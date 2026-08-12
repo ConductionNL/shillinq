@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  */
 
 declare(strict_types=1);

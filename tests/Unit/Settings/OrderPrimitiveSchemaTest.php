@@ -279,7 +279,7 @@ final class OrderPrimitiveSchemaTest extends TestCase
         $lifecycle = $order['x-openregister-lifecycle'];
 
         $statesByType = [
-            'subsidy'   => $this->statesForType($lifecycle, 'subsidy'),
+            'subsidy'    => $this->statesForType($lifecycle, 'subsidy'),
             'purchase'   => $this->statesForType($lifecycle, 'purchase'),
             'engagement' => $this->statesForType($lifecycle, 'engagement'),
         ];

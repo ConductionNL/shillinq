@@ -37,8 +37,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class CashflowSeedDataIntegrationTest extends TestCase
 {
-
-
     /**
      * Load the seed JSON fixture once.
      *
@@ -46,7 +44,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase
      */
     private function seed(): array
     {
-        $path = __DIR__.'/../fixtures/CashflowSeedData.json';
+        $path     = __DIR__.'/../fixtures/CashflowSeedData.json';
         $contents = file_get_contents($path);
         if ($contents === false) {
             self::fail('Could not read CashflowSeedData fixture.');
@@ -60,7 +58,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
         return $data;
 
     }//end seed()
-
 
     /**
      * Sum monthly recurring outflows across a profile, normalised to the period.
@@ -96,12 +93,11 @@ final class CashflowSeedDataIntegrationTest extends TestCase
                     $total += $amount;
                     break;
             }
-        }
+        }//end foreach
 
         return $total;
 
     }//end sumMonthlyRecurringOut()
-
 
     /**
      * Every profile carries non-empty AR + recurring + bufferPolicy.
@@ -121,7 +117,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
 
     }//end testEveryProfileLoads()
 
-
     /**
      * Stable consultant: monthly recurring out < monthly AR baseline.
      *
@@ -129,10 +124,10 @@ final class CashflowSeedDataIntegrationTest extends TestCase
      */
     public function testStableConsultantPositiveMonthlyDelta(): void
     {
-        $seed    = $this->seed();
-        $profile = $seed['profiles'][0];
+        $seed       = $this->seed();
+        $profile    = $seed['profiles'][0];
         $monthlyOut = $this->sumMonthlyRecurringOut($profile);
-        $arMonth = 0.0;
+        $arMonth    = 0.0;
         foreach ($profile['arInvoices'] as $inv) {
             $arMonth += (float) ($inv['outstandingAmount'] ?? 0);
         }
@@ -140,7 +135,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
         self::assertGreaterThan($monthlyOut, $arMonth);
 
     }//end testStableConsultantPositiveMonthlyDelta()
-
 
     /**
      * Buffer thresholds are ordered: ondergrens < vooralarm.
@@ -159,7 +153,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
         }
 
     }//end testBufferThresholdOrdering()
-
 
     /**
      * Volatile profile carries at least one AR projection with mid-confidence
@@ -182,7 +175,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
         self::assertTrue($hasLow, 'Volatile profile should have at least one low-confidence AR projection');
 
     }//end testVolatileProfileHasLowConfidenceArProjection()
-
 
     /**
      * Government contractor's average payment offset exceeds 30 days.
@@ -207,7 +199,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
 
     }//end testGovernmentContractorHasLongPaymentOffsets()
 
-
     /**
      * Opening saldo breakdown sums correctly to totaal across all profiles.
      *
@@ -217,12 +208,9 @@ final class CashflowSeedDataIntegrationTest extends TestCase
     {
         $seed = $this->seed();
         foreach ($seed['profiles'] as $profile) {
-            $os = $profile['horizon']['openingBalance'];
+            $os  = $profile['horizon']['openingBalance'];
             $sum = (
-                (float) $os['zakelijkeRekening']
-                + (float) $os['savingsgoal_btw']
-                + (float) $os['savingsgoal_ib']
-                + (float) $os['savingsgoal_buffer']
+                (float) $os['zakelijkeRekening'] + (float) $os['savingsgoal_btw'] + (float) $os['savingsgoal_ib'] + (float) $os['savingsgoal_buffer']
             );
             self::assertEqualsWithDelta(
                 (float) $os['total'],
@@ -233,7 +221,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
         }
 
     }//end testOpeningSaldoBreakdownSumsCorrectly()
-
 
     /**
      * Buffer policy MIN_MONTHS_VASTE_KOSTEN yields berekendeBuffer >= sumOut x months.
@@ -261,7 +248,6 @@ final class CashflowSeedDataIntegrationTest extends TestCase
 
     }//end testMonthsBufferPolicyMatchesRecurringSum()
 
-
     /**
      * Expected saldo range min is within +-5% tolerance lower bound vs buffer.
      *
@@ -280,6 +266,4 @@ final class CashflowSeedDataIntegrationTest extends TestCase
         }
 
     }//end testExpectedSaldoRangeIsInternallyConsistent()
-
-
 }//end class

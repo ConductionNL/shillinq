@@ -15,7 +15,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 
 declare(strict_types=1);
@@ -33,14 +33,12 @@ class ENSIAXmlExporterTest extends TestCase
 
     private ENSIAXmlExporter $exporter;
 
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->exporter = new ENSIAXmlExporter();
 
     }//end setUp()
-
 
     /**
      * REQ-ENSIA-007: a cyclus not in college-akkoord status MUST NOT be
@@ -51,14 +49,15 @@ class ENSIAXmlExporterTest extends TestCase
     public function testCanExportRefusesNonApprovedCyclus(): void
     {
         $this->assertFalse(
-            $this->exporter->canExport([
-                'status'          => 'in-uitvoering',
-                'declarationFile'  => 'docudesk://x',
-            ])
+            $this->exporter->canExport(
+                    [
+                        'status'          => 'in-uitvoering',
+                        'declarationFile' => 'docudesk://x',
+                    ]
+                    )
         );
 
     }//end testCanExportRefusesNonApprovedCyclus()
-
 
     /**
      * REQ-ENSIA-007: a cyclus without verklaringFile MUST NOT be exportable.
@@ -68,14 +67,15 @@ class ENSIAXmlExporterTest extends TestCase
     public function testCanExportRefusesMissingVerklaringFile(): void
     {
         $this->assertFalse(
-            $this->exporter->canExport([
-                'status'         => 'college-akkoord',
-                'declarationFile' => '',
-            ])
+            $this->exporter->canExport(
+                    [
+                        'status'          => 'college-akkoord',
+                        'declarationFile' => '',
+                    ]
+                    )
         );
 
     }//end testCanExportRefusesMissingVerklaringFile()
-
 
     /**
      * REQ-ENSIA-007: college-akkoord cyclus with verklaringFile — allowed.
@@ -85,14 +85,15 @@ class ENSIAXmlExporterTest extends TestCase
     public function testCanExportAllowsApprovedCyclusWithVerklaring(): void
     {
         $this->assertTrue(
-            $this->exporter->canExport([
-                'status'         => 'college-akkoord',
-                'declarationFile' => 'docudesk://files/12345',
-            ])
+            $this->exporter->canExport(
+                    [
+                        'status'          => 'college-akkoord',
+                        'declarationFile' => 'docudesk://files/12345',
+                    ]
+                    )
         );
 
     }//end testCanExportAllowsApprovedCyclusWithVerklaring()
-
 
     /**
      * REQ-ENSIA-007: rendered XML contains organisation identification.
@@ -102,11 +103,11 @@ class ENSIAXmlExporterTest extends TestCase
     public function testRenderIncludesOrganisationIdentification(): void
     {
         $cyclus = [
-            'organisation'     => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+            'organisation'    => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
             'year'            => 2026,
             'status'          => 'college-akkoord',
             'vraagSetVersion' => 'BIO-1.04-2026',
-            'declarationFile'  => 'docudesk://files/12345',
+            'declarationFile' => 'docudesk://files/12345',
         ];
 
         $xml = $this->exporter->render(cyclus: $cyclus, vragen: [], submittedAt: '2026-04-30T12:00:00+00:00');
@@ -117,7 +118,6 @@ class ENSIAXmlExporterTest extends TestCase
 
     }//end testRenderIncludesOrganisationIdentification()
 
-
     /**
      * REQ-ENSIA-007: rendered XML contains per-question evidence SHA-256.
      *
@@ -126,11 +126,11 @@ class ENSIAXmlExporterTest extends TestCase
     public function testRenderIncludesEvidenceShaHashes(): void
     {
         $cyclus = [
-            'organisation'     => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+            'organisation'    => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
             'year'            => 2026,
             'status'          => 'college-akkoord',
             'vraagSetVersion' => 'BIO-1.04-2026',
-            'declarationFile'  => 'docudesk://files/12345',
+            'declarationFile' => 'docudesk://files/12345',
         ];
 
         $vragen = [
@@ -140,13 +140,13 @@ class ENSIAXmlExporterTest extends TestCase
                 'antwoordType'        => 'volwassenheidsniveau-1-5',
                 'antwoord'            => '4',
                 'volwassenheidsScore' => 4,
-                'notes'         => 'Toegangsbeveiliging is geregeld via formeel beleid.',
+                'notes'               => 'Toegangsbeveiliging is geregeld via formeel beleid.',
                 'peerReviewStatus'    => 'akkoord',
                 'bewijsstukken'       => [
                     [
-                        'fileRef'      => 'docudesk://files/98765',
+                        'fileRef'     => 'docudesk://files/98765',
                         'description' => 'Access control policy effective 2025-01-01',
-                        'sha256'       => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+                        'sha256'      => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
                     ],
                 ],
             ],
@@ -160,7 +160,6 @@ class ENSIAXmlExporterTest extends TestCase
 
     }//end testRenderIncludesEvidenceShaHashes()
 
-
     /**
      * REQ-ENSIA-007: questions are grouped per domein with a domein wrapper.
      *
@@ -169,11 +168,11 @@ class ENSIAXmlExporterTest extends TestCase
     public function testRenderGroupsQuestionsPerDomein(): void
     {
         $cyclus = [
-            'organisation'     => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+            'organisation'    => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
             'year'            => 2026,
             'status'          => 'college-akkoord',
             'vraagSetVersion' => 'BIO-1.04-2026',
-            'declarationFile'  => 'docudesk://files/12345',
+            'declarationFile' => 'docudesk://files/12345',
         ];
 
         $vragen = [
@@ -193,7 +192,6 @@ class ENSIAXmlExporterTest extends TestCase
 
     }//end testRenderGroupsQuestionsPerDomein()
 
-
     /**
      * REQ-ENSIA-007 second scenario: XML is regenerable after corrections;
      * different submittedAt values yield different output.
@@ -203,11 +201,11 @@ class ENSIAXmlExporterTest extends TestCase
     public function testRenderIsRegenerableWithUpdatedTimestamp(): void
     {
         $cyclus = [
-            'organisation'     => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+            'organisation'    => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
             'year'            => 2026,
             'status'          => 'college-akkoord',
             'vraagSetVersion' => 'BIO-1.04-2026',
-            'declarationFile'  => 'docudesk://files/12345',
+            'declarationFile' => 'docudesk://files/12345',
         ];
 
         $first  = $this->exporter->render($cyclus, [], '2026-04-30T12:00:00+00:00');
@@ -219,7 +217,6 @@ class ENSIAXmlExporterTest extends TestCase
 
     }//end testRenderIsRegenerableWithUpdatedTimestamp()
 
-
     /**
      * The rendered XML is valid parseable XML.
      *
@@ -228,11 +225,11 @@ class ENSIAXmlExporterTest extends TestCase
     public function testRenderProducesValidXml(): void
     {
         $cyclus = [
-            'organisation'     => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+            'organisation'    => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
             'year'            => 2026,
             'status'          => 'college-akkoord',
             'vraagSetVersion' => 'BIO-1.04-2026',
-            'declarationFile'  => 'docudesk://files/12345',
+            'declarationFile' => 'docudesk://files/12345',
         ];
 
         $xml = $this->exporter->render($cyclus, []);
@@ -244,6 +241,4 @@ class ENSIAXmlExporterTest extends TestCase
         $this->assertNotFalse($doc);
 
     }//end testRenderProducesValidXml()
-
-
 }//end class

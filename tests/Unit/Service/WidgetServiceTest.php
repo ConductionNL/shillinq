@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-self-service-widget/specs/bookings-self-service-widget/spec.md
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  */
 
 declare(strict_types=1);

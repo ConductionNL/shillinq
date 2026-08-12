@@ -42,7 +42,6 @@ final class CashflowPdfRendererTest extends TestCase
      */
     private CashflowPdfRenderer $renderer;
 
-
     /**
      * Set up fresh renderer per test.
      *
@@ -54,7 +53,6 @@ final class CashflowPdfRendererTest extends TestCase
 
     }//end setUp()
 
-
     /**
      * The renderer returns a filename, mime type, and non-empty payload.
      *
@@ -65,18 +63,18 @@ final class CashflowPdfRendererTest extends TestCase
         $horizon = [
             'horizonId'        => 'horizon-test-001',
             'horizonStart'     => '2026-05-25',
-            'horizonEnd'      => '2026-08-23',
+            'horizonEnd'       => '2026-08-23',
             'administrationId' => 'adm-001',
-            'modelVersion'      => 'v4.1-klantspecifiek-betaalgedrag',
+            'modelVersion'     => 'v4.1-klantspecifiek-betaalgedrag',
             'rolledOp'         => '2026-05-25T02:00:00Z',
         ];
         $weeks   = [
             [
                 'weeknummer'     => 22,
-                'inflows_total' => 12500.0,
+                'inflows_total'  => 12500.0,
                 'outflows_total' => 7200.0,
-                'netMovement'   => 5300.0,
-                'closingBalance'      => 20120.0,
+                'netMovement'    => 5300.0,
+                'closingBalance' => 20120.0,
                 'bufferStatus'   => 'BOVEN_BUFFER',
             ],
         ];
@@ -93,7 +91,6 @@ final class CashflowPdfRendererTest extends TestCase
         self::assertStringContainsString('METHODOLOGY', $result['payload']);
 
     }//end testRenderReturnsExpectedEnvelope()
-
 
     /**
      * Weeks render in the summary table with their saldo + buffer status.
@@ -116,7 +113,6 @@ final class CashflowPdfRendererTest extends TestCase
 
     }//end testRenderIncludesPerWeekRows()
 
-
     /**
      * Optional scenario section appears when a scenario is supplied and
      * carries naam + resultaat onderschrijdingBuffer flag.
@@ -129,7 +125,7 @@ final class CashflowPdfRendererTest extends TestCase
         $scenario = [
             'name'        => 'Acme pays late',
             'description' => 'Acme delays invoice by 4 weeks',
-            'result'   => [
+            'result'      => [
                 'minBufferWeek'         => '2026-w26',
                 'minBufferAmount'       => 100.0,
                 'onderschrijdingBuffer' => true,
@@ -144,7 +140,6 @@ final class CashflowPdfRendererTest extends TestCase
 
     }//end testRenderIncludesScenarioWhenSupplied()
 
-
     /**
      * Top-customer table renders when supplied, including offset + confidence.
      *
@@ -152,8 +147,8 @@ final class CashflowPdfRendererTest extends TestCase
      */
     public function testRenderIncludesTopCustomersWhenSupplied(): void
     {
-        $horizon       = ['horizonId' => 'h1'];
-        $topCustomers  = [
+        $horizon      = ['horizonId' => 'h1'];
+        $topCustomers = [
             ['customerId' => 'klant-municipality-amsterdam', 'gemiddeldeAfwijking' => '+48 days', 'betrouwbaarheidScore' => 0.95],
             ['customerId' => 'klant-acme-bv', 'gemiddeldeAfwijking' => '+8 days', 'betrouwbaarheidScore' => 0.92],
         ];
@@ -165,7 +160,6 @@ final class CashflowPdfRendererTest extends TestCase
         self::assertStringContainsString('+48 days', $result['payload']);
 
     }//end testRenderIncludesTopCustomersWhenSupplied()
-
 
     /**
      * Empty input still renders a valid envelope (no fatal errors).
@@ -179,6 +173,4 @@ final class CashflowPdfRendererTest extends TestCase
         self::assertStringContainsString('13-WEEK CASHFLOW FORECAST', $result['payload']);
 
     }//end testRenderTolerantOfEmptyInput()
-
-
 }//end class

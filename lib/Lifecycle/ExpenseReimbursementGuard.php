@@ -29,10 +29,10 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-11
- * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-16
- * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-17
- * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-22
+ * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+ * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+ * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+ * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
  */
 
 declare(strict_types=1);
@@ -113,7 +113,7 @@ class ExpenseReimbursementGuard
      *
      * @return bool True when the claim may be submitted.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-11
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function requireSettlementModeConsistency(array $claim): bool
     {
@@ -174,7 +174,7 @@ class ExpenseReimbursementGuard
      *
      * @return bool True when the claim may be approved via the standard gate.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-17
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function requireMarkupApprovalIfThreshold(array $claim): bool
     {
@@ -236,7 +236,7 @@ class ExpenseReimbursementGuard
      *
      * @return bool True when the pass-through claim may transition to invoiced.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-11
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function requirePassThroughMode(array $claim): bool
     {
@@ -288,7 +288,7 @@ class ExpenseReimbursementGuard
      *
      * @return bool True when the GL transaction is reversed and the mode-change is permitted.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-16
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function requireGlReversalForModeChange(array $claim): bool
     {

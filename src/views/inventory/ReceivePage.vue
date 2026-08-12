@@ -2,7 +2,7 @@
   Receive Page wrapper. Bootstraps the inventory scanner store and renders
   the Receive operation component.
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.1
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<div class="receive-page">

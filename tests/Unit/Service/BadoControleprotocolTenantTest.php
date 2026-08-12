@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -214,7 +214,7 @@ final class BadoControleprotocolTenantTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAnEmptyProtocolIdResolvesToNull(): void
     {
@@ -230,7 +230,7 @@ final class BadoControleprotocolTenantTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAnAbsentProtocolResolvesToNull(): void
     {
@@ -254,7 +254,7 @@ final class BadoControleprotocolTenantTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAnEntityIsNormalisedThroughJsonSerialize(): void
     {
@@ -287,7 +287,7 @@ final class BadoControleprotocolTenantTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAProtocolWithoutATenantResolvesToTheEmptyString(): void
     {

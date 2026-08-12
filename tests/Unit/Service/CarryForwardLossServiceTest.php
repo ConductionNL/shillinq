@@ -66,7 +66,7 @@ final class CarryForwardLossServiceTest extends TestCase
         self::assertSame(585000.0, $r['residualProfit']);
         self::assertSame(52650.0, $r['residualProfitAt9Pct']);
         self::assertSame(108120.0, $r['totalBenefit']);
-        self::assertSame(0.0, $r['saldoNa']);
+        self::assertSame(0.0, $r['balanceAfter']);
         self::assertSame('volledig_verrekend', $r['status']);
 
     }//end testLossOffsetAtFullTariffThenResidualAt9Pct()
@@ -98,7 +98,7 @@ final class CarryForwardLossServiceTest extends TestCase
         $r = $this->svc->offsetLossAgainstProfit(300000.0, 200000.0, 1.0);
         self::assertSame(200000.0, $r['lossOffset']);
         self::assertSame(0.0, $r['residualProfit']);
-        self::assertSame(100000.0, $r['saldoNa']);
+        self::assertSame(100000.0, $r['balanceAfter']);
         self::assertSame('open', $r['status']);
 
     }//end testPartialOffsetLeavesOpenBalance()

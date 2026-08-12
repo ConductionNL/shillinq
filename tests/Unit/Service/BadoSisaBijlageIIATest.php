@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-21
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -264,7 +264,7 @@ final class BadoSisaBijlageIIATest extends TestCase
                 rows: [
                     [
                         'protocol'                 => $protocolId,
-                        'schemeCode'             => 'G2',
+                        'schemeCode'               => 'G2',
                         'verantwoordingsplichtige' => 'gemeente',
                         'specifiekeUitkering'      => 'Participatiewet',
                         'assuranceLevel'           => 'sisa-specific',
@@ -272,7 +272,7 @@ final class BadoSisaBijlageIIATest extends TestCase
                     ],
                     [
                         'protocol'                 => $protocolId,
-                        'schemeCode'             => 'G3',
+                        'schemeCode'               => 'G3',
                         'verantwoordingsplichtige' => 'gemeente',
                         'specifiekeUitkering'      => 'Schuldhulpverlening',
                         'assuranceLevel'           => 'sisa-specific',

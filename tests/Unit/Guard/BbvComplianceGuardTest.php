@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -191,7 +191,7 @@ class BbvComplianceGuardTest extends TestCase
                     'accountNumber'        => '4310',
                     'administrationId'     => 'gem-1',
                     'administrationType'   => 'gemeente',
-                    'taskField'             => '7.5',
+                    'taskField'            => '7.5',
                     'economischeCategorie' => '3.4.3',
                 ]
                 );
@@ -239,7 +239,7 @@ class BbvComplianceGuardTest extends TestCase
                     'accountNumber'      => '2310',
                     'administrationId'   => 'gem-1',
                     'administrationType' => 'gemeente',
-                    'taskField'           => '4.2',
+                    'taskField'          => '4.2',
                 ]
                 );
 
@@ -262,7 +262,7 @@ class BbvComplianceGuardTest extends TestCase
                     'accountNumber'      => '2310',
                     'administrationId'   => 'gem-1',
                     'administrationType' => 'gemeente',
-                    'taskField'           => '0.10',
+                    'taskField'          => '0.10',
                 ]
                 );
 
@@ -281,7 +281,7 @@ class BbvComplianceGuardTest extends TestCase
             'accountNumber'    => '2420',
             'administrationId' => 'gem-1',
             'bbvClassificatie' => 'voorziening',
-            'taskField'         => '2.1',
+            'taskField'        => '2.1',
         ];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
@@ -290,7 +290,7 @@ class BbvComplianceGuardTest extends TestCase
                     'accountNumber'      => '2420',
                     'administrationId'   => 'gem-1',
                     'administrationType' => 'gemeente',
-                    'taskField'           => '2.1',
+                    'taskField'          => '2.1',
                 ]
                 );
 
@@ -309,7 +309,7 @@ class BbvComplianceGuardTest extends TestCase
             'accountNumber'    => '2420',
             'administrationId' => 'gem-1',
             'bbvClassificatie' => 'voorziening',
-            'taskField'         => '2.1',
+            'taskField'        => '2.1',
         ];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
@@ -318,7 +318,7 @@ class BbvComplianceGuardTest extends TestCase
                     'accountNumber'      => '2420',
                     'administrationId'   => 'gem-1',
                     'administrationType' => 'gemeente',
-                    'taskField'           => '7.2',
+                    'taskField'          => '7.2',
                 ]
                 );
 
@@ -368,7 +368,7 @@ class BbvComplianceGuardTest extends TestCase
                 [
                     'administrationType' => 'gemeente',
                     'administrationId'   => 'gem-1',
-                    'financialYear'           => 2026,
+                    'financialYear'      => 2026,
                 ]
                 );
 
@@ -393,7 +393,7 @@ class BbvComplianceGuardTest extends TestCase
                 [
                     'administrationType' => 'gemeente',
                     'administrationId'   => 'gem-1',
-                    'financialYear'           => 2026,
+                    'financialYear'      => 2026,
                 ]
                 );
 
@@ -413,11 +413,11 @@ class BbvComplianceGuardTest extends TestCase
 
         $result = $this->guard->requireMeerjarenramingSluitend(
                 [
-                    'administrationType' => 'gemeente',
-                    'administrationId'   => 'gem-1',
+                    'administrationType'      => 'gemeente',
+                    'administrationId'        => 'gem-1',
                     'financialYear'           => 2026,
                     'councilResolutionNumber' => 'RB-2026-12',
-                    'raadsbesluitDatum'  => '2026-06-26',
+                    'raadsbesluitDatum'       => '2026-06-26',
                 ]
                 );
 
@@ -438,7 +438,7 @@ class BbvComplianceGuardTest extends TestCase
                 [
                     'administrationType' => 'gemeente',
                     'administrationId'   => 'gem-1',
-                    'financialYear'           => 2026,
+                    'financialYear'      => 2026,
                 ]
                 );
 
@@ -460,8 +460,8 @@ class BbvComplianceGuardTest extends TestCase
         $result = $this->guard->requireMvaActivation(
                 [
                     'administrationType'  => 'gemeente',
-                    'description'        => 'Rondweg',
-                    'mvaCategory'        => 'maatschappelijk-nut',
+                    'description'         => 'Rondweg',
+                    'mvaCategory'         => 'maatschappelijk-nut',
                     'aanschafwaardeCents' => 840000000,
                 ]
                 );
@@ -479,10 +479,10 @@ class BbvComplianceGuardTest extends TestCase
     {
         $result = $this->guard->requireMvaActivation(
                 [
-                    'administrationType'       => 'gemeente',
+                    'administrationType'      => 'gemeente',
                     'description'             => 'Rondweg',
                     'mvaCategory'             => 'maatschappelijk-nut',
-                    'aanschafwaardeCents'      => 840000000,
+                    'aanschafwaardeCents'     => 840000000,
                     'depreciationPeriodYears' => 40,
                 ]
                 );
@@ -501,8 +501,8 @@ class BbvComplianceGuardTest extends TestCase
         $result = $this->guard->requireMvaActivation(
                 [
                     'administrationType'  => 'gemeente',
-                    'description'        => 'Bankje',
-                    'mvaCategory'        => 'maatschappelijk-nut',
+                    'description'         => 'Bankje',
+                    'mvaCategory'         => 'maatschappelijk-nut',
                     'aanschafwaardeCents' => 100000,
                 ]
                 );
@@ -521,8 +521,8 @@ class BbvComplianceGuardTest extends TestCase
         $result = $this->guard->requireMvaActivation(
                 [
                     'administrationType'  => 'gemeente',
-                    'description'        => 'Gemeentehuis',
-                    'mvaCategory'        => 'economisch-nut',
+                    'description'         => 'Gemeentehuis',
+                    'mvaCategory'         => 'economisch-nut',
                     'aanschafwaardeCents' => 5000000000,
                 ]
                 );
@@ -618,17 +618,19 @@ class BbvComplianceGuardTest extends TestCase
         $logger    = $this->createMock(originalClassName: LoggerInterface::class);
 
         $appConfig->method('getValueString')
-            ->willReturnCallback(function (string $appId, string $key, string $default): string {
-                if ($key === 'bbv_installation_date') {
-                    return '2026-01-01';
-                }
+            ->willReturnCallback(
+                    function (string $appId, string $key, string $default): string {
+                        if ($key === 'bbv_installation_date') {
+                            return '2026-01-01';
+                        }
 
-                if ($key === 'register') {
-                    return 'shillinq';
-                }
+                        if ($key === 'register') {
+                            return 'shillinq';
+                        }
 
-                return $default;
-            });
+                        return $default;
+                    }
+                    );
         $appConfig->method('getValueInt')->willReturn(5000000);
 
         $guard = new BbvComplianceGuard(
@@ -665,7 +667,7 @@ class BbvComplianceGuardTest extends TestCase
             [
                 'administrationType' => 'mkb',
                 'administrationId'   => 'mkb-1',
-                'financialYear'           => 2026,
+                'financialYear'      => 2026,
             ]
         );
 
@@ -681,16 +683,20 @@ class BbvComplianceGuardTest extends TestCase
     public function testParagrafenCompletenessRejectsMissingTypes(): void
     {
         $this->container->method('get')
-            ->willReturn($this->buildParagraafStub(rows: [
-                ['type' => 'lokale-heffingen'],
-                ['type' => 'weerstandsvermogen'],
-            ]));
+            ->willReturn(
+                    $this->buildParagraafStub(
+                    rows: [
+                        ['type' => 'lokale-heffingen'],
+                        ['type' => 'weerstandsvermogen'],
+                    ]
+                    )
+                    );
 
         $result = $this->guard->requireParagrafenCompleet(
             [
                 'administrationType' => 'gemeente',
                 'administrationId'   => 'gem-1',
-                'financialYear'           => 2026,
+                'financialYear'      => 2026,
             ]
         );
 
@@ -706,21 +712,25 @@ class BbvComplianceGuardTest extends TestCase
     public function testParagrafenCompletenessPermitsWhenAllSeven(): void
     {
         $this->container->method('get')
-            ->willReturn($this->buildParagraafStub(rows: [
-                ['type' => 'lokale-heffingen'],
-                ['type' => 'weerstandsvermogen'],
-                ['type' => 'onderhoud-kapitaalgoederen'],
-                ['type' => 'financiering'],
-                ['type' => 'bedrijfsvoering'],
-                ['type' => 'verbonden-partijen'],
-                ['type' => 'grondbeleid'],
-            ]));
+            ->willReturn(
+                    $this->buildParagraafStub(
+                    rows: [
+                        ['type' => 'lokale-heffingen'],
+                        ['type' => 'weerstandsvermogen'],
+                        ['type' => 'onderhoud-kapitaalgoederen'],
+                        ['type' => 'financiering'],
+                        ['type' => 'bedrijfsvoering'],
+                        ['type' => 'verbonden-partijen'],
+                        ['type' => 'grondbeleid'],
+                    ]
+                    )
+                    );
 
         $result = $this->guard->requireParagrafenCompleet(
             [
                 'administrationType' => 'gemeente',
                 'administrationId'   => 'gem-1',
-                'financialYear'           => 2026,
+                'financialYear'      => 2026,
             ]
         );
 
@@ -802,7 +812,7 @@ class BbvComplianceGuardTest extends TestCase
     {
         $line = [
             'rechtmatigheidStatus' => 'afwijking_outside_tolerance',
-            'bedragCents' => 28000000,
+            'bedragCents'          => 28000000,
         ];
 
         self::assertSame(expected: 'afwijking_outside_tolerance', actual: $line['rechtmatigheidStatus']);

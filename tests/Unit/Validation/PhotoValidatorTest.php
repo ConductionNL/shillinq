@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expense-capture-core/tasks.md#task-11
+ * @spec openspec/specs/expense-capture-core/spec.md
  */
 
 declare(strict_types=1);

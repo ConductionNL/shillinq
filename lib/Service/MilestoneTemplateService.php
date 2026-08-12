@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use RuntimeException;
  * and performs date/percentage arithmetic only, so it is fully unit-testable
  * without a Nextcloud runtime.
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 class MilestoneTemplateService
 {
@@ -84,7 +84,7 @@ class MilestoneTemplateService
      *
      * @throws \RuntimeException When the templates file is missing or malformed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function getTemplate(string $opdrachttype): array
     {
@@ -125,7 +125,7 @@ class MilestoneTemplateService
      * @throws \InvalidArgumentException When the dates are unparseable or end is not after start.
      * @throws \RuntimeException         When the templates file is missing or malformed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function generatePlan(string $opdrachttype, string $looptijdStart, string $looptijdEind): array
     {
@@ -155,7 +155,7 @@ class MilestoneTemplateService
             $mijlpalen[] = [
                 'mijlpaalId'      => 'MS-'.str_pad((string) $index, 3, '0', STR_PAD_LEFT),
                 'datum'           => gmdate('Y-m-d', $datum),
-                'description'    => (string) ($row['label'] ?? ('Mijlpaal '.$index)),
+                'description'     => (string) ($row['label'] ?? ('Mijlpaal '.$index)),
                 'percentage'      => (float) ($row['percentage'] ?? 0.0),
                 'opleveringsType' => (string) ($row['opleveringsType'] ?? 'deeloplevering'),
                 'status'          => 'planned',
@@ -178,7 +178,7 @@ class MilestoneTemplateService
      *
      * @return float The summed percentage.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function sumPercentage(array $mijlpalen): float
     {
@@ -204,7 +204,7 @@ class MilestoneTemplateService
      *
      * @return array<int, array<string, mixed>> Forecast entries: datum, omschrijving, bedrag.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function buildCashflowForecast(float $contractWaarde, array $mijlpalen): array
     {
@@ -225,10 +225,10 @@ class MilestoneTemplateService
             $allocated += $bedrag;
 
             $forecast[] = [
-                'datum'        => (string) ($mijlpaal['datum'] ?? ''),
+                'datum'       => (string) ($mijlpaal['datum'] ?? ''),
                 'description' => (string) ($mijlpaal['description'] ?? ''),
-                'percentage'   => $percentage,
-                'amount'       => $bedrag,
+                'percentage'  => $percentage,
+                'amount'      => $bedrag,
             ];
         }//end foreach
 

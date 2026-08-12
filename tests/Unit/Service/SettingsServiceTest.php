@@ -226,7 +226,7 @@ class SettingsServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function testSeedDefaultAdministrationFailsWhenOpenRegisterUnavailable(): void
     {
@@ -251,7 +251,7 @@ class SettingsServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function testDefaultAdministrationSeedFileIsValid(): void
     {
@@ -288,7 +288,7 @@ class SettingsServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+     * @spec openspec/specs/first-time-setup/spec.md
      */
     public function testReadDefaultAdministrationCodeReturnsSeedFileValue(): void
     {
@@ -306,7 +306,7 @@ class SettingsServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function testSeedDefaultAdministrationResolvesObjectService(): void
     {
@@ -337,11 +337,11 @@ class SettingsServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-5
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-6
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-7
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-8
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-9
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function testMultiAdministratieRegisterFragmentDeclaresSchemas(): void
     {
@@ -375,7 +375,7 @@ class SettingsServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-1
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function testMultiAdministratieSchemasNotInMonolith(): void
     {
@@ -410,26 +410,27 @@ class SettingsServiceTest extends TestCase
         // ObjectService stub: findAll always returns an existing record (so every
         // policy is skipped); saveObject must never be called.
         $objectService = new class {
+
             public int $saveCalls = 0;
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return [['slug' => ($params['filters']['slug'] ?? 'x')]];
-            }
+            }//end findAll()
 
             /**
              * @param array<string,mixed> $object
@@ -437,7 +438,7 @@ class SettingsServiceTest extends TestCase
             public function saveObject(array $object, string $register, string $schema): void
             {
                 $this->saveCalls++;
-            }
+            }//end saveObject()
         };
 
         $this->container->method('get')->willReturn($objectService);
@@ -464,26 +465,27 @@ class SettingsServiceTest extends TestCase
         // ObjectService stub: findAll returns empty (nothing exists), so each
         // policy is created via saveObject.
         $objectService = new class {
+
             public int $saveCalls = 0;
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return [];
-            }
+            }//end findAll()
 
             /**
              * @param array<string,mixed> $object
@@ -491,7 +493,7 @@ class SettingsServiceTest extends TestCase
             public function saveObject(array $object, string $register, string $schema): void
             {
                 $this->saveCalls++;
-            }
+            }//end saveObject()
         };
 
         $this->container->method('get')->willReturn($objectService);
@@ -566,27 +568,29 @@ class SettingsServiceTest extends TestCase
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
         $objectService = new class {
-            public int $saveCalls    = 0;
+
+            public int $saveCalls = 0;
+
             public bool $ranAsSystem = false;
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return [];
-            }
+            }//end findAll()
 
             /**
              * @param array<string,mixed> $object
@@ -594,7 +598,7 @@ class SettingsServiceTest extends TestCase
             public function saveObject(array $object, string $register, string $schema): void
             {
                 $this->saveCalls++;
-            }
+            }//end saveObject()
 
             /**
              * Mirrors OpenRegister's ObjectService::runAsSystem() — bypasses RBAC.
@@ -607,7 +611,7 @@ class SettingsServiceTest extends TestCase
             {
                 $this->ranAsSystem = true;
                 return $operation();
-            }
+            }//end runAsSystem()
         };
 
         $this->container->method('get')->willReturn($objectService);
@@ -634,26 +638,27 @@ class SettingsServiceTest extends TestCase
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
         $objectService = new class {
+
             public int $saveCalls = 0;
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return [];
-            }
+            }//end findAll()
 
             /**
              * @param array<string,mixed> $object
@@ -661,7 +666,7 @@ class SettingsServiceTest extends TestCase
             public function saveObject(array $object, string $register, string $schema): void
             {
                 $this->saveCalls++;
-            }
+            }//end saveObject()
         };
 
         $this->container->method('get')->willReturn($objectService);
@@ -687,27 +692,29 @@ class SettingsServiceTest extends TestCase
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
         $objectService = new class {
-            public int $saveCalls    = 0;
+
+            public int $saveCalls = 0;
+
             public bool $ranAsSystem = false;
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return [];
-            }
+            }//end findAll()
 
             /**
              * @param array<string,mixed> $object
@@ -715,7 +722,7 @@ class SettingsServiceTest extends TestCase
             public function saveObject(array $object, string $register, string $schema): void
             {
                 $this->saveCalls++;
-            }
+            }//end saveObject()
 
             /**
              * Mirrors OpenRegister's ObjectService::runAsSystem() — bypasses RBAC.
@@ -728,7 +735,7 @@ class SettingsServiceTest extends TestCase
             {
                 $this->ranAsSystem = true;
                 return $operation();
-            }
+            }//end runAsSystem()
         };
 
         $this->container->method('get')->willReturn($objectService);
@@ -755,26 +762,27 @@ class SettingsServiceTest extends TestCase
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
         $objectService = new class {
+
             public int $saveCalls = 0;
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return [];
-            }
+            }//end findAll()
 
             /**
              * @param array<string,mixed> $object
@@ -782,7 +790,7 @@ class SettingsServiceTest extends TestCase
             public function saveObject(array $object, string $register, string $schema): void
             {
                 $this->saveCalls++;
-            }
+            }//end saveObject()
         };
 
         $this->container->method('get')->willReturn($objectService);

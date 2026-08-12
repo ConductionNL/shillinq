@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-12
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use InvalidArgumentException;
 /**
  * Side-effect-free cross-subsidy detector for WMO compliance (REQ-WMO-007).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-12
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral

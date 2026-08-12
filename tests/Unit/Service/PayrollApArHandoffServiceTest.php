@@ -65,14 +65,14 @@ final class PayrollApArHandoffServiceTest extends TestCase
     {
         $payloads = $this->svc->toApTransactionPayloads(
             lhAfdracht: [
-                'werkgeverId'            => 'wg-1',
-                'periodId'              => 'lp-2026-05',
-                'totalPayrollTax'      => 18620.10,
-                'totalSocialInsuranceContributions'        => 7559.40,
+                'werkgeverId'                       => 'wg-1',
+                'periodId'                          => 'lp-2026-05',
+                'totalPayrollTax'                   => 18620.10,
+                'totalSocialInsuranceContributions' => 7559.40,
                 'totalHealthInsurance'              => 3654.00,
-                'totalFinalLeviesWorkRelatedCosts' => 240.00,
-                'vervaldagAfdracht'      => '2026-06-30',
-                'administrationId'       => 'adm-1',
+                'totalFinalLeviesWorkRelatedCosts'  => 240.00,
+                'vervaldagAfdracht'                 => '2026-06-30',
+                'administrationId'                  => 'adm-1',
             ]
         );
 
@@ -108,13 +108,13 @@ final class PayrollApArHandoffServiceTest extends TestCase
     {
         $payloads = $this->svc->toApTransactionPayloads(
             lhAfdracht: [
-                'werkgeverId'            => 'wg-1',
-                'periodId'              => 'lp-2026-05',
-                'totalPayrollTax'      => 0.0,
-                'totalSocialInsuranceContributions'        => 1234.56,
+                'werkgeverId'                       => 'wg-1',
+                'periodId'                          => 'lp-2026-05',
+                'totalPayrollTax'                   => 0.0,
+                'totalSocialInsuranceContributions' => 1234.56,
                 'totalHealthInsurance'              => 0.0,
-                'totalFinalLeviesWorkRelatedCosts' => 0.0,
-                'vervaldagAfdracht'      => '2026-06-30',
+                'totalFinalLeviesWorkRelatedCosts'  => 0.0,
+                'vervaldagAfdracht'                 => '2026-06-30',
             ]
         );
 

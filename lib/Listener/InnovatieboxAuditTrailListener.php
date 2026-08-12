@@ -158,7 +158,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
                     'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                    'financialYear'            => $this->intOrNull(value: $data['financialYear'] ?? null),
+                    'financialYear'       => $this->intOrNull(value: $data['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'NexusCalculation',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -183,7 +183,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
                     'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                    'financialYear'            => $this->intOrNull(value: $data['financialYear'] ?? null),
+                    'financialYear'       => $this->intOrNull(value: $data['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'IBProfitAttribution',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -214,7 +214,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                     options: [
                         'event_type'          => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
                         'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                        'financialYear'            => $this->intOrNull(value: $data['financialYear'] ?? null),
+                        'financialYear'       => $this->intOrNull(value: $data['financialYear'] ?? null),
                         'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                         'subject_schema'      => 'IBProfitAttribution',
                         'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -237,7 +237,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED,
                     'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                    'financialYear'            => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
+                    'financialYear'       => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
                     'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'CarryForwardLoss',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -288,7 +288,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
                     'administrationId'    => (string) ($next['administrationId'] ?? ''),
-                    'financialYear'            => $this->intOrNull(value: $next['financialYear'] ?? null),
+                    'financialYear'       => $this->intOrNull(value: $next['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'NexusCalculation',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -319,7 +319,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
                     'administrationId'    => (string) ($next['administrationId'] ?? ''),
-                    'financialYear'            => $this->intOrNull(value: $next['financialYear'] ?? null),
+                    'financialYear'       => $this->intOrNull(value: $next['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'IBProfitAttribution',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -346,7 +346,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
                     'administrationId'    => $administrationId,
-                    'financialYear'            => $boekjaar,
+                    'financialYear'       => $boekjaar,
                     'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'IBProfitAttribution',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -382,14 +382,14 @@ final class InnovatieboxAuditTrailListener implements IEventListener
             options: [
                 'event_type'          => InnovatieboxAuditEventLogger::EVENT_LOSS_OFFSET_APPLIED,
                 'administrationId'    => (string) ($next['administrationId'] ?? ''),
-                'financialYear'            => $this->intOrNull(value: $next['origin_boekjaar'] ?? ($next['financialYear'] ?? null)),
+                'financialYear'       => $this->intOrNull(value: $next['origin_boekjaar'] ?? ($next['financialYear'] ?? null)),
                 'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                 'subject_schema'      => 'CarryForwardLoss',
                 'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
                 'details'             => [
-                    'new_entries' => $newEntries,
-                    'balance_after'    => $next['balance_after'] ?? null,
-                    'status'      => $next['status'] ?? null,
+                    'new_entries'   => $newEntries,
+                    'balance_after' => $next['balance_after'] ?? null,
+                    'status'        => $next['status'] ?? null,
                 ],
             ]
         );

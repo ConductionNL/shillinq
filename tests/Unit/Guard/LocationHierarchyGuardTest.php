@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
- * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
+ * @spec openspec/specs/inventory-multi-warehouse/spec.md
+ * @spec openspec/specs/inventory-multi-warehouse/spec.md
  */
 
 declare(strict_types=1);

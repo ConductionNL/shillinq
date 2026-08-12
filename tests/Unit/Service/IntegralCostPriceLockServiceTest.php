@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-8
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase
         $voorlopig = [];
         for ($q = 1; $q <= 4; $q++) {
             $voorlopig[] = [
-                'period'      => '2025-Q' . $q,
+                'period'       => '2025-Q'.$q,
                 'totaleKosten' => 25_000.00,
                 'componenten'  => [
                     'directeLoonkosten'     => 12_000.00,
@@ -70,16 +70,18 @@ final class IntegralCostPriceLockServiceTest extends TestCase
             ];
         }
 
-        $definitief = $this->svc->lock([
-            'commercialActivityId' => 'ca-001',
-            'fiscalYear'           => '2025',
-            'voorlopigRecords'     => $voorlopig,
-            'signedBy'             => 'accountant-user',
-            'administrationId'     => 'adm-tilburg',
-            'verkochteEenheden'    => 312.0,
-            'unitLabel'         => 'dagdeel-zaalhuur',
-            'gehanteerdTarief'     => 295.0,
-        ]);
+        $definitief = $this->svc->lock(
+                [
+                    'commercialActivityId' => 'ca-001',
+                    'fiscalYear'           => '2025',
+                    'voorlopigRecords'     => $voorlopig,
+                    'signedBy'             => 'accountant-user',
+                    'administrationId'     => 'adm-tilburg',
+                    'verkochteEenheden'    => 312.0,
+                    'unitLabel'            => 'dagdeel-zaalhuur',
+                    'gehanteerdTarief'     => 295.0,
+                ]
+                );
 
         self::assertSame('definitief', $definitief['status']);
         self::assertSame('2025-YTD', $definitief['period']);
@@ -99,13 +101,15 @@ final class IntegralCostPriceLockServiceTest extends TestCase
     public function testLockRequiresSigner(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->svc->lock([
-            'commercialActivityId' => 'ca-001',
-            'fiscalYear'           => '2025',
-            'voorlopigRecords'     => [['totaleKosten' => 1.0]],
-            'signedBy'             => '',
-            'administrationId'     => 'adm',
-        ]);
+        $this->svc->lock(
+                [
+                    'commercialActivityId' => 'ca-001',
+                    'fiscalYear'           => '2025',
+                    'voorlopigRecords'     => [['totaleKosten' => 1.0]],
+                    'signedBy'             => '',
+                    'administrationId'     => 'adm',
+                ]
+                );
 
     }//end testLockRequiresSigner()
 
@@ -115,13 +119,15 @@ final class IntegralCostPriceLockServiceTest extends TestCase
     public function testLockRequiresAtLeastOneVoorlopig(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->svc->lock([
-            'commercialActivityId' => 'ca-001',
-            'fiscalYear'           => '2025',
-            'voorlopigRecords'     => [],
-            'signedBy'             => 'u',
-            'administrationId'     => 'a',
-        ]);
+        $this->svc->lock(
+                [
+                    'commercialActivityId' => 'ca-001',
+                    'fiscalYear'           => '2025',
+                    'voorlopigRecords'     => [],
+                    'signedBy'             => 'u',
+                    'administrationId'     => 'a',
+                ]
+                );
 
     }//end testLockRequiresAtLeastOneVoorlopig()
 
@@ -136,5 +142,4 @@ final class IntegralCostPriceLockServiceTest extends TestCase
         self::assertFalse($this->svc->shouldLock('2025', '2026-01-01'));
 
     }//end testShouldLockFiresAtYearEndPlus3Months()
-
 }//end class

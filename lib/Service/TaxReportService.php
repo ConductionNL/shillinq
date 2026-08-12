@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-22
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Psr\Container\ContainerInterface;
  * posting. The annual roll-up (REQ-VPB-012) sums the four quarters and estimates
  * the Vpb liability.
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-22
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 class TaxReportService
 {
@@ -81,7 +81,7 @@ class TaxReportService
      *                              specialDeductions, netTaxableIncome,
      *                              untaggedCount and breakdown.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-22
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function computeQuarter(string $administrationId, int $fiscalYear, int $quarter): array
     {
@@ -117,7 +117,7 @@ class TaxReportService
      *                              specialDeductions, netTaxableIncome,
      *                              untaggedCount and estimatedLiability.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-25
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function computeAnnual(string $administrationId, int $fiscalYear): array
     {

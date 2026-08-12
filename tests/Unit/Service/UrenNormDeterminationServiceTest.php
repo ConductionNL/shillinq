@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,8 +32,6 @@ use Psr\Log\LoggerInterface;
  */
 final class UrenNormDeterminationServiceTest extends TestCase
 {
-
-
     /**
      * Build a service with a real guard + null logger.
      *
@@ -47,7 +45,6 @@ final class UrenNormDeterminationServiceTest extends TestCase
 
     }//end build()
 
-
     /**
      * A regular eenmanszaak with no loondienst yields the 1.225 norm seed.
      *
@@ -58,7 +55,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId' => 'adm-1',
-                'enterpriseId'    => 'ond-1',
+                'enterpriseId'     => 'ond-1',
                 'kalenderjaar'     => 2026,
             ]
         );
@@ -74,7 +71,6 @@ final class UrenNormDeterminationServiceTest extends TestCase
 
     }//end testRegularSeedYields1225()
 
-
     /**
      * AO-status drives the 800-uren norm and the lid-5 grondslag.
      *
@@ -85,7 +81,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'  => 'adm-1',
-                'enterpriseId'     => 'ond-2',
+                'enterpriseId'      => 'ond-2',
                 'kalenderjaar'      => 2026,
                 'arbeidsongeschikt' => true,
             ]
@@ -95,7 +91,6 @@ final class UrenNormDeterminationServiceTest extends TestCase
         self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normBasis']);
 
     }//end testArbeidsongeschiktSeedYields800()
-
 
     /**
      * Meewerkende partner drives the 525-uren meewerkaftrek seed.
@@ -107,7 +102,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'   => 'adm-1',
-                'enterpriseId'      => 'ond-3',
+                'enterpriseId'       => 'ond-3',
                 'kalenderjaar'       => 2026,
                 'meewerkendePartner' => true,
             ]
@@ -116,7 +111,6 @@ final class UrenNormDeterminationServiceTest extends TestCase
         self::assertSame(525, $seed['doelNorm']);
 
     }//end testMeewerkendePartnerSeedYields525()
-
 
     /**
      * Parallel loondienst >50% flags NIET_GROTENDEELS_ONDERNEMING.
@@ -128,7 +122,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'    => 'adm-1',
-                'enterpriseId'       => 'ond-4',
+                'enterpriseId'        => 'ond-4',
                 'kalenderjaar'        => 2026,
                 'ondernemingsUrenJTD' => 300.0,
                 'loondienstUrenJTD'   => 600.0,
@@ -138,7 +132,6 @@ final class UrenNormDeterminationServiceTest extends TestCase
         self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
 
     }//end testParallelLoondienstMajorityFlagsNietGrotendeels()
-
 
     /**
      * Parallel loondienst <50% yields GROTENDEELS_ONDERNEMING.
@@ -150,7 +143,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'    => 'adm-1',
-                'enterpriseId'       => 'ond-5',
+                'enterpriseId'        => 'ond-5',
                 'kalenderjaar'        => 2026,
                 'ondernemingsUrenJTD' => 800.0,
                 'loondienstUrenJTD'   => 200.0,
@@ -160,7 +153,6 @@ final class UrenNormDeterminationServiceTest extends TestCase
         self::assertSame('GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
 
     }//end testParallelLoondienstMinorityFlagsGrotendeels()
-
 
     /**
      * The seed passes the canonical YearGuard validateOnSave by construction.
@@ -176,7 +168,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $service->bouwSeedRecord(
             profiel: [
                 'administrationId'  => 'adm-1',
-                'enterpriseId'     => 'ond-9',
+                'enterpriseId'      => 'ond-9',
                 'kalenderjaar'      => 2026,
                 'arbeidsongeschikt' => true,
             ]
@@ -185,6 +177,4 @@ final class UrenNormDeterminationServiceTest extends TestCase
         self::assertTrue($guard->validateOnSave(year: $seed));
 
     }//end testSeedPassesGuardValidateOnSave()
-
-
 }//end class

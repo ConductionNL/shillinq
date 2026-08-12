@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
 
 declare(strict_types=1);

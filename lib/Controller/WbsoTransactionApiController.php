@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-27
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use RuntimeException;
 /**
  * Transaction REST API (REQ-WBSO-002 / REQ-WBSO-005 / REQ-WBSO-008).
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-27
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class WbsoTransactionApiController extends Controller
 {

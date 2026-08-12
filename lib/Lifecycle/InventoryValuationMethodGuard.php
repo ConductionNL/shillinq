@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-6
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * Zero-stock precondition guard for InventoryValuation transitions
  * (REQ-INV-006 + REQ-INV-009).
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-6
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  */
 class InventoryValuationMethodGuard
 {
@@ -80,7 +80,7 @@ class InventoryValuationMethodGuard
      *
      * @return bool True when on-hand quantity is zero.
      *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-6
+     * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
      */
     public function checkZeroStock(array $valuation): bool
     {
@@ -123,7 +123,7 @@ class InventoryValuationMethodGuard
      *
      * @return bool True when uniqueness is respected.
      *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-14
+     * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
      */
     public function checkUniqueActiveSnapshot(array $proposed): bool
     {

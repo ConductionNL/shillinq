@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -169,12 +169,12 @@ class UrencriteriumYearGuardTest extends TestCase
     public function testValidYearPassesSave(): void
     {
         $year = [
-            'enterpriseId'        => 'ond-1',
+            'enterpriseId'         => 'ond-1',
             'doelNorm'             => 1225,
-            'normBasis'        => 'art. 3.6 lid 1 Wet IB 2001',
+            'normBasis'            => 'art. 3.6 lid 1 Wet IB 2001',
             'lopendeUren'          => 916,
-            'forecastYearEnd'    => 1180,
-            'thresholdStatus'        => 'RISICO',
+            'forecastYearEnd'      => 1180,
+            'thresholdStatus'      => 'RISICO',
             'grotendeelsCriterium' => 'NIET_TOEPASSELIJK',
         ];
         self::assertTrue($this->guard->validateOnSave(year: $year));
@@ -189,8 +189,8 @@ class UrencriteriumYearGuardTest extends TestCase
     public function testAoNormWithoutLid5Rejected(): void
     {
         $year = [
-            'doelNorm'      => 800,
-            'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+            'doelNorm'        => 800,
+            'normBasis'       => 'art. 3.6 lid 1 Wet IB 2001',
             'thresholdStatus' => 'OP_KOERS',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
@@ -205,8 +205,8 @@ class UrencriteriumYearGuardTest extends TestCase
     public function testUnrecognisedNormRejected(): void
     {
         $year = [
-            'doelNorm'      => 1000,
-            'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+            'doelNorm'        => 1000,
+            'normBasis'       => 'art. 3.6 lid 1 Wet IB 2001',
             'thresholdStatus' => 'OP_KOERS',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
@@ -221,12 +221,12 @@ class UrencriteriumYearGuardTest extends TestCase
     public function testInconsistentDrempelStatusRejected(): void
     {
         $year = [
-            'doelNorm'          => 1225,
-            'normBasis'     => 'art. 3.6 lid 1 Wet IB 2001',
-            'lopendeUren'       => 916,
+            'doelNorm'        => 1225,
+            'normBasis'       => 'art. 3.6 lid 1 Wet IB 2001',
+            'lopendeUren'     => 916,
             'forecastYearEnd' => 1180,
             // Should be RISICO, not OP_KOERS.
-            'thresholdStatus'     => 'OP_KOERS',
+            'thresholdStatus' => 'OP_KOERS',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
 

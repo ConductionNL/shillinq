@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Throwable;
 /**
  * CloudEvent emitter for the budget-impact + milestone-completed cross-app surface.
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 class BudgetImpactEmitter
 {
@@ -107,11 +107,11 @@ class BudgetImpactEmitter
     {
         $payload = [
             'eventName'        => self::EVENT_OBLIGATION_ACTIVATED,
-            'sourceReference'   => (string) ($verplichting['sourceReference'] ?? ''),
-            'contractValue'   => (float) ($verplichting['amount'] ?? 0),
-            'costCentre'     => (string) ($verplichting['costCentre'] ?? ''),
-            'termStart'    => (string) ($verplichting['termStart'] ?? ''),
-            'termEnd'     => (string) ($verplichting['termEnd'] ?? ''),
+            'sourceReference'  => (string) ($verplichting['sourceReference'] ?? ''),
+            'contractValue'    => (float) ($verplichting['amount'] ?? 0),
+            'costCentre'       => (string) ($verplichting['costCentre'] ?? ''),
+            'termStart'        => (string) ($verplichting['termStart'] ?? ''),
+            'termEnd'          => (string) ($verplichting['termEnd'] ?? ''),
             'tenderNedUrl'     => (string) ($source['tenderNedUrl'] ?? ''),
             'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
             'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
@@ -144,7 +144,7 @@ class BudgetImpactEmitter
 
         $payload = [
             'eventName'        => self::EVENT_MILESTONE_COMPLETED,
-            'commitmentId'   => (string) ($oplevering['commitmentId'] ?? ''),
+            'commitmentId'     => (string) ($oplevering['commitmentId'] ?? ''),
             'mijlpaalId'       => (string) ($oplevering['mijlpaalId'] ?? ''),
             'opleveringsType'  => (string) ($oplevering['opleveringsType'] ?? ''),
             'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),

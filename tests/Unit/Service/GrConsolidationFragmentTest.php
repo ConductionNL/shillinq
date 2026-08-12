@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md
+ * @spec openspec/specs/bookkeeping-gr-consolidation/spec.md
  */
 
 declare(strict_types=1);

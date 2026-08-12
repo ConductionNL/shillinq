@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ final class BegrotingswijzigingStackerTest extends TestCase
         ];
         $wijzigingen = [
             [
-                'status'   => 'vastgesteld',
+                'status'    => 'vastgesteld',
                 'movements' => [
                     ['taskFieldCode' => '1.1', 'baten_delta' => 50.0, 'lasten_delta' => -100.0],
                 ],
@@ -87,7 +87,7 @@ final class BegrotingswijzigingStackerTest extends TestCase
         $basis       = [['taskFieldCode' => '1.1', 'revenue' => 100.0, 'expenses' => 500.0]];
         $wijzigingen = [
             [
-                'status'   => 'draft',
+                'status'    => 'draft',
                 'movements' => [['taskFieldCode' => '1.1', 'baten_delta' => 999.0, 'lasten_delta' => 999.0]],
             ],
         ];

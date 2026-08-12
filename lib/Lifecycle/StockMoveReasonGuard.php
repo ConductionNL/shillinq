@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-11
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: missing or empty `movementReason` denies the transition.
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-11
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -105,7 +105,7 @@ class StockMoveReasonGuard
      *
      * @return bool True when the move may be posted; false otherwise.
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-11
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function requireReasonOnPost(array $move): bool
     {

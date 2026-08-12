@@ -9,7 +9,7 @@
  * exercises live in the unit tests (Jest/PHPUnit); Playwright stays UI-
  * only per the fleet rule.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 import { test, expect } from '@playwright/test'

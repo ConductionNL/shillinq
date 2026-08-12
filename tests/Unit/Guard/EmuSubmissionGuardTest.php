@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 
 declare(strict_types=1);
@@ -66,8 +66,8 @@ class EmuSubmissionGuardTest extends TestCase
         self::assertTrue(
             $this->guard->requireApproval(
                 [
-                    'status'                 => 'concept',
-                    'emuBalanceCalculated'       => -2300000.0,
+                    'status'                  => 'concept',
+                    'emuBalanceCalculated'    => -2300000.0,
                     'bbvAansluitingscontrole' => 'geslaagd',
                 ]
             )

@@ -26,7 +26,7 @@
  `index` page type (ADR-024 / ADR-036). The manifest fragment
  src/manifest.d/reporting-compliance.json declares the route.
 
- @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ @spec exclude The reporting capability has no canonical spec. This tag points at no target rather than at an archived change directory, which cannot resolve.
 
  KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  The change directory it names was never committed, and the `reporting`

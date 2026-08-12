@@ -6,7 +6,7 @@
   queued pendingOp → background sync. Permission gate is enforced server-side
   per REQ-PERM-001; the UI mirrors the role list for early feedback.
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.1
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<section class="receive-op">

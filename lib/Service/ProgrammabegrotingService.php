@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Reads programmabegroting data and produces sluitend-status and exports.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class ProgrammabegrotingService
 {
@@ -70,9 +70,9 @@ class ProgrammabegrotingService
      * @param string $administrationId Administration scope (server-resolved).
      * @param string $begrotingId      The Programmabegroting.id to evaluate.
      *
-     * @return array{begrotingId:string,sluitendStructureel:bool,sluitendReëel:bool,toezichtRegime:string,jaren:array<int,array<string,mixed>>}
+     * @return array{budgetId:string,sluitendStructureel:bool,sluitendReëel:bool,toezichtRegime:string,jaren:array<int,array<string,mixed>>}
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function sluitendStatus(string $administrationId, string $begrotingId): array
     {
@@ -85,10 +85,10 @@ class ProgrammabegrotingService
         foreach ($jaren as $jaar) {
             $result      = $this->sluitend->evaluateYear(year: $jaar, nominaleOntwikkeling: $nominale);
             $evaluated[] = [
-                'year'             => ($jaar['year'] ?? null),
+                'year'              => ($jaar['year'] ?? null),
                 'balanceStructural' => $result['balanceStructural'],
-                'saldoReëel'       => $result['saldoReëel'],
-                'sluitend'         => $result['sluitend'],
+                'saldoReëel'        => $result['saldoReëel'],
+                'sluitend'          => $result['sluitend'],
             ];
         }
 
@@ -99,7 +99,7 @@ class ProgrammabegrotingService
         );
 
         return [
-            'budgetId'         => $begrotingId,
+            'budgetId'            => $begrotingId,
             'sluitendStructureel' => $flags['sluitendStructureel'],
             'sluitendReëel'       => $flags['sluitendReëel'],
             'toezichtRegime'      => $regime,
@@ -116,7 +116,7 @@ class ProgrammabegrotingService
      *
      * @return array<string,mixed> The JSON-serialisable export shape.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function jsonExport(string $administrationId, string $begrotingId): array
     {
@@ -140,9 +140,9 @@ class ProgrammabegrotingService
      * @param string $administrationId Administration scope (server-resolved).
      * @param string $begrotingId      The Programmabegroting.id to export.
      *
-     * @return array<int,array{taakveldCode:string,baten:float,lasten:float}> The iv3 rows.
+     * @return array<int,array{taskFieldCode:string,revenue:float,expenses:float}> The iv3 rows.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function iv3Export(string $administrationId, string $begrotingId): array
     {

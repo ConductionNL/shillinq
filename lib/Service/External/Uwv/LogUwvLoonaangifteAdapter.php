@@ -62,6 +62,10 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
      * @param array<string,mixed> $payload Pull envelope.
      *
      * @return UwvStatusResult The dispatch outcome.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function pullStatus(array $payload): UwvStatusResult
     {
@@ -70,7 +74,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
             'Shillinq UWV loonaangifte pullStatus deferred (no outbound connector bound)',
             [
                 'reference' => $kenmerk,
-                'payload' => $payload,
+                'payload'   => $payload,
             ]
         );
 
@@ -96,6 +100,10 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
      * @param array<string,mixed> $context    Lookup context.
      *
      * @return UwvStatusResult The lookup outcome.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function lookupSector(string $sectorCode, int $peiljaar, array $context=[]): UwvStatusResult
     {
@@ -103,7 +111,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
         $this->logger->info(
             'Shillinq UWV Werkhervattingskas lookupSector deferred (no outbound connector bound)',
             [
-                'reference'    => $kenmerk,
+                'reference'  => $kenmerk,
                 'sectorCode' => $sectorCode,
                 'peiljaar'   => $peiljaar,
                 'context'    => $context,

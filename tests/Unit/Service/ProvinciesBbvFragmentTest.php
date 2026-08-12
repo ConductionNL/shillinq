@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#task-18
+ * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
 
 declare(strict_types=1);

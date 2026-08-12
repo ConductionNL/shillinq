@@ -19,7 +19,7 @@
  headerAction's open-modal `target` resolves it. This component owns its
  own form state, customer/GL lookups, the POST and the toast.
 
- @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 -->
 
 <template>

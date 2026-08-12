@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-10
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 
 declare(strict_types=1);
@@ -75,8 +75,8 @@ class OpdrachtUitvoeringGuardTest extends TestCase
     {
         $opdracht = [
             'commitmentId' => 'vpl-1',
-            'mijlpaalId'     => 'MS-001',
-            'status'         => 'in-progress',
+            'mijlpaalId'   => 'MS-001',
+            'status'       => 'in-progress',
         ];
         $this->assertFalse($this->guard->canVoltooien($opdracht));
 

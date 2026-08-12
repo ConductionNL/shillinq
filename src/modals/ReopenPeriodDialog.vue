@@ -16,7 +16,7 @@
  input capture only. `cancel` and `confirm(closeReason)` events bubble
  the user intent up so the parent can drive the lifecycle service.
 
- @spec openspec/changes/bookkeeping-period-close/tasks.md#task-10
+ @spec openspec/specs/bookkeeping-period-close/spec.md
 -->
 
 <template>

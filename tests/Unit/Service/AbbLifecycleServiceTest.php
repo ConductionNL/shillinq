@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-2
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -98,7 +98,7 @@ final class AbbLifecycleServiceTest extends TestCase
             'publicatieDatum' => '2025-12-01',
             'kennisgevingAcm' => ['submitted' => true, 'reference' => 'ACM/IN/123'],
         ];
-        $r = $this->svc->canTransition('bezwaar', 'geldig', $abb);
+        $r   = $this->svc->canTransition('bezwaar', 'geldig', $abb);
         self::assertTrue($r['ok']);
 
         $abb['kennisgevingAcm']['reference'] = '';
@@ -139,7 +139,7 @@ final class AbbLifecycleServiceTest extends TestCase
     {
         $abb = [
             'status'                 => 'raadsbesluit',
-            'reference'                => 'R-2025-184',
+            'reference'              => 'R-2025-184',
             'publicatieGemeenteblad' => 'gmb-2025-401',
             'publicatieDatum'        => '2025-12-01',
         ];
@@ -158,7 +158,7 @@ final class AbbLifecycleServiceTest extends TestCase
             'status'             => 'bezwaar',
             'publicatieDatum'    => '2025-12-01',
             'vaststellingsdatum' => '2025-11-15',
-            'evaluatieRitme'    => 'tweejaarlijks',
+            'evaluatieRitme'     => 'tweejaarlijks',
             'kennisgevingAcm'    => ['submitted' => true, 'reference' => 'ACM/IN/123'],
         ];
         $out = $this->svc->transition($abb, 'geldig');
@@ -182,5 +182,4 @@ final class AbbLifecycleServiceTest extends TestCase
         self::assertStringContainsString('ingetrokken', $flags[0]['reason']);
 
     }//end testFlagDependentActivitiesOnlyForHerzieningIntrekking()
-
 }//end class

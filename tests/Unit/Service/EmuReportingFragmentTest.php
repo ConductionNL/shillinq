@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 
 declare(strict_types=1);
@@ -30,6 +30,7 @@ use ReflectionMethod;
  */
 final class EmuReportingFragmentTest extends TestCase
 {
+
     /**
      * Absolute path to the change fragment.
      *
@@ -178,6 +179,7 @@ final class EmuReportingFragmentTest extends TestCase
         foreach ($data['objects'] as $obj) {
             $bySchema[$obj['@self']['schema']] = true;
         }
+
         foreach (['EMUReport', 'EMUAdjustment', 'CashFlowItem', 'DebtPosition'] as $name) {
             self::assertArrayHasKey($name, $bySchema, "Fragment must seed a $name object");
         }

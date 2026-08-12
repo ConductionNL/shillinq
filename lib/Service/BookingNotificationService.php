@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Evaluates booking notification triggers and dispatches via openconnector.
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 class BookingNotificationService
 {
@@ -87,7 +87,7 @@ class BookingNotificationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function evaluateEventTrigger(string $eventType, array $booking): void
     {
@@ -183,7 +183,7 @@ class BookingNotificationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function dispatchNotification(array $trigger, array $recipient, array $template, array $booking): void
     {
@@ -255,7 +255,7 @@ class BookingNotificationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-8
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function recordAuditTrail(array $notification, string $status, string $reason): void
     {
@@ -311,7 +311,7 @@ class BookingNotificationService
      *
      * @return array{subject: string, body: string}
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function renderTemplate(array $template, array $booking, array $recipient): array
     {
@@ -335,7 +335,7 @@ class BookingNotificationService
      *
      * @return array<mixed> Matched recipient rules in evaluation order.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function evaluateRecipientRules(array $rules, array $booking): array
     {
@@ -369,7 +369,7 @@ class BookingNotificationService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function evaluateCondition(string $condition, array $booking): bool
     {
@@ -423,7 +423,7 @@ class BookingNotificationService
      *
      * @return bool True if the recipient should NOT receive a notification.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-13
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function isOptedOut(string $recipient, string $triggerType): bool
     {
@@ -477,7 +477,7 @@ class BookingNotificationService
      *
      * @return bool True if rate-limited (should NOT send).
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-9
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function isRateLimited(
         string $bookingId,
@@ -562,7 +562,7 @@ class BookingNotificationService
      *
      * @return bool True if a duplicate send was detected.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-9
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function isDuplicate(
         string $bookingId,
@@ -623,7 +623,7 @@ class BookingNotificationService
      *
      * @return bool True on successful dispatch.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-5
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function sendViaOpenconnector(
         string $channel,
@@ -675,7 +675,7 @@ class BookingNotificationService
      *
      * @return array<mixed> Active trigger objects.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) $bookingId is accepted
      *     and documented above as filtering "booking-specific triggers that
@@ -723,7 +723,7 @@ class BookingNotificationService
      *
      * @return array<mixed> Template object, or empty array if none found.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     private function loadTemplate(string $triggerId, string $eventType): array
     {
@@ -785,7 +785,7 @@ class BookingNotificationService
      *
      * @return string Email, phone, or chat address; empty string if unresolvable.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     private function resolveRecipientAddress(string $role, array $booking): string
     {
@@ -809,7 +809,7 @@ class BookingNotificationService
      *
      * @return array<string,string>
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     private function buildTemplateContext(array $booking, array $recipient): array
     {
@@ -841,7 +841,7 @@ class BookingNotificationService
      *
      * @return string Rendered text.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     private function substituteVariables(string $text, array $context): string
     {

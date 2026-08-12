@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,8 +47,8 @@ final class CreditScoreServiceTest extends TestCase
     /**
      * Build a service wired against an in-memory OR + an arbitrary fetch adapter.
      *
-     * @param InMemoryObjectService              $os    Stub OR.
-     * @param CreditScoreFetchAdapterInterface   $fetch Fetch adapter (test-controlled).
+     * @param InMemoryObjectService            $os    Stub OR.
+     * @param CreditScoreFetchAdapterInterface $fetch Fetch adapter (test-controlled).
      *
      * @return CreditScoreService
      */
@@ -61,11 +61,11 @@ final class CreditScoreServiceTest extends TestCase
 
         $appConfig = $this->createStub(IAppConfig::class);
         $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default = ''): string {
+            static function (string $app, string $key, string $default=''): string {
                 $values = [
-                    'register'                                  => 'shillinq',
-                    'dunning.credit_score_cache_days'           => '30',
-                    'dunning.credit_score_warning_threshold'    => '3.0',
+                    'register'                               => 'shillinq',
+                    'dunning.credit_score_cache_days'        => '30',
+                    'dunning.credit_score_warning_threshold' => '3.0',
                 ];
                 return $values[$key] ?? $default;
             }
@@ -88,18 +88,21 @@ final class CreditScoreServiceTest extends TestCase
     public function testFreshCacheShortCircuitsFetch(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'CreditScore', rows: [
-            [
-                'id'               => 'cs-1',
-                'administrationId' => 'adm-1',
-                'customerId'          => 'klant-1',
-                'provider'         => 'GRAYDON',
-                'scoreDatum'       => (new \DateTimeImmutable('-10 days'))->format('Y-m-d'),
-                'score'            => 6.4,
-                'scoreScale'      => '1-10',
-            ],
-        ]);
-        $fetch  = $this->makeNeverFetch();
+        $os->seed(
+                schema: 'CreditScore',
+                rows: [
+                    [
+                        'id'               => 'cs-1',
+                        'administrationId' => 'adm-1',
+                        'customerId'       => 'klant-1',
+                        'provider'         => 'GRAYDON',
+                        'scoreDatum'       => (new \DateTimeImmutable('-10 days'))->format('Y-m-d'),
+                        'score'            => 6.4,
+                        'scoreScale'       => '1-10',
+                    ],
+                ]
+                );
+        $fetch   = $this->makeNeverFetch();
         $service = $this->makeService(os: $os, fetch: $fetch);
 
         $score = $service->getOrRefresh(administrationId: 'adm-1', klantId: 'klant-1', provider: 'GRAYDON');
@@ -118,26 +121,29 @@ final class CreditScoreServiceTest extends TestCase
     public function testStaleCacheTriggersFetchAndPersists(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'CreditScore', rows: [
-            [
-                'id'               => 'cs-old',
-                'administrationId' => 'adm-1',
-                'customerId'          => 'klant-1',
-                'provider'         => 'GRAYDON',
-                'scoreDatum'       => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
-                'score'            => 2.0,
-                'scoreScale'      => '1-10',
-            ],
-        ]);
-        $fetch = new class implements CreditScoreFetchAdapterInterface {
+        $os->seed(
+                schema: 'CreditScore',
+                rows: [
+                    [
+                        'id'               => 'cs-old',
+                        'administrationId' => 'adm-1',
+                        'customerId'       => 'klant-1',
+                        'provider'         => 'GRAYDON',
+                        'scoreDatum'       => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+                        'score'            => 2.0,
+                        'scoreScale'       => '1-10',
+                    ],
+                ]
+                );
+        $fetch   = new class implements CreditScoreFetchAdapterInterface {
             public function fetch(string $administrationId, string $klantId, string $provider): ?array
             {
                 return [
                     'score'                    => 7.1,
-                    'scoreScale'              => '1-10',
+                    'scoreScale'               => '1-10',
                     'betalingsRisicoIndicatie' => 'LAAG',
                 ];
-            }
+            }//end fetch()
         };
         $service = $this->makeService(os: $os, fetch: $fetch);
 
@@ -160,22 +166,25 @@ final class CreditScoreServiceTest extends TestCase
     public function testFetchNullFallsBackToCachedSnapshot(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'CreditScore', rows: [
-            [
-                'id'               => 'cs-old',
-                'administrationId' => 'adm-1',
-                'customerId'          => 'klant-1',
-                'provider'         => 'GRAYDON',
-                'scoreDatum'       => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
-                'score'            => 2.5,
-                'scoreScale'      => '1-10',
-            ],
-        ]);
-        $fetch = new class implements CreditScoreFetchAdapterInterface {
+        $os->seed(
+                schema: 'CreditScore',
+                rows: [
+                    [
+                        'id'               => 'cs-old',
+                        'administrationId' => 'adm-1',
+                        'customerId'       => 'klant-1',
+                        'provider'         => 'GRAYDON',
+                        'scoreDatum'       => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+                        'score'            => 2.5,
+                        'scoreScale'       => '1-10',
+                    ],
+                ]
+                );
+        $fetch   = new class implements CreditScoreFetchAdapterInterface {
             public function fetch(string $administrationId, string $klantId, string $provider): ?array
             {
                 return null;
-            }
+            }//end fetch()
         };
         $service = $this->makeService(os: $os, fetch: $fetch);
 
@@ -195,22 +204,25 @@ final class CreditScoreServiceTest extends TestCase
     public function testFetchThrowFallsBackToCache(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'CreditScore', rows: [
-            [
-                'id'               => 'cs-old',
-                'administrationId' => 'adm-1',
-                'customerId'          => 'klant-1',
-                'provider'         => 'GRAYDON',
-                'scoreDatum'       => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
-                'score'            => 4.0,
-                'scoreScale'      => '1-10',
-            ],
-        ]);
-        $fetch = new class implements CreditScoreFetchAdapterInterface {
+        $os->seed(
+                schema: 'CreditScore',
+                rows: [
+                    [
+                        'id'               => 'cs-old',
+                        'administrationId' => 'adm-1',
+                        'customerId'       => 'klant-1',
+                        'provider'         => 'GRAYDON',
+                        'scoreDatum'       => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+                        'score'            => 4.0,
+                        'scoreScale'       => '1-10',
+                    ],
+                ]
+                );
+        $fetch   = new class implements CreditScoreFetchAdapterInterface {
             public function fetch(string $administrationId, string $klantId, string $provider): ?array
             {
                 throw new RuntimeException('upstream unavailable');
-            }
+            }//end fetch()
         };
         $service = $this->makeService(os: $os, fetch: $fetch);
 
@@ -231,9 +243,9 @@ final class CreditScoreServiceTest extends TestCase
         $service = $this->makeService(os: new InMemoryObjectService(), fetch: $this->makeNeverFetch());
 
         $score = [
-            'customerId'            => 'klant-1',
+            'customerId'         => 'klant-1',
             'score'              => 2.4,
-            'scoreScale'        => '1-10',
+            'scoreScale'         => '1-10',
             'creditLimietAdvies' => 5000.0,
         ];
 
@@ -256,9 +268,9 @@ final class CreditScoreServiceTest extends TestCase
         $service = $this->makeService(os: new InMemoryObjectService(), fetch: $this->makeNeverFetch());
 
         $score = [
-            'customerId'            => 'klant-1',
+            'customerId'         => 'klant-1',
             'score'              => 8.0,
-            'scoreScale'        => '1-10',
+            'scoreScale'         => '1-10',
             'creditLimietAdvies' => 50000.0,
         ];
 
@@ -280,9 +292,8 @@ final class CreditScoreServiceTest extends TestCase
             public function fetch(string $administrationId, string $klantId, string $provider): ?array
             {
                 throw new RuntimeException('fetch must not be called in this scenario');
-            }
+            }//end fetch()
         };
 
     }//end makeNeverFetch()
-
 }//end class

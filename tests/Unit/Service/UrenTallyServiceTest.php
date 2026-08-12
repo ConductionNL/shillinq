@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,8 +32,6 @@ use Psr\Log\LoggerInterface;
  */
 final class UrenTallyServiceTest extends TestCase
 {
-
-
     /**
      * Build a service with real guard.
      *
@@ -46,7 +44,6 @@ final class UrenTallyServiceTest extends TestCase
         return new UrenTallyService(guard: $guard, logger: $logger);
 
     }//end build()
-
 
     /**
      * Day tally sums entries and applies the reistijd-cap.
@@ -70,7 +67,6 @@ final class UrenTallyServiceTest extends TestCase
 
     }//end testTallyDagAppliesReistijdCap()
 
-
     /**
      * Tally is idempotent: calling it twice yields the same total.
      *
@@ -92,7 +88,6 @@ final class UrenTallyServiceTest extends TestCase
 
     }//end testTallyDagIsIdempotent()
 
-
     /**
      * Empty input yields zero with no overages.
      *
@@ -106,7 +101,6 @@ final class UrenTallyServiceTest extends TestCase
         self::assertSame([], $result['overages']);
 
     }//end testTallyDagEmptyYieldsZero()
-
 
     /**
      * Garbage entries are skipped, not fatal.
@@ -129,7 +123,6 @@ final class UrenTallyServiceTest extends TestCase
 
     }//end testTallyDagSkipsGarbage()
 
-
     /**
      * YTD tally returns the canonical UrencriteriumYear patch shape.
      *
@@ -150,6 +143,4 @@ final class UrenTallyServiceTest extends TestCase
         self::assertSame('2026-09-30T23:00:00Z', $patch['calculatedOn']);
 
     }//end testTallyYearToDateReturnsPatch()
-
-
 }//end class

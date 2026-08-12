@@ -409,8 +409,8 @@ class BbvComplianceGuard
                     [
                         'filters' => [
                             'administrationId' => $administrationId,
-                            'financialYear'         => $boekjaar,
-                            'version'           => 'primitief',
+                            'financialYear'    => $boekjaar,
+                            'version'          => 'primitief',
                         ],
                     ]
                 );
@@ -487,7 +487,7 @@ class BbvComplianceGuard
             $this->logger->info(
                 'BbvComplianceGuard: maatschappelijk-nut investering above grens not activated (REQ-BBV-005)',
                 [
-                    'description'  => ($mva['description'] ?? 'unknown'),
+                    'description'   => ($mva['description'] ?? 'unknown'),
                     'aanschafCents' => $aanschafCents,
                 ]
             );
@@ -553,7 +553,7 @@ class BbvComplianceGuard
                     [
                         'filters' => [
                             'administrationId' => $administrationId,
-                            'financialYear'         => $boekjaar,
+                            'financialYear'    => $boekjaar,
                             'status'           => 'vastgesteld',
                         ],
                     ]
@@ -583,7 +583,7 @@ class BbvComplianceGuard
                 'BbvComplianceGuard: jaarrekening mist verplichte paragrafen (REQ-BBV-007, BBV art. 9)',
                 [
                     'administrationId' => $administrationId,
-                    'financialYear'         => $boekjaar,
+                    'financialYear'    => $boekjaar,
                     'ontbrekend'       => $ontbrekend,
                 ]
             );

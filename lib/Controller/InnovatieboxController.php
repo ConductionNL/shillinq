@@ -121,7 +121,7 @@ class InnovatieboxController extends Controller
                 message: 'Failed to compute innovatiebox aggregation',
                 context: [
                     'administrationId' => $administrationId,
-                    'financialYear'         => $boekjaar,
+                    'financialYear'    => $boekjaar,
                     'exception'        => $e->getMessage(),
                 ]
             );
@@ -214,7 +214,7 @@ class InnovatieboxController extends Controller
                 message: 'Failed to run doorsnijdingsverbod check',
                 context: [
                     'administrationId' => $administrationId,
-                    'financialYear'         => $boekjaar,
+                    'financialYear'    => $boekjaar,
                     'exception'        => $e->getMessage(),
                 ]
             );
@@ -293,7 +293,7 @@ class InnovatieboxController extends Controller
                 message: 'Failed to render innovatiebox SBR/PDF export',
                 context: [
                     'administrationId' => $administrationId,
-                    'financialYear'         => $boekjaar,
+                    'financialYear'    => $boekjaar,
                     'methode'          => $methode,
                     'exception'        => $e->getMessage(),
                 ]

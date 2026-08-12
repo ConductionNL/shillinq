@@ -98,10 +98,10 @@ class DBAPortfolioAggregationJob extends TimedJob
 
         if ($totaal <= 0 || count($omzetPerKlant) === 0) {
             return [
-                'grootsteKlant'     => null,
+                'grootsteKlant'   => null,
                 'revenueShare12m' => 0.0,
-                'drempelHoog'       => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
-                'status'            => 'VEILIG',
+                'drempelHoog'     => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
+                'status'          => 'VEILIG',
             ];
         }
 
@@ -123,10 +123,10 @@ class DBAPortfolioAggregationJob extends TimedJob
         }
 
         return [
-            'grootsteKlant'     => $grootsteKlant,
+            'grootsteKlant'   => $grootsteKlant,
             'revenueShare12m' => round($aandeel, 4),
-            'drempelHoog'       => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
-            'status'            => $status,
+            'drempelHoog'     => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
+            'status'          => $status,
         ];
     }//end computeConcentratie()
 
@@ -189,7 +189,7 @@ class DBAPortfolioAggregationJob extends TimedJob
                 && $aandeel >= DBAConstants::LANGJARIG_DREMPEL_OMZET
             ) {
                 $result[] = [
-                    'customerId'      => (string) $klantId,
+                    'customerId'   => (string) $klantId,
                     'startDatum'   => $row['start']->format('Y-m-d'),
                     'duurJaren'    => round($duurJaren, 2),
                     'revenueShare' => round($aandeel, 4),
@@ -289,13 +289,13 @@ class DBAPortfolioAggregationJob extends TimedJob
                 $objectService->setRegister($register)->setSchema('DBAPortfolioRisico')->saveObject(
                         [
                             'administrationId'   => $administrationId,
-                            'enterpriseId'      => (string) $ondernemingId,
+                            'enterpriseId'       => (string) $ondernemingId,
                             'peilDatum'          => $now->format('Y-m-d'),
                             'actieveOpdrachten'  => count($opdrachten),
                             'concentratie'       => $concentratie,
                             'langjarigeRelaties' => $langjarig,
                             'exclusieveRelaties' => $this->countExclusief(opdrachten: $opdrachten),
-                            'overallRisk'      => $overall,
+                            'overallRisk'        => $overall,
                         ]
                         );
                 $written++;

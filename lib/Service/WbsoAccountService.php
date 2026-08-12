@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-23
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Psr\Container\ContainerInterface;
  * surface a meaningful error message before the OpenRegister write reaches
  * the data layer (defence-in-depth).
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-23
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class WbsoAccountService
 {

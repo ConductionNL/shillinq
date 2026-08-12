@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-2
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md
  * KNOWINGLY DANGLING until shillinq#500 — see TrialBalanceService.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>

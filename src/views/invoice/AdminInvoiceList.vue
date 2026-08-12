@@ -11,7 +11,7 @@
   date-range / billing-model / status filters narrow the row set. Presentation
   only — the invoiceApi feed, columns, filters and row actions are unchanged.
 
-  @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-17
+  @spec openspec/specs/invoice-from-time-and-expense/spec.md
   @spec openspec/specs/list-views-cndatatable/spec.md
 
   SPDX-FileCopyrightText: 2026 Conduction B.V.

@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,6 @@ use Psr\Log\NullLogger;
  */
 final class TenderNedAwardDetectedListenerTest extends TestCase
 {
-
     /**
      * Build a recording IEventDispatcher.
      *
@@ -77,28 +76,28 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
             {
                 $this->events[] = ['name' => $eventName, 'event' => $event];
 
-            }
+            }//end dispatch()
 
             public function dispatchTyped(Event $event): void
             {
-            }
+            }//end dispatchTyped()
 
             public function addListener(string $eventName, callable $listener, int $priority=0): void
             {
-            }
+            }//end addListener()
 
             public function addServiceListener(string $eventName, string $className, int $priority=0): void
             {
-            }
+            }//end addServiceListener()
 
             public function hasListeners(string $eventName): bool
             {
                 return false;
-            }
+            }//end hasListeners()
 
             public function removeListener(string $eventName, callable $listener): void
             {
-            }
+            }//end removeListener()
         };
 
     }//end recordingDispatcher()
@@ -150,60 +149,60 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
              */
             public array $saves = [];
 
-
             /**
              * @param array<int, array<string, mixed>> $rows Existing rows.
              */
             public function __construct(array $rows)
             {
                 $this->verplichtingenRows = $rows;
-            }
+            }//end __construct()
 
             public function setRegister(string $register): self
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): self
             {
                 $this->currentSchema = $schema;
                 return $this;
-            }
+            }//end setSchema()
 
             public function findAll(array $opts=[]): array
             {
                 if ($this->currentSchema === 'Verplichting') {
                     return $this->verplichtingenRows;
                 }
+
                 return [];
-            }
+            }//end findAll()
 
             public function saveObject(array $object): array
             {
                 $this->saves[] = ['schema' => $this->currentSchema, 'object' => $object];
                 return $object;
-            }
+            }//end saveObject()
         };
 
         $container = new class($recorder) implements ContainerInterface {
-
             public function __construct(private readonly object $objectService)
             {
-            }
+            }//end __construct()
 
             public function get(string $id): mixed
             {
                 if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
                     return $this->objectService;
                 }
+
                 throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
                 };
-            }
+            }//end get()
 
             public function has(string $id): bool
             {
                 return $id === 'OCA\\OpenRegister\\Service\\ObjectService';
-            }
+            }//end has()
         };
 
         return [$container, $recorder];
@@ -282,7 +281,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
      */
     public function testNonAanbestedingSchemaIsIgnored(): void
     {
-        [$container, $recorder] = $this->containerAndRecorder([]);
+        [$container, $recorder]  = $this->containerAndRecorder([]);
         [$listener, $dispatcher] = $this->listener($container, '30280353', 'Verplichting');
 
         $event = new ObjectCreatedEvent(
@@ -303,16 +302,19 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
      */
     public function testNonGegundStatusIsIgnored(): void
     {
-        [$container, $recorder] = $this->containerAndRecorder([]);
+        [$container, $recorder]  = $this->containerAndRecorder([]);
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'status'             => 'open',
-                'contractValue'     => 50000.0,
-                'gegundeLeverancier' => '30280353 Test BV',
-                'aanbestedingId'     => 'TN-2026-0001',
-            ])
+            $this->entity(
+                    '1090',
+                    [
+                        'status'             => 'open',
+                        'contractValue'      => 50000.0,
+                        'gegundeLeverancier' => '30280353 Test BV',
+                        'aanbestedingId'     => 'TN-2026-0001',
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -328,16 +330,19 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
      */
     public function testZeroValueIsIgnored(): void
     {
-        [$container, $recorder] = $this->containerAndRecorder([]);
+        [$container, $recorder]  = $this->containerAndRecorder([]);
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'status'             => 'gegund',
-                'contractValue'     => 0.0,
-                'gegundeLeverancier' => '30280353 Test BV',
-                'aanbestedingId'     => 'TN-2026-0001',
-            ])
+            $this->entity(
+                    '1090',
+                    [
+                        'status'             => 'gegund',
+                        'contractValue'      => 0.0,
+                        'gegundeLeverancier' => '30280353 Test BV',
+                        'aanbestedingId'     => 'TN-2026-0001',
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -353,16 +358,19 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
      */
     public function testEmptyTenantKvkSkipsPromotion(): void
     {
-        [$container, $recorder] = $this->containerAndRecorder([]);
+        [$container, $recorder]  = $this->containerAndRecorder([]);
         [$listener, $dispatcher] = $this->listener($container, '');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'status'             => 'gegund',
-                'contractValue'     => 50000.0,
-                'gegundeLeverancier' => '30280353 Test BV',
-                'aanbestedingId'     => 'TN-2026-0001',
-            ])
+            $this->entity(
+                    '1090',
+                    [
+                        'status'             => 'gegund',
+                        'contractValue'      => 50000.0,
+                        'gegundeLeverancier' => '30280353 Test BV',
+                        'aanbestedingId'     => 'TN-2026-0001',
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -378,16 +386,19 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
      */
     public function testSupplierMismatchSkipsPromotion(): void
     {
-        [$container, $recorder] = $this->containerAndRecorder([]);
+        [$container, $recorder]  = $this->containerAndRecorder([]);
         [$listener, $dispatcher] = $this->listener($container, '99999999');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'status'             => 'gegund',
-                'contractValue'     => 50000.0,
-                'gegundeLeverancier' => '30280353 Test BV',
-                'aanbestedingId'     => 'TN-2026-0001',
-            ])
+            $this->entity(
+                    '1090',
+                    [
+                        'status'             => 'gegund',
+                        'contractValue'      => 50000.0,
+                        'gegundeLeverancier' => '30280353 Test BV',
+                        'aanbestedingId'     => 'TN-2026-0001',
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -403,21 +414,24 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
      */
     public function testMatchingKvkPromotesAndEmits(): void
     {
-        [$container, $recorder] = $this->containerAndRecorder([]);
+        [$container, $recorder]  = $this->containerAndRecorder([]);
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'status'             => 'gegund',
-                'contractValue'     => 50000.0,
-                'gegundeLeverancier' => '30280353 Conduction B.V.',
-                'aanbestedingId'     => 'TN-2026-0001',
-                'titel'              => 'Schoonmaak',
-                'opdrachttype'       => 'levering-in-fases',
-                'termStart'      => '2026-01-01',
-                'termEnd'       => '2026-12-31',
-                'administrationId'   => 'adm-x',
-            ])
+            $this->entity(
+                    '1090',
+                    [
+                        'status'             => 'gegund',
+                        'contractValue'      => 50000.0,
+                        'gegundeLeverancier' => '30280353 Conduction B.V.',
+                        'aanbestedingId'     => 'TN-2026-0001',
+                        'titel'              => 'Schoonmaak',
+                        'opdrachttype'       => 'levering-in-fases',
+                        'termStart'          => '2026-01-01',
+                        'termEnd'            => '2026-12-31',
+                        'administrationId'   => 'adm-x',
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -431,6 +445,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
                 break;
             }
         }
+
         $this->assertNotNull($verplichtingSave);
         $this->assertSame('tenderned', $verplichtingSave['source']);
         $this->assertSame('TN-2026-0001', $verplichtingSave['sourceReference']);
@@ -453,23 +468,26 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     {
         $existing = [
             'commitmentNumber' => 'TN-TN-2026-0001',
-            'source'               => 'tenderned',
-            'sourceReference'     => 'TN-2026-0001',
-            'status'             => 'active',
-            'amount'             => 50000.0,
-            'administrationId'   => 'adm-x',
+            'source'           => 'tenderned',
+            'sourceReference'  => 'TN-2026-0001',
+            'status'           => 'active',
+            'amount'           => 50000.0,
+            'administrationId' => 'adm-x',
         ];
-        [$container, $recorder] = $this->containerAndRecorder([$existing]);
+        [$container, $recorder]  = $this->containerAndRecorder([$existing]);
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'status'             => 'gegund',
-                'contractValue'     => 50000.0,
-                'gegundeLeverancier' => '30280353 Conduction B.V.',
-                'aanbestedingId'     => 'TN-2026-0001',
-                'administrationId'   => 'adm-x',
-            ])
+            $this->entity(
+                    '1090',
+                    [
+                        'status'             => 'gegund',
+                        'contractValue'      => 50000.0,
+                        'gegundeLeverancier' => '30280353 Conduction B.V.',
+                        'aanbestedingId'     => 'TN-2026-0001',
+                        'administrationId'   => 'adm-x',
+                    ]
+                    )
         );
 
         $listener->handle($event);

@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -55,7 +55,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\ProgrammabegrotingGuard::canBehandelen and
  * transitions.vaststellen.requires as ::canVaststellen.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 final class ProgrammabegrotingGuard
 {
@@ -101,7 +101,7 @@ final class ProgrammabegrotingGuard
      *
      * @return bool True when the begroting may move to in-behandeling.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function canBehandelen(string $begrotingId, ?array $object=null): bool
     {
@@ -153,7 +153,7 @@ final class ProgrammabegrotingGuard
      *
      * @return bool True when the begroting may be vastgesteld.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function canVaststellen(string $begrotingId, ?array $object=null): bool
     {

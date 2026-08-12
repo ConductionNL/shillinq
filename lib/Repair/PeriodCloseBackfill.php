@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Throwable;
  * Repair step that backfills forward-looking FiscalPeriod records for
  * every Administration (current calendar month + next twelve months).
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  */
 class PeriodCloseBackfill implements IRepairStep
 {
@@ -94,7 +94,7 @@ class PeriodCloseBackfill implements IRepairStep
      *
      * @return string The display name.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function getName(): string
     {
@@ -110,7 +110,7 @@ class PeriodCloseBackfill implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function run(IOutput $output): void
     {

@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Detects incomplete pre-close tasks and formats them as close-assistant flags.
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  */
 class PeriodCloseAssistantService
 {
@@ -79,7 +79,7 @@ class PeriodCloseAssistantService
      *
      * @return array<int,array<string,mixed>> Flag objects {id, severity, message, category, detectedAt}.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function analyse(string $administrationId, string $periodId, string $endDate=''): array
     {
@@ -120,7 +120,7 @@ class PeriodCloseAssistantService
      *
      * @return array{count:int, total:float} Detection summary.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function detectOpenSubLedger(string $administrationId, string $periodId, string $subLedgerType): array
     {
@@ -197,7 +197,7 @@ class PeriodCloseAssistantService
      *
      * @return array{count:int, total:float} Detection summary (total is the receipt count, no euro total).
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function detectUnreconciledBankReceipts(string $administrationId, string $periodId, string $endDate=''): array
     {
@@ -262,7 +262,7 @@ class PeriodCloseAssistantService
      *
      * @return array{count:int, total:float} Detection summary (total is the claimed euro amount).
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function detectOutstandingExpenseClaims(string $administrationId): array
     {
@@ -329,7 +329,7 @@ class PeriodCloseAssistantService
      *
      * @return array<int,array<string,mixed>> The flag objects.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function generateFlags(array $detections): array
     {

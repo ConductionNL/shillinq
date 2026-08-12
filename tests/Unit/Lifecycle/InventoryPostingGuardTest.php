@@ -33,9 +33,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-7
- * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-8
- * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
+ * @spec openspec/specs/inventory-cogs-posting/spec.md
+ * @spec openspec/specs/inventory-cogs-posting/spec.md
+ * @spec openspec/specs/inventory-cogs-posting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

@@ -63,7 +63,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/portal-contribution/tasks.md#task-1
+ * @spec openspec/specs/portal-contribution/spec.md
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-006)
  */
 
@@ -95,7 +95,7 @@ namespace OCA\Shillinq\Portal;
  * rows of `salesInvoices` / `paymentRequests` (REQ-SPPI-006). `supplier` /
  * `accountant` manifests keep empty `actions` — the write leg is customer-only.
  *
- * @spec openspec/changes/portal-contribution/tasks.md#task-1
+ * @spec openspec/specs/portal-contribution/spec.md
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-006)
  *
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Pre-existing debt (issue
@@ -134,7 +134,7 @@ class PortalContributionProvider
      *
      * @return string The audience identifier.
      *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     * @spec openspec/specs/portal-contribution/spec.md
      */
     public function getAudience(): string
     {
@@ -156,7 +156,7 @@ class PortalContributionProvider
      *
      * @return array<string, mixed>|null The manifest, or null when not contributing.
      *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     * @spec openspec/specs/portal-contribution/spec.md
      */
     public function getContribution(array $subject): ?array
     {
@@ -453,7 +453,7 @@ class PortalContributionProvider
      *
      * @return array<string, mixed> The supplier manifest.
      *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     * @spec openspec/specs/portal-contribution/spec.md
      */
     private function supplierManifest(): array
     {

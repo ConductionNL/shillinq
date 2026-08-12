@@ -38,7 +38,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+ * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 
 declare(strict_types=1);
@@ -53,7 +53,7 @@ use Throwable;
 /**
  * Auto-generation rules for SubsidieVerantwoording and AuditorStatement records.
  *
- * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+ * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 class SubsidieVerantwoordingService
 {
@@ -92,7 +92,7 @@ class SubsidieVerantwoordingService
      *
      * @return array<string,mixed> The draft SubsidieVerantwoording payload.
      *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+     * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
      */
     public function buildVerantwoordingForGrant(array $grant, ?string $reportDate=null): array
     {
@@ -132,7 +132,7 @@ class SubsidieVerantwoordingService
      *
      * @return array<string,mixed>|null The pending AuditorStatement payload, or null when below threshold.
      *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+     * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
      */
     public function buildAuditorStatementForVerantwoording(
         array $verantwoording,
@@ -170,7 +170,7 @@ class SubsidieVerantwoordingService
      *
      * @return bool True when the amount is at or above the auditor threshold.
      *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+     * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
      */
     public function requiresAuditorStatement(float $awardedAmount): bool
     {
@@ -192,7 +192,7 @@ class SubsidieVerantwoordingService
      *
      * @return bool True when a new record was created, false when skipped as duplicate.
      *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+     * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
      */
     public function persistChange(
         object $objectService,

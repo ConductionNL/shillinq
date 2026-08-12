@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,6 @@ use Psr\Log\NullLogger;
  */
 final class BudgetImpactEmitterTest extends TestCase
 {
-
     /**
      * Build a recording IEventDispatcher.
      *
@@ -95,20 +94,18 @@ final class BudgetImpactEmitterTest extends TestCase
             public function addListener(string $eventName, $listener, int $priority=0): void
             {
                 // No-op.
-
             }//end addListener()
 
             /**
-             * @param string         $eventName    Event name.
-             * @param string         $serviceName  Service name.
-             * @param int            $priority     Priority.
+             * @param string $eventName   Event name.
+             * @param string $serviceName Service name.
+             * @param int    $priority    Priority.
              *
              * @return void
              */
             public function addServiceListener(string $eventName, string $serviceName, int $priority=0): void
             {
                 // No-op.
-
             }//end addServiceListener()
 
             public function hasListeners(string $eventName): bool
@@ -120,7 +117,6 @@ final class BudgetImpactEmitterTest extends TestCase
             public function removeListener(string $eventName, callable $listener): void
             {
                 // No-op.
-
             }//end removeListener()
         };
 
@@ -134,7 +130,6 @@ final class BudgetImpactEmitterTest extends TestCase
     private function throwingDispatcher(): IEventDispatcher
     {
         return new class implements IEventDispatcher {
-
             public function dispatch(string $eventName, Event $event): void
             {
                 throw new \RuntimeException('boom');
@@ -144,19 +139,16 @@ final class BudgetImpactEmitterTest extends TestCase
             public function dispatchTyped(Event $event): void
             {
                 // No-op.
-
             }//end dispatchTyped()
 
             public function addListener(string $eventName, $listener, int $priority=0): void
             {
                 // No-op.
-
             }//end addListener()
 
             public function addServiceListener(string $eventName, string $serviceName, int $priority=0): void
             {
                 // No-op.
-
             }//end addServiceListener()
 
             public function hasListeners(string $eventName): bool
@@ -168,7 +160,6 @@ final class BudgetImpactEmitterTest extends TestCase
             public function removeListener(string $eventName, callable $listener): void
             {
                 // No-op.
-
             }//end removeListener()
         };
 
@@ -187,11 +178,11 @@ final class BudgetImpactEmitterTest extends TestCase
 
         $emitter->emitActivated(
             [
-                'sourceReference'   => 'TN-2026-0001',
+                'sourceReference'  => 'TN-2026-0001',
                 'amount'           => 50000.0,
-                'costCentre'     => 'KP-100',
-                'termStart'    => '2026-01-01',
-                'termEnd'     => '2026-12-31',
+                'costCentre'       => 'KP-100',
+                'termStart'        => '2026-01-01',
+                'termEnd'          => '2026-12-31',
                 'administrationId' => 'adm-x',
             ],
             ['tenderNedUrl' => 'https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001']
@@ -200,7 +191,9 @@ final class BudgetImpactEmitterTest extends TestCase
         $this->assertCount(1, $dispatcher->events);
         $this->assertSame(BudgetImpactEmitter::EVENT_OBLIGATION_ACTIVATED, $dispatcher->events[0]['name']);
 
-        /** @var array<string, mixed> $args */
+        /*
+         * @var array<string, mixed> $args
+         */
         $args = $dispatcher->events[0]['event']->getArguments();
         $this->assertSame('TN-2026-0001', $args['sourceReference']);
         $this->assertSame(50000.0, $args['contractValue']);
@@ -226,7 +219,7 @@ final class BudgetImpactEmitterTest extends TestCase
 
         $emitter->emitMilestoneCompleted(
             [
-                'commitmentId'   => 'TN-TN-2026-0001',
+                'commitmentId'     => 'TN-TN-2026-0001',
                 'mijlpaalId'       => 'M-Q1',
                 'opleveringsType'  => 'eindoplevering',
                 'opleveringsDatum' => '2026-12-15',

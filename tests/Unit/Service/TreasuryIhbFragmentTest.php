@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 
 declare(strict_types=1);

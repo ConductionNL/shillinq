@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Guard;
  * (register.d: "Open WIP balance surfaces warning requiring operator
  * justification"). A zero WIP balance closes without further gating.
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class ProjectCloseGuard
 {
@@ -46,7 +46,7 @@ class ProjectCloseGuard
      *
      * @return bool True when the project may be closed.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function requireWipJustificationOrZero(array $project): bool
     {

@@ -23,8 +23,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
- * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
+ * @spec openspec/specs/inventory-multi-warehouse/spec.md
+ * @spec openspec/specs/inventory-multi-warehouse/spec.md
  */
 
 declare(strict_types=1);
@@ -44,8 +44,8 @@ use Psr\Log\LoggerInterface;
  * All methods receive pre-fetched location arrays from the OR engine; no direct DB
  * access occurs here.
  *
- * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
- * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
+ * @spec openspec/specs/inventory-multi-warehouse/spec.md
+ * @spec openspec/specs/inventory-multi-warehouse/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -81,7 +81,7 @@ class LocationHierarchyGuard
      *
      * @throws InvalidArgumentException When hierarchy depth would exceed MAX_DEPTH.
      *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+     * @spec openspec/specs/inventory-multi-warehouse/spec.md
      */
     public function validateDepth(?string $parentLocationId, array $allLocations): void
     {
@@ -118,7 +118,7 @@ class LocationHierarchyGuard
      *
      * @throws InvalidArgumentException When circular reference would be created.
      *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
+     * @spec openspec/specs/inventory-multi-warehouse/spec.md
      */
     public function validateNoCircle(string $locationId, ?string $parentLocationId, array $allLocations): void
     {
@@ -157,7 +157,7 @@ class LocationHierarchyGuard
      *
      * @return int Total number of descendant locations at all depth levels.
      *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+     * @spec openspec/specs/inventory-multi-warehouse/spec.md
      */
     public function countDescendants(string $locationId, array $allLocations): int
     {
@@ -184,7 +184,7 @@ class LocationHierarchyGuard
      *
      * @return string Full slash-separated path from warehouse root (e.g. "W-01 / Z-01 / B-100").
      *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+     * @spec openspec/specs/inventory-multi-warehouse/spec.md
      */
     public function buildPath(array $location, array $allLocations): string
     {
@@ -216,7 +216,7 @@ class LocationHierarchyGuard
      *
      * @return int Depth in hierarchy (0 = warehouse, max 3 = bin per REQ-LOC-003).
      *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+     * @spec openspec/specs/inventory-multi-warehouse/spec.md
      */
     public function computeDepth(array $location, array $allLocations): int
     {
@@ -248,7 +248,7 @@ class LocationHierarchyGuard
      *
      * @return string One of: 'In Stock', 'Low Stock', 'Empty', 'Over Capacity'.
      *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-19
+     * @spec openspec/specs/inventory-multi-warehouse/spec.md
      */
     public function stockBadge(float $stockQuantity, ?float $capacity): string
     {

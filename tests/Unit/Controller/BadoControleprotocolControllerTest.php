@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -137,7 +137,7 @@ final class BadoControleprotocolControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAggregationMasksAForeignProtocolAs404(): void
     {
@@ -160,7 +160,7 @@ final class BadoControleprotocolControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testATenantlessProtocolIsRefused(): void
     {
@@ -183,7 +183,7 @@ final class BadoControleprotocolControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAFailedTenantResolutionRefuses(): void
     {
@@ -206,7 +206,7 @@ final class BadoControleprotocolControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAMemberStillGetsTheAggregation(): void
     {
@@ -227,7 +227,7 @@ final class BadoControleprotocolControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testExportMasksAForeignProtocolAs404(): void
     {
@@ -247,7 +247,7 @@ final class BadoControleprotocolControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function testAMemberStillGetsTheExport(): void
     {

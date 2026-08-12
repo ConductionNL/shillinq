@@ -24,7 +24,7 @@
  * "Period not found" error path — that is still a passing UI smoke;
  * the assertion is "page mounted on the correct route".
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  */
 
 import { test, expect } from '@playwright/test'

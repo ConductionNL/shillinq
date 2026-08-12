@@ -12,7 +12,7 @@
  *
  * Run with: node --test tests/unit/inventory-mobile-scanner-helpers.test.mjs
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 import { test } from 'node:test'

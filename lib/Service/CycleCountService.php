@@ -40,7 +40,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-cycle-count/tasks.md#task-10
+ * @spec openspec/specs/inventory-cycle-count/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -72,7 +72,7 @@ use Psr\Log\LoggerInterface;
  * domain logic; early-return refactor deferred pending full behavioral
  * verification of each branch.
  *
- * @spec openspec/changes/inventory-cycle-count/tasks.md#task-10
+ * @spec openspec/specs/inventory-cycle-count/spec.md
  */
 class CycleCountService
 {
@@ -120,7 +120,7 @@ class CycleCountService
      *
      * @return bool True when the snapshot completes (or was already present); false on error.
      *
-     * @spec openspec/changes/inventory-cycle-count/tasks.md#task-10
+     * @spec openspec/specs/inventory-cycle-count/spec.md
      */
     public function snapshotScope(array $count): bool
     {
@@ -247,7 +247,7 @@ class CycleCountService
      *
      * @return bool True when every non-zero-variance line has been posted (or was already posted); false on error.
      *
-     * @spec openspec/changes/inventory-cycle-count/tasks.md#task-10
+     * @spec openspec/specs/inventory-cycle-count/spec.md
      */
     public function emitAdjustments(array $count): bool
     {
@@ -400,7 +400,7 @@ class CycleCountService
      *
      * @return array<string,mixed> The refreshed line (already persisted on success).
      *
-     * @spec openspec/changes/inventory-cycle-count/tasks.md#task-10
+     * @spec openspec/specs/inventory-cycle-count/spec.md
      */
     public function recalculateLine(array $line): array
     {

@@ -62,6 +62,10 @@ class LogIb47Adapter implements Ib47AdapterInterface
      * @param array<string,mixed> $payload The IB47 submission envelope.
      *
      * @return Ib47SubmissionResult The dispatch outcome.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function submit(array $payload): Ib47SubmissionResult
     {
@@ -97,7 +101,7 @@ class LogIb47Adapter implements Ib47AdapterInterface
             'Shillinq Belastingdienst IB47 submission deferred (no outbound connector bound)',
             [
                 'reference' => $kenmerk,
-                'payload' => $sanitised,
+                'payload'   => $sanitised,
             ]
         );
 

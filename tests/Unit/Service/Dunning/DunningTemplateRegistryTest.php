@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,11 +40,11 @@ final class DunningTemplateRegistryTest extends TestCase
      *
      * @return DunningTemplateRegistry
      */
-    private function makeRegistry(array $overrides = []): DunningTemplateRegistry
+    private function makeRegistry(array $overrides=[]): DunningTemplateRegistry
     {
         $appConfig = $this->createStub(IAppConfig::class);
         $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default = '') use ($overrides): string {
+            static function (string $app, string $key, string $default='') use ($overrides): string {
                 return ($overrides[$key] ?? $default);
             }
         );
@@ -132,5 +132,4 @@ final class DunningTemplateRegistryTest extends TestCase
         self::assertSame('vriendelijk', $rows[0]['tone']);
 
     }//end testListAllSurfacesEveryStageRow()
-
 }//end class

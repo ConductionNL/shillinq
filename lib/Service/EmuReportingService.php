@@ -134,10 +134,10 @@ class EmuReportingService
             'type'            => $type,
             'richting'        => $richting,
             'amount'          => abs((float) ($glLine['amount'] ?? 0)),
-            'source'            => [
+            'source'          => [
                 'grootboekrekening' => $account,
-                'description'      => (string) ($glLine['description'] ?? ''),
-                'taskField'          => (string) ($glLine['taskField'] ?? ''),
+                'description'       => (string) ($glLine['description'] ?? ''),
+                'taskField'         => (string) ($glLine['taskField'] ?? ''),
             ],
             'regel'           => 'Wet Hof art. 3: '.$type,
             'overridden'      => false,
@@ -187,7 +187,7 @@ class EmuReportingService
      *
      * @param array<int,array<string,mixed>> $debtPositions DebtPosition object arrays.
      *
-     * @return array{bruto:float,perCategorie:array<string,float>} Total + breakdown.
+     * @return array{gross:float,perCategory:array<string,float>} Total + breakdown.
      *
      * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
@@ -213,7 +213,7 @@ class EmuReportingService
         }
 
         return [
-            'gross'        => (float) ($brutoCents / 100),
+            'gross'       => (float) ($brutoCents / 100),
             'perCategory' => $perCategorie,
         ];
 
@@ -434,7 +434,7 @@ class EmuReportingService
      * @param array<int,array<string,mixed>> $adjustments         EMUAdjustment object arrays.
      * @param float                          $emuSaldoBerekend    Computed EMU-saldo (EUR).
      *
-     * @return array<int,array{regel:int,label:string,bedrag:float}> The 10 CBS-tussenregels.
+     * @return array<int,array{regel:int,label:string,amount:float}> The 10 CBS-tussenregels.
      *
      * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */

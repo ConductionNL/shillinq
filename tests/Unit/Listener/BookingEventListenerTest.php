@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for BookingEventListener.
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 class BookingEventListenerTest extends TestCase
 {
@@ -78,7 +78,7 @@ class BookingEventListenerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testListenerIgnoresNonBookingEvent(): void
     {
@@ -100,7 +100,7 @@ class BookingEventListenerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testListenerDoesNotFireForAnonymousEventWithBookingSchema(): void
     {
@@ -129,7 +129,7 @@ class BookingEventListenerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testListenerIgnoresEmptyBookingPayload(): void
     {

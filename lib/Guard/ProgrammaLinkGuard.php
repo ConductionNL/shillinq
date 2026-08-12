@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#task-15
+ * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  * conflicting re-assignment denies the save. Lines without a programmaStructure
  * always pass (ordinary GL postings are never affected).
  *
- * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#task-15
+ * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
 class ProgrammaLinkGuard
 {
@@ -117,7 +117,7 @@ class ProgrammaLinkGuard
      *
      * @return bool True when the GL line may be saved.
      *
-     * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
      */
     public function validateOnSave(array $glLine): bool
     {

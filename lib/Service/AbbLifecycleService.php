@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-2
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use InvalidArgumentException;
 /**
  * Side-effect-free ABB lifecycle state-machine (REQ-WMO-005).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-2
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.ElseExpression)
@@ -72,6 +72,10 @@ class AbbLifecycleService
      * @param array<string,mixed> $abb        Full ABB record (used for precondition checks).
      *
      * @return array{ok:bool, error?:string} Result envelope.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function canTransition(string $fromStatus, string $toStatus, array $abb): array
     {
@@ -176,6 +180,10 @@ class AbbLifecycleService
      * @param string              $toStatus The new status.
      *
      * @return array<int,array<string,mixed>> Task envelopes.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function generateTasks(array $abb, string $toStatus): array
     {
@@ -269,6 +277,10 @@ class AbbLifecycleService
      * @param array<string,mixed>            $abb        The ABB.
      *
      * @return array<int,array{commercialActivityId:string,reason:string}> Flag envelopes.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function flagDependentActivities(array $activities, array $abb): array
     {

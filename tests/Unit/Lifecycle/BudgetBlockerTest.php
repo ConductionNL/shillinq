@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -217,9 +217,9 @@ class BudgetBlockerTest extends TestCase
             [
                 'administrationId'           => 'adm-1',
                 'programmeCode'              => '5.1',
-                'financialYear'                   => 2026,
-                'authorised_amount'       => 50000000,
-                'realised_amount'        => 20000000,
+                'financialYear'              => 2026,
+                'authorised_amount'          => 50000000,
+                'realised_amount'            => 20000000,
                 'openstaande_verplichtingen' => 0,
             ],
             $overrides
@@ -239,12 +239,12 @@ class BudgetBlockerTest extends TestCase
         return [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'PO-1',
-            'kind'                 => 'inkooporder',
+            'kind'                  => 'inkooporder',
             'totaalbedrag_excl_btw' => $bedrag,
             'regels'                => [
                 [
                     'programme'       => '5.1',
-                    'financialYear'        => 2026,
+                    'financialYear'   => 2026,
                     'amount_excl_vat' => $bedrag,
                 ],
             ],
@@ -308,12 +308,12 @@ class BudgetBlockerTest extends TestCase
     public function testOverrideMandateForcesAcceptance(): void
     {
         $override = [
-            'administrationId'   => 'adm-1',
-            'mandaatcode'        => 'M-CFO-OVERRIDE',
-            'maximumbedrag'      => 1000000000,
-            'kind_commitment' => ['inkooporder'],
-            'is_override'        => true,
-            'valid_from'         => '2020-01-01',
+            'administrationId' => 'adm-1',
+            'mandaatcode'      => 'M-CFO-OVERRIDE',
+            'maximumbedrag'    => 1000000000,
+            'kind_commitment'  => ['inkooporder'],
+            'is_override'      => true,
+            'valid_from'       => '2020-01-01',
             'valid_to'         => '2999-12-31',
         ];
 
@@ -346,7 +346,7 @@ class BudgetBlockerTest extends TestCase
         $commitment = [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'RO-1',
-            'kind'                 => 'raamovereenkomst',
+            'kind'                  => 'raamovereenkomst',
             'totaalbedrag_excl_btw' => 20000000,
             'regels'                => [
                 ['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],

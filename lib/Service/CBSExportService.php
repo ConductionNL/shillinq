@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -59,7 +59,7 @@ use Psr\Log\LoggerInterface;
  * Aggregates GL data into a CBS IV3-extended submission with declarative
  * mapping, IV3 JSON generation, and validation.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
 class CBSExportService
 {

@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-10
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Psr\Log\LoggerInterface;
  * Referenced from inventory-stock-movement-ledger.json
  * StockMove.x-openregister-lifecycle.transitions.cancel.actions[2].
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-10
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  */
 class StockMoveOffsetCreator
 {
@@ -87,7 +87,7 @@ class StockMoveOffsetCreator
      *
      * @return bool True when the offset is materialised or already exists.
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-10
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function emitOffset(array $original): bool
     {

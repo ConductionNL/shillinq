@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-12
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,8 +31,6 @@ use Psr\Log\LoggerInterface;
  */
 final class UrenPrognoseServiceTest extends TestCase
 {
-
-
     /**
      * Build a service.
      *
@@ -44,7 +42,6 @@ final class UrenPrognoseServiceTest extends TestCase
         return new UrenPrognoseService(logger: $logger);
 
     }//end build()
-
 
     /**
      * Build a daily-tallies map of constant 5 hours/day for `n` days ending at end.
@@ -65,7 +62,6 @@ final class UrenPrognoseServiceTest extends TestCase
         return $tallies;
 
     }//end steadyTallies()
-
 
     /**
      * Steady 12-week input yields a positive prognose with the canonical model version.
@@ -94,7 +90,6 @@ final class UrenPrognoseServiceTest extends TestCase
         self::assertGreaterThanOrEqual(0.5, $result['prognoseConfidence']);
 
     }//end testSteadyInputYieldsPositivePrognose()
-
 
     /**
      * August has a -25% seasonal factor, December -15%.
@@ -127,7 +122,6 @@ final class UrenPrognoseServiceTest extends TestCase
 
     }//end testSeasonalFactorsLowerAugustAndDecember()
 
-
     /**
      * A full-month vakantie zeroes that month's prognose.
      *
@@ -149,7 +143,6 @@ final class UrenPrognoseServiceTest extends TestCase
         self::assertSame(0.0, $result['perMonthPrognose']['2026-08']);
 
     }//end testFullMonthVakantieZeroes()
-
 
     /**
      * A geplande opdracht overrides the seasonal projection for that maand.
@@ -175,7 +168,6 @@ final class UrenPrognoseServiceTest extends TestCase
 
     }//end testGeplandeOpdrachtOverridesMaand()
 
-
     /**
      * Confidence is lower for noisy input vs steady input.
      *
@@ -183,7 +175,7 @@ final class UrenPrognoseServiceTest extends TestCase
      */
     public function testNoisyInputLowersConfidence(): void
     {
-        $end = '2026-06-30';
+        $end   = '2026-06-30';
         $endTs = strtotime($end);
         // 12 weeks of alternating 0 / 60 hours per week (very noisy).
         $noisy = [];
@@ -216,7 +208,6 @@ final class UrenPrognoseServiceTest extends TestCase
 
     }//end testNoisyInputLowersConfidence()
 
-
     /**
      * kansBehaaldNorm rises when the prognose meets the norm.
      *
@@ -247,7 +238,6 @@ final class UrenPrognoseServiceTest extends TestCase
 
     }//end testKansBehaaldNormReflectsForecastVsNorm()
 
-
     /**
      * Empty daily-tallies input still returns a structurally valid prognose.
      *
@@ -269,6 +259,4 @@ final class UrenPrognoseServiceTest extends TestCase
         self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersion']);
 
     }//end testEmptyTalliesReturnsZeroPrognose()
-
-
 }//end class

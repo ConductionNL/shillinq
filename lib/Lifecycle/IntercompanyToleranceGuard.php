@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * transitions.create.requires as
  * OCA\Shillinq\Lifecycle\IntercompanyToleranceGuard::isWithinTolerance.
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  */
 class IntercompanyToleranceGuard
 {
@@ -102,7 +102,7 @@ class IntercompanyToleranceGuard
      *
      * @return bool True when the mismatch is within tolerance.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function isWithinTolerance(array $match): bool
     {

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-13
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,35 +53,37 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase
      */
     public function testComposeBuildsActivityRows(): void
     {
-        $bijlage = $this->svc->compose([
-            'fiscalYear'                  => '2025',
-            'administrationId'            => 'adm-tilburg',
-            'activities'                  => [
-                ['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'Dansschool', 'isExempted' => false],
-                ['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true],
-            ],
-            'definitiefIkpByActivity'     => [
-                'ca-001' => ['totaleKosten' => 87_500.00],
-                'ca-002' => ['totaleKosten' => 56_000.00],
-            ],
-            'omzetByActivity'             => [
-                'ca-001' => 92_000.00,
-                'ca-002' => 50_000.00,
-            ],
-            'priorYearIkpByActivity'      => [
-                'ca-001' => ['totaleKosten' => 80_000.00],
-            ],
-            'priorYearOmzetByActivity'    => [
-                'ca-001' => 81_000.00,
-            ],
-            'abbByActivity'               => [
-                'ca-002' => ['reference' => 'R-2023-184'],
-            ],
-            'manualOverridesByActivity'   => [
-                'ca-001' => 2,
-                'ca-002' => 0,
-            ],
-        ]);
+        $bijlage = $this->svc->compose(
+                [
+                    'fiscalYear'                => '2025',
+                    'administrationId'          => 'adm-tilburg',
+                    'activities'                => [
+                        ['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'Dansschool', 'isExempted' => false],
+                        ['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true],
+                    ],
+                    'definitiefIkpByActivity'   => [
+                        'ca-001' => ['totaleKosten' => 87_500.00],
+                        'ca-002' => ['totaleKosten' => 56_000.00],
+                    ],
+                    'omzetByActivity'           => [
+                        'ca-001' => 92_000.00,
+                        'ca-002' => 50_000.00,
+                    ],
+                    'priorYearIkpByActivity'    => [
+                        'ca-001' => ['totaleKosten' => 80_000.00],
+                    ],
+                    'priorYearOmzetByActivity'  => [
+                        'ca-001' => 81_000.00,
+                    ],
+                    'abbByActivity'             => [
+                        'ca-002' => ['reference' => 'R-2023-184'],
+                    ],
+                    'manualOverridesByActivity' => [
+                        'ca-001' => 2,
+                        'ca-002' => 0,
+                    ],
+                ]
+                );
 
         self::assertCount(2, $bijlage['activiteiten']);
         self::assertSame('groen', $bijlage['activiteiten'][0]['complianceColor']);
@@ -115,17 +117,18 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase
      */
     public function testToMarkdown(): void
     {
-        $bijlage = $this->svc->compose([
-            'fiscalYear'              => '2025',
-            'administrationId'        => 'adm',
-            'activities'              => [['id' => 'x', 'code' => 'X', 'name' => 'X', 'isExempted' => false]],
-            'definitiefIkpByActivity' => ['x' => ['totaleKosten' => 10.0]],
-            'omzetByActivity'         => ['x' => 20.0],
-        ]);
-        $md = $this->svc->toMarkdown($bijlage);
+        $bijlage = $this->svc->compose(
+                [
+                    'fiscalYear'              => '2025',
+                    'administrationId'        => 'adm',
+                    'activities'              => [['id' => 'x', 'code' => 'X', 'name' => 'X', 'isExempted' => false]],
+                    'definitiefIkpByActivity' => ['x' => ['totaleKosten' => 10.0]],
+                    'omzetByActivity'         => ['x' => 20.0],
+                ]
+                );
+        $md      = $this->svc->toMarkdown($bijlage);
         self::assertStringContainsString('# WMO-bijlage jaarrekening 2025', $md);
         self::assertStringContainsString('Samenvatting', $md);
 
     }//end testToMarkdown()
-
 }//end class

@@ -152,15 +152,24 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase
         $subsidie = array_values(
             array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
         );
-        $props = $subsidie[0]['props'];
+        $props    = $subsidie[0]['props'];
 
         // Regulatory fields (Dutch ASV-model) MUST all survive.
         $regulatory = [
-            'schemeName', 'schemeArticle', 'subsidyScheme',
-            'decisionDate', 'decisionUri',
-            'vaststellingDate', 'vaststellingUri',
-            'requestedAmount', 'grantedAmount', 'determinedAmount', 'paidOutAmount', 'reclaimedAmount',
-            'prestatieverantwoording', 'repaymentPlanId',
+            'schemeName',
+            'schemeArticle',
+            'subsidyScheme',
+            'decisionDate',
+            'decisionUri',
+            'vaststellingDate',
+            'vaststellingUri',
+            'requestedAmount',
+            'grantedAmount',
+            'determinedAmount',
+            'paidOutAmount',
+            'reclaimedAmount',
+            'prestatieverantwoording',
+            'repaymentPlanId',
         ];
         foreach ($regulatory as $field) {
             $this->assertContains($field, $props, 'Regulatory field dropped from Subsidie: '.$field);
@@ -168,9 +177,20 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase
 
         // The English operations vocabulary MUST also survive (union, no data loss).
         $englishUnion = [
-            'awardAmount', 'awardDate', 'subsidyName', 'grantProgram', 'granteeOrganization',
-            'approvingAuthority', 'attachmentUri', 'budgetYear', 'currency',
-            'disbursementDate', 'hasRepaymentPlan', 'notes', 'purposeDescription', 'settlementDate',
+            'awardAmount',
+            'awardDate',
+            'subsidyName',
+            'grantProgram',
+            'granteeOrganization',
+            'approvingAuthority',
+            'attachmentUri',
+            'budgetYear',
+            'currency',
+            'disbursementDate',
+            'hasRepaymentPlan',
+            'notes',
+            'purposeDescription',
+            'settlementDate',
         ];
         foreach ($englishUnion as $field) {
             $this->assertContains($field, $props, 'Operations field dropped from Subsidie union: '.$field);

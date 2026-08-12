@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Default log-backed fetch adapter.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface
 {
@@ -55,7 +55,7 @@ class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface
      *
      * @return array<string,mixed>|null Always null on the log binding (caller falls back to cache).
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function fetch(string $administrationId, string $klantId, string $provider): ?array
     {
@@ -63,7 +63,7 @@ class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface
             'Shillinq credit-score fetch deferred (no outbound connector bound)',
             [
                 'administrationId' => $administrationId,
-                'customerId'          => $klantId,
+                'customerId'       => $klantId,
                 'provider'         => $provider,
             ]
         );

@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Computes intercompany mirroring + reconciliation and validates the status flow.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -68,7 +68,7 @@ class IntercompanyJournalService
      *
      * @return int Amount in cents.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function toCents(float|int|string $amount): int
     {
@@ -90,7 +90,7 @@ class IntercompanyJournalService
      *
      * @return array<string,mixed> The mirrored destination-side entry data.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function buildMirror(array $source): array
     {
@@ -127,7 +127,7 @@ class IntercompanyJournalService
      *
      * @return float The variance in major currency units (>= 0).
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function reconcileVariance(float|int|string $sourceAmount, float|int|string $destinationAmount): float
     {
@@ -144,7 +144,7 @@ class IntercompanyJournalService
      *
      * @return bool True when the two sides reconcile.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function isBalanced(float|int|string $sourceAmount, float|int|string $destinationAmount): bool
     {
@@ -160,7 +160,7 @@ class IntercompanyJournalService
      *
      * @return bool True when the transition is permitted by the lifecycle.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function isTransitionAllowed(string $from, string $to): bool
     {
@@ -183,7 +183,7 @@ class IntercompanyJournalService
      *
      * @return string The status after the edit.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function statusAfterEdit(string $currentStatus): string
     {

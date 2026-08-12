@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-6
+ * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the completion (CWE-863).
  *
- * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-6
+ * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
  */
 class InvoiceFromBookingGuard
 {
@@ -100,7 +100,7 @@ class InvoiceFromBookingGuard
      *
      * @return bool True when the order may transition to completed.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-22
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function canComplete(string $orderId, ?array $object=null): bool
     {
@@ -211,7 +211,7 @@ class InvoiceFromBookingGuard
      *
      * @return int Deposit credit amount in minor units (>= 0).
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-7
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function resolveDepositCreditCents(array $order): int
     {
@@ -257,7 +257,7 @@ class InvoiceFromBookingGuard
      *
      * @return array<int,array<string,mixed>> Ordered invoice line arrays.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-8
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function buildLineItems(array $order, int $depositCreditCents): array
     {
@@ -314,7 +314,7 @@ class InvoiceFromBookingGuard
      *
      * @return array{netAmount:int,vatAmount:int,grossAmount:int} Totals in minor units.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-9
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function computeTotals(array $lines): array
     {
@@ -351,7 +351,7 @@ class InvoiceFromBookingGuard
      *
      * @return string Due date as YYYY-MM-DD.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-10
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function computeDueDate(string $invoiceDate, array $order): string
     {
@@ -385,7 +385,7 @@ class InvoiceFromBookingGuard
      *
      * @return string The URN urn:nextcloud:booking:order:{orderId}.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-11
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function sourceDocumentUri(string $orderId): string
     {

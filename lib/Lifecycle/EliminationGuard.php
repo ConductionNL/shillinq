@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md
+ * @spec openspec/specs/bookkeeping-gr-consolidation/spec.md
  */
 
 declare(strict_types=1);
@@ -51,7 +51,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.{eliminate,exclude,restore,reinstate}.requires
  * as OCA\Shillinq\Lifecycle\EliminationGuard::canChangeEliminationStatus.
  *
- * @spec openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md
+ * @spec openspec/specs/bookkeeping-gr-consolidation/spec.md
  */
 class EliminationGuard
 {
@@ -99,7 +99,7 @@ class EliminationGuard
      *
      * @return bool True when the elimination status may change.
      *
-     * @spec openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md
+     * @spec openspec/specs/bookkeeping-gr-consolidation/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-4
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use DateTimeZone;
 /**
  * Side-effect-free DROP-API verification helper (REQ-WMO-005 §verification).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-4
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  */
 class DropApiVerificationService
 {

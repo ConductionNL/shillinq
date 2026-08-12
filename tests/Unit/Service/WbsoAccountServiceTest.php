@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-31
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 /**
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-31
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

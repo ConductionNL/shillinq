@@ -217,7 +217,7 @@ class HorizonRollingJob extends TimedJob
         $end   = $start->modify('+90 days');
 
         $horizon['horizonStart']   = $start->format('Y-m-d');
-        $horizon['horizonEnd']    = $end->format('Y-m-d');
+        $horizon['horizonEnd']     = $end->format('Y-m-d');
         $horizon['rolledOp']       = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
         $horizon['lifecycleState'] = 'active';
 

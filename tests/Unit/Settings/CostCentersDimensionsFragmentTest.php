@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 
 declare(strict_types=1);

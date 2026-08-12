@@ -19,7 +19,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag points
+ *  at no target rather than at an archived change directory, which cannot resolve.
  *
  * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  * The change directory it names was never committed, and the `reporting`
@@ -121,7 +122,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
      *
      * @param array<string,mixed> $context Report context.
      *
-     * @return array<string,array{lasten:float,baten:float}>
+     * @return array<string,array{expenses:float,revenue:float}>
      */
     private function aggregateByTaakveld(array $context): array
     {
@@ -159,7 +160,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
     /**
      * Render the taakveld totals as CSV.
      *
-     * @param array<string,array{lasten:float,baten:float}> $totals  Aggregated totals.
+     * @param array<string,array{expenses:float,revenue:float}> $totals  Aggregated totals.
      * @param array<string,mixed>                           $context Report context.
      *
      * @return GeneratedFile
@@ -196,7 +197,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
     /**
      * Render the taakveld totals as IV3 XML.
      *
-     * @param array<string,array{lasten:float,baten:float}> $totals  Aggregated totals.
+     * @param array<string,array{expenses:float,revenue:float}> $totals  Aggregated totals.
      * @param array<string,mixed>                           $context Report context.
      *
      * @return GeneratedFile

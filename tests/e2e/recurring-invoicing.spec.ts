@@ -21,7 +21,7 @@
  * has no profiles the index renders its empty state but the action that
  * opens the modal must still be present.
  *
- * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ * @spec openspec/specs/recurring-invoicing/spec.md
  *
  * @e2e recurring-invoicing::operator-creates-a-monthly-hosting-profile
  * @e2e recurring-invoicing::preview-shows-the-exact-would-be-invoice

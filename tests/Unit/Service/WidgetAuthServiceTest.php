@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for WidgetAuthService.
  *
- * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-13
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  */
 class WidgetAuthServiceTest extends TestCase
 {

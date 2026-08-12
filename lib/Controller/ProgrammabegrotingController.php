@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET endpoints for sluitend-status and programmabegroting exports.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class ProgrammabegrotingController extends Controller
 {
@@ -74,7 +74,7 @@ class ProgrammabegrotingController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     #[NoAdminRequired]
     public function sluitend(): JSONResponse
@@ -97,7 +97,7 @@ class ProgrammabegrotingController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     #[NoAdminRequired]
     public function iv3(): JSONResponse
@@ -120,7 +120,7 @@ class ProgrammabegrotingController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     #[NoAdminRequired]
     public function jsonExport(): JSONResponse

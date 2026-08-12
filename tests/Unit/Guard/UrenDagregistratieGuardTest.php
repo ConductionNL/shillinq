@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -139,10 +139,10 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testBackfillWithinWindowPasses(): void
     {
         $entry = [
-            'enterpriseId'     => 'ond-1',
+            'enterpriseId'      => 'ond-1',
             'datum'             => '2026-05-16',
-            'category'         => 'ACQUISITIE',
-            'hours'              => 2,
+            'category'          => 'ACQUISITIE',
+            'hours'             => 2,
             'registratieMoment' => '2026-05-21T10:00:00Z',
         ];
         self::assertTrue($this->guard->validateOnSave(entry: $entry));
@@ -157,10 +157,10 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testOldBackfillWithoutEvidenceRejected(): void
     {
         $entry = [
-            'enterpriseId'     => 'ond-1',
+            'enterpriseId'      => 'ond-1',
             'datum'             => '2026-04-05',
-            'category'         => 'ACQUISITIE',
-            'hours'              => 2,
+            'category'          => 'ACQUISITIE',
+            'hours'             => 2,
             'registratieMoment' => '2026-05-21T10:00:00Z',
         ];
         self::assertFalse($this->guard->validateOnSave(entry: $entry));
@@ -175,12 +175,12 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testOldBackfillWithEvidenceAccepted(): void
     {
         $entry = [
-            'enterpriseId'     => 'ond-1',
+            'enterpriseId'      => 'ond-1',
             'datum'             => '2026-04-05',
-            'category'         => 'ACQUISITIE',
-            'hours'              => 2,
+            'category'          => 'ACQUISITIE',
+            'hours'             => 2,
             'registratieMoment' => '2026-05-21T10:00:00Z',
-            'backfillReason'     => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
+            'backfillReason'    => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
             'backfillBewijs'    => 'file-77',
         ];
         self::assertTrue($this->guard->validateOnSave(entry: $entry));
@@ -195,10 +195,10 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testScholingWithoutEvidenceRejected(): void
     {
         $entry = [
-            'enterpriseId'     => 'ond-1',
+            'enterpriseId'      => 'ond-1',
             'datum'             => '2026-05-21',
-            'category'         => 'SCHOLING',
-            'hours'              => 8,
+            'category'          => 'SCHOLING',
+            'hours'             => 8,
             'registratieMoment' => '2026-05-21T18:00:00Z',
         ];
         self::assertFalse($this->guard->validateOnSave(entry: $entry));
@@ -213,10 +213,10 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testScholingWithEvidenceAccepted(): void
     {
         $entry = [
-            'enterpriseId'     => 'ond-1',
+            'enterpriseId'      => 'ond-1',
             'datum'             => '2026-05-21',
-            'category'         => 'SCHOLING',
-            'hours'              => 8,
+            'category'          => 'SCHOLING',
+            'hours'             => 8,
             'registratieMoment' => '2026-05-21T18:00:00Z',
             'backfillBewijs'    => 'file-cursus-99',
         ];

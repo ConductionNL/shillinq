@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  */
 
 declare(strict_types=1);

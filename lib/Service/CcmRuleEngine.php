@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+ * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
  */
 
 declare(strict_types=1);
@@ -53,7 +53,7 @@ use Throwable;
  * class complexity is suppressed here (the alternative — one class per operator —
  * would be far harder to audit against the spec's single operator table).
  *
- * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+ * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
@@ -131,7 +131,7 @@ class CcmRuleEngine
      *
      * @throws \InvalidArgumentException When the DSL contains an unknown operator or bad shape.
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
@@ -195,7 +195,7 @@ class CcmRuleEngine
      *
      * @throws \InvalidArgumentException When the rule has no/invalid ruleLogic.
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      */
     public function compileRule(array $rule): array
     {
@@ -229,7 +229,7 @@ class CcmRuleEngine
      *
      * @return array{fired:bool,diagnostics:array<string,mixed>} The evaluation outcome.
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      */
     public function evaluate(array $ast, array $context): array
     {
@@ -259,7 +259,7 @@ class CcmRuleEngine
      *
      * @return array{fired:bool,diagnostics:array<string,mixed>} The evaluation outcome.
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      */
     public function evaluateRule(array $rule, array $context): array
     {
@@ -283,7 +283,7 @@ class CcmRuleEngine
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      */
     public function invalidate(array $rule): void
     {

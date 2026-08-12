@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any lookup failure denies the transition.
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class FiscalYearGuard
 {
@@ -83,7 +83,7 @@ class FiscalYearGuard
      *
      * @return bool True when all periods are closed and year-close may begin.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function requireAllPeriodsClosedForYear(array $fiscalYear): bool
     {

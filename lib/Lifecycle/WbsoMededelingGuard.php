@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.{submit,resubmit}.requires as
  * OCA\Shillinq\Lifecycle\WbsoMededelingGuard::canSubmit.
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class WbsoMededelingGuard
 {
@@ -92,7 +92,7 @@ class WbsoMededelingGuard
      *
      * @return bool True when the mededeling may be submitted.
      *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
      */
     public function canSubmit(string $mededelingId, ?array $object=null): bool
     {
@@ -161,8 +161,8 @@ class WbsoMededelingGuard
             ->findAll(
                 [
                     'filters' => [
-                        'administrationId'  => $administrationId,
-                        'decisionNumber' => $beschikkingNumber,
+                        'administrationId' => $administrationId,
+                        'decisionNumber'   => $beschikkingNumber,
                     ],
                 ]
             );

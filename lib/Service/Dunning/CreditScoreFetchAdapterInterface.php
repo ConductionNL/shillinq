@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service\Dunning;
 /**
  * Live credit-score fetch port — one method per fetch.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 interface CreditScoreFetchAdapterInterface
 {
@@ -50,7 +50,7 @@ interface CreditScoreFetchAdapterInterface
      *
      * @return array<string,mixed>|null The fresh snapshot, or null on temporary failure.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function fetch(string $administrationId, string $klantId, string $provider): ?array;
 }//end interface

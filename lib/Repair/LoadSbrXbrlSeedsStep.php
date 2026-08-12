@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Idempotently seeds XBRLTaxonomy / SBRDocumentType / XBRLMapping fixtures from the change fragment.
  *
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
  *     #506): inherent branch complexity in this domain logic; deferred
@@ -94,7 +94,7 @@ class LoadSbrXbrlSeedsStep implements IRepairStep
      *
      * @return string
      *
-     * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
      */
     public function getName(): string
     {
@@ -115,7 +115,7 @@ class LoadSbrXbrlSeedsStep implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
      */
     public function run(IOutput $output): void
     {

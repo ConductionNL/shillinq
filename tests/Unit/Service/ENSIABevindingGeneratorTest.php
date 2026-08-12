@@ -15,7 +15,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 
 declare(strict_types=1);
@@ -33,14 +33,12 @@ class ENSIABevindingGeneratorTest extends TestCase
 
     private ENSIABevindingGenerator $generator;
 
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->generator = new ENSIABevindingGenerator();
 
     }//end setUp()
-
 
     /**
      * REQ-ENSIA-005: score below normniveau on akkoord question → finding.
@@ -75,7 +73,6 @@ class ENSIABevindingGeneratorTest extends TestCase
 
     }//end testGeneratesFindingForBelowNormScore()
 
-
     /**
      * REQ-ENSIA-005: score at-or-above normniveau yields NO finding.
      *
@@ -104,7 +101,6 @@ class ENSIABevindingGeneratorTest extends TestCase
         $this->assertSame([], $this->generator->generate($cyclus, $vragen));
 
     }//end testNoFindingWhenScoreMeetsNorm()
-
 
     /**
      * REQ-ENSIA-005: questions still in wijziging-gevraagd are SKIPPED —
@@ -136,7 +132,6 @@ class ENSIABevindingGeneratorTest extends TestCase
 
     }//end testSkipsQuestionsAwaitingChange()
 
-
     /**
      * REQ-ENSIA-005: questions without normniveau or score are skipped.
      *
@@ -165,6 +160,4 @@ class ENSIABevindingGeneratorTest extends TestCase
         $this->assertSame([], $this->generator->generate($cyclus, $vragen));
 
     }//end testSkipsQuestionsWithoutScoreOrNorm()
-
-
 }//end class

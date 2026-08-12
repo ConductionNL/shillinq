@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -60,7 +60,7 @@ use Psr\Log\LoggerInterface;
  * unavailable, so this guard's behaviour is not silently dictated by the
  * unrelated schema-nesting defect it depends on.
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class WBSOExportValidationGuard
 {
@@ -86,7 +86,7 @@ class WBSOExportValidationGuard
      *
      * @return bool True when every included entry is fully tagged.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function requireEligibleEntries(array $export): bool
     {

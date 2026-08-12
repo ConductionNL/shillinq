@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -31,7 +31,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for BookingReminderJob.
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 class BookingReminderJobTest extends TestCase
 {
@@ -110,7 +110,7 @@ class BookingReminderJobTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testJobCanBeInstantiated(): void
     {
@@ -122,7 +122,7 @@ class BookingReminderJobTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testJobHandlesObjectServiceErrorGracefully(): void
     {

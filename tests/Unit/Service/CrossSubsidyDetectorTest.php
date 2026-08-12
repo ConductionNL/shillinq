@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-12
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -224,5 +224,4 @@ final class CrossSubsidyDetectorTest extends TestCase
         self::assertSame('Adjusted tariff to cover IKP', $resolved['resolutionNotes']);
 
     }//end testResolveHappyPath()
-
 }//end class

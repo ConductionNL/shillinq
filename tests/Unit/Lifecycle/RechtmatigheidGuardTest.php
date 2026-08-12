@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  */
 
 declare(strict_types=1);
@@ -212,9 +212,9 @@ class RechtmatigheidGuardTest extends TestCase
     {
         $result = $this->guard->canVaststellenParagraaf(
             paragraaf: [
-                'binnen_tolerantie'  => false,
+                'binnen_tolerantie'   => false,
                 'declaration_college' => '',
-                'financialYear'           => 2026,
+                'financialYear'       => 2026,
             ]
         );
         self::assertFalse(condition: $result, message: 'Buiten tolerantie zonder toelichting must be denied');
@@ -230,9 +230,9 @@ class RechtmatigheidGuardTest extends TestCase
     {
         $result = $this->guard->canVaststellenParagraaf(
             paragraaf: [
-                'binnen_tolerantie'  => false,
+                'binnen_tolerantie'   => false,
                 'declaration_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
-                'financialYear'           => 2026,
+                'financialYear'       => 2026,
             ]
         );
         self::assertTrue(condition: $result, message: 'Buiten tolerantie met toelichting must be permitted');

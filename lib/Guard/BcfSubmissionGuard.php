@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Guard;
  * the documented threshold rule literally and fails closed rather than
  * inventing an evidence field. Filed alongside shillinq#435.
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class BcfSubmissionGuard
 {
@@ -54,7 +54,7 @@ class BcfSubmissionGuard
      *
      * @return bool True when the claim may be submitted.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function requireApproval(array $claim): bool
     {

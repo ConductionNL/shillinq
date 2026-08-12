@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-25
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Pure calculator for the straight-line kapitaallasten schedule.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-25
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class KapitaallastenCalculator
 {
@@ -49,7 +49,7 @@ class KapitaallastenCalculator
      *
      * @return array<string,float> A {year: amount} schedule keyed by year string.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-25
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      *
      * @SuppressWarnings(PHPMD.LongVariable) BBV domain field names (eersteAfschrijvingsjaar).
      */

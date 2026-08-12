@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -314,7 +314,7 @@ final class KorMonitorServiceTest extends TestCase
                 'administrationId'   => 'adm-1',
                 'status'             => 'ACTIEF',
                 'vroegsteOpzegDatum' => '1900-01-01',
-                'lockInEndDate'    => '9999-12-31',
+                'lockInEndDate'      => '9999-12-31',
             ],
         ];
 

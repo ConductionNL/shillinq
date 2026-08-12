@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the activation (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 class VerplichtingGuard
 {
@@ -77,7 +77,7 @@ class VerplichtingGuard
      *
      * @return bool True when the obligation may be activated.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function canActiveren(array $verplichting): bool
     {
@@ -102,7 +102,7 @@ class VerplichtingGuard
                 'VerplichtingGuard: canActiveren failed — denying activation (fail-closed)',
                 [
                     'commitmentNumber' => ($verplichting['commitmentNumber'] ?? 'unknown'),
-                    'exception'          => $e->getMessage(),
+                    'exception'        => $e->getMessage(),
                 ]
             );
             return false;
@@ -146,8 +146,8 @@ class VerplichtingGuard
                     'VerplichtingGuard: milestone date out of contract term — denying activation',
                     [
                         'commitmentNumber' => ($verplichting['commitmentNumber'] ?? 'unknown'),
-                        'mijlpaalId'         => ($mijlpaal['mijlpaalId'] ?? 'unknown'),
-                        'datum'              => ($mijlpaal['datum'] ?? 'unknown'),
+                        'mijlpaalId'       => ($mijlpaal['mijlpaalId'] ?? 'unknown'),
+                        'datum'            => ($mijlpaal['datum'] ?? 'unknown'),
                     ]
                 );
                 return false;

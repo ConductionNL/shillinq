@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Default log-backed incasso-bureau adapter.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
 {
@@ -55,7 +55,7 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
      *
      * @return DunningChannelSendResult The dispatch outcome.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult
     {

@@ -25,8 +25,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.3
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.4
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -336,7 +336,7 @@ class VerplichtingWorkflowTest extends TestCase
         $overcommit = [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'RO-1',
-            'kind'                 => 'raamovereenkomst',
+            'kind'                  => 'raamovereenkomst',
             'totaalbedrag_excl_btw' => 20000000,
             'regels'                => [
                 ['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
@@ -438,9 +438,9 @@ class VerplichtingWorkflowTest extends TestCase
             [
                 'administrationId'           => 'adm-1',
                 'programmeCode'              => '5.1',
-                'financialYear'                   => 2026,
-                'authorised_amount'       => 50000000,
-                'realised_amount'        => 0,
+                'financialYear'              => 2026,
+                'authorised_amount'          => 50000000,
+                'realised_amount'            => 0,
                 'openstaande_verplichtingen' => 0,
             ],
             $overrides
@@ -459,12 +459,12 @@ class VerplichtingWorkflowTest extends TestCase
     {
         return array_merge(
             [
-                'administrationId'   => 'adm-1',
-                'mandaatcode'        => 'M-INKOOP-100K',
-                'maximumbedrag'      => 10000000,
-                'kind_commitment' => ['inkooporder', 'raamovereenkomst'],
-                'is_override'        => false,
-                'valid_from'         => '2020-01-01',
+                'administrationId' => 'adm-1',
+                'mandaatcode'      => 'M-INKOOP-100K',
+                'maximumbedrag'    => 10000000,
+                'kind_commitment'  => ['inkooporder', 'raamovereenkomst'],
+                'is_override'      => false,
+                'valid_from'       => '2020-01-01',
                 'valid_to'         => '2999-12-31',
             ],
             $overrides
@@ -484,12 +484,12 @@ class VerplichtingWorkflowTest extends TestCase
         return [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'PO-1',
-            'kind'                 => 'inkooporder',
+            'kind'                  => 'inkooporder',
             'totaalbedrag_excl_btw' => $bedrag,
             'regels'                => [
                 [
                     'programme'       => '5.1',
-                    'financialYear'        => 2026,
+                    'financialYear'   => 2026,
                     'amount_excl_vat' => $bedrag,
                 ],
             ],

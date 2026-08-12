@@ -98,7 +98,7 @@ class DunningController extends Controller
      * @return JSONResponse 200 with the calc shape; 400 on validation; 422 when
      *                      B2C is below the 14-day grace cut-off.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     #[NoAdminRequired]
     public function bik(): JSONResponse
@@ -201,7 +201,7 @@ class DunningController extends Controller
      * @return JSONResponse 201 with the persisted DunningRun; 400 on validation;
      *                      409 when the invoice is paused or admin-error detected.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     #[NoAdminRequired]
     public function executeRun(): JSONResponse
@@ -251,7 +251,7 @@ class DunningController extends Controller
      *
      * @return JSONResponse 201 with the persisted pause; 400 on validation.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     #[NoAdminRequired]
     public function pause(): JSONResponse
@@ -320,7 +320,7 @@ class DunningController extends Controller
      *
      * @return JSONResponse 200 with the updated pause; 404 when not found.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     #[NoAdminRequired]
     public function resumePause(string $pauseId): JSONResponse
@@ -381,7 +381,7 @@ class DunningController extends Controller
      *
      * @return JSONResponse 201 with the persisted write-off.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-22
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     #[NoAdminRequired]
     public function writeOff(): JSONResponse
@@ -437,7 +437,7 @@ class DunningController extends Controller
      *
      * @return JSONResponse 200 with the dossier; 400 on validation.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     #[NoAdminRequired]
     public function dossier(): JSONResponse

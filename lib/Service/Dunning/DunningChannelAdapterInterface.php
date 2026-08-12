@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Service\Dunning;
 /**
  * Channel-adapter port — one method per dispatch.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 interface DunningChannelAdapterInterface
 {
@@ -51,7 +51,7 @@ interface DunningChannelAdapterInterface
      *
      * @return DunningChannelSendResult The dispatch attempt outcome.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function send(string $kanaal, array $payload): DunningChannelSendResult;
 }//end interface

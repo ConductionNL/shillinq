@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use RuntimeException;
 /**
  * Optional credit-score integration. Uses the real OR ObjectService API.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class CreditScoreService
 {
@@ -81,7 +81,7 @@ class CreditScoreService
      *
      * @return array<string,mixed>|null The score record, null when none is available.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function getOrRefresh(string $administrationId, string $klantId, string $provider): ?array
     {
@@ -116,7 +116,7 @@ class CreditScoreService
 
         // Normalise + persist the fresh snapshot so the next call hits the cache.
         $fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
-        $fresh['customerId']          = ($fresh['customerId'] ?? $klantId);
+        $fresh['customerId']       = ($fresh['customerId'] ?? $klantId);
         $fresh['provider']         = ($fresh['provider'] ?? $provider);
         if (isset($fresh['scoreDatum']) === false || (string) $fresh['scoreDatum'] === '') {
             $fresh['scoreDatum'] = (new DateTimeImmutable())->format('Y-m-d');
@@ -171,7 +171,7 @@ class CreditScoreService
      *
      * @return array{warning:bool,message:string,creditLimietAdvies:?float,deelfacturatieAdvies:bool}
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function evaluateForInvoice(?array $score, float $invoiceBedrag): array
     {
@@ -240,7 +240,7 @@ class CreditScoreService
                         [
                             'filters' => [
                                 'administrationId' => $administrationId,
-                                'customerId'          => $klantId,
+                                'customerId'       => $klantId,
                                 'provider'         => $provider,
                             ],
                         ]

@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -51,7 +51,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Account REST API (REQ-WBSO-001 / REQ-WBSO-005 / REQ-WBSO-006).
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class WbsoAccountApiController extends Controller
 {

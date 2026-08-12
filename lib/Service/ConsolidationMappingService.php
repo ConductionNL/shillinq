@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Throwable;
  * Pre-positioned hooks for the future bookkeeping-consolidatie spec
  * (REQ-MA-005).
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * @SuppressWarnings(PHPMD.LongVariable) Pre-existing debt (issue #506):
  *     not in the project's calibrated length threshold; deferred pending
@@ -88,7 +88,7 @@ class ConsolidationMappingService
      *
      * @return array<string,mixed>|null
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function findActiveMapping(
         string $sourceAdministrationId,
@@ -142,7 +142,7 @@ class ConsolidationMappingService
      *
      * @return string The destination GL account number.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function applyAccountRule(array $mapping, string $sourceAccount): string
     {
@@ -187,7 +187,7 @@ class ConsolidationMappingService
      *
      * @return array{mapped:array<int,array{source:string,destination:string}>,unmapped:array<int,string>}
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function applyMapping(array $mapping, array $sourceAccounts): array
     {
@@ -227,7 +227,7 @@ class ConsolidationMappingService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function shouldEliminate(array $intercompanyEntry): bool
     {
@@ -258,7 +258,7 @@ class ConsolidationMappingService
      *
      * @return string|null The elimination GL account number, or null when unconfigured.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function resolveEliminationAccount(array $intercompanyEntry, ?array $mapping): ?string
     {
@@ -293,7 +293,7 @@ class ConsolidationMappingService
      *
      * @return array<string,mixed>|null
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function pickMostRecent(iterable $candidates, DateTimeImmutable $asOf): ?array
     {

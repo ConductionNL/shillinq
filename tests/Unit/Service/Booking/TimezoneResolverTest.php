@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-18
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use Psr\Log\LoggerInterface;
  * Verifies REQ-BCF-003 / REQ-BCF-009 timezone resolution: explicit override
  * (when valid) wins, then user core/timezone, then server default, then UTC.
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-18
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  */
 final class TimezoneResolverTest extends TestCase
 {

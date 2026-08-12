@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -67,7 +67,7 @@ use Throwable;
 /**
  * Admin / per-booking notification REST controller.
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -500,7 +500,7 @@ class NotificationController extends Controller
      *
      * @return JSONResponse|null A 404 response when refused, null when allowed.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-8
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     private function requireAccessibleBooking(string $bookingId): ?JSONResponse
     {

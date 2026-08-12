@@ -189,8 +189,10 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase
                 'LoonStrook' => [
                     ['employeeId' => 'wn-1', 'administrationId' => 'adm-1', 'periodId' => 'lp-2026-01', 'fiscalLoon' => 2000.00],
                     ['employeeId' => 'wn-1', 'administrationId' => 'adm-1', 'periodId' => 'lp-2026-02', 'fiscalLoon' => 2050.00],
-                    ['employeeId' => 'wn-1', 'administrationId' => 'adm-1', 'periodId' => 'lp-2025-12', 'fiscalLoon' => 9999.00], // wrong year
-                    ['employeeId' => 'wn-2', 'administrationId' => 'adm-1', 'periodId' => 'lp-2026-01', 'fiscalLoon' => 9999.00], // wrong werknemer
+                    ['employeeId' => 'wn-1', 'administrationId' => 'adm-1', 'periodId' => 'lp-2025-12', 'fiscalLoon' => 9999.00],
+                // wrong year
+                    ['employeeId' => 'wn-2', 'administrationId' => 'adm-1', 'periodId' => 'lp-2026-01', 'fiscalLoon' => 9999.00],
+                // wrong werknemer
                 ],
             ]
         );

@@ -6,7 +6,7 @@
   orderLineId binds the pick to an open order so downstream reporting can
   reconcile pick-to-order.
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.3
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<section class="pick-op">

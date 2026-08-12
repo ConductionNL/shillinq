@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Container\ContainerInterface;
  * caller (sourced from the AR/invoice module); the asset/liability split and the
  * remaining-amount waterfall come from RevenueRecognitionCalculator.
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  */
 class RevenueCutoffService
 {
@@ -88,7 +88,7 @@ class RevenueCutoffService
      *
      * @return array{data: array<int,array<string,mixed>>, total: int}
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function compute(string $administrationId, string $periodEnd, array $billedByContract=[]): array
     {

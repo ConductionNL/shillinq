@@ -118,10 +118,10 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
-     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/specs/inventory-product-catalog/spec.md
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
-     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-14
+     * @spec openspec/specs/inventory-cogs-posting/spec.md
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function run(IOutput $output): void
     {
@@ -235,7 +235,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     private function seedDefaultAdministration(IOutput $output): void
     {
@@ -318,7 +318,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
      * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
      *       (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
      */
@@ -805,7 +805,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-14
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     private function registerIntercompanyMonthlyMatchingWorkflow(IOutput $output): void
     {
@@ -1198,7 +1198,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-15
+     * @spec openspec/specs/inventory-barcode-sku/spec.md
      */
     private function seedInventoryBarcodeDemo(IOutput $output): void
     {
@@ -1229,7 +1229,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
      */
     private function seedInventoryLotsDemo(IOutput $output): void
     {
@@ -1260,7 +1260,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
+     * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
      */
     private function seedInventoryValuationExamples(IOutput $output): void
     {
@@ -1302,7 +1302,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+     * @spec openspec/specs/inventory-stock-tracking/spec.md
      */
     private function seedInventoryStockExamples(IOutput $output): void
     {
@@ -1343,7 +1343,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
+     * @spec openspec/specs/inventory-cogs-posting/spec.md
      */
     private function seedInventoryGLConfig(IOutput $output): void
     {
@@ -1510,7 +1510,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-18
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     private function seedReimbursementPolicies(IOutput $output): void
     {
@@ -1613,7 +1613,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-19
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     private function seedPassThroughMarkupRules(IOutput $output): void
     {
@@ -1745,7 +1745,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.2
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     private function seedMandaatTemplates(IOutput $output): void
     {
@@ -1858,8 +1858,8 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-18
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     private function seedWmoCommercialActivities(IOutput $output): void
     {
@@ -2028,7 +2028,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     private function seedFixedAssetsDemo(IOutput $output): void
     {

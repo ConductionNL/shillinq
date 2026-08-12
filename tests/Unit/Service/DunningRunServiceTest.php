@@ -57,8 +57,8 @@ final class DunningRunServiceTest extends TestCase
      */
     private function makeService(
         InMemoryObjectService $os,
-        ?IncassoBureauAdapterInterface $incasso = null,
-        ?PostNLAdapterInterface $postnl = null
+        ?IncassoBureauAdapterInterface $incasso=null,
+        ?PostNLAdapterInterface $postnl=null
     ): DunningRunService {
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')->willReturnCallback(
@@ -73,9 +73,10 @@ final class DunningRunServiceTest extends TestCase
                                 providerMessageId: 'noop',
                                 extras: ['dossierId' => 'test-dossier'],
                             );
-                        }
+                        }//end transfer()
                     };
                 }
+
                 if ($id === PostNLAdapterInterface::class) {
                     return ($postnl !== null) ? $postnl : new class implements PostNLAdapterInterface {
                         public function sendRegisteredLetter(array $payload): DunningChannelSendResult
@@ -86,20 +87,21 @@ final class DunningRunServiceTest extends TestCase
                                 providerMessageId: 'noop',
                                 extras: ['barcode' => '3S1234567890123', 'trackingUrl' => 'https://postnl.nl/tracktrace/3S1234567890123'],
                             );
-                        }
+                        }//end sendRegisteredLetter()
                     };
                 }
+
                 return $os;
             }
         );
 
         $appConfig = $this->createStub(IAppConfig::class);
         $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default = ''): string {
+            static function (string $app, string $key, string $default=''): string {
                 $values = [
-                    'register'                                       => 'shillinq',
-                    'dunning.dispute_pause_hard_deadline_days'       => '60',
-                    'dunning.admin_error_lookback_days'              => '90',
+                    'register'                                 => 'shillinq',
+                    'dunning.dispute_pause_hard_deadline_days' => '60',
+                    'dunning.admin_error_lookback_days'        => '90',
                 ];
                 return $values[$key] ?? $default;
             }
@@ -121,12 +123,15 @@ final class DunningRunServiceTest extends TestCase
     public function testResolveLadderFallsBackToBaseWhenNoOverride(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningLadder', rows: [
-            [
-                'id'     => 'ladder-1',
-                'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'name' => 'Reminder', 'channel' => 'EMAIL']],
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningLadder',
+                rows: [
+                    [
+                        'id'     => 'ladder-1',
+                        'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'name' => 'Reminder', 'channel' => 'EMAIL']],
+                    ],
+                ]
+                );
 
         $service  = $this->makeService(os: $os);
         $resolved = $service->resolveLadderForKlant(administrationId: 'adm-1', klantId: 'klant-1', baseLadderId: 'ladder-1');
@@ -145,23 +150,29 @@ final class DunningRunServiceTest extends TestCase
     public function testResolveLadderUsesActiveOverride(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'channel' => 'EMAIL']]],
-        ]);
-        $os->seed(schema: 'KlantLadderOverride', rows: [
-            [
-                'id'             => 'ovr-1',
-                'customerId'        => 'klant-1',
-                'baseLadderId'   => 'ladder-1',
-                'lifecycleState' => 'active',
-                'overrides'      => [
-                    'stages' => [
-                        ['nr' => 1, 'channel' => 'EMAIL'],
-                        ['nr' => 2, 'channel' => 'EMAIL'],
+        $os->seed(
+                schema: 'DunningLadder',
+                rows: [
+                    ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'channel' => 'EMAIL']]],
+                ]
+                );
+        $os->seed(
+                schema: 'KlantLadderOverride',
+                rows: [
+                    [
+                        'id'             => 'ovr-1',
+                        'customerId'     => 'klant-1',
+                        'baseLadderId'   => 'ladder-1',
+                        'lifecycleState' => 'active',
+                        'overrides'      => [
+                            'stages' => [
+                                ['nr' => 1, 'channel' => 'EMAIL'],
+                                ['nr' => 2, 'channel' => 'EMAIL'],
+                            ],
+                        ],
                     ],
-                ],
-            ],
-        ]);
+                ]
+                );
 
         $service  = $this->makeService(os: $os);
         $resolved = $service->resolveLadderForKlant(administrationId: 'adm-1', klantId: 'klant-1', baseLadderId: 'ladder-1');
@@ -179,24 +190,30 @@ final class DunningRunServiceTest extends TestCase
     public function testExecuteStageRefusesWhilePaused(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningPauseDispute', rows: [
-            [
-                'id'               => 'pause-1',
-                'administrationId' => 'adm-1',
-                'invoiceId'        => 'inv-1',
-                'lifecycleState'   => 'active',
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningPauseDispute',
+                rows: [
+                    [
+                        'id'               => 'pause-1',
+                        'administrationId' => 'adm-1',
+                        'invoiceId'        => 'inv-1',
+                        'lifecycleState'   => 'active',
+                    ],
+                ]
+                );
 
         $service = $this->makeService(os: $os);
         $this->expectException(RuntimeException::class);
-        $service->executeStage(administrationId: 'adm-1', params: [
-            'invoiceId' => 'inv-1',
-            'ladderId'  => 'ladder-1',
-            'stageNr'   => 1,
-            'templateId' => 'tpl-1',
-            'channel'    => 'EMAIL',
-        ]);
+        $service->executeStage(
+                administrationId: 'adm-1',
+                params: [
+                    'invoiceId'  => 'inv-1',
+                    'ladderId'   => 'ladder-1',
+                    'stageNr'    => 1,
+                    'templateId' => 'tpl-1',
+                    'channel'    => 'EMAIL',
+                ]
+                );
 
     }//end testExecuteStageRefusesWhilePaused()
 
@@ -210,18 +227,21 @@ final class DunningRunServiceTest extends TestCase
         $os      = new InMemoryObjectService();
         $service = $this->makeService(os: $os);
 
-        $persisted = $service->executeStage(administrationId: 'adm-1', params: [
-            'invoiceId'        => 'inv-1',
-            'ladderId'         => 'ladder-1',
-            'stageNr'          => 1,
-            'templateId'       => 'tpl-stage1',
-            'channel'           => 'EMAIL',
-            'ontvangerEmail'   => 'klant@example.nl',
-            'renderedSubject'  => 'Reminder factuur',
-            'renderedBody'     => 'Vriendelijk verzoek',
-            'deliveryStatus'   => 'DELIVERED',
-            'invoiceAmount'    => 1234.56,
-        ]);
+        $persisted = $service->executeStage(
+                administrationId: 'adm-1',
+                params: [
+                    'invoiceId'       => 'inv-1',
+                    'ladderId'        => 'ladder-1',
+                    'stageNr'         => 1,
+                    'templateId'      => 'tpl-stage1',
+                    'channel'         => 'EMAIL',
+                    'ontvangerEmail'  => 'klant@example.nl',
+                    'renderedSubject' => 'Reminder factuur',
+                    'renderedBody'    => 'Vriendelijk verzoek',
+                    'deliveryStatus'  => 'DELIVERED',
+                    'invoiceAmount'   => 1234.56,
+                ]
+                );
 
         self::assertSame('executed', $persisted['lifecycleState']);
         self::assertSame('EMAIL', $persisted['channel']);
@@ -263,9 +283,12 @@ final class DunningRunServiceTest extends TestCase
     public function testResumePauseFlipsLifecycleState(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningPauseDispute', rows: [
-            ['id' => 'pause-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
-        ]);
+        $os->seed(
+                schema: 'DunningPauseDispute',
+                rows: [
+                    ['id' => 'pause-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
         $resolved = $service->resumePause(administrationId: 'adm-1', pauseId: 'pause-1', resolution: 'resolve');
@@ -273,9 +296,12 @@ final class DunningRunServiceTest extends TestCase
         self::assertNotNull($resolved['pauseEnd']);
 
         $os2 = new InMemoryObjectService();
-        $os2->seed(schema: 'DunningPauseDispute', rows: [
-            ['id' => 'pause-2', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
-        ]);
+        $os2->seed(
+                schema: 'DunningPauseDispute',
+                rows: [
+                    ['id' => 'pause-2', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
+                ]
+                );
         $service2 = $this->makeService(os: $os2);
         $expired  = $service2->resumePause(administrationId: 'adm-1', pauseId: 'pause-2', resolution: 'expire');
         self::assertSame('hardDeadlineExpired', $expired['lifecycleState']);
@@ -292,13 +318,16 @@ final class DunningRunServiceTest extends TestCase
         $os      = new InMemoryObjectService();
         $service = $this->makeService(os: $os);
 
-        $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'invoiceId'            => 'inv-1',
-            'hoofdsomAfgeschreven' => 4200.00,
-            'vatAmount'            => 882.00,
-            'art29OBDeclaration'    => 'Faillissement vonnis 2026-04-12',
-            'btwTaxReturnPeriod'   => '2026-Q2',
-        ]);
+        $persisted = $service->writeOff(
+                administrationId: 'adm-1',
+                params: [
+                    'invoiceId'            => 'inv-1',
+                    'hoofdsomAfgeschreven' => 4200.00,
+                    'vatAmount'            => 882.00,
+                    'art29OBDeclaration'   => 'Faillissement vonnis 2026-04-12',
+                    'btwTaxReturnPeriod'   => '2026-Q2',
+                ]
+                );
 
         self::assertSame('posted', $persisted['lifecycleState']);
         self::assertSame(4200.0, $persisted['hoofdsomAfgeschreven']);
@@ -339,22 +368,25 @@ final class DunningRunServiceTest extends TestCase
     public function testTickInvoiceEmitsRunForApplicableStage(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningLadder', rows: [
-            [
-                'id'     => 'ladder-1',
-                'stages' => [
-                    ['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL', 'templateId' => 'tpl-1'],
-                    ['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL', 'templateId' => 'tpl-2'],
-                ],
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningLadder',
+                rows: [
+                    [
+                        'id'     => 'ladder-1',
+                        'stages' => [
+                            ['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL', 'templateId' => 'tpl-1'],
+                            ['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL', 'templateId' => 'tpl-2'],
+                        ],
+                    ],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
         $now     = new \DateTimeImmutable('2026-06-09T12:00:00Z');
         $invoice = [
-            'id'          => 'inv-1',
-            'dueDate'     => '2026-05-20',
-            'grossAmount' => 8400.00,
+            'id'                => 'inv-1',
+            'dueDate'           => '2026-05-20',
+            'grossAmount'       => 8400.00,
             'customerReference' => 'klant-1',
         ];
 
@@ -382,16 +414,22 @@ final class DunningRunServiceTest extends TestCase
     public function testTickInvoiceSkipsWhilePaused(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
-        ]);
-        $os->seed(schema: 'DunningPauseDispute', rows: [
-            [
-                'administrationId' => 'adm-1',
-                'invoiceId'        => 'inv-1',
-                'lifecycleState'   => 'active',
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningLadder',
+                rows: [
+                    ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
+                ]
+                );
+        $os->seed(
+                schema: 'DunningPauseDispute',
+                rows: [
+                    [
+                        'administrationId' => 'adm-1',
+                        'invoiceId'        => 'inv-1',
+                        'lifecycleState'   => 'active',
+                    ],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
         $result = $service->tickInvoice(
@@ -414,17 +452,23 @@ final class DunningRunServiceTest extends TestCase
     public function testTickInvoiceIsIdempotentPerStage(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
-        ]);
-        $os->seed(schema: 'DunningRun', rows: [
-            [
-                'administrationId' => 'adm-1',
-                'invoiceId'        => 'inv-1',
-                'stageNr'          => 1,
-                'lifecycleState'   => 'executed',
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningLadder',
+                rows: [
+                    ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
+                ]
+                );
+        $os->seed(
+                schema: 'DunningRun',
+                rows: [
+                    [
+                        'administrationId' => 'adm-1',
+                        'invoiceId'        => 'inv-1',
+                        'stageNr'          => 1,
+                        'lifecycleState'   => 'executed',
+                    ],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
         $result = $service->tickInvoice(
@@ -447,9 +491,12 @@ final class DunningRunServiceTest extends TestCase
     public function testTickInvoiceSkipsWhenWithinTerms(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
-        ]);
+        $os->seed(
+                schema: 'DunningLadder',
+                rows: [
+                    ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
         $result = $service->tickInvoice(
@@ -475,13 +522,16 @@ final class DunningRunServiceTest extends TestCase
         $os      = new InMemoryObjectService();
         $service = $this->makeService(os: $os);
 
-        $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'invoiceId'            => 'inv-1',
-            'hoofdsomAfgeschreven' => 4200.00,
-            'vatAmount'            => 882.00,
-            'art29OBDeclaration'    => 'Faillissement vonnis 2026-04-12',
-            'btwTaxReturnPeriod'   => '2026-Q2',
-        ]);
+        $persisted = $service->writeOff(
+                administrationId: 'adm-1',
+                params: [
+                    'invoiceId'            => 'inv-1',
+                    'hoofdsomAfgeschreven' => 4200.00,
+                    'vatAmount'            => 882.00,
+                    'art29OBDeclaration'   => 'Faillissement vonnis 2026-04-12',
+                    'btwTaxReturnPeriod'   => '2026-Q2',
+                ]
+                );
 
         $glRows = $os->dump(schema: 'GLTransaction');
         self::assertCount(1, $glRows, 'one GL transaction materialised');
@@ -503,6 +553,7 @@ final class DunningRunServiceTest extends TestCase
             $debit  += (int) $line['debitCents'];
             $credit += (int) $line['creditCents'];
         }
+
         self::assertSame($debit, $credit, 'GL posting must balance');
         self::assertSame(508200, $debit, 'debit total = hoofdsom + btw in cents');
 
@@ -519,13 +570,16 @@ final class DunningRunServiceTest extends TestCase
         $os      = new InMemoryObjectService();
         $service = $this->makeService(os: $os);
 
-        $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'invoiceId'            => 'inv-1',
-            'hoofdsomAfgeschreven' => 4200.00,
-            'vatAmount'            => 882.00,
-            'art29OBDeclaration'    => 'Faillissement vonnis 2026-04-12',
-            'btwTaxReturnPeriod'   => '2026-Q2',
-        ]);
+        $persisted = $service->writeOff(
+                administrationId: 'adm-1',
+                params: [
+                    'invoiceId'            => 'inv-1',
+                    'hoofdsomAfgeschreven' => 4200.00,
+                    'vatAmount'            => 882.00,
+                    'art29OBDeclaration'   => 'Faillissement vonnis 2026-04-12',
+                    'btwTaxReturnPeriod'   => '2026-Q2',
+                ]
+                );
 
         $lines = $os->dump(schema: 'VATLine');
         self::assertCount(1, $lines);
@@ -550,13 +604,16 @@ final class DunningRunServiceTest extends TestCase
         $os      = new InMemoryObjectService();
         $service = $this->makeService(os: $os);
 
-        $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'invoiceId'            => 'inv-1',
-            'hoofdsomAfgeschreven' => 1000.00,
-            'vatAmount'            => 210.00,
-            'art29OBDeclaration'    => 'Schuldsanering',
-            'entryId'            => 'caller-gl-7',
-        ]);
+        $persisted = $service->writeOff(
+                administrationId: 'adm-1',
+                params: [
+                    'invoiceId'            => 'inv-1',
+                    'hoofdsomAfgeschreven' => 1000.00,
+                    'vatAmount'            => 210.00,
+                    'art29OBDeclaration'   => 'Schuldsanering',
+                    'entryId'              => 'caller-gl-7',
+                ]
+                );
 
         self::assertSame('caller-gl-7', $persisted['entryId']);
         self::assertCount(0, $os->dump(schema: 'GLTransaction'), 'caller boekingId skips re-posting');
@@ -571,29 +628,36 @@ final class DunningRunServiceTest extends TestCase
     public function testAdminErrorDetectorFlagsGoodCustomers(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningRun', rows: [
-            [
-                'id'               => 'dr-1',
-                'administrationId' => 'adm-1',
-                'deliveryStatus'   => 'DELIVERED',
-                'uitgevoerdOp'     => (new \DateTimeImmutable('-30 days'))->format(DATE_ATOM),
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningRun',
+                rows: [
+                    [
+                        'id'               => 'dr-1',
+                        'administrationId' => 'adm-1',
+                        'deliveryStatus'   => 'DELIVERED',
+                        'uitgevoerdOp'     => (new \DateTimeImmutable('-30 days'))->format(DATE_ATOM),
+                    ],
+                ]
+                );
 
         $service = $this->makeService(os: $os);
 
-        self::assertTrue($service->detectAdminError(
+        self::assertTrue(
+                $service->detectAdminError(
             administrationId: 'adm-1',
             klantId: 'klant-1',
             triggerContext: ['ibanInvalid' => true]
-        ));
+        )
+                );
 
         // No trigger context — no flag, even with prior runs.
-        self::assertFalse($service->detectAdminError(
+        self::assertFalse(
+                $service->detectAdminError(
             administrationId: 'adm-1',
             klantId: 'klant-1',
             triggerContext: []
-        ));
+        )
+                );
 
     }//end testAdminErrorDetectorFlagsGoodCustomers()
 
@@ -606,31 +670,38 @@ final class DunningRunServiceTest extends TestCase
     public function testAdminErrorDetectorPrefersInvoicePaidHistory(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'Invoice', rows: [
-            [
-                'id'                 => 'inv-1',
-                'administrationId'   => 'adm-1',
-                'customerReference'  => 'klant-1',
-                'status'             => 'paid',
-                'paidOn'             => (new \DateTimeImmutable('-15 days'))->format('Y-m-d'),
-            ],
-        ]);
+        $os->seed(
+                schema: 'Invoice',
+                rows: [
+                    [
+                        'id'                => 'inv-1',
+                        'administrationId'  => 'adm-1',
+                        'customerReference' => 'klant-1',
+                        'status'            => 'paid',
+                        'paidOn'            => (new \DateTimeImmutable('-15 days'))->format('Y-m-d'),
+                    ],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
-        self::assertTrue($service->detectAdminError(
+        self::assertTrue(
+                $service->detectAdminError(
             administrationId: 'adm-1',
             klantId: 'klant-1',
             triggerContext: ['paymentRefMissing' => true]
-        ));
+        )
+                );
 
         // No matching paid invoice + no DunningRun history → no flag.
-        $os2     = new InMemoryObjectService();
+        $os2      = new InMemoryObjectService();
         $service2 = $this->makeService(os: $os2);
-        self::assertFalse($service2->detectAdminError(
+        self::assertFalse(
+                $service2->detectAdminError(
             administrationId: 'adm-1',
             klantId: 'klant-other',
             triggerContext: ['paymentRefMissing' => true]
-        ));
+        )
+                );
 
     }//end testAdminErrorDetectorPrefersInvoicePaidHistory()
 
@@ -642,17 +713,20 @@ final class DunningRunServiceTest extends TestCase
     public function testTransferToIncassoLocksRunOnDelivery(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningRun', rows: [
-            [
-                'id'               => 'dr-1',
-                'administrationId' => 'adm-1',
-                'invoiceId'        => 'inv-1',
-                'stageNr'          => 5,
-                'channel'           => 'INCASSOBUREAU_API',
-                'lifecycleState'   => 'executed',
-                'deliveryStatus'   => 'PENDING',
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningRun',
+                rows: [
+                    [
+                        'id'               => 'dr-1',
+                        'administrationId' => 'adm-1',
+                        'invoiceId'        => 'inv-1',
+                        'stageNr'          => 5,
+                        'channel'          => 'INCASSOBUREAU_API',
+                        'lifecycleState'   => 'executed',
+                        'deliveryStatus'   => 'PENDING',
+                    ],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
         $result = $service->transferToIncasso(
@@ -665,7 +739,7 @@ final class DunningRunServiceTest extends TestCase
         self::assertSame('DELIVERED', $result->deliveryStatus);
         $sealed = $os->dump(schema: 'DunningRun');
         // The last persisted version is the sealed copy.
-        $last   = end($sealed);
+        $last = end($sealed);
         self::assertSame('locked', $last['lifecycleState']);
         self::assertSame('test-dossier', $last['postageStatus']['dossierId']);
 
@@ -679,15 +753,18 @@ final class DunningRunServiceTest extends TestCase
     public function testTransferToIncassoKeepsRunExecutedOnFailure(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningRun', rows: [
-            [
-                'id'               => 'dr-1',
-                'administrationId' => 'adm-1',
-                'invoiceId'        => 'inv-1',
-                'stageNr'          => 5,
-                'lifecycleState'   => 'executed',
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningRun',
+                rows: [
+                    [
+                        'id'               => 'dr-1',
+                        'administrationId' => 'adm-1',
+                        'invoiceId'        => 'inv-1',
+                        'stageNr'          => 5,
+                        'lifecycleState'   => 'executed',
+                    ],
+                ]
+                );
         $incasso = new class implements IncassoBureauAdapterInterface {
             public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult
             {
@@ -696,7 +773,7 @@ final class DunningRunServiceTest extends TestCase
                     deliveryStatus: 'FAILED',
                     errorMessage: 'connection refused',
                 );
-            }
+            }//end transfer()
         };
         $service = $this->makeService(os: $os, incasso: $incasso);
 
@@ -721,17 +798,20 @@ final class DunningRunServiceTest extends TestCase
     public function testSendRegisteredLetterCapturesPostNLTrackingOnRun(): void
     {
         $os = new InMemoryObjectService();
-        $os->seed(schema: 'DunningRun', rows: [
-            [
-                'id'               => 'dr-1',
-                'administrationId' => 'adm-1',
-                'invoiceId'        => 'inv-1',
-                'stageNr'          => 4,
-                'channel'           => 'AANGETEKENDE_POST',
-                'lifecycleState'   => 'executed',
-                'deliveryStatus'   => 'PENDING',
-            ],
-        ]);
+        $os->seed(
+                schema: 'DunningRun',
+                rows: [
+                    [
+                        'id'               => 'dr-1',
+                        'administrationId' => 'adm-1',
+                        'invoiceId'        => 'inv-1',
+                        'stageNr'          => 4,
+                        'channel'          => 'AANGETEKENDE_POST',
+                        'lifecycleState'   => 'executed',
+                        'deliveryStatus'   => 'PENDING',
+                    ],
+                ]
+                );
         $service = $this->makeService(os: $os);
 
         $result = $service->sendRegisteredLetter(
@@ -795,5 +875,4 @@ final class DunningRunServiceTest extends TestCase
         self::assertCount(1, (array) $pause['evidenceRefs']);
 
     }//end testPauseAcceptsWellFormedEvidenceUri()
-
 }//end class

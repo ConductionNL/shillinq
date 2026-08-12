@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
 
 declare(strict_types=1);
@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service;
  * the fallback. canBeFinalized() is the lifecycle precondition guard
  * referenced in the SisaReport finalize transition.
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
 class SisaReportingService
 {
@@ -51,7 +51,7 @@ class SisaReportingService
      *
      * @return string One of: unqualified, qualified, adverse, disclaimer.
      *
-     * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
      */
     public function calculateAuditOpinion(array $sisaReport): string
     {
@@ -89,7 +89,7 @@ class SisaReportingService
      *
      * @return bool True when finalization is permitted.
      *
-     * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
      */
     public function canBeFinalized(array $sisaReport): bool
     {

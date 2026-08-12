@@ -6,7 +6,7 @@
   mutations are dispatched in a single pendingOp so the server applies them
   atomically.
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.2
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<section class="transfer-op">

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for BookingNotificationController.
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 class BookingNotificationControllerTest extends TestCase
 {
@@ -142,7 +142,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testGetBookingTriggersForbiddenWhenNotAuthenticated(): void
     {
@@ -158,7 +158,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testGetBookingTriggersReturnsTriggersForAdmin(): void
     {
@@ -201,7 +201,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testGetBookingTriggersAllowsNonAdminMemberOfTheAdministration(): void
     {
@@ -247,7 +247,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testGetBookingTriggersDeniesNonAdminOutsideTheAdministration(): void
     {
@@ -286,7 +286,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testGetBookingTriggersDeniesWhenAdministrationIdIsEmpty(): void
     {
@@ -329,7 +329,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testUpdateBookingTriggersMissingTriggersKey(): void
     {
@@ -350,7 +350,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testGetNotificationMonitorReturnsCountsForAdmin(): void
     {
@@ -381,7 +381,7 @@ class BookingNotificationControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testDisableAllTriggersReturnsDisabledCount(): void
     {

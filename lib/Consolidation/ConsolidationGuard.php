@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
+ * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * in shillinq_register.json and returns true when the precondition holds
  * (transition permitted), or throws on hard failure (fail-closed).
  *
- * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
+ * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  */
 class ConsolidationGuard
 {
@@ -91,7 +91,7 @@ class ConsolidationGuard
      *
      * @return bool True when fiscal period is closed and transition is permitted.
      *
-     * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md
      */
     public function requireFiscalPeriodClosed(array $statement): bool
     {
@@ -149,7 +149,7 @@ class ConsolidationGuard
      *
      * @return bool True when all member statements are final.
      *
-     * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md
      */
     public function requireAllMembersFinalised(array $consolidatedReport): bool
     {
@@ -235,7 +235,7 @@ class ConsolidationGuard
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      *
-     * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md
      */
     public function requirePublicationApproval(array $statement): bool
     {

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Default log-backed channel adapter.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class LogDunningChannelAdapter implements DunningChannelAdapterInterface
 {
@@ -58,7 +58,7 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
      *
      * @return DunningChannelSendResult The (synthetic) dispatch outcome.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function send(string $kanaal, array $payload): DunningChannelSendResult
     {
@@ -70,7 +70,7 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
         $this->logger->info(
             'Shillinq dunning channel dispatch',
             [
-                'channel'  => $kanaal,
+                'channel' => $kanaal,
                 'payload' => $sanitised,
             ]
         );

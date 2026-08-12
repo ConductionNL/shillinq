@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use DateTimeZone;
 /**
  * Side-effect-free Integral Cost Price arithmetic helper (REQ-WMO-002).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  */
 class IntegralCostPriceCalculator
 {
@@ -66,7 +66,7 @@ class IntegralCostPriceCalculator
      *
      * @return int Amount in whole cents (half-even rounding).
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -81,7 +81,7 @@ class IntegralCostPriceCalculator
      *
      * @return float Money amount in EUR.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -98,6 +98,10 @@ class IntegralCostPriceCalculator
      * @param string                         $accountKind  One of `loonkosten`, `materialen`, `afschrijvingen`.
      *
      * @return int Sum of matching GL lines in cents.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function sumDirectCosts(array $glLines, string $kostenplaats, string $kostendrager, string $accountKind): int
     {
@@ -120,7 +124,7 @@ class IntegralCostPriceCalculator
                 continue;
             }
 
-            $amount = (float) ($line['amount'] ?? $line['amount'] ?? 0);
+            $amount = (float) ($line['amount'] ?? 0);
             if ($amount < 0) {
                 // Credit notes / reversals are subtracted (sign-preserved).
                 $totalCents += $this->toCents(amount: $amount);
@@ -146,6 +150,10 @@ class IntegralCostPriceCalculator
      * @param string              $kostendrager           Kostendrager code (filter ratios to this drager).
      *
      * @return array<string,int> Per-bucket overhead in cents (huisvesting, ict, directieEnStaf, facilitair, custom).
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function distributeOverhead(int $corporateOverheadCents, array $rule, string $kostendrager): array
     {
@@ -284,6 +292,10 @@ class IntegralCostPriceCalculator
      *                                   eenheidLabel, gehanteerdTarief, omzetEur, status).
      *
      * @return array<string,mixed> IKP record matching the schema.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function compose(array $input): array
     {
@@ -359,8 +371,8 @@ class IntegralCostPriceCalculator
 
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
-            'period'              => (string) $input['period'],
-            'calculatedOn'           => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+            'period'               => (string) $input['period'],
+            'calculatedOn'         => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
             'status'               => (string) ($input['status'] ?? 'voorlopig'),
             'componenten'          => [
                 'directeLoonkosten'     => $this->fromCents(cents: $loonkostenCents),
@@ -372,7 +384,7 @@ class IntegralCostPriceCalculator
             ],
             'totaleKosten'         => $this->fromCents(cents: $totaleKostenCents),
             'verkochteEenheden'    => $verkochteEenhedenOut,
-            'unitLabel'         => ($input['unitLabel'] ?? null),
+            'unitLabel'            => ($input['unitLabel'] ?? null),
             'kostprijsPerEenheid'  => $kostprijsPerEenheid,
             'gehanteerdTarief'     => $gehanteerdTarief,
             'marge'                => $marge,

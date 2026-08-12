@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ namespace OCA\Shillinq\Guard;
  * `requires:` clauses (via the shared RegisterRequiresGuardAdapter — see
  * lib/Lifecycle/RegisterRequiresGuardAdapter.php).
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class Iv3XmlValidationGuard
 {
@@ -58,7 +58,7 @@ class Iv3XmlValidationGuard
      *
      * @return bool True when the export may be marked validated.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function requireValidXml(array $export): bool
     {

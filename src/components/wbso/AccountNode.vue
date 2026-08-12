@@ -6,7 +6,7 @@
  Each node displays the account number, name, type, and status, plus an
  expand/collapse toggle when it has children.
 
- @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-20
+ @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
 -->
 <template>
 	<li role="treeitem" class="wbso-account-node" :aria-expanded="hasChildren ? expanded : null">

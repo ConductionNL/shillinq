@@ -137,7 +137,7 @@ class CommitmentMaterialisationService
         $regelInputs = $this->buildRegelsFromPurchaseOrderLines(purchaseOrder: $purchaseOrder, lines: $lines);
 
         $tegenpartij = [
-            'kind'     => 'leverancier',
+            'kind'      => 'leverancier',
             'contactId' => (string) ($purchaseOrder['supplierId'] ?? ''),
         ];
 
@@ -180,7 +180,7 @@ class CommitmentMaterialisationService
         }
 
         $tegenpartij = [
-            'kind'     => $tegenpartijSoort,
+            'kind'      => $tegenpartijSoort,
             'contactId' => (string) ($contract['counterpartyReference'] ?? ''),
         ];
 
@@ -251,8 +251,8 @@ class CommitmentMaterialisationService
         $draft = [
             'administrationId'      => $administrationId,
             'verplichtingsnummer'   => $bronReferentie,
-            'sourceReference'        => $bronReferentie,
-            'kind'                 => $soort,
+            'sourceReference'       => $bronReferentie,
+            'kind'                  => $soort,
             'status'                => 'concept',
             'totaalbedrag_excl_btw' => $totaal,
             'tegenpartij'           => $tegenpartij,
@@ -345,9 +345,9 @@ class CommitmentMaterialisationService
             $key = $kostenplaats.'|'.$grootboek.'|'.$boekjaar;
             if (isset($grouped[$key]) === false) {
                 $grouped[$key] = [
-                    'costCentre'      => $kostenplaats,
+                    'costCentre'        => $kostenplaats,
                     'grootboekrekening' => $grootboek,
-                    'financialYear'          => $boekjaar,
+                    'financialYear'     => $boekjaar,
                     'amount_excl_vat'   => 0,
                 ];
             }
@@ -406,9 +406,9 @@ class CommitmentMaterialisationService
             }
 
             $regels[] = [
-                'costCentre'      => $kostenplaats,
+                'costCentre'        => $kostenplaats,
                 'grootboekrekening' => '',
-                'financialYear'          => $boekjaar,
+                'financialYear'     => $boekjaar,
                 'amount_excl_vat'   => $bedrag,
                 'programme'         => $this->resolveProgramma(
                     administrationId: $administrationId,
@@ -529,8 +529,8 @@ class CommitmentMaterialisationService
             schema: 'Budget',
             filters: [
                 'administrationId' => $administrationId,
-                'costCentre'     => $kostenplaats,
-                'financialYear'         => $boekjaar,
+                'costCentre'       => $kostenplaats,
+                'financialYear'    => $boekjaar,
             ]
         );
 
@@ -563,12 +563,12 @@ class CommitmentMaterialisationService
                 ->saveObject(
                     object: [
                         'administrationId'  => (string) ($draft['administrationId'] ?? ''),
-                        'commitment'      => (string) ($draft['verplichtingsnummer'] ?? ''),
+                        'commitment'        => (string) ($draft['verplichtingsnummer'] ?? ''),
                         'regelnummer'       => $regelnummer,
-                        'financialYear'          => (int) ($regel['financialYear'] ?? 0),
+                        'financialYear'     => (int) ($regel['financialYear'] ?? 0),
                         'amount_excl_vat'   => (int) ($regel['amount_excl_vat'] ?? 0),
                         'grootboekrekening' => (string) ($regel['grootboekrekening'] ?? ''),
-                        'costCentre'      => (string) ($regel['costCentre'] ?? ''),
+                        'costCentre'        => (string) ($regel['costCentre'] ?? ''),
                         'programme'         => (string) ($regel['programme'] ?? ''),
                         'restant_verplicht' => (int) ($regel['amount_excl_vat'] ?? 0),
                     ]
@@ -611,12 +611,12 @@ class CommitmentMaterialisationService
                     object: [
                         'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
                         'bevindingsnummer' => 'RV-'.($verplichting['verplichtingsnummer'] ?? '').'-OVERRIDE',
-                        'kind'            => 'fout',
+                        'kind'             => 'fout',
                         'criterium'        => 'begroting',
-                        'financialYear'         => $boekjaar,
+                        'financialYear'    => $boekjaar,
                         'programme'        => (string) ($first['programme'] ?? ''),
-                        'amount_error'      => $bedrag,
-                        'description'     => (string) ($verplichting['override_reason'] ?? ''),
+                        'amount_error'     => $bedrag,
+                        'description'      => (string) ($verplichting['override_reason'] ?? ''),
                         'oorzaak'          => sprintf(
                             'Verplichting %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
                             (string) ($verplichting['verplichtingsnummer'] ?? '')
@@ -652,8 +652,8 @@ class CommitmentMaterialisationService
             $payload = [
                 'eventName'           => self::EVENT_COMMITMENT_CREATED,
                 'verplichtingsnummer' => (string) ($verplichting['verplichtingsnummer'] ?? ''),
-                'sourceReference'      => (string) ($verplichting['sourceReference'] ?? ''),
-                'kind'               => (string) ($verplichting['kind'] ?? ''),
+                'sourceReference'     => (string) ($verplichting['sourceReference'] ?? ''),
+                'kind'                => (string) ($verplichting['kind'] ?? ''),
                 'administrationId'    => (string) ($verplichting['administrationId'] ?? ''),
                 'emittedAt'           => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
             ];

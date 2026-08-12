@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Orchestrates the PeriodClose lifecycle with server-side role enforcement.
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  */
 class PeriodCloseService
 {
@@ -106,7 +106,7 @@ class PeriodCloseService
      *
      * @return array<string,mixed>|null The record, or null when not found / out of scope.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function getPeriodForClose(string $periodId, string $administrationId): ?array
     {
@@ -130,7 +130,7 @@ class PeriodCloseService
      *
      * @throws PeriodCloseException On a forbidden / not-found / invalid-state error.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function startClose(string $periodId, string $administrationId, string $userId): array
     {
@@ -158,7 +158,7 @@ class PeriodCloseService
      *
      * @throws PeriodCloseException On a forbidden / not-found / invalid-state / validation error.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function closePeriod(string $periodId, string $administrationId, string $userId): array
     {
@@ -243,7 +243,7 @@ class PeriodCloseService
      *
      * @throws PeriodCloseException On a forbidden / not-found / invalid-state / validation error.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function reopenPeriod(string $periodId, string $administrationId, string $closeReason, string $userId): array
     {
@@ -301,7 +301,7 @@ class PeriodCloseService
      *
      * @throws PeriodCloseException On a forbidden / not-found / invalid-state error.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function lockForAudit(string $periodId, string $administrationId, string $userId): array
     {
@@ -329,7 +329,7 @@ class PeriodCloseService
      *
      * @return bool True when all mandatory items are resolved (or none exist).
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function mandatoryChecklistResolved(array $record): bool
     {
@@ -437,7 +437,7 @@ class PeriodCloseService
      *
      * @return bool True when authorised.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function hasRole(string $userId, string $role): bool
     {

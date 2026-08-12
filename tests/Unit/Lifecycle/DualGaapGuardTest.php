@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
+ * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

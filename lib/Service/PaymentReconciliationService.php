@@ -44,7 +44,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005, REQ-APL-006)
+ * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005, REQ-APL-006)
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-005)
  */
 
@@ -61,7 +61,7 @@ use Psr\Log\LoggerInterface;
  * Idempotent reconciliation of PaymentRequest AND DepositPayment records against
  * gateway outcomes through one shared code path.
  *
- * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005)
+ * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005)
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
  *     #506): inherent branch complexity in this domain logic; deferred
@@ -216,7 +216,7 @@ class PaymentReconciliationService
      *
      * @return array{result: string, schema: ?string} Result constant + which schema matched (or null).
      *
-     * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005, REQ-APL-006)
+     * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005, REQ-APL-006)
      * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-005)
      */
     public function reconcile(string $gateway, array $event): array
@@ -348,7 +348,7 @@ class PaymentReconciliationService
      *
      * @return array<string, mixed>|null The settled ARInvoice, or null to route to captured_unapplied.
      *
-     * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
+     * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
      */
     private function settleLinkedInvoice(object $objectService, string $registerSlug, array $request): ?array
     {
@@ -523,7 +523,7 @@ class PaymentReconciliationService
      *
      * @return array{scanned: int, reconciled: int} Counters for observability.
      *
-     * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
+     * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
      */
     public function pollPending(callable $statusProvider): array
     {

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

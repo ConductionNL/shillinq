@@ -38,7 +38,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use RuntimeException;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  */
 class MovingAverageValuationService
 {
@@ -98,7 +98,7 @@ class MovingAverageValuationService
      *
      * @return array<string,mixed> Result envelope.
      *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
+     * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
      */
     public function processStockMove(array $move): array
     {

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-7
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use RuntimeException;
 /**
  * Side-effect-free ACM report generator (REQ-WMO-006).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-7
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -65,7 +65,7 @@ class AcmReportGenerator
      *
      * @return array<string,mixed> ACMReport record matching the schema.
      *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-8
+     * @spec openspec/specs/shillinq-delegate-signing/spec.md
      */
     public function compose(array $input): array
     {
@@ -108,11 +108,11 @@ class AcmReportGenerator
                 'commercialActivityId' => $activityId,
                 'code'                 => $code,
                 'name'                 => $naam,
-                'revenue'                => $omzet,
+                'revenue'              => $omzet,
                 'integraleKostprijs'   => $integraleCost,
                 'kostendekkingsratio'  => $ratio,
                 'compliant'            => $compliant,
-                'abbReference'        => $abbReferentie,
+                'abbReference'         => $abbReferentie,
             ];
         }//end foreach
 
@@ -123,7 +123,7 @@ class AcmReportGenerator
             }
 
             $abbSummaries[] = [
-                'reference'           => (string) ($abb['reference'] ?? ''),
+                'reference'         => (string) ($abb['reference'] ?? ''),
                 'motiveringExcerpt' => mb_substr(trim((string) ($abb['motivering'] ?? '')), 0, 240),
             ];
         }

@@ -77,15 +77,15 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testValidMonthlyRentIsAccepted(): void
     {
         $recurring = [
-            'recurId'         => 'rec-huur',
-            'label'           => 'Huur kantoor',
+            'recurId'        => 'rec-huur',
+            'label'          => 'Huur kantoor',
             'category'       => 'RECURRING_HUUR',
-            'richting'        => 'OUT',
-            'frequentie'      => 'MAANDELIJKS',
-            'dagFromMonth'     => 1,
+            'richting'       => 'OUT',
+            'frequentie'     => 'MAANDELIJKS',
+            'dagFromMonth'   => 1,
             'standardAmount' => 850.0,
-            'indexatieRegel'  => 'FIXED',
-            'validFrom'       => '2024-09-01',
+            'indexatieRegel' => 'FIXED',
+            'validFrom'      => '2024-09-01',
         ];
 
         self::assertTrue($this->guard->validateOnSave($recurring));
@@ -100,16 +100,16 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testValidAnnualCpiInsuranceIsAccepted(): void
     {
         $recurring = [
-            'recurId'         => 'rec-bav',
-            'label'           => 'BAV-verzekering',
+            'recurId'        => 'rec-bav',
+            'label'          => 'BAV-verzekering',
             'category'       => 'RECURRING_VERZEKERING',
-            'richting'        => 'OUT',
-            'frequentie'      => 'JAARLIJKS',
+            'richting'       => 'OUT',
+            'frequentie'     => 'JAARLIJKS',
             'monthOfYear'    => 7,
-            'dagFromMonth'     => 1,
+            'dagFromMonth'   => 1,
             'standardAmount' => 620.0,
-            'indexatieRegel'  => 'CPI_AFGELOPEN_JAAR',
-            'validFrom'       => '2024-07-01',
+            'indexatieRegel' => 'CPI_AFGELOPEN_JAAR',
+            'validFrom'      => '2024-07-01',
         ];
 
         self::assertTrue($this->guard->validateOnSave($recurring));
@@ -124,11 +124,11 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testNegativeAmountIsDenied(): void
     {
         $recurring = [
-            'recurId'         => 'rec-neg',
-            'frequentie'      => 'MAANDELIJKS',
-            'dagFromMonth'     => 1,
+            'recurId'        => 'rec-neg',
+            'frequentie'     => 'MAANDELIJKS',
+            'dagFromMonth'   => 1,
             'standardAmount' => -100.0,
-            'validFrom'       => '2024-09-01',
+            'validFrom'      => '2024-09-01',
         ];
 
         self::assertFalse($this->guard->validateOnSave($recurring));
@@ -143,10 +143,10 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testMonthlyWithoutDayIsDenied(): void
     {
         $recurring = [
-            'recurId'         => 'rec-noday',
-            'frequentie'      => 'MAANDELIJKS',
+            'recurId'        => 'rec-noday',
+            'frequentie'     => 'MAANDELIJKS',
             'standardAmount' => 850.0,
-            'validFrom'       => '2024-09-01',
+            'validFrom'      => '2024-09-01',
         ];
 
         self::assertFalse($this->guard->validateOnSave($recurring));
@@ -161,11 +161,11 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testAnnualWithoutMonthIsDenied(): void
     {
         $recurring = [
-            'recurId'         => 'rec-nomonth',
-            'frequentie'      => 'JAARLIJKS',
-            'dagFromMonth'     => 1,
+            'recurId'        => 'rec-nomonth',
+            'frequentie'     => 'JAARLIJKS',
+            'dagFromMonth'   => 1,
             'standardAmount' => 620.0,
-            'validFrom'       => '2024-07-01',
+            'validFrom'      => '2024-07-01',
         ];
 
         self::assertFalse($this->guard->validateOnSave($recurring));
@@ -180,12 +180,12 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testValidityWindowReversedIsDenied(): void
     {
         $recurring = [
-            'recurId'         => 'rec-rev',
-            'frequentie'      => 'MAANDELIJKS',
-            'dagFromMonth'     => 1,
+            'recurId'        => 'rec-rev',
+            'frequentie'     => 'MAANDELIJKS',
+            'dagFromMonth'   => 1,
             'standardAmount' => 850.0,
-            'validFrom'       => '2026-09-01',
-            'validTo'       => '2024-09-01',
+            'validFrom'      => '2026-09-01',
+            'validTo'        => '2024-09-01',
         ];
 
         self::assertFalse($this->guard->validateOnSave($recurring));
@@ -200,11 +200,11 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testUnparseableGeldigVanIsDenied(): void
     {
         $recurring = [
-            'recurId'         => 'rec-bad',
-            'frequentie'      => 'MAANDELIJKS',
-            'dagFromMonth'     => 1,
+            'recurId'        => 'rec-bad',
+            'frequentie'     => 'MAANDELIJKS',
+            'dagFromMonth'   => 1,
             'standardAmount' => 850.0,
-            'validFrom'       => 'not-a-date',
+            'validFrom'      => 'not-a-date',
         ];
 
         self::assertFalse($this->guard->validateOnSave($recurring));
@@ -219,12 +219,12 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testCpiOnMonthlyIsDenied(): void
     {
         $recurring = [
-            'recurId'         => 'rec-cpi-monthly',
-            'frequentie'      => 'MAANDELIJKS',
-            'dagFromMonth'     => 1,
+            'recurId'        => 'rec-cpi-monthly',
+            'frequentie'     => 'MAANDELIJKS',
+            'dagFromMonth'   => 1,
             'standardAmount' => 850.0,
-            'indexatieRegel'  => 'CPI_AFGELOPEN_JAAR',
-            'validFrom'       => '2024-09-01',
+            'indexatieRegel' => 'CPI_AFGELOPEN_JAAR',
+            'validFrom'      => '2024-09-01',
         ];
 
         self::assertFalse($this->guard->validateOnSave($recurring));
@@ -239,10 +239,10 @@ final class CashflowRecurringGuardTest extends TestCase
     public function testIndefiniteWindowIsAccepted(): void
     {
         $recurring = [
-            'recurId'         => 'rec-indef',
-            'frequentie'      => 'WEKELIJKS',
+            'recurId'        => 'rec-indef',
+            'frequentie'     => 'WEKELIJKS',
             'standardAmount' => 200.0,
-            'validFrom'       => '2024-09-01',
+            'validFrom'      => '2024-09-01',
         ];
 
         self::assertTrue($this->guard->validateOnSave($recurring));

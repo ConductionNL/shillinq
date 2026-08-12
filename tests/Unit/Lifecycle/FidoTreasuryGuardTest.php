@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md
+ * @spec openspec/specs/bookkeeping-wet-fido-treasury/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

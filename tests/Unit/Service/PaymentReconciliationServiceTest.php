@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005)
+ * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005)
  */
 
 declare(strict_types=1);

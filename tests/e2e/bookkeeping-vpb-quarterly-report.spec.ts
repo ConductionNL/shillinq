@@ -31,7 +31,7 @@
  * aggregation, account-hierarchy grouping, untagged-posting flagging,
  * and net-taxable-income computation).
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-43
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 
 import { test, expect } from '@playwright/test'

@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class DocumentArchiveCron extends TimedJob
 {
@@ -101,7 +101,7 @@ class DocumentArchiveCron extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+     * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
      *     TimedJob::run()'s signature; this job takes no argument.

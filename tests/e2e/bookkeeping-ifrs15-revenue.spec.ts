@@ -23,7 +23,7 @@
  * XBRL exporter, both of which the implementing cycle wires once the register
  * fragment is imported into a running instance.
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#browser-tests
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  */
 
 import { test, expect } from '@playwright/test'

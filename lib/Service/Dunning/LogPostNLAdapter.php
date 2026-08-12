@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Default log-backed PostNL adapter.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class LogPostNLAdapter implements PostNLAdapterInterface
 {
@@ -52,7 +52,7 @@ class LogPostNLAdapter implements PostNLAdapterInterface
      *
      * @return DunningChannelSendResult The dispatch outcome.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function sendRegisteredLetter(array $payload): DunningChannelSendResult
     {

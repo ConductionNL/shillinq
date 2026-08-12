@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-36
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  * GET /api/tax-reports/{year}/{quarter} — quarterly Vpb statement.
  * GET /api/tax-reports/{year}            — annual Vpb summary.
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-36
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 class TaxReportController extends Controller
 {
@@ -98,7 +98,7 @@ class TaxReportController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-36
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     #[NoAdminRequired]
     public function quarter(string $year, string $quarter): JSONResponse
@@ -158,7 +158,7 @@ class TaxReportController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-25
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     #[NoAdminRequired]
     public function annual(string $year): JSONResponse

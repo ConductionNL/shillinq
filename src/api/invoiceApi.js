@@ -6,7 +6,7 @@
 // @nextcloud/axios + generateUrl so requests pick up the framework's
 // CSRF token and per-instance base URL.
 //
-// @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-21
+// @spec openspec/specs/invoice-from-time-and-expense/spec.md
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'

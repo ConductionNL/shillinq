@@ -20,7 +20,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag points
+ *  at no target rather than at an archived change directory, which cannot resolve.
  *
  * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  * The change directory it names was never committed, and the `reporting`
@@ -225,8 +226,8 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator
         foreach ($accounts as $account) {
             $type   = strtolower($this->str($account, 'accountType', 'type', 'category'));
             $bucket = match ($type) {
-                'revenue', 'income', 'opbrengsten', 'revenue' => 'revenue',
-                'expenses', 'expense', 'kosten', 'expenses' => 'expense',
+                'revenue', 'income', 'opbrengsten', 'baten' => 'revenue',
+                'expenses', 'expense', 'kosten', 'lasten' => 'expense',
                 default => null,
             };
 

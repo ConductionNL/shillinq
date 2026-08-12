@@ -5,7 +5,7 @@
  * Offline unit tests for the DeadlineCalendarSettings helpers
  * (compliance-deadline-calendar REQ-CDC-006).
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 
 import { describe, expect, it } from 'vitest'

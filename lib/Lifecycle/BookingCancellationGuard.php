@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-16
+ * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the cancellation (CWE-863).
  *
- * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-16
+ * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
  */
 class BookingCancellationGuard
 {
@@ -97,7 +97,7 @@ class BookingCancellationGuard
      *
      * @return bool True when the cancellation may proceed and a CreditNote materialise.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-27
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function canCancel(string $orderId, ?array $object=null): bool
     {
@@ -181,7 +181,7 @@ class BookingCancellationGuard
      *
      * @return array<string,mixed> The CreditNote field map.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-16
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function buildReversingCreditNote(array $invoice, string $creditDate, string $reason): array
     {
@@ -210,7 +210,7 @@ class BookingCancellationGuard
      *
      * @return bool True when an automatic refund must be initiated.
      *
-     * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-17
+     * @spec openspec/specs/bookings-deposit-to-invoice/spec.md
      */
     public function shouldAutoRefundDeposit(?array $deposit): bool
     {

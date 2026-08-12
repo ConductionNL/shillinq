@@ -192,7 +192,7 @@ class FoldIntoOrderTest extends TestCase
                             }
                         )
                     );
-                }
+                }//end if
 
                 $offset = (int) ($params['offset'] ?? 0);
                 if ($offset > 0) {
@@ -276,19 +276,19 @@ class FoldIntoOrderTest extends TestCase
             'id'                      => 'sub-1',
             'administrationId'        => 'adm-1',
             'direction'               => 'outgoing',
-            'subsidyNumber'          => 'SUB-2026-001',
+            'subsidyNumber'           => 'SUB-2026-001',
             'counterpartyName'        => 'Stichting Cultuur Almelo',
-            'schemeName'            => 'Subsidieregeling cultuur 2026',
-            'schemeArticle'         => 'Art. 3.1',
-            'requestDate'            => '2026-02-01',
-            'decisionDate'         => '2026-03-15',
+            'schemeName'              => 'Subsidieregeling cultuur 2026',
+            'schemeArticle'           => 'Art. 3.1',
+            'requestDate'             => '2026-02-01',
+            'decisionDate'            => '2026-03-15',
             'vaststellingDate'        => '2026-10-01',
-            'requestedAmount'       => 25000.0,
-            'grantedAmount'          => 20000.0,
-            'determinedAmount'       => 18500.0,
-            'paidOutAmount'        => 18500.0,
-            'reclaimedAmount'    => null,
-            'decisionUri'          => 'docudesk://x/verlening.pdf',
+            'requestedAmount'         => 25000.0,
+            'grantedAmount'           => 20000.0,
+            'determinedAmount'        => 18500.0,
+            'paidOutAmount'           => 18500.0,
+            'reclaimedAmount'         => null,
+            'decisionUri'             => 'docudesk://x/verlening.pdf',
             'vaststellingUri'         => null,
             'prestatieverantwoording' => 'Aangewend zoals beschreven.',
             'afwijzingsReden'         => null,
@@ -397,11 +397,11 @@ class FoldIntoOrderTest extends TestCase
         $opdracht = [
             'id'                  => 'dba-opdr-2026-0042',
             'administrationId'    => 'adm-1',
-            'enterpriseId'       => 'ond-nl-001234',
-            'customerId'             => 'klant-acme-bv',
-            'assignmentName'        => 'Backend ontwikkeling betaalmodule',
+            'enterpriseId'        => 'ond-nl-001234',
+            'customerId'          => 'klant-acme-bv',
+            'assignmentName'      => 'Backend ontwikkeling betaalmodule',
             'startDatum'          => '2026-03-01',
-            'expectedRevenue'      => 4800000,
+            'expectedRevenue'     => 4800000,
             'intakeStatus'        => 'ACTIEF',
             'risicoNiveau'        => 'LAAG_MIDDEN',
             'modelOvereenkomstId' => 'modov-bd-2024-tussenkomstvrij-v3',
@@ -439,7 +439,7 @@ class FoldIntoOrderTest extends TestCase
     public function testSkipsAlreadyFoldedRows(): void
     {
         $subsidie      = [
-            'id'             => 'sub-2',
+            'id'            => 'sub-2',
             'subsidyNumber' => 'SUB-2026-002',
         ];
         $alreadyFolded = [
@@ -450,8 +450,8 @@ class FoldIntoOrderTest extends TestCase
 
         $fakeOs = $this->fakeObjectService(
             [
-                'Subsidie'        => [$subsidie],
-                'OrderPrimitive'  => [$alreadyFolded],
+                'Subsidie'       => [$subsidie],
+                'OrderPrimitive' => [$alreadyFolded],
             ]
         );
         $this->container->method('get')->willReturn($fakeOs);
@@ -506,15 +506,15 @@ class FoldIntoOrderTest extends TestCase
         $subsidies = [];
         for ($i = 0; $i < $total; $i++) {
             $subsidies[] = [
-                'id'                => 'sub-'.$i,
-                'administrationId'  => 'adm-1',
-                'direction'         => 'outgoing',
+                'id'               => 'sub-'.$i,
+                'administrationId' => 'adm-1',
+                'direction'        => 'outgoing',
                 'subsidyNumber'    => sprintf('SUB-2026-%04d', $i),
-                'counterpartyName'  => 'Stichting '.$i,
-                'requestedAmount' => 1000.0,
+                'counterpartyName' => 'Stichting '.$i,
+                'requestedAmount'  => 1000.0,
                 'grantedAmount'    => 900.0,
-                'state'             => 'verleend',
-                'currency'          => 'EUR',
+                'state'            => 'verleend',
+                'currency'         => 'EUR',
             ];
         }
 
@@ -555,15 +555,15 @@ class FoldIntoOrderTest extends TestCase
     public function testFoldsRowsDeliveredAsObjectEntities(): void
     {
         $payload = [
-            'id'                => 'sub-obj-1',
-            'administrationId'  => 'adm-1',
-            'direction'         => 'outgoing',
+            'id'               => 'sub-obj-1',
+            'administrationId' => 'adm-1',
+            'direction'        => 'outgoing',
             'subsidyNumber'    => 'SUB-2026-777',
-            'counterpartyName'  => 'Stichting Entity',
-            'requestedAmount' => 5000.0,
+            'counterpartyName' => 'Stichting Entity',
+            'requestedAmount'  => 5000.0,
             'grantedAmount'    => 4500.0,
-            'state'             => 'verleend',
-            'currency'          => 'EUR',
+            'state'            => 'verleend',
+            'currency'         => 'EUR',
         ];
 
         $entity = new class($payload) {
@@ -641,22 +641,22 @@ class FoldIntoOrderTest extends TestCase
                     'id'               => 'sub-idem-1',
                     'administrationId' => 'adm-1',
                     'direction'        => 'outgoing',
-                    'subsidyNumber'   => 'SUB-IDEM-1',
+                    'subsidyNumber'    => 'SUB-IDEM-1',
                     'counterpartyName' => 'Stichting Idem',
-                    'grantedAmount'   => 100.0,
+                    'grantedAmount'    => 100.0,
                     'state'            => 'verleend',
                     'currency'         => 'EUR',
                 ],
             ],
             'DBAOpdracht' => [
                 [
-                    'id'            => 'dba-idem-1',
-                    'enterpriseId' => 'onp-1',
-                    'customerId'       => 'kl-1',
-                    'assignmentName'  => 'Opdracht Idem',
-                    'startDatum'    => '2026-02-01',
-                    'intakeStatus'  => 'ACTIEF',
-                    'risicoNiveau'  => 'LAAG',
+                    'id'             => 'dba-idem-1',
+                    'enterpriseId'   => 'onp-1',
+                    'customerId'     => 'kl-1',
+                    'assignmentName' => 'Opdracht Idem',
+                    'startDatum'     => '2026-02-01',
+                    'intakeStatus'   => 'ACTIEF',
+                    'risicoNiveau'   => 'LAAG',
                 ],
             ],
         ];

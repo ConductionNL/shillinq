@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for BookingNotificationService.
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-16
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 class BookingNotificationServiceTest extends TestCase
 {
@@ -91,7 +91,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testRenderTemplateSubstitutesBookingVariables(): void
     {
@@ -121,7 +121,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testRenderTemplateMissingVariableRendersEmpty(): void
     {
@@ -145,7 +145,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testRenderTemplateSubstitutesRecipientVariables(): void
     {
@@ -169,7 +169,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-3
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testRenderTemplateSystemAppName(): void
     {
@@ -189,7 +189,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testEvaluateConditionTrueReturnsTrue(): void
     {
@@ -202,7 +202,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testEvaluateConditionEmptyReturnsTrue(): void
     {
@@ -215,7 +215,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testEvaluateConditionFalseReturnsFalse(): void
     {
@@ -228,7 +228,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testEvaluateConditionStringEquality(): void
     {
@@ -252,7 +252,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testEvaluateConditionNumericGreaterThan(): void
     {
@@ -274,7 +274,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testEvaluateRecipientRulesSkipsWhenConditionFalse(): void
     {
@@ -292,7 +292,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-4
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testEvaluateRecipientRulesIncludesWhenConditionTrue(): void
     {
@@ -311,7 +311,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-9
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testIsRateLimitedReturnsFalseOnServiceError(): void
     {
@@ -336,7 +336,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-9
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testIsRateLimitedReturnsFalseForEmptyIds(): void
     {
@@ -349,7 +349,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-9
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testIsDuplicateReturnsFalseOnServiceError(): void
     {
@@ -375,7 +375,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-13
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testIsOptedOutReturnsFalseOnServiceError(): void
     {
@@ -400,7 +400,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-13
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testIsOptedOutReturnsFalseWhenNoRecord(): void
     {
@@ -431,7 +431,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-5
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testSendViaOpenconnectorReturnsFalseOnException(): void
     {
@@ -459,7 +459,7 @@ class BookingNotificationServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-8
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function testRecordAuditTrailLogsErrorOnServiceThrow(): void
     {

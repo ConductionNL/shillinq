@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Pure arithmetic + classification helper for intercompany matching.
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  */
 class IntercompanyMatchingCalculator
 {
@@ -45,7 +45,7 @@ class IntercompanyMatchingCalculator
      *
      * @return int The amount in integer cents.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function toCents(float $amount): int
     {
@@ -60,7 +60,7 @@ class IntercompanyMatchingCalculator
      *
      * @return float The amount in major units, rounded to 2 decimals.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -80,7 +80,7 @@ class IntercompanyMatchingCalculator
      *
      * @return int The net side amount in integer cents (reporting currency).
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function sumSideCents(array $transactions, array $rates=[]): int
     {
@@ -105,7 +105,7 @@ class IntercompanyMatchingCalculator
      *
      * @return int The mismatch (A - B) in cents.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function mismatchCents(int $totalACents, int $totalBCents): int
     {
@@ -121,7 +121,7 @@ class IntercompanyMatchingCalculator
      *
      * @return float The relative mismatch in percent (0 when both sides are zero).
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function mismatchPercentage(int $totalACents, int $totalBCents): float
     {
@@ -146,7 +146,7 @@ class IntercompanyMatchingCalculator
      *
      * @return bool True when the mismatch is within tolerance.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function isWithinTolerance(
         int $mismatchCents,
@@ -182,7 +182,7 @@ class IntercompanyMatchingCalculator
      *
      * @return string The match status.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function matchStatus(int $totalACents, int $totalBCents, bool $withinTolerance): string
     {
@@ -214,7 +214,7 @@ class IntercompanyMatchingCalculator
      *
      * @return float The converted amount in major units, rounded to 2 decimals.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function convert(float $amount, float $rate): float
     {
@@ -238,7 +238,7 @@ class IntercompanyMatchingCalculator
      *
      * @return array{lines: array<int,array<string,mixed>>, totalDebit: float, totalCredit: float}
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function buildEliminationLines(
         int $totalACents,
@@ -285,7 +285,7 @@ class IntercompanyMatchingCalculator
      *
      * @return string The cause classification enum value.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function defaultCauseClassification(bool $currencyDiff): string
     {

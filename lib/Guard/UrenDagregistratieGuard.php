@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the save (CWE-863).
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  */
 class UrenDagregistratieGuard
 {
@@ -94,7 +94,7 @@ class UrenDagregistratieGuard
      *
      * @return bool True when the record may be saved.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function validateOnSave(array $entry): bool
     {
@@ -109,7 +109,7 @@ class UrenDagregistratieGuard
                 'UrenDagregistratieGuard: validateOnSave failed — denying save (fail-closed)',
                 [
                     'enterpriseId' => ($entry['enterpriseId'] ?? 'unknown'),
-                    'exception'     => $e->getMessage(),
+                    'exception'    => $e->getMessage(),
                 ]
             );
             return false;
@@ -130,7 +130,7 @@ class UrenDagregistratieGuard
      *
      * @return array{getoldeUren: float, capNotitie: ?string} Counted hours + note.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function pasReistijdCapToe(string $categorie, float $uren): array
     {
@@ -161,7 +161,7 @@ class UrenDagregistratieGuard
      * @return string|null "Backfill T+N dagen" when registered after the work date,
      *                     or null when registered on the same day or earlier.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bepaalBackfillLabel(string $datum, string $registratieMoment): ?string
     {

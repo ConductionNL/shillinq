@@ -69,6 +69,10 @@ class ENSIAXmlExporter
      * @param array<string,mixed> $cyclus The ENSIAJaarcyclus record.
      *
      * @return bool True when export is permitted.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function canExport(array $cyclus): bool
     {
@@ -90,6 +94,10 @@ class ENSIAXmlExporter
      * @param string|null                    $submittedAt Optional submission timestamp override; defaults to now.
      *
      * @return string The XML string.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function render(array $cyclus, array $vragen, ?string $submittedAt=null): string
     {

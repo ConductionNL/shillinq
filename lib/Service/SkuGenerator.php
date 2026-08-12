@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-11
+ * @spec openspec/specs/inventory-barcode-sku/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -69,7 +69,7 @@ class SkuGenerator
      *
      * @throws \InvalidArgumentException When the template is unknown or malformed.
      *
-     * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-11
+     * @spec openspec/specs/inventory-barcode-sku/spec.md
      */
     public function generate(array $item, string $templateId): string
     {

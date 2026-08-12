@@ -18,7 +18,7 @@
  * that silently does not stick) is caught. The spec also opens the shillinq
  * SPA so the journey is anchored to a real authenticated app session.
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md
  */
 
 import { test, expect, request as pwRequest } from '@playwright/test'

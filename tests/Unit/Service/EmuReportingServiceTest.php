@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 
 declare(strict_types=1);
@@ -151,7 +151,7 @@ class EmuReportingServiceTest extends TestCase
             ['categorieEurostat' => 'AF.2-deposits', 'uitstaandeSchuld' => 2100000.0, 'teltMeeInEmuDebt' => true],
             ['categorieEurostat' => 'AF.7-derivatives', 'uitstaandeSchuld' => 800000.0, 'teltMeeInEmuDebt' => false],
         ];
-        $result = $this->service->computeBrutoSchuld($positions);
+        $result    = $this->service->computeBrutoSchuld($positions);
 
         self::assertSame(20850000.0, $result['gross']);
         self::assertArrayHasKey('AF.4-loans', $result['perCategory']);
@@ -209,7 +209,7 @@ class EmuReportingServiceTest extends TestCase
             ['amount' => 450000.0, 'type' => 'c'],
             ['amount' => 10000.0, 'type' => 'd'],
         ];
-        $top = $this->service->topContributors($adjustments, 3);
+        $top         = $this->service->topContributors($adjustments, 3);
         self::assertCount(3, $top);
         self::assertSame('b', $top[0]['type']);
         self::assertSame('c', $top[1]['type']);
@@ -242,7 +242,7 @@ class EmuReportingServiceTest extends TestCase
         $adjustments = [
             ['amount' => 6500000.0, 'richting' => 'saldo-verlagend'],
         ];
-        $result = $this->service->reconcile(4200000.0, $adjustments, [-575000.0, -575000.0, -575000.0, -575000.0]);
+        $result      = $this->service->reconcile(4200000.0, $adjustments, [-575000.0, -575000.0, -575000.0, -575000.0]);
         self::assertSame('geslaagd', $result['controle']);
         self::assertSame(0.0, $result['verschil']);
         self::assertSame(-6500000.0, $result['totaleAdjustments']);
@@ -320,7 +320,7 @@ class EmuReportingServiceTest extends TestCase
             ['type' => 'toevoeging-bruto-investering', 'richting' => 'saldo-verlagend', 'amount' => 820000.0],
             ['type' => 'eliminatie-voorzieningdotatie', 'richting' => 'saldo-verhogend', 'amount' => 450000.0],
         ];
-        $rows = $this->service->renderCbsTussenregels(4200000.0, $adjustments, -2300000.0);
+        $rows        = $this->service->renderCbsTussenregels(4200000.0, $adjustments, -2300000.0);
         self::assertCount(10, $rows);
         // Regel 1 = BBV saldo, Regel 10 = EMU-saldo.
         self::assertSame(1, $rows[0]['regel']);
@@ -372,7 +372,7 @@ class EmuReportingServiceTest extends TestCase
             '4'    => ['hoofdstuk' => 'X', 'functie' => '000', 'category' => '0.0.0'],
             '4801' => ['hoofdstuk' => '4', 'functie' => '420', 'category' => '3.5.1'],
         ];
-        $iv3 = $this->service->mapIv3Classification(item: ['accountNumber' => '4801000'], accountMap: $accountMap);
+        $iv3        = $this->service->mapIv3Classification(item: ['accountNumber' => '4801000'], accountMap: $accountMap);
         self::assertSame('4', $iv3['hoofdstuk']);
         self::assertSame('420', $iv3['functie']);
     }//end testMapIv3AccountPrefixLongestWins()

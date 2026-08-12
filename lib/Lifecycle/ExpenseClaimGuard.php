@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+ * @spec openspec/specs/expense-capture-core/spec.md
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
  * - transitions.submit.requires → requireCostCentresAndItems
  * - transitions.post.requires   → requireOpenPeriodAndCostCentres
  *
- * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+ * @spec openspec/specs/expense-capture-core/spec.md
  */
 class ExpenseClaimGuard
 {
@@ -88,7 +88,7 @@ class ExpenseClaimGuard
      *
      * @return bool True when the claim may be submitted.
      *
-     * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+     * @spec openspec/specs/expense-capture-core/spec.md
      */
     public function requireCostCentresAndItems(array $claim): bool
     {
@@ -137,7 +137,7 @@ class ExpenseClaimGuard
      *
      * @return bool True when the claim may be posted.
      *
-     * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+     * @spec openspec/specs/expense-capture-core/spec.md
      */
     public function requireOpenPeriodAndCostCentres(array $claim): bool
     {
@@ -181,7 +181,7 @@ class ExpenseClaimGuard
      *
      * @return bool True when all items have costCentreCode.
      *
-     * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+     * @spec openspec/specs/expense-capture-core/spec.md
      */
     private function allItemsHaveCostCentres(
         string $claimId,
@@ -232,7 +232,7 @@ class ExpenseClaimGuard
      *
      * @return bool True when the fiscal period is open (or not yet seeded).
      *
-     * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+     * @spec openspec/specs/expense-capture-core/spec.md
      */
     private function isFiscalPeriodOpen(array $claim): bool
     {

@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-3
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Psr\Log\LoggerInterface;
  * Referenced from the bookkeeping-period-close register fragment:
  * GLTransaction.post.preconditions and PeriodClose.{close,reopen}.preconditions.
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-3
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  */
 class PeriodCloseGuard
 {
@@ -109,7 +109,7 @@ class PeriodCloseGuard
      *
      * @return bool True when the posting may proceed.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-4
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function periodOpen(array | string $transaction): bool
     {
@@ -160,7 +160,7 @@ class PeriodCloseGuard
      *
      * @return bool True when the period's trial balance verifies.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function trialBalanceVerifies(array | string $period): bool
     {
@@ -226,7 +226,7 @@ class PeriodCloseGuard
      *
      * @return bool True when the period may transition to closed.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function mandatoryChecklistResolved(array | string $period): bool
     {
@@ -331,7 +331,7 @@ class PeriodCloseGuard
      *
      * @return bool True when the reopen may proceed.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     public function closeReasonSupplied(array | string $period): bool
     {

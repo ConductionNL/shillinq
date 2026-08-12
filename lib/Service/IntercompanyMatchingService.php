@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-15
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Orchestrating service for the intercompany elimination engine.
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-15
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  */
 class IntercompanyMatchingService
 {
@@ -110,7 +110,7 @@ class IntercompanyMatchingService
      *
      * @return array{detectionMethod:string,detectionConfidence:string,counterpartyEntityId:?string}
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The explicit-mark flag is an
      * intrinsic detection input (REQ-ICE-002 explicitly-marked path); splitting it
@@ -198,7 +198,7 @@ class IntercompanyMatchingService
      *
      * @return array<string,mixed> The persisted match payload.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function matchRelationPeriod(string $relationId, string $periodId, array $rates=[]): array
     {
@@ -327,7 +327,7 @@ class IntercompanyMatchingService
      *
      * @return array{sideA:array<int,array<string,mixed>>,sideB:array<int,array<string,mixed>>,idsA:array<int,string>,idsB:array<int,string>,hasFx:bool}
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     private function splitSides(array $transactions, string $entityAId, string $entityBId): array
     {
@@ -375,7 +375,7 @@ class IntercompanyMatchingService
      *
      * @return array<string,mixed> The persisted elimination payload.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     private function generateElimination(array $match, array $relation, int $totalACents, int $totalBCents): array
     {
@@ -426,7 +426,7 @@ class IntercompanyMatchingService
      *
      * @return array<string,mixed> The persisted mismatch payload.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     private function raiseMismatch(array $match, bool $hasFx): array
     {
@@ -472,7 +472,7 @@ class IntercompanyMatchingService
      *
      * @return bool True when the roll-forward is consistent.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function isRollForwardConsistent(string $relationId, string $priorPeriodId, string $currentPeriodId): bool
     {

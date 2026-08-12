@@ -26,7 +26,7 @@
  * administrations to show a card for.
  *
  * @e2e accountant-portal::dashboard-lists-granted-client-administrations
- * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md#req-acp-002
+ * @spec openspec/specs/accountant-portal/spec.md
  */
 
 import { test, expect } from '@playwright/test'

@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any lookup exception denies `receive`.
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class APGuard
 {
@@ -75,7 +75,7 @@ class APGuard
      * @return bool True when no other APTransaction for the same vendor+administration
      *              already carries this invoice number.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function isInvoiceNumberUnique(array $transaction): bool
     {
@@ -138,7 +138,7 @@ class APGuard
      *
      * @return bool True when the write-off may proceed.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function requireWriteOffReason(array $transaction): bool
     {

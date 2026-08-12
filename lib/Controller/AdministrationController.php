@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use RuntimeException;
 /**
  * Administratie context + switcher + export-scope API.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  */
 class AdministrationController extends Controller
 {
@@ -83,7 +83,7 @@ class AdministrationController extends Controller
      * @return JSONResponse 200 with { userId, administrations[], activeAdministrationId };
      *                      401 when no user is authenticated.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     #[NoAdminRequired]
     public function context(): JSONResponse
@@ -115,7 +115,7 @@ class AdministrationController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     #[NoAdminRequired]
     public function switch(): JSONResponse
@@ -160,7 +160,7 @@ class AdministrationController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     #[NoAdminRequired]
     public function exportScope(string $id): JSONResponse
@@ -220,7 +220,7 @@ class AdministrationController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     #[NoAdminRequired]
     public function writableStatus(string $id): JSONResponse

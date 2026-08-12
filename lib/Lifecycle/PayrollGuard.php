@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\PayrollGuard::canCalculate and transitions.issue.requires
  * as OCA\Shillinq\Lifecycle\PayrollGuard::canIssue.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
 class PayrollGuard
 {
@@ -93,7 +93,7 @@ class PayrollGuard
      *
      * @return bool True when the payroll may be calculated.
      *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
      */
     public function canCalculate(string $payrollId, ?array $object=null): bool
     {
@@ -141,7 +141,7 @@ class PayrollGuard
      *
      * @return bool True when the payroll may be issued.
      *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
      */
     public function canIssue(string $payrollId, ?array $object=null): bool
     {

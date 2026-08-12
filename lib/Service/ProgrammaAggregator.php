@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Pure calculator that rolls up a Programma's totals from its Taakvelden.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class ProgrammaAggregator
 {
@@ -48,9 +48,9 @@ class ProgrammaAggregator
      * @param array<int,array<string,mixed>> $taakvelden       The child Taakveld rows.
      * @param float                          $mutatiesReserves The reserve mutation (positive = toevoeging).
      *
-     * @return array{batenTotaal:float,lastenTotaal:float,saldoVoorMutaties:float,saldoNaMutaties:float}
+     * @return array{revenueTotal:float,expensesTotal:float,balanceBeforeMovements:float,balanceAfterMovements:float}
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function aggregate(array $taakvelden, float $mutatiesReserves=0.0): array
     {
@@ -66,10 +66,10 @@ class ProgrammaAggregator
         $saldoNaCents   = ($saldoVoorCents + $mutatiesCents);
 
         return [
-            'revenueTotal'       => (float) ($batenCents / 100),
-            'expensesTotal'      => (float) ($lastenCents / 100),
+            'revenueTotal'           => (float) ($batenCents / 100),
+            'expensesTotal'          => (float) ($lastenCents / 100),
             'balanceBeforeMovements' => (float) ($saldoVoorCents / 100),
-            'balanceAfterMovements'   => (float) ($saldoNaCents / 100),
+            'balanceAfterMovements'  => (float) ($saldoNaCents / 100),
         ];
 
     }//end aggregate()

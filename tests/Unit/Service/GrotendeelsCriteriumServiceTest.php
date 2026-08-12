@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,8 +32,6 @@ use Psr\Log\LoggerInterface;
  */
 final class GrotendeelsCriteriumServiceTest extends TestCase
 {
-
-
     /**
      * Build a service with a real guard.
      *
@@ -46,7 +44,6 @@ final class GrotendeelsCriteriumServiceTest extends TestCase
         return new GrotendeelsCriteriumService(guard: $guard, logger: $logger);
 
     }//end build()
-
 
     /**
      * telOndernemingsUren sums getoldeUren (preferring it over uren).
@@ -67,7 +64,6 @@ final class GrotendeelsCriteriumServiceTest extends TestCase
         self::assertSame(14.0, $totaal);
 
     }//end testTelOndernemingsUrenPrefersGetoldeUren()
-
 
     /**
      * telOndernemingsUren tolerates non-array entries (graceful for streaming feeds).
@@ -90,7 +86,6 @@ final class GrotendeelsCriteriumServiceTest extends TestCase
 
     }//end testTelOndernemingsUrenIgnoresNonArrayEntries()
 
-
     /**
      * No loondienst yields NIET_TOEPASSELIJK regardless of onderneming hours.
      *
@@ -107,7 +102,6 @@ final class GrotendeelsCriteriumServiceTest extends TestCase
         self::assertFalse($patch['blokkeertZelfstandigenaftrek']);
 
     }//end testNoLoondienstYieldsNietToepasselijk()
-
 
     /**
      * Onderneming >50% yields GROTENDEELS_ONDERNEMING (does not block aftrek).
@@ -126,7 +120,6 @@ final class GrotendeelsCriteriumServiceTest extends TestCase
 
     }//end testGrotendeelsOndernemingDoesNotBlockAftrek()
 
-
     /**
      * Loondienst-majority blocks the zelfstandigenaftrek (REQ-URC-007).
      *
@@ -144,7 +137,6 @@ final class GrotendeelsCriteriumServiceTest extends TestCase
 
     }//end testLoondienstMajorityBlocksAftrek()
 
-
     /**
      * Equal onderneming + loondienst hours (50/50) is NOT grotendeels (>50 required).
      *
@@ -160,6 +152,4 @@ final class GrotendeelsCriteriumServiceTest extends TestCase
         self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
 
     }//end testFiftyFiftyIsNietGrotendeels()
-
-
 }//end class

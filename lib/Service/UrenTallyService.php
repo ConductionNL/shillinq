@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Aggregates UrenDagregistratie into a per-day total with the reistijd-cap applied.
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  */
 final class UrenTallyService
 {
@@ -77,14 +77,14 @@ final class UrenTallyService
      * Returns:
      *  - totaalUren: float — sum of counted hours after cap and category filter.
      *  - perCategorie: array<string, float> — counted hours per category.
-     *  - overages: array<int, array{categorie: string, ingevoerd: float, geteld: float, notitie: string}>
+     *  - overages: array<int, array{category: string, ingevoerd: float, geteld: float, notitie: string}>
      *    — entries whose hours exceeded a category cap.
      *
      * @param array<int, array<string, mixed>> $entries Day entries.
      *
-     * @return array{totaalUren: float, perCategorie: array<string, float>, overages: array<int, array<string, mixed>>}
+     * @return array{totalHours: float, perCategory: array<string, float>, overages: array<int, array<string, mixed>>}
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function tallyDag(array $entries): array
     {
@@ -112,7 +112,7 @@ final class UrenTallyService
 
             if ($notitie !== null) {
                 $overages[] = [
-                    'category' => $categorie,
+                    'category'  => $categorie,
                     'ingevoerd' => $uren,
                     'geteld'    => $geteld,
                     'notitie'   => $notitie,
@@ -121,9 +121,9 @@ final class UrenTallyService
         }//end foreach
 
         return [
-            'totalHours'   => $totaal,
+            'totalHours'  => $totaal,
             'perCategory' => $perCategorie,
-            'overages'     => $overages,
+            'overages'    => $overages,
         ];
 
     }//end tallyDag()
@@ -138,9 +138,9 @@ final class UrenTallyService
      * @param array<int, array<string, mixed>> $entries YTD entries.
      * @param string                           $now     ISO-8601 berekendOp timestamp.
      *
-     * @return array{lopendeUren: float, berekendOp: string}
+     * @return array{lopendeUren: float, calculatedOn: string}
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function tallyYearToDate(array $entries, string $now): array
     {
@@ -166,8 +166,8 @@ final class UrenTallyService
         );
 
         return [
-            'lopendeUren' => $totaal,
-            'calculatedOn'  => $now,
+            'lopendeUren'  => $totaal,
+            'calculatedOn' => $now,
         ];
 
     }//end tallyYearToDate()

@@ -28,7 +28,7 @@
  * resets a deep-link to the dashboard, by clicking the "External Connections"
  * nav node — the reliable in-app path documented for the Conduction SPAs.
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
 
 import { test, expect, type Page, type ConsoleMessage } from '@playwright/test'

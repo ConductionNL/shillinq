@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Generates UrenAlert records from UrencriteriumYear state transitions and quarter-end dates.
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -87,7 +87,7 @@ final class UrenAlertService
      *
      * @return bool
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function isKwartaalEinde(string $datum): bool
     {
@@ -105,7 +105,7 @@ final class UrenAlertService
      *
      * @return bool
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function isOmslag(string $oldStatus, string $newStatus): bool
     {
@@ -127,7 +127,7 @@ final class UrenAlertService
      *
      * @return array<string, mixed> UrenAlert shape.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bouwKwartaalAlert(array $year, string $datum): array
     {
@@ -149,8 +149,8 @@ final class UrenAlertService
         $this->logger->info(
             'UrenAlertService: quarter-end alert built',
             [
-                'enterpriseId' => $alert['enterpriseId'],
-                'datum'         => $datum,
+                'enterpriseId'    => $alert['enterpriseId'],
+                'datum'           => $datum,
                 'thresholdStatus' => ($year['thresholdStatus'] ?? null),
             ]
         );
@@ -168,7 +168,7 @@ final class UrenAlertService
      *
      * @return array<string, mixed> UrenAlert shape.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bouwOmslagAlert(array $year, string $oldStatus, string $newStatus): array
     {
@@ -271,15 +271,15 @@ final class UrenAlertService
         $tekort   = max(0.0, ($norm - $prognose));
 
         return [
-            'administrationId'  => (string) ($year['administrationId'] ?? ''),
+            'administrationId' => (string) ($year['administrationId'] ?? ''),
             'enterpriseId'     => (string) ($year['enterpriseId'] ?? ''),
-            'type'              => $type,
-            'urgentie'          => $urgentie,
-            'aanleidingDatum'   => $aanleidingDatum,
-            'lopendeUren'       => (float) ($year['lopendeUren'] ?? 0),
-            'norm'              => $norm,
-            'forecastYearEnd' => $prognose,
-            'tekort'            => $tekort,
+            'type'             => $type,
+            'urgentie'         => $urgentie,
+            'aanleidingDatum'  => $aanleidingDatum,
+            'lopendeUren'      => (float) ($year['lopendeUren'] ?? 0),
+            'norm'             => $norm,
+            'forecastYearEnd'  => $prognose,
+            'tekort'           => $tekort,
         ];
 
     }//end seedAlert()

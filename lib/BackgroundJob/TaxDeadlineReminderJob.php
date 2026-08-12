@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Runs once per day and dispatches due Vpb deadline reminders (REQ-VPB-013).
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 class TaxDeadlineReminderJob extends TimedJob
 {
@@ -64,7 +64,7 @@ class TaxDeadlineReminderJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

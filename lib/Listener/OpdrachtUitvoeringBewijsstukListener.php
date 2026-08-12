@@ -179,7 +179,7 @@ class OpdrachtUitvoeringBewijsstukListener implements IEventListener
             'Shillinq: refused an OpdrachtUitvoering write into `completed` without a bewijsstuk (REQ-004)',
             [
                 'commitmentId' => ($data['commitmentId'] ?? 'unknown'),
-                'mijlpaalId'     => ($data['mijlpaalId'] ?? 'unknown'),
+                'mijlpaalId'   => ($data['mijlpaalId'] ?? 'unknown'),
             ]
         );
 

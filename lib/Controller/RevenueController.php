@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period.
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  */
 class RevenueController extends Controller
 {
@@ -91,7 +91,7 @@ class RevenueController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     #[NoAdminRequired]
     public function cutoff(): JSONResponse

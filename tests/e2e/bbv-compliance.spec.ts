@@ -18,7 +18,7 @@
  * non-BBV tenants hide the Overheid menu entirely (manifest
  * `visibility.administrationType`), in which case the specs are skipped.
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/tasks.md (Tasks 5.13-5.19)
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (Tasks 5.13-5.19)
  */
 
 import { test, expect, type Page } from '@playwright/test'

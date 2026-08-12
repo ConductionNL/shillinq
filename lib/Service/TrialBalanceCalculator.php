@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
  * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
  * name; the archived REQ-TB-008 that mandates it was never canonical.
  *
@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Service;
  * arrays/scalars so the logic is unit-testable in isolation. TrialBalanceService
  * wires this helper to live GL + Account data.
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
  * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
  * name; the archived REQ-TB-008 that mandates it was never canonical.
  */
@@ -52,7 +52,7 @@ class TrialBalanceCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
      * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
      * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
@@ -69,7 +69,7 @@ class TrialBalanceCalculator
      *
      * @return float Money amount.
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
      * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
      * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
@@ -90,7 +90,7 @@ class TrialBalanceCalculator
      *
      * @return int Closing balance in cents.
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
      * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
      * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
@@ -113,7 +113,7 @@ class TrialBalanceCalculator
      *
      * @return int Opening balance in cents (zero when no prior row exists).
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
      * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
      * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
@@ -142,7 +142,7 @@ class TrialBalanceCalculator
      *
      * @return array<string,int> accountNumber => rolled-up closing balance in cents.
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
      * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
      * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
@@ -189,7 +189,7 @@ class TrialBalanceCalculator
      *
      * @return bool True when summed debits equal summed credits.
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
      * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
      * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
@@ -217,7 +217,7 @@ class TrialBalanceCalculator
      * @return array<string,float> Totals: totalAssets, totalLiabilities, totalEquity,
      *                             totalRevenue, totalExpenses, totalDebit, totalCredit.
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
      * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
      * name; the archived REQ-TB-008 that mandates it was never canonical.
      */

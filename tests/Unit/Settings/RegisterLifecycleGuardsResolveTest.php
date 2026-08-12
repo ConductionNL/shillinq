@@ -13,7 +13,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-4
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -189,7 +189,7 @@ final class RegisterLifecycleGuardsResolveTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-4
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function testEveryFqcnShapedLifecycleRequiresResolves(): void
     {

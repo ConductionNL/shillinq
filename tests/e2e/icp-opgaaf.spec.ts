@@ -24,7 +24,7 @@
  * cycle wires those once the live instance has the upstream services. No
  * @e2e scenario tags are emitted by this smoke.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 
 import { test, expect } from '@playwright/test'

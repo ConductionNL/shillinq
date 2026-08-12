@@ -22,8 +22,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-15
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Lifecycle precondition guard for DunningRun.execute.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class DunningRunExecuteGuard
 {
@@ -75,7 +75,7 @@ class DunningRunExecuteGuard
      *
      * @return bool True when execution is allowed.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function canExecute(string $runId): bool
     {

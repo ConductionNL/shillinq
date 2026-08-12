@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-12
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -71,7 +71,7 @@ class ConfirmationMailer
      *
      * @return bool True when handed off to a channel, false otherwise.
      *
-     * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-12
+     * @spec openspec/specs/bookings-confirm-flow/spec.md
      */
     public function send(array $appointment, string $rawToken): bool
     {

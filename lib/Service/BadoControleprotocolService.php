@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Psr\Log\LoggerInterface;
  * ObjectService which enforces multitenancy / RBAC so no cross-organisation
  * audit data leaks.
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * ADR-031 exception-path host bundling the 5 lifecycle preconditions + the
@@ -92,7 +92,7 @@ class BadoControleprotocolService
      *
      * @return array<int,string> Field names whose ceiling exceeds the statutory maximum.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-6
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function validateCeilings(array $row): array
     {
@@ -112,7 +112,7 @@ class BadoControleprotocolService
      *
      * @return string One of: acceptabel, te-corrigeren, materieel.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-9
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function classifySeverity(array $finding, array $toleranceRow, mixed $materialityAmount): string
     {
@@ -135,7 +135,7 @@ class BadoControleprotocolService
      *
      * @return string One of: goedkeurend, met-beperking, oordeelonthouding, afkeurend.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag) scope-limitation is a first-class BADO decision-tree input, not a behaviour toggle.
      */
@@ -158,7 +158,7 @@ class BadoControleprotocolService
      *
      * @return array{protocolId: string, materialityAmount: float, topics: array<int,array<string,mixed>>, proposedOpinion: string}
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function computeAggregation(string $protocolId): array
     {
@@ -195,7 +195,7 @@ class BadoControleprotocolService
      *
      * @return bool True when the protocol may be submitted for review.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-14
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function canSubmitForReview(string $protocolId, ?array $object=null): bool
     {
@@ -234,7 +234,7 @@ class BadoControleprotocolService
      *
      * @return bool True when the protocol may be adopted.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-14
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function canAdopt(string $protocolId, ?array $object=null): bool
     {
@@ -274,7 +274,7 @@ class BadoControleprotocolService
      *
      * @return bool True when a non-empty controllerResponse is present.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function hasControllerResponse(string $findingId, ?array $object=null): bool
     {
@@ -307,7 +307,7 @@ class BadoControleprotocolService
      *
      * @return bool True when the four-eye workflow is complete.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function isFourEyeComplete(string $findingId, ?array $object=null): bool
     {
@@ -343,7 +343,7 @@ class BadoControleprotocolService
      *
      * @return bool True when the verklaring may be signed.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function canSignVerklaring(string $verklaringId, ?array $object=null): bool
     {
@@ -563,7 +563,7 @@ class BadoControleprotocolService
      *
      * @return string|null The organisation id, or null when the protocol does not exist.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function organisationIdFor(string $protocolId): ?string
     {

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Builds a fully-populated UrencriteriumYear seed from an entrepreneur profile.
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  */
 final class UrenNormDeterminationService
 {
@@ -74,7 +74,7 @@ final class UrenNormDeterminationService
      *
      * @return array<string, mixed> UrencriteriumYear seed shape.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bouwSeedRecord(array $profiel): array
     {
@@ -87,12 +87,12 @@ final class UrenNormDeterminationService
 
         $seed = [
             'administrationId'     => (string) ($profiel['administrationId'] ?? ''),
-            'enterpriseId'        => (string) ($profiel['enterpriseId'] ?? ''),
+            'enterpriseId'         => (string) ($profiel['enterpriseId'] ?? ''),
             'kalenderjaar'         => (int) ($profiel['kalenderjaar'] ?? (int) gmdate('Y')),
             'doelNorm'             => $norm,
-            'normBasis'        => $grondslag,
+            'normBasis'            => $grondslag,
             'lopendeUren'          => 0.0,
-            'thresholdStatus'        => 'OP_KOERS',
+            'thresholdStatus'      => 'OP_KOERS',
             'grotendeelsCriterium' => $grotendeels,
         ];
 
@@ -100,9 +100,9 @@ final class UrenNormDeterminationService
             'UrenNormDeterminationService: built seed for new urencriterium-jaar',
             [
                 'enterpriseId' => $seed['enterpriseId'],
-                'kalenderjaar'  => $seed['kalenderjaar'],
-                'doelNorm'      => $norm,
-                'grotendeels'   => $grotendeels,
+                'kalenderjaar' => $seed['kalenderjaar'],
+                'doelNorm'     => $norm,
+                'grotendeels'  => $grotendeels,
             ]
         );
 

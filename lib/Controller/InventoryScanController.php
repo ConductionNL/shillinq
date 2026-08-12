@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T5.1
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Server-authoritative inventory scanner API controller.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T5.1
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 class InventoryScanController extends Controller
 {
@@ -115,7 +115,7 @@ class InventoryScanController extends Controller
      *
      * @return JSONResponse `{found: bool, item?: object}`.
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T2.4
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      *
      * @NoAdminRequired
      */
@@ -155,7 +155,7 @@ class InventoryScanController extends Controller
      *
      * @return JSONResponse `{serverTime: string, stock: array}`.
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      *
      * @NoAdminRequired
      */
@@ -204,7 +204,7 @@ class InventoryScanController extends Controller
      *
      * @return JSONResponse `{results: array<{transactionId, status, ...}>}`.
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.4
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      *
      * @NoAdminRequired
      */
@@ -256,7 +256,7 @@ class InventoryScanController extends Controller
      *
      * @return JSONResponse|null A 400/404 response when refused, null when allowed.
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      */
     private function requireAccessibleAdministration(string $administrationId): ?JSONResponse
     {

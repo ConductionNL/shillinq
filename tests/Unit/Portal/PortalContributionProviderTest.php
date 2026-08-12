@@ -42,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/portal-contribution/tasks.md#task-3
+ * @spec openspec/specs/portal-contribution/spec.md
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-006)
  */
 
@@ -56,7 +56,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for PortalContributionProvider.
  *
- * @spec openspec/changes/portal-contribution/tasks.md#task-3
+ * @spec openspec/specs/portal-contribution/spec.md
  */
 class PortalContributionProviderTest extends TestCase
 {

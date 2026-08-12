@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ namespace OCA\Shillinq\Service;
  * conditional decision tree the declarative engine cannot yet express
  * (ADR-031).
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 class BadoControleprotocolCalculator
 {
@@ -71,7 +71,7 @@ class BadoControleprotocolCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -94,7 +94,7 @@ class BadoControleprotocolCalculator
      *
      * @return array<int,string> Field names whose ceiling exceeds the statutory maximum (or is negative).
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-6
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function validateCeilings(array $row): array
     {
@@ -143,7 +143,7 @@ class BadoControleprotocolCalculator
      *
      * @return array{approvalCents: int, qualificationCents: int}
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function ceilingCentsForAxis(mixed $materialityAmount, array $row, string $axis): array
     {
@@ -184,7 +184,7 @@ class BadoControleprotocolCalculator
      *
      * @return string One of: acceptabel, te-corrigeren, materieel.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-9
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function classifySeverity(array $finding, array $toleranceRow, mixed $materialityAmount): string
     {
@@ -262,7 +262,7 @@ class BadoControleprotocolCalculator
      *
      * @return array<int,array<string,mixed>> One row per topic with counts + verdict.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function aggregateFindings(array $findings): array
     {
@@ -389,7 +389,7 @@ class BadoControleprotocolCalculator
      *
      * @return string One of: goedkeurend, met-beperking, oordeelonthouding, afkeurend.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag) scope-limitation is a first-class BADO decision-tree input, not a behaviour toggle.
      */
@@ -432,7 +432,7 @@ class BadoControleprotocolCalculator
      *
      * @return bool True when both four-eye fields and both axes are populated.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function isFourEyeComplete(array $finding): bool
     {

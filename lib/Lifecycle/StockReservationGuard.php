@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -61,7 +61,7 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  */
 class StockReservationGuard
 {
@@ -91,7 +91,7 @@ class StockReservationGuard
      *
      * @return bool True on successful reservation; false on collision / error.
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function reserveReservation(array $move): bool
     {
@@ -165,7 +165,7 @@ class StockReservationGuard
      *
      * @return bool True on success; false on CAS collision or error.
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function commitReservation(array $move): bool
     {
@@ -267,7 +267,7 @@ class StockReservationGuard
      *
      * @return bool True on success.
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function releaseReservation(array $move): bool
     {
@@ -518,7 +518,7 @@ class StockReservationGuard
      *
      * @return bool True when the reservation is collateralised.
      *
-     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-16
+     * @spec openspec/specs/inventory-stock-tracking/spec.md
      */
     public function checkReservationDoesNotExceedOnHand(array $stock): bool
     {

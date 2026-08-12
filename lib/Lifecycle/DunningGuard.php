@@ -42,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 
 declare(strict_types=1);
@@ -64,7 +64,7 @@ use Psr\Log\LoggerInterface;
  * 14-dagen-brief fragment and the B2C day-44 threshold are read from app config so
  * they can be tuned without a code change (ADR-005 — secrets/config from app config).
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class DunningGuard
 {
@@ -109,7 +109,7 @@ class DunningGuard
      *
      * @return bool True when the override may be activated.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function canActivateOverride(string $overrideId, ?array $object=null): bool
     {
@@ -145,7 +145,7 @@ class DunningGuard
      *
      * @return bool True when the run may be executed.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function canExecuteRun(string $runId, ?array $object=null): bool
     {
@@ -189,7 +189,7 @@ class DunningGuard
      *
      * @return bool True when the pause may be resolved.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function canResolvePause(string $pauseId, ?array $object=null): bool
     {
@@ -220,7 +220,7 @@ class DunningGuard
      *
      * @return bool True when the write-off may post.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function canPostWriteOff(string $writeOffId, ?array $object=null): bool
     {
@@ -256,7 +256,7 @@ class DunningGuard
      *
      * @return bool True when the calculation must be blocked.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function blocksB2cIncassokosten(string $partyType, int $dagenNaVervalDatum): bool
     {

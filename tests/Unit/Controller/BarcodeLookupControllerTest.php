@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-barcode-sku/specs/inventory-barcode-sku/spec.md
+ * @spec openspec/specs/inventory-barcode-sku/spec.md
  */
 
 declare(strict_types=1);

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -189,6 +189,7 @@ final class ProgrammabegrotingFragmentTest extends TestCase
         foreach ($fragSchemaKeys as $fragName) {
             self::assertArrayHasKey($fragName, $schemas, "$fragName must be present after the fragment merge");
         }
+
         foreach (array_keys($base['components']['schemas']) as $baseName) {
             self::assertArrayHasKey($baseName, $schemas, "$baseName must survive the fragment merge");
         }

@@ -142,7 +142,7 @@ class IcpFilingService
      * @param string $administrationId Administration scope (server-resolved, REQ-ICP-001).
      * @param string $period           Filing period (YYYY-Qn / YYYY-MM).
      *
-     * @return array{period:string,zipPath:string,supplyCount:int,manifest:array<int,string>,kenmerk:string}
+     * @return array{period:string,zipPath:string,supplyCount:int,manifest:array<int,string>,reference:string}
      *
      * @throws RuntimeException When the ZIP cannot be created.
      *
@@ -185,7 +185,7 @@ class IcpFilingService
             'zipPath'     => $zipPath,
             'supplyCount' => count($supplies),
             'manifest'    => $manifest,
-            'reference'     => $kenmerk,
+            'reference'   => $kenmerk,
         ];
 
     }//end exportForInspection()

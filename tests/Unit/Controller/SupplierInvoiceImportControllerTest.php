@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

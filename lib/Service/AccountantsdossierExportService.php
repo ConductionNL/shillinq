@@ -58,7 +58,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -93,7 +93,7 @@ use ZipArchive;
  * ADR-031 exception-path host bundling the deterministic dossier writer
  * for the 7 BADO schemas + the PDF/A HTML summary + the PKIO delegation.
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 class AccountantsdossierExportService
 {
@@ -209,7 +209,7 @@ class AccountantsdossierExportService
      *
      * @throws RuntimeException When the protocol cannot be resolved.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function buildDossier(string $protocolId): array
     {
@@ -310,7 +310,7 @@ class AccountantsdossierExportService
      *
      * @throws RuntimeException When the bundle cannot be written.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     public function exportDossier(string $protocolId): array
     {

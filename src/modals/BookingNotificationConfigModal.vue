@@ -17,7 +17,7 @@
   page (manifest page id BookingDetail). It must never be inlined into
   the parent component.
 
-  @spec openspec/changes/bookings-notification-triggers/tasks.md#task-10
+  @spec openspec/specs/bookings-notification-triggers/spec.md
 -->
 
 <template>

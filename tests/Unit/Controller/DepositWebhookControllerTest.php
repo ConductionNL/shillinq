@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-001)
+ * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-001)
  */
 
 declare(strict_types=1);

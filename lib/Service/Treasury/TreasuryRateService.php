@@ -44,7 +44,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Throwable;
 /**
  * Consumer-side facade over `TreasuryRateAdapterInterface`.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 class TreasuryRateService
 {

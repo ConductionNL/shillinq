@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-13-2
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md
  * KNOWINGLY DANGLING until shillinq#500 — the < 2s budget it asserts
  * (archived REQ-TB-014) was never canonical.
  *

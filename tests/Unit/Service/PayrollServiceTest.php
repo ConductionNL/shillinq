@@ -221,8 +221,8 @@ final class PayrollServiceTest extends TestCase
             'Werkgever'            => [
                 [
                     'id'               => 'wg-1',
-                    'awfRate'        => 'LAAG',
-                    'zvwRate'        => 'LAAG',
+                    'awfRate'          => 'LAAG',
+                    'zvwRate'          => 'LAAG',
                     'administrationId' => 'adm-1',
                 ],
             ],
@@ -234,7 +234,7 @@ final class PayrollServiceTest extends TestCase
                     'bsn'                        => '123456789',
                     'periodeBruto'               => 4940.0,
                     'thuiswerkdagenPerWeek'      => 0,
-                    'expat30PctScheme'         => false,
+                    'expat30PctScheme'           => false,
                     'pensioenPremiePctWerkgever' => 0.182,
                     'pensioenPremiePctWerknemer' => 0.072,
                     'vakantiegeldPct'            => 0.08,
@@ -247,8 +247,8 @@ final class PayrollServiceTest extends TestCase
                 [
                     'id'                  => 'lp-1',
                     'werkgeverId'         => 'wg-1',
-                    'periodType'         => 'MAAND',
-                    'periodEnd'         => '2026-05-31',
+                    'periodType'          => 'MAAND',
+                    'periodEnd'           => '2026-05-31',
                     'loonheffingstabelId' => 'lht-1',
                     'administrationId'    => 'adm-1',
                 ],
@@ -257,7 +257,7 @@ final class PayrollServiceTest extends TestCase
                 [
                     'id'          => 'lht-1',
                     'kleur'       => 'WIT',
-                    'period'     => 'MAAND',
+                    'period'      => 'MAAND',
                     'metKorting'  => true,
                     'tabelRegels' => [
                         ['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
@@ -316,14 +316,14 @@ final class PayrollServiceTest extends TestCase
         $data = $this->dataset();
         $data['LoonStrook'] = [
             [
-                'periodId'          => 'lp-1',
+                'periodId'           => 'lp-1',
                 'loonheffing'        => 1000.0,
                 'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
                 'zvw'                => ['afgedragen_wg' => 200.0],
                 'administrationId'   => 'adm-1',
             ],
             [
-                'periodId'          => 'lp-1',
+                'periodId'           => 'lp-1',
                 'loonheffing'        => 500.0,
                 'premiesSVWerkgever' => ['totaal_werkgever' => 100.0],
                 'zvw'                => ['afgedragen_wg' => 50.0],
@@ -355,13 +355,13 @@ final class PayrollServiceTest extends TestCase
         $data = $this->dataset();
         $data['LoonStrook'] = [
             [
-                'periodId'          => 'lp-1',
+                'periodId'           => 'lp-1',
                 'brutoComponenten'   => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
                 'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
                 'zvw'                => ['afgedragen_wg' => 262.81],
                 'pensioen'           => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],
                 'loonheffing'        => 1199.91,
-                'netPaid'       => 3384.41,
+                'netPaid'            => 3384.41,
                 'administrationId'   => 'adm-1',
             ],
         ];
@@ -397,8 +397,8 @@ final class PayrollServiceTest extends TestCase
         $service->persistLoonjournaalpost(
             [
                 'periodId' => 'lp-1',
-                'balanced'  => false,
-                'regels'    => [],
+                'balanced' => false,
+                'regels'   => [],
             ]
         );
 

@@ -78,7 +78,7 @@ class PayrollSbrConversionService
             'premiesSVTotaal'        => (float) ($lhAfdracht['totalSocialInsuranceContributions'] ?? 0.0),
             'zvwTotaal'              => (float) ($lhAfdracht['totalHealthInsurance'] ?? 0.0),
             'eindheffingenWKR'       => (float) ($lhAfdracht['totalFinalLeviesWorkRelatedCosts'] ?? 0.0),
-            'totalRemittance'         => (float) ($lhAfdracht['totalRemittance'] ?? 0.0),
+            'totalRemittance'        => (float) ($lhAfdracht['totalRemittance'] ?? 0.0),
             'vervaldagAfdracht'      => ($lhAfdracht['vervaldagAfdracht'] ?? null),
             'status'                 => 'READY_FOR_SBR',
         ];

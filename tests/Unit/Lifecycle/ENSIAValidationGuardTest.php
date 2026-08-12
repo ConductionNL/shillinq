@@ -15,7 +15,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 
 declare(strict_types=1);
@@ -35,6 +35,7 @@ use Psr\Log\LoggerInterface;
  */
 class ENSIAValidationGuardTest extends TestCase
 {
+
     /**
      * Mock ContainerInterface.
      *
@@ -63,7 +64,6 @@ class ENSIAValidationGuardTest extends TestCase
      */
     private ENSIAValidationGuard $guard;
 
-
     /**
      * Set up test fixtures.
      *
@@ -87,7 +87,6 @@ class ENSIAValidationGuardTest extends TestCase
 
     }//end setUp()
 
-
     /**
      * REQ-ENSIA-003: score below 3 needs no evidence — return true.
      *
@@ -96,16 +95,17 @@ class ENSIAValidationGuardTest extends TestCase
     public function testMaturityScoreBelowThreeNeedsNoEvidence(): void
     {
         $this->assertTrue(
-            $this->guard->maturityEvidenceSatisfied([
-                'vraagCode'           => 'BIO-9.1.1',
-                'volwassenheidsScore' => 2,
-                'bewijsstukken'       => [],
-                'notes'         => 'short',
-            ])
+            $this->guard->maturityEvidenceSatisfied(
+                    [
+                        'vraagCode'           => 'BIO-9.1.1',
+                        'volwassenheidsScore' => 2,
+                        'bewijsstukken'       => [],
+                        'notes'               => 'short',
+                    ]
+                    )
         );
 
     }//end testMaturityScoreBelowThreeNeedsNoEvidence()
-
 
     /**
      * REQ-ENSIA-003: null score needs no evidence — return true.
@@ -115,16 +115,17 @@ class ENSIAValidationGuardTest extends TestCase
     public function testNullMaturityScoreNeedsNoEvidence(): void
     {
         $this->assertTrue(
-            $this->guard->maturityEvidenceSatisfied([
-                'vraagCode'           => 'BIO-9.1.1',
-                'volwassenheidsScore' => null,
-                'bewijsstukken'       => [],
-                'notes'         => '',
-            ])
+            $this->guard->maturityEvidenceSatisfied(
+                    [
+                        'vraagCode'           => 'BIO-9.1.1',
+                        'volwassenheidsScore' => null,
+                        'bewijsstukken'       => [],
+                        'notes'               => '',
+                    ]
+                    )
         );
 
     }//end testNullMaturityScoreNeedsNoEvidence()
-
 
     /**
      * REQ-ENSIA-003: score ≥ 3 with no evidence — return false.
@@ -134,16 +135,17 @@ class ENSIAValidationGuardTest extends TestCase
     public function testMaturityScoreThreeWithoutEvidenceBlocks(): void
     {
         $this->assertFalse(
-            $this->guard->maturityEvidenceSatisfied([
-                'vraagCode'           => 'BIO-9.1.1',
-                'volwassenheidsScore' => 3,
-                'bewijsstukken'       => [],
-                'notes'         => str_repeat('a', 100),
-            ])
+            $this->guard->maturityEvidenceSatisfied(
+                    [
+                        'vraagCode'           => 'BIO-9.1.1',
+                        'volwassenheidsScore' => 3,
+                        'bewijsstukken'       => [],
+                        'notes'               => str_repeat('a', 100),
+                    ]
+                    )
         );
 
     }//end testMaturityScoreThreeWithoutEvidenceBlocks()
-
 
     /**
      * REQ-ENSIA-003: score ≥ 3 with short toelichting — return false.
@@ -153,16 +155,17 @@ class ENSIAValidationGuardTest extends TestCase
     public function testMaturityScoreThreeWithShortToelichtingBlocks(): void
     {
         $this->assertFalse(
-            $this->guard->maturityEvidenceSatisfied([
-                'vraagCode'           => 'BIO-9.1.1',
-                'volwassenheidsScore' => 3,
-                'bewijsstukken'       => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
-                'notes'         => 'too short',
-            ])
+            $this->guard->maturityEvidenceSatisfied(
+                    [
+                        'vraagCode'           => 'BIO-9.1.1',
+                        'volwassenheidsScore' => 3,
+                        'bewijsstukken'       => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
+                        'notes'               => 'too short',
+                    ]
+                    )
         );
 
     }//end testMaturityScoreThreeWithShortToelichtingBlocks()
-
 
     /**
      * REQ-ENSIA-003: score ≥ 3 with evidence and 50+ chars — pass.
@@ -172,16 +175,17 @@ class ENSIAValidationGuardTest extends TestCase
     public function testMaturityScoreThreeWithEvidenceAndLongToelichtingAllowed(): void
     {
         $this->assertTrue(
-            $this->guard->maturityEvidenceSatisfied([
-                'vraagCode'           => 'BIO-9.1.1',
-                'volwassenheidsScore' => 4,
-                'bewijsstukken'       => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
-                'notes'         => str_repeat('a', 50),
-            ])
+            $this->guard->maturityEvidenceSatisfied(
+                    [
+                        'vraagCode'           => 'BIO-9.1.1',
+                        'volwassenheidsScore' => 4,
+                        'bewijsstukken'       => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
+                        'notes'               => str_repeat('a', 50),
+                    ]
+                    )
         );
 
     }//end testMaturityScoreThreeWithEvidenceAndLongToelichtingAllowed()
-
 
     /**
      * REQ-ENSIA-008: pre-peer-review edit needs no reden — return true.
@@ -191,17 +195,18 @@ class ENSIAValidationGuardTest extends TestCase
     public function testPrePeerReviewEditNeedsNoReden(): void
     {
         $this->assertTrue(
-            $this->guard->postPeerReviewReasonRequired([
-                'vraagCode'        => 'BIO-9.1.1',
-                'antwoord'         => '3',
-                'peerReviewStatus' => 'nog-niet-beoordeeld',
-                'peerReviewedAt'   => null,
-                'reason'            => null,
-            ])
+            $this->guard->postPeerReviewReasonRequired(
+                    [
+                        'vraagCode'        => 'BIO-9.1.1',
+                        'antwoord'         => '3',
+                        'peerReviewStatus' => 'nog-niet-beoordeeld',
+                        'peerReviewedAt'   => null,
+                        'reason'           => null,
+                    ]
+                    )
         );
 
     }//end testPrePeerReviewEditNeedsNoReden()
-
 
     /**
      * REQ-ENSIA-008: post-peer-review edit with no reden — return false.
@@ -211,17 +216,18 @@ class ENSIAValidationGuardTest extends TestCase
     public function testPostPeerReviewEditWithoutRedenBlocks(): void
     {
         $this->assertFalse(
-            $this->guard->postPeerReviewReasonRequired([
-                'vraagCode'        => 'BIO-9.1.1',
-                'antwoord'         => '4',
-                'peerReviewStatus' => 'akkoord',
-                'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
-                'reason'            => '',
-            ])
+            $this->guard->postPeerReviewReasonRequired(
+                    [
+                        'vraagCode'        => 'BIO-9.1.1',
+                        'antwoord'         => '4',
+                        'peerReviewStatus' => 'akkoord',
+                        'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
+                        'reason'           => '',
+                    ]
+                    )
         );
 
     }//end testPostPeerReviewEditWithoutRedenBlocks()
-
 
     /**
      * REQ-ENSIA-008: post-peer-review edit with reden — pass.
@@ -231,17 +237,18 @@ class ENSIAValidationGuardTest extends TestCase
     public function testPostPeerReviewEditWithRedenAllowed(): void
     {
         $this->assertTrue(
-            $this->guard->postPeerReviewReasonRequired([
-                'vraagCode'        => 'BIO-9.1.1',
-                'antwoord'         => '4',
-                'peerReviewStatus' => 'akkoord',
-                'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
-                'reason'            => 'Aanvullend bewijs ontvangen na peer-review; antwoord verhoogd van 3 naar 4.',
-            ])
+            $this->guard->postPeerReviewReasonRequired(
+                    [
+                        'vraagCode'        => 'BIO-9.1.1',
+                        'antwoord'         => '4',
+                        'peerReviewStatus' => 'akkoord',
+                        'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
+                        'reason'           => 'Aanvullend bewijs ontvangen na peer-review; antwoord verhoogd van 3 naar 4.',
+                    ]
+                    )
         );
 
     }//end testPostPeerReviewEditWithRedenAllowed()
-
 
     /**
      * REQ-ENSIA-008: whitespace-only reden is rejected post peer-review.
@@ -251,16 +258,17 @@ class ENSIAValidationGuardTest extends TestCase
     public function testWhitespaceOnlyRedenIsRejected(): void
     {
         $this->assertFalse(
-            $this->guard->postPeerReviewReasonRequired([
-                'vraagCode'        => 'BIO-9.1.1',
-                'peerReviewStatus' => 'wijziging-gevraagd',
-                'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
-                'reason'            => "   \t\n  ",
-            ])
+            $this->guard->postPeerReviewReasonRequired(
+                    [
+                        'vraagCode'        => 'BIO-9.1.1',
+                        'peerReviewStatus' => 'wijziging-gevraagd',
+                        'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
+                        'reason'           => "   \t\n  ",
+                    ]
+                    )
         );
 
     }//end testWhitespaceOnlyRedenIsRejected()
-
 
     /**
      * REQ-ENSIA-004: cyclus with no id short-circuits to allow.
@@ -270,14 +278,15 @@ class ENSIAValidationGuardTest extends TestCase
     public function testCollegeAkkoordAllowedShortCircuitsOnMissingId(): void
     {
         $this->assertTrue(
-            $this->guard->collegeAkkoordAllowed([
-                'year'   => 2026,
-                'status' => 'peer-review',
-            ])
+            $this->guard->collegeAkkoordAllowed(
+                    [
+                        'year'   => 2026,
+                        'status' => 'peer-review',
+                    ]
+                    )
         );
 
     }//end testCollegeAkkoordAllowedShortCircuitsOnMissingId()
-
 
     /**
      * REQ-ENSIA-004: ObjectService unavailable → permissive bypass (returns
@@ -290,14 +299,15 @@ class ENSIAValidationGuardTest extends TestCase
     {
         $this->container->method('get')->willThrowException(new \RuntimeException('OR not installed'));
         $this->assertTrue(
-            $this->guard->collegeAkkoordAllowed([
-                'id'     => 'ensia-2026-gemeente-1',
-                'status' => 'peer-review',
-            ])
+            $this->guard->collegeAkkoordAllowed(
+                    [
+                        'id'     => 'ensia-2026-gemeente-1',
+                        'status' => 'peer-review',
+                    ]
+                    )
         );
 
     }//end testCollegeAkkoordAllowedPermissiveOnObjectServiceFailure()
-
 
     /**
      * REQ-ENSIA-004: cyclus with no unresolved wijzigingen — allow.
@@ -310,30 +320,31 @@ class ENSIAValidationGuardTest extends TestCase
             public function setRegister(string $slug): self
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $slug): self
             {
                 return $this;
-            }
+            }//end setSchema()
 
             public function findAll(array $args): array
             {
                 return [];
-            }
+            }//end findAll()
         };
 
         $this->container->method('get')->willReturn($objectService);
 
         $this->assertTrue(
-            $this->guard->collegeAkkoordAllowed([
-                'id'     => 'ensia-2026-gemeente-1',
-                'status' => 'peer-review',
-            ])
+            $this->guard->collegeAkkoordAllowed(
+                    [
+                        'id'     => 'ensia-2026-gemeente-1',
+                        'status' => 'peer-review',
+                    ]
+                    )
         );
 
     }//end testCollegeAkkoordAllowedWhenNoWijzigingenFound()
-
 
     /**
      * REQ-ENSIA-004: cyclus with at least one unresolved wijziging — block.
@@ -346,29 +357,29 @@ class ENSIAValidationGuardTest extends TestCase
             public function setRegister(string $slug): self
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $slug): self
             {
                 return $this;
-            }
+            }//end setSchema()
 
             public function findAll(array $args): array
             {
                 return [['id' => 'q1', 'peerReviewStatus' => 'wijziging-gevraagd']];
-            }
+            }//end findAll()
         };
 
         $this->container->method('get')->willReturn($objectService);
 
         $this->assertFalse(
-            $this->guard->collegeAkkoordAllowed([
-                'id'     => 'ensia-2026-gemeente-1',
-                'status' => 'peer-review',
-            ])
+            $this->guard->collegeAkkoordAllowed(
+                    [
+                        'id'     => 'ensia-2026-gemeente-1',
+                        'status' => 'peer-review',
+                    ]
+                    )
         );
 
     }//end testCollegeAkkoordBlockedWhenUnresolvedWijzigingExists()
-
-
 }//end class

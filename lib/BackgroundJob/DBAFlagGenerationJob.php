@@ -477,7 +477,7 @@ class DBAFlagGenerationJob extends TimedJob
                         'detectieMoment'          => (new DateTimeImmutable())->format('c'),
                         'ernst'                   => $ernst,
                         'details'                 => $details,
-                        'fiscalSource'             => $bron,
+                        'fiscalSource'            => $bron,
                         'actieSuggestie'          => $actie,
                         'status'                  => 'OPEN',
                         'weergegevenAanGebruiker' => true,

@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-6
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * Returns true unless the override modifies an elevated stage (4 or 5) AND
  * is missing approvedBy / approvedAt. Fail-closed on any exception.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-6
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
  *     not in the project's curated idiomatic-abbreviation allowlist;
@@ -68,7 +68,7 @@ class KlantLadderOverrideApprovalGuard
      *
      * @return bool True when activation is allowed.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-6
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function isApprovedForElevatedStages(string $overrideId): bool
     {

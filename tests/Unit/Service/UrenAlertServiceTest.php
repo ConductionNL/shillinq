@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,8 +31,6 @@ use Psr\Log\LoggerInterface;
  */
 final class UrenAlertServiceTest extends TestCase
 {
-
-
     /**
      * Build a service.
      *
@@ -43,7 +41,6 @@ final class UrenAlertServiceTest extends TestCase
         return new UrenAlertService(logger: $this->createMock(LoggerInterface::class));
 
     }//end build()
-
 
     /**
      * Quarter-end dates are detected.
@@ -60,7 +57,6 @@ final class UrenAlertServiceTest extends TestCase
         self::assertFalse($service->isKwartaalEinde(datum: '2026-04-15'));
 
     }//end testIsKwartaalEindeRecognisesAllFour()
-
 
     /**
      * Omslag from OP_KOERS to RISICO triggers, BEHAALD → OP_KOERS does not.
@@ -84,7 +80,6 @@ final class UrenAlertServiceTest extends TestCase
 
     }//end testIsOmslagOnlyOnHigherSeverity()
 
-
     /**
      * Kwartaal-alert sets type, urgentie INFO, ≥3 acties.
      *
@@ -94,12 +89,12 @@ final class UrenAlertServiceTest extends TestCase
     {
         $alert = $this->build()->bouwKwartaalAlert(
             year: [
-                'administrationId'  => 'adm-1',
+                'administrationId' => 'adm-1',
                 'enterpriseId'     => 'ond-1',
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 700.0,
-                'forecastYearEnd' => 1150.0,
-                'thresholdStatus'     => 'RISICO',
+                'doelNorm'         => 1225,
+                'lopendeUren'      => 700.0,
+                'forecastYearEnd'  => 1150.0,
+                'thresholdStatus'  => 'RISICO',
             ],
             datum: '2026-09-30'
         );
@@ -112,7 +107,6 @@ final class UrenAlertServiceTest extends TestCase
 
     }//end testKwartaalAlertShape()
 
-
     /**
      * Omslag to KRITIEK builds an OMSLAG_KRITIEK alert with urgentie KRITIEK.
      *
@@ -122,12 +116,12 @@ final class UrenAlertServiceTest extends TestCase
     {
         $alert = $this->build()->bouwOmslagAlert(
             year: [
-                'administrationId'  => 'adm-1',
+                'administrationId' => 'adm-1',
                 'enterpriseId'     => 'ond-1',
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 600.0,
-                'forecastYearEnd' => 900.0,
-                'thresholdStatus'     => 'KRITIEK',
+                'doelNorm'         => 1225,
+                'lopendeUren'      => 600.0,
+                'forecastYearEnd'  => 900.0,
+                'thresholdStatus'  => 'KRITIEK',
             ],
             oldStatus: 'RISICO',
             newStatus: 'KRITIEK'
@@ -141,7 +135,6 @@ final class UrenAlertServiceTest extends TestCase
 
     }//end testOmslagToKritiek()
 
-
     /**
      * Handelingsperspectief always returns ≥3 acties even when BEHAALD.
      *
@@ -151,17 +144,16 @@ final class UrenAlertServiceTest extends TestCase
     {
         $acties = $this->build()->handelingsperspectief(
             year: [
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 1250.0,
+                'doelNorm'        => 1225,
+                'lopendeUren'     => 1250.0,
                 'forecastYearEnd' => 1400.0,
-                'thresholdStatus'     => 'BEHAALD',
+                'thresholdStatus' => 'BEHAALD',
             ]
         );
 
         self::assertGreaterThanOrEqual(3, count($acties));
 
     }//end testHandelingsperspectiefMinimumWhenBehaald()
-
 
     /**
      * Handelingsperspectief mentions fiscal verlies EUR when there is a tekort.
@@ -172,8 +164,8 @@ final class UrenAlertServiceTest extends TestCase
     {
         $acties = $this->build()->handelingsperspectief(
             year: [
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 400.0,
+                'doelNorm'        => 1225,
+                'lopendeUren'     => 400.0,
                 'forecastYearEnd' => 800.0,
             ]
         );
@@ -183,6 +175,4 @@ final class UrenAlertServiceTest extends TestCase
         self::assertStringContainsString('acquisitie', strtolower($joined));
 
     }//end testHandelingsperspectiefMentionsFiscaalVerliesOnTekort()
-
-
 }//end class

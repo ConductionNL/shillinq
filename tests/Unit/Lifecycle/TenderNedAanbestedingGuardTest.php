@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-10
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 
 declare(strict_types=1);

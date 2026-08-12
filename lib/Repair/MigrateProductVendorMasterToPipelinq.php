@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
  *   live), the step logs and returns WITHOUT marking completed, so it re-runs on the
  *   next upgrade once pipelinq is deployed.
  *
- * @spec openspec/changes/shillinq-product-vendor-to-pipelinq/tasks.md#phase-5
+ * @spec openspec/specs/shillinq-product-vendor-to-pipelinq/spec.md
  * @spec openspec/specs/shillinq-product-vendor-to-pipelinq/spec.md (REQ-SPVP-009)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V.

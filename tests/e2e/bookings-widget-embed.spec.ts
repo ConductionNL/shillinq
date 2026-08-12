@@ -27,7 +27,7 @@
  * tests/integration/*.postman_collection.json once a seeded key is loaded
  * — Playwright stays UI-only for happy paths per the fleet rule.
  *
- * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-21
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  */
 
 import { test, expect } from '@playwright/test'

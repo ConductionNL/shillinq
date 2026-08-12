@@ -38,6 +38,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class BIKStaffelCalculatorTest extends TestCase
 {
+
     /**
      * Subject under test.
      *
@@ -355,5 +356,4 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertEqualsWithDelta(60.76, $r['amount'], 0.01);
 
     }//end testRenteHonoursExplicitOverride()
-
 }//end class

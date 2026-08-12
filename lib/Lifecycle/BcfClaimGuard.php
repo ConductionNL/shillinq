@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.submit.requires as
  * OCA\Shillinq\Lifecycle\BcfClaimGuard::canSubmit.
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md
  */
 class BcfClaimGuard
 {
@@ -92,7 +92,7 @@ class BcfClaimGuard
      *
      * @return bool True when the claim may transition to submitted.
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md
      */
     public function canSubmit(string $bcfClaimId, ?array $object=null): bool
     {

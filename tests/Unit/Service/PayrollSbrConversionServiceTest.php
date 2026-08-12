@@ -64,15 +64,15 @@ final class PayrollSbrConversionServiceTest extends TestCase
     public function testToSbrInstancePayloadEchoesTotalsAndDeterministicRef(): void
     {
         $lh = [
-            'werkgeverId'            => 'wg-conduction-bv',
-            'periodId'              => 'lp-2026-05',
-            'totalPayrollTax'      => 18620.10,
-            'totalSocialInsuranceContributions'        => 7559.40,
+            'werkgeverId'                       => 'wg-conduction-bv',
+            'periodId'                          => 'lp-2026-05',
+            'totalPayrollTax'                   => 18620.10,
+            'totalSocialInsuranceContributions' => 7559.40,
             'totalHealthInsurance'              => 3654.00,
-            'totalFinalLeviesWorkRelatedCosts' => 0.0,
-            'totalRemittance'         => 29833.50,
-            'vervaldagAfdracht'      => '2026-06-30',
-            'status'                 => 'VOORBEREID',
+            'totalFinalLeviesWorkRelatedCosts'  => 0.0,
+            'totalRemittance'                   => 29833.50,
+            'vervaldagAfdracht'                 => '2026-06-30',
+            'status'                            => 'VOORBEREID',
         ];
 
         $payload = $this->svc->toSbrInstancePayload(lhAfdracht: $lh);
@@ -99,7 +99,7 @@ final class PayrollSbrConversionServiceTest extends TestCase
     {
         $lh = [
             'werkgeverId' => 'wg-1',
-            'periodId'   => 'lp-2026-04',
+            'periodId'    => 'lp-2026-04',
         ];
 
         $first  = $this->svc->stampInstanceRef(lhAfdracht: $lh);
@@ -120,7 +120,7 @@ final class PayrollSbrConversionServiceTest extends TestCase
         $payload = $this->svc->toSbrInstancePayload(
             lhAfdracht: [
                 'werkgeverId' => "wg-/?\\!1",
-                'periodId'   => "lp 2026/05",
+                'periodId'    => "lp 2026/05",
             ]
         );
 

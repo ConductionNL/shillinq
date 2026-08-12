@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Precondition guard preventing GL lasten postings beyond the authorized budget.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class BudgetOverrunGuard
 {
@@ -77,7 +77,7 @@ class BudgetOverrunGuard
      *
      * @return bool True when the posting is within budget.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function isWithinBudget(float $authorizedLasten, float $alreadyPosted, float $attempted): bool
     {
@@ -104,7 +104,7 @@ class BudgetOverrunGuard
      *
      * @return bool True when the posting is within the stacked authorized lasten.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function canPost(string $begrotingId, string $taakveldCode, float $attempted): bool
     {

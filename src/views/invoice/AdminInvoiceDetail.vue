@@ -5,7 +5,7 @@
   table (re-using InvoiceLineItemReview), totals, applied rate card and
   retainer, GL posting status, audit trail (Task 18).
 
-  @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-18
+  @spec openspec/specs/invoice-from-time-and-expense/spec.md
 
   SPDX-FileCopyrightText: 2026 Conduction B.V.
   SPDX-License-Identifier: EUPL-1.2

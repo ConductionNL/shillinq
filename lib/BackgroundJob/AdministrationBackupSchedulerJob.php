@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Throwable;
  * Per-administration backup scheduler — evaluates Administration.backupSchedule and
  * queues independent backup runs per administration.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -124,7 +124,7 @@ class AdministrationBackupSchedulerJob extends TimedJob
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function isDue(array $administration, DateTimeImmutable $now): bool
     {
@@ -180,7 +180,7 @@ class AdministrationBackupSchedulerJob extends TimedJob
      *
      * @return array<int,array<string,mixed>>
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function evaluateDueAdministrations(array $administrations, DateTimeImmutable $now): array
     {
@@ -228,7 +228,7 @@ class AdministrationBackupSchedulerJob extends TimedJob
      *
      * @return string|null ISO-8601 timestamp, or null for on-request schedules.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function nextBackupTimestamp(array $administration, DateTimeImmutable $completedAt): ?string
     {
@@ -258,7 +258,7 @@ class AdministrationBackupSchedulerJob extends TimedJob
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function buildBackupRunRecord(
         array $administration,
@@ -291,7 +291,7 @@ class AdministrationBackupSchedulerJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

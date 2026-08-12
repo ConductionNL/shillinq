@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.4
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Server-authoritative inventory operations for the mobile scanner.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.4
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -101,7 +101,7 @@ class InventoryScanService
      *
      * @return array<string, mixed>|null The matching InventoryItem, or null when not found.
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T2.4
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      */
     public function resolveBarcode(string $barcode, string $administrationId): ?array
     {
@@ -135,7 +135,7 @@ class InventoryScanService
      *
      * @return array<int, array<string, mixed>> Stock records modified since the cut-off.
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      */
     public function getStockDelta(?string $since, string $administrationId): array
     {
@@ -181,7 +181,7 @@ class InventoryScanService
      *
      * @return array{status: string, transactionId: string, resultingQuantity?: float, variance?: float, syncedAt: string, message?: string}
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.4
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      */
     public function applyOperation(array $operation, string $userId, string $administrationId): array
     {

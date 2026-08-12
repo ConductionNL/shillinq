@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service\Dunning;
 /**
  * Incasso-bureau outbound port — one method per dossier POST.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 interface IncassoBureauAdapterInterface
 {
@@ -50,7 +50,7 @@ interface IncassoBureauAdapterInterface
      * @return DunningChannelSendResult The dispatch attempt outcome. On success the
      *                                  `extras` array MUST carry `dossierId` (provider id).
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult;
 }//end interface

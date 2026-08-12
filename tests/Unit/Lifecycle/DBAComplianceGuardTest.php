@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -161,7 +161,7 @@ class DBAComplianceGuardTest extends TestCase
             'arbeidSubtotaal'     => 4,
             'financieelSubtotaal' => 9,
             'deliverooSubtotaal'  => 12,
-            'totalScore'         => 34,
+            'totalScore'          => 34,
         ];
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -183,7 +183,7 @@ class DBAComplianceGuardTest extends TestCase
             'financieelSubtotaal' => 9,
             'deliverooSubtotaal'  => 12,
             // Real sum is 34; a tampered 10 must be rejected.
-            'totalScore'         => 10,
+            'totalScore'          => 10,
         ];
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters

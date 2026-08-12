@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  */
 class StockLedgerService
 {
@@ -86,7 +86,7 @@ class StockLedgerService
      *
      * @return float Recomputed on-hand quantity (rounded to 2 decimals).
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function quantityForLocation(
         string $administrationId,
@@ -138,7 +138,7 @@ class StockLedgerService
      *
      * @return float Reserved quantity (rounded to 2 decimals).
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function reservedForLocation(string $administrationId, string $locationId, string $sku): float
     {
@@ -181,7 +181,7 @@ class StockLedgerService
      *
      * @return array<int,array<string,mixed>> Trace rows: {movementNumber, postedAt, movementType, sign, quantity, runningTotal}.
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     public function traceLocation(string $administrationId, string $locationId, string $sku): array
     {

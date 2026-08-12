@@ -25,7 +25,7 @@
  *
  * @link https://shillinq.nl
  *
- * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+ * @spec openspec/specs/first-time-setup/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.Operators.ComparisonOperatorUsage, Squiz.PHP.DisallowInlineIf
  */
@@ -47,7 +47,7 @@ use OCP\IRequest;
 /**
  * First-time setup status + actions for the abstract setup wizard.
  *
- * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+ * @spec openspec/specs/first-time-setup/spec.md
  */
 class SetupController extends Controller
 {
@@ -80,7 +80,7 @@ class SetupController extends Controller
      *
      * @return DataResponse `{ version, completed, steps: { <id>: { done } } }`.
      *
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+     * @spec openspec/specs/first-time-setup/spec.md
      */
     #[AuthorizedAdminSetting(AdminSettings::class)]
     public function status(): DataResponse
@@ -116,7 +116,7 @@ class SetupController extends Controller
      *
      * @return DataResponse `{ success }`.
      *
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+     * @spec openspec/specs/first-time-setup/spec.md
      */
     #[AuthorizedAdminSetting(AdminSettings::class)]
     public function saveConfig(): DataResponse
@@ -143,7 +143,7 @@ class SetupController extends Controller
      *
      * @return DataResponse `{ success, message, detail }`.
      *
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+     * @spec openspec/specs/first-time-setup/spec.md
      */
     #[AuthorizedAdminSetting(AdminSettings::class)]
     public function runAction(string $actionId): DataResponse

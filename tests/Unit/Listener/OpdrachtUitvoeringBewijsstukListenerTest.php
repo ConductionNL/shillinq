@@ -50,7 +50,6 @@ use Psr\Log\NullLogger;
  */
 final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
 {
-
     /**
      * A completion without a bewijsstuk is vetoed.
      *
@@ -62,10 +61,10 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->creatingEvent(
             [
-                'commitmentId' => 'V-1',
-                'mijlpaalId'     => 'MS-1',
-                'status'         => 'completed',
-                'bewijsstukken'  => [],
+                'commitmentId'  => 'V-1',
+                'mijlpaalId'    => 'MS-1',
+                'status'        => 'completed',
+                'bewijsstukken' => [],
             ]
         );
 
@@ -91,10 +90,10 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->creatingEvent(
             [
-                'commitmentId' => 'V-1',
-                'mijlpaalId'     => 'MS-1',
-                'status'         => 'completed',
-                'bewijsstukken'  => [['app' => 'docudesk', 'documentId' => 'doc-1']],
+                'commitmentId'  => 'V-1',
+                'mijlpaalId'    => 'MS-1',
+                'status'        => 'completed',
+                'bewijsstukken' => [['app' => 'docudesk', 'documentId' => 'doc-1']],
             ]
         );
 
@@ -115,9 +114,9 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->updatingEvent(
             [
-                'commitmentId' => 'V-1',
-                'status'         => 'completed',
-                'bewijsstukken'  => [],
+                'commitmentId'  => 'V-1',
+                'status'        => 'completed',
+                'bewijsstukken' => [],
             ]
         );
 
@@ -160,9 +159,9 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->creatingEvent(
             [
-                'commitmentId' => 'V-1',
-                'status'         => 'in-progress',
-                'bewijsstukken'  => [],
+                'commitmentId'  => 'V-1',
+                'status'        => 'in-progress',
+                'bewijsstukken' => [],
             ]
         );
 

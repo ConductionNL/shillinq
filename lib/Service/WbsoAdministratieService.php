@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Computes a per-beschikking realisatie summary from the S&O hour administration.
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -72,7 +72,7 @@ class WbsoAdministratieService
      *
      * @return array{data: array<int,array<string,mixed>>, total: int}
      *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
      */
     public function realisatieSummary(string $administrationId): array
     {
@@ -85,15 +85,15 @@ class WbsoAdministratieService
             $realised      = (int) ($realisedTenths[$beschikkingNumber] ?? 0);
             $remaining     = ($grantedTenths - $realised);
             $rows[]        = [
-                'decisionNumber' => (string) $beschikkingNumber,
-                'rvoReference'      => (string) ($beschikking['rvoReference'] ?? ''),
-                'projectNumber'     => (string) ($beschikking['projectNumber'] ?? ''),
-                'state'             => (string) ($beschikking['state'] ?? ''),
-                'grantedSoHours'    => ((float) $grantedTenths / 10),
-                'realisedSoHours'   => ((float) $realised / 10),
-                'remainingSoHours'  => ((float) $remaining / 10),
-                'exceeded'          => ($realised > $grantedTenths),
-                'administrationId'  => $administrationId,
+                'decisionNumber'   => (string) $beschikkingNumber,
+                'rvoReference'     => (string) ($beschikking['rvoReference'] ?? ''),
+                'projectNumber'    => (string) ($beschikking['projectNumber'] ?? ''),
+                'state'            => (string) ($beschikking['state'] ?? ''),
+                'grantedSoHours'   => ((float) $grantedTenths / 10),
+                'realisedSoHours'  => ((float) $realised / 10),
+                'remainingSoHours' => ((float) $remaining / 10),
+                'exceeded'         => ($realised > $grantedTenths),
+                'administrationId' => $administrationId,
             ];
         }//end foreach
 

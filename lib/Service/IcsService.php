@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-9
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Pure-function ICS payload composer for confirmation emails.
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-9
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral

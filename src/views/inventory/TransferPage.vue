@@ -1,5 +1,5 @@
 <!--
-  Transfer Page wrapper. @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.2
+  Transfer Page wrapper. @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<div class="transfer-page">

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
  * not yet filed/archived) are eligible. The notification object id is the
  * deadline slug/id so the client can deep-link to the deadline detail page.
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 class TaxNotificationService
 {
@@ -83,7 +83,7 @@ class TaxNotificationService
      *
      * @return int The number of reminders dispatched.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function dispatchDueReminders(?DateTimeInterface $now=null): int
     {
@@ -113,7 +113,7 @@ class TaxNotificationService
      *
      * @return int|null The matching window in days, or null when no window matches.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function reminderWindow(array $deadline, DateTimeInterface $today): ?int
     {

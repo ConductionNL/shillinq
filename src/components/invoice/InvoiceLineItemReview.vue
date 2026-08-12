@@ -5,7 +5,7 @@
   sourceType (time_entry, expense, retainer_charge, fixed_fee). Lets the
   admin scan rate/units/cost/VAT per row before posting (Task 16).
 
-  @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-16
+  @spec openspec/specs/invoice-from-time-and-expense/spec.md
 
   SPDX-FileCopyrightText: 2026 Conduction B.V.
   SPDX-License-Identifier: EUPL-1.2

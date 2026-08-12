@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-37
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Tests\Unit\Fixtures;
 /**
  * Static fixture provider for the Chart of Accounts unit tests.
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-37
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * @SuppressWarnings(PHPMD.StaticAccess)
  */

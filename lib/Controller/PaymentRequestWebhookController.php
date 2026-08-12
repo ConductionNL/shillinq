@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
+ * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
  */
 
 declare(strict_types=1);
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Signature-verified shared payment webhook endpoint (REQ-APL-004).
  *
- * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
+ * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
  */
 class PaymentRequestWebhookController extends Controller
 {
@@ -97,7 +97,7 @@ class PaymentRequestWebhookController extends Controller
      * @return JSONResponse 200 on success, 202 when an idempotent no-op, 400 on bad
      *                       signature or malformed payload, 404 when no record matches.
      *
-     * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
+     * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
      */
     #[PublicPage]
     #[NoCSRFRequired]
@@ -185,7 +185,7 @@ class PaymentRequestWebhookController extends Controller
      *
      * @return string The raw request body, or '' when empty/unreadable.
      *
-     * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
+     * @spec openspec/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
      */
     protected function getRawBody(): string
     {

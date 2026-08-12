@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-archiefwet-retention/specs.md
+ * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Throwable;
  * is fail-closed: any unexpected condition denies the transition so a document
  * is never disposed of prematurely (REQ-RET-008).
  *
- * @spec openspec/changes/bookkeeping-archiefwet-retention/specs.md
+ * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md
  */
 class RetentionGuard
 {
@@ -69,7 +69,7 @@ class RetentionGuard
      *
      * @return bool True when review may be initiated.
      *
-     * @spec openspec/changes/bookkeeping-archiefwet-retention/specs.md (REQ-RET-004)
+     * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md (REQ-RET-004)
      */
     public function requiresReview(array $doc): bool
     {
@@ -105,7 +105,7 @@ class RetentionGuard
      *
      * @return bool True when disposal may proceed.
      *
-     * @spec openspec/changes/bookkeeping-archiefwet-retention/specs.md (REQ-RET-008)
+     * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md (REQ-RET-008)
      */
     public function allowsDisposal(array $doc): bool
     {

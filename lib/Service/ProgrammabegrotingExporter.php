@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Pure calculator producing iv3, EMU-saldo and JSON export shapes.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class ProgrammabegrotingExporter
 {
@@ -46,9 +46,9 @@ class ProgrammabegrotingExporter
      *
      * @param array<int,array<string,mixed>> $taakvelden The vastgestelde Taakveld rows.
      *
-     * @return array<int,array{taakveldCode:string,baten:float,lasten:float}> Sorted iv3 rows.
+     * @return array<int,array{taskFieldCode:string,revenue:float,expenses:float}> Sorted iv3 rows.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function iv3Rows(array $taakvelden): array
     {
@@ -73,8 +73,8 @@ class ProgrammabegrotingExporter
         foreach ($byCode as $code => $cents) {
             $rows[] = [
                 'taskFieldCode' => $code,
-                'revenue'        => (float) ($cents['revenueCents'] / 100),
-                'expenses'       => (float) ($cents['expensesCents'] / 100),
+                'revenue'       => (float) ($cents['revenueCents'] / 100),
+                'expenses'      => (float) ($cents['expensesCents'] / 100),
             ];
         }
 
@@ -96,7 +96,7 @@ class ProgrammabegrotingExporter
      *
      * @return float The EMU-saldo in euro (positive = overschot).
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-29
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function emuSaldo(array $taakvelden, array $investeringen=[], float $reserveMutaties=0.0): float
     {
@@ -137,7 +137,7 @@ class ProgrammabegrotingExporter
      *
      * @return array<string,mixed> The JSON-serialisable export shape.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function jsonExport(array $begroting, array $programmas, array $taakvelden, array $paragrafen): array
     {
@@ -157,8 +157,8 @@ class ProgrammabegrotingExporter
                         'number'         => ($programma['number'] ?? null),
                         'name'           => ($programma['name'] ?? null),
                         'doelstellingen' => ($programma['doelstellingen'] ?? null),
-                        'revenueTotal'    => ($programma['revenueTotal'] ?? null),
-                        'expensesTotal'   => ($programma['expensesTotal'] ?? null),
+                        'revenueTotal'   => ($programma['revenueTotal'] ?? null),
+                        'expensesTotal'  => ($programma['expensesTotal'] ?? null),
                     ];
                 },
                 $programmas

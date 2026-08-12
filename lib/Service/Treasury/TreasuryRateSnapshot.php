@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Service\Treasury;
  * dormant branch is checkable via `isLive()` / `isDormant()` without
  * inspecting both the result status and the value.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 final class TreasuryRateSnapshot
 {

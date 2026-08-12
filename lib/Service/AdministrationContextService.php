@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Resolves the administratie-aware RBAC context and enforces tenant isolation.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  */
 class AdministrationContextService
 {
@@ -88,7 +88,7 @@ class AdministrationContextService
      *
      * @return string|null
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function currentUserId(): ?string
     {
@@ -111,7 +111,7 @@ class AdministrationContextService
      *
      * @return array{userId:?string,administrations:array<int,array<string,mixed>>,activeAdministrationId:?string}
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function buildContext(): array
     {
@@ -170,7 +170,7 @@ class AdministrationContextService
      *
      * @return array<int,string>
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function accessibleAdministrationIds(): array
     {
@@ -213,7 +213,7 @@ class AdministrationContextService
      *
      * @return bool True when the user has a valid membership for the administration.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function canAccess(string $administrationId): bool
     {
@@ -235,7 +235,7 @@ class AdministrationContextService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-21
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function canPostJournalEntry(string $administrationId): bool
     {
@@ -260,7 +260,7 @@ class AdministrationContextService
      *
      * @return string|null The id to make active, or null when access is denied.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function resolveSwitchTarget(string $targetId): ?string
     {

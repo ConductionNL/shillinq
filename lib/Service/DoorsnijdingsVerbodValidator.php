@@ -108,7 +108,7 @@ class DoorsnijdingsVerbodValidator
                 options: [
                     'event_type'       => InnovatieboxAuditEventLogger::EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN,
                     'administrationId' => $administrationId,
-                    'financialYear'         => $boekjaar,
+                    'financialYear'    => $boekjaar,
                     'reason'           => $auditReason,
                     'details'          => [
                         'findings'     => $findings,
@@ -177,7 +177,7 @@ class DoorsnijdingsVerbodValidator
 
                 $findings[] = [
                     'grootboekrekening' => $account,
-                    'costCentre'      => $plaats,
+                    'costCentre'        => $plaats,
                     'amount'            => $bedrag,
                     'message'           => sprintf(
                         'EUR %s (account %s, kostenplaats %s) appears in both innovatiebox '
@@ -212,7 +212,7 @@ class DoorsnijdingsVerbodValidator
                 [
                     'filters' => [
                         'administrationId'           => $administrationId,
-                        'financialYear'                   => $boekjaar,
+                        'financialYear'              => $boekjaar,
                         'exclusief_in_winstbepaling' => true,
                     ],
                 ]

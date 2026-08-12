@@ -12,7 +12,7 @@
  * idempotent. No-ops cleanly when service workers are unsupported
  * (older Safari, SSR, test runners).
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T4.1
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 const SW_PATH = '/apps/shillinq/public/inventoryServiceWorker.js'

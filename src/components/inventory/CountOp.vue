@@ -6,7 +6,7 @@
   reconcile flag is OFF by default — counts are reference points; operators
   approve a stock correction separately so audit trails stay clean.
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.4
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<section class="count-op">

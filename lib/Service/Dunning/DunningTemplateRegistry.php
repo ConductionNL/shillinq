@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use OCP\IAppConfig;
 /**
  * Canonical default `templateId` per dunning stage, overridable via app config.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 final class DunningTemplateRegistry
 {
@@ -100,7 +100,7 @@ final class DunningTemplateRegistry
      *
      * @return string The templateId.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function templateIdForStage(int $stageNr): string
     {
@@ -120,7 +120,7 @@ final class DunningTemplateRegistry
      *
      * @return string
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function toneForStage(int $stageNr): string
     {
@@ -133,7 +133,7 @@ final class DunningTemplateRegistry
      *
      * @return array<int,string>
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function mergeFields(): array
     {
@@ -147,7 +147,7 @@ final class DunningTemplateRegistry
      *
      * @return array<int,array{stageNr:int,templateId:string,tone:string}>
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function listAll(): array
     {

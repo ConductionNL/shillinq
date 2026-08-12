@@ -44,7 +44,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#integration-tests
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -66,7 +66,7 @@ use Psr\Container\ContainerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#integration-tests
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  */
 final class Ifrs15RevenueIntegrationTest extends TestCase
 {

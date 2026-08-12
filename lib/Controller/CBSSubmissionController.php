@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -55,7 +55,7 @@ use Psr\Log\LoggerInterface;
 /**
  * CBS Submission CRUD + lifecycle controller.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
 class CBSSubmissionController extends Controller
 {

@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Service\Dunning;
 /**
  * Immutable result value object.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 final class DunningChannelSendResult
 {
@@ -56,7 +56,7 @@ final class DunningChannelSendResult
      *
      * @return array<string,mixed>|null
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function postageStatus(): ?array
     {

@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-8
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use InvalidArgumentException;
 /**
  * Side-effect-free year-end IKP definitief lock (REQ-WMO-002 §year-end lock).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-8
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
  *     #506): inherent branch complexity in this domain logic; deferred
@@ -58,6 +58,10 @@ class IntegralCostPriceLockService
      * @return array<string,mixed> Definitief IKP record.
      *
      * @throws InvalidArgumentException When inputs are invalid.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function lock(array $input): array
     {
@@ -142,8 +146,8 @@ class IntegralCostPriceLockService
 
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
-            'period'              => $fiscalYear.'-YTD',
-            'calculatedOn'           => $now->format(DateTimeImmutable::ATOM),
+            'period'               => $fiscalYear.'-YTD',
+            'calculatedOn'         => $now->format(DateTimeImmutable::ATOM),
             'status'               => 'definitief',
             'componenten'          => [
                 'directeLoonkosten'     => round($loonkostenSum, 2),
@@ -155,7 +159,7 @@ class IntegralCostPriceLockService
             ],
             'totaleKosten'         => round($totaleKostenSum, 2),
             'verkochteEenheden'    => $verkochteEenhedenOut,
-            'unitLabel'         => ($input['unitLabel'] ?? null),
+            'unitLabel'            => ($input['unitLabel'] ?? null),
             'kostprijsPerEenheid'  => $kostprijsPerEenheid,
             'gehanteerdTarief'     => $gehanteerdTarief,
             'marge'                => $marge,

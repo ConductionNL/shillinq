@@ -19,7 +19,7 @@
    new active administration on the next request — matches the
    single-source-of-truth session semantics declared in the design.
 
- @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-13
+ @spec openspec/specs/bookkeeping-multi-administratie/spec.md
 -->
 <template>
 	<div

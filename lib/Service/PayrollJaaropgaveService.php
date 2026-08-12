@@ -125,7 +125,7 @@ class PayrollJaaropgaveService
         $cumulatievenMatch = ($this->calculator->toCents(amount: $ytdFiscaal) === $fiscaalC);
 
         return [
-            'employeeId'            => $werknemerId,
+            'employeeId'             => $werknemerId,
             'year'                   => $jaar,
             'aantalPerioden'         => count($stroken),
             'fiscaalLoonJTD'         => $fiscaalLoon,
@@ -191,7 +191,7 @@ class PayrollJaaropgaveService
                 [
                     'filters' => [
                         'administrationId' => $administrationId,
-                        'employeeId'      => $werknemerId,
+                        'employeeId'       => $werknemerId,
                     ],
                 ]
             );

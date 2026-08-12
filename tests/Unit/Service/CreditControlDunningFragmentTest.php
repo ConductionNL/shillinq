@@ -39,6 +39,7 @@ use ReflectionMethod;
  */
 final class CreditControlDunningFragmentTest extends TestCase
 {
+
     /**
      * Absolute path to the change fragment.
      *
@@ -221,13 +222,14 @@ final class CreditControlDunningFragmentTest extends TestCase
      */
     public function testFragmentMergesAdditively(): void
     {
-        $base   = json_decode((string) file_get_contents($this->registerPath), true);
-        $merged = $this->merge($base, $this->fragment());
+        $base    = json_decode((string) file_get_contents($this->registerPath), true);
+        $merged  = $this->merge($base, $this->fragment());
         $schemas = $merged['components']['schemas'];
 
         foreach (self::SCHEMAS as $slug) {
             self::assertArrayHasKey($slug, $schemas, "Merged config must include $slug");
         }
+
         // Pre-existing schemas survive.
         self::assertArrayHasKey('BankConnection', $schemas);
         self::assertArrayHasKey('GLTransaction', $schemas);
@@ -272,6 +274,7 @@ final class CreditControlDunningFragmentTest extends TestCase
                 break;
             }
         }
+
         self::assertNotNull($sample, 'Sample IncassoKostenBerekening seed must be present');
         self::assertSame(8400.0, (float) $sample['hoofdsom']);
         self::assertSame(795.0, (float) $sample['berekening']['applied']);
@@ -296,6 +299,7 @@ final class CreditControlDunningFragmentTest extends TestCase
                 break;
             }
         }
+
         self::assertNotNull($sample, 'Sample overheid override seed must be present');
         self::assertStringContainsString('Wet betalingstermijnen overheid', (string) $sample['reason']);
         self::assertCount(4, $sample['overrides']['stages']);

@@ -14,7 +14,7 @@
     - @scan="(value)": emitted when a barcode is decoded or manually entered.
     - @cancel: emitted when the operator dismisses the scanner.
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T2.6
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<div class="barcode-scanner" :aria-live="'polite'">

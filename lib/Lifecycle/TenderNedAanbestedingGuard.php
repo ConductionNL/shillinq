@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the transition (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 class TenderNedAanbestedingGuard
 {
@@ -101,7 +101,7 @@ class TenderNedAanbestedingGuard
      *
      * @return bool True when the award may be recorded.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function canGunnen(array $aanbesteding): bool
     {
@@ -154,7 +154,7 @@ class TenderNedAanbestedingGuard
      *
      * @return bool True when the tender may be completed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function canAfronden(array $aanbesteding): bool
     {
@@ -200,7 +200,7 @@ class TenderNedAanbestedingGuard
                 ->findAll(
                     [
                         'filters' => [
-                            'commitmentId'  => $verplichtingId,
+                            'commitmentId'    => $verplichtingId,
                             'opleveringsType' => 'eindoplevering',
                         ],
                     ]
@@ -234,7 +234,7 @@ class TenderNedAanbestedingGuard
             'TenderNedAanbestedingGuard: no approved eindoplevering — denying completion (REQ-006)',
             [
                 'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
-                'commitmentId' => $verplichtingId,
+                'commitmentId'   => $verplichtingId,
             ]
         );
         return false;

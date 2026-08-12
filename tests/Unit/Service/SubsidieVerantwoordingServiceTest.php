@@ -15,7 +15,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+ * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 
 declare(strict_types=1);
@@ -34,6 +34,7 @@ use PHPUnit\Framework\TestCase;
  */
 class SubsidieVerantwoordingServiceTest extends TestCase
 {
+
     /**
      * Mock IAppConfig.
      *
@@ -80,7 +81,7 @@ class SubsidieVerantwoordingServiceTest extends TestCase
     public function testBuildVerantwoordingForGrant(): void
     {
         $grant = [
-            'subsidyNumber'   => 'SUB-2026-0001',
+            'subsidyNumber'    => 'SUB-2026-0001',
             'awardDate'        => '2026-01-01',
             'awardAmount'      => 50000,
             'administrationId' => 'adm-gemeente-1',
@@ -189,7 +190,7 @@ class SubsidieVerantwoordingServiceTest extends TestCase
             /**
              * Count of saveObject() calls.
              *
-             * @var int
+             * @var integer
              */
             public int $saved = 0;
 

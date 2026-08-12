@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+ * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
  */
 
 declare(strict_types=1);
@@ -56,7 +56,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\CcmFindingGuard::<method>. Every guard fails closed:
  * any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+ * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
  */
 class CcmFindingGuard
 {
@@ -84,7 +84,7 @@ class CcmFindingGuard
      *
      * @return bool True when the finding may be dismissed.
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      */
     public function canDismiss(string $findingId, ?array $object=null): bool
     {
@@ -114,7 +114,7 @@ class CcmFindingGuard
      *
      * @return bool True when the finding may be confirmed.
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      */
     public function canConfirm(string $findingId, ?array $object=null): bool
     {
@@ -145,7 +145,7 @@ class CcmFindingGuard
      *
      * @return bool True when the report may be approved.
      *
-     * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
+     * @spec openspec/specs/bookkeeping-ccm-rule-engine/spec.md
      */
     public function canApproveReport(string $reportId, ?array $object=null): bool
     {

@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -55,7 +55,7 @@ use Psr\Log\LoggerInterface;
  * Fail-closed: a missing `glTransactionId`, an unresolvable GLTransaction, or
  * any lookup exception all deny the void.
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class GLReversalGuard
 {
@@ -81,7 +81,7 @@ class GLReversalGuard
      *
      * @return bool True when the linked GLTransaction is reversed and void may proceed.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function isReversed(array $object): bool
     {

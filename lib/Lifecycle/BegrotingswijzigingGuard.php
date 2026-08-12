@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.vaststellen.requires as
  * OCA\Shillinq\Lifecycle\BegrotingswijzigingGuard::canVaststellen.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class BegrotingswijzigingGuard
 {
@@ -76,7 +76,7 @@ class BegrotingswijzigingGuard
      *
      * @return bool True when the wijziging may be vastgesteld.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function canVaststellen(string $wijzigingId, ?array $object=null): bool
     {

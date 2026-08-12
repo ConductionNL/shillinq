@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * REST surface for the PeriodClose lifecycle and close-assistant flags.
  *
- * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-period-close/spec.md
  */
 class PeriodCloseController extends Controller
 {
@@ -78,7 +78,7 @@ class PeriodCloseController extends Controller
      *
      * @return JSONResponse 200 with the period + aiFlags; 400 on bad input; 404 when not found.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     #[NoAdminRequired]
     public function show(string $periodId): JSONResponse
@@ -127,7 +127,7 @@ class PeriodCloseController extends Controller
      *
      * @return JSONResponse 200 with { data: flags[] }; 400/404 on error.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     #[NoAdminRequired]
     public function aiFlags(string $periodId): JSONResponse
@@ -175,7 +175,7 @@ class PeriodCloseController extends Controller
      *
      * @return JSONResponse 200 with the updated record; 403/404/409/422 mapped from the service.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     #[NoAdminRequired]
     public function close(string $periodId): JSONResponse
@@ -199,7 +199,7 @@ class PeriodCloseController extends Controller
      *
      * @return JSONResponse 200 with the updated record; 403/404/409 mapped from the service.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     #[NoAdminRequired]
     public function startClose(string $periodId): JSONResponse
@@ -223,7 +223,7 @@ class PeriodCloseController extends Controller
      *
      * @return JSONResponse 200 with the updated record; 403/404/409/422 mapped from the service.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     #[NoAdminRequired]
     public function reopen(string $periodId): JSONResponse
@@ -249,7 +249,7 @@ class PeriodCloseController extends Controller
      *
      * @return JSONResponse 200 with the updated record; 403/404/409 mapped from the service.
      *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
      */
     #[NoAdminRequired]
     public function lockAudit(string $periodId): JSONResponse

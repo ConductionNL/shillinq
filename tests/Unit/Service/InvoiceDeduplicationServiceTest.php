@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use Psr\Log\LoggerInterface;
  * Verifies double-invoice detection for time-entry + expense source ids
  * across BillableInvoice rows (Task 13 / #111 / design D9).
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  */
 final class InvoiceDeduplicationServiceTest extends TestCase
 {

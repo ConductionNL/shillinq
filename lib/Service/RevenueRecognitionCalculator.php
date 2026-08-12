@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ namespace OCA\Shillinq\Service;
  * spec-canonical field names (revisedTotalEstimatedCost, transactionPriceAllocated)
  * are kept verbatim for traceability, so LongVariable is suppressed too.
  *
- * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  * @SuppressWarnings(PHPMD.LongVariable)
@@ -61,7 +61,7 @@ class RevenueRecognitionCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -76,7 +76,7 @@ class RevenueRecognitionCalculator
      *
      * @return float Money amount.
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -96,7 +96,7 @@ class RevenueRecognitionCalculator
      *
      * @return float The constrained amount (in money).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function constrainedVariable(float $estimate, ?float $constraint): float
     {
@@ -121,7 +121,7 @@ class RevenueRecognitionCalculator
      *
      * @return float The total transaction price (in money).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function totalTransactionPrice(array $price): float
     {
@@ -153,7 +153,7 @@ class RevenueRecognitionCalculator
      *
      * @return array<string,float> poId => allocated amount (in money).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function allocateRelativeSsp(array $pos, float $totalPrice): array
     {
@@ -215,7 +215,7 @@ class RevenueRecognitionCalculator
      *
      * @return array<string,float> poId => allocated amount (in money).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function allocateResidual(array $reliablePos, string $residualPo, float $totalPrice): array
     {
@@ -245,7 +245,7 @@ class RevenueRecognitionCalculator
      *
      * @return float Percentage of completion (0-100).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function percentageComplete(float $actualCostToDate, float $revisedTotalEstimatedCost): float
     {
@@ -279,7 +279,7 @@ class RevenueRecognitionCalculator
      *
      * @return float Cumulative recognised revenue (in money).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function cumulativeFromPercentage(float $percentComplete, float $allocatedPrice): float
     {
@@ -302,7 +302,7 @@ class RevenueRecognitionCalculator
      *
      * @return float Gross margin as a fraction (e.g. 0.10 for 10%).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function revisedMargin(float $allocatedPrice, float $revisedTotalEstimatedCost): float
     {
@@ -329,7 +329,7 @@ class RevenueRecognitionCalculator
      *
      * @return array{asset:float,liability:float} The asset and liability balances (in money).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function contractAssetLiability(float $cumulativeRecognised, float $cumulativeBilled): array
     {
@@ -362,7 +362,7 @@ class RevenueRecognitionCalculator
      *
      * @return float Remaining amount (in money).
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function remainingAmount(float $transactionPriceAllocated, float $cumulativeRecognised): float
     {
@@ -391,7 +391,7 @@ class RevenueRecognitionCalculator
      *
      * @return string One of new-contract | prospective | not-distinct-cumulative.
      *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function classifyModification(bool $addsDistinctScope, bool $pricedAtSsp, bool $priceOnly): string
     {

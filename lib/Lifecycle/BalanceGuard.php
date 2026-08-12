@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
+ * @spec openspec/specs/bookkeeping-general-ledger/spec.md
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * Referenced from shillinq_register.json GLTransaction.x-openregister-lifecycle
  * transitions.post.requires as OCA\Shillinq\Lifecycle\BalanceGuard::isBalanced.
  *
- * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
+ * @spec openspec/specs/bookkeeping-general-ledger/spec.md
  */
 class BalanceGuard
 {
@@ -73,7 +73,7 @@ class BalanceGuard
      *
      * @return bool True when the transaction is balanced and may be posted.
      *
-     * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
+     * @spec openspec/specs/bookkeeping-general-ledger/spec.md
      */
     public function isBalanced(string $transactionId): bool
     {

@@ -29,7 +29,7 @@
  not fit the built-in declarative `detail` page type — see the registry
  docblock for the kind-page justification per ADR-024 / ADR-036.
 
- @spec openspec/changes/bookkeeping-period-close/tasks.md#task-9
+ @spec openspec/specs/bookkeeping-period-close/spec.md
 -->
 <template>
 	<div class="period-close-detail" data-testid="period-close-detail">

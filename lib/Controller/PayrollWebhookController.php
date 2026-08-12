@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Receives signed external-payroll CloudEvents and reflects deductions onto Payroll.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
 class PayrollWebhookController extends Controller
 {
@@ -83,7 +83,7 @@ class PayrollWebhookController extends Controller
      *
      * @return JSONResponse 501 — the webhook accepts POST only.
      *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]
@@ -107,7 +107,7 @@ class PayrollWebhookController extends Controller
      * @return JSONResponse 200 on success/idempotent replay; 400 malformed or
      *                      bad/missing signature; 422 unknown payroll.
      *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]

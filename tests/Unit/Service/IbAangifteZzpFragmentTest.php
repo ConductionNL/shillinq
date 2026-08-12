@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+ * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
 
 declare(strict_types=1);
@@ -31,6 +31,7 @@ use ReflectionMethod;
  */
 final class IbAangifteZzpFragmentTest extends TestCase
 {
+
     /**
      * Absolute path to the change fragment.
      *
@@ -285,7 +286,7 @@ final class IbAangifteZzpFragmentTest extends TestCase
      */
     public function testNewHeaderDoesNotCollideWithExportSchema(): void
     {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
+        $base   = json_decode((string) file_get_contents($this->registerPath), true);
         $merged = $this->merge($base, $this->fragment());
 
         // Both exist side by side after considering all fragments.

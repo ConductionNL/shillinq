@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-28
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use RuntimeException;
 /**
  * Document REST API (REQ-WBSO-003 / REQ-WBSO-005 / REQ-WBSO-007 / REQ-WBSO-009).
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-28
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral

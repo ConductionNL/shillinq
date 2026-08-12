@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/wbso/realisatie — per-beschikking granted-vs-realised S&O hours.
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class WbsoAdministratieController extends Controller
 {
@@ -77,7 +77,7 @@ class WbsoAdministratieController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
      *
      * @no-admin-idor-exempt read-only WBSO realisatie summary; administration scope
      *   is validated against the caller's membership by OpenRegister's ObjectService

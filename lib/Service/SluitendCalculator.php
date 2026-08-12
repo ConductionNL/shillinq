@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Service;
  * lasten before comparing against the structural baten, per the Commissie BBV
  * notitie "Structureel en reëel evenwicht".
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class SluitendCalculator
 {
@@ -54,9 +54,9 @@ class SluitendCalculator
      * @param array<string,mixed> $year                 The meerjarenraming year row.
      * @param float               $nominaleOntwikkeling The loon- en prijsindexatie percentage (e.g. 2.0).
      *
-     * @return array{saldoStructureel:float,saldoIncidenteel:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
+     * @return array{balanceStructural:float,balanceIncidental:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function evaluateYear(array $year, float $nominaleOntwikkeling): array
     {
@@ -78,8 +78,8 @@ class SluitendCalculator
         $sluitendReeel       = ($saldoReelCents >= 0);
 
         return [
-            'balanceStructural'    => $this->toEuro(cents: $saldoStrucCents),
-            'balanceIncidental'    => $this->toEuro(cents: $saldoIncCents),
+            'balanceStructural'   => $this->toEuro(cents: $saldoStrucCents),
+            'balanceIncidental'   => $this->toEuro(cents: $saldoIncCents),
             'saldoReëel'          => $this->toEuro(cents: $saldoReelCents),
             'sluitendStructureel' => $sluitendStructureel,
             'sluitendReëel'       => $sluitendReeel,
@@ -100,7 +100,7 @@ class SluitendCalculator
      *
      * @return array{sluitendStructureel:bool,sluitendReëel:bool}
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function evaluateBegroting(array $years, float $nominaleOntwikkeling): array
     {
@@ -143,7 +143,7 @@ class SluitendCalculator
      *
      * @return string One of `repressief`, `preventief`, `artikel-12`.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function determineToezichtRegime(
         bool $sluitendStructureel,

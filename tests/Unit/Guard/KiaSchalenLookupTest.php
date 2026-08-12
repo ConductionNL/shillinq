@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,6 +40,7 @@ use Psr\Log\LoggerInterface;
  */
 class KiaSchalenLookupTest extends TestCase
 {
+
     /**
      * Mock LoggerInterface.
      *

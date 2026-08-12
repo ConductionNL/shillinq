@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Psr\Log\LoggerInterface;
  * treated as NOT sufficiently mandated (it must go through approval), never
  * silently signed (CWE-863 / OWASP A01:2021).
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 class MandaatEnforcer
 {
@@ -81,7 +81,7 @@ class MandaatEnforcer
      *
      * @return bool True when a valid mandaat covers the commitment amount and soort.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function hasSufficientMandate(string $verplichtingsnummer, ?array $object=null): bool
     {
@@ -115,7 +115,7 @@ class MandaatEnforcer
      *
      * @return bool True when approval is required (mandate insufficient or absent).
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function requiresApproval(string $verplichtingsnummer, ?array $object=null): bool
     {
@@ -139,7 +139,7 @@ class MandaatEnforcer
      *
      * @return array<string,mixed>|null The applicable mandaat record, or null.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function resolveApplicableMandate(array $verplichting): ?array
     {
@@ -191,7 +191,7 @@ class MandaatEnforcer
      *
      * @return bool True when a second signature is required.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function requiresSecondSignature(array $verplichting): bool
     {

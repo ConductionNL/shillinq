@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

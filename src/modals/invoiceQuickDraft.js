@@ -14,7 +14,7 @@ const PREFS_TTL_MS = 90 * 24 * 60 * 60 * 1000 // 90 days (REQ-IQD-004)
  * A fresh, empty draft line. quantity defaults to 1, VAT to the Dutch
  * high rate (21%).
  *
- * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  * @return {object} A new line object.
  */
 export function defaultDraftLine() {
@@ -41,7 +41,7 @@ function round2(value) {
  * Compute net, VAT and gross totals from the line items. Each line's
  * net is quantity * unitPrice; VAT applies its btwRate percentage.
  *
- * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  * @param {Array<object>} lines The draft lines.
  * @return {{net: number, vat: number, gross: number}} The totals.
  */
@@ -77,7 +77,7 @@ export function paymentTermDays(terms) {
  * Compute a due date string (YYYY-MM-DD) from an invoice date plus the
  * customer's payment terms.
  *
- * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  * @param {string} invoiceDate ISO date (YYYY-MM-DD).
  * @param {string} terms Payment terms (e.g. `net30`).
  * @return {string} The due date, or '' when invoiceDate is invalid.
@@ -130,7 +130,7 @@ export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
  * Build the ARInvoice payload posted to the OpenRegister object API.
  * The invoice is always created in lifecycleState `draft` (REQ-IQD-003).
  *
- * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  * @param {object} input The collected form values.
  * @param {string} input.customerId Selected customer id.
  * @param {string} input.invoiceDate Invoice date.
@@ -186,7 +186,7 @@ function prefsKey(customerId) {
  * Load the last-used quick-draft preferences for a customer. Returns
  * null when absent, expired (>90 days) or unreadable.
  *
- * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  * @param {string} customerId Customer id.
  * @return {object|null} The stored prefs, or null.
  */
@@ -210,7 +210,7 @@ export function loadQuickDraftPrefs(customerId) {
 /**
  * Persist the last-used quick-draft preferences for a customer.
  *
- * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  * @param {string} customerId Customer id.
  * @param {object} prefs The preferences (glAccount, vatCode, description, unitPrice).
  * @return {void}

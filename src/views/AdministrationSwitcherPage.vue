@@ -8,7 +8,7 @@
  renders the dropdown plus a help blurb. Single-administratie users see a
  short explainer instead of a useless dropdown (REQ-MA-003).
 
- @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-13
+ @spec openspec/specs/bookkeeping-multi-administratie/spec.md
 -->
 <template>
 	<NcAppContent>

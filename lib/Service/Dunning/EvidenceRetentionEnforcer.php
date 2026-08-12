@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use InvalidArgumentException;
 /**
  * Enforces the per-evidence-ref URI contract + the 7-year retention window.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 final class EvidenceRetentionEnforcer
 {
@@ -71,7 +71,7 @@ final class EvidenceRetentionEnforcer
      *
      * @throws InvalidArgumentException When the URI does not match an allowed scheme.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function assertEvidenceUri(string $uri): void
     {
@@ -112,7 +112,7 @@ final class EvidenceRetentionEnforcer
      *
      * @throws InvalidArgumentException When any URI is malformed (message lists all).
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function validateEvidenceRefs(array $uris): void
     {
@@ -144,7 +144,7 @@ final class EvidenceRetentionEnforcer
      *
      * @return array{retentionYears:int,deletionDate:string,sourceUri:string}
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function retentionPolicy(string $uri, ?DateTimeImmutable $issuedAt=null): array
     {

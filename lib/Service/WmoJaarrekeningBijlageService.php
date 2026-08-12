@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-13
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use DateTimeZone;
 /**
  * Side-effect-free WMO jaarrekening-bijlage composer (REQ-WMO-004).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-13
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.ShortVariable)
@@ -56,6 +56,10 @@ class WmoJaarrekeningBijlageService
      *                                   abbByActivity?, manualOverridesByActivity?).
      *
      * @return array<string,mixed> Bijlage payload.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function compose(array $input): array
     {
@@ -112,7 +116,7 @@ class WmoJaarrekeningBijlageService
                 'commercialActivityId'        => $activityId,
                 'code'                        => $code,
                 'name'                        => $naam,
-                'revenue'                       => $omzet,
+                'revenue'                     => $omzet,
                 'integraleKostprijs'          => $integraleCost,
                 'kostendekkingsratio'         => $ratio,
                 'compliant'                   => $compliant,
@@ -120,7 +124,7 @@ class WmoJaarrekeningBijlageService
                 'priorYearOmzet'              => $priorOmzet,
                 'priorYearIntegraleKostprijs' => $priorCost,
                 'priorYearRatio'              => $priorRatio,
-                'abbReference'               => $abbReferentie,
+                'abbReference'                => $abbReferentie,
                 'manualOverrides'             => (int) ($overridesByAct[$activityId] ?? 0),
             ];
 
@@ -138,7 +142,7 @@ class WmoJaarrekeningBijlageService
             'generatedAt'      => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
             'activiteiten'     => $rows,
             'samenvatting'     => [
-                'total'       => $totalCount,
+                'total'        => $totalCount,
                 'compliant'    => $compliantCount,
                 'nonCompliant' => ($totalCount - $compliantCount),
             ],
@@ -190,6 +194,10 @@ class WmoJaarrekeningBijlageService
      * @param array<string,mixed> $bijlage The composed bijlage.
      *
      * @return string Markdown source.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function toMarkdown(array $bijlage): string
     {
@@ -242,6 +250,10 @@ class WmoJaarrekeningBijlageService
      * @param array<string,mixed> $bijlage The composed bijlage.
      *
      * @return string XML serialization.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function toXml(array $bijlage): string
     {

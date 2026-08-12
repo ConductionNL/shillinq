@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-10
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use InvalidArgumentException;
 /**
  * Side-effect-free splitter for ActivityCostAllocation records (REQ-WMO-003).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-10
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  */
 class ActivityCostAllocationSplitter
 {
@@ -82,6 +82,10 @@ class ActivityCostAllocationSplitter
      * @param string                         $postingDate ISO date (YYYY-MM-DD) of the journal entry.
      *
      * @return array<string,mixed>|null The geldende rule or null when no rule matches.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function resolveRule(array $candidates, string $postingDate): ?array
     {

@@ -51,7 +51,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -82,7 +82,7 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 class TenderNedAwardDetectedListener implements IEventListener
 {
@@ -119,7 +119,16 @@ class TenderNedAwardDetectedListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+     * @listener-placement inline cheap-bounded — the whole inline cost is one lookup
+     *  bounded to a single row (`limit => 1`, added here) plus one saveObject for the
+     *  REQ-002 auto-promotion. No unbounded scan and no fan-out remain on this path.
+     *  The placement itself is PRE-EXISTING, not a choice made by the vocabulary rename
+     *  that surfaced it; shillinq has no ListenerDeferralService, so deferring would mean
+     *  introducing one and shifting the REQ-007 "budget widget reflects the award within
+     *  60 seconds" timing. Re-check this reason rather than trusting it: it describes
+     *  what the app has today, and a deferral service landing would change the answer.
+     *
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function handle(Event $event): void
     {
@@ -271,15 +280,15 @@ class TenderNedAwardDetectedListener implements IEventListener
 
         $verplichting = [
             'commitmentNumber' => 'TN-'.$aanbestedingId,
-            'description'       => (string) ($payload['titel'] ?? $aanbestedingId),
-            'source'               => 'tenderned',
-            'sourceReference'     => $aanbestedingId,
-            'amount'             => (float) ($payload['contractValue'] ?? 0),
-            'termStart'      => (string) ($payload['termStart'] ?? ''),
-            'termEnd'       => (string) ($payload['termEnd'] ?? ''),
-            'mijlpalen'          => $plan,
-            'status'             => 'active',
-            'administrationId'   => (string) ($payload['administrationId'] ?? ''),
+            'description'      => (string) ($payload['titel'] ?? $aanbestedingId),
+            'source'           => 'tenderned',
+            'sourceReference'  => $aanbestedingId,
+            'amount'           => (float) ($payload['contractValue'] ?? 0),
+            'termStart'        => (string) ($payload['termStart'] ?? ''),
+            'termEnd'          => (string) ($payload['termEnd'] ?? ''),
+            'mijlpalen'        => $plan,
+            'status'           => 'active',
+            'administrationId' => (string) ($payload['administrationId'] ?? ''),
         ];
 
         try {
@@ -299,7 +308,7 @@ class TenderNedAwardDetectedListener implements IEventListener
         // execution view. Fail-soft if the update fails — the obligation
         // has been created and the next polling tick will re-attempt.
         try {
-            $payload['status']         = 'in-uitvoering';
+            $payload['status']       = 'in-uitvoering';
             $payload['commitmentId'] = 'TN-'.$aanbestedingId;
             $objectService
                 ->setRegister(register: $this->getRegisterSlug())
@@ -365,8 +374,13 @@ class TenderNedAwardDetectedListener implements IEventListener
                 ->setSchema(schema: 'Verplichting')
                 ->findAll(
                     [
+                        // Bounded on the write path (ADR-078): this method returns
+                        // the FIRST match, so fetching more rows than that is work
+                        // the caller throws away — and it runs inside another
+                        // object's write, where an unbounded scan is the cost.
+                        'limit'   => 1,
                         'filters' => [
-                            'source'           => 'tenderned',
+                            'source'          => 'tenderned',
                             'sourceReference' => $bronReferentie,
                         ],
                     ]

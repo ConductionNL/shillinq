@@ -14,7 +14,7 @@
  * own the gate semantics; Playwright stays UI-only per the fleet rule
  * (Playwright = UI; Newman = API).
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-17
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 import { test, expect } from '@playwright/test'

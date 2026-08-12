@@ -31,7 +31,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+ * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 
 declare(strict_types=1);
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.approve.requires as
  * OCA\Shillinq\Lifecycle\AuditorStatementGuard::canApprove.
  *
- * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+ * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 class AuditorStatementGuard
 {
@@ -83,7 +83,7 @@ class AuditorStatementGuard
      *
      * @return bool True when the auditor statement may be approved.
      *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+     * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
      */
     public function canApprove(string $statementId, ?array $object=null): bool
     {

@@ -17,7 +17,7 @@
  client-side rollup of the raw GLLine list if the aggregation endpoint
  returns 404 (older OR builds).
 
- @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
+ @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 -->
 <template>
 	<NcAppContent>

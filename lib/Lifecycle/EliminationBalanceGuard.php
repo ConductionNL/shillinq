@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
  * transitions.create.requires as
  * OCA\Shillinq\Lifecycle\EliminationBalanceGuard::isBalanced.
  *
- * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+ * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
  */
 class EliminationBalanceGuard
 {
@@ -70,7 +70,7 @@ class EliminationBalanceGuard
      *
      * @return bool True when the journal is balanced and may be persisted.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     public function isBalanced(array $journal): bool
     {
@@ -131,7 +131,7 @@ class EliminationBalanceGuard
      *
      * @return bool True when the supplied totals are internally consistent.
      *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-intercompany-elimination/spec.md
      */
     private function totalsConsistent(array $journal, int $debitCents, int $creditCents): bool
     {

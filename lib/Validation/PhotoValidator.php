@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expense-capture-core/tasks.md#task-11
+ * @spec openspec/specs/expense-capture-core/spec.md
  */
 
 declare(strict_types=1);
@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Validation;
  * Referenced from Receipt schema x-openregister-calculations guard
  * (ADR-031 exception — engine cannot express MIME + size checks declaratively).
  *
- * @spec openspec/changes/expense-capture-core/tasks.md#task-11
+ * @spec openspec/specs/expense-capture-core/spec.md
  */
 class PhotoValidator
 {
@@ -64,7 +64,7 @@ class PhotoValidator
      *
      * @return bool True when the upload is valid per REQ-EC-008.
      *
-     * @spec openspec/changes/expense-capture-core/tasks.md#task-11
+     * @spec openspec/specs/expense-capture-core/spec.md
      */
     public function validate(string $filePath, string $mimeType, int $fileSize): bool
     {

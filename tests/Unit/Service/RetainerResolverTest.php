@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
  * back to a safe zero schedule with warning, and applies toCents() to mixed
  * money inputs.
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  */
 final class RetainerResolverTest extends TestCase
 {

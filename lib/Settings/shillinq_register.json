@@ -21618,6 +21618,7 @@
       ],
       "properties": {
         "subsidyId": {
+          "title": "Subsidy ID",
           "type": "string",
           "description": "FK to parent Subsidie.id.",
           "example": "subsidie-rdsubsidie-2026-001"
@@ -22805,6 +22806,7 @@
       ],
       "properties": {
         "subsidyId": {
+          "title": "Subsidy ID",
           "type": "string",
           "format": "uuid",
           "$ref": "Subsidie",
@@ -22827,6 +22829,7 @@
           "example": "Aantal personen met een bijstandsuitkering per 31 december van het verantwoordingsjaar"
         },
         "indicatorValue": {
+          "title": "Indicator Value",
           "description": "Measured or reported value of the indicator for the fiscal year. May be a number (count, amount, percentage) or string depending on indicatorType.",
           "oneOf": [
             {
@@ -22839,6 +22842,7 @@
           "example": 1247
         },
         "indicatorUnit": {
+          "title": "Indicator Unit",
           "type": "string",
           "description": "Unit of the indicator value (e.g. personen, euro, %, ja/nee). Nullable when not applicable.",
           "nullable": true,
@@ -22998,6 +23002,7 @@
           "example": "CERT-2026-0042"
         },
         "termStart": {
+          "title": "Term Start",
           "type": "string",
           "format": "date",
           "description": "Startdatum van de S&O-projectlooptijd.",
@@ -23081,6 +23086,7 @@
           "example": "sop-2026-001"
         },
         "employeeId": {
+          "title": "Employee ID",
           "type": "string",
           "description": "Referentie naar een Nextcloud-gebruiker (uid) of een Detachering-record-id (FK naar het sibling add-shillinq-detachering-payroll-administratie capability).",
           "example": "user-jan.de.vries"

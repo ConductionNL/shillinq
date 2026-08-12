@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -185,12 +185,12 @@ final class WbsoAdministratieServiceTest extends TestCase
     private function beschikking(string $number, float $granted, string $admin): array
     {
         return [
-            'decisionNumber' => $number,
-            'rvoReference'      => 'S&O '.$number,
-            'projectNumber'     => 'PRJ-'.$number,
-            'grantedSoHours'    => $granted,
-            'state'             => 'granted',
-            'administrationId'  => $admin,
+            'decisionNumber'   => $number,
+            'rvoReference'     => 'S&O '.$number,
+            'projectNumber'    => 'PRJ-'.$number,
+            'grantedSoHours'   => $granted,
+            'state'            => 'granted',
+            'administrationId' => $admin,
         ];
 
     }//end beschikking()
@@ -208,10 +208,10 @@ final class WbsoAdministratieServiceTest extends TestCase
     private function uur(string $number, float $hours, string $state, string $admin): array
     {
         return [
-            'decisionNumber' => $number,
-            'hours'             => $hours,
-            'state'             => $state,
-            'administrationId'  => $admin,
+            'decisionNumber'   => $number,
+            'hours'            => $hours,
+            'state'            => $state,
+            'administrationId' => $admin,
         ];
 
     }//end uur()

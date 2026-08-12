@@ -33,7 +33,7 @@
  * TaxNotificationServiceTest, TaxReportCalculatorTest, TaxReportServiceTest
  * — 26 new tests, full suite 261 green).
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-42
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 
 import { test, expect } from '@playwright/test'

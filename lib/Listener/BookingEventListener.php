@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 class BookingEventListener implements IEventListener
 {
@@ -71,7 +71,7 @@ class BookingEventListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     public function handle(Event $event): void
     {

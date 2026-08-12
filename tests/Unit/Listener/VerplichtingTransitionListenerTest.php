@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,6 @@ use Psr\Log\NullLogger;
  */
 final class VerplichtingTransitionListenerTest extends TestCase
 {
-
     /**
      * Build a recording IEventDispatcher.
      *
@@ -73,19 +72,16 @@ final class VerplichtingTransitionListenerTest extends TestCase
             public function dispatchTyped(Event $event): void
             {
                 // No-op.
-
             }//end dispatchTyped()
 
             public function addListener(string $eventName, callable $listener, int $priority=0): void
             {
                 // No-op.
-
             }//end addListener()
 
             public function addServiceListener(string $eventName, string $className, int $priority=0): void
             {
                 // No-op.
-
             }//end addServiceListener()
 
             public function hasListeners(string $eventName): bool
@@ -97,7 +93,6 @@ final class VerplichtingTransitionListenerTest extends TestCase
             public function removeListener(string $eventName, callable $listener): void
             {
                 // No-op.
-
             }//end removeListener()
         };
 
@@ -151,12 +146,15 @@ final class VerplichtingTransitionListenerTest extends TestCase
         $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1089', [
-                'source'           => 'tenderned',
-                'sourceReference' => 'TN-2026-0001',
-                'status'         => 'active',
-                'amount'         => 50000.0,
-            ])
+            $this->entity(
+                    '1089',
+                    [
+                        'source'          => 'tenderned',
+                        'sourceReference' => 'TN-2026-0001',
+                        'status'          => 'active',
+                        'amount'          => 50000.0,
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -178,11 +176,14 @@ final class VerplichtingTransitionListenerTest extends TestCase
         $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1089', [
-                'source'   => 'manual',
-                'status' => 'active',
-                'amount' => 5000.0,
-            ])
+            $this->entity(
+                    '1089',
+                    [
+                        'source' => 'manual',
+                        'status' => 'active',
+                        'amount' => 5000.0,
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -204,11 +205,14 @@ final class VerplichtingTransitionListenerTest extends TestCase
         $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1089', [
-                'source'   => 'tenderned',
-                'status' => 'concept',
-                'amount' => 5000.0,
-            ])
+            $this->entity(
+                    '1089',
+                    [
+                        'source' => 'tenderned',
+                        'status' => 'concept',
+                        'amount' => 5000.0,
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -229,11 +233,14 @@ final class VerplichtingTransitionListenerTest extends TestCase
         $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1089', [
-                'source'   => 'tenderned',
-                'status' => 'active',
-                'amount' => 5000.0,
-            ]),
+            $this->entity(
+                    '1089',
+                    [
+                        'source' => 'tenderned',
+                        'status' => 'active',
+                        'amount' => 5000.0,
+                    ]
+                    ),
             'activeren',
             'concept',
             'active',
@@ -260,11 +267,14 @@ final class VerplichtingTransitionListenerTest extends TestCase
         $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1089', [
-                'source'   => 'tenderned',
-                'status' => 'concept',
-                'amount' => 5000.0,
-            ]),
+            $this->entity(
+                    '1089',
+                    [
+                        'source' => 'tenderned',
+                        'status' => 'concept',
+                        'amount' => 5000.0,
+                    ]
+                    ),
             'reactiveren',
             'active',
             'concept',
@@ -295,10 +305,13 @@ final class VerplichtingTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'source'   => 'tenderned',
-                'status' => 'active',
-            ])
+            $this->entity(
+                    '1090',
+                    [
+                        'source' => 'tenderned',
+                        'status' => 'active',
+                    ]
+                    )
         );
 
         $listener->handle($event);
@@ -326,7 +339,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
 
         $entity = new ObjectEntity();
         $entity->setSchema('4242');
-        $event  = new ObjectCreatedEvent($entity);
+        $event = new ObjectCreatedEvent($entity);
         $listener->handle($event);
 
         $this->assertCount(0, $dispatcher->events);

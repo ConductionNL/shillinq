@@ -44,7 +44,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -65,7 +65,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  */
 class CogsPosterService
 {
@@ -106,7 +106,7 @@ class CogsPosterService
      *
      * @return array<string,mixed> Result envelope with 'posted' bool, 'transaction', 'valuation'.
      *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
+     * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
      */
     public function postCogs(array $move, array $valuation, int $cogsCents): array
     {

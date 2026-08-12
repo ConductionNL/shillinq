@@ -27,7 +27,7 @@
  * build predates this change (page not found).
  *
  * @e2e compliance-deadline-calendar::toggling-a-category-off-removes-its-events
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 
 import { test, expect } from '@playwright/test'

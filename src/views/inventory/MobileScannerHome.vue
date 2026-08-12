@@ -5,7 +5,7 @@
   inventoryMobileScanner store on mount and surfaces the four operations
   + sync status badge per T3.5.
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.5
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<section class="mobile-scanner-home">

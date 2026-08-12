@@ -145,11 +145,11 @@ class InnovatieboxAggregationService
             $vpb        = $offset['residualProfitAt9Pct'];
             $voordeel   = round(($offset['totalBenefit']), 2);
             $lossOffset = [
-                'loss_offset'  => $offset['lossOffset'],
-                'benefit_full' => $offset['lossOffsetAtFullRate'],
-                'residual'     => $offset['residualProfit'],
-                'benefit_9pct' => $offset['residualProfitAt9Pct'],
-                'balance_after'     => $offset['saldoNa'],
+                'loss_offset'   => $offset['lossOffset'],
+                'benefit_full'  => $offset['lossOffsetAtFullRate'],
+                'residual'      => $offset['residualProfit'],
+                'benefit_9pct'  => $offset['residualProfitAt9Pct'],
+                'balance_after' => $offset['balanceAfter'],
             ];
         }
 

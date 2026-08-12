@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -51,7 +51,7 @@ use Psr\Log\LoggerInterface;
 /**
  * POST /api/tax-payments/{id}/reconcile — reconcile a payment against the GL.
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 class TaxPaymentController extends Controller
 {
@@ -93,7 +93,7 @@ class TaxPaymentController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     #[NoAdminRequired]
     public function reconcile(string $id): JSONResponse

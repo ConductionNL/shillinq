@@ -71,7 +71,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'costCentre'               => 'rd-team-1',
+                'costCentre'                 => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
@@ -98,7 +98,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'costCentre'               => 'rd-team-1',
+                'costCentre'                 => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
@@ -121,7 +121,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'costCentre'               => 'rd-team-1',
+                'costCentre'                 => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => false,
             ],
@@ -142,7 +142,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'costCentre'               => 'rd-team-1',
+                'costCentre'                 => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],

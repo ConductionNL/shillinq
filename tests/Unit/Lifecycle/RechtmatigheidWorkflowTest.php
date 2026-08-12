@@ -31,13 +31,13 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-11
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-13
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-14
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-17
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-22
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-28
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-29
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -154,7 +154,7 @@ class RechtmatigheidWorkflowTest extends TestCase
      */
     public function testBegrotingFoutTriggersOnBudgetOvershootNotification(): void
     {
-        $bevinding   = $this->schema(name: 'Rechtmatigheidsbevinding');
+        $bevinding     = $this->schema(name: 'Rechtmatigheidsbevinding');
         $notifications = ($bevinding['x-openregister-notifications'] ?? []);
         self::assertArrayHasKey(
             key: 'onBudgetOvershoot',
@@ -212,7 +212,7 @@ class RechtmatigheidWorkflowTest extends TestCase
                 haystack: (string) $subject[$locale],
                 message: 'Subject ('.$locale.') must not use the legacy @self. token.'
             );
-        }
+        }//end foreach
 
     }//end testBegrotingFoutTriggersOnBudgetOvershootNotification()
 

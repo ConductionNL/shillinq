@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the commitment (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 class BudgetBlocker
 {
@@ -85,7 +85,7 @@ class BudgetBlocker
      *
      * @return bool True when the commitment may be signed.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function canCommit(string $verplichtingsnummer, ?array $object=null): bool
     {
@@ -113,9 +113,9 @@ class BudgetBlocker
                     $this->logger->info(
                         'BudgetBlocker: insufficient budget — denying commitment',
                         [
-                            'commitment' => $verplichtingsnummer,
-                            'programme'    => ($regel['programme'] ?? null),
-                            'financialYear'     => ($regel['financialYear'] ?? null),
+                            'commitment'    => $verplichtingsnummer,
+                            'programme'     => ($regel['programme'] ?? null),
+                            'financialYear' => ($regel['financialYear'] ?? null),
                         ]
                     );
                     return false;
@@ -143,7 +143,7 @@ class BudgetBlocker
      *
      * @return int Free room in minor units (may be negative when overcommitted).
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function freeRoom(array $budget): int
     {
@@ -164,7 +164,7 @@ class BudgetBlocker
      *
      * @return bool True when bedrag <= free room.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function fits(array $budget, int $bedrag): bool
     {
@@ -205,7 +205,7 @@ class BudgetBlocker
             filters: [
                 'administrationId' => $administrationId,
                 'programmeCode'    => (string) ($regel['programme'] ?? ''),
-                'financialYear'         => (int) ($regel['financialYear'] ?? 0),
+                'financialYear'    => (int) ($regel['financialYear'] ?? 0),
             ]
         );
 
@@ -249,7 +249,7 @@ class BudgetBlocker
         return [
             [
                 'programme'       => (string) ($verplichting['programme'] ?? ''),
-                'financialYear'        => (int) ($verplichting['financialYear'] ?? 0),
+                'financialYear'   => (int) ($verplichting['financialYear'] ?? 0),
                 'amount_excl_vat' => (int) ($verplichting['totaalbedrag_excl_btw'] ?? 0),
             ],
         ];

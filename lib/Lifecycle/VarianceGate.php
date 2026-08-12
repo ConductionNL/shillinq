@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+ * @spec openspec/specs/inventory-cycle-count/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+ * @spec openspec/specs/inventory-cycle-count/spec.md
  */
 class VarianceGate
 {
@@ -113,7 +113,7 @@ class VarianceGate
      *
      * @return bool True when the scope is valid; false otherwise.
      *
-     * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+     * @spec openspec/specs/inventory-cycle-count/spec.md
      */
     public function requireValidScope(array $count): bool
     {
@@ -175,7 +175,7 @@ class VarianceGate
      *
      * @return bool True when every flagged line carries a valid active reasonCode; false otherwise.
      *
-     * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+     * @spec openspec/specs/inventory-cycle-count/spec.md
      */
     public function requireReasonsOnPost(array $count): bool
     {
@@ -258,7 +258,7 @@ class VarianceGate
      *
      * @return array<string,mixed> The line with countedValue, quantityVariance, valueVariance, requiresReason refreshed.
      *
-     * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+     * @spec openspec/specs/inventory-cycle-count/spec.md
      */
     public function recalculateLine(
         array $line,

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
+ * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  * - requireAllMembersFinalised: one member not final denies
  * - requirePublicationApproval: always returns true
  *
- * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
+ * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  */
 class ConsolidationGuardTest extends TestCase
 {

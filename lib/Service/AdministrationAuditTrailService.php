@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Throwable;
  * Aggregates audit-trail rows across the user's accessible administrations
  * (REQ-MA-009 / REQ-MA-001).
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  */
 class AdministrationAuditTrailService
 {
@@ -99,7 +99,7 @@ class AdministrationAuditTrailService
      *
      * @return array<int,array<string,mixed>>|null
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function queryForAdministration(
         string $administrationId,
@@ -139,7 +139,7 @@ class AdministrationAuditTrailService
      *
      * @return array<int,array<string,mixed>>
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function queryAcrossAccessibleAdministrations(
         string $schema,
@@ -178,7 +178,7 @@ class AdministrationAuditTrailService
      *
      * @return array<int,array<string,mixed>>
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function tagWithAdministration(array $rows, string $administrationId): array
     {

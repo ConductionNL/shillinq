@@ -14,7 +14,7 @@
   - The portal is wired through the public confirmationApi client so it
     works for an anonymous customer (the token is the auth factor).
 
-  @spec openspec/changes/bookings-confirm-flow/tasks.md#task-13
+  @spec openspec/specs/bookings-confirm-flow/spec.md
 -->
 
 <template>

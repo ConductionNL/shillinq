@@ -62,9 +62,9 @@ final class QualifyingAssetValidatorTest extends TestCase
         $asset  = [
             'type'           => 'software',
             'toegangsticket' => [
-                'kind'                 => 'so_declaration',
-                'rnd_declaration_number'  => 'S2024/001234',
-                'so_declaration_period' => ['van' => '2024-01-01', 'tot' => '2024-12-31'],
+                'kind'                   => 'so_declaration',
+                'rnd_declaration_number' => 'S2024/001234',
+                'so_declaration_period'  => ['van' => '2024-01-01', 'tot' => '2024-12-31'],
             ],
         ];
         $result = $this->val->validateAccessTicket($asset, '2024-06-01');
@@ -101,9 +101,9 @@ final class QualifyingAssetValidatorTest extends TestCase
         $asset  = [
             'type'           => 'software',
             'toegangsticket' => [
-                'kind'                 => 'so_declaration',
-                'rnd_declaration_number'  => 'S2023/000999',
-                'so_declaration_period' => ['van' => '2023-01-01', 'tot' => '2023-12-31'],
+                'kind'                   => 'so_declaration',
+                'rnd_declaration_number' => 'S2023/000999',
+                'so_declaration_period'  => ['van' => '2023-01-01', 'tot' => '2023-12-31'],
             ],
         ];
         $result = $this->val->validateAccessTicket($asset, '2024-06-01');
@@ -142,7 +142,7 @@ final class QualifyingAssetValidatorTest extends TestCase
                 'type'           => 'combinatie',
                 'toegangsticket' => [
                     'rnd_declaration_number' => 'S2024/001234',
-                    'patent_number'       => 'NL2031234',
+                    'patent_number'          => 'NL2031234',
                 ],
             ],
             '2024-06-01'

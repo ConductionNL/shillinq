@@ -69,6 +69,10 @@ class ENSIABevindingGenerator
      *
      * @return array<int,array<string,mixed>> Concept Bevinding records ready
      *                                        for ObjectService::saveObject.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function generate(array $cyclus, array $vragen): array
     {
@@ -107,7 +111,7 @@ class ENSIABevindingGenerator
                 'administrationId' => $administrationId,
                 'vraagId'          => $vraagId,
                 'type'             => 'tekortkoming',
-                'description'     => sprintf(
+                'description'      => sprintf(
                     '%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
                     $vraagCode,
                     $vraagLabel,

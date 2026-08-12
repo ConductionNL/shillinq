@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
  * KNOWINGLY DANGLING until shillinq#500 — the endpoint's only canonical
  * description would be REQ-TB-009, which was never canonical, and REQ-TB-001
  * forbids the service behind it.
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/trial-balance — period-scoped per-account trial balance.
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
  * KNOWINGLY DANGLING until shillinq#500 — the endpoint's only canonical
  * description would be REQ-TB-009, which was never canonical, and REQ-TB-001
  * forbids the service behind it.
@@ -87,7 +87,7 @@ class TrialBalanceController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-001
  * KNOWINGLY DANGLING until shillinq#500 — the endpoint's only canonical
  * description would be REQ-TB-009, which was never canonical, and REQ-TB-001
  * forbids the service behind it.

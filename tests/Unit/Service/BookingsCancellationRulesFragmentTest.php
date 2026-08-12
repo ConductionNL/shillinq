@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-cancellation-rules/specs/bookings-cancellation-rules/spec.md
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use ReflectionMethod;
  * schema that carries all six cancellation fields without dropping the base
  * fields or polluting the base `required` list.
  *
- * @spec openspec/changes/bookings-cancellation-rules/specs/bookings-cancellation-rules/spec.md
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md
  */
 final class BookingsCancellationRulesFragmentTest extends TestCase
 {

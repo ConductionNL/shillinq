@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
 /**
  * REST endpoints for notification trigger configuration and admin monitoring.
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  *
  * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
  *     not in the project's curated idiomatic-abbreviation allowlist;
@@ -85,7 +85,7 @@ class BookingNotificationController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     #[NoAdminRequired]
     #[NoCSRFRequired]
@@ -120,7 +120,7 @@ class BookingNotificationController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     #[NoAdminRequired]
     public function updateBookingTriggers(string $id): JSONResponse
@@ -164,7 +164,7 @@ class BookingNotificationController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     #[AuthorizedAdminSetting(Application::APP_ID)]
     #[NoCSRFRequired]
@@ -222,7 +222,7 @@ class BookingNotificationController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     #[AuthorizedAdminSetting(Application::APP_ID)]
     public function disableAllTriggers(): JSONResponse
@@ -277,7 +277,7 @@ class BookingNotificationController extends Controller
      *
      * @throws OCSForbiddenException When not authorised.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     private function authorizeBookingAccess(string $bookingId): void
     {

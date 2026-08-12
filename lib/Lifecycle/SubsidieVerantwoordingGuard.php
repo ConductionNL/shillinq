@@ -33,7 +33,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+ * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 
 declare(strict_types=1);
@@ -52,7 +52,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.approve.requires as
  * OCA\Shillinq\Lifecycle\SubsidieVerantwoordingGuard::canApprove.
  *
- * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+ * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
  */
 class SubsidieVerantwoordingGuard
 {
@@ -97,7 +97,7 @@ class SubsidieVerantwoordingGuard
      *
      * @return bool True when the accountability report may be approved.
      *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+     * @spec openspec/specs/bookkeeping-subsidie-verantwoording/spec.md
      */
     public function canApprove(string $verantwoordingId, ?array $object=null): bool
     {

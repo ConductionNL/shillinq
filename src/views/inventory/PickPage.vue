@@ -1,5 +1,5 @@
 <!--
-  Pick Page wrapper. @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.3
+  Pick Page wrapper. @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<div class="pick-page">

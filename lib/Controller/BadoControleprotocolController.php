@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/bado/aggregation — per-topic finding aggregation + proposed opinion.
  *
- * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
  */
 class BadoControleprotocolController extends Controller
 {
@@ -97,7 +97,7 @@ class BadoControleprotocolController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     #[NoAdminRequired]
     public function aggregation(): JSONResponse
@@ -170,7 +170,7 @@ class BadoControleprotocolController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     #[NoAdminRequired]
     public function exportAccountantsdossier(): JSONResponse
@@ -242,7 +242,7 @@ class BadoControleprotocolController extends Controller
      *
      * @return JSONResponse|null A 404 response when refused, null when allowed.
      *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-bado-controleprotocol/spec.md
      */
     private function requireAccessibleProtocol(string $protocolId): ?JSONResponse
     {

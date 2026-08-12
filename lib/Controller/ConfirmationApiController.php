@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  */
 class ConfirmationApiController extends Controller
 {
@@ -111,7 +111,7 @@ class ConfirmationApiController extends Controller
      * @return JSONResponse 200 with the updated appointment on success;
      *                      401 / 403 / 404 on token failures.
      *
-     * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+     * @spec openspec/specs/bookings-confirm-flow/spec.md
      */
     #[PublicPage]
     public function confirm(string $appointmentId=''): JSONResponse
@@ -198,7 +198,7 @@ class ConfirmationApiController extends Controller
      *                      anonymous; 403 when not authorised; 404 when
      *                      missing.
      *
-     * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+     * @spec openspec/specs/bookings-confirm-flow/spec.md
      */
     #[NoAdminRequired]
     public function resend(string $appointmentId=''): JSONResponse
@@ -280,7 +280,7 @@ class ConfirmationApiController extends Controller
      *                      failures so the portal can render localised
      *                      error messages.
      *
-     * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+     * @spec openspec/specs/bookings-confirm-flow/spec.md
      */
     #[PublicPage]
     public function lookupByToken(): JSONResponse

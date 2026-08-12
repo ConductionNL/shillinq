@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/specs/bookkeeping-vat-btw-filing.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
 
 declare(strict_types=1);

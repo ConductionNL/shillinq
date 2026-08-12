@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service\Dunning;
 /**
  * PostNL outbound port — one method per registered-letter send.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 interface PostNLAdapterInterface
 {
@@ -47,7 +47,7 @@ interface PostNLAdapterInterface
      *
      * @return DunningChannelSendResult The dispatch attempt outcome.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function sendRegisteredLetter(array $payload): DunningChannelSendResult;
 }//end interface

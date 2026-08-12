@@ -46,7 +46,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -69,7 +69,7 @@ use Psr\Log\LoggerInterface;
  * A01:2021), matching the fail-closed convention every guard in this app
  * already follows internally.
  *
- * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface
 {
@@ -99,7 +99,7 @@ final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface
      *
      * @return GuardResult Allow or deny + optional message.
      *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) $userId is required by
      *     LifecycleGuardInterface::check()'s signature; this adapter does

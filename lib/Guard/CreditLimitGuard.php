@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
  * and free of IEEE-754 rounding error. The check is fail-closed: any error
  * resolving the customer or summing outstanding invoices denies the issue.
  *
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-007-002)
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md (REQ-007-002)
  */
 class CreditLimitGuard
 {
@@ -112,7 +112,7 @@ class CreditLimitGuard
      *
      * @return bool True when issuing keeps the customer within their credit limit
      *
-     * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-007-002)
+     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md (REQ-007-002)
      */
     public function requireWithinCreditLimit(array $invoice): bool
     {

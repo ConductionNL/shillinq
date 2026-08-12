@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Throwable;
  * `assertWritable` overload that accepts the loaded record; the id-based
  * helper rejects unknown ids so missing data cannot bypass the block.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -123,7 +123,7 @@ class AdministrationArchivalService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function writesAllowed(array $administration): bool
     {
@@ -145,7 +145,7 @@ class AdministrationArchivalService
      *
      * @throws RuntimeException When the administration is in a read-only state.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function assertWritable(array $administration): void
     {
@@ -180,7 +180,7 @@ class AdministrationArchivalService
      *
      * @throws RuntimeException When the administration is missing or read-only.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function assertWritableById(string $administrationId): void
     {
@@ -211,7 +211,7 @@ class AdministrationArchivalService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function isTransitionAllowed(string $from, string $to): bool
     {
@@ -236,7 +236,7 @@ class AdministrationArchivalService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function shouldStartRetentionClock(string $from, string $to): bool
     {

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Covers the confidence scoring and threshold filtering of RgsAccountMapper.
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/tasks.md#task-39
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class RgsAccountMapperTest extends TestCase
 {

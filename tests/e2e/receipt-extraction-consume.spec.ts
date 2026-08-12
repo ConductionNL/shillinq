@@ -19,11 +19,11 @@
  *   - `tests/vitest/billImportModal.spec.js` /
  *     `tests/vitest/receiptCapture.spec.js` (pure-logic vitest).
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-002
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-003
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-004
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-006
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
 
 import { test, expect, type Page } from '@playwright/test'

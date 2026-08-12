@@ -15,7 +15,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 
 declare(strict_types=1);
@@ -34,14 +34,12 @@ class ENSIAVerklaringGeneratorTest extends TestCase
 
     private ENSIAVerklaringGenerator $generator;
 
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->generator = new ENSIAVerklaringGenerator();
 
     }//end setUp()
-
 
     /**
      * REQ-ENSIA-006: result is a valid OOXML ZIP archive carrying the four
@@ -54,7 +52,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
         $docx = $this->generator->render(
             cyclus: [
                 'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
+                'year'         => 2026,
             ],
             vragen: [],
             bevindingen: []
@@ -84,7 +82,6 @@ class ENSIAVerklaringGeneratorTest extends TestCase
 
     }//end testRenderProducesValidDocxArchive()
 
-
     /**
      * REQ-ENSIA-006: rendered DOCX includes organisation name + KvK.
      *
@@ -95,7 +92,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
         $docx = $this->generator->render(
             cyclus: [
                 'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
+                'year'         => 2026,
             ],
             vragen: [],
             bevindingen: []
@@ -109,7 +106,6 @@ class ENSIAVerklaringGeneratorTest extends TestCase
 
     }//end testRenderIncludesOrganisationData()
 
-
     /**
      * REQ-ENSIA-006: rendered DOCX includes per-domein summary lines.
      *
@@ -120,7 +116,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
         $docx = $this->generator->render(
             cyclus: [
                 'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
+                'year'         => 2026,
             ],
             vragen: [
                 ['domein' => 'BIO',   'volwassenheidsScore' => 4, 'normniveau' => 3],
@@ -136,7 +132,6 @@ class ENSIAVerklaringGeneratorTest extends TestCase
 
     }//end testRenderIncludesPerDomeinSummary()
 
-
     /**
      * REQ-ENSIA-006: rendered DOCX lists top findings + mitigation plan.
      *
@@ -147,13 +142,13 @@ class ENSIAVerklaringGeneratorTest extends TestCase
         $docx = $this->generator->render(
             cyclus: [
                 'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
+                'year'         => 2026,
             ],
             vragen: [],
             bevindingen: [
                 [
                     'type'           => 'tekortkoming',
-                    'description'   => 'BIO-9.1.1 score 2 onder norm 3',
+                    'description'    => 'BIO-9.1.1 score 2 onder norm 3',
                     'mitigatieActie' => 'Implementeer access-review proces.',
                 ],
             ]
@@ -165,7 +160,6 @@ class ENSIAVerklaringGeneratorTest extends TestCase
 
     }//end testRenderListsTopFindings()
 
-
     /**
      * REQ-ENSIA-006: rendered DOCX carries handtekeningvelden for ondertekenaars.
      *
@@ -176,7 +170,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
         $docx = $this->generator->render(
             cyclus: [
                 'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
+                'year'         => 2026,
             ],
             vragen: [],
             bevindingen: []
@@ -189,7 +183,6 @@ class ENSIAVerklaringGeneratorTest extends TestCase
         $this->assertStringContainsString('Datum', $documentXml);
 
     }//end testRenderIncludesSignatureFields()
-
 
     /**
      * Pull word/document.xml out of a DOCX byte string for assertion.
@@ -212,6 +205,4 @@ class ENSIAVerklaringGeneratorTest extends TestCase
         return $xml;
 
     }//end extractDocumentXml()
-
-
 }//end class

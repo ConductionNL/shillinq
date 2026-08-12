@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  * Runs every 3600 seconds (hourly). Idempotent — duplicate sends are prevented
  * by BookingNotificationService::isDuplicate().
  *
- * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+ * @spec openspec/specs/bookings-notification-triggers/spec.md
  */
 class BookingReminderJob extends TimedJob
 {
@@ -97,7 +97,7 @@ class BookingReminderJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
      *     TimedJob::run()'s signature; this job takes no argument.
@@ -132,7 +132,7 @@ class BookingReminderJob extends TimedJob
      *
      * @return int Number of reminder events fired.
      *
-     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      */
     private function processReminderWindow(int $windowMinutes): int
     {

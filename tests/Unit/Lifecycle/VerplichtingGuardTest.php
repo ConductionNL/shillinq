@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-10
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 
 declare(strict_types=1);
@@ -80,12 +80,12 @@ class VerplichtingGuardTest extends TestCase
     {
         return array_merge(
             [
-                'commitmentNumber' => 'VPL-2026-0001',
-                'costCentre'       => 'FAC-001',
-                'grootboekrekening'  => '4500',
-                'termStart'      => '2026-02-01',
-                'termEnd'       => '2027-01-31',
-                'mijlpalen'          => [],
+                'commitmentNumber'  => 'VPL-2026-0001',
+                'costCentre'        => 'FAC-001',
+                'grootboekrekening' => '4500',
+                'termStart'         => '2026-02-01',
+                'termEnd'           => '2027-01-31',
+                'mijlpalen'         => [],
             ],
             $overrides
         );
@@ -196,8 +196,8 @@ class VerplichtingGuardTest extends TestCase
         $v = $this->verplichting(
             [
                 'termStart' => '',
-                'termEnd'  => '',
-                'mijlpalen'     => [['mijlpaalId' => 'MS-001', 'datum' => '2099-01-01']],
+                'termEnd'   => '',
+                'mijlpalen' => [['mijlpaalId' => 'MS-001', 'datum' => '2099-01-01']],
             ]
         );
         $this->assertTrue($this->guard->canActiveren($v));

@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Container\ContainerInterface;
  * derived from the payment date; the variance is GL minus payment. All money
  * arithmetic is in integer cents.
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 class TaxPaymentReconciliationService
 {
@@ -68,7 +68,7 @@ class TaxPaymentReconciliationService
      *
      * @return array{matched: bool, paymentAmount: float, glAmount: float, variance: float, glLineCount: int}
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function reconcile(string $administrationId, string $paymentId): array
     {

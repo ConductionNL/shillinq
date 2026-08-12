@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-4
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -96,7 +96,7 @@ class WidgetApiController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-4
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]
@@ -177,7 +177,7 @@ class WidgetApiController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-4
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]
@@ -247,7 +247,7 @@ class WidgetApiController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-4
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]

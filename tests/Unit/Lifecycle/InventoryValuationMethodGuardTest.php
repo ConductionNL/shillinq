@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-6
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

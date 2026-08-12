@@ -17,7 +17,7 @@
  *
  * @link https://shillinq.nl
  *
- * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+ * @spec openspec/specs/first-time-setup/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

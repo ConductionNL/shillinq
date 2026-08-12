@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-18
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Throwable;
  *
  * Pure read-only resolver: never mutates user config, never throws.
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-18
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  */
 final class TimezoneResolver
 {

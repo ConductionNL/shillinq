@@ -1,5 +1,5 @@
 <!--
-  Count Page wrapper. @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.4
+  Count Page wrapper. @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<div class="count-page">

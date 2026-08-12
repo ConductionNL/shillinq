@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T6.6
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 declare(strict_types=1);
@@ -354,7 +354,7 @@ class InventoryScanControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      */
     public function testOmittedAdministrationNoLongerDefaultsToAdm1(): void
     {
@@ -372,7 +372,7 @@ class InventoryScanControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      */
     public function testForeignAdministrationReturns404OnEveryEndpoint(): void
     {

@@ -64,6 +64,10 @@ class LogDigipoortSbrAdapter implements DigipoortSbrAdapterInterface
      * @param array<string,mixed> $payload The Digipoort delivery envelope.
      *
      * @return DigipoortSubmissionResult The dispatch outcome.
+     *
+     * @spec exclude Touched by the Dutch-to-English vocabulary rename only; the change is to
+     *  property-name string literals inside the body, with no behaviour change. No canonical
+     *  spec covers this capability yet.
      */
     public function submit(array $payload): DigipoortSubmissionResult
     {
@@ -76,7 +80,7 @@ class LogDigipoortSbrAdapter implements DigipoortSbrAdapterInterface
             'Shillinq Digipoort/SBR submission deferred (no outbound connector bound)',
             [
                 'reference' => $kenmerk,
-                'payload' => $sanitised,
+                'payload'   => $sanitised,
             ]
         );
 

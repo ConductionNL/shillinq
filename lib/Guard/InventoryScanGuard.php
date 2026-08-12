@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.2
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the save (CWE-863).
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.2
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 class InventoryScanGuard
 {
@@ -111,7 +111,7 @@ class InventoryScanGuard
      *
      * @return bool True when the operation may be saved.
      *
-     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.2
+     * @spec openspec/specs/inventory-mobile-scanner/spec.md
      */
     public function validateOperation(array $operation): bool
     {

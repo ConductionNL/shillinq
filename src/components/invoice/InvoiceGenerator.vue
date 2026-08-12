@@ -7,7 +7,7 @@
   rate-card / retainer pickers, customer + project, and offers the three
   end actions: Save as Draft, Preview PDF, Post to AR.
 
-  @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
+  @spec openspec/specs/invoice-from-time-and-expense/spec.md
 
   SPDX-FileCopyrightText: 2026 Conduction B.V.
   SPDX-License-Identifier: EUPL-1.2

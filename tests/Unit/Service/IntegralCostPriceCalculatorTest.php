@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -142,23 +142,27 @@ final class IntegralCostPriceCalculatorTest extends TestCase
             ],
         ];
 
-        $ikp = $this->svc->compose([
-            'commercialActivityId'    => 'ca-mo-sp-014',
-            'period'                 => '2026-Q1',
-            'administrationId'        => 'adm-tilburg',
-            'costCentre'            => 'K-SP-014',
-            'kostendrager'            => 'D-MO-SP-014',
-            'glLines'                 => $glLines,
-            'corporateOverheadCents'  => 36_580_000, // €365.8k
-            'overheadRule'            => $rule,
-            'investedBookValueCents'  => 4_040_000, // €40.4k
-            'waccRate'                => 0.045,
-            'periodFraction'          => 1.0,
-            'winstopslagRate'         => 0.03,
-            'verkochteEenheden'       => 312.0,
-            'unitLabel'            => 'dagdeel-zaalhuur',
-            'gehanteerdTarief'        => 295.0,
-        ]);
+        $ikp = $this->svc->compose(
+                [
+                    'commercialActivityId'   => 'ca-mo-sp-014',
+                    'period'                 => '2026-Q1',
+                    'administrationId'       => 'adm-tilburg',
+                    'costCentre'             => 'K-SP-014',
+                    'kostendrager'           => 'D-MO-SP-014',
+                    'glLines'                => $glLines,
+                    'corporateOverheadCents' => 36_580_000,
+        // €365.8k
+                    'overheadRule'           => $rule,
+                    'investedBookValueCents' => 4_040_000,
+        // €40.4k
+                    'waccRate'               => 0.045,
+                    'periodFraction'         => 1.0,
+                    'winstopslagRate'        => 0.03,
+                    'verkochteEenheden'      => 312.0,
+                    'unitLabel'              => 'dagdeel-zaalhuur',
+                    'gehanteerdTarief'       => 295.0,
+                ]
+                );
 
         self::assertSame('voorlopig', $ikp['status']);
         self::assertSame(41_250.00, $ikp['componenten']['directeLoonkosten']);
@@ -178,5 +182,4 @@ final class IntegralCostPriceCalculatorTest extends TestCase
         self::assertSame('dagdeel-zaalhuur', $ikp['unitLabel']);
 
     }//end testComposeMonthlyVoorlopig()
-
 }//end class

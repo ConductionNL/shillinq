@@ -179,7 +179,7 @@ class InnovatieboxSbrExportService
 
         return [
             'administrationId' => $administrationId,
-            'financialYear'         => $boekjaar,
+            'financialYear'    => $boekjaar,
             'methode'          => $methode,
             'instanceRef'      => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
             'perAsset'         => $perAsset,

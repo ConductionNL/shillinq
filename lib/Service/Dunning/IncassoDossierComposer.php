@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use RuntimeException;
  * keyed by INCASSOBUREAU_API; this composer's only job is to gather all
  * audit-trail bits per REQ-CCD-008 into a single, self-describing payload.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class IncassoDossierComposer
 {
@@ -65,9 +65,9 @@ class IncassoDossierComposer
      * @param string $factuurId        Invoice FK.
      * @param string $klantId          Klant FK.
      *
-     * @return array{factuurId:string,inhoud:array<string,mixed>}
+     * @return array{invoiceId:string,inhoud:array<string,mixed>}
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function compose(string $administrationId, string $factuurId, string $klantId): array
     {
@@ -131,7 +131,7 @@ class IncassoDossierComposer
             'inhoud'    => [
                 'invoice'       => [
                     'invoiceId'        => $factuurId,
-                    'customerId'          => $klantId,
+                    'customerId'       => $klantId,
                     'administrationId' => $administrationId,
                 ],
                 'dunningRuns'   => $dunningRuns,

@@ -385,8 +385,8 @@ class SettingsService
      * @return array<string,mixed> Result with success flag, seeded count, skipped
      *                             count, and administrationCode.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+     * @spec openspec/specs/first-time-setup/spec.md
      */
     public function seedDefaultAdministration(): array
     {
@@ -495,7 +495,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function seedFixedAssetsDemo(string $administrationId): array
     {
@@ -1628,7 +1628,7 @@ class SettingsService
      *
      * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
      *
-     * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-15
+     * @spec openspec/specs/inventory-barcode-sku/spec.md
      */
     public function seedInventoryBarcodes(): array
     {
@@ -1746,7 +1746,7 @@ class SettingsService
      *
      * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
      *
-     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
      */
     public function seedInventoryLots(): array
     {
@@ -1875,7 +1875,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success/seeded/skipped/message.
      *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
+     * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
      */
     public function seedInventoryValuationExamples(string $administrationId): array
     {
@@ -2012,7 +2012,7 @@ class SettingsService
      *
      * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
      *
-     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+     * @spec openspec/specs/inventory-stock-tracking/spec.md
      */
     public function seedInventoryStockExamples(string $administrationId): array
     {
@@ -2166,7 +2166,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded + skipped counts, message.
      *
-     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
+     * @spec openspec/specs/inventory-cogs-posting/spec.md
      */
     public function seedInventoryGLConfig(string $administrationId): array
     {
@@ -2661,7 +2661,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.7
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function seedMandaatTemplates(string $administrationId): array
     {
@@ -2872,8 +2872,8 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag and per-schema counts.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-18
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function seedWmoCommercialActivities(string $administrationId): array
     {

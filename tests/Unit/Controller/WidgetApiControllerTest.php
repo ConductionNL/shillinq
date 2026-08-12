@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for WidgetApiController.
  *
- * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-15
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  */
 class WidgetApiControllerTest extends TestCase
 {

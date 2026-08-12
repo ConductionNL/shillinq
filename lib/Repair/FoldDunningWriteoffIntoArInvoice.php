@@ -180,7 +180,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
                 $writeOff    = [
                     'isWrittenOff'              => true,
                     'writtenOffReason'          => $this->deriveWriteOffReason(declaration: $declaration),
-                    'art29OBDeclaration'         => $declaration,
+                    'art29OBDeclaration'        => $declaration,
                     'hoofdsomAfgeschreven'      => $this->numOrNull($row['hoofdsomAfgeschreven'] ?? null),
                     'vatAmount'                 => $this->numOrNull($row['vatAmount'] ?? null),
                     'evidenceRef'               => $this->strOrNull($row['evidenceRef'] ?? null),
@@ -323,11 +323,11 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
         }
 
         return [
-            'currentStage'        => (int) ($latest['stageNr'] ?? 0),
-            'nextDunningDate'     => null,
+            'currentStage'         => (int) ($latest['stageNr'] ?? 0),
+            'nextDunningDate'      => null,
             'collectionCostAmount' => $this->numOrNull($latest['collectionCostAmount'] ?? null),
-            'interestAmount'         => $this->numOrNull($latest['interestAmount'] ?? null),
-            'activeLadderId'      => $this->strOrNull($latest['ladderId'] ?? null),
+            'interestAmount'       => $this->numOrNull($latest['interestAmount'] ?? null),
+            'activeLadderId'       => $this->strOrNull($latest['ladderId'] ?? null),
         ];
 
     }//end deriveDunningSummary()

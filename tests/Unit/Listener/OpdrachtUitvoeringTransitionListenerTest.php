@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,6 @@ use Psr\Log\NullLogger;
  */
 final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
 {
-
     /**
      * Build a recording IEventDispatcher.
      *
@@ -76,19 +75,16 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
             public function dispatchTyped(Event $event): void
             {
                 // No-op.
-
             }//end dispatchTyped()
 
             public function addListener(string $eventName, callable $listener, int $priority=0): void
             {
                 // No-op.
-
             }//end addListener()
 
             public function addServiceListener(string $eventName, string $className, int $priority=0): void
             {
                 // No-op.
-
             }//end addServiceListener()
 
             public function hasListeners(string $eventName): bool
@@ -100,7 +96,6 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
             public function removeListener(string $eventName, callable $listener): void
             {
                 // No-op.
-
             }//end removeListener()
         };
 
@@ -142,7 +137,6 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
     private function emptyContainer(): ContainerInterface
     {
         return new class implements ContainerInterface {
-
             public function get(string $id): mixed
             {
                 throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
@@ -224,13 +218,16 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-Q1',
-                'opleveringsType' => 'tussenoplevering',
-                'goedgekeurd'     => true,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId'    => 'TN-2026-0001',
+                        'mijlpaalId'      => 'M-Q1',
+                        'opleveringsType' => 'tussenoplevering',
+                        'goedgekeurd'     => true,
+                        'bewijsstukken'   => [['documentId' => 'doc-1']],
+                    ]
+                    ),
             'voltooien',
             'in-progress',
             'completed',
@@ -265,13 +262,16 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => true,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId'    => 'TN-2026-0001',
+                        'mijlpaalId'      => 'M-EIND',
+                        'opleveringsType' => 'eindoplevering',
+                        'goedgekeurd'     => true,
+                        'bewijsstukken'   => [['documentId' => 'doc-1']],
+                    ]
+                    ),
             'voltooien',
             'in-progress',
             'completed',
@@ -305,13 +305,16 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => false,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId'    => 'TN-2026-0001',
+                        'mijlpaalId'      => 'M-EIND',
+                        'opleveringsType' => 'eindoplevering',
+                        'goedgekeurd'     => false,
+                        'bewijsstukken'   => [['documentId' => 'doc-1']],
+                    ]
+                    ),
             'voltooien',
             'in-progress',
             'completed',
@@ -344,12 +347,15 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => true,
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId'    => 'TN-2026-0001',
+                        'mijlpaalId'      => 'M-EIND',
+                        'opleveringsType' => 'eindoplevering',
+                        'goedgekeurd'     => true,
+                    ]
+                    ),
             'starten',
             'planned',
             'in-progress',

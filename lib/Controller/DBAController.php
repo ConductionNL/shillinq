@@ -114,7 +114,7 @@ class DBAController extends Controller
 
         return new JSONResponse(
                 [
-                    'totalScore'        => $total,
+                    'totalScore'         => $total,
                     'risicoNiveau'       => $band,
                     'gezagsverhouding'   => $this->scoreCalc->subtotalGezag($body),
                     'persoonlijkeArbeid' => $this->scoreCalc->subtotalArbeid($body),
@@ -156,7 +156,7 @@ class DBAController extends Controller
         $total = $this->scoreCalc->computeTotal($body);
         $band  = DBAConstants::bandFromScore($total);
 
-        $body['totalScore']      = $total;
+        $body['totalScore']       = $total;
         $body['interpretatie']    = $band;
         $body['ingevuldDoor']     = (string) (($this->userSession->getUser()?->getUID()) ?? '');
         $body['ingevuldOp']     ??= (new DateTimeImmutable())->format('Y-m-d');
@@ -258,7 +258,7 @@ class DBAController extends Controller
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
         $opdracht['wbaBeoordelingResultaat'] = $resultaat;
-        $opdracht['wbaValidTo']            = (new DateTimeImmutable())
+        $opdracht['wbaValidTo'] = (new DateTimeImmutable())
             ->modify('+'.DBAConstants::WBA_GELDIGHEID_DAGEN.' days')->format('Y-m-d');
         try {
             $updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
@@ -299,7 +299,7 @@ class DBAController extends Controller
 
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
-        $opdracht['intakeStatus']        = 'BEEINDIGD';
+        $opdracht['intakeStatus']  = 'BEEINDIGD';
         $opdracht['actualEndDate'] = $einddatum;
         $retentie = $this->opdrachtGuard->computeRetentieDeadline($einddatum);
         if ($retentie !== null) {

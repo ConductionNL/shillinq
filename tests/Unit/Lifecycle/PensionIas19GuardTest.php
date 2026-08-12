@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

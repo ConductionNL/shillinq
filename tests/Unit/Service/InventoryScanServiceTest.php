@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T6.1
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 declare(strict_types=1);

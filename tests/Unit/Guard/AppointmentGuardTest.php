@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-create-appointment/tasks.md#task-15
+ * @spec openspec/specs/bookings-create-appointment/spec.md
  */
 
 declare(strict_types=1);

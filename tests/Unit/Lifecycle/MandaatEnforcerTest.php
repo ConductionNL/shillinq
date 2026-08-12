@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -211,10 +211,10 @@ class MandaatEnforcerTest extends TestCase
                 'administrationId'                  => 'adm-1',
                 'mandaatcode'                       => 'M-INKOOP-50K',
                 'maximumbedrag'                     => 5000000,
-                'kind_commitment'                => ['inkooporder', 'raamovereenkomst'],
+                'kind_commitment'                   => ['inkooporder', 'raamovereenkomst'],
                 'is_override'                       => false,
                 'valid_from'                        => '2020-01-01',
-                'valid_to'                        => '2999-12-31',
+                'valid_to'                          => '2999-12-31',
                 'vereist_tweede_handtekening_boven' => null,
             ],
             $overrides
@@ -235,7 +235,7 @@ class MandaatEnforcerTest extends TestCase
         return [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'PO-1',
-            'kind'                 => $soort,
+            'kind'                  => $soort,
             'totaalbedrag_excl_btw' => $bedrag,
         ];
 

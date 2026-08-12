@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -341,9 +341,12 @@ final class KorThresholdCalculatorTest extends TestCase
     public function testVoorraadCorrectie(): void
     {
         $assets = [
-            ['vatCents' => 13900, 'remainingMonths' => 57, 'totalMonths' => 60],   // => 13205.
-            ['vatCents' => 21000, 'remainingMonths' => 24, 'totalMonths' => 120],  // => 4200.
-            ['vatCents' => 5000,  'remainingMonths' => 0,  'totalMonths' => 60],   // => 0 (fully depreciated).
+            ['vatCents' => 13900, 'remainingMonths' => 57, 'totalMonths' => 60],
+        // => 13205.
+            ['vatCents' => 21000, 'remainingMonths' => 24, 'totalMonths' => 120],
+        // => 4200.
+            ['vatCents' => 5000,  'remainingMonths' => 0,  'totalMonths' => 60],
+        // => 0 (fully depreciated).
         ];
 
         // 13205 + 4200 + 0 = 17405.

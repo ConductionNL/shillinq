@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Pure dual-post logic for AdministrationMigration (REQ-MA-006).
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -91,7 +91,7 @@ class AdministrationMigrationService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function isTransitionAllowed(string $from, string $to): bool
     {
@@ -114,7 +114,7 @@ class AdministrationMigrationService
      *
      * @return string The status to write back.
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function statusAfterSidePosted(array $migration): string
     {
@@ -140,7 +140,7 @@ class AdministrationMigrationService
      *
      * @return string
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function statusAfterReversal(string $currentStatus): string
     {
@@ -166,7 +166,7 @@ class AdministrationMigrationService
      *
      * @return array{bookCents:int,marketCents:int,resultCents:int}
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function computeTransferAmounts(array $migration): array
     {
@@ -200,7 +200,7 @@ class AdministrationMigrationService
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function buildSourceJournalDraft(array $migration): array
     {
@@ -238,7 +238,7 @@ class AdministrationMigrationService
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function buildDestinationJournalDraft(array $migration): array
     {
@@ -285,7 +285,7 @@ class AdministrationMigrationService
      *
      * @return array{source:array<string,mixed>,destination:array<string,mixed>}
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function buildJournalDrafts(array $migration): array
     {
@@ -316,7 +316,7 @@ class AdministrationMigrationService
      *
      * @return array{source:array<string,mixed>,destination:array<string,mixed>}
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function buildReversalEntries(array $migration): array
     {
@@ -354,7 +354,7 @@ class AdministrationMigrationService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
      */
     public function isEditable(string $status): bool
     {

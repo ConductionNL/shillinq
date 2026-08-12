@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -60,7 +60,7 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 class TenderNedStatusSync
 {
@@ -109,7 +109,7 @@ class TenderNedStatusSync
      *
      * @return bool True when a sync attempt was made; false when ineligible.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function syncCompletion(array $oplevering): bool
     {
@@ -241,7 +241,7 @@ class TenderNedStatusSync
             'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),
             'eindopleveringId' => (string) ($oplevering['mijlpaalId'] ?? ''),
             'bewijsstukCount'  => count($bewijsstukken),
-            'commitmentId'   => (string) ($oplevering['commitmentId'] ?? ''),
+            'commitmentId'     => (string) ($oplevering['commitmentId'] ?? ''),
             'administrationId' => (string) ($oplevering['administrationId'] ?? ''),
         ];
 

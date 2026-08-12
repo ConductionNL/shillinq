@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

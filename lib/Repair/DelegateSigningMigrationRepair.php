@@ -40,7 +40,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-14
+ * @spec openspec/specs/shillinq-delegate-signing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -63,7 +63,7 @@ use Psr\Log\LoggerInterface;
  *
  * Idempotent, fail-soft, never deletes or removes signatureFingerprint.
  *
- * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-14
+ * @spec openspec/specs/shillinq-delegate-signing/spec.md
  */
 class DelegateSigningMigrationRepair implements IRepairStep
 {
@@ -88,7 +88,7 @@ class DelegateSigningMigrationRepair implements IRepairStep
      *
      * @return string The display name.
      *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-14
+     * @spec openspec/specs/shillinq-delegate-signing/spec.md
      */
     public function getName(): string
     {
@@ -104,7 +104,7 @@ class DelegateSigningMigrationRepair implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-14
+     * @spec openspec/specs/shillinq-delegate-signing/spec.md
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */

@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-17
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use InvalidArgumentException;
  * The class is intentionally small and dependency-free so it can be used
  * from both controller and background-job context with no DI ceremony.
  *
- * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-17
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  */
 final class TokenValidator
 {

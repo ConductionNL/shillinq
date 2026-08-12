@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-create-appointment/tasks.md#task-12
+ * @spec openspec/specs/bookings-create-appointment/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
- * @spec openspec/changes/bookings-create-appointment/tasks.md#task-12
+ * @spec openspec/specs/bookings-create-appointment/spec.md
  */
 class AppointmentGuard
 {
@@ -111,7 +111,7 @@ class AppointmentGuard
      *
      * @return bool True when the appointment may be saved.
      *
-     * @spec openspec/changes/bookings-create-appointment/tasks.md#task-12
+     * @spec openspec/specs/bookings-create-appointment/spec.md
      */
     public function validateOnSave(array $appointment): bool
     {

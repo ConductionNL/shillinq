@@ -28,7 +28,7 @@
  * are seeded the customer picker is empty and save stays disabled — the
  * modal shell must still render and the gating must hold.
  *
- * @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md
+ * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  */
 
 import { test, expect } from '@playwright/test'

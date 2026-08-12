@@ -7,7 +7,7 @@
 // caller never needs to know which administraties exist, only what to
 // display (REQ-MA-001, REQ-MA-003).
 //
-// @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-13
+// @spec openspec/specs/bookkeeping-multi-administratie/spec.md
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'

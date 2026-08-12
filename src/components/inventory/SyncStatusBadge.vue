@@ -10,7 +10,7 @@
     🟡 yellow — Pending changes / sync in progress / last sync stale
     🔴 red    — Offline
 
-  @spec openspec/changes/inventory-mobile-scanner/tasks.md#T4.2
+  @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
 <template>
 	<div class="sync-status-badge">

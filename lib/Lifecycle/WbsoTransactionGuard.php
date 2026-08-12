@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Lifecycle precondition guards for Transaction.post and Transaction.reverse.
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class WbsoTransactionGuard
 {

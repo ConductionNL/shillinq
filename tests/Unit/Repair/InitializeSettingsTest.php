@@ -320,7 +320,7 @@ class InitializeSettingsTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
      */
     public function testDemoSeedSkippedWhenNotDevelopmentEnv(): void
     {

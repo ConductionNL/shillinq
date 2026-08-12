@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+ * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
 
 declare(strict_types=1);

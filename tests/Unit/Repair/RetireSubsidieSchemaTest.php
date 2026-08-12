@@ -196,7 +196,7 @@ class RetireSubsidieSchemaTest extends TestCase
                             }
                         )
                     );
-                }
+                }//end if
 
                 $offset = (int) ($params['offset'] ?? 0);
                 if ($offset > 0) {

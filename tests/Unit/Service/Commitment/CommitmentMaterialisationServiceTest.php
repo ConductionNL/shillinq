@@ -251,10 +251,10 @@ class CommitmentMaterialisationServiceTest extends TestCase
             [
                 'administrationId'           => 'adm-1',
                 'programmeCode'              => '5.1',
-                'costCentre'               => 'FAC-2026',
-                'financialYear'                   => 2026,
-                'authorised_amount'       => 50000000,
-                'realised_amount'        => 20000000,
+                'costCentre'                 => 'FAC-2026',
+                'financialYear'              => 2026,
+                'authorised_amount'          => 50000000,
+                'realised_amount'            => 20000000,
                 'openstaande_verplichtingen' => 0,
             ],
             $overrides
@@ -325,12 +325,12 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Budget'             => [$this->budget()],
                 'Mandaat'            => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandaatcode'        => 'M-INKOOP-50K',
-                        'maximumbedrag'      => 10000000,
-                        'kind_commitment' => ['inkooporder'],
-                        'is_override'        => false,
-                        'valid_from'         => '2020-01-01',
+                        'administrationId' => 'adm-1',
+                        'mandaatcode'      => 'M-INKOOP-50K',
+                        'maximumbedrag'    => 10000000,
+                        'kind_commitment'  => ['inkooporder'],
+                        'is_override'      => false,
+                        'valid_from'       => '2020-01-01',
                         'valid_to'         => '2999-12-31',
                     ],
                 ],
@@ -366,7 +366,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $existing = [
             'administrationId'    => 'adm-1',
             'verplichtingsnummer' => 'PO-2026-0207',
-            'sourceReference'      => 'PO-2026-0207',
+            'sourceReference'     => 'PO-2026-0207',
             'status'              => 'aangegaan',
         ];
 
@@ -405,16 +405,16 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Budget'            => [$tightBudget],
                 'Mandaat'           => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandaatcode'        => 'M-DIRECTEUR-250K',
+                        'administrationId' => 'adm-1',
+                        'mandaatcode'      => 'M-DIRECTEUR-250K',
                         // Ceiling comfortably covers the EUR 300.000 commitment amount
                         // so the mandate-sufficiency check passes and the flow reaches
                         // the budget check (this test is specifically about budget
                         // denial, not mandate denial).
-                        'maximumbedrag'      => 100000000,
-                        'kind_commitment' => ['inkooporder'],
-                        'is_override'        => false,
-                        'valid_from'         => '2020-01-01',
+                        'maximumbedrag'    => 100000000,
+                        'kind_commitment'  => ['inkooporder'],
+                        'is_override'      => false,
+                        'valid_from'       => '2020-01-01',
                         'valid_to'         => '2999-12-31',
                     ],
                 ],
@@ -453,12 +453,12 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Budget'                   => [$tightBudget],
                 'Mandaat'                  => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandaatcode'        => 'M-CFO-OVERRIDE',
-                        'maximumbedrag'      => 1000000000,
-                        'kind_commitment' => ['inkooporder'],
-                        'is_override'        => true,
-                        'valid_from'         => '2020-01-01',
+                        'administrationId' => 'adm-1',
+                        'mandaatcode'      => 'M-CFO-OVERRIDE',
+                        'maximumbedrag'    => 1000000000,
+                        'kind_commitment'  => ['inkooporder'],
+                        'is_override'      => true,
+                        'valid_from'       => '2020-01-01',
                         'valid_to'         => '2999-12-31',
                     ],
                 ],
@@ -518,12 +518,12 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $budget2027 = $this->budget(['financialYear' => 2027, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
 
         $mandaat = [
-            'administrationId'   => 'adm-1',
-            'mandaatcode'        => 'M-DIRECTEUR-250K',
-            'maximumbedrag'      => 25000000,
-            'kind_commitment' => ['inkooporder'],
-            'is_override'        => false,
-            'valid_from'         => '2020-01-01',
+            'administrationId' => 'adm-1',
+            'mandaatcode'      => 'M-DIRECTEUR-250K',
+            'maximumbedrag'    => 25000000,
+            'kind_commitment'  => ['inkooporder'],
+            'is_override'      => false,
+            'valid_from'       => '2020-01-01',
             'valid_to'         => '2999-12-31',
         ];
 
@@ -569,12 +569,12 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Budget'       => [$tightBudget],
                 'Mandaat'      => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandaatcode'        => 'M-DIRECTEUR-250K',
-                        'maximumbedrag'      => 25000000,
-                        'kind_commitment' => ['leasing', 'overig', 'huurovereenkomst'],
-                        'is_override'        => false,
-                        'valid_from'         => '2020-01-01',
+                        'administrationId' => 'adm-1',
+                        'mandaatcode'      => 'M-DIRECTEUR-250K',
+                        'maximumbedrag'    => 25000000,
+                        'kind_commitment'  => ['leasing', 'overig', 'huurovereenkomst'],
+                        'is_override'      => false,
+                        'valid_from'       => '2020-01-01',
                         'valid_to'         => '2999-12-31',
                     ],
                 ],
@@ -613,12 +613,12 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $budget2027 = $this->budget(['financialYear' => 2027, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
 
         $mandaat = [
-            'administrationId'   => 'adm-1',
-            'mandaatcode'        => 'M-DIRECTEUR-250K',
-            'maximumbedrag'      => 25000000,
-            'kind_commitment' => ['overig'],
-            'is_override'        => false,
-            'valid_from'         => '2020-01-01',
+            'administrationId' => 'adm-1',
+            'mandaatcode'      => 'M-DIRECTEUR-250K',
+            'maximumbedrag'    => 25000000,
+            'kind_commitment'  => ['overig'],
+            'is_override'      => false,
+            'valid_from'       => '2020-01-01',
             'valid_to'         => '2999-12-31',
         ];
 

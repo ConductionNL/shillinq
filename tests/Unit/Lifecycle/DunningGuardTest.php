@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md *
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
@@ -35,7 +35,8 @@ use Psr\Log\LoggerInterface;
  * REQ-CCD-003/006 (B2C 14-dagen-brief + day-44 incassokosten block), REQ-CCD-004
  * (pause resolve requires pauzeEind) and REQ-CCD-010 (write-off requires art. 29
  * OB-verklaring). All guards fail closed; inline-object cases never touch the
- * container. */
+ * container.
+ */
 class DunningGuardTest extends TestCase
 {
 
@@ -53,7 +54,8 @@ class DunningGuardTest extends TestCase
      */
     private IAppConfig&MockObject $appConfig;
 
-    /**     * Mock LoggerInterface.
+    /**
+     * * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
      */

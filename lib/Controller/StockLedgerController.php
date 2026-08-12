@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
  * GET /api/stock-ledger — drill-down trace + reconciled balance per
  * (administration, location, sku) per REQ-SM-005.
  *
- * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+ * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
  */
 class StockLedgerController extends Controller
 {
@@ -85,7 +85,7 @@ class StockLedgerController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
+     * @spec openspec/specs/inventory-stock-movement-ledger/spec.md
      */
     #[NoAdminRequired]
     public function trace(): JSONResponse

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -111,10 +111,10 @@ class WbsoMededelingGuardTest extends TestCase
     private function beschikkingRecord(int|float $grantedSoHours, string $state): array
     {
         return [
-            'decisionNumber' => 'WBSO-2026-0001',
-            'grantedSoHours'    => $grantedSoHours,
-            'state'             => $state,
-            'administrationId'  => self::ADMIN,
+            'decisionNumber'   => 'WBSO-2026-0001',
+            'grantedSoHours'   => $grantedSoHours,
+            'state'            => $state,
+            'administrationId' => self::ADMIN,
         ];
     }//end beschikkingRecord()
 
@@ -129,9 +129,9 @@ class WbsoMededelingGuardTest extends TestCase
     private function mededelingObject(int|float $realisedSoHours, string $administrationId=self::ADMIN): array
     {
         return [
-            'decisionNumber' => 'WBSO-2026-0001',
-            'realisedSoHours'   => $realisedSoHours,
-            'administrationId'  => $administrationId,
+            'decisionNumber'   => 'WBSO-2026-0001',
+            'realisedSoHours'  => $realisedSoHours,
+            'administrationId' => $administrationId,
         ];
     }//end mededelingObject()
 
@@ -224,10 +224,10 @@ class WbsoMededelingGuardTest extends TestCase
     public function testCrossTenantBeschikkingFailsClosed(): void
     {
         $foreign = [
-            'decisionNumber' => 'WBSO-2026-0001',
-            'grantedSoHours'    => 5000,
-            'state'             => 'granted',
-            'administrationId'  => 'adm-other-bv',
+            'decisionNumber'   => 'WBSO-2026-0001',
+            'grantedSoHours'   => 5000,
+            'state'            => 'granted',
+            'administrationId' => 'adm-other-bv',
         ];
 
         $this->container->method('get')->willReturn($this->buildObjectServiceStub(records: [$foreign]));

@@ -113,7 +113,7 @@ class DunningRunService
      *
      * @return array<string,mixed>|null The applicable stage definition or null.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function stageForOverdueDays(array $stages, int $dagenVerzuim): ?array
     {
@@ -177,7 +177,7 @@ class DunningRunService
      *
      * @return array<string,mixed>|null The materialised `DunningRun`, or null when the tick was a no-op.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function tickInvoice(
         string $administrationId,
@@ -250,7 +250,7 @@ class DunningRunService
                     'invoiceId'      => $factuurId,
                     'ladderId'       => (string) $resolved['ladderId'],
                     'stageNr'        => $stageNr,
-                    'channel'         => $kanaal,
+                    'channel'        => $kanaal,
                     'templateId'     => $tplId,
                     'invoiceAmount'  => (float) ($invoice['grossAmount'] ?? 0.0),
                     'deliveryStatus' => 'PENDING',
@@ -274,7 +274,7 @@ class DunningRunService
      *
      * @return array{ladderId:string,stages:array<int,array<string,mixed>>,source:string,override:?array<string,mixed>}
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) $administrationId is not
      *     read in this method body — fetchOne()/findAll() resolve by id/slug
@@ -300,7 +300,7 @@ class DunningRunService
         $override = $this->fetchOne(
             schema: 'KlantLadderOverride',
             filters: [
-                'customerId'        => $klantId,
+                'customerId'     => $klantId,
                 'baseLadderId'   => $baseLadderId,
                 'lifecycleState' => 'active',
             ]
@@ -332,7 +332,7 @@ class DunningRunService
      *
      * @return array<string,mixed>|null Stage definition, null when no such stage exists.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-18
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function stageDefinition(array $stages, int $stageNr): ?array
     {
@@ -386,7 +386,7 @@ class DunningRunService
      *
      * @return array<string,mixed> The executed DunningRun record.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function executeStage(string $administrationId, array $params): array
     {
@@ -402,27 +402,27 @@ class DunningRunService
         $now = new DateTimeImmutable();
 
         $record = [
-            'invoiceId'           => $factuurId,
-            'ladderId'            => (string) ($params['ladderId'] ?? ''),
-            'stageNr'             => (int) ($params['stageNr'] ?? 1),
-            'uitgevoerdOp'        => $now->format(DATE_ATOM),
+            'invoiceId'            => $factuurId,
+            'ladderId'             => (string) ($params['ladderId'] ?? ''),
+            'stageNr'              => (int) ($params['stageNr'] ?? 1),
+            'uitgevoerdOp'         => $now->format(DATE_ATOM),
             'channel'              => (string) ($params['channel'] ?? 'EMAIL'),
-            'ontvangerEmail'      => ($params['ontvangerEmail'] ?? null),
-            'recipientName'       => ($params['recipientName'] ?? null),
-            'ontvangerAdres'      => ($params['ontvangerAdres'] ?? null),
-            'templateId'          => (string) ($params['templateId'] ?? ''),
-            'renderedSubject'     => ($params['renderedSubject'] ?? null),
-            'renderedBody'        => ($params['renderedBody'] ?? null),
-            'renderedPdfHash'     => ($params['renderedPdfHash'] ?? null),
-            'deliveryStatus'      => (string) ($params['deliveryStatus'] ?? 'PENDING'),
-            'openTracking'        => ($params['openTracking'] ?? null),
-            'postageStatus'       => ($params['postageStatus'] ?? null),
-            'digitalSignature'    => ($params['digitalSignature'] ?? null),
-            'invoiceAmount'       => (float) ($params['invoiceAmount'] ?? 0.0),
+            'ontvangerEmail'       => ($params['ontvangerEmail'] ?? null),
+            'recipientName'        => ($params['recipientName'] ?? null),
+            'ontvangerAdres'       => ($params['ontvangerAdres'] ?? null),
+            'templateId'           => (string) ($params['templateId'] ?? ''),
+            'renderedSubject'      => ($params['renderedSubject'] ?? null),
+            'renderedBody'         => ($params['renderedBody'] ?? null),
+            'renderedPdfHash'      => ($params['renderedPdfHash'] ?? null),
+            'deliveryStatus'       => (string) ($params['deliveryStatus'] ?? 'PENDING'),
+            'openTracking'         => ($params['openTracking'] ?? null),
+            'postageStatus'        => ($params['postageStatus'] ?? null),
+            'digitalSignature'     => ($params['digitalSignature'] ?? null),
+            'invoiceAmount'        => (float) ($params['invoiceAmount'] ?? 0.0),
             'collectionCostAmount' => ($params['collectionCostAmount'] ?? null),
-            'interestAmount'         => ($params['interestAmount'] ?? null),
-            'administrationId'    => $administrationId,
-            'lifecycleState'      => 'executed',
+            'interestAmount'       => ($params['interestAmount'] ?? null),
+            'administrationId'     => $administrationId,
+            'lifecycleState'       => 'executed',
         ];
 
         return $this->saveObject(schema: 'DunningRun', data: $record);
@@ -445,7 +445,7 @@ class DunningRunService
      *
      * @return array<string,mixed> The created pause record.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function pause(
         string $administrationId,
@@ -467,8 +467,8 @@ class DunningRunService
         $record = [
             'invoiceId'           => $factuurId,
             'pauzeStart'          => $pauzeStart->format(DATE_ATOM),
-            'pauseEnd'           => null,
-            'reason'               => $reden,
+            'pauseEnd'            => null,
+            'reason'              => $reden,
             'details'             => $details,
             'gepauzeerdDoor'      => $gepauzeerdDoor,
             'evidenceRefs'        => $refs,
@@ -496,7 +496,7 @@ class DunningRunService
      *
      * @return array<string,mixed> The updated pause record.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) $administrationId is not
      *     read in this method body. Flagged during issue #506 as worth
@@ -555,9 +555,9 @@ class DunningRunService
      *
      * @return array<string,mixed> The created write-off record.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-22
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-26
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function writeOff(string $administrationId, array $params): array
     {
@@ -593,9 +593,9 @@ class DunningRunService
             'invoiceId'            => $factuurId,
             'hoofdsomAfgeschreven' => $hoofdsom,
             'vatAmount'            => $btwBedrag,
-            'art29OBDeclaration'    => (string) ($params['art29OBDeclaration'] ?? ''),
+            'art29OBDeclaration'   => (string) ($params['art29OBDeclaration'] ?? ''),
             'evidenceRef'          => ($params['evidenceRef'] ?? null),
-            'entryId'            => $boekingIdValue,
+            'entryId'              => $boekingIdValue,
             'btwTaxReturnPeriod'   => $periode,
             'administrationId'     => $administrationId,
             'lifecycleState'       => 'posted',
@@ -636,8 +636,8 @@ class DunningRunService
      *
      * @return string The created GLTransaction id, or `''` when persistence failed.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-22
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-26
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     private function materialiseWriteOffGl(
         string $administrationId,
@@ -719,7 +719,7 @@ class DunningRunService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     private function queueVatTeruggaaf(
         string $administrationId,
@@ -773,7 +773,7 @@ class DunningRunService
      *
      * @return string The target period, e.g. `2026-Q2`.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     private function nextVATPeriod(): string
     {
@@ -808,7 +808,7 @@ class DunningRunService
      *
      * @return bool True when a soft-pause is recommended.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-23
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function detectAdminError(string $administrationId, string $klantId, array $triggerContext): bool
     {
@@ -878,7 +878,7 @@ class DunningRunService
      *
      * @return bool
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-23
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     private function klantPaidInvoiceWithin(
         string $administrationId,
@@ -936,7 +936,7 @@ class DunningRunService
      *
      * @return DunningChannelSendResult The dispatch outcome.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function transferToIncasso(
         string $administrationId,
@@ -1004,7 +1004,7 @@ class DunningRunService
      *
      * @return DunningChannelSendResult The dispatch outcome.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) $administrationId is not
      *     read in this method body. Flagged during issue #506 as worth
@@ -1073,7 +1073,7 @@ class DunningRunService
      *
      * @return bool True when at least one active pause exists.
      *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function hasActivePause(string $administrationId, string $factuurId): bool
     {

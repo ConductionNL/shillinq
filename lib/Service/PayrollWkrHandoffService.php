@@ -84,7 +84,7 @@ class PayrollWkrHandoffService
         }
 
         return [
-            'periodId'        => $periodeId,
+            'periodId'         => $periodeId,
             'administrationId' => $administrationId,
             'loonsom'          => $this->calculator->fromCents(cents: $loonsomC),
             'aantalStroken'    => $aantal,
@@ -111,7 +111,7 @@ class PayrollWkrHandoffService
                 [
                     'filters' => [
                         'administrationId' => $administrationId,
-                        'periodId'        => $periodeId,
+                        'periodId'         => $periodeId,
                     ],
                 ]
             );

@@ -104,8 +104,8 @@ class PayrollUpaHandoffService
 
             if (isset($groups[$regeling]) === false) {
                 $groups[$regeling] = [
-                    'pensionScheme' => $regeling,
-                    'periodId'        => $periodeId,
+                    'pensionScheme'    => $regeling,
+                    'periodId'         => $periodeId,
                     'administrationId' => $administrationId,
                     'totaalPremie'     => 0.0,
                     'totaalWerknemers' => 0,
@@ -117,8 +117,8 @@ class PayrollUpaHandoffService
             $groups[$regeling]['totaalWerknemers'] = ((int) $groups[$regeling]['totaalWerknemers'] + 1);
             $groups[$regeling]['regels'][]         = [
                 'employeeId' => $werknemerId,
-                'premieWn'    => $premWn,
-                'premieWg'    => $premWg,
+                'premieWn'   => $premWn,
+                'premieWg'   => $premWg,
             ];
         }//end foreach
 
@@ -184,7 +184,7 @@ class PayrollUpaHandoffService
                 [
                     'filters' => [
                         'administrationId' => $administrationId,
-                        'periodId'        => $periodeId,
+                        'periodId'         => $periodeId,
                     ],
                 ]
             );

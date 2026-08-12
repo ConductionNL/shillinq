@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -66,7 +66,7 @@ use Throwable;
  * domain logic; early-return refactor deferred pending full behavioral
  * verification of each branch.
  *
- * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
+ * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
  */
 class StockMoveTransitionedListener implements IEventListener
 {
@@ -98,7 +98,7 @@ class StockMoveTransitionedListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
+     * @spec openspec/specs/inventory-valuation-fifo-avg/spec.md
      */
     public function handle(Event $event): void
     {

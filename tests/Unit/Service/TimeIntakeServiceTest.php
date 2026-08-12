@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md
+ * @spec openspec/specs/time-expense-invoice-intake/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

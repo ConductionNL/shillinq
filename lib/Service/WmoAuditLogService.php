@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-16
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use InvalidArgumentException;
 /**
  * Side-effect-free WMO audit-log composer and export helper (REQ-WMO-010).
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-16
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  */
 class WmoAuditLogService
 {

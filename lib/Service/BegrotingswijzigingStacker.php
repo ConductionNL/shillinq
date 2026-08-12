@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Pure calculator that stacks vastgestelde wijzigingen onto the basis taakvelden.
  *
- * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+ * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
 class BegrotingswijzigingStacker
 {
@@ -47,9 +47,9 @@ class BegrotingswijzigingStacker
      * @param array<int,array<string,mixed>> $basisTaakvelden The vastgestelde basis Taakveld rows.
      * @param array<int,array<string,mixed>> $wijzigingen     The Begrotingswijziging rows (any status).
      *
-     * @return array<string,array{baten:float,lasten:float}> Effective stand keyed by taakveldCode.
+     * @return array<string,array{revenue:float,expenses:float}> Effective stand keyed by taakveldCode.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function currentStand(array $basisTaakvelden, array $wijzigingen): array
     {
@@ -92,10 +92,10 @@ class BegrotingswijzigingStacker
     /**
      * Apply one wijziging's mutaties onto the cent-keyed stand.
      *
-     * @param array<string,array{batenCents:int,lastenCents:int}> $stand    The accumulating cent-keyed stand.
-     * @param array<int,mixed>                                    $mutaties The wijziging's delta rows.
+     * @param array<string,array{revenueCents:int,expensesCents:int}> $stand    The accumulating cent-keyed stand.
+     * @param array<int,mixed>                                        $mutaties The wijziging's delta rows.
      *
-     * @return array<string,array{batenCents:int,lastenCents:int}> The updated stand.
+     * @return array<string,array{revenueCents:int,expensesCents:int}> The updated stand.
      */
     private function applyMutaties(array $stand, array $mutaties): array
     {
@@ -134,7 +134,7 @@ class BegrotingswijzigingStacker
      *
      * @return float The effective authorized lasten in euro.
      *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
+     * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
      */
     public function authorizedLasten(string $taakveldCode, array $basisTaakvelden, array $wijzigingen): float
     {

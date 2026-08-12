@@ -46,9 +46,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-7
- * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-8
- * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
+ * @spec openspec/specs/inventory-cogs-posting/spec.md
+ * @spec openspec/specs/inventory-cogs-posting/spec.md
+ * @spec openspec/specs/inventory-cogs-posting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -106,7 +106,7 @@ class InventoryPostingGuard
      * @return bool True when posting may proceed; false on every skip
      *              or unexpected error.
      *
-     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-7
+     * @spec openspec/specs/inventory-cogs-posting/spec.md
      */
     public function canPost(array $valuation): bool
     {
@@ -179,7 +179,7 @@ class InventoryPostingGuard
      * @return bool True when posting may proceed; false on zero delta,
      *              missing delta, or any {@see self::canPost()} skip.
      *
-     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
+     * @spec openspec/specs/inventory-cogs-posting/spec.md
      */
     public function canPostVariance(array $valuation): bool
     {
@@ -242,7 +242,7 @@ class InventoryPostingGuard
      *
      * @return string `'positive'` when delta > 0; `'negative'` otherwise.
      *
-     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
+     * @spec openspec/specs/inventory-cogs-posting/spec.md
      */
     public function direction(int $delta): string
     {
@@ -273,7 +273,7 @@ class InventoryPostingGuard
      *
      * @return bool True when every present FK resolves; false on any dangling FK or error.
      *
-     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-5
+     * @spec openspec/specs/inventory-cogs-posting/spec.md
      */
     public function accountExists(array $proposed): bool
     {

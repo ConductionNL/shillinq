@@ -207,7 +207,7 @@ class DBAVbarMonitorService
                             'vbarGrensCents' => $vbarGrensCents,
                             'peiljaar'       => DBAConstants::VBAR_GRENS_PEILJAAR,
                         ],
-                        'fiscalSource'             => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
+                        'fiscalSource'            => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
                         'actieSuggestie'          => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
                             .'(motivatie EUR-grens uitzondering).',
                         'status'                  => 'OPEN',

@@ -200,17 +200,17 @@ class PayrollService
         );
 
         return [
-            'employeeId'              => $werknemerId,
-            'periodId'                => (string) ($periode['id'] ?? ($periode['@self']['id'] ?? '')),
+            'employeeId'               => $werknemerId,
+            'periodId'                 => (string) ($periode['id'] ?? ($periode['@self']['id'] ?? '')),
             'brutoComponenten'         => $brutoComponenten,
-            'fiscalLoon'              => $fiscaalLoon,
+            'fiscalLoon'               => $fiscaalLoon,
             'premieloon_SV'            => $premieloonSV,
             'loonheffing'              => $loonheffing,
             'inhoudingenSV'            => ['totaal_sv_wn' => 0],
             'premiesSVWerkgever'       => $svWg,
             'zvw'                      => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
             'pensioen'                 => $pensioen,
-            'netPaid'             => $nettoBetaald,
+            'netPaid'                  => $nettoBetaald,
             'cumulatieven'             => $cumulatieven,
             'vakantieDagenReservering' => ['opgebouwdEuro' => $vakantieOpbouw],
             'administrationId'         => $administrationId,
@@ -262,17 +262,17 @@ class PayrollService
         );
 
         return [
-            'werkgeverId'            => $werkgeverId,
-            'periodId'              => $periodeId,
-            'totalPayrollTax'      => $loonheffing,
-            'totalFinalLeviesWorkRelatedCosts' => $wkr,
-            'totalSocialInsuranceContributions'        => $premiesSV,
+            'werkgeverId'                       => $werkgeverId,
+            'periodId'                          => $periodeId,
+            'totalPayrollTax'                   => $loonheffing,
+            'totalFinalLeviesWorkRelatedCosts'  => $wkr,
+            'totalSocialInsuranceContributions' => $premiesSV,
             'totalHealthInsurance'              => $zvw,
-            'totalRemittance'         => $totaal,
-            'vervaldagAfdracht'      => $this->laatsteDagVolgendeMaand(periode: $periode),
-            'status'                 => 'VOORBEREID',
-            'sbrInstanceRef'         => null,
-            'administrationId'       => $administrationId,
+            'totalRemittance'                   => $totaal,
+            'vervaldagAfdracht'                 => $this->laatsteDagVolgendeMaand(periode: $periode),
+            'status'                            => 'VOORBEREID',
+            'sbrInstanceRef'                    => null,
+            'administrationId'                  => $administrationId,
         ];
 
     }//end berekenLHAfdracht()
@@ -383,7 +383,7 @@ class PayrollService
         $balanced     = ($debetTotaal === $creditTotaal);
 
         return [
-            'periodId'        => $periodeId,
+            'periodId'         => $periodeId,
             'datum'            => (string) date('Y-m-d'),
             'regels'           => $regels,
             'balanced'         => $balanced,
@@ -561,7 +561,7 @@ class PayrollService
                 schema: 'LoonheffingTabel2026',
                 filters: [
                     'kleur'      => $kleur,
-                    'period'    => (string) ($periode['periodType'] ?? 'MAAND'),
+                    'period'     => (string) ($periode['periodType'] ?? 'MAAND'),
                     'metKorting' => (bool) ($werknemer['loonheffingstabelKorting'] ?? true),
                 ]
                 );

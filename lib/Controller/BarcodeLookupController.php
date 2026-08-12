@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-12
+ * @spec openspec/specs/inventory-barcode-sku/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
  * rejects anonymous callers (never an open endpoint). The API key is read
  * from app config and is never returned in any response.
  *
- * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-12
+ * @spec openspec/specs/inventory-barcode-sku/spec.md
  */
 class BarcodeLookupController extends Controller
 {
@@ -103,7 +103,7 @@ class BarcodeLookupController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-12
+     * @spec openspec/specs/inventory-barcode-sku/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]

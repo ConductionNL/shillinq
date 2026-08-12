@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-12
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Computes year-end forecast hours and confidence from a 12-week rolling average.
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-12
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  */
 final class UrenPrognoseService
 {
@@ -100,13 +100,13 @@ final class UrenPrognoseService
      *  - kalenderjaar: int — target year.
      *  - lopendeUren: float — current YTD total (typically the result of UrenTallyService::tallyYearToDate).
      *  - vakanties: array<int, string> — ISO date ranges ("2026-07-15/2026-08-09") that go to 0.
-     *  - geplandeOpdrachten: array<int, array{maand: string, uren: float}> — overrides per maand (YYYY-MM).
+     *  - geplandeOpdrachten: array<int, array{maand: string, hours: float}> — overrides per maand (YYYY-MM).
      *
      * @param array<string, mixed> $input Input bundle.
      *
      * @return array<string, mixed> UrenPrognose record shape.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-12
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bouwPrognose(array $input): array
     {
@@ -143,19 +143,19 @@ final class UrenPrognoseService
             'UrenPrognoseService: prognose computed',
             [
                 'asOf'           => $asOf,
-                'modelVersion'    => self::MODEL_VERSION,
+                'modelVersion'   => self::MODEL_VERSION,
                 'weekGemiddelde' => $weekGemiddelde,
-                'totalForecast' => $totaalPrognose,
+                'totalForecast'  => $totaalPrognose,
                 'confidence'     => $confidence,
             ]
         );
 
         return [
-            'modelVersion'        => self::MODEL_VERSION,
-            'calculatedOn'         => gmdate('c'),
+            'modelVersion'       => self::MODEL_VERSION,
+            'calculatedOn'       => gmdate('c'),
             'perMonthPrognose'   => $perMaand,
             'vakanties'          => array_values(array_map('strval', $vakanties)),
-            'totalForecast'     => $totaalPrognose,
+            'totalForecast'      => $totaalPrognose,
             'kansBehaaldNorm'    => $kansBehaaldNorm,
             'prognoseConfidence' => $confidence,
         ];
@@ -253,11 +253,11 @@ final class UrenPrognoseService
      * Build the per-resterende-maand prognose with seasonality, vakantie, and
      * geplande-opdracht overrides applied.
      *
-     * @param string                                                             $asOf               Y-m-d.
-     * @param int                                                                $kalenderjaar       Target year.
-     * @param float                                                              $weekGemiddelde     Weekly mean hours.
-     * @param array<int, string>                                                 $vakanties          ISO date ranges.
-     * @param array<int, array{maand: string, uren: float}|array<string, mixed>> $geplandeOpdrachten Per-maand overrides.
+     * @param string                                                              $asOf               Y-m-d.
+     * @param int                                                                 $kalenderjaar       Target year.
+     * @param float                                                               $weekGemiddelde     Weekly mean hours.
+     * @param array<int, string>                                                  $vakanties          ISO date ranges.
+     * @param array<int, array{maand: string, hours: float}|array<string, mixed>> $geplandeOpdrachten Per-maand overrides.
      *
      * @return array<string, float> Forecast hours keyed by YYYY-MM.
      */

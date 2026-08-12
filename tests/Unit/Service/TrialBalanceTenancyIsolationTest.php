@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-13-3
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md
  * KNOWINGLY DANGLING until shillinq#500 — the multi-tenancy requirement it
  * asserts (archived REQ-TB-017) was never canonical.
  *

@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the completion (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
 class OpdrachtUitvoeringGuard
 {
@@ -72,7 +72,7 @@ class OpdrachtUitvoeringGuard
      *
      * @return bool True when the delivery may be marked completed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
      */
     public function canVoltooien(array $opdracht): bool
     {
@@ -82,7 +82,7 @@ class OpdrachtUitvoeringGuard
                     'OpdrachtUitvoeringGuard: no bewijsstuk attached — denying completion (REQ-004)',
                     [
                         'commitmentId' => ($opdracht['commitmentId'] ?? 'unknown'),
-                        'mijlpaalId'     => ($opdracht['mijlpaalId'] ?? 'unknown'),
+                        'mijlpaalId'   => ($opdracht['mijlpaalId'] ?? 'unknown'),
                     ]
                 );
                 return false;
@@ -94,7 +94,7 @@ class OpdrachtUitvoeringGuard
                 'OpdrachtUitvoeringGuard: canVoltooien failed — denying completion (fail-closed)',
                 [
                     'commitmentId' => ($opdracht['commitmentId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
+                    'exception'    => $e->getMessage(),
                 ]
             );
             return false;

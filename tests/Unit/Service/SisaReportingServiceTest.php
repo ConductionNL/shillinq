@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
 
 declare(strict_types=1);
@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @covers \OCA\Shillinq\Service\SisaReportingService
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
 class SisaReportingServiceTest extends TestCase
 {

@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Validation;
  * and on display (masking, REQ-PAY-012). All methods are pure and static so
  * the helper carries no state and never persists or logs a raw BSN.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
 final class BsnValidator
 {
@@ -59,7 +59,7 @@ final class BsnValidator
      *
      * @return bool True when the BSN is absent or passes the 11-proef.
      *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
      */
     public static function isValid(?string $bsn): bool
     {
@@ -105,7 +105,7 @@ final class BsnValidator
      *
      * @return string The masked representation, e.g. `*****6782`.
      *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+     * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
      */
     public static function mask(?string $bsn): string
     {

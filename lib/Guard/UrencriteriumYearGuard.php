@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -51,7 +51,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the save (CWE-863).
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  */
 class UrencriteriumYearGuard
 {
@@ -93,7 +93,7 @@ class UrencriteriumYearGuard
      *
      * @return bool True when the record may be saved.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function validateOnSave(array $year): bool
     {
@@ -116,7 +116,7 @@ class UrencriteriumYearGuard
                 'UrencriteriumYearGuard: validateOnSave failed — denying save (fail-closed)',
                 [
                     'enterpriseId' => ($year['enterpriseId'] ?? 'unknown'),
-                    'exception'     => $e->getMessage(),
+                    'exception'    => $e->getMessage(),
                 ]
             );
             return false;
@@ -137,7 +137,7 @@ class UrencriteriumYearGuard
      *
      * @return int One of NORM_REGULIER / NORM_AO / NORM_MEEWERK.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bepaalDoelNorm(array $profiel): int
     {
@@ -160,7 +160,7 @@ class UrencriteriumYearGuard
      *
      * @return string The legal grondslag citation.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bepaalNormGrondslag(int $doelNorm): string
     {
@@ -187,7 +187,7 @@ class UrencriteriumYearGuard
      *
      * @return string One of BEHAALD / OP_KOERS / RISICO / KRITIEK.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bepaalDrempelStatus(float $lopendeUren, float $prognose, int $norm): string
     {
@@ -220,7 +220,7 @@ class UrencriteriumYearGuard
      * @return string NIET_TOEPASSELIJK when no loondienst, otherwise
      *                GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bepaalGrotendeelsCriterium(float $ondernemingsUren, float $loondienstUren): string
     {

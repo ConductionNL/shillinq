@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Service;
  * arrays/scalars so the logic is unit-testable in isolation. TaxReportService
  * wires this helper to live GLLine + Account data.
  *
- * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
  */
 class TaxReportCalculator
 {
@@ -64,7 +64,7 @@ class TaxReportCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -79,7 +79,7 @@ class TaxReportCalculator
      *
      * @return float Money amount.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -96,7 +96,7 @@ class TaxReportCalculator
      *
      * @return bool True for revenue/expense account types.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-23
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function isTaxRelevant(string $accountType): bool
     {
@@ -124,7 +124,7 @@ class TaxReportCalculator
      *                              specialDeductions, netTaxableIncome (floats),
      *                              untaggedCount (int) and breakdown (per-account rows).
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function aggregate(array $rows): array
     {
@@ -200,7 +200,7 @@ class TaxReportCalculator
      *
      * @return string One of 'special', 'nonOperating', 'revenue', 'operating', or ''.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     private function bucketFor(string $accountType, string $taxTreatment): string
     {
@@ -233,7 +233,7 @@ class TaxReportCalculator
      *
      * @return array<string,array<string,mixed>> The updated breakdown map.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     private function accumulateAccount(array $byAccount, array $row, int $amountCents): array
     {
@@ -276,7 +276,7 @@ class TaxReportCalculator
      *
      * @return float Estimated Vpb liability.
      *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-25
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
      */
     public function estimateLiability(float $netTaxableIncome): float
     {

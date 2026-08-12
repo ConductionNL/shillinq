@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/block-unsellable-stock-dispatch/specs/block-unsellable-stock-dispatch/spec.md
+ * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

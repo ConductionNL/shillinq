@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -126,7 +126,7 @@ final class FakeObjectService
  * - IDOR guard (match must belong to parent)
  * - successful update + audit-log entry
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
  */
 final class ReconciliationResolutionServiceTest extends TestCase
 {

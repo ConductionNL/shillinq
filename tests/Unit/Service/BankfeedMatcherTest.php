@@ -42,7 +42,6 @@ final class BankfeedMatcherTest extends TestCase
      */
     private BankfeedMatcher $matcher;
 
-
     /**
      * Set up fresh matcher per test.
      *
@@ -53,7 +52,6 @@ final class BankfeedMatcherTest extends TestCase
         $this->matcher = new BankfeedMatcher();
 
     }//end setUp()
-
 
     /**
      * Exact amount + matching reference + matching date -> very high confidence.
@@ -68,9 +66,9 @@ final class BankfeedMatcherTest extends TestCase
             'valueDate' => '2026-05-28',
         ];
         $candidate = [
-            'arInvoiceId'            => 'fact-2026-0247',
-            'customerId'                => 'klant-acme-bv',
-            'outstandingAmount'       => 8400.00,
+            'arInvoiceId'         => 'fact-2026-0247',
+            'customerId'          => 'klant-acme-bv',
+            'outstandingAmount'   => 8400.00,
             'expectedReceiptDate' => '2026-05-28',
         ];
 
@@ -80,7 +78,6 @@ final class BankfeedMatcherTest extends TestCase
         self::assertGreaterThanOrEqual(0.95, $result['confidence']);
 
     }//end testHighConfidenceMatchOnExactAmountAndReference()
-
 
     /**
      * Amount delta above 5% drops the amount score to zero and crashes the
@@ -96,9 +93,9 @@ final class BankfeedMatcherTest extends TestCase
             'valueDate' => '2026-08-30',
         ];
         $candidate = [
-            'arInvoiceId'            => 'fact-2026-0247',
-            'customerId'                => 'klant-acme-bv',
-            'outstandingAmount'       => 100.00,
+            'arInvoiceId'         => 'fact-2026-0247',
+            'customerId'          => 'klant-acme-bv',
+            'outstandingAmount'   => 100.00,
             'expectedReceiptDate' => '2026-05-28',
         ];
 
@@ -108,7 +105,6 @@ final class BankfeedMatcherTest extends TestCase
         self::assertLessThan(0.5, $result['confidence']);
 
     }//end testNoMatchWhenAmountIsFarOff()
-
 
     /**
      * Empty candidate list returns null match with zero confidence.
@@ -127,7 +123,6 @@ final class BankfeedMatcherTest extends TestCase
 
     }//end testEmptyCandidatesReturnsNullMatch()
 
-
     /**
      * The matcher picks the highest-scoring candidate from a mixed set.
      *
@@ -142,15 +137,15 @@ final class BankfeedMatcherTest extends TestCase
         ];
         $candidates = [
             [
-                'arInvoiceId'            => 'fact-2026-0247',
-                'customerId'                => 'klant-acme-bv',
-                'outstandingAmount'       => 1210.00,
+                'arInvoiceId'         => 'fact-2026-0247',
+                'customerId'          => 'klant-acme-bv',
+                'outstandingAmount'   => 1210.00,
                 'expectedReceiptDate' => '2026-05-28',
             ],
             [
-                'arInvoiceId'            => 'fact-2026-0250',
-                'customerId'                => 'klant-other',
-                'outstandingAmount'       => 1209.00,
+                'arInvoiceId'         => 'fact-2026-0250',
+                'customerId'          => 'klant-other',
+                'outstandingAmount'   => 1209.00,
                 'expectedReceiptDate' => '2026-07-15',
             ],
         ];
@@ -160,7 +155,6 @@ final class BankfeedMatcherTest extends TestCase
         self::assertSame('fact-2026-0247', $result['arInvoiceId']);
 
     }//end testPicksBestCandidateAmongMultiple()
-
 
     /**
      * Customer-id similarity (klantId) drives the reference score when the
@@ -176,9 +170,9 @@ final class BankfeedMatcherTest extends TestCase
             'valueDate' => '2026-06-10',
         ];
         $candidate = [
-            'arInvoiceId'            => 'fact-jan-2026-023',
-            'customerId'                => 'klant-acme-bv',
-            'outstandingAmount'       => 5200.00,
+            'arInvoiceId'         => 'fact-jan-2026-023',
+            'customerId'          => 'klant-acme-bv',
+            'outstandingAmount'   => 5200.00,
             'expectedReceiptDate' => '2026-06-10',
         ];
 
@@ -189,7 +183,6 @@ final class BankfeedMatcherTest extends TestCase
 
     }//end testReferenceMatchOnCustomerId()
 
-
     /**
      * Date proximity within 14 days yields a non-zero date score; outside it
      * collapses to zero.
@@ -199,9 +192,9 @@ final class BankfeedMatcherTest extends TestCase
     public function testDateProximityScoring(): void
     {
         $candidate = [
-            'arInvoiceId'            => 'fact-x',
-            'customerId'                => 'klant-x',
-            'outstandingAmount'       => 1000.00,
+            'arInvoiceId'         => 'fact-x',
+            'customerId'          => 'klant-x',
+            'outstandingAmount'   => 1000.00,
             'expectedReceiptDate' => '2026-06-01',
         ];
 
@@ -217,6 +210,4 @@ final class BankfeedMatcherTest extends TestCase
         self::assertGreaterThan($far['confidence'], $near['confidence']);
 
     }//end testDateProximityScoring()
-
-
 }//end class

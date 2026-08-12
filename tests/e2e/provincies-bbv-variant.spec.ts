@@ -50,7 +50,7 @@
  * live in the Newman collection. Route smoke tests (200 OK + manifest
  * envelope shape) live in `provincies-bbv-routes-smoke.spec.ts`.
  *
- * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md
+ * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
 
 import { test, expect, type Page } from '@playwright/test'

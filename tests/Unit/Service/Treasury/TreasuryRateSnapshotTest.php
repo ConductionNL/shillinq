@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
  * never apply the synthetic '0' value to FX postings without checking
  * `isLive()` first.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 final class TreasuryRateSnapshotTest extends TestCase
 {

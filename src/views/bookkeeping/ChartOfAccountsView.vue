@@ -8,7 +8,7 @@
  permission. Reads from /api/wbso-sno/accounts/hierarchy via the
  WbsoAccountApiController.
 
- @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-20
+ @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
 -->
 <template>
 	<NcAppContent>

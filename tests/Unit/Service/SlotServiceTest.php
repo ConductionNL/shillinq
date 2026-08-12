@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for SlotService.
  *
- * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-14
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  */
 class SlotServiceTest extends TestCase
 {

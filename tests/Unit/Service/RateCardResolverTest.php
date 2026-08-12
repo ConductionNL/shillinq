@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -91,7 +91,7 @@ final class FakeRateObjectService
  * future/expired records skipped, RateCard fallback, hard-coded fallback,
  * and toCents() float/int handling.
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  */
 final class RateCardResolverTest extends TestCase
 {

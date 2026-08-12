@@ -70,8 +70,8 @@ class KorMonitorService
      * @param int    $year             Calendar year to report.
      *
      * @return array{
-     *   administrationId:string, jaar:int, lopendeOmzet:float, drempel:float,
-     *   drempelBenutting:float, perMaand:array<string,float>, prognoseEindeJaar:float,
+     *   administrationId:string, year:int, currentRevenue:float, threshold:float,
+     *   drempelBenutting:float, perMonth:array<string,float>, forecastYearEnd:float,
      *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
      * }
      *
@@ -95,20 +95,20 @@ class KorMonitorService
         $schijf    = $this->calculator->crossedSchijf(previousBenutting: 0.0, newBenutting: $benutting);
 
         return [
-            'administrationId'  => $administrationId,
-            'year'              => $year,
-            'currentRevenue'      => $this->calculator->fromCents(cents: $omzetCents),
-            'threshold'           => $this->calculator->fromCents(cents: $drempelCents),
-            'drempelBenutting'  => round($benutting, 4),
-            'perMonth'          => $perMaand,
-            'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
-            'prognoseStatus'    => $this->calculator->prognoseStatus(
+            'administrationId' => $administrationId,
+            'year'             => $year,
+            'currentRevenue'   => $this->calculator->fromCents(cents: $omzetCents),
+            'threshold'        => $this->calculator->fromCents(cents: $drempelCents),
+            'drempelBenutting' => round($benutting, 4),
+            'perMonth'         => $perMaand,
+            'forecastYearEnd'  => $this->calculator->fromCents(cents: $prognoseCents),
+            'prognoseStatus'   => $this->calculator->prognoseStatus(
                 prognoseCents: $prognoseCents,
                 drempelCents: $drempelCents
             ),
-            'ernst'             => ($schijf['ernst'] ?? null),
-            'trigger'           => ($schijf['trigger'] ?? null),
-            'optOutPermitted'   => $this->resolveOptOutPermitted(administrationId: $administrationId),
+            'ernst'            => ($schijf['ernst'] ?? null),
+            'trigger'          => ($schijf['trigger'] ?? null),
+            'optOutPermitted'  => $this->resolveOptOutPermitted(administrationId: $administrationId),
         ];
 
     }//end status()

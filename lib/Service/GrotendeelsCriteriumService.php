@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Aggregates onderneming + loondienst hours and emits the grotendeels-criterium marking.
  *
- * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+ * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
  */
 final class GrotendeelsCriteriumService
 {
@@ -67,7 +67,7 @@ final class GrotendeelsCriteriumService
      *
      * @return float Total onderneming hours (post-cap).
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function telOndernemingsUren(array $dagregistraties): float
     {
@@ -97,7 +97,7 @@ final class GrotendeelsCriteriumService
      *
      * @return string NIET_TOEPASSELIJK / GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function classifeer(float $ondernemingsUren, float $loondienstUren): string
     {
@@ -120,7 +120,7 @@ final class GrotendeelsCriteriumService
      *
      * @return array{grotendeelsCriterium: string, blokkeertZelfstandigenaftrek: bool}
      *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+     * @spec openspec/specs/zzp-urencriterium-tracker/spec.md
      */
     public function bouwPatch(array $dagregistraties, float $loondienstUren): array
     {
