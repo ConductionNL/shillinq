@@ -71,9 +71,14 @@ class AdministrationArchivalService
      * Administration lifecycle states that allow new mutations.
      *
      * `in_liquidatie` still allows closing entries per the declared lifecycle —
-     * the consumer of this service (JournalPostingGuard etc.) can apply
-     * stricter checks if needed; the write-block itself only blocks the two
-     * read-only states (REQ-MA-007).
+     * a consumer of this service can apply stricter checks if needed; the
+     * write-block itself only blocks the two read-only states (REQ-MA-007).
+     *
+     * ⚠️ This paragraph previously named `JournalPostingGuard` as the consumer.
+     * That class had zero callers and has been deleted; the live journal
+     * posting seam is `OCA\Shillinq\Lifecycle\JournalEntryGuard`. Do not read
+     * a class name in a docblock as evidence of a wiring — in this app a
+     * stated wiring is a hypothesis until grepped.
      *
      * @var array<int,string>
      */

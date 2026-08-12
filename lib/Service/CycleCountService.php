@@ -52,6 +52,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\VarianceGate;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -606,43 +607,47 @@ class CycleCountService
     /**
      * Extract the OR id from a saveObject return value (entity or array shape).
      *
+     * Delegates to {@see ObjectIdentifier::resolve()}, which carries the full
+     * reasoning and the live measurements. The short version:
+     *
+     * 1. WHICH BRANCH RUNS. The object arm used `method_exists()`. OpenRegister's
+     *    `ObjectEntity` declares neither `getId()` nor `getUuid()` — both arrive
+     *    through `OCP\AppFramework\Db\Entity::__call()`, so `method_exists()` is
+     *    **false for both** and neither arm ever ran. `saveObject()` returns an
+     *    entity, so `is_array()` was false too: `extractId()` returned `''` for
+     *    every real call, and `emitAdjustments()` bailed at :361 — after it had
+     *    already persisted a draft StockMove, and before it could stamp the
+     *    `adjustmentStockMoveId` back-reference its own idempotency depends on.
+     *
+     *    ⚠️ `is_callable()` is NOT the fix: it returns **true for any name at all**
+     *    on a `__call()` class (negative control: `is_callable($e,'totalNonsenseXyz')`
+     *    === true), which turns a never-taken branch into an always-taken one.
+     *
+     * 2. WHICH IDENTIFIER SPACE. Probing correctly is still wrong if you then call
+     *    the wrong accessor. On the value production actually passes — a
+     *    `saveObject()` return — `getId()` yields the **numeric bigint row id**
+     *    (measured: `2`) while `getUuid()` and `jsonSerialize()['id']` yield the
+     *    **UUID**. This value is written to `InventoryCycleCountLine.
+     *    adjustmentStockMoveId`, declared in `inventory-cycle-count.json` as a
+     *    relation to `StockMove.id` — which renders as the UUID. So the obvious
+     *    `property_exists($saved,'id') && $saved->getId()` repair would silently
+     *    store `"2"` against readers expecting a UUID: a dangling FK that fails
+     *    later and quietly, which is strictly worse than the dead path it replaces.
+     *    `getId()` is therefore deliberately NOT probed here.
+     *
+     *    ⚠️ A fixture built from `findAll()` cannot catch this — on a *read* entity
+     *    `getId()` returns NULL, so the fallback runs and the wrong fix certifies
+     *    itself. Build the fixture from the same call production uses.
+     *
+     * The array arm already returned the UUID, so both arms now agree.
+     *
      * @param mixed $saved Whatever ObjectService::saveObject returned.
      *
-     * @return string The id, or empty string when not derivable.
+     * @return string The object's UUID, or empty string when not derivable.
      */
     private function extractId(mixed $saved): string
     {
-        if (is_array($saved) === true) {
-            if (isset($saved['id']) === true) {
-                return (string) $saved['id'];
-            }
-
-            if (isset($saved['@self']['id']) === true) {
-                return (string) $saved['@self']['id'];
-            }
-        }
-
-        if (is_object($saved) === true) {
-            if (method_exists($saved, 'getId') === true) {
-                $id = $saved->getId();
-                if ($id === null) {
-                    return '';
-                }
-
-                return (string) $id;
-            }
-
-            if (method_exists($saved, 'getUuid') === true) {
-                $uuid = $saved->getUuid();
-                if ($uuid === null) {
-                    return '';
-                }
-
-                return (string) $uuid;
-            }
-        }
-
-        return '';
+        return ObjectIdentifier::resolve(saved: $saved);
 
     }//end extractId()
 
