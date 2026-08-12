@@ -170,7 +170,7 @@ final class CreditControlDunningFragmentTest extends TestCase {
 
 		// Money fields use multipleOf 0.01 (REQ-CCD-003 + global money rule).
 		self::assertSame(0.01, $schema['properties']['hoofdsom']['multipleOf']);
-		self::assertSame(0.01, $schema['properties']['totaalVerschuldigd']['multipleOf']);
+		self::assertSame(0.01, $schema['properties']['totalDue']['multipleOf']);
 
 	}//end testIncassoKostenDeclaresAggregations()
 

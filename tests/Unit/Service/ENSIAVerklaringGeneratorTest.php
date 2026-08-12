@@ -48,8 +48,8 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderProducesValidDocxArchive(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-				'jaar' => 2026,
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
 			],
 			vragen: [],
 			bevindingen: []
@@ -87,8 +87,8 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderIncludesOrganisationData(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-				'jaar' => 2026,
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
 			],
 			vragen: [],
 			bevindingen: []
@@ -110,8 +110,8 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderIncludesPerDomeinSummary(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-				'jaar' => 2026,
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
 			],
 			vragen: [
 				['domein' => 'BIO',   'volwassenheidsScore' => 4, 'normniveau' => 3],
@@ -135,8 +135,8 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderListsTopFindings(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-				'jaar' => 2026,
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
 			],
 			vragen: [],
 			bevindingen: [
@@ -162,8 +162,8 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderIncludesSignatureFields(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-				'jaar' => 2026,
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
 			],
 			vragen: [],
 			bevindingen: []

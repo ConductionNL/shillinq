@@ -55,8 +55,8 @@ final class AcmReportGeneratorTest extends TestCase {
 			'period' => '2026-Q1',
 			'administrationId' => 'adm-tilburg',
 			'activities' => [
-				['id' => 'ca-001', 'code' => 'MO-SP-014', 'naam' => 'Dansschool', 'isExempted' => false],
-				['id' => 'ca-002', 'code' => 'MO-SP-016', 'naam' => 'Kantine', 'isExempted' => true, 'exemptionBesluitId' => 'abb-001'],
+				['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'Dansschool', 'isExempted' => false],
+				['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true, 'exemptionBesluitId' => 'abb-001'],
 			],
 			'ikpRecords' => [
 				'ca-001' => ['totaleKosten' => 87_500.00],
@@ -111,7 +111,7 @@ final class AcmReportGeneratorTest extends TestCase {
 		$report = $this->svc->compose([
 			'period' => '2026-Q1',
 			'administrationId' => 'adm-tilburg',
-			'activities' => [['id' => 'ca-001', 'code' => 'MO-SP-014', 'naam' => 'X', 'isExempted' => false]],
+			'activities' => [['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'X', 'isExempted' => false]],
 			'ikpRecords' => ['ca-001' => ['totaleKosten' => 1.0]],
 			'omzetByActivity' => ['ca-001' => 2.0],
 		]);

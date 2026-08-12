@@ -190,7 +190,7 @@ final class PayrollControllerTest extends TestCase {
 	 */
 	public function testLhAfdrachtSuccess(): void {
 		$this->withParams(['administration_id' => 'adm-1', 'periode_id' => 'lp-1']);
-		$payload = ['periodeId' => 'lp-1', 'totaalAfdracht' => 2936.56, 'status' => 'VOORBEREID'];
+		$payload = ['periodeId' => 'lp-1', 'totalRemittance' => 2936.56, 'status' => 'VOORBEREID'];
 		$this->service->method('berekenLHAfdracht')->willReturn($payload);
 		$response = $this->controller->lhAfdracht();
 		self::assertSame(Http::STATUS_OK, $response->getStatus());

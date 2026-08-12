@@ -6,21 +6,21 @@
 			"id": "erik-stable-b2b-consultant",
 			"description": "Stable B2B consultant — predictable monthly inflows, three regular clients with 3-day avg payment offset.",
 			"corporation": {
-				"ondernemingId": "ond-zzp-c001",
-				"naam": "Erik van den Berg - IT Consultancy",
+				"enterpriseId": "ond-zzp-c001",
+				"name": "Erik van den Berg - IT Consultancy",
 				"administrationType": "zzp"
 			},
 			"administrationId": "adm-erik-c001",
 			"horizon": {
 				"horizonId": "horizon-erik-2026-w18",
 				"horizonStart": "2026-04-27",
-				"horizonEind": "2026-07-26",
-				"openingSaldo": {
+				"horizonEnd": "2026-07-26",
+				"openingBalance": {
 					"zakelijkeRekening": 45000.00,
 					"spaardoel_btw": 8200.00,
 					"spaardoel_ib": 12500.00,
 					"spaardoel_buffer": 6800.00,
-					"totaal": 72500.00
+					"total": 72500.00
 				},
 				"modelVersie": "v4.1-klantspecifiek-betaalgedrag",
 				"lifecycleState": "active"
@@ -111,21 +111,21 @@
 			"id": "sarah-volatile-project-based",
 			"description": "Volatile project-based with summer dip — event production, variable freelancer payroll, multiple project clients with mid-confidence payment history.",
 			"corporation": {
-				"ondernemingId": "ond-zzp-vol-001",
-				"naam": "Sarah Chen - Event Production",
+				"enterpriseId": "ond-zzp-vol-001",
+				"name": "Sarah Chen - Event Production",
 				"administrationType": "zzp"
 			},
 			"administrationId": "adm-sarah-vol001",
 			"horizon": {
 				"horizonId": "horizon-sarah-2026-w18",
 				"horizonStart": "2026-04-27",
-				"horizonEind": "2026-07-26",
-				"openingSaldo": {
+				"horizonEnd": "2026-07-26",
+				"openingBalance": {
 					"zakelijkeRekening": 22000.00,
 					"spaardoel_btw": 4100.00,
 					"spaardoel_ib": 3900.00,
 					"spaardoel_buffer": 5200.00,
-					"totaal": 35200.00
+					"total": 35200.00
 				},
 				"modelVersie": "v4.1-klantspecifiek-betaalgedrag",
 				"lifecycleState": "active"
@@ -194,21 +194,21 @@
 			"id": "jan-government-contractor",
 			"description": "Government / semi-public contractor — Municipality of Amsterdam 78-day avg, Province of Utrecht 62-day avg, private Acme BV 38-day avg. Extended payment terms drive multi-week receivable gaps.",
 			"corporation": {
-				"ondernemingId": "ond-zzp-gov-001",
-				"naam": "Jan Pieterse - Public Sector Consultancy",
+				"enterpriseId": "ond-zzp-gov-001",
+				"name": "Jan Pieterse - Public Sector Consultancy",
 				"administrationType": "zzp"
 			},
 			"administrationId": "adm-jan-gov001",
 			"horizon": {
 				"horizonId": "horizon-jan-2026-w18",
 				"horizonStart": "2026-04-27",
-				"horizonEind": "2026-07-26",
-				"openingSaldo": {
+				"horizonEnd": "2026-07-26",
+				"openingBalance": {
 					"zakelijkeRekening": 18500.00,
 					"spaardoel_btw": 3100.00,
 					"spaardoel_ib": 2800.00,
 					"spaardoel_buffer": 3500.00,
-					"totaal": 27900.00
+					"total": 27900.00
 				},
 				"modelVersie": "v4.1-klantspecifiek-betaalgedrag",
 				"lifecycleState": "active"

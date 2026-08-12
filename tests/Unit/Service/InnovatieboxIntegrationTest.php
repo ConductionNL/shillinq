@@ -99,7 +99,7 @@ final class InnovatieboxIntegrationTest extends TestCase {
 			'data' => [
 				[
 					'qualifying_asset_id' => 'asset-1',
-					'naam' => 'Slimme routeringsalgoritme',
+					'name' => 'Slimme routeringsalgoritme',
 					'winst_voor_nexus' => $profitResult['kwalificerendeWinstVoorNexus'],
 					'nexus' => $profitResult['nexusbreukToegepast'],
 					'winst_na_nexus' => $profitResult['kwalificerendeWinstNaNexus'],

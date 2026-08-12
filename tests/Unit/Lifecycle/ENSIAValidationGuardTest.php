@@ -145,7 +145,7 @@ class ENSIAValidationGuardTest extends TestCase {
 			$this->guard->maturityEvidenceSatisfied([
 				'vraagCode' => 'BIO-9.1.1',
 				'volwassenheidsScore' => 3,
-				'bewijsstukken' => [['fileRef' => 'docudesk://x', 'omschrijving' => 'doc']],
+				'bewijsstukken' => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
 				'toelichting' => 'too short',
 			])
 		);
@@ -162,7 +162,7 @@ class ENSIAValidationGuardTest extends TestCase {
 			$this->guard->maturityEvidenceSatisfied([
 				'vraagCode' => 'BIO-9.1.1',
 				'volwassenheidsScore' => 4,
-				'bewijsstukken' => [['fileRef' => 'docudesk://x', 'omschrijving' => 'doc']],
+				'bewijsstukken' => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
 				'toelichting' => str_repeat('a', 50),
 			])
 		);
@@ -248,7 +248,7 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testCollegeAkkoordAllowedShortCircuitsOnMissingId(): void {
 		$this->assertTrue(
 			$this->guard->collegeAkkoordAllowed([
-				'jaar' => 2026,
+				'year' => 2026,
 				'status' => 'peer-review',
 			])
 		);

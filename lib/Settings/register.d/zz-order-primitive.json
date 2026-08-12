@@ -162,19 +162,19 @@
                 "description": "Source Subsidie's own number (also mirrored to the base orderNumber).",
                 "title": "Subsidie Number"
               },
-              "regelingNaam": {
+              "schemeName": {
                 "type": "string",
                 "nullable": true,
                 "description": "Name of the underlying subsidieregeling.",
                 "title": "Regeling Naam"
               },
-              "regelingArtikel": {
+              "schemeArticle": {
                 "type": "string",
                 "nullable": true,
                 "description": "Specific article reference within the regeling.",
                 "title": "Regeling Artikel"
               },
-              "subsidieRegeling": {
+              "subsidyScheme": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
@@ -466,7 +466,7 @@
             "title": "Engagement Details",
             "description": "Populated only when orderType=engagement. The full field set of DBAOpdracht — Wet DBA compliance engagement (modelovereenkomst + risicoklasse), per REQ-ORD-002/003.",
             "properties": {
-              "ondernemingId": {
+              "enterpriseId": {
                 "type": "string",
                 "nullable": true,
                 "description": "FK to the onderneming (ZZP/eenmanszaak/MKB) executing or hiring for this engagement.",
@@ -478,34 +478,34 @@
                 "description": "FK to the client (also mirrored to the base counterpartyId).",
                 "title": "Klant ID"
               },
-              "opdrachtNaam": {
+              "assignmentName": {
                 "type": "string",
                 "nullable": true,
                 "description": "Free name of the engagement (also mirrored to the base description).",
                 "title": "Opdracht Naam"
               },
-              "verwachteEindDatum": {
+              "expectedEndDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Expected end date (also mirrored to the base endDate).",
                 "title": "Verwachte Eind Datum"
               },
-              "feitelijkeEindDatum": {
+              "actualEndDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Actual end date; filled on the beeindiging procedure (REQ-DBA-018).",
                 "title": "Feitelijke Eind Datum"
               },
-              "verwachteOmzet": {
+              "expectedRevenue": {
                 "type": "integer",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Expected total revenue in euro cents.",
                 "title": "Verwachte Omzet"
               },
-              "gerealiseerdeOmzet": {
+              "realisedRevenue": {
                 "type": "integer",
                 "minimum": 0,
                 "default": 0,

@@ -102,7 +102,7 @@ class PayrollUpaHandoffService {
 
 			if (isset($groups[$regeling]) === false) {
 				$groups[$regeling] = [
-					'pensioenRegeling' => $regeling,
+					'pensionScheme' => $regeling,
 					'periodeId' => $periodeId,
 					'administrationId' => $administrationId,
 					'totaalPremie' => 0.0,
@@ -156,7 +156,7 @@ class PayrollUpaHandoffService {
 
 		foreach ($results as $r) {
 			$row = (array)$r;
-			return (string)($row['pensioenRegeling'] ?? '');
+			return (string)($row['pensionScheme'] ?? '');
 		}
 
 		return '';

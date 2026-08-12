@@ -85,7 +85,7 @@ class VerplichtingGuard {
 			) {
 				$this->logger->info(
 					'VerplichtingGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
-					['verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown')]
+					['commitmentNumber' => ($verplichting['commitmentNumber'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -99,7 +99,7 @@ class VerplichtingGuard {
 			$this->logger->error(
 				'VerplichtingGuard: canActiveren failed — denying activation (fail-closed)',
 				[
-					'verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown'),
+					'commitmentNumber' => ($verplichting['commitmentNumber'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -121,7 +121,7 @@ class VerplichtingGuard {
 	 */
 	private function milestonesWithinTerm(array $verplichting): bool {
 		$start = $this->parseDate(value: (string)($verplichting['looptijdStart'] ?? ''));
-		$end = $this->parseDate(value: (string)($verplichting['looptijdEind'] ?? ''));
+		$end = $this->parseDate(value: (string)($verplichting['termEnd'] ?? ''));
 		if ($start === null || $end === null) {
 			// No declared term — nothing to bound.
 			return true;
@@ -142,7 +142,7 @@ class VerplichtingGuard {
 				$this->logger->info(
 					'VerplichtingGuard: milestone date out of contract term — denying activation',
 					[
-						'verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown'),
+						'commitmentNumber' => ($verplichting['commitmentNumber'] ?? 'unknown'),
 						'mijlpaalId' => ($mijlpaal['mijlpaalId'] ?? 'unknown'),
 						'datum' => ($mijlpaal['datum'] ?? 'unknown'),
 					]

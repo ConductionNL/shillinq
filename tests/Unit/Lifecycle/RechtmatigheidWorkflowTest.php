@@ -490,7 +490,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 
 		$agg = $aggregations['foutenPerBoekjaar'];
 		self::assertSame(
-			expected: ['boekjaar'],
+			expected: ['financialYear'],
 			actual: ($agg['groupBy'] ?? null),
 			message: 'foutenPerBoekjaar must group by boekjaar.'
 		);
@@ -533,7 +533,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 	public function testJaarrekeningExportGateOnlyAcceptsDefinitief(): void {
 		foreach (['concept', 'vastgesteld_college', 'behandeld_raad'] as $blockedStatus) {
 			$result = $this->guard->canExportParagraaf(
-				paragraaf: ['status' => $blockedStatus, 'boekjaar' => 2026]
+				paragraaf: ['status' => $blockedStatus, 'financialYear' => 2026]
 			);
 			self::assertFalse(
 				condition: $result,
@@ -542,7 +542,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		}
 
 		$definitief = $this->guard->canExportParagraaf(
-			paragraaf: ['status' => 'definitief', 'boekjaar' => 2026]
+			paragraaf: ['status' => 'definitief', 'financialYear' => 2026]
 		);
 		self::assertTrue(
 			condition: $definitief,

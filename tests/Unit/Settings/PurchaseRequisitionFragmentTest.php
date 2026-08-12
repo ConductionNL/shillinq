@@ -85,11 +85,11 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 		$requisition = $this->fragment()['components']['schemas']['Requisition'];
 		$properties = $requisition['properties'];
 
-		foreach (['programma', 'boekjaar', 'totaalbedrag_excl_btw', 'soort', 'administrationId'] as $field) {
+		foreach (['programme', 'financialYear', 'totaalbedrag_excl_btw', 'soort', 'administrationId'] as $field) {
 			self::assertArrayHasKey($field, $properties, "Requisition must declare $field for BudgetBlocker reuse");
 		}
 
-		foreach (['programma', 'boekjaar', 'soort'] as $required) {
+		foreach (['programme', 'financialYear', 'soort'] as $required) {
 			self::assertContains($required, $requisition['required']);
 		}
 
@@ -245,8 +245,8 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 				);
 			}
 
-			self::assertSame('5.1', $requisition['programma']);
-			self::assertSame(2026, $requisition['boekjaar']);
+			self::assertSame('5.1', $requisition['programme']);
+			self::assertSame(2026, $requisition['financialYear']);
 			// Free room on the seeded Budget (5.1/2026) is 500,000.00 - 25,000.00 =
 			// 475,000.00 EUR (47500000 cents); every seed Requisition must fit.
 			self::assertLessThanOrEqual(47500000, $requisition['totaalbedrag_excl_btw']);

@@ -110,7 +110,7 @@ class CommercialActivityReviewService {
 	 */
 	public function composeReviewTask(array $activity, string $today): array {
 		$code = (string)($activity['code'] ?? '');
-		$naam = (string)($activity['naam'] ?? '');
+		$naam = (string)($activity['name'] ?? '');
 
 		return [
 			'type' => 'wmo-annual-review',

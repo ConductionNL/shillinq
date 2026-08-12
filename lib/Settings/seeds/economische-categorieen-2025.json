@@ -9,21 +9,21 @@
     "url": "https://www.cbs.nl/iv3"
   },
   "economischeCategorieen": [
-    {"code": "1.1", "naam": "Salarissen en sociale lasten", "niveau": 2, "parentCode": "1", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "1.2", "naam": "Sociale uitkeringen personeel", "niveau": 2, "parentCode": "1", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "1.2.1", "naam": "Personeel van derden", "niveau": 3, "parentCode": "1.2", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "2.1", "naam": "Rente", "niveau": 2, "parentCode": "2", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "3.1", "naam": "Duurzame goederen", "niveau": 2, "parentCode": "3", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "3.4", "naam": "Belastingen", "niveau": 2, "parentCode": "3", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "3.4.3", "naam": "Betaalde belastingen", "niveau": 3, "parentCode": "3.4", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "3.5.1", "naam": "Ingeleend personeel", "niveau": 3, "parentCode": "3.5", "batenOfLasten": "lasten", "iv3Verplicht": false},
-    {"code": "4.1", "naam": "Inkomensoverdrachten aan het Rijk", "niveau": 2, "parentCode": "4", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "4.3", "naam": "Inkomensoverdrachten overige overheden", "niveau": 2, "parentCode": "4", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "6.1", "naam": "Afschrijvingen", "niveau": 2, "parentCode": "6", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "7.1", "naam": "Mutaties voorzieningen", "niveau": 2, "parentCode": "7", "batenOfLasten": "lasten", "iv3Verplicht": true},
-    {"code": "8.1", "naam": "Belastingopbrengsten", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true},
-    {"code": "8.2", "naam": "Rente-opbrengsten", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true},
-    {"code": "8.3", "naam": "Goederen en diensten (baten)", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true},
-    {"code": "8.5", "naam": "Inkomensoverdrachten van het Rijk", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true}
+    {"code": "1.1", "name": "Salarissen en sociale lasten", "niveau": 2, "parentCode": "1", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "1.2", "name": "Sociale uitkeringen personeel", "niveau": 2, "parentCode": "1", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "1.2.1", "name": "Personeel van derden", "niveau": 3, "parentCode": "1.2", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "2.1", "name": "Rente", "niveau": 2, "parentCode": "2", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "3.1", "name": "Duurzame goederen", "niveau": 2, "parentCode": "3", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "3.4", "name": "Belastingen", "niveau": 2, "parentCode": "3", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "3.4.3", "name": "Betaalde belastingen", "niveau": 3, "parentCode": "3.4", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "3.5.1", "name": "Ingeleend personeel", "niveau": 3, "parentCode": "3.5", "batenOfLasten": "lasten", "iv3Verplicht": false},
+    {"code": "4.1", "name": "Inkomensoverdrachten aan het Rijk", "niveau": 2, "parentCode": "4", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "4.3", "name": "Inkomensoverdrachten overige overheden", "niveau": 2, "parentCode": "4", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "6.1", "name": "Afschrijvingen", "niveau": 2, "parentCode": "6", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "7.1", "name": "Mutaties voorzieningen", "niveau": 2, "parentCode": "7", "batenOfLasten": "lasten", "iv3Verplicht": true},
+    {"code": "8.1", "name": "Belastingopbrengsten", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true},
+    {"code": "8.2", "name": "Rente-opbrengsten", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true},
+    {"code": "8.3", "name": "Goederen en diensten (baten)", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true},
+    {"code": "8.5", "name": "Inkomensoverdrachten van het Rijk", "niveau": 2, "parentCode": "8", "batenOfLasten": "baten", "iv3Verplicht": true}
   ]
 }

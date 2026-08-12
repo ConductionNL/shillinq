@@ -187,7 +187,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		$entity = $this->entity('4101', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
-			'boekjaar' => 2026,
+			'financialYear' => 2026,
 			'eigen_rd_kosten' => 480000,
 			'rd_kosten_uitbesteed_derden' => 120000,
 			'rd_kosten_uitbesteed_verbonden' => 80000,
@@ -205,7 +205,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			$logger->calls[0]['event_type']
 		);
 		$this->assertSame('asset-1', $logger->calls[0]['qualifying_asset_id']);
-		$this->assertSame(2026, $logger->calls[0]['boekjaar']);
+		$this->assertSame(2026, $logger->calls[0]['financialYear']);
 		$this->assertSame(1.0, $logger->calls[0]['details']['nexusbreuk_toegepast']);
 
 	}//end testNexusCreateEmitsCalculatedEvent()
@@ -229,7 +229,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		$entity = $this->entity('4102', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
-			'boekjaar' => 2026,
+			'financialYear' => 2026,
 			'methode' => 'forfaitair_25pct',
 			'kwalificerende_winst_voor_nexus' => 125000,
 			'kwalificerende_winst_na_nexus' => 25000,
@@ -263,13 +263,13 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		$prior = $this->entity('4102', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
-			'boekjaar' => 2026,
+			'financialYear' => 2026,
 			'vso_locked' => false,
 		]);
 		$next = $this->entity('4102', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
-			'boekjaar' => 2026,
+			'financialYear' => 2026,
 			'vso_locked' => true,
 		]);
 		$event = new ObjectUpdatedEvent($next, $prior);
@@ -303,14 +303,14 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		$prior = $this->entity('4102', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
-			'boekjaar' => 2026,
+			'financialYear' => 2026,
 			'vso_locked' => true,
 			'voordeel_innovatiebox' => 72000,
 		]);
 		$next = $this->entity('4102', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
-			'boekjaar' => 2026,
+			'financialYear' => 2026,
 			'vso_locked' => true,
 			'voordeel_innovatiebox' => 80000,
 		]);
@@ -347,16 +347,16 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
 			'origin_boekjaar' => 2024,
-			'verrekend_boekjaar' => [],
-			'saldo_na' => 215000,
+			'settled_financial_year' => [],
+			'balance_after' => 215000,
 			'status' => 'open',
 		]);
 		$next = $this->entity('4103', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
 			'origin_boekjaar' => 2024,
-			'verrekend_boekjaar' => [['jaar' => 2026, 'amount' => 215000, 'saldo_na' => 0]],
-			'saldo_na' => 0,
+			'settled_financial_year' => [['year' => 2026, 'amount' => 215000, 'balance_after' => 0]],
+			'balance_after' => 0,
 			'status' => 'consumed',
 		]);
 		$event = new ObjectUpdatedEvent($next, $prior);

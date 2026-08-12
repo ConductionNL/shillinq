@@ -160,7 +160,7 @@ class CashflowRecurringGuard {
 		}
 
 		if ($frequency === 'JAARLIJKS') {
-			$month = ($recurring['maandVanJaar'] ?? null);
+			$month = ($recurring['monthOfYear'] ?? null);
 			if (is_int($month) === false || $month < 1 || $month > 12) {
 				$this->logger->info(
 					'CashflowRecurringGuard: JAARLIJKS requires a valid maandVanJaar (1-12) — denying save',

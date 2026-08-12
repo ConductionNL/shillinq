@@ -143,7 +143,7 @@ final class UrenPrognoseService {
 				'asOf' => $asOf,
 				'modelVersie' => self::MODEL_VERSION,
 				'weekGemiddelde' => $weekGemiddelde,
-				'totaalPrognose' => $totaalPrognose,
+				'totalForecast' => $totaalPrognose,
 				'confidence' => $confidence,
 			]
 		);
@@ -153,7 +153,7 @@ final class UrenPrognoseService {
 			'berekendOp' => gmdate('c'),
 			'perMaandPrognose' => $perMaand,
 			'vakanties' => array_values(array_map('strval', $vakanties)),
-			'totaalPrognose' => $totaalPrognose,
+			'totalForecast' => $totaalPrognose,
 			'kansBehaaldNorm' => $kansBehaaldNorm,
 			'prognoseConfidence' => $confidence,
 		];

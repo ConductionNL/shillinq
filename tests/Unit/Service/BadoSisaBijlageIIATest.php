@@ -261,7 +261,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 			rows: [
 				[
 					'protocol' => $protocolId,
-					'regelingCode' => 'G2',
+					'schemeCode' => 'G2',
 					'verantwoordingsplichtige' => 'gemeente',
 					'specifiekeUitkering' => 'Participatiewet',
 					'assuranceLevel' => 'sisa-specific',
@@ -269,7 +269,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 				],
 				[
 					'protocol' => $protocolId,
-					'regelingCode' => 'G3',
+					'schemeCode' => 'G3',
 					'verantwoordingsplichtige' => 'gemeente',
 					'specifiekeUitkering' => 'Schuldhulpverlening',
 					'assuranceLevel' => 'sisa-specific',
@@ -305,7 +305,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 		self::assertCount(2, $ledger['sisaAssurance']);
 		$bycode = [];
 		foreach ($ledger['sisaAssurance'] as $row) {
-			$bycode[$row['regelingCode']] = $row;
+			$bycode[$row['schemeCode']] = $row;
 		}
 
 		self::assertArrayHasKey('G2', $bycode);
@@ -348,8 +348,8 @@ final class BadoSisaBijlageIIATest extends TestCase {
 
 		self::assertIsString($g2Json);
 		self::assertIsString($g3Json);
-		self::assertStringContainsString('"regelingCode": "G2"', $g2Json);
-		self::assertStringContainsString('"regelingCode": "G3"', $g3Json);
+		self::assertStringContainsString('"schemeCode": "G2"', $g2Json);
+		self::assertStringContainsString('"schemeCode": "G3"', $g3Json);
 
 		unlink($written['zipPath']);
 

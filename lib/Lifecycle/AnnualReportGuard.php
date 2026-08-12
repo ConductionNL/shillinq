@@ -216,7 +216,7 @@ class AnnualReportGuard {
 		$cents = 0;
 		foreach ($rubrieken as $rubriek) {
 			if (is_array($rubriek) === true && ($rubriek['zijde'] ?? '') === $zijde) {
-				$cents += (int)round((float)($rubriek['huidigJaar'] ?? 0) * 100);
+				$cents += (int)round((float)($rubriek['currentYear'] ?? 0) * 100);
 			}
 		}
 

@@ -83,7 +83,7 @@ class PayrollLivLkvHandoffService {
 
 		return [
 			'werknemerId' => $werknemerId,
-			'jaar' => $jaar,
+			'year' => $jaar,
 			'inkomenniveau' => (string)($werknemer['inkomenniveau'] ?? ''),
 			'fiscaalLoonJaar' => $totaalFiscaal,
 			'contracturenPerWeek' => (float)($werknemer['contracturenPerWeek'] ?? 0),
@@ -149,7 +149,7 @@ class PayrollLivLkvHandoffService {
 		foreach ($results as $r) {
 			$row = (array)$r;
 			$periode = (string)($row['periodeId'] ?? '');
-			if (preg_match('/(?<jaar>20[0-9]{2})/', $periode, $m) === 1 && (int)$m['jaar'] !== $jaar) {
+			if (preg_match('/(?<year>20[0-9]{2})/', $periode, $m) === 1 && (int)$m['year'] !== $jaar) {
 				continue;
 			}
 

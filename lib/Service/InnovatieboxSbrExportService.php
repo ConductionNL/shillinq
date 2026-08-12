@@ -177,7 +177,7 @@ class InnovatieboxSbrExportService {
 
 		return [
 			'administrationId' => $administrationId,
-			'boekjaar' => $boekjaar,
+			'financialYear' => $boekjaar,
 			'methode' => $methode,
 			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
 			'perAsset' => $perAsset,
@@ -266,7 +266,7 @@ class InnovatieboxSbrExportService {
 
 			$out[] = [
 				'qualifying_asset_id' => (string)($row['qualifying_asset_id'] ?? ''),
-				'naam' => (string)($row['naam'] ?? ''),
+				'name' => (string)($row['name'] ?? ''),
 				'winst_voor_nexus' => round((float)($row['winst_voor_nexus'] ?? ($row['kwalificerende_winst_voor_nexus'] ?? 0.0)), 2),
 				'nexus_percent' => round((float)($row['nexus'] ?? ($row['nexusbreuk_toegepast'] ?? 0.0)), 4),
 				'winst_na_nexus' => round((float)($row['winst_na_nexus'] ?? ($row['kwalificerende_winst_na_nexus'] ?? 0.0)), 2),

@@ -57,7 +57,7 @@ final class UrenTallyServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(11.5, $result['totaalUren']);
+		self::assertSame(11.5, $result['totalHours']);
 		self::assertSame(4.0, $result['perCategorie']['REISTIJD_ZAKELIJK']);
 		self::assertCount(1, $result['overages']);
 		self::assertSame('REISTIJD_ZAKELIJK', $result['overages'][0]['categorie']);
@@ -79,7 +79,7 @@ final class UrenTallyServiceTest extends TestCase {
 		$first = $service->tallyDag(entries: $entries);
 		$second = $service->tallyDag(entries: $entries);
 
-		self::assertSame($first['totaalUren'], $second['totaalUren']);
+		self::assertSame($first['totalHours'], $second['totalHours']);
 		self::assertSame($first['perCategorie'], $second['perCategorie']);
 
 	}//end testTallyDagIsIdempotent()
@@ -91,7 +91,7 @@ final class UrenTallyServiceTest extends TestCase {
 	 */
 	public function testTallyDagEmptyYieldsZero(): void {
 		$result = $this->build()->tallyDag(entries: []);
-		self::assertSame(0.0, $result['totaalUren']);
+		self::assertSame(0.0, $result['totalHours']);
 		self::assertSame([], $result['perCategorie']);
 		self::assertSame([], $result['overages']);
 
@@ -113,7 +113,7 @@ final class UrenTallyServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(6.0, $result['totaalUren']);
+		self::assertSame(6.0, $result['totalHours']);
 
 	}//end testTallyDagSkipsGarbage()
 

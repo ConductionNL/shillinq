@@ -109,7 +109,7 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	public function testValidBewijsstukPermitsCompletion(): void {
 		$opdracht = [
 			'bewijsstukken' => [
-				['app' => 'docudesk', 'documentId' => 'doc-123', 'omschrijving' => 'Acceptatie-protocol'],
+				['app' => 'docudesk', 'documentId' => 'doc-123', 'description' => 'Acceptatie-protocol'],
 			],
 		];
 		$this->assertTrue($this->guard->canVoltooien($opdracht));

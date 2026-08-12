@@ -99,11 +99,11 @@ class ENSIAXmlExporter {
 		$org = $cyclus['organisatie'] ?? [];
 		$orgEl = $doc->createElement('organisatie');
 		$orgEl->appendChild($doc->createElement('kvk', (string)($org['kvk'] ?? '')));
-		$orgEl->appendChild($doc->createElement('naam', (string)($org['naam'] ?? '')));
+		$orgEl->appendChild($doc->createElement('name', (string)($org['name'] ?? '')));
 		$root->appendChild($orgEl);
 
 		// Cycle metadata.
-		$root->appendChild($doc->createElement('jaar', (string)($cyclus['jaar'] ?? '')));
+		$root->appendChild($doc->createElement('year', (string)($cyclus['year'] ?? '')));
 		$root->appendChild($doc->createElement('status', (string)($cyclus['status'] ?? '')));
 		$root->appendChild($doc->createElement('vraagSetVersion', (string)($cyclus['vraagSetVersion'] ?? '')));
 		$root->appendChild($doc->createElement('verklaringFile', (string)($cyclus['verklaringFile'] ?? '')));
@@ -161,7 +161,7 @@ class ENSIAXmlExporter {
 							$doc->createElement('fileRef', (string)($bw['fileRef'] ?? ''))
 						);
 						$bewijsstukEl->appendChild(
-							$doc->createElement('omschrijving', (string)($bw['omschrijving'] ?? ''))
+							$doc->createElement('description', (string)($bw['description'] ?? ''))
 						);
 						$sha = (string)($bw['sha256'] ?? '');
 						if ($sha !== '') {

@@ -180,7 +180,7 @@ class DBAComplianceGuard {
 				return false;
 			}
 
-			$eindDatum = trim((string)($opdracht['feitelijkeEindDatum'] ?? ''));
+			$eindDatum = trim((string)($opdracht['actualEndDate'] ?? ''));
 
 			return $eindDatum !== '';
 		} catch (\Throwable $e) {
@@ -221,7 +221,7 @@ class DBAComplianceGuard {
 				return true;
 			}
 
-			$stored = (int)($intake['totaalScore'] ?? -1);
+			$stored = (int)($intake['totalScore'] ?? -1);
 			$recomputed = $this->computeTotaalScore(intake: $intake);
 			if ($stored !== $recomputed) {
 				return false;

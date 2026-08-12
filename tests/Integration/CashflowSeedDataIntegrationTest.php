@@ -198,7 +198,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 	public function testOpeningSaldoBreakdownSumsCorrectly(): void {
 		$seed = $this->seed();
 		foreach ($seed['profiles'] as $profile) {
-			$os = $profile['horizon']['openingSaldo'];
+			$os = $profile['horizon']['openingBalance'];
 			$sum = (
 				(float)$os['zakelijkeRekening']
 				+ (float)$os['spaardoel_btw']
@@ -206,7 +206,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 				+ (float)$os['spaardoel_buffer']
 			);
 			self::assertEqualsWithDelta(
-				(float)$os['totaal'],
+				(float)$os['total'],
 				$sum,
 				0.01,
 				'totaal must equal sum of buckets for ' . $profile['id']

@@ -106,7 +106,7 @@ class DoorsnijdingsVerbodValidator {
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN,
 					'administrationId' => $administrationId,
-					'boekjaar' => $boekjaar,
+					'financialYear' => $boekjaar,
 					'reason' => $auditReason,
 					'details' => [
 						'findings' => $findings,
@@ -207,7 +207,7 @@ class DoorsnijdingsVerbodValidator {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'boekjaar' => $boekjaar,
+						'financialYear' => $boekjaar,
 						'exclusief_in_winstbepaling' => true,
 					],
 				]
@@ -233,7 +233,7 @@ class DoorsnijdingsVerbodValidator {
 		$rows = $objectService
 			->setRegister($this->register())
 			->setSchema('GLLine')
-			->findAll(['filters' => ['administrationId' => $administrationId, 'boekjaar' => $boekjaar]]);
+			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $boekjaar]]);
 
 		if (is_array($rows) === false) {
 			return [];

@@ -94,7 +94,7 @@ class VsoLockingValidator {
 					[
 						'filters' => [
 							'administrationId' => $administrationId,
-							'boekjaar' => $boekjaar,
+							'financialYear' => $boekjaar,
 							'vso_locked' => true,
 						],
 					]
@@ -107,7 +107,7 @@ class VsoLockingValidator {
 				'VsoLockingValidator: lock-status fetch failed; assuming unlocked',
 				[
 					'administrationId' => $administrationId,
-					'boekjaar' => $boekjaar,
+					'financialYear' => $boekjaar,
 					'exception' => $e->getMessage(),
 				]
 			);

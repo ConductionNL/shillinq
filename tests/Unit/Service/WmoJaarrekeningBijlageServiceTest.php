@@ -54,8 +54,8 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 			'fiscalYear' => '2025',
 			'administrationId' => 'adm-tilburg',
 			'activities' => [
-				['id' => 'ca-001', 'code' => 'MO-SP-014', 'naam' => 'Dansschool', 'isExempted' => false],
-				['id' => 'ca-002', 'code' => 'MO-SP-016', 'naam' => 'Kantine', 'isExempted' => true],
+				['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'Dansschool', 'isExempted' => false],
+				['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true],
 			],
 			'definitiefIkpByActivity' => [
 				'ca-001' => ['totaleKosten' => 87_500.00],
@@ -88,7 +88,7 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 		self::assertSame(2, $bijlage['activiteiten'][0]['manualOverrides']);
 
 		$samenvatting = $bijlage['samenvatting'];
-		self::assertSame(2, $samenvatting['totaal']);
+		self::assertSame(2, $samenvatting['total']);
 		self::assertSame(1, $samenvatting['compliant']);
 		self::assertSame(1, $samenvatting['nonCompliant']);
 
@@ -113,7 +113,7 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 		$bijlage = $this->svc->compose([
 			'fiscalYear' => '2025',
 			'administrationId' => 'adm',
-			'activities' => [['id' => 'x', 'code' => 'X', 'naam' => 'X', 'isExempted' => false]],
+			'activities' => [['id' => 'x', 'code' => 'X', 'name' => 'X', 'isExempted' => false]],
 			'definitiefIkpByActivity' => ['x' => ['totaleKosten' => 10.0]],
 			'omzetByActivity' => ['x' => 20.0],
 		]);

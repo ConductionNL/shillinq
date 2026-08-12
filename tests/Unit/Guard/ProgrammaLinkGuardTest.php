@@ -188,8 +188,8 @@ class ProgrammaLinkGuardTest extends TestCase {
 	public function testValidNewAssignmentPasses(): void {
 		$line = [
 			'accountNumber' => '4100',
-			'programmaStructure' => 'mobiliteit',
-			'programmaAssignedAt' => '2026-05-15',
+			'programmeStructure' => 'mobiliteit',
+			'programmeAssignedAt' => '2026-05-15',
 		];
 		self::assertTrue($this->guard->validateOnSave($line));
 
@@ -201,7 +201,7 @@ class ProgrammaLinkGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testNonCanonicalProgrammeDenied(): void {
-		$line = ['programmaStructure' => 'sport'];
+		$line = ['programmeStructure' => 'sport'];
 		self::assertFalse($this->guard->validateOnSave($line));
 
 	}//end testNonCanonicalProgrammeDenied()
@@ -214,8 +214,8 @@ class ProgrammaLinkGuardTest extends TestCase {
 	public function testFutureEffectiveDateDenied(): void {
 		$future = (new \DateTimeImmutable('tomorrow'))->format('Y-m-d');
 		$line = [
-			'programmaStructure' => 'water',
-			'programmaAssignedAt' => $future,
+			'programmeStructure' => 'water',
+			'programmeAssignedAt' => $future,
 		];
 		self::assertFalse($this->guard->validateOnSave($line));
 
@@ -228,8 +228,8 @@ class ProgrammaLinkGuardTest extends TestCase {
 	 */
 	public function testMalformedEffectiveDateDenied(): void {
 		$line = [
-			'programmaStructure' => 'water',
-			'programmaAssignedAt' => 'not-a-date',
+			'programmeStructure' => 'water',
+			'programmeAssignedAt' => 'not-a-date',
 		];
 		self::assertFalse($this->guard->validateOnSave($line));
 
@@ -243,12 +243,12 @@ class ProgrammaLinkGuardTest extends TestCase {
 	 */
 	public function testConflictingReassignmentDenied(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['id' => 'gl-1', 'programmaStructure' => 'mobiliteit'])
+			$this->buildObjectServiceStub(['id' => 'gl-1', 'programmeStructure' => 'mobiliteit'])
 		);
 
 		$line = [
 			'id' => 'gl-1',
-			'programmaStructure' => 'water',
+			'programmeStructure' => 'water',
 		];
 		self::assertFalse($this->guard->validateOnSave($line));
 
@@ -261,12 +261,12 @@ class ProgrammaLinkGuardTest extends TestCase {
 	 */
 	public function testIdempotentResavePermitted(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['id' => 'gl-1', 'programmaStructure' => 'mobiliteit'])
+			$this->buildObjectServiceStub(['id' => 'gl-1', 'programmeStructure' => 'mobiliteit'])
 		);
 
 		$line = [
 			'id' => 'gl-1',
-			'programmaStructure' => 'mobiliteit',
+			'programmeStructure' => 'mobiliteit',
 		];
 		self::assertTrue($this->guard->validateOnSave($line));
 
@@ -279,12 +279,12 @@ class ProgrammaLinkGuardTest extends TestCase {
 	 */
 	public function testFirstAssignmentOnStoredUnmappedLinePermitted(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['id' => 'gl-1', 'programmaStructure' => null])
+			$this->buildObjectServiceStub(['id' => 'gl-1', 'programmeStructure' => null])
 		);
 
 		$line = [
 			'id' => 'gl-1',
-			'programmaStructure' => 'cultuur',
+			'programmeStructure' => 'cultuur',
 		];
 		self::assertTrue($this->guard->validateOnSave($line));
 
@@ -296,7 +296,7 @@ class ProgrammaLinkGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testNewLineWithoutIdPasses(): void {
-		$line = ['programmaStructure' => 'bestuur'];
+		$line = ['programmeStructure' => 'bestuur'];
 		self::assertTrue($this->guard->validateOnSave($line));
 
 	}//end testNewLineWithoutIdPasses()

@@ -64,10 +64,10 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 			lhAfdracht: [
 				'werkgeverId' => 'wg-1',
 				'periodeId' => 'lp-2026-05',
-				'totaalLoonheffing' => 18620.10,
-				'totaalPremiesSV' => 7559.40,
-				'totaalZVW' => 3654.00,
-				'totaalEindheffingenWKR' => 240.00,
+				'totalPayrollTax' => 18620.10,
+				'totalSocialInsuranceContributions' => 7559.40,
+				'totalHealthInsurance' => 3654.00,
+				'totalFinalLeviesWorkRelatedCosts' => 240.00,
 				'vervaldagAfdracht' => '2026-06-30',
 				'administrationId' => 'adm-1',
 			]
@@ -106,10 +106,10 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 			lhAfdracht: [
 				'werkgeverId' => 'wg-1',
 				'periodeId' => 'lp-2026-05',
-				'totaalLoonheffing' => 0.0,
-				'totaalPremiesSV' => 1234.56,
-				'totaalZVW' => 0.0,
-				'totaalEindheffingenWKR' => 0.0,
+				'totalPayrollTax' => 0.0,
+				'totalSocialInsuranceContributions' => 1234.56,
+				'totalHealthInsurance' => 0.0,
+				'totalFinalLeviesWorkRelatedCosts' => 0.0,
 				'vervaldagAfdracht' => '2026-06-30',
 			]
 		);

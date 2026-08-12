@@ -401,7 +401,7 @@ class DunningRunService {
 			'uitgevoerdOp' => $now->format(DATE_ATOM),
 			'kanaal' => (string)($params['kanaal'] ?? 'EMAIL'),
 			'ontvangerEmail' => ($params['ontvangerEmail'] ?? null),
-			'ontvangerNaam' => ($params['ontvangerNaam'] ?? null),
+			'recipientName' => ($params['recipientName'] ?? null),
 			'ontvangerAdres' => ($params['ontvangerAdres'] ?? null),
 			'templateId' => (string)($params['templateId'] ?? ''),
 			'renderedSubject' => ($params['renderedSubject'] ?? null),
@@ -459,7 +459,7 @@ class DunningRunService {
 		$record = [
 			'factuurId' => $factuurId,
 			'pauzeStart' => $pauzeStart->format(DATE_ATOM),
-			'pauzeEind' => null,
+			'pauseEnd' => null,
 			'reden' => $reden,
 			'details' => $details,
 			'gepauzeerdDoor' => $gepauzeerdDoor,
@@ -505,7 +505,7 @@ class DunningRunService {
 			throw new RuntimeException(sprintf('DunningPauseDispute %s not found.', $pauseId));
 		}
 
-		$pause['pauzeEind'] = (new DateTimeImmutable())->format(DATE_ATOM);
+		$pause['pauseEnd'] = (new DateTimeImmutable())->format(DATE_ATOM);
 		if ($resolution === 'expire') {
 			$pause['lifecycleState'] = 'hardDeadlineExpired';
 		} else {

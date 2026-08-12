@@ -191,7 +191,7 @@ class DualGaapGuardTest extends TestCase {
 			'avaBesluitReference' => 'AVA-2026-03-12-4',
 			'rjVariant' => 'RJk',
 			'sizeCriteriaBalanstotaal' => 5800000.0,
-			'sizeCriteriaNettoOmzet' => 11200000.0,
+			'sizeCriteriaNetRevenue' => 11200000.0,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -229,7 +229,7 @@ class DualGaapGuardTest extends TestCase {
 			'avaBesluitReference' => 'AVA-2026-03-12-4',
 			'rjVariant' => 'RJk',
 			'sizeCriteriaBalanstotaal' => 9000000.0,
-			'sizeCriteriaNettoOmzet' => 18000000.0,
+			'sizeCriteriaNetRevenue' => 18000000.0,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -249,7 +249,7 @@ class DualGaapGuardTest extends TestCase {
 			'avaBesluitReference' => 'AVA-2026-03-12-5',
 			'rjVariant' => 'RJ-onverkort',
 			'sizeCriteriaBalanstotaal' => 25000000.0,
-			'sizeCriteriaNettoOmzet' => 60000000.0,
+			'sizeCriteriaNetRevenue' => 60000000.0,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters

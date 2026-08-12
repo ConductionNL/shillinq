@@ -225,7 +225,7 @@ final class PayrollServiceTest extends TestCase {
 					'bsn' => '123456789',
 					'periodeBruto' => 4940.0,
 					'thuiswerkdagenPerWeek' => 0,
-					'expat30PctRegeling' => false,
+					'expat30PctScheme' => false,
 					'pensioenPremiePctWerkgever' => 0.182,
 					'pensioenPremiePctWerknemer' => 0.072,
 					'vakantiegeldPct' => 0.08,
@@ -239,7 +239,7 @@ final class PayrollServiceTest extends TestCase {
 					'id' => 'lp-1',
 					'werkgeverId' => 'wg-1',
 					'periodeType' => 'MAAND',
-					'periodeEind' => '2026-05-31',
+					'periodEnd' => '2026-05-31',
 					'loonheffingstabelId' => 'lht-1',
 					'administrationId' => 'adm-1',
 				],
@@ -324,10 +324,10 @@ final class PayrollServiceTest extends TestCase {
 
 		$afdracht = $service->berekenLHAfdracht('adm-1', 'lp-1', 0.0);
 
-		self::assertSame(1500.0, $afdracht['totaalLoonheffing']);
-		self::assertSame(500.0, $afdracht['totaalPremiesSV']);
-		self::assertSame(250.0, $afdracht['totaalZVW']);
-		self::assertSame(2250.0, $afdracht['totaalAfdracht']);
+		self::assertSame(1500.0, $afdracht['totalPayrollTax']);
+		self::assertSame(500.0, $afdracht['totalSocialInsuranceContributions']);
+		self::assertSame(250.0, $afdracht['totalHealthInsurance']);
+		self::assertSame(2250.0, $afdracht['totalRemittance']);
 		self::assertSame('VOORBEREID', $afdracht['status']);
 		self::assertSame('2026-06-30', $afdracht['vervaldagAfdracht']);
 

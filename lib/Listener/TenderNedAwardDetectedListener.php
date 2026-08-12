@@ -259,17 +259,17 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		$plan = $this->safeGeneratePlan(
 			opdrachttype: (string)($payload['opdrachttype'] ?? 'other'),
 			looptijdStart: (string)($payload['looptijdStart'] ?? ''),
-			looptijdEind: (string)($payload['looptijdEind'] ?? '')
+			looptijdEind: (string)($payload['termEnd'] ?? '')
 		);
 
 		$verplichting = [
-			'verplichtingNummer' => 'TN-' . $aanbestedingId,
-			'omschrijving' => (string)($payload['titel'] ?? $aanbestedingId),
+			'commitmentNumber' => 'TN-' . $aanbestedingId,
+			'description' => (string)($payload['titel'] ?? $aanbestedingId),
 			'bron' => 'tenderned',
 			'bronReferentie' => $aanbestedingId,
 			'amount' => (float)($payload['contractWaarde'] ?? 0),
 			'looptijdStart' => (string)($payload['looptijdStart'] ?? ''),
-			'looptijdEind' => (string)($payload['looptijdEind'] ?? ''),
+			'termEnd' => (string)($payload['termEnd'] ?? ''),
 			'mijlpalen' => $plan,
 			'status' => 'active',
 			'administrationId' => (string)($payload['administrationId'] ?? ''),

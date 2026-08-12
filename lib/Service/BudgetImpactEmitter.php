@@ -109,7 +109,7 @@ class BudgetImpactEmitter {
 			'contractWaarde' => (float)($verplichting['amount'] ?? 0),
 			'kostenplaats' => (string)($verplichting['kostenplaats'] ?? ''),
 			'looptijdStart' => (string)($verplichting['looptijdStart'] ?? ''),
-			'looptijdEind' => (string)($verplichting['looptijdEind'] ?? ''),
+			'termEnd' => (string)($verplichting['termEnd'] ?? ''),
 			'tenderNedUrl' => (string)($source['tenderNedUrl'] ?? ''),
 			'administrationId' => (string)($verplichting['administrationId'] ?? ''),
 			'emittedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),

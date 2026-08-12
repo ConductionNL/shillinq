@@ -73,10 +73,10 @@ final class PayrollApArHandoffService {
 		$dueDate = ($lhAfdracht['vervaldagAfdracht'] ?? null);
 		$adminId = ($lhAfdracht['administrationId'] ?? null);
 
-		$loonheffing = (float)($lhAfdracht['totaalLoonheffing'] ?? 0.0);
-		$zvw = (float)($lhAfdracht['totaalZVW'] ?? 0.0);
-		$wkr = (float)($lhAfdracht['totaalEindheffingenWKR'] ?? 0.0);
-		$premiesSV = (float)($lhAfdracht['totaalPremiesSV'] ?? 0.0);
+		$loonheffing = (float)($lhAfdracht['totalPayrollTax'] ?? 0.0);
+		$zvw = (float)($lhAfdracht['totalHealthInsurance'] ?? 0.0);
+		$wkr = (float)($lhAfdracht['totalFinalLeviesWorkRelatedCosts'] ?? 0.0);
+		$premiesSV = (float)($lhAfdracht['totalSocialInsuranceContributions'] ?? 0.0);
 
 		$belastingdienstBedrag = ($loonheffing + $zvw + $wkr);
 
@@ -95,7 +95,7 @@ final class PayrollApArHandoffService {
 					'zvw' => $zvw,
 					'eindheffingenWKR' => $wkr,
 				],
-				'omschrijving' => sprintf('Loonheffing + ZVW + WKR afdracht periode %s', $periodeId),
+				'description' => sprintf('Loonheffing + ZVW + WKR afdracht periode %s', $periodeId),
 				'source' => 'LHAfdracht',
 				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodeId),
 			];
@@ -111,7 +111,7 @@ final class PayrollApArHandoffService {
 				'periodeId' => $periodeId,
 				'administrationId' => $adminId,
 				'breakdown' => ['premiesSV' => $premiesSV],
-				'omschrijving' => sprintf('Premies werknemersverzekeringen periode %s', $periodeId),
+				'description' => sprintf('Premies werknemersverzekeringen periode %s', $periodeId),
 				'source' => 'LHAfdracht',
 				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodeId),
 			];

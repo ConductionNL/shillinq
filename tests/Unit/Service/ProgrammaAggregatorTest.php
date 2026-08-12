@@ -63,10 +63,10 @@ final class ProgrammaAggregatorTest extends TestCase {
 			]
 		);
 
-		self::assertSame(150.0, $result['batenTotaal']);
-		self::assertSame(950.0, $result['lastenTotaal']);
-		self::assertSame(-800.0, $result['saldoVoorMutaties']);
-		self::assertSame(-800.0, $result['saldoNaMutaties']);
+		self::assertSame(150.0, $result['revenueTotal']);
+		self::assertSame(950.0, $result['expensesTotal']);
+		self::assertSame(-800.0, $result['balanceBeforeMovements']);
+		self::assertSame(-800.0, $result['balanceAfterMovements']);
 
 	}//end testAggregatesChildTaakveldenWithoutRoundingDrift()
 
@@ -81,8 +81,8 @@ final class ProgrammaAggregatorTest extends TestCase {
 			mutatiesReserves: 200.0
 		);
 
-		self::assertSame(-500.0, $result['saldoVoorMutaties']);
-		self::assertSame(-300.0, $result['saldoNaMutaties']);
+		self::assertSame(-500.0, $result['balanceBeforeMovements']);
+		self::assertSame(-300.0, $result['balanceAfterMovements']);
 
 	}//end testSaldoNaMutatiesAppliesReserveMutation()
 
@@ -93,9 +93,9 @@ final class ProgrammaAggregatorTest extends TestCase {
 	 */
 	public function testEmptyTaakveldenYieldsZeroTotals(): void {
 		$result = $this->aggregator->aggregate(taakvelden: []);
-		self::assertSame(0.0, $result['batenTotaal']);
-		self::assertSame(0.0, $result['lastenTotaal']);
-		self::assertSame(0.0, $result['saldoNaMutaties']);
+		self::assertSame(0.0, $result['revenueTotal']);
+		self::assertSame(0.0, $result['expensesTotal']);
+		self::assertSame(0.0, $result['balanceAfterMovements']);
 
 	}//end testEmptyTaakveldenYieldsZeroTotals()
 
@@ -111,7 +111,7 @@ final class ProgrammaAggregatorTest extends TestCase {
 				['baten' => 0.20, 'lasten' => 0.0],
 			]
 		);
-		self::assertSame(0.30, $result['batenTotaal']);
+		self::assertSame(0.30, $result['revenueTotal']);
 
 	}//end testCentLevelAmountsSumExactly()
 

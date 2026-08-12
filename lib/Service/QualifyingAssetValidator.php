@@ -106,8 +106,8 @@ class QualifyingAssetValidator {
 	 */
 	private function validateCombinatie(array $ticket, string $referenceDate): array {
 		$errors = $this->validateSoVerklaring(ticket: $ticket, referenceDate: $referenceDate, required: true);
-		$octrooi = (string)($ticket['octrooi_nummer'] ?? '');
-		$kweker = (string)($ticket['kwekersrecht_nummer'] ?? '');
+		$octrooi = (string)($ticket['patent_number'] ?? '');
+		$kweker = (string)($ticket['plantBreedersRight_number'] ?? '');
 
 		if ($octrooi === '' && $kweker === '') {
 			$errors[] = 'combinatie_requires_octrooi_or_kwekersrecht';
@@ -132,7 +132,7 @@ class QualifyingAssetValidator {
 		}
 
 		if ($soort === 'octrooi') {
-			if ((string)($ticket['octrooi_nummer'] ?? '') === '') {
+			if ((string)($ticket['patent_number'] ?? '') === '') {
 				return ['octrooi_nummer_required'];
 			}
 
@@ -140,7 +140,7 @@ class QualifyingAssetValidator {
 		}
 
 		if ($soort === 'kwekersrecht') {
-			if ((string)($ticket['kwekersrecht_nummer'] ?? '') === '') {
+			if ((string)($ticket['plantBreedersRight_number'] ?? '') === '') {
 				return ['kwekersrecht_nummer_required'];
 			}
 
@@ -166,7 +166,7 @@ class QualifyingAssetValidator {
 	 * @return array<int,string> Validation error codes (empty when valid).
 	 */
 	private function validateSoVerklaring(array $ticket, string $referenceDate, bool $required): array {
-		$number = (string)($ticket['so_verklaring_nummer'] ?? '');
+		$number = (string)($ticket['rnd_declaration_number'] ?? '');
 
 		if ($number === '') {
 			if ($required === true) {

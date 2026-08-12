@@ -188,7 +188,7 @@ final class AnnualReportSchemaTest extends TestCase {
 		$schema = $this->fragment['components']['schemas']['BalanceSheet'];
 		$item = $schema['properties']['rubrieken']['items'];
 		self::assertContains('rubrieckCode', $item['required']);
-		self::assertContains('huidigJaar', $item['required']);
+		self::assertContains('currentYear', $item['required']);
 		self::assertSame('AnnualReport', $schema['x-openregister-relations']['annualReport']['relatedSchema']);
 
 	}//end testBalanceSheetRubriekAndRelation()
@@ -210,7 +210,7 @@ final class AnnualReportSchemaTest extends TestCase {
 			$activa = 0;
 			$passiva = 0;
 			foreach ($sheet['rubrieken'] as $rubriek) {
-				$cents = (int)round(((float)$rubriek['huidigJaar']) * 100);
+				$cents = (int)round(((float)$rubriek['currentYear']) * 100);
 				if (($rubriek['zijde'] ?? '') === 'activa') {
 					$activa += $cents;
 				} elseif (($rubriek['zijde'] ?? '') === 'passiva') {

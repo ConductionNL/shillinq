@@ -149,7 +149,7 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 
 		// Regulatory fields (Dutch ASV-model) MUST all survive.
 		$regulatory = [
-			'regelingNaam', 'regelingArtikel', 'subsidieRegeling',
+			'schemeName', 'schemeArticle', 'subsidyScheme',
 			'beschikkingDate', 'beschikkingUri',
 			'vaststellingDate', 'vaststellingUri',
 			'requestedAmount', 'grantedAmount', 'determinedAmount', 'paidOutAmount', 'reclaimedAmount',

@@ -354,7 +354,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'administrationType' => 'gemeente',
 				'administrationId' => 'gem-1',
-				'boekjaar' => 2026,
+				'financialYear' => 2026,
 			]
 		);
 
@@ -378,7 +378,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'administrationType' => 'gemeente',
 				'administrationId' => 'gem-1',
-				'boekjaar' => 2026,
+				'financialYear' => 2026,
 			]
 		);
 
@@ -399,8 +399,8 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'administrationType' => 'gemeente',
 				'administrationId' => 'gem-1',
-				'boekjaar' => 2026,
-				'raadsbesluitNummer' => 'RB-2026-12',
+				'financialYear' => 2026,
+				'councilResolutionNumber' => 'RB-2026-12',
 				'raadsbesluitDatum' => '2026-06-26',
 			]
 		);
@@ -421,7 +421,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'administrationType' => 'gemeente',
 				'administrationId' => 'gem-1',
-				'boekjaar' => 2026,
+				'financialYear' => 2026,
 			]
 		);
 
@@ -442,7 +442,7 @@ class BbvComplianceGuardTest extends TestCase {
 		$result = $this->guard->requireMvaActivation(
 			[
 				'administrationType' => 'gemeente',
-				'omschrijving' => 'Rondweg',
+				'description' => 'Rondweg',
 				'mvaCategorie' => 'maatschappelijk-nut',
 				'aanschafwaardeCents' => 840000000,
 			]
@@ -461,10 +461,10 @@ class BbvComplianceGuardTest extends TestCase {
 		$result = $this->guard->requireMvaActivation(
 			[
 				'administrationType' => 'gemeente',
-				'omschrijving' => 'Rondweg',
+				'description' => 'Rondweg',
 				'mvaCategorie' => 'maatschappelijk-nut',
 				'aanschafwaardeCents' => 840000000,
-				'afschrijvingstermijnJaar' => 40,
+				'depreciationPeriodYears' => 40,
 			]
 		);
 
@@ -481,7 +481,7 @@ class BbvComplianceGuardTest extends TestCase {
 		$result = $this->guard->requireMvaActivation(
 			[
 				'administrationType' => 'gemeente',
-				'omschrijving' => 'Bankje',
+				'description' => 'Bankje',
 				'mvaCategorie' => 'maatschappelijk-nut',
 				'aanschafwaardeCents' => 100000,
 			]
@@ -500,7 +500,7 @@ class BbvComplianceGuardTest extends TestCase {
 		$result = $this->guard->requireMvaActivation(
 			[
 				'administrationType' => 'gemeente',
-				'omschrijving' => 'Gemeentehuis',
+				'description' => 'Gemeentehuis',
 				'mvaCategorie' => 'economisch-nut',
 				'aanschafwaardeCents' => 5000000000,
 			]
@@ -636,7 +636,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'administrationType' => 'mkb',
 				'administrationId' => 'mkb-1',
-				'boekjaar' => 2026,
+				'financialYear' => 2026,
 			]
 		);
 
@@ -660,7 +660,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'administrationType' => 'gemeente',
 				'administrationId' => 'gem-1',
-				'boekjaar' => 2026,
+				'financialYear' => 2026,
 			]
 		);
 
@@ -689,7 +689,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'administrationType' => 'gemeente',
 				'administrationId' => 'gem-1',
-				'boekjaar' => 2026,
+				'financialYear' => 2026,
 			]
 		);
 

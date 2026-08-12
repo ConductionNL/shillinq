@@ -21,13 +21,13 @@
         "x-openregister-unique": [
           [
             "administrationId",
-            "boekjaarEind"
+            "financialYearEnd"
           ]
         ],
         "required": [
           "administrationId",
-          "boekjaarStart",
-          "boekjaarEind",
+          "financialYearStart",
+          "financialYearEnd",
           "groottecategorie",
           "rapportageGrondslag",
           "valuta",
@@ -40,14 +40,14 @@
             "example": "adm-001",
             "title": "Administration ID"
           },
-          "boekjaarStart": {
+          "financialYearStart": {
             "type": "string",
             "format": "date",
             "description": "First day of the boekjaar covered by this jaarrekening.",
             "example": "2025-01-01",
             "title": "Boekjaar Start"
           },
-          "boekjaarEind": {
+          "financialYearEnd": {
             "type": "string",
             "format": "date",
             "description": "Last day (balansdatum) of the boekjaar. Drives all wettelijke termijnen per art. 2:391 BW (REQ-T9-010).",
@@ -71,12 +71,12 @@
             "nullable": true,
             "description": "Supporting numerics behind the groottecategorie classification (REQ-T9-001). Holds the two-of-three criterion values per boekjaar plus the matched-criteria count.",
             "properties": {
-              "balansTotaal": {
+              "balanceSheetTotal": {
                 "type": "number",
                 "description": "Balanstotaal (balance sheet total) used in classification.",
                 "title": "Balans Totaal"
               },
-              "nettoOmzet": {
+              "netRevenue": {
                 "type": "number",
                 "description": "Netto-omzet (net revenue) used in classification.",
                 "title": "Netto Omzet"
@@ -518,7 +518,7 @@
               "required": [
                 "rubrieckCode",
                 "rubrieckLabel",
-                "huidigJaar"
+                "currentYear"
               ],
               "properties": {
                 "rubrieckCode": {
@@ -542,12 +542,12 @@
                   "description": "Which side of the balans this rubriek belongs to.",
                   "title": "Zijde"
                 },
-                "huidigJaar": {
+                "currentYear": {
                   "type": "number",
                   "description": "Current-year amount.",
                   "title": "Huidig Jaar"
                 },
-                "vorigJaar": {
+                "previousYear": {
                   "type": "number",
                   "nullable": true,
                   "description": "Prior-year comparatief amount (REQ-T9-002).",
@@ -676,7 +676,7 @@
               "required": [
                 "position",
                 "label",
-                "huidigJaar"
+                "currentYear"
               ],
               "properties": {
                 "position": {
@@ -709,12 +709,12 @@
                   "description": "True for computed subtotal/result rows.",
                   "title": "Is Subtotaal"
                 },
-                "huidigJaar": {
+                "currentYear": {
                   "type": "number",
                   "description": "Current-year amount.",
                   "title": "Huidig Jaar"
                 },
-                "vorigJaar": {
+                "previousYear": {
                   "type": "number",
                   "nullable": true,
                   "description": "Prior-year comparatief amount.",
@@ -1328,12 +1328,12 @@
         "slug": "annual-report-adm-001-2025"
       },
       "administrationId": "adm-001",
-      "boekjaarStart": "2025-01-01",
-      "boekjaarEind": "2025-12-31",
+      "financialYearStart": "2025-01-01",
+      "financialYearEnd": "2025-12-31",
       "groottecategorie": "micro",
       "groottecategorieOnderbouwing": {
-        "balansTotaal": 380000,
-        "nettoOmzet": 750000,
+        "balanceSheetTotal": 380000,
+        "netRevenue": 750000,
         "gemiddeldAantalWerknemers": 6,
         "criteriaMatched": 3,
         "years": [
@@ -1363,12 +1363,12 @@
         "slug": "annual-report-adm-003-2025"
       },
       "administrationId": "adm-003",
-      "boekjaarStart": "2025-01-01",
-      "boekjaarEind": "2025-12-31",
+      "financialYearStart": "2025-01-01",
+      "financialYearEnd": "2025-12-31",
       "groottecategorie": "middelgroot",
       "groottecategorieOnderbouwing": {
-        "balansTotaal": 20000000,
-        "nettoOmzet": 45000000,
+        "balanceSheetTotal": 20000000,
+        "netRevenue": 45000000,
         "gemiddeldAantalWerknemers": 150,
         "criteriaMatched": 2,
         "years": [
@@ -1409,8 +1409,8 @@
           "rubrieckCode": "B.I",
           "rubrieckLabel": "Immateriële vaste activa",
           "zijde": "activa",
-          "huidigJaar": 120000,
-          "vorigJaar": 130000,
+          "currentYear": 120000,
+          "previousYear": 130000,
           "notes": [
             "Note 1.1"
           ]
@@ -1419,8 +1419,8 @@
           "rubrieckCode": "B.II",
           "rubrieckLabel": "Materiële vaste activa",
           "zijde": "activa",
-          "huidigJaar": 450000,
-          "vorigJaar": 500000,
+          "currentYear": 450000,
+          "previousYear": 500000,
           "notes": [
             "Note 1.2"
           ]
@@ -1429,8 +1429,8 @@
           "rubrieckCode": "C.II",
           "rubrieckLabel": "Vorderingen",
           "zijde": "activa",
-          "huidigJaar": 180000,
-          "vorigJaar": 160000,
+          "currentYear": 180000,
+          "previousYear": 160000,
           "notes": [
             "Note 2.1"
           ]
@@ -1439,16 +1439,16 @@
           "rubrieckCode": "C.IV",
           "rubrieckLabel": "Liquide middelen",
           "zijde": "activa",
-          "huidigJaar": 95000,
-          "vorigJaar": 85000,
+          "currentYear": 95000,
+          "previousYear": 85000,
           "notes": []
         },
         {
           "rubrieckCode": "A",
           "rubrieckLabel": "Eigen vermogen",
           "zijde": "passiva",
-          "huidigJaar": 380000,
-          "vorigJaar": 370000,
+          "currentYear": 380000,
+          "previousYear": 370000,
           "notes": [
             "Note 3.1"
           ]
@@ -1457,8 +1457,8 @@
           "rubrieckCode": "B",
           "rubrieckLabel": "Voorzieningen",
           "zijde": "passiva",
-          "huidigJaar": 45000,
-          "vorigJaar": 50000,
+          "currentYear": 45000,
+          "previousYear": 50000,
           "notes": [
             "Note 3.2"
           ]
@@ -1467,8 +1467,8 @@
           "rubrieckCode": "C",
           "rubrieckLabel": "Langlopende schulden",
           "zijde": "passiva",
-          "huidigJaar": 280000,
-          "vorigJaar": 300000,
+          "currentYear": 280000,
+          "previousYear": 300000,
           "notes": [
             "Note 3.3"
           ]
@@ -1477,8 +1477,8 @@
           "rubrieckCode": "D",
           "rubrieckLabel": "Kortlopende schulden",
           "zijde": "passiva",
-          "huidigJaar": 140000,
-          "vorigJaar": 130000,
+          "currentYear": 140000,
+          "previousYear": 130000,
           "notes": [
             "Note 3.4"
           ]
@@ -1502,8 +1502,8 @@
           "position": 1,
           "rubrieckCode": "1",
           "label": "Netto-omzet",
-          "huidigJaar": 1500000,
-          "vorigJaar": 1400000,
+          "currentYear": 1500000,
+          "previousYear": 1400000,
           "notes": [
             "Note 4.1"
           ]
@@ -1512,15 +1512,15 @@
           "position": "Bedrijfsresultaat",
           "label": "Bedrijfsresultaat",
           "isSubtotaal": true,
-          "huidigJaar": 350000,
-          "vorigJaar": 310000
+          "currentYear": 350000,
+          "previousYear": 310000
         },
         {
           "position": "Netto resultaat",
           "label": "Netto resultaat",
           "isSubtotaal": true,
-          "huidigJaar": 266000,
-          "vorigJaar": 233000
+          "currentYear": 266000,
+          "previousYear": 233000
         }
       ]
     },

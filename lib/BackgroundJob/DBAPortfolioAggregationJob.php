@@ -85,7 +85,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		$totaal = 0;
 		foreach ($opdrachten as $opdracht) {
 			$klantId = (string)($opdracht['klantId'] ?? '');
-			$bedrag = (int)($opdracht['gerealiseerdeOmzet'] ?? 0);
+			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
 			if ($klantId === '' || $bedrag <= 0) {
 				continue;
 			}
@@ -97,7 +97,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		if ($totaal <= 0 || count($omzetPerKlant) === 0) {
 			return [
 				'grootsteKlant' => null,
-				'aandeelOmzet12mnd' => 0.0,
+				'revenueShare12m' => 0.0,
 				'drempelHoog' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
 				'status' => 'VEILIG',
 			];
@@ -122,7 +122,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 
 		return [
 			'grootsteKlant' => $grootsteKlant,
-			'aandeelOmzet12mnd' => round($aandeel, 4),
+			'revenueShare12m' => round($aandeel, 4),
 			'drempelHoog' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
 			'status' => $status,
 		];
@@ -144,7 +144,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		$result = [];
 		$totaal = 0;
 		foreach ($opdrachten as $opdracht) {
-			$totaal += (int)($opdracht['gerealiseerdeOmzet'] ?? 0);
+			$totaal += (int)($opdracht['realisedRevenue'] ?? 0);
 		}
 
 		if ($totaal <= 0) {
@@ -156,7 +156,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		foreach ($opdrachten as $opdracht) {
 			$klantId = (string)($opdracht['klantId'] ?? '');
 			$startStr = (string)($opdracht['startDatum'] ?? '');
-			$bedrag = (int)($opdracht['gerealiseerdeOmzet'] ?? 0);
+			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
 			if ($klantId === '' || $startStr === '') {
 				continue;
 			}
@@ -168,16 +168,16 @@ class DBAPortfolioAggregationJob extends TimedJob {
 			}
 
 			if (isset($perKlant[$klantId]) === false || $perKlant[$klantId]['start'] > $start) {
-				$perKlant[$klantId] = ['start' => $start, 'omzet' => $bedrag];
+				$perKlant[$klantId] = ['start' => $start, 'revenue' => $bedrag];
 			} else {
-				$perKlant[$klantId]['omzet'] += $bedrag;
+				$perKlant[$klantId]['revenue'] += $bedrag;
 			}
 		}
 
 		foreach ($perKlant as $klantId => $row) {
 			$duurJaren = (float)($row['start']->diff($now)->days / 365.0);
-			if ($row['omzet'] > 0) {
-				$aandeel = ($row['omzet'] / $totaal);
+			if ($row['revenue'] > 0) {
+				$aandeel = ($row['revenue'] / $totaal);
 			} else {
 				$aandeel = 0.0;
 			}
@@ -189,7 +189,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 					'klantId' => (string)$klantId,
 					'startDatum' => $row['start']->format('Y-m-d'),
 					'duurJaren' => round($duurJaren, 2),
-					'omzetAandeel' => round($aandeel, 4),
+					'revenueShare' => round($aandeel, 4),
 				];
 			}
 		}
@@ -265,7 +265,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 				continue;
 			}
 
-			$ondernemingId = (string)($opdracht['ondernemingId'] ?? '');
+			$ondernemingId = (string)($opdracht['enterpriseId'] ?? '');
 			if ($ondernemingId === '') {
 				continue;
 			}
@@ -284,7 +284,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 				$objectService->setRegister($register)->setSchema('DBAPortfolioRisico')->saveObject(
 					[
 						'administrationId' => $administrationId,
-						'ondernemingId' => (string)$ondernemingId,
+						'enterpriseId' => (string)$ondernemingId,
 						'peilDatum' => $now->format('Y-m-d'),
 						'actieveOpdrachten' => count($opdrachten),
 						'concentratie' => $concentratie,
@@ -297,7 +297,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 			} catch (Throwable $e) {
 				$this->logger->error(
 					'Shillinq DBAPortfolioAggregationJob: failed to write portfolio',
-					['ondernemingId' => (string)$ondernemingId, 'exception' => $e->getMessage()]
+					['enterpriseId' => (string)$ondernemingId, 'exception' => $e->getMessage()]
 				);
 			}
 		}//end foreach
@@ -319,7 +319,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		$totaal = 0;
 		foreach ($opdrachten as $opdracht) {
 			$klantId = (string)($opdracht['klantId'] ?? '');
-			$bedrag = (int)($opdracht['gerealiseerdeOmzet'] ?? 0);
+			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
 			if ($klantId === '' || $bedrag <= 0) {
 				continue;
 			}

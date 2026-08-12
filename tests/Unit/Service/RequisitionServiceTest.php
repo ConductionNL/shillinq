@@ -255,8 +255,8 @@ final class RequisitionServiceTest extends TestCase {
 		$requisition = $service->createRequisition(
 			administrationId: 'adm-1',
 			payload: [
-				'programma' => '5.1',
-				'boekjaar' => 2026,
+				'programme' => '5.1',
+				'financialYear' => 2026,
 				'neededByDate' => '2026-08-15',
 				'justification' => 'Onboarding laptops',
 				'soort' => 'inkoop',
@@ -292,8 +292,8 @@ final class RequisitionServiceTest extends TestCase {
 		$service->createRequisition(
 			administrationId: 'adm-1',
 			payload: [
-				'programma' => '5.1',
-				'boekjaar' => 2026,
+				'programme' => '5.1',
+				'financialYear' => 2026,
 				'neededByDate' => '2026-08-15',
 				'justification' => 'x',
 				'soort' => 'inkoop',
@@ -320,8 +320,8 @@ final class RequisitionServiceTest extends TestCase {
 					'administrationId' => 'adm-1',
 					'statusCode' => 'draft',
 					'totaalbedrag_excl_btw' => 50000,
-					'programma' => '5.1',
-					'boekjaar' => 2026,
+					'programme' => '5.1',
+					'financialYear' => 2026,
 					'soort' => 'inkoop',
 				],
 			],
@@ -371,8 +371,8 @@ final class RequisitionServiceTest extends TestCase {
 					'id' => 'req-1',
 					'administrationId' => 'adm-1',
 					'statusCode' => 'submitted',
-					'programma' => '5.1',
-					'boekjaar' => 2026,
+					'programme' => '5.1',
+					'financialYear' => 2026,
 					'soort' => 'inkoop',
 					'totaalbedrag_excl_btw' => 500000,
 				],
@@ -380,8 +380,8 @@ final class RequisitionServiceTest extends TestCase {
 			'Budget' => [
 				[
 					'administrationId' => 'adm-1',
-					'programmaCode' => '5.1',
-					'boekjaar' => 2026,
+					'programmeCode' => '5.1',
+					'financialYear' => 2026,
 					'authorised_amount' => 1000000,
 					'realised_amount' => 0,
 					'openstaande_verplichtingen' => 0,
@@ -414,8 +414,8 @@ final class RequisitionServiceTest extends TestCase {
 					'id' => 'req-1',
 					'administrationId' => 'adm-1',
 					'statusCode' => 'submitted',
-					'programma' => '5.1',
-					'boekjaar' => 2026,
+					'programme' => '5.1',
+					'financialYear' => 2026,
 					'soort' => 'inkoop',
 					// 20,000.00 EUR requested against a 10,000.00 EUR free room.
 					'totaalbedrag_excl_btw' => 2000000,
@@ -424,8 +424,8 @@ final class RequisitionServiceTest extends TestCase {
 			'Budget' => [
 				[
 					'administrationId' => 'adm-1',
-					'programmaCode' => '5.1',
-					'boekjaar' => 2026,
+					'programmeCode' => '5.1',
+					'financialYear' => 2026,
 					'authorised_amount' => 1000000,
 					'realised_amount' => 0,
 					'openstaande_verplichtingen' => 0,

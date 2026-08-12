@@ -114,15 +114,15 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 		self::assertArrayHasKey('Budget', $schemas);
 		$budget = $schemas['Budget'];
 		self::assertContains('totalAmount', $budget['required']);
-		self::assertContains('programmaStructure', $budget['required']);
-		self::assertSame($this->canonical, $budget['properties']['programmaStructure']['enum']);
+		self::assertContains('programmeStructure', $budget['required']);
+		self::assertSame($this->canonical, $budget['properties']['programmeStructure']['enum']);
 
 		self::assertArrayHasKey('GLLine', $schemas);
 		$glLine = $schemas['GLLine'];
-		self::assertArrayHasKey('programmaStructure', $glLine['properties']);
-		self::assertArrayHasKey('programmaAssignedAt', $glLine['properties']);
-		self::assertSame($this->canonical, $glLine['properties']['programmaStructure']['enum']);
-		self::assertTrue($glLine['properties']['programmaStructure']['nullable']);
+		self::assertArrayHasKey('programmeStructure', $glLine['properties']);
+		self::assertArrayHasKey('programmeAssignedAt', $glLine['properties']);
+		self::assertSame($this->canonical, $glLine['properties']['programmeStructure']['enum']);
+		self::assertTrue($glLine['properties']['programmeStructure']['nullable']);
 
 	}//end testFragmentDeclaresBudgetAndGlLineOverlay()
 
@@ -142,7 +142,7 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 
 		self::assertArrayHasKey('programmeBudgetVsActuals', $glLine['x-openregister-aggregations']);
 		$agg = $glLine['x-openregister-aggregations']['programmeBudgetVsActuals'];
-		self::assertContains('programmaStructure', $agg['groupBy']);
+		self::assertContains('programmeStructure', $agg['groupBy']);
 		self::assertArrayHasKey('spent', $agg['operations']);
 
 	}//end testGlLineOverlayDeclaresGuardAndAggregation()
@@ -188,7 +188,7 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 
 		self::assertNotEmpty($budgets);
 		foreach ($budgets as $budget) {
-			self::assertContains($budget['programmaStructure'], $this->canonical);
+			self::assertContains($budget['programmeStructure'], $this->canonical);
 			self::assertGreaterThan(0, $budget['totalAmount']);
 			self::assertContains($budget['status'], ['approved', 'provisional', 'amended']);
 		}
@@ -230,8 +230,8 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 			self::assertContains($prop, $glPropsAfter, "GLLine.$prop must survive overlay");
 		}
 
-		self::assertContains('programmaStructure', $glPropsAfter);
-		self::assertContains('programmaAssignedAt', $glPropsAfter);
+		self::assertContains('programmeStructure', $glPropsAfter);
+		self::assertContains('programmeAssignedAt', $glPropsAfter);
 
 		// Pre-existing GLLine aggregations survive alongside the new one.
 		$aggs = $merged['components']['schemas']['GLLine']['x-openregister-aggregations'];

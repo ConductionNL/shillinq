@@ -103,7 +103,7 @@
                 "example": "12345678",
                 "title": "KvK"
               },
-              "naam": {
+              "name": {
                 "type": "string",
                 "nullable": true,
                 "description": "Counterparty name.",
@@ -117,7 +117,7 @@
                 "example": "NL00BANK0123456789",
                 "title": "IBAN"
               },
-              "btw_nummer": {
+              "vat_number": {
                 "type": "string",
                 "nullable": true,
                 "description": "Counterparty VAT identification number.",
@@ -387,7 +387,7 @@
               ]
             },
             "budget-holder": {
-              "scope": "programma",
+              "scope": "programme",
               "capabilities": [
                 "read"
               ]
@@ -421,7 +421,7 @@
           "administrationId",
           "verplichting",
           "regelnummer",
-          "boekjaar",
+          "financialYear",
           "amount_excl_vat"
         ],
         "properties": {
@@ -443,14 +443,14 @@
             "example": 1,
             "title": "Regelnummer"
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "nullable": true,
             "description": "Human-readable line description.",
             "example": "Licentie 2026",
             "title": "Omschrijving"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year this line's budget is consumed from (REQ-VPL-004).",
             "example": 2026,
@@ -483,7 +483,7 @@
             "example": "KP-1042",
             "title": "Kostenplaats"
           },
-          "programma": {
+          "programme": {
             "type": "string",
             "nullable": true,
             "description": "BBV taakveld / programma code, ties the commitment to a budget bucket (REQ-VPL-009).",
@@ -555,9 +555,9 @@
             "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching Budget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
             "source": "Verplichtingsregel",
             "groupBy": [
-              "programma",
+              "programme",
               "kostenplaats",
-              "boekjaar",
+              "financialYear",
               "grootboekrekening"
             ],
             "filter": {
@@ -718,7 +718,7 @@
         "required": [
           "administrationId",
           "mandaatcode",
-          "naam",
+          "name",
           "maximumbedrag"
         ],
         "properties": {
@@ -734,7 +734,7 @@
             "example": "M-INKOOP-50K",
             "title": "Mandaatcode"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Human-readable mandate name.",
             "example": "Inkoopmandaat tot 50.000 EUR",
@@ -979,7 +979,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "boekjaar",
+          "financialYear",
           "authorised_amount"
         ],
         "properties": {
@@ -989,7 +989,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "programmaCode": {
+          "programmeCode": {
             "type": "string",
             "nullable": true,
             "description": "BBV programma / taakveld code this budget covers.",
@@ -1003,13 +1003,13 @@
             "example": "KP-1042",
             "title": "Kostenplaats"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year of the budget.",
             "example": 2026,
             "title": "Boekjaar"
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "nullable": true,
             "description": "Human-readable budget label.",
@@ -1051,14 +1051,14 @@
             "field": "restant_verplicht",
             "where": [
               {
-                "field": "boekjaar",
+                "field": "financialYear",
                 "op": "eq",
-                "ref": "boekjaar"
+                "ref": "financialYear"
               },
               {
-                "field": "programma",
+                "field": "programme",
                 "op": "eq",
-                "ref": "programmaCode"
+                "ref": "programmeCode"
               },
               {
                 "field": "administrationId",
@@ -1082,7 +1082,7 @@
         "x-openregister-rbac": {
           "roles": {
             "budget-holder": {
-              "scope": "programma",
+              "scope": "programme",
               "capabilities": [
                 "read"
               ]
@@ -1115,7 +1115,7 @@
       },
       "administrationId": "adm-demo",
       "mandaatcode": "M-INKOOP-50K",
-      "naam": "Inkoopmandaat tot 50.000 EUR",
+      "name": "Inkoopmandaat tot 50.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 5000000,
       "soort_verplichting": [
@@ -1136,7 +1136,7 @@
       },
       "administrationId": "adm-demo",
       "mandaatcode": "M-DIRECTEUR-250K",
-      "naam": "Directeursmandaat tot 250.000 EUR",
+      "name": "Directeursmandaat tot 250.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 25000000,
       "soort_verplichting": [
@@ -1159,7 +1159,7 @@
       },
       "administrationId": "adm-demo",
       "mandaatcode": "M-CFO-OVERRIDE",
-      "naam": "CFO override-mandaat (budgetoverschrijding)",
+      "name": "CFO override-mandaat (budgetoverschrijding)",
       "houder_type": "role",
       "maximumbedrag": 1000000000,
       "soort_verplichting": [
@@ -1183,10 +1183,10 @@
         "slug": "vpl-budget-5-1-fac2026-2026"
       },
       "administrationId": "adm-demo",
-      "programmaCode": "5.1",
+      "programmeCode": "5.1",
       "kostenplaats": "FAC-2026",
-      "boekjaar": 2026,
-      "omschrijving": "Programma 5.1 Cultuur 2026",
+      "financialYear": 2026,
+      "description": "Programma 5.1 Cultuur 2026",
       "authorised_amount": 50000000,
       "realised_amount": 2500000
     },
@@ -1197,10 +1197,10 @@
         "slug": "vpl-budget-5-1-fac2027-2027"
       },
       "administrationId": "adm-demo",
-      "programmaCode": "5.1",
+      "programmeCode": "5.1",
       "kostenplaats": "FAC-2027",
-      "boekjaar": 2027,
-      "omschrijving": "Programma 5.1 Cultuur 2027",
+      "financialYear": 2027,
+      "description": "Programma 5.1 Cultuur 2027",
       "authorised_amount": 30000000,
       "realised_amount": 0
     },
@@ -1220,7 +1220,7 @@
       "mandaat_toegepast": "M-DIRECTEUR-250K",
       "tegenpartij": {
         "soort": "leverancier",
-        "naam": "ICT Leverancier B.V.",
+        "name": "ICT Leverancier B.V.",
         "kvk": "12345678"
       }
     },
@@ -1233,12 +1233,12 @@
       "administrationId": "adm-demo",
       "verplichting": "VPL-2026-0001",
       "regelnummer": 1,
-      "omschrijving": "ICT-diensten 2026",
-      "boekjaar": 2026,
+      "description": "ICT-diensten 2026",
+      "financialYear": 2026,
       "amount_excl_vat": 7500000,
       "grootboekrekening": "4400",
       "kostenplaats": "FAC-2026",
-      "programma": "5.1",
+      "programme": "5.1",
       "invoiced_amount": 2500000,
       "restant_verplicht": 5000000
     },
@@ -1258,7 +1258,7 @@
       "mandaat_toegepast": "M-DIRECTEUR-250K",
       "tegenpartij": {
         "soort": "leverancier",
-        "naam": "Facilitair Diensten Groep B.V.",
+        "name": "Facilitair Diensten Groep B.V.",
         "kvk": "87654321"
       }
     },
@@ -1271,12 +1271,12 @@
       "administrationId": "adm-demo",
       "verplichting": "VPL-2026-0002",
       "regelnummer": 1,
-      "omschrijving": "Facilitaire dienstverlening 2026",
-      "boekjaar": 2026,
+      "description": "Facilitaire dienstverlening 2026",
+      "financialYear": 2026,
       "amount_excl_vat": 10000000,
       "grootboekrekening": "4400",
       "kostenplaats": "FAC-2026",
-      "programma": "5.1",
+      "programme": "5.1",
       "invoiced_amount": 0,
       "restant_verplicht": 10000000
     },
@@ -1289,12 +1289,12 @@
       "administrationId": "adm-demo",
       "verplichting": "VPL-2026-0002",
       "regelnummer": 2,
-      "omschrijving": "Facilitaire dienstverlening 2027",
-      "boekjaar": 2027,
+      "description": "Facilitaire dienstverlening 2027",
+      "financialYear": 2027,
       "amount_excl_vat": 10000000,
       "grootboekrekening": "4400",
       "kostenplaats": "FAC-2027",
-      "programma": "5.1",
+      "programme": "5.1",
       "invoiced_amount": 0,
       "restant_verplicht": 10000000
     },
@@ -1314,7 +1314,7 @@
       "interne_kenmerk": "Eindafrekening 20% restant nog te ontvangen",
       "tegenpartij": {
         "soort": "subsidieontvanger",
-        "naam": "Stichting Cultuurhuis Zuidoost"
+        "name": "Stichting Cultuurhuis Zuidoost"
       }
     },
     {
@@ -1326,12 +1326,12 @@
       "administrationId": "adm-demo",
       "verplichting": "VPL-2026-0003",
       "regelnummer": 1,
-      "omschrijving": "Subsidiebeschikking cultuurhuis 2026",
-      "boekjaar": 2026,
+      "description": "Subsidiebeschikking cultuurhuis 2026",
+      "financialYear": 2026,
       "amount_excl_vat": 4000000,
       "grootboekrekening": "4410",
       "kostenplaats": "FAC-2026",
-      "programma": "5.1",
+      "programme": "5.1",
       "invoiced_amount": 0,
       "restant_verplicht": 4000000
     }

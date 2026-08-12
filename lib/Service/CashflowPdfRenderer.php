@@ -83,7 +83,7 @@ class CashflowPdfRenderer {
 		$lines[] = '13-WEEK CASHFLOW FORECAST';
 		$lines[] = '==========================';
 		$lines[] = '';
-		$lines[] = 'Horizon: ' . ($horizon['horizonStart'] ?? '?') . ' .. ' . ($horizon['horizonEind'] ?? '?');
+		$lines[] = 'Horizon: ' . ($horizon['horizonStart'] ?? '?') . ' .. ' . ($horizon['horizonEnd'] ?? '?');
 		$lines[] = 'Administration: ' . ($horizon['administrationId'] ?? '?');
 		$lines[] = 'Model: ' . ($horizon['modelVersie'] ?? '?');
 		$lines[] = 'Rolled on: ' . ($horizon['rolledOp'] ?? '?');
@@ -105,10 +105,10 @@ class CashflowPdfRenderer {
 			$lines[] = sprintf(
 				'%-6s %-12.2f %-12.2f %-12.2f %-12.2f %s',
 				(string)($week['weeknummer'] ?? '?'),
-				(float)($week['inflows_totaal'] ?? 0),
-				(float)($week['outflows_totaal'] ?? 0),
+				(float)($week['inflows_total'] ?? 0),
+				(float)($week['outflows_total'] ?? 0),
 				(float)($week['nettoMutatie'] ?? 0),
-				(float)($week['eindSaldo'] ?? 0),
+				(float)($week['closingBalance'] ?? 0),
 				(string)($week['bufferStatus'] ?? '?')
 			);
 		}
@@ -144,7 +144,7 @@ class CashflowPdfRenderer {
 
 		if ($scenario !== null) {
 			$lines[] = '';
-			$lines[] = 'SCENARIO: ' . ($scenario['naam'] ?? '?');
+			$lines[] = 'SCENARIO: ' . ($scenario['name'] ?? '?');
 			$lines[] = '---------';
 			$lines[] = ($scenario['description'] ?? '');
 			if (isset($scenario['resultaat']) === true && is_array($scenario['resultaat']) === true) {

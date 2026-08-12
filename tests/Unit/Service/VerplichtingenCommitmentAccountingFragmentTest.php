@@ -103,7 +103,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 		$agg = $regel['x-openregister-aggregations']['committedVsRealisedPerBudgetLine'];
 		self::assertSame('Verplichtingsregel', $agg['source']);
 		self::assertSame(
-			['programma', 'kostenplaats', 'boekjaar', 'grootboekrekening'],
+			['programme', 'kostenplaats', 'financialYear', 'grootboekrekening'],
 			$agg['groupBy']
 		);
 		self::assertContains('restant_verplicht', $agg['sum']);
@@ -190,8 +190,8 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 			foreach ($ownRegels as $regel) {
 				$matchingBudget = array_filter(
 					$budgets,
-					static fn ($b) => $b['programmaCode'] === $regel['programma']
-						&& $b['boekjaar'] === $regel['boekjaar']
+					static fn ($b) => $b['programmeCode'] === $regel['programme']
+						&& $b['financialYear'] === $regel['financialYear']
 						&& $b['kostenplaats'] === $regel['kostenplaats']
 				);
 				$slug = $regel['@self']['slug'];

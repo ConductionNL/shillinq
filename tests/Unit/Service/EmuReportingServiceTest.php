@@ -369,7 +369,7 @@ class EmuReportingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testResolveConsolidatieEmuS1313(): void {
-		$tegen = ['sector' => 'S.1313', 'naam' => 'Veiligheidsregio Brabant-Zuid'];
+		$tegen = ['sector' => 'S.1313', 'name' => 'Veiligheidsregio Brabant-Zuid'];
 		self::assertSame('intern-S1313', $this->service->resolveConsolidatieEmu(tegenpartij: $tegen));
 	}//end testResolveConsolidatieEmuS1313()
 

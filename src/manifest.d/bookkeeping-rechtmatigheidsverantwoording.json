@@ -126,8 +126,8 @@
 					{ "key": "criterium", "label": "Criterion", "sortable": true },
 					{ "key": "amount_error", "label": "Error amount", "sortable": true },
 					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "sortable": true },
-					{ "key": "boekjaar", "label": "Financial year", "sortable": true },
-					{ "key": "programma", "label": "Programme", "sortable": true },
+					{ "key": "financialYear", "label": "Financial year", "sortable": true },
+					{ "key": "programme", "label": "Programme", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "meldingsdatum",
@@ -149,9 +149,9 @@
 					{ "key": "criterium", "label": "Criterion", "type": "string" },
 					{ "key": "amount_error", "label": "Error amount", "type": "string" },
 					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "type": "string" },
-					{ "key": "boekjaar", "label": "Financial year", "type": "string" },
-					{ "key": "programma", "label": "Programme", "type": "string" },
-					{ "key": "omschrijving", "label": "Description", "type": "string" },
+					{ "key": "financialYear", "label": "Financial year", "type": "string" },
+					{ "key": "programme", "label": "Programme", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
 					{ "key": "oorzaak", "label": "Cause", "type": "string" },
 					{ "key": "maatregel", "label": "Measure", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" },
@@ -190,14 +190,14 @@
 				"register": "shillinq",
 				"schema": "Tolerantiegrens",
 				"columns": [
-					{ "key": "boekjaar", "label": "Financial year", "sortable": true },
+					{ "key": "financialYear", "label": "Financial year", "sortable": true },
 					{ "key": "fout_percentage", "label": "Error %", "sortable": true },
 					{ "key": "onzekerheid_percentage", "label": "Uncertainty %", "sortable": true },
 					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Council decision", "sortable": true },
 					{ "key": "vastgesteld_op", "label": "Adopted on", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "boekjaar",
+				"defaultSort": "financialYear",
 				"detailRoute": "TolerantieDetail"
 			}
 		},
@@ -211,7 +211,7 @@
 				"schema": "Tolerantiegrens",
 				"_note": "CONFIG threshold (the council-adopted error/uncertainty tolerance for a financial year — the pass/fail line for the whole lawfulness paragraph). The body is the definition: percentages, calculation basis, the council decision that adopted it and its validity window. No transactions, no comms. The audit trail sidebar matters because the threshold is politically adopted; changing it retroactively alters whether a year passes.",
 				"fields": [
-					{ "key": "boekjaar", "label": "Financial year", "type": "string" },
+					{ "key": "financialYear", "label": "Financial year", "type": "string" },
 					{ "key": "fout_percentage", "label": "Error %", "type": "string" },
 					{ "key": "onzekerheid_percentage", "label": "Uncertainty %", "type": "string" },
 					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Council decision", "type": "string" },
@@ -253,13 +253,13 @@
 				"register": "shillinq",
 				"schema": "Rechtmatigheidsparagraaf",
 				"columns": [
-					{ "key": "boekjaar", "label": "Financial year", "sortable": true },
-					{ "key": "totaal_geconstateerde_fouten", "label": "Errors", "sortable": true },
-					{ "key": "totaal_geconstateerde_onzekerheden", "label": "Uncertainties", "sortable": true },
+					{ "key": "financialYear", "label": "Financial year", "sortable": true },
+					{ "key": "total_identified_errors", "label": "Errors", "sortable": true },
+					{ "key": "total_identified_uncertainties", "label": "Uncertainties", "sortable": true },
 					{ "key": "binnen_tolerantie", "label": "Within tolerance", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "boekjaar",
+				"defaultSort": "financialYear",
 				"detailRoute": "ParagraafDetail"
 			}
 		},
@@ -273,12 +273,12 @@
 				"schema": "Rechtmatigheidsparagraaf",
 				"_note": "REPORT (the year-end lawfulness paragraph adopted by the executive and handled by the council — the formal statement that summed errors/uncertainties stayed within tolerance). The body is the roll-up: total expenses base, tolerance thresholds, total identified errors and uncertainties, the within-tolerance verdict, the executive statement text, and the adoption/handling dates. It is a computed summary of the findings, so no child object-list. No comms. The audit trail sidebar is the adoption record.",
 				"fields": [
-					{ "key": "boekjaar", "label": "Financial year", "type": "string" },
-					{ "key": "totaal_lasten_inclusief_mutaties_reserves", "label": "Total expenses incl. reserve movements", "type": "string" },
+					{ "key": "financialYear", "label": "Financial year", "type": "string" },
+					{ "key": "total_expenses_including_reserve_movements", "label": "Total expenses incl. reserve movements", "type": "string" },
 					{ "key": "tolerance_error_amount", "label": "Tolerance threshold error (amount)", "type": "string" },
 					{ "key": "tolerance_uncertainty_amount", "label": "Tolerance threshold uncertainty (amount)", "type": "string" },
-					{ "key": "totaal_geconstateerde_fouten", "label": "Total identified errors", "type": "string" },
-					{ "key": "totaal_geconstateerde_onzekerheden", "label": "Total identified uncertainties", "type": "string" },
+					{ "key": "total_identified_errors", "label": "Total identified errors", "type": "string" },
+					{ "key": "total_identified_uncertainties", "label": "Total identified uncertainties", "type": "string" },
 					{ "key": "binnen_tolerantie", "label": "Within tolerance", "type": "string" },
 					{ "key": "verklaring_college", "label": "Executive statement", "type": "string" },
 					{ "key": "vastgesteld_door_college_op", "label": "Adopted by executive on", "type": "string" },

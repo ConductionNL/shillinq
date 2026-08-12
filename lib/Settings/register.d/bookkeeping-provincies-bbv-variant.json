@@ -3,7 +3,7 @@
     "schemas": {
       "GLLine": {
         "properties": {
-          "programmaStructure": {
+          "programmeStructure": {
             "type": "string",
             "description": "BBV provincie programma-indeling this GL line is allocated to (REQ-BBL-001). One of the seven canonical provincie programmes per the BBV-provincies handleiding. Null until the line is mapped via the Budget-to-Programme Linker. Distinct from the BBVProgramma.programmaStructure discriminator (taakveld/kostentoedeling); on provincie administrations the seven values below are the canonical programme codes.",
             "enum": [
@@ -19,7 +19,7 @@
             "example": "mobiliteit",
             "title": "Programma Structure"
           },
-          "programmaAssignedAt": {
+          "programmeAssignedAt": {
             "type": "string",
             "format": "date",
             "description": "Effective date on which programmaStructure was assigned via the Budget-to-Programme Linker or a manual detail edit (REQ-BBL-001/003). Null when unmapped.",
@@ -37,12 +37,12 @@
           "programmeBudgetVsActuals": {
             "description": "Spend and commitment roll-up per BBV provincie programme, consumed by the BBV Compliance Dashboard (REQ-BBC-001). Groups posted/committed GL lines by programmaStructure and fiscalYearId so the dashboard can compute Spent, Committed and Remaining against the matching Budget records. Lines with a null programmaStructure are excluded (unmapped).",
             "filter": {
-              "programmaStructure": {
+              "programmeStructure": {
                 "operator": "isNotNull"
               }
             },
             "groupBy": [
-              "programmaStructure",
+              "programmeStructure",
               "fiscalYearId"
             ],
             "operations": {
@@ -76,7 +76,7 @@
         "required": [
           "budgetName",
           "totalAmount",
-          "programmaStructure",
+          "programmeStructure",
           "status",
           "fiscalYear",
           "administrationId"
@@ -102,7 +102,7 @@
             "example": "EUR",
             "title": "Currency"
           },
-          "programmaStructure": {
+          "programmeStructure": {
             "type": "string",
             "description": "The canonical BBV provincie programme this budget allocates to (REQ-BBC-001). Locked to the seven legislated programmes; provinces with local variations map to this taxonomy (design D3).",
             "enum": [
@@ -201,9 +201,9 @@
         "slug": "bbv-prov-ruimte"
       },
       "code": "ruimte",
-      "naam": "Ruimte",
+      "name": "Ruimte",
       "beschrijving": "Ruimtelijke ordening, gebiedsontwikkeling en wonen conform de BBV-provincies programma-indeling.",
-      "programmaStructure": "taakveld",
+      "programmeStructure": "taakveld",
       "bbvVariant": "provincie",
       "administrationId": "template"
     },
@@ -214,9 +214,9 @@
         "slug": "bbv-prov-mobiliteit"
       },
       "code": "mobiliteit",
-      "naam": "Mobiliteit",
+      "name": "Mobiliteit",
       "beschrijving": "Provinciale wegen, openbaar vervoer en bereikbaarheid conform de BBV-provincies programma-indeling.",
-      "programmaStructure": "taakveld",
+      "programmeStructure": "taakveld",
       "bbvVariant": "provincie",
       "administrationId": "template"
     },
@@ -227,9 +227,9 @@
         "slug": "bbv-prov-water"
       },
       "code": "water",
-      "naam": "Water",
+      "name": "Water",
       "beschrijving": "Waterbeheer, waterveiligheid en grondwater conform de BBV-provincies programma-indeling.",
-      "programmaStructure": "taakveld",
+      "programmeStructure": "taakveld",
       "bbvVariant": "provincie",
       "administrationId": "template"
     },
@@ -240,9 +240,9 @@
         "slug": "bbv-prov-milieu"
       },
       "code": "milieu",
-      "naam": "Milieu",
+      "name": "Milieu",
       "beschrijving": "Milieubeleid, vergunningverlening en handhaving conform de BBV-provincies programma-indeling.",
-      "programmaStructure": "taakveld",
+      "programmeStructure": "taakveld",
       "bbvVariant": "provincie",
       "administrationId": "template"
     },
@@ -253,9 +253,9 @@
         "slug": "bbv-prov-cultuur"
       },
       "code": "cultuur",
-      "naam": "Cultuur",
+      "name": "Cultuur",
       "beschrijving": "Cultuur, erfgoed en monumenten conform de BBV-provincies programma-indeling.",
-      "programmaStructure": "taakveld",
+      "programmeStructure": "taakveld",
       "bbvVariant": "provincie",
       "administrationId": "template"
     },
@@ -266,9 +266,9 @@
         "slug": "bbv-prov-economie"
       },
       "code": "economie",
-      "naam": "Economie",
+      "name": "Economie",
       "beschrijving": "Economische ontwikkeling, arbeidsmarkt en innovatie conform de BBV-provincies programma-indeling.",
-      "programmaStructure": "taakveld",
+      "programmeStructure": "taakveld",
       "bbvVariant": "provincie",
       "administrationId": "template"
     },
@@ -279,9 +279,9 @@
         "slug": "bbv-prov-bestuur"
       },
       "code": "bestuur",
-      "naam": "Bestuur",
+      "name": "Bestuur",
       "beschrijving": "Bestuur, organisatie en algemene dekkingsmiddelen conform de BBV-provincies programma-indeling.",
-      "programmaStructure": "taakveld",
+      "programmeStructure": "taakveld",
       "bbvVariant": "provincie",
       "administrationId": "template"
     },
@@ -294,7 +294,7 @@
       "budgetName": "Mobiliteit operationeel 2026",
       "totalAmount": 500000,
       "currency": "EUR",
-      "programmaStructure": "mobiliteit",
+      "programmeStructure": "mobiliteit",
       "status": "approved",
       "fiscalYear": 2026,
       "startDate": "2026-01-01",
@@ -311,7 +311,7 @@
       "budgetName": "Water beheer 2026",
       "totalAmount": 300000,
       "currency": "EUR",
-      "programmaStructure": "water",
+      "programmeStructure": "water",
       "status": "approved",
       "fiscalYear": 2026,
       "startDate": "2026-01-01",
@@ -328,7 +328,7 @@
       "budgetName": "Cultuur programmering 2026",
       "totalAmount": 150000,
       "currency": "EUR",
-      "programmaStructure": "cultuur",
+      "programmeStructure": "cultuur",
       "status": "approved",
       "fiscalYear": 2026,
       "startDate": "2026-01-01",
@@ -345,7 +345,7 @@
       "budgetName": "Economie ontwikkeling 2026",
       "totalAmount": 200000,
       "currency": "EUR",
-      "programmaStructure": "economie",
+      "programmeStructure": "economie",
       "status": "provisional",
       "fiscalYear": 2026,
       "startDate": "2026-01-01",
@@ -362,7 +362,7 @@
       "budgetName": "Bestuur algemeen 2026",
       "totalAmount": 100000,
       "currency": "EUR",
-      "programmaStructure": "bestuur",
+      "programmeStructure": "bestuur",
       "status": "approved",
       "fiscalYear": 2026,
       "startDate": "2026-01-01",
@@ -379,7 +379,7 @@
       "budgetName": "Ruimte gebiedsontwikkeling 2026",
       "totalAmount": 250000,
       "currency": "EUR",
-      "programmaStructure": "ruimte",
+      "programmeStructure": "ruimte",
       "status": "approved",
       "fiscalYear": 2026,
       "startDate": "2026-01-01",
@@ -401,8 +401,8 @@
       "currency": "EUR",
       "periodId": "2026-05",
       "description": "Personeel Mobiliteit",
-      "programmaStructure": "mobiliteit",
-      "programmaAssignedAt": "2026-05-15"
+      "programmeStructure": "mobiliteit",
+      "programmeAssignedAt": "2026-05-15"
     },
     {
       "@self": {
@@ -418,8 +418,8 @@
       "currency": "EUR",
       "periodId": "2026-05",
       "description": "Personeel Water",
-      "programmaStructure": "water",
-      "programmaAssignedAt": "2026-05-15"
+      "programmeStructure": "water",
+      "programmeAssignedAt": "2026-05-15"
     },
     {
       "@self": {
@@ -435,8 +435,8 @@
       "currency": "EUR",
       "periodId": "2026-04",
       "description": "Materialen Cultuur",
-      "programmaStructure": "cultuur",
-      "programmaAssignedAt": "2026-04-20"
+      "programmeStructure": "cultuur",
+      "programmeAssignedAt": "2026-04-20"
     },
     {
       "@self": {
@@ -452,8 +452,8 @@
       "currency": "EUR",
       "periodId": "2026-05",
       "description": "Contracten Economie",
-      "programmaStructure": "economie",
-      "programmaAssignedAt": "2026-05-10"
+      "programmeStructure": "economie",
+      "programmeAssignedAt": "2026-05-10"
     },
     {
       "@self": {

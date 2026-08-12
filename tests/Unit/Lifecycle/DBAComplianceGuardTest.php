@@ -133,10 +133,10 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testCanBeeindigOpdrachtRequiresEndDate(): void {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-4', object: ['feitelijkeEindDatum' => '2026-09-30']));
+		self::assertTrue($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-4', object: ['actualEndDate' => '2026-09-30']));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-5', object: ['feitelijkeEindDatum' => '']));
+		self::assertFalse($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-5', object: ['actualEndDate' => '']));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-6', object: []));
@@ -155,7 +155,7 @@ class DBAComplianceGuardTest extends TestCase {
 			'arbeidSubtotaal' => 4,
 			'financieelSubtotaal' => 9,
 			'deliverooSubtotaal' => 12,
-			'totaalScore' => 34,
+			'totalScore' => 34,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -176,7 +176,7 @@ class DBAComplianceGuardTest extends TestCase {
 			'financieelSubtotaal' => 9,
 			'deliverooSubtotaal' => 12,
 			// Real sum is 34; a tampered 10 must be rejected.
-			'totaalScore' => 10,
+			'totalScore' => 10,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -191,7 +191,7 @@ class DBAComplianceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testVerkorteIntakeAlwaysCompletable(): void {
-		$object = ['verkort' => true, 'totaalScore' => 0];
+		$object = ['verkort' => true, 'totalScore' => 0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue($this->guard->canCompleteIntake(intakeId: 'intake-3', object: $object));

@@ -15,7 +15,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "ondernemingId",
+          "enterpriseId",
           "kalenderjaar",
           "doelNorm",
           "normGrondslag",
@@ -28,7 +28,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming (eenmanszaak, VOF-aandeel, maatschap). Het urencriterium geldt per onderneming (REQ-URC-014).",
             "example": "ond-1",
@@ -66,7 +66,7 @@
             "example": 916,
             "title": "Lopende Uren"
           },
-          "prognoseEindeJaar": {
+          "forecastYearEnd": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -145,9 +145,9 @@
         },
         "x-openregister-relations": {
           "categorie": {
-            "localField": "ondernemingId",
+            "localField": "enterpriseId",
             "relatedSchema": "UrenDagregistratie",
-            "relatedField": "ondernemingId",
+            "relatedField": "enterpriseId",
             "cardinality": "one-to-many",
             "description": "De dagregistraties die deze jaar-tally voeden."
           }
@@ -198,7 +198,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "ondernemingId",
+          "enterpriseId",
           "datum",
           "categorie",
           "uren"
@@ -210,7 +210,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming waaronder deze uren tellen.",
             "example": "ond-1",
@@ -459,9 +459,9 @@
         "type": "object",
         "required": [
           "administrationId",
-          "ondernemingId",
+          "enterpriseId",
           "modelVersie",
-          "totaalPrognose"
+          "totalForecast"
         ],
         "properties": {
           "administrationId": {
@@ -470,7 +470,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming waarvoor de prognose geldt.",
             "example": "ond-1",
@@ -516,7 +516,7 @@
             ],
             "title": "Vakanties"
           },
-          "totaalPrognose": {
+          "totalForecast": {
             "type": "number",
             "minimum": 0,
             "description": "Voorspelde eindstand uren op 31 december.",
@@ -568,7 +568,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "ondernemingId",
+          "enterpriseId",
           "type",
           "urgentie"
         ],
@@ -579,7 +579,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming waarop de alert betrekking heeft.",
             "example": "ond-1",
@@ -620,7 +620,7 @@
             "example": 1225,
             "title": "Norm"
           },
-          "prognoseEindeJaar": {
+          "forecastYearEnd": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -707,7 +707,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "ondernemingId",
+          "enterpriseId",
           "periode",
           "exportFormaat",
           "bewaarTermijn"
@@ -719,7 +719,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming waarop het bewijsdossier betrekking heeft.",
             "example": "ond-1",
@@ -731,7 +731,7 @@
             "example": "2026-Q1",
             "title": "Periode"
           },
-          "totaalUren": {
+          "totalHours": {
             "type": "number",
             "minimum": 0,
             "nullable": true,

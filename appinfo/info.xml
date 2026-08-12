@@ -200,13 +200,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\RematerialiseConvertedCalculations</step>
             <!--
                 Must run AFTER the register sync that adds the English columns,
-                so it can tell the rename case from the back-fill case. Covers
-                all 50 amount properties together — a register-scoped step
+                so it can tell the rename case from the back-fill case. Covers every
+                renamed property together — a register-scoped step
                 cannot rename a column for one owner and not the rest without
                 the others silently reading null. Idempotent, non-destructive,
                 and it refuses ambiguous renames rather than merging them.
             -->
-            <step>OCA\Shillinq\Repair\RenameDutchAmountColumns</step>
+            <step>OCA\Shillinq\Repair\RenameDutchColumns</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first

@@ -63,7 +63,7 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 			'data' => [
 				[
 					'qualifying_asset_id' => 'asset-1',
-					'naam' => 'Slimme routeringsalgoritme',
+					'name' => 'Slimme routeringsalgoritme',
 					'winst_voor_nexus' => 800000.0,
 					'nexus' => 1.0,
 					'winst_na_nexus' => 800000.0,
@@ -72,7 +72,7 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 				],
 				[
 					'qualifying_asset_id' => 'asset-2',
-					'naam' => 'Voorspellingsmodel',
+					'name' => 'Voorspellingsmodel',
 					'winst_voor_nexus' => 200000.0,
 					'nexus' => 0.866,
 					'winst_na_nexus' => 173200.0,
@@ -170,7 +170,7 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 			'data' => [
 				[
 					'qualifying_asset_id' => 'asset-1',
-					'naam' => 'IP A',
+					'name' => 'IP A',
 					'winst_voor_nexus' => 100.0,
 					'nexus' => 0.5,
 					'winst_na_nexus' => 50.0,
@@ -188,11 +188,11 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 
 		$ctx = $this->svc->toPdfRenderContext($aggregation, 'adm-x', 2026);
 
-		$this->assertSame(2026, $ctx['boekjaar']);
+		$this->assertSame(2026, $ctx['financialYear']);
 		$this->assertSame('adm-x', $ctx['administrationId']);
 		$this->assertSame('per_asset_afpelmethode', $ctx['methode']);
 		$this->assertCount(1, $ctx['perAsset']);
-		$this->assertSame('IP A', $ctx['perAsset'][0]['naam']);
+		$this->assertSame('IP A', $ctx['perAsset'][0]['name']);
 		$this->assertSame(50.0, $ctx['totals']['winst_na_nexus']);
 		$this->assertSame(21.3, $ctx['totals']['voordeel']);
 		$this->assertNull($ctx['forfaitair']);

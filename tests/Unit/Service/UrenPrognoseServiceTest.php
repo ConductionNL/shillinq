@@ -76,7 +76,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 		);
 
 		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
-		self::assertGreaterThan(700.0, $result['totaalPrognose']);
+		self::assertGreaterThan(700.0, $result['totalForecast']);
 		self::assertIsArray($result['perMaandPrognose']);
 		self::assertNotEmpty($result['perMaandPrognose']);
 		self::assertArrayHasKey('2026-07', $result['perMaandPrognose']);
@@ -244,7 +244,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(0.0, $result['totaalPrognose']);
+		self::assertSame(0.0, $result['totalForecast']);
 		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
 
 	}//end testEmptyTalliesReturnsZeroPrognose()

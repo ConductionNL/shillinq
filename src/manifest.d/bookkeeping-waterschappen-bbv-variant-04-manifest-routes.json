@@ -77,7 +77,7 @@
 						"type": "string"
 					},
 					{
-						"key": "programmaCode",
+						"key": "programmeCode",
 						"label": "Programme",
 						"type": "string"
 					},

@@ -76,7 +76,7 @@ class WmoJaarrekeningBijlageService {
 
 			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
 			$code = (string)($activity['code'] ?? '');
-			$naam = (string)($activity['naam'] ?? '');
+			$naam = (string)($activity['name'] ?? '');
 
 			$ikp = (array)($ikpByAct[$activityId] ?? []);
 			$integraleCost = (float)($ikp['totaleKosten'] ?? 0);
@@ -109,8 +109,8 @@ class WmoJaarrekeningBijlageService {
 			$rows[] = [
 				'commercialActivityId' => $activityId,
 				'code' => $code,
-				'naam' => $naam,
-				'omzet' => $omzet,
+				'name' => $naam,
+				'revenue' => $omzet,
 				'integraleKostprijs' => $integraleCost,
 				'kostendekkingsratio' => $ratio,
 				'compliant' => $compliant,
@@ -136,7 +136,7 @@ class WmoJaarrekeningBijlageService {
 			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'activiteiten' => $rows,
 			'samenvatting' => [
-				'totaal' => $totalCount,
+				'total' => $totalCount,
 				'compliant' => $compliantCount,
 				'nonCompliant' => ($totalCount - $compliantCount),
 			],
@@ -215,8 +215,8 @@ class WmoJaarrekeningBijlageService {
 			$lines[] = sprintf(
 				'| %s | %s | %.2f | %.2f | %s | %s | %s |',
 				(string)($row['code'] ?? ''),
-				(string)($row['naam'] ?? ''),
-				(float)($row['omzet'] ?? 0),
+				(string)($row['name'] ?? ''),
+				(float)($row['revenue'] ?? 0),
 				(float)($row['integraleKostprijs'] ?? 0),
 				$ratioText,
 				$compliantText,
@@ -226,7 +226,7 @@ class WmoJaarrekeningBijlageService {
 
 		$sam = (array)($bijlage['samenvatting'] ?? []);
 		$lines[] = '';
-		$lines[] = sprintf('**Samenvatting**: %d compliant / %d totaal', (int)($sam['compliant'] ?? 0), (int)($sam['totaal'] ?? 0));
+		$lines[] = sprintf('**Samenvatting**: %d compliant / %d totaal', (int)($sam['compliant'] ?? 0), (int)($sam['total'] ?? 0));
 
 		return implode("\n", $lines);
 	}//end toMarkdown()
@@ -261,7 +261,7 @@ class WmoJaarrekeningBijlageService {
 			$rows[] = sprintf(
 				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s" abb="%s"/>',
 				htmlspecialchars((string)($r['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
-				(float)($r['omzet'] ?? 0),
+				(float)($r['revenue'] ?? 0),
 				(float)($r['integraleKostprijs'] ?? 0),
 				$ratioAttr,
 				$compliantAttr,

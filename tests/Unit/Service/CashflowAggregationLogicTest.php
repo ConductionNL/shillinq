@@ -162,16 +162,16 @@ final class CashflowAggregationLogicTest extends TestCase {
 	 */
 	public function testCrisisModeTriggerWithinFourWeeks(): void {
 		$allPositive = [
-			['weeknummer' => 22, 'eindSaldo' => 100.0],
-			['weeknummer' => 23, 'eindSaldo' => 50.0],
-			['weeknummer' => 24, 'eindSaldo' => 200.0],
-			['weeknummer' => 25, 'eindSaldo' => 300.0],
+			['weeknummer' => 22, 'closingBalance' => 100.0],
+			['weeknummer' => 23, 'closingBalance' => 50.0],
+			['weeknummer' => 24, 'closingBalance' => 200.0],
+			['weeknummer' => 25, 'closingBalance' => 300.0],
 		];
 		$hasNegative = [
-			['weeknummer' => 22, 'eindSaldo' => 100.0],
-			['weeknummer' => 23, 'eindSaldo' => -50.0],
-			['weeknummer' => 24, 'eindSaldo' => 200.0],
-			['weeknummer' => 25, 'eindSaldo' => 300.0],
+			['weeknummer' => 22, 'closingBalance' => 100.0],
+			['weeknummer' => 23, 'closingBalance' => -50.0],
+			['weeknummer' => 24, 'closingBalance' => 200.0],
+			['weeknummer' => 25, 'closingBalance' => 300.0],
 		];
 		self::assertFalse($this->crisisActive($allPositive));
 		self::assertTrue($this->crisisActive($hasNegative));
@@ -350,7 +350,7 @@ final class CashflowAggregationLogicTest extends TestCase {
 	private function crisisActive(array $weeks): bool {
 		$leading = array_slice($weeks, 0, 4);
 		foreach ($leading as $week) {
-			if ($week['eindSaldo'] < 0) {
+			if ($week['closingBalance'] < 0) {
 				return true;
 			}
 		}

@@ -150,7 +150,7 @@ class MilestoneTemplateService {
 			$mijlpalen[] = [
 				'mijlpaalId' => 'MS-' . str_pad((string)$index, 3, '0', STR_PAD_LEFT),
 				'datum' => gmdate('Y-m-d', $datum),
-				'omschrijving' => (string)($row['label'] ?? ('Mijlpaal ' . $index)),
+				'description' => (string)($row['label'] ?? ('Mijlpaal ' . $index)),
 				'percentage' => (float)($row['percentage'] ?? 0.0),
 				'opleveringsType' => (string)($row['opleveringsType'] ?? 'deeloplevering'),
 				'status' => 'planned',
@@ -217,7 +217,7 @@ class MilestoneTemplateService {
 
 			$forecast[] = [
 				'datum' => (string)($mijlpaal['datum'] ?? ''),
-				'omschrijving' => (string)($mijlpaal['omschrijving'] ?? ''),
+				'description' => (string)($mijlpaal['description'] ?? ''),
 				'percentage' => $percentage,
 				'amount' => $bedrag,
 			];

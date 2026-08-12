@@ -63,11 +63,11 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 		$lh = [
 			'werkgeverId' => 'wg-conduction-bv',
 			'periodeId' => 'lp-2026-05',
-			'totaalLoonheffing' => 18620.10,
-			'totaalPremiesSV' => 7559.40,
-			'totaalZVW' => 3654.00,
-			'totaalEindheffingenWKR' => 0.0,
-			'totaalAfdracht' => 29833.50,
+			'totalPayrollTax' => 18620.10,
+			'totalSocialInsuranceContributions' => 7559.40,
+			'totalHealthInsurance' => 3654.00,
+			'totalFinalLeviesWorkRelatedCosts' => 0.0,
+			'totalRemittance' => 29833.50,
 			'vervaldagAfdracht' => '2026-06-30',
 			'status' => 'VOORBEREID',
 		];
@@ -82,7 +82,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 		$this->assertSame(7559.40, $payload['premiesSVTotaal']);
 		$this->assertSame(3654.00, $payload['zvwTotaal']);
 		$this->assertSame(0.0, $payload['eindheffingenWKR']);
-		$this->assertSame(29833.50, $payload['totaalAfdracht']);
+		$this->assertSame(29833.50, $payload['totalRemittance']);
 		$this->assertSame('2026-06-30', $payload['vervaldagAfdracht']);
 
 	}//end testToSbrInstancePayloadEchoesTotalsAndDeterministicRef()

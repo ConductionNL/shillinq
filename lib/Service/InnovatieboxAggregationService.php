@@ -121,7 +121,7 @@ class InnovatieboxAggregationService {
 	 * @return array<string,mixed> The aggregation row.
 	 */
 	private function buildRow(array $asset, array $attribution, ?array $loss): array {
-		$naam = (string)($asset['naam'] ?? '');
+		$naam = (string)($asset['name'] ?? '');
 		$voorNexus = (float)($attribution['kwalificerende_winst_voor_nexus'] ?? 0);
 		$nexus = (float)($attribution['nexusbreuk_toegepast'] ?? 1.0);
 		$naNexus = (float)($attribution['kwalificerende_winst_na_nexus'] ?? 0);
@@ -132,9 +132,9 @@ class InnovatieboxAggregationService {
 
 		// REQ-IBA-007: an open loss is recovered first at the full tariff before
 		// the innovatiebox 0.09 applies to the residual; this raises the benefit.
-		if ($loss !== null && (float)($loss['saldo_open'] ?? 0) > 0.0) {
+		if ($loss !== null && (float)($loss['balance_open'] ?? 0) > 0.0) {
 			$offset = $this->lossService->offsetLossAgainstProfit(
-				openLoss: (float)$loss['saldo_open'],
+				openLoss: (float)$loss['balance_open'],
 				currentYearProfit: $naNexus,
 				nexusBreak: $nexus
 			);
@@ -146,13 +146,13 @@ class InnovatieboxAggregationService {
 				'benefit_full' => $offset['lossOffsetAtFullRate'],
 				'residual' => $offset['residualProfit'],
 				'benefit_9pct' => $offset['residualProfitAt9Pct'],
-				'saldo_na' => $offset['saldoNa'],
+				'balance_after' => $offset['saldoNa'],
 			];
 		}
 
 		return [
 			'qualifying_asset_id' => $this->assetId(asset: $asset),
-			'naam' => $naam,
+			'name' => $naam,
 			'methode' => (string)($attribution['methode'] ?? ''),
 			'kwalificerende_winst_voor_nexus' => round($voorNexus, 2),
 			'nexusbreuk_toegepast' => round($nexus, 4),
@@ -250,7 +250,7 @@ class InnovatieboxAggregationService {
 		$rows = $objectService
 			->setRegister($this->register())
 			->setSchema('IBProfitAttribution')
-			->findAll(['filters' => ['administrationId' => $administrationId, 'boekjaar' => $boekjaar]]);
+			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $boekjaar]]);
 
 		if (is_array($rows) === false) {
 			return [];

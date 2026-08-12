@@ -143,7 +143,7 @@ final class UrenAlertService {
 		$this->logger->info(
 			'UrenAlertService: quarter-end alert built',
 			[
-				'ondernemingId' => $alert['ondernemingId'],
+				'enterpriseId' => $alert['enterpriseId'],
 				'datum' => $datum,
 				'drempelStatus' => ($year['drempelStatus'] ?? null),
 			]
@@ -204,7 +204,7 @@ final class UrenAlertService {
 	 * @return array<int, string> ≥3 acties.
 	 */
 	public function handelingsperspectief(array $year): array {
-		$prognose = (float)($year['prognoseEindeJaar'] ?? 0);
+		$prognose = (float)($year['forecastYearEnd'] ?? 0);
 		$norm = (int)($year['doelNorm'] ?? 1225);
 		$tekort = max(0.0, ($norm - $prognose));
 
@@ -255,18 +255,18 @@ final class UrenAlertService {
 	 */
 	private function seedAlert(array $year, string $type, string $urgentie, string $aanleidingDatum): array {
 		$norm = (int)($year['doelNorm'] ?? 1225);
-		$prognose = (float)($year['prognoseEindeJaar'] ?? 0);
+		$prognose = (float)($year['forecastYearEnd'] ?? 0);
 		$tekort = max(0.0, ($norm - $prognose));
 
 		return [
 			'administrationId' => (string)($year['administrationId'] ?? ''),
-			'ondernemingId' => (string)($year['ondernemingId'] ?? ''),
+			'enterpriseId' => (string)($year['enterpriseId'] ?? ''),
 			'type' => $type,
 			'urgentie' => $urgentie,
 			'aanleidingDatum' => $aanleidingDatum,
 			'lopendeUren' => (float)($year['lopendeUren'] ?? 0),
 			'norm' => $norm,
-			'prognoseEindeJaar' => $prognose,
+			'forecastYearEnd' => $prognose,
 			'tekort' => $tekort,
 		];
 

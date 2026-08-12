@@ -155,7 +155,7 @@ class RequisitionConversionService {
 			administrationId: $administrationId,
 			payload: [
 				'supplierId' => $supplierId,
-				'costCenter' => (string)($requisition['programma'] ?? ''),
+				'costCenter' => (string)($requisition['programme'] ?? ''),
 				'requisitionId' => $requisitionId,
 				'lines' => $poLines,
 				'notes' => 'Converted from requisition ' . ($requisition['requisitionNumber'] ?? $requisitionId),

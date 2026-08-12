@@ -10,7 +10,7 @@
   "mandaatTemplates": [
     {
       "mandaatcode": "M-GEM-MEDEWERKER-10K",
-      "naam": "Medewerker inkoop tot 10.000 EUR",
+      "name": "Medewerker inkoop tot 10.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 1000000,
       "soort_verplichting": ["inkooporder"],
@@ -21,7 +21,7 @@
     },
     {
       "mandaatcode": "M-GEM-BUDGETHOUDER-50K",
-      "naam": "Budgethouder tot 50.000 EUR",
+      "name": "Budgethouder tot 50.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 5000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst"],
@@ -32,7 +32,7 @@
     },
     {
       "mandaatcode": "M-GEM-AFDELINGSHOOFD-100K",
-      "naam": "Afdelingshoofd tot 100.000 EUR",
+      "name": "Afdelingshoofd tot 100.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 10000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing"],
@@ -43,7 +43,7 @@
     },
     {
       "mandaatcode": "M-GEM-DIRECTEUR-250K",
-      "naam": "Directeur tot 250.000 EUR",
+      "name": "Directeur tot 250.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 25000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing"],
@@ -54,7 +54,7 @@
     },
     {
       "mandaatcode": "M-GEM-CONCERNCONTROLLER-OVERRIDE",
-      "naam": "Concerncontroller override-mandaat",
+      "name": "Concerncontroller override-mandaat",
       "houder_type": "role",
       "maximumbedrag": 1000000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
@@ -65,7 +65,7 @@
     },
     {
       "mandaatcode": "M-PROV-GEDEPUTEERDE-500K",
-      "naam": "Gedeputeerde tot 500.000 EUR",
+      "name": "Gedeputeerde tot 500.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 50000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "subsidiebeschikking"],
@@ -76,7 +76,7 @@
     },
     {
       "mandaatcode": "M-WS-DAGELIJKS-BESTUUR-200K",
-      "naam": "Dagelijks bestuur waterschap tot 200.000 EUR",
+      "name": "Dagelijks bestuur waterschap tot 200.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 20000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "leasing"],
@@ -87,7 +87,7 @@
     },
     {
       "mandaatcode": "M-MKB-INKOPER-25K",
-      "naam": "Inkoper tot 25.000 EUR",
+      "name": "Inkoper tot 25.000 EUR",
       "houder_type": "user",
       "maximumbedrag": 2500000,
       "soort_verplichting": ["inkooporder"],
@@ -98,7 +98,7 @@
     },
     {
       "mandaatcode": "M-MKB-MANAGER-100K",
-      "naam": "Manager tot 100.000 EUR",
+      "name": "Manager tot 100.000 EUR",
       "houder_type": "user",
       "maximumbedrag": 10000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "arbeidscontract"],
@@ -109,7 +109,7 @@
     },
     {
       "mandaatcode": "M-MKB-CFO-250K",
-      "naam": "CFO tot 250.000 EUR",
+      "name": "CFO tot 250.000 EUR",
       "houder_type": "user",
       "maximumbedrag": 25000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "huurovereenkomst", "leasing", "overig"],
@@ -120,7 +120,7 @@
     },
     {
       "mandaatcode": "M-MKB-CFO-OVERRIDE",
-      "naam": "CFO override-mandaat (budgetoverschrijding)",
+      "name": "CFO override-mandaat (budgetoverschrijding)",
       "houder_type": "user",
       "maximumbedrag": 1000000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
@@ -131,7 +131,7 @@
     },
     {
       "mandaatcode": "M-ZZP-EIGENAAR-ONBEPERKT",
-      "naam": "Eigenaar (onbeperkt)",
+      "name": "Eigenaar (onbeperkt)",
       "houder_type": "user",
       "maximumbedrag": 1000000000,
       "soort_verplichting": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "overig"],

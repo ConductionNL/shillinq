@@ -59,7 +59,7 @@ final class UrenNormDeterminationService {
 	 *
 	 * Profile shape (REQ-URC-000):
 	 *  - 'administrationId' string   — tenant-isolation FK.
-	 *  - 'ondernemingId'    string   — onderneming FK.
+	 *  - 'enterpriseId'    string   — onderneming FK.
 	 *  - 'kalenderjaar'     int      — year.
 	 *  - 'arbeidsongeschikt'  bool   — UWV AO-status (drives 800 norm).
 	 *  - 'meewerkendePartner' bool   — drives 525 norm.
@@ -85,7 +85,7 @@ final class UrenNormDeterminationService {
 
 		$seed = [
 			'administrationId' => (string)($profiel['administrationId'] ?? ''),
-			'ondernemingId' => (string)($profiel['ondernemingId'] ?? ''),
+			'enterpriseId' => (string)($profiel['enterpriseId'] ?? ''),
 			'kalenderjaar' => (int)($profiel['kalenderjaar'] ?? (int)gmdate('Y')),
 			'doelNorm' => $norm,
 			'normGrondslag' => $grondslag,
@@ -97,7 +97,7 @@ final class UrenNormDeterminationService {
 		$this->logger->info(
 			'UrenNormDeterminationService: built seed for new urencriterium-jaar',
 			[
-				'ondernemingId' => $seed['ondernemingId'],
+				'enterpriseId' => $seed['enterpriseId'],
 				'kalenderjaar' => $seed['kalenderjaar'],
 				'doelNorm' => $norm,
 				'grotendeels' => $grotendeels,

@@ -105,7 +105,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 				'sluitendReëel' => true,
 				'toezichtRegime' => 'repressief',
 			],
-			programmas: [['nummer' => '1', 'naam' => 'Veiligheid', 'doelstellingen' => 'x', 'batenTotaal' => 80.0, 'lastenTotaal' => 650.0]],
+			programmas: [['number' => '1', 'name' => 'Veiligheid', 'doelstellingen' => 'x', 'revenueTotal' => 80.0, 'expensesTotal' => 650.0]],
 			taakvelden: [['taakveldCode' => '1.1', 'baten' => 50.0, 'lasten' => 450.0]],
 			paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'tekst', 'kerncijfers' => []]]
 		);
@@ -113,7 +113,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 		self::assertSame(2027, $export['metadata']['begrotingsjaar']);
 		self::assertTrue($export['metadata']['sluitendStructureel']);
 		self::assertCount(1, $export['programmas']);
-		self::assertSame('Veiligheid', $export['programmas'][0]['naam']);
+		self::assertSame('Veiligheid', $export['programmas'][0]['name']);
 		self::assertCount(1, $export['taakvelden']);
 		self::assertSame('1.1', $export['taakvelden'][0]['taakveldCode']);
 		self::assertCount(1, $export['paragrafen']);

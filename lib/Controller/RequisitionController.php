@@ -110,8 +110,8 @@ class RequisitionController extends Controller {
 		}
 
 		$payload = [
-			'programma' => trim((string)$this->request->getParam('programma', '')),
-			'boekjaar' => (int)$this->request->getParam('boekjaar', 0),
+			'programme' => trim((string)$this->request->getParam('programme', '')),
+			'financialYear' => (int)$this->request->getParam('financialYear', 0),
 			'neededByDate' => trim((string)$this->request->getParam('neededByDate', '')),
 			'justification' => trim((string)$this->request->getParam('justification', '')),
 			'soort' => trim((string)$this->request->getParam('soort', '')),

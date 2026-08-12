@@ -1,10 +1,12 @@
 <?php
 
 /**
- * Shillinq RenameDutchAmountColumns Repair Step
+ * Shillinq RenameDutchColumns Repair Step
  *
- * Moves stored data from the Dutch amount columns to the English ones the
- * shillinq register now declares.
+ * Moves stored data from the Dutch columns to the English ones the shillinq
+ * register now declares. Covers every vocabulary cluster migrated so far, not
+ * only amounts — the class was renamed from RenameDutchAmountColumns when the
+ * second cluster landed, because one register-scoped step must carry them all.
  *
  * WHY THIS IS NEEDED. OpenRegister does not store an object as a JSON blob
  * keyed by property name — each schema property is a real, snake_cased COLUMN
@@ -62,7 +64,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-class RenameDutchAmountColumns implements IRepairStep {
+class RenameDutchColumns implements IRepairStep {
 	/**
 	 * Slug prefix of the registers in scope.
 	 *
@@ -130,6 +132,147 @@ class RenameDutchAmountColumns implements IRepairStep {
 		'vastgesteld_belastbaar_bedrag' => 'determined_taxable_amount',
 		'verleend_bedrag' => 'granted_amount',
 		'zelfstandigenaftrek_bedrag' => 'self_employed_deduction_amount',
+
+		// Batch 2 — the naam/totaal/jaar/omschrijving/saldo/omzet/regeling/
+		// programma/boekjaar/onderneming/eind/nummer clusters, 137 names.
+		// Same rule as above: every one was checked to be collision-free
+		// against its English target before being added here.
+		'aandeel_omzet12mnd' => 'revenue_share12m',
+		'aanslag_jaar' => 'assessment_year',
+		'actualisatie_frequentie_jaar' => 'update_frequency_years',
+		'afschrijving_jaar_cents' => 'depreciation_year_cents',
+		'afschrijvingstermijn_jaar' => 'depreciation_period_years',
+		'asset_naam' => 'asset_name',
+		'balans_totaal' => 'balance_sheet_total',
+		'baten_totaal' => 'revenue_total',
+		'bbv_saldo_baten_lasten' => 'municipal_accounting_balance_revenue_expenses',
+		'betalingen_totaal' => 'payments_total',
+		'boekjaar' => 'financial_year',
+		'boekjaar_eind' => 'financial_year_end',
+		'boekjaar_start' => 'financial_year_start',
+		'boekjaar_tot' => 'financial_year_until',
+		'boekjaar_van' => 'financial_year_from',
+		'boekwaarde_begin_jaar_cents' => 'book_value_year_start_cents',
+		'btw_nummer' => 'vat_number',
+		'concurrent_naam' => 'competitor_name',
+		'deal_naam' => 'deal_name',
+		'deelnemer_naam' => 'participant_name',
+		'dotaties_jaar_cents' => 'additions_year_cents',
+		'drempel_jaar' => 'threshold_year',
+		'eind_datum' => 'end_date',
+		'eind_saldo' => 'closing_balance',
+		'emu_saldo_afwijking' => 'emu_balance_deviation',
+		'emu_saldo_afwijking_percentage' => 'emu_balance_deviation_percentage',
+		'emu_saldo_begroot' => 'emu_balance_budgeted',
+		'emu_saldo_berekend' => 'emu_balance_calculated',
+		'ex_nummer' => 'ex_number',
+		'expat30_pct_regeling' => 'expat30_pct_scheme',
+		'feitelijke_eind_datum' => 'actual_end_date',
+		'fiscalist_becon_nummer' => 'tax_advisor_becon_number',
+		'gerealiseerde_omzet' => 'realised_revenue',
+		'hoofdfunctie_naam' => 'main_function_name',
+		'horizon_eind' => 'horizon_end',
+		'huidig_jaar' => 'current_year',
+		'indicator_omschrijving' => 'indicator_description',
+		'inflows_totaal' => 'inflows_total',
+		'jaar' => 'year',
+		'jaar_van_gebruik' => 'year_of_use',
+		'kostprijs_omzet' => 'cost_of_revenue',
+		'kvk_nummer' => 'chamber_of_commerce_number',
+		'kwekersrecht_nummer' => 'plant_breeders_right_number',
+		'lasten_totaal' => 'expenses_total',
+		'leverancier_naam' => 'supplier_name',
+		'lock_in_eind_datum' => 'lock_in_end_date',
+		'looptijd_eind' => 'term_end',
+		'lopende_omzet' => 'current_revenue',
+		'maand_van_jaar' => 'month_of_year',
+		'naam' => 'name',
+		'netto_omzet' => 'net_revenue',
+		'nummer' => 'number',
+		'octrooi_nummer' => 'patent_number',
+		'omschrijving' => 'description',
+		'omschrijving_iv3' => 'description_iv3',
+		'omzet' => 'revenue',
+		'omzet_aandeel' => 'revenue_share',
+		'omzet_exclusief_btw' => 'revenue_excluding_vat',
+		'omzet_op_moment' => 'revenue_at_moment',
+		'omzettings_regeling' => 'conversion_scheme',
+		'onderneming_id' => 'enterprise_id',
+		'ontvanger_naam' => 'recipient_name',
+		'opdracht_naam' => 'assignment_name',
+		'opening_saldo' => 'opening_balance',
+		'outflows_totaal' => 'outflows_total',
+		'pauze_eind' => 'pause_end',
+		'pensioen_regeling' => 'pension_scheme',
+		'periode_eind' => 'period_end',
+		'periode_jaar' => 'period_year',
+		'prognose_einde_jaar' => 'forecast_year_end',
+		'programma' => 'programme',
+		'programma_assigned_at' => 'programme_assigned_at',
+		'programma_code' => 'programme_code',
+		'programma_focus' => 'programme_focus',
+		'programma_id' => 'programme_id',
+		'programma_structure' => 'programme_structure',
+		'project_naam' => 'project_name',
+		'raadsbesluit_nummer' => 'council_resolution_number',
+		'regeling_artikel' => 'scheme_article',
+		'regeling_code' => 'scheme_code',
+		'regeling_naam' => 'scheme_name',
+		'regeling_tot_zakelijk' => 'scheme_until_business',
+		'rvo_project_nummer' => 'rvo_project_number',
+		's_en_ocertificaat_nummer' => 'rnd_certificate_number',
+		'saldo_begin_jaar_cents' => 'balance_year_start_cents',
+		'saldo_eind_jaar_cents' => 'balance_year_end_cents',
+		'saldo_incidenteel' => 'balance_incidental',
+		'saldo_na' => 'balance_after',
+		'saldo_na_mutaties' => 'balance_after_movements',
+		'saldo_open' => 'balance_open',
+		'saldo_structureel' => 'balance_structural',
+		'saldo_voor_mutaties' => 'balance_before_movements',
+		'sector_omschrijving' => 'sector_description',
+		'size_criteria_netto_omzet' => 'size_criteria_net_revenue',
+		'sleutel_naam' => 'key_name',
+		'so_verklaring_nummer' => 'rnd_declaration_number',
+		'subsidie_regeling' => 'subsidy_scheme',
+		'taak_omschrijving' => 'task_description',
+		'taakveld_naam' => 'task_field_name',
+		'totaal' => 'total',
+		'totaal_afdracht' => 'total_remittance',
+		'totaal_aftrek' => 'total_deduction',
+		'totaal_aftrekbaar' => 'total_deductible',
+		'totaal_box1_inkomen' => 'total_box1_income',
+		'totaal_box3_inkomen' => 'total_box3_income',
+		'totaal_brutoloon' => 'total_gross_pay',
+		'totaal_eindheffingen_wkr' => 'total_final_levies_work_related_costs',
+		'totaal_euomzet' => 'total_eu_revenue',
+		'totaal_geconstateerde_fouten' => 'total_identified_errors',
+		'totaal_geconstateerde_onzekerheden' => 'total_identified_uncertainties',
+		'totaal_heffingskortingen' => 'total_tax_credits',
+		'totaal_lasten_inclusief_mutaties_reserves' => 'total_expenses_including_reserve_movements',
+		'totaal_lhafdracht' => 'total_payroll_tax_remittance',
+		'totaal_loonheffing' => 'total_payroll_tax',
+		'totaal_netto_betaald' => 'total_net_paid',
+		'totaal_premies_sv' => 'total_social_insurance_contributions',
+		'totaal_premies_svafdracht' => 'total_social_insurance_remittance',
+		'totaal_prognose' => 'total_forecast',
+		'totaal_rendementsgrondslag' => 'total_yield_basis',
+		'totaal_score' => 'total_score',
+		'totaal_uren' => 'total_hours',
+		'totaal_verschuldigd' => 'total_due',
+		'totaal_zvw' => 'total_health_insurance',
+		'totaal_zvwafdracht' => 'total_health_insurance_remittance',
+		'uitkering_jaar' => 'distribution_year',
+		'verplichting_nummer' => 'commitment_number',
+		'verrekend_boekjaar' => 'settled_financial_year',
+		'verwachte_eind_datum' => 'expected_end_date',
+		'verwachte_omzet' => 'expected_revenue',
+		'voorgaande_omzet' => 'previous_revenue',
+		'vorig_jaar' => 'previous_year',
+		'vrijvallen_jaar_cents' => 'releases_year_cents',
+		'wbso_verklaring_nummer' => 'rnd_tax_credit_declaration_number',
+		'week_eind' => 'week_end',
+		'winst_uit_onderneming' => 'profit_from_enterprise',
+		'zzp_naam' => 'freelancer_name',
 	];
 
 	/**
@@ -152,7 +295,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function getName(): string {
-		return 'Move shillinq amount data from the Dutch columns to the English ones';
+		return 'Move shillinq data from the Dutch columns to the English ones';
 	}//end getName()
 
 	/**
@@ -167,7 +310,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 	public function run(IOutput $output): void {
 		$tables = $this->shardTables();
 		if ($tables === []) {
-			$output->info('RenameDutchAmountColumns: no shillinq shard tables on this install; nothing to do.');
+			$output->info('RenameDutchColumns: no shillinq shard tables on this install; nothing to do.');
 			return;
 		}
 
@@ -186,7 +329,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 
 				if ($this->hasCollision(columns: $columns, target: $new) === true) {
 					$this->logger->warning(
-						'RenameDutchAmountColumns: two sources target one destination; migrating neither.',
+						'RenameDutchColumns: two sources target one destination; migrating neither.',
 						['table' => $table, 'source' => $old, 'destination' => $new]
 					);
 					$refused++;
@@ -214,7 +357,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 		}//end foreach
 
 		$output->info(
-			'RenameDutchAmountColumns: ' . $renamed . ' renamed, ' . $copied . ' back-filled, '
+			'RenameDutchColumns: ' . $renamed . ' renamed, ' . $copied . ' back-filled, '
 			. $refused . ' refused, across ' . count($tables) . ' shard table(s).'
 		);
 
@@ -259,7 +402,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 			)->fetchAll(\PDO::FETCH_COLUMN);
 		} catch (Exception $e) {
 			$this->logger->warning(
-				'RenameDutchAmountColumns: could not resolve the shillinq registers; skipping.',
+				'RenameDutchColumns: could not resolve the shillinq registers; skipping.',
 				['exception' => $e->getMessage()]
 			);
 			return [];
@@ -277,7 +420,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 			$stmt->execute();
 		} catch (\Throwable $e) {
 			$this->logger->warning(
-				'RenameDutchAmountColumns: could not list tables; skipping.',
+				'RenameDutchColumns: could not list tables; skipping.',
 				['exception' => $e->getMessage()]
 			);
 			return [];
@@ -322,7 +465,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 			$stmt->execute();
 		} catch (\Throwable $e) {
 			$this->logger->warning(
-				'RenameDutchAmountColumns: could not read columns; skipping table.',
+				'RenameDutchColumns: could not read columns; skipping table.',
 				['table' => $table, 'exception' => $e->getMessage()]
 			);
 			return [];
@@ -352,7 +495,7 @@ class RenameDutchAmountColumns implements IRepairStep {
 			return true;
 		} catch (Exception $e) {
 			$this->logger->warning(
-				'RenameDutchAmountColumns: statement failed; leaving the column as it was.',
+				'RenameDutchColumns: statement failed; leaving the column as it was.',
 				['sql' => $sql, 'exception' => $e->getMessage()]
 			);
 			return false;

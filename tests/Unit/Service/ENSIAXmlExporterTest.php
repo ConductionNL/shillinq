@@ -91,8 +91,8 @@ class ENSIAXmlExporterTest extends TestCase {
 	 */
 	public function testRenderIncludesOrganisationIdentification(): void {
 		$cyclus = [
-			'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-			'jaar' => 2026,
+			'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+			'year' => 2026,
 			'status' => 'college-akkoord',
 			'vraagSetVersion' => 'BIO-1.04-2026',
 			'verklaringFile' => 'docudesk://files/12345',
@@ -113,8 +113,8 @@ class ENSIAXmlExporterTest extends TestCase {
 	 */
 	public function testRenderIncludesEvidenceShaHashes(): void {
 		$cyclus = [
-			'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-			'jaar' => 2026,
+			'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+			'year' => 2026,
 			'status' => 'college-akkoord',
 			'vraagSetVersion' => 'BIO-1.04-2026',
 			'verklaringFile' => 'docudesk://files/12345',
@@ -132,7 +132,7 @@ class ENSIAXmlExporterTest extends TestCase {
 				'bewijsstukken' => [
 					[
 						'fileRef' => 'docudesk://files/98765',
-						'omschrijving' => 'Access control policy effective 2025-01-01',
+						'description' => 'Access control policy effective 2025-01-01',
 						'sha256' => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
 					],
 				],
@@ -154,8 +154,8 @@ class ENSIAXmlExporterTest extends TestCase {
 	 */
 	public function testRenderGroupsQuestionsPerDomein(): void {
 		$cyclus = [
-			'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-			'jaar' => 2026,
+			'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+			'year' => 2026,
 			'status' => 'college-akkoord',
 			'vraagSetVersion' => 'BIO-1.04-2026',
 			'verklaringFile' => 'docudesk://files/12345',
@@ -186,8 +186,8 @@ class ENSIAXmlExporterTest extends TestCase {
 	 */
 	public function testRenderIsRegenerableWithUpdatedTimestamp(): void {
 		$cyclus = [
-			'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-			'jaar' => 2026,
+			'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+			'year' => 2026,
 			'status' => 'college-akkoord',
 			'vraagSetVersion' => 'BIO-1.04-2026',
 			'verklaringFile' => 'docudesk://files/12345',
@@ -209,8 +209,8 @@ class ENSIAXmlExporterTest extends TestCase {
 	 */
 	public function testRenderProducesValidXml(): void {
 		$cyclus = [
-			'organisatie' => ['kvk' => '12345678', 'naam' => 'Gemeente Voorbeeld'],
-			'jaar' => 2026,
+			'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+			'year' => 2026,
 			'status' => 'college-akkoord',
 			'vraagSetVersion' => 'BIO-1.04-2026',
 			'verklaringFile' => 'docudesk://files/12345',

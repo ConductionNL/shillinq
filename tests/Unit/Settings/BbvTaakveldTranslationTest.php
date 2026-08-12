@@ -75,9 +75,9 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 */
 	public static function catalogueProvider(): array {
 		$iv3Pairs = [
-			'naam' => 'naamEn',
-			'hoofdfunctieNaam' => 'hoofdfunctieNaamEn',
-			'omschrijvingIv3' => 'omschrijvingIv3En',
+			'name' => 'naamEn',
+			'mainFunctionName' => 'hoofdfunctieNaamEn',
+			'descriptionIv3' => 'omschrijvingIv3En',
 		];
 
 		return [
@@ -89,7 +89,7 @@ class BbvTaakveldTranslationTest extends TestCase {
 				[
 					'name' => 'nameEn',
 					'description' => 'descriptionEn',
-					'programmaFocus' => 'programmaFocusEn',
+					'programmeFocus' => 'programmaFocusEn',
 				],
 			],
 		];
@@ -165,7 +165,7 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 * @dataProvider catalogueProvider
 	 */
 	public function testEveryTaakveldHasBothANameAndAnEnglishName(string $file, array $pairs): void {
-		$dutchName = isset($pairs['naam']) ? 'naam' : 'name';
+		$dutchName = isset($pairs['name']) ? 'name' : 'name';
 		$englishName = $pairs[$dutchName];
 
 		$taakvelden = $this->taakvelden($file);

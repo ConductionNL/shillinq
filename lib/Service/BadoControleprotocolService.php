@@ -518,7 +518,7 @@ class BadoControleprotocolService {
 			->findAll(['filters' => ['protocol' => $protocolId]]);
 
 		foreach ($assurances as $assurance) {
-			if (trim((string)($assurance['regelingCode'] ?? '')) === '') {
+			if (trim((string)($assurance['schemeCode'] ?? '')) === '') {
 				return false;
 			}
 		}

@@ -290,7 +290,7 @@
 					{"key": "rjVariant", "label": "RJ variant", "type": "string"},
 					{"key": "complyOrExplainMotivation", "label": "Comply-or-explain", "type": "string"},
 					{"key": "sizeCriteriaBalanstotaal", "label": "Balanstotaal", "type": "number"},
-					{"key": "sizeCriteriaNettoOmzet", "label": "Netto-omzet", "type": "number"},
+					{"key": "sizeCriteriaNetRevenue", "label": "Netto-omzet", "type": "number"},
 					{"key": "sizeCriteriaGemiddeldWerknemers", "label": "Gem. werknemers", "type": "number"},
 					{"key": "sizeCriteriaBreachYears", "label": "Breach years", "type": "number"},
 					{"key": "avaBesluitReference", "label": "AVA-besluit", "type": "string"},

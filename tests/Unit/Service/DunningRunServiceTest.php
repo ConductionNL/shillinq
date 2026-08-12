@@ -119,7 +119,7 @@ final class DunningRunServiceTest extends TestCase {
 		$os->seed(schema: 'DunningLadder', rows: [
 			[
 				'id' => 'ladder-1',
-				'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'naam' => 'Reminder', 'kanaal' => 'EMAIL']],
+				'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'name' => 'Reminder', 'kanaal' => 'EMAIL']],
 			],
 		]);
 
@@ -260,7 +260,7 @@ final class DunningRunServiceTest extends TestCase {
 
 		$resolved = $service->resumePause(administrationId: 'adm-1', pauseId: 'pause-1', resolution: 'resolve');
 		self::assertSame('resolved', $resolved['lifecycleState']);
-		self::assertNotNull($resolved['pauzeEind']);
+		self::assertNotNull($resolved['pauseEnd']);
 
 		$os2 = new InMemoryObjectService();
 		$os2->seed(schema: 'DunningPauseDispute', rows: [

@@ -140,7 +140,7 @@ class PayrollService {
 		$thuiswerkverg = $this->calculator->thuiswerkvergoeding(thuiswerkdagen: $thuiswerkdagen);
 		$expatVrij = $this->calculator->expat30PctVrijstelling(
 			brutoLoon: $basissalaris,
-			applies: (bool)($werknemer['expat30PctRegeling'] ?? false)
+			applies: (bool)($werknemer['expat30PctScheme'] ?? false)
 		);
 
 		$brutoComponenten = [
@@ -261,11 +261,11 @@ class PayrollService {
 		return [
 			'werkgeverId' => $werkgeverId,
 			'periodeId' => $periodeId,
-			'totaalLoonheffing' => $loonheffing,
-			'totaalEindheffingenWKR' => $wkr,
-			'totaalPremiesSV' => $premiesSV,
-			'totaalZVW' => $zvw,
-			'totaalAfdracht' => $totaal,
+			'totalPayrollTax' => $loonheffing,
+			'totalFinalLeviesWorkRelatedCosts' => $wkr,
+			'totalSocialInsuranceContributions' => $premiesSV,
+			'totalHealthInsurance' => $zvw,
+			'totalRemittance' => $totaal,
 			'vervaldagAfdracht' => $this->laatsteDagVolgendeMaand(periode: $periode),
 			'status' => 'VOORBEREID',
 			'sbrInstanceRef' => null,
@@ -320,55 +320,55 @@ class PayrollService {
 		$regels = [
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_BRUTOLONEN,
-				'naam' => 'Brutolonen',
+				'name' => 'Brutolonen',
 				'debet' => $f($brutoC),
 				'credit' => 0.0,
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_BELASTINGVRIJE_VERGOEDINGEN,
-				'naam' => 'Belastingvrije vergoedingen',
+				'name' => 'Belastingvrije vergoedingen',
 				'debet' => $f($vrijC),
 				'credit' => 0.0,
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_SOCIALE_LASTEN_WG,
-				'naam' => 'Sociale lasten WG',
+				'name' => 'Sociale lasten WG',
 				'debet' => $f($svWgC),
 				'credit' => 0.0,
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_ZVW_WG,
-				'naam' => 'ZVW-bijdrage WG',
+				'name' => 'ZVW-bijdrage WG',
 				'debet' => $f($zvwC),
 				'credit' => 0.0,
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_PENSIOEN_WG,
-				'naam' => 'Pensioenpremie WG',
+				'name' => 'Pensioenpremie WG',
 				'debet' => $f($pensWgC),
 				'credit' => 0.0,
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_TE_BETALEN_NETTO_LOON,
-				'naam' => 'Te betalen netto loon',
+				'name' => 'Te betalen netto loon',
 				'debet' => 0.0,
 				'credit' => $f($nettoC),
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_LH,
-				'naam' => 'Af te dragen loonheffing',
+				'name' => 'Af te dragen loonheffing',
 				'debet' => 0.0,
 				'credit' => $f($lhC),
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PREMIES_SV_ZVW,
-				'naam' => 'Af te dragen premies SV+ZVW',
+				'name' => 'Af te dragen premies SV+ZVW',
 				'debet' => 0.0,
 				'credit' => $f(($svWgC + $zvwC)),
 			],
 			[
 				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PENSIOEN,
-				'naam' => 'Af te dragen pensioenpremie',
+				'name' => 'Af te dragen pensioenpremie',
 				'debet' => 0.0,
 				'credit' => $f(($pensWgC + $pensWnC)),
 			],
@@ -569,7 +569,7 @@ class PayrollService {
 	 * @return string|null Due date (Y-m-d) or null.
 	 */
 	private function laatsteDagVolgendeMaand(?array $periode): ?string {
-		$eind = ($periode['periodeEind'] ?? null);
+		$eind = ($periode['periodEnd'] ?? null);
 		if (is_string($eind) === false || $eind === '') {
 			return null;
 		}
