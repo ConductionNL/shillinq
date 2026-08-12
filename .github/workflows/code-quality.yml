@@ -72,7 +72,7 @@ jobs:
       # journeydoc-capture all pin `fromJSON(inputs.nextcloud-test-refs)[0]`, so
       # stable31 sitting FIRST meant all three ran entirely on the version
       # openregister cannot load.
-      nextcloud-test-refs: '["stable32", "stable33"]'
+      nextcloud-test-refs: '["stable34"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
