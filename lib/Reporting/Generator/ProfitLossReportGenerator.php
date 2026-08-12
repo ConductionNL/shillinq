@@ -53,6 +53,40 @@ use PhpOffice\PhpWord\PhpWord;
 final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator
 {
     /**
+     * Dutch `accountType` tokens accepted on READ, normalised to the English
+     * bucket names this app uses internally.
+     *
+     * These are NOT app vocabulary and are deliberately not renamed. They are
+     * INPUT tokens: values that already sit in customer data or arrive from a
+     * bookkeeping import, where `baten` / `lasten` are the statutory Dutch
+     * terms an accountant's export actually writes. The adapter boundary is
+     * the one place the English-only rule exempts, and this is that boundary.
+     *
+     * The distinction matters because it was got wrong once here: the
+     * vocabulary rename translated `'baten'` to `'revenue'` inside the match,
+     * which produced a duplicate arm, so accounts typed `baten` matched
+     * nothing, fell through to `continue`, and VANISHED from the profit-and-
+     * loss report. Renaming a stored value is a data migration, not an edit.
+     *
+     * Everything downstream of this map is English: the buckets are `revenue`
+     * and `expense`, and no Dutch token escapes this class.
+     *
+     * @var array<string, string>
+     */
+    private const ACCOUNT_TYPE_ALIASES = [
+        // English, already canonical.
+        'revenue'     => 'revenue',
+        'income'      => 'revenue',
+        'expenses'    => 'expense',
+        'expense'     => 'expense',
+        // Dutch, accepted on read only.
+        'opbrengsten' => 'revenue',
+        'baten'       => 'revenue',
+        'kosten'      => 'expense',
+        'lasten'      => 'expense',
+    ];
+
+    /**
      * The catalogue report-type id this generator produces.
      *
      * @return string
@@ -225,11 +259,7 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator
 
         foreach ($accounts as $account) {
             $type   = strtolower($this->str($account, 'accountType', 'type', 'category'));
-            $bucket = match ($type) {
-                'revenue', 'income', 'opbrengsten', 'baten' => 'revenue',
-                'expenses', 'expense', 'kosten', 'lasten' => 'expense',
-                default => null,
-            };
+            $bucket = (self::ACCOUNT_TYPE_ALIASES[$type] ?? null);
 
             if ($bucket === null) {
                 continue;
