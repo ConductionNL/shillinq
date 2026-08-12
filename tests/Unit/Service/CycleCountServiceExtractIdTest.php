@@ -339,6 +339,90 @@ class CycleCountServiceExtractIdTest extends TestCase
     }//end testThrowingSerialiserFallsThroughToTheUuidProbe()
 
     /**
+     * An entity with NO uuid property at all yields '' — the property_exists arm.
+     *
+     * Distinct from the case below: here `property_exists($saved, 'uuid')` is
+     * false, so the magic accessor is never called. There the property exists and
+     * merely holds null.
+     *
+     * @return void
+     */
+    public function testEntityWithoutUuidPropertyYieldsEmptyString(): void
+    {
+        // phpcs:disable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
+        $noUuidProperty = new class {
+            public function jsonSerialize(): array
+            {
+                return ['name' => 'no identifiers here'];
+            }
+        };
+        // phpcs:enable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
+
+        $this->assertFalse(property_exists($noUuidProperty, 'uuid'), 'fixture precondition');
+        $this->assertSame('', $this->extract($noUuidProperty));
+
+    }//end testEntityWithoutUuidPropertyYieldsEmptyString()
+
+    /**
+     * A jsonSerialize() returning a non-array is ignored, not trusted.
+     *
+     * @return void
+     */
+    public function testNonArrayRenderedPayloadIsIgnored(): void
+    {
+        // phpcs:disable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
+        $scalarPayload = new class {
+
+            private ?string $uuid = '4dbf0ba6-c05f-4ca8-a76b-65ff48488af6';
+
+            public function __call(string $name, array $arguments): mixed
+            {
+                return match ($name) {
+                    'getUuid' => $this->uuid,
+                    default => throw new \BadMethodCallException($name),
+                };
+            }
+
+            public function jsonSerialize(): mixed
+            {
+                return 'not-an-array';
+            }
+        };
+        // phpcs:enable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
+
+        // Falls past the rendered arm and recovers via the uuid probe.
+        $this->assertSame(self::UUID, $this->extract($scalarPayload));
+
+    }//end testNonArrayRenderedPayloadIsIgnored()
+
+    /**
+     * A throwing magic accessor is contained and yields ''.
+     *
+     * `Entity::__call()` raises BadFunctionCallException for a property the
+     * entity does not carry; that must not escape into the caller.
+     *
+     * @return void
+     */
+    public function testThrowingAccessorIsContained(): void
+    {
+        // phpcs:disable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
+        $throwingAccessor = new class {
+
+            private ?string $uuid = null;
+
+            public function __call(string $name, array $arguments): mixed
+            {
+                throw new \BadFunctionCallException($name);
+            }
+        };
+        // phpcs:enable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
+
+        $this->assertTrue(property_exists($throwingAccessor, 'uuid'), 'fixture precondition');
+        $this->assertSame('', $this->extract($throwingAccessor));
+
+    }//end testThrowingAccessorIsContained()
+
+    /**
      * An entity carrying neither a rendered id nor a uuid yields ''.
      *
      * The caller treats '' as "no id derivable" and refuses — fail-closed.
