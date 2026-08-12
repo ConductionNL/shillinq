@@ -37,22 +37,21 @@ namespace OCA\Shillinq\Reporting;
 /**
  * Immutable rendered-report payload.
  */
-final class GeneratedFile
-{
-    /**
-     * Construct an immutable rendered-report payload.
-     *
-     * @param string $fileName Suggested file name including extension.
-     * @param string $mimeType MIME type (e.g. application/pdf, text/xml, text/csv).
-     * @param string $format   Short format label: pdf | xml | xbrl | csv | json.
-     * @param string $content  The rendered file bytes.
-     */
-    public function __construct(
-        public readonly string $fileName,
-        public readonly string $mimeType,
-        public readonly string $format,
-        public readonly string $content,
-    ) {
+final class GeneratedFile {
+	/**
+	 * Construct an immutable rendered-report payload.
+	 *
+	 * @param string $fileName Suggested file name including extension.
+	 * @param string $mimeType MIME type (e.g. application/pdf, text/xml, text/csv).
+	 * @param string $format Short format label: pdf | xml | xbrl | csv | json.
+	 * @param string $content The rendered file bytes.
+	 */
+	public function __construct(
+		public readonly string $fileName,
+		public readonly string $mimeType,
+		public readonly string $format,
+		public readonly string $content,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 }//end class

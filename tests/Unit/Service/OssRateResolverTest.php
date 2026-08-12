@@ -32,78 +32,73 @@ use Psr\Container\ContainerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class OssRateResolverTest extends TestCase
-{
+class OssRateResolverTest extends TestCase {
 
-    /**
-     * The resolver under test (container is never touched by the pure methods).
-     *
-     * @var OssRateResolver
-     */
-    private OssRateResolver $resolver;
+	/**
+	 * The resolver under test (container is never touched by the pure methods).
+	 *
+	 * @var OssRateResolver
+	 */
+	private OssRateResolver $resolver;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $container      = $this->createMock(ContainerInterface::class);
-        $appConfig      = $this->createMock(IAppConfig::class);
-        $this->resolver = new OssRateResolver($container, $appConfig);
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$container = $this->createMock(ContainerInterface::class);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$this->resolver = new OssRateResolver($container, $appConfig);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * EU member states other than NL are OSS destinations (REQ-OSS-001).
-     *
-     * @return void
-     */
-    public function testIsOssDestination(): void
-    {
-        self::assertTrue($this->resolver->isOssDestination('DE'));
-        self::assertTrue($this->resolver->isOssDestination('fr'));
-        self::assertFalse($this->resolver->isOssDestination('NL'));
-        self::assertFalse($this->resolver->isOssDestination('US'));
-        self::assertFalse($this->resolver->isOssDestination(''));
+	/**
+	 * EU member states other than NL are OSS destinations (REQ-OSS-001).
+	 *
+	 * @return void
+	 */
+	public function testIsOssDestination(): void {
+		self::assertTrue($this->resolver->isOssDestination('DE'));
+		self::assertTrue($this->resolver->isOssDestination('fr'));
+		self::assertFalse($this->resolver->isOssDestination('NL'));
+		self::assertFalse($this->resolver->isOssDestination('US'));
+		self::assertFalse($this->resolver->isOssDestination(''));
 
-    }//end testIsOssDestination()
+	}//end testIsOssDestination()
 
-    /**
-     * The rate in force on a date is the row whose validity window covers it (REQ-OSS-007/011).
-     *
-     * @return void
-     */
-    public function testSelectRateInForce(): void
-    {
-        $rates = [
-            ['ratePercentage' => 19.0, 'validFrom' => '2024-01-01', 'validUntil' => '2026-12-31', '@self' => ['slug' => 'de-2024']],
-            ['ratePercentage' => 20.0, 'validFrom' => '2027-01-01', 'validUntil' => null, '@self' => ['slug' => 'de-2027']],
-        ];
+	/**
+	 * The rate in force on a date is the row whose validity window covers it (REQ-OSS-007/011).
+	 *
+	 * @return void
+	 */
+	public function testSelectRateInForce(): void {
+		$rates = [
+			['ratePercentage' => 19.0, 'validFrom' => '2024-01-01', 'validUntil' => '2026-12-31', '@self' => ['slug' => 'de-2024']],
+			['ratePercentage' => 20.0, 'validFrom' => '2027-01-01', 'validUntil' => null, '@self' => ['slug' => 'de-2027']],
+		];
 
-        $row = $this->resolver->selectRateInForce($rates, '2026-06-15');
-        self::assertNotNull($row);
-        self::assertSame(19.0, $row['ratePercentage']);
+		$row = $this->resolver->selectRateInForce($rates, '2026-06-15');
+		self::assertNotNull($row);
+		self::assertSame(19.0, $row['ratePercentage']);
 
-        $future = $this->resolver->selectRateInForce($rates, '2027-03-01');
-        self::assertSame(20.0, $future['ratePercentage']);
+		$future = $this->resolver->selectRateInForce($rates, '2027-03-01');
+		self::assertSame(20.0, $future['ratePercentage']);
 
-    }//end testSelectRateInForce()
+	}//end testSelectRateInForce()
 
-    /**
-     * No row in force on the invoice date resolves to null (REQ-OSS-001 missing-rate block).
-     *
-     * @return void
-     */
-    public function testSelectRateInForceReturnsNullWhenMissing(): void
-    {
-        $rates = [['ratePercentage' => 19.0, 'validFrom' => '2027-01-01', 'validUntil' => null]];
-        self::assertNull($this->resolver->selectRateInForce($rates, '2026-06-15'));
-        self::assertNull($this->resolver->selectRateInForce([], '2026-06-15'));
+	/**
+	 * No row in force on the invoice date resolves to null (REQ-OSS-001 missing-rate block).
+	 *
+	 * @return void
+	 */
+	public function testSelectRateInForceReturnsNullWhenMissing(): void {
+		$rates = [['ratePercentage' => 19.0, 'validFrom' => '2027-01-01', 'validUntil' => null]];
+		self::assertNull($this->resolver->selectRateInForce($rates, '2026-06-15'));
+		self::assertNull($this->resolver->selectRateInForce([], '2026-06-15'));
 
-    }//end testSelectRateInForceReturnsNullWhenMissing()
+	}//end testSelectRateInForceReturnsNullWhenMissing()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

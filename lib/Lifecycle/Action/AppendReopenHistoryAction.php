@@ -61,114 +61,108 @@ use OCP\IUserSession;
  *
  * @spec openspec/specs/bookkeeping-period-close/spec.md
  */
-class AppendReopenHistoryAction implements LifecycleActionInterface
-{
+class AppendReopenHistoryAction implements LifecycleActionInterface {
 
-    /**
-     * Default target property when `actionParameters.target` is absent.
-     *
-     * @var string
-     */
-    private const DEFAULT_TARGET = 'reopenedHistory';
+	/**
+	 * Default target property when `actionParameters.target` is absent.
+	 *
+	 * @var string
+	 */
+	private const DEFAULT_TARGET = 'reopenedHistory';
 
-    /**
-     * Constructor.
-     *
-     * @param IUserSession $userSession Supplies the acting user for `reopenedBy`.
-     */
-    public function __construct(
-        private readonly IUserSession $userSession,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param IUserSession $userSession Supplies the acting user for `reopenedBy`.
+	 */
+	public function __construct(
+		private readonly IUserSession $userSession,
+	) {
+	}//end __construct()
 
-    /**
-     * Record the reopen on the transitioning FiscalPeriod (REQ-PC-006).
-     *
-     * @param array<string,mixed> $objectData   Payload after the state moved to `open`.
-     * @param array<string,mixed> $previousData Payload before the transition (carries the prior close stamps).
-     * @param array<string,mixed> $parameters   Declared `actionParameters` (`target`).
-     * @param string              $actionName   The declared action name.
-     *
-     * @return array<string,mixed> The payload with the history appended and the close stamps cleared.
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $actionName is required by
-     * OpenRegister's LifecycleActionInterface; this handler serves exactly one
-     * declared action and has no dispatch to do on the name.
-     *
-     * @spec openspec/specs/bookkeeping-period-close/spec.md
-     */
-    public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array
-    {
-        $target = trim((string) ($parameters['target'] ?? self::DEFAULT_TARGET));
-        if ($target === '') {
-            $target = self::DEFAULT_TARGET;
-        }
+	/**
+	 * Record the reopen on the transitioning FiscalPeriod (REQ-PC-006).
+	 *
+	 * @param array<string,mixed> $objectData Payload after the state moved to `open`.
+	 * @param array<string,mixed> $previousData Payload before the transition (carries the prior close stamps).
+	 * @param array<string,mixed> $parameters Declared `actionParameters` (`target`).
+	 * @param string $actionName The declared action name.
+	 *
+	 * @return array<string,mixed> The payload with the history appended and the close stamps cleared.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $actionName is required by
+	 * OpenRegister's LifecycleActionInterface; this handler serves exactly one
+	 * declared action and has no dispatch to do on the name.
+	 *
+	 * @spec openspec/specs/bookkeeping-period-close/spec.md
+	 */
+	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+		$target = trim((string)($parameters['target'] ?? self::DEFAULT_TARGET));
+		if ($target === '') {
+			$target = self::DEFAULT_TARGET;
+		}
 
-        $history = ($objectData[$target] ?? []);
-        if (is_array($history) === false) {
-            $history = [];
-        }
+		$history = ($objectData[$target] ?? []);
+		if (is_array($history) === false) {
+			$history = [];
+		}
 
-        $closedAt = ($previousData['closedAt'] ?? ($objectData['closedAt'] ?? null));
-        $closedBy = ($previousData['closedBy'] ?? ($objectData['closedBy'] ?? null));
+		$closedAt = ($previousData['closedAt'] ?? ($objectData['closedAt'] ?? null));
+		$closedBy = ($previousData['closedBy'] ?? ($objectData['closedBy'] ?? null));
 
-        if ($this->alreadyRecorded(history: $history, closedAt: $closedAt, closedBy: $closedBy) === false) {
-            $history[] = [
-                'closedAt'    => $closedAt,
-                'closedBy'    => $closedBy,
-                'reopenedAt'  => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
-                'reopenedBy'  => $this->actor(),
-                'closeReason' => (string) ($objectData['closeReason'] ?? ''),
-            ];
-        }
+		if ($this->alreadyRecorded(history: $history, closedAt: $closedAt, closedBy: $closedBy) === false) {
+			$history[] = [
+				'closedAt' => $closedAt,
+				'closedBy' => $closedBy,
+				'reopenedAt' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+				'reopenedBy' => $this->actor(),
+				'closeReason' => (string)($objectData['closeReason'] ?? ''),
+			];
+		}
 
-        $objectData[$target]    = $history;
-        $objectData['closedAt'] = null;
-        $objectData['closedBy'] = null;
+		$objectData[$target] = $history;
+		$objectData['closedAt'] = null;
+		$objectData['closedBy'] = null;
 
-        return $objectData;
+		return $objectData;
+	}//end execute()
 
-    }//end execute()
+	/**
+	 * Whether the tail of the history already records this same reopen.
+	 *
+	 * @param array<int,mixed> $history The current reopenedHistory entries.
+	 * @param mixed $closedAt The prior close timestamp.
+	 * @param mixed $closedBy The prior closing actor.
+	 *
+	 * @return bool True when the last entry already describes this reopen.
+	 */
+	private function alreadyRecorded(array $history, mixed $closedAt, mixed $closedBy): bool {
+		if ($history === []) {
+			return false;
+		}
 
-    /**
-     * Whether the tail of the history already records this same reopen.
-     *
-     * @param array<int,mixed> $history  The current reopenedHistory entries.
-     * @param mixed            $closedAt The prior close timestamp.
-     * @param mixed            $closedBy The prior closing actor.
-     *
-     * @return bool True when the last entry already describes this reopen.
-     */
-    private function alreadyRecorded(array $history, mixed $closedAt, mixed $closedBy): bool
-    {
-        if ($history === []) {
-            return false;
-        }
+		$last = end($history);
+		if (is_array($last) === false) {
+			return false;
+		}
 
-        $last = end($history);
-        if (is_array($last) === false) {
-            return false;
-        }
+		return ($last['closedAt'] ?? null) === $closedAt
+			&& ($last['closedBy'] ?? null) === $closedBy
+			&& ($last['reopenedAt'] ?? null) !== null;
 
-        return ($last['closedAt'] ?? null) === $closedAt
-            && ($last['closedBy'] ?? null) === $closedBy
-            && ($last['reopenedAt'] ?? null) !== null;
+	}//end alreadyRecorded()
 
-    }//end alreadyRecorded()
+	/**
+	 * Resolve the acting user id, falling back to `system` outside a session.
+	 *
+	 * @return string The acting user id.
+	 */
+	private function actor(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return 'system';
+		}
 
-    /**
-     * Resolve the acting user id, falling back to `system` outside a session.
-     *
-     * @return string The acting user id.
-     */
-    private function actor(): string
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return 'system';
-        }
-
-        return $user->getUID();
-
-    }//end actor()
+		return $user->getUID();
+	}//end actor()
 }//end class

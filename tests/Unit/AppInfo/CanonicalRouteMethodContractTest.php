@@ -56,233 +56,220 @@ use ReflectionClass;
  * This test asserts the ITEM (each individual method), never the container
  * (the controller class merely existing).
  */
-final class CanonicalRouteMethodContractTest extends TestCase
-{
+final class CanonicalRouteMethodContractTest extends TestCase {
 
-    /**
-     * The canonical route names supplied by
-     * `\OCA\OpenRegister\AppHost\Routes::standard()`.
-     *
-     * Keyed `controllerPrefix => [method, ...]`. This list is a local mirror:
-     * shillinq's `appinfo/routes.php` delegates to `Routes::standard()`
-     * unconditionally and ships NO local fallback copy, so the literal strings
-     * `settings#update` etc. do not appear anywhere in this repository. A test
-     * that grepped `appinfo/routes.php` for them would find nothing and could
-     * only pass vacuously or fail wrongly — see
-     * `testRouteTableStillDelegatesToTheCanonicalAppHostTable()` for the
-     * assertion that IS meaningful here, and
-     * `testCanonicalListMatchesOpenRegistersOwnTableWhenReachable()` for the
-     * best-effort cross-check against the real source.
-     *
-     * @var array<string, array<int, string>>
-     */
-    private const CANONICAL_ROUTES = [
-        'Dashboard'   => ['page', 'catchAll'],
-        'Settings'    => ['index', 'create', 'update', 'load'],
-        'Preferences' => ['getPreference', 'setPreference'],
-        'Metrics'     => ['index'],
-        'Health'      => ['index'],
-    ];
+	/**
+	 * The canonical route names supplied by
+	 * `\OCA\OpenRegister\AppHost\Routes::standard()`.
+	 *
+	 * Keyed `controllerPrefix => [method, ...]`. This list is a local mirror:
+	 * shillinq's `appinfo/routes.php` delegates to `Routes::standard()`
+	 * unconditionally and ships NO local fallback copy, so the literal strings
+	 * `settings#update` etc. do not appear anywhere in this repository. A test
+	 * that grepped `appinfo/routes.php` for them would find nothing and could
+	 * only pass vacuously or fail wrongly — see
+	 * `testRouteTableStillDelegatesToTheCanonicalAppHostTable()` for the
+	 * assertion that IS meaningful here, and
+	 * `testCanonicalListMatchesOpenRegistersOwnTableWhenReachable()` for the
+	 * best-effort cross-check against the real source.
+	 *
+	 * @var array<string, array<int, string>>
+	 */
+	private const CANONICAL_ROUTES = [
+		'Dashboard' => ['page', 'catchAll'],
+		'Settings' => ['index', 'create', 'update', 'load'],
+		'Preferences' => ['getPreference', 'setPreference'],
+		'Metrics' => ['index'],
+		'Health' => ['index'],
+	];
 
+	/**
+	 * Absolute path to this app's repository root.
+	 *
+	 * @return string The repository root path.
+	 */
+	private function repoRoot(): string {
+		return dirname(__DIR__, 3);
+	}//end repoRoot()
 
-    /**
-     * Absolute path to this app's repository root.
-     *
-     * @return string The repository root path.
-     */
-    private function repoRoot(): string
-    {
-        return dirname(__DIR__, 3);
+	/**
+	 * The route table must still delegate to the canonical AppHost table.
+	 *
+	 * This is the positive control for the method contract below: the leaf-owed
+	 * method list only binds while `appinfo/routes.php` actually returns
+	 * `Routes::standard(...)`. If shillinq ever stopped delegating (inlining
+	 * its own table instead), the canonical list would be stale and a green
+	 * from the next test would mean nothing. Read that green only together
+	 * with a green here.
+	 *
+	 * @return void
+	 */
+	public function testRouteTableStillDelegatesToTheCanonicalAppHostTable(): void {
+		$routesFile = $this->repoRoot() . '/appinfo/routes.php';
+		$this->assertFileExists($routesFile, 'appinfo/routes.php must exist');
 
-    }//end repoRoot()
+		$routesSource = file_get_contents($routesFile);
+		$this->assertIsString($routesSource, 'appinfo/routes.php must be readable');
 
+		$this->assertStringContainsString(
+			'OCA\\OpenRegister\\AppHost\\Routes::standard',
+			$routesSource,
+			'appinfo/routes.php no longer delegates to the canonical AppHost route '
+			. 'table. The leaf-owed method list in this test is derived from that '
+			. 'table, so it is now stale — re-derive it from whatever routes.php '
+			. 'actually declares before trusting the method contract test.'
+		);
 
-    /**
-     * The route table must still delegate to the canonical AppHost table.
-     *
-     * This is the positive control for the method contract below: the leaf-owed
-     * method list only binds while `appinfo/routes.php` actually returns
-     * `Routes::standard(...)`. If shillinq ever stopped delegating (inlining
-     * its own table instead), the canonical list would be stale and a green
-     * from the next test would mean nothing. Read that green only together
-     * with a green here.
-     *
-     * @return void
-     */
-    public function testRouteTableStillDelegatesToTheCanonicalAppHostTable(): void
-    {
-        $routesFile = $this->repoRoot().'/appinfo/routes.php';
-        $this->assertFileExists($routesFile, 'appinfo/routes.php must exist');
+	}//end testRouteTableStillDelegatesToTheCanonicalAppHostTable()
 
-        $routesSource = file_get_contents($routesFile);
-        $this->assertIsString($routesSource, 'appinfo/routes.php must be readable');
+	/**
+	 * Cross-check the local mirror against OpenRegister's real route table.
+	 *
+	 * OpenRegister is a runtime app dependency, not a composer dependency, so
+	 * its source is not present in this repository's `vendor/` and is normally
+	 * unreachable from a CI checkout. This half therefore SKIPS in CI and
+	 * provides no signal there — it only fires for a developer running the
+	 * suite from a workspace that also holds an openregister checkout. It is
+	 * kept because when it does run it is the only thing that can catch the
+	 * local mirror drifting from the real table.
+	 *
+	 * @return void
+	 */
+	public function testCanonicalListMatchesOpenRegistersOwnTableWhenReachable(): void {
+		$candidates = [
+			$this->repoRoot() . '/../openregister/lib/AppHost/Routes.php',
+			$this->repoRoot() . '/../../openregister/lib/AppHost/Routes.php',
+			'/var/www/html/custom_apps/openregister/lib/AppHost/Routes.php',
+		];
 
-        $this->assertStringContainsString(
-            'OCA\\OpenRegister\\AppHost\\Routes::standard',
-            $routesSource,
-            'appinfo/routes.php no longer delegates to the canonical AppHost route '
-            .'table. The leaf-owed method list in this test is derived from that '
-            .'table, so it is now stale — re-derive it from whatever routes.php '
-            .'actually declares before trusting the method contract test.'
-        );
+		$source = null;
+		foreach ($candidates as $candidate) {
+			if (file_exists($candidate) === true) {
+				$source = file_get_contents($candidate);
+				break;
+			}
+		}
 
-    }//end testRouteTableStillDelegatesToTheCanonicalAppHostTable()
+		if (is_string($source) === false) {
+			$this->markTestSkipped(
+				'OpenRegister\'s AppHost/Routes.php is not reachable from this checkout, '
+				. 'so the canonical route list cannot be cross-checked here. This is the '
+				. 'expected state in CI — treat the mirror in self::CANONICAL_ROUTES as '
+				. 'unverified by this run.'
+			);
+		}
 
+		foreach (self::CANONICAL_ROUTES as $prefix => $methods) {
+			foreach ($methods as $method) {
+				$routeName = lcfirst($prefix) . '#' . $method;
+				$this->assertStringContainsString(
+					"'" . $routeName . "'",
+					$source,
+					sprintf(
+						'OpenRegister\'s AppHost route table no longer declares "%s". '
+						. 'The mirror in this test is stale.',
+						$routeName
+					)
+				);
+			}
+		}
 
-    /**
-     * Cross-check the local mirror against OpenRegister's real route table.
-     *
-     * OpenRegister is a runtime app dependency, not a composer dependency, so
-     * its source is not present in this repository's `vendor/` and is normally
-     * unreachable from a CI checkout. This half therefore SKIPS in CI and
-     * provides no signal there — it only fires for a developer running the
-     * suite from a workspace that also holds an openregister checkout. It is
-     * kept because when it does run it is the only thing that can catch the
-     * local mirror drifting from the real table.
-     *
-     * @return void
-     */
-    public function testCanonicalListMatchesOpenRegistersOwnTableWhenReachable(): void
-    {
-        $candidates = [
-            $this->repoRoot().'/../openregister/lib/AppHost/Routes.php',
-            $this->repoRoot().'/../../openregister/lib/AppHost/Routes.php',
-            '/var/www/html/custom_apps/openregister/lib/AppHost/Routes.php',
-        ];
+	}//end testCanonicalListMatchesOpenRegistersOwnTableWhenReachable()
 
-        $source = null;
-        foreach ($candidates as $candidate) {
-            if (file_exists($candidate) === true) {
-                $source = file_get_contents($candidate);
-                break;
-            }
-        }
+	/**
+	 * A controller this app ships itself must implement every canonical
+	 * method routed to it — the AppHost generic will not fill the gap.
+	 *
+	 * @return void
+	 */
+	public function testLeafOwnedControllersImplementEveryCanonicalMethodRoutedToThem(): void {
+		$inspected = 0;
+		$missing = [];
 
-        if (is_string($source) === false) {
-            $this->markTestSkipped(
-                'OpenRegister\'s AppHost/Routes.php is not reachable from this checkout, '
-                .'so the canonical route list cannot be cross-checked here. This is the '
-                .'expected state in CI — treat the mirror in self::CANONICAL_ROUTES as '
-                .'unverified by this run.'
-            );
-        }
+		foreach (self::CANONICAL_ROUTES as $prefix => $methods) {
+			$class = 'OCA\\Shillinq\\Controller\\' . $prefix . 'Controller';
 
-        foreach (self::CANONICAL_ROUTES as $prefix => $methods) {
-            foreach ($methods as $method) {
-                $routeName = lcfirst($prefix).'#'.$method;
-                $this->assertStringContainsString(
-                    "'".$routeName."'",
-                    $source,
-                    sprintf(
-                        'OpenRegister\'s AppHost route table no longer declares "%s". '
-                        .'The mirror in this test is stale.',
-                        $routeName
-                    )
-                );
-            }
-        }
+			// The class file existing on disk is what makes the AppHost skip
+			// the alias. `class_exists()` alone would also be satisfied by the
+			// DI alias target in a booted container, which is precisely the
+			// case this test must NOT treat as leaf-owned.
+			$file = $this->repoRoot() . '/lib/Controller/' . $prefix . 'Controller.php';
+			if (file_exists($file) === false) {
+				continue;
+			}
 
-    }//end testCanonicalListMatchesOpenRegistersOwnTableWhenReachable()
+			$this->assertTrue(
+				class_exists($class),
+				sprintf('%s exists on disk but does not autoload as %s', $file, $class)
+			);
 
+			$reflection = new ReflectionClass($class);
 
-    /**
-     * A controller this app ships itself must implement every canonical
-     * method routed to it — the AppHost generic will not fill the gap.
-     *
-     * @return void
-     */
-    public function testLeafOwnedControllersImplementEveryCanonicalMethodRoutedToThem(): void
-    {
-        $inspected = 0;
-        $missing   = [];
+			foreach ($methods as $method) {
+				$inspected++;
+				if ($reflection->hasMethod($method) === false) {
+					$missing[] = $prefix . 'Controller::' . $method . '()';
+					continue;
+				}
 
-        foreach (self::CANONICAL_ROUTES as $prefix => $methods) {
-            $class = 'OCA\\Shillinq\\Controller\\'.$prefix.'Controller';
+				$this->assertTrue(
+					$reflection->getMethod($method)->isPublic(),
+					sprintf('%s::%s() must be public to be dispatchable', $class, $method)
+				);
+			}
+		}//end foreach
 
-            // The class file existing on disk is what makes the AppHost skip
-            // the alias. `class_exists()` alone would also be satisfied by the
-            // DI alias target in a booted container, which is precisely the
-            // case this test must NOT treat as leaf-owned.
-            $file = $this->repoRoot().'/lib/Controller/'.$prefix.'Controller.php';
-            if (file_exists($file) === false) {
-                continue;
-            }
+		// Positive control: an empty $missing ("nothing is missing") is only
+		// meaningful if something was actually inspected. Zero inspections
+		// would mean the lib/Controller path probe silently matched nothing.
+		$this->assertGreaterThan(
+			0,
+			$inspected,
+			'No leaf-owned canonical controller was inspected — the lib/Controller '
+			. 'path probe is broken, so the empty finding list means nothing.'
+		);
 
-            $this->assertTrue(
-                class_exists($class),
-                sprintf('%s exists on disk but does not autoload as %s', $file, $class)
-            );
+		$this->assertSame(
+			[],
+			$missing,
+			sprintf(
+				'The canonical AppHost route table routes to these method(s), but this '
+				. 'app ships the controller itself so no generic is aliased in. Each of '
+				. "these is a 500, not a 404.\n  - %s",
+				implode("\n  - ", $missing)
+			)
+		);
 
-            $reflection = new ReflectionClass($class);
+	}//end testLeafOwnedControllersImplementEveryCanonicalMethodRoutedToThem()
 
-            foreach ($methods as $method) {
-                $inspected++;
-                if ($reflection->hasMethod($method) === false) {
-                    $missing[] = $prefix.'Controller::'.$method.'()';
-                    continue;
-                }
+	/**
+	 * The settings write must be reachable under BOTH canonical verbs.
+	 *
+	 * Named explicitly (rather than only via the loop above) so a regression
+	 * reports the actual defect by name instead of a generic list entry.
+	 *
+	 * @return void
+	 */
+	public function testSettingsControllerExposesBothCanonicalWriteMethods(): void {
+		$reflection = new ReflectionClass(\OCA\Shillinq\Controller\SettingsController::class);
 
-                $this->assertTrue(
-                    $reflection->getMethod($method)->isPublic(),
-                    sprintf('%s::%s() must be public to be dispatchable', $class, $method)
-                );
-            }
-        }//end foreach
+		foreach (['update', 'create'] as $method) {
+			$this->assertTrue(
+				$reflection->hasMethod($method),
+				sprintf(
+					'SettingsController::%s() does not exist. The canonical AppHost table '
+					. 'routes PUT /api/settings to settings#update and POST /api/settings '
+					. 'to settings#create; a missing method is a 500, not a 404.',
+					$method
+				)
+			);
 
-        // Positive control: an empty $missing ("nothing is missing") is only
-        // meaningful if something was actually inspected. Zero inspections
-        // would mean the lib/Controller path probe silently matched nothing.
-        $this->assertGreaterThan(
-            0,
-            $inspected,
-            'No leaf-owned canonical controller was inspected — the lib/Controller '
-            .'path probe is broken, so the empty finding list means nothing.'
-        );
+			$this->assertTrue(
+				$reflection->getMethod($method)->isPublic(),
+				sprintf('SettingsController::%s() must be public to be dispatchable', $method)
+			);
+		}
 
-        $this->assertSame(
-            [],
-            $missing,
-            sprintf(
-                "The canonical AppHost route table routes to these method(s), but this "
-                ."app ships the controller itself so no generic is aliased in. Each of "
-                ."these is a 500, not a 404.\n  - %s",
-                implode("\n  - ", $missing)
-            )
-        );
-
-    }//end testLeafOwnedControllersImplementEveryCanonicalMethodRoutedToThem()
-
-
-    /**
-     * The settings write must be reachable under BOTH canonical verbs.
-     *
-     * Named explicitly (rather than only via the loop above) so a regression
-     * reports the actual defect by name instead of a generic list entry.
-     *
-     * @return void
-     */
-    public function testSettingsControllerExposesBothCanonicalWriteMethods(): void
-    {
-        $reflection = new ReflectionClass(\OCA\Shillinq\Controller\SettingsController::class);
-
-        foreach (['update', 'create'] as $method) {
-            $this->assertTrue(
-                $reflection->hasMethod($method),
-                sprintf(
-                    'SettingsController::%s() does not exist. The canonical AppHost table '
-                    .'routes PUT /api/settings to settings#update and POST /api/settings '
-                    .'to settings#create; a missing method is a 500, not a 404.',
-                    $method
-                )
-            );
-
-            $this->assertTrue(
-                $reflection->getMethod($method)->isPublic(),
-                sprintf('SettingsController::%s() must be public to be dispatchable', $method)
-            );
-        }
-
-    }//end testSettingsControllerExposesBothCanonicalWriteMethods()
-
+	}//end testSettingsControllerExposesBothCanonicalWriteMethods()
 
 }//end class

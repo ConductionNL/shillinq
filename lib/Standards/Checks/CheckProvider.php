@@ -32,22 +32,21 @@ namespace OCA\Shillinq\Standards\Checks;
 /**
  * Contract for a per-domain set of executable rule checks.
  */
-interface CheckProvider
-{
-    /**
-     * The domain's checks, keyed by OpenRegister object type then by RuleCatalogue
-     * rule id. Each value is a predicate `fn(array $object, array $context): bool`.
-     *
-     * @return array<string, array<string, callable>>
-     */
-    public static function checks(): array;
+interface CheckProvider {
+	/**
+	 * The domain's checks, keyed by OpenRegister object type then by RuleCatalogue
+	 * rule id. Each value is a predicate `fn(array $object, array $context): bool`.
+	 *
+	 * @return array<string, array<string, callable>>
+	 */
+	public static function checks(): array;
 
-    /**
-     * Test-data field defaults this provider's checks expect, keyed by object type.
-     * Each entry is `[fieldName => defaultValue]`; the seeder backfills any missing
-     * field on the seeded objects of that type. Return [] when no seeding is needed.
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    public static function seedSpec(): array;
+	/**
+	 * Test-data field defaults this provider's checks expect, keyed by object type.
+	 * Each entry is `[fieldName => defaultValue]`; the seeder backfills any missing
+	 * field on the seeded objects of that type. Return [] when no seeding is needed.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function seedSpec(): array;
 }//end interface

@@ -26,59 +26,54 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for OCA\OpenRegister\Event\ObjectCreatingEvent.
  */
-class ObjectCreatingEvent extends Event
-{
+class ObjectCreatingEvent extends Event {
 
-    /**
-     * Errors set by a rejecting hook.
-     *
-     * @var array<string,mixed>
-     */
-    private array $errors = [];
+	/**
+	 * Errors set by a rejecting hook.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private array $errors = [];
 
-    /**
-     * Construct the event.
-     *
-     * @param ObjectEntity|null $object The object being created.
-     */
-    public function __construct(private ?ObjectEntity $object=null)
-    {
-        parent::__construct();
+	/**
+	 * Construct the event.
+	 *
+	 * @param ObjectEntity|null $object The object being created.
+	 */
+	public function __construct(
+		private ?ObjectEntity $object = null,
+	) {
+		parent::__construct();
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the object being created.
-     *
-     * @return ObjectEntity|null
-     */
-    public function getObject(): ?ObjectEntity
-    {
-        return $this->object;
+	/**
+	 * Return the object being created.
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getObject(): ?ObjectEntity {
+		return $this->object;
+	}//end getObject()
 
-    }//end getObject()
+	/**
+	 * Record the rejection reason.
+	 *
+	 * @param array<string,mixed> $errors The rejection payload.
+	 *
+	 * @return void
+	 */
+	public function setErrors(array $errors): void {
+		$this->errors = $errors;
 
-    /**
-     * Record the rejection reason.
-     *
-     * @param array<string,mixed> $errors The rejection payload.
-     *
-     * @return void
-     */
-    public function setErrors(array $errors): void
-    {
-        $this->errors = $errors;
+	}//end setErrors()
 
-    }//end setErrors()
-
-    /**
-     * Return the rejection reason.
-     *
-     * @return array<string,mixed>
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-
-    }//end getErrors()
+	/**
+	 * Return the rejection reason.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function getErrors(): array {
+		return $this->errors;
+	}//end getErrors()
 }//end class

@@ -30,84 +30,79 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class OssPaymentReconciliationTest extends TestCase
-{
+class OssPaymentReconciliationTest extends TestCase {
 
-    /**
-     * The service under test.
-     *
-     * @var OssPaymentReconciliation
-     */
-    private OssPaymentReconciliation $service;
+	/**
+	 * The service under test.
+	 *
+	 * @var OssPaymentReconciliation
+	 */
+	private OssPaymentReconciliation $service;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->service = new OssPaymentReconciliation();
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->service = new OssPaymentReconciliation();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * A transaction matches when amount + IBAN line up to the cent (REQ-OSS-008).
-     *
-     * @return void
-     */
-    public function testMatches(): void
-    {
-        $return = ['totalVatAmount' => 4732.18];
-        $tx     = ['amount' => 4732.18, 'ibanTo' => 'NL86 INGB 0002 4455 88'];
-        self::assertTrue($this->service->matches($return, $tx, 'NL86INGB0002445588'));
+	/**
+	 * A transaction matches when amount + IBAN line up to the cent (REQ-OSS-008).
+	 *
+	 * @return void
+	 */
+	public function testMatches(): void {
+		$return = ['totalVatAmount' => 4732.18];
+		$tx = ['amount' => 4732.18, 'ibanTo' => 'NL86 INGB 0002 4455 88'];
+		self::assertTrue($this->service->matches($return, $tx, 'NL86INGB0002445588'));
 
-        // Off by a cent -> no match.
-        self::assertFalse($this->service->matches($return, ['amount' => 4732.17, 'ibanTo' => 'NL86INGB0002445588'], 'NL86INGB0002445588'));
-        // Wrong IBAN -> no match.
-        self::assertFalse($this->service->matches($return, ['amount' => 4732.18, 'ibanTo' => 'NL00OTHER'], 'NL86INGB0002445588'));
+		// Off by a cent -> no match.
+		self::assertFalse($this->service->matches($return, ['amount' => 4732.17, 'ibanTo' => 'NL86INGB0002445588'], 'NL86INGB0002445588'));
+		// Wrong IBAN -> no match.
+		self::assertFalse($this->service->matches($return, ['amount' => 4732.18, 'ibanTo' => 'NL00OTHER'], 'NL86INGB0002445588'));
 
-    }//end testMatches()
+	}//end testMatches()
 
-    /**
-     * Marking paid requires a linked bank transaction and an equal amount (REQ-OSS-008).
-     *
-     * @return void
-     */
-    public function testCanMarkPaid(): void
-    {
-        $return = ['totalVatAmount' => 4732.18];
-        self::assertTrue($this->service->canMarkPaid(['bankTransactionId' => 'tx-1', 'amount' => 4732.18], $return));
-        self::assertFalse($this->service->canMarkPaid(['amount' => 4732.18], $return));
-        self::assertFalse($this->service->canMarkPaid(['bankTransactionId' => 'tx-1', 'amount' => 4000.0], $return));
+	/**
+	 * Marking paid requires a linked bank transaction and an equal amount (REQ-OSS-008).
+	 *
+	 * @return void
+	 */
+	public function testCanMarkPaid(): void {
+		$return = ['totalVatAmount' => 4732.18];
+		self::assertTrue($this->service->canMarkPaid(['bankTransactionId' => 'tx-1', 'amount' => 4732.18], $return));
+		self::assertFalse($this->service->canMarkPaid(['amount' => 4732.18], $return));
+		self::assertFalse($this->service->canMarkPaid(['bankTransactionId' => 'tx-1', 'amount' => 4000.0], $return));
 
-    }//end testCanMarkPaid()
+	}//end testCanMarkPaid()
 
-    /**
-     * A matching distribution reconciles; a divergence surfaces the difference (REQ-OSS-008).
-     *
-     * @return void
-     */
-    public function testReconcileDistribution(): void
-    {
-        $return = [
-            'lineItems' => [
-                ['countryCode' => 'DE', 'vatAmount' => 1802.0],
-                ['countryCode' => 'FR', 'vatAmount' => 1440.0],
-                ['countryCode' => 'IT', 'vatAmount' => 1490.18],
-            ],
-        ];
+	/**
+	 * A matching distribution reconciles; a divergence surfaces the difference (REQ-OSS-008).
+	 *
+	 * @return void
+	 */
+	public function testReconcileDistribution(): void {
+		$return = [
+			'lineItems' => [
+				['countryCode' => 'DE', 'vatAmount' => 1802.0],
+				['countryCode' => 'FR', 'vatAmount' => 1440.0],
+				['countryCode' => 'IT', 'vatAmount' => 1490.18],
+			],
+		];
 
-        $ok = $this->service->reconcileDistribution($return, ['DE' => 1802.0, 'FR' => 1440.0, 'IT' => 1490.18]);
-        self::assertSame('reconciled', $ok['status']);
-        self::assertEmpty($ok['differences']);
+		$ok = $this->service->reconcileDistribution($return, ['DE' => 1802.0, 'FR' => 1440.0, 'IT' => 1490.18]);
+		self::assertSame('reconciled', $ok['status']);
+		self::assertEmpty($ok['differences']);
 
-        $bad = $this->service->reconcileDistribution($return, ['DE' => 1800.0, 'FR' => 1440.0, 'IT' => 1490.18]);
-        self::assertSame('discrepancy', $bad['status']);
-        self::assertEqualsWithDelta(-2.0, $bad['differences']['DE'], 0.001);
+		$bad = $this->service->reconcileDistribution($return, ['DE' => 1800.0, 'FR' => 1440.0, 'IT' => 1490.18]);
+		self::assertSame('discrepancy', $bad['status']);
+		self::assertEqualsWithDelta(-2.0, $bad['differences']['DE'], 0.001);
 
-    }//end testReconcileDistribution()
+	}//end testReconcileDistribution()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

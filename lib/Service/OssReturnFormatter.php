@@ -41,160 +41,151 @@ use DOMDocument;
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-class OssReturnFormatter
-{
-    /**
-     * The OSS VAT return XML namespace this formatter targets.
-     *
-     * @var string
-     */
-    private const NS = 'urn:belastingdienst:oss:vat-return:v1';
+class OssReturnFormatter {
+	/**
+	 * The OSS VAT return XML namespace this formatter targets.
+	 *
+	 * @var string
+	 */
+	private const NS = 'urn:belastingdienst:oss:vat-return:v1';
 
-    /**
-     * Lifecycle precondition: may a draft return be finalised (REQ-OSS-005)?
-     *
-     * Permits finalisation only when an OSS registration is present and its status
-     * is active or voluntaryBelowThreshold; otherwise the caller refuses with
-     * `oss.registration.invalid`. Also requires at least the period + identifier.
-     *
-     * @param array<string,mixed> $ossReturn    Draft OssReturn object array.
-     * @param array<string,mixed> $registration The OssRegistration the return belongs to.
-     *
-     * @return bool True when finalisation is permitted.
-     *
-     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
-     */
-    public function canFinalize(array $ossReturn, array $registration): bool
-    {
-        $status         = (string) ($registration['registrationStatus'] ?? '');
-        $activeStatuses = ['active', 'voluntaryBelowThreshold'];
-        if (in_array($status, $activeStatuses, true) === false) {
-            return false;
-        }
+	/**
+	 * Lifecycle precondition: may a draft return be finalised (REQ-OSS-005)?
+	 *
+	 * Permits finalisation only when an OSS registration is present and its status
+	 * is active or voluntaryBelowThreshold; otherwise the caller refuses with
+	 * `oss.registration.invalid`. Also requires at least the period + identifier.
+	 *
+	 * @param array<string,mixed> $ossReturn Draft OssReturn object array.
+	 * @param array<string,mixed> $registration The OssRegistration the return belongs to.
+	 *
+	 * @return bool True when finalisation is permitted.
+	 *
+	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
+	 */
+	public function canFinalize(array $ossReturn, array $registration): bool {
+		$status = (string)($registration['registrationStatus'] ?? '');
+		$activeStatuses = ['active', 'voluntaryBelowThreshold'];
+		if (in_array($status, $activeStatuses, true) === false) {
+			return false;
+		}
 
-        if (empty($registration['ossIdentifier']) === true) {
-            return false;
-        }
+		if (empty($registration['ossIdentifier']) === true) {
+			return false;
+		}
 
-        return empty($ossReturn['periodYear']) === false && empty($ossReturn['periodQuarter']) === false;
+		return empty($ossReturn['periodYear']) === false && empty($ossReturn['periodQuarter']) === false;
+	}//end canFinalize()
 
-    }//end canFinalize()
+	/**
+	 * Format a money amount as a EUR string with exactly two decimals (REQ-OSS-005).
+	 *
+	 * @param mixed $amount Money amount.
+	 *
+	 * @return string Amount with two decimal places, dot separator.
+	 */
+	private function money(mixed $amount): string {
+		return number_format((float)($amount ?? 0), 2, '.', '');
+	}//end money()
 
-    /**
-     * Format a money amount as a EUR string with exactly two decimals (REQ-OSS-005).
-     *
-     * @param mixed $amount Money amount.
-     *
-     * @return string Amount with two decimal places, dot separator.
-     */
-    private function money(mixed $amount): string
-    {
-        return number_format((float) ($amount ?? 0), 2, '.', '');
+	/**
+	 * Render a draft OssReturn as an XSD-shaped XML payload (REQ-OSS-005).
+	 *
+	 * Built entirely with DOMDocument node construction — no XML is parsed, so there
+	 * is no XXE attack surface. Country codes, the OSS-identifier, the period, EUR
+	 * amounts (two decimals) and the seller IBAN are emitted per the Belastingdienst
+	 * OSS upload specification.
+	 *
+	 * @param array<string,mixed> $ossReturn The draft OssReturn to render.
+	 * @param string $ossId Seller OSS-identifier from the registration.
+	 * @param string $sellerIban Seller IBAN for refund routing.
+	 *
+	 * @return string The XML payload.
+	 *
+	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
+	 */
+	public function toXml(array $ossReturn, string $ossId, string $sellerIban): string {
+		$doc = new DOMDocument('1.0', 'UTF-8');
+		$doc->formatOutput = true;
 
-    }//end money()
+		$root = $doc->createElementNS(self::NS, 'OSSVATReturn');
+		$doc->appendChild($root);
 
-    /**
-     * Render a draft OssReturn as an XSD-shaped XML payload (REQ-OSS-005).
-     *
-     * Built entirely with DOMDocument node construction — no XML is parsed, so there
-     * is no XXE attack surface. Country codes, the OSS-identifier, the period, EUR
-     * amounts (two decimals) and the seller IBAN are emitted per the Belastingdienst
-     * OSS upload specification.
-     *
-     * @param array<string,mixed> $ossReturn  The draft OssReturn to render.
-     * @param string              $ossId      Seller OSS-identifier from the registration.
-     * @param string              $sellerIban Seller IBAN for refund routing.
-     *
-     * @return string The XML payload.
-     *
-     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
-     */
-    public function toXml(array $ossReturn, string $ossId, string $sellerIban): string
-    {
-        $doc = new DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
+		$period = (string)($ossReturn['periodYear'] ?? '') . '-' . (string)($ossReturn['periodQuarter'] ?? '');
+		$root->appendChild($doc->createElement('OSSIdentifier', htmlspecialchars($ossId, ENT_XML1)));
+		$root->appendChild($doc->createElement('Period', htmlspecialchars($period, ENT_XML1)));
+		$root->appendChild($doc->createElement('Type', htmlspecialchars((string)($ossReturn['type'] ?? 'regular'), ENT_XML1)));
+		$root->appendChild($doc->createElement('SellerIBAN', htmlspecialchars($sellerIban, ENT_XML1)));
 
-        $root = $doc->createElementNS(self::NS, 'OSSVATReturn');
-        $doc->appendChild($root);
+		$lines = $doc->createElement('Lines');
+		$root->appendChild($lines);
+		foreach (($ossReturn['lineItems'] ?? []) as $line) {
+			$node = $doc->createElement('Line');
+			$node->appendChild($doc->createElement('CountryCode', htmlspecialchars((string)($line['countryCode'] ?? ''), ENT_XML1)));
+			$node->appendChild($doc->createElement('RateCategory', htmlspecialchars((string)($line['rateCategory'] ?? ''), ENT_XML1)));
+			$node->appendChild($doc->createElement('TaxableBase', $this->money(amount: ($line['taxableBase'] ?? 0))));
+			$node->appendChild($doc->createElement('VatRate', $this->money(amount: ($line['vatRate'] ?? 0))));
+			$node->appendChild($doc->createElement('VatAmount', $this->money(amount: ($line['vatAmount'] ?? 0))));
+			$lines->appendChild($node);
+		}
 
-        $period = (string) ($ossReturn['periodYear'] ?? '').'-'.(string) ($ossReturn['periodQuarter'] ?? '');
-        $root->appendChild($doc->createElement('OSSIdentifier', htmlspecialchars($ossId, ENT_XML1)));
-        $root->appendChild($doc->createElement('Period', htmlspecialchars($period, ENT_XML1)));
-        $root->appendChild($doc->createElement('Type', htmlspecialchars((string) ($ossReturn['type'] ?? 'regular'), ENT_XML1)));
-        $root->appendChild($doc->createElement('SellerIBAN', htmlspecialchars($sellerIban, ENT_XML1)));
+		$totals = $doc->createElement('Totals');
+		$totals->appendChild($doc->createElement('TotalTaxableBase', $this->money(amount: ($ossReturn['totalTaxableBase'] ?? 0))));
+		$totals->appendChild($doc->createElement('TotalVatAmount', $this->money(amount: ($ossReturn['totalVatAmount'] ?? 0))));
+		$root->appendChild($totals);
 
-        $lines = $doc->createElement('Lines');
-        $root->appendChild($lines);
-        foreach (($ossReturn['lineItems'] ?? []) as $line) {
-            $node = $doc->createElement('Line');
-            $node->appendChild($doc->createElement('CountryCode', htmlspecialchars((string) ($line['countryCode'] ?? ''), ENT_XML1)));
-            $node->appendChild($doc->createElement('RateCategory', htmlspecialchars((string) ($line['rateCategory'] ?? ''), ENT_XML1)));
-            $node->appendChild($doc->createElement('TaxableBase', $this->money(amount: ($line['taxableBase'] ?? 0))));
-            $node->appendChild($doc->createElement('VatRate', $this->money(amount: ($line['vatRate'] ?? 0))));
-            $node->appendChild($doc->createElement('VatAmount', $this->money(amount: ($line['vatAmount'] ?? 0))));
-            $lines->appendChild($node);
-        }
+		return (string)$doc->saveXML();
+	}//end toXml()
 
-        $totals = $doc->createElement('Totals');
-        $totals->appendChild($doc->createElement('TotalTaxableBase', $this->money(amount: ($ossReturn['totalTaxableBase'] ?? 0))));
-        $totals->appendChild($doc->createElement('TotalVatAmount', $this->money(amount: ($ossReturn['totalVatAmount'] ?? 0))));
-        $root->appendChild($totals);
+	/**
+	 * Render a draft OssReturn as a CSV fallback payload (REQ-OSS-005).
+	 *
+	 * One header row plus one row per (country, rate category) line, then a totals
+	 * row. Amounts are EUR with two decimals; country codes are ISO 3166-1 alpha-2.
+	 *
+	 * @param array<string,mixed> $ossReturn The draft OssReturn to render.
+	 * @param string $ossId Seller OSS-identifier.
+	 *
+	 * @return string The CSV payload.
+	 *
+	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
+	 */
+	public function toCsv(array $ossReturn, string $ossId): string {
+		$period = (string)($ossReturn['periodYear'] ?? '') . '-' . (string)($ossReturn['periodQuarter'] ?? '');
+		$rows = [];
+		$rows[] = ['ossIdentifier', 'period', 'countryCode', 'rateCategory', 'taxableBase', 'vatRate', 'vatAmount'];
+		foreach (($ossReturn['lineItems'] ?? []) as $line) {
+			$rows[] = [
+				$ossId,
+				$period,
+				(string)($line['countryCode'] ?? ''),
+				(string)($line['rateCategory'] ?? ''),
+				$this->money(amount: ($line['taxableBase'] ?? 0)),
+				$this->money(amount: ($line['vatRate'] ?? 0)),
+				$this->money(amount: ($line['vatAmount'] ?? 0)),
+			];
+		}
 
-        return (string) $doc->saveXML();
+		$totalBase = $this->money(amount: ($ossReturn['totalTaxableBase'] ?? 0));
+		$totalVat = $this->money(amount: ($ossReturn['totalVatAmount'] ?? 0));
+		$rows[] = ['TOTAL', $period, '', '', $totalBase, '', $totalVat];
 
-    }//end toXml()
+		$out = '';
+		foreach ($rows as $row) {
+			$escaped = array_map(
+				static function ($cell): string {
+					$value = (string)$cell;
+					if (str_contains($value, ',') === true || str_contains($value, '"') === true) {
+						return '"' . str_replace('"', '""', $value) . '"';
+					}
 
-    /**
-     * Render a draft OssReturn as a CSV fallback payload (REQ-OSS-005).
-     *
-     * One header row plus one row per (country, rate category) line, then a totals
-     * row. Amounts are EUR with two decimals; country codes are ISO 3166-1 alpha-2.
-     *
-     * @param array<string,mixed> $ossReturn The draft OssReturn to render.
-     * @param string              $ossId     Seller OSS-identifier.
-     *
-     * @return string The CSV payload.
-     *
-     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
-     */
-    public function toCsv(array $ossReturn, string $ossId): string
-    {
-        $period = (string) ($ossReturn['periodYear'] ?? '').'-'.(string) ($ossReturn['periodQuarter'] ?? '');
-        $rows   = [];
-        $rows[] = ['ossIdentifier', 'period', 'countryCode', 'rateCategory', 'taxableBase', 'vatRate', 'vatAmount'];
-        foreach (($ossReturn['lineItems'] ?? []) as $line) {
-            $rows[] = [
-                $ossId,
-                $period,
-                (string) ($line['countryCode'] ?? ''),
-                (string) ($line['rateCategory'] ?? ''),
-                $this->money(amount: ($line['taxableBase'] ?? 0)),
-                $this->money(amount: ($line['vatRate'] ?? 0)),
-                $this->money(amount: ($line['vatAmount'] ?? 0)),
-            ];
-        }
+					return $value;
+				},
+				$row
+			);
+			$out .= implode(',', $escaped) . "\n";
+		}
 
-        $totalBase = $this->money(amount: ($ossReturn['totalTaxableBase'] ?? 0));
-        $totalVat  = $this->money(amount: ($ossReturn['totalVatAmount'] ?? 0));
-        $rows[]    = ['TOTAL', $period, '', '', $totalBase, '', $totalVat];
-
-        $out = '';
-        foreach ($rows as $row) {
-            $escaped = array_map(
-                static function ($cell): string {
-                    $value = (string) $cell;
-                    if (str_contains($value, ',') === true || str_contains($value, '"') === true) {
-                        return '"'.str_replace('"', '""', $value).'"';
-                    }
-
-                    return $value;
-                },
-                $row
-            );
-            $out    .= implode(',', $escaped)."\n";
-        }
-
-        return $out;
-
-    }//end toCsv()
+		return $out;
+	}//end toCsv()
 }//end class

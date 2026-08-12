@@ -40,315 +40,302 @@ use RuntimeException;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class PayrollJaaropgaveServiceTest extends TestCase
-{
+final class PayrollJaaropgaveServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Set up shared mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
-        $this->logger = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up shared mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build a PayrollJaaropgaveService over the in-memory ObjectService stub.
-     *
-     * @param array<string,array<int,array<string,mixed>>> $data  Schema => rows.
-     * @param array<int,array<string,mixed>>               $saved Saved capture.
-     *
-     * @return PayrollJaaropgaveService
-     */
-    private function buildService(array $data, array &$saved): PayrollJaaropgaveService
-    {
-        $stub = new class($data, $saved) {
+	/**
+	 * Build a PayrollJaaropgaveService over the in-memory ObjectService stub.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
+	 * @param array<int,array<string,mixed>> $saved Saved capture.
+	 *
+	 * @return PayrollJaaropgaveService
+	 */
+	private function buildService(array $data, array &$saved): PayrollJaaropgaveService {
+		$stub = new class($data, $saved) {
 
-            /**
-             * Schema => rows.
-             *
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $data;
+			/**
+			 * Schema => rows.
+			 *
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $data;
 
-            /**
-             * Captured saves.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $saved;
+			/**
+			 * Captured saves.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $saved;
 
-            /**
-             * Active schema.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Active schema.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Constructor.
-             *
-             * @param array<string,array<int,array<string,mixed>>> $data  Data.
-             * @param array<int,array<string,mixed>>               $saved Saved capture ref.
-             */
-            public function __construct(array $data, array &$saved)
-            {
-                $this->data  = $data;
-                $this->saved = &$saved;
-            }//end __construct()
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string,array<int,array<string,mixed>>> $data Data.
+			 * @param array<int,array<string,mixed>> $saved Saved capture ref.
+			 */
+			public function __construct(array $data, array &$saved) {
+				$this->data = $data;
+				$this->saved = &$saved;
+			}//end __construct()
 
-            /**
-             * Fluent register setter (no-op).
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register setter (no-op).
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Filtered findAll.
-             *
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->data[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
+			/**
+			 * Filtered findAll.
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->data[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
+				if ($filters === []) {
+					return $rows;
+				}
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
+							return true;
+						}
+					)
+				);
+			}//end findAll()
 
-            /**
-             * Capture saved object.
-             *
-             * @param array<string,mixed> $object   Payload.
-             * @param string              $register Register slug.
-             * @param string              $schema   Schema slug.
-             *
-             * @return array<string,mixed>
-             */
-            public function saveObject(array $object, string $register='', string $schema=''): array
-            {
-                $object['@self'] = ['register' => $register, 'schema' => $schema];
-                $this->saved[]   = $object;
-                return $object;
-            }//end saveObject()
-        };
+			/**
+			 * Capture saved object.
+			 *
+			 * @param array<string,mixed> $object Payload.
+			 * @param string $register Register slug.
+			 * @param string $schema Schema slug.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+				$object['@self'] = ['register' => $register, 'schema' => $schema];
+				$this->saved[] = $object;
+				return $object;
+			}//end saveObject()
+		};
 
-        $this->container->method('get')->willReturn($stub);
+		$this->container->method('get')->willReturn($stub);
 
-        return new PayrollJaaropgaveService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            calculator: new PayrollCalculator(),
-            logger: $this->logger,
-        );
+		return new PayrollJaaropgaveService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			calculator: new PayrollCalculator(),
+			logger: $this->logger,
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * Build three months of identical loonstroken for one employee.
-     *
-     * @return array<string,array<int,array<string,mixed>>>
-     */
-    private function dataset(): array
-    {
-        $strook = static function (string $id, string $periodeId, float $ytdFiscaal, float $ytdVak): array {
-            return [
-                'id'                       => $id,
-                'periodeId'                => $periodeId,
-                'werknemerId'              => 'wn-1',
-                'administrationId'         => 'adm-1',
-                'fiscaalLoon'              => 4959.20,
-                'loonheffing'              => 1083.40,
-                'premiesSVWerkgever'       => ['totaal_werkgever' => 500.86],
-                'zvw'                      => ['afgedragen_wg' => 262.80],
-                'pensioen'                 => ['premie_wn_aandeel' => 355.68, 'premie_wg_aandeel' => 898.88],
-                'brutoComponenten'         => ['totaal_bruto' => 4959.20, 'vakantietoeslag_uitbetaling' => 0.0],
-                'nettoBetaald'             => 3520.12,
-                'cumulatieven'             => ['fiscaalloon_ytd' => $ytdFiscaal, 'vakantiegeld_reservering_ytd' => $ytdVak],
-                'vakantieDagenReservering' => ['opgebouwdEuro' => 395.20],
-            ];
-        };
+	/**
+	 * Build three months of identical loonstroken for one employee.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	private function dataset(): array {
+		$strook = static function (string $id, string $periodeId, float $ytdFiscaal, float $ytdVak): array {
+			return [
+				'id' => $id,
+				'periodeId' => $periodeId,
+				'werknemerId' => 'wn-1',
+				'administrationId' => 'adm-1',
+				'fiscaalLoon' => 4959.20,
+				'loonheffing' => 1083.40,
+				'premiesSVWerkgever' => ['totaal_werkgever' => 500.86],
+				'zvw' => ['afgedragen_wg' => 262.80],
+				'pensioen' => ['premie_wn_aandeel' => 355.68, 'premie_wg_aandeel' => 898.88],
+				'brutoComponenten' => ['totaal_bruto' => 4959.20, 'vakantietoeslag_uitbetaling' => 0.0],
+				'nettoBetaald' => 3520.12,
+				'cumulatieven' => ['fiscaalloon_ytd' => $ytdFiscaal, 'vakantiegeld_reservering_ytd' => $ytdVak],
+				'vakantieDagenReservering' => ['opgebouwdEuro' => 395.20],
+			];
+		};
 
-        return [
-            'LoonStrook' => [
-                $strook('ls-1', 'lp-2026-01', 4959.20, 395.20),
-                $strook('ls-2', 'lp-2026-02', 9918.40, 790.40),
-                $strook('ls-3', 'lp-2026-03', 14877.60, 1185.60),
-                // Different werknemer in same admin (must be filtered out).
-                [
-                    'id'               => 'ls-x',
-                    'periodeId'        => 'lp-2026-01',
-                    'werknemerId'      => 'wn-9',
-                    'administrationId' => 'adm-1',
-                    'fiscaalLoon'      => 99999.00,
-                ],
-                // Different year (must be filtered out).
-                $strook('ls-y', 'lp-2025-12', 60000.00, 4800.00) + ['werknemerId' => 'wn-1', 'administrationId' => 'adm-1'],
-            ],
-        ];
+		return [
+			'LoonStrook' => [
+				$strook('ls-1', 'lp-2026-01', 4959.20, 395.20),
+				$strook('ls-2', 'lp-2026-02', 9918.40, 790.40),
+				$strook('ls-3', 'lp-2026-03', 14877.60, 1185.60),
+				// Different werknemer in same admin (must be filtered out).
+				[
+					'id' => 'ls-x',
+					'periodeId' => 'lp-2026-01',
+					'werknemerId' => 'wn-9',
+					'administrationId' => 'adm-1',
+					'fiscaalLoon' => 99999.00,
+				],
+				// Different year (must be filtered out).
+				$strook('ls-y', 'lp-2025-12', 60000.00, 4800.00) + ['werknemerId' => 'wn-1', 'administrationId' => 'adm-1'],
+			],
+		];
 
-    }//end dataset()
+	}//end dataset()
 
-    /**
-     * The bouwJaaropgave sums all monthly stroken for the year.
-     *
-     * @return void
-     */
-    public function testBouwJaaropgaveSumsAllPerioden(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(data: $this->dataset(), saved: $saved);
+	/**
+	 * The bouwJaaropgave sums all monthly stroken for the year.
+	 *
+	 * @return void
+	 */
+	public function testBouwJaaropgaveSumsAllPerioden(): void {
+		$saved = [];
+		$service = $this->buildService(data: $this->dataset(), saved: $saved);
 
-        $statement = $service->bouwJaaropgave(
-            administrationId: 'adm-1',
-            werknemerId: 'wn-1',
-            jaar: 2026
-        );
+		$statement = $service->bouwJaaropgave(
+			administrationId: 'adm-1',
+			werknemerId: 'wn-1',
+			jaar: 2026
+		);
 
-        $this->assertSame(2026, $statement['jaar']);
-        $this->assertSame(3, $statement['aantalPerioden']);
-        $this->assertEqualsWithDelta(14877.60, $statement['fiscaalLoonJTD'], 0.005);
-        $this->assertEqualsWithDelta(3250.20, $statement['loonheffingJTD'], 0.005);
-        $this->assertEqualsWithDelta(1502.58, $statement['premiesSVWgJTD'], 0.005);
-        $this->assertEqualsWithDelta(788.40, $statement['zvwWgJTD'], 0.005);
-        $this->assertEqualsWithDelta(1067.04, $statement['pensioenWnJTD'], 0.005);
-        $this->assertEqualsWithDelta(2696.64, $statement['pensioenWgJTD'], 0.005);
-        $this->assertEqualsWithDelta(10560.36, $statement['nettoUitbetaaldJTD'], 0.005);
-        $this->assertSame('CONCEPT', $statement['status']);
-        $this->assertSame('adm-1', $statement['administrationId']);
-        $this->assertTrue($statement['cumulatievenConsistent']);
+		$this->assertSame(2026, $statement['jaar']);
+		$this->assertSame(3, $statement['aantalPerioden']);
+		$this->assertEqualsWithDelta(14877.60, $statement['fiscaalLoonJTD'], 0.005);
+		$this->assertEqualsWithDelta(3250.20, $statement['loonheffingJTD'], 0.005);
+		$this->assertEqualsWithDelta(1502.58, $statement['premiesSVWgJTD'], 0.005);
+		$this->assertEqualsWithDelta(788.40, $statement['zvwWgJTD'], 0.005);
+		$this->assertEqualsWithDelta(1067.04, $statement['pensioenWnJTD'], 0.005);
+		$this->assertEqualsWithDelta(2696.64, $statement['pensioenWgJTD'], 0.005);
+		$this->assertEqualsWithDelta(10560.36, $statement['nettoUitbetaaldJTD'], 0.005);
+		$this->assertSame('CONCEPT', $statement['status']);
+		$this->assertSame('adm-1', $statement['administrationId']);
+		$this->assertTrue($statement['cumulatievenConsistent']);
 
-    }//end testBouwJaaropgaveSumsAllPerioden()
+	}//end testBouwJaaropgaveSumsAllPerioden()
 
-    /**
-     * The cumulatievenConsistent flag flips false when the ytd snapshot diverges.
-     *
-     * @return void
-     */
-    public function testBouwJaaropgaveFlagsCumulatievenMismatch(): void
-    {
-        $data = $this->dataset();
-        // Tamper with the last cumulatieven snapshot.
-        $data['LoonStrook'][2]['cumulatieven']['fiscaalloon_ytd'] = 12345.67;
+	/**
+	 * The cumulatievenConsistent flag flips false when the ytd snapshot diverges.
+	 *
+	 * @return void
+	 */
+	public function testBouwJaaropgaveFlagsCumulatievenMismatch(): void {
+		$data = $this->dataset();
+		// Tamper with the last cumulatieven snapshot.
+		$data['LoonStrook'][2]['cumulatieven']['fiscaalloon_ytd'] = 12345.67;
 
-        $saved   = [];
-        $service = $this->buildService(data: $data, saved: $saved);
+		$saved = [];
+		$service = $this->buildService(data: $data, saved: $saved);
 
-        $statement = $service->bouwJaaropgave(
-            administrationId: 'adm-1',
-            werknemerId: 'wn-1',
-            jaar: 2026
-        );
+		$statement = $service->bouwJaaropgave(
+			administrationId: 'adm-1',
+			werknemerId: 'wn-1',
+			jaar: 2026
+		);
 
-        $this->assertFalse($statement['cumulatievenConsistent']);
+		$this->assertFalse($statement['cumulatievenConsistent']);
 
-    }//end testBouwJaaropgaveFlagsCumulatievenMismatch()
+	}//end testBouwJaaropgaveFlagsCumulatievenMismatch()
 
-    /**
-     * Persisting an inconsistent statement is refused.
-     *
-     * @return void
-     */
-    public function testPersistJaaropgaveRefusesInconsistent(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(data: $this->dataset(), saved: $saved);
+	/**
+	 * Persisting an inconsistent statement is refused.
+	 *
+	 * @return void
+	 */
+	public function testPersistJaaropgaveRefusesInconsistent(): void {
+		$saved = [];
+		$service = $this->buildService(data: $this->dataset(), saved: $saved);
 
-        $this->expectException(RuntimeException::class);
-        $service->persistJaaropgave(
-            jaaropgave: [
-                'werknemerId'            => 'wn-1',
-                'jaar'                   => 2026,
-                'cumulatievenConsistent' => false,
-            ]
-        );
+		$this->expectException(RuntimeException::class);
+		$service->persistJaaropgave(
+			jaaropgave: [
+				'werknemerId' => 'wn-1',
+				'jaar' => 2026,
+				'cumulatievenConsistent' => false,
+			]
+		);
 
-    }//end testPersistJaaropgaveRefusesInconsistent()
+	}//end testPersistJaaropgaveRefusesInconsistent()
 
-    /**
-     * Persisting a consistent statement captures the saved object.
-     *
-     * @return void
-     */
-    public function testPersistJaaropgaveSavesWhenConsistent(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(data: $this->dataset(), saved: $saved);
+	/**
+	 * Persisting a consistent statement captures the saved object.
+	 *
+	 * @return void
+	 */
+	public function testPersistJaaropgaveSavesWhenConsistent(): void {
+		$saved = [];
+		$service = $this->buildService(data: $this->dataset(), saved: $saved);
 
-        $statement = $service->bouwJaaropgave(
-            administrationId: 'adm-1',
-            werknemerId: 'wn-1',
-            jaar: 2026
-        );
+		$statement = $service->bouwJaaropgave(
+			administrationId: 'adm-1',
+			werknemerId: 'wn-1',
+			jaar: 2026
+		);
 
-        $service->persistJaaropgave(jaaropgave: $statement);
+		$service->persistJaaropgave(jaaropgave: $statement);
 
-        $this->assertCount(1, $saved);
-        $this->assertSame('Jaaropgave', $saved[0]['@self']['schema']);
+		$this->assertCount(1, $saved);
+		$this->assertSame('Jaaropgave', $saved[0]['@self']['schema']);
 
-    }//end testPersistJaaropgaveSavesWhenConsistent()
+	}//end testPersistJaaropgaveSavesWhenConsistent()
 }//end class

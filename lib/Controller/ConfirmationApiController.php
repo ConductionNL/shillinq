@@ -66,467 +66,453 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
  */
-class ConfirmationApiController extends Controller
-{
-    /**
-     * Construct the controller with DI dependencies.
-     *
-     * @param IRequest                     $request   Inbound request object.
-     * @param ContainerInterface           $container DI container for lazy
-     *                                                OR resolution.
-     * @param SettingsService              $settings  Shillinq settings
-     *                                                (register slug, OR
-     *                                                availability).
-     * @param AdministrationContextService $context   Per-administration
-     *                                                IDOR guard (ADR-005).
-     * @param ConfirmationTokenService     $tokens    Token lifecycle +
-     *                                                email dispatcher.
-     * @param ITimeFactory                 $time      Server clock.
-     * @param LoggerInterface              $logger    Logger for fail-closed
-     *                                                diagnostics.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly ContainerInterface $container,
-        private readonly SettingsService $settings,
-        private readonly AdministrationContextService $context,
-        private readonly ConfirmationTokenService $tokens,
-        private readonly ITimeFactory $time,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+class ConfirmationApiController extends Controller {
+	/**
+	 * Construct the controller with DI dependencies.
+	 *
+	 * @param IRequest $request Inbound request object.
+	 * @param ContainerInterface $container DI container for lazy
+	 *                                      OR resolution.
+	 * @param SettingsService $settings Shillinq settings
+	 *                                  (register slug, OR
+	 *                                  availability).
+	 * @param AdministrationContextService $context Per-administration
+	 *                                              IDOR guard (ADR-005).
+	 * @param ConfirmationTokenService $tokens Token lifecycle +
+	 *                                         email dispatcher.
+	 * @param ITimeFactory $time Server clock.
+	 * @param LoggerInterface $logger Logger for fail-closed
+	 *                                diagnostics.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly ContainerInterface $container,
+		private readonly SettingsService $settings,
+		private readonly AdministrationContextService $context,
+		private readonly ConfirmationTokenService $tokens,
+		private readonly ITimeFactory $time,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * PATCH /api/v1/appointments/{appointmentId}/confirm
-     *
-     * Validate the supplied token and move the appointment to `confirmed`.
-     * Public so the email link works in an anonymous browser; the token
-     * itself is the authorisation factor (constant-time hash check via
-     * TokenValidator::verify per REQ-BCF-004).
-     *
-     * @param string $appointmentId Appointment id (path parameter).
-     *
-     * @return JSONResponse 200 with the updated appointment on success;
-     *                      401 / 403 / 404 on token failures.
-     *
-     * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
-     */
-    #[PublicPage]
-    public function confirm(string $appointmentId=''): JSONResponse
-    {
-        $appointmentId = trim($appointmentId);
-        $token         = trim((string) $this->request->getParam('token', ''));
-        if ($appointmentId === '' || $token === '') {
-            return new JSONResponse(
-                ['error' => 'appointmentId and token are required'],
-                Http::STATUS_BAD_REQUEST,
-            );
-        }
+	/**
+	 * PATCH /api/v1/appointments/{appointmentId}/confirm
+	 *
+	 * Validate the supplied token and move the appointment to `confirmed`.
+	 * Public so the email link works in an anonymous browser; the token
+	 * itself is the authorisation factor (constant-time hash check via
+	 * TokenValidator::verify per REQ-BCF-004).
+	 *
+	 * @param string $appointmentId Appointment id (path parameter).
+	 *
+	 * @return JSONResponse 200 with the updated appointment on success;
+	 *                      401 / 403 / 404 on token failures.
+	 *
+	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+	 */
+	#[PublicPage]
+	public function confirm(string $appointmentId = ''): JSONResponse {
+		$appointmentId = trim($appointmentId);
+		$token = trim((string)$this->request->getParam('token', ''));
+		if ($appointmentId === '' || $token === '') {
+			return new JSONResponse(
+				['error' => 'appointmentId and token are required'],
+				Http::STATUS_BAD_REQUEST,
+			);
+		}
 
-        $result = $this->tokens->validate($appointmentId, $token);
-        if ($result['ok'] === false) {
-            return $this->mapValidationError(reason: $result['reason']);
-        }
+		$result = $this->tokens->validate($appointmentId, $token);
+		if ($result['ok'] === false) {
+			return $this->mapValidationError(reason: $result['reason']);
+		}
 
-        if ($this->settings->isOpenRegisterAvailable() === false) {
-            return new JSONResponse(
-                ['error' => 'OpenRegister unavailable'],
-                Http::STATUS_SERVICE_UNAVAILABLE,
-            );
-        }
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return new JSONResponse(
+				['error' => 'OpenRegister unavailable'],
+				Http::STATUS_SERVICE_UNAVAILABLE,
+			);
+		}
 
-        try {
-            $appointment = $this->loadAppointment(appointmentId: $appointmentId);
-            if ($appointment === null) {
-                return new JSONResponse(
-                    ['error' => 'Appointment not found'],
-                    Http::STATUS_NOT_FOUND,
-                );
-            }
+		try {
+			$appointment = $this->loadAppointment(appointmentId: $appointmentId);
+			if ($appointment === null) {
+				return new JSONResponse(
+					['error' => 'Appointment not found'],
+					Http::STATUS_NOT_FOUND,
+				);
+			}
 
-            $appointment['status']      = 'confirmed';
-            $appointment['confirmedAt'] = $this->nowIso();
-            $appointment['confirmationTokenId'] = (string) ($result['token']['tokenId'] ?? '');
+			$appointment['status'] = 'confirmed';
+			$appointment['confirmedAt'] = $this->nowIso();
+			$appointment['confirmationTokenId'] = (string)($result['token']['tokenId'] ?? '');
 
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $saved         = $objectService->saveObject(
-                object: $appointment,
-                register: $this->settings->getRegisterSlug(),
-                schema: 'Appointment',
-            );
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$saved = $objectService->saveObject(
+				object: $appointment,
+				register: $this->settings->getRegisterSlug(),
+				schema: 'Appointment',
+			);
 
-            $this->tokens->markRedeemed($result['token']);
+			$this->tokens->markRedeemed($result['token']);
 
-            $this->logger->info(
-                'ConfirmationApiController: appointment confirmed',
-                [
-                    'appointmentId' => $appointmentId,
-                    'tokenId'       => (string) ($result['token']['tokenId'] ?? ''),
-                ]
-            );
+			$this->logger->info(
+				'ConfirmationApiController: appointment confirmed',
+				[
+					'appointmentId' => $appointmentId,
+					'tokenId' => (string)($result['token']['tokenId'] ?? ''),
+				]
+			);
 
-            return new JSONResponse(
-                ['appointment' => $this->toArray(object: $saved)],
-                Http::STATUS_OK,
-            );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'ConfirmationApiController: confirm failed',
-                ['appointmentId' => $appointmentId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(
-                ['error' => 'Confirmation failed'],
-                Http::STATUS_INTERNAL_SERVER_ERROR,
-            );
-        }//end try
+			return new JSONResponse(
+				['appointment' => $this->toArray(object: $saved)],
+				Http::STATUS_OK,
+			);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'ConfirmationApiController: confirm failed',
+				['appointmentId' => $appointmentId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				['error' => 'Confirmation failed'],
+				Http::STATUS_INTERNAL_SERVER_ERROR,
+			);
+		}//end try
 
-    }//end confirm()
+	}//end confirm()
 
-    /**
-     * POST /api/v1/appointments/{appointmentId}/resend-confirmation
-     *
-     * Revoke the active token, issue a fresh one, dispatch a new email.
-     * Requires an authenticated session; the per-appointment authorisation
-     * guard rejects calls that don't match the appointment's customer or
-     * administration (ADR-005 / IDOR).
-     *
-     * @param string $appointmentId Appointment id (path parameter).
-     *
-     * @return JSONResponse 200 with `{ok: true, tokenId, sent}`; 401 when
-     *                      anonymous; 403 when not authorised; 404 when
-     *                      missing.
-     *
-     * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
-     */
-    #[NoAdminRequired]
-    public function resend(string $appointmentId=''): JSONResponse
-    {
-        if ($this->context->currentUserId() === null) {
-            return new JSONResponse(
-                ['error' => 'Not authenticated'],
-                Http::STATUS_UNAUTHORIZED,
-            );
-        }
+	/**
+	 * POST /api/v1/appointments/{appointmentId}/resend-confirmation
+	 *
+	 * Revoke the active token, issue a fresh one, dispatch a new email.
+	 * Requires an authenticated session; the per-appointment authorisation
+	 * guard rejects calls that don't match the appointment's customer or
+	 * administration (ADR-005 / IDOR).
+	 *
+	 * @param string $appointmentId Appointment id (path parameter).
+	 *
+	 * @return JSONResponse 200 with `{ok: true, tokenId, sent}`; 401 when
+	 *                      anonymous; 403 when not authorised; 404 when
+	 *                      missing.
+	 *
+	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+	 */
+	#[NoAdminRequired]
+	public function resend(string $appointmentId = ''): JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(
+				['error' => 'Not authenticated'],
+				Http::STATUS_UNAUTHORIZED,
+			);
+		}
 
-        $appointmentId = trim($appointmentId);
-        if ($appointmentId === '') {
-            return new JSONResponse(
-                ['error' => 'appointmentId is required'],
-                Http::STATUS_BAD_REQUEST,
-            );
-        }
+		$appointmentId = trim($appointmentId);
+		if ($appointmentId === '') {
+			return new JSONResponse(
+				['error' => 'appointmentId is required'],
+				Http::STATUS_BAD_REQUEST,
+			);
+		}
 
-        if ($this->settings->isOpenRegisterAvailable() === false) {
-            return new JSONResponse(
-                ['error' => 'OpenRegister unavailable'],
-                Http::STATUS_SERVICE_UNAVAILABLE,
-            );
-        }
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return new JSONResponse(
+				['error' => 'OpenRegister unavailable'],
+				Http::STATUS_SERVICE_UNAVAILABLE,
+			);
+		}
 
-        $appointment = $this->loadAppointment(appointmentId: $appointmentId);
-        if ($appointment === null) {
-            return new JSONResponse(
-                ['error' => 'Appointment not found'],
-                Http::STATUS_NOT_FOUND,
-            );
-        }
+		$appointment = $this->loadAppointment(appointmentId: $appointmentId);
+		if ($appointment === null) {
+			return new JSONResponse(
+				['error' => 'Appointment not found'],
+				Http::STATUS_NOT_FOUND,
+			);
+		}
 
-        if ($this->isAuthorisedForAppointment(appointment: $appointment) === false) {
-            return new JSONResponse(
-                ['error' => 'Forbidden'],
-                Http::STATUS_FORBIDDEN,
-            );
-        }
+		if ($this->isAuthorisedForAppointment(appointment: $appointment) === false) {
+			return new JSONResponse(
+				['error' => 'Forbidden'],
+				Http::STATUS_FORBIDDEN,
+			);
+		}
 
-        $customer = $this->loadCustomer(appointment: $appointment);
-        $result   = $this->tokens->resend(
-            appointment: $appointment,
-            customer: $customer,
-            actor: (string) $this->context->currentUserId(),
-        );
+		$customer = $this->loadCustomer(appointment: $appointment);
+		$result = $this->tokens->resend(
+			appointment: $appointment,
+			customer: $customer,
+			actor: (string)$this->context->currentUserId(),
+		);
 
-        $this->logger->info(
-            'ConfirmationApiController: confirmation email resent',
-            ['appointmentId' => $appointmentId, 'tokenId' => $result['tokenId']]
-        );
+		$this->logger->info(
+			'ConfirmationApiController: confirmation email resent',
+			['appointmentId' => $appointmentId, 'tokenId' => $result['tokenId']]
+		);
 
-        return new JSONResponse(
-            [
-                'ok'      => true,
-                'tokenId' => $result['tokenId'],
-                'sent'    => $result['sent'],
-                'message' => 'Confirmation email resent',
-            ],
-            Http::STATUS_OK,
-        );
+		return new JSONResponse(
+			[
+				'ok' => true,
+				'tokenId' => $result['tokenId'],
+				'sent' => $result['sent'],
+				'message' => 'Confirmation email resent',
+			],
+			Http::STATUS_OK,
+		);
 
-    }//end resend()
+	}//end resend()
 
-    /**
-     * GET /api/v1/appointments/validate-confirmation-token
-     *
-     * Dry-run a token against the matching appointment. Used by the web
-     * portal so the customer sees appointment details before pressing
-     * Confirm. NEVER mutates state. Public — the token is the
-     * authorisation factor (REQ-BCF-007).
-     *
-     * Query parameters: `token` (required), `appointmentId` (optional —
-     * when present, narrows the lookup).
-     *
-     * @return JSONResponse 200 with appointment details on success; the
-     *                      shape `{ok: false, reason: ...}` on token
-     *                      failures so the portal can render localised
-     *                      error messages.
-     *
-     * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
-     */
-    #[PublicPage]
-    public function lookupByToken(): JSONResponse
-    {
-        $token         = trim((string) $this->request->getParam('token', ''));
-        $appointmentId = trim((string) $this->request->getParam('appointmentId', ''));
-        if ($token === '') {
-            return new JSONResponse(
-                ['ok' => false, 'reason' => 'invalid_input'],
-                Http::STATUS_BAD_REQUEST,
-            );
-        }
+	/**
+	 * GET /api/v1/appointments/validate-confirmation-token
+	 *
+	 * Dry-run a token against the matching appointment. Used by the web
+	 * portal so the customer sees appointment details before pressing
+	 * Confirm. NEVER mutates state. Public — the token is the
+	 * authorisation factor (REQ-BCF-007).
+	 *
+	 * Query parameters: `token` (required), `appointmentId` (optional —
+	 * when present, narrows the lookup).
+	 *
+	 * @return JSONResponse 200 with appointment details on success; the
+	 *                      shape `{ok: false, reason: ...}` on token
+	 *                      failures so the portal can render localised
+	 *                      error messages.
+	 *
+	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+	 */
+	#[PublicPage]
+	public function lookupByToken(): JSONResponse {
+		$token = trim((string)$this->request->getParam('token', ''));
+		$appointmentId = trim((string)$this->request->getParam('appointmentId', ''));
+		if ($token === '') {
+			return new JSONResponse(
+				['ok' => false, 'reason' => 'invalid_input'],
+				Http::STATUS_BAD_REQUEST,
+			);
+		}
 
-        if ($this->settings->isOpenRegisterAvailable() === false) {
-            return new JSONResponse(
-                ['ok' => false, 'reason' => 'or_unavailable'],
-                Http::STATUS_SERVICE_UNAVAILABLE,
-            );
-        }
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return new JSONResponse(
+				['ok' => false, 'reason' => 'or_unavailable'],
+				Http::STATUS_SERVICE_UNAVAILABLE,
+			);
+		}
 
-        if ($appointmentId === '') {
-            return new JSONResponse(
-                ['ok' => false, 'reason' => 'missing_appointment_id'],
-                Http::STATUS_BAD_REQUEST,
-            );
-        }
+		if ($appointmentId === '') {
+			return new JSONResponse(
+				['ok' => false, 'reason' => 'missing_appointment_id'],
+				Http::STATUS_BAD_REQUEST,
+			);
+		}
 
-        $result = $this->tokens->validate($appointmentId, $token);
-        if ($result['ok'] === false) {
-            return new JSONResponse(
-                ['ok' => false, 'reason' => $result['reason']],
-                Http::STATUS_OK,
-            );
-        }
+		$result = $this->tokens->validate($appointmentId, $token);
+		if ($result['ok'] === false) {
+			return new JSONResponse(
+				['ok' => false, 'reason' => $result['reason']],
+				Http::STATUS_OK,
+			);
+		}
 
-        $appointment = $this->loadAppointment(appointmentId: $appointmentId);
-        if ($appointment === null) {
-            return new JSONResponse(
-                ['ok' => false, 'reason' => 'not_found'],
-                Http::STATUS_NOT_FOUND,
-            );
-        }
+		$appointment = $this->loadAppointment(appointmentId: $appointmentId);
+		if ($appointment === null) {
+			return new JSONResponse(
+				['ok' => false, 'reason' => 'not_found'],
+				Http::STATUS_NOT_FOUND,
+			);
+		}
 
-        return new JSONResponse(
-            [
-                'ok'          => true,
-                'appointment' => $this->presentAppointment(appointment: $appointment),
-            ],
-            Http::STATUS_OK,
-        );
+		return new JSONResponse(
+			[
+				'ok' => true,
+				'appointment' => $this->presentAppointment(appointment: $appointment),
+			],
+			Http::STATUS_OK,
+		);
 
-    }//end lookupByToken()
+	}//end lookupByToken()
 
-    /**
-     * Map a {@see ConfirmationTokenService::validate()} `reason` onto an
-     * HTTP status + message that matches the spec scenarios.
-     *
-     * @param string $reason Validation failure reason.
-     *
-     * @return JSONResponse
-     */
-    private function mapValidationError(string $reason): JSONResponse
-    {
-        return match ($reason) {
-            'expired'          => new JSONResponse(['error' => 'Token has expired'], Http::STATUS_FORBIDDEN),
-            'already_redeemed' => new JSONResponse(['error' => 'Token has already been used'], Http::STATUS_FORBIDDEN),
-            'revoked'          => new JSONResponse(
-                ['error' => 'Token is no longer valid; request a new confirmation email'],
-                Http::STATUS_FORBIDDEN,
-            ),
-            'invalid'          => new JSONResponse(['error' => 'Invalid token'], Http::STATUS_UNAUTHORIZED),
-            'not_found'        => new JSONResponse(['error' => 'Token not found'], Http::STATUS_NOT_FOUND),
-            default            => new JSONResponse(['error' => 'Confirmation rejected'], Http::STATUS_BAD_REQUEST),
-        };
+	/**
+	 * Map a {@see ConfirmationTokenService::validate()} `reason` onto an
+	 * HTTP status + message that matches the spec scenarios.
+	 *
+	 * @param string $reason Validation failure reason.
+	 *
+	 * @return JSONResponse
+	 */
+	private function mapValidationError(string $reason): JSONResponse {
+		return match ($reason) {
+			'expired' => new JSONResponse(['error' => 'Token has expired'], Http::STATUS_FORBIDDEN),
+			'already_redeemed' => new JSONResponse(['error' => 'Token has already been used'], Http::STATUS_FORBIDDEN),
+			'revoked' => new JSONResponse(
+				['error' => 'Token is no longer valid; request a new confirmation email'],
+				Http::STATUS_FORBIDDEN,
+			),
+			'invalid' => new JSONResponse(['error' => 'Invalid token'], Http::STATUS_UNAUTHORIZED),
+			'not_found' => new JSONResponse(['error' => 'Token not found'], Http::STATUS_NOT_FOUND),
+			default => new JSONResponse(['error' => 'Confirmation rejected'], Http::STATUS_BAD_REQUEST),
+		};
 
-    }//end mapValidationError()
+	}//end mapValidationError()
 
-    /**
-     * Load an Appointment OR record by id (REST-style business key).
-     *
-     * @param string $appointmentId Appointment id.
-     *
-     * @return array<string, mixed>|null Flat appointment record or NULL.
-     */
-    private function loadAppointment(string $appointmentId): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $records       = $objectService
-                ->setRegister($this->settings->getRegisterSlug())
-                ->setSchema('Appointment')
-                ->findAll(
-                        [
-                            'filters' => ['appointmentId' => $appointmentId],
-                            'limit'   => 1,
-                        ]
-                        );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'ConfirmationApiController: appointment lookup failed',
-                ['exception' => $e->getMessage(), 'appointmentId' => $appointmentId]
-            );
-            return null;
-        }
+	/**
+	 * Load an Appointment OR record by id (REST-style business key).
+	 *
+	 * @param string $appointmentId Appointment id.
+	 *
+	 * @return array<string, mixed>|null Flat appointment record or NULL.
+	 */
+	private function loadAppointment(string $appointmentId): ?array {
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$records = $objectService
+				->setRegister($this->settings->getRegisterSlug())
+				->setSchema('Appointment')
+				->findAll(
+					[
+						'filters' => ['appointmentId' => $appointmentId],
+						'limit' => 1,
+					]
+				);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'ConfirmationApiController: appointment lookup failed',
+				['exception' => $e->getMessage(), 'appointmentId' => $appointmentId]
+			);
+			return null;
+		}
 
-        foreach ($records as $record) {
-            return $this->toArray(object: $record);
-        }
+		foreach ($records as $record) {
+			return $this->toArray(object: $record);
+		}
 
-        return null;
+		return null;
+	}//end loadAppointment()
 
-    }//end loadAppointment()
+	/**
+	 * Build the customer descriptor used by ConfirmationTokenService /
+	 * IcsService from the appointment record + the requesting user.
+	 *
+	 * Phase-1 pulls the customer email from the appointment's
+	 * `customerEmail` field (set by the create flow) and falls back to the
+	 * current authenticated user. ADR-006 / contact-is-NC-entity-aware:
+	 * later phases will look up the email via OCP\Contacts\IManager.
+	 *
+	 * @param array<string, mixed> $appointment Appointment record.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function loadCustomer(array $appointment): array {
+		return [
+			'id' => (string)($appointment['customerId'] ?? ''),
+			'userId' => (string)($appointment['customerUserId'] ?? ($this->context->currentUserId() ?? '')),
+			'name' => (string)($appointment['customerName'] ?? ''),
+			'email' => (string)($appointment['customerEmail'] ?? ''),
+		];
 
-    /**
-     * Build the customer descriptor used by ConfirmationTokenService /
-     * IcsService from the appointment record + the requesting user.
-     *
-     * Phase-1 pulls the customer email from the appointment's
-     * `customerEmail` field (set by the create flow) and falls back to the
-     * current authenticated user. ADR-006 / contact-is-NC-entity-aware:
-     * later phases will look up the email via OCP\Contacts\IManager.
-     *
-     * @param array<string, mixed> $appointment Appointment record.
-     *
-     * @return array<string, mixed>
-     */
-    private function loadCustomer(array $appointment): array
-    {
-        return [
-            'id'     => (string) ($appointment['customerId'] ?? ''),
-            'userId' => (string) ($appointment['customerUserId'] ?? ($this->context->currentUserId() ?? '')),
-            'name'   => (string) ($appointment['customerName'] ?? ''),
-            'email'  => (string) ($appointment['customerEmail'] ?? ''),
-        ];
+	}//end loadCustomer()
 
-    }//end loadCustomer()
+	/**
+	 * Authorise the current user against an appointment. The customer of
+	 * the appointment, the assigned staff, or an administrator of the
+	 * owning administration may resend; everyone else is rejected
+	 * (ADR-005 / OWASP A01:2021).
+	 *
+	 * @param array<string, mixed> $appointment Appointment record.
+	 *
+	 * @return bool TRUE when the current user may operate on the
+	 *              appointment.
+	 */
+	private function isAuthorisedForAppointment(array $appointment): bool {
+		$current = $this->context->currentUserId();
+		if ($current === null) {
+			return false;
+		}
 
-    /**
-     * Authorise the current user against an appointment. The customer of
-     * the appointment, the assigned staff, or an administrator of the
-     * owning administration may resend; everyone else is rejected
-     * (ADR-005 / OWASP A01:2021).
-     *
-     * @param array<string, mixed> $appointment Appointment record.
-     *
-     * @return bool TRUE when the current user may operate on the
-     *              appointment.
-     */
-    private function isAuthorisedForAppointment(array $appointment): bool
-    {
-        $current = $this->context->currentUserId();
-        if ($current === null) {
-            return false;
-        }
+		if ((string)($appointment['customerUserId'] ?? '') === $current) {
+			return true;
+		}
 
-        if ((string) ($appointment['customerUserId'] ?? '') === $current) {
-            return true;
-        }
+		if ((string)($appointment['customerId'] ?? '') === $current) {
+			return true;
+		}
 
-        if ((string) ($appointment['customerId'] ?? '') === $current) {
-            return true;
-        }
+		if ((string)($appointment['createdBy'] ?? '') === $current) {
+			return true;
+		}
 
-        if ((string) ($appointment['createdBy'] ?? '') === $current) {
-            return true;
-        }
+		// Admins / schedulers — defer the deeper RBAC check to the
+		// AdministrationContextService; on dev installs (no admin record)
+		// it returns FALSE and we deny.
+		if ($this->context->canAccess((string)($appointment['administrationId'] ?? '')) === true) {
+			return true;
+		}
 
-        // Admins / schedulers — defer the deeper RBAC check to the
-        // AdministrationContextService; on dev installs (no admin record)
-        // it returns FALSE and we deny.
-        if ($this->context->canAccess((string) ($appointment['administrationId'] ?? '')) === true) {
-            return true;
-        }
+		return false;
+	}//end isAuthorisedForAppointment()
 
-        return false;
+	/**
+	 * Project an Appointment record into the response shape used by the
+	 * confirmation portal (no token hash, no internal audit fields).
+	 *
+	 * @param array<string, mixed> $appointment Appointment record.
+	 *
+	 * @return array<string, mixed> Portal-safe projection.
+	 */
+	private function presentAppointment(array $appointment): array {
+		return [
+			'appointmentId' => (string)($appointment['appointmentId'] ?? ''),
+			'serviceName' => (string)($appointment['serviceName'] ?? ''),
+			'startTime' => (string)($appointment['startTime'] ?? ''),
+			'endTime' => (string)($appointment['endTime'] ?? ''),
+			'location' => (string)($appointment['location'] ?? ''),
+			'status' => (string)($appointment['status'] ?? ''),
+			'confirmationDeadline' => (string)($appointment['confirmationDeadline'] ?? ''),
+			'notes' => (string)($appointment['notes'] ?? ''),
+		];
 
-    }//end isAuthorisedForAppointment()
+	}//end presentAppointment()
 
-    /**
-     * Project an Appointment record into the response shape used by the
-     * confirmation portal (no token hash, no internal audit fields).
-     *
-     * @param array<string, mixed> $appointment Appointment record.
-     *
-     * @return array<string, mixed> Portal-safe projection.
-     */
-    private function presentAppointment(array $appointment): array
-    {
-        return [
-            'appointmentId'        => (string) ($appointment['appointmentId'] ?? ''),
-            'serviceName'          => (string) ($appointment['serviceName'] ?? ''),
-            'startTime'            => (string) ($appointment['startTime'] ?? ''),
-            'endTime'              => (string) ($appointment['endTime'] ?? ''),
-            'location'             => (string) ($appointment['location'] ?? ''),
-            'status'               => (string) ($appointment['status'] ?? ''),
-            'confirmationDeadline' => (string) ($appointment['confirmationDeadline'] ?? ''),
-            'notes'                => (string) ($appointment['notes'] ?? ''),
-        ];
+	/**
+	 * Current server time as ISO 8601 UTC.
+	 *
+	 * @return string
+	 */
+	private function nowIso(): string {
+		return $this->time->getDateTime()
+			->setTimezone(new DateTimeZone('UTC'))
+			->format('Y-m-d\TH:i:s\Z');
 
-    }//end presentAppointment()
+	}//end nowIso()
 
-    /**
-     * Current server time as ISO 8601 UTC.
-     *
-     * @return string
-     */
-    private function nowIso(): string
-    {
-        return $this->time->getDateTime()
-            ->setTimezone(new DateTimeZone('UTC'))
-            ->format('Y-m-d\TH:i:s\Z');
+	/**
+	 * Normalise an OR record into a flat array.
+	 *
+	 * @param mixed $object OR ObjectService payload.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function toArray(mixed $object): array {
+		if (is_array($object) === true) {
+			return $object;
+		}
 
-    }//end nowIso()
+		if (is_object($object) === true) {
+			if (method_exists($object, 'jsonSerialize') === true) {
+				$serialised = $object->jsonSerialize();
+				if (is_array($serialised) === true) {
+					return $serialised;
+				}
+			}
 
-    /**
-     * Normalise an OR record into a flat array.
-     *
-     * @param mixed $object OR ObjectService payload.
-     *
-     * @return array<string, mixed>
-     */
-    private function toArray(mixed $object): array
-    {
-        if (is_array($object) === true) {
-            return $object;
-        }
+			if (method_exists($object, 'getObject') === true) {
+				$inner = $object->getObject();
+				if (is_array($inner) === true) {
+					return $inner;
+				}
+			}
 
-        if (is_object($object) === true) {
-            if (method_exists($object, 'jsonSerialize') === true) {
-                $serialised = $object->jsonSerialize();
-                if (is_array($serialised) === true) {
-                    return $serialised;
-                }
-            }
+			return (array)$object;
+		}
 
-            if (method_exists($object, 'getObject') === true) {
-                $inner = $object->getObject();
-                if (is_array($inner) === true) {
-                    return $inner;
-                }
-            }
-
-            return (array) $object;
-        }
-
-        return [];
-
-    }//end toArray()
+		return [];
+	}//end toArray()
 }//end class

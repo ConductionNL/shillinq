@@ -57,260 +57,247 @@ use Psr\Container\ContainerInterface;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class RgsAccountMapper
-{
-    /**
-     * Default confidence threshold (percentage) below which a suggestion is
-     * dropped from the operator-review queue.
-     *
-     * @var int
-     */
-    private const DEFAULT_CONFIDENCE_THRESHOLD = 70;
+class RgsAccountMapper {
+	/**
+	 * Default confidence threshold (percentage) below which a suggestion is
+	 * dropped from the operator-review queue.
+	 *
+	 * @var int
+	 */
+	private const DEFAULT_CONFIDENCE_THRESHOLD = 70;
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface $container DI container — ObjectService fetched lazily.
-     * @param IAppConfig         $appConfig App config for register slug + threshold override.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — ObjectService fetched lazily.
+	 * @param IAppConfig $appConfig App config for register slug + threshold override.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+	) {
+	}//end __construct()
 
-    /**
-     * Resolve the configured register slug (falls back to 'shillinq').
-     *
-     * @return string
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured register slug (falls back to 'shillinq').
+	 *
+	 * @return string
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
 
-        return $slug;
+		return $slug;
+	}//end getRegisterSlug()
 
-    }//end getRegisterSlug()
+	/**
+	 * Resolve the confidence threshold for surfacing a suggestion.
+	 *
+	 * @return int
+	 */
+	private function getConfidenceThreshold(): int {
+		$value = $this->appConfig->getValueString(
+			Application::APP_ID,
+			'bbv_rgs_mapper_confidence_threshold',
+			(string)self::DEFAULT_CONFIDENCE_THRESHOLD
+		);
 
-    /**
-     * Resolve the confidence threshold for surfacing a suggestion.
-     *
-     * @return int
-     */
-    private function getConfidenceThreshold(): int
-    {
-        $value = $this->appConfig->getValueString(
-            Application::APP_ID,
-            'bbv_rgs_mapper_confidence_threshold',
-            (string) self::DEFAULT_CONFIDENCE_THRESHOLD
-        );
+		$threshold = (int)$value;
+		if ($threshold < 0 || $threshold > 100) {
+			return self::DEFAULT_CONFIDENCE_THRESHOLD;
+		}
 
-        $threshold = (int) $value;
-        if ($threshold < 0 || $threshold > 100) {
-            return self::DEFAULT_CONFIDENCE_THRESHOLD;
-        }
+		return $threshold;
+	}//end getConfidenceThreshold()
 
-        return $threshold;
+	/**
+	 * Produce mapping suggestions for every unmapped Account in the given administration.
+	 *
+	 * Account is considered "unmapped" when `rgsDecentraalCode` is empty / missing.
+	 *
+	 * @param string $administrationId Administration identifier to backfill.
+	 *
+	 * @return array{
+	 *     success: bool,
+	 *     suggestions: array<int, array{
+	 *         accountId: string,
+	 *         accountNumber: string,
+	 *         accountName: string,
+	 *         candidate: array<string, mixed>|null,
+	 *         confidence: int,
+	 *         scoringReason: string,
+	 *     }>,
+	 *     skipped: int,
+	 *     message?: string,
+	 * }
+	 */
+	public function suggestMappings(string $administrationId): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
+		}
 
-    }//end getConfidenceThreshold()
+		$registerSlug = $this->getRegisterSlug();
+		$threshold = $this->getConfidenceThreshold();
 
-    /**
-     * Produce mapping suggestions for every unmapped Account in the given administration.
-     *
-     * Account is considered "unmapped" when `rgsDecentraalCode` is empty / missing.
-     *
-     * @param string $administrationId Administration identifier to backfill.
-     *
-     * @return array{
-     *     success: bool,
-     *     suggestions: array<int, array{
-     *         accountId: string,
-     *         accountNumber: string,
-     *         accountName: string,
-     *         candidate: array<string, mixed>|null,
-     *         confidence: int,
-     *         scoringReason: string,
-     *     }>,
-     *     skipped: int,
-     *     message?: string,
-     * }
-     */
-    public function suggestMappings(string $administrationId): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable $e) {
-            return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
-        }
+		try {
+			$accounts = $objectService
+				->setRegister($registerSlug)
+				->setSchema('Account')
+				->findAll(
+					[
+						'filters' => ['administrationId' => $administrationId],
+						'limit' => 5000,
+					]
+				);
+		} catch (\Throwable $e) {
+			return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
+		}
 
-        $registerSlug = $this->getRegisterSlug();
-        $threshold    = $this->getConfidenceThreshold();
+		try {
+			$rgsRekeningen = $objectService
+				->setRegister($registerSlug)
+				->setSchema('RgsDecentraalRekening')
+				->findAll(['limit' => 5000]);
+		} catch (\Throwable $e) {
+			// Fall back to the BbvAccountMapping register if RgsDecentraalRekening is not yet declared.
+			try {
+				$rgsRekeningen = $objectService
+					->setRegister($registerSlug)
+					->setSchema('BbvAccountMapping')
+					->findAll(['limit' => 5000]);
+			} catch (\Throwable $f) {
+				return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $f->getMessage()];
+			}
+		}
 
-        try {
-            $accounts = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('Account')
-                ->findAll(
-                        [
-                            'filters' => ['administrationId' => $administrationId],
-                            'limit'   => 5000,
-                        ]
-                        );
-        } catch (\Throwable $e) {
-            return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
-        }
+		$rgsRows = array_map(fn ($row) => $this->toArray(object: $row), $rgsRekeningen);
 
-        try {
-            $rgsRekeningen = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('RgsDecentraalRekening')
-                ->findAll(['limit' => 5000]);
-        } catch (\Throwable $e) {
-            // Fall back to the BbvAccountMapping register if RgsDecentraalRekening is not yet declared.
-            try {
-                $rgsRekeningen = $objectService
-                    ->setRegister($registerSlug)
-                    ->setSchema('BbvAccountMapping')
-                    ->findAll(['limit' => 5000]);
-            } catch (\Throwable $f) {
-                return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $f->getMessage()];
-            }
-        }
+		$suggestions = [];
+		$skipped = 0;
 
-        $rgsRows = array_map(fn($row) => $this->toArray(object: $row), $rgsRekeningen);
+		foreach ($accounts as $account) {
+			$accountRow = $this->toArray(object: $account);
 
-        $suggestions = [];
-        $skipped     = 0;
+			if (empty($accountRow['rgsDecentraalCode']) === false) {
+				$skipped++;
+				continue;
+			}
 
-        foreach ($accounts as $account) {
-            $accountRow = $this->toArray(object: $account);
+			$candidate = $this->bestCandidate(accountRow: $accountRow, rgsRows: $rgsRows);
 
-            if (empty($accountRow['rgsDecentraalCode']) === false) {
-                $skipped++;
-                continue;
-            }
+			if ($candidate === null || $candidate['confidence'] < $threshold) {
+				continue;
+			}
 
-            $candidate = $this->bestCandidate(accountRow: $accountRow, rgsRows: $rgsRows);
+			$suggestions[] = [
+				'accountId' => (string)($accountRow['id'] ?? $accountRow['uuid'] ?? ''),
+				'accountNumber' => (string)($accountRow['code'] ?? $accountRow['accountNumber'] ?? ''),
+				'accountName' => (string)($accountRow['name'] ?? ''),
+				'candidate' => $candidate['row'],
+				'confidence' => $candidate['confidence'],
+				'scoringReason' => $candidate['reason'],
+			];
+		}//end foreach
 
-            if ($candidate === null || $candidate['confidence'] < $threshold) {
-                continue;
-            }
+		return ['success' => true, 'suggestions' => $suggestions, 'skipped' => $skipped];
+	}//end suggestMappings()
 
-            $suggestions[] = [
-                'accountId'     => (string) ($accountRow['id'] ?? $accountRow['uuid'] ?? ''),
-                'accountNumber' => (string) ($accountRow['code'] ?? $accountRow['accountNumber'] ?? ''),
-                'accountName'   => (string) ($accountRow['name'] ?? ''),
-                'candidate'     => $candidate['row'],
-                'confidence'    => $candidate['confidence'],
-                'scoringReason' => $candidate['reason'],
-            ];
-        }//end foreach
+	/**
+	 * Pick the highest-scoring RGS-decentraal candidate for an Account.
+	 *
+	 * @param array<string,mixed> $accountRow Account associative array.
+	 * @param array<int, array<string, mixed>> $rgsRows RGS-decentraal candidates.
+	 *
+	 * @return array{row: array<string,mixed>, confidence:int, reason:string}|null
+	 */
+	private function bestCandidate(array $accountRow, array $rgsRows): ?array {
+		$accountReference = (string)($accountRow['referentienummer'] ?? '');
+		$accountCode = (string)($accountRow['code'] ?? $accountRow['accountNumber'] ?? '');
+		$accountName = mb_strtolower((string)($accountRow['name'] ?? ''));
 
-        return ['success' => true, 'suggestions' => $suggestions, 'skipped' => $skipped];
+		$best = null;
 
-    }//end suggestMappings()
+		foreach ($rgsRows as $rgsRow) {
+			$confidence = 0;
+			$reason = '';
 
-    /**
-     * Pick the highest-scoring RGS-decentraal candidate for an Account.
-     *
-     * @param array<string,mixed>              $accountRow Account associative array.
-     * @param array<int, array<string, mixed>> $rgsRows    RGS-decentraal candidates.
-     *
-     * @return array{row: array<string,mixed>, confidence:int, reason:string}|null
-     */
-    private function bestCandidate(array $accountRow, array $rgsRows): ?array
-    {
-        $accountReference = (string) ($accountRow['referentienummer'] ?? '');
-        $accountCode      = (string) ($accountRow['code'] ?? $accountRow['accountNumber'] ?? '');
-        $accountName      = mb_strtolower((string) ($accountRow['name'] ?? ''));
+			if ($accountReference !== '' && (string)($rgsRow['referentienummer'] ?? '') === $accountReference) {
+				$confidence = 100;
+				$reason = 'exact-referentienummer';
+			} elseif ($accountCode !== '' && (string)($rgsRow['rgsDecentraalCode'] ?? '') === $accountCode) {
+				$confidence = 95;
+				$reason = 'exact-rgsDecentraalCode';
+			} elseif ($accountCode !== '' && (string)($rgsRow['rgsCode'] ?? '') === $accountCode) {
+				$confidence = 80;
+				$reason = 'exact-rgsCode';
+			} elseif ($accountName !== '') {
+				$candidateName = mb_strtolower((string)($rgsRow['omschrijvingKort'] ?? $rgsRow['naam'] ?? ''));
+				if ($candidateName !== '') {
+					$similarity = $this->similarityPercent(left: $accountName, right: $candidateName);
+					if ($similarity >= 50) {
+						$confidence = (int)round($similarity * 0.70);
+						$reason = 'fuzzy-name-match-' . ((int)$similarity) . '%';
+					}
+				}
+			}
 
-        $best = null;
+			if ($confidence === 0) {
+				continue;
+			}
 
-        foreach ($rgsRows as $rgsRow) {
-            $confidence = 0;
-            $reason     = '';
+			if ($best === null || $confidence > $best['confidence']) {
+				$best = ['row' => $rgsRow, 'confidence' => $confidence, 'reason' => $reason];
+				if ($confidence >= 100) {
+					break;
+				}
+			}
+		}//end foreach
 
-            if ($accountReference !== '' && (string) ($rgsRow['referentienummer'] ?? '') === $accountReference) {
-                $confidence = 100;
-                $reason     = 'exact-referentienummer';
-            } else if ($accountCode !== '' && (string) ($rgsRow['rgsDecentraalCode'] ?? '') === $accountCode) {
-                $confidence = 95;
-                $reason     = 'exact-rgsDecentraalCode';
-            } else if ($accountCode !== '' && (string) ($rgsRow['rgsCode'] ?? '') === $accountCode) {
-                $confidence = 80;
-                $reason     = 'exact-rgsCode';
-            } else if ($accountName !== '') {
-                $candidateName = mb_strtolower((string) ($rgsRow['omschrijvingKort'] ?? $rgsRow['naam'] ?? ''));
-                if ($candidateName !== '') {
-                    $similarity = $this->similarityPercent(left: $accountName, right: $candidateName);
-                    if ($similarity >= 50) {
-                        $confidence = (int) round($similarity * 0.70);
-                        $reason     = 'fuzzy-name-match-'.((int) $similarity).'%';
-                    }
-                }
-            }
+		return $best;
+	}//end bestCandidate()
 
-            if ($confidence === 0) {
-                continue;
-            }
+	/**
+	 * Compute name similarity as a percentage 0-100 using PHP's similar_text.
+	 *
+	 * @param string $left Left string.
+	 * @param string $right Right string.
+	 *
+	 * @return float Percentage similarity.
+	 */
+	private function similarityPercent(string $left, string $right): float {
+		$percent = 0.0;
+		similar_text($left, $right, $percent);
 
-            if ($best === null || $confidence > $best['confidence']) {
-                $best = ['row' => $rgsRow, 'confidence' => $confidence, 'reason' => $reason];
-                if ($confidence >= 100) {
-                    break;
-                }
-            }
-        }//end foreach
+		return $percent;
+	}//end similarityPercent()
 
-        return $best;
+	/**
+	 * Normalise a heterogeneous OR object into an associative array.
+	 *
+	 * @param mixed $object Object or array returned by OR ObjectService.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function toArray($object): array {
+		if (is_array($object) === true) {
+			return $object;
+		}
 
-    }//end bestCandidate()
+		if (is_object($object) === true) {
+			if (method_exists($object, 'jsonSerialize') === true) {
+				$payload = $object->jsonSerialize();
+				if (is_array($payload) === true) {
+					return $payload;
+				}
+			}
 
-    /**
-     * Compute name similarity as a percentage 0-100 using PHP's similar_text.
-     *
-     * @param string $left  Left string.
-     * @param string $right Right string.
-     *
-     * @return float Percentage similarity.
-     */
-    private function similarityPercent(string $left, string $right): float
-    {
-        $percent = 0.0;
-        similar_text($left, $right, $percent);
+			return (array)$object;
+		}
 
-        return $percent;
-
-    }//end similarityPercent()
-
-    /**
-     * Normalise a heterogeneous OR object into an associative array.
-     *
-     * @param mixed $object Object or array returned by OR ObjectService.
-     *
-     * @return array<string,mixed>
-     */
-    private function toArray($object): array
-    {
-        if (is_array($object) === true) {
-            return $object;
-        }
-
-        if (is_object($object) === true) {
-            if (method_exists($object, 'jsonSerialize') === true) {
-                $payload = $object->jsonSerialize();
-                if (is_array($payload) === true) {
-                    return $payload;
-                }
-            }
-
-            return (array) $object;
-        }
-
-        return [];
-
-    }//end toArray()
+		return [];
+	}//end toArray()
 }//end class

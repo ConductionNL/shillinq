@@ -36,207 +36,196 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class ChartOfAccountsCandidateServiceTest extends TestCase
-{
+final class ChartOfAccountsCandidateServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the service wired to an ObjectService stub returning the given
-     * Account rows for the equality-filtered findAll() call.
-     *
-     * @param array<int,array<string,mixed>> $rows All Account rows in the fixture.
-     *
-     * @return ChartOfAccountsCandidateService
-     */
-    private function buildService(array $rows): ChartOfAccountsCandidateService
-    {
-        $stub = new class($rows) {
+	/**
+	 * Build the service wired to an ObjectService stub returning the given
+	 * Account rows for the equality-filtered findAll() call.
+	 *
+	 * @param array<int,array<string,mixed>> $rows All Account rows in the fixture.
+	 *
+	 * @return ChartOfAccountsCandidateService
+	 */
+	private function buildService(array $rows): ChartOfAccountsCandidateService {
+		$stub = new class($rows) {
 
-            /**
-             * The fixture Account rows.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $rows;
+			/**
+			 * The fixture Account rows.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $rows;
 
-            /**
-             * Construct the stub with a fixture row set.
-             *
-             * @param array<int,array<string,mixed>> $rows Account rows.
-             */
-            public function __construct(array $rows)
-            {
-                $this->rows = $rows;
-            }//end __construct()
+			/**
+			 * Construct the stub with a fixture row set.
+			 *
+			 * @param array<int,array<string,mixed>> $rows Account rows.
+			 */
+			public function __construct(array $rows) {
+				$this->rows = $rows;
+			}//end __construct()
 
-            /**
-             * Fluent register selector (no-op — the stub is single-register).
-             *
-             * @param string $r Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $r): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register selector (no-op — the stub is single-register).
+			 *
+			 * @param string $r Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $r): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema selector (no-op — the stub is single-schema).
-             *
-             * @param string $s Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $s): static
-            {
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema selector (no-op — the stub is single-schema).
+			 *
+			 * @param string $s Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $s): static {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Filter the fixture rows by the given equality filters.
-             *
-             * @param array<string,mixed> $params Query params.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $filters = ($params['filters'] ?? []);
-                return array_values(
-                    array_filter(
-                        $this->rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+			/**
+			 * Filter the fixture rows by the given equality filters.
+			 *
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$filters = ($params['filters'] ?? []);
+				return array_values(
+					array_filter(
+						$this->rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
-        };
+							return true;
+						}
+					)
+				);
+			}//end findAll()
+		};
 
-        $this->container->method('get')->willReturn($stub);
+		$this->container->method('get')->willReturn($stub);
 
-        return new ChartOfAccountsCandidateService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		return new ChartOfAccountsCandidateService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->createMock(LoggerInterface::class),
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * REQ-GAC-002: candidates are scoped to the draft's own administration —
-     * another administration's account is excluded.
-     *
-     * @return void
-     */
-    public function testCandidatesScopedToOwnAdministration(): void
-    {
-        $service = $this->buildService(
-            [
-                ['accountNumber' => '4300', 'name' => 'Kantoorkosten', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
-                ['accountNumber' => '4400', 'name' => 'Representatiekosten', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
-                ['accountNumber' => '9999', 'name' => 'Other Tenant Account', 'administrationId' => 'adm-2', 'lifecycleState' => 'active'],
-            ]
-        );
+	/**
+	 * REQ-GAC-002: candidates are scoped to the draft's own administration —
+	 * another administration's account is excluded.
+	 *
+	 * @return void
+	 */
+	public function testCandidatesScopedToOwnAdministration(): void {
+		$service = $this->buildService(
+			[
+				['accountNumber' => '4300', 'name' => 'Kantoorkosten', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
+				['accountNumber' => '4400', 'name' => 'Representatiekosten', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
+				['accountNumber' => '9999', 'name' => 'Other Tenant Account', 'administrationId' => 'adm-2', 'lifecycleState' => 'active'],
+			]
+		);
 
-        $candidates = $service->activeCandidates(administrationId: 'adm-1');
-        $codes      = array_column($candidates, 'code');
+		$candidates = $service->activeCandidates(administrationId: 'adm-1');
+		$codes = array_column($candidates, 'code');
 
-        self::assertContains('4300', $codes);
-        self::assertContains('4400', $codes);
-        self::assertNotContains('9999', $codes);
+		self::assertContains('4300', $codes);
+		self::assertContains('4400', $codes);
+		self::assertNotContains('9999', $codes);
 
-    }//end testCandidatesScopedToOwnAdministration()
+	}//end testCandidatesScopedToOwnAdministration()
 
-    /**
-     * REQ-GAC-002: blocked and archived accounts are excluded from candidates.
-     *
-     * @return void
-     */
-    public function testBlockedAndArchivedAccountsExcluded(): void
-    {
-        $service = $this->buildService(
-            [
-                ['accountNumber' => '4300', 'name' => 'Kantoorkosten', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
-                ['accountNumber' => '4999', 'name' => 'Blocked Account', 'administrationId' => 'adm-1', 'lifecycleState' => 'blocked'],
-                ['accountNumber' => '4998', 'name' => 'Archived Account', 'administrationId' => 'adm-1', 'lifecycleState' => 'archived'],
-            ]
-        );
+	/**
+	 * REQ-GAC-002: blocked and archived accounts are excluded from candidates.
+	 *
+	 * @return void
+	 */
+	public function testBlockedAndArchivedAccountsExcluded(): void {
+		$service = $this->buildService(
+			[
+				['accountNumber' => '4300', 'name' => 'Kantoorkosten', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
+				['accountNumber' => '4999', 'name' => 'Blocked Account', 'administrationId' => 'adm-1', 'lifecycleState' => 'blocked'],
+				['accountNumber' => '4998', 'name' => 'Archived Account', 'administrationId' => 'adm-1', 'lifecycleState' => 'archived'],
+			]
+		);
 
-        $candidates = $service->activeCandidates(administrationId: 'adm-1');
-        $codes      = array_column($candidates, 'code');
+		$candidates = $service->activeCandidates(administrationId: 'adm-1');
+		$codes = array_column($candidates, 'code');
 
-        self::assertContains('4300', $codes);
-        self::assertNotContains('4999', $codes);
-        self::assertNotContains('4998', $codes);
+		self::assertContains('4300', $codes);
+		self::assertNotContains('4999', $codes);
+		self::assertNotContains('4998', $codes);
 
-    }//end testBlockedAndArchivedAccountsExcluded()
+	}//end testBlockedAndArchivedAccountsExcluded()
 
-    /**
-     * An empty administration id yields an empty candidate set without
-     * ever touching OR.
-     *
-     * @return void
-     */
-    public function testEmptyAdministrationIdYieldsNoCandidates(): void
-    {
-        $service = $this->buildService([]);
+	/**
+	 * An empty administration id yields an empty candidate set without
+	 * ever touching OR.
+	 *
+	 * @return void
+	 */
+	public function testEmptyAdministrationIdYieldsNoCandidates(): void {
+		$service = $this->buildService([]);
 
-        self::assertSame([], $service->activeCandidates(administrationId: ''));
+		self::assertSame([], $service->activeCandidates(administrationId: ''));
 
-    }//end testEmptyAdministrationIdYieldsNoCandidates()
+	}//end testEmptyAdministrationIdYieldsNoCandidates()
 
-    /**
-     * REQ-GAC-006: when OR is unavailable, resolution degrades to an empty
-     * candidate set rather than throwing.
-     *
-     * @return void
-     */
-    public function testDegradesGracefullyWhenOrUnavailable(): void
-    {
-        $this->container->method('get')->willThrowException(new \RuntimeException('OpenRegister not installed'));
+	/**
+	 * REQ-GAC-006: when OR is unavailable, resolution degrades to an empty
+	 * candidate set rather than throwing.
+	 *
+	 * @return void
+	 */
+	public function testDegradesGracefullyWhenOrUnavailable(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('OpenRegister not installed'));
 
-        $service = new ChartOfAccountsCandidateService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		$service = new ChartOfAccountsCandidateService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->createMock(LoggerInterface::class),
+		);
 
-        self::assertSame([], $service->activeCandidates(administrationId: 'adm-1'));
+		self::assertSame([], $service->activeCandidates(administrationId: 'adm-1'));
 
-    }//end testDegradesGracefullyWhenOrUnavailable()
+	}//end testDegradesGracefullyWhenOrUnavailable()
 }//end class

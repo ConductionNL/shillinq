@@ -44,152 +44,148 @@ use InvalidArgumentException;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class IntegralCostPriceLockService
-{
-    /**
-     * Aggregate monthly voorlopig records into a single definitief record (REQ-WMO-002).
-     *
-     * @param array<string,mixed> $input Lock inputs (commercialActivityId,
-     *                                   fiscalYear, voorlopigRecords, signedBy,
-     *                                   signatureFingerprint, administrationId,
-     *                                   gehanteerdTarief, verkochteEenheden,
-     *                                   eenheidLabel).
-     *
-     * @return array<string,mixed> Definitief IKP record.
-     *
-     * @throws InvalidArgumentException When inputs are invalid.
-     */
-    public function lock(array $input): array
-    {
-        $voorlopig = (array) ($input['voorlopigRecords'] ?? []);
-        if ($voorlopig === []) {
-            throw new InvalidArgumentException('Cannot lock without any voorlopig IKP records');
-        }
+class IntegralCostPriceLockService {
+	/**
+	 * Aggregate monthly voorlopig records into a single definitief record (REQ-WMO-002).
+	 *
+	 * @param array<string,mixed> $input Lock inputs (commercialActivityId,
+	 *                                   fiscalYear, voorlopigRecords, signedBy,
+	 *                                   signatureFingerprint, administrationId,
+	 *                                   gehanteerdTarief, verkochteEenheden,
+	 *                                   eenheidLabel).
+	 *
+	 * @return array<string,mixed> Definitief IKP record.
+	 *
+	 * @throws InvalidArgumentException When inputs are invalid.
+	 */
+	public function lock(array $input): array {
+		$voorlopig = (array)($input['voorlopigRecords'] ?? []);
+		if ($voorlopig === []) {
+			throw new InvalidArgumentException('Cannot lock without any voorlopig IKP records');
+		}
 
-        $signedBy = (string) ($input['signedBy'] ?? '');
-        if (trim($signedBy) === '') {
-            throw new InvalidArgumentException('Year-end lock requires an accountant user-id (signedBy)');
-        }
+		$signedBy = (string)($input['signedBy'] ?? '');
+		if (trim($signedBy) === '') {
+			throw new InvalidArgumentException('Year-end lock requires an accountant user-id (signedBy)');
+		}
 
-        $fiscalYear = (string) ($input['fiscalYear'] ?? '');
-        if (preg_match('/^[0-9]{4}$/', $fiscalYear) !== 1) {
-            throw new InvalidArgumentException('Invalid fiscalYear (expected YYYY): '.$fiscalYear);
-        }
+		$fiscalYear = (string)($input['fiscalYear'] ?? '');
+		if (preg_match('/^[0-9]{4}$/', $fiscalYear) !== 1) {
+			throw new InvalidArgumentException('Invalid fiscalYear (expected YYYY): ' . $fiscalYear);
+		}
 
-        $loonkostenSum     = 0.0;
-        $materialenSum     = 0.0;
-        $afschrijvingenSum = 0.0;
-        $vermogensSum      = 0.0;
-        $winstopslagSum    = 0.0;
-        $overheadBuckets   = [];
-        $totaleKostenSum   = 0.0;
+		$loonkostenSum = 0.0;
+		$materialenSum = 0.0;
+		$afschrijvingenSum = 0.0;
+		$vermogensSum = 0.0;
+		$winstopslagSum = 0.0;
+		$overheadBuckets = [];
+		$totaleKostenSum = 0.0;
 
-        foreach ($voorlopig as $record) {
-            if (is_array($record) === false) {
-                continue;
-            }
+		foreach ($voorlopig as $record) {
+			if (is_array($record) === false) {
+				continue;
+			}
 
-            $componenten = (array) ($record['componenten'] ?? []);
+			$componenten = (array)($record['componenten'] ?? []);
 
-            $loonkostenSum     += (float) ($componenten['directeLoonkosten'] ?? 0);
-            $materialenSum     += (float) ($componenten['directeMaterialen'] ?? 0);
-            $afschrijvingenSum += (float) ($componenten['directeAfschrijvingen'] ?? 0);
-            $vermogensSum      += (float) ($componenten['vermogenskosten'] ?? 0);
-            $winstopslagSum    += (float) ($componenten['winstopslag'] ?? 0);
+			$loonkostenSum += (float)($componenten['directeLoonkosten'] ?? 0);
+			$materialenSum += (float)($componenten['directeMaterialen'] ?? 0);
+			$afschrijvingenSum += (float)($componenten['directeAfschrijvingen'] ?? 0);
+			$vermogensSum += (float)($componenten['vermogenskosten'] ?? 0);
+			$winstopslagSum += (float)($componenten['winstopslag'] ?? 0);
 
-            $overheadInRecord = (array) ($componenten['indirecteOverhead'] ?? []);
-            foreach ($overheadInRecord as $bucket => $amount) {
-                $overheadBuckets[(string) $bucket] = ($overheadBuckets[(string) $bucket] ?? 0.0) + (float) $amount;
-            }
+			$overheadInRecord = (array)($componenten['indirecteOverhead'] ?? []);
+			foreach ($overheadInRecord as $bucket => $amount) {
+				$overheadBuckets[(string)$bucket] = ($overheadBuckets[(string)$bucket] ?? 0.0) + (float)$amount;
+			}
 
-            $totaleKostenSum += (float) ($record['totaleKosten'] ?? 0);
-        }
+			$totaleKostenSum += (float)($record['totaleKosten'] ?? 0);
+		}
 
-        $verkochteEenheden   = (float) ($input['verkochteEenheden'] ?? 0);
-        $kostprijsPerEenheid = null;
-        if ($verkochteEenheden > 0.0) {
-            $kostprijsPerEenheid = round(($totaleKostenSum / $verkochteEenheden), 4);
-        }
+		$verkochteEenheden = (float)($input['verkochteEenheden'] ?? 0);
+		$kostprijsPerEenheid = null;
+		if ($verkochteEenheden > 0.0) {
+			$kostprijsPerEenheid = round(($totaleKostenSum / $verkochteEenheden), 4);
+		}
 
-        $gehanteerdTarief = null;
-        if (isset($input['gehanteerdTarief']) === true) {
-            $gehanteerdTarief = (float) $input['gehanteerdTarief'];
-        }
+		$gehanteerdTarief = null;
+		if (isset($input['gehanteerdTarief']) === true) {
+			$gehanteerdTarief = (float)$input['gehanteerdTarief'];
+		}
 
-        $marge           = null;
-        $margePercentage = null;
-        if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-            $marge = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
-            $base  = 1.0;
-            if ($kostprijsPerEenheid > 0.0) {
-                $base = $kostprijsPerEenheid;
-            }
+		$marge = null;
+		$margePercentage = null;
+		if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
+			$marge = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
+			$base = 1.0;
+			if ($kostprijsPerEenheid > 0.0) {
+				$base = $kostprijsPerEenheid;
+			}
 
-            $margePercentage = round((($marge / $base) * 100), 4);
-        }
+			$margePercentage = round((($marge / $base) * 100), 4);
+		}
 
-        $compliant = false;
-        if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-            $compliant = ($gehanteerdTarief >= $kostprijsPerEenheid);
-        }
+		$compliant = false;
+		if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
+			$compliant = ($gehanteerdTarief >= $kostprijsPerEenheid);
+		}
 
-        $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
-        $verkochteEenhedenOut = null;
-        if ($verkochteEenheden > 0.0) {
-            $verkochteEenhedenOut = $verkochteEenheden;
-        }
+		$verkochteEenhedenOut = null;
+		if ($verkochteEenheden > 0.0) {
+			$verkochteEenhedenOut = $verkochteEenheden;
+		}
 
-        return [
-            'commercialActivityId' => (string) $input['commercialActivityId'],
-            'periode'              => $fiscalYear.'-YTD',
-            'berekendOp'           => $now->format(DateTimeImmutable::ATOM),
-            'status'               => 'definitief',
-            'componenten'          => [
-                'directeLoonkosten'     => round($loonkostenSum, 2),
-                'directeMaterialen'     => round($materialenSum, 2),
-                'directeAfschrijvingen' => round($afschrijvingenSum, 2),
-                'indirecteOverhead'     => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
-                'vermogenskosten'       => round($vermogensSum, 2),
-                'winstopslag'           => round($winstopslagSum, 2),
-            ],
-            'totaleKosten'         => round($totaleKostenSum, 2),
-            'verkochteEenheden'    => $verkochteEenhedenOut,
-            'eenheidLabel'         => ($input['eenheidLabel'] ?? null),
-            'kostprijsPerEenheid'  => $kostprijsPerEenheid,
-            'gehanteerdTarief'     => $gehanteerdTarief,
-            'marge'                => $marge,
-            'margePercentage'      => $margePercentage,
-            'compliant'            => $compliant,
-            'definitiefSignedBy'   => $signedBy,
-            'definitiefSignedAt'   => $now->format(DateTimeImmutable::ATOM),
-            'administrationId'     => (string) $input['administrationId'],
-        ];
+		return [
+			'commercialActivityId' => (string)$input['commercialActivityId'],
+			'periode' => $fiscalYear . '-YTD',
+			'berekendOp' => $now->format(DateTimeImmutable::ATOM),
+			'status' => 'definitief',
+			'componenten' => [
+				'directeLoonkosten' => round($loonkostenSum, 2),
+				'directeMaterialen' => round($materialenSum, 2),
+				'directeAfschrijvingen' => round($afschrijvingenSum, 2),
+				'indirecteOverhead' => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
+				'vermogenskosten' => round($vermogensSum, 2),
+				'winstopslag' => round($winstopslagSum, 2),
+			],
+			'totaleKosten' => round($totaleKostenSum, 2),
+			'verkochteEenheden' => $verkochteEenhedenOut,
+			'eenheidLabel' => ($input['eenheidLabel'] ?? null),
+			'kostprijsPerEenheid' => $kostprijsPerEenheid,
+			'gehanteerdTarief' => $gehanteerdTarief,
+			'marge' => $marge,
+			'margePercentage' => $margePercentage,
+			'compliant' => $compliant,
+			'definitiefSignedBy' => $signedBy,
+			'definitiefSignedAt' => $now->format(DateTimeImmutable::ATOM),
+			'administrationId' => (string)$input['administrationId'],
+		];
 
-    }//end lock()
+	}//end lock()
 
-    /**
-     * Determine whether today is past the year-end lock trigger date (31 March of FY+1).
-     *
-     * @param string $fiscalYear Fiscal year (YYYY).
-     * @param string $today      Today's ISO date.
-     *
-     * @return bool True when lock should run.
-     */
-    public function shouldLock(string $fiscalYear, string $today): bool
-    {
-        if (preg_match('/^[0-9]{4}$/', $fiscalYear) !== 1) {
-            return false;
-        }
+	/**
+	 * Determine whether today is past the year-end lock trigger date (31 March of FY+1).
+	 *
+	 * @param string $fiscalYear Fiscal year (YYYY).
+	 * @param string $today Today's ISO date.
+	 *
+	 * @return bool True when lock should run.
+	 */
+	public function shouldLock(string $fiscalYear, string $today): bool {
+		if (preg_match('/^[0-9]{4}$/', $fiscalYear) !== 1) {
+			return false;
+		}
 
-        try {
-            $lockDate = new DateTimeImmutable(((int) $fiscalYear + 1).'-03-31');
-            $now      = new DateTimeImmutable($today);
-        } catch (\Throwable) {
-            return false;
-        }
+		try {
+			$lockDate = new DateTimeImmutable(((int)$fiscalYear + 1) . '-03-31');
+			$now = new DateTimeImmutable($today);
+		} catch (\Throwable) {
+			return false;
+		}
 
-        return $now >= $lockDate;
-
-    }//end shouldLock()
+		return $now >= $lockDate;
+	}//end shouldLock()
 }//end class

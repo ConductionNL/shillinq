@@ -34,97 +34,92 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class PayrollSbrConversionServiceTest extends TestCase
-{
+final class PayrollSbrConversionServiceTest extends TestCase {
 
-    /**
-     * Service under test.
-     *
-     * @var PayrollSbrConversionService
-     */
-    private PayrollSbrConversionService $svc;
+	/**
+	 * Service under test.
+	 *
+	 * @var PayrollSbrConversionService
+	 */
+	private PayrollSbrConversionService $svc;
 
-    /**
-     * Build a fresh service before each test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->svc = new PayrollSbrConversionService();
+	/**
+	 * Build a fresh service before each test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->svc = new PayrollSbrConversionService();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Converts an LHAfdracht into a complete SBR instance hand-off payload.
-     *
-     * @return void
-     */
-    public function testToSbrInstancePayloadEchoesTotalsAndDeterministicRef(): void
-    {
-        $lh = [
-            'werkgeverId'            => 'wg-conduction-bv',
-            'periodeId'              => 'lp-2026-05',
-            'totaalLoonheffing'      => 18620.10,
-            'totaalPremiesSV'        => 7559.40,
-            'totaalZVW'              => 3654.00,
-            'totaalEindheffingenWKR' => 0.0,
-            'totaalAfdracht'         => 29833.50,
-            'vervaldagAfdracht'      => '2026-06-30',
-            'status'                 => 'VOORBEREID',
-        ];
+	/**
+	 * Converts an LHAfdracht into a complete SBR instance hand-off payload.
+	 *
+	 * @return void
+	 */
+	public function testToSbrInstancePayloadEchoesTotalsAndDeterministicRef(): void {
+		$lh = [
+			'werkgeverId' => 'wg-conduction-bv',
+			'periodeId' => 'lp-2026-05',
+			'totaalLoonheffing' => 18620.10,
+			'totaalPremiesSV' => 7559.40,
+			'totaalZVW' => 3654.00,
+			'totaalEindheffingenWKR' => 0.0,
+			'totaalAfdracht' => 29833.50,
+			'vervaldagAfdracht' => '2026-06-30',
+			'status' => 'VOORBEREID',
+		];
 
-        $payload = $this->svc->toSbrInstancePayload(lhAfdracht: $lh);
+		$payload = $this->svc->toSbrInstancePayload(lhAfdracht: $lh);
 
-        $this->assertSame(PayrollSbrConversionService::SBR_TAXONOMY_VERSION, $payload['taxonomyVersion']);
-        $this->assertSame('LA-XX-2026-wg-conduction-bv-lp-2026-05', $payload['instanceRef']);
-        $this->assertSame('Loonaangifte', $payload['collectie']);
-        $this->assertSame('READY_FOR_SBR', $payload['status']);
-        $this->assertSame(18620.10, $payload['loonheffingTotaal']);
-        $this->assertSame(7559.40, $payload['premiesSVTotaal']);
-        $this->assertSame(3654.00, $payload['zvwTotaal']);
-        $this->assertSame(0.0, $payload['eindheffingenWKR']);
-        $this->assertSame(29833.50, $payload['totaalAfdracht']);
-        $this->assertSame('2026-06-30', $payload['vervaldagAfdracht']);
+		$this->assertSame(PayrollSbrConversionService::SBR_TAXONOMY_VERSION, $payload['taxonomyVersion']);
+		$this->assertSame('LA-XX-2026-wg-conduction-bv-lp-2026-05', $payload['instanceRef']);
+		$this->assertSame('Loonaangifte', $payload['collectie']);
+		$this->assertSame('READY_FOR_SBR', $payload['status']);
+		$this->assertSame(18620.10, $payload['loonheffingTotaal']);
+		$this->assertSame(7559.40, $payload['premiesSVTotaal']);
+		$this->assertSame(3654.00, $payload['zvwTotaal']);
+		$this->assertSame(0.0, $payload['eindheffingenWKR']);
+		$this->assertSame(29833.50, $payload['totaalAfdracht']);
+		$this->assertSame('2026-06-30', $payload['vervaldagAfdracht']);
 
-    }//end testToSbrInstancePayloadEchoesTotalsAndDeterministicRef()
+	}//end testToSbrInstancePayloadEchoesTotalsAndDeterministicRef()
 
-    /**
-     * Stamps a stable, idempotent sbrInstanceRef on the LHAfdracht copy.
-     *
-     * @return void
-     */
-    public function testStampInstanceRefIsIdempotent(): void
-    {
-        $lh = [
-            'werkgeverId' => 'wg-1',
-            'periodeId'   => 'lp-2026-04',
-        ];
+	/**
+	 * Stamps a stable, idempotent sbrInstanceRef on the LHAfdracht copy.
+	 *
+	 * @return void
+	 */
+	public function testStampInstanceRefIsIdempotent(): void {
+		$lh = [
+			'werkgeverId' => 'wg-1',
+			'periodeId' => 'lp-2026-04',
+		];
 
-        $first  = $this->svc->stampInstanceRef(lhAfdracht: $lh);
-        $second = $this->svc->stampInstanceRef(lhAfdracht: $first);
+		$first = $this->svc->stampInstanceRef(lhAfdracht: $lh);
+		$second = $this->svc->stampInstanceRef(lhAfdracht: $first);
 
-        $this->assertSame('LA-XX-2026-wg-1-lp-2026-04', $first['sbrInstanceRef']);
-        $this->assertSame($first['sbrInstanceRef'], $second['sbrInstanceRef']);
+		$this->assertSame('LA-XX-2026-wg-1-lp-2026-04', $first['sbrInstanceRef']);
+		$this->assertSame($first['sbrInstanceRef'], $second['sbrInstanceRef']);
 
-    }//end testStampInstanceRefIsIdempotent()
+	}//end testStampInstanceRefIsIdempotent()
 
-    /**
-     * Sanitises unsafe characters in identifiers before composing the ref.
-     *
-     * @return void
-     */
-    public function testInstanceRefSanitisesIdentifierCharacters(): void
-    {
-        $payload = $this->svc->toSbrInstancePayload(
-            lhAfdracht: [
-                'werkgeverId' => "wg-/?\\!1",
-                'periodeId'   => "lp 2026/05",
-            ]
-        );
+	/**
+	 * Sanitises unsafe characters in identifiers before composing the ref.
+	 *
+	 * @return void
+	 */
+	public function testInstanceRefSanitisesIdentifierCharacters(): void {
+		$payload = $this->svc->toSbrInstancePayload(
+			lhAfdracht: [
+				'werkgeverId' => 'wg-/?\\!1',
+				'periodeId' => 'lp 2026/05',
+			]
+		);
 
-        $this->assertSame('LA-XX-2026-wg-1-lp202605', $payload['instanceRef']);
+		$this->assertSame('LA-XX-2026-wg-1-lp202605', $payload['instanceRef']);
 
-    }//end testInstanceRefSanitisesIdentifierCharacters()
+	}//end testInstanceRefSanitisesIdentifierCharacters()
 }//end class

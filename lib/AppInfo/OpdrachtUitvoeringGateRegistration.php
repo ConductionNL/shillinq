@@ -55,51 +55,49 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
-final class OpdrachtUitvoeringGateRegistration
-{
+final class OpdrachtUitvoeringGateRegistration {
 
-    /**
-     * The `requires` tag the OpdrachtUitvoering `voltooien` transition declares.
-     *
-     * @var string
-     */
-    private const VOLTOOIEN_GUARD_TAG = 'OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard::canVoltooien';
+	/**
+	 * The `requires` tag the OpdrachtUitvoering `voltooien` transition declares.
+	 *
+	 * @var string
+	 */
+	private const VOLTOOIEN_GUARD_TAG = 'OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard::canVoltooien';
 
-    /**
-     * Register the listener and the transition-guard alias.
-     *
-     * @param IRegistrationContext $context The app registration context.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function register(IRegistrationContext $context): void
-    {
-        // A direct create/update never triggers a lifecycle transition, so the
-        // declarative `requires` guard never sees it. Measured on a live
-        // instance: POSTing an OpdrachtUitvoering with `status: completed` and
-        // `bewijsstukken: []` returned 201 Created.
-        foreach ([ObjectCreatingEvent::class, ObjectUpdatingEvent::class] as $preSaveEvent) {
-            $context->registerEventListener(
-                event: $preSaveEvent,
-                listener: OpdrachtUitvoeringBewijsstukListener::class
-            );
-        }
+	/**
+	 * Register the listener and the transition-guard alias.
+	 *
+	 * @param IRegistrationContext $context The app registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function register(IRegistrationContext $context): void {
+		// A direct create/update never triggers a lifecycle transition, so the
+		// declarative `requires` guard never sees it. Measured on a live
+		// instance: POSTing an OpdrachtUitvoering with `status: completed` and
+		// `bewijsstukken: []` returned 201 Created.
+		foreach ([ObjectCreatingEvent::class, ObjectUpdatingEvent::class] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: OpdrachtUitvoeringBewijsstukListener::class
+			);
+		}
 
-        // The transition endpoint's half. Denies with the SAME wording as the
-        // listener so a caller cannot tell the two enforcement points apart.
-        $context->registerService(
-            self::VOLTOOIEN_GUARD_TAG,
-            static function ($c): RegisterRequiresGuardAdapter {
-                return new RegisterRequiresGuardAdapter(
-                    guard: $c->get(OpdrachtUitvoeringGuard::class),
-                    method: 'canVoltooien',
-                    denyMessage: OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
-                    logger: $c->get(LoggerInterface::class),
-                );
-            }
-        );
+		// The transition endpoint's half. Denies with the SAME wording as the
+		// listener so a caller cannot tell the two enforcement points apart.
+		$context->registerService(
+			self::VOLTOOIEN_GUARD_TAG,
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(OpdrachtUitvoeringGuard::class),
+					method: 'canVoltooien',
+					denyMessage: OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
 
-    }//end register()
+	}//end register()
 }//end class

@@ -33,217 +33,207 @@ use ReflectionMethod;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class MarketGovernmentSeparationFragmentTest extends TestCase
-{
+final class MarketGovernmentSeparationFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-market-government-separation.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-market-government-separation.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * The fragment file is present and valid JSON with a schemas block.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		self::assertArrayHasKey('schemas', $data['components']);
 
-    /**
-     * The fragment file is present and valid JSON with a schemas block.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        self::assertArrayHasKey('schemas', $data['components']);
+	}//end testFragmentIsValidJson()
 
-    }//end testFragmentIsValidJson()
+	/**
+	 * The fragment declares the three Phase-1 WMO schemas with correct purpose.
+	 *
+	 * @return void
+	 */
+	public function testFragmentDeclaresPhase1Schemas(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		$schemas = $data['components']['schemas'];
 
-    /**
-     * The fragment declares the three Phase-1 WMO schemas with correct purpose.
-     *
-     * @return void
-     */
-    public function testFragmentDeclaresPhase1Schemas(): void
-    {
-        $data    = json_decode((string) file_get_contents($this->fragmentPath), true);
-        $schemas = $data['components']['schemas'];
+		foreach (['CommercialActivity', 'IntegralCostPrice', 'ActivityCostAllocation'] as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+			self::assertSame('fact', $schemas[$name]['x-openregister-purpose'], "$name must be a fact schema");
+			self::assertArrayHasKey('administrationId', $schemas[$name]['properties'], "$name must carry administrationId for tenant isolation");
+			self::assertContains('administrationId', $schemas[$name]['required'], "$name must require administrationId");
+		}
 
-        foreach (['CommercialActivity', 'IntegralCostPrice', 'ActivityCostAllocation'] as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-            self::assertSame('fact', $schemas[$name]['x-openregister-purpose'], "$name must be a fact schema");
-            self::assertArrayHasKey('administrationId', $schemas[$name]['properties'], "$name must carry administrationId for tenant isolation");
-            self::assertContains('administrationId', $schemas[$name]['required'], "$name must require administrationId");
-        }
+	}//end testFragmentDeclaresPhase1Schemas()
 
-    }//end testFragmentDeclaresPhase1Schemas()
+	/**
+	 * CommercialActivity carries the REQ-WMO-001 mandatory fields and the ACM melding block.
+	 *
+	 * @return void
+	 */
+	public function testCommercialActivityHasMandatoryFields(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		$props = $data['components']['schemas']['CommercialActivity']['properties'];
 
-    /**
-     * CommercialActivity carries the REQ-WMO-001 mandatory fields and the ACM melding block.
-     *
-     * @return void
-     */
-    public function testCommercialActivityHasMandatoryFields(): void
-    {
-        $data  = json_decode((string) file_get_contents($this->fragmentPath), true);
-        $props = $data['components']['schemas']['CommercialActivity']['properties'];
+		$mandatory = [
+			'code',
+			'naam',
+			'bestuursorgaan',
+			'marktsegment',
+			'concurrenten',
+			'kostprijsMethode',
+			'kostenplaatsCode',
+			'kostendragerCode',
+			'isExempted',
+			'acmMelding',
+		];
+		foreach ($mandatory as $field) {
+			self::assertArrayHasKey($field, $props, "CommercialActivity must declare $field");
+		}
 
-        $mandatory = [
-            'code',
-            'naam',
-            'bestuursorgaan',
-            'marktsegment',
-            'concurrenten',
-            'kostprijsMethode',
-            'kostenplaatsCode',
-            'kostendragerCode',
-            'isExempted',
-            'acmMelding',
-        ];
-        foreach ($mandatory as $field) {
-            self::assertArrayHasKey($field, $props, "CommercialActivity must declare $field");
-        }
+		// The kostprijsMethode is the statutory enum.
+		self::assertContains('integrale-kostprijs-art-25i', $props['kostprijsMethode']['enum']);
 
-        // The kostprijsMethode is the statutory enum.
-        self::assertContains('integrale-kostprijs-art-25i', $props['kostprijsMethode']['enum']);
+	}//end testCommercialActivityHasMandatoryFields()
 
-    }//end testCommercialActivityHasMandatoryFields()
+	/**
+	 * IntegralCostPrice declares the six statutory cost components and the status enum.
+	 *
+	 * @return void
+	 */
+	public function testIntegralCostPriceHasSixComponents(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		$schema = $data['components']['schemas']['IntegralCostPrice'];
+		$components = $schema['properties']['componenten']['properties'];
 
-    /**
-     * IntegralCostPrice declares the six statutory cost components and the status enum.
-     *
-     * @return void
-     */
-    public function testIntegralCostPriceHasSixComponents(): void
-    {
-        $data       = json_decode((string) file_get_contents($this->fragmentPath), true);
-        $schema     = $data['components']['schemas']['IntegralCostPrice'];
-        $components = $schema['properties']['componenten']['properties'];
+		$expected = [
+			'directeLoonkosten',
+			'directeMaterialen',
+			'directeAfschrijvingen',
+			'indirecteOverhead',
+			'vermogenskosten',
+			'winstopslag',
+		];
+		foreach ($expected as $component) {
+			self::assertArrayHasKey($component, $components, "componenten must include $component");
+		}
 
-        $expected = [
-            'directeLoonkosten',
-            'directeMaterialen',
-            'directeAfschrijvingen',
-            'indirecteOverhead',
-            'vermogenskosten',
-            'winstopslag',
-        ];
-        foreach ($expected as $component) {
-            self::assertArrayHasKey($component, $components, "componenten must include $component");
-        }
+		self::assertSame(['voorlopig', 'definitief'], $schema['properties']['status']['enum']);
 
-        self::assertSame(['voorlopig', 'definitief'], $schema['properties']['status']['enum']);
+	}//end testIntegralCostPriceHasSixComponents()
 
-    }//end testIntegralCostPriceHasSixComponents()
+	/**
+	 * ActivityCostAllocation models a reversible split with an override block (REQ-WMO-003).
+	 *
+	 * @return void
+	 */
+	public function testActivityCostAllocationModelsReversibleSplit(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		$props = $data['components']['schemas']['ActivityCostAllocation']['properties'];
 
-    /**
-     * ActivityCostAllocation models a reversible split with an override block (REQ-WMO-003).
-     *
-     * @return void
-     */
-    public function testActivityCostAllocationModelsReversibleSplit(): void
-    {
-        $data  = json_decode((string) file_get_contents($this->fragmentPath), true);
-        $props = $data['components']['schemas']['ActivityCostAllocation']['properties'];
+		self::assertArrayHasKey('splits', $props);
+		self::assertArrayHasKey('verdeelsleutel', $props);
+		self::assertArrayHasKey('automatischToegepast', $props);
+		self::assertArrayHasKey('handmatigeOverride', $props);
+		// Status enum supports the override / reversal lifecycle.
+		self::assertSame(['active', 'overridden', 'reversed'], $props['status']['enum']);
+		// The override carries the 4-ogen-akkoord.
+		self::assertArrayHasKey('approvedBy', $props['handmatigeOverride']['properties']);
 
-        self::assertArrayHasKey('splits', $props);
-        self::assertArrayHasKey('verdeelsleutel', $props);
-        self::assertArrayHasKey('automatischToegepast', $props);
-        self::assertArrayHasKey('handmatigeOverride', $props);
-        // Status enum supports the override / reversal lifecycle.
-        self::assertSame(['active', 'overridden', 'reversed'], $props['status']['enum']);
-        // The override carries the 4-ogen-akkoord.
-        self::assertArrayHasKey('approvedBy', $props['handmatigeOverride']['properties']);
+	}//end testActivityCostAllocationModelsReversibleSplit()
 
-    }//end testActivityCostAllocationModelsReversibleSplit()
+	/**
+	 * The fragment ships archived seed objects bound to the shillinq register.
+	 *
+	 * @return void
+	 */
+	public function testFragmentShipsArchivedSeedObjects(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertArrayHasKey('objects', $data);
+		self::assertNotEmpty($data['objects']);
 
-    /**
-     * The fragment ships archived seed objects bound to the shillinq register.
-     *
-     * @return void
-     */
-    public function testFragmentShipsArchivedSeedObjects(): void
-    {
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertArrayHasKey('objects', $data);
-        self::assertNotEmpty($data['objects']);
+		foreach ($data['objects'] as $object) {
+			self::assertSame('shillinq', $object['@self']['register'], 'Seed object must target the shillinq register');
+			self::assertContains(
+				$object['@self']['schema'],
+				['CommercialActivity', 'IntegralCostPrice', 'ActivityCostAllocation'],
+				'Seed object must bind to a WMO schema'
+			);
+			self::assertSame('archived', $object['_meta']['lifecycleState'], 'Seed objects are historical reference only (archived)');
+		}
 
-        foreach ($data['objects'] as $object) {
-            self::assertSame('shillinq', $object['@self']['register'], 'Seed object must target the shillinq register');
-            self::assertContains(
-                $object['@self']['schema'],
-                ['CommercialActivity', 'IntegralCostPrice', 'ActivityCostAllocation'],
-                'Seed object must bind to a WMO schema'
-            );
-            self::assertSame('archived', $object['_meta']['lifecycleState'], 'Seed objects are historical reference only (archived)');
-        }
+	}//end testFragmentShipsArchivedSeedObjects()
 
-    }//end testFragmentShipsArchivedSeedObjects()
+	/**
+	 * Merging the fragment onto the monolith adds the schemas without dropping any
+	 * pre-existing schema and without disturbing the reused AllocationRule (ADR-037 union).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = json_decode((string)file_get_contents($this->fragmentPath), true);
 
-    /**
-     * Merging the fragment onto the monolith adds the schemas without dropping any
-     * pre-existing schema and without disturbing the reused AllocationRule (ADR-037 union).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = json_decode((string) file_get_contents($this->fragmentPath), true);
+		$schemaCountBefore = count($base['components']['schemas']);
+		$merged = $this->merge($base, $frag);
+		$schemas = $merged['components']['schemas'];
 
-        $schemaCountBefore = count($base['components']['schemas']);
-        $merged            = $this->merge($base, $frag);
-        $schemas           = $merged['components']['schemas'];
+		// The three Phase-1 WMO fact schemas are present.
+		self::assertArrayHasKey('CommercialActivity', $schemas);
+		self::assertArrayHasKey('IntegralCostPrice', $schemas);
+		self::assertArrayHasKey('ActivityCostAllocation', $schemas);
 
-        // The three Phase-1 WMO fact schemas are present.
-        self::assertArrayHasKey('CommercialActivity', $schemas);
-        self::assertArrayHasKey('IntegralCostPrice', $schemas);
-        self::assertArrayHasKey('ActivityCostAllocation', $schemas);
+		// Additive union: the merged set grows by exactly the number of fragment
+		// schemas not already present in the base, and no base schema is dropped.
+		// The fragment ships the full WMO schema set (the three Phase-1 fact
+		// schemas plus the later-phase ACM/audit/benchmark schemas), so the delta
+		// is computed from the fragment rather than hard-coded, to stay correct as
+		// the consolidated monolith absorbs schemas over time.
+		$fragSchemaKeys = array_keys($frag['components']['schemas']);
+		$netNew = count(array_diff($fragSchemaKeys, array_keys($base['components']['schemas'])));
+		self::assertSame(($schemaCountBefore + $netNew), count($schemas));
+		foreach ($fragSchemaKeys as $fragName) {
+			self::assertArrayHasKey($fragName, $schemas, "$fragName must be present after the fragment merge");
+		}
 
-        // Additive union: the merged set grows by exactly the number of fragment
-        // schemas not already present in the base, and no base schema is dropped.
-        // The fragment ships the full WMO schema set (the three Phase-1 fact
-        // schemas plus the later-phase ACM/audit/benchmark schemas), so the delta
-        // is computed from the fragment rather than hard-coded, to stay correct as
-        // the consolidated monolith absorbs schemas over time.
-        $fragSchemaKeys = array_keys($frag['components']['schemas']);
-        $netNew         = count(array_diff($fragSchemaKeys, array_keys($base['components']['schemas'])));
-        self::assertSame(($schemaCountBefore + $netNew), count($schemas));
-        foreach ($fragSchemaKeys as $fragName) {
-            self::assertArrayHasKey($fragName, $schemas, "$fragName must be present after the fragment merge");
-        }
+		// Every pre-existing schema survives the merge (including the reused AllocationRule).
+		foreach (array_keys($base['components']['schemas']) as $name) {
+			self::assertArrayHasKey($name, $schemas, "$name must survive the fragment merge");
+		}
 
-        // Every pre-existing schema survives the merge (including the reused AllocationRule).
-        foreach (array_keys($base['components']['schemas']) as $name) {
-            self::assertArrayHasKey($name, $schemas, "$name must survive the fragment merge");
-        }
+		self::assertArrayHasKey('AllocationRule', $schemas, 'The reused OverheadDistributionRule (AllocationRule) is untouched');
 
-        self::assertArrayHasKey('AllocationRule', $schemas, 'The reused OverheadDistributionRule (AllocationRule) is untouched');
+		// Seed objects union onto the base objects list (ADR-037 list union).
+		self::assertGreaterThanOrEqual(count($base['objects'] ?? []), count($merged['objects']));
 
-        // Seed objects union onto the base objects list (ADR-037 list union).
-        self::assertGreaterThanOrEqual(count($base['objects'] ?? []), count($merged['objects']));
-
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 }//end class

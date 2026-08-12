@@ -51,260 +51,245 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class LocationHierarchyGuard
-{
-    /**
-     * Maximum allowed hierarchy depth per REQ-LOC-003.
-     */
-    public const MAX_DEPTH = 4;
+class LocationHierarchyGuard {
+	/**
+	 * Maximum allowed hierarchy depth per REQ-LOC-003.
+	 */
+	public const MAX_DEPTH = 4;
 
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for hierarchy diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for hierarchy diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Validate that the new location does not exceed MAX_DEPTH in the hierarchy.
-     *
-     * Called by x-openregister-lifecycle `validations.onCreate.maxDepth` guard clause.
-     * Throws InvalidArgumentException when depth ≥ MAX_DEPTH.
-     *
-     * @param string|null           $parentLocationId The proposed parent location id (null = top-level).
-     * @param array<string,mixed>[] $allLocations     All locations in the administration keyed by id.
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When hierarchy depth would exceed MAX_DEPTH.
-     *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
-     */
-    public function validateDepth(?string $parentLocationId, array $allLocations): void
-    {
-        if ($parentLocationId === null) {
-            return;
-        }
+	/**
+	 * Validate that the new location does not exceed MAX_DEPTH in the hierarchy.
+	 *
+	 * Called by x-openregister-lifecycle `validations.onCreate.maxDepth` guard clause.
+	 * Throws InvalidArgumentException when depth ≥ MAX_DEPTH.
+	 *
+	 * @param string|null $parentLocationId The proposed parent location id (null = top-level).
+	 * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When hierarchy depth would exceed MAX_DEPTH.
+	 *
+	 * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+	 */
+	public function validateDepth(?string $parentLocationId, array $allLocations): void {
+		if ($parentLocationId === null) {
+			return;
+		}
 
-        $depth = $this->computeDepthFromParent(parentId: $parentLocationId, allLocations: $allLocations);
+		$depth = $this->computeDepthFromParent(parentId: $parentLocationId, allLocations: $allLocations);
 
-        $this->logger->debug(
-            'LocationHierarchyGuard: validateDepth',
-            ['parentLocationId' => $parentLocationId, 'computedDepth' => $depth]
-        );
+		$this->logger->debug(
+			'LocationHierarchyGuard: validateDepth',
+			['parentLocationId' => $parentLocationId, 'computedDepth' => $depth]
+		);
 
-        if ($depth >= self::MAX_DEPTH) {
-            throw new InvalidArgumentException(
-                'Location hierarchy exceeds maximum depth of '.self::MAX_DEPTH.'.'
-            );
-        }
+		if ($depth >= self::MAX_DEPTH) {
+			throw new InvalidArgumentException(
+				'Location hierarchy exceeds maximum depth of ' . self::MAX_DEPTH . '.'
+			);
+		}
 
-    }//end validateDepth()
+	}//end validateDepth()
 
-    /**
-     * Validate that setting parentLocationId does not create a circular reference.
-     *
-     * Called by x-openregister-lifecycle `validations.onCreate.noCircularReference` guard.
-     * Throws InvalidArgumentException when a cycle is detected.
-     *
-     * @param string                $locationId       The location being saved (new or updated).
-     * @param string|null           $parentLocationId The proposed parent location id.
-     * @param array<string,mixed>[] $allLocations     All locations in the administration keyed by id.
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When circular reference would be created.
-     *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
-     */
-    public function validateNoCircle(string $locationId, ?string $parentLocationId, array $allLocations): void
-    {
-        if ($parentLocationId === null) {
-            return;
-        }
+	/**
+	 * Validate that setting parentLocationId does not create a circular reference.
+	 *
+	 * Called by x-openregister-lifecycle `validations.onCreate.noCircularReference` guard.
+	 * Throws InvalidArgumentException when a cycle is detected.
+	 *
+	 * @param string $locationId The location being saved (new or updated).
+	 * @param string|null $parentLocationId The proposed parent location id.
+	 * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When circular reference would be created.
+	 *
+	 * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
+	 */
+	public function validateNoCircle(string $locationId, ?string $parentLocationId, array $allLocations): void {
+		if ($parentLocationId === null) {
+			return;
+		}
 
-        $visited = [$locationId => true];
-        $current = $parentLocationId;
+		$visited = [$locationId => true];
+		$current = $parentLocationId;
 
-        while ($current !== null) {
-            if (isset($visited[$current]) === true) {
-                throw new InvalidArgumentException(
-                    'Circular reference detected in location hierarchy.'
-                );
-            }
+		while ($current !== null) {
+			if (isset($visited[$current]) === true) {
+				throw new InvalidArgumentException(
+					'Circular reference detected in location hierarchy.'
+				);
+			}
 
-            $visited[$current] = true;
-            $parent            = $allLocations[$current] ?? null;
-            if ($parent === null) {
-                $current = null;
-            } else {
-                $current = $parent['parentLocationId'] ?? null;
-            }
-        }
+			$visited[$current] = true;
+			$parent = $allLocations[$current] ?? null;
+			if ($parent === null) {
+				$current = null;
+			} else {
+				$current = $parent['parentLocationId'] ?? null;
+			}
+		}
 
-    }//end validateNoCircle()
+	}//end validateNoCircle()
 
-    /**
-     * Count all descendants of a location (recursive, all depths).
-     *
-     * Called by x-openregister-aggregations `descendantCount` guard clause.
-     *
-     * @param string                $locationId   The root location whose descendants are counted.
-     * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
-     *
-     * @return int Total number of descendant locations at all depth levels.
-     *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
-     */
-    public function countDescendants(string $locationId, array $allLocations): int
-    {
-        $count    = 0;
-        $children = $this->directChildIds(parentId: $locationId, allLocations: $allLocations);
+	/**
+	 * Count all descendants of a location (recursive, all depths).
+	 *
+	 * Called by x-openregister-aggregations `descendantCount` guard clause.
+	 *
+	 * @param string $locationId The root location whose descendants are counted.
+	 * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
+	 *
+	 * @return int Total number of descendant locations at all depth levels.
+	 *
+	 * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+	 */
+	public function countDescendants(string $locationId, array $allLocations): int {
+		$count = 0;
+		$children = $this->directChildIds(parentId: $locationId, allLocations: $allLocations);
 
-        foreach ($children as $childId) {
-            $count++;
-            $count += $this->countDescendants(locationId: $childId, allLocations: $allLocations);
-        }
+		foreach ($children as $childId) {
+			$count++;
+			$count += $this->countDescendants(locationId: $childId, allLocations: $allLocations);
+		}
 
-        return $count;
+		return $count;
+	}//end countDescendants()
 
-    }//end countDescendants()
+	/**
+	 * Build the full human-readable path from warehouse root to this location.
+	 *
+	 * Example: "W-01 / Z-01 / B-100" per design.md D5.
+	 * Called by x-openregister-calculations `hierarchyPath` guard clause.
+	 *
+	 * @param array<string,mixed> $location The location to build the path for.
+	 * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
+	 *
+	 * @return string Full slash-separated path from warehouse root (e.g. "W-01 / Z-01 / B-100").
+	 *
+	 * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+	 */
+	public function buildPath(array $location, array $allLocations): string {
+		$segments = [$location['locationCode'] ?? $location['name'] ?? ''];
+		$current = $location['parentLocationId'] ?? null;
 
-    /**
-     * Build the full human-readable path from warehouse root to this location.
-     *
-     * Example: "W-01 / Z-01 / B-100" per design.md D5.
-     * Called by x-openregister-calculations `hierarchyPath` guard clause.
-     *
-     * @param array<string,mixed>   $location     The location to build the path for.
-     * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
-     *
-     * @return string Full slash-separated path from warehouse root (e.g. "W-01 / Z-01 / B-100").
-     *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
-     */
-    public function buildPath(array $location, array $allLocations): string
-    {
-        $segments = [$location['locationCode'] ?? $location['name'] ?? ''];
-        $current  = $location['parentLocationId'] ?? null;
+		while ($current !== null) {
+			$parent = $allLocations[$current] ?? null;
+			if ($parent === null) {
+				break;
+			}
 
-        while ($current !== null) {
-            $parent = $allLocations[$current] ?? null;
-            if ($parent === null) {
-                break;
-            }
+			array_unshift($segments, $parent['locationCode'] ?? $parent['name'] ?? '');
+			$current = $parent['parentLocationId'] ?? null;
+		}
 
-            array_unshift($segments, $parent['locationCode'] ?? $parent['name'] ?? '');
-            $current = $parent['parentLocationId'] ?? null;
-        }
+		return implode(separator: ' / ', array: $segments);
+	}//end buildPath()
 
-        return implode(separator: ' / ', array: $segments);
+	/**
+	 * Compute the numeric depth of a location in the hierarchy.
+	 *
+	 * 0 = warehouse (no parent), 1 = zone, 2 = aisle/section, 3 = bin.
+	 * Called by x-openregister-calculations `hierarchyDepthValue` guard clause.
+	 *
+	 * @param array<string,mixed> $location The location to compute depth for.
+	 * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
+	 *
+	 * @return int Depth in hierarchy (0 = warehouse, max 3 = bin per REQ-LOC-003).
+	 *
+	 * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
+	 */
+	public function computeDepth(array $location, array $allLocations): int {
+		$depth = 0;
+		$current = $location['parentLocationId'] ?? null;
 
-    }//end buildPath()
+		while ($current !== null) {
+			$depth++;
+			$parent = $allLocations[$current] ?? null;
+			if ($parent === null) {
+				$current = null;
+			} else {
+				$current = $parent['parentLocationId'] ?? null;
+			}
+		}
 
-    /**
-     * Compute the numeric depth of a location in the hierarchy.
-     *
-     * 0 = warehouse (no parent), 1 = zone, 2 = aisle/section, 3 = bin.
-     * Called by x-openregister-calculations `hierarchyDepthValue` guard clause.
-     *
-     * @param array<string,mixed>   $location     The location to compute depth for.
-     * @param array<string,mixed>[] $allLocations All locations in the administration keyed by id.
-     *
-     * @return int Depth in hierarchy (0 = warehouse, max 3 = bin per REQ-LOC-003).
-     *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
-     */
-    public function computeDepth(array $location, array $allLocations): int
-    {
-        $depth   = 0;
-        $current = $location['parentLocationId'] ?? null;
+		return $depth;
+	}//end computeDepth()
 
-        while ($current !== null) {
-            $depth++;
-            $parent = $allLocations[$current] ?? null;
-            if ($parent === null) {
-                $current = null;
-            } else {
-                $current = $parent['parentLocationId'] ?? null;
-            }
-        }
+	/**
+	 * Return a stock availability badge label for display per REQ-LOC-009.
+	 *
+	 * Badge values: 'In Stock', 'Low Stock', 'Empty', 'Over Capacity'.
+	 * Called by x-openregister-calculations `stockAvailabilityBadge` guard clause.
+	 *
+	 * @param float $stockQuantity Aggregated on-hand quantity from stockRollup.
+	 * @param float|null $capacity Optional capacity limit (null = no limit check).
+	 *
+	 * @return string One of: 'In Stock', 'Low Stock', 'Empty', 'Over Capacity'.
+	 *
+	 * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-19
+	 */
+	public function stockBadge(float $stockQuantity, ?float $capacity): string {
+		if ($stockQuantity <= 0.0) {
+			return 'Empty';
+		}
 
-        return $depth;
+		if ($capacity !== null && $capacity > 0.0 && $stockQuantity > $capacity) {
+			return 'Over Capacity';
+		}
 
-    }//end computeDepth()
+		if ($capacity !== null && $capacity > 0.0 && $stockQuantity < ($capacity * 0.1)) {
+			return 'Low Stock';
+		}
 
-    /**
-     * Return a stock availability badge label for display per REQ-LOC-009.
-     *
-     * Badge values: 'In Stock', 'Low Stock', 'Empty', 'Over Capacity'.
-     * Called by x-openregister-calculations `stockAvailabilityBadge` guard clause.
-     *
-     * @param float      $stockQuantity Aggregated on-hand quantity from stockRollup.
-     * @param float|null $capacity      Optional capacity limit (null = no limit check).
-     *
-     * @return string One of: 'In Stock', 'Low Stock', 'Empty', 'Over Capacity'.
-     *
-     * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-19
-     */
-    public function stockBadge(float $stockQuantity, ?float $capacity): string
-    {
-        if ($stockQuantity <= 0.0) {
-            return 'Empty';
-        }
+		return 'In Stock';
+	}//end stockBadge()
 
-        if ($capacity !== null && $capacity > 0.0 && $stockQuantity > $capacity) {
-            return 'Over Capacity';
-        }
+	/**
+	 * Compute depth from a parent id (used in validateDepth).
+	 *
+	 * @param string $parentId The parent location id.
+	 * @param array<string,mixed>[] $allLocations All locations keyed by id.
+	 *
+	 * @return int Depth of the parent + 1 (= depth the new child would have).
+	 */
+	private function computeDepthFromParent(string $parentId, array $allLocations): int {
+		$parent = $allLocations[$parentId] ?? null;
+		if ($parent === null) {
+			return 1;
+		}
 
-        if ($capacity !== null && $capacity > 0.0 && $stockQuantity < ($capacity * 0.1)) {
-            return 'Low Stock';
-        }
+		return 1 + $this->computeDepth(location: $parent, allLocations: $allLocations);
+	}//end computeDepthFromParent()
 
-        return 'In Stock';
+	/**
+	 * Return direct child location ids for a given parent.
+	 *
+	 * @param string $parentId The parent location id.
+	 * @param array<string,mixed>[] $allLocations All locations keyed by id.
+	 *
+	 * @return string[] Array of direct child location ids.
+	 */
+	private function directChildIds(string $parentId, array $allLocations): array {
+		$ids = [];
+		foreach ($allLocations as $id => $loc) {
+			if (($loc['parentLocationId'] ?? null) === $parentId) {
+				$ids[] = $id;
+			}
+		}
 
-    }//end stockBadge()
-
-    /**
-     * Compute depth from a parent id (used in validateDepth).
-     *
-     * @param string                $parentId     The parent location id.
-     * @param array<string,mixed>[] $allLocations All locations keyed by id.
-     *
-     * @return int Depth of the parent + 1 (= depth the new child would have).
-     */
-    private function computeDepthFromParent(string $parentId, array $allLocations): int
-    {
-        $parent = $allLocations[$parentId] ?? null;
-        if ($parent === null) {
-            return 1;
-        }
-
-        return 1 + $this->computeDepth(location: $parent, allLocations: $allLocations);
-
-    }//end computeDepthFromParent()
-
-    /**
-     * Return direct child location ids for a given parent.
-     *
-     * @param string                $parentId     The parent location id.
-     * @param array<string,mixed>[] $allLocations All locations keyed by id.
-     *
-     * @return string[] Array of direct child location ids.
-     */
-    private function directChildIds(string $parentId, array $allLocations): array
-    {
-        $ids = [];
-        foreach ($allLocations as $id => $loc) {
-            if (($loc['parentLocationId'] ?? null) === $parentId) {
-                $ids[] = $id;
-            }
-        }
-
-        return $ids;
-
-    }//end directChildIds()
+		return $ids;
+	}//end directChildIds()
 }//end class

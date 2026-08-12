@@ -33,24 +33,23 @@ namespace OCA\Shillinq\Service\Dunning;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
  */
-interface CreditScoreFetchAdapterInterface
-{
-    /**
-     * Fetch a fresh CreditScore snapshot from the named provider for a klant.
-     *
-     * Implementations MUST return a record in the canonical `CreditScore`
-     * shape (`klantId`, `provider`, `scoreDatum`, `score`, `scoreSchaal`,
-     * `betalingsRisicoIndicatie`, `creditLimietAdvies`, `kostenLookup`,
-     * `administrationId`). Returning null signals a temporary fetch failure;
-     * the caller treats it as "stay on the cached snapshot if any".
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $klantId          Customer FK.
-     * @param string $provider         One of GRAYDON / CREDITSAFE / ATRADIUS_INSIGHTS.
-     *
-     * @return array<string,mixed>|null The fresh snapshot, or null on temporary failure.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
-     */
-    public function fetch(string $administrationId, string $klantId, string $provider): ?array;
+interface CreditScoreFetchAdapterInterface {
+	/**
+	 * Fetch a fresh CreditScore snapshot from the named provider for a klant.
+	 *
+	 * Implementations MUST return a record in the canonical `CreditScore`
+	 * shape (`klantId`, `provider`, `scoreDatum`, `score`, `scoreSchaal`,
+	 * `betalingsRisicoIndicatie`, `creditLimietAdvies`, `kostenLookup`,
+	 * `administrationId`). Returning null signals a temporary fetch failure;
+	 * the caller treats it as "stay on the cached snapshot if any".
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $klantId Customer FK.
+	 * @param string $provider One of GRAYDON / CREDITSAFE / ATRADIUS_INSIGHTS.
+	 *
+	 * @return array<string,mixed>|null The fresh snapshot, or null on temporary failure.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+	 */
+	public function fetch(string $administrationId, string $klantId, string $provider): ?array;
 }//end interface

@@ -49,113 +49,109 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  */
-class SegregatedLedgerGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class SegregatedLedgerGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the segregated ledger reconciles (variance == 0).
-     *
-     * REQ-EUF-002: both administraties must be sluitend and reconcilieerbaar
-     * before the ledger may close. Variance is computed in integer cents to
-     * avoid IEEE-754 equality issues, preferring an explicit
-     * reconciliationVariance and otherwise the difference between the two
-     * balance fields.
-     *
-     * Fail-closed: returns false on any exception (REQ-EUF-002 / CWE-863).
-     *
-     * @param string                   $segregatedLedgerId The SegregatedLedger.id (call-signature parity).
-     * @param array<string,mixed>|null $object             The SegregatedLedger object being transitioned.
-     *
-     * @return bool True when the ledger reconciles and may close.
-     *
-     * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
-     */
-    public function canClose(string $segregatedLedgerId, ?array $object=null): bool
-    {
-        try {
-            $ledger = $this->resolveLedger(segregatedLedgerId: $segregatedLedgerId, object: $object);
-            if ($ledger === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the segregated ledger reconciles (variance == 0).
+	 *
+	 * REQ-EUF-002: both administraties must be sluitend and reconcilieerbaar
+	 * before the ledger may close. Variance is computed in integer cents to
+	 * avoid IEEE-754 equality issues, preferring an explicit
+	 * reconciliationVariance and otherwise the difference between the two
+	 * balance fields.
+	 *
+	 * Fail-closed: returns false on any exception (REQ-EUF-002 / CWE-863).
+	 *
+	 * @param string $segregatedLedgerId The SegregatedLedger.id (call-signature parity).
+	 * @param array<string,mixed>|null $object The SegregatedLedger object being transitioned.
+	 *
+	 * @return bool True when the ledger reconciles and may close.
+	 *
+	 * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+	 */
+	public function canClose(string $segregatedLedgerId, ?array $object = null): bool {
+		try {
+			$ledger = $this->resolveLedger(segregatedLedgerId: $segregatedLedgerId, object: $object);
+			if ($ledger === null) {
+				return false;
+			}
 
-            if (array_key_exists('reconciliationVariance', $ledger) === true
-                && $ledger['reconciliationVariance'] !== null
-            ) {
-                $varianceCents = (int) round((float) $ledger['reconciliationVariance'] * 100);
-                return $varianceCents === 0;
-            }
+			if (array_key_exists('reconciliationVariance', $ledger) === true
+				&& $ledger['reconciliationVariance'] !== null
+			) {
+				$varianceCents = (int)round((float)$ledger['reconciliationVariance'] * 100);
+				return $varianceCents === 0;
+			}
 
-            $regularCents = (int) round((float) ($ledger['regularGlBalanceEur'] ?? 0.0) * 100);
-            $euCents      = (int) round((float) ($ledger['euAdministrationBalanceEur'] ?? 0.0) * 100);
-            return $regularCents === $euCents;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'SegregatedLedgerGuard: close check failed — denying close transition (fail-closed)',
-                ['segregatedLedgerId' => $segregatedLedgerId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canClose()
+			$regularCents = (int)round((float)($ledger['regularGlBalanceEur'] ?? 0.0) * 100);
+			$euCents = (int)round((float)($ledger['euAdministrationBalanceEur'] ?? 0.0) * 100);
+			return $regularCents === $euCents;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'SegregatedLedgerGuard: close check failed — denying close transition (fail-closed)',
+				['segregatedLedgerId' => $segregatedLedgerId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canClose()
 
-    /**
-     * Resolve the SegregatedLedger object, preferring the supplied object and
-     * falling back to an ObjectService lookup by id.
-     *
-     * @param string                   $segregatedLedgerId The SegregatedLedger.id.
-     * @param array<string,mixed>|null $object             The in-flight object, if provided.
-     *
-     * @return array<string,mixed>|null The ledger, or null when unresolved.
-     */
-    private function resolveLedger(string $segregatedLedgerId, ?array $object): ?array
-    {
-        if ($object !== null) {
-            return $object;
-        }
+	/**
+	 * Resolve the SegregatedLedger object, preferring the supplied object and
+	 * falling back to an ObjectService lookup by id.
+	 *
+	 * @param string $segregatedLedgerId The SegregatedLedger.id.
+	 * @param array<string,mixed>|null $object The in-flight object, if provided.
+	 *
+	 * @return array<string,mixed>|null The ledger, or null when unresolved.
+	 */
+	private function resolveLedger(string $segregatedLedgerId, ?array $object): ?array {
+		if ($object !== null) {
+			return $object;
+		}
 
-        if ($segregatedLedgerId === '') {
-            return null;
-        }
+		if ($segregatedLedgerId === '') {
+			return null;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $ledgers       = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema('SegregatedLedger')
-            ->findAll(['filters' => ['id' => $segregatedLedgerId], 'limit' => 1]);
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$ledgers = $objectService
+			->setRegister($this->resolveRegister())
+			->setSchema('SegregatedLedger')
+			->findAll(['filters' => ['id' => $segregatedLedgerId], 'limit' => 1]);
 
-        foreach ($ledgers as $ledger) {
-            if (is_array($ledger) === true) {
-                return $ledger;
-            }
-        }
+		foreach ($ledgers as $ledger) {
+			if (is_array($ledger) === true) {
+				return $ledger;
+			}
+		}
 
-        return null;
-    }//end resolveLedger()
+		return null;
+	}//end resolveLedger()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

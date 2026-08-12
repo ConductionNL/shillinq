@@ -33,163 +33,152 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class EInvoiceValidationServiceTest extends TestCase
-{
-    /**
-     * Build a stub ViesService that returns a fixed outcome regardless of input.
-     *
-     * @param array<string,mixed> $outcome The validate() return value.
-     *
-     * @return ViesService
-     */
-    private function stubVies(array $outcome): ViesService
-    {
-        $vies = $this->createMock(ViesService::class);
-        $vies->method('validate')->willReturn($outcome);
+final class EInvoiceValidationServiceTest extends TestCase {
+	/**
+	 * Build a stub ViesService that returns a fixed outcome regardless of input.
+	 *
+	 * @param array<string,mixed> $outcome The validate() return value.
+	 *
+	 * @return ViesService
+	 */
+	private function stubVies(array $outcome): ViesService {
+		$vies = $this->createMock(ViesService::class);
+		$vies->method('validate')->willReturn($outcome);
 
-        return $vies;
+		return $vies;
+	}//end stubVies()
 
-    }//end stubVies()
+	/**
+	 * Build a stub Peppol port with a fixed lookupParticipant() return value.
+	 *
+	 * @param string|null $participantId Lookup return value.
+	 *
+	 * @return PeppolTransmissionPortInterface
+	 */
+	private function stubPort(?string $participantId): PeppolTransmissionPortInterface {
+		$port = $this->createMock(PeppolTransmissionPortInterface::class);
+		$port->method('lookupParticipant')->willReturn($participantId);
 
-    /**
-     * Build a stub Peppol port with a fixed lookupParticipant() return value.
-     *
-     * @param string|null $participantId Lookup return value.
-     *
-     * @return PeppolTransmissionPortInterface
-     */
-    private function stubPort(?string $participantId): PeppolTransmissionPortInterface
-    {
-        $port = $this->createMock(PeppolTransmissionPortInterface::class);
-        $port->method('lookupParticipant')->willReturn($participantId);
+		return $port;
+	}//end stubPort()
 
-        return $port;
+	/**
+	 * A valid ARInvoice with a resolvable participant passes validation.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function validInvoice(): array {
+		return [
+			'customerId' => 'DEB-0001',
+			'buyerLegalRegId' => '12340001',
+			'buyerVatId' => 'NL001234567B01',
+		];
 
-    }//end stubPort()
+	}//end validInvoice()
 
-    /**
-     * A valid ARInvoice with a resolvable participant passes validation.
-     *
-     * @return array<string,mixed>
-     */
-    private function validInvoice(): array
-    {
-        return [
-            'customerId'      => 'DEB-0001',
-            'buyerLegalRegId' => '12340001',
-            'buyerVatId'      => 'NL001234567B01',
-        ];
+	/**
+	 * REQ-EINV-003 scenario 1: malformed BTW-nummer blocks send.
+	 *
+	 * @return void
+	 */
+	public function testMalformedVatIdBlocksSend(): void {
+		$invoice = $this->validInvoice();
+		$invoice['buyerVatId'] = 'NL123';
 
-    }//end validInvoice()
+		$service = new EInvoiceValidationService(
+			vies: $this->stubVies(['valid' => false, 'outage' => false]),
+			peppolPort: $this->stubPort('0106:00000000')
+		);
 
-    /**
-     * REQ-EINV-003 scenario 1: malformed BTW-nummer blocks send.
-     *
-     * @return void
-     */
-    public function testMalformedVatIdBlocksSend(): void
-    {
-        $invoice = $this->validInvoice();
-        $invoice['buyerVatId'] = 'NL123';
+		$result = $service->validate(administrationId: 'adm-1', arInvoice: $invoice);
 
-        $service = new EInvoiceValidationService(
-            vies: $this->stubVies(['valid' => false, 'outage' => false]),
-            peppolPort: $this->stubPort('0106:00000000')
-        );
+		self::assertFalse($result['valid']);
+		self::assertNotEmpty($result['errors']);
+		self::assertSame('vat_format_invalid', $result['errors'][0]['code']);
+		self::assertNull($result['peppolParticipantId'], 'no Peppol lookup should run once BTW format fails');
 
-        $result = $service->validate(administrationId: 'adm-1', arInvoice: $invoice);
+	}//end testMalformedVatIdBlocksSend()
 
-        self::assertFalse($result['valid']);
-        self::assertNotEmpty($result['errors']);
-        self::assertSame('vat_format_invalid', $result['errors'][0]['code']);
-        self::assertNull($result['peppolParticipantId'], 'no Peppol lookup should run once BTW format fails');
+	/**
+	 * KvK numbers that are not exactly 8 digits are rejected.
+	 *
+	 * @return void
+	 */
+	public function testMalformedKvkBlocksSend(): void {
+		$invoice = $this->validInvoice();
+		$invoice['buyerLegalRegId'] = '123';
 
-    }//end testMalformedVatIdBlocksSend()
+		$service = new EInvoiceValidationService(
+			vies: $this->stubVies(['valid' => true, 'outage' => false]),
+			peppolPort: $this->stubPort('0106:00000000')
+		);
 
-    /**
-     * KvK numbers that are not exactly 8 digits are rejected.
-     *
-     * @return void
-     */
-    public function testMalformedKvkBlocksSend(): void
-    {
-        $invoice = $this->validInvoice();
-        $invoice['buyerLegalRegId'] = '123';
+		$result = $service->validate(administrationId: 'adm-1', arInvoice: $invoice);
 
-        $service = new EInvoiceValidationService(
-            vies: $this->stubVies(['valid' => true, 'outage' => false]),
-            peppolPort: $this->stubPort('0106:00000000')
-        );
+		self::assertFalse($result['valid']);
+		$codes = array_column($result['errors'], 'code');
+		self::assertContains('kvk_invalid', $codes);
 
-        $result = $service->validate(administrationId: 'adm-1', arInvoice: $invoice);
+	}//end testMalformedKvkBlocksSend()
 
-        self::assertFalse($result['valid']);
-        $codes = array_column($result['errors'], 'code');
-        self::assertContains('kvk_invalid', $codes);
+	/**
+	 * REQ-EINV-003 scenario 2: unknown Peppol participant falls back gracefully
+	 * (valid stays true — this is not a hard validation error).
+	 *
+	 * @return void
+	 */
+	public function testUnknownPeppolParticipantIsAGracefulFallback(): void {
+		$service = new EInvoiceValidationService(
+			vies: $this->stubVies(['valid' => true, 'outage' => false]),
+			peppolPort: $this->stubPort(null)
+		);
 
-    }//end testMalformedKvkBlocksSend()
+		$result = $service->validate(administrationId: 'adm-1', arInvoice: $this->validInvoice());
 
-    /**
-     * REQ-EINV-003 scenario 2: unknown Peppol participant falls back gracefully
-     * (valid stays true — this is not a hard validation error).
-     *
-     * @return void
-     */
-    public function testUnknownPeppolParticipantIsAGracefulFallback(): void
-    {
-        $service = new EInvoiceValidationService(
-            vies: $this->stubVies(['valid' => true, 'outage' => false]),
-            peppolPort: $this->stubPort(null)
-        );
+		self::assertTrue($result['valid']);
+		self::assertNull($result['peppolParticipantId']);
+		$codes = array_column($result['warnings'], 'code');
+		self::assertContains('peppol_participant_not_found', $codes);
 
-        $result = $service->validate(administrationId: 'adm-1', arInvoice: $this->validInvoice());
+	}//end testUnknownPeppolParticipantIsAGracefulFallback()
 
-        self::assertTrue($result['valid']);
-        self::assertNull($result['peppolParticipantId']);
-        $codes = array_column($result['warnings'], 'code');
-        self::assertContains('peppol_participant_not_found', $codes);
+	/**
+	 * REQ-EINV-003 scenario 3: a VIES outage degrades to a non-blocking warning
+	 * on a syntactically valid BTW-nummer, and the operator may still proceed.
+	 *
+	 * @return void
+	 */
+	public function testViesOutageDegradesToWarning(): void {
+		$service = new EInvoiceValidationService(
+			vies: $this->stubVies(['valid' => false, 'outage' => true]),
+			peppolPort: $this->stubPort('0106:00000000')
+		);
 
-    }//end testUnknownPeppolParticipantIsAGracefulFallback()
+		$result = $service->validate(administrationId: 'adm-1', arInvoice: $this->validInvoice());
 
-    /**
-     * REQ-EINV-003 scenario 3: a VIES outage degrades to a non-blocking warning
-     * on a syntactically valid BTW-nummer, and the operator may still proceed.
-     *
-     * @return void
-     */
-    public function testViesOutageDegradesToWarning(): void
-    {
-        $service = new EInvoiceValidationService(
-            vies: $this->stubVies(['valid' => false, 'outage' => true]),
-            peppolPort: $this->stubPort('0106:00000000')
-        );
+		self::assertTrue($result['valid'], 'a VIES outage must not hard-block a syntactically valid BTW-nummer');
+		$codes = array_column($result['warnings'], 'code');
+		self::assertContains('vies_outage', $codes);
+		self::assertNotNull($result['peppolParticipantId']);
 
-        $result = $service->validate(administrationId: 'adm-1', arInvoice: $this->validInvoice());
+	}//end testViesOutageDegradesToWarning()
 
-        self::assertTrue($result['valid'], 'a VIES outage must not hard-block a syntactically valid BTW-nummer');
-        $codes = array_column($result['warnings'], 'code');
-        self::assertContains('vies_outage', $codes);
-        self::assertNotNull($result['peppolParticipantId']);
+	/**
+	 * A fully valid invoice with a resolvable participant passes clean.
+	 *
+	 * @return void
+	 */
+	public function testFullyValidInvoicePassesWithParticipant(): void {
+		$service = new EInvoiceValidationService(
+			vies: $this->stubVies(['valid' => true, 'outage' => false]),
+			peppolPort: $this->stubPort('0106:00000000')
+		);
 
-    }//end testViesOutageDegradesToWarning()
+		$result = $service->validate(administrationId: 'adm-1', arInvoice: $this->validInvoice());
 
-    /**
-     * A fully valid invoice with a resolvable participant passes clean.
-     *
-     * @return void
-     */
-    public function testFullyValidInvoicePassesWithParticipant(): void
-    {
-        $service = new EInvoiceValidationService(
-            vies: $this->stubVies(['valid' => true, 'outage' => false]),
-            peppolPort: $this->stubPort('0106:00000000')
-        );
+		self::assertTrue($result['valid']);
+		self::assertSame([], $result['errors']);
+		self::assertSame('0106:00000000', $result['peppolParticipantId']);
 
-        $result = $service->validate(administrationId: 'adm-1', arInvoice: $this->validInvoice());
-
-        self::assertTrue($result['valid']);
-        self::assertSame([], $result['errors']);
-        self::assertSame('0106:00000000', $result['peppolParticipantId']);
-
-    }//end testFullyValidInvoicePassesWithParticipant()
+	}//end testFullyValidInvoicePassesWithParticipant()
 }//end class

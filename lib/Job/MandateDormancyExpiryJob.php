@@ -46,103 +46,100 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
-class MandateDormancyExpiryJob extends TimedJob
-{
+class MandateDormancyExpiryJob extends TimedJob {
 
-    /**
-     * Run interval: once per day (REQ-SDD-008 "the daily expiry job").
-     */
-    private const INTERVAL_SECONDS = 86400;
+	/**
+	 * Run interval: once per day (REQ-SDD-008 "the daily expiry job").
+	 */
+	private const INTERVAL_SECONDS = 86400;
 
-    /**
-     * Construct the job.
-     *
-     * @param ITimeFactory       $time      Time factory for TimedJob scheduling.
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param MandateGuard       $guard     Dormancy decision guard.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly MandateGuard $guard,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: self::INTERVAL_SECONDS);
-    }//end __construct()
+	/**
+	 * Construct the job.
+	 *
+	 * @param ITimeFactory $time Time factory for TimedJob scheduling.
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param MandateGuard $guard Dormancy decision guard.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly MandateGuard $guard,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: self::INTERVAL_SECONDS);
+	}//end __construct()
 
-    /**
-     * Iterate active mandates and expire those dormant beyond 36 months.
-     *
-     * Fail-soft: any error is logged and swallowed so a single bad record
-     * never aborts the whole run.
-     *
-     * @param mixed $argument The job argument (unused).
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    protected function run($argument): void
-    {
-        try {
-            $register      = $this->resolveRegister();
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+	/**
+	 * Iterate active mandates and expire those dormant beyond 36 months.
+	 *
+	 * Fail-soft: any error is logged and swallowed so a single bad record
+	 * never aborts the whole run.
+	 *
+	 * @param mixed $argument The job argument (unused).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 */
+	protected function run($argument): void {
+		try {
+			$register = $this->resolveRegister();
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-            $mandates = $objectService
-                ->setRegister($register)
-                ->setSchema('SepaMandate')
-                ->findAll(['filters' => ['status' => 'active']]);
+			$mandates = $objectService
+				->setRegister($register)
+				->setSchema('SepaMandate')
+				->findAll(['filters' => ['status' => 'active']]);
 
-            $expired = 0;
-            foreach ($mandates as $mandate) {
-                if (is_array($mandate) === false) {
-                    continue;
-                }
+			$expired = 0;
+			foreach ($mandates as $mandate) {
+				if (is_array($mandate) === false) {
+					continue;
+				}
 
-                $mandateId = (string) ($mandate['id'] ?? '');
-                if ($this->guard->canExpire(mandateId: $mandateId, object: $mandate) === false) {
-                    continue;
-                }
+				$mandateId = (string)($mandate['id'] ?? '');
+				if ($this->guard->canExpire(mandateId: $mandateId, object: $mandate) === false) {
+					continue;
+				}
 
-                $mandate['status'] = 'expired';
-                $objectService
-                    ->setRegister($register)
-                    ->setSchema('SepaMandate')
-                    ->saveObject($mandate);
-                $expired++;
-            }//end foreach
+				$mandate['status'] = 'expired';
+				$objectService
+					->setRegister($register)
+					->setSchema('SepaMandate')
+					->saveObject($mandate);
+				$expired++;
+			}//end foreach
 
-            if ($expired > 0) {
-                $this->logger->info(
-                    'MandateDormancyExpiryJob: expired '.$expired.' dormant SEPA mandate(s) (REQ-SDD-008)'
-                );
-            }
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'MandateDormancyExpiryJob: run failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
-    }//end run()
+			if ($expired > 0) {
+				$this->logger->info(
+					'MandateDormancyExpiryJob: expired ' . $expired . ' dormant SEPA mandate(s) (REQ-SDD-008)'
+				);
+			}
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'MandateDormancyExpiryJob: run failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
+	}//end run()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

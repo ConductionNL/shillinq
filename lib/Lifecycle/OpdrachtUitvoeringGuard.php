@@ -46,90 +46,86 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class OpdrachtUitvoeringGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class OpdrachtUitvoeringGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for the voltooien (in-progress → completed) transition.
-     *
-     * REQ-004: the delivery can only be completed when at least one bewijsstuk
-     * (proof of delivery) is attached. A bewijsstuk is considered valid when it
-     * carries a non-empty documentId, so an empty placeholder object cannot
-     * satisfy the gate.
-     *
-     * Fail-closed: returns false on any exception (denies completion) per CWE-863.
-     *
-     * @param array<string, mixed> $opdracht OpdrachtUitvoering object array supplied by OR.
-     *
-     * @return bool True when the delivery may be marked completed.
-     *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
-     */
-    public function canVoltooien(array $opdracht): bool
-    {
-        try {
-            if ($this->hasValidBewijsstuk(opdracht: $opdracht) === false) {
-                $this->logger->info(
-                    'OpdrachtUitvoeringGuard: no bewijsstuk attached — denying completion (REQ-004)',
-                    [
-                        'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
-                        'mijlpaalId'     => ($opdracht['mijlpaalId'] ?? 'unknown'),
-                    ]
-                );
-                return false;
-            }
+	/**
+	 * Precondition for the voltooien (in-progress → completed) transition.
+	 *
+	 * REQ-004: the delivery can only be completed when at least one bewijsstuk
+	 * (proof of delivery) is attached. A bewijsstuk is considered valid when it
+	 * carries a non-empty documentId, so an empty placeholder object cannot
+	 * satisfy the gate.
+	 *
+	 * Fail-closed: returns false on any exception (denies completion) per CWE-863.
+	 *
+	 * @param array<string, mixed> $opdracht OpdrachtUitvoering object array supplied by OR.
+	 *
+	 * @return bool True when the delivery may be marked completed.
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+	 */
+	public function canVoltooien(array $opdracht): bool {
+		try {
+			if ($this->hasValidBewijsstuk(opdracht: $opdracht) === false) {
+				$this->logger->info(
+					'OpdrachtUitvoeringGuard: no bewijsstuk attached — denying completion (REQ-004)',
+					[
+						'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
+						'mijlpaalId' => ($opdracht['mijlpaalId'] ?? 'unknown'),
+					]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'OpdrachtUitvoeringGuard: canVoltooien failed — denying completion (fail-closed)',
-                [
-                    'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'OpdrachtUitvoeringGuard: canVoltooien failed — denying completion (fail-closed)',
+				[
+					'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-    }//end canVoltooien()
+	}//end canVoltooien()
 
-    /**
-     * Determine whether the delivery carries at least one valid bewijsstuk.
-     *
-     * A bewijsstuk is valid when it is an array carrying a non-empty documentId.
-     * Scalar entries or entries without a documentId do not satisfy REQ-004.
-     *
-     * @param array<string, mixed> $opdracht OpdrachtUitvoering object array.
-     *
-     * @return bool True when at least one valid bewijsstuk exists.
-     */
-    private function hasValidBewijsstuk(array $opdracht): bool
-    {
-        $bewijsstukken = ($opdracht['bewijsstukken'] ?? []);
-        if (is_array($bewijsstukken) === false) {
-            return false;
-        }
+	/**
+	 * Determine whether the delivery carries at least one valid bewijsstuk.
+	 *
+	 * A bewijsstuk is valid when it is an array carrying a non-empty documentId.
+	 * Scalar entries or entries without a documentId do not satisfy REQ-004.
+	 *
+	 * @param array<string, mixed> $opdracht OpdrachtUitvoering object array.
+	 *
+	 * @return bool True when at least one valid bewijsstuk exists.
+	 */
+	private function hasValidBewijsstuk(array $opdracht): bool {
+		$bewijsstukken = ($opdracht['bewijsstukken'] ?? []);
+		if (is_array($bewijsstukken) === false) {
+			return false;
+		}
 
-        foreach ($bewijsstukken as $bewijsstuk) {
-            if (is_array($bewijsstuk) === false) {
-                continue;
-            }
+		foreach ($bewijsstukken as $bewijsstuk) {
+			if (is_array($bewijsstuk) === false) {
+				continue;
+			}
 
-            if (trim((string) ($bewijsstuk['documentId'] ?? '')) !== '') {
-                return true;
-            }
-        }
+			if (trim((string)($bewijsstuk['documentId'] ?? '')) !== '') {
+				return true;
+			}
+		}
 
-        return false;
-
-    }//end hasValidBewijsstuk()
+		return false;
+	}//end hasValidBewijsstuk()
 }//end class

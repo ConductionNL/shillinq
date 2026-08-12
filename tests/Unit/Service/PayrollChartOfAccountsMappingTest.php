@@ -33,62 +33,58 @@ use PHPUnit\Framework\TestCase;
  * single source of truth so the chart-of-accounts app and downstream reports
  * see one consistent contract.
  */
-final class PayrollChartOfAccountsMappingTest extends TestCase
-{
+final class PayrollChartOfAccountsMappingTest extends TestCase {
 
-    /**
-     * Mapping returns the full payroll account set with stable keys.
-     *
-     * @return void
-     */
-    public function testAllReturnsAllAccountsAsCanonicalDictionary(): void
-    {
-        $all = PayrollChartOfAccountsMapping::all();
+	/**
+	 * Mapping returns the full payroll account set with stable keys.
+	 *
+	 * @return void
+	 */
+	public function testAllReturnsAllAccountsAsCanonicalDictionary(): void {
+		$all = PayrollChartOfAccountsMapping::all();
 
-        $this->assertCount(10, $all);
-        $this->assertSame('4001', $all['brutolonen']);
-        $this->assertSame('4002', $all['belastingvrijeVergoedingen']);
-        $this->assertSame('4010', $all['socialeLastenWg']);
-        $this->assertSame('4012', $all['zvwWg']);
-        $this->assertSame('4020', $all['pensioenWg']);
-        $this->assertSame('1610', $all['teBetalenNettoLoon']);
-        $this->assertSame('1620', $all['afTeDragenLh']);
-        $this->assertSame('1630', $all['afTeDragenPremiesSvZvw']);
-        $this->assertSame('1640', $all['afTeDragenPensioen']);
-        $this->assertSame('1715', $all['teBetalenVakantiegeld']);
+		$this->assertCount(10, $all);
+		$this->assertSame('4001', $all['brutolonen']);
+		$this->assertSame('4002', $all['belastingvrijeVergoedingen']);
+		$this->assertSame('4010', $all['socialeLastenWg']);
+		$this->assertSame('4012', $all['zvwWg']);
+		$this->assertSame('4020', $all['pensioenWg']);
+		$this->assertSame('1610', $all['teBetalenNettoLoon']);
+		$this->assertSame('1620', $all['afTeDragenLh']);
+		$this->assertSame('1630', $all['afTeDragenPremiesSvZvw']);
+		$this->assertSame('1640', $all['afTeDragenPensioen']);
+		$this->assertSame('1715', $all['teBetalenVakantiegeld']);
 
-    }//end testAllReturnsAllAccountsAsCanonicalDictionary()
+	}//end testAllReturnsAllAccountsAsCanonicalDictionary()
 
-    /**
-     * Every account number is within the RGS 3.5 ranges (4001-4099 or 1610-1799).
-     *
-     * @return void
-     */
-    public function testAccountNumbersStayInRgsRanges(): void
-    {
-        foreach (PayrollChartOfAccountsMapping::all() as $key => $accountNumber) {
-            $num = (int) $accountNumber;
-            $inKosten   = ($num >= 4001 && $num <= 4099);
-            $inSchulden = ($num >= 1610 && $num <= 1799);
-            $this->assertTrue(
-                ($inKosten || $inSchulden),
-                sprintf('Account %s for %s falls outside RGS 3.5 loonkosten/schulden ranges', $accountNumber, $key)
-            );
-        }
+	/**
+	 * Every account number is within the RGS 3.5 ranges (4001-4099 or 1610-1799).
+	 *
+	 * @return void
+	 */
+	public function testAccountNumbersStayInRgsRanges(): void {
+		foreach (PayrollChartOfAccountsMapping::all() as $key => $accountNumber) {
+			$num = (int)$accountNumber;
+			$inKosten = ($num >= 4001 && $num <= 4099);
+			$inSchulden = ($num >= 1610 && $num <= 1799);
+			$this->assertTrue(
+				($inKosten || $inSchulden),
+				sprintf('Account %s for %s falls outside RGS 3.5 loonkosten/schulden ranges', $accountNumber, $key)
+			);
+		}
 
-    }//end testAccountNumbersStayInRgsRanges()
+	}//end testAccountNumbersStayInRgsRanges()
 
-    /**
-     * isKnown returns true for canonical accounts and false otherwise.
-     *
-     * @return void
-     */
-    public function testIsKnownDiscriminatesCanonicalAccounts(): void
-    {
-        $this->assertTrue(PayrollChartOfAccountsMapping::isKnown('4001'));
-        $this->assertTrue(PayrollChartOfAccountsMapping::isKnown('1640'));
-        $this->assertFalse(PayrollChartOfAccountsMapping::isKnown('9999'));
-        $this->assertFalse(PayrollChartOfAccountsMapping::isKnown(''));
+	/**
+	 * isKnown returns true for canonical accounts and false otherwise.
+	 *
+	 * @return void
+	 */
+	public function testIsKnownDiscriminatesCanonicalAccounts(): void {
+		$this->assertTrue(PayrollChartOfAccountsMapping::isKnown('4001'));
+		$this->assertTrue(PayrollChartOfAccountsMapping::isKnown('1640'));
+		$this->assertFalse(PayrollChartOfAccountsMapping::isKnown('9999'));
+		$this->assertFalse(PayrollChartOfAccountsMapping::isKnown(''));
 
-    }//end testIsKnownDiscriminatesCanonicalAccounts()
+	}//end testIsKnownDiscriminatesCanonicalAccounts()
 }//end class

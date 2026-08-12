@@ -38,100 +38,93 @@ use OCP\IUserSession;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-30
  */
-class WbsoRbacResolver
-{
+class WbsoRbacResolver {
 
-    /**
-     * Nextcloud group → WBSO role.
-     *
-     * @var array<string,string>
-     */
-    public const GROUP_TO_ROLE = [
-        'shillinq_bookkeeper' => 'bookkeeper',
-        'shillinq_auditor'    => 'auditor',
-        'shillinq_admin'      => 'administrator',
-        'bookkeeper'          => 'bookkeeper',
-        'auditor'             => 'auditor',
-    ];
+	/**
+	 * Nextcloud group → WBSO role.
+	 *
+	 * @var array<string,string>
+	 */
+	public const GROUP_TO_ROLE = [
+		'shillinq_bookkeeper' => 'bookkeeper',
+		'shillinq_auditor' => 'auditor',
+		'shillinq_admin' => 'administrator',
+		'bookkeeper' => 'bookkeeper',
+		'auditor' => 'auditor',
+	];
 
-    /**
-     * Construct the resolver.
-     *
-     * @param IUserSession  $userSession  Active session.
-     * @param IGroupManager $groupManager Group membership lookups.
-     */
-    public function __construct(
-        private readonly IUserSession $userSession,
-        private readonly IGroupManager $groupManager,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the resolver.
+	 *
+	 * @param IUserSession $userSession Active session.
+	 * @param IGroupManager $groupManager Group membership lookups.
+	 */
+	public function __construct(
+		private readonly IUserSession $userSession,
+		private readonly IGroupManager $groupManager,
+	) {
+	}//end __construct()
 
-    /**
-     * Return the WBSO roles the currently-authenticated user holds.
-     *
-     * Returns an empty array when no user is authenticated.
-     *
-     * @return array<int,string>
-     */
-    public function currentRoles(): array
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return [];
-        }
+	/**
+	 * Return the WBSO roles the currently-authenticated user holds.
+	 *
+	 * Returns an empty array when no user is authenticated.
+	 *
+	 * @return array<int,string>
+	 */
+	public function currentRoles(): array {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return [];
+		}
 
-        $roles = [];
-        if ($this->groupManager->isAdmin($user->getUID()) === true) {
-            $roles[] = 'administrator';
-        }
+		$roles = [];
+		if ($this->groupManager->isAdmin($user->getUID()) === true) {
+			$roles[] = 'administrator';
+		}
 
-        foreach (array_keys(self::GROUP_TO_ROLE) as $group) {
-            if ($this->groupManager->isInGroup($user->getUID(), $group) === true) {
-                $role = self::GROUP_TO_ROLE[$group];
-                if (in_array($role, $roles, true) === false) {
-                    $roles[] = $role;
-                }
-            }
-        }
+		foreach (array_keys(self::GROUP_TO_ROLE) as $group) {
+			if ($this->groupManager->isInGroup($user->getUID(), $group) === true) {
+				$role = self::GROUP_TO_ROLE[$group];
+				if (in_array($role, $roles, true) === false) {
+					$roles[] = $role;
+				}
+			}
+		}
 
-        // Authenticated users without any explicit role default to bookkeeper
-        // for read scope; write permissions still require an explicit role.
-        if ($roles === []) {
-            $roles[] = 'bookkeeper';
-        }
+		// Authenticated users without any explicit role default to bookkeeper
+		// for read scope; write permissions still require an explicit role.
+		if ($roles === []) {
+			$roles[] = 'bookkeeper';
+		}
 
-        return $roles;
+		return $roles;
+	}//end currentRoles()
 
-    }//end currentRoles()
+	/**
+	 * Check whether the current user holds any of the listed roles.
+	 *
+	 * @param array<int,string> $allowed Roles allowed for the action.
+	 *
+	 * @return bool
+	 */
+	public function hasAny(array $allowed): bool {
+		$roles = $this->currentRoles();
+		foreach ($roles as $role) {
+			if (in_array($role, $allowed, true) === true) {
+				return true;
+			}
+		}
 
-    /**
-     * Check whether the current user holds any of the listed roles.
-     *
-     * @param array<int,string> $allowed Roles allowed for the action.
-     *
-     * @return bool
-     */
-    public function hasAny(array $allowed): bool
-    {
-        $roles = $this->currentRoles();
-        foreach ($roles as $role) {
-            if (in_array($role, $allowed, true) === true) {
-                return true;
-            }
-        }
+		return false;
+	}//end hasAny()
 
-        return false;
-
-    }//end hasAny()
-
-    /**
-     * Convenience: true iff the user can write at all (bookkeeper or admin).
-     *
-     * @return bool
-     */
-    public function canCreate(): bool
-    {
-        return $this->hasAny(allowed: ['bookkeeper', 'administrator']);
-
-    }//end canCreate()
+	/**
+	 * Convenience: true iff the user can write at all (bookkeeper or admin).
+	 *
+	 * @return bool
+	 */
+	public function canCreate(): bool {
+		return $this->hasAny(allowed: ['bookkeeper', 'administrator']);
+	}//end canCreate()
 }//end class

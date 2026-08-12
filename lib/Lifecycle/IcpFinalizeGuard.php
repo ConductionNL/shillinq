@@ -49,58 +49,56 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class IcpFinalizeGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param IcpService      $icpService The ICP reconciliation service.
-     * @param LoggerInterface $logger     Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly IcpService $icpService,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class IcpFinalizeGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param IcpService $icpService The ICP reconciliation service.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly IcpService $icpService,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the period's ICP ledger reconciles with rubriek 3b (REQ-ICP-004).
-     *
-     * Compares the computed ICP total against the BTW-aangifte rubriek 3b within the
-     * EUR 1 tolerance. A missing BTW-aangifte (icp.btw.missing) and any divergence
-     * beyond tolerance (icp.reconciliation.mismatch) both deny finalization.
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param string $administrationId The administration the opgaaf belongs to.
-     * @param string $period           The filing period (YYYY-Qn or YYYY-MM).
-     *
-     * @return bool True when finalization may proceed.
-     *
-     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
-     */
-    public function canFinalize(string $administrationId, string $period): bool
-    {
-        try {
-            $outcome = $this->icpService->reconcile(administrationId: $administrationId, period: $period);
-            if ($outcome['missing'] === true) {
-                $this->logger->warning(
-                    'IcpFinalizeGuard: no BTW-aangifte for period — denying finalize (icp.btw.missing)',
-                    ['administrationId' => $administrationId, 'period' => $period]
-                );
+	/**
+	 * Returns true iff the period's ICP ledger reconciles with rubriek 3b (REQ-ICP-004).
+	 *
+	 * Compares the computed ICP total against the BTW-aangifte rubriek 3b within the
+	 * EUR 1 tolerance. A missing BTW-aangifte (icp.btw.missing) and any divergence
+	 * beyond tolerance (icp.reconciliation.mismatch) both deny finalization.
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param string $administrationId The administration the opgaaf belongs to.
+	 * @param string $period The filing period (YYYY-Qn or YYYY-MM).
+	 *
+	 * @return bool True when finalization may proceed.
+	 *
+	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
+	 */
+	public function canFinalize(string $administrationId, string $period): bool {
+		try {
+			$outcome = $this->icpService->reconcile(administrationId: $administrationId, period: $period);
+			if ($outcome['missing'] === true) {
+				$this->logger->warning(
+					'IcpFinalizeGuard: no BTW-aangifte for period — denying finalize (icp.btw.missing)',
+					['administrationId' => $administrationId, 'period' => $period]
+				);
 
-                return false;
-            }
+				return false;
+			}
 
-            return $outcome['matches'];
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'IcpFinalizeGuard: reconciliation failed — denying finalize (fail-closed)',
-                ['administrationId' => $administrationId, 'period' => $period, 'exception' => $e->getMessage()]
-            );
+			return $outcome['matches'];
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'IcpFinalizeGuard: reconciliation failed — denying finalize (fail-closed)',
+				['administrationId' => $administrationId, 'period' => $period, 'exception' => $e->getMessage()]
+			);
 
-            return false;
-        }//end try
+			return false;
+		}//end try
 
-    }//end canFinalize()
+	}//end canFinalize()
 }//end class

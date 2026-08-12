@@ -58,129 +58,125 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class BudgetImpactEmitter
-{
+class BudgetImpactEmitter {
 
-    /**
-     * Event name for an activated TenderNed-sourced obligation (REQ-007).
-     *
-     * @var string
-     */
-    public const EVENT_OBLIGATION_ACTIVATED = 'shillinq.obligation.activated';
+	/**
+	 * Event name for an activated TenderNed-sourced obligation (REQ-007).
+	 *
+	 * @var string
+	 */
+	public const EVENT_OBLIGATION_ACTIVATED = 'shillinq.obligation.activated';
 
-    /**
-     * Event name for a completed milestone (REQ-005 audit-trail emission).
-     *
-     * @var string
-     */
-    public const EVENT_MILESTONE_COMPLETED = 'shillinq.milestone.completed';
+	/**
+	 * Event name for a completed milestone (REQ-005 audit-trail emission).
+	 *
+	 * @var string
+	 */
+	public const EVENT_MILESTONE_COMPLETED = 'shillinq.milestone.completed';
 
-    /**
-     * Construct the emitter.
-     *
-     * @param IEventDispatcher $dispatcher NC event dispatcher (cross-app transport).
-     * @param LoggerInterface  $logger     Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly IEventDispatcher $dispatcher,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the emitter.
+	 *
+	 * @param IEventDispatcher $dispatcher NC event dispatcher (cross-app transport).
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly IEventDispatcher $dispatcher,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Emit the `obligation.activated` CloudEvent (REQ-007).
-     *
-     * Idempotency: subscribers MUST treat `bronReferentie` + `eventName`
-     * as the dedup key so retries from the listener (after a network
-     * failure on the openconnector outbound source) do not double-count
-     * the committed expense.
-     *
-     * @param array<string, mixed> $verplichting Activated Verplichting payload.
-     * @param array<string, mixed> $source       Source TenderNedAanbesteding payload (dossier URL).
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-007
-     */
-    public function emitActivated(array $verplichting, array $source=[]): void
-    {
-        $payload = [
-            'eventName'        => self::EVENT_OBLIGATION_ACTIVATED,
-            'bronReferentie'   => (string) ($verplichting['bronReferentie'] ?? ''),
-            'contractWaarde'   => (float) ($verplichting['bedrag'] ?? 0),
-            'kostenplaats'     => (string) ($verplichting['kostenplaats'] ?? ''),
-            'looptijdStart'    => (string) ($verplichting['looptijdStart'] ?? ''),
-            'looptijdEind'     => (string) ($verplichting['looptijdEind'] ?? ''),
-            'tenderNedUrl'     => (string) ($source['tenderNedUrl'] ?? ''),
-            'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
-            'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
-        ];
+	/**
+	 * Emit the `obligation.activated` CloudEvent (REQ-007).
+	 *
+	 * Idempotency: subscribers MUST treat `bronReferentie` + `eventName`
+	 * as the dedup key so retries from the listener (after a network
+	 * failure on the openconnector outbound source) do not double-count
+	 * the committed expense.
+	 *
+	 * @param array<string, mixed> $verplichting Activated Verplichting payload.
+	 * @param array<string, mixed> $source Source TenderNedAanbesteding payload (dossier URL).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-007
+	 */
+	public function emitActivated(array $verplichting, array $source = []): void {
+		$payload = [
+			'eventName' => self::EVENT_OBLIGATION_ACTIVATED,
+			'bronReferentie' => (string)($verplichting['bronReferentie'] ?? ''),
+			'contractWaarde' => (float)($verplichting['bedrag'] ?? 0),
+			'kostenplaats' => (string)($verplichting['kostenplaats'] ?? ''),
+			'looptijdStart' => (string)($verplichting['looptijdStart'] ?? ''),
+			'looptijdEind' => (string)($verplichting['looptijdEind'] ?? ''),
+			'tenderNedUrl' => (string)($source['tenderNedUrl'] ?? ''),
+			'administrationId' => (string)($verplichting['administrationId'] ?? ''),
+			'emittedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
+		];
 
-        $this->dispatch(eventName: self::EVENT_OBLIGATION_ACTIVATED, payload: $payload);
+		$this->dispatch(eventName: self::EVENT_OBLIGATION_ACTIVATED, payload: $payload);
 
-    }//end emitActivated()
+	}//end emitActivated()
 
-    /**
-     * Emit the `milestone.completed` CloudEvent (Task 5.3 / REQ-005).
-     *
-     * Carries the OpdrachtUitvoering identifier, the linked obligation,
-     * the approval marker, and the bewijsstuk count so downstream
-     * subscribers (audit-trail consumer + budget-utilisation widget) can
-     * reconcile without re-fetching the OR record.
-     *
-     * @param array<string, mixed> $oplevering Completed OpdrachtUitvoering payload.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-005
-     */
-    public function emitMilestoneCompleted(array $oplevering): void
-    {
-        $bewijsstukken = ($oplevering['bewijsstukken'] ?? []);
-        if (is_array($bewijsstukken) === false) {
-            $bewijsstukken = [];
-        }
+	/**
+	 * Emit the `milestone.completed` CloudEvent (Task 5.3 / REQ-005).
+	 *
+	 * Carries the OpdrachtUitvoering identifier, the linked obligation,
+	 * the approval marker, and the bewijsstuk count so downstream
+	 * subscribers (audit-trail consumer + budget-utilisation widget) can
+	 * reconcile without re-fetching the OR record.
+	 *
+	 * @param array<string, mixed> $oplevering Completed OpdrachtUitvoering payload.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-005
+	 */
+	public function emitMilestoneCompleted(array $oplevering): void {
+		$bewijsstukken = ($oplevering['bewijsstukken'] ?? []);
+		if (is_array($bewijsstukken) === false) {
+			$bewijsstukken = [];
+		}
 
-        $payload = [
-            'eventName'        => self::EVENT_MILESTONE_COMPLETED,
-            'verplichtingId'   => (string) ($oplevering['verplichtingId'] ?? ''),
-            'mijlpaalId'       => (string) ($oplevering['mijlpaalId'] ?? ''),
-            'opleveringsType'  => (string) ($oplevering['opleveringsType'] ?? ''),
-            'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),
-            'goedgekeurd'      => (bool) ($oplevering['goedgekeurd'] ?? false),
-            'bewijsstukCount'  => count($bewijsstukken),
-            'administrationId' => (string) ($oplevering['administrationId'] ?? ''),
-            'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
-        ];
+		$payload = [
+			'eventName' => self::EVENT_MILESTONE_COMPLETED,
+			'verplichtingId' => (string)($oplevering['verplichtingId'] ?? ''),
+			'mijlpaalId' => (string)($oplevering['mijlpaalId'] ?? ''),
+			'opleveringsType' => (string)($oplevering['opleveringsType'] ?? ''),
+			'opleveringsDatum' => (string)($oplevering['opleveringsDatum'] ?? ''),
+			'goedgekeurd' => (bool)($oplevering['goedgekeurd'] ?? false),
+			'bewijsstukCount' => count($bewijsstukken),
+			'administrationId' => (string)($oplevering['administrationId'] ?? ''),
+			'emittedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
+		];
 
-        $this->dispatch(eventName: self::EVENT_MILESTONE_COMPLETED, payload: $payload);
+		$this->dispatch(eventName: self::EVENT_MILESTONE_COMPLETED, payload: $payload);
 
-    }//end emitMilestoneCompleted()
+	}//end emitMilestoneCompleted()
 
-    /**
-     * Dispatch the payload as a GenericEvent.
-     *
-     * Fail-soft: any dispatcher error is logged but never bubbled up to
-     * the originating OR write path (the OR record is the source of
-     * truth; the cross-app notification is a derived view).
-     *
-     * @param string               $eventName CloudEvent name.
-     * @param array<string, mixed> $payload   Event payload.
-     *
-     * @return void
-     */
-    private function dispatch(string $eventName, array $payload): void
-    {
-        try {
-            $event = new GenericEvent(null, $payload);
-            $this->dispatcher->dispatch($eventName, $event);
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'BudgetImpactEmitter: dispatch failed — fail-soft',
-                ['eventName' => $eventName, 'exception' => $e->getMessage()]
-            );
-        }//end try
+	/**
+	 * Dispatch the payload as a GenericEvent.
+	 *
+	 * Fail-soft: any dispatcher error is logged but never bubbled up to
+	 * the originating OR write path (the OR record is the source of
+	 * truth; the cross-app notification is a derived view).
+	 *
+	 * @param string $eventName CloudEvent name.
+	 * @param array<string, mixed> $payload Event payload.
+	 *
+	 * @return void
+	 */
+	private function dispatch(string $eventName, array $payload): void {
+		try {
+			$event = new GenericEvent(null, $payload);
+			$this->dispatcher->dispatch($eventName, $event);
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'BudgetImpactEmitter: dispatch failed — fail-soft',
+				['eventName' => $eventName, 'exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end dispatch()
+	}//end dispatch()
 }//end class

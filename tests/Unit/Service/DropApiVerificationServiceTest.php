@@ -30,90 +30,82 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class DropApiVerificationServiceTest extends TestCase
-{
+final class DropApiVerificationServiceTest extends TestCase {
 
-    /**
-     * Service under test.
-     */
-    private DropApiVerificationService $svc;
+	/**
+	 * Service under test.
+	 */
+	private DropApiVerificationService $svc;
 
-    /**
-     * Set up test fixtures.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->svc = new DropApiVerificationService();
+	/**
+	 * Set up test fixtures.
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->svc = new DropApiVerificationService();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Compose lookup uses the publicatieGemeenteblad reference.
-     */
-    public function testComposeLookupRequest(): void
-    {
-        $r = $this->svc->composeLookupRequest(['publicatieGemeenteblad' => 'gmb-2025-401']);
-        self::assertTrue($r['ok']);
-        self::assertSame('gmb-2025-401', $r['gemeentebladId']);
-        self::assertSame(['identifier' => 'gmb-2025-401'], $r['request']['query']);
+	/**
+	 * Compose lookup uses the publicatieGemeenteblad reference.
+	 */
+	public function testComposeLookupRequest(): void {
+		$r = $this->svc->composeLookupRequest(['publicatieGemeenteblad' => 'gmb-2025-401']);
+		self::assertTrue($r['ok']);
+		self::assertSame('gmb-2025-401', $r['gemeentebladId']);
+		self::assertSame(['identifier' => 'gmb-2025-401'], $r['request']['query']);
 
-    }//end testComposeLookupRequest()
+	}//end testComposeLookupRequest()
 
-    /**
-     * No gemeenteblad reference yields ok=false.
-     */
-    public function testComposeLookupWithoutReferenceFails(): void
-    {
-        $r = $this->svc->composeLookupRequest([]);
-        self::assertFalse($r['ok']);
+	/**
+	 * No gemeenteblad reference yields ok=false.
+	 */
+	public function testComposeLookupWithoutReferenceFails(): void {
+		$r = $this->svc->composeLookupRequest([]);
+		self::assertFalse($r['ok']);
 
-    }//end testComposeLookupWithoutReferenceFails()
+	}//end testComposeLookupWithoutReferenceFails()
 
-    /**
-     * Empty / null response → fail-soft message.
-     */
-    public function testParseConnectionFailure(): void
-    {
-        $r = $this->svc->parseResponse(null, null);
-        self::assertFalse($r['success']);
-        self::assertStringContainsString('unavailable', $r['message']);
+	/**
+	 * Empty / null response → fail-soft message.
+	 */
+	public function testParseConnectionFailure(): void {
+		$r = $this->svc->parseResponse(null, null);
+		self::assertFalse($r['success']);
+		self::assertStringContainsString('unavailable', $r['message']);
 
-    }//end testParseConnectionFailure()
+	}//end testParseConnectionFailure()
 
-    /**
-     * 404 → not found.
-     */
-    public function testParseNotFound(): void
-    {
-        $r = $this->svc->parseResponse('{}', 404);
-        self::assertFalse($r['success']);
-        self::assertStringContainsString('not found', $r['message']);
+	/**
+	 * 404 → not found.
+	 */
+	public function testParseNotFound(): void {
+		$r = $this->svc->parseResponse('{}', 404);
+		self::assertFalse($r['success']);
+		self::assertStringContainsString('not found', $r['message']);
 
-    }//end testParseNotFound()
+	}//end testParseNotFound()
 
-    /**
-     * 200 with bindings → success.
-     */
-    public function testParseSuccess(): void
-    {
-        $body = json_encode(['results' => ['bindings' => [['identifier' => 'gmb-2025-401']]]]);
-        $r    = $this->svc->parseResponse($body, 200);
-        self::assertTrue($r['success']);
-        self::assertSame('Verified', $r['message']);
+	/**
+	 * 200 with bindings → success.
+	 */
+	public function testParseSuccess(): void {
+		$body = json_encode(['results' => ['bindings' => [['identifier' => 'gmb-2025-401']]]]);
+		$r = $this->svc->parseResponse($body, 200);
+		self::assertTrue($r['success']);
+		self::assertSame('Verified', $r['message']);
 
-    }//end testParseSuccess()
+	}//end testParseSuccess()
 
-    /**
-     * applyVerification writes onto the ABB.
-     */
-    public function testApplyVerification(): void
-    {
-        $abb       = ['status' => 'publicatie'];
-        $verified  = ['verifiedAt' => '2026-01-01T00:00:00Z', 'success' => true, 'message' => 'Verified'];
-        $updated   = $this->svc->applyVerification($abb, $verified);
-        self::assertSame($verified, $updated['dropVerification']);
+	/**
+	 * applyVerification writes onto the ABB.
+	 */
+	public function testApplyVerification(): void {
+		$abb = ['status' => 'publicatie'];
+		$verified = ['verifiedAt' => '2026-01-01T00:00:00Z', 'success' => true, 'message' => 'Verified'];
+		$updated = $this->svc->applyVerification($abb, $verified);
+		self::assertSame($verified, $updated['dropVerification']);
 
-    }//end testApplyVerification()
+	}//end testApplyVerification()
 
 }//end class

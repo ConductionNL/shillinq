@@ -55,198 +55,189 @@ use RuntimeException;
  * 09 (retry/circuit-breaker) and 10 (end-to-end). Members 02+ wire
  * the mock through their HTTP adapter test seam.
  */
-final class PipelinqMockServer
-{
+final class PipelinqMockServer {
 
-    /**
-     * Path to the bundled fixture directory.
-     *
-     * @var string
-     */
-    private string $fixtureDir;
+	/**
+	 * Path to the bundled fixture directory.
+	 *
+	 * @var string
+	 */
+	private string $fixtureDir;
 
-    /**
-     * Override status code returned for the NEXT dispatch when set.
-     *
-     * @var integer|null
-     */
-    private ?int $forcedStatus = null;
+	/**
+	 * Override status code returned for the NEXT dispatch when set.
+	 *
+	 * @var integer|null
+	 */
+	private ?int $forcedStatus = null;
 
-    /**
-     * History of dispatched requests for assertion in tests.
-     *
-     * @var array<int, array{method: string, path: string, body: ?string}>
-     */
-    private array $requests = [];
+	/**
+	 * History of dispatched requests for assertion in tests.
+	 *
+	 * @var array<int, array{method: string, path: string, body: ?string}>
+	 */
+	private array $requests = [];
 
-    /**
-     * Constructor.
-     *
-     * @param string|null $fixtureDir Override fixture directory. Defaults
-     *                                to the bundled `fixtures/` next to
-     *                                this class.
-     */
-    public function __construct(?string $fixtureDir=null)
-    {
-        $this->fixtureDir = ($fixtureDir ?? (__DIR__.'/fixtures'));
+	/**
+	 * Constructor.
+	 *
+	 * @param string|null $fixtureDir Override fixture directory. Defaults
+	 *                                to the bundled `fixtures/` next to
+	 *                                this class.
+	 */
+	public function __construct(?string $fixtureDir = null) {
+		$this->fixtureDir = ($fixtureDir ?? (__DIR__ . '/fixtures'));
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Force the next dispatch to return the given HTTP status code.
-     *
-     * Used by retry/circuit-breaker tests (member 09) to simulate
-     * transient and permanent server-side failures. The forced code
-     * applies once and is cleared after the next dispatch.
-     *
-     * @param int $code HTTP status code to return.
-     *
-     * @return void
-     */
-    public function forceStatus(int $code): void
-    {
-        $this->forcedStatus = $code;
+	/**
+	 * Force the next dispatch to return the given HTTP status code.
+	 *
+	 * Used by retry/circuit-breaker tests (member 09) to simulate
+	 * transient and permanent server-side failures. The forced code
+	 * applies once and is cleared after the next dispatch.
+	 *
+	 * @param int $code HTTP status code to return.
+	 *
+	 * @return void
+	 */
+	public function forceStatus(int $code): void {
+		$this->forcedStatus = $code;
 
-    }//end forceStatus()
+	}//end forceStatus()
 
-    /**
-     * Return the full request-history captured by dispatch().
-     *
-     * @return array<int, array{method: string, path: string, body: ?string}>
-     */
-    public function getRequests(): array
-    {
-        return $this->requests;
+	/**
+	 * Return the full request-history captured by dispatch().
+	 *
+	 * @return array<int, array{method: string, path: string, body: ?string}>
+	 */
+	public function getRequests(): array {
+		return $this->requests;
+	}//end getRequests()
 
-    }//end getRequests()
+	/**
+	 * Reset the request history and any forced-status override.
+	 *
+	 * @return void
+	 */
+	public function reset(): void {
+		$this->requests = [];
+		$this->forcedStatus = null;
 
-    /**
-     * Reset the request history and any forced-status override.
-     *
-     * @return void
-     */
-    public function reset(): void
-    {
-        $this->requests     = [];
-        $this->forcedStatus = null;
+	}//end reset()
 
-    }//end reset()
+	/**
+	 * Dispatch an HTTP request through the in-process router.
+	 *
+	 * @param string $method HTTP method (GET, POST).
+	 * @param string $path Request path (must start with `/`).
+	 * @param string|null $body Request body for POST routes.
+	 *
+	 * @return array{status:int, headers:array<string,string>, body:string}
+	 */
+	public function dispatch(string $method, string $path, ?string $body = null): array {
+		$this->requests[] = [
+			'method' => $method,
+			'path' => $path,
+			'body' => $body,
+		];
 
-    /**
-     * Dispatch an HTTP request through the in-process router.
-     *
-     * @param string      $method HTTP method (GET, POST).
-     * @param string      $path   Request path (must start with `/`).
-     * @param string|null $body   Request body for POST routes.
-     *
-     * @return array{status:int, headers:array<string,string>, body:string}
-     */
-    public function dispatch(string $method, string $path, ?string $body=null): array
-    {
-        $this->requests[] = [
-            'method' => $method,
-            'path'   => $path,
-            'body'   => $body,
-        ];
+		if ($this->forcedStatus !== null) {
+			$forced = $this->forcedStatus;
+			$this->forcedStatus = null;
+			return $this->jsonResponse(
+				status: $forced,
+				payload: ['error' => 'forced status ' . $forced]
+			);
+		}
 
-        if ($this->forcedStatus !== null) {
-            $forced = $this->forcedStatus;
-            $this->forcedStatus = null;
-            return $this->jsonResponse(
-                status: $forced,
-                payload: ['error' => 'forced status '.$forced]
-            );
-        }
+		if ($method === 'GET' && $path === '/health') {
+			return $this->jsonResponse(status: 200, payload: ['status' => 'ok']);
+		}
 
-        if ($method === 'GET' && $path === '/health') {
-            return $this->jsonResponse(status: 200, payload: ['status' => 'ok']);
-        }
+		if ($method === 'GET' && preg_match('#^/contacts/([^/]+)$#', $path, $m) === 1) {
+			return $this->fixtureResponse(prefix: 'contact', externalId: $m[1]);
+		}
 
-        if ($method === 'GET' && preg_match('#^/contacts/([^/]+)$#', $path, $m) === 1) {
-            return $this->fixtureResponse(prefix: 'contact', externalId: $m[1]);
-        }
+		if ($method === 'GET' && preg_match('#^/klantbeeld/([^/]+)$#', $path, $m) === 1) {
+			return $this->fixtureResponse(prefix: 'klantbeeld', externalId: $m[1]);
+		}
 
-        if ($method === 'GET' && preg_match('#^/klantbeeld/([^/]+)$#', $path, $m) === 1) {
-            return $this->fixtureResponse(prefix: 'klantbeeld', externalId: $m[1]);
-        }
+		if ($method === 'GET' && preg_match('#^/contacts/([^/]+)/timeline$#', $path, $m) === 1) {
+			return $this->fixtureResponse(prefix: 'timeline', externalId: $m[1]);
+		}
 
-        if ($method === 'GET' && preg_match('#^/contacts/([^/]+)/timeline$#', $path, $m) === 1) {
-            return $this->fixtureResponse(prefix: 'timeline', externalId: $m[1]);
-        }
+		if ($method === 'POST' && preg_match('#^/contacts/([^/]+)/timeline$#', $path, $m) === 1) {
+			return $this->jsonResponse(
+				status: 202,
+				payload: [
+					'accepted' => true,
+					'externalId' => $m[1],
+					'entryId' => 'mock-' . bin2hex(random_bytes(4)),
+				]
+			);
+		}
 
-        if ($method === 'POST' && preg_match('#^/contacts/([^/]+)/timeline$#', $path, $m) === 1) {
-            return $this->jsonResponse(
-                status: 202,
-                payload: [
-                    'accepted'   => true,
-                    'externalId' => $m[1],
-                    'entryId'    => 'mock-'.bin2hex(random_bytes(4)),
-                ]
-            );
-        }
+		return $this->jsonResponse(
+			status: 404,
+			payload: [
+				'error' => 'no_route',
+				'path' => $path,
+			]
+		);
 
-        return $this->jsonResponse(
-            status: 404,
-            payload: [
-                'error' => 'no_route',
-                'path'  => $path,
-            ]
-        );
+	}//end dispatch()
 
-    }//end dispatch()
+	/**
+	 * Resolve a fixture file from disk and return it as a response.
+	 *
+	 * Falls back to 404 when the file is missing — used by tests to
+	 * exercise the "Contact not found in pipelinq" branch.
+	 *
+	 * @param string $prefix Fixture filename prefix (contact/klantbeeld/timeline).
+	 * @param string $externalId Pipelinq Contact externalId.
+	 *
+	 * @return array{status:int, headers:array<string,string>, body:string}
+	 */
+	private function fixtureResponse(string $prefix, string $externalId): array {
+		$file = $this->fixtureDir . '/' . $prefix . '-' . $externalId . '.json';
+		if (file_exists($file) === false) {
+			return $this->jsonResponse(
+				status: 404,
+				payload: [
+					'error' => 'not_found',
+					'externalId' => $externalId,
+				]
+			);
+		}
 
-    /**
-     * Resolve a fixture file from disk and return it as a response.
-     *
-     * Falls back to 404 when the file is missing — used by tests to
-     * exercise the "Contact not found in pipelinq" branch.
-     *
-     * @param string $prefix     Fixture filename prefix (contact/klantbeeld/timeline).
-     * @param string $externalId Pipelinq Contact externalId.
-     *
-     * @return array{status:int, headers:array<string,string>, body:string}
-     */
-    private function fixtureResponse(string $prefix, string $externalId): array
-    {
-        $file = $this->fixtureDir.'/'.$prefix.'-'.$externalId.'.json';
-        if (file_exists($file) === false) {
-            return $this->jsonResponse(
-                status: 404,
-                payload: [
-                    'error'      => 'not_found',
-                    'externalId' => $externalId,
-                ]
-            );
-        }
+		$body = file_get_contents($file);
+		if ($body === false) {
+			throw new RuntimeException('Failed to read fixture ' . $file);
+		}
 
-        $body = file_get_contents($file);
-        if ($body === false) {
-            throw new RuntimeException('Failed to read fixture '.$file);
-        }
+		return [
+			'status' => 200,
+			'headers' => ['Content-Type' => 'application/json'],
+			'body' => $body,
+		];
 
-        return [
-            'status'  => 200,
-            'headers' => ['Content-Type' => 'application/json'],
-            'body'    => $body,
-        ];
+	}//end fixtureResponse()
 
-    }//end fixtureResponse()
+	/**
+	 * Build a JSON HTTP response envelope.
+	 *
+	 * @param int $status HTTP status code.
+	 * @param array<string, mixed> $payload Payload to JSON-encode.
+	 *
+	 * @return array{status:int, headers:array<string,string>, body:string}
+	 */
+	private function jsonResponse(int $status, array $payload): array {
+		return [
+			'status' => $status,
+			'headers' => ['Content-Type' => 'application/json'],
+			'body' => (string)json_encode($payload),
+		];
 
-    /**
-     * Build a JSON HTTP response envelope.
-     *
-     * @param int                  $status  HTTP status code.
-     * @param array<string, mixed> $payload Payload to JSON-encode.
-     *
-     * @return array{status:int, headers:array<string,string>, body:string}
-     */
-    private function jsonResponse(int $status, array $payload): array
-    {
-        return [
-            'status'  => $status,
-            'headers' => ['Content-Type' => 'application/json'],
-            'body'    => (string) json_encode($payload),
-        ];
-
-    }//end jsonResponse()
+	}//end jsonResponse()
 }//end class

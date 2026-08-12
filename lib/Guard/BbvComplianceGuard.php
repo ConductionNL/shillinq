@@ -47,656 +47,625 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
-class BbvComplianceGuard
-{
-    /**
-     * BBV-applicable administration types. Only these tenants are subject to the
-     * BBV preconditions; all other administrations bypass them.
-     *
-     * @var array<int, string>
-     */
-    private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
-
-    /**
-     * Reserve mutations must always book on this taakveld (resultaatbestemming).
-     */
-    private const RESERVE_TAAKVELD = '0.10';
-
-    /**
-     * Construct the guard with lazy DI of OR's ObjectService.
-     *
-     * @param ContainerInterface $container DI container — OR's ObjectService is
-     *                                      fetched lazily so the class stays usable
-     *                                      before sibling registers exist.
-     * @param IAppConfig         $appConfig App config for register-slug resolution.
-     * @param LoggerInterface    $logger    Nextcloud logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
-
-    /**
-     * Return the configured register slug, falling back to 'shillinq' if unset.
-     *
-     * Mirrors AccountBalanceGuard / SettingsService::getRegisterSlug() so all
-     * reads use the same register even when the admin reconfigures the slug.
-     *
-     * @return string
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
-
-        return $slug;
-
-    }//end getRegisterSlug()
-
-    /**
-     * Resolve whether the owning administration is a BBV-tenant.
-     *
-     * A record is BBV-applicable when its own `administrationType` is municipal,
-     * or — when only an `administrationId` is present — when the referenced
-     * Administration record (if resolvable) is municipal. When the type cannot be
-     * resolved at all the record is treated as non-BBV so generic tenants are
-     * never blocked by a missing lookup (the BBV repair step seeds the type).
-     *
-     * @param array<string, mixed> $record Object array under validation.
-     *
-     * @return bool True when BBV preconditions apply to this record.
-     */
-    private function isBbvTenant(array $record): bool
-    {
-        $type = (string) ($record['administrationType'] ?? '');
-        if ($type !== '') {
-            return in_array($type, self::BBV_ADMINISTRATION_TYPES, true);
-        }
-
-        return (($record['bbvCompliance'] ?? $record['bbv_compliance'] ?? null) === true);
-
-    }//end isBbvTenant()
-
-    /**
-     * Precondition for Account.save (REQ-BBV-001): a BBV-tenant may not create or
-     * mutate a grootboekrekening without a `rgsDecentraalCode`. Non-BBV tenants
-     * always pass. The presence of a matching BbvAccountMapping is verified when
-     * the mapping register is available; otherwise the inline `rgsDecentraalCode`
-     * field suffices (T-staging before the mapping register ships).
-     *
-     * @param array<string, mixed> $account Account object array (loaded by OR).
-     *
-     * @return bool True when the RGS-decentraal mapping requirement is satisfied.
-     *
-     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-001)
-     */
-    public function requireBbvAccountMapping(array $account): bool
-    {
-        if ($this->isBbvTenant(record: $account) === false) {
-            return true;
-        }
-
-        $code = (string) ($account['rgsDecentraalCode'] ?? '');
-        if ($code !== '') {
-            return true;
-        }
-
-        $this->logger->info(
-            'BbvComplianceGuard: rejecting BBV account without rgsDecentraalCode (REQ-BBV-001)',
-            ['accountNumber' => ($account['accountNumber'] ?? 'unknown')]
-        );
-
-        return false;
-
-    }//end requireBbvAccountMapping()
-
-    /**
-     * Precondition for GLLine.save (REQ-BBV-002 + REQ-BBV-004): a BBV exploitatie
-     * line must carry a taakveld + economische_categorie; reserve mutations must
-     * book on taakveld 0.10; voorziening mutations must book on the gekoppelde
-     * taakveld. The account's `bbvClassificatie` (and, for voorziening, its
-     * preset `taakveld`) is read from the referenced Account record. Non-BBV
-     * tenants and balans-overig postings pass unconditionally.
-     *
-     * @param array<string, mixed> $line GLLine object array (loaded by OR).
-     *
-     * @return bool True when the line's BBV classification/routing is valid.
-     *
-     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-002, REQ-BBV-004)
-     */
-    public function requireLineClassification(array $line): bool
-    {
-        if ($this->isBbvTenant(record: $line) === false) {
-            return true;
-        }
-
-        // REQ-BBV-002 forward-only: skip historic postings whose postingDate falls
-        // before the BBV installation date. The app config key
-        // `bbv_installation_date` is stamped by the InitializeSettings repair step
-        // when the first BBV-tenant comes online; an empty value means BBV is not
-        // yet installation-anchored, so the precondition runs for every line.
-        if ($this->isHistoricPosting(line: $line) === true) {
-            return true;
-        }
-
-        $account = $this->resolveAccount(
-            accountNumber: (string) ($line['accountNumber'] ?? ''),
-            administrationId: (string) ($line['administrationId'] ?? '')
-        );
-
-        // When the account cannot be resolved we cannot determine the BBV route;
-        // fail closed for BBV tenants to avoid silently accepting unmapped lines.
-        if ($account === null) {
-            $this->logger->info(
-                'BbvComplianceGuard: cannot resolve account for GLLine classification (REQ-BBV-002)',
-                ['accountNumber' => ($line['accountNumber'] ?? 'unknown')]
-            );
-            return false;
-        }
-
-        $classificatie = ($account['bbvClassificatie'] ?? null);
-
-        // Balans-overig and investering postings are exempt from taakveld-plicht.
-        if ($classificatie === 'balans-overig' || $classificatie === 'investering') {
-            return true;
-        }
-
-        if ($classificatie === 'reserve') {
-            return $this->checkReserveRoute(line: $line);
-        }
-
-        if ($classificatie === 'voorziening') {
-            return $this->checkVoorzieningRoute(line: $line, account: $account);
-        }
-
-        // Default (exploitatie): taakveld + economische_categorie are verplicht.
-        return $this->checkExploitatieClassification(line: $line);
-
-    }//end requireLineClassification()
-
-    /**
-     * REQ-BBV-002 forward-only carve-out: a posting is "historic" when its
-     * `postingDate` precedes the BBV installation date stored in app config.
-     *
-     * Returns `false` when no installation date is configured (so the
-     * precondition runs for every line) and `false` when the line carries
-     * no parseable postingDate (so we don't silently accept a missing date).
-     *
-     * @param array<string,mixed> $line GLLine object array.
-     *
-     * @return bool True when the posting is historic and exempt; false otherwise.
-     */
-    private function isHistoricPosting(array $line): bool
-    {
-        $installRaw = $this->appConfig->getValueString(
-            Application::APP_ID,
-            'bbv_installation_date',
-            ''
-        );
-
-        if ($installRaw === '') {
-            return false;
-        }
-
-        $postingRaw = (string) ($line['postingDate'] ?? '');
-        if ($postingRaw === '') {
-            return false;
-        }
-
-        try {
-            $installDate = new DateTimeImmutable(datetime: $installRaw);
-            $postingDate = new DateTimeImmutable(datetime: $postingRaw);
-        } catch (\Throwable $e) {
-            return false;
-        }
-
-        return $postingDate < $installDate;
-
-    }//end isHistoricPosting()
-
-    /**
-     * REQ-BBV-004: reserve mutaties run uitsluitend via taakveld 0.10.
-     *
-     * @param array<string, mixed> $line GLLine object array.
-     *
-     * @return bool True when the reserve line books on taakveld 0.10.
-     */
-    private function checkReserveRoute(array $line): bool
-    {
-        $taakveld = ($line['taakveld'] ?? null);
-        if ((string) $taakveld === self::RESERVE_TAAKVELD) {
-            return true;
-        }
-
-        $this->logger->info(
-            'BbvComplianceGuard: reserve mutation off taakveld 0.10 rejected (REQ-BBV-004)',
-            ['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taakveld' => $taakveld]
-        );
-
-        return false;
-
-    }//end checkReserveRoute()
-
-    /**
-     * REQ-BBV-004: voorziening mutaties run via het gekoppelde taakveld of the account.
-     *
-     * @param array<string, mixed> $line    GLLine object array.
-     * @param array<string, mixed> $account Resolved Account object array.
-     *
-     * @return bool True when the voorziening line books on the gekoppelde taakveld.
-     */
-    private function checkVoorzieningRoute(array $line, array $account): bool
-    {
-        $gekoppeld = ($account['taakveld'] ?? null);
-        $taakveld  = ($line['taakveld'] ?? null);
-        if ($gekoppeld === null || (string) $taakveld === (string) $gekoppeld) {
-            return true;
-        }
-
-        $this->logger->info(
-            'BbvComplianceGuard: voorziening mutation off gekoppeld taakveld rejected (REQ-BBV-004)',
-            [
-                'accountNumber' => ($line['accountNumber'] ?? 'unknown'),
-                'expected'      => $gekoppeld,
-                'found'         => $taakveld,
-            ]
-        );
-
-        return false;
-
-    }//end checkVoorzieningRoute()
-
-    /**
-     * REQ-BBV-002: an exploitatie line must carry taakveld + economische_categorie.
-     *
-     * @param array<string, mixed> $line GLLine object array.
-     *
-     * @return bool True when both classification fields are present.
-     */
-    private function checkExploitatieClassification(array $line): bool
-    {
-        $taakveld  = (string) ($line['taakveld'] ?? '');
-        $categorie = (string) ($line['economischeCategorie'] ?? '');
-        if ($taakveld !== '' && $categorie !== '') {
-            return true;
-        }
-
-        $this->logger->info(
-            'BbvComplianceGuard: exploitatie line missing taakveld/economische_categorie (REQ-BBV-002)',
-            ['accountNumber' => ($line['accountNumber'] ?? 'unknown')]
-        );
-
-        return false;
-
-    }//end checkExploitatieClassification()
-
-    /**
-     * Precondition for Programma.publish (REQ-BBV-003): every meerjaren-horizon
-     * (T..T+3) must be structureel en reëel sluitend — for each horizon,
-     * sum(batenCents) - sum(lastenCents) + sum(mutatieReservesCents) >= 0.
-     * A non-sluitende begroting blocks publication unless overridden with a
-     * raadsbesluit (raadsbesluitNummer + raadsbesluitDatum on the Programma).
-     * Non-BBV tenants pass unconditionally.
-     *
-     * @param array<string, mixed> $programma Programma object array (loaded by OR).
-     *
-     * @return bool True when all horizons are sluitend or an override is present.
-     *
-     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
-     */
-    public function requireMeerjarenramingSluitend(array $programma): bool
-    {
-        if ($this->isBbvTenant(record: $programma) === false) {
-            return true;
-        }
-
-        // Raadsbesluit override: an explicit, audit-trailed motivation unblocks
-        // a non-sluitende begroting per art. 189 Gemeentewet.
-        $besluit = (string) ($programma['raadsbesluitNummer'] ?? '');
-        $datum   = (string) ($programma['raadsbesluitDatum'] ?? '');
-        if ($besluit !== '' && $datum !== '') {
-            return true;
-        }
-
-        $administrationId = (string) ($programma['administrationId'] ?? '');
-        $boekjaar         = (int) ($programma['boekjaar'] ?? 0);
-
-        $rows = $this->loadMeerjarenBudgetRows(administrationId: $administrationId, boekjaar: $boekjaar);
-        if ($rows === null) {
-            // Lookup failed — fail closed.
-            return false;
-        }
-
-        $saldoPerHorizon = $this->computeSaldoPerHorizon(rows: $rows);
-        foreach ($saldoPerHorizon as $horizon => $saldoCents) {
-            if ($saldoCents < 0) {
-                $this->logger->info(
-                    'BbvComplianceGuard: meerjarenraming not sluitend (REQ-BBV-003)',
-                    [
-                        'administrationId' => $administrationId,
-                        'horizon'          => $horizon,
-                        'saldoCents'       => $saldoCents,
-                    ]
-                );
-                return false;
-            }
-        }
-
-        return true;
-
-    }//end requireMeerjarenramingSluitend()
-
-    /**
-     * Load the primitieve MeerjarenBudget rows for an administration + boekjaar.
-     *
-     * @param string $administrationId Owning administration.
-     * @param int    $boekjaar         Base fiscal year T.
-     *
-     * @return array<int, array<string, mixed>>|null Rows, or null on lookup failure.
-     */
-    private function loadMeerjarenBudgetRows(string $administrationId, int $boekjaar): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            return $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('MeerjarenBudget')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'administrationId' => $administrationId,
-                            'boekjaar'         => $boekjaar,
-                            'versie'           => 'primitief',
-                        ],
-                    ]
-                );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'BbvComplianceGuard: meerjarenraming lookup failed — denying publish (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return null;
-        }//end try
-
-    }//end loadMeerjarenBudgetRows()
-
-    /**
-     * Aggregate the sluitend-saldo per horizon in integer cents.
-     *
-     * @param array<int, array<string, mixed>> $rows MeerjarenBudget rows.
-     *
-     * @return array<int, int> Saldo in cents keyed by meerjarenHorizon.
-     */
-    private function computeSaldoPerHorizon(array $rows): array
-    {
-        $saldoPerHorizon = [];
-        foreach ($rows as $row) {
-            $horizon = (int) ($row['meerjarenHorizon'] ?? 0);
-            if (isset($saldoPerHorizon[$horizon]) === false) {
-                $saldoPerHorizon[$horizon] = 0;
-            }
-
-            $batenCents   = (int) ($row['batenCents'] ?? 0);
-            $lastenCents  = (int) ($row['lastenCents'] ?? 0);
-            $mutatieCents = (int) ($row['mutatieReservesCents'] ?? 0);
-            $saldoPerHorizon[$horizon] += ($batenCents - $lastenCents + $mutatieCents);
-        }
-
-        return $saldoPerHorizon;
-
-    }//end computeSaldoPerHorizon()
-
-    /**
-     * Precondition for MaterieleVasteActiva.save (REQ-BBV-005): a
-     * maatschappelijk-nut investering above the activeringsgrens MUST be
-     * activated — i.e. it must carry a depreciation term (afschrijvingstermijn)
-     * so it is not booked directly to exploitatie. The activeringsgrens defaults
-     * to EUR 50.000 (5_000_000 cents) and is operator-configurable. Non-BBV
-     * tenants and economisch-nut assets pass unconditionally.
-     *
-     * @param array<string, mixed> $mva MaterieleVasteActiva object array (loaded by OR).
-     *
-     * @return bool True when the MVA is correctly activated (or out of scope).
-     *
-     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
-     */
-    public function requireMvaActivation(array $mva): bool
-    {
-        if ($this->isBbvTenant(record: $mva) === false) {
-            return true;
-        }
-
-        if (($mva['mvaCategorie'] ?? '') !== 'maatschappelijk-nut') {
-            return true;
-        }
-
-        $aanschafCents = (int) ($mva['aanschafwaardeCents'] ?? 0);
-        $grensCents    = $this->getActiveringsgrensCents();
-        if ($aanschafCents <= $grensCents) {
-            return true;
-        }
-
-        // Above the grens: a depreciation term must be set so the actief is
-        // activated and depreciated, not expensed in one go (BBV art. 59 lid 4).
-        $termijn = (int) ($mva['afschrijvingstermijnJaar'] ?? 0);
-        if ($termijn < 1) {
-            $this->logger->info(
-                'BbvComplianceGuard: maatschappelijk-nut investering above grens not activated (REQ-BBV-005)',
-                [
-                    'omschrijving'  => ($mva['omschrijving'] ?? 'unknown'),
-                    'aanschafCents' => $aanschafCents,
-                ]
-            );
-            return false;
-        }
-
-        return true;
-
-    }//end requireMvaActivation()
-
-    /**
-     * The seven mandatory BBV paragrafen per BBV art. 9.
-     *
-     * Used by `requireParagrafenCompleet` (REQ-BBV-007).
-     *
-     * @var array<int, string>
-     */
-    private const REQUIRED_PARAGRAFEN = [
-        'lokale-heffingen',
-        'weerstandsvermogen',
-        'onderhoud-kapitaalgoederen',
-        'financiering',
-        'bedrijfsvoering',
-        'verbonden-partijen',
-        'grondbeleid',
-    ];
-
-    /**
-     * Precondition for Jaarrekening.publish (REQ-BBV-007 paragraaf-completeness).
-     *
-     * Loads every `Paragraaf` row for the administration + boekjaar with
-     * `status = vastgesteld` and checks that all seven mandatory types are
-     * present. Non-BBV tenants bypass.
-     *
-     * @param array<string, mixed> $jaarrekening Jaarrekening record (administrationId + boekjaar).
-     *
-     * @return bool True when all seven paragrafen are vastgesteld, false otherwise.
-     *
-     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-007)
-     */
-    public function requireParagrafenCompleet(array $jaarrekening): bool
-    {
-        if ($this->isBbvTenant(record: $jaarrekening) === false) {
-            return true;
-        }
-
-        $administrationId = (string) ($jaarrekening['administrationId'] ?? '');
-        $boekjaar         = (int) ($jaarrekening['boekjaar'] ?? 0);
-
-        if ($administrationId === '' || $boekjaar === 0) {
-            $this->logger->info(
-                'BbvComplianceGuard: jaarrekening missing administrationId or boekjaar (REQ-BBV-007)'
-            );
-            return false;
-        }
-
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('Paragraaf')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'administrationId' => $administrationId,
-                            'boekjaar'         => $boekjaar,
-                            'status'           => 'vastgesteld',
-                        ],
-                    ]
-                );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'BbvComplianceGuard: paragraaf lookup failed — denying publish (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-
-        $aanwezig = [];
-        foreach ($rows as $row) {
-            $aanwezig[(string) ($row['type'] ?? '')] = true;
-        }
-
-        $ontbrekend = [];
-        foreach (self::REQUIRED_PARAGRAFEN as $type) {
-            if (isset($aanwezig[$type]) === false) {
-                $ontbrekend[] = $type;
-            }
-        }
-
-        if (count($ontbrekend) > 0) {
-            $this->logger->info(
-                'BbvComplianceGuard: jaarrekening mist verplichte paragrafen (REQ-BBV-007, BBV art. 9)',
-                [
-                    'administrationId' => $administrationId,
-                    'boekjaar'         => $boekjaar,
-                    'ontbrekend'       => $ontbrekend,
-                ]
-            );
-            return false;
-        }
-
-        return true;
-
-    }//end requireParagrafenCompleet()
-
-    /**
-     * Compute the month-of-first-depreciation for an MVA per REQ-BBV-005.
-     *
-     * Depreciation starts in the month FOLLOWING `ingebruiknameDatum`. Example:
-     *   ingebruiknameDatum = 2026-09-15 → first depreciation in 2026-10.
-     *
-     * Declarative helper used by the FixedAssets monthly-depreciation workflow
-     * and exercised by the spec scenario "Afschrijving start maand na ingebruikname".
-     * Returns `null` when the ingebruikname date is missing or unparseable.
-     *
-     * @param array<string, mixed> $mva MaterieleVasteActiva record.
-     *
-     * @return string|null First depreciation month as `YYYY-MM`, or null.
-     *
-     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
-     */
-    public function depreciationStartMonth(array $mva): ?string
-    {
-        $raw = (string) ($mva['ingebruiknameDatum'] ?? '');
-        if ($raw === '') {
-            return null;
-        }
-
-        try {
-            $date = new DateTimeImmutable(datetime: $raw);
-        } catch (\Throwable $e) {
-            $this->logger->info(
-                'BbvComplianceGuard: ingebruiknameDatum unparseable, depreciation start unknown',
-                ['raw' => $raw, 'exception' => $e->getMessage()]
-            );
-            return null;
-        }
-
-        // First depreciation accrues in the month AFTER ingebruikname (REQ-BBV-005).
-        $next = $date->modify(modifier: 'first day of next month');
-        if ($next === false) {
-            return null;
-        }
-
-        return $next->format(format: 'Y-m');
-
-    }//end depreciationStartMonth()
-
-    /**
-     * Resolve the activeringsgrens in integer cents from app config, defaulting
-     * to EUR 50.000 (5_000_000 cents) per the gangbare gemeente-drempel.
-     *
-     * @return int Activeringsgrens in eurocents.
-     */
-    private function getActiveringsgrensCents(): int
-    {
-        $configured = $this->appConfig->getValueInt(
-            Application::APP_ID,
-            'bbv_activeringsgrens_cents',
-            5000000
-        );
-
-        if ($configured > 0) {
-            return $configured;
-        }
-
-        return 5000000;
-
-    }//end getActiveringsgrensCents()
-
-    /**
-     * Resolve the Account record for a GL line via OR's real ObjectService API.
-     *
-     * @param string $accountNumber    Account.accountNumber to resolve.
-     * @param string $administrationId Owning administration (scopes uniqueness).
-     *
-     * @return array<string, mixed>|null The account array, or null when not found.
-     */
-    private function resolveAccount(string $accountNumber, string $administrationId): ?array
-    {
-        if ($accountNumber === '') {
-            return null;
-        }
-
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $filters       = ['accountNumber' => $accountNumber];
-            if ($administrationId !== '') {
-                $filters['administrationId'] = $administrationId;
-            }
-
-            $matches = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('Account')
-                ->findAll(['filters' => $filters, 'limit' => 1]);
-
-            if (is_array($matches) === true && count($matches) > 0) {
-                return $matches[0];
-            }
-
-            return null;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'BbvComplianceGuard: account resolution failed',
-                ['exception' => $e->getMessage()]
-            );
-            return null;
-        }//end try
-
-    }//end resolveAccount()
+class BbvComplianceGuard {
+	/**
+	 * BBV-applicable administration types. Only these tenants are subject to the
+	 * BBV preconditions; all other administrations bypass them.
+	 *
+	 * @var array<int, string>
+	 */
+	private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
+
+	/**
+	 * Reserve mutations must always book on this taakveld (resultaatbestemming).
+	 */
+	private const RESERVE_TAAKVELD = '0.10';
+
+	/**
+	 * Construct the guard with lazy DI of OR's ObjectService.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is
+	 *                                      fetched lazily so the class stays usable
+	 *                                      before sibling registers exist.
+	 * @param IAppConfig $appConfig App config for register-slug resolution.
+	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
+
+	/**
+	 * Return the configured register slug, falling back to 'shillinq' if unset.
+	 *
+	 * Mirrors AccountBalanceGuard / SettingsService::getRegisterSlug() so all
+	 * reads use the same register even when the admin reconfigures the slug.
+	 *
+	 * @return string
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
+
+		return $slug;
+	}//end getRegisterSlug()
+
+	/**
+	 * Resolve whether the owning administration is a BBV-tenant.
+	 *
+	 * A record is BBV-applicable when its own `administrationType` is municipal,
+	 * or — when only an `administrationId` is present — when the referenced
+	 * Administration record (if resolvable) is municipal. When the type cannot be
+	 * resolved at all the record is treated as non-BBV so generic tenants are
+	 * never blocked by a missing lookup (the BBV repair step seeds the type).
+	 *
+	 * @param array<string, mixed> $record Object array under validation.
+	 *
+	 * @return bool True when BBV preconditions apply to this record.
+	 */
+	private function isBbvTenant(array $record): bool {
+		$type = (string)($record['administrationType'] ?? '');
+		if ($type !== '') {
+			return in_array($type, self::BBV_ADMINISTRATION_TYPES, true);
+		}
+
+		return (($record['bbvCompliance'] ?? $record['bbv_compliance'] ?? null) === true);
+	}//end isBbvTenant()
+
+	/**
+	 * Precondition for Account.save (REQ-BBV-001): a BBV-tenant may not create or
+	 * mutate a grootboekrekening without a `rgsDecentraalCode`. Non-BBV tenants
+	 * always pass. The presence of a matching BbvAccountMapping is verified when
+	 * the mapping register is available; otherwise the inline `rgsDecentraalCode`
+	 * field suffices (T-staging before the mapping register ships).
+	 *
+	 * @param array<string, mixed> $account Account object array (loaded by OR).
+	 *
+	 * @return bool True when the RGS-decentraal mapping requirement is satisfied.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-001)
+	 */
+	public function requireBbvAccountMapping(array $account): bool {
+		if ($this->isBbvTenant(record: $account) === false) {
+			return true;
+		}
+
+		$code = (string)($account['rgsDecentraalCode'] ?? '');
+		if ($code !== '') {
+			return true;
+		}
+
+		$this->logger->info(
+			'BbvComplianceGuard: rejecting BBV account without rgsDecentraalCode (REQ-BBV-001)',
+			['accountNumber' => ($account['accountNumber'] ?? 'unknown')]
+		);
+
+		return false;
+	}//end requireBbvAccountMapping()
+
+	/**
+	 * Precondition for GLLine.save (REQ-BBV-002 + REQ-BBV-004): a BBV exploitatie
+	 * line must carry a taakveld + economische_categorie; reserve mutations must
+	 * book on taakveld 0.10; voorziening mutations must book on the gekoppelde
+	 * taakveld. The account's `bbvClassificatie` (and, for voorziening, its
+	 * preset `taakveld`) is read from the referenced Account record. Non-BBV
+	 * tenants and balans-overig postings pass unconditionally.
+	 *
+	 * @param array<string, mixed> $line GLLine object array (loaded by OR).
+	 *
+	 * @return bool True when the line's BBV classification/routing is valid.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-002, REQ-BBV-004)
+	 */
+	public function requireLineClassification(array $line): bool {
+		if ($this->isBbvTenant(record: $line) === false) {
+			return true;
+		}
+
+		// REQ-BBV-002 forward-only: skip historic postings whose postingDate falls
+		// before the BBV installation date. The app config key
+		// `bbv_installation_date` is stamped by the InitializeSettings repair step
+		// when the first BBV-tenant comes online; an empty value means BBV is not
+		// yet installation-anchored, so the precondition runs for every line.
+		if ($this->isHistoricPosting(line: $line) === true) {
+			return true;
+		}
+
+		$account = $this->resolveAccount(
+			accountNumber: (string)($line['accountNumber'] ?? ''),
+			administrationId: (string)($line['administrationId'] ?? '')
+		);
+
+		// When the account cannot be resolved we cannot determine the BBV route;
+		// fail closed for BBV tenants to avoid silently accepting unmapped lines.
+		if ($account === null) {
+			$this->logger->info(
+				'BbvComplianceGuard: cannot resolve account for GLLine classification (REQ-BBV-002)',
+				['accountNumber' => ($line['accountNumber'] ?? 'unknown')]
+			);
+			return false;
+		}
+
+		$classificatie = ($account['bbvClassificatie'] ?? null);
+
+		// Balans-overig and investering postings are exempt from taakveld-plicht.
+		if ($classificatie === 'balans-overig' || $classificatie === 'investering') {
+			return true;
+		}
+
+		if ($classificatie === 'reserve') {
+			return $this->checkReserveRoute(line: $line);
+		}
+
+		if ($classificatie === 'voorziening') {
+			return $this->checkVoorzieningRoute(line: $line, account: $account);
+		}
+
+		// Default (exploitatie): taakveld + economische_categorie are verplicht.
+		return $this->checkExploitatieClassification(line: $line);
+	}//end requireLineClassification()
+
+	/**
+	 * REQ-BBV-002 forward-only carve-out: a posting is "historic" when its
+	 * `postingDate` precedes the BBV installation date stored in app config.
+	 *
+	 * Returns `false` when no installation date is configured (so the
+	 * precondition runs for every line) and `false` when the line carries
+	 * no parseable postingDate (so we don't silently accept a missing date).
+	 *
+	 * @param array<string,mixed> $line GLLine object array.
+	 *
+	 * @return bool True when the posting is historic and exempt; false otherwise.
+	 */
+	private function isHistoricPosting(array $line): bool {
+		$installRaw = $this->appConfig->getValueString(
+			Application::APP_ID,
+			'bbv_installation_date',
+			''
+		);
+
+		if ($installRaw === '') {
+			return false;
+		}
+
+		$postingRaw = (string)($line['postingDate'] ?? '');
+		if ($postingRaw === '') {
+			return false;
+		}
+
+		try {
+			$installDate = new DateTimeImmutable(datetime: $installRaw);
+			$postingDate = new DateTimeImmutable(datetime: $postingRaw);
+		} catch (\Throwable $e) {
+			return false;
+		}
+
+		return $postingDate < $installDate;
+	}//end isHistoricPosting()
+
+	/**
+	 * REQ-BBV-004: reserve mutaties run uitsluitend via taakveld 0.10.
+	 *
+	 * @param array<string, mixed> $line GLLine object array.
+	 *
+	 * @return bool True when the reserve line books on taakveld 0.10.
+	 */
+	private function checkReserveRoute(array $line): bool {
+		$taakveld = ($line['taakveld'] ?? null);
+		if ((string)$taakveld === self::RESERVE_TAAKVELD) {
+			return true;
+		}
+
+		$this->logger->info(
+			'BbvComplianceGuard: reserve mutation off taakveld 0.10 rejected (REQ-BBV-004)',
+			['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taakveld' => $taakveld]
+		);
+
+		return false;
+	}//end checkReserveRoute()
+
+	/**
+	 * REQ-BBV-004: voorziening mutaties run via het gekoppelde taakveld of the account.
+	 *
+	 * @param array<string, mixed> $line GLLine object array.
+	 * @param array<string, mixed> $account Resolved Account object array.
+	 *
+	 * @return bool True when the voorziening line books on the gekoppelde taakveld.
+	 */
+	private function checkVoorzieningRoute(array $line, array $account): bool {
+		$gekoppeld = ($account['taakveld'] ?? null);
+		$taakveld = ($line['taakveld'] ?? null);
+		if ($gekoppeld === null || (string)$taakveld === (string)$gekoppeld) {
+			return true;
+		}
+
+		$this->logger->info(
+			'BbvComplianceGuard: voorziening mutation off gekoppeld taakveld rejected (REQ-BBV-004)',
+			[
+				'accountNumber' => ($line['accountNumber'] ?? 'unknown'),
+				'expected' => $gekoppeld,
+				'found' => $taakveld,
+			]
+		);
+
+		return false;
+	}//end checkVoorzieningRoute()
+
+	/**
+	 * REQ-BBV-002: an exploitatie line must carry taakveld + economische_categorie.
+	 *
+	 * @param array<string, mixed> $line GLLine object array.
+	 *
+	 * @return bool True when both classification fields are present.
+	 */
+	private function checkExploitatieClassification(array $line): bool {
+		$taakveld = (string)($line['taakveld'] ?? '');
+		$categorie = (string)($line['economischeCategorie'] ?? '');
+		if ($taakveld !== '' && $categorie !== '') {
+			return true;
+		}
+
+		$this->logger->info(
+			'BbvComplianceGuard: exploitatie line missing taakveld/economische_categorie (REQ-BBV-002)',
+			['accountNumber' => ($line['accountNumber'] ?? 'unknown')]
+		);
+
+		return false;
+	}//end checkExploitatieClassification()
+
+	/**
+	 * Precondition for Programma.publish (REQ-BBV-003): every meerjaren-horizon
+	 * (T..T+3) must be structureel en reëel sluitend — for each horizon,
+	 * sum(batenCents) - sum(lastenCents) + sum(mutatieReservesCents) >= 0.
+	 * A non-sluitende begroting blocks publication unless overridden with a
+	 * raadsbesluit (raadsbesluitNummer + raadsbesluitDatum on the Programma).
+	 * Non-BBV tenants pass unconditionally.
+	 *
+	 * @param array<string, mixed> $programma Programma object array (loaded by OR).
+	 *
+	 * @return bool True when all horizons are sluitend or an override is present.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
+	 */
+	public function requireMeerjarenramingSluitend(array $programma): bool {
+		if ($this->isBbvTenant(record: $programma) === false) {
+			return true;
+		}
+
+		// Raadsbesluit override: an explicit, audit-trailed motivation unblocks
+		// a non-sluitende begroting per art. 189 Gemeentewet.
+		$besluit = (string)($programma['raadsbesluitNummer'] ?? '');
+		$datum = (string)($programma['raadsbesluitDatum'] ?? '');
+		if ($besluit !== '' && $datum !== '') {
+			return true;
+		}
+
+		$administrationId = (string)($programma['administrationId'] ?? '');
+		$boekjaar = (int)($programma['boekjaar'] ?? 0);
+
+		$rows = $this->loadMeerjarenBudgetRows(administrationId: $administrationId, boekjaar: $boekjaar);
+		if ($rows === null) {
+			// Lookup failed — fail closed.
+			return false;
+		}
+
+		$saldoPerHorizon = $this->computeSaldoPerHorizon(rows: $rows);
+		foreach ($saldoPerHorizon as $horizon => $saldoCents) {
+			if ($saldoCents < 0) {
+				$this->logger->info(
+					'BbvComplianceGuard: meerjarenraming not sluitend (REQ-BBV-003)',
+					[
+						'administrationId' => $administrationId,
+						'horizon' => $horizon,
+						'saldoCents' => $saldoCents,
+					]
+				);
+				return false;
+			}
+		}
+
+		return true;
+	}//end requireMeerjarenramingSluitend()
+
+	/**
+	 * Load the primitieve MeerjarenBudget rows for an administration + boekjaar.
+	 *
+	 * @param string $administrationId Owning administration.
+	 * @param int $boekjaar Base fiscal year T.
+	 *
+	 * @return array<int, array<string, mixed>>|null Rows, or null on lookup failure.
+	 */
+	private function loadMeerjarenBudgetRows(string $administrationId, int $boekjaar): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return $objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('MeerjarenBudget')
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							'boekjaar' => $boekjaar,
+							'versie' => 'primitief',
+						],
+					]
+				);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'BbvComplianceGuard: meerjarenraming lookup failed — denying publish (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}//end try
+
+	}//end loadMeerjarenBudgetRows()
+
+	/**
+	 * Aggregate the sluitend-saldo per horizon in integer cents.
+	 *
+	 * @param array<int, array<string, mixed>> $rows MeerjarenBudget rows.
+	 *
+	 * @return array<int, int> Saldo in cents keyed by meerjarenHorizon.
+	 */
+	private function computeSaldoPerHorizon(array $rows): array {
+		$saldoPerHorizon = [];
+		foreach ($rows as $row) {
+			$horizon = (int)($row['meerjarenHorizon'] ?? 0);
+			if (isset($saldoPerHorizon[$horizon]) === false) {
+				$saldoPerHorizon[$horizon] = 0;
+			}
+
+			$batenCents = (int)($row['batenCents'] ?? 0);
+			$lastenCents = (int)($row['lastenCents'] ?? 0);
+			$mutatieCents = (int)($row['mutatieReservesCents'] ?? 0);
+			$saldoPerHorizon[$horizon] += ($batenCents - $lastenCents + $mutatieCents);
+		}
+
+		return $saldoPerHorizon;
+	}//end computeSaldoPerHorizon()
+
+	/**
+	 * Precondition for MaterieleVasteActiva.save (REQ-BBV-005): a
+	 * maatschappelijk-nut investering above the activeringsgrens MUST be
+	 * activated — i.e. it must carry a depreciation term (afschrijvingstermijn)
+	 * so it is not booked directly to exploitatie. The activeringsgrens defaults
+	 * to EUR 50.000 (5_000_000 cents) and is operator-configurable. Non-BBV
+	 * tenants and economisch-nut assets pass unconditionally.
+	 *
+	 * @param array<string, mixed> $mva MaterieleVasteActiva object array (loaded by OR).
+	 *
+	 * @return bool True when the MVA is correctly activated (or out of scope).
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
+	 */
+	public function requireMvaActivation(array $mva): bool {
+		if ($this->isBbvTenant(record: $mva) === false) {
+			return true;
+		}
+
+		if (($mva['mvaCategorie'] ?? '') !== 'maatschappelijk-nut') {
+			return true;
+		}
+
+		$aanschafCents = (int)($mva['aanschafwaardeCents'] ?? 0);
+		$grensCents = $this->getActiveringsgrensCents();
+		if ($aanschafCents <= $grensCents) {
+			return true;
+		}
+
+		// Above the grens: a depreciation term must be set so the actief is
+		// activated and depreciated, not expensed in one go (BBV art. 59 lid 4).
+		$termijn = (int)($mva['afschrijvingstermijnJaar'] ?? 0);
+		if ($termijn < 1) {
+			$this->logger->info(
+				'BbvComplianceGuard: maatschappelijk-nut investering above grens not activated (REQ-BBV-005)',
+				[
+					'omschrijving' => ($mva['omschrijving'] ?? 'unknown'),
+					'aanschafCents' => $aanschafCents,
+				]
+			);
+			return false;
+		}
+
+		return true;
+	}//end requireMvaActivation()
+
+	/**
+	 * The seven mandatory BBV paragrafen per BBV art. 9.
+	 *
+	 * Used by `requireParagrafenCompleet` (REQ-BBV-007).
+	 *
+	 * @var array<int, string>
+	 */
+	private const REQUIRED_PARAGRAFEN = [
+		'lokale-heffingen',
+		'weerstandsvermogen',
+		'onderhoud-kapitaalgoederen',
+		'financiering',
+		'bedrijfsvoering',
+		'verbonden-partijen',
+		'grondbeleid',
+	];
+
+	/**
+	 * Precondition for Jaarrekening.publish (REQ-BBV-007 paragraaf-completeness).
+	 *
+	 * Loads every `Paragraaf` row for the administration + boekjaar with
+	 * `status = vastgesteld` and checks that all seven mandatory types are
+	 * present. Non-BBV tenants bypass.
+	 *
+	 * @param array<string, mixed> $jaarrekening Jaarrekening record (administrationId + boekjaar).
+	 *
+	 * @return bool True when all seven paragrafen are vastgesteld, false otherwise.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-007)
+	 */
+	public function requireParagrafenCompleet(array $jaarrekening): bool {
+		if ($this->isBbvTenant(record: $jaarrekening) === false) {
+			return true;
+		}
+
+		$administrationId = (string)($jaarrekening['administrationId'] ?? '');
+		$boekjaar = (int)($jaarrekening['boekjaar'] ?? 0);
+
+		if ($administrationId === '' || $boekjaar === 0) {
+			$this->logger->info(
+				'BbvComplianceGuard: jaarrekening missing administrationId or boekjaar (REQ-BBV-007)'
+			);
+			return false;
+		}
+
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('Paragraaf')
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							'boekjaar' => $boekjaar,
+							'status' => 'vastgesteld',
+						],
+					]
+				);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'BbvComplianceGuard: paragraaf lookup failed — denying publish (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+
+		$aanwezig = [];
+		foreach ($rows as $row) {
+			$aanwezig[(string)($row['type'] ?? '')] = true;
+		}
+
+		$ontbrekend = [];
+		foreach (self::REQUIRED_PARAGRAFEN as $type) {
+			if (isset($aanwezig[$type]) === false) {
+				$ontbrekend[] = $type;
+			}
+		}
+
+		if (count($ontbrekend) > 0) {
+			$this->logger->info(
+				'BbvComplianceGuard: jaarrekening mist verplichte paragrafen (REQ-BBV-007, BBV art. 9)',
+				[
+					'administrationId' => $administrationId,
+					'boekjaar' => $boekjaar,
+					'ontbrekend' => $ontbrekend,
+				]
+			);
+			return false;
+		}
+
+		return true;
+	}//end requireParagrafenCompleet()
+
+	/**
+	 * Compute the month-of-first-depreciation for an MVA per REQ-BBV-005.
+	 *
+	 * Depreciation starts in the month FOLLOWING `ingebruiknameDatum`. Example:
+	 *   ingebruiknameDatum = 2026-09-15 → first depreciation in 2026-10.
+	 *
+	 * Declarative helper used by the FixedAssets monthly-depreciation workflow
+	 * and exercised by the spec scenario "Afschrijving start maand na ingebruikname".
+	 * Returns `null` when the ingebruikname date is missing or unparseable.
+	 *
+	 * @param array<string, mixed> $mva MaterieleVasteActiva record.
+	 *
+	 * @return string|null First depreciation month as `YYYY-MM`, or null.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
+	 */
+	public function depreciationStartMonth(array $mva): ?string {
+		$raw = (string)($mva['ingebruiknameDatum'] ?? '');
+		if ($raw === '') {
+			return null;
+		}
+
+		try {
+			$date = new DateTimeImmutable(datetime: $raw);
+		} catch (\Throwable $e) {
+			$this->logger->info(
+				'BbvComplianceGuard: ingebruiknameDatum unparseable, depreciation start unknown',
+				['raw' => $raw, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		// First depreciation accrues in the month AFTER ingebruikname (REQ-BBV-005).
+		$next = $date->modify(modifier: 'first day of next month');
+		if ($next === false) {
+			return null;
+		}
+
+		return $next->format(format: 'Y-m');
+	}//end depreciationStartMonth()
+
+	/**
+	 * Resolve the activeringsgrens in integer cents from app config, defaulting
+	 * to EUR 50.000 (5_000_000 cents) per the gangbare gemeente-drempel.
+	 *
+	 * @return int Activeringsgrens in eurocents.
+	 */
+	private function getActiveringsgrensCents(): int {
+		$configured = $this->appConfig->getValueInt(
+			Application::APP_ID,
+			'bbv_activeringsgrens_cents',
+			5000000
+		);
+
+		if ($configured > 0) {
+			return $configured;
+		}
+
+		return 5000000;
+	}//end getActiveringsgrensCents()
+
+	/**
+	 * Resolve the Account record for a GL line via OR's real ObjectService API.
+	 *
+	 * @param string $accountNumber Account.accountNumber to resolve.
+	 * @param string $administrationId Owning administration (scopes uniqueness).
+	 *
+	 * @return array<string, mixed>|null The account array, or null when not found.
+	 */
+	private function resolveAccount(string $accountNumber, string $administrationId): ?array {
+		if ($accountNumber === '') {
+			return null;
+		}
+
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$filters = ['accountNumber' => $accountNumber];
+			if ($administrationId !== '') {
+				$filters['administrationId'] = $administrationId;
+			}
+
+			$matches = $objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('Account')
+				->findAll(['filters' => $filters, 'limit' => 1]);
+
+			if (is_array($matches) === true && count($matches) > 0) {
+				return $matches[0];
+			}
+
+			return null;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'BbvComplianceGuard: account resolution failed',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}//end try
+
+	}//end resolveAccount()
 }//end class

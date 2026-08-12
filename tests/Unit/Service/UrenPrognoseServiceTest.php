@@ -29,246 +29,224 @@ use Psr\Log\LoggerInterface;
 /**
  * Covers REQ-URC-002: 12-week rolling + seasonal + vakantie + planning prognose.
  */
-final class UrenPrognoseServiceTest extends TestCase
-{
+final class UrenPrognoseServiceTest extends TestCase {
 
+	/**
+	 * Build a service.
+	 *
+	 * @return UrenPrognoseService
+	 */
+	private function build(): UrenPrognoseService {
+		$logger = $this->createMock(LoggerInterface::class);
+		return new UrenPrognoseService(logger: $logger);
+	}//end build()
 
-    /**
-     * Build a service.
-     *
-     * @return UrenPrognoseService
-     */
-    private function build(): UrenPrognoseService
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        return new UrenPrognoseService(logger: $logger);
+	/**
+	 * Build a daily-tallies map of constant 5 hours/day for `n` days ending at end.
+	 *
+	 * @param string $end Y-m-d.
+	 * @param int $n Days.
+	 *
+	 * @return array<string, float>
+	 */
+	private function steadyTallies(string $end, int $n): array {
+		$tallies = [];
+		$endTs = strtotime($end);
+		for ($i = 0; $i < $n; $i++) {
+			$tallies[gmdate('Y-m-d', $endTs - ($i * 86400))] = 5.0;
+		}
 
-    }//end build()
+		return $tallies;
+	}//end steadyTallies()
 
+	/**
+	 * Steady 12-week input yields a positive prognose with the canonical model version.
+	 *
+	 * @return void
+	 */
+	public function testSteadyInputYieldsPositivePrognose(): void {
+		$result = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => '2026-06-30',
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 700.0,
+				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
+				'doelNorm' => 1225,
+			]
+		);
 
-    /**
-     * Build a daily-tallies map of constant 5 hours/day for `n` days ending at end.
-     *
-     * @param string $end Y-m-d.
-     * @param int    $n   Days.
-     *
-     * @return array<string, float>
-     */
-    private function steadyTallies(string $end, int $n): array
-    {
-        $tallies = [];
-        $endTs   = strtotime($end);
-        for ($i = 0; $i < $n; $i++) {
-            $tallies[gmdate('Y-m-d', $endTs - ($i * 86400))] = 5.0;
-        }
+		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
+		self::assertGreaterThan(700.0, $result['totaalPrognose']);
+		self::assertIsArray($result['perMaandPrognose']);
+		self::assertNotEmpty($result['perMaandPrognose']);
+		self::assertArrayHasKey('2026-07', $result['perMaandPrognose']);
+		self::assertArrayHasKey('2026-12', $result['perMaandPrognose']);
+		// Confidence should be high for steady input.
+		self::assertGreaterThanOrEqual(0.5, $result['prognoseConfidence']);
 
-        return $tallies;
+	}//end testSteadyInputYieldsPositivePrognose()
 
-    }//end steadyTallies()
+	/**
+	 * August has a -25% seasonal factor, December -15%.
+	 *
+	 * @return void
+	 */
+	public function testSeasonalFactorsLowerAugustAndDecember(): void {
+		$result = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => '2026-06-30',
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 0.0,
+				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
+				'doelNorm' => 1225,
+			]
+		);
 
+		$july = $result['perMaandPrognose']['2026-07'];
+		$augustus = $result['perMaandPrognose']['2026-08'];
+		$sept = $result['perMaandPrognose']['2026-09'];
+		$december = $result['perMaandPrognose']['2026-12'];
 
-    /**
-     * Steady 12-week input yields a positive prognose with the canonical model version.
-     *
-     * @return void
-     */
-    public function testSteadyInputYieldsPositivePrognose(): void
-    {
-        $result = $this->build()->bouwPrognose(
-            input: [
-                'asOf'         => '2026-06-30',
-                'kalenderjaar' => 2026,
-                'lopendeUren'  => 700.0,
-                'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
-                'doelNorm'     => 1225,
-            ]
-        );
+		// August must be lower than September (-25% vs neutral).
+		self::assertLessThan($sept, $augustus);
+		// July is -10% so also below September.
+		self::assertLessThan($sept, $july);
+		// December is -15% so below September.
+		self::assertLessThan($sept, $december);
 
-        self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
-        self::assertGreaterThan(700.0, $result['totaalPrognose']);
-        self::assertIsArray($result['perMaandPrognose']);
-        self::assertNotEmpty($result['perMaandPrognose']);
-        self::assertArrayHasKey('2026-07', $result['perMaandPrognose']);
-        self::assertArrayHasKey('2026-12', $result['perMaandPrognose']);
-        // Confidence should be high for steady input.
-        self::assertGreaterThanOrEqual(0.5, $result['prognoseConfidence']);
+	}//end testSeasonalFactorsLowerAugustAndDecember()
 
-    }//end testSteadyInputYieldsPositivePrognose()
+	/**
+	 * A full-month vakantie zeroes that month's prognose.
+	 *
+	 * @return void
+	 */
+	public function testFullMonthVakantieZeroes(): void {
+		$result = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => '2026-06-30',
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 0.0,
+				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
+				'vakanties' => ['2026-08-01/2026-08-31'],
+				'doelNorm' => 1225,
+			]
+		);
 
+		self::assertSame(0.0, $result['perMaandPrognose']['2026-08']);
 
-    /**
-     * August has a -25% seasonal factor, December -15%.
-     *
-     * @return void
-     */
-    public function testSeasonalFactorsLowerAugustAndDecember(): void
-    {
-        $result = $this->build()->bouwPrognose(
-            input: [
-                'asOf'         => '2026-06-30',
-                'kalenderjaar' => 2026,
-                'lopendeUren'  => 0.0,
-                'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
-                'doelNorm'     => 1225,
-            ]
-        );
+	}//end testFullMonthVakantieZeroes()
 
-        $july     = $result['perMaandPrognose']['2026-07'];
-        $augustus = $result['perMaandPrognose']['2026-08'];
-        $sept     = $result['perMaandPrognose']['2026-09'];
-        $december = $result['perMaandPrognose']['2026-12'];
+	/**
+	 * A geplande opdracht overrides the seasonal projection for that maand.
+	 *
+	 * @return void
+	 */
+	public function testGeplandeOpdrachtOverridesMaand(): void {
+		$result = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => '2026-06-30',
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 0.0,
+				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
+				'geplandeOpdrachten' => [
+					['maand' => '2026-09', 'uren' => 200.0],
+				],
+				'doelNorm' => 1225,
+			]
+		);
 
-        // August must be lower than September (-25% vs neutral).
-        self::assertLessThan($sept, $augustus);
-        // July is -10% so also below September.
-        self::assertLessThan($sept, $july);
-        // December is -15% so below September.
-        self::assertLessThan($sept, $december);
+		self::assertSame(200.0, $result['perMaandPrognose']['2026-09']);
 
-    }//end testSeasonalFactorsLowerAugustAndDecember()
+	}//end testGeplandeOpdrachtOverridesMaand()
 
+	/**
+	 * Confidence is lower for noisy input vs steady input.
+	 *
+	 * @return void
+	 */
+	public function testNoisyInputLowersConfidence(): void {
+		$end = '2026-06-30';
+		$endTs = strtotime($end);
+		// 12 weeks of alternating 0 / 60 hours per week (very noisy).
+		$noisy = [];
+		for ($i = 0; $i < 84; $i++) {
+			$week = (int)floor($i / 7);
+			$noisy[gmdate('Y-m-d', $endTs - ($i * 86400))] = (($week % 2 === 0) ? 0.0 : 8.57);
+		}
 
-    /**
-     * A full-month vakantie zeroes that month's prognose.
-     *
-     * @return void
-     */
-    public function testFullMonthVakantieZeroes(): void
-    {
-        $result = $this->build()->bouwPrognose(
-            input: [
-                'asOf'         => '2026-06-30',
-                'kalenderjaar' => 2026,
-                'lopendeUren'  => 0.0,
-                'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
-                'vakanties'    => ['2026-08-01/2026-08-31'],
-                'doelNorm'     => 1225,
-            ]
-        );
+		$steady = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => $end,
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 0.0,
+				'dailyTallies' => $this->steadyTallies($end, 84),
+				'doelNorm' => 1225,
+			]
+		);
 
-        self::assertSame(0.0, $result['perMaandPrognose']['2026-08']);
+		$noisyResult = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => $end,
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 0.0,
+				'dailyTallies' => $noisy,
+				'doelNorm' => 1225,
+			]
+		);
 
-    }//end testFullMonthVakantieZeroes()
+		self::assertLessThan($steady['prognoseConfidence'], $noisyResult['prognoseConfidence']);
 
+	}//end testNoisyInputLowersConfidence()
 
-    /**
-     * A geplande opdracht overrides the seasonal projection for that maand.
-     *
-     * @return void
-     */
-    public function testGeplandeOpdrachtOverridesMaand(): void
-    {
-        $result = $this->build()->bouwPrognose(
-            input: [
-                'asOf'               => '2026-06-30',
-                'kalenderjaar'       => 2026,
-                'lopendeUren'        => 0.0,
-                'dailyTallies'       => $this->steadyTallies('2026-06-30', 84),
-                'geplandeOpdrachten' => [
-                    ['maand' => '2026-09', 'uren' => 200.0],
-                ],
-                'doelNorm'           => 1225,
-            ]
-        );
+	/**
+	 * kansBehaaldNorm rises when the prognose meets the norm.
+	 *
+	 * @return void
+	 */
+	public function testKansBehaaldNormReflectsForecastVsNorm(): void {
+		// 12 weeks (84 days) of steady 7h/day = 49h/week mean → forecasts ~50 weeks
+		// remaining at that pace → well above 1225 norm.
+		$tallies = [];
+		$endTs = strtotime('2026-02-28');
+		for ($i = 0; $i < 84; $i++) {
+			$tallies[gmdate('Y-m-d', $endTs - ($i * 86400))] = 7.0;
+		}
 
-        self::assertSame(200.0, $result['perMaandPrognose']['2026-09']);
+		$result = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => '2026-02-28',
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 300.0,
+				'dailyTallies' => $tallies,
+				'doelNorm' => 1225,
+			]
+		);
 
-    }//end testGeplandeOpdrachtOverridesMaand()
+		// Forecast should clear the norm comfortably → high kansBehaaldNorm.
+		self::assertGreaterThanOrEqual(0.5, $result['kansBehaaldNorm']);
 
+	}//end testKansBehaaldNormReflectsForecastVsNorm()
 
-    /**
-     * Confidence is lower for noisy input vs steady input.
-     *
-     * @return void
-     */
-    public function testNoisyInputLowersConfidence(): void
-    {
-        $end = '2026-06-30';
-        $endTs = strtotime($end);
-        // 12 weeks of alternating 0 / 60 hours per week (very noisy).
-        $noisy = [];
-        for ($i = 0; $i < 84; $i++) {
-            $week = (int) floor($i / 7);
-            $noisy[gmdate('Y-m-d', $endTs - ($i * 86400))] = (($week % 2 === 0) ? 0.0 : 8.57);
-        }
+	/**
+	 * Empty daily-tallies input still returns a structurally valid prognose.
+	 *
+	 * @return void
+	 */
+	public function testEmptyTalliesReturnsZeroPrognose(): void {
+		$result = $this->build()->bouwPrognose(
+			input: [
+				'asOf' => '2026-06-30',
+				'kalenderjaar' => 2026,
+				'lopendeUren' => 0.0,
+				'dailyTallies' => [],
+				'doelNorm' => 1225,
+			]
+		);
 
-        $steady = $this->build()->bouwPrognose(
-            input: [
-                'asOf'         => $end,
-                'kalenderjaar' => 2026,
-                'lopendeUren'  => 0.0,
-                'dailyTallies' => $this->steadyTallies($end, 84),
-                'doelNorm'     => 1225,
-            ]
-        );
+		self::assertSame(0.0, $result['totaalPrognose']);
+		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
 
-        $noisyResult = $this->build()->bouwPrognose(
-            input: [
-                'asOf'         => $end,
-                'kalenderjaar' => 2026,
-                'lopendeUren'  => 0.0,
-                'dailyTallies' => $noisy,
-                'doelNorm'     => 1225,
-            ]
-        );
-
-        self::assertLessThan($steady['prognoseConfidence'], $noisyResult['prognoseConfidence']);
-
-    }//end testNoisyInputLowersConfidence()
-
-
-    /**
-     * kansBehaaldNorm rises when the prognose meets the norm.
-     *
-     * @return void
-     */
-    public function testKansBehaaldNormReflectsForecastVsNorm(): void
-    {
-        // 12 weeks (84 days) of steady 7h/day = 49h/week mean → forecasts ~50 weeks
-        // remaining at that pace → well above 1225 norm.
-        $tallies = [];
-        $endTs   = strtotime('2026-02-28');
-        for ($i = 0; $i < 84; $i++) {
-            $tallies[gmdate('Y-m-d', $endTs - ($i * 86400))] = 7.0;
-        }
-
-        $result = $this->build()->bouwPrognose(
-            input: [
-                'asOf'         => '2026-02-28',
-                'kalenderjaar' => 2026,
-                'lopendeUren'  => 300.0,
-                'dailyTallies' => $tallies,
-                'doelNorm'     => 1225,
-            ]
-        );
-
-        // Forecast should clear the norm comfortably → high kansBehaaldNorm.
-        self::assertGreaterThanOrEqual(0.5, $result['kansBehaaldNorm']);
-
-    }//end testKansBehaaldNormReflectsForecastVsNorm()
-
-
-    /**
-     * Empty daily-tallies input still returns a structurally valid prognose.
-     *
-     * @return void
-     */
-    public function testEmptyTalliesReturnsZeroPrognose(): void
-    {
-        $result = $this->build()->bouwPrognose(
-            input: [
-                'asOf'         => '2026-06-30',
-                'kalenderjaar' => 2026,
-                'lopendeUren'  => 0.0,
-                'dailyTallies' => [],
-                'doelNorm'     => 1225,
-            ]
-        );
-
-        self::assertSame(0.0, $result['totaalPrognose']);
-        self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
-
-    }//end testEmptyTalliesReturnsZeroPrognose()
-
+	}//end testEmptyTalliesReturnsZeroPrognose()
 
 }//end class

@@ -54,221 +54,210 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
  */
-class UrenDagregistratieGuard
-{
+class UrenDagregistratieGuard {
 
-    /**
-     * Maximum number of reistijd hours counted per day (REQ-URC-001).
-     */
-    public const REISTIJD_CAP_PER_DAY = 4.0;
+	/**
+	 * Maximum number of reistijd hours counted per day (REQ-URC-001).
+	 */
+	public const REISTIJD_CAP_PER_DAY = 4.0;
 
-    /**
-     * Number of days within which a backfill is accepted without reden + bewijs.
-     */
-    public const BACKFILL_FREE_DAYS = 7;
+	/**
+	 * Number of days within which a backfill is accepted without reden + bewijs.
+	 */
+	public const BACKFILL_FREE_DAYS = 7;
 
-    /**
-     * Categories that require an evidence reference before the entry is finalised.
-     *
-     * @var array<int, string>
-     */
-    private const EVIDENCE_REQUIRED_CATEGORIES = ['SCHOLING', 'FICTIE_ZEZ'];
+	/**
+	 * Categories that require an evidence reference before the entry is finalised.
+	 *
+	 * @var array<int, string>
+	 */
+	private const EVIDENCE_REQUIRED_CATEGORIES = ['SCHOLING', 'FICTIE_ZEZ'];
 
-    /**
-     * Construct the guard.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Save precondition for the UrenDagregistratie schema.
-     *
-     * Validates the evidence requirement and backfill rule. Returns true only when
-     * every check passes. Fail-closed: returns false on any exception per CWE-863.
-     *
-     * @param array<string, mixed> $entry UrenDagregistratie object array supplied by OR.
-     *
-     * @return bool True when the record may be saved.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
-     */
-    public function validateOnSave(array $entry): bool
-    {
-        try {
-            if ($this->evidenceRequirementMet(entry: $entry) === false) {
-                return false;
-            }
+	/**
+	 * Save precondition for the UrenDagregistratie schema.
+	 *
+	 * Validates the evidence requirement and backfill rule. Returns true only when
+	 * every check passes. Fail-closed: returns false on any exception per CWE-863.
+	 *
+	 * @param array<string, mixed> $entry UrenDagregistratie object array supplied by OR.
+	 *
+	 * @return bool True when the record may be saved.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+	 */
+	public function validateOnSave(array $entry): bool {
+		try {
+			if ($this->evidenceRequirementMet(entry: $entry) === false) {
+				return false;
+			}
 
-            return $this->backfillRuleMet(entry: $entry);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'UrenDagregistratieGuard: validateOnSave failed — denying save (fail-closed)',
-                [
-                    'ondernemingId' => ($entry['ondernemingId'] ?? 'unknown'),
-                    'exception'     => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+			return $this->backfillRuleMet(entry: $entry);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'UrenDagregistratieGuard: validateOnSave failed — denying save (fail-closed)',
+				[
+					'ondernemingId' => ($entry['ondernemingId'] ?? 'unknown'),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-    }//end validateOnSave()
+	}//end validateOnSave()
 
-    /**
-     * Apply the reistijd-cap to an entry, returning the counted hours and an
-     * optional audit note (REQ-URC-001).
-     *
-     * For REISTIJD_ZAKELIJK entries above the cap, only REISTIJD_CAP_PER_DAY hours
-     * are counted and a "Reistijd-cap toegepast: N uur niet meegeteld" note is
-     * produced. All other categories count their hours unchanged.
-     *
-     * @param string $categorie The category code.
-     * @param float  $uren      The registered hours.
-     *
-     * @return array{getoldeUren: float, capNotitie: ?string} Counted hours + note.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
-     */
-    public function pasReistijdCapToe(string $categorie, float $uren): array
-    {
-        if ($categorie !== 'REISTIJD_ZAKELIJK' || $uren <= self::REISTIJD_CAP_PER_DAY) {
-            return ['getoldeUren' => $uren, 'capNotitie' => null];
-        }
+	/**
+	 * Apply the reistijd-cap to an entry, returning the counted hours and an
+	 * optional audit note (REQ-URC-001).
+	 *
+	 * For REISTIJD_ZAKELIJK entries above the cap, only REISTIJD_CAP_PER_DAY hours
+	 * are counted and a "Reistijd-cap toegepast: N uur niet meegeteld" note is
+	 * produced. All other categories count their hours unchanged.
+	 *
+	 * @param string $categorie The category code.
+	 * @param float $uren The registered hours.
+	 *
+	 * @return array{getoldeUren: float, capNotitie: ?string} Counted hours + note.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+	 */
+	public function pasReistijdCapToe(string $categorie, float $uren): array {
+		if ($categorie !== 'REISTIJD_ZAKELIJK' || $uren <= self::REISTIJD_CAP_PER_DAY) {
+			return ['getoldeUren' => $uren, 'capNotitie' => null];
+		}
 
-        $nietGeteld = ($uren - self::REISTIJD_CAP_PER_DAY);
-        $notitie    = sprintf(
-            'Reistijd-cap toegepast: %s uur niet meegeteld',
-            rtrim(rtrim(number_format($nietGeteld, 2, '.', ''), '0'), '.')
-        );
+		$nietGeteld = ($uren - self::REISTIJD_CAP_PER_DAY);
+		$notitie = sprintf(
+			'Reistijd-cap toegepast: %s uur niet meegeteld',
+			rtrim(rtrim(number_format($nietGeteld, 2, '.', ''), '0'), '.')
+		);
 
-        return [
-            'getoldeUren' => self::REISTIJD_CAP_PER_DAY,
-            'capNotitie'  => $notitie,
-        ];
+		return [
+			'getoldeUren' => self::REISTIJD_CAP_PER_DAY,
+			'capNotitie' => $notitie,
+		];
 
-    }//end pasReistijdCapToe()
+	}//end pasReistijdCapToe()
 
-    /**
-     * Compute the backfill label for an entry given its work date and the date it
-     * is registered (REQ-URC-017).
-     *
-     * @param string $datum             Work date (Y-m-d).
-     * @param string $registratieMoment Registration timestamp (any strtotime value).
-     *
-     * @return string|null "Backfill T+N dagen" when registered after the work date,
-     *                     or null when registered on the same day or earlier.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
-     */
-    public function bepaalBackfillLabel(string $datum, string $registratieMoment): ?string
-    {
-        $days = $this->backfillDays(datum: $datum, registratieMoment: $registratieMoment);
-        if ($days === null || $days <= 0) {
-            return null;
-        }
+	/**
+	 * Compute the backfill label for an entry given its work date and the date it
+	 * is registered (REQ-URC-017).
+	 *
+	 * @param string $datum Work date (Y-m-d).
+	 * @param string $registratieMoment Registration timestamp (any strtotime value).
+	 *
+	 * @return string|null "Backfill T+N dagen" when registered after the work date,
+	 *                     or null when registered on the same day or earlier.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
+	 */
+	public function bepaalBackfillLabel(string $datum, string $registratieMoment): ?string {
+		$days = $this->backfillDays(datum: $datum, registratieMoment: $registratieMoment);
+		if ($days === null || $days <= 0) {
+			return null;
+		}
 
-        return 'Backfill T+'.$days.' dagen';
+		return 'Backfill T+' . $days . ' dagen';
+	}//end bepaalBackfillLabel()
 
-    }//end bepaalBackfillLabel()
+	/**
+	 * Verify that an entry in an evidence-requiring category carries a bewijs
+	 * reference (REQ-URC-004 / REQ-URC-008).
+	 *
+	 * @param array<string, mixed> $entry UrenDagregistratie object array.
+	 *
+	 * @return bool True when no evidence is required, or evidence is present.
+	 */
+	private function evidenceRequirementMet(array $entry): bool {
+		$categorie = (string)($entry['categorie'] ?? '');
+		if (in_array($categorie, self::EVIDENCE_REQUIRED_CATEGORIES, true) === false) {
+			return true;
+		}
 
-    /**
-     * Verify that an entry in an evidence-requiring category carries a bewijs
-     * reference (REQ-URC-004 / REQ-URC-008).
-     *
-     * @param array<string, mixed> $entry UrenDagregistratie object array.
-     *
-     * @return bool True when no evidence is required, or evidence is present.
-     */
-    private function evidenceRequirementMet(array $entry): bool
-    {
-        $categorie = (string) ($entry['categorie'] ?? '');
-        if (in_array($categorie, self::EVIDENCE_REQUIRED_CATEGORIES, true) === false) {
-            return true;
-        }
+		$bewijs = (string)($entry['backfillBewijs'] ?? '');
+		if ($bewijs === '') {
+			$this->logger->info(
+				'UrenDagregistratieGuard: category requires evidence but none supplied — denying save',
+				['categorie' => $categorie]
+			);
+			return false;
+		}
 
-        $bewijs = (string) ($entry['backfillBewijs'] ?? '');
-        if ($bewijs === '') {
-            $this->logger->info(
-                'UrenDagregistratieGuard: category requires evidence but none supplied — denying save',
-                ['categorie' => $categorie]
-            );
-            return false;
-        }
+		return true;
+	}//end evidenceRequirementMet()
 
-        return true;
+	/**
+	 * Verify the backfill rule: entries older than BACKFILL_FREE_DAYS require both a
+	 * reden and a bewijs reference (REQ-URC-017).
+	 *
+	 * @param array<string, mixed> $entry UrenDagregistratie object array.
+	 *
+	 * @return bool True when within the free window, or reden + bewijs present.
+	 */
+	private function backfillRuleMet(array $entry): bool {
+		$days = $this->backfillDays(
+			datum: (string)($entry['datum'] ?? ''),
+			registratieMoment: (string)($entry['registratieMoment'] ?? '')
+		);
 
-    }//end evidenceRequirementMet()
+		if ($days === null || $days <= self::BACKFILL_FREE_DAYS) {
+			return true;
+		}
 
-    /**
-     * Verify the backfill rule: entries older than BACKFILL_FREE_DAYS require both a
-     * reden and a bewijs reference (REQ-URC-017).
-     *
-     * @param array<string, mixed> $entry UrenDagregistratie object array.
-     *
-     * @return bool True when within the free window, or reden + bewijs present.
-     */
-    private function backfillRuleMet(array $entry): bool
-    {
-        $days = $this->backfillDays(
-            datum: (string) ($entry['datum'] ?? ''),
-            registratieMoment: (string) ($entry['registratieMoment'] ?? '')
-        );
+		$reden = (string)($entry['backfillReden'] ?? '');
+		$bewijs = (string)($entry['backfillBewijs'] ?? '');
+		if ($reden === '' || $bewijs === '') {
+			$this->logger->info(
+				'UrenDagregistratieGuard: backfill older than 7 days requires reden + bewijs — denying save',
+				[
+					'days' => $days,
+					'hasReden' => ($reden !== ''),
+					'hasBewijs' => ($bewijs !== ''),
+				]
+			);
+			return false;
+		}
 
-        if ($days === null || $days <= self::BACKFILL_FREE_DAYS) {
-            return true;
-        }
+		return true;
+	}//end backfillRuleMet()
 
-        $reden  = (string) ($entry['backfillReden'] ?? '');
-        $bewijs = (string) ($entry['backfillBewijs'] ?? '');
-        if ($reden === '' || $bewijs === '') {
-            $this->logger->info(
-                'UrenDagregistratieGuard: backfill older than 7 days requires reden + bewijs — denying save',
-                [
-                    'days'      => $days,
-                    'hasReden'  => ($reden !== ''),
-                    'hasBewijs' => ($bewijs !== ''),
-                ]
-            );
-            return false;
-        }
+	/**
+	 * Compute the number of whole days between a work date and the registration
+	 * moment. Returns null when either value is unparseable or no registration
+	 * moment is given (treated as same-day, not a backfill).
+	 *
+	 * @param string $datum Work date (Y-m-d).
+	 * @param string $registratieMoment Registration timestamp.
+	 *
+	 * @return int|null Whole days of delay, or null when not computable.
+	 */
+	private function backfillDays(string $datum, string $registratieMoment): ?int {
+		if ($datum === '' || $registratieMoment === '') {
+			return null;
+		}
 
-        return true;
+		$work = strtotime($datum);
+		$reg = strtotime($registratieMoment);
+		if ($work === false || $reg === false) {
+			return null;
+		}
 
-    }//end backfillRuleMet()
+		// Compare calendar days at UTC midnight to avoid intra-day rounding.
+		$workDay = strtotime(gmdate('Y-m-d', $work) . 'T00:00:00Z');
+		$regDay = strtotime(gmdate('Y-m-d', $reg) . 'T00:00:00Z');
+		if ($workDay === false || $regDay === false) {
+			return null;
+		}
 
-    /**
-     * Compute the number of whole days between a work date and the registration
-     * moment. Returns null when either value is unparseable or no registration
-     * moment is given (treated as same-day, not a backfill).
-     *
-     * @param string $datum             Work date (Y-m-d).
-     * @param string $registratieMoment Registration timestamp.
-     *
-     * @return int|null Whole days of delay, or null when not computable.
-     */
-    private function backfillDays(string $datum, string $registratieMoment): ?int
-    {
-        if ($datum === '' || $registratieMoment === '') {
-            return null;
-        }
-
-        $work = strtotime($datum);
-        $reg  = strtotime($registratieMoment);
-        if ($work === false || $reg === false) {
-            return null;
-        }
-
-        // Compare calendar days at UTC midnight to avoid intra-day rounding.
-        $workDay = strtotime(gmdate('Y-m-d', $work).'T00:00:00Z');
-        $regDay  = strtotime(gmdate('Y-m-d', $reg).'T00:00:00Z');
-        if ($workDay === false || $regDay === false) {
-            return null;
-        }
-
-        return (int) floor((($regDay - $workDay) / 86400));
-
-    }//end backfillDays()
+		return (int)floor((($regDay - $workDay) / 86400));
+	}//end backfillDays()
 }//end class

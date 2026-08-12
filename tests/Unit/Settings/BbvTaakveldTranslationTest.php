@@ -63,217 +63,210 @@ use PHPUnit\Framework\TestCase;
  *
  * @coversNothing
  */
-class BbvTaakveldTranslationTest extends TestCase
-{
-    /**
-     * The seed catalogues, and the Dutch => English field pairs each uses.
-     *
-     * The 2024 file feeds the `BbvTaakveld` schema and the three 2025 files
-     * feed `Taakveld`; they use different field names for the same idea, which
-     * is why the pairs are per-file rather than global.
-     *
-     * @return array<string, array{0: string, 1: array<string, string>}>
-     */
-    public static function catalogueProvider(): array
-    {
-        $iv3Pairs = [
-            'naam'             => 'naamEn',
-            'hoofdfunctieNaam' => 'hoofdfunctieNaamEn',
-            'omschrijvingIv3'  => 'omschrijvingIv3En',
-        ];
+class BbvTaakveldTranslationTest extends TestCase {
+	/**
+	 * The seed catalogues, and the Dutch => English field pairs each uses.
+	 *
+	 * The 2024 file feeds the `BbvTaakveld` schema and the three 2025 files
+	 * feed `Taakveld`; they use different field names for the same idea, which
+	 * is why the pairs are per-file rather than global.
+	 *
+	 * @return array<string, array{0: string, 1: array<string, string>}>
+	 */
+	public static function catalogueProvider(): array {
+		$iv3Pairs = [
+			'naam' => 'naamEn',
+			'hoofdfunctieNaam' => 'hoofdfunctieNaamEn',
+			'omschrijvingIv3' => 'omschrijvingIv3En',
+		];
 
-        return [
-            'gemeente 2025'  => ['bbv-taakvelden-gemeente-2025.json', $iv3Pairs],
-            'provincie 2025' => ['bbv-taakvelden-provincia-2025.json', $iv3Pairs],
-            'waterschap 2025' => ['bbv-taakvelden-waterschap-2025.json', $iv3Pairs],
-            'BBV 2024'       => [
-                'bbv-taakvelden-2024.json',
-                [
-                    'name'           => 'nameEn',
-                    'description'    => 'descriptionEn',
-                    'programmaFocus' => 'programmaFocusEn',
-                ],
-            ],
-        ];
-    }
+		return [
+			'gemeente 2025' => ['bbv-taakvelden-gemeente-2025.json', $iv3Pairs],
+			'provincie 2025' => ['bbv-taakvelden-provincia-2025.json', $iv3Pairs],
+			'waterschap 2025' => ['bbv-taakvelden-waterschap-2025.json', $iv3Pairs],
+			'BBV 2024' => [
+				'bbv-taakvelden-2024.json',
+				[
+					'name' => 'nameEn',
+					'description' => 'descriptionEn',
+					'programmaFocus' => 'programmaFocusEn',
+				],
+			],
+		];
+	}
 
-    /**
-     * Read a seed catalogue's taakveld list.
-     *
-     * @param string $file The seed file name.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function taakvelden(string $file): array
-    {
-        $path = __DIR__.'/../../../lib/Settings/seeds/'.$file;
-        self::assertFileExists($path);
+	/**
+	 * Read a seed catalogue's taakveld list.
+	 *
+	 * @param string $file The seed file name.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function taakvelden(string $file): array {
+		$path = __DIR__ . '/../../../lib/Settings/seeds/' . $file;
+		self::assertFileExists($path);
 
-        $data = json_decode((string) file_get_contents($path), associative: true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), $file.' is not valid JSON');
-        self::assertNotEmpty($data['taakvelden'], $file.' declares no taakvelden');
+		$data = json_decode((string)file_get_contents($path), associative: true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), $file . ' is not valid JSON');
+		self::assertNotEmpty($data['taakvelden'], $file . ' declares no taakvelden');
 
-        return $data['taakvelden'];
-    }
+		return $data['taakvelden'];
+	}
 
-    /**
-     * Every Dutch field has an English partner and vice versa.
-     *
-     * @param string                $file  Seed file name.
-     * @param array<string, string> $pairs Dutch field => English field.
-     *
-     * @return void
-     *
-     * @dataProvider catalogueProvider
-     */
-    public function testEveryDutchFieldIsPairedWithAnEnglishOne(string $file, array $pairs): void
-    {
-        foreach ($this->taakvelden($file) as $taakveld) {
-            $code = $taakveld['code'] ?? '(no code)';
+	/**
+	 * Every Dutch field has an English partner and vice versa.
+	 *
+	 * @param string $file Seed file name.
+	 * @param array<string, string> $pairs Dutch field => English field.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider catalogueProvider
+	 */
+	public function testEveryDutchFieldIsPairedWithAnEnglishOne(string $file, array $pairs): void {
+		foreach ($this->taakvelden($file) as $taakveld) {
+			$code = $taakveld['code'] ?? '(no code)';
 
-            foreach ($pairs as $dutch => $english) {
-                $hasDutch   = ($taakveld[$dutch] ?? '') !== '';
-                $hasEnglish = ($taakveld[$english] ?? '') !== '';
+			foreach ($pairs as $dutch => $english) {
+				$hasDutch = ($taakveld[$dutch] ?? '') !== '';
+				$hasEnglish = ($taakveld[$english] ?? '') !== '';
 
-                self::assertSame(
-                    $hasDutch,
-                    $hasEnglish,
-                    sprintf(
-                        '%s taakveld %s: "%s" is %s but "%s" is %s. A Dutch field without an '
-                        .'English partner renders in Dutch in an English UI; an English field '
-                        .'without a Dutch one is an invented string with no statutory basis.',
-                        $file,
-                        $code,
-                        $dutch,
-                        $hasDutch ? 'present' : 'absent',
-                        $english,
-                        $hasEnglish ? 'present' : 'absent'
-                    )
-                );
-            }
-        }
-    }
+				self::assertSame(
+					$hasDutch,
+					$hasEnglish,
+					sprintf(
+						'%s taakveld %s: "%s" is %s but "%s" is %s. A Dutch field without an '
+						. 'English partner renders in Dutch in an English UI; an English field '
+						. 'without a Dutch one is an invented string with no statutory basis.',
+						$file,
+						$code,
+						$dutch,
+						$hasDutch ? 'present' : 'absent',
+						$english,
+						$hasEnglish ? 'present' : 'absent'
+					)
+				);
+			}
+		}
+	}
 
-    /**
-     * The primary name is translated for every single entry.
-     *
-     * Pairing alone would be satisfied by a catalogue with no names at all in
-     * either language, so the name specifically is required to be present in
-     * both.
-     *
-     * @param string                $file  Seed file name.
-     * @param array<string, string> $pairs Dutch field => English field.
-     *
-     * @return void
-     *
-     * @dataProvider catalogueProvider
-     */
-    public function testEveryTaakveldHasBothANameAndAnEnglishName(string $file, array $pairs): void
-    {
-        $dutchName   = isset($pairs['naam']) ? 'naam' : 'name';
-        $englishName = $pairs[$dutchName];
+	/**
+	 * The primary name is translated for every single entry.
+	 *
+	 * Pairing alone would be satisfied by a catalogue with no names at all in
+	 * either language, so the name specifically is required to be present in
+	 * both.
+	 *
+	 * @param string $file Seed file name.
+	 * @param array<string, string> $pairs Dutch field => English field.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider catalogueProvider
+	 */
+	public function testEveryTaakveldHasBothANameAndAnEnglishName(string $file, array $pairs): void {
+		$dutchName = isset($pairs['naam']) ? 'naam' : 'name';
+		$englishName = $pairs[$dutchName];
 
-        $taakvelden = $this->taakvelden($file);
+		$taakvelden = $this->taakvelden($file);
 
-        foreach ($taakvelden as $taakveld) {
-            $code = $taakveld['code'] ?? '(no code)';
+		foreach ($taakvelden as $taakveld) {
+			$code = $taakveld['code'] ?? '(no code)';
 
-            self::assertNotEmpty(
-                $taakveld[$dutchName] ?? '',
-                $file.' taakveld '.$code.': the STATUTORY Dutch name must never be dropped — '
-                .'it is what a CBS Iv3 submission carries and what legalBasis cites.'
-            );
-            self::assertNotEmpty(
-                $taakveld[$englishName] ?? '',
-                $file.' taakveld '.$code.' has no '.$englishName.', so an English UI shows Dutch here.'
-            );
-        }
-    }
+			self::assertNotEmpty(
+				$taakveld[$dutchName] ?? '',
+				$file . ' taakveld ' . $code . ': the STATUTORY Dutch name must never be dropped — '
+				. 'it is what a CBS Iv3 submission carries and what legalBasis cites.'
+			);
+			self::assertNotEmpty(
+				$taakveld[$englishName] ?? '',
+				$file . ' taakveld ' . $code . ' has no ' . $englishName . ', so an English UI shows Dutch here.'
+			);
+		}
+	}
 
-    /**
-     * The English fields are DECLARED by the schema, or OpenRegister drops them.
-     *
-     * MagicMapper discards properties the schema does not declare. It logs and
-     * continues — the import reports success and the values are simply not
-     * stored — so without this assertion a shipped translation could be
-     * invisible at runtime with nothing anywhere reporting a failure.
-     *
-     * The register declaration is assembled from `shillinq_register.json` plus
-     * every fragment under `register.d/`, so all of them are merged here the
-     * same way the loader merges them.
-     *
-     * @return void
-     */
-    public function testTheRegisterDeclaresEveryEnglishField(): void
-    {
-        $settings = __DIR__.'/../../../lib/Settings';
+	/**
+	 * The English fields are DECLARED by the schema, or OpenRegister drops them.
+	 *
+	 * MagicMapper discards properties the schema does not declare. It logs and
+	 * continues — the import reports success and the values are simply not
+	 * stored — so without this assertion a shipped translation could be
+	 * invisible at runtime with nothing anywhere reporting a failure.
+	 *
+	 * The register declaration is assembled from `shillinq_register.json` plus
+	 * every fragment under `register.d/`, so all of them are merged here the
+	 * same way the loader merges them.
+	 *
+	 * @return void
+	 */
+	public function testTheRegisterDeclaresEveryEnglishField(): void {
+		$settings = __DIR__ . '/../../../lib/Settings';
 
-        $sources = [$settings.'/shillinq_register.json'];
-        foreach ((array) glob($settings.'/register.d/*.json') as $fragment) {
-            $sources[] = $fragment;
-        }
+		$sources = [$settings . '/shillinq_register.json'];
+		foreach ((array)glob($settings . '/register.d/*.json') as $fragment) {
+			$sources[] = $fragment;
+		}
 
-        $declared = [];
-        foreach ($sources as $source) {
-            $data = json_decode((string) file_get_contents($source), associative: true);
-            if (is_array($data) === false) {
-                continue;
-            }
+		$declared = [];
+		foreach ($sources as $source) {
+			$data = json_decode((string)file_get_contents($source), associative: true);
+			if (is_array($data) === false) {
+				continue;
+			}
 
-            $this->collectSchemaProperties($data, $declared);
-        }
+			$this->collectSchemaProperties($data, $declared);
+		}
 
-        $expected = [
-            'Taakveld'    => ['naamEn', 'hoofdfunctieNaamEn', 'omschrijvingIv3En'],
-            'BbvTaakveld' => ['nameEn', 'descriptionEn', 'programmaFocusEn'],
-        ];
+		$expected = [
+			'Taakveld' => ['naamEn', 'hoofdfunctieNaamEn', 'omschrijvingIv3En'],
+			'BbvTaakveld' => ['nameEn', 'descriptionEn', 'programmaFocusEn'],
+		];
 
-        foreach ($expected as $schema => $fields) {
-            self::assertArrayHasKey($schema, $declared, 'schema '.$schema.' is not declared anywhere');
+		foreach ($expected as $schema => $fields) {
+			self::assertArrayHasKey($schema, $declared, 'schema ' . $schema . ' is not declared anywhere');
 
-            foreach ($fields as $field) {
-                self::assertContains(
-                    $field,
-                    $declared[$schema],
-                    sprintf(
-                        'Schema "%s" does not declare "%s". OpenRegister\'s MagicMapper DISCARDS '
-                        .'undeclared properties — the seed would import "successfully" and store '
-                        .'nothing, and the UI would silently fall back to Dutch.',
-                        $schema,
-                        $field
-                    )
-                );
-            }
-        }
-    }
+			foreach ($fields as $field) {
+				self::assertContains(
+					$field,
+					$declared[$schema],
+					sprintf(
+						'Schema "%s" does not declare "%s". OpenRegister\'s MagicMapper DISCARDS '
+						. 'undeclared properties — the seed would import "successfully" and store '
+						. 'nothing, and the UI would silently fall back to Dutch.',
+						$schema,
+						$field
+					)
+				);
+			}
+		}
+	}
 
-    /**
-     * Walk a decoded register document collecting `<SchemaName> => [props]`.
-     *
-     * @param mixed                            $node     Current node.
-     * @param array<string, array<int, string>> $declared Accumulator, by reference.
-     *
-     * @return void
-     */
-    private function collectSchemaProperties(mixed $node, array &$declared): void
-    {
-        if (is_array($node) === false) {
-            return;
-        }
+	/**
+	 * Walk a decoded register document collecting `<SchemaName> => [props]`.
+	 *
+	 * @param mixed $node Current node.
+	 * @param array<string, array<int, string>> $declared Accumulator, by reference.
+	 *
+	 * @return void
+	 */
+	private function collectSchemaProperties(mixed $node, array &$declared): void {
+		if (is_array($node) === false) {
+			return;
+		}
 
-        foreach ($node as $key => $value) {
-            if (is_array($value) === true
-                && isset($value['properties']) === true
-                && is_array($value['properties']) === true
-                && is_string($key) === true
-            ) {
-                $declared[$key] = array_merge(
-                    ($declared[$key] ?? []),
-                    array_keys($value['properties'])
-                );
-            }
+		foreach ($node as $key => $value) {
+			if (is_array($value) === true
+				&& isset($value['properties']) === true
+				&& is_array($value['properties']) === true
+				&& is_string($key) === true
+			) {
+				$declared[$key] = array_merge(
+					($declared[$key] ?? []),
+					array_keys($value['properties'])
+				);
+			}
 
-            $this->collectSchemaProperties($value, $declared);
-        }
-    }
+			$this->collectSchemaProperties($value, $declared);
+		}
+	}
 }

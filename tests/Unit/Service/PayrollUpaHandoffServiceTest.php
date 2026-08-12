@@ -39,242 +39,231 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class PayrollUpaHandoffServiceTest extends TestCase
-{
+final class PayrollUpaHandoffServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Set up shared mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
-        $this->logger = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up shared mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the service over an in-memory ObjectService stub.
-     *
-     * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
-     *
-     * @return PayrollUpaHandoffService
-     */
-    private function buildService(array $data): PayrollUpaHandoffService
-    {
-        $stub = new class($data) {
+	/**
+	 * Build the service over an in-memory ObjectService stub.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
+	 *
+	 * @return PayrollUpaHandoffService
+	 */
+	private function buildService(array $data): PayrollUpaHandoffService {
+		$stub = new class($data) {
 
-            /**
-             * Schema => rows.
-             *
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $data;
+			/**
+			 * Schema => rows.
+			 *
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $data;
 
-            /**
-             * Active schema.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Active schema.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Constructor.
-             *
-             * @param array<string,array<int,array<string,mixed>>> $data Data.
-             */
-            public function __construct(array $data)
-            {
-                $this->data = $data;
-            }//end __construct()
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string,array<int,array<string,mixed>>> $data Data.
+			 */
+			public function __construct(array $data) {
+				$this->data = $data;
+			}//end __construct()
 
-            /**
-             * Fluent register setter (no-op).
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register setter (no-op).
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Filtered findAll.
-             *
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->data[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
+			/**
+			 * Filtered findAll.
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->data[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
+				if ($filters === []) {
+					return $rows;
+				}
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
-        };
+							return true;
+						}
+					)
+				);
+			}//end findAll()
+		};
 
-        $this->container->method('get')->willReturn($stub);
+		$this->container->method('get')->willReturn($stub);
 
-        return new PayrollUpaHandoffService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+		return new PayrollUpaHandoffService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * A worked dataset: 3 werknemers across 2 pensioenregelingen + one without.
-     *
-     * @return array<string,array<int,array<string,mixed>>>
-     */
-    private function dataset(): array
-    {
-        return [
-            'Werknemer'  => [
-                ['id' => 'wn-1', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PME_DC'],
-                ['id' => 'wn-2', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PME_DC'],
-                ['id' => 'wn-3', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PFZW'],
-                ['id' => 'wn-4', 'administrationId' => 'adm-1', 'pensioenRegeling' => ''],
-                ['id' => 'wn-5', 'administrationId' => 'adm-2', 'pensioenRegeling' => 'PME_DC'],
-            ],
-            'LoonStrook' => [
-                ['werknemerId' => 'wn-1', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
-                ['werknemerId' => 'wn-2', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
-                ['werknemerId' => 'wn-3', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
-                // No regeling -> excluded.
-                ['werknemerId' => 'wn-4', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
-                // Different admin -> excluded by scope.
-                ['werknemerId' => 'wn-5', 'periodeId' => 'lp-1', 'administrationId' => 'adm-2', 'pensioen' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
-                // Zero pensioen -> excluded.
-                ['werknemerId' => 'wn-1', 'periodeId' => 'lp-2', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
-            ],
-        ];
+	/**
+	 * A worked dataset: 3 werknemers across 2 pensioenregelingen + one without.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	private function dataset(): array {
+		return [
+			'Werknemer' => [
+				['id' => 'wn-1', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PME_DC'],
+				['id' => 'wn-2', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PME_DC'],
+				['id' => 'wn-3', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PFZW'],
+				['id' => 'wn-4', 'administrationId' => 'adm-1', 'pensioenRegeling' => ''],
+				['id' => 'wn-5', 'administrationId' => 'adm-2', 'pensioenRegeling' => 'PME_DC'],
+			],
+			'LoonStrook' => [
+				['werknemerId' => 'wn-1', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
+				['werknemerId' => 'wn-2', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
+				['werknemerId' => 'wn-3', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
+				// No regeling -> excluded.
+				['werknemerId' => 'wn-4', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
+				// Different admin -> excluded by scope.
+				['werknemerId' => 'wn-5', 'periodeId' => 'lp-1', 'administrationId' => 'adm-2', 'pensioen' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
+				// Zero pensioen -> excluded.
+				['werknemerId' => 'wn-1', 'periodeId' => 'lp-2', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
+			],
+		];
 
-    }//end dataset()
+	}//end dataset()
 
-    /**
-     * Groups payloads per pensioenuitvoerder with correct totals.
-     *
-     * @return void
-     */
-    public function testGroupsByUitvoerderAndSumsCorrectly(): void
-    {
-        $svc = $this->buildService(data: $this->dataset());
+	/**
+	 * Groups payloads per pensioenuitvoerder with correct totals.
+	 *
+	 * @return void
+	 */
+	public function testGroupsByUitvoerderAndSumsCorrectly(): void {
+		$svc = $this->buildService(data: $this->dataset());
 
-        $payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
 
-        $this->assertCount(2, $payloads);
+		$this->assertCount(2, $payloads);
 
-        $byRegeling = [];
-        foreach ($payloads as $p) {
-            $byRegeling[$p['pensioenRegeling']] = $p;
-        }
+		$byRegeling = [];
+		foreach ($payloads as $p) {
+			$byRegeling[$p['pensioenRegeling']] = $p;
+		}
 
-        $this->assertArrayHasKey('PME_DC', $byRegeling);
-        $this->assertArrayHasKey('PFZW', $byRegeling);
+		$this->assertArrayHasKey('PME_DC', $byRegeling);
+		$this->assertArrayHasKey('PFZW', $byRegeling);
 
-        $pme = $byRegeling['PME_DC'];
-        $this->assertSame(2, $pme['totaalWerknemers']);
-        $this->assertEqualsWithDelta(500.0, $pme['totaalPremie'], 0.005);
-        $this->assertSame('lp-1', $pme['periodeId']);
-        $this->assertSame('adm-1', $pme['administrationId']);
-        $this->assertCount(2, $pme['regels']);
+		$pme = $byRegeling['PME_DC'];
+		$this->assertSame(2, $pme['totaalWerknemers']);
+		$this->assertEqualsWithDelta(500.0, $pme['totaalPremie'], 0.005);
+		$this->assertSame('lp-1', $pme['periodeId']);
+		$this->assertSame('adm-1', $pme['administrationId']);
+		$this->assertCount(2, $pme['regels']);
 
-        $pfzw = $byRegeling['PFZW'];
-        $this->assertSame(1, $pfzw['totaalWerknemers']);
-        $this->assertEqualsWithDelta(300.0, $pfzw['totaalPremie'], 0.005);
+		$pfzw = $byRegeling['PFZW'];
+		$this->assertSame(1, $pfzw['totaalWerknemers']);
+		$this->assertEqualsWithDelta(300.0, $pfzw['totaalPremie'], 0.005);
 
-    }//end testGroupsByUitvoerderAndSumsCorrectly()
+	}//end testGroupsByUitvoerderAndSumsCorrectly()
 
-    /**
-     * Returns an empty array when there are no loonstroken for the period.
-     *
-     * @return void
-     */
-    public function testReturnsEmptyWhenNoStroken(): void
-    {
-        $svc = $this->buildService(data: ['Werknemer' => [], 'LoonStrook' => []]);
+	/**
+	 * Returns an empty array when there are no loonstroken for the period.
+	 *
+	 * @return void
+	 */
+	public function testReturnsEmptyWhenNoStroken(): void {
+		$svc = $this->buildService(data: ['Werknemer' => [], 'LoonStrook' => []]);
 
-        $payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
 
-        $this->assertSame([], $payloads);
+		$this->assertSame([], $payloads);
 
-    }//end testReturnsEmptyWhenNoStroken()
+	}//end testReturnsEmptyWhenNoStroken()
 
-    /**
-     * Does not leak cross-administration loonstroken.
-     *
-     * @return void
-     */
-    public function testDoesNotLeakCrossAdministration(): void
-    {
-        $svc = $this->buildService(data: $this->dataset());
+	/**
+	 * Does not leak cross-administration loonstroken.
+	 *
+	 * @return void
+	 */
+	public function testDoesNotLeakCrossAdministration(): void {
+		$svc = $this->buildService(data: $this->dataset());
 
-        $payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-2', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-2', periodeId: 'lp-1');
 
-        // adm-2 has wn-5 with PME_DC but we never see adm-1's wn-1/wn-2 grouped in.
-        $this->assertCount(1, $payloads);
-        $this->assertSame('PME_DC', $payloads[0]['pensioenRegeling']);
-        $this->assertSame('adm-2', $payloads[0]['administrationId']);
-        $this->assertSame(1, $payloads[0]['totaalWerknemers']);
+		// adm-2 has wn-5 with PME_DC but we never see adm-1's wn-1/wn-2 grouped in.
+		$this->assertCount(1, $payloads);
+		$this->assertSame('PME_DC', $payloads[0]['pensioenRegeling']);
+		$this->assertSame('adm-2', $payloads[0]['administrationId']);
+		$this->assertSame(1, $payloads[0]['totaalWerknemers']);
 
-    }//end testDoesNotLeakCrossAdministration()
+	}//end testDoesNotLeakCrossAdministration()
 }//end class

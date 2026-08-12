@@ -45,106 +45,102 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class FiscalYearGuard
-{
-    /**
-     * FiscalPeriod states that satisfy REQ-YEC-007.
-     *
-     * @var array<string>
-     */
-    private const SATISFYING_STATES = [
-        'closed',
-        'audit-locked',
-    ];
+class FiscalYearGuard {
+	/**
+	 * FiscalPeriod states that satisfy REQ-YEC-007.
+	 *
+	 * @var array<string>
+	 */
+	private const SATISFYING_STATES = [
+		'closed',
+		'audit-locked',
+	];
 
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for `beginClose`: every FiscalPeriod in this fiscal year
-     * (matched by `fiscalYear` + `administrationId`) must already be closed.
-     *
-     * A fiscal year with no FiscalPeriod records yet is permitted to close
-     * (nothing to gate against — mirrors PeriodCloseGuard::periodOpen()'s
-     * "no scope, allow" convention).
-     *
-     * @param array<string, mixed> $fiscalYear The FiscalYear object being transitioned.
-     *
-     * @return bool True when all periods are closed and year-close may begin.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireAllPeriodsClosedForYear(array $fiscalYear): bool
-    {
-        $yearNumber       = ($fiscalYear['yearNumber'] ?? null);
-        $administrationId = (string) ($fiscalYear['administrationId'] ?? '');
-        if ($yearNumber === null) {
-            // No year scope to gate against.
-            return true;
-        }
+	/**
+	 * Precondition for `beginClose`: every FiscalPeriod in this fiscal year
+	 * (matched by `fiscalYear` + `administrationId`) must already be closed.
+	 *
+	 * A fiscal year with no FiscalPeriod records yet is permitted to close
+	 * (nothing to gate against — mirrors PeriodCloseGuard::periodOpen()'s
+	 * "no scope, allow" convention).
+	 *
+	 * @param array<string, mixed> $fiscalYear The FiscalYear object being transitioned.
+	 *
+	 * @return bool True when all periods are closed and year-close may begin.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireAllPeriodsClosedForYear(array $fiscalYear): bool {
+		$yearNumber = ($fiscalYear['yearNumber'] ?? null);
+		$administrationId = (string)($fiscalYear['administrationId'] ?? '');
+		if ($yearNumber === null) {
+			// No year scope to gate against.
+			return true;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $filters       = ['fiscalYear' => $yearNumber];
-            if ($administrationId !== '') {
-                $filters['administrationId'] = $administrationId;
-            }
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$filters = ['fiscalYear' => $yearNumber];
+			if ($administrationId !== '') {
+				$filters['administrationId'] = $administrationId;
+			}
 
-            $periods = $objectService
-                ->setRegister($this->register())
-                ->setSchema('FiscalPeriod')
-                ->findAll(['filters' => $filters]);
+			$periods = $objectService
+				->setRegister($this->register())
+				->setSchema('FiscalPeriod')
+				->findAll(['filters' => $filters]);
 
-            if (is_array($periods) === false || $periods === []) {
-                return true;
-            }
+			if (is_array($periods) === false || $periods === []) {
+				return true;
+			}
 
-            foreach ($periods as $period) {
-                $state = (string) ($period['state'] ?? '');
-                if (in_array($state, self::SATISFYING_STATES, true) === false) {
-                    $this->logger->info(
-                        'FiscalYearGuard: beginClose rejected — an open FiscalPeriod remains',
-                        ['yearNumber' => $yearNumber, 'periodId' => ($period['periodId'] ?? null), 'state' => $state]
-                    );
-                    return false;
-                }
-            }
+			foreach ($periods as $period) {
+				$state = (string)($period['state'] ?? '');
+				if (in_array($state, self::SATISFYING_STATES, true) === false) {
+					$this->logger->info(
+						'FiscalYearGuard: beginClose rejected — an open FiscalPeriod remains',
+						['yearNumber' => $yearNumber, 'periodId' => ($period['periodId'] ?? null), 'state' => $state]
+					);
+					return false;
+				}
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'FiscalYearGuard: requireAllPeriodsClosedForYear check failed — denying (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'FiscalYearGuard: requireAllPeriodsClosedForYear check failed — denying (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end requireAllPeriodsClosedForYear()
+	}//end requireAllPeriodsClosedForYear()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

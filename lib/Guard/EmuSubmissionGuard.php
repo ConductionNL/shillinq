@@ -38,55 +38,52 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
-class EmuSubmissionGuard
-{
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class EmuSubmissionGuard {
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Lifecycle precondition for the EMUReport `indienen` transition.
-     *
-     * Permits submission only when (REQ-EMU-006 / REQ-EMU-009):
-     *  - the report is still a concept (idempotent — never re-submit);
-     *  - emuSaldoBerekend is present (the conversion has run);
-     *  - the BBV-aansluitingscontrole has not failed (mislukt blocks).
-     *
-     * @param array<string,mixed> $emuReport EMUReport object array from OpenRegister.
-     *
-     * @return bool True when submission to CBS is permitted.
-     *
-     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
-     */
-    public function requireApproval(array $emuReport): bool
-    {
-        $status        = (string) ($emuReport['status'] ?? '');
-        $saldoComputed = array_key_exists('emuSaldoBerekend', $emuReport)
-            && $emuReport['emuSaldoBerekend'] !== null;
-        $aansluiting   = (string) ($emuReport['bbvAansluitingscontrole'] ?? 'niet-uitgevoerd');
+	/**
+	 * Lifecycle precondition for the EMUReport `indienen` transition.
+	 *
+	 * Permits submission only when (REQ-EMU-006 / REQ-EMU-009):
+	 *  - the report is still a concept (idempotent — never re-submit);
+	 *  - emuSaldoBerekend is present (the conversion has run);
+	 *  - the BBV-aansluitingscontrole has not failed (mislukt blocks).
+	 *
+	 * @param array<string,mixed> $emuReport EMUReport object array from OpenRegister.
+	 *
+	 * @return bool True when submission to CBS is permitted.
+	 *
+	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
+	 */
+	public function requireApproval(array $emuReport): bool {
+		$status = (string)($emuReport['status'] ?? '');
+		$saldoComputed = array_key_exists('emuSaldoBerekend', $emuReport)
+			&& $emuReport['emuSaldoBerekend'] !== null;
+		$aansluiting = (string)($emuReport['bbvAansluitingscontrole'] ?? 'niet-uitgevoerd');
 
-        $permitted = $status === 'concept'
-            && $saldoComputed === true
-            && $aansluiting !== 'mislukt';
+		$permitted = $status === 'concept'
+			&& $saldoComputed === true
+			&& $aansluiting !== 'mislukt';
 
-        if ($permitted === false) {
-            $this->logger->info(
-                'EmuSubmissionGuard: indiening blocked',
-                [
-                    'status'               => $status,
-                    'saldoComputed'        => $saldoComputed,
-                    'aansluitingscontrole' => $aansluiting,
-                ]
-            );
-        }
+		if ($permitted === false) {
+			$this->logger->info(
+				'EmuSubmissionGuard: indiening blocked',
+				[
+					'status' => $status,
+					'saldoComputed' => $saldoComputed,
+					'aansluitingscontrole' => $aansluiting,
+				]
+			);
+		}
 
-        return $permitted;
-
-    }//end requireApproval()
+		return $permitted;
+	}//end requireApproval()
 }//end class

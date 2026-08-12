@@ -45,74 +45,72 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
-class SepaAuditController extends Controller
-{
-    /**
-     * Construct the controller.
-     *
-     * @param IRequest         $request      The request.
-     * @param SepaAuditService $auditService The audit assembly service.
-     * @param IUserSession     $userSession  Session for the auth body-guard.
-     * @param LoggerInterface  $logger       Logger.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly SepaAuditService $auditService,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+class SepaAuditController extends Controller {
+	/**
+	 * Construct the controller.
+	 *
+	 * @param IRequest $request The request.
+	 * @param SepaAuditService $auditService The audit assembly service.
+	 * @param IUserSession $userSession Session for the auth body-guard.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly SepaAuditService $auditService,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Export the audit dossier for a single mandate as a ZIP (REQ-SDD-010).
-     *
-     * Scoped to the authenticated user's accessible administrations by the
-     * service (IDOR-safe per ADR-005 / REQ-MA-001): a mandate the caller may not
-     * read yields a 404 rather than leaking its existence.
-     *
-     * ⚠️ This sentence was written before it was true. Until this change the
-     * service scoped to `appConfig('administration_id')` — an instance-wide
-     * constant, never the caller's memberships — and skipped the comparison
-     * entirely when that key was unset (its default). The dossier is mandate +
-     * collections + R-transactions + pre-notifications as a ZIP.
-     *
-     * @param string $mandateId The SepaMandate UUID/slug to export.
-     *
-     * @return DataDownloadResponse|JSONResponse The ZIP download or an error.
-     *
-     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
-     */
-    #[NoAdminRequired]
-    public function exportMandate(string $mandateId): DataDownloadResponse|JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Export the audit dossier for a single mandate as a ZIP (REQ-SDD-010).
+	 *
+	 * Scoped to the authenticated user's accessible administrations by the
+	 * service (IDOR-safe per ADR-005 / REQ-MA-001): a mandate the caller may not
+	 * read yields a 404 rather than leaking its existence.
+	 *
+	 * ⚠️ This sentence was written before it was true. Until this change the
+	 * service scoped to `appConfig('administration_id')` — an instance-wide
+	 * constant, never the caller's memberships — and skipped the comparison
+	 * entirely when that key was unset (its default). The dossier is mandate +
+	 * collections + R-transactions + pre-notifications as a ZIP.
+	 *
+	 * @param string $mandateId The SepaMandate UUID/slug to export.
+	 *
+	 * @return DataDownloadResponse|JSONResponse The ZIP download or an error.
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 */
+	#[NoAdminRequired]
+	public function exportMandate(string $mandateId): DataDownloadResponse|JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        try {
-            $bundle = $this->auditService->buildMandateDossier(mandateId: $mandateId);
-            if ($bundle === null) {
-                return new JSONResponse(
-                    ['error' => 'mandate_not_found'],
-                    Http::STATUS_NOT_FOUND
-                );
-            }
+		try {
+			$bundle = $this->auditService->buildMandateDossier(mandateId: $mandateId);
+			if ($bundle === null) {
+				return new JSONResponse(
+					['error' => 'mandate_not_found'],
+					Http::STATUS_NOT_FOUND
+				);
+			}
 
-            return new DataDownloadResponse(
-                $bundle['data'],
-                $bundle['filename'],
-                'application/zip'
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'SepaAuditController: mandate export failed',
-                ['exception' => $e->getMessage()]
-            );
-            return new JSONResponse(
-                ['error' => 'export_failed'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
-    }//end exportMandate()
+			return new DataDownloadResponse(
+				$bundle['data'],
+				$bundle['filename'],
+				'application/zip'
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'SepaAuditController: mandate export failed',
+				['exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				['error' => 'export_failed'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
+	}//end exportMandate()
 }//end class

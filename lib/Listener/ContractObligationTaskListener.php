@@ -74,172 +74,166 @@ use Throwable;
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
-class ContractObligationTaskListener implements IEventListener
-{
+class ContractObligationTaskListener implements IEventListener {
 
-    /**
-     * The schema this listener reacts to.
-     *
-     * @var string
-     */
-    private const SCHEMA = 'ContractObligation';
+	/**
+	 * The schema this listener reacts to.
+	 *
+	 * @var string
+	 */
+	private const SCHEMA = 'ContractObligation';
 
-    /**
-     * Link status that means the VTODO already exists — re-entry is a no-op.
-     *
-     * @var string
-     */
-    private const STATUS_LINKED = 'linked';
+	/**
+	 * Link status that means the VTODO already exists — re-entry is a no-op.
+	 *
+	 * @var string
+	 */
+	private const STATUS_LINKED = 'linked';
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface     $container       DI container — OR ObjectService pulled
-     *                                                lazily (avoids a circular DI edge).
-     * @param SettingsService        $settingsService Shillinq settings (register slug).
-     * @param ObligationTaskBridge   $bridge          NC Tasks / Deck glue.
-     * @param ListenerSchemaResolver $schemaResolver  Resolves the entity's schema id to its slug.
-     * @param LoggerInterface        $logger          Logger.
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly SettingsService $settingsService,
-        private readonly ObligationTaskBridge $bridge,
-        private readonly ListenerSchemaResolver $schemaResolver,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR ObjectService pulled
+	 *                                      lazily (avoids a circular DI edge).
+	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param ObligationTaskBridge $bridge NC Tasks / Deck glue.
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LoggerInterface $logger Logger.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly SettingsService $settingsService,
+		private readonly ObligationTaskBridge $bridge,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle an OR ObjectCreatedEvent / ObjectUpdatedEvent on ContractObligation.
-     *
-     * @param Event $event OR object lifecycle event.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/compliance-deadline-calendar/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if (($event instanceof ObjectCreatedEvent) === false
-            && ($event instanceof ObjectUpdatedEvent) === false
-        ) {
-            return;
-        }
+	/**
+	 * Handle an OR ObjectCreatedEvent / ObjectUpdatedEvent on ContractObligation.
+	 *
+	 * @param Event $event OR object lifecycle event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	public function handle(Event $event): void {
+		if (($event instanceof ObjectCreatedEvent) === false
+			&& ($event instanceof ObjectUpdatedEvent) === false
+		) {
+			return;
+		}
 
-        try {
-            $entity = $this->resolveEntity(event: $event);
-            if ($entity === null) {
-                return;
-            }
+		try {
+			$entity = $this->resolveEntity(event: $event);
+			if ($entity === null) {
+				return;
+			}
 
-            $schema = $this->schemaResolver->schemaSlug(entity: $entity);
-            if ($this->isObligationSchema(schema: $schema) === false) {
-                return;
-            }
+			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
+			if ($this->isObligationSchema(schema: $schema) === false) {
+				return;
+			}
 
-            $obligation = $entity->getObject();
-            if (is_array($obligation) === false) {
-                return;
-            }
+			$obligation = $entity->getObject();
+			if (is_array($obligation) === false) {
+				return;
+			}
 
-            // Re-entry guard — see the class docblock. This is what stops the
-            // write-back below from re-triggering this listener forever.
-            if ((string) ($obligation['taskLinkStatus'] ?? '') === self::STATUS_LINKED) {
-                return;
-            }
+			// Re-entry guard — see the class docblock. This is what stops the
+			// write-back below from re-triggering this listener forever.
+			if ((string)($obligation['taskLinkStatus'] ?? '') === self::STATUS_LINKED) {
+				return;
+			}
 
-            $objectId = (string) ($obligation['id'] ?? ($entity->getId() ?? ''));
-            if ($objectId === '') {
-                return;
-            }
+			$objectId = (string)($obligation['id'] ?? ($entity->getId() ?? ''));
+			if ($objectId === '') {
+				return;
+			}
 
-            $obligation['id'] = $objectId;
+			$obligation['id'] = $objectId;
 
-            $result = $this->bridge->createTaskForObligation(obligation: $obligation);
+			$result = $this->bridge->createTaskForObligation(obligation: $obligation);
 
-            $this->persist(id: $objectId, result: $result);
+			$this->persist(id: $objectId, result: $result);
 
-            $this->logger->info(
-                'ContractObligationTaskListener: obligation task link attempted',
-                [
-                    'obligationId'   => $objectId,
-                    'taskLinkStatus' => ($result['taskLinkStatus'] ?? 'unknown'),
-                ]
-            );
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'ContractObligationTaskListener: task creation failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->logger->info(
+				'ContractObligationTaskListener: obligation task link attempted',
+				[
+					'obligationId' => $objectId,
+					'taskLinkStatus' => ($result['taskLinkStatus'] ?? 'unknown'),
+				]
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'ContractObligationTaskListener: task creation failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Pull the object entity off either supported event shape.
-     *
-     * @param Event $event OR event.
-     *
-     * @return object|null
-     */
-    private function resolveEntity(Event $event): ?object
-    {
-        if (method_exists($event, 'getObject') === false) {
-            return null;
-        }
+	/**
+	 * Pull the object entity off either supported event shape.
+	 *
+	 * @param Event $event OR event.
+	 *
+	 * @return object|null
+	 */
+	private function resolveEntity(Event $event): ?object {
+		if (method_exists($event, 'getObject') === false) {
+			return null;
+		}
 
-        $entity = $event->getObject();
-        if (is_object($entity) === false) {
-            return null;
-        }
+		$entity = $event->getObject();
+		if (is_object($entity) === false) {
+			return null;
+		}
 
-        return $entity;
+		return $entity;
+	}//end resolveEntity()
 
-    }//end resolveEntity()
+	/**
+	 * Check whether the schema slug is ContractObligation.
+	 *
+	 * @param string $schema Schema slug from the event.
+	 *
+	 * @return bool
+	 */
+	private function isObligationSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
 
-    /**
-     * Check whether the schema slug is ContractObligation.
-     *
-     * @param string $schema Schema slug from the event.
-     *
-     * @return bool
-     */
-    private function isObligationSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
+		return ($normalised === 'contractobligation'
+			|| str_ends_with(haystack: $normalised, needle: 'contractobligation'));
 
-        return ($normalised === 'contractobligation'
-            || str_ends_with(haystack: $normalised, needle: 'contractobligation'));
+	}//end isObligationSchema()
 
-    }//end isObligationSchema()
+	/**
+	 * Persist the bridge's link result back onto the obligation.
+	 *
+	 * Only the two fields the ContractObligation schema declares are written;
+	 * the bridge's eventUri / eventLinkStatus keys belong to the calendar
+	 * surface, which ComplianceDeadlineCalendarService owns.
+	 *
+	 * @param string $id The obligation object id.
+	 * @param array<string,mixed> $result The bridge result.
+	 *
+	 * @return void
+	 */
+	private function persist(string $id, array $result): void {
+		$updates = ['taskLinkStatus' => (string)($result['taskLinkStatus'] ?? 'failed')];
+		if (($result['taskUri'] ?? null) !== null) {
+			$updates['taskUri'] = (string)$result['taskUri'];
+		}
 
-    /**
-     * Persist the bridge's link result back onto the obligation.
-     *
-     * Only the two fields the ContractObligation schema declares are written;
-     * the bridge's eventUri / eventLinkStatus keys belong to the calendar
-     * surface, which ComplianceDeadlineCalendarService owns.
-     *
-     * @param string              $id     The obligation object id.
-     * @param array<string,mixed> $result The bridge result.
-     *
-     * @return void
-     */
-    private function persist(string $id, array $result): void
-    {
-        $updates = ['taskLinkStatus' => (string) ($result['taskLinkStatus'] ?? 'failed')];
-        if (($result['taskUri'] ?? null) !== null) {
-            $updates['taskUri'] = (string) $result['taskUri'];
-        }
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$objectService
+			->setRegister($this->settingsService->getRegisterSlug())
+			->setSchema(self::SCHEMA)
+			->updateObject($id, $updates);
 
-        $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $objectService
-            ->setRegister($this->settingsService->getRegisterSlug())
-            ->setSchema(self::SCHEMA)
-            ->updateObject($id, $updates);
-
-    }//end persist()
+	}//end persist()
 }//end class

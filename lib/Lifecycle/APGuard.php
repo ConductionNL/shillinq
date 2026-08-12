@@ -48,117 +48,111 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class APGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class APGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for `receive`: the vendor invoice number must be unique
-     * per (administrationId, vendorId) — REQ-AP-003 scenario 2. Excludes the
-     * current record by id so re-saving an already-received invoice does not
-     * self-collide.
-     *
-     * @param array<string, mixed> $transaction The APTransaction object being transitioned.
-     *
-     * @return bool True when no other APTransaction for the same vendor+administration
-     *              already carries this invoice number.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function isInvoiceNumberUnique(array $transaction): bool
-    {
-        $invoiceNumber    = trim((string) ($transaction['invoiceNumber'] ?? ''));
-        $vendorId         = (string) ($transaction['vendorId'] ?? '');
-        $administrationId = (string) ($transaction['administrationId'] ?? '');
-        if ($invoiceNumber === '') {
-            // No invoice number recorded yet — nothing to dedupe against;
-            // the schema's own `required` validation gates emptiness.
-            return true;
-        }
+	/**
+	 * Precondition for `receive`: the vendor invoice number must be unique
+	 * per (administrationId, vendorId) — REQ-AP-003 scenario 2. Excludes the
+	 * current record by id so re-saving an already-received invoice does not
+	 * self-collide.
+	 *
+	 * @param array<string, mixed> $transaction The APTransaction object being transitioned.
+	 *
+	 * @return bool True when no other APTransaction for the same vendor+administration
+	 *              already carries this invoice number.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function isInvoiceNumberUnique(array $transaction): bool {
+		$invoiceNumber = trim((string)($transaction['invoiceNumber'] ?? ''));
+		$vendorId = (string)($transaction['vendorId'] ?? '');
+		$administrationId = (string)($transaction['administrationId'] ?? '');
+		if ($invoiceNumber === '') {
+			// No invoice number recorded yet — nothing to dedupe against;
+			// the schema's own `required` validation gates emptiness.
+			return true;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $existing      = $objectService
-                ->setRegister($this->register())
-                ->setSchema('APTransaction')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'invoiceNumber'    => $invoiceNumber,
-                            'vendorId'         => $vendorId,
-                            'administrationId' => $administrationId,
-                        ],
-                    ]
-                );
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$existing = $objectService
+				->setRegister($this->register())
+				->setSchema('APTransaction')
+				->findAll(
+					[
+						'filters' => [
+							'invoiceNumber' => $invoiceNumber,
+							'vendorId' => $vendorId,
+							'administrationId' => $administrationId,
+						],
+					]
+				);
 
-            if (is_array($existing) === false || $existing === []) {
-                return true;
-            }
+			if (is_array($existing) === false || $existing === []) {
+				return true;
+			}
 
-            $currentId = ($transaction['id'] ?? null);
-            foreach ($existing as $candidate) {
-                if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
-                    continue;
-                }
+			$currentId = ($transaction['id'] ?? null);
+			foreach ($existing as $candidate) {
+				if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
+					continue;
+				}
 
-                $this->logger->info(
-                    'APGuard: duplicate vendor invoice number rejected',
-                    ['vendorId' => $vendorId, 'administrationId' => $administrationId, 'invoiceNumber' => $invoiceNumber]
-                );
-                return false;
-            }
+				$this->logger->info(
+					'APGuard: duplicate vendor invoice number rejected',
+					['vendorId' => $vendorId, 'administrationId' => $administrationId, 'invoiceNumber' => $invoiceNumber]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'APGuard: isInvoiceNumberUnique check failed — denying receive (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'APGuard: isInvoiceNumberUnique check failed — denying receive (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end isInvoiceNumberUnique()
+	}//end isInvoiceNumberUnique()
 
-    /**
-     * Precondition for `writeOff`: `writeOffReason` must be set.
-     *
-     * @param array<string, mixed> $transaction The APTransaction object being transitioned.
-     *
-     * @return bool True when the write-off may proceed.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireWriteOffReason(array $transaction): bool
-    {
-        return trim((string) ($transaction['writeOffReason'] ?? '')) !== '';
+	/**
+	 * Precondition for `writeOff`: `writeOffReason` must be set.
+	 *
+	 * @param array<string, mixed> $transaction The APTransaction object being transitioned.
+	 *
+	 * @return bool True when the write-off may proceed.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireWriteOffReason(array $transaction): bool {
+		return trim((string)($transaction['writeOffReason'] ?? '')) !== '';
+	}//end requireWriteOffReason()
 
-    }//end requireWriteOffReason()
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

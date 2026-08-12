@@ -35,177 +35,166 @@ use ReflectionMethod;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class TrialBalanceFragmentTest extends TestCase
-{
+final class TrialBalanceFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-trial-balance.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-trial-balance.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * The fragment is present and valid JSON with the expected sections.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertArrayHasKey('schemas', $data['components']);
+		self::assertArrayHasKey('objects', $data['components']);
 
-    }//end fragment()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment is present and valid JSON with the expected sections.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertArrayHasKey('schemas', $data['components']);
-        self::assertArrayHasKey('objects', $data['components']);
+	/**
+	 * The fragment declares the read-only TrialBalanceLine schema (REQ-TB-001, REQ-TB-007).
+	 *
+	 * @return void
+	 */
+	public function testDeclaresReadOnlyTrialBalanceLineSchema(): void {
+		$schema = $this->fragment()['components']['schemas']['TrialBalanceLine'];
+		self::assertSame('TrialBalanceLine', $schema['slug']);
+		self::assertTrue($schema['readonly']);
+		self::assertTrue($schema['x-openregister']['readonly']);
 
-    }//end testFragmentIsValidJson()
+		$expected = [
+			'periodId',
+			'accountNumber',
+			'accountName',
+			'accountType',
+			'openingBalance',
+			'debitMovement',
+			'creditMovement',
+			'closingBalance',
+			'currency',
+			'parentAccountNumber',
+			'administrationId',
+		];
+		foreach ($expected as $field) {
+			self::assertArrayHasKey($field, $schema['properties'], "TrialBalanceLine must declare $field");
+		}
 
-    /**
-     * The fragment declares the read-only TrialBalanceLine schema (REQ-TB-001, REQ-TB-007).
-     *
-     * @return void
-     */
-    public function testDeclaresReadOnlyTrialBalanceLineSchema(): void
-    {
-        $schema = $this->fragment()['components']['schemas']['TrialBalanceLine'];
-        self::assertSame('TrialBalanceLine', $schema['slug']);
-        self::assertTrue($schema['readonly']);
-        self::assertTrue($schema['x-openregister']['readonly']);
+	}//end testDeclaresReadOnlyTrialBalanceLineSchema()
 
-        $expected = [
-            'periodId',
-            'accountNumber',
-            'accountName',
-            'accountType',
-            'openingBalance',
-            'debitMovement',
-            'creditMovement',
-            'closingBalance',
-            'currency',
-            'parentAccountNumber',
-            'administrationId',
-        ];
-        foreach ($expected as $field) {
-            self::assertArrayHasKey($field, $schema['properties'], "TrialBalanceLine must declare $field");
-        }
+	/**
+	 * The per-account roll-up is declared as an aggregation (ADR-031, REQ-TB-018).
+	 *
+	 * @return void
+	 */
+	public function testDeclaresAggregation(): void {
+		$schema = $this->fragment()['components']['schemas']['TrialBalanceLine'];
+		self::assertArrayHasKey('x-openregister-aggregations', $schema);
+		self::assertArrayHasKey('trialBalanceByAccountPeriod', $schema['x-openregister-aggregations']);
 
-    }//end testDeclaresReadOnlyTrialBalanceLineSchema()
+	}//end testDeclaresAggregation()
 
-    /**
-     * The per-account roll-up is declared as an aggregation (ADR-031, REQ-TB-018).
-     *
-     * @return void
-     */
-    public function testDeclaresAggregation(): void
-    {
-        $schema = $this->fragment()['components']['schemas']['TrialBalanceLine'];
-        self::assertArrayHasKey('x-openregister-aggregations', $schema);
-        self::assertArrayHasKey('trialBalanceByAccountPeriod', $schema['x-openregister-aggregations']);
+	/**
+	 * Merging the fragment adds TrialBalanceLine without dropping the monolith's
+	 * existing snapshot TrialBalance schema (ADR-037 disjoint union).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = $this->fragment();
 
-    }//end testDeclaresAggregation()
+		$merged = $this->merge($base, $frag);
+		$schemas = $merged['components']['schemas'];
 
-    /**
-     * Merging the fragment adds TrialBalanceLine without dropping the monolith's
-     * existing snapshot TrialBalance schema (ADR-037 disjoint union).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = $this->fragment();
+		self::assertArrayHasKey('TrialBalanceLine', $schemas);
+		// The pre-existing snapshot TrialBalance schema survives the merge.
+		self::assertArrayHasKey('TrialBalance', $schemas);
+		self::assertArrayHasKey('reportDate', $schemas['TrialBalance']['properties']);
 
-        $merged  = $this->merge($base, $frag);
-        $schemas = $merged['components']['schemas'];
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 
-        self::assertArrayHasKey('TrialBalanceLine', $schemas);
-        // The pre-existing snapshot TrialBalance schema survives the merge.
-        self::assertArrayHasKey('TrialBalance', $schemas);
-        self::assertArrayHasKey('reportDate', $schemas['TrialBalance']['properties']);
+	/**
+	 * Seed objects target only the declared schema and balance per REQ-TB-003.
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsAreConsistent(): void {
+		$frag = $this->fragment();
+		$schemas = $frag['components']['schemas'];
+		$objects = $frag['components']['objects'];
 
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+		self::assertNotEmpty($objects);
+		foreach ($objects as $object) {
+			self::assertArrayHasKey('@self', $object);
+			self::assertSame('shillinq', $object['@self']['register']);
+			self::assertArrayHasKey($object['@self']['schema'], $schemas);
 
-    /**
-     * Seed objects target only the declared schema and balance per REQ-TB-003.
-     *
-     * @return void
-     */
-    public function testSeedObjectsAreConsistent(): void
-    {
-        $frag    = $this->fragment();
-        $schemas = $frag['components']['schemas'];
-        $objects = $frag['components']['objects'];
+			// Closing = opening + (debit - credit) in cents (REQ-TB-003).
+			$opening = (int)round(((float)$object['openingBalance']) * 100);
+			$debit = (int)round(((float)$object['debitMovement']) * 100);
+			$credit = (int)round(((float)$object['creditMovement']) * 100);
+			$closing = (int)round(((float)$object['closingBalance']) * 100);
+			self::assertSame(
+				($opening + ($debit - $credit)),
+				$closing,
+				'Seed ' . $object['@self']['slug'] . ' must satisfy closing = opening + (debit - credit)'
+			);
+		}
 
-        self::assertNotEmpty($objects);
-        foreach ($objects as $object) {
-            self::assertArrayHasKey('@self', $object);
-            self::assertSame('shillinq', $object['@self']['register']);
-            self::assertArrayHasKey($object['@self']['schema'], $schemas);
+	}//end testSeedObjectsAreConsistent()
 
-            // Closing = opening + (debit - credit) in cents (REQ-TB-003).
-            $opening = (int) round(((float) $object['openingBalance']) * 100);
-            $debit   = (int) round(((float) $object['debitMovement']) * 100);
-            $credit  = (int) round(((float) $object['creditMovement']) * 100);
-            $closing = (int) round(((float) $object['closingBalance']) * 100);
-            self::assertSame(
-                ($opening + ($debit - $credit)),
-                $closing,
-                'Seed '.$object['@self']['slug'].' must satisfy closing = opening + (debit - credit)'
-            );
-        }
+	/**
+	 * At least five distinct example trial balances are seeded (REQ-TB-013).
+	 *
+	 * @return void
+	 */
+	public function testFiveExampleTrialBalancesSeeded(): void {
+		$objects = $this->fragment()['components']['objects'];
+		$groups = [];
+		foreach ($objects as $object) {
+			$groups[$object['administrationId'] . '|' . $object['periodId']] = true;
+		}
 
-    }//end testSeedObjectsAreConsistent()
+		self::assertGreaterThanOrEqual(5, count($groups), 'Expect >= 5 distinct administration+period example trial balances');
 
-    /**
-     * At least five distinct example trial balances are seeded (REQ-TB-013).
-     *
-     * @return void
-     */
-    public function testFiveExampleTrialBalancesSeeded(): void
-    {
-        $objects = $this->fragment()['components']['objects'];
-        $groups  = [];
-        foreach ($objects as $object) {
-            $groups[$object['administrationId'].'|'.$object['periodId']] = true;
-        }
+	}//end testFiveExampleTrialBalancesSeeded()
 
-        self::assertGreaterThanOrEqual(5, count($groups), 'Expect >= 5 distinct administration+period example trial balances');
-
-    }//end testFiveExampleTrialBalancesSeeded()
-
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

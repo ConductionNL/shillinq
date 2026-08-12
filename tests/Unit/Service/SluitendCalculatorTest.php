@@ -30,216 +30,203 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class SluitendCalculatorTest extends TestCase
-{
+final class SluitendCalculatorTest extends TestCase {
 
-    /**
-     * The calculator under test.
-     *
-     * @var SluitendCalculator
-     */
-    private SluitendCalculator $calculator;
+	/**
+	 * The calculator under test.
+	 *
+	 * @var SluitendCalculator
+	 */
+	private SluitendCalculator $calculator;
 
-    /**
-     * Set up the calculator.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->calculator = new SluitendCalculator();
+	/**
+	 * Set up the calculator.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->calculator = new SluitendCalculator();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * REQ-008: a year with baten ≥ lasten and a positive reëel saldo is sluitend.
-     *
-     * @return void
-     */
-    public function testYearSluitendWhenStructureelAndReeelHold(): void
-    {
-        $result = $this->calculator->evaluateYear(
-            year: ['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
-            nominaleOntwikkeling: 2.0
-        );
+	/**
+	 * REQ-008: a year with baten ≥ lasten and a positive reëel saldo is sluitend.
+	 *
+	 * @return void
+	 */
+	public function testYearSluitendWhenStructureelAndReeelHold(): void {
+		$result = $this->calculator->evaluateYear(
+			year: ['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
+			nominaleOntwikkeling: 2.0
+		);
 
-        // Saldo structureel = 100; reëel uplift = 2% of 900 = 18; saldo reëel = 82.
-        self::assertSame(100.0, $result['saldoStructureel']);
-        self::assertSame(82.0, $result['saldoReëel']);
-        self::assertTrue($result['sluitendStructureel']);
-        self::assertTrue($result['sluitendReëel']);
-        self::assertTrue($result['sluitend']);
+		// Saldo structureel = 100; reëel uplift = 2% of 900 = 18; saldo reëel = 82.
+		self::assertSame(100.0, $result['saldoStructureel']);
+		self::assertSame(82.0, $result['saldoReëel']);
+		self::assertTrue($result['sluitendStructureel']);
+		self::assertTrue($result['sluitendReëel']);
+		self::assertTrue($result['sluitend']);
 
-    }//end testYearSluitendWhenStructureelAndReeelHold()
+	}//end testYearSluitendWhenStructureelAndReeelHold()
 
-    /**
-     * REQ-008: a year with lasten > baten is not sluitend; the parent flags fail.
-     *
-     * @return void
-     */
-    public function testYearNotSluitendWhenLastenExceedBaten(): void
-    {
-        $result = $this->calculator->evaluateYear(
-            year: ['batenStructureel' => 1000.0, 'lastenStructureel' => 1100.0],
-            nominaleOntwikkeling: 2.0
-        );
+	/**
+	 * REQ-008: a year with lasten > baten is not sluitend; the parent flags fail.
+	 *
+	 * @return void
+	 */
+	public function testYearNotSluitendWhenLastenExceedBaten(): void {
+		$result = $this->calculator->evaluateYear(
+			year: ['batenStructureel' => 1000.0, 'lastenStructureel' => 1100.0],
+			nominaleOntwikkeling: 2.0
+		);
 
-        self::assertSame(-100.0, $result['saldoStructureel']);
-        self::assertFalse($result['sluitendStructureel']);
-        self::assertFalse($result['sluitend']);
+		self::assertSame(-100.0, $result['saldoStructureel']);
+		self::assertFalse($result['sluitendStructureel']);
+		self::assertFalse($result['sluitend']);
 
-    }//end testYearNotSluitendWhenLastenExceedBaten()
+	}//end testYearNotSluitendWhenLastenExceedBaten()
 
-    /**
-     * A structureel-positive year can still fail reëel once the nominale uplift bites.
-     *
-     * @return void
-     */
-    public function testYearStructureelSluitendButReeelFails(): void
-    {
-        // Saldo structureel = 10; uplift = 5% of 1000 = 50; saldo reëel = -40.
-        $result = $this->calculator->evaluateYear(
-            year: ['batenStructureel' => 1010.0, 'lastenStructureel' => 1000.0],
-            nominaleOntwikkeling: 5.0
-        );
+	/**
+	 * A structureel-positive year can still fail reëel once the nominale uplift bites.
+	 *
+	 * @return void
+	 */
+	public function testYearStructureelSluitendButReeelFails(): void {
+		// Saldo structureel = 10; uplift = 5% of 1000 = 50; saldo reëel = -40.
+		$result = $this->calculator->evaluateYear(
+			year: ['batenStructureel' => 1010.0, 'lastenStructureel' => 1000.0],
+			nominaleOntwikkeling: 5.0
+		);
 
-        self::assertTrue($result['sluitendStructureel']);
-        self::assertFalse($result['sluitendReëel']);
-        self::assertFalse($result['sluitend']);
+		self::assertTrue($result['sluitendStructureel']);
+		self::assertFalse($result['sluitendReëel']);
+		self::assertFalse($result['sluitend']);
 
-    }//end testYearStructureelSluitendButReeelFails()
+	}//end testYearStructureelSluitendButReeelFails()
 
-    /**
-     * REQ-011: the overall flags hold only when every year holds.
-     *
-     * @return void
-     */
-    public function testBegrotingSluitendOnlyWhenAllYearsHold(): void
-    {
-        $years = [
-            ['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
-            ['batenStructureel' => 1020.0, 'lastenStructureel' => 950.0],
-        ];
+	/**
+	 * REQ-011: the overall flags hold only when every year holds.
+	 *
+	 * @return void
+	 */
+	public function testBegrotingSluitendOnlyWhenAllYearsHold(): void {
+		$years = [
+			['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
+			['batenStructureel' => 1020.0, 'lastenStructureel' => 950.0],
+		];
 
-        $flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
-        self::assertTrue($flags['sluitendStructureel']);
-        self::assertTrue($flags['sluitendReëel']);
+		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
+		self::assertTrue($flags['sluitendStructureel']);
+		self::assertTrue($flags['sluitendReëel']);
 
-    }//end testBegrotingSluitendOnlyWhenAllYearsHold()
+	}//end testBegrotingSluitendOnlyWhenAllYearsHold()
 
-    /**
-     * One failing year drops the overall structural flag (REQ-008 all-quantifier).
-     *
-     * @return void
-     */
-    public function testBegrotingNotSluitendWhenOneYearFails(): void
-    {
-        $years = [
-            ['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
-            ['batenStructureel' => 800.0, 'lastenStructureel' => 950.0],
-        ];
+	/**
+	 * One failing year drops the overall structural flag (REQ-008 all-quantifier).
+	 *
+	 * @return void
+	 */
+	public function testBegrotingNotSluitendWhenOneYearFails(): void {
+		$years = [
+			['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
+			['batenStructureel' => 800.0, 'lastenStructureel' => 950.0],
+		];
 
-        $flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
-        self::assertFalse($flags['sluitendStructureel']);
+		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
+		self::assertFalse($flags['sluitendStructureel']);
 
-    }//end testBegrotingNotSluitendWhenOneYearFails()
+	}//end testBegrotingNotSluitendWhenOneYearFails()
 
-    /**
-     * An empty meerjarenraming is fail-closed (not sluitend).
-     *
-     * @return void
-     */
-    public function testEmptyBegrotingIsNotSluitend(): void
-    {
-        $flags = $this->calculator->evaluateBegroting(years: [], nominaleOntwikkeling: 2.0);
-        self::assertFalse($flags['sluitendStructureel']);
-        self::assertFalse($flags['sluitendReëel']);
+	/**
+	 * An empty meerjarenraming is fail-closed (not sluitend).
+	 *
+	 * @return void
+	 */
+	public function testEmptyBegrotingIsNotSluitend(): void {
+		$flags = $this->calculator->evaluateBegroting(years: [], nominaleOntwikkeling: 2.0);
+		self::assertFalse($flags['sluitendStructureel']);
+		self::assertFalse($flags['sluitendReëel']);
 
-    }//end testEmptyBegrotingIsNotSluitend()
+	}//end testEmptyBegrotingIsNotSluitend()
 
-    /**
-     * D5: full conformity yields repressief toezicht.
-     *
-     * @return void
-     */
-    public function testRepressiefWhenFullyConform(): void
-    {
-        $regime = $this->calculator->determineToezichtRegime(
-            sluitendStructureel: true,
-            sluitendReeel: true,
-            historyResultaten: [100.0, 50.0, 80.0, 20.0],
-            weerstandsverhouding: 1.4
-        );
-        self::assertSame('repressief', $regime);
+	/**
+	 * D5: full conformity yields repressief toezicht.
+	 *
+	 * @return void
+	 */
+	public function testRepressiefWhenFullyConform(): void {
+		$regime = $this->calculator->determineToezichtRegime(
+			sluitendStructureel: true,
+			sluitendReeel: true,
+			historyResultaten: [100.0, 50.0, 80.0, 20.0],
+			weerstandsverhouding: 1.4
+		);
+		self::assertSame('repressief', $regime);
 
-    }//end testRepressiefWhenFullyConform()
+	}//end testRepressiefWhenFullyConform()
 
-    /**
-     * D5: a non-sluitende begroting yields preventief toezicht.
-     *
-     * @return void
-     */
-    public function testPreventiefWhenNotSluitend(): void
-    {
-        $regime = $this->calculator->determineToezichtRegime(
-            sluitendStructureel: false,
-            sluitendReeel: true,
-            weerstandsverhouding: 1.4
-        );
-        self::assertSame('preventief', $regime);
+	/**
+	 * D5: a non-sluitende begroting yields preventief toezicht.
+	 *
+	 * @return void
+	 */
+	public function testPreventiefWhenNotSluitend(): void {
+		$regime = $this->calculator->determineToezichtRegime(
+			sluitendStructureel: false,
+			sluitendReeel: true,
+			weerstandsverhouding: 1.4
+		);
+		self::assertSame('preventief', $regime);
 
-    }//end testPreventiefWhenNotSluitend()
+	}//end testPreventiefWhenNotSluitend()
 
-    /**
-     * D5: a sustained 4-year tekort yields preventief even when sluitend.
-     *
-     * @return void
-     */
-    public function testPreventiefOnSustainedTekort(): void
-    {
-        $regime = $this->calculator->determineToezichtRegime(
-            sluitendStructureel: true,
-            sluitendReeel: true,
-            historyResultaten: [-10.0, -20.0, -30.0, -5.0],
-            weerstandsverhouding: 1.2
-        );
-        self::assertSame('preventief', $regime);
+	/**
+	 * D5: a sustained 4-year tekort yields preventief even when sluitend.
+	 *
+	 * @return void
+	 */
+	public function testPreventiefOnSustainedTekort(): void {
+		$regime = $this->calculator->determineToezichtRegime(
+			sluitendStructureel: true,
+			sluitendReeel: true,
+			historyResultaten: [-10.0, -20.0, -30.0, -5.0],
+			weerstandsverhouding: 1.2
+		);
+		self::assertSame('preventief', $regime);
 
-    }//end testPreventiefOnSustainedTekort()
+	}//end testPreventiefOnSustainedTekort()
 
-    /**
-     * D5: a negative weerstandsverhouding (vermogenstekort) yields artikel-12.
-     *
-     * @return void
-     */
-    public function testArtikel12OnNegativeWeerstandsverhouding(): void
-    {
-        $regime = $this->calculator->determineToezichtRegime(
-            sluitendStructureel: true,
-            sluitendReeel: true,
-            weerstandsverhouding: -0.2
-        );
-        self::assertSame('artikel-12', $regime);
+	/**
+	 * D5: a negative weerstandsverhouding (vermogenstekort) yields artikel-12.
+	 *
+	 * @return void
+	 */
+	public function testArtikel12OnNegativeWeerstandsverhouding(): void {
+		$regime = $this->calculator->determineToezichtRegime(
+			sluitendStructureel: true,
+			sluitendReeel: true,
+			weerstandsverhouding: -0.2
+		);
+		self::assertSame('artikel-12', $regime);
 
-    }//end testArtikel12OnNegativeWeerstandsverhouding()
+	}//end testArtikel12OnNegativeWeerstandsverhouding()
 
-    /**
-     * Integer-cent arithmetic avoids IEEE-754 drift on the reëel correction.
-     *
-     * @return void
-     */
-    public function testIntegerCentsAvoidDrift(): void
-    {
-        // 0.1 + 0.2 baten/lasten that would drift in float — result must be exact.
-        $result = $this->calculator->evaluateYear(
-            year: ['batenStructureel' => 0.3, 'lastenStructureel' => 0.3],
-            nominaleOntwikkeling: 0.0
-        );
-        self::assertSame(0.0, $result['saldoStructureel']);
-        self::assertTrue($result['sluitendStructureel']);
+	/**
+	 * Integer-cent arithmetic avoids IEEE-754 drift on the reëel correction.
+	 *
+	 * @return void
+	 */
+	public function testIntegerCentsAvoidDrift(): void {
+		// 0.1 + 0.2 baten/lasten that would drift in float — result must be exact.
+		$result = $this->calculator->evaluateYear(
+			year: ['batenStructureel' => 0.3, 'lastenStructureel' => 0.3],
+			nominaleOntwikkeling: 0.0
+		);
+		self::assertSame(0.0, $result['saldoStructureel']);
+		self::assertTrue($result['sluitendStructureel']);
 
-    }//end testIntegerCentsAvoidDrift()
+	}//end testIntegerCentsAvoidDrift()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

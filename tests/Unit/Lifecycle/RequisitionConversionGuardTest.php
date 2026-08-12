@@ -35,144 +35,135 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class RequisitionConversionGuardTest extends TestCase
-{
+final class RequisitionConversionGuardTest extends TestCase {
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Set up shared mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
-        $this->logger = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up shared mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Verifies canConvert() returns true for an approved requisition, passed
-     * directly as the $object parameter (the lifecycle-engine call shape).
-     *
-     * @return void
-     */
-    public function testCanConvertTrueWhenApproved(): void
-    {
-        $container = $this->createMock(ContainerInterface::class);
-        $guard     = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
+	/**
+	 * Verifies canConvert() returns true for an approved requisition, passed
+	 * directly as the $object parameter (the lifecycle-engine call shape).
+	 *
+	 * @return void
+	 */
+	public function testCanConvertTrueWhenApproved(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$guard = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
 
-        $result = $guard->canConvert(requisitionId: 'req-1', object: ['statusCode' => 'approved']);
+		$result = $guard->canConvert(requisitionId: 'req-1', object: ['statusCode' => 'approved']);
 
-        self::assertTrue($result);
+		self::assertTrue($result);
 
-    }//end testCanConvertTrueWhenApproved()
+	}//end testCanConvertTrueWhenApproved()
 
-    /**
-     * Verifies canConvert() returns false for every non-approved status —
-     * draft, submitted, rejected, converted.
-     *
-     * @return void
-     */
-    public function testCanConvertFalseWhenNotApproved(): void
-    {
-        $container = $this->createMock(ContainerInterface::class);
-        $guard     = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
+	/**
+	 * Verifies canConvert() returns false for every non-approved status —
+	 * draft, submitted, rejected, converted.
+	 *
+	 * @return void
+	 */
+	public function testCanConvertFalseWhenNotApproved(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$guard = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
 
-        foreach (['draft', 'submitted', 'rejected', 'converted', ''] as $status) {
-            self::assertFalse(
-                $guard->canConvert(requisitionId: 'req-1', object: ['statusCode' => $status]),
-                "canConvert() must deny status '$status'"
-            );
-        }
+		foreach (['draft', 'submitted', 'rejected', 'converted', ''] as $status) {
+			self::assertFalse(
+				$guard->canConvert(requisitionId: 'req-1', object: ['statusCode' => $status]),
+				"canConvert() must deny status '$status'"
+			);
+		}
 
-    }//end testCanConvertFalseWhenNotApproved()
+	}//end testCanConvertFalseWhenNotApproved()
 
-    /**
-     * Verifies canConvert() denies (fail-closed) when the requisition cannot
-     * be found — neither passed directly nor resolvable via ObjectService.
-     *
-     * @return void
-     */
-    public function testCanConvertFalseWhenRequisitionMissing(): void
-    {
-        $stub = new class {
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+	/**
+	 * Verifies canConvert() denies (fail-closed) when the requisition cannot
+	 * be found — neither passed directly nor resolvable via ObjectService.
+	 *
+	 * @return void
+	 */
+	public function testCanConvertFalseWhenRequisitionMissing(): void {
+		$stub = new class {
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Always empty — simulates "not found".
-             *
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                return [];
-            }//end findAll()
-        };
+			/**
+			 * Always empty — simulates "not found".
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				return [];
+			}//end findAll()
+		};
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
 
-        $guard = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
+		$guard = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
 
-        self::assertFalse($guard->canConvert(requisitionId: 'missing-req', object: null));
+		self::assertFalse($guard->canConvert(requisitionId: 'missing-req', object: null));
 
-    }//end testCanConvertFalseWhenRequisitionMissing()
+	}//end testCanConvertFalseWhenRequisitionMissing()
 
-    /**
-     * Verifies canConvert() denies (fail-closed) when the ObjectService
-     * lookup throws — an infrastructure failure must never be treated as
-     * "allow".
-     *
-     * @return void
-     */
-    public function testCanConvertFalseOnLookupException(): void
-    {
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willThrowException(new \RuntimeException('OpenRegister unavailable'));
+	/**
+	 * Verifies canConvert() denies (fail-closed) when the ObjectService
+	 * lookup throws — an infrastructure failure must never be treated as
+	 * "allow".
+	 *
+	 * @return void
+	 */
+	public function testCanConvertFalseOnLookupException(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willThrowException(new \RuntimeException('OpenRegister unavailable'));
 
-        $guard = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
+		$guard = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
 
-        self::assertFalse($guard->canConvert(requisitionId: 'req-1', object: null));
+		self::assertFalse($guard->canConvert(requisitionId: 'req-1', object: null));
 
-    }//end testCanConvertFalseOnLookupException()
+	}//end testCanConvertFalseOnLookupException()
 }//end class

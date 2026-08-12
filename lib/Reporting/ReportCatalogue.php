@@ -47,80 +47,76 @@ namespace OCA\Shillinq\Reporting;
 /**
  * Static catalogue of report types for the Reporting & Compliance section.
  */
-final class ReportCatalogue
-{
+final class ReportCatalogue {
 
-    /**
-     * Report categories, in display order, for grouping the overview cards.
-     */
-    public const CATEGORIES = [
-        'tax'           => 'Belastingaangiften',
-        'statements'    => 'Jaarrekening & financiële overzichten',
-        'ledger'        => 'Grootboek & saldi',
-        'audit-file'    => 'Auditbestanden & e-facturatie',
-        'public-sector' => 'Overheidsrapportages',
-        'compliance'    => 'Compliance & audit trail',
-    ];
+	/**
+	 * Report categories, in display order, for grouping the overview cards.
+	 */
+	public const CATEGORIES = [
+		'tax' => 'Belastingaangiften',
+		'statements' => 'Jaarrekening & financiële overzichten',
+		'ledger' => 'Grootboek & saldi',
+		'audit-file' => 'Auditbestanden & e-facturatie',
+		'public-sector' => 'Overheidsrapportages',
+		'compliance' => 'Compliance & audit trail',
+	];
 
-    /**
-     * The report-type registry. Each: id, label, category, kind (data|document),
-     * formats (offered to the user; document reports list editable formats first),
-     * description, and the default template name for document reports (null for data;
-     * shipped in lib/Reporting/templates/, customisable via docudesk).
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public static function all(): array
-    {
-        return [
-            // --- Tax filings ---
-            ['id' => 'vat-return', 'label' => 'BTW-aangifte', 'category' => 'tax', 'kind' => 'data', 'formats' => ['xml', 'pdf'], 'templateId' => null, 'description' => 'Periodieke btw-aangifte (Digipoort/XBRL).'],
-            ['id' => 'icp-opgaaf', 'label' => 'ICP-opgaaf', 'category' => 'tax', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Opgaaf intracommunautaire prestaties.'],
-            ['id' => 'ib-aangifte', 'label' => 'IB-aangifte (winst)', 'category' => 'tax', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-ib-aangifte', 'description' => 'Inkomstenbelasting winstaangifte ZZP.'],
-            ['id' => 'vpb-aangifte', 'label' => 'Vpb-aangifte', 'category' => 'tax', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-vpb-aangifte', 'description' => 'Vennootschapsbelasting aangifte met fiscale balans.'],
+	/**
+	 * The report-type registry. Each: id, label, category, kind (data|document),
+	 * formats (offered to the user; document reports list editable formats first),
+	 * description, and the default template name for document reports (null for data;
+	 * shipped in lib/Reporting/templates/, customisable via docudesk).
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function all(): array {
+		return [
+			// --- Tax filings ---
+			['id' => 'vat-return', 'label' => 'BTW-aangifte', 'category' => 'tax', 'kind' => 'data', 'formats' => ['xml', 'pdf'], 'templateId' => null, 'description' => 'Periodieke btw-aangifte (Digipoort/XBRL).'],
+			['id' => 'icp-opgaaf', 'label' => 'ICP-opgaaf', 'category' => 'tax', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Opgaaf intracommunautaire prestaties.'],
+			['id' => 'ib-aangifte', 'label' => 'IB-aangifte (winst)', 'category' => 'tax', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-ib-aangifte', 'description' => 'Inkomstenbelasting winstaangifte ZZP.'],
+			['id' => 'vpb-aangifte', 'label' => 'Vpb-aangifte', 'category' => 'tax', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-vpb-aangifte', 'description' => 'Vennootschapsbelasting aangifte met fiscale balans.'],
 
-            // --- Statutory statements ---
-            ['id' => 'annual-accounts', 'label' => 'Jaarrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-jaarrekening', 'description' => 'Titel 9 BW2 jaarrekening (balans, W&V, toelichting).'],
-            ['id' => 'balance-sheet', 'label' => 'Balans', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-balans', 'description' => 'Balans per peildatum.'],
-            ['id' => 'profit-loss', 'label' => 'Winst- en verliesrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-winst-verlies', 'description' => 'Resultatenrekening over de periode.'],
-            ['id' => 'sbr-xbrl', 'label' => 'SBR/XBRL-deponering', 'category' => 'statements', 'kind' => 'data', 'formats' => ['xbrl'], 'templateId' => null, 'description' => 'SBR-jaarrekening in XBRL (KvK/Belastingdienst).'],
+			// --- Statutory statements ---
+			['id' => 'annual-accounts', 'label' => 'Jaarrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-jaarrekening', 'description' => 'Titel 9 BW2 jaarrekening (balans, W&V, toelichting).'],
+			['id' => 'balance-sheet', 'label' => 'Balans', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-balans', 'description' => 'Balans per peildatum.'],
+			['id' => 'profit-loss', 'label' => 'Winst- en verliesrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-winst-verlies', 'description' => 'Resultatenrekening over de periode.'],
+			['id' => 'sbr-xbrl', 'label' => 'SBR/XBRL-deponering', 'category' => 'statements', 'kind' => 'data', 'formats' => ['xbrl'], 'templateId' => null, 'description' => 'SBR-jaarrekening in XBRL (KvK/Belastingdienst).'],
 
-            // --- Ledger / balances ---
-            ['id' => 'trial-balance', 'label' => 'Proef- en saldibalans', 'category' => 'ledger', 'kind' => 'data', 'formats' => ['csv', 'pdf'], 'templateId' => null, 'description' => 'Saldibalans van alle grootboekrekeningen.'],
-            ['id' => 'general-ledger', 'label' => 'Grootboekkaarten', 'category' => 'ledger', 'kind' => 'data', 'formats' => ['csv'], 'templateId' => null, 'description' => 'Grootboekmutaties per rekening.'],
+			// --- Ledger / balances ---
+			['id' => 'trial-balance', 'label' => 'Proef- en saldibalans', 'category' => 'ledger', 'kind' => 'data', 'formats' => ['csv', 'pdf'], 'templateId' => null, 'description' => 'Saldibalans van alle grootboekrekeningen.'],
+			['id' => 'general-ledger', 'label' => 'Grootboekkaarten', 'category' => 'ledger', 'kind' => 'data', 'formats' => ['csv'], 'templateId' => null, 'description' => 'Grootboekmutaties per rekening.'],
 
-            // --- Audit files / e-invoicing ---
-            ['id' => 'saft', 'label' => 'SAF-T auditbestand', 'category' => 'audit-file', 'kind' => 'data', 'formats' => ['xml'], 'templateId' => null, 'description' => 'OECD SAF-T fiscaal auditbestand.'],
-            ['id' => 'xaf', 'label' => 'XAF auditbestand (Auditfile Financieel)', 'category' => 'audit-file', 'kind' => 'data', 'formats' => ['xml'], 'templateId' => null, 'description' => 'Nederlands Auditfile Financieel (XAF 3.2, Belastingdienst/XBRL Nederland).'],
+			// --- Audit files / e-invoicing ---
+			['id' => 'saft', 'label' => 'SAF-T auditbestand', 'category' => 'audit-file', 'kind' => 'data', 'formats' => ['xml'], 'templateId' => null, 'description' => 'OECD SAF-T fiscaal auditbestand.'],
+			['id' => 'xaf', 'label' => 'XAF auditbestand (Auditfile Financieel)', 'category' => 'audit-file', 'kind' => 'data', 'formats' => ['xml'], 'templateId' => null, 'description' => 'Nederlands Auditfile Financieel (XAF 3.2, Belastingdienst/XBRL Nederland).'],
 
-            // --- Public sector ---
-            ['id' => 'iv3', 'label' => 'IV3-rapportage', 'category' => 'public-sector', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Informatie voor derden (CBS).'],
-            ['id' => 'bbv-jaarstukken', 'label' => 'BBV-jaarstukken', 'category' => 'public-sector', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-bbv-jaarstukken', 'description' => 'BBV programmaverantwoording & jaarstukken.'],
+			// --- Public sector ---
+			['id' => 'iv3', 'label' => 'IV3-rapportage', 'category' => 'public-sector', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Informatie voor derden (CBS).'],
+			['id' => 'bbv-jaarstukken', 'label' => 'BBV-jaarstukken', 'category' => 'public-sector', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-bbv-jaarstukken', 'description' => 'BBV programmaverantwoording & jaarstukken.'],
 
-            // --- Compliance / audit trail ---
-            ['id' => 'rule-audit', 'label' => 'Compliance-auditrapport', 'category' => 'compliance', 'kind' => 'data', 'formats' => ['csv', 'pdf'], 'templateId' => null, 'description' => 'Resultaat van de regelmotor (shillinq:rules:audit): afdwingbare regels, overtredingen, dekking.'],
-            ['id' => 'audit-trail', 'label' => 'Audit trail', 'category' => 'compliance', 'kind' => 'data', 'formats' => ['csv'], 'templateId' => null, 'description' => 'Onveranderlijke mutatie-audittrail over de periode.'],
-            ['id' => 'management-letter', 'label' => 'Management letter', 'category' => 'compliance', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-management-letter', 'description' => 'Management letter / bevindingenrapport.'],
-        ];
+			// --- Compliance / audit trail ---
+			['id' => 'rule-audit', 'label' => 'Compliance-auditrapport', 'category' => 'compliance', 'kind' => 'data', 'formats' => ['csv', 'pdf'], 'templateId' => null, 'description' => 'Resultaat van de regelmotor (shillinq:rules:audit): afdwingbare regels, overtredingen, dekking.'],
+			['id' => 'audit-trail', 'label' => 'Audit trail', 'category' => 'compliance', 'kind' => 'data', 'formats' => ['csv'], 'templateId' => null, 'description' => 'Onveranderlijke mutatie-audittrail over de periode.'],
+			['id' => 'management-letter', 'label' => 'Management letter', 'category' => 'compliance', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-management-letter', 'description' => 'Management letter / bevindingenrapport.'],
+		];
 
-    }//end all()
+	}//end all()
 
-    /**
-     * Look up a report type by id.
-     *
-     * @param string $id Report-type id.
-     *
-     * @return array<string, mixed>|null
-     */
-    public static function byId(string $id): ?array
-    {
-        foreach (self::all() as $report) {
-            if ($report['id'] === $id) {
-                return $report;
-            }
-        }
+	/**
+	 * Look up a report type by id.
+	 *
+	 * @param string $id Report-type id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public static function byId(string $id): ?array {
+		foreach (self::all() as $report) {
+			if ($report['id'] === $id) {
+				return $report;
+			}
+		}
 
-        return null;
-
-    }//end byId()
+		return null;
+	}//end byId()
 }//end class

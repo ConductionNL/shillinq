@@ -24,15 +24,14 @@ use OCA\OpenRegister\Db\ObjectEntity;
  * Stub for OCA\OpenRegister\Service\Notification\RecipientResolverInterface
  * used by shillinq tests.
  */
-interface RecipientResolverInterface
-{
-    /**
-     * Resolve the recipient uids for a notification dispatch.
-     *
-     * @param ObjectEntity         $object  The object the event happened on.
-     * @param array<string, mixed> $context Trigger-specific extras.
-     *
-     * @return array<int, string> List of Nextcloud uids.
-     */
-    public function resolve(ObjectEntity $object, array $context): array;
+interface RecipientResolverInterface {
+	/**
+	 * Resolve the recipient uids for a notification dispatch.
+	 *
+	 * @param ObjectEntity $object The object the event happened on.
+	 * @param array<string, mixed> $context Trigger-specific extras.
+	 *
+	 * @return array<int, string> List of Nextcloud uids.
+	 */
+	public function resolve(ObjectEntity $object, array $context): array;
 }//end interface

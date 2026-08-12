@@ -32,281 +32,266 @@ use ReflectionMethod;
  * merges additively onto the monolith without colliding (ADR-037), references
  * only the two ADR-031 guard classes that exist, and ships the seed objects.
  */
-final class VpbMkbFragmentTest extends TestCase
-{
-    // PHPUnit assertions take positional ($actual, $expected, $message) arguments;
-    // the custom named-parameter sniff does not apply to them.
-    // phpcs:disable CustomSniffs.Functions.NamedParameters
+final class VpbMkbFragmentTest extends TestCase {
+	// PHPUnit assertions take positional ($actual, $expected, $message) arguments;
+	// the custom named-parameter sniff does not apply to them.
+	// phpcs:disable CustomSniffs.Functions.NamedParameters
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-vpb-mkb.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-vpb-mkb.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * The twelve schemas the fragment must declare.
-     *
-     * @var array<string>
-     */
-    private const SCHEMAS = [
-        'Belastingplichtige',
-        'VpbTariefcatalogus',
-        'VpbAangifte',
-        'FiscaleCorrectie',
-        'Innovatiebox',
-        'Deelneming',
-        'FiscaleEenheid',
-        'Voorvoegingsverlies',
-        'InvesteringsAftrek',
-        'VoorlopigeAanslag',
-        'DefinitieveAanslag',
-        'BezwaarBeroep',
-    ];
+	/**
+	 * The twelve schemas the fragment must declare.
+	 *
+	 * @var array<string>
+	 */
+	private const SCHEMAS = [
+		'Belastingplichtige',
+		'VpbTariefcatalogus',
+		'VpbAangifte',
+		'FiscaleCorrectie',
+		'Innovatiebox',
+		'Deelneming',
+		'FiscaleEenheid',
+		'Voorvoegingsverlies',
+		'InvesteringsAftrek',
+		'VoorlopigeAanslag',
+		'DefinitieveAanslag',
+		'BezwaarBeroep',
+	];
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * The fragment file is present and valid JSON with the expected sections.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		self::assertArrayHasKey('schemas', $data['components']);
+		self::assertArrayHasKey('objects', $data['components']);
 
-    }//end fragment()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment file is present and valid JSON with the expected sections.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        self::assertArrayHasKey('schemas', $data['components']);
-        self::assertArrayHasKey('objects', $data['components']);
+	/**
+	 * The fragment declares the twelve Vpb schemas, each carrying its slug.
+	 *
+	 * @return void
+	 */
+	public function testFragmentDeclaresTwelveSchemas(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		self::assertCount(count(self::SCHEMAS), $schemas);
 
-    }//end testFragmentIsValidJson()
+		foreach (self::SCHEMAS as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+			self::assertSame($name, $schemas[$name]['slug'], "$name must carry a matching slug");
+		}
 
-    /**
-     * The fragment declares the twelve Vpb schemas, each carrying its slug.
-     *
-     * @return void
-     */
-    public function testFragmentDeclaresTwelveSchemas(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        self::assertCount(count(self::SCHEMAS), $schemas);
+	}//end testFragmentDeclaresTwelveSchemas()
 
-        foreach (self::SCHEMAS as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-            self::assertSame($name, $schemas[$name]['slug'], "$name must carry a matching slug");
-        }
+	/**
+	 * State-bearing schemas declare an x-openregister-lifecycle on `status`.
+	 *
+	 * @return void
+	 */
+	public function testStateBearingSchemasDeclareLifecycle(): void {
+		$schemas = $this->fragment()['components']['schemas'];
 
-    }//end testFragmentDeclaresTwelveSchemas()
+		foreach (['VpbAangifte', 'DefinitieveAanslag', 'BezwaarBeroep'] as $name) {
+			self::assertArrayHasKey('x-openregister-lifecycle', $schemas[$name], "$name must declare a lifecycle");
+			self::assertSame('status', $schemas[$name]['x-openregister-lifecycle']['field']);
+		}
 
-    /**
-     * State-bearing schemas declare an x-openregister-lifecycle on `status`.
-     *
-     * @return void
-     */
-    public function testStateBearingSchemasDeclareLifecycle(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
+	}//end testStateBearingSchemasDeclareLifecycle()
 
-        foreach (['VpbAangifte', 'DefinitieveAanslag', 'BezwaarBeroep'] as $name) {
-            self::assertArrayHasKey('x-openregister-lifecycle', $schemas[$name], "$name must declare a lifecycle");
-            self::assertSame('status', $schemas[$name]['x-openregister-lifecycle']['field']);
-        }
+	/**
+	 * The VpbAangifte lifecycle enforces one-aangifte-per-jaar via a unique constraint
+	 * and the concept->ingediend transition is guarded by VpbAangifteGuard::canIndienen.
+	 *
+	 * @return void
+	 */
+	public function testAangifteUniqueAndIndienenGuard(): void {
+		$aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
 
-    }//end testStateBearingSchemasDeclareLifecycle()
+		self::assertContains(
+			['belastingplichtige', 'belastingjaar'],
+			$aangifte['x-openregister-unique'],
+			'VpbAangifte must be unique per (belastingplichtige, belastingjaar) (REQ-VPB-001)'
+		);
 
-    /**
-     * The VpbAangifte lifecycle enforces one-aangifte-per-jaar via a unique constraint
-     * and the concept->ingediend transition is guarded by VpbAangifteGuard::canIndienen.
-     *
-     * @return void
-     */
-    public function testAangifteUniqueAndIndienenGuard(): void
-    {
-        $aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
+		$indienen = $aangifte['x-openregister-lifecycle']['transitions']['indienen'];
+		self::assertSame('concept', $indienen['from']);
+		self::assertSame('ingediend', $indienen['to']);
+		self::assertSame('OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canIndienen', $indienen['requires']);
 
-        self::assertContains(
-            ['belastingplichtige', 'belastingjaar'],
-            $aangifte['x-openregister-unique'],
-            'VpbAangifte must be unique per (belastingplichtige, belastingjaar) (REQ-VPB-001)'
-        );
+	}//end testAangifteUniqueAndIndienenGuard()
 
-        $indienen = $aangifte['x-openregister-lifecycle']['transitions']['indienen'];
-        self::assertSame('concept', $indienen['from']);
-        self::assertSame('ingediend', $indienen['to']);
-        self::assertSame('OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canIndienen', $indienen['requires']);
+	/**
+	 * The schijftarief and te-betalen calculations are declared on VpbAangifte (REQ-VPB-003).
+	 *
+	 * @return void
+	 */
+	public function testAangifteCalculations(): void {
+		$calc = $this->fragment()['components']['schemas']['VpbAangifte']['x-openregister-calculations'];
+		self::assertArrayHasKey('verschuldigdeVpb', $calc);
+		self::assertArrayHasKey('teBetalen', $calc);
+		self::assertArrayHasKey('fiscaleWinstVoorVerliezen', $calc);
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::berekenVerschuldigdeVpb',
+			$calc['verschuldigdeVpb']['guard']
+		);
 
-    }//end testAangifteUniqueAndIndienenGuard()
+	}//end testAangifteCalculations()
 
-    /**
-     * The schijftarief and te-betalen calculations are declared on VpbAangifte (REQ-VPB-003).
-     *
-     * @return void
-     */
-    public function testAangifteCalculations(): void
-    {
-        $calc = $this->fragment()['components']['schemas']['VpbAangifte']['x-openregister-calculations'];
-        self::assertArrayHasKey('verschuldigdeVpb', $calc);
-        self::assertArrayHasKey('teBetalen', $calc);
-        self::assertArrayHasKey('fiscaleWinstVoorVerliezen', $calc);
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::berekenVerschuldigdeVpb',
-            $calc['verschuldigdeVpb']['guard']
-        );
+	/**
+	 * The voorvoegingsverlies regime and verjaring calculations are declared (REQ-VPB-006).
+	 *
+	 * @return void
+	 */
+	public function testVoorvoegingsverliesCalculations(): void {
+		$calc = $this->fragment()['components']['schemas']['Voorvoegingsverlies']['x-openregister-calculations'];
+		self::assertArrayHasKey('regime', $calc);
+		self::assertArrayHasKey('verjaartIn', $calc);
+		self::assertArrayHasKey('restant', $calc);
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerliesRegime',
+			$calc['regime']['guard']
+		);
 
-    }//end testAangifteCalculations()
+	}//end testVoorvoegingsverliesCalculations()
 
-    /**
-     * The voorvoegingsverlies regime and verjaring calculations are declared (REQ-VPB-006).
-     *
-     * @return void
-     */
-    public function testVoorvoegingsverliesCalculations(): void
-    {
-        $calc = $this->fragment()['components']['schemas']['Voorvoegingsverlies']['x-openregister-calculations'];
-        self::assertArrayHasKey('regime', $calc);
-        self::assertArrayHasKey('verjaartIn', $calc);
-        self::assertArrayHasKey('restant', $calc);
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerliesRegime',
-            $calc['regime']['guard']
-        );
+	/**
+	 * The bezwaar/beroep lifecycle references the ObjectionPeriodGuard (REQ-VPB-010).
+	 *
+	 * @return void
+	 */
+	public function testObjectionPeriodGuardReferenced(): void {
+		$aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection',
+			$aangifte['x-openregister-lifecycle']['transitions']['bezwaarMaken']['requires']
+		);
 
-    }//end testVoorvoegingsverliesCalculations()
+		$bezwaar = $this->fragment()['components']['schemas']['BezwaarBeroep'];
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal',
+			$bezwaar['x-openregister-lifecycle']['transitions']['beroepInstellen']['requires']
+		);
 
-    /**
-     * The bezwaar/beroep lifecycle references the ObjectionPeriodGuard (REQ-VPB-010).
-     *
-     * @return void
-     */
-    public function testObjectionPeriodGuardReferenced(): void
-    {
-        $aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection',
-            $aangifte['x-openregister-lifecycle']['transitions']['bezwaarMaken']['requires']
-        );
+	}//end testObjectionPeriodGuardReferenced()
 
-        $bezwaar = $this->fragment()['components']['schemas']['BezwaarBeroep'];
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal',
-            $bezwaar['x-openregister-lifecycle']['transitions']['beroepInstellen']['requires']
-        );
+	/**
+	 * Every guard class referenced by the fragment exists as a PHP file.
+	 *
+	 * @return void
+	 */
+	public function testReferencedGuardClassesExist(): void {
+		$json = (string)file_get_contents($this->fragmentPath);
 
-    }//end testObjectionPeriodGuardReferenced()
+		$guards = [
+			'OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard' => __DIR__ . '/../../../lib/Lifecycle/VpbAangifteGuard.php',
+			'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard' => __DIR__ . '/../../../lib/Lifecycle/ObjectionPeriodGuard.php',
+			'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard' => __DIR__ . '/../../../lib/Lifecycle/VpbBerekeningGuard.php',
+		];
 
-    /**
-     * Every guard class referenced by the fragment exists as a PHP file.
-     *
-     * @return void
-     */
-    public function testReferencedGuardClassesExist(): void
-    {
-        $json = (string) file_get_contents($this->fragmentPath);
+		foreach ($guards as $fqcn => $path) {
+			if (str_contains($json, str_replace('\\', '\\\\', $fqcn)) === true) {
+				self::assertFileExists($path, "Referenced guard $fqcn must have a backing class file");
+			}
+		}
 
-        $guards = [
-            'OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard'     => __DIR__.'/../../../lib/Lifecycle/VpbAangifteGuard.php',
-            'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard' => __DIR__.'/../../../lib/Lifecycle/ObjectionPeriodGuard.php',
-            'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard'   => __DIR__.'/../../../lib/Lifecycle/VpbBerekeningGuard.php',
-        ];
+	}//end testReferencedGuardClassesExist()
 
-        foreach ($guards as $fqcn => $path) {
-            if (str_contains($json, str_replace('\\', '\\\\', $fqcn)) === true) {
-                self::assertFileExists($path, "Referenced guard $fqcn must have a backing class file");
-            }
-        }
+	/**
+	 * The fragment merges additively onto the monolith without dropping monolith schemas
+	 * and without colliding on any Vpb schema name (ADR-037).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditively(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$baseKeys = array_keys($base['components']['schemas']);
 
-    }//end testReferencedGuardClassesExist()
+		// No Vpb schema may already exist in the monolith.
+		foreach (self::SCHEMAS as $name) {
+			self::assertNotContains($name, $baseKeys, "$name must not pre-exist in the monolith");
+		}
 
-    /**
-     * The fragment merges additively onto the monolith without dropping monolith schemas
-     * and without colliding on any Vpb schema name (ADR-037).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditively(): void
-    {
-        $base     = json_decode((string) file_get_contents($this->registerPath), true);
-        $baseKeys = array_keys($base['components']['schemas']);
+		$merged = $this->merge($base, $this->fragment());
+		$mergedKeys = array_keys($merged['components']['schemas']);
 
-        // No Vpb schema may already exist in the monolith.
-        foreach (self::SCHEMAS as $name) {
-            self::assertNotContains($name, $baseKeys, "$name must not pre-exist in the monolith");
-        }
+		// All monolith schemas survive.
+		foreach ($baseKeys as $name) {
+			self::assertContains($name, $mergedKeys, "Monolith schema $name must survive the merge");
+		}
 
-        $merged     = $this->merge($base, $this->fragment());
-        $mergedKeys = array_keys($merged['components']['schemas']);
+		// All Vpb schemas are added.
+		foreach (self::SCHEMAS as $name) {
+			self::assertContains($name, $mergedKeys, "Fragment schema $name must be present after merge");
+		}
 
-        // All monolith schemas survive.
-        foreach ($baseKeys as $name) {
-            self::assertContains($name, $mergedKeys, "Monolith schema $name must survive the merge");
-        }
+	}//end testFragmentMergesAdditively()
 
-        // All Vpb schemas are added.
-        foreach (self::SCHEMAS as $name) {
-            self::assertContains($name, $mergedKeys, "Fragment schema $name must be present after merge");
-        }
+	/**
+	 * The fragment ships the 2026 tariff, the ACME BV belastingplichtige and a
+	 * voorvoegingsverlies seed object, all targeting the shillinq register.
+	 *
+	 * @return void
+	 */
+	public function testSeedObjects(): void {
+		$objects = $this->fragment()['components']['objects'];
+		self::assertNotEmpty($objects);
 
-    }//end testFragmentMergesAdditively()
+		$bySchema = [];
+		foreach ($objects as $object) {
+			self::assertSame('shillinq', $object['@self']['register']);
+			$bySchema[$object['@self']['schema']] = $object;
+		}
 
-    /**
-     * The fragment ships the 2026 tariff, the ACME BV belastingplichtige and a
-     * voorvoegingsverlies seed object, all targeting the shillinq register.
-     *
-     * @return void
-     */
-    public function testSeedObjects(): void
-    {
-        $objects = $this->fragment()['components']['objects'];
-        self::assertNotEmpty($objects);
+		self::assertArrayHasKey('VpbTariefcatalogus', $bySchema);
+		self::assertSame(2026, $bySchema['VpbTariefcatalogus']['belastingjaar']);
+		self::assertSame(0.19, $bySchema['VpbTariefcatalogus']['tarief1']);
+		self::assertSame(0.258, $bySchema['VpbTariefcatalogus']['tarief2']);
+		self::assertSame(245000, $bySchema['VpbTariefcatalogus']['belastbaarBedragGrens']);
 
-        $bySchema = [];
-        foreach ($objects as $object) {
-            self::assertSame('shillinq', $object['@self']['register']);
-            $bySchema[$object['@self']['schema']] = $object;
-        }
+		self::assertArrayHasKey('Belastingplichtige', $bySchema);
+		self::assertSame('EH3', $bySchema['Belastingplichtige']['eHerkenningsNiveau']);
 
-        self::assertArrayHasKey('VpbTariefcatalogus', $bySchema);
-        self::assertSame(2026, $bySchema['VpbTariefcatalogus']['belastingjaar']);
-        self::assertSame(0.19, $bySchema['VpbTariefcatalogus']['tarief1']);
-        self::assertSame(0.258, $bySchema['VpbTariefcatalogus']['tarief2']);
-        self::assertSame(245000, $bySchema['VpbTariefcatalogus']['belastbaarBedragGrens']);
-
-        self::assertArrayHasKey('Belastingplichtige', $bySchema);
-        self::assertSame('EH3', $bySchema['Belastingplichtige']['eHerkenningsNiveau']);
-
-    }//end testSeedObjects()
+	}//end testSeedObjects()
 }//end class

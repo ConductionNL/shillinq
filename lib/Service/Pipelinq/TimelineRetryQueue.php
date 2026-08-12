@@ -37,19 +37,18 @@ namespace OCA\Shillinq\Service\Pipelinq;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
  */
-interface TimelineRetryQueue
-{
-    /**
-     * Hand an event off for async retry.
-     *
-     * Implementations MUST be cheap and non-throwing — the caller invokes
-     * this from a listener whose primary side-effect (the booking commit)
-     * has already happened; raising here would mask the original publish
-     * failure with a queueing failure.
-     *
-     * @param TimelineEventDto $event Event to retry.
-     *
-     * @return void
-     */
-    public function enqueue(TimelineEventDto $event): void;
+interface TimelineRetryQueue {
+	/**
+	 * Hand an event off for async retry.
+	 *
+	 * Implementations MUST be cheap and non-throwing — the caller invokes
+	 * this from a listener whose primary side-effect (the booking commit)
+	 * has already happened; raising here would mask the original publish
+	 * failure with a queueing failure.
+	 *
+	 * @param TimelineEventDto $event Event to retry.
+	 *
+	 * @return void
+	 */
+	public function enqueue(TimelineEventDto $event): void;
 }//end interface

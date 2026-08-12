@@ -35,131 +35,124 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class BadoControleprotocolFragmentTest extends TestCase
-{
+final class BadoControleprotocolFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-bado-controleprotocol.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-bado-controleprotocol.json';
 
-    /**
-     * Decoded fragment.
-     *
-     * @var array<string,mixed>
-     */
-    private array $fragment = [];
+	/**
+	 * Decoded fragment.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private array $fragment = [];
 
-    /**
-     * Decode the fragment once per test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->fragment = (array) json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * Decode the fragment once per test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->fragment = (array)json_decode((string)file_get_contents($this->fragmentPath), true);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * The fragment is present and valid JSON.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertArrayHasKey('components', $this->fragment);
+	/**
+	 * The fragment is present and valid JSON.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertArrayHasKey('components', $this->fragment);
 
-    }//end testFragmentIsValidJson()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment declares the 7 BADO schemas (REQ-001..REQ-008).
-     *
-     * @return void
-     */
-    public function testDeclaresSevenSchemas(): void
-    {
-        $schemas  = array_keys((array) $this->fragment['components']['schemas']);
-        $expected = [
-            'Controleprotocol',
-            'ToleranceMatrix',
-            'Materialiteit',
-            'AuditSample',
-            'AuditFinding',
-            'VerklaringDraft',
-            'SiSaAssurance',
-        ];
-        foreach ($expected as $schema) {
-            self::assertContains($schema, $schemas);
-        }
+	/**
+	 * The fragment declares the 7 BADO schemas (REQ-001..REQ-008).
+	 *
+	 * @return void
+	 */
+	public function testDeclaresSevenSchemas(): void {
+		$schemas = array_keys((array)$this->fragment['components']['schemas']);
+		$expected = [
+			'Controleprotocol',
+			'ToleranceMatrix',
+			'Materialiteit',
+			'AuditSample',
+			'AuditFinding',
+			'VerklaringDraft',
+			'SiSaAssurance',
+		];
+		foreach ($expected as $schema) {
+			self::assertContains($schema, $schemas);
+		}
 
-        self::assertCount(7, $schemas);
+		self::assertCount(7, $schemas);
 
-    }//end testDeclaresSevenSchemas()
+	}//end testDeclaresSevenSchemas()
 
-    /**
-     * Every lifecycle `requires` reference resolves to a public service method.
-     *
-     * Guards against drift between the declarative fragment and the ADR-031
-     * exception-path service — a dangling `requires` would silently disable the
-     * precondition at runtime (fail-open), which this test forbids.
-     *
-     * @return void
-     */
-    public function testLifecycleRequiresResolveToServiceMethods(): void
-    {
-        $json    = (string) file_get_contents($this->fragmentPath);
-        $matches = [];
-        preg_match_all('/BadoControleprotocolService::([A-Za-z]+)/', $json, $matches);
-        $methods = array_unique($matches[1]);
+	/**
+	 * Every lifecycle `requires` reference resolves to a public service method.
+	 *
+	 * Guards against drift between the declarative fragment and the ADR-031
+	 * exception-path service — a dangling `requires` would silently disable the
+	 * precondition at runtime (fail-open), which this test forbids.
+	 *
+	 * @return void
+	 */
+	public function testLifecycleRequiresResolveToServiceMethods(): void {
+		$json = (string)file_get_contents($this->fragmentPath);
+		$matches = [];
+		preg_match_all('/BadoControleprotocolService::([A-Za-z]+)/', $json, $matches);
+		$methods = array_unique($matches[1]);
 
-        self::assertNotEmpty($methods, 'fragment should reference at least one service method');
+		self::assertNotEmpty($methods, 'fragment should reference at least one service method');
 
-        foreach ($methods as $method) {
-            self::assertTrue(
-                method_exists(BadoControleprotocolService::class, $method),
-                'BadoControleprotocolService is missing referenced method: '.$method
-            );
-        }
+		foreach ($methods as $method) {
+			self::assertTrue(
+				method_exists(BadoControleprotocolService::class, $method),
+				'BadoControleprotocolService is missing referenced method: ' . $method
+			);
+		}
 
-    }//end testLifecycleRequiresResolveToServiceMethods()
+	}//end testLifecycleRequiresResolveToServiceMethods()
 
-    /**
-     * Every seed object references one of the declared schemas (ADR-037).
-     *
-     * @return void
-     */
-    public function testSeedObjectsReferenceDeclaredSchemas(): void
-    {
-        $schemas = array_keys((array) $this->fragment['components']['schemas']);
-        $objects = (array) ($this->fragment['components']['objects'] ?? []);
+	/**
+	 * Every seed object references one of the declared schemas (ADR-037).
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsReferenceDeclaredSchemas(): void {
+		$schemas = array_keys((array)$this->fragment['components']['schemas']);
+		$objects = (array)($this->fragment['components']['objects'] ?? []);
 
-        self::assertNotEmpty($objects, 'fragment should ship worked-example seeds');
+		self::assertNotEmpty($objects, 'fragment should ship worked-example seeds');
 
-        foreach ($objects as $slug => $object) {
-            $schema = (string) ($object['@self']['schema'] ?? '');
-            self::assertContains($schema, $schemas, 'seed '.$slug.' references unknown schema '.$schema);
-        }
+		foreach ($objects as $slug => $object) {
+			$schema = (string)($object['@self']['schema'] ?? '');
+			self::assertContains($schema, $schemas, 'seed ' . $slug . ' references unknown schema ' . $schema);
+		}
 
-    }//end testSeedObjectsReferenceDeclaredSchemas()
+	}//end testSeedObjectsReferenceDeclaredSchemas()
 
-    /**
-     * The ToleranceMatrix ceilings cannot exceed the BADO statutory maxima (REQ-002).
-     *
-     * @return void
-     */
-    public function testToleranceCeilingsHonourStatutoryMaxima(): void
-    {
-        $props = (array) $this->fragment['components']['schemas']['ToleranceMatrix']['properties'];
-        self::assertSame(1, $props['getrouwheidApprovalCeiling']['maximum']);
-        self::assertSame(3, $props['getrouwheidQualificationCeiling']['maximum']);
-        self::assertSame(1, $props['rechtmatigheidApprovalCeiling']['maximum']);
-        self::assertSame(3, $props['rechtmatigheidQualificationCeiling']['maximum']);
+	/**
+	 * The ToleranceMatrix ceilings cannot exceed the BADO statutory maxima (REQ-002).
+	 *
+	 * @return void
+	 */
+	public function testToleranceCeilingsHonourStatutoryMaxima(): void {
+		$props = (array)$this->fragment['components']['schemas']['ToleranceMatrix']['properties'];
+		self::assertSame(1, $props['getrouwheidApprovalCeiling']['maximum']);
+		self::assertSame(3, $props['getrouwheidQualificationCeiling']['maximum']);
+		self::assertSame(1, $props['rechtmatigheidApprovalCeiling']['maximum']);
+		self::assertSame(3, $props['rechtmatigheidQualificationCeiling']['maximum']);
 
-    }//end testToleranceCeilingsHonourStatutoryMaxima()
+	}//end testToleranceCeilingsHonourStatutoryMaxima()
 }//end class

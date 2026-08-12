@@ -42,7 +42,6 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DOMDocument;
-use DOMElement;
 
 /**
  * Renders ENSIAJaarcyclus records into ENSIA-XSD-compliant XML for the
@@ -50,151 +49,146 @@ use DOMElement;
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
-class ENSIAXmlExporter
-{
-    /**
-     * ENSIA-portal target namespace per VNG XSD.
-     *
-     * @var string
-     */
-    private const NS = 'urn:vng:ensia:zelfevaluatie:v1';
+class ENSIAXmlExporter {
+	/**
+	 * ENSIA-portal target namespace per VNG XSD.
+	 *
+	 * @var string
+	 */
+	private const NS = 'urn:vng:ensia:zelfevaluatie:v1';
 
-    /**
-     * Lifecycle precondition: may a cyclus be exported / submitted?
-     *
-     * Per REQ-ENSIA-007, the cyclus MUST be in `college-akkoord` status
-     * AND carry a verklaringFile file-reference before XML export is
-     * permitted (a missing signed verklaring is a portal-rejection cause).
-     *
-     * @param array<string,mixed> $cyclus The ENSIAJaarcyclus record.
-     *
-     * @return bool True when export is permitted.
-     */
-    public function canExport(array $cyclus): bool
-    {
-        $status = (string) ($cyclus['status'] ?? '');
-        if ($status !== 'college-akkoord' && $status !== 'ingediend') {
-            return false;
-        }
+	/**
+	 * Lifecycle precondition: may a cyclus be exported / submitted?
+	 *
+	 * Per REQ-ENSIA-007, the cyclus MUST be in `college-akkoord` status
+	 * AND carry a verklaringFile file-reference before XML export is
+	 * permitted (a missing signed verklaring is a portal-rejection cause).
+	 *
+	 * @param array<string,mixed> $cyclus The ENSIAJaarcyclus record.
+	 *
+	 * @return bool True when export is permitted.
+	 */
+	public function canExport(array $cyclus): bool {
+		$status = (string)($cyclus['status'] ?? '');
+		if ($status !== 'college-akkoord' && $status !== 'ingediend') {
+			return false;
+		}
 
-        $verklaringFile = (string) ($cyclus['verklaringFile'] ?? '');
-        return $verklaringFile !== '';
+		$verklaringFile = (string)($cyclus['verklaringFile'] ?? '');
+		return $verklaringFile !== '';
+	}//end canExport()
 
-    }//end canExport()
+	/**
+	 * Render the cyclus into ENSIA-XSD-compliant XML.
+	 *
+	 * @param array<string,mixed> $cyclus ENSIAJaarcyclus record.
+	 * @param array<int,array<string,mixed>> $vragen All Evaluatievraag children of the cyclus.
+	 * @param string|null $submittedAt Optional submission timestamp override; defaults to now.
+	 *
+	 * @return string The XML string.
+	 */
+	public function render(array $cyclus, array $vragen, ?string $submittedAt = null): string {
+		$doc = new DOMDocument('1.0', 'UTF-8');
+		$doc->formatOutput = true;
+		$doc->preserveWhiteSpace = false;
 
-    /**
-     * Render the cyclus into ENSIA-XSD-compliant XML.
-     *
-     * @param array<string,mixed>            $cyclus      ENSIAJaarcyclus record.
-     * @param array<int,array<string,mixed>> $vragen      All Evaluatievraag children of the cyclus.
-     * @param string|null                    $submittedAt Optional submission timestamp override; defaults to now.
-     *
-     * @return string The XML string.
-     */
-    public function render(array $cyclus, array $vragen, ?string $submittedAt=null): string
-    {
-        $doc = new DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput       = true;
-        $doc->preserveWhiteSpace = false;
+		$root = $doc->createElementNS(self::NS, 'ensiaZelfevaluatie');
+		$doc->appendChild($root);
 
-        $root = $doc->createElementNS(self::NS, 'ensiaZelfevaluatie');
-        $doc->appendChild($root);
+		// Organisation.
+		$org = $cyclus['organisatie'] ?? [];
+		$orgEl = $doc->createElement('organisatie');
+		$orgEl->appendChild($doc->createElement('kvk', (string)($org['kvk'] ?? '')));
+		$orgEl->appendChild($doc->createElement('naam', (string)($org['naam'] ?? '')));
+		$root->appendChild($orgEl);
 
-        // Organisation.
-        $org   = $cyclus['organisatie'] ?? [];
-        $orgEl = $doc->createElement('organisatie');
-        $orgEl->appendChild($doc->createElement('kvk', (string) ($org['kvk'] ?? '')));
-        $orgEl->appendChild($doc->createElement('naam', (string) ($org['naam'] ?? '')));
-        $root->appendChild($orgEl);
+		// Cycle metadata.
+		$root->appendChild($doc->createElement('jaar', (string)($cyclus['jaar'] ?? '')));
+		$root->appendChild($doc->createElement('status', (string)($cyclus['status'] ?? '')));
+		$root->appendChild($doc->createElement('vraagSetVersion', (string)($cyclus['vraagSetVersion'] ?? '')));
+		$root->appendChild($doc->createElement('verklaringFile', (string)($cyclus['verklaringFile'] ?? '')));
+		$root->appendChild(
+			$doc->createElement('submittedAt', $submittedAt ?? (new DateTimeImmutable('now'))->format(DATE_ATOM))
+		);
 
-        // Cycle metadata.
-        $root->appendChild($doc->createElement('jaar', (string) ($cyclus['jaar'] ?? '')));
-        $root->appendChild($doc->createElement('status', (string) ($cyclus['status'] ?? '')));
-        $root->appendChild($doc->createElement('vraagSetVersion', (string) ($cyclus['vraagSetVersion'] ?? '')));
-        $root->appendChild($doc->createElement('verklaringFile', (string) ($cyclus['verklaringFile'] ?? '')));
-        $root->appendChild(
-            $doc->createElement('submittedAt', $submittedAt ?? (new DateTimeImmutable('now'))->format(DATE_ATOM))
-        );
+		// Group questions per domein.
+		$byDomein = [];
+		foreach ($vragen as $v) {
+			$domein = (string)($v['domein'] ?? 'BIO');
+			if (isset($byDomein[$domein]) === false) {
+				$byDomein[$domein] = [];
+			}
 
-        // Group questions per domein.
-        $byDomein = [];
-        foreach ($vragen as $v) {
-            $domein = (string) ($v['domein'] ?? 'BIO');
-            if (isset($byDomein[$domein]) === false) {
-                $byDomein[$domein] = [];
-            }
+			$byDomein[$domein][] = $v;
+		}
 
-            $byDomein[$domein][] = $v;
-        }
+		$domeinenEl = $doc->createElement('verantwoordingsdomeinen');
+		foreach ($byDomein as $domein => $domeinVragen) {
+			$domeinEl = $doc->createElement('domein');
+			$domeinEl->setAttribute('code', $domein);
 
-        $domeinenEl = $doc->createElement('verantwoordingsdomeinen');
-        foreach ($byDomein as $domein => $domeinVragen) {
-            $domeinEl = $doc->createElement('domein');
-            $domeinEl->setAttribute('code', $domein);
+			foreach ($domeinVragen as $v) {
+				$vraagEl = $doc->createElement('vraag');
+				$vraagEl->setAttribute('code', (string)($v['vraagCode'] ?? ''));
+				$vraagEl->appendChild($doc->createElement('antwoordType', (string)($v['antwoordType'] ?? '')));
 
-            foreach ($domeinVragen as $v) {
-                $vraagEl = $doc->createElement('vraag');
-                $vraagEl->setAttribute('code', (string) ($v['vraagCode'] ?? ''));
-                $vraagEl->appendChild($doc->createElement('antwoordType', (string) ($v['antwoordType'] ?? '')));
+				$antwoord = $v['antwoord'] ?? null;
+				if ($antwoord !== null) {
+					$vraagEl->appendChild($doc->createElement('antwoord', (string)$antwoord));
+				}
 
-                $antwoord = $v['antwoord'] ?? null;
-                if ($antwoord !== null) {
-                    $vraagEl->appendChild($doc->createElement('antwoord', (string) $antwoord));
-                }
+				$score = $v['volwassenheidsScore'] ?? null;
+				if ($score !== null) {
+					$vraagEl->appendChild($doc->createElement('volwassenheidsScore', (string)$score));
+				}
 
-                $score = $v['volwassenheidsScore'] ?? null;
-                if ($score !== null) {
-                    $vraagEl->appendChild($doc->createElement('volwassenheidsScore', (string) $score));
-                }
+				$toelichting = (string)($v['toelichting'] ?? '');
+				if ($toelichting !== '') {
+					$vraagEl->appendChild($doc->createElement('toelichting', $toelichting));
+				}
 
-                $toelichting = (string) ($v['toelichting'] ?? '');
-                if ($toelichting !== '') {
-                    $vraagEl->appendChild($doc->createElement('toelichting', $toelichting));
-                }
+				$peerReviewStatus = (string)($v['peerReviewStatus'] ?? '');
+				if ($peerReviewStatus !== '') {
+					$vraagEl->appendChild($doc->createElement('peerReviewStatus', $peerReviewStatus));
+				}
 
-                $peerReviewStatus = (string) ($v['peerReviewStatus'] ?? '');
-                if ($peerReviewStatus !== '') {
-                    $vraagEl->appendChild($doc->createElement('peerReviewStatus', $peerReviewStatus));
-                }
+				$bewijsstukken = $v['bewijsstukken'] ?? [];
+				if (is_array($bewijsstukken) === true && count($bewijsstukken) > 0) {
+					$bewijsEl = $doc->createElement('bewijsstukken');
+					foreach ($bewijsstukken as $bw) {
+						$bewijsstukEl = $doc->createElement('bewijsstuk');
+						$bewijsstukEl->appendChild(
+							$doc->createElement('fileRef', (string)($bw['fileRef'] ?? ''))
+						);
+						$bewijsstukEl->appendChild(
+							$doc->createElement('omschrijving', (string)($bw['omschrijving'] ?? ''))
+						);
+						$sha = (string)($bw['sha256'] ?? '');
+						if ($sha !== '') {
+							$bewijsstukEl->appendChild($doc->createElement('sha256', $sha));
+						}
 
-                $bewijsstukken = $v['bewijsstukken'] ?? [];
-                if (is_array($bewijsstukken) === true && count($bewijsstukken) > 0) {
-                    $bewijsEl = $doc->createElement('bewijsstukken');
-                    foreach ($bewijsstukken as $bw) {
-                        $bewijsstukEl = $doc->createElement('bewijsstuk');
-                        $bewijsstukEl->appendChild(
-                            $doc->createElement('fileRef', (string) ($bw['fileRef'] ?? ''))
-                        );
-                        $bewijsstukEl->appendChild(
-                            $doc->createElement('omschrijving', (string) ($bw['omschrijving'] ?? ''))
-                        );
-                        $sha = (string) ($bw['sha256'] ?? '');
-                        if ($sha !== '') {
-                            $bewijsstukEl->appendChild($doc->createElement('sha256', $sha));
-                        }
+						$bewijsEl->appendChild($bewijsstukEl);
+					}
 
-                        $bewijsEl->appendChild($bewijsstukEl);
-                    }
+					$vraagEl->appendChild($bewijsEl);
+				}
 
-                    $vraagEl->appendChild($bewijsEl);
-                }
+				$domeinEl->appendChild($vraagEl);
+			}//end foreach
 
-                $domeinEl->appendChild($vraagEl);
-            }//end foreach
+			$domeinenEl->appendChild($domeinEl);
+		}//end foreach
 
-            $domeinenEl->appendChild($domeinEl);
-        }//end foreach
+		$root->appendChild($domeinenEl);
 
-        $root->appendChild($domeinenEl);
+		$xml = $doc->saveXML();
+		if ($xml === false) {
+			// SaveXML cannot fail on construction-only DOMDocument; defensive
+			// fallback returns an empty signed envelope.
+			return '<?xml version="1.0" encoding="UTF-8"?><ensiaZelfevaluatie/>';
+		}
 
-        $xml = $doc->saveXML();
-        if ($xml === false) {
-            // SaveXML cannot fail on construction-only DOMDocument; defensive
-            // fallback returns an empty signed envelope.
-            return '<?xml version="1.0" encoding="UTF-8"?><ensiaZelfevaluatie/>';
-        }
-
-        return $xml;
-
-    }//end render()
+		return $xml;
+	}//end render()
 }//end class

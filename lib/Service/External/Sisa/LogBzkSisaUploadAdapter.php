@@ -34,60 +34,58 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
-class LogBzkSisaUploadAdapter implements BzkSisaUploadAdapterInterface
-{
-    /**
-     * Construct the log-backed BZK SiSa adapter.
-     *
-     * @param LoggerInterface $logger Structured logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogBzkSisaUploadAdapter implements BzkSisaUploadAdapterInterface {
+	/**
+	 * Construct the log-backed BZK SiSa adapter.
+	 *
+	 * @param LoggerInterface $logger Structured logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Log the intent + synthesise a DEFERRED upload result.
-     *
-     * @param array<string,mixed> $payload The SiSa upload envelope.
-     *
-     * @return BzkSisaUploadResult The dispatch outcome.
-     */
-    public function upload(array $payload): BzkSisaUploadResult
-    {
-        $sanitised = $payload;
-        unset($sanitised['reportXmlBytes']);
-        unset($sanitised['signedPdfBytes']);
+	/**
+	 * Log the intent + synthesise a DEFERRED upload result.
+	 *
+	 * @param array<string,mixed> $payload The SiSa upload envelope.
+	 *
+	 * @return BzkSisaUploadResult The dispatch outcome.
+	 */
+	public function upload(array $payload): BzkSisaUploadResult {
+		$sanitised = $payload;
+		unset($sanitised['reportXmlBytes']);
+		unset($sanitised['signedPdfBytes']);
 
-        $trackingId = 'sisa-log-'.bin2hex(random_bytes(8));
-        $this->logger->info(
-            'Shillinq BZK SiSa upload deferred (no outbound connector bound)',
-            [
-                'trackingId' => $trackingId,
-                'payload'    => $sanitised,
-            ]
-        );
+		$trackingId = 'sisa-log-' . bin2hex(random_bytes(8));
+		$this->logger->info(
+			'Shillinq BZK SiSa upload deferred (no outbound connector bound)',
+			[
+				'trackingId' => $trackingId,
+				'payload' => $sanitised,
+			]
+		);
 
-        return new BzkSisaUploadResult(
-            deliveryStatus: 'DEFERRED',
-            trackingId: $trackingId,
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `bzk-sisa` and override BzkSisaUploadAdapterInterface '
-                    .'in Application::register() to enable real transport.',
-            ],
-        );
-    }//end upload()
+		return new BzkSisaUploadResult(
+			deliveryStatus: 'DEFERRED',
+			trackingId: $trackingId,
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector source slug `bzk-sisa` and override BzkSisaUploadAdapterInterface '
+					. 'in Application::register() to enable real transport.',
+			],
+		);
+	}//end upload()
 
-    /**
-     * Report whether this adapter is dormant (logs only, no outbound connector).
-     *
-     * @inheritDoc
-     *
-     * @return bool Always true for the dormant log adapter.
-     */
-    public function isDormant(): bool
-    {
-        return true;
-    }//end isDormant()
+	/**
+	 * Report whether this adapter is dormant (logs only, no outbound connector).
+	 *
+	 * @inheritDoc
+	 *
+	 * @return bool Always true for the dormant log adapter.
+	 */
+	public function isDormant(): bool {
+		return true;
+	}//end isDormant()
 }//end class

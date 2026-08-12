@@ -67,365 +67,342 @@ use RuntimeException;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
  */
-class CogsPosterService
-{
+class CogsPosterService {
 
-    /**
-     * App-config key for the COGS account number override per
-     * administration (RGS 3.5 MKB default '5100').
-     */
-    public const CFG_COGS_ACCOUNT = 'cogs_account';
+	/**
+	 * App-config key for the COGS account number override per
+	 * administration (RGS 3.5 MKB default '5100').
+	 */
+	public const CFG_COGS_ACCOUNT = 'cogs_account';
 
-    /**
-     * App-config key for the inventory asset account number override
-     * (RGS 3.5 MKB default '1300').
-     */
-    public const CFG_INVENTORY_ACCOUNT = 'inventory_account';
+	/**
+	 * App-config key for the inventory asset account number override
+	 * (RGS 3.5 MKB default '1300').
+	 */
+	public const CFG_INVENTORY_ACCOUNT = 'inventory_account';
 
-    /**
-     * Construct the service.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for account numbers + register slug.
-     * @param LoggerInterface    $logger    Logger for diagnostics; never logs full payloads.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the service.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for account numbers + register slug.
+	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Post one balanced GLTransaction for an outbound StockMove.
-     *
-     * @param array<string,mixed> $move      The outbound StockMove (movementType=issue).
-     * @param array<string,mixed> $valuation The driving InventoryValuation snapshot.
-     * @param int                 $cogsCents Total COGS amount in integer cents (from FIFO/avg).
-     *
-     * @return array<string,mixed> Result envelope with 'posted' bool, 'transaction', 'valuation'.
-     *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
-     */
-    public function postCogs(array $move, array $valuation, int $cogsCents): array
-    {
-        if ($cogsCents <= 0) {
-            return [
-                'posted'  => false,
-                'message' => 'cogsCents non-positive — nothing to post',
-            ];
-        }
+	/**
+	 * Post one balanced GLTransaction for an outbound StockMove.
+	 *
+	 * @param array<string,mixed> $move The outbound StockMove (movementType=issue).
+	 * @param array<string,mixed> $valuation The driving InventoryValuation snapshot.
+	 * @param int $cogsCents Total COGS amount in integer cents (from FIFO/avg).
+	 *
+	 * @return array<string,mixed> Result envelope with 'posted' bool, 'transaction', 'valuation'.
+	 *
+	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
+	 */
+	public function postCogs(array $move, array $valuation, int $cogsCents): array {
+		if ($cogsCents <= 0) {
+			return [
+				'posted' => false,
+				'message' => 'cogsCents non-positive — nothing to post',
+			];
+		}
 
-        $cogsAccount      = $this->cogsAccount();
-        $inventoryAccount = $this->inventoryAccount();
+		$cogsAccount = $this->cogsAccount();
+		$inventoryAccount = $this->inventoryAccount();
 
-        if ($cogsAccount === '' || $inventoryAccount === '') {
-            $this->logger->warning(
-                'CogsPosterService: GL accounts not configured — marking valuation adjusted',
-                [
-                    'movementNumber'   => ($move['movementNumber'] ?? null),
-                    'cogsAccount'      => $cogsAccount,
-                    'inventoryAccount' => $inventoryAccount,
-                ]
-            );
+		if ($cogsAccount === '' || $inventoryAccount === '') {
+			$this->logger->warning(
+				'CogsPosterService: GL accounts not configured — marking valuation adjusted',
+				[
+					'movementNumber' => ($move['movementNumber'] ?? null),
+					'cogsAccount' => $cogsAccount,
+					'inventoryAccount' => $inventoryAccount,
+				]
+			);
 
-            $valuation['status']      = 'adjusted';
-            $valuation['pendingCogs'] = true;
-            $savedValuation           = $this->saveValuation(data: $valuation);
+			$valuation['status'] = 'adjusted';
+			$valuation['pendingCogs'] = true;
+			$savedValuation = $this->saveValuation(data: $valuation);
 
-            return [
-                'posted'    => false,
-                'valuation' => $savedValuation,
-                'message'   => 'GL accounts not configured; valuation marked adjusted',
-            ];
-        }
+			return [
+				'posted' => false,
+				'valuation' => $savedValuation,
+				'message' => 'GL accounts not configured; valuation marked adjusted',
+			];
+		}
 
-        $administrationId = (string) ($move['administrationId'] ?? '');
-        $sourceReference  = (string) ($move['id'] ?? ($move['movementNumber'] ?? ''));
-        $description      = $this->describe(move: $move, cogsCents: $cogsCents);
+		$administrationId = (string)($move['administrationId'] ?? '');
+		$sourceReference = (string)($move['id'] ?? ($move['movementNumber'] ?? ''));
+		$description = $this->describe(move: $move, cogsCents: $cogsCents);
 
-        try {
-            $transaction = $this->saveTransaction(
-                    data: [
-                        'transactionNumber' => $this->transactionNumber(move: $move),
-                        'postingDate'       => $this->postingDate(move: $move),
-                        'periodId'          => $this->periodId(move: $move),
-                        'currency'          => 'EUR',
-                        'description'       => $description,
-                        'sourceReference'   => $sourceReference,
-                        'state'             => 'draft',
-                        'administrationId'  => $administrationId,
-                    ]
-                    );
+		try {
+			$transaction = $this->saveTransaction(
+				data: [
+					'transactionNumber' => $this->transactionNumber(move: $move),
+					'postingDate' => $this->postingDate(move: $move),
+					'periodId' => $this->periodId(move: $move),
+					'currency' => 'EUR',
+					'description' => $description,
+					'sourceReference' => $sourceReference,
+					'state' => 'draft',
+					'administrationId' => $administrationId,
+				]
+			);
 
-            $transactionId = (string) ($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+			$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
 
-            $cogsAmount = round(($cogsCents / 100), 2);
+			$cogsAmount = round(($cogsCents / 100), 2);
 
-            $this->saveLine(
-                    data: [
-                        'transactionId' => $transactionId,
-                        'lineNumber'    => 1,
-                        'accountNumber' => $cogsAccount,
-                        'side'          => 'debit',
-                        'amount'        => $cogsAmount,
-                        'currency'      => 'EUR',
-                        'description'   => $description,
-                    ]
-                    );
+			$this->saveLine(
+				data: [
+					'transactionId' => $transactionId,
+					'lineNumber' => 1,
+					'accountNumber' => $cogsAccount,
+					'side' => 'debit',
+					'amount' => $cogsAmount,
+					'currency' => 'EUR',
+					'description' => $description,
+				]
+			);
 
-            $this->saveLine(
-                    data: [
-                        'transactionId' => $transactionId,
-                        'lineNumber'    => 2,
-                        'accountNumber' => $inventoryAccount,
-                        'side'          => 'credit',
-                        'amount'        => $cogsAmount,
-                        'currency'      => 'EUR',
-                        'description'   => $description,
-                    ]
-                    );
+			$this->saveLine(
+				data: [
+					'transactionId' => $transactionId,
+					'lineNumber' => 2,
+					'accountNumber' => $inventoryAccount,
+					'side' => 'credit',
+					'amount' => $cogsAmount,
+					'currency' => 'EUR',
+					'description' => $description,
+				]
+			);
 
-            // PendingCogs cleared on a successful post.
-            if (((bool) ($valuation['pendingCogs'] ?? false)) === true) {
-                $valuation['pendingCogs'] = false;
-                $valuation = $this->saveValuation(data: $valuation);
-            }
+			// PendingCogs cleared on a successful post.
+			if (((bool)($valuation['pendingCogs'] ?? false)) === true) {
+				$valuation['pendingCogs'] = false;
+				$valuation = $this->saveValuation(data: $valuation);
+			}
 
-            return [
-                'posted'      => true,
-                'transaction' => $transaction,
-                'valuation'   => $valuation,
-                'cogsCents'   => $cogsCents,
-                'message'     => 'COGS posted',
-            ];
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'CogsPosterService: failed to post COGS',
-                [
-                    'movementNumber' => ($move['movementNumber'] ?? null),
-                    'cogsCents'      => $cogsCents,
-                    'exception'      => $e->getMessage(),
-                ]
-            );
+			return [
+				'posted' => true,
+				'transaction' => $transaction,
+				'valuation' => $valuation,
+				'cogsCents' => $cogsCents,
+				'message' => 'COGS posted',
+			];
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'CogsPosterService: failed to post COGS',
+				[
+					'movementNumber' => ($move['movementNumber'] ?? null),
+					'cogsCents' => $cogsCents,
+					'exception' => $e->getMessage(),
+				]
+			);
 
-            // Fail-soft: mark valuation pending so operator sees the gap.
-            $valuation['status']      = 'adjusted';
-            $valuation['pendingCogs'] = true;
-            $savedValuation           = $this->saveValuation(data: $valuation);
+			// Fail-soft: mark valuation pending so operator sees the gap.
+			$valuation['status'] = 'adjusted';
+			$valuation['pendingCogs'] = true;
+			$savedValuation = $this->saveValuation(data: $valuation);
 
-            return [
-                'posted'    => false,
-                'valuation' => $savedValuation,
-                'message'   => 'COGS posting raised: '.$e->getMessage(),
-            ];
-        }//end try
+			return [
+				'posted' => false,
+				'valuation' => $savedValuation,
+				'message' => 'COGS posting raised: ' . $e->getMessage(),
+			];
+		}//end try
 
-    }//end postCogs()
+	}//end postCogs()
 
-    /**
-     * Compose the human-readable description per REQ-INV-007.
-     *
-     * @param array<string,mixed> $move      The StockMove.
-     * @param int                 $cogsCents COGS in cents.
-     *
-     * @return string Description like 'COGS — GT-10-2026 — 35 × EUR 10,2857'.
-     */
-    private function describe(array $move, int $cogsCents): string
-    {
-        $sku      = (string) ($move['itemId'] ?? '');
-        $qty      = (float) ($move['quantity'] ?? 0);
-        $unitCost = 0.0;
-        if ($qty > 0) {
-            $unitCost = (($cogsCents / 100) / $qty);
-        }
+	/**
+	 * Compose the human-readable description per REQ-INV-007.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 * @param int $cogsCents COGS in cents.
+	 *
+	 * @return string Description like 'COGS — GT-10-2026 — 35 × EUR 10,2857'.
+	 */
+	private function describe(array $move, int $cogsCents): string {
+		$sku = (string)($move['itemId'] ?? '');
+		$qty = (float)($move['quantity'] ?? 0);
+		$unitCost = 0.0;
+		if ($qty > 0) {
+			$unitCost = (($cogsCents / 100) / $qty);
+		}
 
-        $unitCost = round($unitCost, 4);
+		$unitCost = round($unitCost, 4);
 
-        return sprintf(
-            'COGS — %s — %s × EUR %s',
-            $sku,
-            number_format($qty, 2, ',', ''),
-            number_format($unitCost, 4, ',', '')
-        );
+		return sprintf(
+			'COGS — %s — %s × EUR %s',
+			$sku,
+			number_format($qty, 2, ',', ''),
+			number_format($unitCost, 4, ',', '')
+		);
 
-    }//end describe()
+	}//end describe()
 
-    /**
-     * Build a transaction number unique per administration + fiscal year.
-     *
-     * @param array<string,mixed> $move The StockMove.
-     *
-     * @return string e.g. COGS-2026-<movementNumber>.
-     */
-    private function transactionNumber(array $move): string
-    {
-        $year   = (int) substr((string) ($move['postedAt'] ?? ($move['draftedAt'] ?? date('Y'))), 0, 4);
-        $suffix = (string) ($move['movementNumber'] ?? ($move['id'] ?? uniqid('mv-', true)));
-        if ($year === 0) {
-            $year = (int) date('Y');
-        }
+	/**
+	 * Build a transaction number unique per administration + fiscal year.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return string e.g. COGS-2026-<movementNumber>.
+	 */
+	private function transactionNumber(array $move): string {
+		$year = (int)substr((string)($move['postedAt'] ?? ($move['draftedAt'] ?? date('Y'))), 0, 4);
+		$suffix = (string)($move['movementNumber'] ?? ($move['id'] ?? uniqid('mv-', true)));
+		if ($year === 0) {
+			$year = (int)date('Y');
+		}
 
-        return sprintf('COGS-%04d-%s', $year, $suffix);
+		return sprintf('COGS-%04d-%s', $year, $suffix);
+	}//end transactionNumber()
 
-    }//end transactionNumber()
+	/**
+	 * Posting date as ISO yyyy-mm-dd, defaulting to the move postedAt.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return string yyyy-mm-dd.
+	 */
+	private function postingDate(array $move): string {
+		$postedAt = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
+		if ($postedAt === '') {
+			return date('Y-m-d');
+		}
 
-    /**
-     * Posting date as ISO yyyy-mm-dd, defaulting to the move postedAt.
-     *
-     * @param array<string,mixed> $move The StockMove.
-     *
-     * @return string yyyy-mm-dd.
-     */
-    private function postingDate(array $move): string
-    {
-        $postedAt = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-        if ($postedAt === '') {
-            return date('Y-m-d');
-        }
+		return substr($postedAt, 0, 10);
+	}//end postingDate()
 
-        return substr($postedAt, 0, 10);
+	/**
+	 * Resolve a periodId (e.g. 2026-Q2) from the posting date.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return string Period identifier.
+	 */
+	private function periodId(array $move): string {
+		$date = $this->postingDate(move: $move);
+		$year = (int)substr($date, 0, 4);
+		$month = (int)substr($date, 5, 2);
+		if ($year === 0) {
+			$year = (int)date('Y');
+		}
 
-    }//end postingDate()
+		$quarter = (int)ceil(max(1, $month) / 3);
+		return sprintf('%04d-Q%d', $year, $quarter);
+	}//end periodId()
 
-    /**
-     * Resolve a periodId (e.g. 2026-Q2) from the posting date.
-     *
-     * @param array<string,mixed> $move The StockMove.
-     *
-     * @return string Period identifier.
-     */
-    private function periodId(array $move): string
-    {
-        $date  = $this->postingDate(move: $move);
-        $year  = (int) substr($date, 0, 4);
-        $month = (int) substr($date, 5, 2);
-        if ($year === 0) {
-            $year = (int) date('Y');
-        }
+	/**
+	 * Resolve COGS account number from app config, default empty.
+	 *
+	 * @return string
+	 */
+	private function cogsAccount(): string {
+		return trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_COGS_ACCOUNT, ''));
+	}//end cogsAccount()
 
-        $quarter = (int) ceil(max(1, $month) / 3);
-        return sprintf('%04d-Q%d', $year, $quarter);
+	/**
+	 * Resolve Inventory asset account number from app config, default empty.
+	 *
+	 * @return string
+	 */
+	private function inventoryAccount(): string {
+		return trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_INVENTORY_ACCOUNT, ''));
+	}//end inventoryAccount()
 
-    }//end periodId()
+	/**
+	 * Persist a GLTransaction header.
+	 *
+	 * @param array<string,mixed> $data Header data.
+	 *
+	 * @return array<string,mixed> Persisted row (with id).
+	 */
+	private function saveTransaction(array $data): array {
+		return $this->saveOnSchema(schema: 'GLTransaction', data: $data);
+	}//end saveTransaction()
 
-    /**
-     * Resolve COGS account number from app config, default empty.
-     *
-     * @return string
-     */
-    private function cogsAccount(): string
-    {
-        return trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_COGS_ACCOUNT, ''));
+	/**
+	 * Persist a GLLine row.
+	 *
+	 * @param array<string,mixed> $data Line data.
+	 *
+	 * @return array<string,mixed> Persisted row (with id).
+	 */
+	private function saveLine(array $data): array {
+		return $this->saveOnSchema(schema: 'GLLine', data: $data);
+	}//end saveLine()
 
-    }//end cogsAccount()
+	/**
+	 * Persist an InventoryValuation snapshot (pendingCogs / status patches).
+	 *
+	 * @param array<string,mixed> $data Snapshot data.
+	 *
+	 * @return array<string,mixed> Persisted snapshot.
+	 */
+	private function saveValuation(array $data): array {
+		return $this->saveOnSchema(schema: 'InventoryValuation', data: $data);
+	}//end saveValuation()
 
-    /**
-     * Resolve Inventory asset account number from app config, default empty.
-     *
-     * @return string
-     */
-    private function inventoryAccount(): string
-    {
-        return trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_INVENTORY_ACCOUNT, ''));
+	/**
+	 * Generic ObjectService::saveObject helper bound to the configured register.
+	 *
+	 * @param string $schema Schema slug.
+	 * @param array<string,mixed> $data Row body.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function saveOnSchema(string $schema, array $data): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$saved = $objectService
+			->setRegister($this->register())
+			->setSchema($schema)
+			->saveObject($data);
 
-    }//end inventoryAccount()
+		if (is_array($saved) === true) {
+			return $saved;
+		}
 
-    /**
-     * Persist a GLTransaction header.
-     *
-     * @param array<string,mixed> $data Header data.
-     *
-     * @return array<string,mixed> Persisted row (with id).
-     */
-    private function saveTransaction(array $data): array
-    {
-        return $this->saveOnSchema(schema: 'GLTransaction', data: $data);
+		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
+			$out = $saved->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-    }//end saveTransaction()
+			return [];
+		}
 
-    /**
-     * Persist a GLLine row.
-     *
-     * @param array<string,mixed> $data Line data.
-     *
-     * @return array<string,mixed> Persisted row (with id).
-     */
-    private function saveLine(array $data): array
-    {
-        return $this->saveOnSchema(schema: 'GLLine', data: $data);
+		if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
+			$out = $saved->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-    }//end saveLine()
+			return [];
+		}
 
-    /**
-     * Persist an InventoryValuation snapshot (pendingCogs / status patches).
-     *
-     * @param array<string,mixed> $data Snapshot data.
-     *
-     * @return array<string,mixed> Persisted snapshot.
-     */
-    private function saveValuation(array $data): array
-    {
-        return $this->saveOnSchema(schema: 'InventoryValuation', data: $data);
+		throw new RuntimeException('CogsPosterService: unsupported row type from ObjectService::saveObject');
+	}//end saveOnSchema()
 
-    }//end saveValuation()
+	/**
+	 * Resolve the OR register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Generic ObjectService::saveObject helper bound to the configured register.
-     *
-     * @param string              $schema Schema slug.
-     * @param array<string,mixed> $data   Row body.
-     *
-     * @return array<string,mixed>
-     */
-    private function saveOnSchema(string $schema, array $data): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $saved         = $objectService
-            ->setRegister($this->register())
-            ->setSchema($schema)
-            ->saveObject($data);
-
-        if (is_array($saved) === true) {
-            return $saved;
-        }
-
-        if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-            $out = $saved->jsonSerialize();
-            if (is_array($out) === true) {
-                return $out;
-            }
-
-            return [];
-        }
-
-        if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
-            $out = $saved->getObject();
-            if (is_array($out) === true) {
-                return $out;
-            }
-
-            return [];
-        }
-
-        throw new RuntimeException('CogsPosterService: unsupported row type from ObjectService::saveObject');
-
-    }//end saveOnSchema()
-
-    /**
-     * Resolve the OR register slug, defaulting to 'shillinq'.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

@@ -58,335 +58,321 @@ use Throwable;
  *
  * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md (REQ-SIGN-005/006)
  */
-final class SignoffDecisionConcludedListener implements IEventListener
-{
+final class SignoffDecisionConcludedListener implements IEventListener {
 
-    /**
-     * Finance schemas that carry the governance-decision consumer field set.
-     * Matched against the concluded event's subjectSchema, with a fallback
-     * scan when the schema is absent.
-     *
-     * @var array<string>
-     */
-    private const SUBJECT_SCHEMAS = ['ACMReport', 'ActuarialValuation', 'AnnualReport'];
+	/**
+	 * Finance schemas that carry the governance-decision consumer field set.
+	 * Matched against the concluded event's subjectSchema, with a fallback
+	 * scan when the schema is absent.
+	 *
+	 * @var array<string>
+	 */
+	private const SUBJECT_SCHEMAS = ['ACMReport', 'ActuarialValuation', 'AnnualReport'];
 
-    /**
-     * Decidesk statuses that map to a terminal shillinq outcome.
-     *
-     * @var array<string,string>
-     */
-    private const STATUS_MAP = [
-        'approved' => 'approved',
-        'rejected' => 'rejected',
-    ];
+	/**
+	 * Decidesk statuses that map to a terminal shillinq outcome.
+	 *
+	 * @var array<string,string>
+	 */
+	private const STATUS_MAP = [
+		'approved' => 'approved',
+		'rejected' => 'rejected',
+	];
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface     $container       DI container — OR ObjectService pulled
-     *                                                lazily.
-     * @param SettingsService        $settingsService Shillinq settings (register slug).
-     * @param SignoffDecisionService $signoffService  The sign-off consumer service.
-     * @param LoggerInterface        $logger          Logger.
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly SettingsService $settingsService,
-        private readonly SignoffDecisionService $signoffService,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR ObjectService pulled
+	 *                                      lazily.
+	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param SignoffDecisionService $signoffService The sign-off consumer service.
+	 * @param LoggerInterface $logger Logger.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly SettingsService $settingsService,
+		private readonly SignoffDecisionService $signoffService,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle a decidesk DecisionConcludedEvent.
-     *
-     * Fail-soft: any error logs and returns; never bubbles back into decidesk's
-     * dispatch.
-     *
-     * @param Event $event The dispatched event.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        // Only react to the decidesk DecisionConcludedEvent. Guarded by
-        // class_exists so the listener is inert when decidesk is absent.
-        if (class_exists(\OCA\Decidesk\Event\DecisionConcludedEvent::class) === false) {
-            return;
-        }
+	/**
+	 * Handle a decidesk DecisionConcludedEvent.
+	 *
+	 * Fail-soft: any error logs and returns; never bubbles back into decidesk's
+	 * dispatch.
+	 *
+	 * @param Event $event The dispatched event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
+	 */
+	public function handle(Event $event): void {
+		// Only react to the decidesk DecisionConcludedEvent. Guarded by
+		// class_exists so the listener is inert when decidesk is absent.
+		if (class_exists(\OCA\Decidesk\Event\DecisionConcludedEvent::class) === false) {
+			return;
+		}
 
-        if (($event instanceof \OCA\Decidesk\Event\DecisionConcludedEvent) === false) {
-            return;
-        }
+		if (($event instanceof \OCA\Decidesk\Event\DecisionConcludedEvent) === false) {
+			return;
+		}
 
-        try {
-            // Filter to shillinq-originated decisions only.
-            if ($event->getSourceApp() !== 'shillinq') {
-                return;
-            }
+		try {
+			// Filter to shillinq-originated decisions only.
+			if ($event->getSourceApp() !== 'shillinq') {
+				return;
+			}
 
-            $outcome = self::STATUS_MAP[$event->getStatus()] ?? null;
-            if ($outcome === null) {
-                // Withdrawn / pending / unknown — no terminal projection.
-                return;
-            }
+			$outcome = self::STATUS_MAP[$event->getStatus()] ?? null;
+			if ($outcome === null) {
+				// Withdrawn / pending / unknown — no terminal projection.
+				return;
+			}
 
-            $decisionRef = (string) $event->getDecisionId();
-            $subjectId   = $this->resolveSubjectId(event: $event);
-            if ($subjectId === '') {
-                $this->logger->info(
-                    'SignoffDecisionConcludedListener: no subject id on concluded decision (skipping)',
-                    ['decisionRef' => $decisionRef]
-                );
-                return;
-            }
+			$decisionRef = (string)$event->getDecisionId();
+			$subjectId = $this->resolveSubjectId(event: $event);
+			if ($subjectId === '') {
+				$this->logger->info(
+					'SignoffDecisionConcludedListener: no subject id on concluded decision (skipping)',
+					['decisionRef' => $decisionRef]
+				);
+				return;
+			}
 
-            $resolved = $this->resolveFinanceObject(event: $event, subjectId: $subjectId);
-            if ($resolved === null) {
-                $this->logger->info(
-                    'SignoffDecisionConcludedListener: no matching finance object (skipping)',
-                    ['decisionRef' => $decisionRef, 'subjectId' => $subjectId]
-                );
-                return;
-            }
+			$resolved = $this->resolveFinanceObject(event: $event, subjectId: $subjectId);
+			if ($resolved === null) {
+				$this->logger->info(
+					'SignoffDecisionConcludedListener: no matching finance object (skipping)',
+					['decisionRef' => $decisionRef, 'subjectId' => $subjectId]
+				);
+				return;
+			}
 
-            [$schema, $financeObject] = $resolved;
+			[$schema, $financeObject] = $resolved;
 
-            // Capture the accounting-consequence mutation so it can be
-            // persisted alongside the mirror. onDecisionCallback owns the
-            // idempotency guard and fires the consequence exactly once on
-            // 'approved'; a repeated conclusion is a no-op and $consequence
-            // stays null (nothing extra to persist).
-            $consequence = [];
-            $updated     = $this->signoffService->onDecisionCallback(
-                $financeObject,
-                $outcome,
-                $decisionRef,
-                function (array $object) use ($schema, $outcome, &$consequence): array {
-                    $object      = $this->applyAccountingConsequence(schema: $schema, object: $object, outcome: $outcome);
-                    $consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
-                    return $object;
-                },
-                // Activity object type for the REQ-RAP-006 `decision_made`
-                // event raised inside onDecisionCallback(). This listener is the
-                // sole production caller, so omitting it here would leave that
-                // event permanently unemitted.
-                $schema,
-            );
+			// Capture the accounting-consequence mutation so it can be
+			// persisted alongside the mirror. onDecisionCallback owns the
+			// idempotency guard and fires the consequence exactly once on
+			// 'approved'; a repeated conclusion is a no-op and $consequence
+			// stays null (nothing extra to persist).
+			$consequence = [];
+			$updated = $this->signoffService->onDecisionCallback(
+				$financeObject,
+				$outcome,
+				$decisionRef,
+				function (array $object) use ($schema, $outcome, &$consequence): array {
+					$object = $this->applyAccountingConsequence(schema: $schema, object: $object, outcome: $outcome);
+					$consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
+					return $object;
+				},
+				// Activity object type for the REQ-RAP-006 `decision_made`
+				// event raised inside onDecisionCallback(). This listener is the
+				// sole production caller, so omitting it here would leave that
+				// event permanently unemitted.
+				$schema,
+			);
 
-            // Persist the mirror (decisionRef + decisionOutcome) plus any local
-            // accounting-consequence delta (REQ-SIGN-006) through OR.
-            $updates = [
-                'decisionRef'     => $updated['decisionRef'] ?? $decisionRef,
-                'decisionOutcome' => $updated['decisionOutcome'] ?? $outcome,
-            ];
-            $this->persist(schema: $schema, id: $subjectId, updates: ($updates + $consequence));
+			// Persist the mirror (decisionRef + decisionOutcome) plus any local
+			// accounting-consequence delta (REQ-SIGN-006) through OR.
+			$updates = [
+				'decisionRef' => $updated['decisionRef'] ?? $decisionRef,
+				'decisionOutcome' => $updated['decisionOutcome'] ?? $outcome,
+			];
+			$this->persist(schema: $schema, id: $subjectId, updates: ($updates + $consequence));
 
-            $this->logger->info(
-                    'SignoffDecisionConcludedListener: outcome consumed',
-                    [
-                        'schema'      => $schema,
-                        'subjectId'   => $subjectId,
-                        'outcome'     => $outcome,
-                        'decisionRef' => $decisionRef,
-                    ]
-                    );
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'SignoffDecisionConcludedListener: projection failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->logger->info(
+				'SignoffDecisionConcludedListener: outcome consumed',
+				[
+					'schema' => $schema,
+					'subjectId' => $subjectId,
+					'outcome' => $outcome,
+					'decisionRef' => $decisionRef,
+				]
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'SignoffDecisionConcludedListener: projection failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Resolve the subject id from the concluded event — prefer the
-     * externalReference we sent on the request, fall back to subjectId.
-     *
-     * @param \OCA\Decidesk\Event\DecisionConcludedEvent $event The concluded event.
-     *
-     * @return string The subject id, or '' when none.
-     */
-    private function resolveSubjectId(\OCA\Decidesk\Event\DecisionConcludedEvent $event): string
-    {
-        $external = (string) $event->getExternalReference();
-        if ($external !== '') {
-            return $external;
-        }
+	/**
+	 * Resolve the subject id from the concluded event — prefer the
+	 * externalReference we sent on the request, fall back to subjectId.
+	 *
+	 * @param \OCA\Decidesk\Event\DecisionConcludedEvent $event The concluded event.
+	 *
+	 * @return string The subject id, or '' when none.
+	 */
+	private function resolveSubjectId(\OCA\Decidesk\Event\DecisionConcludedEvent $event): string {
+		$external = (string)$event->getExternalReference();
+		if ($external !== '') {
+			return $external;
+		}
 
-        return (string) ($event->getSubjectId() ?? '');
+		return (string)($event->getSubjectId() ?? '');
+	}//end resolveSubjectId()
 
-    }//end resolveSubjectId()
+	/**
+	 * Resolve the finance object the concluded decision belongs to.
+	 *
+	 * Uses the event's subjectSchema when present; otherwise scans the three
+	 * known governance-decision subject schemas for the id.
+	 *
+	 * @param \OCA\Decidesk\Event\DecisionConcludedEvent $event The concluded event.
+	 * @param string $subjectId The finance object id.
+	 *
+	 * @return array{0:string,1:array<string,mixed>}|null [schema, object] or null.
+	 */
+	private function resolveFinanceObject(\OCA\Decidesk\Event\DecisionConcludedEvent $event, string $subjectId): ?array {
+		$hintedSchema = (string)($event->getSubjectSchema() ?? '');
 
-    /**
-     * Resolve the finance object the concluded decision belongs to.
-     *
-     * Uses the event's subjectSchema when present; otherwise scans the three
-     * known governance-decision subject schemas for the id.
-     *
-     * @param \OCA\Decidesk\Event\DecisionConcludedEvent $event     The concluded event.
-     * @param string                                     $subjectId The finance object id.
-     *
-     * @return array{0:string,1:array<string,mixed>}|null [schema, object] or null.
-     */
-    private function resolveFinanceObject(\OCA\Decidesk\Event\DecisionConcludedEvent $event, string $subjectId): ?array
-    {
-        $hintedSchema = (string) ($event->getSubjectSchema() ?? '');
+		$schemas = self::SUBJECT_SCHEMAS;
+		if ($hintedSchema !== '') {
+			// Try the hinted schema first.
+			array_unshift($schemas, $hintedSchema);
+			$schemas = array_values(array_unique($schemas));
+		}
 
-        $schemas = self::SUBJECT_SCHEMAS;
-        if ($hintedSchema !== '') {
-            // Try the hinted schema first.
-            array_unshift($schemas, $hintedSchema);
-            $schemas = array_values(array_unique($schemas));
-        }
+		foreach ($schemas as $schema) {
+			$object = $this->findObject(schema: $schema, id: $subjectId);
+			if ($object !== null) {
+				return [$schema, $object];
+			}
+		}
 
-        foreach ($schemas as $schema) {
-            $object = $this->findObject(schema: $schema, id: $subjectId);
-            if ($object !== null) {
-                return [$schema, $object];
-            }
-        }
+		return null;
+	}//end resolveFinanceObject()
 
-        return null;
+	/**
+	 * Apply the local accounting consequence on an approved sign-off
+	 * (REQ-SIGN-006). The consequence stays in shillinq: on `approved` the
+	 * finance lifecycle is flipped through the existing OR write path so the
+	 * report becomes submittable / the adoption posting can run. On `rejected`
+	 * no lifecycle advance happens.
+	 *
+	 * @param string $schema The finance schema.
+	 * @param array<string,mixed> $object The finance object (already carrying the mirror).
+	 * @param string $outcome 'approved' | 'rejected'.
+	 *
+	 * @return array<string,mixed> The (possibly mutated) finance object.
+	 */
+	private function applyAccountingConsequence(string $schema, array $object, string $outcome): array {
+		if ($outcome !== 'approved') {
+			return $object;
+		}
 
-    }//end resolveFinanceObject()
+		// The accounting consequence flips the finance lifecycle to the
+		// post-sign-off state through the existing OR write path. shillinq owns
+		// no approval logic — it records the decidesk outcome and opens its own
+		// downstream gate (submission / adoption posting) exactly once.
+		$object['signoffApprovedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		$object['signoffGateOpen'] = true;
 
-    /**
-     * Apply the local accounting consequence on an approved sign-off
-     * (REQ-SIGN-006). The consequence stays in shillinq: on `approved` the
-     * finance lifecycle is flipped through the existing OR write path so the
-     * report becomes submittable / the adoption posting can run. On `rejected`
-     * no lifecycle advance happens.
-     *
-     * @param string              $schema  The finance schema.
-     * @param array<string,mixed> $object  The finance object (already carrying the mirror).
-     * @param string              $outcome 'approved' | 'rejected'.
-     *
-     * @return array<string,mixed> The (possibly mutated) finance object.
-     */
-    private function applyAccountingConsequence(string $schema, array $object, string $outcome): array
-    {
-        if ($outcome !== 'approved') {
-            return $object;
-        }
+		$this->logger->info(
+			'SignoffDecisionConcludedListener: accounting consequence applied',
+			[
+				'schema' => $schema,
+				'outcome' => $outcome,
+			]
+		);
 
-        // The accounting consequence flips the finance lifecycle to the
-        // post-sign-off state through the existing OR write path. shillinq owns
-        // no approval logic — it records the decidesk outcome and opens its own
-        // downstream gate (submission / adoption posting) exactly once.
-        $object['signoffApprovedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-        $object['signoffGateOpen']   = true;
+		return $object;
+	}//end applyAccountingConsequence()
 
-        $this->logger->info(
-                'SignoffDecisionConcludedListener: accounting consequence applied',
-                [
-                    'schema'  => $schema,
-                    'outcome' => $outcome,
-                ]
-                );
+	/**
+	 * Extract the accounting-consequence fields written by
+	 * {@see self::applyAccountingConsequence} so they can be persisted with the
+	 * mirror in a single OR write.
+	 *
+	 * @param array<string,mixed> $object The finance object after the consequence.
+	 * @param string $outcome 'approved' | 'rejected'.
+	 *
+	 * @return array<string,mixed> The consequence delta (empty on non-approved).
+	 */
+	private function consequenceDelta(array $object, string $outcome): array {
+		if ($outcome !== 'approved') {
+			return [];
+		}
 
-        return $object;
+		$delta = [];
+		foreach (['signoffApprovedAt', 'signoffGateOpen'] as $key) {
+			if (array_key_exists($key, $object) === true) {
+				$delta[$key] = $object[$key];
+			}
+		}
 
-    }//end applyAccountingConsequence()
+		return $delta;
+	}//end consequenceDelta()
 
-    /**
-     * Extract the accounting-consequence fields written by
-     * {@see self::applyAccountingConsequence} so they can be persisted with the
-     * mirror in a single OR write.
-     *
-     * @param array<string,mixed> $object  The finance object after the consequence.
-     * @param string              $outcome 'approved' | 'rejected'.
-     *
-     * @return array<string,mixed> The consequence delta (empty on non-approved).
-     */
-    private function consequenceDelta(array $object, string $outcome): array
-    {
-        if ($outcome !== 'approved') {
-            return [];
-        }
+	/**
+	 * Find a finance object by id within a schema, returning a plain array.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param string $id The object id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findObject(string $schema, string $id): ?array {
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$result = $objectService
+				->setRegister($this->settingsService->getRegisterSlug())
+				->setSchema($schema)
+				->find($id);
 
-        $delta = [];
-        foreach (['signoffApprovedAt', 'signoffGateOpen'] as $key) {
-            if (array_key_exists($key, $object) === true) {
-                $delta[$key] = $object[$key];
-            }
-        }
+			return $this->toArray(result: $result);
+		} catch (Throwable $e) {
+			return null;
+		}
 
-        return $delta;
+	}//end findObject()
 
-    }//end consequenceDelta()
+	/**
+	 * Persist the mirror updates onto the finance object via OR.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param string $id The object id.
+	 * @param array<string,mixed> $updates The fields to write.
+	 *
+	 * @return void
+	 */
+	private function persist(string $schema, string $id, array $updates): void {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$objectService
+			->setRegister($this->settingsService->getRegisterSlug())
+			->setSchema($schema)
+			->updateObject($id, $updates);
 
-    /**
-     * Find a finance object by id within a schema, returning a plain array.
-     *
-     * @param string $schema The schema slug.
-     * @param string $id     The object id.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findObject(string $schema, string $id): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $result        = $objectService
-                ->setRegister($this->settingsService->getRegisterSlug())
-                ->setSchema($schema)
-                ->find($id);
+	}//end persist()
 
-            return $this->toArray(result: $result);
-        } catch (Throwable $e) {
-            return null;
-        }
+	/**
+	 * Normalise an OR find result to a plain array.
+	 *
+	 * @param mixed $result OR return value.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function toArray(mixed $result): ?array {
+		if (is_array($result) === true) {
+			return $result;
+		}
 
-    }//end findObject()
+		if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
+			$serialized = $result->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
 
-    /**
-     * Persist the mirror updates onto the finance object via OR.
-     *
-     * @param string              $schema  The schema slug.
-     * @param string              $id      The object id.
-     * @param array<string,mixed> $updates The fields to write.
-     *
-     * @return void
-     */
-    private function persist(string $schema, string $id, array $updates): void
-    {
-        $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $objectService
-            ->setRegister($this->settingsService->getRegisterSlug())
-            ->setSchema($schema)
-            ->updateObject($id, $updates);
+			return null;
+		}
 
-    }//end persist()
-
-    /**
-     * Normalise an OR find result to a plain array.
-     *
-     * @param mixed $result OR return value.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function toArray(mixed $result): ?array
-    {
-        if (is_array($result) === true) {
-            return $result;
-        }
-
-        if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-            $serialized = $result->jsonSerialize();
-            if (is_array($serialized) === true) {
-                return $serialized;
-            }
-
-            return null;
-        }
-
-        return null;
-
-    }//end toArray()
+		return null;
+	}//end toArray()
 }//end class

@@ -56,183 +56,176 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
  */
-class VpbBerekeningGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class VpbBerekeningGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the verschuldigde Vpb via the graduated schijftarief brackets.
-     *
-     * REQ-VPB-003: tarief1 over min(belastbaar, grens) + tarief2 over the excess,
-     * using the VpbTariefcatalogus of the aangifte's belastingjaar. Integer-cent
-     * arithmetic avoids IEEE-754 rounding drift; the result is returned in EUR.
-     * Returns 0.0 on a non-positive belastbaar bedrag and on any failure (the
-     * caller treats a missing tarief as "no liability computable yet").
-     *
-     * @param int|null   $belastingjaar   The belastingjaar to look up tarieven for.
-     * @param float|null $belastbareWinst The belastbare fiscale winst (EUR).
-     *
-     * @return float The verschuldigde Vpb in EUR.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
-     */
-    public function berekenVerschuldigdeVpb(?int $belastingjaar, ?float $belastbareWinst): float
-    {
-        try {
-            $belastbaar = (float) ($belastbareWinst ?? 0);
-            if ($belastbaar <= 0.0 || $belastingjaar === null) {
-                return 0.0;
-            }
+	/**
+	 * Compute the verschuldigde Vpb via the graduated schijftarief brackets.
+	 *
+	 * REQ-VPB-003: tarief1 over min(belastbaar, grens) + tarief2 over the excess,
+	 * using the VpbTariefcatalogus of the aangifte's belastingjaar. Integer-cent
+	 * arithmetic avoids IEEE-754 rounding drift; the result is returned in EUR.
+	 * Returns 0.0 on a non-positive belastbaar bedrag and on any failure (the
+	 * caller treats a missing tarief as "no liability computable yet").
+	 *
+	 * @param int|null $belastingjaar The belastingjaar to look up tarieven for.
+	 * @param float|null $belastbareWinst The belastbare fiscale winst (EUR).
+	 *
+	 * @return float The verschuldigde Vpb in EUR.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
+	 */
+	public function berekenVerschuldigdeVpb(?int $belastingjaar, ?float $belastbareWinst): float {
+		try {
+			$belastbaar = (float)($belastbareWinst ?? 0);
+			if ($belastbaar <= 0.0 || $belastingjaar === null) {
+				return 0.0;
+			}
 
-            $tarief = $this->resolveTariefcatalogus(belastingjaar: $belastingjaar);
-            if ($tarief === null) {
-                return 0.0;
-            }
+			$tarief = $this->resolveTariefcatalogus(belastingjaar: $belastingjaar);
+			if ($tarief === null) {
+				return 0.0;
+			}
 
-            return $this->applySchijftarief(tarief: $tarief, belastbaar: $belastbaar);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'VpbBerekeningGuard: berekenVerschuldigdeVpb failed — returning 0 (fail-closed)',
-                ['belastingjaar' => $belastingjaar, 'exception' => $e->getMessage()]
-            );
-            return 0.0;
-        }//end try
-    }//end berekenVerschuldigdeVpb()
+			return $this->applySchijftarief(tarief: $tarief, belastbaar: $belastbaar);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'VpbBerekeningGuard: berekenVerschuldigdeVpb failed — returning 0 (fail-closed)',
+				['belastingjaar' => $belastingjaar, 'exception' => $e->getMessage()]
+			);
+			return 0.0;
+		}//end try
+	}//end berekenVerschuldigdeVpb()
 
-    /**
-     * Apply the graduated schijftarief brackets to a belastbaar bedrag.
-     *
-     * Pure helper for berekenVerschuldigdeVpb: tarief1 over min(belastbaar, grens)
-     * plus tarief2 over the excess, using integer-cent arithmetic to avoid IEEE-754
-     * rounding drift. The result is returned in EUR.
-     *
-     * @param array<string,mixed> $tarief     The VpbTariefcatalogus record (tarief1/tarief2/belastbaarBedragGrens).
-     * @param float               $belastbaar The belastbare fiscale winst (EUR).
-     *
-     * @return float The verschuldigde Vpb in EUR.
-     */
-    private function applySchijftarief(array $tarief, float $belastbaar): float
-    {
-        $tarief1 = (float) ($tarief['tarief1'] ?? 0);
-        $tarief2 = (float) ($tarief['tarief2'] ?? 0);
-        $grens   = (float) ($tarief['belastbaarBedragGrens'] ?? 0);
+	/**
+	 * Apply the graduated schijftarief brackets to a belastbaar bedrag.
+	 *
+	 * Pure helper for berekenVerschuldigdeVpb: tarief1 over min(belastbaar, grens)
+	 * plus tarief2 over the excess, using integer-cent arithmetic to avoid IEEE-754
+	 * rounding drift. The result is returned in EUR.
+	 *
+	 * @param array<string,mixed> $tarief The VpbTariefcatalogus record (tarief1/tarief2/belastbaarBedragGrens).
+	 * @param float $belastbaar The belastbare fiscale winst (EUR).
+	 *
+	 * @return float The verschuldigde Vpb in EUR.
+	 */
+	private function applySchijftarief(array $tarief, float $belastbaar): float {
+		$tarief1 = (float)($tarief['tarief1'] ?? 0);
+		$tarief2 = (float)($tarief['tarief2'] ?? 0);
+		$grens = (float)($tarief['belastbaarBedragGrens'] ?? 0);
 
-        $belastbaarCents = (int) round($belastbaar * 100);
-        $grensCents      = (int) round($grens * 100);
+		$belastbaarCents = (int)round($belastbaar * 100);
+		$grensCents = (int)round($grens * 100);
 
-        $schijf1Cents = min($belastbaarCents, $grensCents);
-        $schijf2Cents = max(0, ($belastbaarCents - $grensCents));
+		$schijf1Cents = min($belastbaarCents, $grensCents);
+		$schijf2Cents = max(0, ($belastbaarCents - $grensCents));
 
-        $vpbCents = (($schijf1Cents * $tarief1) + ($schijf2Cents * $tarief2));
+		$vpbCents = (($schijf1Cents * $tarief1) + ($schijf2Cents * $tarief2));
 
-        return round(($vpbCents / 100), 2);
-    }//end applySchijftarief()
+		return round(($vpbCents / 100), 2);
+	}//end applySchijftarief()
 
-    /**
-     * Determine the voorvoegingsverlies regime for a given verliesjaar.
-     *
-     * REQ-VPB-006: <= 2018 -> 9jr; 2019-2021 -> 6jr; >= 2022 -> onbeperkt-50pct.
-     * Returns an empty string on any failure (fail-closed).
-     *
-     * @param int|null $verliesjaar The year the loss was incurred.
-     *
-     * @return string The regime code, or '' on failure.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
-     */
-    public function bepaalVerliesRegime(?int $verliesjaar): string
-    {
-        if ($verliesjaar === null) {
-            return '';
-        }
+	/**
+	 * Determine the voorvoegingsverlies regime for a given verliesjaar.
+	 *
+	 * REQ-VPB-006: <= 2018 -> 9jr; 2019-2021 -> 6jr; >= 2022 -> onbeperkt-50pct.
+	 * Returns an empty string on any failure (fail-closed).
+	 *
+	 * @param int|null $verliesjaar The year the loss was incurred.
+	 *
+	 * @return string The regime code, or '' on failure.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
+	 */
+	public function bepaalVerliesRegime(?int $verliesjaar): string {
+		if ($verliesjaar === null) {
+			return '';
+		}
 
-        if ($verliesjaar <= 2018) {
-            return '9jr';
-        }
+		if ($verliesjaar <= 2018) {
+			return '9jr';
+		}
 
-        if ($verliesjaar <= 2021) {
-            return '6jr';
-        }
+		if ($verliesjaar <= 2021) {
+			return '6jr';
+		}
 
-        return 'onbeperkt-50pct';
-    }//end bepaalVerliesRegime()
+		return 'onbeperkt-50pct';
+	}//end bepaalVerliesRegime()
 
-    /**
-     * Compute the verjaring date for a voorvoegingsverlies per its regime.
-     *
-     * REQ-VPB-006: 9jr regime -> 31 December of (verliesjaar + 9); 6jr regime ->
-     * 31 December of (verliesjaar + 6); onbeperkt regime -> null (no expiry).
-     *
-     * @param int|null $verliesjaar The year the loss was incurred.
-     *
-     * @return string|null The verjaring date (YYYY-12-31), or null when unbounded/unknown.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
-     */
-    public function bepaalVerjaardatum(?int $verliesjaar): ?string
-    {
-        $regime = $this->bepaalVerliesRegime(verliesjaar: $verliesjaar);
-        if ($regime === '9jr') {
-            return ($verliesjaar + 9).'-12-31';
-        }
+	/**
+	 * Compute the verjaring date for a voorvoegingsverlies per its regime.
+	 *
+	 * REQ-VPB-006: 9jr regime -> 31 December of (verliesjaar + 9); 6jr regime ->
+	 * 31 December of (verliesjaar + 6); onbeperkt regime -> null (no expiry).
+	 *
+	 * @param int|null $verliesjaar The year the loss was incurred.
+	 *
+	 * @return string|null The verjaring date (YYYY-12-31), or null when unbounded/unknown.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
+	 */
+	public function bepaalVerjaardatum(?int $verliesjaar): ?string {
+		$regime = $this->bepaalVerliesRegime(verliesjaar: $verliesjaar);
+		if ($regime === '9jr') {
+			return ($verliesjaar + 9) . '-12-31';
+		}
 
-        if ($regime === '6jr') {
-            return ($verliesjaar + 6).'-12-31';
-        }
+		if ($regime === '6jr') {
+			return ($verliesjaar + 6) . '-12-31';
+		}
 
-        return null;
-    }//end bepaalVerjaardatum()
+		return null;
+	}//end bepaalVerjaardatum()
 
-    /**
-     * Resolve the VpbTariefcatalogus record for a belastingjaar.
-     *
-     * @param int $belastingjaar The belastingjaar to look up.
-     *
-     * @return array<string,mixed>|null The tarief record, or null when absent.
-     */
-    private function resolveTariefcatalogus(int $belastingjaar): ?array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
+	/**
+	 * Resolve the VpbTariefcatalogus record for a belastingjaar.
+	 *
+	 * @param int $belastingjaar The belastingjaar to look up.
+	 *
+	 * @return array<string,mixed>|null The tarief record, or null when absent.
+	 */
+	private function resolveTariefcatalogus(int $belastingjaar): ?array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->resolveRegister();
 
-        $records = $objectService
-            ->setRegister($register)
-            ->setSchema('VpbTariefcatalogus')
-            ->findAll(['filters' => ['belastingjaar' => $belastingjaar]]);
+		$records = $objectService
+			->setRegister($register)
+			->setSchema('VpbTariefcatalogus')
+			->findAll(['filters' => ['belastingjaar' => $belastingjaar]]);
 
-        foreach ($records as $record) {
-            if (is_array($record) === true) {
-                return $record;
-            }
-        }
+		foreach ($records as $record) {
+			if (is_array($record) === true) {
+				return $record;
+			}
+		}
 
-        return null;
-    }//end resolveTariefcatalogus()
+		return null;
+	}//end resolveTariefcatalogus()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

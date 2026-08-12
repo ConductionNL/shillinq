@@ -34,364 +34,342 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class MandaatEnforcerTest extends TestCase
-{
+class MandaatEnforcerTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var MandaatEnforcer
-     */
-    private MandaatEnforcer $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var MandaatEnforcer
+	 */
+	private MandaatEnforcer $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new MandaatEnforcer(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+		$this->guard = new MandaatEnforcer(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build a filter-aware ObjectService stub returning records by schema, honouring
-     * the exact-match filters in the findAll query.
-     *
-     * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records by schema.
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $recordsBySchema): object
-    {
-        return new class ($recordsBySchema) {
+	/**
+	 * Build a filter-aware ObjectService stub returning records by schema, honouring
+	 * the exact-match filters in the findAll query.
+	 *
+	 * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records by schema.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $recordsBySchema): object {
+		return new class($recordsBySchema) {
+			/**
+			 * Map of schema name → record arrays.
+			 *
+			 * @var array<string, array<int, array<string, mixed>>>
+			 */
+			private array $recordsBySchema;
 
-            /**
-             * Map of schema name → record arrays.
-             *
-             * @var array<string, array<int, array<string, mixed>>>
-             */
-            private array $recordsBySchema;
+			/**
+			 * Currently active schema name.
+			 *
+			 * @var string
+			 */
+			private string $currentSchema = '';
 
-            /**
-             * Currently active schema name.
-             *
-             * @var string
-             */
-            private string $currentSchema = '';
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records by schema.
+			 */
+			public function __construct(array $recordsBySchema) {
+				$this->recordsBySchema = $recordsBySchema;
 
-            /**
-             * Constructor.
-             *
-             * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records by schema.
-             */
-            public function __construct(array $recordsBySchema)
-            {
-                $this->recordsBySchema = $recordsBySchema;
+			}//end __construct()
 
-            }//end __construct()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->currentSchema = $schema;
+				return $this;
+			}//end setSchema()
 
-            }//end setRegister()
+			/**
+			 * Return stubbed records matching the exact-match filters.
+			 *
+			 * @param array<string, mixed> $params Query parameters.
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$records = ($this->recordsBySchema[$this->currentSchema] ?? []);
+				$filters = ($params['filters'] ?? []);
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema name.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->currentSchema = $schema;
-                return $this;
+				return array_values(
+					array_filter(
+						$records,
+						static function (array $record) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($record[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-            }//end setSchema()
+							return true;
+						}
+					)
+				);
 
-            /**
-             * Return stubbed records matching the exact-match filters.
-             *
-             * @param array<string, mixed> $params Query parameters.
-             *
-             * @return array<int, array<string, mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $records = ($this->recordsBySchema[$this->currentSchema] ?? []);
-                $filters = ($params['filters'] ?? []);
+			}//end findAll()
+		};
 
-                return array_values(
-                    array_filter(
-                        $records,
-                        static function (array $record) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($record[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+	}//end buildObjectServiceStub()
 
-                            return true;
-                        }
-                    )
-                );
+	/**
+	 * Stub the container to return the given ObjectService stub.
+	 *
+	 * @param object $objectService The ObjectService stub.
+	 *
+	 * @return void
+	 */
+	private function withObjectService(object $objectService): void {
+		$this->container->method('get')->willReturn($objectService);
 
-            }//end findAll()
-        };
+	}//end withObjectService()
 
-    }//end buildObjectServiceStub()
+	/**
+	 * A valid inkoop mandate up to EUR 50.000 for the demo administration.
+	 *
+	 * @param array<string,mixed> $overrides Field overrides.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function mandate(array $overrides = []): array {
+		return array_merge(
+			[
+				'administrationId' => 'adm-1',
+				'mandaatcode' => 'M-INKOOP-50K',
+				'maximumbedrag' => 5000000,
+				'soort_verplichting' => ['inkooporder', 'raamovereenkomst'],
+				'is_override' => false,
+				'geldig_van' => '2020-01-01',
+				'geldig_tot' => '2999-12-31',
+				'vereist_tweede_handtekening_boven' => null,
+			],
+			$overrides
+		);
 
-    /**
-     * Stub the container to return the given ObjectService stub.
-     *
-     * @param object $objectService The ObjectService stub.
-     *
-     * @return void
-     */
-    private function withObjectService(object $objectService): void
-    {
-        $this->container->method('get')->willReturn($objectService);
+	}//end mandate()
 
-    }//end withObjectService()
+	/**
+	 * A commitment of the given soort and amount for the demo administration.
+	 *
+	 * @param string $soort Commitment soort.
+	 * @param int $bedrag Amount in minor units.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function commitment(string $soort, int $bedrag): array {
+		return [
+			'administrationId' => 'adm-1',
+			'verplichtingsnummer' => 'PO-1',
+			'soort' => $soort,
+			'totaalbedrag_excl_btw' => $bedrag,
+		];
 
-    /**
-     * A valid inkoop mandate up to EUR 50.000 for the demo administration.
-     *
-     * @param array<string,mixed> $overrides Field overrides.
-     *
-     * @return array<string,mixed>
-     */
-    private function mandate(array $overrides=[]): array
-    {
-        return array_merge(
-            [
-                'administrationId'                  => 'adm-1',
-                'mandaatcode'                       => 'M-INKOOP-50K',
-                'maximumbedrag'                     => 5000000,
-                'soort_verplichting'                => ['inkooporder', 'raamovereenkomst'],
-                'is_override'                       => false,
-                'geldig_van'                        => '2020-01-01',
-                'geldig_tot'                        => '2999-12-31',
-                'vereist_tweede_handtekening_boven' => null,
-            ],
-            $overrides
-        );
+	}//end commitment()
 
-    }//end mandate()
+	/**
+	 * REQ-VPL-002: a user with a sufficient mandate can sign within the limit.
+	 *
+	 * @return void
+	 */
+	public function testSufficientMandateWithinLimit(): void {
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$this->mandate()]]));
 
-    /**
-     * A commitment of the given soort and amount for the demo administration.
-     *
-     * @param string $soort  Commitment soort.
-     * @param int    $bedrag Amount in minor units.
-     *
-     * @return array<string,mixed>
-     */
-    private function commitment(string $soort, int $bedrag): array
-    {
-        return [
-            'administrationId'      => 'adm-1',
-            'verplichtingsnummer'   => 'PO-1',
-            'soort'                 => $soort,
-            'totaalbedrag_excl_btw' => $bedrag,
-        ];
+		$this->assertTrue(
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 3000000))
+		);
+		$this->assertFalse(
+			$this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 3000000))
+		);
 
-    }//end commitment()
+	}//end testSufficientMandateWithinLimit()
 
-    /**
-     * REQ-VPL-002: a user with a sufficient mandate can sign within the limit.
-     *
-     * @return void
-     */
-    public function testSufficientMandateWithinLimit(): void
-    {
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$this->mandate()]]));
+	/**
+	 * REQ-VPL-002: a commitment above the mandate ceiling requires approval.
+	 *
+	 * @return void
+	 */
+	public function testAmountExceedsMandateRequiresApproval(): void {
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$this->mandate()]]));
 
-        $this->assertTrue(
-            $this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 3000000))
-        );
-        $this->assertFalse(
-            $this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 3000000))
-        );
+		$this->assertFalse(
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 7500000))
+		);
+		$this->assertTrue(
+			$this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 7500000))
+		);
 
-    }//end testSufficientMandateWithinLimit()
+	}//end testAmountExceedsMandateRequiresApproval()
 
-    /**
-     * REQ-VPL-002: a commitment above the mandate ceiling requires approval.
-     *
-     * @return void
-     */
-    public function testAmountExceedsMandateRequiresApproval(): void
-    {
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$this->mandate()]]));
+	/**
+	 * REQ-VPL-002: a soort not listed in the mandate does not apply.
+	 *
+	 * @return void
+	 */
+	public function testSoortNotCoveredRequiresApproval(): void {
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$this->mandate()]]));
 
-        $this->assertFalse(
-            $this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 7500000))
-        );
-        $this->assertTrue(
-            $this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 7500000))
-        );
+		// An arbeidscontract is not in the mandate's soort_verplichting list.
+		$this->assertFalse(
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('arbeidscontract', 1000000))
+		);
 
-    }//end testAmountExceedsMandateRequiresApproval()
+	}//end testSoortNotCoveredRequiresApproval()
 
-    /**
-     * REQ-VPL-002: a soort not listed in the mandate does not apply.
-     *
-     * @return void
-     */
-    public function testSoortNotCoveredRequiresApproval(): void
-    {
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$this->mandate()]]));
+	/**
+	 * REQ-VPL-002: an expired mandate is treated as absent.
+	 *
+	 * @return void
+	 */
+	public function testExpiredMandateIsIgnored(): void {
+		$expired = $this->mandate(['geldig_tot' => '2000-01-01']);
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$expired]]));
 
-        // An arbeidscontract is not in the mandate's soort_verplichting list.
-        $this->assertFalse(
-            $this->guard->hasSufficientMandate('PO-1', $this->commitment('arbeidscontract', 1000000))
-        );
+		$this->assertFalse(
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
+		);
 
-    }//end testSoortNotCoveredRequiresApproval()
+	}//end testExpiredMandateIsIgnored()
 
-    /**
-     * REQ-VPL-002: an expired mandate is treated as absent.
-     *
-     * @return void
-     */
-    public function testExpiredMandateIsIgnored(): void
-    {
-        $expired = $this->mandate(['geldig_tot' => '2000-01-01']);
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$expired]]));
+	/**
+	 * REQ-VPL-002: a not-yet-valid mandate is treated as absent.
+	 *
+	 * @return void
+	 */
+	public function testFutureMandateIsIgnored(): void {
+		$future = $this->mandate(['geldig_van' => '2999-01-01']);
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$future]]));
 
-        $this->assertFalse(
-            $this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
-        );
+		$this->assertFalse(
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
+		);
 
-    }//end testExpiredMandateIsIgnored()
+	}//end testFutureMandateIsIgnored()
 
-    /**
-     * REQ-VPL-002: a not-yet-valid mandate is treated as absent.
-     *
-     * @return void
-     */
-    public function testFutureMandateIsIgnored(): void
-    {
-        $future = $this->mandate(['geldig_van' => '2999-01-01']);
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$future]]));
+	/**
+	 * REQ-VPL-002: a second signature is required above the mandate threshold.
+	 *
+	 * @return void
+	 */
+	public function testSecondSignatureRequiredAboveThreshold(): void {
+		$mandate = $this->mandate(['vereist_tweede_handtekening_boven' => 2500000]);
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$mandate]]));
 
-        $this->assertFalse(
-            $this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
-        );
+		$this->assertTrue(
+			$this->guard->requiresSecondSignature($this->commitment('inkooporder', 3000000))
+		);
+		$this->assertFalse(
+			$this->guard->requiresSecondSignature($this->commitment('inkooporder', 2000000))
+		);
 
-    }//end testFutureMandateIsIgnored()
+	}//end testSecondSignatureRequiredAboveThreshold()
 
-    /**
-     * REQ-VPL-002: a second signature is required above the mandate threshold.
-     *
-     * @return void
-     */
-    public function testSecondSignatureRequiredAboveThreshold(): void
-    {
-        $mandate = $this->mandate(['vereist_tweede_handtekening_boven' => 2500000]);
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$mandate]]));
+	/**
+	 * Least-privilege: when several mandates apply, the lowest sufficient
+	 * non-override ceiling is preferred.
+	 *
+	 * @return void
+	 */
+	public function testResolvesLeastPrivilegeNonOverrideMandate(): void {
+		$small = $this->mandate(['mandaatcode' => 'SMALL', 'maximumbedrag' => 5000000]);
+		$big = $this->mandate(['mandaatcode' => 'BIG', 'maximumbedrag' => 25000000]);
+		$override = $this->mandate(['mandaatcode' => 'OVR', 'maximumbedrag' => 1000000000, 'is_override' => true]);
 
-        $this->assertTrue(
-            $this->guard->requiresSecondSignature($this->commitment('inkooporder', 3000000))
-        );
-        $this->assertFalse(
-            $this->guard->requiresSecondSignature($this->commitment('inkooporder', 2000000))
-        );
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$big, $override, $small]]));
 
-    }//end testSecondSignatureRequiredAboveThreshold()
+		$resolved = $this->guard->resolveApplicableMandate($this->commitment('inkooporder', 3000000));
+		$this->assertNotNull($resolved);
+		$this->assertSame('SMALL', $resolved['mandaatcode']);
 
-    /**
-     * Least-privilege: when several mandates apply, the lowest sufficient
-     * non-override ceiling is preferred.
-     *
-     * @return void
-     */
-    public function testResolvesLeastPrivilegeNonOverrideMandate(): void
-    {
-        $small    = $this->mandate(['mandaatcode' => 'SMALL', 'maximumbedrag' => 5000000]);
-        $big      = $this->mandate(['mandaatcode' => 'BIG', 'maximumbedrag' => 25000000]);
-        $override = $this->mandate(['mandaatcode' => 'OVR', 'maximumbedrag' => 1000000000, 'is_override' => true]);
+	}//end testResolvesLeastPrivilegeNonOverrideMandate()
 
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$big, $override, $small]]));
+	/**
+	 * No mandate at all means approval is required.
+	 *
+	 * @return void
+	 */
+	public function testNoMandateRequiresApproval(): void {
+		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => []]));
 
-        $resolved = $this->guard->resolveApplicableMandate($this->commitment('inkooporder', 3000000));
-        $this->assertNotNull($resolved);
-        $this->assertSame('SMALL', $resolved['mandaatcode']);
+		$this->assertTrue(
+			$this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 1000000))
+		);
 
-    }//end testResolvesLeastPrivilegeNonOverrideMandate()
+	}//end testNoMandateRequiresApproval()
 
-    /**
-     * No mandate at all means approval is required.
-     *
-     * @return void
-     */
-    public function testNoMandateRequiresApproval(): void
-    {
-        $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => []]));
+	/**
+	 * Fail-closed: when the ObjectService throws, the commitment is treated as not
+	 * mandated (CWE-863).
+	 *
+	 * @return void
+	 */
+	public function testFailClosedOnException(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('boom'));
 
-        $this->assertTrue(
-            $this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 1000000))
-        );
+		$this->assertFalse(
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
+		);
 
-    }//end testNoMandateRequiresApproval()
-
-    /**
-     * Fail-closed: when the ObjectService throws, the commitment is treated as not
-     * mandated (CWE-863).
-     *
-     * @return void
-     */
-    public function testFailClosedOnException(): void
-    {
-        $this->container->method('get')->willThrowException(new \RuntimeException('boom'));
-
-        $this->assertFalse(
-            $this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
-        );
-
-    }//end testFailClosedOnException()
+	}//end testFailClosedOnException()
 }//end class

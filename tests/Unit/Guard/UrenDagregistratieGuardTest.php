@@ -35,192 +35,180 @@ use Psr\Log\LoggerInterface;
  * - evidence requirement for SCHOLING / FICTIE_ZEZ
  * - fail-closed on malformed input
  */
-class UrenDagregistratieGuardTest extends TestCase
-{
+class UrenDagregistratieGuardTest extends TestCase {
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var UrenDagregistratieGuard
-     */
-    private UrenDagregistratieGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var UrenDagregistratieGuard
+	 */
+	private UrenDagregistratieGuard $guard;
 
-    /**
-     * Set up the guard with a mocked logger.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new UrenDagregistratieGuard(logger: $this->logger);
+	/**
+	 * Set up the guard with a mocked logger.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new UrenDagregistratieGuard(logger: $this->logger);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Reistijd within the cap is counted unchanged with no note (REQ-URC-001).
-     *
-     * @return void
-     */
-    public function testReistijdWithinCapUnchanged(): void
-    {
-        $result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 3.0);
-        self::assertSame(3.0, $result['getoldeUren']);
-        self::assertNull($result['capNotitie']);
+	/**
+	 * Reistijd within the cap is counted unchanged with no note (REQ-URC-001).
+	 *
+	 * @return void
+	 */
+	public function testReistijdWithinCapUnchanged(): void {
+		$result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 3.0);
+		self::assertSame(3.0, $result['getoldeUren']);
+		self::assertNull($result['capNotitie']);
 
-    }//end testReistijdWithinCapUnchanged()
+	}//end testReistijdWithinCapUnchanged()
 
-    /**
-     * Reistijd above the cap counts 4 hours and records the overage note.
-     *
-     * @return void
-     */
-    public function testReistijdCapAppliedWithNote(): void
-    {
-        $result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 6.0);
-        self::assertSame(4.0, $result['getoldeUren']);
-        self::assertSame('Reistijd-cap toegepast: 2 uur niet meegeteld', $result['capNotitie']);
+	/**
+	 * Reistijd above the cap counts 4 hours and records the overage note.
+	 *
+	 * @return void
+	 */
+	public function testReistijdCapAppliedWithNote(): void {
+		$result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 6.0);
+		self::assertSame(4.0, $result['getoldeUren']);
+		self::assertSame('Reistijd-cap toegepast: 2 uur niet meegeteld', $result['capNotitie']);
 
-    }//end testReistijdCapAppliedWithNote()
+	}//end testReistijdCapAppliedWithNote()
 
-    /**
-     * Non-reistijd categories are never capped.
-     *
-     * @return void
-     */
-    public function testOtherCategoriesNotCapped(): void
-    {
-        $result = $this->guard->pasReistijdCapToe(categorie: 'ACQUISITIE', uren: 9.0);
-        self::assertSame(9.0, $result['getoldeUren']);
-        self::assertNull($result['capNotitie']);
+	/**
+	 * Non-reistijd categories are never capped.
+	 *
+	 * @return void
+	 */
+	public function testOtherCategoriesNotCapped(): void {
+		$result = $this->guard->pasReistijdCapToe(categorie: 'ACQUISITIE', uren: 9.0);
+		self::assertSame(9.0, $result['getoldeUren']);
+		self::assertNull($result['capNotitie']);
 
-    }//end testOtherCategoriesNotCapped()
+	}//end testOtherCategoriesNotCapped()
 
-    /**
-     * A 5-day-old backfill is auto-labelled (REQ-URC-017 scenario).
-     *
-     * @return void
-     */
-    public function testBackfillLabelStamped(): void
-    {
-        self::assertSame(
-            'Backfill T+5 dagen',
-            $this->guard->bepaalBackfillLabel(datum: '2026-05-16', registratieMoment: '2026-05-21T10:00:00Z')
-        );
+	/**
+	 * A 5-day-old backfill is auto-labelled (REQ-URC-017 scenario).
+	 *
+	 * @return void
+	 */
+	public function testBackfillLabelStamped(): void {
+		self::assertSame(
+			'Backfill T+5 dagen',
+			$this->guard->bepaalBackfillLabel(datum: '2026-05-16', registratieMoment: '2026-05-21T10:00:00Z')
+		);
 
-    }//end testBackfillLabelStamped()
+	}//end testBackfillLabelStamped()
 
-    /**
-     * Same-day registration is not a backfill.
-     *
-     * @return void
-     */
-    public function testSameDayNotBackfill(): void
-    {
-        self::assertNull(
-            $this->guard->bepaalBackfillLabel(datum: '2026-05-21', registratieMoment: '2026-05-21T18:00:00Z')
-        );
+	/**
+	 * Same-day registration is not a backfill.
+	 *
+	 * @return void
+	 */
+	public function testSameDayNotBackfill(): void {
+		self::assertNull(
+			$this->guard->bepaalBackfillLabel(datum: '2026-05-21', registratieMoment: '2026-05-21T18:00:00Z')
+		);
 
-    }//end testSameDayNotBackfill()
+	}//end testSameDayNotBackfill()
 
-    /**
-     * A backfill within 7 days passes the save precondition without reden/bewijs.
-     *
-     * @return void
-     */
-    public function testBackfillWithinWindowPasses(): void
-    {
-        $entry = [
-            'ondernemingId'     => 'ond-1',
-            'datum'             => '2026-05-16',
-            'categorie'         => 'ACQUISITIE',
-            'uren'              => 2,
-            'registratieMoment' => '2026-05-21T10:00:00Z',
-        ];
-        self::assertTrue($this->guard->validateOnSave(entry: $entry));
+	/**
+	 * A backfill within 7 days passes the save precondition without reden/bewijs.
+	 *
+	 * @return void
+	 */
+	public function testBackfillWithinWindowPasses(): void {
+		$entry = [
+			'ondernemingId' => 'ond-1',
+			'datum' => '2026-05-16',
+			'categorie' => 'ACQUISITIE',
+			'uren' => 2,
+			'registratieMoment' => '2026-05-21T10:00:00Z',
+		];
+		self::assertTrue($this->guard->validateOnSave(entry: $entry));
 
-    }//end testBackfillWithinWindowPasses()
+	}//end testBackfillWithinWindowPasses()
 
-    /**
-     * A backfill older than 7 days without reden + bewijs is rejected (REQ-URC-017).
-     *
-     * @return void
-     */
-    public function testOldBackfillWithoutEvidenceRejected(): void
-    {
-        $entry = [
-            'ondernemingId'     => 'ond-1',
-            'datum'             => '2026-04-05',
-            'categorie'         => 'ACQUISITIE',
-            'uren'              => 2,
-            'registratieMoment' => '2026-05-21T10:00:00Z',
-        ];
-        self::assertFalse($this->guard->validateOnSave(entry: $entry));
+	/**
+	 * A backfill older than 7 days without reden + bewijs is rejected (REQ-URC-017).
+	 *
+	 * @return void
+	 */
+	public function testOldBackfillWithoutEvidenceRejected(): void {
+		$entry = [
+			'ondernemingId' => 'ond-1',
+			'datum' => '2026-04-05',
+			'categorie' => 'ACQUISITIE',
+			'uren' => 2,
+			'registratieMoment' => '2026-05-21T10:00:00Z',
+		];
+		self::assertFalse($this->guard->validateOnSave(entry: $entry));
 
-    }//end testOldBackfillWithoutEvidenceRejected()
+	}//end testOldBackfillWithoutEvidenceRejected()
 
-    /**
-     * A backfill older than 7 days WITH reden + bewijs is accepted (REQ-URC-017).
-     *
-     * @return void
-     */
-    public function testOldBackfillWithEvidenceAccepted(): void
-    {
-        $entry = [
-            'ondernemingId'     => 'ond-1',
-            'datum'             => '2026-04-05',
-            'categorie'         => 'ACQUISITIE',
-            'uren'              => 2,
-            'registratieMoment' => '2026-05-21T10:00:00Z',
-            'backfillReden'     => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
-            'backfillBewijs'    => 'file-77',
-        ];
-        self::assertTrue($this->guard->validateOnSave(entry: $entry));
+	/**
+	 * A backfill older than 7 days WITH reden + bewijs is accepted (REQ-URC-017).
+	 *
+	 * @return void
+	 */
+	public function testOldBackfillWithEvidenceAccepted(): void {
+		$entry = [
+			'ondernemingId' => 'ond-1',
+			'datum' => '2026-04-05',
+			'categorie' => 'ACQUISITIE',
+			'uren' => 2,
+			'registratieMoment' => '2026-05-21T10:00:00Z',
+			'backfillReden' => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
+			'backfillBewijs' => 'file-77',
+		];
+		self::assertTrue($this->guard->validateOnSave(entry: $entry));
 
-    }//end testOldBackfillWithEvidenceAccepted()
+	}//end testOldBackfillWithEvidenceAccepted()
 
-    /**
-     * A SCHOLING entry without evidence is rejected (REQ-URC-004).
-     *
-     * @return void
-     */
-    public function testScholingWithoutEvidenceRejected(): void
-    {
-        $entry = [
-            'ondernemingId'     => 'ond-1',
-            'datum'             => '2026-05-21',
-            'categorie'         => 'SCHOLING',
-            'uren'              => 8,
-            'registratieMoment' => '2026-05-21T18:00:00Z',
-        ];
-        self::assertFalse($this->guard->validateOnSave(entry: $entry));
+	/**
+	 * A SCHOLING entry without evidence is rejected (REQ-URC-004).
+	 *
+	 * @return void
+	 */
+	public function testScholingWithoutEvidenceRejected(): void {
+		$entry = [
+			'ondernemingId' => 'ond-1',
+			'datum' => '2026-05-21',
+			'categorie' => 'SCHOLING',
+			'uren' => 8,
+			'registratieMoment' => '2026-05-21T18:00:00Z',
+		];
+		self::assertFalse($this->guard->validateOnSave(entry: $entry));
 
-    }//end testScholingWithoutEvidenceRejected()
+	}//end testScholingWithoutEvidenceRejected()
 
-    /**
-     * A SCHOLING entry with evidence is accepted.
-     *
-     * @return void
-     */
-    public function testScholingWithEvidenceAccepted(): void
-    {
-        $entry = [
-            'ondernemingId'     => 'ond-1',
-            'datum'             => '2026-05-21',
-            'categorie'         => 'SCHOLING',
-            'uren'              => 8,
-            'registratieMoment' => '2026-05-21T18:00:00Z',
-            'backfillBewijs'    => 'file-cursus-99',
-        ];
-        self::assertTrue($this->guard->validateOnSave(entry: $entry));
+	/**
+	 * A SCHOLING entry with evidence is accepted.
+	 *
+	 * @return void
+	 */
+	public function testScholingWithEvidenceAccepted(): void {
+		$entry = [
+			'ondernemingId' => 'ond-1',
+			'datum' => '2026-05-21',
+			'categorie' => 'SCHOLING',
+			'uren' => 8,
+			'registratieMoment' => '2026-05-21T18:00:00Z',
+			'backfillBewijs' => 'file-cursus-99',
+		];
+		self::assertTrue($this->guard->validateOnSave(entry: $entry));
 
-    }//end testScholingWithEvidenceAccepted()
+	}//end testScholingWithEvidenceAccepted()
 }//end class

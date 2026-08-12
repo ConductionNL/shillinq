@@ -50,388 +50,376 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class WaterschappenBbvAggregationIntegrationTest extends TestCase
-{
+final class WaterschappenBbvAggregationIntegrationTest extends TestCase {
 
+	/**
+	 * Compliance status thresholds carried from REQ-BBVW-005 / giant D3.
+	 *
+	 * @var array<string,float>
+	 */
+	private const THRESHOLD_ON_TRACK = 0.75;
 
-    /**
-     * Compliance status thresholds carried from REQ-BBVW-005 / giant D3.
-     *
-     * @var array<string,float>
-     */
-    private const THRESHOLD_ON_TRACK = 0.75;
+	/**
+	 * Upper bound (inclusive) for the at-risk band; > this is non-compliant.
+	 *
+	 * @var float
+	 */
+	private const THRESHOLD_AT_RISK = 0.90;
 
-    /**
-     * Upper bound (inclusive) for the at-risk band; > this is non-compliant.
-     *
-     * @var float
-     */
-    private const THRESHOLD_AT_RISK = 0.90;
+	/**
+	 * Load the base shillinq_register.json + merge every register.d/*.json
+	 * fragment the same way SettingsService does at install time. Returns
+	 * the merged OpenAPI components object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function loadMergedComponents(): array {
+		$basePath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
+		$baseRaw = file_get_contents($basePath);
+		if ($baseRaw === false) {
+			self::fail('Could not read shillinq_register.json base config.');
+		}
 
-    /**
-     * Load the base shillinq_register.json + merge every register.d/*.json
-     * fragment the same way SettingsService does at install time. Returns
-     * the merged OpenAPI components object.
-     *
-     * @return array<string,mixed>
-     */
-    private function loadMergedComponents(): array
-    {
-        $basePath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
-        $baseRaw  = file_get_contents($basePath);
-        if ($baseRaw === false) {
-            self::fail('Could not read shillinq_register.json base config.');
-        }
+		$base = json_decode($baseRaw, true);
+		if (is_array($base) === false) {
+			self::fail('shillinq_register.json base config is not valid JSON.');
+		}
 
-        $base = json_decode($baseRaw, true);
-        if (is_array($base) === false) {
-            self::fail('shillinq_register.json base config is not valid JSON.');
-        }
+		$fragmentDir = __DIR__ . '/../../../lib/Settings/register.d';
+		$fragments = glob($fragmentDir . '/*.json');
+		if ($fragments === false) {
+			$fragments = [];
+		}
 
-        $fragmentDir = __DIR__.'/../../../lib/Settings/register.d';
-        $fragments   = glob($fragmentDir.'/*.json');
-        if ($fragments === false) {
-            $fragments = [];
-        }
+		sort($fragments);
+		foreach ($fragments as $fragmentPath) {
+			$fragmentRaw = file_get_contents($fragmentPath);
+			if ($fragmentRaw === false) {
+				continue;
+			}
 
-        sort($fragments);
-        foreach ($fragments as $fragmentPath) {
-            $fragmentRaw = file_get_contents($fragmentPath);
-            if ($fragmentRaw === false) {
-                continue;
-            }
+			$fragmentData = json_decode($fragmentRaw, true);
+			if (is_array($fragmentData) === false) {
+				continue;
+			}
 
-            $fragmentData = json_decode($fragmentRaw, true);
-            if (is_array($fragmentData) === false) {
-                continue;
-            }
+			$base = self::deepMerge(base: $base, overlay: $fragmentData);
+		}
 
-            $base = self::deepMerge(base: $base, overlay: $fragmentData);
-        }
+		return ($base['components'] ?? []);
+	}//end loadMergedComponents()
 
-        return ($base['components'] ?? []);
+	/**
+	 * Deep-merge an overlay onto a base; mirror of
+	 * SettingsService::deepMergeConfig (assoc arrays merge by key, list
+	 * arrays concatenate, scalars overwrite).
+	 *
+	 * @param array<mixed> $base The accumulated config.
+	 * @param array<mixed> $overlay The fragment to merge.
+	 *
+	 * @return array<mixed>
+	 */
+	private static function deepMerge(array $base, array $overlay): array {
+		foreach ($overlay as $key => $value) {
+			if (is_array($value) === true
+				&& isset($base[$key]) === true
+				&& is_array($base[$key]) === true
+			) {
+				$baseIsList = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
+				$overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
+				if ($baseIsList === true && $overlayIsList === true) {
+					$base[$key] = array_merge($base[$key], $value);
+				} else {
+					$base[$key] = self::deepMerge(base: $base[$key], overlay: $value);
+				}
+			} else {
+				$base[$key] = $value;
+			}
+		}
 
-    }//end loadMergedComponents()
+		return $base;
+	}//end deepMerge()
 
-    /**
-     * Deep-merge an overlay onto a base; mirror of
-     * SettingsService::deepMergeConfig (assoc arrays merge by key, list
-     * arrays concatenate, scalars overwrite).
-     *
-     * @param array<mixed> $base    The accumulated config.
-     * @param array<mixed> $overlay The fragment to merge.
-     *
-     * @return array<mixed>
-     */
-    private static function deepMerge(array $base, array $overlay): array
-    {
-        foreach ($overlay as $key => $value) {
-            if (is_array($value) === true
-                && isset($base[$key]) === true
-                && is_array($base[$key]) === true
-            ) {
-                $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
-                $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
-                if ($baseIsList === true && $overlayIsList === true) {
-                    $base[$key] = array_merge($base[$key], $value);
-                } else {
-                    $base[$key] = self::deepMerge(base: $base[$key], overlay: $value);
-                }
-            } else {
-                $base[$key] = $value;
-            }
-        }
+	/**
+	 * Load the slice-02 seed fixture.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function fixture(): array {
+		$path = __DIR__ . '/../../fixtures/WaterschappenBbvAggregationSeedData.json';
+		$raw = file_get_contents($path);
+		if ($raw === false) {
+			self::fail('Could not read WaterschappenBbvAggregationSeedData fixture.');
+		}
 
-        return $base;
+		$data = json_decode($raw, true);
+		if (is_array($data) === false) {
+			self::fail('WaterschappenBbvAggregationSeedData fixture is not valid JSON.');
+		}
 
-    }//end deepMerge()
+		return $data;
+	}//end fixture()
 
-    /**
-     * Load the slice-02 seed fixture.
-     *
-     * @return array<string,mixed>
-     */
-    private function fixture(): array
-    {
-        $path = __DIR__.'/../../fixtures/WaterschappenBbvAggregationSeedData.json';
-        $raw  = file_get_contents($path);
-        if ($raw === false) {
-            self::fail('Could not read WaterschappenBbvAggregationSeedData fixture.');
-        }
+	/**
+	 * Compute the aggregation outputs (totalBudget, ytdSpend, utilization,
+	 * complianceStatus) for one programme by evaluating the declarative
+	 * arithmetic from the x-openregister-aggregations block against the
+	 * given mappings + GL transactions. Mirrors what the OpenRegister
+	 * aggregation engine MUST produce — REQ-BBVW-005 / giant D3.
+	 *
+	 * @param string $programmeCode The programme code to aggregate.
+	 * @param array<int,array<string,mixed>> $mappings All BudgetBBVMapping records.
+	 * @param array<int,array<string,mixed>> $transactions GL transaction lines in the fiscal year.
+	 *
+	 * @return array{totalBudgetCents:int,ytdSpendCents:int,utilization:float,complianceStatus:string}
+	 */
+	private function computeAggregation(
+		string $programmeCode,
+		array $mappings,
+		array $transactions,
+	): array {
+		// Slice mappings for this programme.
+		$programmeMappings = array_values(
+			array_filter(
+				$mappings,
+				static fn (array $m): bool => ($m['programmeCode'] ?? null) === $programmeCode
+			)
+		);
 
-        $data = json_decode($raw, true);
-        if (is_array($data) === false) {
-            self::fail('WaterschappenBbvAggregationSeedData fixture is not valid JSON.');
-        }
+		// TotalBudget = SUM(glAccountBudgetCents * allocation% / 100), integer-cent.
+		$totalBudgetCents = 0;
+		foreach ($programmeMappings as $m) {
+			$totalBudgetCents += (int)(
+				((int)$m['glAccountBudgetCents']) * ((float)$m['allocationPercentage']) / 100
+			);
+		}
 
-        return $data;
+		// YTDSpend = SUM(line.amountCents * allocation% / 100) joined on glAccountNumber.
+		$ytdSpendCents = 0;
+		foreach ($transactions as $line) {
+			foreach ($programmeMappings as $m) {
+				if (((string)$line['glAccountNumber']) !== ((string)$m['glAccountNumber'])) {
+					continue;
+				}
 
-    }//end fixture()
+				$effectiveFrom = ($m['effectiveFrom'] ?? null);
+				$effectiveTo = ($m['effectiveTo'] ?? null);
+				$postingDate = ((string)$line['postingDate']);
 
-    /**
-     * Compute the aggregation outputs (totalBudget, ytdSpend, utilization,
-     * complianceStatus) for one programme by evaluating the declarative
-     * arithmetic from the x-openregister-aggregations block against the
-     * given mappings + GL transactions. Mirrors what the OpenRegister
-     * aggregation engine MUST produce — REQ-BBVW-005 / giant D3.
-     *
-     * @param string                         $programmeCode The programme code to aggregate.
-     * @param array<int,array<string,mixed>> $mappings      All BudgetBBVMapping records.
-     * @param array<int,array<string,mixed>> $transactions  GL transaction lines in the fiscal year.
-     *
-     * @return array{totalBudgetCents:int,ytdSpendCents:int,utilization:float,complianceStatus:string}
-     */
-    private function computeAggregation(
-        string $programmeCode,
-        array $mappings,
-        array $transactions
-    ): array {
-        // Slice mappings for this programme.
-        $programmeMappings = array_values(
-            array_filter(
-                $mappings,
-                static fn (array $m): bool => ($m['programmeCode'] ?? null) === $programmeCode
-            )
-        );
+				if ($effectiveFrom !== null && $postingDate < $effectiveFrom) {
+					continue;
+				}
 
-        // TotalBudget = SUM(glAccountBudgetCents * allocation% / 100), integer-cent.
-        $totalBudgetCents = 0;
-        foreach ($programmeMappings as $m) {
-            $totalBudgetCents += (int) (
-                ((int) $m['glAccountBudgetCents']) * ((float) $m['allocationPercentage']) / 100
-            );
-        }
+				if ($effectiveTo !== null && $postingDate > $effectiveTo) {
+					continue;
+				}
 
-        // YTDSpend = SUM(line.amountCents * allocation% / 100) joined on glAccountNumber.
-        $ytdSpendCents = 0;
-        foreach ($transactions as $line) {
-            foreach ($programmeMappings as $m) {
-                if (((string) $line['glAccountNumber']) !== ((string) $m['glAccountNumber'])) {
-                    continue;
-                }
+				$ytdSpendCents += (int)(
+					((int)$line['amountCents']) * ((float)$m['allocationPercentage']) / 100
+				);
+			}//end foreach
+		}//end foreach
 
-                $effectiveFrom = ($m['effectiveFrom'] ?? null);
-                $effectiveTo   = ($m['effectiveTo'] ?? null);
-                $postingDate   = ((string) $line['postingDate']);
+		$utilization = 0.0;
+		if ($totalBudgetCents > 0) {
+			$utilization = ($ytdSpendCents / $totalBudgetCents);
+		}
 
-                if ($effectiveFrom !== null && $postingDate < $effectiveFrom) {
-                    continue;
-                }
+		$hasMappings = ($totalBudgetCents > 0);
+		if ($hasMappings === false) {
+			$complianceStatus = 'unconfigured';
+		} elseif ($utilization <= self::THRESHOLD_ON_TRACK) {
+			$complianceStatus = 'on-track';
+		} elseif ($utilization <= self::THRESHOLD_AT_RISK) {
+			$complianceStatus = 'at-risk';
+		} else {
+			$complianceStatus = 'non-compliant';
+		}
 
-                if ($effectiveTo !== null && $postingDate > $effectiveTo) {
-                    continue;
-                }
+		return [
+			'totalBudgetCents' => $totalBudgetCents,
+			'ytdSpendCents' => $ytdSpendCents,
+			'utilization' => $utilization,
+			'complianceStatus' => $complianceStatus,
+		];
 
-                $ytdSpendCents += (int) (
-                    ((int) $line['amountCents']) * ((float) $m['allocationPercentage']) / 100
-                );
-            }//end foreach
-        }//end foreach
+	}//end computeAggregation()
 
-        $utilization = 0.0;
-        if ($totalBudgetCents > 0) {
-            $utilization = ($ytdSpendCents / $totalBudgetCents);
-        }
+	/**
+	 * The slice-02 fragment must materialise the four required aggregations
+	 * on BBVProgramme: totalBudget, ytdSpend, utilization, complianceStatus.
+	 *
+	 * @return void
+	 */
+	public function testAggregationBlockMaterialises(): void {
+		$components = $this->loadMergedComponents();
+		self::assertArrayHasKey('schemas', $components);
+		self::assertArrayHasKey(
+			'BBVProgramme',
+			$components['schemas'],
+			'BBVProgramme schema must be declared by the slice-02 fragment.'
+		);
 
-        $hasMappings = ($totalBudgetCents > 0);
-        if ($hasMappings === false) {
-            $complianceStatus = 'unconfigured';
-        } else if ($utilization <= self::THRESHOLD_ON_TRACK) {
-            $complianceStatus = 'on-track';
-        } else if ($utilization <= self::THRESHOLD_AT_RISK) {
-            $complianceStatus = 'at-risk';
-        } else {
-            $complianceStatus = 'non-compliant';
-        }
+		$programme = $components['schemas']['BBVProgramme'];
+		self::assertArrayHasKey(
+			'x-openregister-aggregations',
+			$programme,
+			'BBVProgramme must declare x-openregister-aggregations (ADR-031).'
+		);
 
-        return [
-            'totalBudgetCents' => $totalBudgetCents,
-            'ytdSpendCents'    => $ytdSpendCents,
-            'utilization'      => $utilization,
-            'complianceStatus' => $complianceStatus,
-        ];
+		$aggs = $programme['x-openregister-aggregations'];
+		foreach (['totalBudget', 'ytdSpend', 'utilization', 'complianceStatus'] as $name) {
+			self::assertArrayHasKey(
+				$name,
+				$aggs,
+				'BBVProgramme aggregation ' . $name . ' must be declared.'
+			);
+		}
 
-    }//end computeAggregation()
+		// ComplianceStatus must be derived (computedFields), never stored.
+		self::assertArrayHasKey('computedFields', $aggs['complianceStatus']);
+		self::assertArrayHasKey('complianceStatus', $aggs['complianceStatus']['computedFields']);
+		self::assertSame(
+			['unconfigured', 'on-track', 'at-risk', 'non-compliant'],
+			$aggs['complianceStatus']['computedFields']['complianceStatus']['enum']
+		);
 
-    /**
-     * The slice-02 fragment must materialise the four required aggregations
-     * on BBVProgramme: totalBudget, ytdSpend, utilization, complianceStatus.
-     *
-     * @return void
-     */
-    public function testAggregationBlockMaterialises(): void
-    {
-        $components = $this->loadMergedComponents();
-        self::assertArrayHasKey('schemas', $components);
-        self::assertArrayHasKey(
-            'BBVProgramme',
-            $components['schemas'],
-            'BBVProgramme schema must be declared by the slice-02 fragment.'
-        );
+		// Stored complianceStatus property MUST NOT exist (giant D3).
+		self::assertArrayNotHasKey(
+			'complianceStatus',
+			($programme['properties'] ?? []),
+			'complianceStatus is COMPUTED, not stored (giant D3 / ADR-031).'
+		);
 
-        $programme = $components['schemas']['BBVProgramme'];
-        self::assertArrayHasKey(
-            'x-openregister-aggregations',
-            $programme,
-            'BBVProgramme must declare x-openregister-aggregations (ADR-031).'
-        );
+	}//end testAggregationBlockMaterialises()
 
-        $aggs = $programme['x-openregister-aggregations'];
-        foreach (['totalBudget', 'ytdSpend', 'utilization', 'complianceStatus'] as $name) {
-            self::assertArrayHasKey(
-                $name,
-                $aggs,
-                'BBVProgramme aggregation '.$name.' must be declared.'
-            );
-        }
+	/**
+	 * Materialised TotalBudget per programme must equal
+	 * SUM(GL-budget × allocation%) for the slice-02 fixture mappings.
+	 *
+	 * @return void
+	 */
+	public function testTotalBudgetMaterialisedFromFixtures(): void {
+		$fixture = $this->fixture();
+		$mappings = $fixture['mappings'];
+		$expectedBudgets = $fixture['_notes']['expectedTotalBudgetCents'];
 
-        // ComplianceStatus must be derived (computedFields), never stored.
-        self::assertArrayHasKey('computedFields', $aggs['complianceStatus']);
-        self::assertArrayHasKey('complianceStatus', $aggs['complianceStatus']['computedFields']);
-        self::assertSame(
-            ['unconfigured', 'on-track', 'at-risk', 'non-compliant'],
-            $aggs['complianceStatus']['computedFields']['complianceStatus']['enum']
-        );
+		// No GL transactions yet — TotalBudget is a pure mapping aggregation.
+		foreach ($expectedBudgets as $programmeCode => $expectedCents) {
+			$agg = $this->computeAggregation(
+				(string)$programmeCode,
+				$mappings,
+				transactions: []
+			);
 
-        // Stored complianceStatus property MUST NOT exist (giant D3).
-        self::assertArrayNotHasKey(
-            'complianceStatus',
-            ($programme['properties'] ?? []),
-            'complianceStatus is COMPUTED, not stored (giant D3 / ADR-031).'
-        );
+			self::assertSame(
+				(int)$expectedCents,
+				$agg['totalBudgetCents'],
+				'TotalBudget for programme ' . $programmeCode . ' must equal SUM(GL-budget × allocation%).'
+			);
+		}
 
-    }//end testAggregationBlockMaterialises()
+		// Programme 3.1.0 has no mappings; the aggregation MUST resolve as
+		// unconfigured, never on-track.
+		$unmapped = $this->computeAggregation('3.1.0', $mappings, transactions: []);
+		self::assertSame(0, $unmapped['totalBudgetCents']);
+		self::assertSame('unconfigured', $unmapped['complianceStatus']);
 
-    /**
-     * Materialised TotalBudget per programme must equal
-     * SUM(GL-budget × allocation%) for the slice-02 fixture mappings.
-     *
-     * @return void
-     */
-    public function testTotalBudgetMaterialisedFromFixtures(): void
-    {
-        $fixture         = $this->fixture();
-        $mappings        = $fixture['mappings'];
-        $expectedBudgets = $fixture['_notes']['expectedTotalBudgetCents'];
+	}//end testTotalBudgetMaterialisedFromFixtures()
 
-        // No GL transactions yet — TotalBudget is a pure mapping aggregation.
-        foreach ($expectedBudgets as $programmeCode => $expectedCents) {
-            $agg = $this->computeAggregation(
-                (string) $programmeCode,
-                $mappings,
-                transactions: []
-            );
+	/**
+	 * YTDSpend + Utilization for programme 2.3.2 must match the on-track
+	 * snapshot (Σ GL.amount × allocation%, ratio against TotalBudget).
+	 *
+	 * @return void
+	 */
+	public function testYtdSpendAndUtilizationFromGlTransactions(): void {
+		$fixture = $this->fixture();
+		$mappings = $fixture['mappings'];
+		$snapshot = $fixture['spendSnapshots']['onTrack'];
 
-            self::assertSame(
-                (int) $expectedCents,
-                $agg['totalBudgetCents'],
-                'TotalBudget for programme '.$programmeCode.' must equal SUM(GL-budget × allocation%).'
-            );
-        }
+		$agg = $this->computeAggregation(
+			'2.3.2',
+			$mappings,
+			$snapshot['transactions']
+		);
 
-        // Programme 3.1.0 has no mappings; the aggregation MUST resolve as
-        // unconfigured, never on-track.
-        $unmapped = $this->computeAggregation('3.1.0', $mappings, transactions: []);
-        self::assertSame(0, $unmapped['totalBudgetCents']);
-        self::assertSame('unconfigured', $unmapped['complianceStatus']);
+		self::assertSame(
+			(int)$snapshot['expectedYtdSpendCents']['2.3.2'],
+			$agg['ytdSpendCents'],
+			'YTDSpend(2.3.2) must equal SUM(GL.amount × allocation%) for the on-track snapshot.'
+		);
 
-    }//end testTotalBudgetMaterialisedFromFixtures()
+		// Utilization is a float ratio — assert with delta to allow IEEE-754 noise.
+		self::assertEqualsWithDelta(
+			(float)$snapshot['expectedUtilization']['2.3.2'],
+			$agg['utilization'],
+			0.0001,
+			'Utilization(2.3.2) must equal YTDSpend / TotalBudget.'
+		);
 
-    /**
-     * YTDSpend + Utilization for programme 2.3.2 must match the on-track
-     * snapshot (Σ GL.amount × allocation%, ratio against TotalBudget).
-     *
-     * @return void
-     */
-    public function testYtdSpendAndUtilizationFromGlTransactions(): void
-    {
-        $fixture  = $this->fixture();
-        $mappings = $fixture['mappings'];
-        $snapshot = $fixture['spendSnapshots']['onTrack'];
+		// ComplianceStatus on this snapshot must be on-track.
+		self::assertSame('on-track', $agg['complianceStatus']);
 
-        $agg = $this->computeAggregation(
-            '2.3.2',
-            $mappings,
-            $snapshot['transactions']
-        );
+	}//end testYtdSpendAndUtilizationFromGlTransactions()
 
-        self::assertSame(
-            (int) $snapshot['expectedYtdSpendCents']['2.3.2'],
-            $agg['ytdSpendCents'],
-            'YTDSpend(2.3.2) must equal SUM(GL.amount × allocation%) for the on-track snapshot.'
-        );
+	/**
+	 * ComplianceStatus must transition on-track → at-risk → non-compliant as
+	 * GL spend on programme 2.3.2 rises through the three fixture
+	 * snapshots, with no manual recomputation step (REQ-BBVW-005).
+	 *
+	 * @return void
+	 */
+	public function testComplianceStatusTransitionsOnRisingSpend(): void {
+		$fixture = $this->fixture();
+		$mappings = $fixture['mappings'];
 
-        // Utilization is a float ratio — assert with delta to allow IEEE-754 noise.
-        self::assertEqualsWithDelta(
-            (float) $snapshot['expectedUtilization']['2.3.2'],
-            $agg['utilization'],
-            0.0001,
-            'Utilization(2.3.2) must equal YTDSpend / TotalBudget.'
-        );
+		$onTrack = $fixture['spendSnapshots']['onTrack'];
+		$atRisk = $fixture['spendSnapshots']['atRisk'];
+		$nonCompliant = $fixture['spendSnapshots']['nonCompliant'];
 
-        // ComplianceStatus on this snapshot must be on-track.
-        self::assertSame('on-track', $agg['complianceStatus']);
+		$aggOnTrack = $this->computeAggregation('2.3.2', $mappings, $onTrack['transactions']);
+		$aggAtRisk = $this->computeAggregation('2.3.2', $mappings, $atRisk['transactions']);
+		$aggNonCompliant = $this->computeAggregation('2.3.2', $mappings, $nonCompliant['transactions']);
 
-    }//end testYtdSpendAndUtilizationFromGlTransactions()
+		// YTDSpend must rise monotonically as transactions accumulate.
+		self::assertLessThan($aggAtRisk['ytdSpendCents'], $aggOnTrack['ytdSpendCents']);
+		self::assertLessThan($aggNonCompliant['ytdSpendCents'], $aggAtRisk['ytdSpendCents']);
 
-    /**
-     * ComplianceStatus must transition on-track → at-risk → non-compliant as
-     * GL spend on programme 2.3.2 rises through the three fixture
-     * snapshots, with no manual recomputation step (REQ-BBVW-005).
-     *
-     * @return void
-     */
-    public function testComplianceStatusTransitionsOnRisingSpend(): void
-    {
-        $fixture  = $this->fixture();
-        $mappings = $fixture['mappings'];
+		// Each snapshot's compliance status matches the threshold band.
+		self::assertSame('on-track', $aggOnTrack['complianceStatus']);
+		self::assertSame('at-risk', $aggAtRisk['complianceStatus']);
+		self::assertSame('non-compliant', $aggNonCompliant['complianceStatus']);
 
-        $onTrack      = $fixture['spendSnapshots']['onTrack'];
-        $atRisk       = $fixture['spendSnapshots']['atRisk'];
-        $nonCompliant = $fixture['spendSnapshots']['nonCompliant'];
+		// Utilization values match the expected ratios within IEEE-754 delta.
+		self::assertEqualsWithDelta(0.65, $aggOnTrack['utilization'], 0.0001);
+		self::assertEqualsWithDelta(0.85, $aggAtRisk['utilization'], 0.0001);
+		self::assertEqualsWithDelta(0.96, $aggNonCompliant['utilization'], 0.0001);
 
-        $aggOnTrack      = $this->computeAggregation('2.3.2', $mappings, $onTrack['transactions']);
-        $aggAtRisk       = $this->computeAggregation('2.3.2', $mappings, $atRisk['transactions']);
-        $aggNonCompliant = $this->computeAggregation('2.3.2', $mappings, $nonCompliant['transactions']);
+		// Boundary semantics (programme 2.3.2 budget = 100 000 EUR / 10 000 000 ct;
+		// GL 5000 allocation is 25%, so a 30 000 000-ct GL line delivers 7 500 000 ct =
+		// 75% utilization, and a 36 000 000-ct GL line delivers 9 000 000 ct = 90%).
+		$boundary75 = [
+			['glAccountNumber' => '5000', 'amountCents' => 30000000, 'postingDate' => '2026-03-15'],
+		];
+		$aggBoundary75 = $this->computeAggregation('2.3.2', $mappings, $boundary75);
+		self::assertEqualsWithDelta(0.75, $aggBoundary75['utilization'], 0.0001);
+		self::assertSame(
+			'on-track',
+			$aggBoundary75['complianceStatus'],
+			'Utilization == 0.75 must be on-track (≤ 75%, inclusive).'
+		);
 
-        // YTDSpend must rise monotonically as transactions accumulate.
-        self::assertLessThan($aggAtRisk['ytdSpendCents'], $aggOnTrack['ytdSpendCents']);
-        self::assertLessThan($aggNonCompliant['ytdSpendCents'], $aggAtRisk['ytdSpendCents']);
+		$boundary90 = [
+			['glAccountNumber' => '5000', 'amountCents' => 36000000, 'postingDate' => '2026-03-15'],
+		];
+		$aggBoundary90 = $this->computeAggregation('2.3.2', $mappings, $boundary90);
+		self::assertEqualsWithDelta(0.90, $aggBoundary90['utilization'], 0.0001);
+		self::assertSame(
+			'at-risk',
+			$aggBoundary90['complianceStatus'],
+			'Utilization == 0.90 must be at-risk (≤ 90%, inclusive).'
+		);
 
-        // Each snapshot's compliance status matches the threshold band.
-        self::assertSame('on-track', $aggOnTrack['complianceStatus']);
-        self::assertSame('at-risk', $aggAtRisk['complianceStatus']);
-        self::assertSame('non-compliant', $aggNonCompliant['complianceStatus']);
-
-        // Utilization values match the expected ratios within IEEE-754 delta.
-        self::assertEqualsWithDelta(0.65, $aggOnTrack['utilization'], 0.0001);
-        self::assertEqualsWithDelta(0.85, $aggAtRisk['utilization'], 0.0001);
-        self::assertEqualsWithDelta(0.96, $aggNonCompliant['utilization'], 0.0001);
-
-        // Boundary semantics (programme 2.3.2 budget = 100 000 EUR / 10 000 000 ct;
-        // GL 5000 allocation is 25%, so a 30 000 000-ct GL line delivers 7 500 000 ct =
-        // 75% utilization, and a 36 000 000-ct GL line delivers 9 000 000 ct = 90%).
-        $boundary75    = [
-            ['glAccountNumber' => '5000', 'amountCents' => 30000000, 'postingDate' => '2026-03-15'],
-        ];
-        $aggBoundary75 = $this->computeAggregation('2.3.2', $mappings, $boundary75);
-        self::assertEqualsWithDelta(0.75, $aggBoundary75['utilization'], 0.0001);
-        self::assertSame(
-            'on-track',
-            $aggBoundary75['complianceStatus'],
-            'Utilization == 0.75 must be on-track (≤ 75%, inclusive).'
-        );
-
-        $boundary90    = [
-            ['glAccountNumber' => '5000', 'amountCents' => 36000000, 'postingDate' => '2026-03-15'],
-        ];
-        $aggBoundary90 = $this->computeAggregation('2.3.2', $mappings, $boundary90);
-        self::assertEqualsWithDelta(0.90, $aggBoundary90['utilization'], 0.0001);
-        self::assertSame(
-            'at-risk',
-            $aggBoundary90['complianceStatus'],
-            'Utilization == 0.90 must be at-risk (≤ 90%, inclusive).'
-        );
-
-    }//end testComplianceStatusTransitionsOnRisingSpend()
+	}//end testComplianceStatusTransitionsOnRisingSpend()
 }//end class

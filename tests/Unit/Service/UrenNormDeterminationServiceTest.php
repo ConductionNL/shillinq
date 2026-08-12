@@ -30,161 +30,144 @@ use Psr\Log\LoggerInterface;
 /**
  * Covers REQ-URC-000/006/007: norm determination wiring.
  */
-final class UrenNormDeterminationServiceTest extends TestCase
-{
+final class UrenNormDeterminationServiceTest extends TestCase {
 
+	/**
+	 * Build a service with a real guard + null logger.
+	 *
+	 * @return UrenNormDeterminationService
+	 */
+	private function build(): UrenNormDeterminationService {
+		$logger = $this->createMock(LoggerInterface::class);
+		$guard = new UrencriteriumYearGuard(logger: $logger);
+		return new UrenNormDeterminationService(guard: $guard, logger: $logger);
+	}//end build()
 
-    /**
-     * Build a service with a real guard + null logger.
-     *
-     * @return UrenNormDeterminationService
-     */
-    private function build(): UrenNormDeterminationService
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $guard  = new UrencriteriumYearGuard(logger: $logger);
-        return new UrenNormDeterminationService(guard: $guard, logger: $logger);
+	/**
+	 * A regular eenmanszaak with no loondienst yields the 1.225 norm seed.
+	 *
+	 * @return void
+	 */
+	public function testRegularSeedYields1225(): void {
+		$seed = $this->build()->bouwSeedRecord(
+			profiel: [
+				'administrationId' => 'adm-1',
+				'ondernemingId' => 'ond-1',
+				'kalenderjaar' => 2026,
+			]
+		);
 
-    }//end build()
+		self::assertSame(1225, $seed['doelNorm']);
+		self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normGrondslag']);
+		self::assertSame('NIET_TOEPASSELIJK', $seed['grotendeelsCriterium']);
+		self::assertSame('OP_KOERS', $seed['drempelStatus']);
+		self::assertSame(0.0, $seed['lopendeUren']);
+		self::assertSame('adm-1', $seed['administrationId']);
+		self::assertSame('ond-1', $seed['ondernemingId']);
+		self::assertSame(2026, $seed['kalenderjaar']);
 
+	}//end testRegularSeedYields1225()
 
-    /**
-     * A regular eenmanszaak with no loondienst yields the 1.225 norm seed.
-     *
-     * @return void
-     */
-    public function testRegularSeedYields1225(): void
-    {
-        $seed = $this->build()->bouwSeedRecord(
-            profiel: [
-                'administrationId' => 'adm-1',
-                'ondernemingId'    => 'ond-1',
-                'kalenderjaar'     => 2026,
-            ]
-        );
+	/**
+	 * AO-status drives the 800-uren norm and the lid-5 grondslag.
+	 *
+	 * @return void
+	 */
+	public function testArbeidsongeschiktSeedYields800(): void {
+		$seed = $this->build()->bouwSeedRecord(
+			profiel: [
+				'administrationId' => 'adm-1',
+				'ondernemingId' => 'ond-2',
+				'kalenderjaar' => 2026,
+				'arbeidsongeschikt' => true,
+			]
+		);
 
-        self::assertSame(1225, $seed['doelNorm']);
-        self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normGrondslag']);
-        self::assertSame('NIET_TOEPASSELIJK', $seed['grotendeelsCriterium']);
-        self::assertSame('OP_KOERS', $seed['drempelStatus']);
-        self::assertSame(0.0, $seed['lopendeUren']);
-        self::assertSame('adm-1', $seed['administrationId']);
-        self::assertSame('ond-1', $seed['ondernemingId']);
-        self::assertSame(2026, $seed['kalenderjaar']);
+		self::assertSame(800, $seed['doelNorm']);
+		self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normGrondslag']);
 
-    }//end testRegularSeedYields1225()
+	}//end testArbeidsongeschiktSeedYields800()
 
+	/**
+	 * Meewerkende partner drives the 525-uren meewerkaftrek seed.
+	 *
+	 * @return void
+	 */
+	public function testMeewerkendePartnerSeedYields525(): void {
+		$seed = $this->build()->bouwSeedRecord(
+			profiel: [
+				'administrationId' => 'adm-1',
+				'ondernemingId' => 'ond-3',
+				'kalenderjaar' => 2026,
+				'meewerkendePartner' => true,
+			]
+		);
 
-    /**
-     * AO-status drives the 800-uren norm and the lid-5 grondslag.
-     *
-     * @return void
-     */
-    public function testArbeidsongeschiktSeedYields800(): void
-    {
-        $seed = $this->build()->bouwSeedRecord(
-            profiel: [
-                'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-2',
-                'kalenderjaar'      => 2026,
-                'arbeidsongeschikt' => true,
-            ]
-        );
+		self::assertSame(525, $seed['doelNorm']);
 
-        self::assertSame(800, $seed['doelNorm']);
-        self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normGrondslag']);
+	}//end testMeewerkendePartnerSeedYields525()
 
-    }//end testArbeidsongeschiktSeedYields800()
+	/**
+	 * Parallel loondienst >50% flags NIET_GROTENDEELS_ONDERNEMING.
+	 *
+	 * @return void
+	 */
+	public function testParallelLoondienstMajorityFlagsNietGrotendeels(): void {
+		$seed = $this->build()->bouwSeedRecord(
+			profiel: [
+				'administrationId' => 'adm-1',
+				'ondernemingId' => 'ond-4',
+				'kalenderjaar' => 2026,
+				'ondernemingsUrenJTD' => 300.0,
+				'loondienstUrenJTD' => 600.0,
+			]
+		);
 
+		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
 
-    /**
-     * Meewerkende partner drives the 525-uren meewerkaftrek seed.
-     *
-     * @return void
-     */
-    public function testMeewerkendePartnerSeedYields525(): void
-    {
-        $seed = $this->build()->bouwSeedRecord(
-            profiel: [
-                'administrationId'   => 'adm-1',
-                'ondernemingId'      => 'ond-3',
-                'kalenderjaar'       => 2026,
-                'meewerkendePartner' => true,
-            ]
-        );
+	}//end testParallelLoondienstMajorityFlagsNietGrotendeels()
 
-        self::assertSame(525, $seed['doelNorm']);
+	/**
+	 * Parallel loondienst <50% yields GROTENDEELS_ONDERNEMING.
+	 *
+	 * @return void
+	 */
+	public function testParallelLoondienstMinorityFlagsGrotendeels(): void {
+		$seed = $this->build()->bouwSeedRecord(
+			profiel: [
+				'administrationId' => 'adm-1',
+				'ondernemingId' => 'ond-5',
+				'kalenderjaar' => 2026,
+				'ondernemingsUrenJTD' => 800.0,
+				'loondienstUrenJTD' => 200.0,
+			]
+		);
 
-    }//end testMeewerkendePartnerSeedYields525()
+		self::assertSame('GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
 
+	}//end testParallelLoondienstMinorityFlagsGrotendeels()
 
-    /**
-     * Parallel loondienst >50% flags NIET_GROTENDEELS_ONDERNEMING.
-     *
-     * @return void
-     */
-    public function testParallelLoondienstMajorityFlagsNietGrotendeels(): void
-    {
-        $seed = $this->build()->bouwSeedRecord(
-            profiel: [
-                'administrationId'    => 'adm-1',
-                'ondernemingId'       => 'ond-4',
-                'kalenderjaar'        => 2026,
-                'ondernemingsUrenJTD' => 300.0,
-                'loondienstUrenJTD'   => 600.0,
-            ]
-        );
+	/**
+	 * The seed passes the canonical YearGuard validateOnSave by construction.
+	 *
+	 * @return void
+	 */
+	public function testSeedPassesGuardValidateOnSave(): void {
+		$logger = $this->createMock(LoggerInterface::class);
+		$guard = new UrencriteriumYearGuard(logger: $logger);
+		$service = new UrenNormDeterminationService(guard: $guard, logger: $logger);
 
-        self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
+		$seed = $service->bouwSeedRecord(
+			profiel: [
+				'administrationId' => 'adm-1',
+				'ondernemingId' => 'ond-9',
+				'kalenderjaar' => 2026,
+				'arbeidsongeschikt' => true,
+			]
+		);
 
-    }//end testParallelLoondienstMajorityFlagsNietGrotendeels()
+		self::assertTrue($guard->validateOnSave(year: $seed));
 
-
-    /**
-     * Parallel loondienst <50% yields GROTENDEELS_ONDERNEMING.
-     *
-     * @return void
-     */
-    public function testParallelLoondienstMinorityFlagsGrotendeels(): void
-    {
-        $seed = $this->build()->bouwSeedRecord(
-            profiel: [
-                'administrationId'    => 'adm-1',
-                'ondernemingId'       => 'ond-5',
-                'kalenderjaar'        => 2026,
-                'ondernemingsUrenJTD' => 800.0,
-                'loondienstUrenJTD'   => 200.0,
-            ]
-        );
-
-        self::assertSame('GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
-
-    }//end testParallelLoondienstMinorityFlagsGrotendeels()
-
-
-    /**
-     * The seed passes the canonical YearGuard validateOnSave by construction.
-     *
-     * @return void
-     */
-    public function testSeedPassesGuardValidateOnSave(): void
-    {
-        $logger  = $this->createMock(LoggerInterface::class);
-        $guard   = new UrencriteriumYearGuard(logger: $logger);
-        $service = new UrenNormDeterminationService(guard: $guard, logger: $logger);
-
-        $seed = $service->bouwSeedRecord(
-            profiel: [
-                'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-9',
-                'kalenderjaar'      => 2026,
-                'arbeidsongeschikt' => true,
-            ]
-        );
-
-        self::assertTrue($guard->validateOnSave(year: $seed));
-
-    }//end testSeedPassesGuardValidateOnSave()
-
+	}//end testSeedPassesGuardValidateOnSave()
 
 }//end class

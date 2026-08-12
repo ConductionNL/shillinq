@@ -47,191 +47,186 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class InventoryAdjustmentController extends Controller
-{
+class InventoryAdjustmentController extends Controller {
 
-    /**
-     * Identifier validation pattern shared across parameters.
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\-:\\/ ]{1,128}$/';
+	/**
+	 * Identifier validation pattern shared across parameters.
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-:\\/ ]{1,128}$/';
 
-    /**
-     * Construct the controller.
-     *
-     * @param IRequest                     $request    The request object.
-     * @param LandedCostAllocationService  $landedCost The landed-cost allocation service.
-     * @param NrvWriteDownService          $nrv        The NRV write-down service.
-     * @param AdministrationContextService $context    Admin-membership / IDOR context.
-     * @param LoggerInterface              $logger     Logger; never leaks stack traces.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly LandedCostAllocationService $landedCost,
-        private readonly NrvWriteDownService $nrv,
-        private readonly AdministrationContextService $context,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Construct the controller.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param LandedCostAllocationService $landedCost The landed-cost allocation service.
+	 * @param NrvWriteDownService $nrv The NRV write-down service.
+	 * @param AdministrationContextService $context Admin-membership / IDOR context.
+	 * @param LoggerInterface $logger Logger; never leaks stack traces.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly LandedCostAllocationService $landedCost,
+		private readonly NrvWriteDownService $nrv,
+		private readonly AdministrationContextService $context,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Allocate a receipt's landed cost across its lines and capitalise it.
-     *
-     * Body: { administration_id, receipt_reference, landed_cost_cents, basis? }.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/inventory-accounting-correctness/spec.md
-     */
-    #[NoAdminRequired]
-    public function landedCost(): JSONResponse
-    {
-        $guard = $this->guard();
-        if ($guard instanceof JSONResponse) {
-            return $guard;
-        }
+	/**
+	 * Allocate a receipt's landed cost across its lines and capitalise it.
+	 *
+	 * Body: { administration_id, receipt_reference, landed_cost_cents, basis? }.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	#[NoAdminRequired]
+	public function landedCost(): JSONResponse {
+		$guard = $this->guard();
+		if ($guard instanceof JSONResponse) {
+			return $guard;
+		}
 
-        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $receiptReference = trim((string) $this->request->getParam('receipt_reference', ''));
-        $landedCostCents  = (int) $this->request->getParam('landed_cost_cents', 0);
-        $basis            = trim((string) $this->request->getParam('basis', 'value'));
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		$receiptReference = trim((string)$this->request->getParam('receipt_reference', ''));
+		$landedCostCents = (int)$this->request->getParam('landed_cost_cents', 0);
+		$basis = trim((string)$this->request->getParam('basis', 'value'));
 
-        if ($administrationId === '' || $receiptReference === '') {
-            return new JSONResponse(
-                ['error' => 'administration_id and receipt_reference are required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($administrationId === '' || $receiptReference === '') {
+			return new JSONResponse(
+				['error' => 'administration_id and receipt_reference are required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if (preg_match(self::ID_PATTERN, $administrationId) !== 1
-            || preg_match(self::ID_PATTERN, $receiptReference) !== 1
-            || $landedCostCents <= 0
-            || in_array($basis, ['value', 'quantity'], true) === false
-        ) {
-            return new JSONResponse(
-                ['error' => 'Invalid administration_id, receipt_reference, landed_cost_cents or basis'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
+			|| preg_match(self::ID_PATTERN, $receiptReference) !== 1
+			|| $landedCostCents <= 0
+			|| in_array($basis, ['value', 'quantity'], true) === false
+		) {
+			return new JSONResponse(
+				['error' => 'Invalid administration_id, receipt_reference, landed_cost_cents or basis'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        try {
-            if ($this->context->canAccess(administrationId: $administrationId) === false) {
-                return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-            }
+		try {
+			if ($this->context->canAccess(administrationId: $administrationId) === false) {
+				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            $result = $this->landedCost->allocate(
-                administrationId: $administrationId,
-                receiptReference: $receiptReference,
-                landedCostCents: $landedCostCents,
-                basis: $basis
-            );
+			$result = $this->landedCost->allocate(
+				administrationId: $administrationId,
+				receiptReference: $receiptReference,
+				landedCostCents: $landedCostCents,
+				basis: $basis
+			);
 
-            return new JSONResponse($result, Http::STATUS_OK);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'InventoryAdjustmentController: landed-cost allocation failed',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
+			return new JSONResponse($result, Http::STATUS_OK);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'InventoryAdjustmentController: landed-cost allocation failed',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
 
-            return new JSONResponse(
-                ['error' => 'Failed to allocate landed cost'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+			return new JSONResponse(
+				['error' => 'Failed to allocate landed cost'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-    }//end landedCost()
+	}//end landedCost()
 
-    /**
-     * Run lower-of-cost-or-NRV for an administration + period, driven by an
-     * operator-supplied NRV-per-unit map keyed by productId (SKU).
-     *
-     * Body: { administration_id, period_id, nrv_by_sku: { <sku>: <nrvPerUnit>, ... } }.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/inventory-accounting-correctness/spec.md
-     */
-    #[NoAdminRequired]
-    public function nrvWriteDown(): JSONResponse
-    {
-        $guard = $this->guard();
-        if ($guard instanceof JSONResponse) {
-            return $guard;
-        }
+	/**
+	 * Run lower-of-cost-or-NRV for an administration + period, driven by an
+	 * operator-supplied NRV-per-unit map keyed by productId (SKU).
+	 *
+	 * Body: { administration_id, period_id, nrv_by_sku: { <sku>: <nrvPerUnit>, ... } }.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	#[NoAdminRequired]
+	public function nrvWriteDown(): JSONResponse {
+		$guard = $this->guard();
+		if ($guard instanceof JSONResponse) {
+			return $guard;
+		}
 
-        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $periodId         = trim((string) $this->request->getParam('period_id', ''));
-        $nrvBySkuRaw      = $this->request->getParam('nrv_by_sku', []);
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		$periodId = trim((string)$this->request->getParam('period_id', ''));
+		$nrvBySkuRaw = $this->request->getParam('nrv_by_sku', []);
 
-        if ($administrationId === '' || $periodId === '' || is_array($nrvBySkuRaw) === false || $nrvBySkuRaw === []) {
-            return new JSONResponse(
-                ['error' => 'administration_id, period_id and a non-empty nrv_by_sku map are required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($administrationId === '' || $periodId === '' || is_array($nrvBySkuRaw) === false || $nrvBySkuRaw === []) {
+			return new JSONResponse(
+				['error' => 'administration_id, period_id and a non-empty nrv_by_sku map are required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if (preg_match(self::ID_PATTERN, $administrationId) !== 1
-            || preg_match('/^[A-Za-z0-9_.\\-]{1,32}$/', $periodId) !== 1
-        ) {
-            return new JSONResponse(
-                ['error' => 'Invalid administration_id or period_id'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
+			|| preg_match('/^[A-Za-z0-9_.\\-]{1,32}$/', $periodId) !== 1
+		) {
+			return new JSONResponse(
+				['error' => 'Invalid administration_id or period_id'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        $nrvBySku = [];
-        foreach ($nrvBySkuRaw as $sku => $nrv) {
-            $skuKey = trim((string) $sku);
-            if ($skuKey === '' || preg_match(self::ID_PATTERN, $skuKey) !== 1 || is_numeric($nrv) === false) {
-                return new JSONResponse(
-                    ['error' => 'nrv_by_sku must map valid SKUs to numeric NRV-per-unit values'],
-                    Http::STATUS_BAD_REQUEST
-                );
-            }
+		$nrvBySku = [];
+		foreach ($nrvBySkuRaw as $sku => $nrv) {
+			$skuKey = trim((string)$sku);
+			if ($skuKey === '' || preg_match(self::ID_PATTERN, $skuKey) !== 1 || is_numeric($nrv) === false) {
+				return new JSONResponse(
+					['error' => 'nrv_by_sku must map valid SKUs to numeric NRV-per-unit values'],
+					Http::STATUS_BAD_REQUEST
+				);
+			}
 
-            $nrvBySku[$skuKey] = (float) $nrv;
-        }
+			$nrvBySku[$skuKey] = (float)$nrv;
+		}
 
-        try {
-            if ($this->context->canAccess(administrationId: $administrationId) === false) {
-                return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-            }
+		try {
+			if ($this->context->canAccess(administrationId: $administrationId) === false) {
+				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            $result = $this->nrv->runForAdministration(
-                administrationId: $administrationId,
-                periodId: $periodId,
-                nrvBySku: $nrvBySku
-            );
+			$result = $this->nrv->runForAdministration(
+				administrationId: $administrationId,
+				periodId: $periodId,
+				nrvBySku: $nrvBySku
+			);
 
-            return new JSONResponse($result, Http::STATUS_OK);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'InventoryAdjustmentController: NRV write-down run failed',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
+			return new JSONResponse($result, Http::STATUS_OK);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'InventoryAdjustmentController: NRV write-down run failed',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
 
-            return new JSONResponse(
-                ['error' => 'Failed to run NRV write-down'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+			return new JSONResponse(
+				['error' => 'Failed to run NRV write-down'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-    }//end nrvWriteDown()
+	}//end nrvWriteDown()
 
-    /**
-     * Shared authentication guard — returns a 401 JSONResponse when the
-     * request is unauthenticated, null otherwise.
-     *
-     * @return JSONResponse|null
-     */
-    private function guard(): ?JSONResponse
-    {
-        if ($this->context->currentUserId() === null) {
-            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Shared authentication guard — returns a 401 JSONResponse when the
+	 * request is unauthenticated, null otherwise.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function guard(): ?JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        return null;
-
-    }//end guard()
+		return null;
+	}//end guard()
 }//end class

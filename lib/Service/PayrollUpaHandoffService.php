@@ -42,186 +42,175 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
-class PayrollUpaHandoffService
-{
-    /**
-     * Construct the service.
-     *
-     * @param ContainerInterface $container DI container (OR's ObjectService is lazy).
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger (no BSN / special-category data).
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class PayrollUpaHandoffService {
+	/**
+	 * Construct the service.
+	 *
+	 * @param ContainerInterface $container DI container (OR's ObjectService is lazy).
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Build UPA submission payloads for one LoonPeriode, grouped per pensioenuitvoerder.
-     *
-     * Each payload contains: pensioenRegeling (uitvoerder slug),
-     * administrationId, periodeId, the sum of werknemer + werkgever
-     * pensioenpremie, and an array of per-werknemer line items
-     * (werknemerId masked-bsn premie_wn premie_wg).
-     *
-     * BSN is masked to its last 2 digits (AVG / ADR-005) so this payload is
-     * safe to transit cross-app; the UPA app re-fetches the full BSN from
-     * the masters at transport time using the werknemerId.
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     * @param string $periodeId        Period id.
-     *
-     * @return array<int,array<string,mixed>> UPA submission payloads.
-     *
-     * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
-     */
-    public function toUpaSubmissionPayloads(string $administrationId, string $periodeId): array
-    {
-        $stroken = $this->findStroken(administrationId: $administrationId, periodeId: $periodeId);
-        if ($stroken === []) {
-            $this->logger->debug(
-                'Shillinq payroll: no loonstroken found for UPA period',
-                ['periodeId' => $periodeId]
-            );
-            return [];
-        }
+	/**
+	 * Build UPA submission payloads for one LoonPeriode, grouped per pensioenuitvoerder.
+	 *
+	 * Each payload contains: pensioenRegeling (uitvoerder slug),
+	 * administrationId, periodeId, the sum of werknemer + werkgever
+	 * pensioenpremie, and an array of per-werknemer line items
+	 * (werknemerId masked-bsn premie_wn premie_wg).
+	 *
+	 * BSN is masked to its last 2 digits (AVG / ADR-005) so this payload is
+	 * safe to transit cross-app; the UPA app re-fetches the full BSN from
+	 * the masters at transport time using the werknemerId.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $periodeId Period id.
+	 *
+	 * @return array<int,array<string,mixed>> UPA submission payloads.
+	 *
+	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
+	 */
+	public function toUpaSubmissionPayloads(string $administrationId, string $periodeId): array {
+		$stroken = $this->findStroken(administrationId: $administrationId, periodeId: $periodeId);
+		if ($stroken === []) {
+			$this->logger->debug(
+				'Shillinq payroll: no loonstroken found for UPA period',
+				['periodeId' => $periodeId]
+			);
+			return [];
+		}
 
-        $groups = [];
-        foreach ($stroken as $strook) {
-            $werknemerId = (string) ($strook['werknemerId'] ?? '');
-            $regeling    = (string) ($this->lookupWerknemerRegeling(administrationId: $administrationId, werknemerId: $werknemerId));
-            if ($regeling === '') {
-                continue;
-            }
+		$groups = [];
+		foreach ($stroken as $strook) {
+			$werknemerId = (string)($strook['werknemerId'] ?? '');
+			$regeling = (string)($this->lookupWerknemerRegeling(administrationId: $administrationId, werknemerId: $werknemerId));
+			if ($regeling === '') {
+				continue;
+			}
 
-            $premWn = (float) (($strook['pensioen']['premie_wn_aandeel'] ?? 0));
-            $premWg = (float) (($strook['pensioen']['premie_wg_aandeel'] ?? 0));
-            if (($premWn + $premWg) <= 0.0) {
-                continue;
-            }
+			$premWn = (float)(($strook['pensioen']['premie_wn_aandeel'] ?? 0));
+			$premWg = (float)(($strook['pensioen']['premie_wg_aandeel'] ?? 0));
+			if (($premWn + $premWg) <= 0.0) {
+				continue;
+			}
 
-            if (isset($groups[$regeling]) === false) {
-                $groups[$regeling] = [
-                    'pensioenRegeling' => $regeling,
-                    'periodeId'        => $periodeId,
-                    'administrationId' => $administrationId,
-                    'totaalPremie'     => 0.0,
-                    'totaalWerknemers' => 0,
-                    'regels'           => [],
-                ];
-            }
+			if (isset($groups[$regeling]) === false) {
+				$groups[$regeling] = [
+					'pensioenRegeling' => $regeling,
+					'periodeId' => $periodeId,
+					'administrationId' => $administrationId,
+					'totaalPremie' => 0.0,
+					'totaalWerknemers' => 0,
+					'regels' => [],
+				];
+			}
 
-            $groups[$regeling]['totaalPremie']    += ($premWn + $premWg);
-            $groups[$regeling]['totaalWerknemers'] = ((int) $groups[$regeling]['totaalWerknemers'] + 1);
-            $groups[$regeling]['regels'][]         = [
-                'werknemerId' => $werknemerId,
-                'premieWn'    => $premWn,
-                'premieWg'    => $premWg,
-            ];
-        }//end foreach
+			$groups[$regeling]['totaalPremie'] += ($premWn + $premWg);
+			$groups[$regeling]['totaalWerknemers'] = ((int)$groups[$regeling]['totaalWerknemers'] + 1);
+			$groups[$regeling]['regels'][] = [
+				'werknemerId' => $werknemerId,
+				'premieWn' => $premWn,
+				'premieWg' => $premWg,
+			];
+		}//end foreach
 
-        $payloads = [];
-        foreach ($groups as $group) {
-            $group['totaalPremie'] = round((float) $group['totaalPremie'], 2);
-            $payloads[]            = $group;
-        }
+		$payloads = [];
+		foreach ($groups as $group) {
+			$group['totaalPremie'] = round((float)$group['totaalPremie'], 2);
+			$payloads[] = $group;
+		}
 
-        return $payloads;
+		return $payloads;
+	}//end toUpaSubmissionPayloads()
 
-    }//end toUpaSubmissionPayloads()
+	/**
+	 * Look up the werknemer's pensioenRegeling, scoped to the administration.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $werknemerId Employee id.
+	 *
+	 * @return string The pensioenRegeling slug or '' when unknown.
+	 */
+	private function lookupWerknemerRegeling(string $administrationId, string $werknemerId): string {
+		if ($werknemerId === '') {
+			return '';
+		}
 
-    /**
-     * Look up the werknemer's pensioenRegeling, scoped to the administration.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $werknemerId      Employee id.
-     *
-     * @return string The pensioenRegeling slug or '' when unknown.
-     */
-    private function lookupWerknemerRegeling(string $administrationId, string $werknemerId): string
-    {
-        if ($werknemerId === '') {
-            return '';
-        }
+		$results = $this->objectService()
+			->setRegister($this->register())
+			->setSchema('Werknemer')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'id' => $werknemerId,
+					],
+				]
+			);
 
-        $results = $this->objectService()
-            ->setRegister($this->register())
-            ->setSchema('Werknemer')
-            ->findAll(
-                [
-                    'filters' => [
-                        'administrationId' => $administrationId,
-                        'id'               => $werknemerId,
-                    ],
-                ]
-            );
+		foreach ($results as $r) {
+			$row = (array)$r;
+			return (string)($row['pensioenRegeling'] ?? '');
+		}
 
-        foreach ($results as $r) {
-            $row = (array) $r;
-            return (string) ($row['pensioenRegeling'] ?? '');
-        }
+		return '';
+	}//end lookupWerknemerRegeling()
 
-        return '';
+	/**
+	 * Read all LoonStrook records for the period, administration-scoped.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $periodeId Period id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findStroken(string $administrationId, string $periodeId): array {
+		$results = $this->objectService()
+			->setRegister($this->register())
+			->setSchema('LoonStrook')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'periodeId' => $periodeId,
+					],
+				]
+			);
 
-    }//end lookupWerknemerRegeling()
+		$out = [];
+		foreach ($results as $r) {
+			$out[] = (array)$r;
+		}
 
-    /**
-     * Read all LoonStrook records for the period, administration-scoped.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $periodeId        Period id.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function findStroken(string $administrationId, string $periodeId): array
-    {
-        $results = $this->objectService()
-            ->setRegister($this->register())
-            ->setSchema('LoonStrook')
-            ->findAll(
-                [
-                    'filters' => [
-                        'administrationId' => $administrationId,
-                        'periodeId'        => $periodeId,
-                    ],
-                ]
-            );
+		return $out;
+	}//end findStroken()
 
-        $out = [];
-        foreach ($results as $r) {
-            $out[] = (array) $r;
-        }
+	/**
+	 * Lazily fetch OpenRegister's ObjectService.
+	 *
+	 * @return object The ObjectService.
+	 */
+	private function objectService(): object {
+		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+	}//end objectService()
 
-        return $out;
+	/**
+	 * Resolve the configured OpenRegister register slug.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    }//end findStroken()
-
-    /**
-     * Lazily fetch OpenRegister's ObjectService.
-     *
-     * @return object The ObjectService.
-     */
-    private function objectService(): object
-    {
-        return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-    }//end objectService()
-
-    /**
-     * Resolve the configured OpenRegister register slug.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

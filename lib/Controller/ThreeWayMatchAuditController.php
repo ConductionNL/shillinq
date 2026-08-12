@@ -61,378 +61,364 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
  */
-class ThreeWayMatchAuditController extends Controller
-{
+class ThreeWayMatchAuditController extends Controller {
 
-    /**
-     * Short-slug identifier pattern shared by every scope/path parameter.
-     *
-     * @var string
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+	/**
+	 * Short-slug identifier pattern shared by every scope/path parameter.
+	 *
+	 * @var string
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
-    /**
-     * Schema slug for SupplierInvoice records (slice 01) — needed for
-     * the ledger-by-id read path.
-     *
-     * @var string
-     */
-    private const SCHEMA_SUPPLIER_INVOICE = 'SupplierInvoice';
+	/**
+	 * Schema slug for SupplierInvoice records (slice 01) — needed for
+	 * the ledger-by-id read path.
+	 *
+	 * @var string
+	 */
+	private const SCHEMA_SUPPLIER_INVOICE = 'SupplierInvoice';
 
-    /**
-     * Schema slug for PurchaseOrder records (slice 01).
-     *
-     * @var string
-     */
-    private const SCHEMA_PURCHASE_ORDER = 'PurchaseOrder';
+	/**
+	 * Schema slug for PurchaseOrder records (slice 01).
+	 *
+	 * @var string
+	 */
+	private const SCHEMA_PURCHASE_ORDER = 'PurchaseOrder';
 
-    /**
-     * Schema slug for GoodsReceiptNote records (slice 01).
-     *
-     * @var string
-     */
-    private const SCHEMA_GOODS_RECEIPT_NOTE = 'GoodsReceiptNote';
+	/**
+	 * Schema slug for GoodsReceiptNote records (slice 01).
+	 *
+	 * @var string
+	 */
+	private const SCHEMA_GOODS_RECEIPT_NOTE = 'GoodsReceiptNote';
 
-    /**
-     * Schema slug for ThreeWayMatch records (slice 01).
-     *
-     * @var string
-     */
-    private const SCHEMA_THREE_WAY_MATCH = 'ThreeWayMatch';
+	/**
+	 * Schema slug for ThreeWayMatch records (slice 01).
+	 *
+	 * @var string
+	 */
+	private const SCHEMA_THREE_WAY_MATCH = 'ThreeWayMatch';
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                     $request               The request object.
-     * @param AuditExportService           $auditExportService    The audit export service.
-     * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param IUserSession                 $userSession           User-session guard.
-     * @param ContainerInterface           $container             DI container — OR's
-     *                                                            ObjectService is fetched
-     *                                                            lazily for the ledger-only
-     *                                                            read path.
-     * @param LoggerInterface              $logger                Logger (no stack traces to
-     *                                                            client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly AuditExportService $auditExportService,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly IUserSession $userSession,
-        private readonly ContainerInterface $container,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param AuditExportService $auditExportService The audit export service.
+	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param IUserSession $userSession User-session guard.
+	 * @param ContainerInterface $container DI container — OR's
+	 *                                      ObjectService is fetched
+	 *                                      lazily for the ledger-only
+	 *                                      read path.
+	 * @param LoggerInterface $logger Logger (no stack traces to
+	 *                                client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly AuditExportService $auditExportService,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IUserSession $userSession,
+		private readonly ContainerInterface $container,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Fetch the lifecycle ledger for one SupplierInvoice (Vue timeline).
-     *
-     * GET /api/three-way-match/audit-trail
-     * Query: administrationId, invoiceId.
-     *
-     * @return JSONResponse 200 with the ledger; 400 on validation;
-     *                      401 anonymous; 404 cross-tenant or missing
-     *                      invoice; 500 without stack trace.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
-     */
-    #[NoAdminRequired]
-    public function ledger(): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Fetch the lifecycle ledger for one SupplierInvoice (Vue timeline).
+	 *
+	 * GET /api/three-way-match/audit-trail
+	 * Query: administrationId, invoiceId.
+	 *
+	 * @return JSONResponse 200 with the ledger; 400 on validation;
+	 *                      401 anonymous; 404 cross-tenant or missing
+	 *                      invoice; 500 without stack trace.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function ledger(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $invoiceId = $this->scopeParam(name: 'invoiceId');
-        if ($invoiceId === '') {
-            return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$invoiceId = $this->scopeParam(name: 'invoiceId');
+		if ($invoiceId === '') {
+			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            $bundle = $this->loadBundle(
-                administrationId: $administrationId,
-                invoiceId: $invoiceId
-            );
-            if ($bundle === null) {
-                return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
-            }
+		try {
+			$bundle = $this->loadBundle(
+				administrationId: $administrationId,
+				invoiceId: $invoiceId
+			);
+			if ($bundle === null) {
+				return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            $ledger = $this->auditExportService->buildLedger(bundle: $bundle);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'ThreeWayMatchAuditController: failed to build ledger',
-                [
-                    'administrationId' => $administrationId,
-                    'invoiceId'        => $invoiceId,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
-            return new JSONResponse(['error' => 'Could not load audit trail'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+			$ledger = $this->auditExportService->buildLedger(bundle: $bundle);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ThreeWayMatchAuditController: failed to build ledger',
+				[
+					'administrationId' => $administrationId,
+					'invoiceId' => $invoiceId,
+					'exception' => $e->getMessage(),
+				]
+			);
+			return new JSONResponse(['error' => 'Could not load audit trail'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-        return new JSONResponse($ledger, Http::STATUS_OK);
+		return new JSONResponse($ledger, Http::STATUS_OK);
+	}//end ledger()
 
-    }//end ledger()
+	/**
+	 * Generate an immutable audit package (ZIP) for one SupplierInvoice
+	 * and return the package envelope so the operator can hand the ZIP
+	 * to the external auditor.
+	 *
+	 * POST /api/three-way-match/audit-trail/export
+	 * Body: administrationId, invoiceId.
+	 *
+	 * @return JSONResponse 200 with the package envelope; 400 on
+	 *                      validation; 401 anonymous; 404 cross-tenant
+	 *                      or missing invoice; 500 without stack trace.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function export(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-    /**
-     * Generate an immutable audit package (ZIP) for one SupplierInvoice
-     * and return the package envelope so the operator can hand the ZIP
-     * to the external auditor.
-     *
-     * POST /api/three-way-match/audit-trail/export
-     * Body: administrationId, invoiceId.
-     *
-     * @return JSONResponse 200 with the package envelope; 400 on
-     *                      validation; 401 anonymous; 404 cross-tenant
-     *                      or missing invoice; 500 without stack trace.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
-     */
-    #[NoAdminRequired]
-    public function export(): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
-        }
+		$invoiceId = $this->scopeParam(name: 'invoiceId');
+		if ($invoiceId === '') {
+			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $invoiceId = $this->scopeParam(name: 'invoiceId');
-        if ($invoiceId === '') {
-            return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$envelope = $this->auditExportService->generateAuditPackage(
+				administrationId: $administrationId,
+				invoiceId:        $invoiceId
+			);
+		} catch (\RuntimeException $e) {
+			return $this->mapRuntimeException(exception: $e);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ThreeWayMatchAuditController: failed to export audit package',
+				[
+					'administrationId' => $administrationId,
+					'invoiceId' => $invoiceId,
+					'exception' => $e->getMessage(),
+				]
+			);
+			return new JSONResponse(['error' => 'Could not export audit package'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        try {
-            $envelope = $this->auditExportService->generateAuditPackage(
-                administrationId: $administrationId,
-                invoiceId:        $invoiceId
-            );
-        } catch (\RuntimeException $e) {
-            return $this->mapRuntimeException(exception: $e);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'ThreeWayMatchAuditController: failed to export audit package',
-                [
-                    'administrationId' => $administrationId,
-                    'invoiceId'        => $invoiceId,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
-            return new JSONResponse(['error' => 'Could not export audit package'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		// Strip the local zipPath from the response — the path is a
+		// server-only handle so the file can be streamed by a follow-up
+		// download endpoint or handed to docudesk; exposing the FS path
+		// would leak the temp-dir layout.
+		$payload = $envelope;
+		unset($payload['zipPath']);
+		return new JSONResponse($payload, Http::STATUS_OK);
+	}//end export()
 
-        // Strip the local zipPath from the response — the path is a
-        // server-only handle so the file can be streamed by a follow-up
-        // download endpoint or handed to docudesk; exposing the FS path
-        // would leak the temp-dir layout.
-        $payload = $envelope;
-        unset($payload['zipPath']);
-        return new JSONResponse($payload, Http::STATUS_OK);
+	/**
+	 * Load the lifecycle bundle for the read-only ledger endpoint.
+	 *
+	 * Returns null when the invoice is not visible to the caller — the
+	 * controller surfaces a 404 so cross-tenant probes never leak the
+	 * existence of an invoice from another administration.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $invoiceId SupplierInvoice id.
+	 *
+	 * @return array{
+	 *     invoice:array<string,mixed>,
+	 *     purchaseOrders:array<int,array<string,mixed>>,
+	 *     goodsReceiptNotes:array<int,array<string,mixed>>,
+	 *     threeWayMatches:array<int,array<string,mixed>>
+	 * }|null
+	 */
+	private function loadBundle(string $administrationId, string $invoiceId): ?array {
+		$invoice = $this->findOne(
+			schema: self::SCHEMA_SUPPLIER_INVOICE,
+			filters: [
+				'id' => $invoiceId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($invoice === null) {
+			return null;
+		}
 
-    }//end export()
+		$matches = $this->findAll(
+			schema: self::SCHEMA_THREE_WAY_MATCH,
+			filters: [
+				'invoiceId' => $invoiceId,
+				'administrationId' => $administrationId,
+			]
+		);
 
-    /**
-     * Load the lifecycle bundle for the read-only ledger endpoint.
-     *
-     * Returns null when the invoice is not visible to the caller — the
-     * controller surfaces a 404 so cross-tenant probes never leak the
-     * existence of an invoice from another administration.
-     *
-     * @param string $administrationId Tenant scope.
-     * @param string $invoiceId        SupplierInvoice id.
-     *
-     * @return array{
-     *     invoice:array<string,mixed>,
-     *     purchaseOrders:array<int,array<string,mixed>>,
-     *     goodsReceiptNotes:array<int,array<string,mixed>>,
-     *     threeWayMatches:array<int,array<string,mixed>>
-     * }|null
-     */
-    private function loadBundle(string $administrationId, string $invoiceId): ?array
-    {
-        $invoice = $this->findOne(
-            schema: self::SCHEMA_SUPPLIER_INVOICE,
-            filters: [
-                'id'               => $invoiceId,
-                'administrationId' => $administrationId,
-            ]
-        );
-        if ($invoice === null) {
-            return null;
-        }
+		$poIds = [];
+		$grnIds = [];
+		foreach ($matches as $match) {
+			foreach ((array)($match['matchedPoIds'] ?? []) as $poId) {
+				$value = trim((string)$poId);
+				if ($value !== '' && in_array($value, $poIds, true) === false) {
+					$poIds[] = $value;
+				}
+			}
 
-        $matches = $this->findAll(
-            schema: self::SCHEMA_THREE_WAY_MATCH,
-            filters: [
-                'invoiceId'        => $invoiceId,
-                'administrationId' => $administrationId,
-            ]
-        );
+			foreach ((array)($match['matchedGrnIds'] ?? []) as $grnId) {
+				$value = trim((string)$grnId);
+				if ($value !== '' && in_array($value, $grnIds, true) === false) {
+					$grnIds[] = $value;
+				}
+			}
+		}
 
-        $poIds  = [];
-        $grnIds = [];
-        foreach ($matches as $match) {
-            foreach ((array) ($match['matchedPoIds'] ?? []) as $poId) {
-                $value = trim((string) $poId);
-                if ($value !== '' && in_array($value, $poIds, true) === false) {
-                    $poIds[] = $value;
-                }
-            }
+		$purchaseOrders = [];
+		foreach ($poIds as $poId) {
+			$purchaseOrder = $this->findOne(
+				schema: self::SCHEMA_PURCHASE_ORDER,
+				filters: [
+					'id' => $poId,
+					'administrationId' => $administrationId,
+				]
+			);
+			if ($purchaseOrder !== null) {
+				$purchaseOrders[] = $purchaseOrder;
+			}
+		}
 
-            foreach ((array) ($match['matchedGrnIds'] ?? []) as $grnId) {
-                $value = trim((string) $grnId);
-                if ($value !== '' && in_array($value, $grnIds, true) === false) {
-                    $grnIds[] = $value;
-                }
-            }
-        }
+		$goodsReceiptNotes = [];
+		foreach ($grnIds as $grnId) {
+			$grn = $this->findOne(
+				schema: self::SCHEMA_GOODS_RECEIPT_NOTE,
+				filters: [
+					'id' => $grnId,
+					'administrationId' => $administrationId,
+				]
+			);
+			if ($grn !== null) {
+				$goodsReceiptNotes[] = $grn;
+			}
+		}
 
-        $purchaseOrders = [];
-        foreach ($poIds as $poId) {
-            $purchaseOrder = $this->findOne(
-                schema: self::SCHEMA_PURCHASE_ORDER,
-                filters: [
-                    'id'               => $poId,
-                    'administrationId' => $administrationId,
-                ]
-            );
-            if ($purchaseOrder !== null) {
-                $purchaseOrders[] = $purchaseOrder;
-            }
-        }
+		return [
+			'invoice' => $invoice,
+			'purchaseOrders' => $purchaseOrders,
+			'goodsReceiptNotes' => $goodsReceiptNotes,
+			'threeWayMatches' => $matches,
+		];
 
-        $goodsReceiptNotes = [];
-        foreach ($grnIds as $grnId) {
-            $grn = $this->findOne(
-                schema: self::SCHEMA_GOODS_RECEIPT_NOTE,
-                filters: [
-                    'id'               => $grnId,
-                    'administrationId' => $administrationId,
-                ]
-            );
-            if ($grn !== null) {
-                $goodsReceiptNotes[] = $grn;
-            }
-        }
+	}//end loadBundle()
 
-        return [
-            'invoice'           => $invoice,
-            'purchaseOrders'    => $purchaseOrders,
-            'goodsReceiptNotes' => $goodsReceiptNotes,
-            'threeWayMatches'   => $matches,
-        ];
+	/**
+	 * Read + validate a scope parameter; '' when blank/malformed.
+	 *
+	 * @param string $name Parameter name.
+	 *
+	 * @return string
+	 */
+	private function scopeParam(string $name): string {
+		$value = trim((string)$this->request->getParam($name, ''));
+		if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
+			return '';
+		}
 
-    }//end loadBundle()
+		return $value;
+	}//end scopeParam()
 
-    /**
-     * Read + validate a scope parameter; '' when blank/malformed.
-     *
-     * @param string $name Parameter name.
-     *
-     * @return string
-     */
-    private function scopeParam(string $name): string
-    {
-        $value = trim((string) $this->request->getParam($name, ''));
-        if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
-            return '';
-        }
+	/**
+	 * Fetch one record via the real ObjectService API.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $filters Equality filters.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findOne(string $schema, array $filters): ?array {
+		$rows = $this->findAll(schema: $schema, filters: $filters);
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
 
-        return $value;
+		return null;
+	}//end findOne()
 
-    }//end scopeParam()
+	/**
+	 * Fetch all records via the real ObjectService API.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $filters Equality filters.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findAll(string $schema, array $filters): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister('shillinq')
+				->setSchema($schema)
+				->findAll(['filters' => $filters]);
+		} catch (\Throwable $exception) {
+			$this->logger->error(
+				'ThreeWayMatchAuditController: failed to query OpenRegister',
+				['schema' => $schema, 'exception' => $exception->getMessage()]
+			);
+			return [];
+		}
 
-    /**
-     * Fetch one record via the real ObjectService API.
-     *
-     * @param string              $schema  OR schema slug.
-     * @param array<string,mixed> $filters Equality filters.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findOne(string $schema, array $filters): ?array
-    {
-        $rows = $this->findAll(schema: $schema, filters: $filters);
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                return $row;
-            }
-        }
+		$result = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$result[] = $row;
+			}
+		}
 
-        return null;
+		return $result;
+	}//end findAll()
 
-    }//end findOne()
+	/**
+	 * Map a service-level RuntimeException to a JSONResponse.
+	 *
+	 * @param \RuntimeException $exception The exception.
+	 *
+	 * @return JSONResponse
+	 */
+	private function mapRuntimeException(\RuntimeException $exception): JSONResponse {
+		$message = $exception->getMessage();
+		if (str_contains($message, 'not found') === true) {
+			return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+		}
 
-    /**
-     * Fetch all records via the real ObjectService API.
-     *
-     * @param string              $schema  OR schema slug.
-     * @param array<string,mixed> $filters Equality filters.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function findAll(string $schema, array $filters): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister('shillinq')
-                ->setSchema($schema)
-                ->findAll(['filters' => $filters]);
-        } catch (\Throwable $exception) {
-            $this->logger->error(
-                'ThreeWayMatchAuditController: failed to query OpenRegister',
-                ['schema' => $schema, 'exception' => $exception->getMessage()]
-            );
-            return [];
-        }
-
-        $result = [];
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                $result[] = $row;
-            }
-        }
-
-        return $result;
-
-    }//end findAll()
-
-    /**
-     * Map a service-level RuntimeException to a JSONResponse.
-     *
-     * @param \RuntimeException $exception The exception.
-     *
-     * @return JSONResponse
-     */
-    private function mapRuntimeException(\RuntimeException $exception): JSONResponse
-    {
-        $message = $exception->getMessage();
-        if (str_contains($message, 'not found') === true) {
-            return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-        }
-
-        return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
-
-    }//end mapRuntimeException()
+		return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
+	}//end mapRuntimeException()
 }//end class

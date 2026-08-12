@@ -36,66 +36,62 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
  */
-class SisaReportingService
-{
-    /**
-     * Derive the audit opinion from a SisaReport's aggregated finding counts.
-     *
-     * Rule per REQ-SISA-009 (priority order — first match wins):
-     *  1. Any overdue remediation                         → disclaimer
-     *  2. Any critical finding OR ≥3 major findings       → adverse
-     *  3. 1-2 major findings, 0 critical, 0 overdue       → qualified
-     *  4. No findings, no overdue                         → unqualified
-     *
-     * @param array<string,mixed> $sisaReport SisaReport object array from OpenRegister.
-     *
-     * @return string One of: unqualified, qualified, adverse, disclaimer.
-     *
-     * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
-     */
-    public function calculateAuditOpinion(array $sisaReport): string
-    {
-        $overdueCount  = (int) ($sisaReport['remediationOverdueCount'] ?? 0);
-        $criticalCount = (int) ($sisaReport['criticalFindingsCount'] ?? 0);
-        $majorCount    = (int) ($sisaReport['majorFindingsCount'] ?? 0);
+class SisaReportingService {
+	/**
+	 * Derive the audit opinion from a SisaReport's aggregated finding counts.
+	 *
+	 * Rule per REQ-SISA-009 (priority order — first match wins):
+	 *  1. Any overdue remediation                         → disclaimer
+	 *  2. Any critical finding OR ≥3 major findings       → adverse
+	 *  3. 1-2 major findings, 0 critical, 0 overdue       → qualified
+	 *  4. No findings, no overdue                         → unqualified
+	 *
+	 * @param array<string,mixed> $sisaReport SisaReport object array from OpenRegister.
+	 *
+	 * @return string One of: unqualified, qualified, adverse, disclaimer.
+	 *
+	 * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+	 */
+	public function calculateAuditOpinion(array $sisaReport): string {
+		$overdueCount = (int)($sisaReport['remediationOverdueCount'] ?? 0);
+		$criticalCount = (int)($sisaReport['criticalFindingsCount'] ?? 0);
+		$majorCount = (int)($sisaReport['majorFindingsCount'] ?? 0);
 
-        if ($overdueCount > 0) {
-            return 'disclaimer';
-        }
+		if ($overdueCount > 0) {
+			return 'disclaimer';
+		}
 
-        if ($criticalCount > 0 || $majorCount >= 3) {
-            return 'adverse';
-        }
+		if ($criticalCount > 0 || $majorCount >= 3) {
+			return 'adverse';
+		}
 
-        if ($majorCount >= 1) {
-            return 'qualified';
-        }
+		if ($majorCount >= 1) {
+			return 'qualified';
+		}
 
-        return 'unqualified';
+		return 'unqualified';
+	}//end calculateAuditOpinion()
 
-    }//end calculateAuditOpinion()
+	/**
+	 * Lifecycle precondition guard for the SisaReport `finalize` transition.
+	 *
+	 * Returns true (permit finalization) when the SisaReport has a reportDate,
+	 * fiscalYear, and administrationId — the minimum required before the audit
+	 * opinion can be meaningfully computed. Returns false if any are missing.
+	 *
+	 * Referenced from lib/Settings/shillinq_register.json SisaReport lifecycle
+	 * finalize.requires as "OCA\\Shillinq\\Service\\SisaReportingService::canBeFinalized".
+	 *
+	 * @param array<string,mixed> $sisaReport SisaReport object array from OpenRegister.
+	 *
+	 * @return bool True when finalization is permitted.
+	 *
+	 * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
+	 */
+	public function canBeFinalized(array $sisaReport): bool {
+		return empty($sisaReport['reportDate']) === false
+			&& empty($sisaReport['fiscalYear']) === false
+			&& empty($sisaReport['administrationId']) === false;
 
-    /**
-     * Lifecycle precondition guard for the SisaReport `finalize` transition.
-     *
-     * Returns true (permit finalization) when the SisaReport has a reportDate,
-     * fiscalYear, and administrationId — the minimum required before the audit
-     * opinion can be meaningfully computed. Returns false if any are missing.
-     *
-     * Referenced from lib/Settings/shillinq_register.json SisaReport lifecycle
-     * finalize.requires as "OCA\\Shillinq\\Service\\SisaReportingService::canBeFinalized".
-     *
-     * @param array<string,mixed> $sisaReport SisaReport object array from OpenRegister.
-     *
-     * @return bool True when finalization is permitted.
-     *
-     * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
-     */
-    public function canBeFinalized(array $sisaReport): bool
-    {
-        return empty($sisaReport['reportDate']) === false
-            && empty($sisaReport['fiscalYear']) === false
-            && empty($sisaReport['administrationId']) === false;
-
-    }//end canBeFinalized()
+	}//end canBeFinalized()
 }//end class

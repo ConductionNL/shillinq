@@ -65,534 +65,518 @@ use Psr\Log\LoggerInterface;
  *     not in the project's calibrated length threshold; deferred pending
  *     a dedicated rename pass.
  */
-class ExpenseReimbursementGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
-
-    /**
-     * Resolve the configured register slug; falls back to 'shillinq'.
-     *
-     * @return string The non-empty register slug.
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
-
-        return $slug;
-
-    }//end getRegisterSlug()
-
-    /**
-     * Precondition for the submit transition (REQ-ERP-001, REQ-ERP-002, REQ-ERP-003).
-     *
-     * Validates:
-     * 1. The claim has a non-null settlementMode (reimbursable | pass-through).
-     * 2. Every linked Receipt / MileageEntry / PerDiem has matching or null
-     *    settlementMode — mixed-mode claims are rejected per REQ-ERP-003.
-     * 3. Pass-through claims have a non-null linkedCustomerId on every
-     *    pass-through line item per REQ-ERP-002 (validation rule).
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
-     *
-     * @return bool True when the claim may be submitted.
-     *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-11
-     */
-    public function requireSettlementModeConsistency(array $claim): bool
-    {
-        try {
-            $claimMode = ($claim['settlementMode'] ?? null);
-            if ($claimMode === null || $claimMode === '') {
-                $this->logger->info(
-                    'ExpenseReimbursementGuard: claim has no settlementMode — denying submit (REQ-ERP-003)',
-                    ['claimId' => ($claim['id'] ?? 'unknown')]
-                );
-                return false;
-            }
-
-            if (in_array($claimMode, ['reimbursable', 'pass-through'], true) === false) {
-                $this->logger->info(
-                    'ExpenseReimbursementGuard: claim has invalid settlementMode — denying submit',
-                    [
-                        'claimId'        => ($claim['id'] ?? 'unknown'),
-                        'settlementMode' => $claimMode,
-                    ]
-                );
-                return false;
-            }
-
-            return $this->allItemsMatchSettlementMode(
-                claimId: (string) ($claim['id'] ?? ''),
-                claimMode: $claimMode,
-                receiptIds: (array) ($claim['receiptIds'] ?? []),
-                mileageIds: (array) ($claim['mileageIds'] ?? []),
-                perDiemIds: (array) ($claim['perDiemIds'] ?? []),
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'ExpenseReimbursementGuard: requireSettlementModeConsistency failed — denying submit (fail-closed)',
-                ['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-
-    }//end requireSettlementModeConsistency()
-
-    /**
-     * Precondition for the approve transition (REQ-ERP-006).
-     *
-     * When the claim's ReimbursementPolicy declares a
-     * requiresMarkupApprovalThreshold AND the claim's pass-through markup
-     * amount (totalPassThroughAmount minus the pre-markup cost portion)
-     * meets-or-exceeds that threshold, this guard denies the standard
-     * approve transition — the claim must be routed through the OR
-     * approval-workflow extra-approver gate per ADR-022.
-     *
-     * Below-threshold or no-threshold claims pass through unaffected so OR's
-     * standard approve flow can complete.
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
-     *
-     * @return bool True when the claim may be approved via the standard gate.
-     *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-17
-     */
-    public function requireMarkupApprovalIfThreshold(array $claim): bool
-    {
-        try {
-            // No pass-through markup ⇒ no extra gate needed.
-            $settlementMode = ($claim['settlementMode'] ?? null);
-            if ($settlementMode !== 'pass-through') {
-                return true;
-            }
-
-            $policyId = ($claim['reimbursementPolicyId'] ?? null);
-            if ($policyId === null || $policyId === '') {
-                // No explicit policy ⇒ admin defaults apply, no extra gate.
-                return true;
-            }
-
-            $threshold = $this->getMarkupApprovalThresholdForPolicy(policyId: (string) $policyId);
-            if ($threshold === null) {
-                return true;
-            }
-
-            $totalPassThroughAmount = (float) ($claim['totalPassThroughAmount'] ?? 0.0);
-            $markupAmount           = $this->computePassThroughMarkupAmount(claim: $claim, totalPassThrough: $totalPassThroughAmount);
-
-            if ($markupAmount >= $threshold) {
-                $this->logger->info(
-                    'ExpenseReimbursementGuard: pass-through markup meets/exceeds policy threshold — '
-                    .'denying standard approve, deferring to OR approval-workflow extra-approver gate (REQ-ERP-006)',
-                    [
-                        'claimId'      => ($claim['id'] ?? 'unknown'),
-                        'policyId'     => $policyId,
-                        'markupAmount' => $markupAmount,
-                        'threshold'    => $threshold,
-                    ]
-                );
-                return false;
-            }
-
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'ExpenseReimbursementGuard: requireMarkupApprovalIfThreshold failed — denying approve (fail-closed)',
-                ['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-
-    }//end requireMarkupApprovalIfThreshold()
-
-    /**
-     * Precondition for the markInvoiced transition (REQ-ERP-007 pass-through closure).
-     *
-     * Only pass-through claims may transition posted → invoiced; reimbursable
-     * claims use the reimbursed closure instead.
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
-     *
-     * @return bool True when the pass-through claim may transition to invoiced.
-     *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-11
-     */
-    public function requirePassThroughMode(array $claim): bool
-    {
-        try {
-            $settlementMode = ($claim['settlementMode'] ?? null);
-            if ($settlementMode !== 'pass-through') {
-                $this->logger->info(
-                    'ExpenseReimbursementGuard: markInvoiced denied — claim is not pass-through (REQ-ERP-007)',
-                    [
-                        'claimId'        => ($claim['id'] ?? 'unknown'),
-                        'settlementMode' => $settlementMode,
-                    ]
-                );
-                return false;
-            }
-
-            // Pass-through path requires the GL transaction back-reference to exist.
-            $glPassThroughTransactionId = ($claim['glPassThroughTransactionId'] ?? null);
-            if ($glPassThroughTransactionId === null || $glPassThroughTransactionId === '') {
-                $this->logger->info(
-                    'ExpenseReimbursementGuard: markInvoiced denied — glPassThroughTransactionId missing',
-                    ['claimId' => ($claim['id'] ?? 'unknown')]
-                );
-                return false;
-            }
-
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'ExpenseReimbursementGuard: requirePassThroughMode failed — denying (fail-closed)',
-                ['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-
-    }//end requirePassThroughMode()
-
-    /**
-     * Precondition for the changeSettlementMode transition (REQ-ERP-011).
-     *
-     * High-privilege transition: the existing GL transaction
-     * (glReimbursableTransactionId or glPassThroughTransactionId per the
-     * current settlementMode) MUST already be marked reversed per T1
-     * REQ-GL-004 before the operator may change the mode and re-post.
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
-     *
-     * @return bool True when the GL transaction is reversed and the mode-change is permitted.
-     *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-16
-     */
-    public function requireGlReversalForModeChange(array $claim): bool
-    {
-        try {
-            $settlementMode = ($claim['settlementMode'] ?? null);
-            $glField        = 'glReimbursableTransactionId';
-            if ($settlementMode === 'pass-through') {
-                $glField = 'glPassThroughTransactionId';
-            }
-
-            $glTxnId = ($claim[$glField] ?? null);
-
-            if ($glTxnId === null || $glTxnId === '') {
-                // No GL entry to reverse ⇒ permit (claim was never posted under this mode).
-                return true;
-            }
-
-            return $this->isGlTransactionReversed(glTxnId: (string) $glTxnId);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'ExpenseReimbursementGuard: requireGlReversalForModeChange failed — denying (fail-closed)',
-                ['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-
-    }//end requireGlReversalForModeChange()
-
-    /**
-     * Verify every linked line item has settlementMode matching the claim
-     * (or null — items inherit the claim mode by default per REQ-ERP-003).
-     *
-     * Items with a non-null settlementMode that diverges from the claim
-     * settlementMode are rejected (mixed-mode claim).
-     *
-     * @param string        $claimId    Claim ID for log context.
-     * @param string        $claimMode  The claim-level settlementMode.
-     * @param array<string> $receiptIds Receipt record IDs.
-     * @param array<string> $mileageIds MileageEntry record IDs.
-     * @param array<string> $perDiemIds PerDiem record IDs.
-     *
-     * @return bool True when all items match (or inherit) the claim mode.
-     */
-    private function allItemsMatchSettlementMode(
-        string $claimId,
-        string $claimMode,
-        array $receiptIds,
-        array $mileageIds,
-        array $perDiemIds,
-    ): bool {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->getRegisterSlug();
-
-        $checks = [
-            ['schema' => 'Receipt', 'ids' => $receiptIds],
-            ['schema' => 'MileageEntry', 'ids' => $mileageIds],
-            ['schema' => 'PerDiem', 'ids' => $perDiemIds],
-        ];
-
-        foreach ($checks as $check) {
-            foreach ($check['ids'] as $itemId) {
-                $stringId = (string) $itemId;
-                if ($stringId === '') {
-                    continue;
-                }
-
-                $item = $objectService
-                    ->setRegister($register)
-                    ->setSchema($check['schema'])
-                    ->find($stringId);
-
-                if ($item === null) {
-                    continue;
-                }
-
-                $itemArray = (array) $item;
-                if (is_array($item) === true) {
-                    $itemArray = $item;
-                }
-
-                $itemMode = ($itemArray['settlementMode'] ?? null);
-
-                if ($itemMode !== null && $itemMode !== '' && $itemMode !== $claimMode) {
-                    $this->logger->info(
-                        'ExpenseReimbursementGuard: mixed-mode claim rejected (REQ-ERP-003)',
-                        [
-                            'claimId'   => $claimId,
-                            'itemId'    => $stringId,
-                            'schema'    => $check['schema'],
-                            'claimMode' => $claimMode,
-                            'itemMode'  => $itemMode,
-                        ]
-                    );
-                    return false;
-                }
-
-                // Pass-through items require linkedCustomerId (REQ-ERP-002 validation).
-                if ($claimMode === 'pass-through') {
-                    $linkedCustomerId = ($itemArray['linkedCustomerId'] ?? null);
-                    if ($linkedCustomerId === null || $linkedCustomerId === '') {
-                        $this->logger->info(
-                            'ExpenseReimbursementGuard: pass-through item missing linkedCustomerId (REQ-ERP-002)',
-                            [
-                                'claimId' => $claimId,
-                                'itemId'  => $stringId,
-                                'schema'  => $check['schema'],
-                            ]
-                        );
-                        return false;
-                    }
-                }
-            }//end foreach
-        }//end foreach
-
-        return true;
-
-    }//end allItemsMatchSettlementMode()
-
-    /**
-     * Look up the requiresMarkupApprovalThreshold field on the named
-     * ReimbursementPolicy record. Returns null when no threshold is set or
-     * the policy cannot be resolved (no extra gate applies in either case).
-     *
-     * @param string $policyId The policyId to resolve.
-     *
-     * @return float|null The threshold amount in base currency, or null.
-     */
-    private function getMarkupApprovalThresholdForPolicy(string $policyId): ?float
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->getRegisterSlug();
-
-        $matches = $objectService
-            ->setRegister($register)
-            ->setSchema('ReimbursementPolicy')
-            ->findAll(
-                    [
-                        'filters' => ['policyId' => $policyId],
-                        'limit'   => 1,
-                    ]
-                    );
-
-        if (empty($matches) === true) {
-            return null;
-        }
-
-        $policy = (array) $matches[0];
-        if (is_array($matches[0]) === true) {
-            $policy = $matches[0];
-        }
-
-        $threshold = ($policy['requiresMarkupApprovalThreshold'] ?? null);
-        if ($threshold === null) {
-            return null;
-        }
-
-        return (float) $threshold;
-
-    }//end getMarkupApprovalThresholdForPolicy()
-
-    /**
-     * Compute the markup portion of a pass-through claim total per REQ-ERP-006.
-     *
-     * Formula:
-     *
-     *   markupAmount = totalPassThroughAmount - (totalPassThroughAmount / (1 + avgMarkupRate))
-     *
-     * where avgMarkupRate is the cost-weighted average of markupRateApplied
-     * across all pass-through line items. For mixed percentage / fixedAmount
-     * rules the engine falls back to the spec's simpler formulation:
-     *
-     *   markupAmount = totalPassThroughAmount × avgMarkupRate / (1 + avgMarkupRate)
-     *
-     * When the rate cannot be derived (e.g. no rule resolved), the method
-     * returns the totalPassThroughAmount itself so threshold checks remain
-     * conservative (fail toward extra approval).
-     *
-     * @param array<string, mixed> $claim            ExpenseClaimEntry object array.
-     * @param float                $totalPassThrough Pre-resolved totalPassThroughAmount.
-     *
-     * @return float Markup amount in base currency.
-     */
-    private function computePassThroughMarkupAmount(array $claim, float $totalPassThrough): float
-    {
-        if ($totalPassThrough <= 0.0) {
-            return 0.0;
-        }
-
-        $weighted = $this->weightedAverageMarkupRate(claim: $claim);
-        if ($weighted === null || $weighted <= 0.0) {
-            // Conservative fallback: treat the whole pass-through amount as markup
-            // so threshold checks gate toward extra approval.
-            return $totalPassThrough;
-        }
-
-        return ($totalPassThrough * $weighted) / (1.0 + $weighted);
-
-    }//end computePassThroughMarkupAmount()
-
-    /**
-     * Cost-weighted average markupRateApplied across all pass-through line items.
-     *
-     * @param array<string, mixed> $claim ExpenseClaimEntry object array.
-     *
-     * @return float|null The weighted average, or null when no rates can be resolved.
-     */
-    private function weightedAverageMarkupRate(array $claim): ?float
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->getRegisterSlug();
-
-        $totalCost     = 0.0;
-        $totalWeighted = 0.0;
-
-        $sources = [
-            ['schema' => 'Receipt', 'ids' => (array) ($claim['receiptIds'] ?? []), 'amountField' => 'amountInBaseCurrency'],
-            ['schema' => 'MileageEntry', 'ids' => (array) ($claim['mileageIds'] ?? []), 'amountField' => 'totalAmount'],
-            ['schema' => 'PerDiem', 'ids' => (array) ($claim['perDiemIds'] ?? []), 'amountField' => 'allowanceAmount'],
-        ];
-
-        foreach ($sources as $source) {
-            foreach ($source['ids'] as $itemId) {
-                $stringId = (string) $itemId;
-                if ($stringId === '') {
-                    continue;
-                }
-
-                $item = $objectService
-                    ->setRegister($register)
-                    ->setSchema($source['schema'])
-                    ->find($stringId);
-
-                if ($item === null) {
-                    continue;
-                }
-
-                $itemArray = (array) $item;
-                if (is_array($item) === true) {
-                    $itemArray = $item;
-                }
-
-                if (($itemArray['settlementMode'] ?? null) !== 'pass-through') {
-                    continue;
-                }
-
-                $cost = (float) ($itemArray[$source['amountField']] ?? 0.0);
-                $rate = (float) ($itemArray['markupRateApplied'] ?? 0.0);
-                if ($cost <= 0.0) {
-                    continue;
-                }
-
-                $totalCost     += $cost;
-                $totalWeighted += ($cost * $rate);
-            }//end foreach
-        }//end foreach
-
-        if ($totalCost <= 0.0) {
-            return null;
-        }
-
-        return ($totalWeighted / $totalCost);
-
-    }//end weightedAverageMarkupRate()
-
-    /**
-     * Check whether the named GLTransaction has been marked reversed per
-     * T1 REQ-GL-004. Returns false when the transaction cannot be located
-     * (fail-closed deny).
-     *
-     * @param string $glTxnId The GLTransaction id to inspect.
-     *
-     * @return bool True when the GL transaction is reversed.
-     */
-    private function isGlTransactionReversed(string $glTxnId): bool
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->getRegisterSlug();
-
-        $txn = $objectService
-            ->setRegister($register)
-            ->setSchema('GLTransaction')
-            ->find($glTxnId);
-
-        if ($txn === null) {
-            return false;
-        }
-
-        $txnArray = (array) $txn;
-        if (is_array($txn) === true) {
-            $txnArray = $txn;
-        }
-
-        $status   = ($txnArray['status'] ?? null);
-        $reversed = ($txnArray['isReversed'] ?? null);
-
-        if ($reversed === true) {
-            return true;
-        }
-
-        if (is_string($status) === true && in_array($status, ['reversed', 'voided'], true) === true) {
-            return true;
-        }
-
-        return false;
-
-    }//end isGlTransactionReversed()
+class ExpenseReimbursementGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
+
+	/**
+	 * Resolve the configured register slug; falls back to 'shillinq'.
+	 *
+	 * @return string The non-empty register slug.
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
+
+		return $slug;
+	}//end getRegisterSlug()
+
+	/**
+	 * Precondition for the submit transition (REQ-ERP-001, REQ-ERP-002, REQ-ERP-003).
+	 *
+	 * Validates:
+	 * 1. The claim has a non-null settlementMode (reimbursable | pass-through).
+	 * 2. Every linked Receipt / MileageEntry / PerDiem has matching or null
+	 *    settlementMode — mixed-mode claims are rejected per REQ-ERP-003.
+	 * 3. Pass-through claims have a non-null linkedCustomerId on every
+	 *    pass-through line item per REQ-ERP-002 (validation rule).
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
+	 *
+	 * @return bool True when the claim may be submitted.
+	 *
+	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-11
+	 */
+	public function requireSettlementModeConsistency(array $claim): bool {
+		try {
+			$claimMode = ($claim['settlementMode'] ?? null);
+			if ($claimMode === null || $claimMode === '') {
+				$this->logger->info(
+					'ExpenseReimbursementGuard: claim has no settlementMode — denying submit (REQ-ERP-003)',
+					['claimId' => ($claim['id'] ?? 'unknown')]
+				);
+				return false;
+			}
+
+			if (in_array($claimMode, ['reimbursable', 'pass-through'], true) === false) {
+				$this->logger->info(
+					'ExpenseReimbursementGuard: claim has invalid settlementMode — denying submit',
+					[
+						'claimId' => ($claim['id'] ?? 'unknown'),
+						'settlementMode' => $claimMode,
+					]
+				);
+				return false;
+			}
+
+			return $this->allItemsMatchSettlementMode(
+				claimId: (string)($claim['id'] ?? ''),
+				claimMode: $claimMode,
+				receiptIds: (array)($claim['receiptIds'] ?? []),
+				mileageIds: (array)($claim['mileageIds'] ?? []),
+				perDiemIds: (array)($claim['perDiemIds'] ?? []),
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ExpenseReimbursementGuard: requireSettlementModeConsistency failed — denying submit (fail-closed)',
+				['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+
+	}//end requireSettlementModeConsistency()
+
+	/**
+	 * Precondition for the approve transition (REQ-ERP-006).
+	 *
+	 * When the claim's ReimbursementPolicy declares a
+	 * requiresMarkupApprovalThreshold AND the claim's pass-through markup
+	 * amount (totalPassThroughAmount minus the pre-markup cost portion)
+	 * meets-or-exceeds that threshold, this guard denies the standard
+	 * approve transition — the claim must be routed through the OR
+	 * approval-workflow extra-approver gate per ADR-022.
+	 *
+	 * Below-threshold or no-threshold claims pass through unaffected so OR's
+	 * standard approve flow can complete.
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
+	 *
+	 * @return bool True when the claim may be approved via the standard gate.
+	 *
+	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-17
+	 */
+	public function requireMarkupApprovalIfThreshold(array $claim): bool {
+		try {
+			// No pass-through markup ⇒ no extra gate needed.
+			$settlementMode = ($claim['settlementMode'] ?? null);
+			if ($settlementMode !== 'pass-through') {
+				return true;
+			}
+
+			$policyId = ($claim['reimbursementPolicyId'] ?? null);
+			if ($policyId === null || $policyId === '') {
+				// No explicit policy ⇒ admin defaults apply, no extra gate.
+				return true;
+			}
+
+			$threshold = $this->getMarkupApprovalThresholdForPolicy(policyId: (string)$policyId);
+			if ($threshold === null) {
+				return true;
+			}
+
+			$totalPassThroughAmount = (float)($claim['totalPassThroughAmount'] ?? 0.0);
+			$markupAmount = $this->computePassThroughMarkupAmount(claim: $claim, totalPassThrough: $totalPassThroughAmount);
+
+			if ($markupAmount >= $threshold) {
+				$this->logger->info(
+					'ExpenseReimbursementGuard: pass-through markup meets/exceeds policy threshold — '
+					. 'denying standard approve, deferring to OR approval-workflow extra-approver gate (REQ-ERP-006)',
+					[
+						'claimId' => ($claim['id'] ?? 'unknown'),
+						'policyId' => $policyId,
+						'markupAmount' => $markupAmount,
+						'threshold' => $threshold,
+					]
+				);
+				return false;
+			}
+
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ExpenseReimbursementGuard: requireMarkupApprovalIfThreshold failed — denying approve (fail-closed)',
+				['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+
+	}//end requireMarkupApprovalIfThreshold()
+
+	/**
+	 * Precondition for the markInvoiced transition (REQ-ERP-007 pass-through closure).
+	 *
+	 * Only pass-through claims may transition posted → invoiced; reimbursable
+	 * claims use the reimbursed closure instead.
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
+	 *
+	 * @return bool True when the pass-through claim may transition to invoiced.
+	 *
+	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-11
+	 */
+	public function requirePassThroughMode(array $claim): bool {
+		try {
+			$settlementMode = ($claim['settlementMode'] ?? null);
+			if ($settlementMode !== 'pass-through') {
+				$this->logger->info(
+					'ExpenseReimbursementGuard: markInvoiced denied — claim is not pass-through (REQ-ERP-007)',
+					[
+						'claimId' => ($claim['id'] ?? 'unknown'),
+						'settlementMode' => $settlementMode,
+					]
+				);
+				return false;
+			}
+
+			// Pass-through path requires the GL transaction back-reference to exist.
+			$glPassThroughTransactionId = ($claim['glPassThroughTransactionId'] ?? null);
+			if ($glPassThroughTransactionId === null || $glPassThroughTransactionId === '') {
+				$this->logger->info(
+					'ExpenseReimbursementGuard: markInvoiced denied — glPassThroughTransactionId missing',
+					['claimId' => ($claim['id'] ?? 'unknown')]
+				);
+				return false;
+			}
+
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ExpenseReimbursementGuard: requirePassThroughMode failed — denying (fail-closed)',
+				['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+
+	}//end requirePassThroughMode()
+
+	/**
+	 * Precondition for the changeSettlementMode transition (REQ-ERP-011).
+	 *
+	 * High-privilege transition: the existing GL transaction
+	 * (glReimbursableTransactionId or glPassThroughTransactionId per the
+	 * current settlementMode) MUST already be marked reversed per T1
+	 * REQ-GL-004 before the operator may change the mode and re-post.
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array loaded by OR.
+	 *
+	 * @return bool True when the GL transaction is reversed and the mode-change is permitted.
+	 *
+	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-16
+	 */
+	public function requireGlReversalForModeChange(array $claim): bool {
+		try {
+			$settlementMode = ($claim['settlementMode'] ?? null);
+			$glField = 'glReimbursableTransactionId';
+			if ($settlementMode === 'pass-through') {
+				$glField = 'glPassThroughTransactionId';
+			}
+
+			$glTxnId = ($claim[$glField] ?? null);
+
+			if ($glTxnId === null || $glTxnId === '') {
+				// No GL entry to reverse ⇒ permit (claim was never posted under this mode).
+				return true;
+			}
+
+			return $this->isGlTransactionReversed(glTxnId: (string)$glTxnId);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ExpenseReimbursementGuard: requireGlReversalForModeChange failed — denying (fail-closed)',
+				['claimId' => ($claim['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+
+	}//end requireGlReversalForModeChange()
+
+	/**
+	 * Verify every linked line item has settlementMode matching the claim
+	 * (or null — items inherit the claim mode by default per REQ-ERP-003).
+	 *
+	 * Items with a non-null settlementMode that diverges from the claim
+	 * settlementMode are rejected (mixed-mode claim).
+	 *
+	 * @param string $claimId Claim ID for log context.
+	 * @param string $claimMode The claim-level settlementMode.
+	 * @param array<string> $receiptIds Receipt record IDs.
+	 * @param array<string> $mileageIds MileageEntry record IDs.
+	 * @param array<string> $perDiemIds PerDiem record IDs.
+	 *
+	 * @return bool True when all items match (or inherit) the claim mode.
+	 */
+	private function allItemsMatchSettlementMode(
+		string $claimId,
+		string $claimMode,
+		array $receiptIds,
+		array $mileageIds,
+		array $perDiemIds,
+	): bool {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->getRegisterSlug();
+
+		$checks = [
+			['schema' => 'Receipt', 'ids' => $receiptIds],
+			['schema' => 'MileageEntry', 'ids' => $mileageIds],
+			['schema' => 'PerDiem', 'ids' => $perDiemIds],
+		];
+
+		foreach ($checks as $check) {
+			foreach ($check['ids'] as $itemId) {
+				$stringId = (string)$itemId;
+				if ($stringId === '') {
+					continue;
+				}
+
+				$item = $objectService
+					->setRegister($register)
+					->setSchema($check['schema'])
+					->find($stringId);
+
+				if ($item === null) {
+					continue;
+				}
+
+				$itemArray = (array)$item;
+				if (is_array($item) === true) {
+					$itemArray = $item;
+				}
+
+				$itemMode = ($itemArray['settlementMode'] ?? null);
+
+				if ($itemMode !== null && $itemMode !== '' && $itemMode !== $claimMode) {
+					$this->logger->info(
+						'ExpenseReimbursementGuard: mixed-mode claim rejected (REQ-ERP-003)',
+						[
+							'claimId' => $claimId,
+							'itemId' => $stringId,
+							'schema' => $check['schema'],
+							'claimMode' => $claimMode,
+							'itemMode' => $itemMode,
+						]
+					);
+					return false;
+				}
+
+				// Pass-through items require linkedCustomerId (REQ-ERP-002 validation).
+				if ($claimMode === 'pass-through') {
+					$linkedCustomerId = ($itemArray['linkedCustomerId'] ?? null);
+					if ($linkedCustomerId === null || $linkedCustomerId === '') {
+						$this->logger->info(
+							'ExpenseReimbursementGuard: pass-through item missing linkedCustomerId (REQ-ERP-002)',
+							[
+								'claimId' => $claimId,
+								'itemId' => $stringId,
+								'schema' => $check['schema'],
+							]
+						);
+						return false;
+					}
+				}
+			}//end foreach
+		}//end foreach
+
+		return true;
+	}//end allItemsMatchSettlementMode()
+
+	/**
+	 * Look up the requiresMarkupApprovalThreshold field on the named
+	 * ReimbursementPolicy record. Returns null when no threshold is set or
+	 * the policy cannot be resolved (no extra gate applies in either case).
+	 *
+	 * @param string $policyId The policyId to resolve.
+	 *
+	 * @return float|null The threshold amount in base currency, or null.
+	 */
+	private function getMarkupApprovalThresholdForPolicy(string $policyId): ?float {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->getRegisterSlug();
+
+		$matches = $objectService
+			->setRegister($register)
+			->setSchema('ReimbursementPolicy')
+			->findAll(
+				[
+					'filters' => ['policyId' => $policyId],
+					'limit' => 1,
+				]
+			);
+
+		if (empty($matches) === true) {
+			return null;
+		}
+
+		$policy = (array)$matches[0];
+		if (is_array($matches[0]) === true) {
+			$policy = $matches[0];
+		}
+
+		$threshold = ($policy['requiresMarkupApprovalThreshold'] ?? null);
+		if ($threshold === null) {
+			return null;
+		}
+
+		return (float)$threshold;
+	}//end getMarkupApprovalThresholdForPolicy()
+
+	/**
+	 * Compute the markup portion of a pass-through claim total per REQ-ERP-006.
+	 *
+	 * Formula:
+	 *
+	 *   markupAmount = totalPassThroughAmount - (totalPassThroughAmount / (1 + avgMarkupRate))
+	 *
+	 * where avgMarkupRate is the cost-weighted average of markupRateApplied
+	 * across all pass-through line items. For mixed percentage / fixedAmount
+	 * rules the engine falls back to the spec's simpler formulation:
+	 *
+	 *   markupAmount = totalPassThroughAmount × avgMarkupRate / (1 + avgMarkupRate)
+	 *
+	 * When the rate cannot be derived (e.g. no rule resolved), the method
+	 * returns the totalPassThroughAmount itself so threshold checks remain
+	 * conservative (fail toward extra approval).
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array.
+	 * @param float $totalPassThrough Pre-resolved totalPassThroughAmount.
+	 *
+	 * @return float Markup amount in base currency.
+	 */
+	private function computePassThroughMarkupAmount(array $claim, float $totalPassThrough): float {
+		if ($totalPassThrough <= 0.0) {
+			return 0.0;
+		}
+
+		$weighted = $this->weightedAverageMarkupRate(claim: $claim);
+		if ($weighted === null || $weighted <= 0.0) {
+			// Conservative fallback: treat the whole pass-through amount as markup
+			// so threshold checks gate toward extra approval.
+			return $totalPassThrough;
+		}
+
+		return ($totalPassThrough * $weighted) / (1.0 + $weighted);
+	}//end computePassThroughMarkupAmount()
+
+	/**
+	 * Cost-weighted average markupRateApplied across all pass-through line items.
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array.
+	 *
+	 * @return float|null The weighted average, or null when no rates can be resolved.
+	 */
+	private function weightedAverageMarkupRate(array $claim): ?float {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->getRegisterSlug();
+
+		$totalCost = 0.0;
+		$totalWeighted = 0.0;
+
+		$sources = [
+			['schema' => 'Receipt', 'ids' => (array)($claim['receiptIds'] ?? []), 'amountField' => 'amountInBaseCurrency'],
+			['schema' => 'MileageEntry', 'ids' => (array)($claim['mileageIds'] ?? []), 'amountField' => 'totalAmount'],
+			['schema' => 'PerDiem', 'ids' => (array)($claim['perDiemIds'] ?? []), 'amountField' => 'allowanceAmount'],
+		];
+
+		foreach ($sources as $source) {
+			foreach ($source['ids'] as $itemId) {
+				$stringId = (string)$itemId;
+				if ($stringId === '') {
+					continue;
+				}
+
+				$item = $objectService
+					->setRegister($register)
+					->setSchema($source['schema'])
+					->find($stringId);
+
+				if ($item === null) {
+					continue;
+				}
+
+				$itemArray = (array)$item;
+				if (is_array($item) === true) {
+					$itemArray = $item;
+				}
+
+				if (($itemArray['settlementMode'] ?? null) !== 'pass-through') {
+					continue;
+				}
+
+				$cost = (float)($itemArray[$source['amountField']] ?? 0.0);
+				$rate = (float)($itemArray['markupRateApplied'] ?? 0.0);
+				if ($cost <= 0.0) {
+					continue;
+				}
+
+				$totalCost += $cost;
+				$totalWeighted += ($cost * $rate);
+			}//end foreach
+		}//end foreach
+
+		if ($totalCost <= 0.0) {
+			return null;
+		}
+
+		return ($totalWeighted / $totalCost);
+	}//end weightedAverageMarkupRate()
+
+	/**
+	 * Check whether the named GLTransaction has been marked reversed per
+	 * T1 REQ-GL-004. Returns false when the transaction cannot be located
+	 * (fail-closed deny).
+	 *
+	 * @param string $glTxnId The GLTransaction id to inspect.
+	 *
+	 * @return bool True when the GL transaction is reversed.
+	 */
+	private function isGlTransactionReversed(string $glTxnId): bool {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->getRegisterSlug();
+
+		$txn = $objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->find($glTxnId);
+
+		if ($txn === null) {
+			return false;
+		}
+
+		$txnArray = (array)$txn;
+		if (is_array($txn) === true) {
+			$txnArray = $txn;
+		}
+
+		$status = ($txnArray['status'] ?? null);
+		$reversed = ($txnArray['isReversed'] ?? null);
+
+		if ($reversed === true) {
+			return true;
+		}
+
+		if (is_string($status) === true && in_array($status, ['reversed', 'voided'], true) === true) {
+			return true;
+		}
+
+		return false;
+	}//end isGlTransactionReversed()
 }//end class

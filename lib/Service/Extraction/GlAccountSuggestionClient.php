@@ -54,203 +54,199 @@ use Throwable;
  *
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  */
-class GlAccountSuggestionClient
-{
-    /**
-     * Docudesk route name for the suggestion endpoint (NC
-     * `{appId}.{controller}.{method}` convention for
-     * `['name' => 'glAccountSuggestion#suggestAccount', ...]`).
-     *
-     * @var string
-     */
-    public const SUGGEST_ROUTE_NAME = 'docudesk.glAccountSuggestion.suggestAccount';
+class GlAccountSuggestionClient {
+	/**
+	 * Docudesk route name for the suggestion endpoint (NC
+	 * `{appId}.{controller}.{method}` convention for
+	 * `['name' => 'glAccountSuggestion#suggestAccount', ...]`).
+	 *
+	 * @var string
+	 */
+	public const SUGGEST_ROUTE_NAME = 'docudesk.glAccountSuggestion.suggestAccount';
 
-    /**
-     * Docudesk route name for the (already-shipped) corrections endpoint.
-     *
-     * @var string
-     */
-    public const CORRECTIONS_ROUTE_NAME = 'docudesk.extraction.corrections';
+	/**
+	 * Docudesk route name for the (already-shipped) corrections endpoint.
+	 *
+	 * @var string
+	 */
+	public const CORRECTIONS_ROUTE_NAME = 'docudesk.extraction.corrections';
 
-    /**
-     * Request timeout in seconds.
-     *
-     * @var int
-     */
-    private const REQUEST_TIMEOUT_SECONDS = 10;
+	/**
+	 * Request timeout in seconds.
+	 *
+	 * @var int
+	 */
+	private const REQUEST_TIMEOUT_SECONDS = 10;
 
-    /**
-     * Constructor.
-     *
-     * @param IClientService  $clientService NC HTTP client factory.
-     * @param IURLGenerator   $urlGenerator  Resolves docudesk's intra-instance routes.
-     * @param LoggerInterface $logger        Logger; requests never carry credentials to log.
-     */
-    public function __construct(
-        private readonly IClientService $clientService,
-        private readonly IURLGenerator $urlGenerator,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param IClientService $clientService NC HTTP client factory.
+	 * @param IURLGenerator $urlGenerator Resolves docudesk's intra-instance routes.
+	 * @param LoggerInterface $logger Logger; requests never carry credentials to log.
+	 */
+	public function __construct(
+		private readonly IClientService $clientService,
+		private readonly IURLGenerator $urlGenerator,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Request a GL-account suggestion for a prior docudesk financial
-     * extraction (REQ-GAC-003).
-     *
-     * @param string                           $extractionId      The docudesk `financialExtraction`
-     *                                                            object id.
-     * @param array<int, array<string,string>> $candidateAccounts Candidate accounts (each
-     *                                                            `{code, label}`), supplied by
-     *                                                            shillinq's own chart of accounts
-     *                                                            (REQ-GAC-002).
-     *
-     * @return array{success: bool, statusCode: int, error: string|null, suggestion: array<string,mixed>|null}
-     *         Outcome; never throws. `suggestion` is docudesk's decoded response body, or null on
-     *         any failure (REQ-GAC-006 graceful degradation).
-     *
-     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
-     */
-    public function requestSuggestion(string $extractionId, array $candidateAccounts): array
-    {
-        try {
-            $url = $this->urlGenerator->linkToRouteAbsolute(self::SUGGEST_ROUTE_NAME, ['id' => $extractionId]);
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'GlAccountSuggestionClient: docudesk suggest-account route unavailable — docudesk may not be installed',
-                ['exception' => $e->getMessage()]
-            );
-            return $this->degraded(error: 'docudesk is not available');
-        }
+	/**
+	 * Request a GL-account suggestion for a prior docudesk financial
+	 * extraction (REQ-GAC-003).
+	 *
+	 * @param string $extractionId The docudesk `financialExtraction`
+	 *                             object id.
+	 * @param array<int, array<string,string>> $candidateAccounts Candidate accounts (each
+	 *                                                            `{code, label}`), supplied by
+	 *                                                            shillinq's own chart of accounts
+	 *                                                            (REQ-GAC-002).
+	 *
+	 * @return array{success: bool, statusCode: int, error: string|null, suggestion: array<string,mixed>|null}
+	 *                                                                                                         Outcome; never throws. `suggestion` is docudesk's decoded response body, or null on
+	 *                                                                                                         any failure (REQ-GAC-006 graceful degradation).
+	 *
+	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+	 */
+	public function requestSuggestion(string $extractionId, array $candidateAccounts): array {
+		try {
+			$url = $this->urlGenerator->linkToRouteAbsolute(self::SUGGEST_ROUTE_NAME, ['id' => $extractionId]);
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'GlAccountSuggestionClient: docudesk suggest-account route unavailable — docudesk may not be installed',
+				['exception' => $e->getMessage()]
+			);
+			return $this->degraded(error: 'docudesk is not available');
+		}
 
-        $body = [
-            'candidateAccounts' => $candidateAccounts,
-            'sourceApp'         => 'shillinq',
-        ];
+		$body = [
+			'candidateAccounts' => $candidateAccounts,
+			'sourceApp' => 'shillinq',
+		];
 
-        try {
-            $response = $this->clientService->newClient()->post(
-                $url,
-                [
-                    'timeout'         => self::REQUEST_TIMEOUT_SECONDS,
-                    'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
-                    'headers'         => ['Content-Type' => 'application/json', 'Accept' => 'application/json'],
-                    'body'            => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
-                ]
-            );
+		try {
+			$response = $this->clientService->newClient()->post(
+				$url,
+				[
+					'timeout' => self::REQUEST_TIMEOUT_SECONDS,
+					'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
+					'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json'],
+					'body' => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+				]
+			);
 
-            $status  = $response->getStatusCode();
-            $decoded = json_decode((string) $response->getBody(), true);
-            $success = ($status >= 200 && $status < 300 && is_array($decoded) === true);
+			$status = $response->getStatusCode();
+			$decoded = json_decode((string)$response->getBody(), true);
+			$success = ($status >= 200 && $status < 300 && is_array($decoded) === true);
 
-            $error      = 'docudesk returned an unexpected response';
-            $suggestion = null;
-            if ($success === true) {
-                $error      = null;
-                $suggestion = $decoded;
-            }
+			$error = 'docudesk returned an unexpected response';
+			$suggestion = null;
+			if ($success === true) {
+				$error = null;
+				$suggestion = $decoded;
+			}
 
-            return [
-                'success'    => $success,
-                'statusCode' => $status,
-                'error'      => $error,
-                'suggestion' => $suggestion,
-            ];
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'GlAccountSuggestionClient: suggestion request failed — degrading gracefully',
-                ['extractionId' => $extractionId, 'exception' => $e->getMessage()]
-            );
-            return $this->degraded(error: 'docudesk suggestion request failed');
-        }//end try
+			return [
+				'success' => $success,
+				'statusCode' => $status,
+				'error' => $error,
+				'suggestion' => $suggestion,
+			];
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'GlAccountSuggestionClient: suggestion request failed — degrading gracefully',
+				['extractionId' => $extractionId, 'exception' => $e->getMessage()]
+			);
+			return $this->degraded(error: 'docudesk suggestion request failed');
+		}//end try
 
-    }//end requestSuggestion()
+	}//end requestSuggestion()
 
-    /**
-     * Post the operator's committed GL-account booking back to docudesk as a
-     * correction, so the ranker's booking history reflects it (REQ-GAC-005).
-     * Posted whether or not the booked code matches the prior suggestion —
-     * docudesk's own `HistoryRanker` counts frequency over ALL past bookings
-     * (design.md Decision D3).
-     *
-     * @param string      $extractionId The docudesk `financialExtraction` object id.
-     * @param string      $accountCode  The operator's committed GL-account code.
-     * @param string|null $accountLabel Optional account label.
-     *
-     * @return array{success: bool, statusCode: int, error: string|null} Outcome; never throws —
-     *         best-effort, MUST NOT block or undo the already-committed local booking.
-     *
-     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
-     */
-    public function postCorrection(string $extractionId, string $accountCode, ?string $accountLabel): array
-    {
-        try {
-            $url = $this->urlGenerator->linkToRouteAbsolute(self::CORRECTIONS_ROUTE_NAME, ['id' => $extractionId]);
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'GlAccountSuggestionClient: docudesk corrections route unavailable — booking history not fed',
-                ['exception' => $e->getMessage()]
-            );
-            return ['success' => false, 'statusCode' => 0, 'error' => 'docudesk is not available'];
-        }
+	/**
+	 * Post the operator's committed GL-account booking back to docudesk as a
+	 * correction, so the ranker's booking history reflects it (REQ-GAC-005).
+	 * Posted whether or not the booked code matches the prior suggestion —
+	 * docudesk's own `HistoryRanker` counts frequency over ALL past bookings
+	 * (design.md Decision D3).
+	 *
+	 * @param string $extractionId The docudesk `financialExtraction` object id.
+	 * @param string $accountCode The operator's committed GL-account code.
+	 * @param string|null $accountLabel Optional account label.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string|null} Outcome; never throws —
+	 *                                                                   best-effort, MUST NOT block or undo the already-committed local booking.
+	 *
+	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+	 */
+	public function postCorrection(string $extractionId, string $accountCode, ?string $accountLabel): array {
+		try {
+			$url = $this->urlGenerator->linkToRouteAbsolute(self::CORRECTIONS_ROUTE_NAME, ['id' => $extractionId]);
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'GlAccountSuggestionClient: docudesk corrections route unavailable — booking history not fed',
+				['exception' => $e->getMessage()]
+			);
+			return ['success' => false, 'statusCode' => 0, 'error' => 'docudesk is not available'];
+		}
 
-        $body = [
-            'fields' => array_filter(
-                ['glAccountCode' => $accountCode, 'glAccountLabel' => $accountLabel],
-                static fn ($value): bool => ($value !== null)
-            ),
-        ];
+		$body = [
+			'fields' => array_filter(
+				['glAccountCode' => $accountCode, 'glAccountLabel' => $accountLabel],
+				static fn ($value): bool => ($value !== null)
+			),
+		];
 
-        try {
-            $response = $this->clientService->newClient()->post(
-                $url,
-                [
-                    'timeout'         => self::REQUEST_TIMEOUT_SECONDS,
-                    'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
-                    'headers'         => ['Content-Type' => 'application/json', 'Accept' => 'application/json'],
-                    'body'            => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
-                ]
-            );
+		try {
+			$response = $this->clientService->newClient()->post(
+				$url,
+				[
+					'timeout' => self::REQUEST_TIMEOUT_SECONDS,
+					'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
+					'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json'],
+					'body' => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+				]
+			);
 
-            $status = $response->getStatusCode();
-            $this->logger->info(
-                'GlAccountSuggestionClient: booking correction posted',
-                ['extractionId' => $extractionId, 'accountCode' => $accountCode, 'status' => $status]
-            );
+			$status = $response->getStatusCode();
+			$this->logger->info(
+				'GlAccountSuggestionClient: booking correction posted',
+				['extractionId' => $extractionId, 'accountCode' => $accountCode, 'status' => $status]
+			);
 
-            return [
-                'success'    => ($status >= 200 && $status < 300),
-                'statusCode' => $status,
-                'error'      => null,
-            ];
-        } catch (Throwable $e) {
-            // Best-effort (REQ-GAC-005) — logged, never thrown; the caller's
-            // already-successful local booking is unaffected.
-            $this->logger->warning(
-                'GlAccountSuggestionClient: booking correction failed — local booking unaffected',
-                ['extractionId' => $extractionId, 'accountCode' => $accountCode, 'exception' => $e->getMessage()]
-            );
-            return ['success' => false, 'statusCode' => 0, 'error' => 'docudesk correction request failed'];
-        }//end try
+			return [
+				'success' => ($status >= 200 && $status < 300),
+				'statusCode' => $status,
+				'error' => null,
+			];
+		} catch (Throwable $e) {
+			// Best-effort (REQ-GAC-005) — logged, never thrown; the caller's
+			// already-successful local booking is unaffected.
+			$this->logger->warning(
+				'GlAccountSuggestionClient: booking correction failed — local booking unaffected',
+				['extractionId' => $extractionId, 'accountCode' => $accountCode, 'exception' => $e->getMessage()]
+			);
+			return ['success' => false, 'statusCode' => 0, 'error' => 'docudesk correction request failed'];
+		}//end try
 
-    }//end postCorrection()
+	}//end postCorrection()
 
-    /**
-     * Build the fail-soft "no suggestion available" shape shared by both
-     * `requestSuggestion()` early-return paths.
-     *
-     * @param string $error The error message.
-     *
-     * @return array{success: bool, statusCode: int, error: string, suggestion: null}
-     */
-    private function degraded(string $error): array
-    {
-        return [
-            'success'    => false,
-            'statusCode' => 0,
-            'error'      => $error,
-            'suggestion' => null,
-        ];
+	/**
+	 * Build the fail-soft "no suggestion available" shape shared by both
+	 * `requestSuggestion()` early-return paths.
+	 *
+	 * @param string $error The error message.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string, suggestion: null}
+	 */
+	private function degraded(string $error): array {
+		return [
+			'success' => false,
+			'statusCode' => 0,
+			'error' => $error,
+			'suggestion' => null,
+		];
 
-    }//end degraded()
+	}//end degraded()
 }//end class

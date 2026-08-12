@@ -62,324 +62,316 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
  */
-class BackfillFiscalPeriods implements IRepairStep
-{
-    use ReadsSourceRowsInBatches;
+class BackfillFiscalPeriods implements IRepairStep {
+	use ReadsSourceRowsInBatches;
 
-    /**
-     * Constructor.
-     *
-     * @param SettingsService    $settingsService The settings service (register slug).
-     * @param LoggerInterface    $logger          The logger interface.
-     * @param ContainerInterface $container       The DI container (lazy OR ObjectService resolution).
-     */
-    public function __construct(
-        private SettingsService $settingsService,
-        private LoggerInterface $logger,
-        private ContainerInterface $container,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param LoggerInterface $logger The logger interface.
+	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
+	 */
+	public function __construct(
+		private SettingsService $settingsService,
+		private LoggerInterface $logger,
+		private ContainerInterface $container,
+	) {
+	}//end __construct()
 
-    /**
-     * The repair-step display name.
-     *
-     * @return string The display name.
-     *
-     * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
-     */
-    public function getName(): string
-    {
-        return 'Shillinq: backfill FiscalPeriod records from historical GLLine.periodId values';
+	/**
+	 * The repair-step display name.
+	 *
+	 * @return string The display name.
+	 *
+	 * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
+	 */
+	public function getName(): string {
+		return 'Shillinq: backfill FiscalPeriod records from historical GLLine.periodId values';
+	}//end getName()
 
-    }//end getName()
+	/**
+	 * Run the backfill. Idempotent — never duplicates records and never
+	 * mutates existing FiscalPeriod state.
+	 *
+	 * @param IOutput $output The repair-step output (progress + warnings).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
+	 */
+	public function run(IOutput $output): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registerSlug = $this->settingsService->getRegisterSlug();
 
-    /**
-     * Run the backfill. Idempotent — never duplicates records and never
-     * mutates existing FiscalPeriod state.
-     *
-     * @param IOutput $output The repair-step output (progress + warnings).
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
-     */
-    public function run(IOutput $output): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->settingsService->getRegisterSlug();
+			// Stream every GLLine carrying a non-empty periodId; collect
+			// the (administrationId, periodId) tuples we have not yet
+			// materialised as FiscalPeriod records.
+			$lines = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'GLLine');
 
-            // Stream every GLLine carrying a non-empty periodId; collect
-            // the (administrationId, periodId) tuples we have not yet
-            // materialised as FiscalPeriod records.
-            $lines = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'GLLine');
+			if ($lines === []) {
+				$output->info('Shillinq: no GLLine records — FiscalPeriod backfill skipped.');
+				return;
+			}
 
-            if ($lines === []) {
-                $output->info('Shillinq: no GLLine records — FiscalPeriod backfill skipped.');
-                return;
-            }
+			// Bucket distinct (administrationId, periodId) tuples.
+			$tuples = [];
+			foreach ($lines as $line) {
+				$arr = $this->rowPayload(row: $line);
+				$periodId = (string)($arr['periodId'] ?? '');
+				if ($periodId === '') {
+					continue;
+				}
 
-            // Bucket distinct (administrationId, periodId) tuples.
-            $tuples = [];
-            foreach ($lines as $line) {
-                $arr      = $this->rowPayload(row: $line);
-                $periodId = (string) ($arr['periodId'] ?? '');
-                if ($periodId === '') {
-                    continue;
-                }
+				// GLLine does not carry administrationId directly — derive
+				// it from the parent GLTransaction by transactionId.
+				$administrationId = (string)($arr['administrationId'] ?? '');
+				$key = $administrationId . '|' . $periodId;
+				if (isset($tuples[$key]) === true) {
+					continue;
+				}
 
-                // GLLine does not carry administrationId directly — derive
-                // it from the parent GLTransaction by transactionId.
-                $administrationId = (string) ($arr['administrationId'] ?? '');
-                $key = $administrationId.'|'.$periodId;
-                if (isset($tuples[$key]) === true) {
-                    continue;
-                }
+				$tuples[$key] = ['administrationId' => $administrationId, 'periodId' => $periodId];
+			}
 
-                $tuples[$key] = ['administrationId' => $administrationId, 'periodId' => $periodId];
-            }
+			$created = 0;
+			$skipped = 0;
+			foreach ($tuples as $tuple) {
+				if ($this->fiscalPeriodExists(
+					objectService: $objectService,
+					registerSlug: $registerSlug,
+					periodId: $tuple['periodId'],
+					administrationId: $tuple['administrationId']
+				) === true
+				) {
+					$skipped++;
+					continue;
+				}
 
-            $created = 0;
-            $skipped = 0;
-            foreach ($tuples as $tuple) {
-                if ($this->fiscalPeriodExists(
-                    objectService: $objectService,
-                    registerSlug: $registerSlug,
-                    periodId: $tuple['periodId'],
-                    administrationId: $tuple['administrationId']
-                ) === true
-                ) {
-                    $skipped++;
-                    continue;
-                }
+				$record = $this->buildSeedRecord(
+					periodId: $tuple['periodId'],
+					administrationId: $tuple['administrationId']
+				);
 
-                $record = $this->buildSeedRecord(
-                    periodId: $tuple['periodId'],
-                    administrationId: $tuple['administrationId']
-                );
+				// Runs in the installer/repair context where no web user is
+				// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+				// backfill persists instead of throwing "User 'Anonymous' does not
+				// have permission to 'create'".
+				$objectService->saveObject(
+					object: $record,
+					register: $registerSlug,
+					schema: 'FiscalPeriod',
+					_rbac: false,
+					_multitenancy: false,
+				);
+				$created++;
+			}//end foreach
 
-                // Runs in the installer/repair context where no web user is
-                // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
-                // backfill persists instead of throwing "User 'Anonymous' does not
-                // have permission to 'create'".
-                $objectService->saveObject(
-                    object: $record,
-                    register: $registerSlug,
-                    schema: 'FiscalPeriod',
-                    _rbac: false,
-                    _multitenancy: false,
-                );
-                $created++;
-            }//end foreach
+			$output->info(
+				'Shillinq: FiscalPeriod backfill complete — ' . $created . ' created, ' . $skipped . ' skipped (already exist).'
+			);
+		} catch (\Throwable $e) {
+			// Backfill is best-effort: failing it must NOT block the
+			// app upgrade. Log + warn so an operator can re-run.
+			$output->warning('Shillinq: FiscalPeriod backfill failed: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: FiscalPeriod backfill failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-            $output->info(
-                'Shillinq: FiscalPeriod backfill complete — '.$created.' created, '.$skipped.' skipped (already exist).'
-            );
-        } catch (\Throwable $e) {
-            // Backfill is best-effort: failing it must NOT block the
-            // app upgrade. Log + warn so an operator can re-run.
-            $output->warning('Shillinq: FiscalPeriod backfill failed: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: FiscalPeriod backfill failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+	}//end run()
 
-    }//end run()
+	/**
+	 * Whether a FiscalPeriod record already exists for the given
+	 * (periodId, administrationId) tuple.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param string $periodId The business periodId.
+	 * @param string $administrationId The administration scope ('' for none).
+	 *
+	 * @return bool True when a match is found.
+	 */
+	private function fiscalPeriodExists(
+		object $objectService,
+		string $registerSlug,
+		string $periodId,
+		string $administrationId,
+	): bool {
+		$filters = ['periodId' => $periodId];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
 
-    /**
-     * Whether a FiscalPeriod record already exists for the given
-     * (periodId, administrationId) tuple.
-     *
-     * @param object $objectService    The OR ObjectService.
-     * @param string $registerSlug     The register slug.
-     * @param string $periodId         The business periodId.
-     * @param string $administrationId The administration scope ('' for none).
-     *
-     * @return bool True when a match is found.
-     */
-    private function fiscalPeriodExists(
-        object $objectService,
-        string $registerSlug,
-        string $periodId,
-        string $administrationId
-    ): bool {
-        $filters = ['periodId' => $periodId];
-        if ($administrationId !== '') {
-            $filters['administrationId'] = $administrationId;
-        }
+		$found = $objectService
+			->setRegister($registerSlug)
+			->setSchema('FiscalPeriod')
+			->findAll(['filters' => $filters, 'limit' => 1]);
 
-        $found = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('FiscalPeriod')
-            ->findAll(['filters' => $filters, 'limit' => 1]);
+		return is_array($found) === true && $found !== [];
+	}//end fiscalPeriodExists()
 
-        return is_array($found) === true && $found !== [];
+	/**
+	 * Build the seed record for a distinct historical periodId. Derives
+	 * a reasonable `name`, `startDate`, `endDate`, and `fiscalYear` from
+	 * the periodId slug (e.g. `2026-Q1`, `2026-01`, `2026-W12`,
+	 * `FY2026`). Falls back to placeholder values when the slug shape
+	 * is unrecognised — the operator can refine the record afterwards.
+	 *
+	 * @param string $periodId The business periodId.
+	 * @param string $administrationId The administration scope ('' allowed).
+	 *
+	 * @return array<string,mixed> The seed FiscalPeriod record (state: open).
+	 */
+	private function buildSeedRecord(string $periodId, string $administrationId): array {
+		$derived = $this->derivePeriodFields(periodId: $periodId);
 
-    }//end fiscalPeriodExists()
+		$resolvedAdministrationId = 'unknown';
+		if ($administrationId !== '') {
+			$resolvedAdministrationId = $administrationId;
+		}
 
-    /**
-     * Build the seed record for a distinct historical periodId. Derives
-     * a reasonable `name`, `startDate`, `endDate`, and `fiscalYear` from
-     * the periodId slug (e.g. `2026-Q1`, `2026-01`, `2026-W12`,
-     * `FY2026`). Falls back to placeholder values when the slug shape
-     * is unrecognised — the operator can refine the record afterwards.
-     *
-     * @param string $periodId         The business periodId.
-     * @param string $administrationId The administration scope ('' allowed).
-     *
-     * @return array<string,mixed> The seed FiscalPeriod record (state: open).
-     */
-    private function buildSeedRecord(string $periodId, string $administrationId): array
-    {
-        $derived = $this->derivePeriodFields(periodId: $periodId);
+		$record = [
+			'periodId' => $periodId,
+			'name' => $derived['name'],
+			'administrationId' => $resolvedAdministrationId,
+			'startDate' => $derived['startDate'],
+			'endDate' => $derived['endDate'],
+			'fiscalYear' => $derived['fiscalYear'],
+			'state' => 'open',
+			'reopenedHistory' => [],
+			'taskChecklistItems' => [],
+			'aiFlags' => [],
+		];
 
-        $resolvedAdministrationId = 'unknown';
-        if ($administrationId !== '') {
-            $resolvedAdministrationId = $administrationId;
-        }
+		return $record;
+	}//end buildSeedRecord()
 
-        $record = [
-            'periodId'           => $periodId,
-            'name'               => $derived['name'],
-            'administrationId'   => $resolvedAdministrationId,
-            'startDate'          => $derived['startDate'],
-            'endDate'            => $derived['endDate'],
-            'fiscalYear'         => $derived['fiscalYear'],
-            'state'              => 'open',
-            'reopenedHistory'    => [],
-            'taskChecklistItems' => [],
-            'aiFlags'            => [],
-        ];
+	/**
+	 * Parse a periodId slug into a (name, startDate, endDate,
+	 * fiscalYear) tuple. Recognises:
+	 *
+	 *   - YYYY-Qn        → calendar quarter
+	 *   - YYYY-Mnn       → calendar month
+	 *   - YYYY-nn        → calendar month (alias)
+	 *   - YYYY-Wnn       → ISO week
+	 *   - FYYYYY         → fiscal year only
+	 *
+	 * Falls back to YYYY-01-01..YYYY-12-31 when only a year can be
+	 * extracted, and to today's year + a placeholder name otherwise.
+	 *
+	 * @param string $periodId The periodId slug.
+	 *
+	 * @return array{name:string,startDate:string,endDate:string,fiscalYear:int} The derived fields.
+	 */
+	private function derivePeriodFields(string $periodId): array {
+		$now = new DateTimeImmutable();
+		$fallbackYear = (int)$now->format('Y');
 
-        return $record;
+		// YYYY-Qn (calendar quarter).
+		if (preg_match('/^(\d{4})-Q([1-4])$/i', $periodId, $m) === 1) {
+			$year = (int)$m[1];
+			$quarter = (int)$m[2];
+			$startMonth = (($quarter - 1) * 3) + 1;
+			$endMonth = $startMonth + 2;
+			$start = sprintf('%04d-%02d-01', $year, $startMonth);
+			$endDay = (int)(new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $endMonth)))->format('t');
+			$end = sprintf('%04d-%02d-%02d', $year, $endMonth, $endDay);
 
-    }//end buildSeedRecord()
+			return [
+				'name' => sprintf('Q%d %04d', $quarter, $year),
+				'startDate' => $start,
+				'endDate' => $end,
+				'fiscalYear' => $year,
+			];
+		}
 
-    /**
-     * Parse a periodId slug into a (name, startDate, endDate,
-     * fiscalYear) tuple. Recognises:
-     *
-     *   - YYYY-Qn        → calendar quarter
-     *   - YYYY-Mnn       → calendar month
-     *   - YYYY-nn        → calendar month (alias)
-     *   - YYYY-Wnn       → ISO week
-     *   - FYYYYY         → fiscal year only
-     *
-     * Falls back to YYYY-01-01..YYYY-12-31 when only a year can be
-     * extracted, and to today's year + a placeholder name otherwise.
-     *
-     * @param string $periodId The periodId slug.
-     *
-     * @return array{name:string,startDate:string,endDate:string,fiscalYear:int} The derived fields.
-     */
-    private function derivePeriodFields(string $periodId): array
-    {
-        $now          = new DateTimeImmutable();
-        $fallbackYear = (int) $now->format('Y');
+		// YYYY-Mnn (calendar month, M-prefixed).
+		if (preg_match('/^(\d{4})-M(\d{2})$/i', $periodId, $m) === 1
+			|| preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $periodId, $m) === 1
+		) {
+			$year = (int)$m[1];
+			$month = (int)$m[2];
+			$start = sprintf('%04d-%02d-01', $year, $month);
+			$endDay = (int)(new DateTimeImmutable($start))->format('t');
+			$end = sprintf('%04d-%02d-%02d', $year, $month, $endDay);
 
-        // YYYY-Qn (calendar quarter).
-        if (preg_match('/^(\d{4})-Q([1-4])$/i', $periodId, $m) === 1) {
-            $year       = (int) $m[1];
-            $quarter    = (int) $m[2];
-            $startMonth = (($quarter - 1) * 3) + 1;
-            $endMonth   = $startMonth + 2;
-            $start      = sprintf('%04d-%02d-01', $year, $startMonth);
-            $endDay     = (int) (new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $endMonth)))->format('t');
-            $end        = sprintf('%04d-%02d-%02d', $year, $endMonth, $endDay);
+			$names = [
+				1 => 'January',
+				2 => 'February',
+				3 => 'March',
+				4 => 'April',
+				5 => 'May',
+				6 => 'June',
+				7 => 'July',
+				8 => 'August',
+				9 => 'September',
+				10 => 'October',
+				11 => 'November',
+				12 => 'December',
+			];
 
-            return [
-                'name'       => sprintf('Q%d %04d', $quarter, $year),
-                'startDate'  => $start,
-                'endDate'    => $end,
-                'fiscalYear' => $year,
-            ];
-        }
+			return [
+				'name' => sprintf('%s %04d', $names[$month], $year),
+				'startDate' => $start,
+				'endDate' => $end,
+				'fiscalYear' => $year,
+			];
+		}//end if
 
-        // YYYY-Mnn (calendar month, M-prefixed).
-        if (preg_match('/^(\d{4})-M(\d{2})$/i', $periodId, $m) === 1
-            || preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $periodId, $m) === 1
-        ) {
-            $year   = (int) $m[1];
-            $month  = (int) $m[2];
-            $start  = sprintf('%04d-%02d-01', $year, $month);
-            $endDay = (int) (new DateTimeImmutable($start))->format('t');
-            $end    = sprintf('%04d-%02d-%02d', $year, $month, $endDay);
+		// YYYY-Wnn (ISO week — startDate Monday, endDate Sunday).
+		if (preg_match('/^(\d{4})-W(\d{2})$/i', $periodId, $m) === 1) {
+			$year = (int)$m[1];
+			$week = (int)$m[2];
+			try {
+				$start = (new DateTimeImmutable())->setISODate($year, $week, 1)->format('Y-m-d');
+				$end = (new DateTimeImmutable())->setISODate($year, $week, 7)->format('Y-m-d');
+			} catch (\Throwable) {
+				$start = sprintf('%04d-01-01', $year);
+				$end = sprintf('%04d-12-31', $year);
+			}
 
-            $names = [
-                1  => 'January',
-                2  => 'February',
-                3  => 'March',
-                4  => 'April',
-                5  => 'May',
-                6  => 'June',
-                7  => 'July',
-                8  => 'August',
-                9  => 'September',
-                10 => 'October',
-                11 => 'November',
-                12 => 'December',
-            ];
+			return [
+				'name' => sprintf('Week %d %04d', $week, $year),
+				'startDate' => $start,
+				'endDate' => $end,
+				'fiscalYear' => $year,
+			];
+		}
 
-            return [
-                'name'       => sprintf('%s %04d', $names[$month], $year),
-                'startDate'  => $start,
-                'endDate'    => $end,
-                'fiscalYear' => $year,
-            ];
-        }//end if
+		// FYYYYY (fiscal-year only).
+		if (preg_match('/^FY(\d{4})$/i', $periodId, $m) === 1) {
+			$year = (int)$m[1];
 
-        // YYYY-Wnn (ISO week — startDate Monday, endDate Sunday).
-        if (preg_match('/^(\d{4})-W(\d{2})$/i', $periodId, $m) === 1) {
-            $year = (int) $m[1];
-            $week = (int) $m[2];
-            try {
-                $start = (new DateTimeImmutable())->setISODate($year, $week, 1)->format('Y-m-d');
-                $end   = (new DateTimeImmutable())->setISODate($year, $week, 7)->format('Y-m-d');
-            } catch (\Throwable) {
-                $start = sprintf('%04d-01-01', $year);
-                $end   = sprintf('%04d-12-31', $year);
-            }
+			return [
+				'name' => sprintf('Fiscal year %04d', $year),
+				'startDate' => sprintf('%04d-01-01', $year),
+				'endDate' => sprintf('%04d-12-31', $year),
+				'fiscalYear' => $year,
+			];
+		}
 
-            return [
-                'name'       => sprintf('Week %d %04d', $week, $year),
-                'startDate'  => $start,
-                'endDate'    => $end,
-                'fiscalYear' => $year,
-            ];
-        }
+		// YYYY-... fallback — at least the year is parseable.
+		if (preg_match('/^(\d{4})/', $periodId, $m) === 1) {
+			$year = (int)$m[1];
 
-        // FYYYYY (fiscal-year only).
-        if (preg_match('/^FY(\d{4})$/i', $periodId, $m) === 1) {
-            $year = (int) $m[1];
+			return [
+				'name' => $periodId,
+				'startDate' => sprintf('%04d-01-01', $year),
+				'endDate' => sprintf('%04d-12-31', $year),
+				'fiscalYear' => $year,
+			];
+		}
 
-            return [
-                'name'       => sprintf('Fiscal year %04d', $year),
-                'startDate'  => sprintf('%04d-01-01', $year),
-                'endDate'    => sprintf('%04d-12-31', $year),
-                'fiscalYear' => $year,
-            ];
-        }
+		// Total fallback.
+		return [
+			'name' => $periodId,
+			'startDate' => sprintf('%04d-01-01', $fallbackYear),
+			'endDate' => sprintf('%04d-12-31', $fallbackYear),
+			'fiscalYear' => $fallbackYear,
+		];
 
-        // YYYY-... fallback — at least the year is parseable.
-        if (preg_match('/^(\d{4})/', $periodId, $m) === 1) {
-            $year = (int) $m[1];
-
-            return [
-                'name'       => $periodId,
-                'startDate'  => sprintf('%04d-01-01', $year),
-                'endDate'    => sprintf('%04d-12-31', $year),
-                'fiscalYear' => $year,
-            ];
-        }
-
-        // Total fallback.
-        return [
-            'name'       => $periodId,
-            'startDate'  => sprintf('%04d-01-01', $fallbackYear),
-            'endDate'    => sprintf('%04d-12-31', $fallbackYear),
-            'fiscalYear' => $fallbackYear,
-        ];
-
-    }//end derivePeriodFields()
+	}//end derivePeriodFields()
 }//end class

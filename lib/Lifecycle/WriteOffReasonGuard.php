@@ -34,20 +34,17 @@ namespace OCA\Shillinq\Lifecycle;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class WriteOffReasonGuard
-{
-    /**
-     * Precondition for `writeOff`: `writeOffReason` must be set.
-     *
-     * @param array<string, mixed> $invoice The ARInvoice object being transitioned.
-     *
-     * @return bool True when the write-off may proceed.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireReason(array $invoice): bool
-    {
-        return trim((string) ($invoice['writeOffReason'] ?? '')) !== '';
-
-    }//end requireReason()
+class WriteOffReasonGuard {
+	/**
+	 * Precondition for `writeOff`: `writeOffReason` must be set.
+	 *
+	 * @param array<string, mixed> $invoice The ARInvoice object being transitioned.
+	 *
+	 * @return bool True when the write-off may proceed.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireReason(array $invoice): bool {
+		return trim((string)($invoice['writeOffReason'] ?? '')) !== '';
+	}//end requireReason()
 }//end class

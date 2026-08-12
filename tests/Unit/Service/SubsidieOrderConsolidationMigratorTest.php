@@ -36,128 +36,120 @@ use RuntimeException;
 /**
  * Tests the pure migration core: field-map + count-abort.
  */
-final class SubsidieOrderConsolidationMigratorTest extends TestCase
-{
+final class SubsidieOrderConsolidationMigratorTest extends TestCase {
 
-    /**
-     * The migrator under test.
-     *
-     * @var SubsidieOrderConsolidationMigrator
-     */
-    private SubsidieOrderConsolidationMigrator $migrator;
+	/**
+	 * The migrator under test.
+	 *
+	 * @var SubsidieOrderConsolidationMigrator
+	 */
+	private SubsidieOrderConsolidationMigrator $migrator;
 
-    /**
-     * Set up the migrator.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->migrator = new SubsidieOrderConsolidationMigrator();
+	/**
+	 * Set up the migrator.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->migrator = new SubsidieOrderConsolidationMigrator();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * The booking rename is Order → BookingOrder; Subsidie needs no object move.
-     *
-     * @return void
-     */
-    public function testConsolidationTopology(): void
-    {
-        $this->assertSame(
-            ['from' => 'Order', 'to' => 'BookingOrder'],
-            $this->migrator->bookingOrderRename()
-        );
-        $this->assertFalse($this->migrator->subsidieMigrationRequired());
+	/**
+	 * The booking rename is Order → BookingOrder; Subsidie needs no object move.
+	 *
+	 * @return void
+	 */
+	public function testConsolidationTopology(): void {
+		$this->assertSame(
+			['from' => 'Order', 'to' => 'BookingOrder'],
+			$this->migrator->bookingOrderRename()
+		);
+		$this->assertFalse($this->migrator->subsidieMigrationRequired());
 
-    }//end testConsolidationTopology()
+	}//end testConsolidationTopology()
 
-    /**
-     * mapObjectToRenamedSchema re-points a matching object's @self.schema only.
-     *
-     * @return void
-     */
-    public function testMapRepointsMatchingObject(): void
-    {
-        $object = [
-            '@self'            => ['register' => 'shillinq', 'schema' => 'Order', 'slug' => 'ord-1001'],
-            'administrationId' => 'adm-1',
-            'orderId'          => 'ord-1001',
-            'grossAmount'      => 1210.00,
-        ];
+	/**
+	 * mapObjectToRenamedSchema re-points a matching object's @self.schema only.
+	 *
+	 * @return void
+	 */
+	public function testMapRepointsMatchingObject(): void {
+		$object = [
+			'@self' => ['register' => 'shillinq', 'schema' => 'Order', 'slug' => 'ord-1001'],
+			'administrationId' => 'adm-1',
+			'orderId' => 'ord-1001',
+			'grossAmount' => 1210.00,
+		];
 
-        $migrated = $this->migrator->mapObjectToRenamedSchema($object, 'Order', 'BookingOrder');
+		$migrated = $this->migrator->mapObjectToRenamedSchema($object, 'Order', 'BookingOrder');
 
-        $this->assertSame('BookingOrder', $migrated['@self']['schema']);
-        // Every other field is preserved verbatim.
-        $this->assertSame('shillinq', $migrated['@self']['register']);
-        $this->assertSame('ord-1001', $migrated['@self']['slug']);
-        $this->assertSame('adm-1', $migrated['administrationId']);
-        $this->assertSame('ord-1001', $migrated['orderId']);
-        $this->assertSame(1210.00, $migrated['grossAmount']);
+		$this->assertSame('BookingOrder', $migrated['@self']['schema']);
+		// Every other field is preserved verbatim.
+		$this->assertSame('shillinq', $migrated['@self']['register']);
+		$this->assertSame('ord-1001', $migrated['@self']['slug']);
+		$this->assertSame('adm-1', $migrated['administrationId']);
+		$this->assertSame('ord-1001', $migrated['orderId']);
+		$this->assertSame(1210.00, $migrated['grossAmount']);
 
-    }//end testMapRepointsMatchingObject()
+	}//end testMapRepointsMatchingObject()
 
-    /**
-     * A non-matching object (different schema) passes through unchanged.
-     *
-     * @return void
-     */
-    public function testMapLeavesNonMatchingObjectUnchanged(): void
-    {
-        $object   = ['@self' => ['schema' => 'SalesOrder'], 'orderId' => 'so-1'];
-        $migrated = $this->migrator->mapObjectToRenamedSchema($object, 'Order', 'BookingOrder');
+	/**
+	 * A non-matching object (different schema) passes through unchanged.
+	 *
+	 * @return void
+	 */
+	public function testMapLeavesNonMatchingObjectUnchanged(): void {
+		$object = ['@self' => ['schema' => 'SalesOrder'], 'orderId' => 'so-1'];
+		$migrated = $this->migrator->mapObjectToRenamedSchema($object, 'Order', 'BookingOrder');
 
-        $this->assertSame('SalesOrder', $migrated['@self']['schema']);
-        $this->assertSame($object, $migrated);
+		$this->assertSame('SalesOrder', $migrated['@self']['schema']);
+		$this->assertSame($object, $migrated);
 
-    }//end testMapLeavesNonMatchingObjectUnchanged()
+	}//end testMapLeavesNonMatchingObjectUnchanged()
 
-    /**
-     * migrateBatch re-points every source object and preserves the count.
-     *
-     * @return void
-     */
-    public function testMigrateBatchRepointsEveryObject(): void
-    {
-        $source = [
-            ['@self' => ['schema' => 'Order'], 'orderId' => 'ord-1'],
-            ['@self' => ['schema' => 'Order'], 'orderId' => 'ord-2'],
-            ['@self' => ['schema' => 'Order'], 'orderId' => 'ord-3'],
-        ];
+	/**
+	 * migrateBatch re-points every source object and preserves the count.
+	 *
+	 * @return void
+	 */
+	public function testMigrateBatchRepointsEveryObject(): void {
+		$source = [
+			['@self' => ['schema' => 'Order'], 'orderId' => 'ord-1'],
+			['@self' => ['schema' => 'Order'], 'orderId' => 'ord-2'],
+			['@self' => ['schema' => 'Order'], 'orderId' => 'ord-3'],
+		];
 
-        $migrated = $this->migrator->migrateBatch($source, 'Order', 'BookingOrder');
+		$migrated = $this->migrator->migrateBatch($source, 'Order', 'BookingOrder');
 
-        $this->assertCount(3, $migrated);
-        foreach ($migrated as $object) {
-            $this->assertSame('BookingOrder', $object['@self']['schema']);
-        }
+		$this->assertCount(3, $migrated);
+		foreach ($migrated as $object) {
+			$this->assertSame('BookingOrder', $object['@self']['schema']);
+		}
 
-    }//end testMigrateBatchRepointsEveryObject()
+	}//end testMigrateBatchRepointsEveryObject()
 
-    /**
-     * assertCountsMatch is a no-op on equal counts.
-     *
-     * @return void
-     */
-    public function testAssertCountsMatchAcceptsEqualCounts(): void
-    {
-        $this->migrator->assertCountsMatch(5, 5);
-        $this->addToAssertionCount(1);
+	/**
+	 * assertCountsMatch is a no-op on equal counts.
+	 *
+	 * @return void
+	 */
+	public function testAssertCountsMatchAcceptsEqualCounts(): void {
+		$this->migrator->assertCountsMatch(5, 5);
+		$this->addToAssertionCount(1);
 
-    }//end testAssertCountsMatchAcceptsEqualCounts()
+	}//end testAssertCountsMatchAcceptsEqualCounts()
 
-    /**
-     * assertCountsMatch ABORTS (throws) on a mismatch — no-row-loss guard.
-     *
-     * @return void
-     */
-    public function testAssertCountsMatchAbortsOnMismatch(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('source data left intact');
-        $this->migrator->assertCountsMatch(5, 4);
+	/**
+	 * assertCountsMatch ABORTS (throws) on a mismatch — no-row-loss guard.
+	 *
+	 * @return void
+	 */
+	public function testAssertCountsMatchAbortsOnMismatch(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('source data left intact');
+		$this->migrator->assertCountsMatch(5, 4);
 
-    }//end testAssertCountsMatchAbortsOnMismatch()
+	}//end testAssertCountsMatchAbortsOnMismatch()
 }//end class

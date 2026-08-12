@@ -45,81 +45,74 @@ use OCP\Notification\UnknownNotificationException;
  *
  * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
-class PosStockUnmatchedLineNotifier implements INotifier
-{
-    /**
-     * Construct the notifier.
-     *
-     * @param IFactory $l10nFactory The l10n factory for per-language rendering.
-     */
-    public function __construct(
-        private readonly IFactory $l10nFactory,
-    ) {
-    }//end __construct()
+class PosStockUnmatchedLineNotifier implements INotifier {
+	/**
+	 * Construct the notifier.
+	 *
+	 * @param IFactory $l10nFactory The l10n factory for per-language rendering.
+	 */
+	public function __construct(
+		private readonly IFactory $l10nFactory,
+	) {
+	}//end __construct()
 
-    /**
-     * The notifier id (app id).
-     *
-     * @return string The identifier.
-     *
-     * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
-     */
-    public function getID(): string
-    {
-        return Application::APP_ID;
+	/**
+	 * The notifier id (app id).
+	 *
+	 * @return string The identifier.
+	 *
+	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 */
+	public function getID(): string {
+		return Application::APP_ID;
+	}//end getID()
 
-    }//end getID()
+	/**
+	 * The human-readable notifier name.
+	 *
+	 * @return string The name.
+	 *
+	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 */
+	public function getName(): string {
+		return $this->l10nFactory->get(Application::APP_ID)->t('Shillinq');
+	}//end getName()
 
-    /**
-     * The human-readable notifier name.
-     *
-     * @return string The name.
-     *
-     * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
-     */
-    public function getName(): string
-    {
-        return $this->l10nFactory->get(Application::APP_ID)->t('Shillinq');
+	/**
+	 * Prepare a `pos_stock_unmatched_line` notification for display.
+	 *
+	 * @param INotification $notification The raw notification.
+	 * @param string $languageCode The language to render in.
+	 *
+	 * @return INotification The prepared notification.
+	 *
+	 * @throws UnknownNotificationException When the notification is not ours.
+	 *
+	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
+	 */
+	public function prepare(INotification $notification, string $languageCode): INotification {
+		if ($notification->getApp() !== Application::APP_ID
+			|| $notification->getSubject() !== PosStockDecrementListener::NOTIFICATION_SUBJECT_UNMATCHED
+		) {
+			throw new UnknownNotificationException();
+		}
 
-    }//end getName()
+		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
+		$parameters = $notification->getSubjectParameters();
+		$productRef = (string)($parameters['productRef'] ?? '');
+		$posTxnId = (string)($parameters['posTxnId'] ?? '');
 
-    /**
-     * Prepare a `pos_stock_unmatched_line` notification for display.
-     *
-     * @param INotification $notification The raw notification.
-     * @param string        $languageCode The language to render in.
-     *
-     * @return INotification The prepared notification.
-     *
-     * @throws UnknownNotificationException When the notification is not ours.
-     *
-     * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
-     */
-    public function prepare(INotification $notification, string $languageCode): INotification
-    {
-        if ($notification->getApp() !== Application::APP_ID
-            || $notification->getSubject() !== PosStockDecrementListener::NOTIFICATION_SUBJECT_UNMATCHED
-        ) {
-            throw new UnknownNotificationException();
-        }
+		$subject = $l->t('POS sale %1$s: a sold line has no matching product reference', [$posTxnId]);
+		if ($productRef !== '') {
+			$subject = $l->t('POS sale %1$s: product %2$s could not be matched to inventory', [$posTxnId, $productRef]);
+		}
 
-        $l          = $this->l10nFactory->get(Application::APP_ID, $languageCode);
-        $parameters = $notification->getSubjectParameters();
-        $productRef = (string) ($parameters['productRef'] ?? '');
-        $posTxnId   = (string) ($parameters['posTxnId'] ?? '');
+		$notification->setParsedSubject($subject);
 
-        $subject = $l->t('POS sale %1$s: a sold line has no matching product reference', [$posTxnId]);
-        if ($productRef !== '') {
-            $subject = $l->t('POS sale %1$s: product %2$s could not be matched to inventory', [$posTxnId, $productRef]);
-        }
+		$notification->setParsedMessage(
+			$l->t('Stock was not decremented for this line. Review it in Shillinq inventory reconciliation.')
+		);
 
-        $notification->setParsedSubject($subject);
-
-        $notification->setParsedMessage(
-            $l->t('Stock was not decremented for this line. Review it in Shillinq inventory reconciliation.')
-        );
-
-        return $notification;
-
-    }//end prepare()
+		return $notification;
+	}//end prepare()
 }//end class

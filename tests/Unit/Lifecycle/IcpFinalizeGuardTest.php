@@ -33,103 +33,97 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class IcpFinalizeGuardTest extends TestCase
-{
+final class IcpFinalizeGuardTest extends TestCase {
 
-    /**
-     * Mock IcpService.
-     *
-     * @var IcpService&MockObject
-     */
-    private IcpService&MockObject $service;
+	/**
+	 * Mock IcpService.
+	 *
+	 * @var IcpService&MockObject
+	 */
+	private IcpService&MockObject $service;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var IcpFinalizeGuard
-     */
-    private IcpFinalizeGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var IcpFinalizeGuard
+	 */
+	private IcpFinalizeGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->service = $this->createMock(IcpService::class);
-        $this->logger  = $this->createMock(LoggerInterface::class);
-        $this->guard   = new IcpFinalizeGuard(icpService: $this->service, logger: $this->logger);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->service = $this->createMock(IcpService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new IcpFinalizeGuard(icpService: $this->service, logger: $this->logger);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Finalize is permitted when the period reconciles (REQ-ICP-004).
-     *
-     * @return void
-     */
-    public function testAllowsFinalizeWhenReconciled(): void
-    {
-        $this->service->method('reconcile')->willReturn(
-            ['period' => '2026-Q2', 'icpTotal' => 100.0, 'rubriek3b' => 100.0, 'matches' => true, 'missing' => false, 'difference' => 0.0]
-        );
+	/**
+	 * Finalize is permitted when the period reconciles (REQ-ICP-004).
+	 *
+	 * @return void
+	 */
+	public function testAllowsFinalizeWhenReconciled(): void {
+		$this->service->method('reconcile')->willReturn(
+			['period' => '2026-Q2', 'icpTotal' => 100.0, 'rubriek3b' => 100.0, 'matches' => true, 'missing' => false, 'difference' => 0.0]
+		);
 
-        self::assertTrue($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
+		self::assertTrue($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
 
-    }//end testAllowsFinalizeWhenReconciled()
+	}//end testAllowsFinalizeWhenReconciled()
 
-    /**
-     * Finalize is denied on a reconciliation mismatch (REQ-ICP-004).
-     *
-     * @return void
-     */
-    public function testDeniesFinalizeOnMismatch(): void
-    {
-        $this->service->method('reconcile')->willReturn(
-            ['period' => '2026-Q2', 'icpTotal' => 100.0, 'rubriek3b' => 80.0, 'matches' => false, 'missing' => false, 'difference' => 20.0]
-        );
+	/**
+	 * Finalize is denied on a reconciliation mismatch (REQ-ICP-004).
+	 *
+	 * @return void
+	 */
+	public function testDeniesFinalizeOnMismatch(): void {
+		$this->service->method('reconcile')->willReturn(
+			['period' => '2026-Q2', 'icpTotal' => 100.0, 'rubriek3b' => 80.0, 'matches' => false, 'missing' => false, 'difference' => 20.0]
+		);
 
-        self::assertFalse($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
+		self::assertFalse($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
 
-    }//end testDeniesFinalizeOnMismatch()
+	}//end testDeniesFinalizeOnMismatch()
 
-    /**
-     * Finalize is denied when no BTW-aangifte exists (icp.btw.missing, REQ-ICP-004).
-     *
-     * @return void
-     */
-    public function testDeniesFinalizeWhenBtwMissing(): void
-    {
-        $this->service->method('reconcile')->willReturn(
-            ['period' => '2026-Q2', 'icpTotal' => 100.0, 'rubriek3b' => null, 'matches' => false, 'missing' => true, 'difference' => 0.0]
-        );
-        $this->logger->expects($this->once())->method('warning');
+	/**
+	 * Finalize is denied when no BTW-aangifte exists (icp.btw.missing, REQ-ICP-004).
+	 *
+	 * @return void
+	 */
+	public function testDeniesFinalizeWhenBtwMissing(): void {
+		$this->service->method('reconcile')->willReturn(
+			['period' => '2026-Q2', 'icpTotal' => 100.0, 'rubriek3b' => null, 'matches' => false, 'missing' => true, 'difference' => 0.0]
+		);
+		$this->logger->expects($this->once())->method('warning');
 
-        self::assertFalse($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
+		self::assertFalse($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
 
-    }//end testDeniesFinalizeWhenBtwMissing()
+	}//end testDeniesFinalizeWhenBtwMissing()
 
-    /**
-     * Finalize is denied fail-closed on any exception (CWE-863).
-     *
-     * @return void
-     */
-    public function testDeniesFinalizeFailClosedOnException(): void
-    {
-        $this->service->method('reconcile')->willThrowException(new \RuntimeException('boom'));
-        $this->logger->expects($this->once())->method('error');
+	/**
+	 * Finalize is denied fail-closed on any exception (CWE-863).
+	 *
+	 * @return void
+	 */
+	public function testDeniesFinalizeFailClosedOnException(): void {
+		$this->service->method('reconcile')->willThrowException(new \RuntimeException('boom'));
+		$this->logger->expects($this->once())->method('error');
 
-        self::assertFalse($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
+		self::assertFalse($this->guard->canFinalize(administrationId: 'adm-1', period: '2026-Q2'));
 
-    }//end testDeniesFinalizeFailClosedOnException()
+	}//end testDeniesFinalizeFailClosedOnException()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

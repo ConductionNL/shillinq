@@ -45,34 +45,31 @@ namespace OCA\Shillinq\Guard;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class Iv3XmlValidationGuard
-{
-    /**
-     * Precondition for `validate`/`revalidate`: the export must carry a
-     * materialised XML attachment and at least one aggregated bucket.
-     *
-     * Fail-closed is implicit here — there is no external I/O, so this is a
-     * pure data-completeness check with no exception path to fail closed on.
-     *
-     * @param array<string, mixed> $export The Iv3Export object being transitioned.
-     *
-     * @return bool True when the export may be marked validated.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireValidXml(array $export): bool
-    {
-        $xmlUri = trim((string) ($export['xmlAttachmentUri'] ?? ''));
-        if ($xmlUri === '') {
-            return false;
-        }
+class Iv3XmlValidationGuard {
+	/**
+	 * Precondition for `validate`/`revalidate`: the export must carry a
+	 * materialised XML attachment and at least one aggregated bucket.
+	 *
+	 * Fail-closed is implicit here — there is no external I/O, so this is a
+	 * pure data-completeness check with no exception path to fail closed on.
+	 *
+	 * @param array<string, mixed> $export The Iv3Export object being transitioned.
+	 *
+	 * @return bool True when the export may be marked validated.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireValidXml(array $export): bool {
+		$xmlUri = trim((string)($export['xmlAttachmentUri'] ?? ''));
+		if ($xmlUri === '') {
+			return false;
+		}
 
-        $buckets = ($export['buckets'] ?? null);
-        if (is_array($buckets) === false || $buckets === []) {
-            return false;
-        }
+		$buckets = ($export['buckets'] ?? null);
+		if (is_array($buckets) === false || $buckets === []) {
+			return false;
+		}
 
-        return true;
-
-    }//end requireValidXml()
+		return true;
+	}//end requireValidXml()
 }//end class

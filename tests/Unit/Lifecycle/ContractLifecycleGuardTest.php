@@ -35,116 +35,108 @@ use Psr\Log\LoggerInterface;
  * - canActivate false when any mandatory field missing or empty.
  * - requireTerminationReason true only when terminationReason non-empty.
  */
-class ContractLifecycleGuardTest extends TestCase
-{
+class ContractLifecycleGuardTest extends TestCase {
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var ContractLifecycleGuard
-     */
-    private ContractLifecycleGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var ContractLifecycleGuard
+	 */
+	private ContractLifecycleGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        $this->logger = $this->createMock(LoggerInterface::class);
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->guard = new ContractLifecycleGuard(logger: $this->logger);
-    }//end setUp()
+		$this->guard = new ContractLifecycleGuard(logger: $this->logger);
+	}//end setUp()
 
-    /**
-     * canActivate returns true when all mandatory fields are present (REQ-CLM-002).
-     *
-     * @return void
-     */
-    public function testCanActivateTrueWhenAllFieldsPresent(): void
-    {
-        $contract = [
-            'startDate'             => '2026-01-01',
-            'counterpartyReference' => 'contacts://acme-bv',
-            'contractOwner'         => 'alice',
-        ];
+	/**
+	 * canActivate returns true when all mandatory fields are present (REQ-CLM-002).
+	 *
+	 * @return void
+	 */
+	public function testCanActivateTrueWhenAllFieldsPresent(): void {
+		$contract = [
+			'startDate' => '2026-01-01',
+			'counterpartyReference' => 'contacts://acme-bv',
+			'contractOwner' => 'alice',
+		];
 
-        self::assertTrue($this->guard->canActivate($contract));
-    }//end testCanActivateTrueWhenAllFieldsPresent()
+		self::assertTrue($this->guard->canActivate($contract));
+	}//end testCanActivateTrueWhenAllFieldsPresent()
 
-    /**
-     * canActivate returns false when a mandatory field is missing (REQ-CLM-002).
-     *
-     * @return void
-     */
-    public function testCanActivateFalseWhenContractOwnerMissing(): void
-    {
-        $contract = [
-            'startDate'             => '2026-01-01',
-            'counterpartyReference' => 'contacts://acme-bv',
-        ];
+	/**
+	 * canActivate returns false when a mandatory field is missing (REQ-CLM-002).
+	 *
+	 * @return void
+	 */
+	public function testCanActivateFalseWhenContractOwnerMissing(): void {
+		$contract = [
+			'startDate' => '2026-01-01',
+			'counterpartyReference' => 'contacts://acme-bv',
+		];
 
-        self::assertFalse($this->guard->canActivate($contract));
-    }//end testCanActivateFalseWhenContractOwnerMissing()
+		self::assertFalse($this->guard->canActivate($contract));
+	}//end testCanActivateFalseWhenContractOwnerMissing()
 
-    /**
-     * canActivate returns false when a mandatory field is empty / whitespace.
-     *
-     * @return void
-     */
-    public function testCanActivateFalseWhenFieldEmpty(): void
-    {
-        $contract = [
-            'startDate'             => '2026-01-01',
-            'counterpartyReference' => '   ',
-            'contractOwner'         => 'alice',
-        ];
+	/**
+	 * canActivate returns false when a mandatory field is empty / whitespace.
+	 *
+	 * @return void
+	 */
+	public function testCanActivateFalseWhenFieldEmpty(): void {
+		$contract = [
+			'startDate' => '2026-01-01',
+			'counterpartyReference' => '   ',
+			'contractOwner' => 'alice',
+		];
 
-        self::assertFalse($this->guard->canActivate($contract));
-    }//end testCanActivateFalseWhenFieldEmpty()
+		self::assertFalse($this->guard->canActivate($contract));
+	}//end testCanActivateFalseWhenFieldEmpty()
 
-    /**
-     * canActivate returns false for an empty contract array.
-     *
-     * @return void
-     */
-    public function testCanActivateFalseForEmptyContract(): void
-    {
-        self::assertFalse($this->guard->canActivate([]));
-    }//end testCanActivateFalseForEmptyContract()
+	/**
+	 * canActivate returns false for an empty contract array.
+	 *
+	 * @return void
+	 */
+	public function testCanActivateFalseForEmptyContract(): void {
+		self::assertFalse($this->guard->canActivate([]));
+	}//end testCanActivateFalseForEmptyContract()
 
-    /**
-     * requireTerminationReason returns true when a reason is present (REQ-CLM-002).
-     *
-     * @return void
-     */
-    public function testRequireTerminationReasonTrueWhenPresent(): void
-    {
-        self::assertTrue(
-            $this->guard->requireTerminationReason(['terminationReason' => 'Opgezegd binnen termijn'])
-        );
-    }//end testRequireTerminationReasonTrueWhenPresent()
+	/**
+	 * requireTerminationReason returns true when a reason is present (REQ-CLM-002).
+	 *
+	 * @return void
+	 */
+	public function testRequireTerminationReasonTrueWhenPresent(): void {
+		self::assertTrue(
+			$this->guard->requireTerminationReason(['terminationReason' => 'Opgezegd binnen termijn'])
+		);
+	}//end testRequireTerminationReasonTrueWhenPresent()
 
-    /**
-     * requireTerminationReason returns false when the reason is missing or empty.
-     *
-     * @return void
-     */
-    public function testRequireTerminationReasonFalseWhenMissingOrEmpty(): void
-    {
-        self::assertFalse($this->guard->requireTerminationReason([]));
-        self::assertFalse($this->guard->requireTerminationReason(['terminationReason' => '']));
-        self::assertFalse($this->guard->requireTerminationReason(['terminationReason' => '   ']));
-    }//end testRequireTerminationReasonFalseWhenMissingOrEmpty()
+	/**
+	 * requireTerminationReason returns false when the reason is missing or empty.
+	 *
+	 * @return void
+	 */
+	public function testRequireTerminationReasonFalseWhenMissingOrEmpty(): void {
+		self::assertFalse($this->guard->requireTerminationReason([]));
+		self::assertFalse($this->guard->requireTerminationReason(['terminationReason' => '']));
+		self::assertFalse($this->guard->requireTerminationReason(['terminationReason' => '   ']));
+	}//end testRequireTerminationReasonFalseWhenMissingOrEmpty()
 }//end class

@@ -52,261 +52,252 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
  */
-class ReconciliationResolutionController extends Controller
-{
-    /**
-     * Allowed resolution classifications per REQ-REC-004.
-     *
-     * @var array<int,string>
-     */
-    private const ALLOWED_STATUSES = ['matched', 'timing', 'pending', 'adjustment'];
+class ReconciliationResolutionController extends Controller {
+	/**
+	 * Allowed resolution classifications per REQ-REC-004.
+	 *
+	 * @var array<int,string>
+	 */
+	private const ALLOWED_STATUSES = ['matched', 'timing', 'pending', 'adjustment'];
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                        $request     Inbound request.
-     * @param ReconciliationResolutionService $service     Encapsulates the
-     *                                                     write logic + audit
-     *                                                     trail.
-     * @param IUserSession                    $userSession Current Nextcloud
-     *                                                     user (for audit-trail
-     *                                                     actor stamp).
-     * @param LoggerInterface                 $logger      Logger for
-     *                                                     fail-closed
-     *                                                     diagnostics.
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly ReconciliationResolutionService $service,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request Inbound request.
+	 * @param ReconciliationResolutionService $service Encapsulates the
+	 *                                                 write logic + audit
+	 *                                                 trail.
+	 * @param IUserSession $userSession Current Nextcloud
+	 *                                  user (for audit-trail
+	 *                                  actor stamp).
+	 * @param LoggerInterface $logger Logger for
+	 *                                fail-closed
+	 *                                diagnostics.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly ReconciliationResolutionService $service,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Resolve a single unmatched item (REQ-REC-004).
-     *
-     * Body parameters:
-     *   - resolutionStatus (required) — one of matched / timing / pending
-     *                                   / adjustment
-     *   - resolutionReason (required) — non-empty operator-supplied note
-     *                                   (audit-trailed)
-     *
-     * Returns HTTP 200 on success with the updated ReconciliationMatch;
-     * HTTP 400 on a missing/malformed parameter; HTTP 404 when the match
-     * does not exist; HTTP 409 when the parent reconciliation is locked
-     * (already closed/cancelled).
-     *
-     * @param string $reconId The parent BankReconciliation id.
-     * @param string $matchId The ReconciliationMatch id.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
-     */
-    #[NoAdminRequired]
-    public function resolve(string $reconId, string $matchId): JSONResponse
-    {
-        $reconId = trim($reconId);
-        $matchId = trim($matchId);
-        if ($reconId === '' || $matchId === '') {
-            return new JSONResponse(
-                ['error' => 'reconId and matchId are required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+	/**
+	 * Resolve a single unmatched item (REQ-REC-004).
+	 *
+	 * Body parameters:
+	 *   - resolutionStatus (required) — one of matched / timing / pending
+	 *                                   / adjustment
+	 *   - resolutionReason (required) — non-empty operator-supplied note
+	 *                                   (audit-trailed)
+	 *
+	 * Returns HTTP 200 on success with the updated ReconciliationMatch;
+	 * HTTP 400 on a missing/malformed parameter; HTTP 404 when the match
+	 * does not exist; HTTP 409 when the parent reconciliation is locked
+	 * (already closed/cancelled).
+	 *
+	 * @param string $reconId The parent BankReconciliation id.
+	 * @param string $matchId The ReconciliationMatch id.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+	 */
+	#[NoAdminRequired]
+	public function resolve(string $reconId, string $matchId): JSONResponse {
+		$reconId = trim($reconId);
+		$matchId = trim($matchId);
+		if ($reconId === '' || $matchId === '') {
+			return new JSONResponse(
+				['error' => 'reconId and matchId are required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        $resolutionStatus = trim((string) $this->request->getParam('resolutionStatus', ''));
-        $resolutionReason = trim((string) $this->request->getParam('resolutionReason', ''));
+		$resolutionStatus = trim((string)$this->request->getParam('resolutionStatus', ''));
+		$resolutionReason = trim((string)$this->request->getParam('resolutionReason', ''));
 
-        $validation = $this->validatePayload(
-            resolutionStatus: $resolutionStatus,
-            resolutionReason: $resolutionReason,
-        );
-        if ($validation !== null) {
-            return $validation;
-        }
+		$validation = $this->validatePayload(
+			resolutionStatus: $resolutionStatus,
+			resolutionReason: $resolutionReason,
+		);
+		if ($validation !== null) {
+			return $validation;
+		}
 
-        $this->requireAuthenticatedSession();
-        $actor = $this->resolveActor();
+		$this->requireAuthenticatedSession();
+		$actor = $this->resolveActor();
 
-        try {
-            $updated = $this->service->resolveMatch(
-                reconId: $reconId,
-                matchId: $matchId,
-                resolutionStatus: $resolutionStatus,
-                resolutionReason: $resolutionReason,
-                actor: $actor,
-            );
-        } catch (\OutOfBoundsException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (\DomainException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'ReconciliationResolutionController: resolve failed',
-                ['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(
-                ['error' => 'resolution failed; see server log'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+		try {
+			$updated = $this->service->resolveMatch(
+				reconId: $reconId,
+				matchId: $matchId,
+				resolutionStatus: $resolutionStatus,
+				resolutionReason: $resolutionReason,
+				actor: $actor,
+			);
+		} catch (\OutOfBoundsException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+		} catch (\DomainException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ReconciliationResolutionController: resolve failed',
+				['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				['error' => 'resolution failed; see server log'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-        return new JSONResponse($updated, Http::STATUS_OK);
+		return new JSONResponse($updated, Http::STATUS_OK);
+	}//end resolve()
 
-    }//end resolve()
+	/**
+	 * Bulk-resolve a list of unmatched items (REQ-REC-008 scenario "Unmatched
+	 * Items page provides bulk resolution"). All matches receive the same
+	 * classification + reason.
+	 *
+	 * Body parameters:
+	 *   - matchIds         (required) — non-empty array of ReconciliationMatch ids
+	 *   - resolutionStatus (required) — see resolve()
+	 *   - resolutionReason (required) — see resolve()
+	 *
+	 * Returns HTTP 200 with { applied: int, failed: array<string,string> }.
+	 * Per-id failures are surfaced in the response body but do NOT short-circuit
+	 * the rest of the batch.
+	 *
+	 * @param string $reconId The parent BankReconciliation id.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-008)
+	 */
+	#[NoAdminRequired]
+	public function bulkResolve(string $reconId): JSONResponse {
+		$reconId = trim($reconId);
+		if ($reconId === '') {
+			return new JSONResponse(
+				['error' => 'reconId is required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-    /**
-     * Bulk-resolve a list of unmatched items (REQ-REC-008 scenario "Unmatched
-     * Items page provides bulk resolution"). All matches receive the same
-     * classification + reason.
-     *
-     * Body parameters:
-     *   - matchIds         (required) — non-empty array of ReconciliationMatch ids
-     *   - resolutionStatus (required) — see resolve()
-     *   - resolutionReason (required) — see resolve()
-     *
-     * Returns HTTP 200 with { applied: int, failed: array<string,string> }.
-     * Per-id failures are surfaced in the response body but do NOT short-circuit
-     * the rest of the batch.
-     *
-     * @param string $reconId The parent BankReconciliation id.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-008)
-     */
-    #[NoAdminRequired]
-    public function bulkResolve(string $reconId): JSONResponse
-    {
-        $reconId = trim($reconId);
-        if ($reconId === '') {
-            return new JSONResponse(
-                ['error' => 'reconId is required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		$matchIdsParam = $this->request->getParam('matchIds');
+		if (is_array($matchIdsParam) === false || empty($matchIdsParam) === true) {
+			return new JSONResponse(
+				['error' => 'matchIds must be a non-empty array'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        $matchIdsParam = $this->request->getParam('matchIds');
-        if (is_array($matchIdsParam) === false || empty($matchIdsParam) === true) {
-            return new JSONResponse(
-                ['error' => 'matchIds must be a non-empty array'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		$resolutionStatus = trim((string)$this->request->getParam('resolutionStatus', ''));
+		$resolutionReason = trim((string)$this->request->getParam('resolutionReason', ''));
 
-        $resolutionStatus = trim((string) $this->request->getParam('resolutionStatus', ''));
-        $resolutionReason = trim((string) $this->request->getParam('resolutionReason', ''));
+		$validation = $this->validatePayload(
+			resolutionStatus: $resolutionStatus,
+			resolutionReason: $resolutionReason,
+		);
+		if ($validation !== null) {
+			return $validation;
+		}
 
-        $validation = $this->validatePayload(
-            resolutionStatus: $resolutionStatus,
-            resolutionReason: $resolutionReason,
-        );
-        if ($validation !== null) {
-            return $validation;
-        }
+		$this->requireAuthenticatedSession();
+		$actor = $this->resolveActor();
+		$applied = 0;
+		$failed = [];
+		foreach ($matchIdsParam as $rawId) {
+			$matchId = trim((string)$rawId);
+			if ($matchId === '') {
+				continue;
+			}
 
-                $this->requireAuthenticatedSession();
-        $actor   = $this->resolveActor();
-        $applied = 0;
-        $failed  = [];
-        foreach ($matchIdsParam as $rawId) {
-            $matchId = trim((string) $rawId);
-            if ($matchId === '') {
-                continue;
-            }
+			try {
+				$this->service->resolveMatch(
+					reconId: $reconId,
+					matchId: $matchId,
+					resolutionStatus: $resolutionStatus,
+					resolutionReason: $resolutionReason,
+					actor: $actor,
+				);
+				$applied++;
+			} catch (\Throwable $e) {
+				$failed[$matchId] = $e->getMessage();
+			}
+		}
 
-            try {
-                $this->service->resolveMatch(
-                    reconId: $reconId,
-                    matchId: $matchId,
-                    resolutionStatus: $resolutionStatus,
-                    resolutionReason: $resolutionReason,
-                    actor: $actor,
-                );
-                $applied++;
-            } catch (\Throwable $e) {
-                $failed[$matchId] = $e->getMessage();
-            }
-        }
+		return new JSONResponse(
+			['applied' => $applied, 'failed' => $failed],
+			Http::STATUS_OK
+		);
 
-        return new JSONResponse(
-            ['applied' => $applied, 'failed' => $failed],
-            Http::STATUS_OK
-        );
+	}//end bulkResolve()
 
-    }//end bulkResolve()
+	/**
+	 * Validate the resolutionStatus + resolutionReason payload. Returns a
+	 * JSONResponse when validation fails, null when the payload is
+	 * acceptable.
+	 *
+	 * @param string $resolutionStatus The submitted classification.
+	 * @param string $resolutionReason The submitted operator note.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function validatePayload(string $resolutionStatus, string $resolutionReason): ?JSONResponse {
+		if (in_array($resolutionStatus, self::ALLOWED_STATUSES, true) === false) {
+			return new JSONResponse(
+				['error' => 'resolutionStatus must be one of: ' . implode(', ', self::ALLOWED_STATUSES)],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-    /**
-     * Validate the resolutionStatus + resolutionReason payload. Returns a
-     * JSONResponse when validation fails, null when the payload is
-     * acceptable.
-     *
-     * @param string $resolutionStatus The submitted classification.
-     * @param string $resolutionReason The submitted operator note.
-     *
-     * @return JSONResponse|null
-     */
-    private function validatePayload(string $resolutionStatus, string $resolutionReason): ?JSONResponse
-    {
-        if (in_array($resolutionStatus, self::ALLOWED_STATUSES, true) === false) {
-            return new JSONResponse(
-                ['error' => 'resolutionStatus must be one of: '.implode(', ', self::ALLOWED_STATUSES)],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($resolutionReason === '') {
+			return new JSONResponse(
+				['error' => 'resolutionReason is required (audit-trailed per REQ-REC-004)'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if ($resolutionReason === '') {
-            return new JSONResponse(
-                ['error' => 'resolutionReason is required (audit-trailed per REQ-REC-004)'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		return null;
+	}//end validatePayload()
 
-        return null;
+	/**
+	 * Require an authenticated Nextcloud session (REQ-REC-004 IDOR guard).
+	 * Throws OCSForbiddenException when the controller is invoked outside a
+	 * logged-in session (defensive: #[NoAdminRequired] still requires
+	 * authentication, but the runtime guarantee depends on middleware order).
+	 *
+	 * @return void
+	 *
+	 * @throws OCSForbiddenException When no authenticated user is present.
+	 */
+	private function requireAuthenticatedSession(): void {
+		if ($this->userSession->getUser() === null) {
+			throw new OCSForbiddenException(
+				'authenticated session required to resolve reconciliation matches'
+			);
+		}
 
-    }//end validatePayload()
+	}//end requireAuthenticatedSession()
 
-    /**
-     * Require an authenticated Nextcloud session (REQ-REC-004 IDOR guard).
-     * Throws OCSForbiddenException when the controller is invoked outside a
-     * logged-in session (defensive: #[NoAdminRequired] still requires
-     * authentication, but the runtime guarantee depends on middleware order).
-     *
-     * @return void
-     *
-     * @throws OCSForbiddenException When no authenticated user is present.
-     */
-    private function requireAuthenticatedSession(): void
-    {
-        if ($this->userSession->getUser() === null) {
-            throw new OCSForbiddenException(
-                'authenticated session required to resolve reconciliation matches'
-            );
-        }
+	/**
+	 * Resolve the current Nextcloud actor UID for audit-trail stamping.
+	 * Falls back to 'system' when the session is unavailable (should not
+	 * happen on #[NoAdminRequired] routes).
+	 *
+	 * @return string The actor UID.
+	 */
+	private function resolveActor(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return 'system';
+		}
 
-    }//end requireAuthenticatedSession()
-
-    /**
-     * Resolve the current Nextcloud actor UID for audit-trail stamping.
-     * Falls back to 'system' when the session is unavailable (should not
-     * happen on #[NoAdminRequired] routes).
-     *
-     * @return string The actor UID.
-     */
-    private function resolveActor(): string
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return 'system';
-        }
-
-        return $user->getUID();
-
-    }//end resolveActor()
+		return $user->getUID();
+	}//end resolveActor()
 }//end class

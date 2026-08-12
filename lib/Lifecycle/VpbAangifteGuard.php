@@ -65,295 +65,286 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
  */
-class VpbAangifteGuard
-{
-    /**
-     * Valid accountantsverklaring/jaarrekening states that count as vastgesteld.
-     *
-     * @var array<string>
-     */
-    private const VASTGESTELDE_STATES = ['vastgesteld', 'gedeponeerd'];
+class VpbAangifteGuard {
+	/**
+	 * Valid accountantsverklaring/jaarrekening states that count as vastgesteld.
+	 *
+	 * @var array<string>
+	 */
+	private const VASTGESTELDE_STATES = ['vastgesteld', 'gedeponeerd'];
 
-    /**
-     * Aangifte states from which a DefinitieveAanslag may be marked ontvangen.
-     *
-     * @var array<string>
-     */
-    private const AANSLAG_TOEGESTANE_STATES = ['ingediend', 'aanslag-ontvangen', 'bezwaar', 'beroep', 'onherroepelijk'];
+	/**
+	 * Aangifte states from which a DefinitieveAanslag may be marked ontvangen.
+	 *
+	 * @var array<string>
+	 */
+	private const AANSLAG_TOEGESTANE_STATES = ['ingediend', 'aanslag-ontvangen', 'bezwaar', 'beroep', 'onherroepelijk'];
 
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the aangifte may transition concept -> ingediend.
-     *
-     * REQ-VPB-002 / REQ-VPB-004 / REQ-VPB-009: indiening is only permitted when
-     *  - the linked jaarrekening (commercieleWinst FK) is vastgesteld,
-     *  - the Belastingplichtige has eHerkenning EH3+ and a Digipoort-certificaat,
-     *  - every Innovatiebox claim on the aangifte carries an S&O-verklaring.
-     *
-     * Fail-closed: returns false on any exception or unresolvable dependency.
-     *
-     * @param string                   $aangifteId The VpbAangifte id (call-signature parity).
-     * @param array<string,mixed>|null $object     The aangifte being transitioned.
-     *
-     * @return bool True when the aangifte may be ingediend.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
-     */
-    public function canIndienen(string $aangifteId, ?array $object=null): bool
-    {
-        try {
-            $aangifte = $object;
-            if ($aangifte === null || isset($aangifte['belastingplichtige']) === false) {
-                $aangifte = $this->resolveObject(schema: 'VpbAangifte', id: $aangifteId);
-            }
+	/**
+	 * Returns true iff the aangifte may transition concept -> ingediend.
+	 *
+	 * REQ-VPB-002 / REQ-VPB-004 / REQ-VPB-009: indiening is only permitted when
+	 *  - the linked jaarrekening (commercieleWinst FK) is vastgesteld,
+	 *  - the Belastingplichtige has eHerkenning EH3+ and a Digipoort-certificaat,
+	 *  - every Innovatiebox claim on the aangifte carries an S&O-verklaring.
+	 *
+	 * Fail-closed: returns false on any exception or unresolvable dependency.
+	 *
+	 * @param string $aangifteId The VpbAangifte id (call-signature parity).
+	 * @param array<string,mixed>|null $object The aangifte being transitioned.
+	 *
+	 * @return bool True when the aangifte may be ingediend.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
+	 */
+	public function canIndienen(string $aangifteId, ?array $object = null): bool {
+		try {
+			$aangifte = $object;
+			if ($aangifte === null || isset($aangifte['belastingplichtige']) === false) {
+				$aangifte = $this->resolveObject(schema: 'VpbAangifte', id: $aangifteId);
+			}
 
-            if ($aangifte === null) {
-                return false;
-            }
+			if ($aangifte === null) {
+				return false;
+			}
 
-            if ($this->jaarrekeningVastgesteld(aangifte: $aangifte) === false) {
-                return false;
-            }
+			if ($this->jaarrekeningVastgesteld(aangifte: $aangifte) === false) {
+				return false;
+			}
 
-            if ($this->belastingplichtigeDigipoortReady(belastingplichtigeId: (string) ($aangifte['belastingplichtige'] ?? '')) === false) {
-                return false;
-            }
+			if ($this->belastingplichtigeDigipoortReady(belastingplichtigeId: (string)($aangifte['belastingplichtige'] ?? '')) === false) {
+				return false;
+			}
 
-            return $this->innovatieboxClaimsHaveSO(aangifteId: (string) ($aangifte['id'] ?? $aangifteId));
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'VpbAangifteGuard: canIndienen check failed — denying indienen transition (fail-closed)',
-                ['aangifteId' => $aangifteId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canIndienen()
+			return $this->innovatieboxClaimsHaveSO(aangifteId: (string)($aangifte['id'] ?? $aangifteId));
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'VpbAangifteGuard: canIndienen check failed — denying indienen transition (fail-closed)',
+				['aangifteId' => $aangifteId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canIndienen()
 
-    /**
-     * Returns true iff a DefinitieveAanslag may be marked ontvangen.
-     *
-     * REQ-VPB-010: the gekoppelde VpbAangifte must already be in the ingediend
-     * (or later) state. Fail-closed on any exception or missing aangifte.
-     *
-     * @param string                   $aanslagId The DefinitieveAanslag id (call-signature parity).
-     * @param array<string,mixed>|null $object    The aanslag being transitioned.
-     *
-     * @return bool True when the aanslag may be marked ontvangen.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
-     */
-    public function canAanslagOntvangen(string $aanslagId, ?array $object=null): bool
-    {
-        try {
-            $aanslag = $object;
-            if ($aanslag === null || isset($aanslag['aangifte']) === false) {
-                $aanslag = $this->resolveObject(schema: 'DefinitieveAanslag', id: $aanslagId);
-            }
+	/**
+	 * Returns true iff a DefinitieveAanslag may be marked ontvangen.
+	 *
+	 * REQ-VPB-010: the gekoppelde VpbAangifte must already be in the ingediend
+	 * (or later) state. Fail-closed on any exception or missing aangifte.
+	 *
+	 * @param string $aanslagId The DefinitieveAanslag id (call-signature parity).
+	 * @param array<string,mixed>|null $object The aanslag being transitioned.
+	 *
+	 * @return bool True when the aanslag may be marked ontvangen.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
+	 */
+	public function canAanslagOntvangen(string $aanslagId, ?array $object = null): bool {
+		try {
+			$aanslag = $object;
+			if ($aanslag === null || isset($aanslag['aangifte']) === false) {
+				$aanslag = $this->resolveObject(schema: 'DefinitieveAanslag', id: $aanslagId);
+			}
 
-            if ($aanslag === null) {
-                return false;
-            }
+			if ($aanslag === null) {
+				return false;
+			}
 
-            $aangifte = $this->resolveObject(schema: 'VpbAangifte', id: (string) ($aanslag['aangifte'] ?? ''));
-            if ($aangifte === null) {
-                return false;
-            }
+			$aangifte = $this->resolveObject(schema: 'VpbAangifte', id: (string)($aanslag['aangifte'] ?? ''));
+			if ($aangifte === null) {
+				return false;
+			}
 
-            $status = (string) ($aangifte['status'] ?? '');
+			$status = (string)($aangifte['status'] ?? '');
 
-            return in_array($status, self::AANSLAG_TOEGESTANE_STATES, true);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'VpbAangifteGuard: canAanslagOntvangen check failed — denying transition (fail-closed)',
-                ['aanslagId' => $aanslagId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canAanslagOntvangen()
+			return in_array($status, self::AANSLAG_TOEGESTANE_STATES, true);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'VpbAangifteGuard: canAanslagOntvangen check failed — denying transition (fail-closed)',
+				['aanslagId' => $aanslagId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canAanslagOntvangen()
 
-    /**
-     * Returns true iff a FiscaleEenheid voeging satisfies article 15 conditions.
-     *
-     * REQ-VPB-007: voeging requires bezitPercentage >= 95, gelijke boekjaren and
-     * vestiging in NL. Fail-closed on any exception.
-     *
-     * @param string                   $eenheidId The FiscaleEenheid id (call-signature parity).
-     * @param array<string,mixed>|null $object    The eenheid being created/voegen.
-     *
-     * @return bool True when the voeging is permitted.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
-     */
-    public function canVoegen(string $eenheidId, ?array $object=null): bool
-    {
-        try {
-            $eenheid = $object;
-            if ($eenheid === null || isset($eenheid['bezitPercentage']) === false) {
-                $eenheid = $this->resolveObject(schema: 'FiscaleEenheid', id: $eenheidId);
-            }
+	/**
+	 * Returns true iff a FiscaleEenheid voeging satisfies article 15 conditions.
+	 *
+	 * REQ-VPB-007: voeging requires bezitPercentage >= 95, gelijke boekjaren and
+	 * vestiging in NL. Fail-closed on any exception.
+	 *
+	 * @param string $eenheidId The FiscaleEenheid id (call-signature parity).
+	 * @param array<string,mixed>|null $object The eenheid being created/voegen.
+	 *
+	 * @return bool True when the voeging is permitted.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
+	 */
+	public function canVoegen(string $eenheidId, ?array $object = null): bool {
+		try {
+			$eenheid = $object;
+			if ($eenheid === null || isset($eenheid['bezitPercentage']) === false) {
+				$eenheid = $this->resolveObject(schema: 'FiscaleEenheid', id: $eenheidId);
+			}
 
-            if ($eenheid === null) {
-                return false;
-            }
+			if ($eenheid === null) {
+				return false;
+			}
 
-            $bezit           = (float) ($eenheid['bezitPercentage'] ?? 0);
-            $gelijkeBoekjaar = ($eenheid['gelijkeBoekjaren'] ?? false) === true;
-            $vestigingNl     = ($eenheid['vestigingNederland'] ?? false) === true;
+			$bezit = (float)($eenheid['bezitPercentage'] ?? 0);
+			$gelijkeBoekjaar = ($eenheid['gelijkeBoekjaren'] ?? false) === true;
+			$vestigingNl = ($eenheid['vestigingNederland'] ?? false) === true;
 
-            return $bezit >= 95.0 && $gelijkeBoekjaar === true && $vestigingNl === true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'VpbAangifteGuard: canVoegen check failed — denying voeging (fail-closed)',
-                ['eenheidId' => $eenheidId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canVoegen()
+			return $bezit >= 95.0 && $gelijkeBoekjaar === true && $vestigingNl === true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'VpbAangifteGuard: canVoegen check failed — denying voeging (fail-closed)',
+				['eenheidId' => $eenheidId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canVoegen()
 
-    /**
-     * Returns true iff the aangifte's linked jaarrekening is vastgesteld.
-     *
-     * Looks up the AnnualReport referenced by commercieleWinst and checks its
-     * status against the vastgestelde states. A missing FK denies indiening.
-     *
-     * @param array<string,mixed> $aangifte The aangifte being transitioned.
-     *
-     * @return bool True when the jaarrekening is vastgesteld.
-     */
-    private function jaarrekeningVastgesteld(array $aangifte): bool
-    {
-        $reportId = (string) ($aangifte['commercieleWinst'] ?? '');
-        if ($reportId === '') {
-            return false;
-        }
+	/**
+	 * Returns true iff the aangifte's linked jaarrekening is vastgesteld.
+	 *
+	 * Looks up the AnnualReport referenced by commercieleWinst and checks its
+	 * status against the vastgestelde states. A missing FK denies indiening.
+	 *
+	 * @param array<string,mixed> $aangifte The aangifte being transitioned.
+	 *
+	 * @return bool True when the jaarrekening is vastgesteld.
+	 */
+	private function jaarrekeningVastgesteld(array $aangifte): bool {
+		$reportId = (string)($aangifte['commercieleWinst'] ?? '');
+		if ($reportId === '') {
+			return false;
+		}
 
-        $report = $this->resolveObject(schema: 'AnnualReport', id: $reportId);
-        if ($report === null) {
-            return false;
-        }
+		$report = $this->resolveObject(schema: 'AnnualReport', id: $reportId);
+		if ($report === null) {
+			return false;
+		}
 
-        $status = (string) ($report['status'] ?? '');
+		$status = (string)($report['status'] ?? '');
 
-        return in_array($status, self::VASTGESTELDE_STATES, true);
-    }//end jaarrekeningVastgesteld()
+		return in_array($status, self::VASTGESTELDE_STATES, true);
+	}//end jaarrekeningVastgesteld()
 
-    /**
-     * Returns true iff the Belastingplichtige is Digipoort-ready.
-     *
-     * Requires eHerkenningsNiveau EH3+ and a non-empty digipoortCertificaat FK.
-     *
-     * @param string $belastingplichtigeId The Belastingplichtige id.
-     *
-     * @return bool True when eHerkenning EH3+ and a Digipoort cert are present.
-     */
-    private function belastingplichtigeDigipoortReady(string $belastingplichtigeId): bool
-    {
-        if ($belastingplichtigeId === '') {
-            return false;
-        }
+	/**
+	 * Returns true iff the Belastingplichtige is Digipoort-ready.
+	 *
+	 * Requires eHerkenningsNiveau EH3+ and a non-empty digipoortCertificaat FK.
+	 *
+	 * @param string $belastingplichtigeId The Belastingplichtige id.
+	 *
+	 * @return bool True when eHerkenning EH3+ and a Digipoort cert are present.
+	 */
+	private function belastingplichtigeDigipoortReady(string $belastingplichtigeId): bool {
+		if ($belastingplichtigeId === '') {
+			return false;
+		}
 
-        $belastingplichtige = $this->resolveObject(schema: 'Belastingplichtige', id: $belastingplichtigeId);
-        if ($belastingplichtige === null) {
-            return false;
-        }
+		$belastingplichtige = $this->resolveObject(schema: 'Belastingplichtige', id: $belastingplichtigeId);
+		if ($belastingplichtige === null) {
+			return false;
+		}
 
-        $niveau = (string) ($belastingplichtige['eHerkenningsNiveau'] ?? '');
-        $cert   = (string) ($belastingplichtige['digipoortCertificaat'] ?? '');
+		$niveau = (string)($belastingplichtige['eHerkenningsNiveau'] ?? '');
+		$cert = (string)($belastingplichtige['digipoortCertificaat'] ?? '');
 
-        return in_array($niveau, ['EH3', 'EH4'], true) && $cert !== '';
-    }//end belastingplichtigeDigipoortReady()
+		return in_array($niveau, ['EH3', 'EH4'], true) && $cert !== '';
+	}//end belastingplichtigeDigipoortReady()
 
-    /**
-     * Returns true iff every Innovatiebox claim on the aangifte carries an S&O ref.
-     *
-     * REQ-VPB-004: an innovatiebox claim is invalid without a soVerklaringReferentie.
-     * An aangifte with zero innovatiebox claims trivially passes.
-     *
-     * @param string $aangifteId The VpbAangifte id whose claims to check.
-     *
-     * @return bool True when all (or no) innovatiebox claims carry an S&O reference.
-     */
-    private function innovatieboxClaimsHaveSO(string $aangifteId): bool
-    {
-        if ($aangifteId === '') {
-            return false;
-        }
+	/**
+	 * Returns true iff every Innovatiebox claim on the aangifte carries an S&O ref.
+	 *
+	 * REQ-VPB-004: an innovatiebox claim is invalid without a soVerklaringReferentie.
+	 * An aangifte with zero innovatiebox claims trivially passes.
+	 *
+	 * @param string $aangifteId The VpbAangifte id whose claims to check.
+	 *
+	 * @return bool True when all (or no) innovatiebox claims carry an S&O reference.
+	 */
+	private function innovatieboxClaimsHaveSO(string $aangifteId): bool {
+		if ($aangifteId === '') {
+			return false;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-        $claims = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema('Innovatiebox')
-            ->findAll(['filters' => ['aangifte' => $aangifteId]]);
+		$claims = $objectService
+			->setRegister($this->resolveRegister())
+			->setSchema('Innovatiebox')
+			->findAll(['filters' => ['aangifte' => $aangifteId]]);
 
-        foreach ($claims as $claim) {
-            if (is_array($claim) === false) {
-                continue;
-            }
+		foreach ($claims as $claim) {
+			if (is_array($claim) === false) {
+				continue;
+			}
 
-            if ((string) ($claim['soVerklaringReferentie'] ?? '') === '') {
-                return false;
-            }
-        }
+			if ((string)($claim['soVerklaringReferentie'] ?? '') === '') {
+				return false;
+			}
+		}
 
-        return true;
-    }//end innovatieboxClaimsHaveSO()
+		return true;
+	}//end innovatieboxClaimsHaveSO()
 
-    /**
-     * Resolve an object of the given schema by id via ObjectService.
-     *
-     * @param string $schema The OpenRegister schema slug.
-     * @param string $id     The object id.
-     *
-     * @return array<string,mixed>|null The object, or null when not found.
-     */
-    private function resolveObject(string $schema, string $id): ?array
-    {
-        if ($id === '') {
-            return null;
-        }
+	/**
+	 * Resolve an object of the given schema by id via ObjectService.
+	 *
+	 * @param string $schema The OpenRegister schema slug.
+	 * @param string $id The object id.
+	 *
+	 * @return array<string,mixed>|null The object, or null when not found.
+	 */
+	private function resolveObject(string $schema, string $id): ?array {
+		if ($id === '') {
+			return null;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-        $records = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema($schema)
-            ->findAll(['filters' => ['id' => $id]]);
+		$records = $objectService
+			->setRegister($this->resolveRegister())
+			->setSchema($schema)
+			->findAll(['filters' => ['id' => $id]]);
 
-        foreach ($records as $record) {
-            if (is_array($record) === true) {
-                return $record;
-            }
-        }
+		foreach ($records as $record) {
+			if (is_array($record) === true) {
+				return $record;
+			}
+		}
 
-        return null;
-    }//end resolveObject()
+		return null;
+	}//end resolveObject()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

@@ -48,7 +48,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use ZipArchive;
 
-require_once __DIR__.'/InMemoryObjectService.php';
+require_once __DIR__ . '/InMemoryObjectService.php';
 
 /**
  * BADO SiSa-bijlage IIA integration test.
@@ -67,318 +67,314 @@ require_once __DIR__.'/InMemoryObjectService.php';
  *
  * @uses \OCA\Shillinq\Service\BadoControleprotocolCalculator
  */
-final class BadoSisaBijlageIIATest extends TestCase
-{
+final class BadoSisaBijlageIIATest extends TestCase {
 
-    /**
-     * In-memory ObjectService.
-     *
-     * @var InMemoryObjectService
-     */
-    private InMemoryObjectService $os;
+	/**
+	 * In-memory ObjectService.
+	 *
+	 * @var InMemoryObjectService
+	 */
+	private InMemoryObjectService $os;
 
-    /**
-     * Production BADO service.
-     *
-     * @var BadoControleprotocolService
-     */
-    private BadoControleprotocolService $service;
+	/**
+	 * Production BADO service.
+	 *
+	 * @var BadoControleprotocolService
+	 */
+	private BadoControleprotocolService $service;
 
-    /**
-     * Production exporter.
-     *
-     * @var AccountantsdossierExportService
-     */
-    private AccountantsdossierExportService $exporter;
+	/**
+	 * Production exporter.
+	 *
+	 * @var AccountantsdossierExportService
+	 */
+	private AccountantsdossierExportService $exporter;
 
-    /**
-     * Build the harness and wire production classes.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Build the harness and wire production classes.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->os = new InMemoryObjectService();
+		$this->os = new InMemoryObjectService();
 
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')->willReturn($this->os);
+		$container = $this->createStub(ContainerInterface::class);
+		$container->method('get')->willReturn($this->os);
 
-        $appConfig = $this->createStub(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturnCallback(
-            static fn (string $app, string $key, string $default=''): string => $default
-        );
+		$appConfig = $this->createStub(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
 
-        $userSession = $this->createStub(IUserSession::class);
-        $userSession->method('getUser')->willReturn(null);
+		$userSession = $this->createStub(IUserSession::class);
+		$userSession->method('getUser')->willReturn(null);
 
-        $this->service = new BadoControleprotocolService(
-            container: $container,
-            appConfig: $appConfig,
-            calculator: new BadoControleprotocolCalculator(),
-            logger: new NullLogger(),
-        );
+		$this->service = new BadoControleprotocolService(
+			container: $container,
+			appConfig: $appConfig,
+			calculator: new BadoControleprotocolCalculator(),
+			logger: new NullLogger(),
+		);
 
-        $this->exporter = new AccountantsdossierExportService(
-            container: $container,
-            appConfig: $appConfig,
-            userSession: $userSession,
-            logger: new NullLogger(),
-        );
+		$this->exporter = new AccountantsdossierExportService(
+			container: $container,
+			appConfig: $appConfig,
+			userSession: $userSession,
+			logger: new NullLogger(),
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * SiSa-bijlage IIA per-regeling roll-up + dossier inclusion.
-     *
-     * @return void
-     */
-    public function testSisaBijlageRollupAndDossierInclusion(): void
-    {
-        $protocolId = 'cp-2026-sisa-utrecht';
-        $this->os->seed(
-                schema: 'Controleprotocol',
-                rows: [
-                    [
-                        'id'                => $protocolId,
-                        'version'           => '2026.1',
-                        'auditYear'         => 2026,
-                        'organisationId'    => 'gemeente-utrecht',
-                        'organisationType'  => 'gemeente',
-                        'materialityBase'   => 'lasten',
-                        'materialityAmount' => 5000000.0,
-                        'effectiveFrom'     => '2026-01-01',
-                        'effectiveTo'       => '2026-12-31',
-                        'status'            => 'adopted',
-                        'adoptionDate'      => '2026-12-10',
-                        'adoptionDecision'  => [
-                            'besluitnummer' => '2026/12',
-                            'datum'         => '2026-12-10',
-                            'decisionType'  => 'raadsbesluit',
-                        ],
-                    ],
-                ]
-                );
-        $this->os->seed(
-                schema: 'Materialiteit',
-                rows: [
-                    [
-                        'protocol'         => $protocolId,
-                        'scope'            => 'overall',
-                        'base'             => 500000000.0,
-                        'percentage'       => 1.0,
-                        'calculatedAmount' => 5000000.0,
-                        'status'           => 'frozen',
-                    ],
-                ]
-                );
-        $this->os->seed(
-                schema: 'ToleranceMatrix',
-                rows: [
-                    $this->statutoryRow(protocolId: $protocolId, topic: 'SiSa-G2 Participatiewet'),
-                    $this->statutoryRow(protocolId: $protocolId, topic: 'SiSa-G3 Schulden'),
-                ]
-                );
+	/**
+	 * SiSa-bijlage IIA per-regeling roll-up + dossier inclusion.
+	 *
+	 * @return void
+	 */
+	public function testSisaBijlageRollupAndDossierInclusion(): void {
+		$protocolId = 'cp-2026-sisa-utrecht';
+		$this->os->seed(
+			schema: 'Controleprotocol',
+			rows: [
+				[
+					'id' => $protocolId,
+					'version' => '2026.1',
+					'auditYear' => 2026,
+					'organisationId' => 'gemeente-utrecht',
+					'organisationType' => 'gemeente',
+					'materialityBase' => 'lasten',
+					'materialityAmount' => 5000000.0,
+					'effectiveFrom' => '2026-01-01',
+					'effectiveTo' => '2026-12-31',
+					'status' => 'adopted',
+					'adoptionDate' => '2026-12-10',
+					'adoptionDecision' => [
+						'besluitnummer' => '2026/12',
+						'datum' => '2026-12-10',
+						'decisionType' => 'raadsbesluit',
+					],
+				],
+			]
+		);
+		$this->os->seed(
+			schema: 'Materialiteit',
+			rows: [
+				[
+					'protocol' => $protocolId,
+					'scope' => 'overall',
+					'base' => 500000000.0,
+					'percentage' => 1.0,
+					'calculatedAmount' => 5000000.0,
+					'status' => 'frozen',
+				],
+			]
+		);
+		$this->os->seed(
+			schema: 'ToleranceMatrix',
+			rows: [
+				$this->statutoryRow(protocolId: $protocolId, topic: 'SiSa-G2 Participatiewet'),
+				$this->statutoryRow(protocolId: $protocolId, topic: 'SiSa-G3 Schulden'),
+			]
+		);
 
-        // Seed AuditSample + per-regeling AuditFinding.
-        $g2Sample = 'sample-sisa-g2';
-        $g3Sample = 'sample-sisa-g3';
-        $this->os->seed(
-                schema: 'AuditSample',
-                rows: [
-                    [
-                        'id'               => $g2Sample,
-                        'protocol'         => $protocolId,
-                        'population'       => 'SiSa G2 Participatiewet uitkeringen 2026',
-                        'selectionMethod'  => 'monetary-unit-sampling',
-                        'sampleSize'       => 30,
-                        'reproducibleSeed' => 'g2-seed-2026',
-                        'extractedAt'      => '2026-12-18T09:00:00Z',
-                        'extractedBy'      => 'auditor-1',
-                    ],
-                    [
-                        'id'               => $g3Sample,
-                        'protocol'         => $protocolId,
-                        'population'       => 'SiSa G3 Schuldhulp dossiers 2026',
-                        'selectionMethod'  => 'random',
-                        'sampleSize'       => 20,
-                        'reproducibleSeed' => 'g3-seed-2026',
-                        'extractedAt'      => '2026-12-18T11:00:00Z',
-                        'extractedBy'      => 'auditor-1',
-                    ],
-                ]
-                );
+		// Seed AuditSample + per-regeling AuditFinding.
+		$g2Sample = 'sample-sisa-g2';
+		$g3Sample = 'sample-sisa-g3';
+		$this->os->seed(
+			schema: 'AuditSample',
+			rows: [
+				[
+					'id' => $g2Sample,
+					'protocol' => $protocolId,
+					'population' => 'SiSa G2 Participatiewet uitkeringen 2026',
+					'selectionMethod' => 'monetary-unit-sampling',
+					'sampleSize' => 30,
+					'reproducibleSeed' => 'g2-seed-2026',
+					'extractedAt' => '2026-12-18T09:00:00Z',
+					'extractedBy' => 'auditor-1',
+				],
+				[
+					'id' => $g3Sample,
+					'protocol' => $protocolId,
+					'population' => 'SiSa G3 Schuldhulp dossiers 2026',
+					'selectionMethod' => 'random',
+					'sampleSize' => 20,
+					'reproducibleSeed' => 'g3-seed-2026',
+					'extractedAt' => '2026-12-18T11:00:00Z',
+					'extractedBy' => 'auditor-1',
+				],
+			]
+		);
 
-        $g2Finding1 = 'finding-g2-1';
-        $g2Finding2 = 'finding-g2-2';
-        $g3Finding1 = 'finding-g3-1';
-        $this->os->seed(
-                schema: 'AuditFinding',
-                rows: [
-                    [
-                        'id'                 => $g2Finding1,
-                        'sample'             => $g2Sample,
-                        'transaction'        => 'pw-tx-001',
-                        'findingType'        => 'rechtmatigheid',
-                        'rechtmatigheid'     => 'exception',
-                        'amount'             => 8000.0,
-                        'topic'              => 'SiSa-G2 Participatiewet',
-                        'narrative'          => 'Onterechte uitkering',
-                        'controllerResponse' => 'Akkoord — terugvordering ingezet.',
-                        'auditorConclusion'  => 'accepted',
-                        'status'             => 'agreed',
-                    ],
-                    [
-                        'id'                 => $g2Finding2,
-                        'sample'             => $g2Sample,
-                        'transaction'        => 'pw-tx-002',
-                        'findingType'        => 'rechtmatigheid',
-                        'rechtmatigheid'     => 'compliant',
-                        'amount'             => 0.0,
-                        'topic'              => 'SiSa-G2 Participatiewet',
-                        'narrative'          => 'Compliant',
-                        'controllerResponse' => 'Akkoord',
-                        'auditorConclusion'  => 'accepted',
-                        'status'             => 'agreed',
-                    ],
-                    [
-                        'id'                 => $g3Finding1,
-                        'sample'             => $g3Sample,
-                        'transaction'        => 'sh-tx-001',
-                        'findingType'        => 'getrouwheid',
-                        'getrouwheid'        => 'misstated',
-                        'amount'             => 2500.0,
-                        'topic'              => 'SiSa-G3 Schulden',
-                        'narrative'          => 'Boekingsfout opname schuldhulp',
-                        'controllerResponse' => 'Akkoord — geboekt op juiste taakveld.',
-                        'auditorConclusion'  => 'accepted',
-                        'status'             => 'agreed',
-                    ],
-                ]
-                );
+		$g2Finding1 = 'finding-g2-1';
+		$g2Finding2 = 'finding-g2-2';
+		$g3Finding1 = 'finding-g3-1';
+		$this->os->seed(
+			schema: 'AuditFinding',
+			rows: [
+				[
+					'id' => $g2Finding1,
+					'sample' => $g2Sample,
+					'transaction' => 'pw-tx-001',
+					'findingType' => 'rechtmatigheid',
+					'rechtmatigheid' => 'exception',
+					'amount' => 8000.0,
+					'topic' => 'SiSa-G2 Participatiewet',
+					'narrative' => 'Onterechte uitkering',
+					'controllerResponse' => 'Akkoord — terugvordering ingezet.',
+					'auditorConclusion' => 'accepted',
+					'status' => 'agreed',
+				],
+				[
+					'id' => $g2Finding2,
+					'sample' => $g2Sample,
+					'transaction' => 'pw-tx-002',
+					'findingType' => 'rechtmatigheid',
+					'rechtmatigheid' => 'compliant',
+					'amount' => 0.0,
+					'topic' => 'SiSa-G2 Participatiewet',
+					'narrative' => 'Compliant',
+					'controllerResponse' => 'Akkoord',
+					'auditorConclusion' => 'accepted',
+					'status' => 'agreed',
+				],
+				[
+					'id' => $g3Finding1,
+					'sample' => $g3Sample,
+					'transaction' => 'sh-tx-001',
+					'findingType' => 'getrouwheid',
+					'getrouwheid' => 'misstated',
+					'amount' => 2500.0,
+					'topic' => 'SiSa-G3 Schulden',
+					'narrative' => 'Boekingsfout opname schuldhulp',
+					'controllerResponse' => 'Akkoord — geboekt op juiste taakveld.',
+					'auditorConclusion' => 'accepted',
+					'status' => 'agreed',
+				],
+			]
+		);
 
-        // SiSaAssurance: one row per regeling.
-        $this->os->seed(
-                schema: 'SiSaAssurance',
-                rows: [
-                    [
-                        'protocol'                 => $protocolId,
-                        'regelingCode'             => 'G2',
-                        'verantwoordingsplichtige' => 'gemeente',
-                        'specifiekeUitkering'      => 'Participatiewet',
-                        'assuranceLevel'           => 'sisa-specific',
-                        'findings'                 => [$g2Finding1, $g2Finding2],
-                    ],
-                    [
-                        'protocol'                 => $protocolId,
-                        'regelingCode'             => 'G3',
-                        'verantwoordingsplichtige' => 'gemeente',
-                        'specifiekeUitkering'      => 'Schuldhulpverlening',
-                        'assuranceLevel'           => 'sisa-specific',
-                        'findings'                 => [$g3Finding1],
-                    ],
-                ]
-                );
+		// SiSaAssurance: one row per regeling.
+		$this->os->seed(
+			schema: 'SiSaAssurance',
+			rows: [
+				[
+					'protocol' => $protocolId,
+					'regelingCode' => 'G2',
+					'verantwoordingsplichtige' => 'gemeente',
+					'specifiekeUitkering' => 'Participatiewet',
+					'assuranceLevel' => 'sisa-specific',
+					'findings' => [$g2Finding1, $g2Finding2],
+				],
+				[
+					'protocol' => $protocolId,
+					'regelingCode' => 'G3',
+					'verantwoordingsplichtige' => 'gemeente',
+					'specifiekeUitkering' => 'Schuldhulpverlening',
+					'assuranceLevel' => 'sisa-specific',
+					'findings' => [$g3Finding1],
+				],
+			]
+		);
 
-        // VerklaringDraft.
-        $this->os->seed(
-                schema: 'VerklaringDraft',
-                rows: [
-                    [
-                        'id'               => 'verklaring-sisa',
-                        'protocol'         => $protocolId,
-                        'proposedOpinion'  => 'goedkeurend',
-                        'opinionRationale' => 'Geen materiële afwijkingen; SiSa-coverage compleet.',
-                        'status'           => 'draft',
-                        'signOff'          => [
-                            'auditor'              => 'J. Bakker',
-                            'afmVergunningsnummer' => 'AFM-1235',
-                            'datum'                => '2026-12-22',
-                            'plaats'               => 'Utrecht',
-                        ],
-                    ],
-                ]
-                );
+		// VerklaringDraft.
+		$this->os->seed(
+			schema: 'VerklaringDraft',
+			rows: [
+				[
+					'id' => 'verklaring-sisa',
+					'protocol' => $protocolId,
+					'proposedOpinion' => 'goedkeurend',
+					'opinionRationale' => 'Geen materiële afwijkingen; SiSa-coverage compleet.',
+					'status' => 'draft',
+					'signOff' => [
+						'auditor' => 'J. Bakker',
+						'afmVergunningsnummer' => 'AFM-1235',
+						'datum' => '2026-12-22',
+						'plaats' => 'Utrecht',
+					],
+				],
+			]
+		);
 
-        // Per Task 21 step 1+2: dossier must include both SiSaAssurance rows.
-        $envelope = $this->exporter->buildDossier(protocolId: $protocolId);
-        $ledger   = $envelope['ledger'];
+		// Per Task 21 step 1+2: dossier must include both SiSaAssurance rows.
+		$envelope = $this->exporter->buildDossier(protocolId: $protocolId);
+		$ledger = $envelope['ledger'];
 
-        self::assertCount(2, $ledger['sisaAssurance']);
-        $bycode = [];
-        foreach ($ledger['sisaAssurance'] as $row) {
-            $bycode[$row['regelingCode']] = $row;
-        }
+		self::assertCount(2, $ledger['sisaAssurance']);
+		$bycode = [];
+		foreach ($ledger['sisaAssurance'] as $row) {
+			$bycode[$row['regelingCode']] = $row;
+		}
 
-        self::assertArrayHasKey('G2', $bycode);
-        self::assertArrayHasKey('G3', $bycode);
+		self::assertArrayHasKey('G2', $bycode);
+		self::assertArrayHasKey('G3', $bycode);
 
-        // Step 4: per-regeling roll-up — count findings linked to each regeling.
-        self::assertCount(2, $bycode['G2']['findings']);
-        self::assertCount(1, $bycode['G3']['findings']);
+		// Step 4: per-regeling roll-up — count findings linked to each regeling.
+		self::assertCount(2, $bycode['G2']['findings']);
+		self::assertCount(1, $bycode['G3']['findings']);
 
-        // Step 4: each row carries verantwoordingsplichtige, assurance level,
-        // specifiekeUitkering — the IIA-table column set.
-        foreach (['G2', 'G3'] as $code) {
-            self::assertSame('gemeente', $bycode[$code]['verantwoordingsplichtige']);
-            self::assertSame('sisa-specific', $bycode[$code]['assuranceLevel']);
-            self::assertNotEmpty($bycode[$code]['specifiekeUitkering']);
-        }
+		// Step 4: each row carries verantwoordingsplichtige, assurance level,
+		// specifiekeUitkering — the IIA-table column set.
+		foreach (['G2', 'G3'] as $code) {
+			self::assertSame('gemeente', $bycode[$code]['verantwoordingsplichtige']);
+			self::assertSame('sisa-specific', $bycode[$code]['assuranceLevel']);
+			self::assertNotEmpty($bycode[$code]['specifiekeUitkering']);
+		}
 
-        // Step 4: HTML summary contains the IIA-style row for each regeling.
-        self::assertStringContainsString('G2', $envelope['summaryHtml']);
-        self::assertStringContainsString('G3', $envelope['summaryHtml']);
-        self::assertStringContainsString('Participatiewet', $envelope['summaryHtml']);
-        self::assertStringContainsString('Schuldhulpverlening', $envelope['summaryHtml']);
+		// Step 4: HTML summary contains the IIA-style row for each regeling.
+		self::assertStringContainsString('G2', $envelope['summaryHtml']);
+		self::assertStringContainsString('G3', $envelope['summaryHtml']);
+		self::assertStringContainsString('Participatiewet', $envelope['summaryHtml']);
+		self::assertStringContainsString('Schuldhulpverlening', $envelope['summaryHtml']);
 
-        // Step 5: IIA inclusion is reflected in the bundle's attachment manifest.
-        $attachmentPaths = $envelope['manifest']['attachments'];
-        $sisaAttachments = array_filter(
-            $attachmentPaths,
-            static fn (string $path): bool => str_starts_with($path, 'attachments/sisa-assurance/')
-        );
-        self::assertCount(2, $sisaAttachments);
+		// Step 5: IIA inclusion is reflected in the bundle's attachment manifest.
+		$attachmentPaths = $envelope['manifest']['attachments'];
+		$sisaAttachments = array_filter(
+			$attachmentPaths,
+			static fn (string $path): bool => str_starts_with($path, 'attachments/sisa-assurance/')
+		);
+		self::assertCount(2, $sisaAttachments);
 
-        // Step 6: the ZIP physically carries the SiSa rows.
-        $written = $this->exporter->exportDossier(protocolId: $protocolId);
-        $zip     = new ZipArchive();
-        self::assertTrue($zip->open($written['zipPath']) === true);
+		// Step 6: the ZIP physically carries the SiSa rows.
+		$written = $this->exporter->exportDossier(protocolId: $protocolId);
+		$zip = new ZipArchive();
+		self::assertTrue($zip->open($written['zipPath']) === true);
 
-        $g2Json = $zip->getFromName($written['packageId'].'/attachments/sisa-assurance/row-0001.json');
-        $g3Json = $zip->getFromName($written['packageId'].'/attachments/sisa-assurance/row-0002.json');
-        $zip->close();
+		$g2Json = $zip->getFromName($written['packageId'] . '/attachments/sisa-assurance/row-0001.json');
+		$g3Json = $zip->getFromName($written['packageId'] . '/attachments/sisa-assurance/row-0002.json');
+		$zip->close();
 
-        self::assertIsString($g2Json);
-        self::assertIsString($g3Json);
-        self::assertStringContainsString('"regelingCode": "G2"', $g2Json);
-        self::assertStringContainsString('"regelingCode": "G3"', $g3Json);
+		self::assertIsString($g2Json);
+		self::assertIsString($g3Json);
+		self::assertStringContainsString('"regelingCode": "G2"', $g2Json);
+		self::assertStringContainsString('"regelingCode": "G3"', $g3Json);
 
-        unlink($written['zipPath']);
+		unlink($written['zipPath']);
 
-        // Sanity: signature delegation still pending (no signer configured).
-        self::assertTrue($this->service->canSignVerklaring(verklaringId: 'verklaring-sisa'));
+		// Sanity: signature delegation still pending (no signer configured).
+		self::assertTrue($this->service->canSignVerklaring(verklaringId: 'verklaring-sisa'));
 
-    }//end testSisaBijlageRollupAndDossierInclusion()
+	}//end testSisaBijlageRollupAndDossierInclusion()
 
-    /**
-     * Build a statutory-default ToleranceMatrix row.
-     *
-     * @param string $protocolId The Controleprotocol.id.
-     * @param string $topic      Topic.
-     *
-     * @return array<string,mixed>
-     */
-    private function statutoryRow(string $protocolId, string $topic): array
-    {
-        return [
-            'protocol'                           => $protocolId,
-            'topic'                              => $topic,
-            'getrouwheidApprovalCeiling'         => 1.0,
-            'getrouwheidQualificationCeiling'    => 3.0,
-            'rechtmatigheidApprovalCeiling'      => 1.0,
-            'rechtmatigheidQualificationCeiling' => 3.0,
-            'uncertaintyCeiling'                 => 3.0,
-        ];
-    }//end statutoryRow()
+	/**
+	 * Build a statutory-default ToleranceMatrix row.
+	 *
+	 * @param string $protocolId The Controleprotocol.id.
+	 * @param string $topic Topic.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function statutoryRow(string $protocolId, string $topic): array {
+		return [
+			'protocol' => $protocolId,
+			'topic' => $topic,
+			'getrouwheidApprovalCeiling' => 1.0,
+			'getrouwheidQualificationCeiling' => 3.0,
+			'rechtmatigheidApprovalCeiling' => 1.0,
+			'rechtmatigheidQualificationCeiling' => 3.0,
+			'uncertaintyCeiling' => 3.0,
+		];
+	}//end statutoryRow()
 }//end class

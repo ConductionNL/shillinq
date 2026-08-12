@@ -38,179 +38,168 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-require_once __DIR__.'/../Service/InMemoryObjectService.php';
+require_once __DIR__ . '/../Service/InMemoryObjectService.php';
 
 /**
  * Tests the `OssReturn.pay` / `OssPayment.reconcile` precondition.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class OssPaymentGuardTest extends TestCase
-{
+class OssPaymentGuardTest extends TestCase {
 
-    /**
-     * The in-memory ObjectService backing the chain.
-     *
-     * @var InMemoryObjectService
-     */
-    private InMemoryObjectService $objects;
+	/**
+	 * The in-memory ObjectService backing the chain.
+	 *
+	 * @var InMemoryObjectService
+	 */
+	private InMemoryObjectService $objects;
 
-    /**
-     * The guard under test.
-     *
-     * @var OssPaymentGuard
-     */
-    private OssPaymentGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var OssPaymentGuard
+	 */
+	private OssPaymentGuard $guard;
 
-    /**
-     * Set up the guard over the real kernel.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up the guard over the real kernel.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->objects = new InMemoryObjectService();
+		$this->objects = new InMemoryObjectService();
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($this->objects);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($this->objects);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new OssPaymentGuard(
-            resolver: new OssRecordResolver(
-                container: $container,
-                appConfig: $appConfig,
-                logger: $this->createMock(LoggerInterface::class),
-            ),
-            reconciliation: new OssPaymentReconciliation(),
-        );
+		$this->guard = new OssPaymentGuard(
+			resolver: new OssRecordResolver(
+				container: $container,
+				appConfig: $appConfig,
+				logger: $this->createMock(LoggerInterface::class),
+			),
+			reconciliation: new OssPaymentReconciliation(),
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * The declared OssReturn.
-     *
-     * @return array<string,mixed>
-     */
-    private function ossReturn(): array
-    {
-        return [
-            'id'             => 'ossret-1',
-            'totalVatAmount' => 3242.0,
-        ];
+	/**
+	 * The declared OssReturn.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function ossReturn(): array {
+		return [
+			'id' => 'ossret-1',
+			'totalVatAmount' => 3242.0,
+		];
 
-    }//end ossReturn()
+	}//end ossReturn()
 
-    /**
-     * Seed the pair.
-     *
-     * @param float  $amount            The payment amount.
-     * @param string $bankTransactionId The linked bank transaction ('' = none).
-     *
-     * @return array<string,mixed> The payment payload.
-     */
-    private function seedPair(float $amount, string $bankTransactionId): array
-    {
-        $payment = [
-            'id'                   => 'osspay-1',
-            'ossReturnId'          => 'ossret-1',
-            'amount'               => $amount,
-            'bankTransactionId'    => $bankTransactionId,
-            'reconciliationStatus' => 'pending',
-        ];
+	/**
+	 * Seed the pair.
+	 *
+	 * @param float $amount The payment amount.
+	 * @param string $bankTransactionId The linked bank transaction ('' = none).
+	 *
+	 * @return array<string,mixed> The payment payload.
+	 */
+	private function seedPair(float $amount, string $bankTransactionId): array {
+		$payment = [
+			'id' => 'osspay-1',
+			'ossReturnId' => 'ossret-1',
+			'amount' => $amount,
+			'bankTransactionId' => $bankTransactionId,
+			'reconciliationStatus' => 'pending',
+		];
 
-        $this->objects->seed('OssReturn', [$this->ossReturn()]);
-        $this->objects->seed('OssPayment', [$payment]);
+		$this->objects->seed('OssReturn', [$this->ossReturn()]);
+		$this->objects->seed('OssPayment', [$payment]);
 
-        return $payment;
+		return $payment;
+	}//end seedPair()
 
-    }//end seedPair()
+	/**
+	 * A payment settling the return in full is permitted (REQ-GLTAX-004).
+	 *
+	 * @return void
+	 */
+	public function testPaymentSideAllowsAFullSettlement(): void {
+		$payment = $this->seedPair(amount: 3242.0, bankTransactionId: 'bank-tx-1');
 
-    /**
-     * A payment settling the return in full is permitted (REQ-GLTAX-004).
-     *
-     * @return void
-     */
-    public function testPaymentSideAllowsAFullSettlement(): void
-    {
-        $payment = $this->seedPair(amount: 3242.0, bankTransactionId: 'bank-tx-1');
+		self::assertTrue($this->guard->canMarkPaid(object: $payment));
 
-        self::assertTrue($this->guard->canMarkPaid(object: $payment));
+	}//end testPaymentSideAllowsAFullSettlement()
 
-    }//end testPaymentSideAllowsAFullSettlement()
+	/**
+	 * A short payment is denied (REQ-GLTAX-004).
+	 *
+	 * @return void
+	 */
+	public function testPaymentSideDeniesAShortSettlement(): void {
+		$payment = $this->seedPair(amount: 3000.0, bankTransactionId: 'bank-tx-1');
 
-    /**
-     * A short payment is denied (REQ-GLTAX-004).
-     *
-     * @return void
-     */
-    public function testPaymentSideDeniesAShortSettlement(): void
-    {
-        $payment = $this->seedPair(amount: 3000.0, bankTransactionId: 'bank-tx-1');
+		self::assertFalse($this->guard->canMarkPaid(object: $payment));
 
-        self::assertFalse($this->guard->canMarkPaid(object: $payment));
+	}//end testPaymentSideDeniesAShortSettlement()
 
-    }//end testPaymentSideDeniesAShortSettlement()
+	/**
+	 * A payment with no linked bank transaction is denied (REQ-GLTAX-004).
+	 *
+	 * @return void
+	 */
+	public function testPaymentSideDeniesAnUnlinkedPayment(): void {
+		$payment = $this->seedPair(amount: 3242.0, bankTransactionId: '');
 
-    /**
-     * A payment with no linked bank transaction is denied (REQ-GLTAX-004).
-     *
-     * @return void
-     */
-    public function testPaymentSideDeniesAnUnlinkedPayment(): void
-    {
-        $payment = $this->seedPair(amount: 3242.0, bankTransactionId: '');
+		self::assertFalse($this->guard->canMarkPaid(object: $payment));
 
-        self::assertFalse($this->guard->canMarkPaid(object: $payment));
+	}//end testPaymentSideDeniesAnUnlinkedPayment()
 
-    }//end testPaymentSideDeniesAnUnlinkedPayment()
+	/**
+	 * The SAME tag is used by `OssReturn.pay`: given the return, the guard
+	 * resolves the payment behind it (REQ-GLTAX-004).
+	 *
+	 * @return void
+	 */
+	public function testReturnSideResolvesItsPayment(): void {
+		$this->seedPair(amount: 3242.0, bankTransactionId: 'bank-tx-1');
 
-    /**
-     * The SAME tag is used by `OssReturn.pay`: given the return, the guard
-     * resolves the payment behind it (REQ-GLTAX-004).
-     *
-     * @return void
-     */
-    public function testReturnSideResolvesItsPayment(): void
-    {
-        $this->seedPair(amount: 3242.0, bankTransactionId: 'bank-tx-1');
+		self::assertTrue($this->guard->canMarkPaid(object: $this->ossReturn()));
 
-        self::assertTrue($this->guard->canMarkPaid(object: $this->ossReturn()));
+	}//end testReturnSideResolvesItsPayment()
 
-    }//end testReturnSideResolvesItsPayment()
+	/**
+	 * A return with no payment at all is denied — fail-closed (REQ-GLTAX-004).
+	 *
+	 * @return void
+	 */
+	public function testReturnSideWithoutAPaymentIsDenied(): void {
+		$this->objects->seed('OssReturn', [$this->ossReturn()]);
 
-    /**
-     * A return with no payment at all is denied — fail-closed (REQ-GLTAX-004).
-     *
-     * @return void
-     */
-    public function testReturnSideWithoutAPaymentIsDenied(): void
-    {
-        $this->objects->seed('OssReturn', [$this->ossReturn()]);
+		self::assertFalse($this->guard->canMarkPaid(object: $this->ossReturn()));
 
-        self::assertFalse($this->guard->canMarkPaid(object: $this->ossReturn()));
+	}//end testReturnSideWithoutAPaymentIsDenied()
 
-    }//end testReturnSideWithoutAPaymentIsDenied()
+	/**
+	 * A payment whose OssReturn cannot be read is denied — fail-closed
+	 * (REQ-GLTAX-004).
+	 *
+	 * @return void
+	 */
+	public function testPaymentWithAnUnresolvableReturnIsDenied(): void {
+		$payment = [
+			'id' => 'osspay-1',
+			'ossReturnId' => 'ossret-missing',
+			'amount' => 3242.0,
+			'bankTransactionId' => 'bank-tx-1',
+		];
 
-    /**
-     * A payment whose OssReturn cannot be read is denied — fail-closed
-     * (REQ-GLTAX-004).
-     *
-     * @return void
-     */
-    public function testPaymentWithAnUnresolvableReturnIsDenied(): void
-    {
-        $payment = [
-            'id'                => 'osspay-1',
-            'ossReturnId'       => 'ossret-missing',
-            'amount'            => 3242.0,
-            'bankTransactionId' => 'bank-tx-1',
-        ];
+		self::assertFalse($this->guard->canMarkPaid(object: $payment));
 
-        self::assertFalse($this->guard->canMarkPaid(object: $payment));
-
-    }//end testPaymentWithAnUnresolvableReturnIsDenied()
+	}//end testPaymentWithAnUnresolvableReturnIsDenied()
 }//end class

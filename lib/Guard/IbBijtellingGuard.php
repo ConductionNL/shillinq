@@ -42,60 +42,58 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
-class IbBijtellingGuard
-{
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class IbBijtellingGuard {
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the gross bijtelling per art. 3.20 Wet IB 2001.
-     *
-     * Regular cars apply the tier-2 percentage to the whole catalogue value.
-     * Zero-emission cars apply the tier-1 percentage up to the tier-1 cap and
-     * the tier-2 percentage to the excess. All percentages/caps are supplied by
-     * the caller from IBTaxParameterYear so no tariff is hard-coded (REQ-IB-013).
-     *
-     * @param float  $cataloguswaarde Catalogue value when new (>= 0).
-     * @param string $categorie       Bijtelling category (REGULIER_22PCT / EV_TIERED_17_22PCT / ZERO_EMISSION / OTHER).
-     * @param float  $staffel1Pct     Tier-1 (EV) percentage, e.g. 0.17.
-     * @param float  $staffel1Cap     Tier-1 cap, e.g. 30000.0.
-     * @param float  $staffel2Pct     Tier-2 / regular percentage, e.g. 0.22.
-     *
-     * @return float The gross bijtelling amount, rounded to cents (>= 0).
-     *
-     * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
-     */
-    public function computeBijtelling(
-        float $cataloguswaarde,
-        string $categorie,
-        float $staffel1Pct,
-        float $staffel1Cap,
-        float $staffel2Pct,
-    ): float {
-        $this->logger->debug(
-            'IbBijtellingGuard: computeBijtelling',
-            ['cataloguswaarde' => $cataloguswaarde, 'categorie' => $categorie]
-        );
+	/**
+	 * Compute the gross bijtelling per art. 3.20 Wet IB 2001.
+	 *
+	 * Regular cars apply the tier-2 percentage to the whole catalogue value.
+	 * Zero-emission cars apply the tier-1 percentage up to the tier-1 cap and
+	 * the tier-2 percentage to the excess. All percentages/caps are supplied by
+	 * the caller from IBTaxParameterYear so no tariff is hard-coded (REQ-IB-013).
+	 *
+	 * @param float $cataloguswaarde Catalogue value when new (>= 0).
+	 * @param string $categorie Bijtelling category (REGULIER_22PCT / EV_TIERED_17_22PCT / ZERO_EMISSION / OTHER).
+	 * @param float $staffel1Pct Tier-1 (EV) percentage, e.g. 0.17.
+	 * @param float $staffel1Cap Tier-1 cap, e.g. 30000.0.
+	 * @param float $staffel2Pct Tier-2 / regular percentage, e.g. 0.22.
+	 *
+	 * @return float The gross bijtelling amount, rounded to cents (>= 0).
+	 *
+	 * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
+	 */
+	public function computeBijtelling(
+		float $cataloguswaarde,
+		string $categorie,
+		float $staffel1Pct,
+		float $staffel1Cap,
+		float $staffel2Pct,
+	): float {
+		$this->logger->debug(
+			'IbBijtellingGuard: computeBijtelling',
+			['cataloguswaarde' => $cataloguswaarde, 'categorie' => $categorie]
+		);
 
-        if ($cataloguswaarde <= 0.0) {
-            return 0.0;
-        }
+		if ($cataloguswaarde <= 0.0) {
+			return 0.0;
+		}
 
-        if ($categorie === 'EV_TIERED_17_22PCT') {
-            $tier1Base  = min($cataloguswaarde, $staffel1Cap);
-            $tier2Base  = max(($cataloguswaarde - $staffel1Cap), 0.0);
-            $bijtelling = (($tier1Base * $staffel1Pct) + ($tier2Base * $staffel2Pct));
-            return round($bijtelling, 2);
-        }
+		if ($categorie === 'EV_TIERED_17_22PCT') {
+			$tier1Base = min($cataloguswaarde, $staffel1Cap);
+			$tier2Base = max(($cataloguswaarde - $staffel1Cap), 0.0);
+			$bijtelling = (($tier1Base * $staffel1Pct) + ($tier2Base * $staffel2Pct));
+			return round($bijtelling, 2);
+		}
 
-        return round(($cataloguswaarde * $staffel2Pct), 2);
-
-    }//end computeBijtelling()
+		return round(($cataloguswaarde * $staffel2Pct), 2);
+	}//end computeBijtelling()
 }//end class

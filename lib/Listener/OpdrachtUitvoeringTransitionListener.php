@@ -62,96 +62,93 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class OpdrachtUitvoeringTransitionListener implements IEventListener
-{
-    /**
-     * Construct the listener.
-     *
-     * @param BudgetImpactEmitter    $emitter        Shared cross-app CloudEvent emitter.
-     * @param TenderNedStatusSync    $sync           Outbound status-sync integration (REQ-006).
-     * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
-     * @param LoggerInterface        $logger         Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly BudgetImpactEmitter $emitter,
-        private readonly TenderNedStatusSync $sync,
-        private readonly ListenerSchemaResolver $schemaResolver,
-        private readonly LoggerInterface $logger,
-    ) {
+class OpdrachtUitvoeringTransitionListener implements IEventListener {
+	/**
+	 * Construct the listener.
+	 *
+	 * @param BudgetImpactEmitter $emitter Shared cross-app CloudEvent emitter.
+	 * @param TenderNedStatusSync $sync Outbound status-sync integration (REQ-006).
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly BudgetImpactEmitter $emitter,
+		private readonly TenderNedStatusSync $sync,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an ObjectTransitionedEvent on the OpdrachtUitvoering schema.
-     *
-     * @param Event $event OR transition event.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectTransitionedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectTransitionedEvent on the OpdrachtUitvoering schema.
+	 *
+	 * @param Event $event OR transition event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectTransitionedEvent === false) {
+			return;
+		}
 
-        try {
-            if ($event->getTo() !== 'completed') {
-                return;
-            }
+		try {
+			if ($event->getTo() !== 'completed') {
+				return;
+			}
 
-            $entity = $event->getObject();
-            if ($entity === null) {
-                return;
-            }
+			$entity = $event->getObject();
+			if ($entity === null) {
+				return;
+			}
 
-            $schema = $this->schemaResolver->schemaSlug(entity: $entity);
-            if ($this->isOpdrachtUitvoeringSchema(schema: $schema) === false) {
-                return;
-            }
+			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
+			if ($this->isOpdrachtUitvoeringSchema(schema: $schema) === false) {
+				return;
+			}
 
-            $oplevering = $entity->getObject();
-            if (is_array($oplevering) === false) {
-                return;
-            }
+			$oplevering = $entity->getObject();
+			if (is_array($oplevering) === false) {
+				return;
+			}
 
-            // REQ-005 / Task 5.3 — always emit the milestone-completed event.
-            $this->emitter->emitMilestoneCompleted(oplevering: $oplevering);
+			// REQ-005 / Task 5.3 — always emit the milestone-completed event.
+			$this->emitter->emitMilestoneCompleted(oplevering: $oplevering);
 
-            // REQ-006 — outbound sync only when this is the approved
-            // eindoplevering (the buyer-side gate; vendor-completed
-            // openrules are denied earlier by RBAC).
-            if ((string) ($oplevering['opleveringsType'] ?? '') !== 'eindoplevering') {
-                return;
-            }
+			// REQ-006 — outbound sync only when this is the approved
+			// eindoplevering (the buyer-side gate; vendor-completed
+			// openrules are denied earlier by RBAC).
+			if ((string)($oplevering['opleveringsType'] ?? '') !== 'eindoplevering') {
+				return;
+			}
 
-            if (((bool) ($oplevering['goedgekeurd'] ?? false)) !== true) {
-                return;
-            }
+			if (((bool)($oplevering['goedgekeurd'] ?? false)) !== true) {
+				return;
+			}
 
-            $this->sync->syncCompletion(oplevering: $oplevering);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'OpdrachtUitvoeringTransitionListener: fail-soft on completion',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->sync->syncCompletion(oplevering: $oplevering);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'OpdrachtUitvoeringTransitionListener: fail-soft on completion',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Check whether the schema slug is OpdrachtUitvoering.
-     *
-     * @param string $schema Schema slug.
-     *
-     * @return bool
-     */
-    private function isOpdrachtUitvoeringSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === 'opdrachtuitvoering'
-            || str_ends_with(haystack: $normalised, needle: 'opdrachtuitvoering'));
+	/**
+	 * Check whether the schema slug is OpdrachtUitvoering.
+	 *
+	 * @param string $schema Schema slug.
+	 *
+	 * @return bool
+	 */
+	private function isOpdrachtUitvoeringSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === 'opdrachtuitvoering'
+			|| str_ends_with(haystack: $normalised, needle: 'opdrachtuitvoering'));
 
-    }//end isOpdrachtUitvoeringSchema()
+	}//end isOpdrachtUitvoeringSchema()
 }//end class

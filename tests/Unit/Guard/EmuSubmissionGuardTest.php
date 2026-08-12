@@ -27,108 +27,101 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for the EMUReport submission approval gate (REQ-EMU-006).
  */
-class EmuSubmissionGuardTest extends TestCase
-{
+class EmuSubmissionGuardTest extends TestCase {
 
-    /**
-     * Mock logger.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Guard under test.
-     *
-     * @var EmuSubmissionGuard
-     */
-    private EmuSubmissionGuard $guard;
+	/**
+	 * Guard under test.
+	 *
+	 * @var EmuSubmissionGuard
+	 */
+	private EmuSubmissionGuard $guard;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new EmuSubmissionGuard(logger: $this->logger);
-    }//end setUp()
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new EmuSubmissionGuard(logger: $this->logger);
+	}//end setUp()
 
-    /**
-     * A reviewed concept with computed saldo and passed reconciliation may submit.
-     *
-     * @return void
-     */
-    public function testApprovedConceptMaySubmit(): void
-    {
-        self::assertTrue(
-            $this->guard->requireApproval(
-                [
-                    'status'                 => 'concept',
-                    'emuSaldoBerekend'       => -2300000.0,
-                    'bbvAansluitingscontrole' => 'geslaagd',
-                ]
-            )
-        );
-    }//end testApprovedConceptMaySubmit()
+	/**
+	 * A reviewed concept with computed saldo and passed reconciliation may submit.
+	 *
+	 * @return void
+	 */
+	public function testApprovedConceptMaySubmit(): void {
+		self::assertTrue(
+			$this->guard->requireApproval(
+				[
+					'status' => 'concept',
+					'emuSaldoBerekend' => -2300000.0,
+					'bbvAansluitingscontrole' => 'geslaagd',
+				]
+			)
+		);
+	}//end testApprovedConceptMaySubmit()
 
-    /**
-     * An already-ingediend report is never re-submitted (idempotent).
-     *
-     * @return void
-     */
-    public function testAlreadySubmittedIsBlocked(): void
-    {
-        $this->logger->expects(self::once())->method('info');
-        self::assertFalse(
-            $this->guard->requireApproval(
-                ['status' => 'ingediend', 'emuSaldoBerekend' => -2300000.0, 'bbvAansluitingscontrole' => 'geslaagd']
-            )
-        );
-    }//end testAlreadySubmittedIsBlocked()
+	/**
+	 * An already-ingediend report is never re-submitted (idempotent).
+	 *
+	 * @return void
+	 */
+	public function testAlreadySubmittedIsBlocked(): void {
+		$this->logger->expects(self::once())->method('info');
+		self::assertFalse(
+			$this->guard->requireApproval(
+				['status' => 'ingediend', 'emuSaldoBerekend' => -2300000.0, 'bbvAansluitingscontrole' => 'geslaagd']
+			)
+		);
+	}//end testAlreadySubmittedIsBlocked()
 
-    /**
-     * A concept without a computed saldo cannot be submitted.
-     *
-     * @return void
-     */
-    public function testConceptWithoutSaldoIsBlocked(): void
-    {
-        $this->logger->expects(self::once())->method('info');
-        self::assertFalse(
-            $this->guard->requireApproval(['status' => 'concept', 'bbvAansluitingscontrole' => 'geslaagd'])
-        );
-    }//end testConceptWithoutSaldoIsBlocked()
+	/**
+	 * A concept without a computed saldo cannot be submitted.
+	 *
+	 * @return void
+	 */
+	public function testConceptWithoutSaldoIsBlocked(): void {
+		$this->logger->expects(self::once())->method('info');
+		self::assertFalse(
+			$this->guard->requireApproval(['status' => 'concept', 'bbvAansluitingscontrole' => 'geslaagd'])
+		);
+	}//end testConceptWithoutSaldoIsBlocked()
 
-    /**
-     * A failed reconciliation blocks submission (REQ-EMU-009).
-     *
-     * @return void
-     */
-    public function testFailedReconciliationBlocks(): void
-    {
-        $this->logger->expects(self::once())->method('info');
-        self::assertFalse(
-            $this->guard->requireApproval(
-                ['status' => 'concept', 'emuSaldoBerekend' => 1.0, 'bbvAansluitingscontrole' => 'mislukt']
-            )
-        );
-    }//end testFailedReconciliationBlocks()
+	/**
+	 * A failed reconciliation blocks submission (REQ-EMU-009).
+	 *
+	 * @return void
+	 */
+	public function testFailedReconciliationBlocks(): void {
+		$this->logger->expects(self::once())->method('info');
+		self::assertFalse(
+			$this->guard->requireApproval(
+				['status' => 'concept', 'emuSaldoBerekend' => 1.0, 'bbvAansluitingscontrole' => 'mislukt']
+			)
+		);
+	}//end testFailedReconciliationBlocks()
 
-    /**
-     * A null computed saldo is treated as not-computed.
-     *
-     * @return void
-     */
-    public function testNullSaldoIsBlocked(): void
-    {
-        $this->logger->expects(self::once())->method('info');
-        self::assertFalse(
-            $this->guard->requireApproval(
-                ['status' => 'concept', 'emuSaldoBerekend' => null, 'bbvAansluitingscontrole' => 'geslaagd']
-            )
-        );
-    }//end testNullSaldoIsBlocked()
+	/**
+	 * A null computed saldo is treated as not-computed.
+	 *
+	 * @return void
+	 */
+	public function testNullSaldoIsBlocked(): void {
+		$this->logger->expects(self::once())->method('info');
+		self::assertFalse(
+			$this->guard->requireApproval(
+				['status' => 'concept', 'emuSaldoBerekend' => null, 'bbvAansluitingscontrole' => 'geslaagd']
+			)
+		);
+	}//end testNullSaldoIsBlocked()
 }//end class

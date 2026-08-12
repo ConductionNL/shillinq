@@ -62,256 +62,246 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
  */
-class PensionIas19Guard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class PensionIas19Guard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the PensionPlan may leave draft and become active.
-     *
-     * REQ-PEN-001: a plan needs a type, a regulatory framework and a
-     * pensionable-salary definition. For benefit-accruing plans (DB / CDC /
-     * hybrid) an accrual rate is also required before activation.
-     *
-     * @param string                   $planId The PensionPlan id (call-signature parity).
-     * @param array<string,mixed>|null $object The plan being transitioned.
-     *
-     * @return bool True when the plan may be activated.
-     *
-     * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
-     */
-    public function canActivatePlan(string $planId, ?array $object=null): bool
-    {
-        try {
-            $plan = $this->resolveObject(schema: 'PensionPlan', id: $planId, object: $object);
-            if ($plan === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the PensionPlan may leave draft and become active.
+	 *
+	 * REQ-PEN-001: a plan needs a type, a regulatory framework and a
+	 * pensionable-salary definition. For benefit-accruing plans (DB / CDC /
+	 * hybrid) an accrual rate is also required before activation.
+	 *
+	 * @param string $planId The PensionPlan id (call-signature parity).
+	 * @param array<string,mixed>|null $object The plan being transitioned.
+	 *
+	 * @return bool True when the plan may be activated.
+	 *
+	 * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
+	 */
+	public function canActivatePlan(string $planId, ?array $object = null): bool {
+		try {
+			$plan = $this->resolveObject(schema: 'PensionPlan', id: $planId, object: $object);
+			if ($plan === null) {
+				return false;
+			}
 
-            $planType = (string) ($plan['planType'] ?? '');
-            if (in_array($planType, ['DB', 'DC', 'CDC', 'hybrid'], true) === false) {
-                return false;
-            }
+			$planType = (string)($plan['planType'] ?? '');
+			if (in_array($planType, ['DB', 'DC', 'CDC', 'hybrid'], true) === false) {
+				return false;
+			}
 
-            if ((string) ($plan['regulatoryFramework'] ?? '') === '') {
-                return false;
-            }
+			if ((string)($plan['regulatoryFramework'] ?? '') === '') {
+				return false;
+			}
 
-            if (trim((string) ($plan['pensionableSalaryDefinition'] ?? '')) === '') {
-                return false;
-            }
+			if (trim((string)($plan['pensionableSalaryDefinition'] ?? '')) === '') {
+				return false;
+			}
 
-            // Benefit-accruing plans must carry an accrual rate before activation.
-            if (in_array($planType, ['DB', 'CDC', 'hybrid'], true) === true) {
-                $accrualRate = $plan['accrualRate'] ?? null;
-                if (is_numeric($accrualRate) === false || (float) $accrualRate <= 0.0) {
-                    return false;
-                }
-            }
+			// Benefit-accruing plans must carry an accrual rate before activation.
+			if (in_array($planType, ['DB', 'CDC', 'hybrid'], true) === true) {
+				$accrualRate = $plan['accrualRate'] ?? null;
+				if (is_numeric($accrualRate) === false || (float)$accrualRate <= 0.0) {
+					return false;
+				}
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'PensionIas19Guard: plan activation check failed — denying transition (fail-closed)',
-                ['planId' => $planId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canActivatePlan()
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PensionIas19Guard: plan activation check failed — denying transition (fail-closed)',
+				['planId' => $planId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canActivatePlan()
 
-    /**
-     * Returns true iff the ActuarialValuation may transition from draft to approved.
-     *
-     * REQ-PEN-001 / REQ-PEN-002 / REQ-PEN-008: the discount-rate source must be
-     * recorded for audit; DB plans (methodology=PUC) must carry a positive DBO and
-     * complete core assumptions; DC valuations (methodology=DC) must NOT carry a DBO.
-     *
-     * @param string                   $valuationId The ActuarialValuation id (call-signature parity).
-     * @param array<string,mixed>|null $object      The valuation being transitioned.
-     *
-     * @return bool True when the valuation may be approved.
-     *
-     * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
-     */
-    public function canApproveValuation(string $valuationId, ?array $object=null): bool
-    {
-        try {
-            $valuation = $this->resolveObject(schema: 'ActuarialValuation', id: $valuationId, object: $object);
-            if ($valuation === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the ActuarialValuation may transition from draft to approved.
+	 *
+	 * REQ-PEN-001 / REQ-PEN-002 / REQ-PEN-008: the discount-rate source must be
+	 * recorded for audit; DB plans (methodology=PUC) must carry a positive DBO and
+	 * complete core assumptions; DC valuations (methodology=DC) must NOT carry a DBO.
+	 *
+	 * @param string $valuationId The ActuarialValuation id (call-signature parity).
+	 * @param array<string,mixed>|null $object The valuation being transitioned.
+	 *
+	 * @return bool True when the valuation may be approved.
+	 *
+	 * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
+	 */
+	public function canApproveValuation(string $valuationId, ?array $object = null): bool {
+		try {
+			$valuation = $this->resolveObject(schema: 'ActuarialValuation', id: $valuationId, object: $object);
+			if ($valuation === null) {
+				return false;
+			}
 
-            // REQ-PEN-002: discount-rate source must be recorded for the audit trail.
-            if (trim((string) ($valuation['discountRateSource'] ?? '')) === '') {
-                return false;
-            }
+			// REQ-PEN-002: discount-rate source must be recorded for the audit trail.
+			if (trim((string)($valuation['discountRateSource'] ?? '')) === '') {
+				return false;
+			}
 
-            $methodology = (string) ($valuation['methodology'] ?? '');
+			$methodology = (string)($valuation['methodology'] ?? '');
 
-            if ($methodology === 'DC') {
-                return $this->isDcValuationComplete(valuation: $valuation);
-            }
+			if ($methodology === 'DC') {
+				return $this->isDcValuationComplete(valuation: $valuation);
+			}
 
-            if ($methodology === 'PUC') {
-                return $this->isPucValuationComplete(valuation: $valuation);
-            }
+			if ($methodology === 'PUC') {
+				return $this->isPucValuationComplete(valuation: $valuation);
+			}
 
-            // REQ-PEN-001: DB plans must use PUC; anything else is rejected.
-            return false;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'PensionIas19Guard: valuation approve check failed — denying transition (fail-closed)',
-                ['valuationId' => $valuationId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canApproveValuation()
+			// REQ-PEN-001: DB plans must use PUC; anything else is rejected.
+			return false;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PensionIas19Guard: valuation approve check failed — denying transition (fail-closed)',
+				['valuationId' => $valuationId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canApproveValuation()
 
-    /**
-     * Returns true iff a DC valuation is complete enough to approve.
-     *
-     * REQ-PEN-008: DC valuations carry no DBO measurement.
-     *
-     * @param array<string,mixed> $valuation The valuation under transition.
-     *
-     * @return bool True when the DC valuation may be approved.
-     */
-    private function isDcValuationComplete(array $valuation): bool
-    {
-        $dboGross = $valuation['dboGross'] ?? null;
+	/**
+	 * Returns true iff a DC valuation is complete enough to approve.
+	 *
+	 * REQ-PEN-008: DC valuations carry no DBO measurement.
+	 *
+	 * @param array<string,mixed> $valuation The valuation under transition.
+	 *
+	 * @return bool True when the DC valuation may be approved.
+	 */
+	private function isDcValuationComplete(array $valuation): bool {
+		$dboGross = $valuation['dboGross'] ?? null;
 
-        return (is_numeric($dboGross) === false || (float) $dboGross === 0.0);
+		return (is_numeric($dboGross) === false || (float)$dboGross === 0.0);
+	}//end isDcValuationComplete()
 
-    }//end isDcValuationComplete()
+	/**
+	 * Returns true iff a PUC valuation carries a positive DBO and core assumptions.
+	 *
+	 * REQ-PEN-001: a DB valuation must use PUC, carry a positive DBO, a mortality
+	 * table and a numeric salary-growth assumption.
+	 *
+	 * @param array<string,mixed> $valuation The valuation under transition.
+	 *
+	 * @return bool True when the PUC valuation may be approved.
+	 */
+	private function isPucValuationComplete(array $valuation): bool {
+		$dboGross = $valuation['dboGross'] ?? null;
+		if (is_numeric($dboGross) === false || (float)$dboGross <= 0.0) {
+			return false;
+		}
 
-    /**
-     * Returns true iff a PUC valuation carries a positive DBO and core assumptions.
-     *
-     * REQ-PEN-001: a DB valuation must use PUC, carry a positive DBO, a mortality
-     * table and a numeric salary-growth assumption.
-     *
-     * @param array<string,mixed> $valuation The valuation under transition.
-     *
-     * @return bool True when the PUC valuation may be approved.
-     */
-    private function isPucValuationComplete(array $valuation): bool
-    {
-        $dboGross = $valuation['dboGross'] ?? null;
-        if (is_numeric($dboGross) === false || (float) $dboGross <= 0.0) {
-            return false;
-        }
+		if (trim((string)($valuation['mortalityTable'] ?? '')) === '') {
+			return false;
+		}
 
-        if (trim((string) ($valuation['mortalityTable'] ?? '')) === '') {
-            return false;
-        }
+		return is_numeric($valuation['salaryGrowthAssumption'] ?? null);
+	}//end isPucValuationComplete()
 
-        return is_numeric($valuation['salaryGrowthAssumption'] ?? null);
+	/**
+	 * Returns true iff the approved ActuarialValuation may be locked.
+	 *
+	 * REQ-PEN-002 / REQ-PEN-010: an approver must be recorded and the HRMQ
+	 * deelnemersbestand must have been reconciled (rosterReconciled flag) before
+	 * the valuation is locked into the jaarrekening.
+	 *
+	 * @param string $valuationId The ActuarialValuation id (call-signature parity).
+	 * @param array<string,mixed>|null $object The valuation being transitioned.
+	 *
+	 * @return bool True when the valuation may be locked.
+	 *
+	 * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
+	 */
+	public function canLockValuation(string $valuationId, ?array $object = null): bool {
+		try {
+			$valuation = $this->resolveObject(schema: 'ActuarialValuation', id: $valuationId, object: $object);
+			if ($valuation === null) {
+				return false;
+			}
 
-    }//end isPucValuationComplete()
+			if (trim((string)($valuation['approvedBy'] ?? '')) === '') {
+				return false;
+			}
 
-    /**
-     * Returns true iff the approved ActuarialValuation may be locked.
-     *
-     * REQ-PEN-002 / REQ-PEN-010: an approver must be recorded and the HRMQ
-     * deelnemersbestand must have been reconciled (rosterReconciled flag) before
-     * the valuation is locked into the jaarrekening.
-     *
-     * @param string                   $valuationId The ActuarialValuation id (call-signature parity).
-     * @param array<string,mixed>|null $object      The valuation being transitioned.
-     *
-     * @return bool True when the valuation may be locked.
-     *
-     * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
-     */
-    public function canLockValuation(string $valuationId, ?array $object=null): bool
-    {
-        try {
-            $valuation = $this->resolveObject(schema: 'ActuarialValuation', id: $valuationId, object: $object);
-            if ($valuation === null) {
-                return false;
-            }
+			// REQ-PEN-010: the HRMQ roster reconciliation must be signed off.
+			// A DC valuation has no roster dependency and may lock once approved.
+			if ((string)($valuation['methodology'] ?? '') === 'DC') {
+				return true;
+			}
 
-            if (trim((string) ($valuation['approvedBy'] ?? '')) === '') {
-                return false;
-            }
+			return (bool)($valuation['rosterReconciled'] ?? false) === true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PensionIas19Guard: valuation lock check failed — denying transition (fail-closed)',
+				['valuationId' => $valuationId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canLockValuation()
 
-            // REQ-PEN-010: the HRMQ roster reconciliation must be signed off.
-            // A DC valuation has no roster dependency and may lock once approved.
-            if ((string) ($valuation['methodology'] ?? '') === 'DC') {
-                return true;
-            }
+	/**
+	 * Resolve the object under transition, preferring the supplied in-flight
+	 * object and falling back to an ObjectService lookup by id (ADR-022 real API).
+	 *
+	 * @param string $schema The OpenRegister schema slug to query.
+	 * @param string $id The object id to look up if no object given.
+	 * @param array<string,mixed>|null $object The in-flight object, if provided by the engine.
+	 *
+	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
+	 */
+	private function resolveObject(string $schema, string $id, ?array $object): ?array {
+		if ($object !== null) {
+			return $object;
+		}
 
-            return (bool) ($valuation['rosterReconciled'] ?? false) === true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'PensionIas19Guard: valuation lock check failed — denying transition (fail-closed)',
-                ['valuationId' => $valuationId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canLockValuation()
+		if ($id === '') {
+			return null;
+		}
 
-    /**
-     * Resolve the object under transition, preferring the supplied in-flight
-     * object and falling back to an ObjectService lookup by id (ADR-022 real API).
-     *
-     * @param string                   $schema The OpenRegister schema slug to query.
-     * @param string                   $id     The object id to look up if no object given.
-     * @param array<string,mixed>|null $object The in-flight object, if provided by the engine.
-     *
-     * @return array<string,mixed>|null The resolved object, or null when unavailable.
-     */
-    private function resolveObject(string $schema, string $id, ?array $object): ?array
-    {
-        if ($object !== null) {
-            return $object;
-        }
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->resolveRegister();
 
-        if ($id === '') {
-            return null;
-        }
+		$results = $objectService
+			->setRegister($register)
+			->setSchema($schema)
+			->findAll(['filters' => ['id' => $id]]);
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
+		foreach ($results as $result) {
+			if (is_array($result) === true) {
+				return $result;
+			}
+		}
 
-        $results = $objectService
-            ->setRegister($register)
-            ->setSchema($schema)
-            ->findAll(['filters' => ['id' => $id]]);
+		return null;
+	}//end resolveObject()
 
-        foreach ($results as $result) {
-            if (is_array($result) === true) {
-                return $result;
-            }
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return null;
-    }//end resolveObject()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

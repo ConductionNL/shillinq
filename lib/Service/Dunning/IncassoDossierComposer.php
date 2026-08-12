@@ -31,7 +31,6 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Composes the dossier-bundle JSON for a stage-5 overdracht.
@@ -42,152 +41,147 @@ use RuntimeException;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
  */
-class IncassoDossierComposer
-{
-    /**
-     * Construct the composer with its DI dependencies.
-     *
-     * @param ContainerInterface $container DI for OR ObjectService.
-     * @param IAppConfig         $appConfig App config.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class IncassoDossierComposer {
+	/**
+	 * Construct the composer with its DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI for OR ObjectService.
+	 * @param IAppConfig $appConfig App config.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Assemble the bundle.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $factuurId        Invoice FK.
-     * @param string $klantId          Klant FK.
-     *
-     * @return array{factuurId:string,inhoud:array<string,mixed>}
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
-     */
-    public function compose(string $administrationId, string $factuurId, string $klantId): array
-    {
-        $register = $this->register();
+	/**
+	 * Assemble the bundle.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $factuurId Invoice FK.
+	 * @param string $klantId Klant FK.
+	 *
+	 * @return array{factuurId:string,inhoud:array<string,mixed>}
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+	 */
+	public function compose(string $administrationId, string $factuurId, string $klantId): array {
+		$register = $this->register();
 
-        $dunningRuns      = $this->findAll(
-                register: $register,
-                schema: 'DunningRun',
-                filters: [
-                    'administrationId' => $administrationId,
-                    'factuurId'        => $factuurId,
-                ]
-                );
-        $incassoKostenAll = $this->findAll(
-                register: $register,
-                schema: 'IncassoKostenBerekening',
-                filters: [
-                    'administrationId' => $administrationId,
-                    'factuurId'        => $factuurId,
-                ]
-                );
-        $pauseAll         = $this->findAll(
-                register: $register,
-                schema: 'DunningPauseDispute',
-                filters: [
-                    'administrationId' => $administrationId,
-                    'factuurId'        => $factuurId,
-                ]
-                );
+		$dunningRuns = $this->findAll(
+			register: $register,
+			schema: 'DunningRun',
+			filters: [
+				'administrationId' => $administrationId,
+				'factuurId' => $factuurId,
+			]
+		);
+		$incassoKostenAll = $this->findAll(
+			register: $register,
+			schema: 'IncassoKostenBerekening',
+			filters: [
+				'administrationId' => $administrationId,
+				'factuurId' => $factuurId,
+			]
+		);
+		$pauseAll = $this->findAll(
+			register: $register,
+			schema: 'DunningPauseDispute',
+			filters: [
+				'administrationId' => $administrationId,
+				'factuurId' => $factuurId,
+			]
+		);
 
-        // Pick the latest IncassoKostenBerekening (highest berekendOp date).
-        usort(
-            $incassoKostenAll,
-            static function (array $a, array $b): int {
-                return strcmp(
-                    (string) ($b['wettelijkeRente']['berekendOp'] ?? ''),
-                    (string) ($a['wettelijkeRente']['berekendOp'] ?? '')
-                );
-            }
-        );
-        $latestIncassoKosten = null;
-        if ($incassoKostenAll !== []) {
-            $latestIncassoKosten = $incassoKostenAll[0];
-        }
+		// Pick the latest IncassoKostenBerekening (highest berekendOp date).
+		usort(
+			$incassoKostenAll,
+			static function (array $a, array $b): int {
+				return strcmp(
+					(string)($b['wettelijkeRente']['berekendOp'] ?? ''),
+					(string)($a['wettelijkeRente']['berekendOp'] ?? '')
+				);
+			}
+		);
+		$latestIncassoKosten = null;
+		if ($incassoKostenAll !== []) {
+			$latestIncassoKosten = $incassoKostenAll[0];
+		}
 
-        $evidenceRefs = [];
-        foreach ($dunningRuns as $run) {
-            $hash = (string) ($run['renderedPdfHash'] ?? '');
-            if ($hash !== '') {
-                $evidenceRefs[] = 'dunning-run:'.((string) ($run['id'] ?? '')).':sha256='.$hash;
-            }
+		$evidenceRefs = [];
+		foreach ($dunningRuns as $run) {
+			$hash = (string)($run['renderedPdfHash'] ?? '');
+			if ($hash !== '') {
+				$evidenceRefs[] = 'dunning-run:' . ((string)($run['id'] ?? '')) . ':sha256=' . $hash;
+			}
 
-            $barcode = (string) ($run['postageStatus']['barcode'] ?? '');
-            if ($barcode !== '') {
-                $evidenceRefs[] = 'postnl:'.$barcode;
-            }
-        }
+			$barcode = (string)($run['postageStatus']['barcode'] ?? '');
+			if ($barcode !== '') {
+				$evidenceRefs[] = 'postnl:' . $barcode;
+			}
+		}
 
-        return [
-            'factuurId' => $factuurId,
-            'inhoud'    => [
-                'invoice'       => [
-                    'factuurId'        => $factuurId,
-                    'klantId'          => $klantId,
-                    'administrationId' => $administrationId,
-                ],
-                'dunningRuns'   => $dunningRuns,
-                'incassoKosten' => $latestIncassoKosten,
-                'pauseEvents'   => $pauseAll,
-                'klantGegevens' => [
-                    'klantId' => $klantId,
-                ],
-                'evidenceRefs'  => $evidenceRefs,
-            ],
-        ];
+		return [
+			'factuurId' => $factuurId,
+			'inhoud' => [
+				'invoice' => [
+					'factuurId' => $factuurId,
+					'klantId' => $klantId,
+					'administrationId' => $administrationId,
+				],
+				'dunningRuns' => $dunningRuns,
+				'incassoKosten' => $latestIncassoKosten,
+				'pauseEvents' => $pauseAll,
+				'klantGegevens' => [
+					'klantId' => $klantId,
+				],
+				'evidenceRefs' => $evidenceRefs,
+			],
+		];
 
-    }//end compose()
+	}//end compose()
 
-    /**
-     * Find all matching records via the canonical OR ObjectService API.
-     *
-     * @param string              $register OR register slug.
-     * @param string              $schema   Schema slug.
-     * @param array<string,mixed> $filters  Filter map.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function findAll(string $register, string $schema, array $filters): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($register)
-                ->setSchema($schema)
-                ->findAll(['filters' => $filters]);
-            if (is_array($rows) === true) {
-                return $rows;
-            }
+	/**
+	 * Find all matching records via the canonical OR ObjectService API.
+	 *
+	 * @param string $register OR register slug.
+	 * @param string $schema Schema slug.
+	 * @param array<string,mixed> $filters Filter map.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findAll(string $register, string $schema, array $filters): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($register)
+				->setSchema($schema)
+				->findAll(['filters' => $filters]);
+			if (is_array($rows) === true) {
+				return $rows;
+			}
 
-            return [];
-        } catch (\Throwable $e) {
-            $this->logger->warning('Shillinq: IncassoDossierComposer findAll('.$schema.') failed: '.$e->getMessage());
-            return [];
-        }
+			return [];
+		} catch (\Throwable $e) {
+			$this->logger->warning('Shillinq: IncassoDossierComposer findAll(' . $schema . ') failed: ' . $e->getMessage());
+			return [];
+		}
 
-    }//end findAll()
+	}//end findAll()
 
-    /**
-     * Resolve the configured register slug.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured register slug.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

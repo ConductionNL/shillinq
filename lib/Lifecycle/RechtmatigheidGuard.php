@@ -57,204 +57,199 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  */
-class RechtmatigheidGuard
-{
-    /**
-     * Minimum onderbouwing length required for a negative toets uitkomst (REQ-RV-002).
-     */
-    private const MIN_ONDERBOUWING_LENGTH = 50;
+class RechtmatigheidGuard {
+	/**
+	 * Minimum onderbouwing length required for a negative toets uitkomst (REQ-RV-002).
+	 */
+	private const MIN_ONDERBOUWING_LENGTH = 50;
 
-    /**
-     * Uitkomst values that require a substantiation + linked bevinding (REQ-RV-002).
-     *
-     * @var array<int, string>
-     */
-    private const NEGATIVE_UITKOMSTEN = ['voldoet_niet', 'onzeker'];
+	/**
+	 * Uitkomst values that require a substantiation + linked bevinding (REQ-RV-002).
+	 *
+	 * @var array<int, string>
+	 */
+	private const NEGATIVE_UITKOMSTEN = ['voldoet_niet', 'onzeker'];
 
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for the Rechtmatigheidstoets afronden transition (REQ-RV-002).
-     *
-     * When uitkomst is voldoet_niet or onzeker, the toets may only be finalised
-     * when the onderbouwing is at least 50 characters and a rechtmatigheidsbevinding
-     * FK is linked. A voldoet / niet_van_toepassing uitkomst has no such requirement.
-     *
-     * Fail-closed: returns false on any exception (denies transition) per CWE-863.
-     *
-     * @param array<string, mixed> $toets Rechtmatigheidstoets object array loaded by OR.
-     *
-     * @return bool True when the toets may be finalised.
-     *
-     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
-     */
-    public function canFinaliseToets(array $toets): bool
-    {
-        try {
-            $uitkomst = (string) ($toets['uitkomst'] ?? '');
+	/**
+	 * Precondition for the Rechtmatigheidstoets afronden transition (REQ-RV-002).
+	 *
+	 * When uitkomst is voldoet_niet or onzeker, the toets may only be finalised
+	 * when the onderbouwing is at least 50 characters and a rechtmatigheidsbevinding
+	 * FK is linked. A voldoet / niet_van_toepassing uitkomst has no such requirement.
+	 *
+	 * Fail-closed: returns false on any exception (denies transition) per CWE-863.
+	 *
+	 * @param array<string, mixed> $toets Rechtmatigheidstoets object array loaded by OR.
+	 *
+	 * @return bool True when the toets may be finalised.
+	 *
+	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+	 */
+	public function canFinaliseToets(array $toets): bool {
+		try {
+			$uitkomst = (string)($toets['uitkomst'] ?? '');
 
-            if (in_array($uitkomst, self::NEGATIVE_UITKOMSTEN, true) === false) {
-                // Voldoet / niet_van_toepassing: no substantiation gate.
-                return true;
-            }
+			if (in_array($uitkomst, self::NEGATIVE_UITKOMSTEN, true) === false) {
+				// Voldoet / niet_van_toepassing: no substantiation gate.
+				return true;
+			}
 
-            $onderbouwing = trim((string) ($toets['onderbouwing'] ?? ''));
-            if (mb_strlen($onderbouwing) < self::MIN_ONDERBOUWING_LENGTH) {
-                $this->logger->info(
-                    'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
-                    [
-                        'toetsId'  => ($toets['id'] ?? 'unknown'),
-                        'uitkomst' => $uitkomst,
-                        'length'   => mb_strlen($onderbouwing),
-                    ]
-                );
-                return false;
-            }
+			$onderbouwing = trim((string)($toets['onderbouwing'] ?? ''));
+			if (mb_strlen($onderbouwing) < self::MIN_ONDERBOUWING_LENGTH) {
+				$this->logger->info(
+					'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
+					[
+						'toetsId' => ($toets['id'] ?? 'unknown'),
+						'uitkomst' => $uitkomst,
+						'length' => mb_strlen($onderbouwing),
+					]
+				);
+				return false;
+			}
 
-            $bevinding = trim((string) ($toets['rechtmatigheidsbevinding'] ?? ''));
-            if ($bevinding === '') {
-                $this->logger->info(
-                    'RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden',
-                    ['toetsId' => ($toets['id'] ?? 'unknown'), 'uitkomst' => $uitkomst]
-                );
-                return false;
-            }
+			$bevinding = trim((string)($toets['rechtmatigheidsbevinding'] ?? ''));
+			if ($bevinding === '') {
+				$this->logger->info(
+					'RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden',
+					['toetsId' => ($toets['id'] ?? 'unknown'), 'uitkomst' => $uitkomst]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RechtmatigheidGuard: canFinaliseToets failed — denying afronden (fail-closed)',
-                ['toetsId' => ($toets['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RechtmatigheidGuard: canFinaliseToets failed — denying afronden (fail-closed)',
+				['toetsId' => ($toets['id'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end canFinaliseToets()
+	}//end canFinaliseToets()
 
-    /**
-     * Precondition for the Rechtmatigheidsbevinding oplossen transition (REQ-RV-010).
-     *
-     * A bevinding may only move to opgelost when a correctieboeking_id FK is set,
-     * preserving the audit-trail link between the original fout and its correction.
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param array<string, mixed> $bevinding Rechtmatigheidsbevinding object array.
-     *
-     * @return bool True when the bevinding may be resolved.
-     *
-     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
-     */
-    public function canResolveBevinding(array $bevinding): bool
-    {
-        try {
-            $correctie = trim((string) ($bevinding['correctieboeking_id'] ?? ''));
-            if ($correctie === '') {
-                $this->logger->info(
-                    'RechtmatigheidGuard: bevinding without correctieboeking_id — denying oplossen',
-                    ['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown')]
-                );
-                return false;
-            }
+	/**
+	 * Precondition for the Rechtmatigheidsbevinding oplossen transition (REQ-RV-010).
+	 *
+	 * A bevinding may only move to opgelost when a correctieboeking_id FK is set,
+	 * preserving the audit-trail link between the original fout and its correction.
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param array<string, mixed> $bevinding Rechtmatigheidsbevinding object array.
+	 *
+	 * @return bool True when the bevinding may be resolved.
+	 *
+	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+	 */
+	public function canResolveBevinding(array $bevinding): bool {
+		try {
+			$correctie = trim((string)($bevinding['correctieboeking_id'] ?? ''));
+			if ($correctie === '') {
+				$this->logger->info(
+					'RechtmatigheidGuard: bevinding without correctieboeking_id — denying oplossen',
+					['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown')]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RechtmatigheidGuard: canResolveBevinding failed — denying oplossen (fail-closed)',
-                ['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RechtmatigheidGuard: canResolveBevinding failed — denying oplossen (fail-closed)',
+				['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end canResolveBevinding()
+	}//end canResolveBevinding()
 
-    /**
-     * Precondition for the Rechtmatigheidsparagraaf vaststellen_college transition (REQ-RV-005).
-     *
-     * When the paragraaf is binnen_tolerantie, college vaststelling needs no extra
-     * toelichting. When NOT binnen_tolerantie, the portefeuillehouder Financiën must
-     * have authored a verklaring_college (toelichting) citing the overages before the
-     * paragraaf may advance.
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
-     *
-     * @return bool True when the paragraaf may be vastgesteld by college.
-     *
-     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
-     */
-    public function canVaststellenParagraaf(array $paragraaf): bool
-    {
-        try {
-            $binnenTolerantie = (bool) ($paragraaf['binnen_tolerantie'] ?? true);
-            if ($binnenTolerantie === true) {
-                return true;
-            }
+	/**
+	 * Precondition for the Rechtmatigheidsparagraaf vaststellen_college transition (REQ-RV-005).
+	 *
+	 * When the paragraaf is binnen_tolerantie, college vaststelling needs no extra
+	 * toelichting. When NOT binnen_tolerantie, the portefeuillehouder Financiën must
+	 * have authored a verklaring_college (toelichting) citing the overages before the
+	 * paragraaf may advance.
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
+	 *
+	 * @return bool True when the paragraaf may be vastgesteld by college.
+	 *
+	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+	 */
+	public function canVaststellenParagraaf(array $paragraaf): bool {
+		try {
+			$binnenTolerantie = (bool)($paragraaf['binnen_tolerantie'] ?? true);
+			if ($binnenTolerantie === true) {
+				return true;
+			}
 
-            $verklaring = trim((string) ($paragraaf['verklaring_college'] ?? ''));
-            if ($verklaring === '') {
-                $this->logger->info(
-                    'RechtmatigheidGuard: paragraaf buiten tolerantie zonder toelichting — denying vaststellen',
-                    ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown')]
-                );
-                return false;
-            }
+			$verklaring = trim((string)($paragraaf['verklaring_college'] ?? ''));
+			if ($verklaring === '') {
+				$this->logger->info(
+					'RechtmatigheidGuard: paragraaf buiten tolerantie zonder toelichting — denying vaststellen',
+					['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown')]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RechtmatigheidGuard: canVaststellenParagraaf failed — denying vaststellen (fail-closed)',
-                ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RechtmatigheidGuard: canVaststellenParagraaf failed — denying vaststellen (fail-closed)',
+				['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end canVaststellenParagraaf()
+	}//end canVaststellenParagraaf()
 
-    /**
-     * Gating check for jaarrekening-export of a paragraaf (REQ-RV-006).
-     *
-     * Consumed by the bookkeeping-financial-statements export integration: a
-     * paragraaf may only be exported when its status is definitief. A concept /
-     * vastgesteld_college / behandeld_raad paragraaf blocks export.
-     *
-     * Fail-closed: returns false on any exception.
-     *
-     * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
-     *
-     * @return bool True when the paragraaf may be exported.
-     *
-     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
-     */
-    public function canExportParagraaf(array $paragraaf): bool
-    {
-        try {
-            $status = (string) ($paragraaf['status'] ?? '');
-            if ($status !== 'definitief') {
-                $this->logger->info(
-                    'RechtmatigheidGuard: paragraaf not definitief — denying jaarrekening-export',
-                    ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'status' => $status]
-                );
-                return false;
-            }
+	/**
+	 * Gating check for jaarrekening-export of a paragraaf (REQ-RV-006).
+	 *
+	 * Consumed by the bookkeeping-financial-statements export integration: a
+	 * paragraaf may only be exported when its status is definitief. A concept /
+	 * vastgesteld_college / behandeld_raad paragraaf blocks export.
+	 *
+	 * Fail-closed: returns false on any exception.
+	 *
+	 * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
+	 *
+	 * @return bool True when the paragraaf may be exported.
+	 *
+	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+	 */
+	public function canExportParagraaf(array $paragraaf): bool {
+		try {
+			$status = (string)($paragraaf['status'] ?? '');
+			if ($status !== 'definitief') {
+				$this->logger->info(
+					'RechtmatigheidGuard: paragraaf not definitief — denying jaarrekening-export',
+					['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'status' => $status]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RechtmatigheidGuard: canExportParagraaf failed — denying export (fail-closed)',
-                ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RechtmatigheidGuard: canExportParagraaf failed — denying export (fail-closed)',
+				['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end canExportParagraaf()
+	}//end canExportParagraaf()
 }//end class

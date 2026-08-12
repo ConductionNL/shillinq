@@ -35,23 +35,22 @@ namespace OCA\Shillinq\Service\External\Digipoort;
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  */
-final class DigipoortSubmissionResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
-     * @param string              $kenmerk        Digipoort-side submission id.
-     * @param bool                $dormant        TRUE when the adapter was dormant.
-     * @param array<string,mixed> $extras         Provider-specific extras
-     *                                            (e.g. statusInformation URL,
-     *                                            rejection reason codes).
-     */
-    public function __construct(
-        public readonly string $deliveryStatus,
-        public readonly string $kenmerk,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class DigipoortSubmissionResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
+	 * @param string $kenmerk Digipoort-side submission id.
+	 * @param bool $dormant TRUE when the adapter was dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras
+	 *                                    (e.g. statusInformation URL,
+	 *                                    rejection reason codes).
+	 */
+	public function __construct(
+		public readonly string $deliveryStatus,
+		public readonly string $kenmerk,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

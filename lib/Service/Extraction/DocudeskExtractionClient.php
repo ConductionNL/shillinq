@@ -64,168 +64,165 @@ use Throwable;
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
-class DocudeskExtractionClient
-{
-    /**
-     * Docudesk route name for the financial extraction endpoint (NC
-     * `{appId}.{controller}.{method}` convention for
-     * `['name' => 'extraction#financial', 'url' => 'api/extraction/financial', 'verb' => 'POST']`).
-     *
-     * @var string
-     */
-    public const ROUTE_NAME = 'docudesk.extraction.financial';
+class DocudeskExtractionClient {
+	/**
+	 * Docudesk route name for the financial extraction endpoint (NC
+	 * `{appId}.{controller}.{method}` convention for
+	 * `['name' => 'extraction#financial', 'url' => 'api/extraction/financial', 'verb' => 'POST']`).
+	 *
+	 * @var string
+	 */
+	public const ROUTE_NAME = 'docudesk.extraction.financial';
 
-    /**
-     * Request timeout in seconds — the endpoint itself only needs to accept
-     * the request and dispatch OCR/extraction asynchronously
-     * (`callbackEvent: true`), so a short budget is enough.
-     *
-     * @var int
-     */
-    private const REQUEST_TIMEOUT_SECONDS = 10;
+	/**
+	 * Request timeout in seconds — the endpoint itself only needs to accept
+	 * the request and dispatch OCR/extraction asynchronously
+	 * (`callbackEvent: true`), so a short budget is enough.
+	 *
+	 * @var int
+	 */
+	private const REQUEST_TIMEOUT_SECONDS = 10;
 
-    /**
-     * Constructor.
-     *
-     * @param IClientService  $clientService NC HTTP client factory.
-     * @param IURLGenerator   $urlGenerator  Resolves docudesk's intra-instance route.
-     * @param LoggerInterface $logger        Logger; the request never carries credentials to log.
-     */
-    public function __construct(
-        private readonly IClientService $clientService,
-        private readonly IURLGenerator $urlGenerator,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param IClientService $clientService NC HTTP client factory.
+	 * @param IURLGenerator $urlGenerator Resolves docudesk's intra-instance route.
+	 * @param LoggerInterface $logger Logger; the request never carries credentials to log.
+	 */
+	public function __construct(
+		private readonly IClientService $clientService,
+		private readonly IURLGenerator $urlGenerator,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Request a (re-)extraction for a document (REQ-RXC-005).
-     *
-     * POSTs `{documentUri, docType, callbackEvent: true}` to docudesk's
-     * `POST /api/extraction/financial`. Always sets `callbackEvent: true` —
-     * shillinq only consumes the async event path (REQ-RXC-001), never the
-     * synchronous response body.
-     *
-     * @param string $documentUri The docudesk source document URI.
-     * @param string $docType     `receipt` or `supplier-invoice`.
-     *
-     * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
-     *         Outcome; never throws. `extractionId` is the docudesk `financialExtraction` object
-     *         id read from the synchronous response (REQ-GAC-001), or null when the request
-     *         failed or the response body carried no usable id.
-     *
-     * @spec openspec/specs/receipt-extraction-consume/spec.md
-     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
-     */
-    public function requestExtraction(string $documentUri, string $docType): array
-    {
-        try {
-            $url = $this->urlGenerator->linkToRouteAbsolute(self::ROUTE_NAME);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed',
-                ['exception' => $e->getMessage()]
-            );
-            return [
-                'success'      => false,
-                'statusCode'   => 0,
-                'error'        => 'docudesk is not available',
-                'extractionId' => null,
-            ];
-        }
+	/**
+	 * Request a (re-)extraction for a document (REQ-RXC-005).
+	 *
+	 * POSTs `{documentUri, docType, callbackEvent: true}` to docudesk's
+	 * `POST /api/extraction/financial`. Always sets `callbackEvent: true` —
+	 * shillinq only consumes the async event path (REQ-RXC-001), never the
+	 * synchronous response body.
+	 *
+	 * @param string $documentUri The docudesk source document URI.
+	 * @param string $docType `receipt` or `supplier-invoice`.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
+	 *                                                                                              Outcome; never throws. `extractionId` is the docudesk `financialExtraction` object
+	 *                                                                                              id read from the synchronous response (REQ-GAC-001), or null when the request
+	 *                                                                                              failed or the response body carried no usable id.
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
+	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+	 */
+	public function requestExtraction(string $documentUri, string $docType): array {
+		try {
+			$url = $this->urlGenerator->linkToRouteAbsolute(self::ROUTE_NAME);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed',
+				['exception' => $e->getMessage()]
+			);
+			return [
+				'success' => false,
+				'statusCode' => 0,
+				'error' => 'docudesk is not available',
+				'extractionId' => null,
+			];
+		}
 
-        $client = $this->clientService->newClient();
-        $body   = [
-            'documentUri'   => $documentUri,
-            'docType'       => $docType,
-            'callbackEvent' => true,
-        ];
+		$client = $this->clientService->newClient();
+		$body = [
+			'documentUri' => $documentUri,
+			'docType' => $docType,
+			'callbackEvent' => true,
+		];
 
-        try {
-            $response = $client->post(
-                $url,
-                [
-                    'timeout'         => self::REQUEST_TIMEOUT_SECONDS,
-                    'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
-                    'headers'         => [
-                        'Content-Type' => 'application/json',
-                        'Accept'       => 'application/json',
-                    ],
-                    'body'            => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
-                ]
-            );
+		try {
+			$response = $client->post(
+				$url,
+				[
+					'timeout' => self::REQUEST_TIMEOUT_SECONDS,
+					'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
+					'headers' => [
+						'Content-Type' => 'application/json',
+						'Accept' => 'application/json',
+					],
+					'body' => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+				]
+			);
 
-            $status = $response->getStatusCode();
-            $this->logger->info(
-                'DocudeskExtractionClient: extraction requested',
-                ['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status]
-            );
+			$status = $response->getStatusCode();
+			$this->logger->info(
+				'DocudeskExtractionClient: extraction requested',
+				['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status]
+			);
 
-            return [
-                'success'      => ($status >= 200 && $status < 300),
-                'statusCode'   => $status,
-                'error'        => null,
-                'extractionId' => $this->extractExtractionId(response: $response),
-            ];
-        } catch (Throwable $e) {
-            $status = 0;
-            if (method_exists($e, 'getResponse') === true) {
-                $errorResponse = $e->getResponse();
-                if ($errorResponse !== null) {
-                    $status = $errorResponse->getStatusCode();
-                }
-            }
+			return [
+				'success' => ($status >= 200 && $status < 300),
+				'statusCode' => $status,
+				'error' => null,
+				'extractionId' => $this->extractExtractionId(response: $response),
+			];
+		} catch (Throwable $e) {
+			$status = 0;
+			if (method_exists($e, 'getResponse') === true) {
+				$errorResponse = $e->getResponse();
+				if ($errorResponse !== null) {
+					$status = $errorResponse->getStatusCode();
+				}
+			}
 
-            $this->logger->warning(
-                'DocudeskExtractionClient: extraction request failed',
-                ['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status, 'exception' => $e->getMessage()]
-            );
+			$this->logger->warning(
+				'DocudeskExtractionClient: extraction request failed',
+				['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status, 'exception' => $e->getMessage()]
+			);
 
-            return [
-                'success'      => false,
-                'statusCode'   => $status,
-                'error'        => 'docudesk request failed',
-                'extractionId' => null,
-            ];
-        }//end try
+			return [
+				'success' => false,
+				'statusCode' => $status,
+				'error' => 'docudesk request failed',
+				'extractionId' => null,
+			];
+		}//end try
 
-    }//end requestExtraction()
+	}//end requestExtraction()
 
-    /**
-     * Read the `financialExtraction` object id out of the synchronous
-     * response body of `POST /api/extraction/financial` (REQ-GAC-001). The
-     * response is the OR-saved object itself (see class docblock), so its
-     * `id` key is the extraction id; a malformed/unexpected body degrades to
-     * null rather than throwing — the caller treats a missing id exactly
-     * like "docudesk did not tell us" (REQ-GAC-006 graceful degradation).
-     *
-     * @param IResponse $response The HTTP response.
-     *
-     * @return string|null The extraction id, or null when unavailable.
-     */
-    private function extractExtractionId(IResponse $response): ?string
-    {
-        try {
-            $body = (string) $response->getBody();
-            if ($body === '') {
-                return null;
-            }
+	/**
+	 * Read the `financialExtraction` object id out of the synchronous
+	 * response body of `POST /api/extraction/financial` (REQ-GAC-001). The
+	 * response is the OR-saved object itself (see class docblock), so its
+	 * `id` key is the extraction id; a malformed/unexpected body degrades to
+	 * null rather than throwing — the caller treats a missing id exactly
+	 * like "docudesk did not tell us" (REQ-GAC-006 graceful degradation).
+	 *
+	 * @param IResponse $response The HTTP response.
+	 *
+	 * @return string|null The extraction id, or null when unavailable.
+	 */
+	private function extractExtractionId(IResponse $response): ?string {
+		try {
+			$body = (string)$response->getBody();
+			if ($body === '') {
+				return null;
+			}
 
-            $decoded = json_decode($body, true);
-            if (is_array($decoded) === false) {
-                return null;
-            }
+			$decoded = json_decode($body, true);
+			if (is_array($decoded) === false) {
+				return null;
+			}
 
-            $id = ($decoded['id'] ?? $decoded['uuid'] ?? null);
-            if (is_string($id) === true && $id !== '') {
-                return $id;
-            }
+			$id = ($decoded['id'] ?? $decoded['uuid'] ?? null);
+			if (is_string($id) === true && $id !== '') {
+				return $id;
+			}
 
-            return null;
-        } catch (Throwable $e) {
-            return null;
-        }
+			return null;
+		} catch (Throwable $e) {
+			return null;
+		}
 
-    }//end extractExtractionId()
+	}//end extractExtractionId()
 }//end class

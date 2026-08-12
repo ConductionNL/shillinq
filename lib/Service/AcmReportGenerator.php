@@ -47,205 +47,198 @@ use RuntimeException;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class AcmReportGenerator
-{
-    /**
-     * Canonical ACM standard format version.
-     *
-     * @var string
-     */
-    public const FORMAT = 'ACM-standaardformulier-mo-2024';
+class AcmReportGenerator {
+	/**
+	 * Canonical ACM standard format version.
+	 *
+	 * @var string
+	 */
+	public const FORMAT = 'ACM-standaardformulier-mo-2024';
 
-    /**
-     * Compose an ACM report record for a reporting period (REQ-WMO-006).
-     *
-     * @param array<string,mixed> $input Inputs (period, administrationId, activities,
-     *                                   ikpRecords, omzetByActivity, abbList?,
-     *                                   manualOverrides?, samenvatting?).
-     *
-     * @return array<string,mixed> ACMReport record matching the schema.
-     *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-8
-     */
-    public function compose(array $input): array
-    {
-        $period = (string) $input['period'];
-        if (preg_match('/^[0-9]{4}-(Q[1-4]|YTD)$/', $period) !== 1) {
-            throw new InvalidArgumentException('Invalid period format: '.$period);
-        }
+	/**
+	 * Compose an ACM report record for a reporting period (REQ-WMO-006).
+	 *
+	 * @param array<string,mixed> $input Inputs (period, administrationId, activities,
+	 *                                   ikpRecords, omzetByActivity, abbList?,
+	 *                                   manualOverrides?, samenvatting?).
+	 *
+	 * @return array<string,mixed> ACMReport record matching the schema.
+	 *
+	 * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-8
+	 */
+	public function compose(array $input): array {
+		$period = (string)$input['period'];
+		if (preg_match('/^[0-9]{4}-(Q[1-4]|YTD)$/', $period) !== 1) {
+			throw new InvalidArgumentException('Invalid period format: ' . $period);
+		}
 
-        $activities      = (array) $input['activities'];
-        $ikpRecords      = (array) ($input['ikpRecords'] ?? []);
-        $omzetByActivity = (array) ($input['omzetByActivity'] ?? []);
-        $abbList         = (array) ($input['abbList'] ?? []);
+		$activities = (array)$input['activities'];
+		$ikpRecords = (array)($input['ikpRecords'] ?? []);
+		$omzetByActivity = (array)($input['omzetByActivity'] ?? []);
+		$abbList = (array)($input['abbList'] ?? []);
 
-        $activiteiten = [];
-        foreach ($activities as $activity) {
-            if (is_array($activity) === false) {
-                continue;
-            }
+		$activiteiten = [];
+		foreach ($activities as $activity) {
+			if (is_array($activity) === false) {
+				continue;
+			}
 
-            $activityId    = (string) ($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
-            $code          = (string) ($activity['code'] ?? '');
-            $naam          = (string) ($activity['naam'] ?? '');
-            $ikp           = (array) ($ikpRecords[$activityId] ?? []);
-            $integraleCost = (float) ($ikp['totaleKosten'] ?? 0);
-            $omzet         = (float) ($omzetByActivity[$activityId] ?? 0);
-            if ($integraleCost > 0.0) {
-                $ratio = round(($omzet / $integraleCost), 4);
-            } else {
-                $ratio = null;
-            }
+			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
+			$code = (string)($activity['code'] ?? '');
+			$naam = (string)($activity['naam'] ?? '');
+			$ikp = (array)($ikpRecords[$activityId] ?? []);
+			$integraleCost = (float)($ikp['totaleKosten'] ?? 0);
+			$omzet = (float)($omzetByActivity[$activityId] ?? 0);
+			if ($integraleCost > 0.0) {
+				$ratio = round(($omzet / $integraleCost), 4);
+			} else {
+				$ratio = null;
+			}
 
-            $compliant = ($omzet >= $integraleCost);
-            if ((bool) ($activity['isExempted'] ?? false) === true) {
-                $abbReferentie = (string) ($activity['exemptionBesluitId'] ?? '');
-            } else {
-                $abbReferentie = null;
-            }
+			$compliant = ($omzet >= $integraleCost);
+			if ((bool)($activity['isExempted'] ?? false) === true) {
+				$abbReferentie = (string)($activity['exemptionBesluitId'] ?? '');
+			} else {
+				$abbReferentie = null;
+			}
 
-            $activiteiten[] = [
-                'commercialActivityId' => $activityId,
-                'code'                 => $code,
-                'naam'                 => $naam,
-                'omzet'                => $omzet,
-                'integraleKostprijs'   => $integraleCost,
-                'kostendekkingsratio'  => $ratio,
-                'compliant'            => $compliant,
-                'abbReferentie'        => $abbReferentie,
-            ];
-        }//end foreach
+			$activiteiten[] = [
+				'commercialActivityId' => $activityId,
+				'code' => $code,
+				'naam' => $naam,
+				'omzet' => $omzet,
+				'integraleKostprijs' => $integraleCost,
+				'kostendekkingsratio' => $ratio,
+				'compliant' => $compliant,
+				'abbReferentie' => $abbReferentie,
+			];
+		}//end foreach
 
-        $abbSummaries = [];
-        foreach ($abbList as $abb) {
-            if (is_array($abb) === false) {
-                continue;
-            }
+		$abbSummaries = [];
+		foreach ($abbList as $abb) {
+			if (is_array($abb) === false) {
+				continue;
+			}
 
-            $abbSummaries[] = [
-                'kenmerk'           => (string) ($abb['kenmerk'] ?? ''),
-                'motiveringExcerpt' => mb_substr(trim((string) ($abb['motivering'] ?? '')), 0, 240),
-            ];
-        }
+			$abbSummaries[] = [
+				'kenmerk' => (string)($abb['kenmerk'] ?? ''),
+				'motiveringExcerpt' => mb_substr(trim((string)($abb['motivering'] ?? '')), 0, 240),
+			];
+		}
 
-        return [
-            'period'                 => $period,
-            'format'                 => self::FORMAT,
-            'generatedAt'            => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
-            'activiteiten'           => $activiteiten,
-            'samenvatting'           => ($input['samenvatting'] ?? null),
-            'manualOverrides'        => (int) ($input['manualOverrides'] ?? 0),
-            'abbList'                => $abbSummaries,
-            // Deprecated legacy fields — retained for array shape compatibility; see REQ-SIGN-004.
-            'ondertekenaar'          => null,
-            'ondertekendOp'          => null,
-            'signatureFingerprint'   => null,
-            'verzondenAanAcm'        => false,
-            'verzondenAanAcmOp'      => null,
-            'publicatieGemeenteblad' => null,
-            'administrationId'       => (string) $input['administrationId'],
-            'status'                 => 'draft',
-        ];
+		return [
+			'period' => $period,
+			'format' => self::FORMAT,
+			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+			'activiteiten' => $activiteiten,
+			'samenvatting' => ($input['samenvatting'] ?? null),
+			'manualOverrides' => (int)($input['manualOverrides'] ?? 0),
+			'abbList' => $abbSummaries,
+			// Deprecated legacy fields — retained for array shape compatibility; see REQ-SIGN-004.
+			'ondertekenaar' => null,
+			'ondertekendOp' => null,
+			'signatureFingerprint' => null,
+			'verzondenAanAcm' => false,
+			'verzondenAanAcmOp' => null,
+			'publicatieGemeenteblad' => null,
+			'administrationId' => (string)$input['administrationId'],
+			'status' => 'draft',
+		];
 
-    }//end compose()
+	}//end compose()
 
-    /**
-     * Submit a signed report (REQ-WMO-006 §submit). Status flips to `verzonden`.
-     *
-     * @param array<string,mixed> $report           A signed report.
-     * @param string|null         $publicatieGmblad Optional gemeenteblad reference.
-     *
-     * @return array<string,mixed> Submitted report (immutable from here).
-     *
-     * @throws InvalidArgumentException When the report is not signed.
-     */
-    public function submit(array $report, ?string $publicatieGmblad=null): array
-    {
-        if ((string) ($report['status'] ?? '') !== 'ready-for-submission') {
-            throw new InvalidArgumentException('Only ready-for-submission reports can be submitted');
-        }
+	/**
+	 * Submit a signed report (REQ-WMO-006 §submit). Status flips to `verzonden`.
+	 *
+	 * @param array<string,mixed> $report A signed report.
+	 * @param string|null $publicatieGmblad Optional gemeenteblad reference.
+	 *
+	 * @return array<string,mixed> Submitted report (immutable from here).
+	 *
+	 * @throws InvalidArgumentException When the report is not signed.
+	 */
+	public function submit(array $report, ?string $publicatieGmblad = null): array {
+		if ((string)($report['status'] ?? '') !== 'ready-for-submission') {
+			throw new InvalidArgumentException('Only ready-for-submission reports can be submitted');
+		}
 
-        $report['verzondenAanAcm']        = true;
-        $report['verzondenAanAcmOp']      = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
-        $report['publicatieGemeenteblad'] = $publicatieGmblad;
-        $report['status'] = 'verzonden';
+		$report['verzondenAanAcm'] = true;
+		$report['verzondenAanAcmOp'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+		$report['publicatieGemeenteblad'] = $publicatieGmblad;
+		$report['status'] = 'verzonden';
 
-        return $report;
+		return $report;
+	}//end submit()
 
-    }//end submit()
+	/**
+	 * Serialize a report to JSON (ACM-API-compatible).
+	 *
+	 * @param array<string,mixed> $report The report record.
+	 *
+	 * @return string Pretty-printed JSON.
+	 */
+	public function toJson(array $report): string {
+		$encoded = json_encode($report, (JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+		if ($encoded === false) {
+			throw new RuntimeException('Failed to encode report as JSON');
+		}
 
-    /**
-     * Serialize a report to JSON (ACM-API-compatible).
-     *
-     * @param array<string,mixed> $report The report record.
-     *
-     * @return string Pretty-printed JSON.
-     */
-    public function toJson(array $report): string
-    {
-        $encoded = json_encode($report, (JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        if ($encoded === false) {
-            throw new RuntimeException('Failed to encode report as JSON');
-        }
+		return $encoded;
+	}//end toJson()
 
-        return $encoded;
+	/**
+	 * Serialize a report to a minimal SBR/XBRL-style XML (REQ-WMO-006).
+	 *
+	 * Anticipates the ACM API: a simple top-level <ACMReport format="..."/> with
+	 * one <Activiteit/> per line. Real SBR XBRL schemas will be wired when the
+	 * ACM API spec is published; this is the structural placeholder used for
+	 * the gemeenteblad export and offline review.
+	 *
+	 * @param array<string,mixed> $report The report record.
+	 *
+	 * @return string XML serialization.
+	 */
+	public function toXml(array $report): string {
+		$period = htmlspecialchars((string)($report['period'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+		$administrationId = htmlspecialchars((string)($report['administrationId'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+		$format = htmlspecialchars((string)($report['format'] ?? self::FORMAT), ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
-    }//end toJson()
+		$lines = [];
+		foreach ((array)($report['activiteiten'] ?? []) as $a) {
+			if (is_array($a) === false) {
+				continue;
+			}
 
-    /**
-     * Serialize a report to a minimal SBR/XBRL-style XML (REQ-WMO-006).
-     *
-     * Anticipates the ACM API: a simple top-level <ACMReport format="..."/> with
-     * one <Activiteit/> per line. Real SBR XBRL schemas will be wired when the
-     * ACM API spec is published; this is the structural placeholder used for
-     * the gemeenteblad export and offline review.
-     *
-     * @param array<string,mixed> $report The report record.
-     *
-     * @return string XML serialization.
-     */
-    public function toXml(array $report): string
-    {
-        $period           = htmlspecialchars((string) ($report['period'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $administrationId = htmlspecialchars((string) ($report['administrationId'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $format           = htmlspecialchars((string) ($report['format'] ?? self::FORMAT), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+			if ($a['kostendekkingsratio'] === null) {
+				$ratioAttr = '';
+			} else {
+				$ratioAttr = (string)$a['kostendekkingsratio'];
+			}
 
-        $lines = [];
-        foreach ((array) ($report['activiteiten'] ?? []) as $a) {
-            if (is_array($a) === false) {
-                continue;
-            }
+			if ((bool)($a['compliant'] ?? false) === true) {
+				$compliantAttr = 'true';
+			} else {
+				$compliantAttr = 'false';
+			}
 
-            if ($a['kostendekkingsratio'] === null) {
-                $ratioAttr = '';
-            } else {
-                $ratioAttr = (string) $a['kostendekkingsratio'];
-            }
+			$lines[] = sprintf(
+				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
+				htmlspecialchars((string)($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
+				(float)($a['omzet'] ?? 0),
+				(float)($a['integraleKostprijs'] ?? 0),
+				$ratioAttr,
+				$compliantAttr
+			);
+		}//end foreach
 
-            if ((bool) ($a['compliant'] ?? false) === true) {
-                $compliantAttr = 'true';
-            } else {
-                $compliantAttr = 'false';
-            }
+		$body = implode("\n", $lines);
 
-            $lines[] = sprintf(
-                '  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
-                htmlspecialchars((string) ($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
-                (float) ($a['omzet'] ?? 0),
-                (float) ($a['integraleKostprijs'] ?? 0),
-                $ratioAttr,
-                $compliantAttr
-            );
-        }//end foreach
-
-        $body = implode("\n", $lines);
-
-        return <<<XML
+		return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <ACMReport format="{$format}" period="{$period}" administrationId="{$administrationId}">
 {$body}
 </ACMReport>
 XML;
 
-    }//end toXml()
+	}//end toXml()
 }//end class

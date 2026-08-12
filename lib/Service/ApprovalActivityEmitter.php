@@ -64,273 +64,266 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */
-class ApprovalActivityEmitter
-{
+class ApprovalActivityEmitter {
 
-    /**
-     * Activity event subject id for "approval_requested".
-     *
-     * @var string
-     */
-    public const EVENT_APPROVAL_REQUESTED = 'approval_requested';
+	/**
+	 * Activity event subject id for "approval_requested".
+	 *
+	 * @var string
+	 */
+	public const EVENT_APPROVAL_REQUESTED = 'approval_requested';
 
-    /**
-     * Activity event subject id for "approval_approved".
-     *
-     * @var string
-     */
-    public const EVENT_APPROVAL_APPROVED = 'approval_approved';
+	/**
+	 * Activity event subject id for "approval_approved".
+	 *
+	 * @var string
+	 */
+	public const EVENT_APPROVAL_APPROVED = 'approval_approved';
 
-    /**
-     * Activity event subject id for "approval_rejected".
-     *
-     * @var string
-     */
-    public const EVENT_APPROVAL_REJECTED = 'approval_rejected';
+	/**
+	 * Activity event subject id for "approval_rejected".
+	 *
+	 * @var string
+	 */
+	public const EVENT_APPROVAL_REJECTED = 'approval_rejected';
 
-    /**
-     * Activity event subject id for "document_signed".
-     *
-     * @var string
-     */
-    public const EVENT_DOCUMENT_SIGNED = 'document_signed';
+	/**
+	 * Activity event subject id for "document_signed".
+	 *
+	 * @var string
+	 */
+	public const EVENT_DOCUMENT_SIGNED = 'document_signed';
 
-    /**
-     * Activity event subject id for "decision_made".
-     *
-     * @var string
-     */
-    public const EVENT_DECISION_MADE = 'decision_made';
+	/**
+	 * Activity event subject id for "decision_made".
+	 *
+	 * @var string
+	 */
+	public const EVENT_DECISION_MADE = 'decision_made';
 
-    /**
-     * Activity type bucket for the bookkeeping decision lifecycle.
-     *
-     * @var string
-     */
-    public const ACTIVITY_TYPE = 'shillinq_decision_lifecycle';
+	/**
+	 * Activity type bucket for the bookkeeping decision lifecycle.
+	 *
+	 * @var string
+	 */
+	public const ACTIVITY_TYPE = 'shillinq_decision_lifecycle';
 
-    /**
-     * Constructor.
-     *
-     * @param IActivityManager $activityManager Nextcloud Activity app handle.
-     * @param IUserSession     $userSession     Session for actor fallback.
-     * @param LoggerInterface  $logger          Logger (Activity publish
-     *                                          failure is non-fatal — the
-     *                                          OR audit-trail still records
-     *                                          the lifecycle event).
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly IActivityManager $activityManager,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param IActivityManager $activityManager Nextcloud Activity app handle.
+	 * @param IUserSession $userSession Session for actor fallback.
+	 * @param LoggerInterface $logger Logger (Activity publish
+	 *                                failure is non-fatal — the
+	 *                                OR audit-trail still records
+	 *                                the lifecycle event).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly IActivityManager $activityManager,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Emit "approval_requested" — an ApprovalRequest object was created.
-     *
-     * @param string $objectType  OR schema slug (e.g. "ApprovalRequest").
-     * @param string $objectId    UUID of the object.
-     * @param string $actorUid    UID of the creator (defaults to current session).
-     * @param string $summaryHint Free-form 1-line summary (e.g. "AP Invoice #12345").
-     *
-     * @return void
-     */
-    public function emitApprovalRequested(string $objectType, string $objectId, string $actorUid='', string $summaryHint=''): void
-    {
-        if ($summaryHint !== '') {
-            $label = $summaryHint;
-        } else {
-            $label = $objectId;
-        }
+	/**
+	 * Emit "approval_requested" — an ApprovalRequest object was created.
+	 *
+	 * @param string $objectType OR schema slug (e.g. "ApprovalRequest").
+	 * @param string $objectId UUID of the object.
+	 * @param string $actorUid UID of the creator (defaults to current session).
+	 * @param string $summaryHint Free-form 1-line summary (e.g. "AP Invoice #12345").
+	 *
+	 * @return void
+	 */
+	public function emitApprovalRequested(string $objectType, string $objectId, string $actorUid = '', string $summaryHint = ''): void {
+		if ($summaryHint !== '') {
+			$label = $summaryHint;
+		} else {
+			$label = $objectId;
+		}
 
-        $this->publish(
-            event:       self::EVENT_APPROVAL_REQUESTED,
-            objectType:  $objectType,
-            objectId:    $objectId,
-            actorUid:    $actorUid,
-            summary:     sprintf('Approval requested for %s', $label),
-            parameters:  ['object' => $label]
-        );
+		$this->publish(
+			event:       self::EVENT_APPROVAL_REQUESTED,
+			objectType:  $objectType,
+			objectId:    $objectId,
+			actorUid:    $actorUid,
+			summary:     sprintf('Approval requested for %s', $label),
+			parameters:  ['object' => $label]
+		);
 
-    }//end emitApprovalRequested()
+	}//end emitApprovalRequested()
 
-    /**
-     * Emit "approval_approved" — an ApprovalRequest / ApprovalTask was approved.
-     *
-     * @param string $objectType  OR schema slug.
-     * @param string $objectId    UUID.
-     * @param string $actorUid    UID of the approver.
-     * @param string $summaryHint Free-form 1-line summary.
-     * @param string $comment     Approval comment (optional).
-     *
-     * @return void
-     */
-    public function emitApprovalApproved(string $objectType, string $objectId, string $actorUid, string $summaryHint='', string $comment=''): void
-    {
-        if ($summaryHint !== '') {
-            $label = $summaryHint;
-        } else {
-            $label = $objectId;
-        }
+	/**
+	 * Emit "approval_approved" — an ApprovalRequest / ApprovalTask was approved.
+	 *
+	 * @param string $objectType OR schema slug.
+	 * @param string $objectId UUID.
+	 * @param string $actorUid UID of the approver.
+	 * @param string $summaryHint Free-form 1-line summary.
+	 * @param string $comment Approval comment (optional).
+	 *
+	 * @return void
+	 */
+	public function emitApprovalApproved(string $objectType, string $objectId, string $actorUid, string $summaryHint = '', string $comment = ''): void {
+		if ($summaryHint !== '') {
+			$label = $summaryHint;
+		} else {
+			$label = $objectId;
+		}
 
-        $this->publish(
-            event:       self::EVENT_APPROVAL_APPROVED,
-            objectType:  $objectType,
-            objectId:    $objectId,
-            actorUid:    $actorUid,
-            summary:     sprintf('%s approved %s', $actorUid, $label),
-            parameters:  ['actor' => $actorUid, 'object' => $label, 'comment' => $comment]
-        );
+		$this->publish(
+			event:       self::EVENT_APPROVAL_APPROVED,
+			objectType:  $objectType,
+			objectId:    $objectId,
+			actorUid:    $actorUid,
+			summary:     sprintf('%s approved %s', $actorUid, $label),
+			parameters:  ['actor' => $actorUid, 'object' => $label, 'comment' => $comment]
+		);
 
-    }//end emitApprovalApproved()
+	}//end emitApprovalApproved()
 
-    /**
-     * Emit "approval_rejected" — an ApprovalRequest / ApprovalTask was rejected.
-     *
-     * @param string $objectType  OR schema slug.
-     * @param string $objectId    UUID.
-     * @param string $actorUid    UID of the rejecter.
-     * @param string $summaryHint Free-form 1-line summary.
-     * @param string $reason      Rejection reason.
-     *
-     * @return void
-     */
-    public function emitApprovalRejected(string $objectType, string $objectId, string $actorUid, string $summaryHint='', string $reason=''): void
-    {
-        if ($summaryHint !== '') {
-            $label = $summaryHint;
-        } else {
-            $label = $objectId;
-        }
+	/**
+	 * Emit "approval_rejected" — an ApprovalRequest / ApprovalTask was rejected.
+	 *
+	 * @param string $objectType OR schema slug.
+	 * @param string $objectId UUID.
+	 * @param string $actorUid UID of the rejecter.
+	 * @param string $summaryHint Free-form 1-line summary.
+	 * @param string $reason Rejection reason.
+	 *
+	 * @return void
+	 */
+	public function emitApprovalRejected(string $objectType, string $objectId, string $actorUid, string $summaryHint = '', string $reason = ''): void {
+		if ($summaryHint !== '') {
+			$label = $summaryHint;
+		} else {
+			$label = $objectId;
+		}
 
-        $this->publish(
-            event:       self::EVENT_APPROVAL_REJECTED,
-            objectType:  $objectType,
-            objectId:    $objectId,
-            actorUid:    $actorUid,
-            summary:     sprintf('%s rejected %s: %s', $actorUid, $label, $reason),
-            parameters:  ['actor' => $actorUid, 'object' => $label, 'reason' => $reason]
-        );
+		$this->publish(
+			event:       self::EVENT_APPROVAL_REJECTED,
+			objectType:  $objectType,
+			objectId:    $objectId,
+			actorUid:    $actorUid,
+			summary:     sprintf('%s rejected %s: %s', $actorUid, $label, $reason),
+			parameters:  ['actor' => $actorUid, 'object' => $label, 'reason' => $reason]
+		);
 
-    }//end emitApprovalRejected()
+	}//end emitApprovalRejected()
 
-    /**
-     * Emit "document_signed" — a SigningAuthority signature was recorded.
-     *
-     * @param string $objectType  OR schema slug.
-     * @param string $objectId    UUID of the signed document.
-     * @param string $actorUid    UID of the signer.
-     * @param string $summaryHint Free-form 1-line summary.
-     *
-     * @return void
-     */
-    public function emitDocumentSigned(string $objectType, string $objectId, string $actorUid, string $summaryHint=''): void
-    {
-        if ($summaryHint !== '') {
-            $label = $summaryHint;
-        } else {
-            $label = $objectId;
-        }
+	/**
+	 * Emit "document_signed" — a SigningAuthority signature was recorded.
+	 *
+	 * @param string $objectType OR schema slug.
+	 * @param string $objectId UUID of the signed document.
+	 * @param string $actorUid UID of the signer.
+	 * @param string $summaryHint Free-form 1-line summary.
+	 *
+	 * @return void
+	 */
+	public function emitDocumentSigned(string $objectType, string $objectId, string $actorUid, string $summaryHint = ''): void {
+		if ($summaryHint !== '') {
+			$label = $summaryHint;
+		} else {
+			$label = $objectId;
+		}
 
-        $this->publish(
-            event:       self::EVENT_DOCUMENT_SIGNED,
-            objectType:  $objectType,
-            objectId:    $objectId,
-            actorUid:    $actorUid,
-            summary:     sprintf('%s signed %s', $actorUid, $label),
-            parameters:  ['actor' => $actorUid, 'object' => $label]
-        );
+		$this->publish(
+			event:       self::EVENT_DOCUMENT_SIGNED,
+			objectType:  $objectType,
+			objectId:    $objectId,
+			actorUid:    $actorUid,
+			summary:     sprintf('%s signed %s', $actorUid, $label),
+			parameters:  ['actor' => $actorUid, 'object' => $label]
+		);
 
-    }//end emitDocumentSigned()
+	}//end emitDocumentSigned()
 
-    /**
-     * Emit "decision_made" — a Decision lifecycle state was changed.
-     *
-     * @param string $objectType  OR schema slug.
-     * @param string $objectId    UUID of the decision object.
-     * @param string $actorUid    UID of the deciding party.
-     * @param string $newStatus   New decision status.
-     * @param string $summaryHint Free-form 1-line summary.
-     *
-     * @return void
-     */
-    public function emitDecisionMade(string $objectType, string $objectId, string $actorUid, string $newStatus, string $summaryHint=''): void
-    {
-        if ($summaryHint !== '') {
-            $label = $summaryHint;
-        } else {
-            $label = $objectId;
-        }
+	/**
+	 * Emit "decision_made" — a Decision lifecycle state was changed.
+	 *
+	 * @param string $objectType OR schema slug.
+	 * @param string $objectId UUID of the decision object.
+	 * @param string $actorUid UID of the deciding party.
+	 * @param string $newStatus New decision status.
+	 * @param string $summaryHint Free-form 1-line summary.
+	 *
+	 * @return void
+	 */
+	public function emitDecisionMade(string $objectType, string $objectId, string $actorUid, string $newStatus, string $summaryHint = ''): void {
+		if ($summaryHint !== '') {
+			$label = $summaryHint;
+		} else {
+			$label = $objectId;
+		}
 
-        $this->publish(
-            event:       self::EVENT_DECISION_MADE,
-            objectType:  $objectType,
-            objectId:    $objectId,
-            actorUid:    $actorUid,
-            summary:     sprintf('%s made decision on %s: %s', $actorUid, $label, $newStatus),
-            parameters:  ['actor' => $actorUid, 'object' => $label, 'status' => $newStatus]
-        );
+		$this->publish(
+			event:       self::EVENT_DECISION_MADE,
+			objectType:  $objectType,
+			objectId:    $objectId,
+			actorUid:    $actorUid,
+			summary:     sprintf('%s made decision on %s: %s', $actorUid, $label, $newStatus),
+			parameters:  ['actor' => $actorUid, 'object' => $label, 'status' => $newStatus]
+		);
 
-    }//end emitDecisionMade()
+	}//end emitDecisionMade()
 
-    /**
-     * Publish one Activity event via IActivityManager.
-     *
-     * Failure is logged but not raised — the OR audit-trail still captures
-     * the lifecycle transition, so the Activity surface is best-effort.
-     *
-     * @param string              $event      Event subject id (REQ-RAP-006 table).
-     * @param string              $objectType OR schema slug.
-     * @param string              $objectId   Object UUID.
-     * @param string              $actorUid   Actor UID ('' = current session).
-     * @param string              $summary    1-line human summary.
-     * @param array<string,mixed> $parameters Subject parameters.
-     *
-     * @return void
-     */
-    private function publish(string $event, string $objectType, string $objectId, string $actorUid, string $summary, array $parameters): void
-    {
-        try {
-            $effectiveActor = $actorUid;
-            if ($effectiveActor === '') {
-                $user = $this->userSession->getUser();
-                if ($user !== null) {
-                    $effectiveActor = $user->getUID();
-                } else {
-                    $effectiveActor = 'system';
-                }
-            }
+	/**
+	 * Publish one Activity event via IActivityManager.
+	 *
+	 * Failure is logged but not raised — the OR audit-trail still captures
+	 * the lifecycle transition, so the Activity surface is best-effort.
+	 *
+	 * @param string $event Event subject id (REQ-RAP-006 table).
+	 * @param string $objectType OR schema slug.
+	 * @param string $objectId Object UUID.
+	 * @param string $actorUid Actor UID ('' = current session).
+	 * @param string $summary 1-line human summary.
+	 * @param array<string,mixed> $parameters Subject parameters.
+	 *
+	 * @return void
+	 */
+	private function publish(string $event, string $objectType, string $objectId, string $actorUid, string $summary, array $parameters): void {
+		try {
+			$effectiveActor = $actorUid;
+			if ($effectiveActor === '') {
+				$user = $this->userSession->getUser();
+				if ($user !== null) {
+					$effectiveActor = $user->getUID();
+				} else {
+					$effectiveActor = 'system';
+				}
+			}
 
-            $activity = $this->activityManager->generateEvent();
-            $activity
-                ->setApp(Application::APP_ID)
-                ->setType(self::ACTIVITY_TYPE)
-                ->setAuthor($effectiveActor)
-                ->setAffectedUser($effectiveActor)
-                ->setTimestamp(time())
-                ->setSubject($event, $parameters)
-                ->setObject($objectType, 0, $objectId);
+			$activity = $this->activityManager->generateEvent();
+			$activity
+				->setApp(Application::APP_ID)
+				->setType(self::ACTIVITY_TYPE)
+				->setAuthor($effectiveActor)
+				->setAffectedUser($effectiveActor)
+				->setTimestamp(time())
+				->setSubject($event, $parameters)
+				->setObject($objectType, 0, $objectId);
 
-            if (method_exists($activity, 'setMessage') === true) {
-                $activity->setMessage('summary', ['summary' => $summary]);
-            }
+			if (method_exists($activity, 'setMessage') === true) {
+				$activity->setMessage('summary', ['summary' => $summary]);
+			}
 
-            $this->activityManager->publish($activity);
-        } catch (\Throwable $e) {
-            $this->logger->info(
-                'ApprovalActivityEmitter: failed to publish Activity event (OR audit-trail still records the transition)',
-                [
-                    'event'      => $event,
-                    'objectType' => $objectType,
-                    'objectId'   => $objectId,
-                    'exception'  => $e->getMessage(),
-                ]
-            );
-        }//end try
+			$this->activityManager->publish($activity);
+		} catch (\Throwable $e) {
+			$this->logger->info(
+				'ApprovalActivityEmitter: failed to publish Activity event (OR audit-trail still records the transition)',
+				[
+					'event' => $event,
+					'objectType' => $objectType,
+					'objectId' => $objectId,
+					'exception' => $e->getMessage(),
+				]
+			);
+		}//end try
 
-    }//end publish()
+	}//end publish()
 }//end class

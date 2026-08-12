@@ -36,221 +36,207 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class TaxNotificationServiceTest extends TestCase
-{
+final class TaxNotificationServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock IManager.
-     *
-     * @var IManager&MockObject
-     */
-    private IManager&MockObject $notificationMgr;
+	/**
+	 * Mock IManager.
+	 *
+	 * @var IManager&MockObject
+	 */
+	private IManager&MockObject $notificationMgr;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The service under test.
-     *
-     * @var TaxNotificationService
-     */
-    private TaxNotificationService $service;
+	/**
+	 * The service under test.
+	 *
+	 * @var TaxNotificationService
+	 */
+	private TaxNotificationService $service;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container       = $this->createMock(ContainerInterface::class);
-        $this->appConfig       = $this->createMock(IAppConfig::class);
-        $this->notificationMgr = $this->createMock(IManager::class);
-        $this->logger          = $this->createMock(LoggerInterface::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->notificationMgr = $this->createMock(IManager::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->service = new TaxNotificationService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            notificationMgr: $this->notificationMgr,
-            logger: $this->logger,
-        );
+		$this->service = new TaxNotificationService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			notificationMgr: $this->notificationMgr,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * The reminder window matches exactly 7 and 1 day(s) before the deadline (REQ-VPB-013).
-     *
-     * @return void
-     */
-    public function testReminderWindowMatchesSevenAndOneDay(): void
-    {
-        $today = new \DateTimeImmutable('2025-04-13');
+	/**
+	 * The reminder window matches exactly 7 and 1 day(s) before the deadline (REQ-VPB-013).
+	 *
+	 * @return void
+	 */
+	public function testReminderWindowMatchesSevenAndOneDay(): void {
+		$today = new \DateTimeImmutable('2025-04-13');
 
-        // 7 days before 2025-04-20.
-        self::assertSame(7, $this->service->reminderWindow(['deadlineDate' => '2025-04-20'], $today));
+		// 7 days before 2025-04-20.
+		self::assertSame(7, $this->service->reminderWindow(['deadlineDate' => '2025-04-20'], $today));
 
-        $today = new \DateTimeImmutable('2025-04-19');
-        // 1 day before 2025-04-20.
-        self::assertSame(1, $this->service->reminderWindow(['deadlineDate' => '2025-04-20'], $today));
+		$today = new \DateTimeImmutable('2025-04-19');
+		// 1 day before 2025-04-20.
+		self::assertSame(1, $this->service->reminderWindow(['deadlineDate' => '2025-04-20'], $today));
 
-        $today = new \DateTimeImmutable('2025-04-17');
-        // 3 days before — no reminder window.
-        self::assertNull($this->service->reminderWindow(['deadlineDate' => '2025-04-20'], $today));
+		$today = new \DateTimeImmutable('2025-04-17');
+		// 3 days before — no reminder window.
+		self::assertNull($this->service->reminderWindow(['deadlineDate' => '2025-04-20'], $today));
 
-    }//end testReminderWindowMatchesSevenAndOneDay()
+	}//end testReminderWindowMatchesSevenAndOneDay()
 
-    /**
-     * A deadline in a reminder window dispatches exactly one notification (REQ-VPB-013).
-     *
-     * @return void
-     */
-    public function testDispatchesReminderForDueDeadline(): void
-    {
-        $deadlines = [
-            [
-                '@self'        => ['slug' => '2025-provisional-q1-payment'],
-                'deadlineDate' => '2025-04-20',
-                'deadlineType' => 'provisional-payment',
-                'status'       => 'pending',
-            ],
-            // Filed deadline — must be skipped.
-            [
-                '@self'        => ['slug' => 'filed-one'],
-                'deadlineDate' => '2025-04-20',
-                'status'       => 'filed',
-            ],
-        ];
+	/**
+	 * A deadline in a reminder window dispatches exactly one notification (REQ-VPB-013).
+	 *
+	 * @return void
+	 */
+	public function testDispatchesReminderForDueDeadline(): void {
+		$deadlines = [
+			[
+				'@self' => ['slug' => '2025-provisional-q1-payment'],
+				'deadlineDate' => '2025-04-20',
+				'deadlineType' => 'provisional-payment',
+				'status' => 'pending',
+			],
+			// Filed deadline — must be skipped.
+			[
+				'@self' => ['slug' => 'filed-one'],
+				'deadlineDate' => '2025-04-20',
+				'status' => 'filed',
+			],
+		];
 
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub($deadlines));
+		$this->container->method('get')->willReturn($this->buildObjectServiceStub($deadlines));
 
-        $notification = $this->createMock(INotification::class);
-        $notification->method('setApp')->willReturnSelf();
-        $notification->method('setObject')->willReturnSelf();
-        $notification->method('setSubject')->willReturnSelf();
-        $notification->method('setDateTime')->willReturnSelf();
+		$notification = $this->createMock(INotification::class);
+		$notification->method('setApp')->willReturnSelf();
+		$notification->method('setObject')->willReturnSelf();
+		$notification->method('setSubject')->willReturnSelf();
+		$notification->method('setDateTime')->willReturnSelf();
 
-        $this->notificationMgr->method('createNotification')->willReturn($notification);
-        // Exactly one notify() for the single eligible pending deadline.
-        $this->notificationMgr->expects($this->once())->method('notify')->with($notification);
+		$this->notificationMgr->method('createNotification')->willReturn($notification);
+		// Exactly one notify() for the single eligible pending deadline.
+		$this->notificationMgr->expects($this->once())->method('notify')->with($notification);
 
-        $count = $this->service->dispatchDueReminders(new \DateTimeImmutable('2025-04-13'));
+		$count = $this->service->dispatchDueReminders(new \DateTimeImmutable('2025-04-13'));
 
-        self::assertSame(1, $count);
+		self::assertSame(1, $count);
 
-    }//end testDispatchesReminderForDueDeadline()
+	}//end testDispatchesReminderForDueDeadline()
 
-    /**
-     * No eligible deadline dispatches nothing.
-     *
-     * @return void
-     */
-    public function testNoReminderWhenOutsideWindow(): void
-    {
-        $deadlines = [
-            [
-                '@self'        => ['slug' => 'far-away'],
-                'deadlineDate' => '2025-12-31',
-                'status'       => 'pending',
-            ],
-        ];
+	/**
+	 * No eligible deadline dispatches nothing.
+	 *
+	 * @return void
+	 */
+	public function testNoReminderWhenOutsideWindow(): void {
+		$deadlines = [
+			[
+				'@self' => ['slug' => 'far-away'],
+				'deadlineDate' => '2025-12-31',
+				'status' => 'pending',
+			],
+		];
 
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub($deadlines));
-        $this->notificationMgr->expects($this->never())->method('notify');
+		$this->container->method('get')->willReturn($this->buildObjectServiceStub($deadlines));
+		$this->notificationMgr->expects($this->never())->method('notify');
 
-        $count = $this->service->dispatchDueReminders(new \DateTimeImmutable('2025-04-13'));
+		$count = $this->service->dispatchDueReminders(new \DateTimeImmutable('2025-04-13'));
 
-        self::assertSame(0, $count);
+		self::assertSame(0, $count);
 
-    }//end testNoReminderWhenOutsideWindow()
+	}//end testNoReminderWhenOutsideWindow()
 
-    /**
-     * Build a fluent ObjectService stub returning the given TaxDeadline records.
-     *
-     * @param array<int,array<string,mixed>> $deadlines Deadline records.
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $deadlines): object
-    {
-        return new class ($deadlines) {
+	/**
+	 * Build a fluent ObjectService stub returning the given TaxDeadline records.
+	 *
+	 * @param array<int,array<string,mixed>> $deadlines Deadline records.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $deadlines): object {
+		return new class($deadlines) {
+			/**
+			 * Deadline records.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $deadlines;
 
-            /**
-             * Deadline records.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $deadlines;
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int,array<string,mixed>> $deadlines Deadline records.
+			 */
+			public function __construct(array $deadlines) {
+				$this->deadlines = $deadlines;
 
-            /**
-             * Constructor.
-             *
-             * @param array<int,array<string,mixed>> $deadlines Deadline records.
-             */
-            public function __construct(array $deadlines)
-            {
-                $this->deadlines = $deadlines;
+			}//end __construct()
 
-            }//end __construct()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug (unused).
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema (unused).
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
 
-            }//end setRegister()
+			/**
+			 * Return the stubbed deadlines.
+			 *
+			 * @param array<string,mixed> $params Query params (unused).
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				return $this->deadlines;
+			}//end findAll()
+		};
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema (unused).
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                return $this;
-
-            }//end setSchema()
-
-            /**
-             * Return the stubbed deadlines.
-             *
-             * @param array<string,mixed> $params Query params (unused).
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                return $this->deadlines;
-
-            }//end findAll()
-        };
-
-    }//end buildObjectServiceStub()
+	}//end buildObjectServiceStub()
 }//end class

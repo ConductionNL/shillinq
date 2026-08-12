@@ -42,168 +42,159 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
  */
-class SluitendCalculator
-{
-    /**
-     * Evaluate a single meerjarenraming year.
-     *
-     * Computes saldoStructureel, saldoIncidenteel, saldoReëel (after applying
-     * the nominale-ontwikkeling correction to structural lasten) and the
-     * per-year sluitend flag (struktureel AND reëel must both hold).
-     *
-     * @param array<string,mixed> $year                 The meerjarenraming year row.
-     * @param float               $nominaleOntwikkeling The loon- en prijsindexatie percentage (e.g. 2.0).
-     *
-     * @return array{saldoStructureel:float,saldoIncidenteel:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
-     */
-    public function evaluateYear(array $year, float $nominaleOntwikkeling): array
-    {
-        $batenStrucCents  = $this->toCents(amount: $year['batenStructureel'] ?? 0);
-        $lastenStrucCents = $this->toCents(amount: $year['lastenStructureel'] ?? 0);
-        $batenIncCents    = $this->toCents(amount: $year['batenIncidenteel'] ?? 0);
-        $lastenIncCents   = $this->toCents(amount: $year['lastenIncidenteel'] ?? 0);
+class SluitendCalculator {
+	/**
+	 * Evaluate a single meerjarenraming year.
+	 *
+	 * Computes saldoStructureel, saldoIncidenteel, saldoReëel (after applying
+	 * the nominale-ontwikkeling correction to structural lasten) and the
+	 * per-year sluitend flag (struktureel AND reëel must both hold).
+	 *
+	 * @param array<string,mixed> $year The meerjarenraming year row.
+	 * @param float $nominaleOntwikkeling The loon- en prijsindexatie percentage (e.g. 2.0).
+	 *
+	 * @return array{saldoStructureel:float,saldoIncidenteel:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+	 */
+	public function evaluateYear(array $year, float $nominaleOntwikkeling): array {
+		$batenStrucCents = $this->toCents(amount: $year['batenStructureel'] ?? 0);
+		$lastenStrucCents = $this->toCents(amount: $year['lastenStructureel'] ?? 0);
+		$batenIncCents = $this->toCents(amount: $year['batenIncidenteel'] ?? 0);
+		$lastenIncCents = $this->toCents(amount: $year['lastenIncidenteel'] ?? 0);
 
-        $saldoStrucCents = ($batenStrucCents - $lastenStrucCents);
-        $saldoIncCents   = ($batenIncCents - $lastenIncCents);
+		$saldoStrucCents = ($batenStrucCents - $lastenStrucCents);
+		$saldoIncCents = ($batenIncCents - $lastenIncCents);
 
-        // Reëel correction: structural lasten are uplifted by the nominale
-        // ontwikkeling (prices rise faster than the nominal budget), so the
-        // reëel saldo subtracts that uplift from the nominal saldo.
-        $upliftCents    = (int) round($lastenStrucCents * ($nominaleOntwikkeling / 100.0));
-        $saldoReelCents = ($saldoStrucCents + $saldoIncCents - $upliftCents);
+		// Reëel correction: structural lasten are uplifted by the nominale
+		// ontwikkeling (prices rise faster than the nominal budget), so the
+		// reëel saldo subtracts that uplift from the nominal saldo.
+		$upliftCents = (int)round($lastenStrucCents * ($nominaleOntwikkeling / 100.0));
+		$saldoReelCents = ($saldoStrucCents + $saldoIncCents - $upliftCents);
 
-        $sluitendStructureel = ($lastenStrucCents <= $batenStrucCents);
-        $sluitendReeel       = ($saldoReelCents >= 0);
+		$sluitendStructureel = ($lastenStrucCents <= $batenStrucCents);
+		$sluitendReeel = ($saldoReelCents >= 0);
 
-        return [
-            'saldoStructureel'    => $this->toEuro(cents: $saldoStrucCents),
-            'saldoIncidenteel'    => $this->toEuro(cents: $saldoIncCents),
-            'saldoReëel'          => $this->toEuro(cents: $saldoReelCents),
-            'sluitendStructureel' => $sluitendStructureel,
-            'sluitendReëel'       => $sluitendReeel,
-            'sluitend'            => ($sluitendStructureel === true && $sluitendReeel === true),
-        ];
+		return [
+			'saldoStructureel' => $this->toEuro(cents: $saldoStrucCents),
+			'saldoIncidenteel' => $this->toEuro(cents: $saldoIncCents),
+			'saldoReëel' => $this->toEuro(cents: $saldoReelCents),
+			'sluitendStructureel' => $sluitendStructureel,
+			'sluitendReëel' => $sluitendReeel,
+			'sluitend' => ($sluitendStructureel === true && $sluitendReeel === true),
+		];
 
-    }//end evaluateYear()
+	}//end evaluateYear()
 
-    /**
-     * Evaluate the overall sluitend-flags across all meerjarenraming years.
-     *
-     * The begroting is sluitendStructureel iff every year is structurally
-     * balanced; sluitendReëel iff every year is reëel balanced (REQ-008,
-     * REQ-011). An empty year set is not sluitend (fail-closed).
-     *
-     * @param array<int,array<string,mixed>> $years                The meerjarenraming year rows.
-     * @param float                          $nominaleOntwikkeling The loon- en prijsindexatie percentage.
-     *
-     * @return array{sluitendStructureel:bool,sluitendReëel:bool}
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
-     */
-    public function evaluateBegroting(array $years, float $nominaleOntwikkeling): array
-    {
-        if ($years === []) {
-            return ['sluitendStructureel' => false, 'sluitendReëel' => false];
-        }
+	/**
+	 * Evaluate the overall sluitend-flags across all meerjarenraming years.
+	 *
+	 * The begroting is sluitendStructureel iff every year is structurally
+	 * balanced; sluitendReëel iff every year is reëel balanced (REQ-008,
+	 * REQ-011). An empty year set is not sluitend (fail-closed).
+	 *
+	 * @param array<int,array<string,mixed>> $years The meerjarenraming year rows.
+	 * @param float $nominaleOntwikkeling The loon- en prijsindexatie percentage.
+	 *
+	 * @return array{sluitendStructureel:bool,sluitendReëel:bool}
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+	 */
+	public function evaluateBegroting(array $years, float $nominaleOntwikkeling): array {
+		if ($years === []) {
+			return ['sluitendStructureel' => false, 'sluitendReëel' => false];
+		}
 
-        $allStructureel = true;
-        $allReeel       = true;
-        foreach ($years as $year) {
-            $result = $this->evaluateYear(year: $year, nominaleOntwikkeling: $nominaleOntwikkeling);
-            if ($result['sluitendStructureel'] === false) {
-                $allStructureel = false;
-            }
+		$allStructureel = true;
+		$allReeel = true;
+		foreach ($years as $year) {
+			$result = $this->evaluateYear(year: $year, nominaleOntwikkeling: $nominaleOntwikkeling);
+			if ($result['sluitendStructureel'] === false) {
+				$allStructureel = false;
+			}
 
-            if ($result['sluitendReëel'] === false) {
-                $allReeel = false;
-            }
-        }
+			if ($result['sluitendReëel'] === false) {
+				$allReeel = false;
+			}
+		}
 
-        return ['sluitendStructureel' => $allStructureel, 'sluitendReëel' => $allReeel];
+		return ['sluitendStructureel' => $allStructureel, 'sluitendReëel' => $allReeel];
+	}//end evaluateBegroting()
 
-    }//end evaluateBegroting()
+	/**
+	 * Determine the toezichtregime from the sluitend-flags and 4-year history.
+	 *
+	 * Per design D5 / the IPO beoordelingskader:
+	 *  - repressief requires both sluitend-flags AND a weerstandsverhouding ≥ 1.0
+	 *    AND no sustained tekort in the preceding 4 years;
+	 *  - a structural tekort without dekkingsplan, or a weerstandsverhouding < 1.0,
+	 *    yields preventief;
+	 *  - a negative algemene reserve (vermogenstekort) yields artikel-12.
+	 *
+	 * @param bool $sluitendStructureel The overall structural flag.
+	 * @param bool $sluitendReeel The overall reëel
+	 *                            flag.
+	 * @param array<int,float> $historyResultaten Resultaat of the preceding years (negative = tekort).
+	 * @param float $weerstandsverhouding Algemene reserve / totale lasten ratio (default 1.0).
+	 *
+	 * @return string One of `repressief`, `preventief`, `artikel-12`.
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-20
+	 */
+	public function determineToezichtRegime(
+		bool $sluitendStructureel,
+		bool $sluitendReeel,
+		array $historyResultaten = [],
+		float $weerstandsverhouding = 1.0,
+	): string {
+		// A negative weerstandsverhouding signals an exhausted algemene reserve
+		// (vermogenstekort) — the artikel-12 distressed regime.
+		if ($weerstandsverhouding < 0.0) {
+			return 'artikel-12';
+		}
 
-    /**
-     * Determine the toezichtregime from the sluitend-flags and 4-year history.
-     *
-     * Per design D5 / the IPO beoordelingskader:
-     *  - repressief requires both sluitend-flags AND a weerstandsverhouding ≥ 1.0
-     *    AND no sustained tekort in the preceding 4 years;
-     *  - a structural tekort without dekkingsplan, or a weerstandsverhouding < 1.0,
-     *    yields preventief;
-     *  - a negative algemene reserve (vermogenstekort) yields artikel-12.
-     *
-     * @param bool             $sluitendStructureel  The overall structural flag.
-     * @param bool             $sluitendReeel        The overall reëel
-     *                                               flag.
-     * @param array<int,float> $historyResultaten    Resultaat of the preceding years (negative = tekort).
-     * @param float            $weerstandsverhouding Algemene reserve / totale lasten ratio (default 1.0).
-     *
-     * @return string One of `repressief`, `preventief`, `artikel-12`.
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-20
-     */
-    public function determineToezichtRegime(
-        bool $sluitendStructureel,
-        bool $sluitendReeel,
-        array $historyResultaten=[],
-        float $weerstandsverhouding=1.0
-    ): string {
-        // A negative weerstandsverhouding signals an exhausted algemene reserve
-        // (vermogenstekort) — the artikel-12 distressed regime.
-        if ($weerstandsverhouding < 0.0) {
-            return 'artikel-12';
-        }
+		// Sustained tekort = every one of (at least four) prior years negative.
+		$sustainedTekort = false;
+		if (count($historyResultaten) >= 4) {
+			$sustainedTekort = true;
+			foreach ($historyResultaten as $resultaat) {
+				if ($resultaat >= 0.0) {
+					$sustainedTekort = false;
+					break;
+				}
+			}
+		}
 
-        // Sustained tekort = every one of (at least four) prior years negative.
-        $sustainedTekort = false;
-        if (count($historyResultaten) >= 4) {
-            $sustainedTekort = true;
-            foreach ($historyResultaten as $resultaat) {
-                if ($resultaat >= 0.0) {
-                    $sustainedTekort = false;
-                    break;
-                }
-            }
-        }
+		if ($sluitendStructureel === true
+			&& $sluitendReeel === true
+			&& $weerstandsverhouding >= 1.0
+			&& $sustainedTekort === false
+		) {
+			return 'repressief';
+		}
 
-        if ($sluitendStructureel === true
-            && $sluitendReeel === true
-            && $weerstandsverhouding >= 1.0
-            && $sustainedTekort === false
-        ) {
-            return 'repressief';
-        }
+		return 'preventief';
+	}//end determineToezichtRegime()
 
-        return 'preventief';
+	/**
+	 * Convert a euro amount to integer cents (round-half-up).
+	 *
+	 * @param mixed $amount The euro amount (numeric or numeric string).
+	 *
+	 * @return int The amount in integer cents.
+	 */
+	private function toCents(mixed $amount): int {
+		return (int)round(((float)$amount) * 100);
+	}//end toCents()
 
-    }//end determineToezichtRegime()
-
-    /**
-     * Convert a euro amount to integer cents (round-half-up).
-     *
-     * @param mixed $amount The euro amount (numeric or numeric string).
-     *
-     * @return int The amount in integer cents.
-     */
-    private function toCents(mixed $amount): int
-    {
-        return (int) round(((float) $amount) * 100);
-
-    }//end toCents()
-
-    /**
-     * Convert integer cents back to a euro float.
-     *
-     * @param int $cents The amount in integer cents.
-     *
-     * @return float The euro amount.
-     */
-    private function toEuro(int $cents): float
-    {
-        return (float) ($cents / 100);
-
-    }//end toEuro()
+	/**
+	 * Convert integer cents back to a euro float.
+	 *
+	 * @param int $cents The amount in integer cents.
+	 *
+	 * @return float The euro amount.
+	 */
+	private function toEuro(int $cents): float {
+		return (float)($cents / 100);
+	}//end toEuro()
 }//end class

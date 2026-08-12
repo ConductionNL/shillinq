@@ -45,175 +45,167 @@ use RuntimeException;
  *
  * @spec openspec/specs/procurement-governance/spec.md
  */
-class FrameworkAgreementDrawdownGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class FrameworkAgreementDrawdownGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Assert a call-off of $addCents fits the agreement's remaining ceiling, or
-     * throw (REQ-PG-004).
-     *
-     * Fail-closed: throws when the agreement is missing, not `active`, outside its
-     * validity window, or when `drawnAmount + addCents > ceilingAmount`.
-     *
-     * @param string $administrationId     Administration (tenant) scope.
-     * @param string $frameworkAgreementId FrameworkAgreement identifier (agreementNumber or object id).
-     * @param int    $addCents             Call-off amount in integer euro cents.
-     *
-     * @return array<string,mixed> The resolved FrameworkAgreement (for the caller to record the drawdown against).
-     *
-     * @throws RuntimeException When the call-off is not allowed.
-     *
-     * @spec openspec/specs/procurement-governance/spec.md
-     */
-    public function assertWithinCeiling(string $administrationId, string $frameworkAgreementId, int $addCents): array
-    {
-        try {
-            $agreement = $this->resolveAgreement(
-                administrationId: $administrationId,
-                frameworkAgreementId: $frameworkAgreementId
-            );
+	/**
+	 * Assert a call-off of $addCents fits the agreement's remaining ceiling, or
+	 * throw (REQ-PG-004).
+	 *
+	 * Fail-closed: throws when the agreement is missing, not `active`, outside its
+	 * validity window, or when `drawnAmount + addCents > ceilingAmount`.
+	 *
+	 * @param string $administrationId Administration (tenant) scope.
+	 * @param string $frameworkAgreementId FrameworkAgreement identifier (agreementNumber or object id).
+	 * @param int $addCents Call-off amount in integer euro cents.
+	 *
+	 * @return array<string,mixed> The resolved FrameworkAgreement (for the caller to record the drawdown against).
+	 *
+	 * @throws RuntimeException When the call-off is not allowed.
+	 *
+	 * @spec openspec/specs/procurement-governance/spec.md
+	 */
+	public function assertWithinCeiling(string $administrationId, string $frameworkAgreementId, int $addCents): array {
+		try {
+			$agreement = $this->resolveAgreement(
+				administrationId: $administrationId,
+				frameworkAgreementId: $frameworkAgreementId
+			);
 
-            if ($agreement === null) {
-                throw new RuntimeException('Framework agreement not found.');
-            }
+			if ($agreement === null) {
+				throw new RuntimeException('Framework agreement not found.');
+			}
 
-            $this->assertUsable(agreement: $agreement);
+			$this->assertUsable(agreement: $agreement);
 
-            $ceiling = (int) ($agreement['ceilingAmount'] ?? 0);
-            $drawn   = (int) ($agreement['drawnAmount'] ?? 0);
-            if (($drawn + $addCents) > $ceiling) {
-                $this->logger->info(
-                    'FrameworkAgreementDrawdownGuard: call-off exceeds ceiling — blocking purchase order',
-                    [
-                        'frameworkAgreementId' => $frameworkAgreementId,
-                        'ceilingAmount'        => $ceiling,
-                        'drawnAmount'          => $drawn,
-                        'addCents'             => $addCents,
-                    ]
-                );
-                throw new RuntimeException('Call-off exceeds the framework agreement ceiling.');
-            }
+			$ceiling = (int)($agreement['ceilingAmount'] ?? 0);
+			$drawn = (int)($agreement['drawnAmount'] ?? 0);
+			if (($drawn + $addCents) > $ceiling) {
+				$this->logger->info(
+					'FrameworkAgreementDrawdownGuard: call-off exceeds ceiling — blocking purchase order',
+					[
+						'frameworkAgreementId' => $frameworkAgreementId,
+						'ceilingAmount' => $ceiling,
+						'drawnAmount' => $drawn,
+						'addCents' => $addCents,
+					]
+				);
+				throw new RuntimeException('Call-off exceeds the framework agreement ceiling.');
+			}
 
-            return $agreement;
-        } catch (RuntimeException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'FrameworkAgreementDrawdownGuard: drawdown check failed — denying (fail-closed)',
-                ['frameworkAgreementId' => $frameworkAgreementId, 'exception' => $e->getMessage()]
-            );
-            throw new RuntimeException('Framework agreement drawdown check failed.');
-        }//end try
+			return $agreement;
+		} catch (RuntimeException $e) {
+			throw $e;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'FrameworkAgreementDrawdownGuard: drawdown check failed — denying (fail-closed)',
+				['frameworkAgreementId' => $frameworkAgreementId, 'exception' => $e->getMessage()]
+			);
+			throw new RuntimeException('Framework agreement drawdown check failed.');
+		}//end try
 
-    }//end assertWithinCeiling()
+	}//end assertWithinCeiling()
 
-    /**
-     * Assert the agreement is active and within its validity window, or throw.
-     *
-     * @param array<string,mixed> $agreement The resolved FrameworkAgreement.
-     *
-     * @return void
-     *
-     * @throws RuntimeException When the agreement is not active or out of window.
-     */
-    private function assertUsable(array $agreement): void
-    {
-        if ((string) ($agreement['statusCode'] ?? '') !== 'active') {
-            throw new RuntimeException('Framework agreement is not active.');
-        }
+	/**
+	 * Assert the agreement is active and within its validity window, or throw.
+	 *
+	 * @param array<string,mixed> $agreement The resolved FrameworkAgreement.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the agreement is not active or out of window.
+	 */
+	private function assertUsable(array $agreement): void {
+		if ((string)($agreement['statusCode'] ?? '') !== 'active') {
+			throw new RuntimeException('Framework agreement is not active.');
+		}
 
-        $today     = date('Y-m-d');
-        $validFrom = trim((string) ($agreement['validFrom'] ?? ''));
-        $validTo   = trim((string) ($agreement['validUntil'] ?? ''));
-        if (($validFrom !== '' && $today < $validFrom) || ($validTo !== '' && $today > $validTo)) {
-            throw new RuntimeException('Framework agreement is outside its validity window.');
-        }
+		$today = date('Y-m-d');
+		$validFrom = trim((string)($agreement['validFrom'] ?? ''));
+		$validTo = trim((string)($agreement['validUntil'] ?? ''));
+		if (($validFrom !== '' && $today < $validFrom) || ($validTo !== '' && $today > $validTo)) {
+			throw new RuntimeException('Framework agreement is outside its validity window.');
+		}
 
-    }//end assertUsable()
+	}//end assertUsable()
 
-    /**
-     * Resolve an agreement by agreementNumber, then by object id.
-     *
-     * @param string $administrationId     Administration scope.
-     * @param string $frameworkAgreementId Reference (agreementNumber or id).
-     *
-     * @return array<string,mixed>|null
-     */
-    private function resolveAgreement(string $administrationId, string $frameworkAgreementId): ?array
-    {
-        $byNumber = $this->findOne(
-            schema: 'FrameworkAgreement',
-            filters: [
-                'administrationId' => $administrationId,
-                'agreementNumber'  => $frameworkAgreementId,
-            ]
-        );
-        if ($byNumber !== null) {
-            return $byNumber;
-        }
+	/**
+	 * Resolve an agreement by agreementNumber, then by object id.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $frameworkAgreementId Reference (agreementNumber or id).
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function resolveAgreement(string $administrationId, string $frameworkAgreementId): ?array {
+		$byNumber = $this->findOne(
+			schema: 'FrameworkAgreement',
+			filters: [
+				'administrationId' => $administrationId,
+				'agreementNumber' => $frameworkAgreementId,
+			]
+		);
+		if ($byNumber !== null) {
+			return $byNumber;
+		}
 
-        return $this->findOne(
-            schema: 'FrameworkAgreement',
-            filters: [
-                'administrationId' => $administrationId,
-                'id'               => $frameworkAgreementId,
-            ]
-        );
+		return $this->findOne(
+			schema: 'FrameworkAgreement',
+			filters: [
+				'administrationId' => $administrationId,
+				'id' => $frameworkAgreementId,
+			]
+		);
 
-    }//end resolveAgreement()
+	}//end resolveAgreement()
 
-    /**
-     * Fetch one record via the real ObjectService API (findAll then first).
-     *
-     * @param string              $schema  OR schema slug.
-     * @param array<string,mixed> $filters Equality filters.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findOne(string $schema, array $filters): ?array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $rows          = $objectService
-            ->setRegister($this->register())
-            ->setSchema($schema)
-            ->findAll(['filters' => $filters]);
+	/**
+	 * Fetch one record via the real ObjectService API (findAll then first).
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $filters Equality filters.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findOne(string $schema, array $filters): ?array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$rows = $objectService
+			->setRegister($this->register())
+			->setSchema($schema)
+			->findAll(['filters' => $filters]);
 
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                return $row;
-            }
-        }
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
 
-        return null;
+		return null;
+	}//end findOne()
 
-    }//end findOne()
+	/**
+	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

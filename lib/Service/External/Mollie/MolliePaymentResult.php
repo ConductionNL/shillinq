@@ -36,32 +36,31 @@ namespace OCA\Shillinq\Service\External\Mollie;
  * @spec openspec/specs/bookings-deposits/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-final class MolliePaymentResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $paymentStatus   Mollie-side state.
-     * @param string              $molliePaymentId Mollie-side intent id
-     *                                             (synthetic for dormant).
-     * @param string              $checkoutUrl     Hosted-checkout URL the
-     *                                             payer is redirected to
-     *                                             — empty string for
-     *                                             dormant.
-     * @param bool                $dormant         TRUE when the adapter was
-     *                                             dormant.
-     * @param array<string,mixed> $extras          Provider-specific extras
-     *                                             (e.g. mode
-     *                                             `live`/`test`, method
-     *                                             actually selected,
-     *                                             paidAt, amountRefunded).
-     */
-    public function __construct(
-        public readonly string $paymentStatus,
-        public readonly string $molliePaymentId,
-        public readonly string $checkoutUrl,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class MolliePaymentResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $paymentStatus Mollie-side state.
+	 * @param string $molliePaymentId Mollie-side intent id
+	 *                                (synthetic for dormant).
+	 * @param string $checkoutUrl Hosted-checkout URL the
+	 *                            payer is redirected to
+	 *                            — empty string for
+	 *                            dormant.
+	 * @param bool $dormant TRUE when the adapter was
+	 *                      dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras
+	 *                                    (e.g. mode
+	 *                                    `live`/`test`, method
+	 *                                    actually selected,
+	 *                                    paidAt, amountRefunded).
+	 */
+	public function __construct(
+		public readonly string $paymentStatus,
+		public readonly string $molliePaymentId,
+		public readonly string $checkoutUrl,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class
