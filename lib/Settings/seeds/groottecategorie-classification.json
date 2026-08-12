@@ -46,7 +46,7 @@
     "micro": {
       "balans": "verkort",
       "winstEnVerlies": false,
-      "toelichting": "minimaal",
+      "notes": "minimaal",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
       "accountantsverklaring": false
@@ -54,7 +54,7 @@
     "klein": {
       "balans": "verkort",
       "winstEnVerlies": "niet-gedeponeerd",
-      "toelichting": "beperkt",
+      "notes": "beperkt",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
       "accountantsverklaring": "optioneel"
@@ -62,7 +62,7 @@
     "middelgroot": {
       "balans": "volledig",
       "winstEnVerlies": true,
-      "toelichting": "volledig",
+      "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
       "accountantsverklaring": true
@@ -70,7 +70,7 @@
     "groot": {
       "balans": "volledig",
       "winstEnVerlies": true,
-      "toelichting": "volledig",
+      "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
       "accountantsverklaring": true,

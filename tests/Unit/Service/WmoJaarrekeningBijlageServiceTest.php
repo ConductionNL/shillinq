@@ -75,7 +75,7 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase
                 'ca-001' => 81_000.00,
             ],
             'abbByActivity'               => [
-                'ca-002' => ['kenmerk' => 'R-2023-184'],
+                'ca-002' => ['reference' => 'R-2023-184'],
             ],
             'manualOverridesByActivity'   => [
                 'ca-001' => 2,
@@ -86,8 +86,8 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase
         self::assertCount(2, $bijlage['activiteiten']);
         self::assertSame('groen', $bijlage['activiteiten'][0]['complianceColor']);
         self::assertSame('rood', $bijlage['activiteiten'][1]['complianceColor']);
-        self::assertSame('R-2023-184', $bijlage['activiteiten'][1]['abbReferentie']);
-        self::assertNull($bijlage['activiteiten'][0]['abbReferentie']);
+        self::assertSame('R-2023-184', $bijlage['activiteiten'][1]['abbReference']);
+        self::assertNull($bijlage['activiteiten'][0]['abbReference']);
         self::assertSame(2, $bijlage['activiteiten'][0]['manualOverrides']);
 
         $samenvatting = $bijlage['samenvatting'];

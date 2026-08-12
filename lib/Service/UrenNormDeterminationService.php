@@ -90,9 +90,9 @@ final class UrenNormDeterminationService
             'enterpriseId'        => (string) ($profiel['enterpriseId'] ?? ''),
             'kalenderjaar'         => (int) ($profiel['kalenderjaar'] ?? (int) gmdate('Y')),
             'doelNorm'             => $norm,
-            'normGrondslag'        => $grondslag,
+            'normBasis'        => $grondslag,
             'lopendeUren'          => 0.0,
-            'drempelStatus'        => 'OP_KOERS',
+            'thresholdStatus'        => 'OP_KOERS',
             'grotendeelsCriterium' => $grotendeels,
         ];
 

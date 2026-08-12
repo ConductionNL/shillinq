@@ -230,7 +230,7 @@ class DunningGuard
                 return false;
             }
 
-            if (trim((string) ($writeOff['art29OBVerklaring'] ?? '')) === '') {
+            if (trim((string) ($writeOff['art29OBDeclaration'] ?? '')) === '') {
                 return false;
             }
 
@@ -320,7 +320,7 @@ class DunningGuard
 
         $partyType = strtoupper((string) ($run['partyType'] ?? ''));
         if ($partyType === '') {
-            $partyType = strtoupper($this->lookupPartyType(factuurId: (string) ($run['factuurId'] ?? '')));
+            $partyType = strtoupper($this->lookupPartyType(factuurId: (string) ($run['invoiceId'] ?? '')));
         }
 
         return $partyType === 'B2C';
@@ -369,7 +369,7 @@ class DunningGuard
         $results = $objectService
             ->setRegister($register)
             ->setSchema('IncassoKostenBerekening')
-            ->findAll(['filters' => ['factuurId' => $factuurId]]);
+            ->findAll(['filters' => ['invoiceId' => $factuurId]]);
 
         foreach ($results as $result) {
             if (is_array($result) === true && isset($result['partyType']) === true) {

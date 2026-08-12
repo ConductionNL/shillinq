@@ -37,7 +37,7 @@
             "example": "Schoonmaak Gemeentehuis Utrecht",
             "title": "Titel"
           },
-          "beschrijving": {
+          "description": {
             "type": "string",
             "description": "Tender description.",
             "nullable": true,
@@ -67,14 +67,14 @@
             "nullable": true,
             "title": "Gunnings Datum"
           },
-          "contractWaarde": {
+          "contractValue": {
             "type": "number",
             "minimum": 0,
             "description": "Contract value excluding BTW, in the administration's base currency.",
             "example": 50000.0,
             "title": "Contract Waarde"
           },
-          "looptijdStart": {
+          "termStart": {
             "type": "string",
             "format": "date",
             "description": "Contract term start date — drives milestone-plan generation (REQ-003).",
@@ -106,7 +106,7 @@
             "default": "other",
             "title": "Opdrachttype"
           },
-          "verplichtingId": {
+          "commitmentId": {
             "type": "string",
             "description": "FK to the materialised Shillinq Verplichting (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
             "nullable": true,
@@ -192,8 +192,8 @@
           }
         },
         "x-openregister-relations": {
-          "verplichting": {
-            "localField": "verplichtingId",
+          "commitment": {
+            "localField": "commitmentId",
             "relatedSchema": "Verplichting",
             "relatedField": "id",
             "cardinality": "one-to-one",
@@ -244,7 +244,7 @@
         "required": [
           "commitmentNumber",
           "description",
-          "bron",
+          "source",
           "amount",
           "administrationId",
           "status"
@@ -262,7 +262,7 @@
             "example": "Schoonmaakcontract gemeentehuis 2026",
             "title": "Omschrijving"
           },
-          "bron": {
+          "source": {
             "type": "string",
             "enum": [
               "manual",
@@ -273,7 +273,7 @@
             "default": "manual",
             "title": "Bron"
           },
-          "bronReferentie": {
+          "sourceReference": {
             "type": "string",
             "description": "TenderNed aanbestedingId when bron is tenderned; null otherwise (conditional-required, design validation rules).",
             "nullable": true,
@@ -287,7 +287,7 @@
             "example": 50000.0,
             "title": "Bedrag"
           },
-          "kostenplaats": {
+          "costCentre": {
             "type": "string",
             "description": "Cost centre (FK to CostCenter.costCentreCode) — enriched by the contractmanager before activation (design D2).",
             "nullable": true,
@@ -299,7 +299,7 @@
             "nullable": true,
             "title": "Grootboekrekening"
           },
-          "looptijdStart": {
+          "termStart": {
             "type": "string",
             "format": "date",
             "description": "Obligation term start date; bounds milestone dates (design validation rules).",
@@ -432,7 +432,7 @@
         },
         "x-openregister-relations": {
           "aanbesteding": {
-            "localField": "bronReferentie",
+            "localField": "sourceReference",
             "relatedSchema": "TenderNedAanbesteding",
             "relatedField": "aanbestedingId",
             "cardinality": "one-to-one",
@@ -481,14 +481,14 @@
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
         "required": [
-          "verplichtingId",
+          "commitmentId",
           "mijlpaalId",
           "opleveringsType",
           "administrationId",
           "status"
         ],
         "properties": {
-          "verplichtingId": {
+          "commitmentId": {
             "type": "string",
             "description": "FK to the parent Verplichting (design D5).",
             "title": "Verplichting ID"
@@ -610,8 +610,8 @@
           }
         },
         "x-openregister-relations": {
-          "verplichting": {
-            "localField": "verplichtingId",
+          "commitment": {
+            "localField": "commitmentId",
             "relatedSchema": "Verplichting",
             "relatedField": "id",
             "cardinality": "many-to-one",
@@ -662,14 +662,14 @@
       "aanbestedingId": "TN-2026-0001",
       "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001",
       "titel": "Schoonmaak Gemeentehuis Utrecht",
-      "beschrijving": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
+      "description": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
       "cpvCodes": [
         "90910000-9"
       ],
       "aanbestedendeDienst": "30280353 Gemeente Utrecht",
       "gunningsDatum": "2026-01-15",
-      "contractWaarde": 50000.0,
-      "looptijdStart": "2026-02-01",
+      "contractValue": 50000.0,
+      "termStart": "2026-02-01",
       "termEnd": "2027-01-31",
       "gegundeLeverancier": "76741850 Conduction B.V.",
       "opdrachttype": "dienstverlening-doorlopend",
@@ -685,15 +685,15 @@
       "aanbestedingId": "TN-2026-0002",
       "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0002",
       "titel": "IT-dienstverlening Provincie Brabant",
-      "beschrijving": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
+      "description": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
       "cpvCodes": [
         "72000000-5",
         "30200000-1"
       ],
       "aanbestedendeDienst": "17278718 Provincie Noord-Brabant",
       "gunningsDatum": "2026-02-10",
-      "contractWaarde": 250000.0,
-      "looptijdStart": "2026-03-01",
+      "contractValue": 250000.0,
+      "termStart": "2026-03-01",
       "termEnd": "2028-02-29",
       "gegundeLeverancier": "76741850 Conduction B.V.",
       "opdrachttype": "levering-in-fases",
@@ -708,12 +708,12 @@
       },
       "commitmentNumber": "VPL-2026-0001",
       "description": "Schoonmaakcontract gemeentehuis Utrecht 2026",
-      "bron": "tenderned",
-      "bronReferentie": "TN-2026-0001",
+      "source": "tenderned",
+      "sourceReference": "TN-2026-0001",
       "amount": 50000.0,
-      "kostenplaats": "FAC-001",
+      "costCentre": "FAC-001",
       "grootboekrekening": "4500",
-      "looptijdStart": "2026-02-01",
+      "termStart": "2026-02-01",
       "termEnd": "2027-01-31",
       "gegundeLeverancierKvk": "76741850",
       "mijlpalen": [

@@ -352,7 +352,7 @@
             "example": 5000.0,
             "title": "Total Triangulation"
           },
-          "belastingdienstKenmerk": {
+          "taxAuthorityReference": {
             "type": "string",
             "description": "Reference number from the Digipoort submission confirmation (REQ-ICP-010).",
             "nullable": true,
@@ -825,7 +825,7 @@
         "totalGoods": 30000.0,
         "totalServices": 12500.0,
         "totalTriangulation": 5000.0,
-        "belastingdienstKenmerk": null,
+        "taxAuthorityReference": null,
         "submittedAt": null,
         "xmlPayload": null,
         "auditBundle": null,
@@ -854,7 +854,7 @@
         "totalGoods": 0.0,
         "totalServices": 1200.0,
         "totalTriangulation": 0.0,
-        "belastingdienstKenmerk": "BD-2026-Q1-CORR-001",
+        "taxAuthorityReference": "BD-2026-Q1-CORR-001",
         "submittedAt": "2026-05-02T08:00:00+00:00",
         "xmlPayload": null,
         "auditBundle": null,

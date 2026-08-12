@@ -96,7 +96,7 @@
             "example": "aftrekbaar",
             "title": "BTW Regime"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "nullable": true,
             "description": "Free-text or taxonomy category used for code lookup hints.",
@@ -176,12 +176,12 @@
             "description": "RvO melding lifecycle state.",
             "enum": [
               "geen",
-              "ingediend",
+              "submitted",
               "definitief",
               "verlopen"
             ],
             "default": "geen",
-            "example": "ingediend",
+            "example": "submitted",
             "title": "Rvo Melding Status"
           },
           "rvoMeldingDatum": {
@@ -200,7 +200,7 @@
             "example": "2026-06-15",
             "title": "Rvo Melding Deadline"
           },
-          "rvoReferentie": {
+          "rvoReference": {
             "type": "string",
             "nullable": true,
             "description": "RvO eLoket reference once a melding is submitted.",
@@ -240,7 +240,7 @@
             "example": 2026,
             "title": "Jaartal"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "nullable": true,
             "example": "Duurzame energie",
@@ -267,7 +267,7 @@
             "example": null,
             "title": "Max Bedrag Per Eenheid"
           },
-          "eenheid": {
+          "unit": {
             "type": "string",
             "nullable": true,
             "example": "kWp",
@@ -323,7 +323,7 @@
             "title": "Jaartal",
             "description": "The numeric value for jaartal."
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "nullable": true,
             "example": "Circulaire economie",
@@ -427,7 +427,7 @@
             "title": "Scheme",
             "description": "The scheme."
           },
-          "grondslag": {
+          "basis": {
             "type": "integer",
             "description": "Base amount the percentage applies to, in EUR cents.",
             "example": 5000000,
@@ -449,22 +449,22 @@
           "status": {
             "type": "string",
             "enum": [
-              "ingediend",
+              "submitted",
               "definitief"
             ],
-            "default": "ingediend",
-            "example": "ingediend",
+            "default": "submitted",
+            "example": "submitted",
             "title": "Status",
             "description": "The current status of this record."
           },
-          "ingediendInAangifte": {
+          "submittedInTaxReturn": {
             "type": "boolean",
             "default": false,
             "example": false,
             "title": "Ingediend In Aangifte",
             "description": "Indicates whether ngediend in aangifte applies."
           },
-          "rvoBeschikking": {
+          "rvoDecision": {
             "type": "object",
             "nullable": true,
             "description": "RvO award, populated async via the openconnector mededeling feed or overridden by the boekhouder (REQ-INV-007 / D8).",
@@ -482,7 +482,7 @@
                 "title": "Toegekend Bedrag",
                 "description": "The numeric value for toegekend bedrag."
               },
-              "referentie": {
+              "reference": {
                 "type": "string",
                 "example": "RVO-2026-EIA-00123",
                 "title": "Referentie",
@@ -612,7 +612,7 @@
         "required": [
           "tier",
           "jaartal",
-          "vanaf"
+          "from"
         ],
         "properties": {
           "tier": {
@@ -627,7 +627,7 @@
             "title": "Jaartal",
             "description": "The numeric value for jaartal."
           },
-          "vanaf": {
+          "from": {
             "type": "integer",
             "description": "Lower bound of the tier (inclusive), EUR cents.",
             "example": 280000,

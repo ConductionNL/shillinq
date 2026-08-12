@@ -183,7 +183,7 @@ final class PayrollControllerTest extends TestCase
     public function testLoonstrookSuccess(): void
     {
         $this->withParams(['administration_id' => 'adm-1', 'werknemer_id' => 'wn-1', 'periode_id' => 'lp-1']);
-        $payload = ['werknemerId' => 'wn-1', 'nettoBetaald' => 3403.61];
+        $payload = ['employeeId' => 'wn-1', 'netPaid' => 3403.61];
         $this->service->method('berekenLoonStrook')->willReturn($payload);
         $response = $this->controller->loonstrook();
         self::assertSame(Http::STATUS_OK, $response->getStatus());
@@ -199,7 +199,7 @@ final class PayrollControllerTest extends TestCase
     public function testLhAfdrachtSuccess(): void
     {
         $this->withParams(['administration_id' => 'adm-1', 'periode_id' => 'lp-1']);
-        $payload = ['periodeId' => 'lp-1', 'totalRemittance' => 2936.56, 'status' => 'VOORBEREID'];
+        $payload = ['periodId' => 'lp-1', 'totalRemittance' => 2936.56, 'status' => 'VOORBEREID'];
         $this->service->method('berekenLHAfdracht')->willReturn($payload);
         $response = $this->controller->lhAfdracht();
         self::assertSame(Http::STATUS_OK, $response->getStatus());
@@ -228,7 +228,7 @@ final class PayrollControllerTest extends TestCase
     public function testJournaalpostSuccess(): void
     {
         $this->withParams(['administration_id' => 'adm-1', 'periode_id' => 'lp-1']);
-        $payload = ['periodeId' => 'lp-1', 'balanced' => true, 'regels' => []];
+        $payload = ['periodId' => 'lp-1', 'balanced' => true, 'regels' => []];
         $this->service->method('bouwLoonjournaalpost')->willReturn($payload);
         $response = $this->controller->journaalpost();
         self::assertSame(Http::STATUS_OK, $response->getStatus());

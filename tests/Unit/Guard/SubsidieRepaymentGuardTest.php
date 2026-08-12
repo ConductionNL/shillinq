@@ -112,8 +112,8 @@ final class SubsidieRepaymentGuardTest extends TestCase
     {
         $guard = $this->buildGuard(
             [
-                ['subsidieId' => 'sub-1', 'amount' => 5000, 'state' => 'paid'],
-                ['subsidieId' => 'sub-1', 'amount' => 5000, 'state' => 'paid'],
+                ['subsidyId' => 'sub-1', 'amount' => 5000, 'state' => 'paid'],
+                ['subsidyId' => 'sub-1', 'amount' => 5000, 'state' => 'paid'],
             ]
         );
 
@@ -145,8 +145,8 @@ final class SubsidieRepaymentGuardTest extends TestCase
     {
         $guard = $this->buildGuard(
             [
-                ['subsidieId' => 'sub-1', 'amount' => 5000, 'state' => 'paid'],
-                ['subsidieId' => 'sub-1', 'amount' => 2500, 'state' => 'due'],
+                ['subsidyId' => 'sub-1', 'amount' => 5000, 'state' => 'paid'],
+                ['subsidyId' => 'sub-1', 'amount' => 2500, 'state' => 'due'],
             ]
         );
 

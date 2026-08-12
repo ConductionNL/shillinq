@@ -90,7 +90,7 @@
             "example": "2028-10-01",
             "title": "Vroegste Opzeg Datum"
           },
-          "belastingdienstReferentie": {
+          "taxAuthorityReference": {
             "type": "string",
             "description": "Referentie/kenmerk van de Belastingdienst-aanvraag (REQ-KOR-001).",
             "nullable": true,
@@ -132,7 +132,7 @@
             "example": false,
             "title": "Omzettings Regeling"
           },
-          "fiscalEenheidId": {
+          "fiscalUnitId": {
             "type": "string",
             "description": "FK naar fiscale eenheid; gevuld blokkeert individuele KOR-aanmelding (REQ-KOR-010). Null voor niet-eenheid.",
             "nullable": true,
@@ -206,7 +206,7 @@
           "registrationId",
           "year",
           "currentRevenue",
-          "drempel",
+          "threshold",
           "drempelBenutting",
           "administrationId"
         ],
@@ -230,7 +230,7 @@
             "example": 16420.0,
             "title": "Lopende Omzet"
           },
-          "drempel": {
+          "threshold": {
             "type": "number",
             "description": "KOR-jaardrempel in EUR (NL: 20000).",
             "default": 20000,
@@ -244,7 +244,7 @@
             "example": 0.821,
             "title": "Drempel Benutting"
           },
-          "perMaand": {
+          "perMonth": {
             "type": "object",
             "description": "Omzet per maand (YYYY-MM -> bedrag), basis voor de lineaire eindejaars-prognose (REQ-KOR-002).",
             "nullable": true,
@@ -271,7 +271,7 @@
                   "title": "Bedrag",
                   "description": "The numeric value for bedrag."
                 },
-                "grondslag": {
+                "basis": {
                   "type": "string",
                   "title": "Grondslag",
                   "description": "The grondslag."
@@ -282,7 +282,7 @@
               {
                 "type": "VRIJGESTELDE_PRESTATIE",
                 "amount": 4200.0,
-                "grondslag": "art. 11 OB"
+                "basis": "art. 11 OB"
               }
             ],
             "title": "Uitgesloten Posten"
@@ -425,7 +425,7 @@
             "example": "Overweeg opt-out of factureer strategisch.",
             "title": "Aanbeveling"
           },
-          "kanaal": {
+          "channel": {
             "type": "array",
             "description": "Dispatch-kanalen, afhankelijk van ernst (REQ-KOR-003).",
             "items": {
@@ -508,7 +508,7 @@
             "example": "2026-09-04",
             "title": "Revocatie Datum"
           },
-          "triggerFactuurId": {
+          "triggerInvoiceId": {
             "type": "string",
             "description": "FK naar de AR-factuur die de overschrijding veroorzaakte (nullable bij vrijwillige opzegging).",
             "nullable": true,
@@ -560,7 +560,7 @@
             },
             "title": "Herrekening Range"
           },
-          "nieuwRegime": {
+          "newRegime": {
             "type": "string",
             "description": "Regime na revocatie.",
             "enum": [
@@ -661,7 +661,7 @@
             "example": 47800.0,
             "title": "Totaal Eu Omzet"
           },
-          "drempelEUBrut": {
+          "thresholdEUBrut": {
             "type": "number",
             "description": "EU-brede drempel in EUR (REQ-KOR-008).",
             "default": 100000,
@@ -675,17 +675,17 @@
             "example": {
               "BE": {
                 "revenue": 12400.0,
-                "drempel": 25000,
+                "threshold": 25000,
                 "benutting": 0.496
               },
               "DE": {
                 "revenue": 8200.0,
-                "drempel": 22000,
+                "threshold": 22000,
                 "benutting": 0.372
               },
               "NL": {
                 "revenue": 18100.0,
-                "drempel": 20000,
+                "threshold": 20000,
                 "benutting": 0.905
               }
             },
@@ -768,7 +768,7 @@
         "ingangsDatum": "2026-01-01",
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
-        "belastingdienstReferentie": "KOR-2025-NL-89231",
+        "taxAuthorityReference": "KOR-2025-NL-89231",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
         "thresholdYear": 20000,
         "previousRevenue": {
@@ -776,7 +776,7 @@
           "2025": 16800.0
         },
         "conversionScheme": false,
-        "fiscalEenheidId": null,
+        "fiscalUnitId": null,
         "administrationId": "adm-zzp-fotograaf"
       },
       {
@@ -792,7 +792,7 @@
         "ingangsDatum": "2026-01-01",
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
-        "belastingdienstReferentie": "KOR-2025-NL-77410",
+        "taxAuthorityReference": "KOR-2025-NL-77410",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
         "thresholdYear": 20000,
         "previousRevenue": {
@@ -800,7 +800,7 @@
           "2025": 19100.0
         },
         "conversionScheme": false,
-        "fiscalEenheidId": null,
+        "fiscalUnitId": null,
         "administrationId": "adm-kapper-maria"
       },
       {
@@ -816,7 +816,7 @@
         "ingangsDatum": "2026-02-01",
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
-        "belastingdienstReferentie": "KOR-EU-2026-NL-0019",
+        "taxAuthorityReference": "KOR-EU-2026-NL-0019",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_KORUS",
         "thresholdYear": 20000,
         "previousRevenue": {
@@ -824,7 +824,7 @@
           "2025": 34500.0
         },
         "conversionScheme": false,
-        "fiscalEenheidId": null,
+        "fiscalUnitId": null,
         "administrationId": "adm-webshop-1"
       },
       {
@@ -840,7 +840,7 @@
         "ingangsDatum": "2026-01-01",
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
-        "belastingdienstReferentie": "KOR-2025-NL-55120",
+        "taxAuthorityReference": "KOR-2025-NL-55120",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
         "thresholdYear": 20000,
         "previousRevenue": {
@@ -848,7 +848,7 @@
           "2025": 15600.0
         },
         "conversionScheme": false,
-        "fiscalEenheidId": null,
+        "fiscalUnitId": null,
         "administrationId": "adm-zzp-coach"
       },
       {
@@ -860,9 +860,9 @@
         "registrationId": "kor-reg-zzp-fotograaf-2026",
         "year": 2026,
         "currentRevenue": 9300.0,
-        "drempel": 20000,
+        "threshold": 20000,
         "drempelBenutting": 0.465,
-        "perMaand": {
+        "perMonth": {
           "2026-01": 1380.0,
           "2026-02": 1850.0,
           "2026-03": 1620.0,
@@ -884,9 +884,9 @@
         "registrationId": "kor-reg-kapper-maria-2026",
         "year": 2026,
         "currentRevenue": 20360.0,
-        "drempel": 20000,
+        "threshold": 20000,
         "drempelBenutting": 1.018,
-        "perMaand": {
+        "perMonth": {
           "2026-01": 2010.0,
           "2026-02": 2120.0,
           "2026-03": 2280.0,
@@ -911,9 +911,9 @@
         "registrationId": "kor-reg-zzp-onderdrempel-2026",
         "year": 2026,
         "currentRevenue": 19850.0,
-        "drempel": 20000,
+        "threshold": 20000,
         "drempelBenutting": 0.9925,
-        "perMaand": {
+        "perMonth": {
           "2026-01": 1620.0,
           "2026-02": 1640.0,
           "2026-03": 1680.0,
@@ -931,7 +931,7 @@
           {
             "type": "VRIJGESTELDE_PRESTATIE",
             "amount": 4200.0,
-            "grondslag": "art. 11-1-o OB (onderwijs)"
+            "basis": "art. 11-1-o OB (onderwijs)"
           }
         ],
         "forecastYearEnd": 19850.0,
@@ -952,7 +952,7 @@
         "forecastYearEnd": 24630.0,
         "ernst": "KRITIEK",
         "aanbeveling": "Overweeg opt-out of factureer strategisch (vooruitfactureren naar januari).",
-        "kanaal": [
+        "channel": [
           "EMAIL",
           "IN_APP",
           "DASHBOARD"
@@ -975,7 +975,7 @@
         "forecastYearEnd": 27100.0,
         "ernst": "OVERSCHRIJDING",
         "aanbeveling": "Je KOR is per 4 september 2026 beëindigd wegens drempel-overschrijding. Vanaf deze datum factureer je met 21% btw.",
-        "kanaal": [
+        "channel": [
           "EMAIL",
           "IN_APP",
           "DASHBOARD"
@@ -998,7 +998,7 @@
         "forecastYearEnd": 18600.0,
         "ernst": "VROEG",
         "aanbeveling": "Monitor je omzet; je nadert de KOR-drempel.",
-        "kanaal": [
+        "channel": [
           "EMAIL"
         ],
         "bevestigdDoor": null,
@@ -1014,7 +1014,7 @@
         "registrationId": "kor-reg-kapper-maria-2026",
         "type": "OVERSCHRIJDING",
         "revocatieDatum": "2026-09-04",
-        "triggerFactuurId": "fact-2026-0240",
+        "triggerInvoiceId": "fact-2026-0240",
         "revenueAtMoment": 20360.0,
         "btwSuppletieVerschuldigd": true,
         "vatSupplementaryAmount": 3533.55,
@@ -1022,7 +1022,7 @@
           "van": "2026-09-04",
           "tot": "2026-12-31"
         },
-        "nieuwRegime": "REGULIER_BTW",
+        "newRegime": "REGULIER_BTW",
         "blokkadeHeraanmelding": "2029-09-04",
         "belastingdienstNotificatie": {
           "verzonden": true,
@@ -1041,21 +1041,21 @@
         "exNumber": "EX-NL-2026-019234",
         "year": 2026,
         "totalEuRevenue": 20700.0,
-        "drempelEUBrut": 100000,
+        "thresholdEUBrut": 100000,
         "perLidstaat": {
           "NL": {
             "revenue": 10000.0,
-            "drempel": 20000,
+            "threshold": 20000,
             "benutting": 0.5
           },
           "BE": {
             "revenue": 6500.0,
-            "drempel": 25000,
+            "threshold": 25000,
             "benutting": 0.26
           },
           "DE": {
             "revenue": 4200.0,
-            "drempel": 22000,
+            "threshold": 22000,
             "benutting": 0.191
           }
         },

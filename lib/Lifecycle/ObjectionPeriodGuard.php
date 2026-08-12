@@ -202,13 +202,13 @@ class ObjectionPeriodGuard
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         $register      = $this->resolveRegister();
 
-        // 'DefinitieveAanslag' and the 'aangifte' filter key are the data
+        // 'DefinitieveAanslag' and the 'taxReturn' filter key are the data
         // contract — the registered schema title and one of its property
         // columns. Both move with the schema rename and its migration.
         $assessments = $objectService
             ->setRegister($register)
             ->setSchema('DefinitieveAanslag')
-            ->findAll(['filters' => ['aangifte' => $taxReturnId]]);
+            ->findAll(['filters' => ['taxReturn' => $taxReturnId]]);
 
         foreach ($assessments as $assessment) {
             if (is_array($assessment) === true) {

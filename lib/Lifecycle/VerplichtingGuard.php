@@ -82,7 +82,7 @@ class VerplichtingGuard
     public function canActiveren(array $verplichting): bool
     {
         try {
-            if (trim((string) ($verplichting['kostenplaats'] ?? '')) === ''
+            if (trim((string) ($verplichting['costCentre'] ?? '')) === ''
                 || trim((string) ($verplichting['grootboekrekening'] ?? '')) === ''
             ) {
                 $this->logger->info(
@@ -123,7 +123,7 @@ class VerplichtingGuard
      */
     private function milestonesWithinTerm(array $verplichting): bool
     {
-        $start = $this->parseDate(value: (string) ($verplichting['looptijdStart'] ?? ''));
+        $start = $this->parseDate(value: (string) ($verplichting['termStart'] ?? ''));
         $end   = $this->parseDate(value: (string) ($verplichting['termEnd'] ?? ''));
         if ($start === null || $end === null) {
             // No declared term — nothing to bound.

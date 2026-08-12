@@ -63,7 +63,7 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
             'Shillinq incasso-bureau transfer deferred (no outbound connector bound)',
             [
                 'administrationId' => $administrationId,
-                'factuurId'        => $factuurId,
+                'invoiceId'        => $factuurId,
                 'dunningRuns'      => count((array) ($dossier['inhoud']['dunningRuns'] ?? [])),
                 'evidenceRefs'     => count((array) ($dossier['inhoud']['evidenceRefs'] ?? [])),
             ]

@@ -85,7 +85,7 @@
                 "description": "Categorised write-off ground, derived from the OninbaarAfschrijving.art29OBVerklaring declaration: bankruptcy (Faillissement), debt restructuring (Schuldsanering), one year unpaid (1jaar-onbetaald) or other (overig).",
                 "title": "Written Off Reason"
               },
-              "art29OBVerklaring": {
+              "art29OBDeclaration": {
                 "type": "string",
                 "nullable": true,
                 "description": "Verbatim reason / declaration text underpinning the write-off (e.g. 'Faillissement vonnis 2026-04-12', 'Schuldsanering WSNP'). Source: OninbaarAfschrijving.art29OBVerklaring.",

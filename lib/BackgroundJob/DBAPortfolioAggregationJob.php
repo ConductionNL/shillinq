@@ -86,7 +86,7 @@ class DBAPortfolioAggregationJob extends TimedJob
         $omzetPerKlant = [];
         $totaal        = 0;
         foreach ($opdrachten as $opdracht) {
-            $klantId = (string) ($opdracht['klantId'] ?? '');
+            $klantId = (string) ($opdracht['customerId'] ?? '');
             $bedrag  = (int) ($opdracht['realisedRevenue'] ?? 0);
             if ($klantId === '' || $bedrag <= 0) {
                 continue;
@@ -157,7 +157,7 @@ class DBAPortfolioAggregationJob extends TimedJob
         // Group oldest startDatum + total omzet per klant.
         $perKlant = [];
         foreach ($opdrachten as $opdracht) {
-            $klantId  = (string) ($opdracht['klantId'] ?? '');
+            $klantId  = (string) ($opdracht['customerId'] ?? '');
             $startStr = (string) ($opdracht['startDatum'] ?? '');
             $bedrag   = (int) ($opdracht['realisedRevenue'] ?? 0);
             if ($klantId === '' || $startStr === '') {
@@ -189,7 +189,7 @@ class DBAPortfolioAggregationJob extends TimedJob
                 && $aandeel >= DBAConstants::LANGJARIG_DREMPEL_OMZET
             ) {
                 $result[] = [
-                    'klantId'      => (string) $klantId,
+                    'customerId'      => (string) $klantId,
                     'startDatum'   => $row['start']->format('Y-m-d'),
                     'duurJaren'    => round($duurJaren, 2),
                     'revenueShare' => round($aandeel, 4),
@@ -295,7 +295,7 @@ class DBAPortfolioAggregationJob extends TimedJob
                             'concentratie'       => $concentratie,
                             'langjarigeRelaties' => $langjarig,
                             'exclusieveRelaties' => $this->countExclusief(opdrachten: $opdrachten),
-                            'overallRisico'      => $overall,
+                            'overallRisk'      => $overall,
                         ]
                         );
                 $written++;
@@ -324,7 +324,7 @@ class DBAPortfolioAggregationJob extends TimedJob
         $omzetPerKlant = [];
         $totaal        = 0;
         foreach ($opdrachten as $opdracht) {
-            $klantId = (string) ($opdracht['klantId'] ?? '');
+            $klantId = (string) ($opdracht['customerId'] ?? '');
             $bedrag  = (int) ($opdracht['realisedRevenue'] ?? 0);
             if ($klantId === '' || $bedrag <= 0) {
                 continue;

@@ -96,7 +96,7 @@ class DunningRunExecuteGuard
 
             $run = $runs[0];
 
-            $factuurId = (string) ($run['factuurId'] ?? '');
+            $factuurId = (string) ($run['invoiceId'] ?? '');
             if ($factuurId === '') {
                 return false;
             }
@@ -107,7 +107,7 @@ class DunningRunExecuteGuard
                 ->findAll(
                         [
                             'filters' => [
-                                'factuurId'      => $factuurId,
+                                'invoiceId'      => $factuurId,
                                 'lifecycleState' => 'active',
                             ],
                         ]

@@ -99,7 +99,7 @@ final class UrenAlertServiceTest extends TestCase
                 'doelNorm'          => 1225,
                 'lopendeUren'       => 700.0,
                 'forecastYearEnd' => 1150.0,
-                'drempelStatus'     => 'RISICO',
+                'thresholdStatus'     => 'RISICO',
             ],
             datum: '2026-09-30'
         );
@@ -127,7 +127,7 @@ final class UrenAlertServiceTest extends TestCase
                 'doelNorm'          => 1225,
                 'lopendeUren'       => 600.0,
                 'forecastYearEnd' => 900.0,
-                'drempelStatus'     => 'KRITIEK',
+                'thresholdStatus'     => 'KRITIEK',
             ],
             oldStatus: 'RISICO',
             newStatus: 'KRITIEK'
@@ -154,7 +154,7 @@ final class UrenAlertServiceTest extends TestCase
                 'doelNorm'          => 1225,
                 'lopendeUren'       => 1250.0,
                 'forecastYearEnd' => 1400.0,
-                'drempelStatus'     => 'BEHAALD',
+                'thresholdStatus'     => 'BEHAALD',
             ]
         );
 

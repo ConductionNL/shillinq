@@ -184,7 +184,7 @@ class UrenDagregistratieGuard
      */
     private function evidenceRequirementMet(array $entry): bool
     {
-        $categorie = (string) ($entry['categorie'] ?? '');
+        $categorie = (string) ($entry['category'] ?? '');
         if (in_array($categorie, self::EVIDENCE_REQUIRED_CATEGORIES, true) === false) {
             return true;
         }
@@ -193,7 +193,7 @@ class UrenDagregistratieGuard
         if ($bewijs === '') {
             $this->logger->info(
                 'UrenDagregistratieGuard: category requires evidence but none supplied — denying save',
-                ['categorie' => $categorie]
+                ['category' => $categorie]
             );
             return false;
         }
@@ -221,7 +221,7 @@ class UrenDagregistratieGuard
             return true;
         }
 
-        $reden  = (string) ($entry['backfillReden'] ?? '');
+        $reden  = (string) ($entry['backfillReason'] ?? '');
         $bewijs = (string) ($entry['backfillBewijs'] ?? '');
         if ($reden === '' || $bewijs === '') {
             $this->logger->info(

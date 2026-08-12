@@ -54,17 +54,17 @@ class ProgrammabegrotingExporter
     {
         $byCode = [];
         foreach ($taakvelden as $taakveld) {
-            $code = (string) ($taakveld['taakveldCode'] ?? '');
+            $code = (string) ($taakveld['taskFieldCode'] ?? '');
             if ($code === '') {
                 continue;
             }
 
             if (isset($byCode[$code]) === false) {
-                $byCode[$code] = ['batenCents' => 0, 'lastenCents' => 0];
+                $byCode[$code] = ['revenueCents' => 0, 'expensesCents' => 0];
             }
 
-            $byCode[$code]['batenCents']  += (int) round(((float) ($taakveld['baten'] ?? 0)) * 100);
-            $byCode[$code]['lastenCents'] += (int) round(((float) ($taakveld['lasten'] ?? 0)) * 100);
+            $byCode[$code]['revenueCents']  += (int) round(((float) ($taakveld['revenue'] ?? 0)) * 100);
+            $byCode[$code]['expensesCents'] += (int) round(((float) ($taakveld['expenses'] ?? 0)) * 100);
         }
 
         ksort($byCode);
@@ -72,9 +72,9 @@ class ProgrammabegrotingExporter
         $rows = [];
         foreach ($byCode as $code => $cents) {
             $rows[] = [
-                'taakveldCode' => $code,
-                'baten'        => (float) ($cents['batenCents'] / 100),
-                'lasten'       => (float) ($cents['lastenCents'] / 100),
+                'taskFieldCode' => $code,
+                'revenue'        => (float) ($cents['revenueCents'] / 100),
+                'expenses'       => (float) ($cents['expensesCents'] / 100),
             ];
         }
 
@@ -103,13 +103,13 @@ class ProgrammabegrotingExporter
         $batenCents  = 0;
         $lastenCents = 0;
         foreach ($taakvelden as $taakveld) {
-            $batenCents  += (int) round(((float) ($taakveld['baten'] ?? 0)) * 100);
-            $lastenCents += (int) round(((float) ($taakveld['lasten'] ?? 0)) * 100);
+            $batenCents  += (int) round(((float) ($taakveld['revenue'] ?? 0)) * 100);
+            $lastenCents += (int) round(((float) ($taakveld['expenses'] ?? 0)) * 100);
         }
 
         $investeringCents = 0;
         foreach ($investeringen as $investering) {
-            $investeringCents += (int) round(((float) ($investering['bruto'] ?? 0)) * 100);
+            $investeringCents += (int) round(((float) ($investering['gross'] ?? 0)) * 100);
         }
 
         $reserveCents = (int) round($reserveMutaties * 100);

@@ -200,7 +200,7 @@ class RechtmatigheidGuard
                 return true;
             }
 
-            $verklaring = trim((string) ($paragraaf['verklaring_college'] ?? ''));
+            $verklaring = trim((string) ($paragraaf['declaration_college'] ?? ''));
             if ($verklaring === '') {
                 $this->logger->info(
                     'RechtmatigheidGuard: paragraaf buiten tolerantie zonder toelichting — denying vaststellen',

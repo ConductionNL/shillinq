@@ -63,7 +63,7 @@ class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface
             'Shillinq credit-score fetch deferred (no outbound connector bound)',
             [
                 'administrationId' => $administrationId,
-                'klantId'          => $klantId,
+                'customerId'          => $klantId,
                 'provider'         => $provider,
             ]
         );

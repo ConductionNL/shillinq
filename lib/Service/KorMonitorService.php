@@ -98,9 +98,9 @@ class KorMonitorService
             'administrationId'  => $administrationId,
             'year'              => $year,
             'currentRevenue'      => $this->calculator->fromCents(cents: $omzetCents),
-            'drempel'           => $this->calculator->fromCents(cents: $drempelCents),
+            'threshold'           => $this->calculator->fromCents(cents: $drempelCents),
             'drempelBenutting'  => round($benutting, 4),
-            'perMaand'          => $perMaand,
+            'perMonth'          => $perMaand,
             'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
             'prognoseStatus'    => $this->calculator->prognoseStatus(
                 prognoseCents: $prognoseCents,

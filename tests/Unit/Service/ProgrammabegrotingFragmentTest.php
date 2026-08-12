@@ -258,8 +258,8 @@ final class ProgrammabegrotingFragmentTest extends TestCase
             $batenCents  = 0;
             $lastenCents = 0;
             foreach ($taakveldByProgramma[$pid] as $tv) {
-                $batenCents  += (int) round($tv['baten'] * 100);
-                $lastenCents += (int) round($tv['lasten'] * 100);
+                $batenCents  += (int) round($tv['revenue'] * 100);
+                $lastenCents += (int) round($tv['expenses'] * 100);
             }
 
             self::assertSame($batenCents, (int) round($object['revenueTotal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');

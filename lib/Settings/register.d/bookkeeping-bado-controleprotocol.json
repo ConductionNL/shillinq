@@ -119,8 +119,8 @@
           "materialityBase": {
             "type": "string",
             "enum": [
-              "lasten",
-              "baten",
+              "expenses",
+              "revenue",
               "balanstotaal"
             ],
             "description": "Base used to compute materialiteit (REQ-003).",
@@ -407,7 +407,7 @@
             "enum": [
               "overall",
               "programme",
-              "taakveld",
+              "taskField",
               "sisa"
             ],
             "description": "Granularity of the materialiteit row.",
@@ -1103,7 +1103,7 @@
         "effectiveFrom": "2026-01-01",
         "effectiveTo": "2026-12-31",
         "status": "adopted",
-        "materialityBase": "lasten",
+        "materialityBase": "expenses",
         "materialityAmount": 1200000.0,
         "referenceFramework": "BBV 2024 / Wet Fido / SiSa 2026",
         "currency": "EUR"

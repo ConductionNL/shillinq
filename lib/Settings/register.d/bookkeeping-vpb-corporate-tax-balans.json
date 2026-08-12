@@ -74,7 +74,7 @@
             "example": null,
             "title": "VpB Pligtig Tot En Met"
           },
-          "toelichting": {
+          "notes": {
             "type": "string",
             "nullable": true,
             "description": "Free-text bookkeeper note on the Vpb-pligt grond (e.g. 'gemeentelijk havenbedrijf, Wet modernisering Vpb-plicht 2016').",

@@ -143,7 +143,7 @@ final class UrenPrognoseService
             'UrenPrognoseService: prognose computed',
             [
                 'asOf'           => $asOf,
-                'modelVersie'    => self::MODEL_VERSION,
+                'modelVersion'    => self::MODEL_VERSION,
                 'weekGemiddelde' => $weekGemiddelde,
                 'totalForecast' => $totaalPrognose,
                 'confidence'     => $confidence,
@@ -151,9 +151,9 @@ final class UrenPrognoseService
         );
 
         return [
-            'modelVersie'        => self::MODEL_VERSION,
-            'berekendOp'         => gmdate('c'),
-            'perMaandPrognose'   => $perMaand,
+            'modelVersion'        => self::MODEL_VERSION,
+            'calculatedOn'         => gmdate('c'),
+            'perMonthPrognose'   => $perMaand,
             'vakanties'          => array_values(array_map('strval', $vakanties)),
             'totalForecast'     => $totaalPrognose,
             'kansBehaaldNorm'    => $kansBehaaldNorm,
@@ -281,7 +281,7 @@ final class UrenPrognoseService
             }
 
             $maand = (string) ($opdracht['maand'] ?? '');
-            $uren  = (float) ($opdracht['uren'] ?? 0);
+            $uren  = (float) ($opdracht['hours'] ?? 0);
             if ($maand !== '') {
                 $overridesByMaand[$maand] = $uren;
             }

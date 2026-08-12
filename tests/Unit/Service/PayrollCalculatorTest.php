@@ -144,10 +144,10 @@ final class PayrollCalculatorTest extends TestCase
     public function testLoonheffingUitTabel(): void
     {
         $regels = [
-            ['vanaf' => 0, 'tot' => 1200, 'percentage' => 0.0935, 'vasteHeffing' => 0, 'korting' => 295.0],
-            ['vanaf' => 1200, 'tot' => 3300, 'percentage' => 0.3697, 'vasteHeffing' => 112.2, 'korting' => 295.0],
-            ['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
-            ['vanaf' => 6400, 'tot' => null, 'percentage' => 0.495, 'vasteHeffing' => 2034.7, 'korting' => 0],
+            ['from' => 0, 'tot' => 1200, 'percentage' => 0.0935, 'vasteHeffing' => 0, 'korting' => 295.0],
+            ['from' => 1200, 'tot' => 3300, 'percentage' => 0.3697, 'vasteHeffing' => 112.2, 'korting' => 295.0],
+            ['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
+            ['from' => 6400, 'tot' => null, 'percentage' => 0.495, 'vasteHeffing' => 2034.7, 'korting' => 0],
         ];
 
         // €4.940 falls in the 3300..6400 bracket:
@@ -168,10 +168,10 @@ final class PayrollCalculatorTest extends TestCase
     public function testKortingLowersTax(): void
     {
         $metKorting    = [
-            ['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
+            ['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
         ];
         $zonderKorting = [
-            ['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 0],
+            ['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 0],
         ];
 
         $met    = $this->calc->loonheffingUitTabel(4940.0, $metKorting);
@@ -244,7 +244,7 @@ final class PayrollCalculatorTest extends TestCase
 
         // €6.500/month exceeds the €5.969 cap -> 5,32% x 5969 = 317,55.
         $capped = $this->calc->zvwWerkgever(6500.0, 'MAAND', 'LAAG');
-        self::assertSame(5969.00, $capped['grondslag']);
+        self::assertSame(5969.00, $capped['basis']);
         self::assertSame(317.55, $capped['afgedragen_wg']);
 
     }//end testZvwWerkgever()

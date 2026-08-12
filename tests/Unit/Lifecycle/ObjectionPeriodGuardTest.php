@@ -100,7 +100,7 @@ class ObjectionPeriodGuardTest extends TestCase
     {
         $dagtekening = (new \DateTimeImmutable('today'))->modify('-1 week')->format('Y-m-d');
         $this->container->method('get')->willReturn(
-            $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['aangifte' => 'aangifte-1', 'dagtekening' => $dagtekening]]])
+            $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-1', 'dagtekening' => $dagtekening]]])
         );
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -117,7 +117,7 @@ class ObjectionPeriodGuardTest extends TestCase
     {
         $dagtekening = (new \DateTimeImmutable('today'))->modify('-8 weeks')->format('Y-m-d');
         $this->container->method('get')->willReturn(
-            $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['aangifte' => 'aangifte-2', 'dagtekening' => $dagtekening]]])
+            $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-2', 'dagtekening' => $dagtekening]]])
         );
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters

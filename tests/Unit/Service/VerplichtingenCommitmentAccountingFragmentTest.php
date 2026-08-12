@@ -74,9 +74,9 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase
     public function testVerplichtingDeclaresBronReferentie(): void
     {
         $verplichting = $this->fragment()['components']['schemas']['Verplichting'];
-        self::assertArrayHasKey('bronReferentie', $verplichting['properties']);
-        self::assertTrue($verplichting['properties']['bronReferentie']['nullable'] ?? false);
-        self::assertArrayNotContains('bronReferentie', ($verplichting['required'] ?? []));
+        self::assertArrayHasKey('sourceReference', $verplichting['properties']);
+        self::assertTrue($verplichting['properties']['sourceReference']['nullable'] ?? false);
+        self::assertArrayNotContains('sourceReference', ($verplichting['required'] ?? []));
 
     }//end testVerplichtingDeclaresBronReferentie()
 
@@ -110,7 +110,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase
         $agg = $regel['x-openregister-aggregations']['committedVsRealisedPerBudgetLine'];
         self::assertSame('Verplichtingsregel', $agg['source']);
         self::assertSame(
-            ['programme', 'kostenplaats', 'financialYear', 'grootboekrekening'],
+            ['programme', 'costCentre', 'financialYear', 'grootboekrekening'],
             $agg['groupBy']
         );
         self::assertContains('restant_verplicht', $agg['sum']);
@@ -187,14 +187,14 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase
         self::assertGreaterThanOrEqual(3, count($verplichtingen));
         self::assertGreaterThanOrEqual(1, count($budgets));
 
-        $soorten = array_map(static fn ($v) => $v['soort'], $verplichtingen);
+        $soorten = array_map(static fn ($v) => $v['kind'], $verplichtingen);
         foreach (['inkooporder', 'raamovereenkomst', 'subsidiebeschikking'] as $expected) {
             self::assertContains($expected, $soorten, "Seed must include a $expected Verplichting");
         }
 
         foreach ($verplichtingen as $v) {
-            self::assertNotEmpty($v['bronReferentie'] ?? '', "Seeded Verplichting {$v['verplichtingsnummer']} must carry a bronReferentie");
-            $ownRegels = array_filter($regels, static fn ($r) => $r['verplichting'] === $v['verplichtingsnummer']);
+            self::assertNotEmpty($v['sourceReference'] ?? '', "Seeded Verplichting {$v['verplichtingsnummer']} must carry a bronReferentie");
+            $ownRegels = array_filter($regels, static fn ($r) => $r['commitment'] === $v['verplichtingsnummer']);
             self::assertNotEmpty($ownRegels, "Seeded Verplichting {$v['verplichtingsnummer']} must have at least one Verplichtingsregel");
 
             foreach ($ownRegels as $regel) {
@@ -202,7 +202,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase
                     $budgets,
                     static fn ($b) => $b['programmeCode'] === $regel['programme']
                         && $b['financialYear'] === $regel['financialYear']
-                        && $b['kostenplaats'] === $regel['kostenplaats']
+                        && $b['costCentre'] === $regel['costCentre']
                 );
                 $slug           = $regel['@self']['slug'];
                 self::assertNotEmpty($matchingBudget, "Regel $slug must have a matching seeded Budget");

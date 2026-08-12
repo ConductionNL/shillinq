@@ -146,7 +146,7 @@ final class BadoSisaBijlageIIATest extends TestCase
                         'auditYear'         => 2026,
                         'organisationId'    => 'gemeente-utrecht',
                         'organisationType'  => 'gemeente',
-                        'materialityBase'   => 'lasten',
+                        'materialityBase'   => 'expenses',
                         'materialityAmount' => 5000000.0,
                         'effectiveFrom'     => '2026-01-01',
                         'effectiveTo'       => '2026-12-31',

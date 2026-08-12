@@ -105,7 +105,7 @@ class WmoJaarrekeningBijlageService
             $abb           = (array) ($abbByAct[$activityId] ?? []);
             $abbReferentie = null;
             if ((bool) ($activity['isExempted'] ?? false) === true) {
-                $abbReferentie = (string) ($abb['kenmerk'] ?? $activity['exemptionBesluitId'] ?? '');
+                $abbReferentie = (string) ($abb['reference'] ?? $activity['exemptionBesluitId'] ?? '');
             }
 
             $rows[] = [
@@ -120,7 +120,7 @@ class WmoJaarrekeningBijlageService
                 'priorYearOmzet'              => $priorOmzet,
                 'priorYearIntegraleKostprijs' => $priorCost,
                 'priorYearRatio'              => $priorRatio,
-                'abbReferentie'               => $abbReferentie,
+                'abbReference'               => $abbReferentie,
                 'manualOverrides'             => (int) ($overridesByAct[$activityId] ?? 0),
             ];
 
@@ -224,7 +224,7 @@ class WmoJaarrekeningBijlageService
                 (float) ($row['integraleKostprijs'] ?? 0),
                 $ratioText,
                 $compliantText,
-                (string) ($row['abbReferentie'] ?? '—')
+                (string) ($row['abbReference'] ?? '—')
             );
         }//end foreach
 
@@ -271,7 +271,7 @@ class WmoJaarrekeningBijlageService
                 (float) ($r['integraleKostprijs'] ?? 0),
                 $ratioAttr,
                 $compliantAttr,
-                htmlspecialchars((string) ($r['abbReferentie'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
+                htmlspecialchars((string) ($r['abbReference'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
             );
         }//end foreach
 

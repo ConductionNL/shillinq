@@ -168,7 +168,7 @@ class DBAScoreCalculator
     {
         $block       = $this->arrayOrEmpty(value: ($intake['financieelRisico'] ?? []));
         $frequentie  = (int) ($block['factuurFrequentieScore'] ?? 0);
-        $risico      = (int) ($block['betalingsRisicoScore'] ?? 0);
+        $risico      = (int) ($block['paymentRiskScore'] ?? 0);
         $investering = (int) ($block['investeringEigenMiddelenScore'] ?? 0);
         $value       = ($frequentie + $risico + $investering);
         return $this->clamp(value: $value, min: 0, max: 20);

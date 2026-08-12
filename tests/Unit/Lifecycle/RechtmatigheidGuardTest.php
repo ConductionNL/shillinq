@@ -213,7 +213,7 @@ class RechtmatigheidGuardTest extends TestCase
         $result = $this->guard->canVaststellenParagraaf(
             paragraaf: [
                 'binnen_tolerantie'  => false,
-                'verklaring_college' => '',
+                'declaration_college' => '',
                 'financialYear'           => 2026,
             ]
         );
@@ -231,7 +231,7 @@ class RechtmatigheidGuardTest extends TestCase
         $result = $this->guard->canVaststellenParagraaf(
             paragraaf: [
                 'binnen_tolerantie'  => false,
-                'verklaring_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
+                'declaration_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
                 'financialYear'           => 2026,
             ]
         );

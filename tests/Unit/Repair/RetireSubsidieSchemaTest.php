@@ -235,7 +235,7 @@ class RetireSubsidieSchemaTest extends TestCase
      */
     public function testDeletesSubsidieWithMatchingOrder(): void
     {
-        $subsidie = ['id' => 'sub-1', 'subsidieNumber' => 'SUB-2026-001'];
+        $subsidie = ['id' => 'sub-1', 'subsidyNumber' => 'SUB-2026-001'];
         $order    = ['migratedFrom' => ['schema' => 'Subsidie', 'key' => 'SUB-2026-001']];
 
         $fakeOs = $this->fakeObjectService(
@@ -264,7 +264,7 @@ class RetireSubsidieSchemaTest extends TestCase
      */
     public function testKeepsUnmigratedSubsidie(): void
     {
-        $subsidie = ['id' => 'sub-2', 'subsidieNumber' => 'SUB-2026-002'];
+        $subsidie = ['id' => 'sub-2', 'subsidyNumber' => 'SUB-2026-002'];
 
         $fakeOs = $this->fakeObjectService(['Subsidie' => [$subsidie]]);
         $this->container->method('get')->willReturn($fakeOs);
@@ -288,7 +288,7 @@ class RetireSubsidieSchemaTest extends TestCase
      */
     public function testDoesNotMatchOrderFromDifferentSourceSchema(): void
     {
-        $subsidie       = ['id' => 'sub-3', 'subsidieNumber' => 'SUB-2026-003'];
+        $subsidie       = ['id' => 'sub-3', 'subsidyNumber' => 'SUB-2026-003'];
         $unrelatedOrder = ['migratedFrom' => ['schema' => 'PurchaseOrder', 'key' => 'SUB-2026-003']];
 
         $fakeOs = $this->fakeObjectService(

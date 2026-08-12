@@ -108,7 +108,7 @@ class IntegralCostPriceCalculator
                 continue;
             }
 
-            $kp   = (string) ($line['kostenplaats'] ?? $line['kostenplaatsCode'] ?? '');
+            $kp   = (string) ($line['costCentre'] ?? $line['costCentreCode'] ?? '');
             $kd   = (string) ($line['kostendrager'] ?? $line['kostendragerCode'] ?? '');
             $kind = (string) ($line['accountKind'] ?? $line['kind'] ?? '');
 
@@ -166,7 +166,7 @@ class IntegralCostPriceCalculator
                 continue;
             }
 
-            $bucket = (string) ($entry['bucket'] ?? $entry['categorie'] ?? 'overig');
+            $bucket = (string) ($entry['bucket'] ?? $entry['category'] ?? 'overig');
             $ratio  = (float) ($entry['ratio'] ?? 0);
 
             if ($ratio < 0.0) {
@@ -288,7 +288,7 @@ class IntegralCostPriceCalculator
     public function compose(array $input): array
     {
         $glLines = (array) ($input['glLines'] ?? []);
-        $kp      = (string) $input['kostenplaats'];
+        $kp      = (string) $input['costCentre'];
         $kd      = (string) $input['kostendrager'];
 
         $loonkostenCents     = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'loonkosten');
@@ -359,8 +359,8 @@ class IntegralCostPriceCalculator
 
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
-            'periode'              => (string) $input['periode'],
-            'berekendOp'           => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+            'period'              => (string) $input['period'],
+            'calculatedOn'           => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
             'status'               => (string) ($input['status'] ?? 'voorlopig'),
             'componenten'          => [
                 'directeLoonkosten'     => $this->fromCents(cents: $loonkostenCents),
@@ -372,7 +372,7 @@ class IntegralCostPriceCalculator
             ],
             'totaleKosten'         => $this->fromCents(cents: $totaleKostenCents),
             'verkochteEenheden'    => $verkochteEenhedenOut,
-            'eenheidLabel'         => ($input['eenheidLabel'] ?? null),
+            'unitLabel'         => ($input['unitLabel'] ?? null),
             'kostprijsPerEenheid'  => $kostprijsPerEenheid,
             'gehanteerdTarief'     => $gehanteerdTarief,
             'marge'                => $marge,

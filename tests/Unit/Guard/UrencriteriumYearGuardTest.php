@@ -171,10 +171,10 @@ class UrencriteriumYearGuardTest extends TestCase
         $year = [
             'enterpriseId'        => 'ond-1',
             'doelNorm'             => 1225,
-            'normGrondslag'        => 'art. 3.6 lid 1 Wet IB 2001',
+            'normBasis'        => 'art. 3.6 lid 1 Wet IB 2001',
             'lopendeUren'          => 916,
             'forecastYearEnd'    => 1180,
-            'drempelStatus'        => 'RISICO',
+            'thresholdStatus'        => 'RISICO',
             'grotendeelsCriterium' => 'NIET_TOEPASSELIJK',
         ];
         self::assertTrue($this->guard->validateOnSave(year: $year));
@@ -190,8 +190,8 @@ class UrencriteriumYearGuardTest extends TestCase
     {
         $year = [
             'doelNorm'      => 800,
-            'normGrondslag' => 'art. 3.6 lid 1 Wet IB 2001',
-            'drempelStatus' => 'OP_KOERS',
+            'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+            'thresholdStatus' => 'OP_KOERS',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
 
@@ -206,8 +206,8 @@ class UrencriteriumYearGuardTest extends TestCase
     {
         $year = [
             'doelNorm'      => 1000,
-            'normGrondslag' => 'art. 3.6 lid 1 Wet IB 2001',
-            'drempelStatus' => 'OP_KOERS',
+            'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+            'thresholdStatus' => 'OP_KOERS',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
 
@@ -222,11 +222,11 @@ class UrencriteriumYearGuardTest extends TestCase
     {
         $year = [
             'doelNorm'          => 1225,
-            'normGrondslag'     => 'art. 3.6 lid 1 Wet IB 2001',
+            'normBasis'     => 'art. 3.6 lid 1 Wet IB 2001',
             'lopendeUren'       => 916,
             'forecastYearEnd' => 1180,
             // Should be RISICO, not OP_KOERS.
-            'drempelStatus'     => 'OP_KOERS',
+            'thresholdStatus'     => 'OP_KOERS',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
 

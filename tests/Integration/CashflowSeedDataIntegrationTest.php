@@ -220,9 +220,9 @@ final class CashflowSeedDataIntegrationTest extends TestCase
             $os = $profile['horizon']['openingBalance'];
             $sum = (
                 (float) $os['zakelijkeRekening']
-                + (float) $os['spaardoel_btw']
-                + (float) $os['spaardoel_ib']
-                + (float) $os['spaardoel_buffer']
+                + (float) $os['savingsgoal_btw']
+                + (float) $os['savingsgoal_ib']
+                + (float) $os['savingsgoal_buffer']
             );
             self::assertEqualsWithDelta(
                 (float) $os['total'],

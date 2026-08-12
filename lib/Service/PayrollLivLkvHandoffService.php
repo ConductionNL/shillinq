@@ -84,7 +84,7 @@ class PayrollLivLkvHandoffService
         );
 
         return [
-            'werknemerId'         => $werknemerId,
+            'employeeId'         => $werknemerId,
             'year'                => $jaar,
             'inkomenniveau'       => (string) ($werknemer['inkomenniveau'] ?? ''),
             'fiscaalLoonJaar'     => $totaalFiscaal,
@@ -145,7 +145,7 @@ class PayrollLivLkvHandoffService
                 [
                     'filters' => [
                         'administrationId' => $administrationId,
-                        'werknemerId'      => $werknemerId,
+                        'employeeId'      => $werknemerId,
                     ],
                 ]
             );
@@ -153,12 +153,12 @@ class PayrollLivLkvHandoffService
         $totaalC = 0;
         foreach ($results as $r) {
             $row     = (array) $r;
-            $periode = (string) ($row['periodeId'] ?? '');
+            $periode = (string) ($row['periodId'] ?? '');
             if (preg_match('/(?<year>20[0-9]{2})/', $periode, $m) === 1 && (int) $m['year'] !== $jaar) {
                 continue;
             }
 
-            $totaalC += $this->calculator->toCents(amount: (float) ($row['fiscaalLoon'] ?? 0));
+            $totaalC += $this->calculator->toCents(amount: (float) ($row['fiscalLoon'] ?? 0));
         }
 
         return $this->calculator->fromCents(cents: $totaalC);

@@ -173,7 +173,7 @@ class RechtmatigheidWorkflowTest extends TestCase
 
         $filter = ($trigger['filter'] ?? []);
         self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
-        self::assertSame(expected: 'fout', actual: ($filter['soort'] ?? null));
+        self::assertSame(expected: 'fout', actual: ($filter['kind'] ?? null));
 
         $groups = [];
         foreach (($notif['recipients'] ?? []) as $recipient) {

@@ -79,7 +79,7 @@ class VpbAangifteGuard
      *
      * @var array<string>
      */
-    private const AANSLAG_TOEGESTANE_STATES = ['ingediend', 'aanslag-ontvangen', 'bezwaar', 'beroep', 'onherroepelijk'];
+    private const AANSLAG_TOEGESTANE_STATES = ['submitted', 'aanslag-ontvangen', 'bezwaar', 'beroep', 'onherroepelijk'];
 
     /**
      * Construct the guard with DI dependencies.
@@ -136,7 +136,7 @@ class VpbAangifteGuard
         } catch (\Throwable $e) {
             $this->logger->error(
                 'VpbAangifteGuard: canIndienen check failed — denying indienen transition (fail-closed)',
-                ['aangifteId' => $aangifteId, 'exception' => $e->getMessage()]
+                ['taxReturnId' => $aangifteId, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
@@ -159,7 +159,7 @@ class VpbAangifteGuard
     {
         try {
             $aanslag = $object;
-            if ($aanslag === null || isset($aanslag['aangifte']) === false) {
+            if ($aanslag === null || isset($aanslag['taxReturn']) === false) {
                 $aanslag = $this->resolveObject(schema: 'DefinitieveAanslag', id: $aanslagId);
             }
 
@@ -167,7 +167,7 @@ class VpbAangifteGuard
                 return false;
             }
 
-            $aangifte = $this->resolveObject(schema: 'VpbAangifte', id: (string) ($aanslag['aangifte'] ?? ''));
+            $aangifte = $this->resolveObject(schema: 'VpbAangifte', id: (string) ($aanslag['taxReturn'] ?? ''));
             if ($aangifte === null) {
                 return false;
             }
@@ -297,14 +297,14 @@ class VpbAangifteGuard
         $claims = $objectService
             ->setRegister($this->resolveRegister())
             ->setSchema('Innovatiebox')
-            ->findAll(['filters' => ['aangifte' => $aangifteId]]);
+            ->findAll(['filters' => ['taxReturn' => $aangifteId]]);
 
         foreach ($claims as $claim) {
             if (is_array($claim) === false) {
                 continue;
             }
 
-            if ((string) ($claim['soVerklaringReferentie'] ?? '') === '') {
+            if ((string) ($claim['soDeclarationReference'] ?? '') === '') {
                 return false;
             }
         }

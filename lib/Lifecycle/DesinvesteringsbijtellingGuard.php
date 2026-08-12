@@ -218,7 +218,7 @@ class DesinvesteringsbijtellingGuard
             'DesinvesteringsbijtellingGuard: computeBijtelling',
             [
                 'percentage' => $aftrekPercentage,
-                'grondslag'  => $grondslag,
+                'basis'  => $grondslag,
                 'raw'        => $bijtelling,
                 'capped'     => $capped,
             ]

@@ -55,14 +55,14 @@ class BegrotingswijzigingStacker
     {
         $stand = [];
         foreach ($basisTaakvelden as $taakveld) {
-            $code = (string) ($taakveld['taakveldCode'] ?? '');
+            $code = (string) ($taakveld['taskFieldCode'] ?? '');
             if ($code === '') {
                 continue;
             }
 
             $stand[$code] = [
-                'batenCents'  => (int) round(((float) ($taakveld['baten'] ?? 0)) * 100),
-                'lastenCents' => (int) round(((float) ($taakveld['lasten'] ?? 0)) * 100),
+                'revenueCents'  => (int) round(((float) ($taakveld['revenue'] ?? 0)) * 100),
+                'expensesCents' => (int) round(((float) ($taakveld['expenses'] ?? 0)) * 100),
             ];
         }
 
@@ -71,7 +71,7 @@ class BegrotingswijzigingStacker
                 continue;
             }
 
-            $mutaties = ($wijziging['mutaties'] ?? []);
+            $mutaties = ($wijziging['movements'] ?? []);
             if (is_array($mutaties) === true) {
                 $stand = $this->applyMutaties(stand: $stand, mutaties: $mutaties);
             }
@@ -80,8 +80,8 @@ class BegrotingswijzigingStacker
         $result = [];
         foreach ($stand as $code => $cents) {
             $result[$code] = [
-                'baten'  => (float) ($cents['batenCents'] / 100),
-                'lasten' => (float) ($cents['lastenCents'] / 100),
+                'revenue'  => (float) ($cents['revenueCents'] / 100),
+                'expenses' => (float) ($cents['expensesCents'] / 100),
             ];
         }
 
@@ -104,17 +104,17 @@ class BegrotingswijzigingStacker
                 continue;
             }
 
-            $code = (string) ($mutatie['taakveldCode'] ?? '');
+            $code = (string) ($mutatie['taskFieldCode'] ?? '');
             if ($code === '') {
                 continue;
             }
 
             if (isset($stand[$code]) === false) {
-                $stand[$code] = ['batenCents' => 0, 'lastenCents' => 0];
+                $stand[$code] = ['revenueCents' => 0, 'expensesCents' => 0];
             }
 
-            $stand[$code]['batenCents']  += (int) round(((float) ($mutatie['baten_delta'] ?? 0)) * 100);
-            $stand[$code]['lastenCents'] += (int) round(((float) ($mutatie['lasten_delta'] ?? 0)) * 100);
+            $stand[$code]['revenueCents']  += (int) round(((float) ($mutatie['baten_delta'] ?? 0)) * 100);
+            $stand[$code]['expensesCents'] += (int) round(((float) ($mutatie['lasten_delta'] ?? 0)) * 100);
         }
 
         return $stand;
@@ -139,7 +139,7 @@ class BegrotingswijzigingStacker
     public function authorizedLasten(string $taakveldCode, array $basisTaakvelden, array $wijzigingen): float
     {
         $stand = $this->currentStand(basisTaakvelden: $basisTaakvelden, wijzigingen: $wijzigingen);
-        return ($stand[$taakveldCode]['lasten'] ?? 0.0);
+        return ($stand[$taakveldCode]['expenses'] ?? 0.0);
 
     }//end authorizedLasten()
 }//end class

@@ -135,20 +135,20 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
             }
 
             $accountNumber = (string) ($line['accountNumber'] ?? '');
-            $taakveld      = (string) ($line['taakveld'] ?? $accounts[$accountNumber]['taakveld'] ?? '');
+            $taakveld      = (string) ($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
             if ($taakveld === '') {
                 $taakveld = '0.0';
             }
 
             if (isset($totals[$taakveld]) === false) {
-                $totals[$taakveld] = ['lasten' => 0.0, 'baten' => 0.0];
+                $totals[$taakveld] = ['expenses' => 0.0, 'revenue' => 0.0];
             }
 
             $amount = $this->toFloat($line['amount'] ?? 0);
             if ((string) ($line['side'] ?? '') === 'debit') {
-                $totals[$taakveld]['lasten'] += $amount;
+                $totals[$taakveld]['expenses'] += $amount;
             } else {
-                $totals[$taakveld]['baten'] += $amount;
+                $totals[$taakveld]['revenue'] += $amount;
             }
         }//end foreach
 
@@ -167,15 +167,15 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
     private function renderCsv(array $totals, array $context): GeneratedFile
     {
         $handle = fopen('php://temp', 'r+');
-        fputcsv($handle, ['taakveld', 'lasten', 'baten', 'saldo']);
+        fputcsv($handle, ['taskField', 'expenses', 'revenue', 'saldo']);
         foreach ($totals as $taakveld => $row) {
             fputcsv(
                 $handle,
                 [
                     $taakveld,
-                    $this->money($row['lasten']),
-                    $this->money($row['baten']),
-                    $this->money(($row['baten'] - $row['lasten'])),
+                    $this->money($row['expenses']),
+                    $this->money($row['revenue']),
+                    $this->money(($row['revenue'] - $row['expenses'])),
                 ]
             );
         }
@@ -210,7 +210,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
         $writer->startDocument('1.0', 'UTF-8');
 
         $writer->startElement('Iv3Rapportage');
-        $writer->writeAttribute('periode', $this->contextString($context, 'period'));
+        $writer->writeAttribute('period', $this->contextString($context, 'period'));
         $writer->writeAttribute('administratie', $this->contextString($context, 'administrationId'));
         $writer->writeAttribute('valuta', 'EUR');
         $writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
@@ -218,9 +218,9 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
         foreach ($totals as $taakveld => $row) {
             $writer->startElement('Taakveld');
             $writer->writeAttribute('code', (string) $taakveld);
-            $writer->writeElement('Lasten', $this->money($row['lasten']));
-            $writer->writeElement('Baten', $this->money($row['baten']));
-            $writer->writeElement('Saldo', $this->money(($row['baten'] - $row['lasten'])));
+            $writer->writeElement('Lasten', $this->money($row['expenses']));
+            $writer->writeElement('Baten', $this->money($row['revenue']));
+            $writer->writeElement('Saldo', $this->money(($row['revenue'] - $row['expenses'])));
             $writer->endElement();
         }
 

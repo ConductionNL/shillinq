@@ -292,7 +292,7 @@ class PayrollCalculator
             return 0.0;
         }
 
-        $vanaf        = (float) ($regel['vanaf'] ?? 0);
+        $vanaf        = (float) ($regel['from'] ?? 0);
         $percentage   = (float) ($regel['percentage'] ?? 0);
         $vasteHeffing = (float) ($regel['vasteHeffing'] ?? 0);
         $korting      = (float) ($regel['korting'] ?? 0);
@@ -315,7 +315,7 @@ class PayrollCalculator
     private function vindBracket(float $bedrag, array $tabelRegels): ?array
     {
         foreach ($tabelRegels as $regel) {
-            $vanaf = (float) ($regel['vanaf'] ?? 0);
+            $vanaf = (float) ($regel['from'] ?? 0);
             $tot   = ($regel['tot'] ?? null);
             if ($bedrag < $vanaf) {
                 continue;
@@ -432,8 +432,8 @@ class PayrollCalculator
         }
 
         return [
-            'grondslag'     => $grondslag,
-            'tarief'        => $tarief,
+            'basis'     => $grondslag,
+            'rate'        => $tarief,
             'afgedragen_wg' => $this->pct(bedrag: $grondslag, fractie: $tarief),
         ];
 

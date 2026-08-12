@@ -13,19 +13,19 @@
 			"name": "Dansschool de Maten",
 			"bestuursorgaan": "Gemeente Voorbeeld",
 			"organisatieonderdeel": "Afdeling Sport & Cultuur",
-			"beschrijving": "Verhuur zaalruimte voor commerciële danslessen — concurrent met privédansscholen.",
+			"description": "Verhuur zaalruimte voor commerciële danslessen — concurrent met privédansscholen.",
 			"marktsegment": "privédansscholen Voorbeeld",
 			"concurrenten": ["Dansacademie Sint-Hubert", "Dansstudio Pas de Deux"],
 			"afnemers": ["Dansacademie Voorbeeld BV"],
 			"startDatum": "2024-01-15",
 			"kostprijsMethode": "integrale-kostprijs-art-25i",
-			"kostenplaatsCode": "K-SP-014",
+			"costCentreCode": "K-SP-014",
 			"kostendragerCode": "D-MO-SP-014",
 			"isExempted": false,
 			"acmMelding": {
-				"ingediend": true,
+				"submitted": true,
 				"datum": "2024-02-08",
-				"kenmerk": "ACM/UIT/498321"
+				"reference": "ACM/UIT/498321"
 			},
 			"jaaromzet": 92000,
 			"state": "paused"
@@ -35,18 +35,18 @@
 			"name": "Verhuur sporthal commerciële evenementen",
 			"bestuursorgaan": "Gemeente Voorbeeld",
 			"organisatieonderdeel": "Afdeling Sport & Cultuur",
-			"beschrijving": "Verhuur sporthal aan commerciële evenementenorganisatoren buiten reguliere binding.",
+			"description": "Verhuur sporthal aan commerciële evenementenorganisatoren buiten reguliere binding.",
 			"marktsegment": "zakelijke evenementenlocaties Midden-Brabant",
 			"concurrenten": ["LocHal Tilburg BV", "Faxx Theater"],
 			"startDatum": "2023-06-01",
 			"kostprijsMethode": "integrale-kostprijs-art-25i",
-			"kostenplaatsCode": "K-SP-015",
+			"costCentreCode": "K-SP-015",
 			"kostendragerCode": "D-MO-SP-015",
 			"isExempted": false,
 			"acmMelding": {
-				"ingediend": true,
+				"submitted": true,
 				"datum": "2023-07-12",
-				"kenmerk": "ACM/UIT/461728"
+				"reference": "ACM/UIT/461728"
 			},
 			"jaaromzet": 187500,
 			"state": "paused"
@@ -56,19 +56,19 @@
 			"name": "Sportkantine-exploitatie",
 			"bestuursorgaan": "Gemeente Voorbeeld",
 			"organisatieonderdeel": "Afdeling Sport & Cultuur",
-			"beschrijving": "Horeca-exploitatie binnen gemeentelijke sporthallen voor publiek + zakelijke afnemers.",
+			"description": "Horeca-exploitatie binnen gemeentelijke sporthallen voor publiek + zakelijke afnemers.",
 			"marktsegment": "horeca-exploitatie sport en cultuur",
 			"concurrenten": ["Sligro Foodservice", "Albert Heijn Foodservice"],
 			"startDatum": "2022-09-01",
 			"kostprijsMethode": "kostprijs-monitor-zonder-winstopslag",
-			"kostenplaatsCode": "K-SP-016",
+			"costCentreCode": "K-SP-016",
 			"kostendragerCode": "D-MO-SP-016",
 			"isExempted": true,
 			"exemptionBesluitId": "abb-mo-sp-016-2023",
 			"acmMelding": {
-				"ingediend": true,
+				"submitted": true,
 				"datum": "2023-04-19",
-				"kenmerk": "ACM/UIT/471932"
+				"reference": "ACM/UIT/471932"
 			},
 			"jaaromzet": 56800,
 			"state": "paused"

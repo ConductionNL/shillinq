@@ -854,7 +854,7 @@ class SettingsServiceTest extends TestCase
         self::assertNotEmpty($data['taakvelden']);
 
         foreach ($data['taakvelden'] as $taakveld) {
-            foreach (['taakveldCode', 'name', 'category', 'legalBasis', 'effectiveFrom'] as $requiredField) {
+            foreach (['taskFieldCode', 'name', 'category', 'legalBasis', 'effectiveFrom'] as $requiredField) {
                 self::assertArrayHasKey(
                     $requiredField,
                     $taakveld,
@@ -862,7 +862,7 @@ class SettingsServiceTest extends TestCase
                 );
             }
 
-            self::assertNotSame('', $taakveld['taakveldCode']);
+            self::assertNotSame('', $taakveld['taskFieldCode']);
         }//end foreach
 
     }//end testBbvTaakveldSeedFileHasSchemaRequiredProperties()

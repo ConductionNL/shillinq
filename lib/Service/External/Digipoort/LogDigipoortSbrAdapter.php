@@ -75,7 +75,7 @@ class LogDigipoortSbrAdapter implements DigipoortSbrAdapterInterface
         $this->logger->info(
             'Shillinq Digipoort/SBR submission deferred (no outbound connector bound)',
             [
-                'kenmerk' => $kenmerk,
+                'reference' => $kenmerk,
                 'payload' => $sanitised,
             ]
         );

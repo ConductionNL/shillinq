@@ -228,11 +228,11 @@ class BIKStaffelCalculator
             'total'               => $this->fromCents(cents: $totaalCents),
             'minimum'              => $this->fromCents(cents: self::MINIMUM_CENTS),
             'maximum'              => $this->fromCents(cents: self::MAXIMUM_CENTS),
-            'toegepast'            => $this->fromCents(cents: $toegepastCents),
+            'applied'            => $this->fromCents(cents: $toegepastCents),
             'btwVerrekenbaar'      => $btwVerrekenbaar,
             'btwPercentage'        => $appliedBtwPercentage,
             'vatAmount'            => $this->fromCents(cents: $btwCents),
-            'toegepastInclBtw'     => $this->fromCents(cents: ($toegepastCents + $btwCents)),
+            'appliedInclBtw'     => $this->fromCents(cents: ($toegepastCents + $btwCents)),
         ];
 
     }//end staffel()
@@ -292,7 +292,7 @@ class BIKStaffelCalculator
                 [
                     'van'    => $ingangsdatum,
                     'tot'    => $berekendOp,
-                    'tarief' => $override,
+                    'rate' => $override,
                 ],
             ];
         } else {
@@ -308,28 +308,28 @@ class BIKStaffelCalculator
         $totaalDagen = 0;
         foreach ($segments as $segment) {
             $dagen        = (int) $segment['van']->diff($segment['tot'])->days;
-            $segmentCents = (int) round((($hoofdsomCents * $segment['tarief'] * $dagen) / 365.0));
+            $segmentCents = (int) round((($hoofdsomCents * $segment['rate'] * $dagen) / 365.0));
             $totaalCents += $segmentCents;
             $totaalDagen += $dagen;
             $perioden[]   = [
                 'van'    => $segment['van']->format('Y-m-d'),
                 'tot'    => $segment['tot']->format('Y-m-d'),
-                'dagen'  => $dagen,
-                'tarief' => $segment['tarief'],
+                'days'  => $dagen,
+                'rate' => $segment['rate'],
                 'amount' => $this->fromCents(cents: $segmentCents),
             ];
         }
 
         // Headline tarief = the rate in force on berekendOp (the current rate).
         $lastSegment    = end($segments);
-        $headlineTarief = (float) $lastSegment['tarief'];
+        $headlineTarief = (float) $lastSegment['rate'];
 
         return [
-            'tarief'       => $headlineTarief,
+            'rate'       => $headlineTarief,
             'type'         => $type,
             'ingangsdatum' => $ingangsdatum->format('Y-m-d'),
-            'berekendOp'   => $berekendOp->format('Y-m-d'),
-            'dagen'        => $totaalDagen,
+            'calculatedOn'   => $berekendOp->format('Y-m-d'),
+            'days'        => $totaalDagen,
             'amount'       => $this->fromCents(cents: $totaalCents),
             'perioden'     => $perioden,
         ];
@@ -394,7 +394,7 @@ class BIKStaffelCalculator
             $segments[] = [
                 'van'    => $cursor,
                 'tot'    => $cut,
-                'tarief' => $this->resolveRateOn(table: $table, on: $cursor),
+                'rate' => $this->resolveRateOn(table: $table, on: $cursor),
             ];
             $cursor     = $cut;
         }
@@ -402,7 +402,7 @@ class BIKStaffelCalculator
         $segments[] = [
             'van'    => $cursor,
             'tot'    => $to,
-            'tarief' => $this->resolveRateOn(table: $table, on: $cursor),
+            'rate' => $this->resolveRateOn(table: $table, on: $cursor),
         ];
 
         return $segments;
@@ -487,12 +487,12 @@ class BIKStaffelCalculator
 
         $hoofdsomCents = $this->toCents(amount: $hoofdsom);
         // Incassokosten owed = the normed fee INCLUDING any BTW surcharge.
-        $incassoCents = $this->toCents(amount: $berekening['toegepastInclBtw']);
+        $incassoCents = $this->toCents(amount: $berekening['appliedInclBtw']);
         $renteCents   = $this->toCents(amount: $rente['amount']);
         $totaalCents  = ($hoofdsomCents + $incassoCents + $renteCents);
 
         return [
-            'factuurId'          => $factuurId,
+            'invoiceId'          => $factuurId,
             'hoofdsom'           => round($hoofdsom, 2),
             'berekening'         => $berekening,
             'wettelijkeRente'    => $rente,

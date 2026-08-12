@@ -105,7 +105,7 @@ class VpbBerekeningGuardTest extends TestCase
             $this->buildSchemaStub(
                 recordsBySchema: [
                     'VpbTariefcatalogus' => [
-                        ['belastingjaar' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
+                        ['taxYear' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
                     ],
                 ]
             )
@@ -127,7 +127,7 @@ class VpbBerekeningGuardTest extends TestCase
             $this->buildSchemaStub(
                 recordsBySchema: [
                     'VpbTariefcatalogus' => [
-                        ['belastingjaar' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
+                        ['taxYear' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
                     ],
                 ]
             )

@@ -118,7 +118,7 @@ class PayrollController extends Controller
         } catch (\Throwable $e) {
             $this->logger->error(
                 'PayrollController: failed to compute loonstrook',
-                ['administrationId' => $administrationId, 'periodeId' => $periodeId, 'exception' => $e->getMessage()]
+                ['administrationId' => $administrationId, 'periodId' => $periodeId, 'exception' => $e->getMessage()]
             );
             return new JSONResponse(['error' => 'Kon loonstrook niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
         }//end try
@@ -165,7 +165,7 @@ class PayrollController extends Controller
         } catch (\Throwable $e) {
             $this->logger->error(
                 'PayrollController: failed to compute LH-afdracht',
-                ['administrationId' => $administrationId, 'periodeId' => $periodeId, 'exception' => $e->getMessage()]
+                ['administrationId' => $administrationId, 'periodId' => $periodeId, 'exception' => $e->getMessage()]
             );
             return new JSONResponse(['error' => 'Kon LH-afdracht niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
@@ -206,7 +206,7 @@ class PayrollController extends Controller
         } catch (\Throwable $e) {
             $this->logger->error(
                 'PayrollController: failed to build journaalpost',
-                ['administrationId' => $administrationId, 'periodeId' => $periodeId, 'exception' => $e->getMessage()]
+                ['administrationId' => $administrationId, 'periodId' => $periodeId, 'exception' => $e->getMessage()]
             );
             return new JSONResponse(['error' => 'Kon loonjournaalpost niet opbouwen'], Http::STATUS_INTERNAL_SERVER_ERROR);
         }

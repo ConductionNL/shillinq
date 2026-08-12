@@ -220,7 +220,7 @@ class InitializeBbvAdministration implements IRepairStep
         $payload = [
             'administrationId' => $administrationId,
             'name'             => self::ALGEMENE_RESERVE_NAAM,
-            'soort'            => 'algemeen',
+            'kind'            => 'algemeen',
             'saldoBeginJaar'   => 0,
             'rentetoerekening' => false,
             '_meta'            => [
@@ -287,7 +287,7 @@ class InitializeBbvAdministration implements IRepairStep
             'mainFunctionName' => 'Bestuur en ondersteuning',
             'descriptionIv3'  => 'Resultaatbestemming: dotaties en onttrekkingen aan reserves (bootstrap).',
             'overheidslaag'    => $overheidslaag,
-            'geldigVanaf'      => '2025-01-01',
+            'validFrom'      => '2025-01-01',
             '_meta'            => [
                 'source'    => 'bootstrap',
                 'createdBy' => 'InitializeBbvAdministration',

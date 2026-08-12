@@ -131,9 +131,9 @@ final class BudgetOverrunGuardTest extends TestCase
     {
         $this->container->method('get')->willReturn(
             $this->objectServiceStub(
-                taakvelden: [['taakveldCode' => '1.2', 'baten' => 0.0, 'lasten' => 500.0]],
-                wijzigingen: [['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '1.2', 'lasten_delta' => 100.0]]]],
-                glLines: [['taakveldCode' => '1.2', 'side' => 'debit', 'amount' => 400.0]]
+                taakvelden: [['taskFieldCode' => '1.2', 'revenue' => 0.0, 'expenses' => 500.0]],
+                wijzigingen: [['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '1.2', 'lasten_delta' => 100.0]]]],
+                glLines: [['taskFieldCode' => '1.2', 'side' => 'debit', 'amount' => 400.0]]
             )
         );
 
@@ -151,9 +151,9 @@ final class BudgetOverrunGuardTest extends TestCase
     {
         $this->container->method('get')->willReturn(
             $this->objectServiceStub(
-                taakvelden: [['taakveldCode' => '1.2', 'baten' => 0.0, 'lasten' => 500.0]],
+                taakvelden: [['taskFieldCode' => '1.2', 'revenue' => 0.0, 'expenses' => 500.0]],
                 wijzigingen: [],
-                glLines: [['taakveldCode' => '1.2', 'side' => 'debit', 'amount' => 450.0]]
+                glLines: [['taskFieldCode' => '1.2', 'side' => 'debit', 'amount' => 450.0]]
             )
         );
 

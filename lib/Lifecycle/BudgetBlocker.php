@@ -94,7 +94,7 @@ class BudgetBlocker
             if ($verplichting === null) {
                 $this->logger->info(
                     'BudgetBlocker: verplichting not found — denying commitment',
-                    ['verplichting' => $verplichtingsnummer]
+                    ['commitment' => $verplichtingsnummer]
                 );
                 return false;
             }
@@ -113,7 +113,7 @@ class BudgetBlocker
                     $this->logger->info(
                         'BudgetBlocker: insufficient budget — denying commitment',
                         [
-                            'verplichting' => $verplichtingsnummer,
+                            'commitment' => $verplichtingsnummer,
                             'programme'    => ($regel['programme'] ?? null),
                             'financialYear'     => ($regel['financialYear'] ?? null),
                         ]
@@ -126,7 +126,7 @@ class BudgetBlocker
         } catch (\Throwable $e) {
             $this->logger->error(
                 'BudgetBlocker: canCommit failed — denying commitment (fail-closed)',
-                ['verplichting' => $verplichtingsnummer, 'exception' => $e->getMessage()]
+                ['commitment' => $verplichtingsnummer, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
@@ -237,7 +237,7 @@ class BudgetBlocker
         $nummer  = (string) ($verplichting['verplichtingsnummer'] ?? '');
         $queried = [];
         if ($nummer !== '') {
-            $queried = $this->findMany(schema: 'Verplichtingsregel', filters: ['verplichting' => $nummer]);
+            $queried = $this->findMany(schema: 'Verplichtingsregel', filters: ['commitment' => $nummer]);
         }
 
         if (count($queried) > 0) {

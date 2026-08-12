@@ -78,7 +78,7 @@ class IncassoDossierComposer
                 schema: 'DunningRun',
                 filters: [
                     'administrationId' => $administrationId,
-                    'factuurId'        => $factuurId,
+                    'invoiceId'        => $factuurId,
                 ]
                 );
         $incassoKostenAll = $this->findAll(
@@ -86,7 +86,7 @@ class IncassoDossierComposer
                 schema: 'IncassoKostenBerekening',
                 filters: [
                     'administrationId' => $administrationId,
-                    'factuurId'        => $factuurId,
+                    'invoiceId'        => $factuurId,
                 ]
                 );
         $pauseAll         = $this->findAll(
@@ -94,7 +94,7 @@ class IncassoDossierComposer
                 schema: 'DunningPauseDispute',
                 filters: [
                     'administrationId' => $administrationId,
-                    'factuurId'        => $factuurId,
+                    'invoiceId'        => $factuurId,
                 ]
                 );
 
@@ -103,8 +103,8 @@ class IncassoDossierComposer
             $incassoKostenAll,
             static function (array $a, array $b): int {
                 return strcmp(
-                    (string) ($b['wettelijkeRente']['berekendOp'] ?? ''),
-                    (string) ($a['wettelijkeRente']['berekendOp'] ?? '')
+                    (string) ($b['wettelijkeRente']['calculatedOn'] ?? ''),
+                    (string) ($a['wettelijkeRente']['calculatedOn'] ?? '')
                 );
             }
         );
@@ -127,18 +127,18 @@ class IncassoDossierComposer
         }
 
         return [
-            'factuurId' => $factuurId,
+            'invoiceId' => $factuurId,
             'inhoud'    => [
                 'invoice'       => [
-                    'factuurId'        => $factuurId,
-                    'klantId'          => $klantId,
+                    'invoiceId'        => $factuurId,
+                    'customerId'          => $klantId,
                     'administrationId' => $administrationId,
                 ],
                 'dunningRuns'   => $dunningRuns,
                 'incassoKosten' => $latestIncassoKosten,
                 'pauseEvents'   => $pauseAll,
                 'klantGegevens' => [
-                    'klantId' => $klantId,
+                    'customerId' => $klantId,
                 ],
                 'evidenceRefs'  => $evidenceRefs,
             ],

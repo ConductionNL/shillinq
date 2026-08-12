@@ -189,7 +189,7 @@ final class CashflowForecastFragmentTest extends TestCase
 
         self::assertArrayHasKey('projectedReceiptsByWeek', $aggs);
         self::assertSame('sum', $aggs['projectedReceiptsByWeek']['operation']);
-        self::assertSame('verwachtOntvangstWeek', $aggs['projectedReceiptsByWeek']['groupBy']);
+        self::assertSame('expectedReceiptWeek', $aggs['projectedReceiptsByWeek']['groupBy']);
 
     }//end testArProjectionDeclaresReceiptsAggregation()
 

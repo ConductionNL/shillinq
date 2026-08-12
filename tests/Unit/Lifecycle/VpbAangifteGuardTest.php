@@ -107,7 +107,7 @@ class VpbAangifteGuardTest extends TestCase
                 recordsBySchema: [
                     'AnnualReport'       => [['id' => 'jr-1', 'status' => 'vastgesteld']],
                     'Belastingplichtige' => [['id' => 'bp-1', 'eHerkenningsNiveau' => 'EH3', 'digipoortCertificaat' => 'vault://cert']],
-                    'Innovatiebox'       => [['aangifte' => 'aangifte-1', 'soVerklaringReferentie' => 'SO-2026-1']],
+                    'Innovatiebox'       => [['taxReturn' => 'aangifte-1', 'soDeclarationReference' => 'SO-2026-1']],
                 ]
             )
         );
@@ -187,7 +187,7 @@ class VpbAangifteGuardTest extends TestCase
                 recordsBySchema: [
                     'AnnualReport'       => [['id' => 'jr-4', 'status' => 'gedeponeerd']],
                     'Belastingplichtige' => [['id' => 'bp-4', 'eHerkenningsNiveau' => 'EH3', 'digipoortCertificaat' => 'vault://cert']],
-                    'Innovatiebox'       => [['aangifte' => 'aangifte-4', 'soVerklaringReferentie' => '']],
+                    'Innovatiebox'       => [['taxReturn' => 'aangifte-4', 'soDeclarationReference' => '']],
                 ]
             )
         );
@@ -232,13 +232,13 @@ class VpbAangifteGuardTest extends TestCase
     {
         $this->container->method('get')->willReturn(
             $this->buildSchemaStub(
-                recordsBySchema: ['VpbAangifte' => [['id' => 'aangifte-5', 'status' => 'ingediend']]]
+                recordsBySchema: ['VpbAangifte' => [['id' => 'aangifte-5', 'status' => 'submitted']]]
             )
         );
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertTrue(
-            $this->guard->canAanslagOntvangen(aanslagId: 'aanslag-5', object: ['aangifte' => 'aangifte-5'])
+            $this->guard->canAanslagOntvangen(aanslagId: 'aanslag-5', object: ['taxReturn' => 'aangifte-5'])
         );
 
     }//end testCanAanslagOntvangenWhenAangifteIngediend()
@@ -258,7 +258,7 @@ class VpbAangifteGuardTest extends TestCase
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertFalse(
-            $this->guard->canAanslagOntvangen(aanslagId: 'aanslag-6', object: ['aangifte' => 'aangifte-6'])
+            $this->guard->canAanslagOntvangen(aanslagId: 'aanslag-6', object: ['taxReturn' => 'aangifte-6'])
         );
 
     }//end testCannotAanslagOntvangenWhenAangifteConcept()

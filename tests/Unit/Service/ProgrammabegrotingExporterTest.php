@@ -61,18 +61,18 @@ final class ProgrammabegrotingExporterTest extends TestCase
     {
         $rows = $this->exporter->iv3Rows(
             taakvelden: [
-                ['taakveldCode' => '1.1', 'baten' => 50.0, 'lasten' => 450.0],
-                ['taakveldCode' => '1.1', 'baten' => 10.0, 'lasten' => 50.0],
-                ['taakveldCode' => '6.1', 'baten' => 120.0, 'lasten' => 1300.0],
+                ['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0],
+                ['taskFieldCode' => '1.1', 'revenue' => 10.0, 'expenses' => 50.0],
+                ['taskFieldCode' => '6.1', 'revenue' => 120.0, 'expenses' => 1300.0],
             ]
         );
 
         self::assertCount(2, $rows);
         // Sorted by code: 1.1 first, aggregated 60 / 500.
-        self::assertSame('1.1', $rows[0]['taakveldCode']);
-        self::assertSame(60.0, $rows[0]['baten']);
-        self::assertSame(500.0, $rows[0]['lasten']);
-        self::assertSame('6.1', $rows[1]['taakveldCode']);
+        self::assertSame('1.1', $rows[0]['taskFieldCode']);
+        self::assertSame(60.0, $rows[0]['revenue']);
+        self::assertSame(500.0, $rows[0]['expenses']);
+        self::assertSame('6.1', $rows[1]['taskFieldCode']);
 
     }//end testIv3AggregatesPerTaakveld()
 
@@ -85,8 +85,8 @@ final class ProgrammabegrotingExporterTest extends TestCase
     {
         // Σbaten - Σlasten = 100 - 600 = -500; + investering 400 + reserve 50 = -50.
         $saldo = $this->exporter->emuSaldo(
-            taakvelden: [['baten' => 100.0, 'lasten' => 600.0]],
-            investeringen: [['bruto' => 400.0]],
+            taakvelden: [['revenue' => 100.0, 'expenses' => 600.0]],
+            investeringen: [['gross' => 400.0]],
             reserveMutaties: 50.0
         );
         self::assertSame(-50.0, $saldo);
@@ -111,7 +111,7 @@ final class ProgrammabegrotingExporterTest extends TestCase
                 'toezichtRegime'      => 'repressief',
             ],
             programmas: [['number' => '1', 'name' => 'Veiligheid', 'doelstellingen' => 'x', 'revenueTotal' => 80.0, 'expensesTotal' => 650.0]],
-            taakvelden: [['taakveldCode' => '1.1', 'baten' => 50.0, 'lasten' => 450.0]],
+            taakvelden: [['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0]],
             paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'tekst', 'kerncijfers' => []]]
         );
 
@@ -120,7 +120,7 @@ final class ProgrammabegrotingExporterTest extends TestCase
         self::assertCount(1, $export['programmas']);
         self::assertSame('Veiligheid', $export['programmas'][0]['name']);
         self::assertCount(1, $export['taakvelden']);
-        self::assertSame('1.1', $export['taakvelden'][0]['taakveldCode']);
+        self::assertSame('1.1', $export['taakvelden'][0]['taskFieldCode']);
         self::assertCount(1, $export['paragrafen']);
         self::assertSame('lokaleHeffingen', $export['paragrafen'][0]['type']);
         // The whole shape must be json-encodable.

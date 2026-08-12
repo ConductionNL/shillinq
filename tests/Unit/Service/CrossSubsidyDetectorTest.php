@@ -168,11 +168,11 @@ final class CrossSubsidyDetectorTest extends TestCase
      */
     public function testComposeAlert(): void
     {
-        $alert = $this->svc->composeAlert('loss-financing', 'ca-001', 'HIGH', 'adm-tilburg', ['periode' => '2026-02']);
+        $alert = $this->svc->composeAlert('loss-financing', 'ca-001', 'HIGH', 'adm-tilburg', ['period' => '2026-02']);
         self::assertSame('loss-financing', $alert['alertType']);
         self::assertSame('concerncontroller', $alert['assignedTo']);
         self::assertSame('open', $alert['status']);
-        self::assertSame(['periode' => '2026-02'], $alert['detectionContext']);
+        self::assertSame(['period' => '2026-02'], $alert['detectionContext']);
 
     }//end testComposeAlert()
 

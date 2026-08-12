@@ -111,7 +111,7 @@ final class DunningTemplateRegistryTest extends TestCase
         self::assertContains('klantNaam', $fields);
         self::assertContains('factuurNummer', $fields);
         self::assertContains('outstandingAmount', $fields);
-        self::assertContains('vervalDatum', $fields);
+        self::assertContains('expiryDate', $fields);
         self::assertContains('iban', $fields);
         self::assertContains('incassokosten', $fields);
         self::assertContains('rente', $fields);

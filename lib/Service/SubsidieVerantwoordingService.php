@@ -101,7 +101,7 @@ class SubsidieVerantwoordingService
             $report = (new DateTimeImmutable())->format('Y-m-d');
         }
 
-        $grantId          = (string) ($grant['subsidieNumber'] ?? $grant['grantId'] ?? '');
+        $grantId          = (string) ($grant['subsidyNumber'] ?? $grant['grantId'] ?? '');
         $awardDate        = (string) ($grant['awardDate'] ?? '');
         $administrationId = (string) ($grant['administrationId'] ?? '');
         $awardedAmount    = (float) ($grant['awardAmount'] ?? $grant['awardedAmount'] ?? 0.0);

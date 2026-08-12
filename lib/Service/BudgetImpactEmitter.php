@@ -107,10 +107,10 @@ class BudgetImpactEmitter
     {
         $payload = [
             'eventName'        => self::EVENT_OBLIGATION_ACTIVATED,
-            'bronReferentie'   => (string) ($verplichting['bronReferentie'] ?? ''),
-            'contractWaarde'   => (float) ($verplichting['amount'] ?? 0),
-            'kostenplaats'     => (string) ($verplichting['kostenplaats'] ?? ''),
-            'looptijdStart'    => (string) ($verplichting['looptijdStart'] ?? ''),
+            'sourceReference'   => (string) ($verplichting['sourceReference'] ?? ''),
+            'contractValue'   => (float) ($verplichting['amount'] ?? 0),
+            'costCentre'     => (string) ($verplichting['costCentre'] ?? ''),
+            'termStart'    => (string) ($verplichting['termStart'] ?? ''),
             'termEnd'     => (string) ($verplichting['termEnd'] ?? ''),
             'tenderNedUrl'     => (string) ($source['tenderNedUrl'] ?? ''),
             'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
@@ -144,7 +144,7 @@ class BudgetImpactEmitter
 
         $payload = [
             'eventName'        => self::EVENT_MILESTONE_COMPLETED,
-            'verplichtingId'   => (string) ($oplevering['verplichtingId'] ?? ''),
+            'commitmentId'   => (string) ($oplevering['commitmentId'] ?? ''),
             'mijlpaalId'       => (string) ($oplevering['mijlpaalId'] ?? ''),
             'opleveringsType'  => (string) ($oplevering['opleveringsType'] ?? ''),
             'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),

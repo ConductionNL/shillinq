@@ -57,16 +57,16 @@ final class UrenTallyServiceTest extends TestCase
     {
         $result = $this->build()->tallyDag(
             entries: [
-                ['categorie' => 'BILLABLE_KLANTWERK', 'uren' => 6],
-                ['categorie' => 'REISTIJD_ZAKELIJK', 'uren' => 8],
-                ['categorie' => 'ADMINISTRATIE', 'uren' => 1.5],
+                ['category' => 'BILLABLE_KLANTWERK', 'hours' => 6],
+                ['category' => 'REISTIJD_ZAKELIJK', 'hours' => 8],
+                ['category' => 'ADMINISTRATIE', 'hours' => 1.5],
             ]
         );
 
         self::assertSame(11.5, $result['totalHours']);
-        self::assertSame(4.0, $result['perCategorie']['REISTIJD_ZAKELIJK']);
+        self::assertSame(4.0, $result['perCategory']['REISTIJD_ZAKELIJK']);
         self::assertCount(1, $result['overages']);
-        self::assertSame('REISTIJD_ZAKELIJK', $result['overages'][0]['categorie']);
+        self::assertSame('REISTIJD_ZAKELIJK', $result['overages'][0]['category']);
 
     }//end testTallyDagAppliesReistijdCap()
 
@@ -80,15 +80,15 @@ final class UrenTallyServiceTest extends TestCase
     {
         $service = $this->build();
         $entries = [
-            ['categorie' => 'BILLABLE_KLANTWERK', 'uren' => 6],
-            ['categorie' => 'REISTIJD_ZAKELIJK', 'uren' => 5],
+            ['category' => 'BILLABLE_KLANTWERK', 'hours' => 6],
+            ['category' => 'REISTIJD_ZAKELIJK', 'hours' => 5],
         ];
 
         $first  = $service->tallyDag(entries: $entries);
         $second = $service->tallyDag(entries: $entries);
 
         self::assertSame($first['totalHours'], $second['totalHours']);
-        self::assertSame($first['perCategorie'], $second['perCategorie']);
+        self::assertSame($first['perCategory'], $second['perCategory']);
 
     }//end testTallyDagIsIdempotent()
 
@@ -102,7 +102,7 @@ final class UrenTallyServiceTest extends TestCase
     {
         $result = $this->build()->tallyDag(entries: []);
         self::assertSame(0.0, $result['totalHours']);
-        self::assertSame([], $result['perCategorie']);
+        self::assertSame([], $result['perCategory']);
         self::assertSame([], $result['overages']);
 
     }//end testTallyDagEmptyYieldsZero()
@@ -117,11 +117,11 @@ final class UrenTallyServiceTest extends TestCase
     {
         $result = $this->build()->tallyDag(
             entries: [
-                ['categorie' => 'BILLABLE_KLANTWERK', 'uren' => 4],
+                ['category' => 'BILLABLE_KLANTWERK', 'hours' => 4],
                 'garbage',
-                ['uren' => 2],
-                ['categorie' => '', 'uren' => 99],
-                ['categorie' => 'ACQUISITIE', 'uren' => 2],
+                ['hours' => 2],
+                ['category' => '', 'hours' => 99],
+                ['category' => 'ACQUISITIE', 'hours' => 2],
             ]
         );
 
@@ -139,15 +139,15 @@ final class UrenTallyServiceTest extends TestCase
     {
         $patch = $this->build()->tallyYearToDate(
             entries: [
-                ['categorie' => 'BILLABLE_KLANTWERK', 'uren' => 800],
-                ['categorie' => 'ACQUISITIE', 'uren' => 100],
-                ['categorie' => 'REISTIJD_ZAKELIJK', 'uren' => 6],
+                ['category' => 'BILLABLE_KLANTWERK', 'hours' => 800],
+                ['category' => 'ACQUISITIE', 'hours' => 100],
+                ['category' => 'REISTIJD_ZAKELIJK', 'hours' => 6],
             ],
             now: '2026-09-30T23:00:00Z'
         );
 
         self::assertSame(904.0, $patch['lopendeUren']);
-        self::assertSame('2026-09-30T23:00:00Z', $patch['berekendOp']);
+        self::assertSame('2026-09-30T23:00:00Z', $patch['calculatedOn']);
 
     }//end testTallyYearToDateReturnsPatch()
 

@@ -336,7 +336,7 @@ class VerplichtingWorkflowTest extends TestCase
         $overcommit = [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'RO-1',
-            'soort'                 => 'raamovereenkomst',
+            'kind'                 => 'raamovereenkomst',
             'totaalbedrag_excl_btw' => 20000000,
             'regels'                => [
                 ['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
@@ -462,10 +462,10 @@ class VerplichtingWorkflowTest extends TestCase
                 'administrationId'   => 'adm-1',
                 'mandaatcode'        => 'M-INKOOP-100K',
                 'maximumbedrag'      => 10000000,
-                'soort_verplichting' => ['inkooporder', 'raamovereenkomst'],
+                'kind_commitment' => ['inkooporder', 'raamovereenkomst'],
                 'is_override'        => false,
-                'geldig_van'         => '2020-01-01',
-                'geldig_tot'         => '2999-12-31',
+                'valid_from'         => '2020-01-01',
+                'valid_to'         => '2999-12-31',
             ],
             $overrides
         );
@@ -484,7 +484,7 @@ class VerplichtingWorkflowTest extends TestCase
         return [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'PO-1',
-            'soort'                 => 'inkooporder',
+            'kind'                 => 'inkooporder',
             'totaalbedrag_excl_btw' => $bedrag,
             'regels'                => [
                 [

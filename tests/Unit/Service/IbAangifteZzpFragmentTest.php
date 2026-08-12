@@ -170,7 +170,7 @@ final class IbAangifteZzpFragmentTest extends TestCase
         $schemas = $this->fragment()['components']['schemas'];
 
         // MKB exemption rate is sourced from the parameter entity.
-        $mkb = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['mkbWinstvrijstelling'];
+        $mkb = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['mkbProfitExemption'];
         self::assertStringContainsString('IBTaxParameterYear.mkbExemptionRate', $mkb['parameterSource']);
 
         // Urencriterium guard points at the real existing method.

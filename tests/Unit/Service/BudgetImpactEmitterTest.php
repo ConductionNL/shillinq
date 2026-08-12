@@ -187,10 +187,10 @@ final class BudgetImpactEmitterTest extends TestCase
 
         $emitter->emitActivated(
             [
-                'bronReferentie'   => 'TN-2026-0001',
+                'sourceReference'   => 'TN-2026-0001',
                 'amount'           => 50000.0,
-                'kostenplaats'     => 'KP-100',
-                'looptijdStart'    => '2026-01-01',
+                'costCentre'     => 'KP-100',
+                'termStart'    => '2026-01-01',
                 'termEnd'     => '2026-12-31',
                 'administrationId' => 'adm-x',
             ],
@@ -202,9 +202,9 @@ final class BudgetImpactEmitterTest extends TestCase
 
         /** @var array<string, mixed> $args */
         $args = $dispatcher->events[0]['event']->getArguments();
-        $this->assertSame('TN-2026-0001', $args['bronReferentie']);
-        $this->assertSame(50000.0, $args['contractWaarde']);
-        $this->assertSame('KP-100', $args['kostenplaats']);
+        $this->assertSame('TN-2026-0001', $args['sourceReference']);
+        $this->assertSame(50000.0, $args['contractValue']);
+        $this->assertSame('KP-100', $args['costCentre']);
         $this->assertSame(
             'https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001',
             $args['tenderNedUrl']
@@ -226,7 +226,7 @@ final class BudgetImpactEmitterTest extends TestCase
 
         $emitter->emitMilestoneCompleted(
             [
-                'verplichtingId'   => 'TN-TN-2026-0001',
+                'commitmentId'   => 'TN-TN-2026-0001',
                 'mijlpaalId'       => 'M-Q1',
                 'opleveringsType'  => 'eindoplevering',
                 'opleveringsDatum' => '2026-12-15',
@@ -243,7 +243,7 @@ final class BudgetImpactEmitterTest extends TestCase
         $this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
 
         $args = $dispatcher->events[0]['event']->getArguments();
-        $this->assertSame('TN-TN-2026-0001', $args['verplichtingId']);
+        $this->assertSame('TN-TN-2026-0001', $args['commitmentId']);
         $this->assertSame('M-Q1', $args['mijlpaalId']);
         $this->assertSame('eindoplevering', $args['opleveringsType']);
         $this->assertTrue((bool) $args['goedgekeurd']);
@@ -262,7 +262,7 @@ final class BudgetImpactEmitterTest extends TestCase
 
         // The test is "does not throw". If it raises, PHPUnit fails the test
         // — no need for assertNoException semantics in PHPUnit 10.
-        $emitter->emitActivated(['bronReferentie' => 'TN-X'], []);
+        $emitter->emitActivated(['sourceReference' => 'TN-X'], []);
         $this->addToAssertionCount(1);
 
     }//end testEmitActivatedSwallowsDispatcherException()
@@ -276,7 +276,7 @@ final class BudgetImpactEmitterTest extends TestCase
     {
         $emitter = new BudgetImpactEmitter($this->throwingDispatcher(), new NullLogger());
 
-        $emitter->emitMilestoneCompleted(['verplichtingId' => 'TN-X']);
+        $emitter->emitMilestoneCompleted(['commitmentId' => 'TN-X']);
         $this->addToAssertionCount(1);
 
     }//end testEmitMilestoneCompletedSwallowsDispatcherException()

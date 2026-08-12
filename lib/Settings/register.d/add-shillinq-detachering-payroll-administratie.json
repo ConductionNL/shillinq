@@ -264,9 +264,9 @@
           "zzpId",
           "freelancerName",
           "opdrachtBeschrijving",
-          "looptijdStart",
+          "termStart",
           "termEnd",
-          "verklaringStatus",
+          "declarationStatus",
           "risicoBeoordeling",
           "administrationId"
         ],
@@ -289,7 +289,7 @@
             "example": "IT-consultancy voor ERP-migratie project Q3-2026",
             "title": "Opdracht Beschrijving"
           },
-          "looptijdStart": {
+          "termStart": {
             "type": "string",
             "format": "date",
             "description": "Assignment start date.",
@@ -303,7 +303,7 @@
             "example": "2026-09-30",
             "title": "Looptijd Eind"
           },
-          "verklaringStatus": {
+          "declarationStatus": {
             "type": "string",
             "description": "Current lifecycle status of the opdrachtgeversverklaring per REQ-DPA-003.",
             "enum": [
@@ -322,7 +322,7 @@
             "example": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/bijzondere_situaties/freelance/modelovereenkomsten/overeenkomst-van-opdracht-001",
             "title": "Model Overeenkomst"
           },
-          "verklaringDocumentUri": {
+          "declarationDocumentUri": {
             "type": "string",
             "description": "docudesk attachment URI of the generated opdrachtgeversverklaring document. Populated after the 'generate document' action triggers the docudesk template render.",
             "nullable": true,
@@ -349,7 +349,7 @@
           }
         },
         "x-openregister-lifecycle": {
-          "field": "verklaringStatus",
+          "field": "declarationStatus",
           "initialState": "concept",
           "states": {
             "concept": {
@@ -386,7 +386,7 @@
               "action": "x-openregister-docudesk-render",
               "actionParameters": {
                 "templateSlug": "shillinq-opdrachtgeversverklaring",
-                "outputField": "verklaringDocumentUri"
+                "outputField": "declarationDocumentUri"
               }
             }
           }
@@ -427,17 +427,17 @@
         "type": "object",
         "x-schema-org": "schema:TaxForm",
         "required": [
-          "belastingjaar",
+          "taxYear",
           "opdrachtgeverId",
           "recipientName",
           "ontvangerBSN",
           "ontvangerAdres",
           "paymentsTotal",
-          "betalingTypeCode",
+          "paymentTypeCode",
           "administrationId"
         ],
         "properties": {
-          "belastingjaar": {
+          "taxYear": {
             "type": "integer",
             "description": "Tax year this IB47 record covers.",
             "minimum": 2000,
@@ -489,7 +489,7 @@
             "example": 15000.0,
             "title": "Betalingen Totaal"
           },
-          "betalingTypeCode": {
+          "paymentTypeCode": {
             "type": "string",
             "description": "Belastingdienst IB47 payment type code per the IB47 schema 2026.",
             "enum": [
@@ -536,10 +536,10 @@
               "isDryRun": false
             },
             "groupBy": [
-              "belastingjaar",
+              "taxYear",
               "opdrachtgeverId",
               "recipientName",
-              "betalingTypeCode"
+              "paymentTypeCode"
             ],
             "operations": {
               "totalBetalingen": {
@@ -558,11 +558,11 @@
               "isDryRun": true
             },
             "groupBy": [
-              "belastingjaar",
+              "taxYear",
               "opdrachtgeverId",
               "recipientName",
               "dryRunMonth",
-              "betalingTypeCode"
+              "paymentTypeCode"
             ],
             "operations": {
               "maandTotaalBetalingen": {
@@ -574,7 +574,7 @@
           "ib47ReconciliationCheck": {
             "description": "Invariant check: final yearly batch totals per recipient MUST equal the sum of 12 monthly dry-run totals (€0 tolerance) per REQ-DPA-005. Surfaced as a non-blocking warning when the invariant is violated before submission.",
             "groupBy": [
-              "belastingjaar",
+              "taxYear",
               "opdrachtgeverId",
               "recipientName"
             ],

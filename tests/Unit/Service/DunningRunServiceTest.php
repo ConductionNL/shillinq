@@ -124,7 +124,7 @@ final class DunningRunServiceTest extends TestCase
         $os->seed(schema: 'DunningLadder', rows: [
             [
                 'id'     => 'ladder-1',
-                'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'name' => 'Reminder', 'kanaal' => 'EMAIL']],
+                'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'name' => 'Reminder', 'channel' => 'EMAIL']],
             ],
         ]);
 
@@ -146,18 +146,18 @@ final class DunningRunServiceTest extends TestCase
     {
         $os = new InMemoryObjectService();
         $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'kanaal' => 'EMAIL']]],
+            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'channel' => 'EMAIL']]],
         ]);
         $os->seed(schema: 'KlantLadderOverride', rows: [
             [
                 'id'             => 'ovr-1',
-                'klantId'        => 'klant-1',
+                'customerId'        => 'klant-1',
                 'baseLadderId'   => 'ladder-1',
                 'lifecycleState' => 'active',
                 'overrides'      => [
                     'stages' => [
-                        ['nr' => 1, 'kanaal' => 'EMAIL'],
-                        ['nr' => 2, 'kanaal' => 'EMAIL'],
+                        ['nr' => 1, 'channel' => 'EMAIL'],
+                        ['nr' => 2, 'channel' => 'EMAIL'],
                     ],
                 ],
             ],
@@ -183,7 +183,7 @@ final class DunningRunServiceTest extends TestCase
             [
                 'id'               => 'pause-1',
                 'administrationId' => 'adm-1',
-                'factuurId'        => 'inv-1',
+                'invoiceId'        => 'inv-1',
                 'lifecycleState'   => 'active',
             ],
         ]);
@@ -191,11 +191,11 @@ final class DunningRunServiceTest extends TestCase
         $service = $this->makeService(os: $os);
         $this->expectException(RuntimeException::class);
         $service->executeStage(administrationId: 'adm-1', params: [
-            'factuurId' => 'inv-1',
+            'invoiceId' => 'inv-1',
             'ladderId'  => 'ladder-1',
             'stageNr'   => 1,
             'templateId' => 'tpl-1',
-            'kanaal'    => 'EMAIL',
+            'channel'    => 'EMAIL',
         ]);
 
     }//end testExecuteStageRefusesWhilePaused()
@@ -211,11 +211,11 @@ final class DunningRunServiceTest extends TestCase
         $service = $this->makeService(os: $os);
 
         $persisted = $service->executeStage(administrationId: 'adm-1', params: [
-            'factuurId'        => 'inv-1',
+            'invoiceId'        => 'inv-1',
             'ladderId'         => 'ladder-1',
             'stageNr'          => 1,
             'templateId'       => 'tpl-stage1',
-            'kanaal'           => 'EMAIL',
+            'channel'           => 'EMAIL',
             'ontvangerEmail'   => 'klant@example.nl',
             'renderedSubject'  => 'Reminder factuur',
             'renderedBody'     => 'Vriendelijk verzoek',
@@ -224,7 +224,7 @@ final class DunningRunServiceTest extends TestCase
         ]);
 
         self::assertSame('executed', $persisted['lifecycleState']);
-        self::assertSame('EMAIL', $persisted['kanaal']);
+        self::assertSame('EMAIL', $persisted['channel']);
         self::assertSame(1234.56, $persisted['invoiceAmount']);
         self::assertNotNull($persisted['uitgevoerdOp']);
 
@@ -293,16 +293,16 @@ final class DunningRunServiceTest extends TestCase
         $service = $this->makeService(os: $os);
 
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'factuurId'            => 'inv-1',
+            'invoiceId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 4200.00,
             'vatAmount'            => 882.00,
-            'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
-            'btwAangiftePeriode'   => '2026-Q2',
+            'art29OBDeclaration'    => 'Faillissement vonnis 2026-04-12',
+            'btwTaxReturnPeriod'   => '2026-Q2',
         ]);
 
         self::assertSame('posted', $persisted['lifecycleState']);
         self::assertSame(4200.0, $persisted['hoofdsomAfgeschreven']);
-        self::assertStringContainsString('Faillissement', (string) $persisted['art29OBVerklaring']);
+        self::assertStringContainsString('Faillissement', (string) $persisted['art29OBDeclaration']);
 
     }//end testWriteOffPersistsRecord()
 
@@ -315,11 +315,11 @@ final class DunningRunServiceTest extends TestCase
     {
         $service = $this->makeService(os: new InMemoryObjectService());
         $stages  = [
-            ['nr' => 1, 'dagenNaVervalDatum' => 0,  'kanaal' => 'EMAIL'],
-            ['nr' => 2, 'dagenNaVervalDatum' => 14, 'kanaal' => 'EMAIL'],
-            ['nr' => 3, 'dagenNaVervalDatum' => 30, 'kanaal' => 'EMAIL+POSTREGISTRATIE'],
-            ['nr' => 4, 'dagenNaVervalDatum' => 60, 'kanaal' => 'AANGETEKENDE_POST'],
-            ['nr' => 5, 'dagenNaVervalDatum' => 90, 'kanaal' => 'INCASSOBUREAU_API'],
+            ['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL'],
+            ['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL'],
+            ['nr' => 3, 'daysAfterExpiryDate' => 30, 'channel' => 'EMAIL+POSTREGISTRATIE'],
+            ['nr' => 4, 'daysAfterExpiryDate' => 60, 'channel' => 'AANGETEKENDE_POST'],
+            ['nr' => 5, 'daysAfterExpiryDate' => 90, 'channel' => 'INCASSOBUREAU_API'],
         ];
 
         self::assertSame(1, (int) $service->stageForOverdueDays(stages: $stages, dagenVerzuim: 0)['nr']);
@@ -343,8 +343,8 @@ final class DunningRunServiceTest extends TestCase
             [
                 'id'     => 'ladder-1',
                 'stages' => [
-                    ['nr' => 1, 'dagenNaVervalDatum' => 0,  'kanaal' => 'EMAIL', 'templateId' => 'tpl-1'],
-                    ['nr' => 2, 'dagenNaVervalDatum' => 14, 'kanaal' => 'EMAIL', 'templateId' => 'tpl-2'],
+                    ['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL', 'templateId' => 'tpl-1'],
+                    ['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL', 'templateId' => 'tpl-2'],
                 ],
             ],
         ]);
@@ -368,7 +368,7 @@ final class DunningRunServiceTest extends TestCase
 
         self::assertNotNull($run);
         self::assertSame(2, (int) $run['stageNr']);
-        self::assertSame('EMAIL', $run['kanaal']);
+        self::assertSame('EMAIL', $run['channel']);
         self::assertSame(8400.0, (float) $run['invoiceAmount']);
         self::assertSame('executed', $run['lifecycleState']);
 
@@ -383,12 +383,12 @@ final class DunningRunServiceTest extends TestCase
     {
         $os = new InMemoryObjectService();
         $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'kanaal' => 'EMAIL']]],
+            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
         ]);
         $os->seed(schema: 'DunningPauseDispute', rows: [
             [
                 'administrationId' => 'adm-1',
-                'factuurId'        => 'inv-1',
+                'invoiceId'        => 'inv-1',
                 'lifecycleState'   => 'active',
             ],
         ]);
@@ -415,12 +415,12 @@ final class DunningRunServiceTest extends TestCase
     {
         $os = new InMemoryObjectService();
         $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'kanaal' => 'EMAIL']]],
+            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
         ]);
         $os->seed(schema: 'DunningRun', rows: [
             [
                 'administrationId' => 'adm-1',
-                'factuurId'        => 'inv-1',
+                'invoiceId'        => 'inv-1',
                 'stageNr'          => 1,
                 'lifecycleState'   => 'executed',
             ],
@@ -448,7 +448,7 @@ final class DunningRunServiceTest extends TestCase
     {
         $os = new InMemoryObjectService();
         $os->seed(schema: 'DunningLadder', rows: [
-            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'kanaal' => 'EMAIL']]],
+            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
         ]);
         $service = $this->makeService(os: $os);
 
@@ -476,11 +476,11 @@ final class DunningRunServiceTest extends TestCase
         $service = $this->makeService(os: $os);
 
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'factuurId'            => 'inv-1',
+            'invoiceId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 4200.00,
             'vatAmount'            => 882.00,
-            'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
-            'btwAangiftePeriode'   => '2026-Q2',
+            'art29OBDeclaration'    => 'Faillissement vonnis 2026-04-12',
+            'btwTaxReturnPeriod'   => '2026-Q2',
         ]);
 
         $glRows = $os->dump(schema: 'GLTransaction');
@@ -488,7 +488,7 @@ final class DunningRunServiceTest extends TestCase
         $journal = $glRows[0];
 
         // boekingId on the OninbaarAfschrijving points at the GL transaction.
-        self::assertSame($journal['id'], $persisted['boekingId']);
+        self::assertSame($journal['id'], $persisted['entryId']);
         self::assertSame('inv-1', $journal['sourceReference']);
         self::assertSame('posted', $journal['state']);
         self::assertTrue((bool) $journal['isBalanced']);
@@ -520,11 +520,11 @@ final class DunningRunServiceTest extends TestCase
         $service = $this->makeService(os: $os);
 
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'factuurId'            => 'inv-1',
+            'invoiceId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 4200.00,
             'vatAmount'            => 882.00,
-            'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
-            'btwAangiftePeriode'   => '2026-Q2',
+            'art29OBDeclaration'    => 'Faillissement vonnis 2026-04-12',
+            'btwTaxReturnPeriod'   => '2026-Q2',
         ]);
 
         $lines = $os->dump(schema: 'VATLine');
@@ -551,14 +551,14 @@ final class DunningRunServiceTest extends TestCase
         $service = $this->makeService(os: $os);
 
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
-            'factuurId'            => 'inv-1',
+            'invoiceId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 1000.00,
             'vatAmount'            => 210.00,
-            'art29OBVerklaring'    => 'Schuldsanering',
-            'boekingId'            => 'caller-gl-7',
+            'art29OBDeclaration'    => 'Schuldsanering',
+            'entryId'            => 'caller-gl-7',
         ]);
 
-        self::assertSame('caller-gl-7', $persisted['boekingId']);
+        self::assertSame('caller-gl-7', $persisted['entryId']);
         self::assertCount(0, $os->dump(schema: 'GLTransaction'), 'caller boekingId skips re-posting');
 
     }//end testWriteOffHonorsCallerProvidedBoekingId()
@@ -646,9 +646,9 @@ final class DunningRunServiceTest extends TestCase
             [
                 'id'               => 'dr-1',
                 'administrationId' => 'adm-1',
-                'factuurId'        => 'inv-1',
+                'invoiceId'        => 'inv-1',
                 'stageNr'          => 5,
-                'kanaal'           => 'INCASSOBUREAU_API',
+                'channel'           => 'INCASSOBUREAU_API',
                 'lifecycleState'   => 'executed',
                 'deliveryStatus'   => 'PENDING',
             ],
@@ -658,7 +658,7 @@ final class DunningRunServiceTest extends TestCase
         $result = $service->transferToIncasso(
             administrationId: 'adm-1',
             factuurId: 'inv-1',
-            dossier: ['factuurId' => 'inv-1', 'inhoud' => []],
+            dossier: ['invoiceId' => 'inv-1', 'inhoud' => []],
             dunningRunId: 'dr-1'
         );
 
@@ -683,7 +683,7 @@ final class DunningRunServiceTest extends TestCase
             [
                 'id'               => 'dr-1',
                 'administrationId' => 'adm-1',
-                'factuurId'        => 'inv-1',
+                'invoiceId'        => 'inv-1',
                 'stageNr'          => 5,
                 'lifecycleState'   => 'executed',
             ],
@@ -703,7 +703,7 @@ final class DunningRunServiceTest extends TestCase
         $result = $service->transferToIncasso(
             administrationId: 'adm-1',
             factuurId: 'inv-1',
-            dossier: ['factuurId' => 'inv-1', 'inhoud' => []],
+            dossier: ['invoiceId' => 'inv-1', 'inhoud' => []],
             dunningRunId: 'dr-1'
         );
 
@@ -725,9 +725,9 @@ final class DunningRunServiceTest extends TestCase
             [
                 'id'               => 'dr-1',
                 'administrationId' => 'adm-1',
-                'factuurId'        => 'inv-1',
+                'invoiceId'        => 'inv-1',
                 'stageNr'          => 4,
-                'kanaal'           => 'AANGETEKENDE_POST',
+                'channel'           => 'AANGETEKENDE_POST',
                 'lifecycleState'   => 'executed',
                 'deliveryStatus'   => 'PENDING',
             ],

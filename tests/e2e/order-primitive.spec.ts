@@ -70,13 +70,13 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 	test('a subsidie is an Order of type subsidie @spec REQ-ORD-001', async () => {
 		const { id } = await fx.create(SCHEMA, {
 			administrationId: ADMIN_ID,
-			orderType: 'subsidie',
+			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB`,
 			state: 'aanvraag',
 		})
 		const obj = await fx.get(SCHEMA, id)
-		expect(obj.orderType).toBe('subsidie')
+		expect(obj.orderType).toBe('subsidy')
 	})
 
 	test('a purchase order is an Order of type purchase @spec REQ-ORD-001', async () => {
@@ -106,7 +106,7 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 	test('subsidie keeps its statutory lifecycle (verleen: aanvraag → verleend) @spec REQ-ORD-002', async () => {
 		const { id } = await fx.create(SCHEMA, {
 			administrationId: ADMIN_ID,
-			orderType: 'subsidie',
+			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB-LIFECYCLE`,
 			state: 'aanvraag',
@@ -123,7 +123,7 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 	test('a transition never crosses orderType boundaries (approve refused on a subsidie) @spec REQ-ORD-002', async () => {
 		const { id } = await fx.create(SCHEMA, {
 			administrationId: ADMIN_ID,
-			orderType: 'subsidie',
+			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB-CROSS`,
 			state: 'aanvraag',

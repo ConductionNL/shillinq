@@ -204,10 +204,10 @@ class DBAController extends Controller
 
         $body        = $this->jsonBody();
         $bedragCents = (int) ($body['bedragCents'] ?? 0);
-        $uren        = (float) ($body['uren'] ?? 0.0);
+        $uren        = (float) ($body['hours'] ?? 0.0);
         $opdrachtId  = (string) ($body['opdrachtId'] ?? '');
         $administrationId = (string) ($body['administrationId'] ?? '');
-        $factuurId        = (string) ($body['factuurId'] ?? '');
+        $factuurId        = (string) ($body['invoiceId'] ?? '');
 
         $result = $this->vbarMonitor->assess(bedragCents: $bedragCents, uren: $uren, administrationId: $administrationId);
 
@@ -258,7 +258,7 @@ class DBAController extends Controller
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
         $opdracht['wbaBeoordelingResultaat'] = $resultaat;
-        $opdracht['wbaGeldigTot']            = (new DateTimeImmutable())
+        $opdracht['wbaValidTo']            = (new DateTimeImmutable())
             ->modify('+'.DBAConstants::WBA_GELDIGHEID_DAGEN.' days')->format('Y-m-d');
         try {
             $updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');

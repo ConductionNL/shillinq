@@ -208,7 +208,7 @@ final class TenderNedStatusSyncTest extends TestCase
             new NullLogger()
         );
 
-        $result = $sync->syncCompletion(['verplichtingId' => 'TN-X', 'mijlpaalId' => 'M-EIND']);
+        $result = $sync->syncCompletion(['commitmentId' => 'TN-X', 'mijlpaalId' => 'M-EIND']);
 
         $this->assertFalse($result);
 
@@ -226,7 +226,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '99999999 Gemeente Anders',
-                    'verplichtingId'      => 'TN-X',
+                    'commitmentId'      => 'TN-X',
                 ],
                 $this->spyGateway()
             ),
@@ -236,7 +236,7 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'verplichtingId'  => 'TN-X',
+                'commitmentId'  => 'TN-X',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsDatum' => '2026-12-15',
                 'bewijsstukken'   => [['documentId' => 'doc-1']],
@@ -259,7 +259,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'verplichtingId'      => 'TN-X',
+                    'commitmentId'      => 'TN-X',
                 ],
                 null
             ),
@@ -269,7 +269,7 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'verplichtingId'   => 'TN-X',
+                'commitmentId'   => 'TN-X',
                 'mijlpaalId'       => 'M-EIND',
                 'opleveringsDatum' => '2026-12-15',
                 'bewijsstukken'    => [['documentId' => 'doc-1']],
@@ -294,7 +294,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'verplichtingId'      => 'TN-X',
+                    'commitmentId'      => 'TN-X',
                 ],
                 $gateway
             ),
@@ -304,7 +304,7 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'verplichtingId'   => 'TN-X',
+                'commitmentId'   => 'TN-X',
                 'mijlpaalId'       => 'M-EIND',
                 'opleveringsDatum' => '2026-12-15',
                 'bewijsstukken'    => [['documentId' => 'doc-1']],
@@ -342,7 +342,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'verplichtingId'      => 'TN-X',
+                    'commitmentId'      => 'TN-X',
                 ],
                 $gateway
             ),
@@ -352,7 +352,7 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'verplichtingId'   => 'TN-X',
+                'commitmentId'   => 'TN-X',
                 'mijlpaalId'       => 'M-EIND',
                 'opleveringsDatum' => '2026-12-15',
                 'bewijsstukken'    => [],

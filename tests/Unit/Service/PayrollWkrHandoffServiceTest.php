@@ -177,20 +177,20 @@ final class PayrollWkrHandoffServiceTest extends TestCase
         $svc = $this->buildService(
             data: [
                 'LoonStrook' => [
-                    ['periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'fiscaalLoon' => 4940.00],
-                    ['periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'fiscaalLoon' => 6700.00],
-                    ['periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'fiscaalLoon' => 3210.50],
+                    ['periodId' => 'lp-1', 'administrationId' => 'adm-1', 'fiscalLoon' => 4940.00],
+                    ['periodId' => 'lp-1', 'administrationId' => 'adm-1', 'fiscalLoon' => 6700.00],
+                    ['periodId' => 'lp-1', 'administrationId' => 'adm-1', 'fiscalLoon' => 3210.50],
                     // Different period -> excluded.
-                    ['periodeId' => 'lp-2', 'administrationId' => 'adm-1', 'fiscaalLoon' => 9999.00],
+                    ['periodId' => 'lp-2', 'administrationId' => 'adm-1', 'fiscalLoon' => 9999.00],
                     // Different admin -> excluded.
-                    ['periodeId' => 'lp-1', 'administrationId' => 'adm-2', 'fiscaalLoon' => 9999.00],
+                    ['periodId' => 'lp-1', 'administrationId' => 'adm-2', 'fiscalLoon' => 9999.00],
                 ],
             ]
         );
 
         $payload = $svc->toWkrLoonsomPayload(administrationId: 'adm-1', periodeId: 'lp-1');
 
-        $this->assertSame('lp-1', $payload['periodeId']);
+        $this->assertSame('lp-1', $payload['periodId']);
         $this->assertSame('adm-1', $payload['administrationId']);
         $this->assertEqualsWithDelta(14850.50, $payload['loonsom'], 0.005);
         $this->assertSame(3, $payload['aantalStroken']);

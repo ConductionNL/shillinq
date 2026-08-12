@@ -293,7 +293,7 @@
         "required": [
           "administrationId",
           "bevindingsnummer",
-          "soort",
+          "kind",
           "criterium",
           "financialYear",
           "status"
@@ -311,7 +311,7 @@
             "example": "RV-2026-0142",
             "title": "Bevindingsnummer"
           },
-          "soort": {
+          "kind": {
             "type": "string",
             "enum": [
               "fout",
@@ -482,7 +482,7 @@
               "type": "created",
               "filter": {
                 "criterium": "begroting",
-                "soort": "fout"
+                "kind": "fout"
               }
             },
             "description": "REQ-RV-001: notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
@@ -615,7 +615,7 @@
             "description": "True when both fouten and onzekerheden are within their thresholds (REQ-RV-005).",
             "title": "Binnen Tolerantie"
           },
-          "verklaring_college": {
+          "declaration_college": {
             "type": "string",
             "nullable": true,
             "description": "College verklaring text (standaard when binnen_tolerantie, else gewijzigd citing overages).",
@@ -629,7 +629,7 @@
             },
             "title": "Bevindingen"
           },
-          "vastgesteld_door_college_op": {
+          "determined_by_college_on": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -811,14 +811,14 @@
             "example": "RB-2025-117",
             "title": "Vastgesteld Bij Raadsbesluit"
           },
-          "vastgesteld_op": {
+          "determined_on": {
             "type": "string",
             "format": "date",
             "nullable": true,
             "description": "Date the raadsbesluit was taken.",
             "title": "Vastgesteld Op"
           },
-          "geldig_vanaf": {
+          "valid_from": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -826,7 +826,7 @@
             "example": "2026-01-01",
             "title": "Geldig Vanaf"
           },
-          "geldig_tot": {
+          "valid_to": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -900,9 +900,9 @@
       "fout_percentage": 3.0,
       "onzekerheid_percentage": 1.0,
       "vastgesteld_bij_raadsbesluit": null,
-      "vastgesteld_op": null,
-      "geldig_vanaf": "2026-01-01",
-      "geldig_tot": "2026-12-31",
+      "determined_on": null,
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
       "berekeningsbasis": "total_expenses_including_reserve_movements",
       "status": "concept"
     }

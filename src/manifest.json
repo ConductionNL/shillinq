@@ -3764,12 +3764,12 @@
 						"type": "integer"
 					},
 					{
-						"key": "tariefGrondslag",
+						"key": "rateBasis",
 						"label": "Rate basis",
 						"type": "string"
 					},
 					{
-						"key": "tarief",
+						"key": "rate",
 						"label": "Rate (EUR)",
 						"type": "number"
 					},
@@ -7977,7 +7977,7 @@
 									"schema": "DunningRun",
 									"metric": "count",
 									"filter": {
-										"factuurId": "@objectId"
+										"invoiceId": "@objectId"
 									},
 									"route": "DunningRuns"
 								}
@@ -8018,7 +8018,7 @@
 							"register": "shillinq",
 							"schema": "DunningRun",
 							"filter": {
-								"factuurId": "@objectId"
+								"invoiceId": "@objectId"
 							},
 							"sort": {
 								"field": "stageNr",
@@ -8035,7 +8035,7 @@
 									"label": "Executed"
 								},
 								{
-									"key": "kanaal",
+									"key": "channel",
 									"label": "Channel"
 								},
 								{
@@ -8050,7 +8050,7 @@
 							"rowRoute": "DunningRunDetail",
 							"viewAllRoute": "DunningRuns",
 							"viewAllQuery": {
-								"factuurId": "@objectId"
+								"invoiceId": "@objectId"
 							},
 							"emptyText": "No dunning runs have been triggered for this invoice.",
 							"allowCreate": false
@@ -8603,7 +8603,7 @@
 						"type": "calculated"
 					},
 					{
-						"key": "vpbAangifteId",
+						"key": "vpbTaxReturnId",
 						"label": "Vpb return link",
 						"type": "string"
 					},
@@ -8748,7 +8748,7 @@
 				},
 				"columns": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Grant number",
 						"sortable": true
 					},
@@ -8795,7 +8795,7 @@
 				"schema": "Subsidie",
 				"fields": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Grant number",
 						"type": "string"
 					},
@@ -8820,12 +8820,12 @@
 						"type": "string"
 					},
 					{
-						"key": "aanvraagDate",
+						"key": "requestDate",
 						"label": "Application date",
 						"type": "date"
 					},
 					{
-						"key": "beschikkingDate",
+						"key": "decisionDate",
 						"label": "Decision date",
 						"type": "date"
 					},
@@ -8878,7 +8878,7 @@
 						"title": "Cost items",
 						"schema": "Kostenpost",
 						"filter": {
-							"subsidieId": "@self.id"
+							"subsidyId": "@self.id"
 						},
 						"columns": [
 							{
@@ -8937,7 +8937,7 @@
 				"schema": "Kostenpost",
 				"fields": [
 					{
-						"key": "subsidieId",
+						"key": "subsidyId",
 						"label": "Grant",
 						"type": "string"
 					},
@@ -11365,7 +11365,7 @@
 						"type": "number"
 					},
 					{
-						"key": "mkbWinstvrijstelling",
+						"key": "mkbProfitExemption",
 						"label": "MKB profit exemption",
 						"type": "number"
 					},
@@ -11457,7 +11457,7 @@
 						"sortable": true
 					},
 					{
-						"key": "taakveld",
+						"key": "taskField",
 						"label": "Task field",
 						"sortable": true
 					},
@@ -11507,7 +11507,7 @@
 						"type": "string"
 					},
 					{
-						"key": "taakveld",
+						"key": "taskField",
 						"label": "Task field",
 						"type": "string"
 					},
@@ -11728,12 +11728,12 @@
 				"schema": "Subsidie",
 				"columns": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Number",
 						"sortable": true
 					},
 					{
-						"key": "subsidieName",
+						"key": "subsidyName",
 						"label": "Name",
 						"sortable": true
 					},
@@ -11748,7 +11748,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "subsidieNumber",
+				"defaultSort": "subsidyNumber",
 				"detailRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
@@ -11766,12 +11766,12 @@
 				},
 				"columns": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Number",
 						"sortable": true
 					},
 					{
-						"key": "subsidieName",
+						"key": "subsidyName",
 						"label": "Name",
 						"sortable": true
 					},
@@ -11781,7 +11781,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "subsidieNumber",
+				"defaultSort": "subsidyNumber",
 				"detailRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
@@ -11799,12 +11799,12 @@
 				},
 				"columns": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Number",
 						"sortable": true
 					},
 					{
-						"key": "subsidieName",
+						"key": "subsidyName",
 						"label": "Name",
 						"sortable": true
 					},
@@ -11814,7 +11814,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "subsidieNumber",
+				"defaultSort": "subsidyNumber",
 				"detailRoute": "SubsidieDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
@@ -12393,7 +12393,7 @@
 						"sortable": true
 					},
 					{
-						"key": "categorie",
+						"key": "category",
 						"label": "Category",
 						"sortable": true
 					},
@@ -12416,19 +12416,19 @@
 						"label": "Indexation"
 					},
 					{
-						"key": "geldigVan",
+						"key": "validFrom",
 						"label": "Valid From"
 					},
 					{
-						"key": "geldigTot",
+						"key": "validTo",
 						"label": "Valid To"
 					}
 				],
-				"defaultSort": "geldigVan",
+				"defaultSort": "validFrom",
 				"detailRoute": "CashflowRecurringDetail",
 				"filters": [
 					{
-						"key": "categorie",
+						"key": "category",
 						"label": "Category"
 					},
 					{
@@ -12497,11 +12497,11 @@
 						},
 						"columns": [
 							{
-								"key": "klantId",
+								"key": "customerId",
 								"label": "Customer"
 							},
 							{
-								"key": "reden",
+								"key": "reason",
 								"label": "Reason"
 							},
 							{
@@ -12589,7 +12589,7 @@
 				"schema": "KlantLadderOverride",
 				"columns": [
 					{
-						"key": "klantId",
+						"key": "customerId",
 						"label": "Customer",
 						"sortable": true
 					},
@@ -12599,7 +12599,7 @@
 						"sortable": true
 					},
 					{
-						"key": "reden",
+						"key": "reason",
 						"label": "Reason",
 						"sortable": false
 					},
@@ -12614,7 +12614,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "klantId",
+				"defaultSort": "customerId",
 				"detailRoute": "DunningKlantOverrideDetail",
 				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5). REQ-CCD-001.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
@@ -12632,7 +12632,7 @@
 				"schema": "KlantLadderOverride",
 				"fields": [
 					{
-						"key": "klantId",
+						"key": "customerId",
 						"label": "Customer",
 						"type": "string"
 					},
@@ -12647,7 +12647,7 @@
 						"type": "json"
 					},
 					{
-						"key": "reden",
+						"key": "reason",
 						"label": "Reason",
 						"type": "string"
 					},
@@ -12717,7 +12717,7 @@
 				"schema": "DunningRun",
 				"columns": [
 					{
-						"key": "factuurId",
+						"key": "invoiceId",
 						"label": "Invoice",
 						"sortable": true
 					},
@@ -12727,7 +12727,7 @@
 						"sortable": true
 					},
 					{
-						"key": "kanaal",
+						"key": "channel",
 						"label": "Channel",
 						"sortable": true
 					},
@@ -12760,7 +12760,7 @@
 				"schema": "DunningRun",
 				"fields": [
 					{
-						"key": "factuurId",
+						"key": "invoiceId",
 						"label": "Invoice",
 						"type": "string"
 					},
@@ -12775,7 +12775,7 @@
 						"type": "integer"
 					},
 					{
-						"key": "kanaal",
+						"key": "channel",
 						"label": "Channel",
 						"type": "string"
 					},
@@ -12891,7 +12891,7 @@
 				"schema": "IncassoKostenBerekening",
 				"columns": [
 					{
-						"key": "factuurId",
+						"key": "invoiceId",
 						"label": "Invoice",
 						"sortable": true
 					},
@@ -12911,7 +12911,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "factuurId",
+				"defaultSort": "invoiceId",
 				"detailRoute": "IncassoKostenDetail",
 				"description": "BIK staffel + wettelijke rente per invoice (REQ-CCD-003).",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
@@ -12929,7 +12929,7 @@
 				"schema": "IncassoKostenBerekening",
 				"fields": [
 					{
-						"key": "factuurId",
+						"key": "invoiceId",
 						"label": "Invoice",
 						"type": "string"
 					},
@@ -12998,7 +12998,7 @@
 				"schema": "OninbaarAfschrijving",
 				"columns": [
 					{
-						"key": "factuurId",
+						"key": "invoiceId",
 						"label": "Invoice",
 						"sortable": true
 					},
@@ -13013,7 +13013,7 @@
 						"sortable": true
 					},
 					{
-						"key": "btwAangiftePeriode",
+						"key": "btwTaxReturnPeriod",
 						"label": "VAT period",
 						"sortable": true
 					},
@@ -13023,7 +13023,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "factuurId",
+				"defaultSort": "invoiceId",
 				"detailRoute": "OninbareAfschrijvingDetail",
 				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB. REQ-CCD-010.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
@@ -13041,7 +13041,7 @@
 				"schema": "OninbaarAfschrijving",
 				"fields": [
 					{
-						"key": "factuurId",
+						"key": "invoiceId",
 						"label": "Invoice",
 						"type": "string"
 					},
@@ -13056,7 +13056,7 @@
 						"type": "money"
 					},
 					{
-						"key": "art29OBVerklaring",
+						"key": "art29OBDeclaration",
 						"label": "Reason (art. 29 OB)",
 						"type": "string"
 					},
@@ -13066,12 +13066,12 @@
 						"type": "string"
 					},
 					{
-						"key": "boekingId",
+						"key": "entryId",
 						"label": "GL posting",
 						"type": "string"
 					},
 					{
-						"key": "btwAangiftePeriode",
+						"key": "btwTaxReturnPeriod",
 						"label": "BTW return period",
 						"type": "string"
 					},
@@ -13216,7 +13216,7 @@
 						"type": "string"
 					},
 					{
-						"key": "soort",
+						"key": "kind",
 						"label": "Commitment Type",
 						"type": "string"
 					},
@@ -17519,7 +17519,7 @@
 						"sortable": true
 					},
 					{
-						"key": "klantId",
+						"key": "customerId",
 						"label": "Customer",
 						"sortable": true
 					},
@@ -17624,7 +17624,7 @@
 						"type": "string"
 					},
 					{
-						"key": "klantId",
+						"key": "customerId",
 						"label": "Customer",
 						"type": "string"
 					},
@@ -17679,7 +17679,7 @@
 						"type": "string"
 					},
 					{
-						"key": "wbaGeldigTot",
+						"key": "wbaValidTo",
 						"label": "WBA geldig tot",
 						"type": "date"
 					},
@@ -17729,7 +17729,7 @@
 						"sortable": true
 					},
 					{
-						"key": "overallRisico",
+						"key": "overallRisk",
 						"label": "Portfolio risk",
 						"sortable": true
 					}
@@ -17806,7 +17806,7 @@
 						"type": "array"
 					},
 					{
-						"key": "overallRisico",
+						"key": "overallRisk",
 						"label": "Portfolio risk",
 						"type": "string"
 					}
@@ -17957,12 +17957,12 @@
 						"sortable": true
 					},
 					{
-						"key": "bron",
+						"key": "source",
 						"label": "Source",
 						"sortable": true
 					},
 					{
-						"key": "versie",
+						"key": "version",
 						"label": "Version",
 						"sortable": true
 					},
@@ -17972,7 +17972,7 @@
 						"sortable": true
 					},
 					{
-						"key": "geldigTot",
+						"key": "validTo",
 						"label": "Valid until",
 						"sortable": true
 					},
@@ -18040,7 +18040,7 @@
 						"type": "string"
 					},
 					{
-						"key": "bron",
+						"key": "source",
 						"label": "Source",
 						"type": "string"
 					},
@@ -18055,7 +18055,7 @@
 						"type": "date"
 					},
 					{
-						"key": "geldigTot",
+						"key": "validTo",
 						"label": "Valid until",
 						"type": "date"
 					},
@@ -18065,7 +18065,7 @@
 						"type": "array"
 					},
 					{
-						"key": "versie",
+						"key": "version",
 						"label": "Version",
 						"type": "string"
 					},
@@ -18186,7 +18186,7 @@
 								"label": "Type"
 							},
 							{
-								"key": "beschrijving",
+								"key": "description",
 								"label": "Description"
 							},
 							{
@@ -18259,7 +18259,7 @@
 						"type": "string"
 					},
 					{
-						"key": "verklaringFile",
+						"key": "declarationFile",
 						"label": "Declaration document",
 						"type": "string"
 					},
@@ -18416,7 +18416,7 @@
 						"type": "number"
 					},
 					{
-						"key": "toelichting",
+						"key": "notes",
 						"label": "Explanation",
 						"type": "string"
 					},
@@ -18451,7 +18451,7 @@
 						"type": "date-time"
 					},
 					{
-						"key": "reden",
+						"key": "reason",
 						"label": "Change reason",
 						"type": "string"
 					}
@@ -18511,7 +18511,7 @@
 						"sortable": true
 					},
 					{
-						"key": "beschrijving",
+						"key": "description",
 						"label": "Description",
 						"sortable": false
 					},
@@ -18583,7 +18583,7 @@
 						"type": "string"
 					},
 					{
-						"key": "beschrijving",
+						"key": "description",
 						"label": "Description",
 						"type": "string"
 					},
@@ -18715,7 +18715,7 @@
 				},
 				"columns": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Grant number",
 						"sortable": true
 					},
@@ -18773,7 +18773,7 @@
 				},
 				"columns": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Grant number",
 						"sortable": true
 					},
@@ -18810,7 +18810,7 @@
 				"schema": "Subsidie",
 				"fields": [
 					{
-						"key": "subsidieNumber",
+						"key": "subsidyNumber",
 						"label": "Grant number",
 						"type": "string"
 					},
@@ -18835,12 +18835,12 @@
 						"type": "string"
 					},
 					{
-						"key": "aanvraagDate",
+						"key": "requestDate",
 						"label": "Application date",
 						"type": "date"
 					},
 					{
-						"key": "beschikkingDate",
+						"key": "decisionDate",
 						"label": "Decision date",
 						"type": "date"
 					},
@@ -18880,7 +18880,7 @@
 						"type": "string"
 					},
 					{
-						"key": "beschikkingUri",
+						"key": "decisionUri",
 						"label": "Award decision",
 						"type": "link"
 					},
@@ -18907,7 +18907,7 @@
 						"title": "Terugbetalingstermijnen",
 						"schema": "RepaymentInstallment",
 						"filter": {
-							"subsidieId": "@self.id"
+							"subsidyId": "@self.id"
 						},
 						"columns": [
 							{

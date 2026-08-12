@@ -263,7 +263,7 @@
             "nullable": true,
             "title": "Linked Milieuvoorziening Detail"
           },
-          "linkedClaimsVoorzieningDetail": {
+          "linkedClaimsProvisionDetail": {
             "type": "string",
             "description": "FK to the ClaimsVoorzieningDetail when provisionType=claims (REQ-PROV-006).",
             "nullable": true,

@@ -141,8 +141,8 @@ class UrenDagregistratieGuardTest extends TestCase
         $entry = [
             'enterpriseId'     => 'ond-1',
             'datum'             => '2026-05-16',
-            'categorie'         => 'ACQUISITIE',
-            'uren'              => 2,
+            'category'         => 'ACQUISITIE',
+            'hours'              => 2,
             'registratieMoment' => '2026-05-21T10:00:00Z',
         ];
         self::assertTrue($this->guard->validateOnSave(entry: $entry));
@@ -159,8 +159,8 @@ class UrenDagregistratieGuardTest extends TestCase
         $entry = [
             'enterpriseId'     => 'ond-1',
             'datum'             => '2026-04-05',
-            'categorie'         => 'ACQUISITIE',
-            'uren'              => 2,
+            'category'         => 'ACQUISITIE',
+            'hours'              => 2,
             'registratieMoment' => '2026-05-21T10:00:00Z',
         ];
         self::assertFalse($this->guard->validateOnSave(entry: $entry));
@@ -177,10 +177,10 @@ class UrenDagregistratieGuardTest extends TestCase
         $entry = [
             'enterpriseId'     => 'ond-1',
             'datum'             => '2026-04-05',
-            'categorie'         => 'ACQUISITIE',
-            'uren'              => 2,
+            'category'         => 'ACQUISITIE',
+            'hours'              => 2,
             'registratieMoment' => '2026-05-21T10:00:00Z',
-            'backfillReden'     => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
+            'backfillReason'     => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
             'backfillBewijs'    => 'file-77',
         ];
         self::assertTrue($this->guard->validateOnSave(entry: $entry));
@@ -197,8 +197,8 @@ class UrenDagregistratieGuardTest extends TestCase
         $entry = [
             'enterpriseId'     => 'ond-1',
             'datum'             => '2026-05-21',
-            'categorie'         => 'SCHOLING',
-            'uren'              => 8,
+            'category'         => 'SCHOLING',
+            'hours'              => 8,
             'registratieMoment' => '2026-05-21T18:00:00Z',
         ];
         self::assertFalse($this->guard->validateOnSave(entry: $entry));
@@ -215,8 +215,8 @@ class UrenDagregistratieGuardTest extends TestCase
         $entry = [
             'enterpriseId'     => 'ond-1',
             'datum'             => '2026-05-21',
-            'categorie'         => 'SCHOLING',
-            'uren'              => 8,
+            'category'         => 'SCHOLING',
+            'hours'              => 8,
             'registratieMoment' => '2026-05-21T18:00:00Z',
             'backfillBewijs'    => 'file-cursus-99',
         ];

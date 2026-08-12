@@ -28,8 +28,8 @@
 					{"key": "name", "label": "Name", "sortable": true},
 					{"key": "loonheffingsnummer", "label": "Payroll tax number", "sortable": true},
 					{"key": "sectorcode", "label": "Sector", "sortable": true},
-					{"key": "awfTarief", "label": "AWF", "sortable": true},
-					{"key": "zvwTarief", "label": "ZVW", "sortable": true}
+					{"key": "awfRate", "label": "AWF", "sortable": true},
+					{"key": "zvwRate", "label": "ZVW", "sortable": true}
 				],
 				"defaultSort": "name",
 				"detailRoute": "WerkgeverDetail"
@@ -50,8 +50,8 @@
 					{"key": "loonheffingsnummer", "label": "Payroll tax number", "type": "string"},
 					{"key": "sectorcode", "label": "Sector code", "type": "number"},
 					{"key": "sectorDescription", "label": "Sector", "type": "string"},
-					{"key": "awfTarief", "label": "AWF rate", "type": "string"},
-					{"key": "zvwTarief", "label": "ZVW rate", "type": "string"},
+					{"key": "awfRate", "label": "AWF rate", "type": "string"},
+					{"key": "zvwRate", "label": "ZVW rate", "type": "string"},
 					{"key": "wkrBudget2026", "label": "WKR budget 2026", "type": "number"},
 					{"key": "vakantiegeldUitbetalingMaand", "label": "Holiday pay month", "type": "number"}
 				],
@@ -75,7 +75,7 @@
 							"register": "shillinq",
 							"schema": "LoonPeriode",
 							"filterField": "werkgeverId",
-							"columns": ["year", "periodeNr", "periodeType", "status", "totalGrossPay"]
+							"columns": ["year", "periodNr", "periodType", "status", "totalGrossPay"]
 						}
 					}
 				],
@@ -155,8 +155,8 @@
 						"componentProps": {
 							"register": "shillinq",
 							"schema": "LoonStrook",
-							"filterField": "werknemerId",
-							"columns": ["periodeId", "fiscaalLoon", "loonheffing", "nettoBetaald"]
+							"filterField": "employeeId",
+							"columns": ["periodId", "fiscalLoon", "loonheffing", "netPaid"]
 						}
 					}
 				],
@@ -193,12 +193,12 @@
 				"schema": "LoonPeriode",
 				"columns": [
 					{"key": "year", "label": "Year", "sortable": true},
-					{"key": "periodeNr", "label": "Period", "sortable": true},
-					{"key": "periodeType", "label": "Type", "sortable": true},
+					{"key": "periodNr", "label": "Period", "sortable": true},
+					{"key": "periodType", "label": "Type", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
 					{"key": "totalGrossPay", "label": "Total gross", "sortable": true}
 				],
-				"defaultSort": "periodeNr",
+				"defaultSort": "periodNr",
 				"detailRoute": "LoonperiodeDetail"
 			}
 		},
@@ -212,10 +212,10 @@
 				"schema": "LoonPeriode",
 				"_note": "PERIOD run (the container that gets calculated + closed). The header totals (gross/net/LH) sit above the three things a period produces: the payslips generated in it, the LH remittance derived from it, and the payroll journal entries booked from it — each an object-list filtered on periodeId. This is the run-review view a payroll officer uses before closing/approving a period. No comms leaves. Audit trail sidebar records status transitions (open → calculated → closed).",
 				"fields": [
-					{"key": "periodeType", "label": "Type", "type": "string"},
+					{"key": "periodType", "label": "Type", "type": "string"},
 					{"key": "year", "label": "Year", "type": "number"},
-					{"key": "periodeNr", "label": "Period number", "type": "number"},
-					{"key": "periodeStart", "label": "Start", "type": "string"},
+					{"key": "periodNr", "label": "Period number", "type": "number"},
+					{"key": "periodStart", "label": "Start", "type": "string"},
 					{"key": "periodEnd", "label": "End", "type": "string"},
 					{"key": "betaaldatum", "label": "Payment date", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
@@ -232,8 +232,8 @@
 						"componentProps": {
 							"register": "shillinq",
 							"schema": "LoonStrook",
-							"filterField": "periodeId",
-							"columns": ["werknemerId", "fiscaalLoon", "loonheffing", "nettoBetaald"]
+							"filterField": "periodId",
+							"columns": ["employeeId", "fiscalLoon", "loonheffing", "netPaid"]
 						}
 					},
 					{
@@ -243,7 +243,7 @@
 						"componentProps": {
 							"register": "shillinq",
 							"schema": "LHAfdracht",
-							"filterField": "periodeId",
+							"filterField": "periodId",
 							"columns": ["totalPayrollTax", "totalSocialInsuranceContributions", "totalRemittance", "status"]
 						}
 					},
@@ -254,7 +254,7 @@
 						"componentProps": {
 							"register": "shillinq",
 							"schema": "Loonjournaalpost",
-							"filterField": "periodeId",
+							"filterField": "periodId",
 							"columns": ["datum", "balanced"]
 						}
 					}
@@ -291,13 +291,13 @@
 				"register": "shillinq",
 				"schema": "LoonStrook",
 				"columns": [
-					{"key": "werknemerId", "label": "Employee", "sortable": true},
-					{"key": "periodeId", "label": "Period", "sortable": true},
-					{"key": "fiscaalLoon", "label": "Taxable pay", "sortable": true},
+					{"key": "employeeId", "label": "Employee", "sortable": true},
+					{"key": "periodId", "label": "Period", "sortable": true},
+					{"key": "fiscalLoon", "label": "Taxable pay", "sortable": true},
 					{"key": "loonheffing", "label": "Payroll tax", "sortable": true},
-					{"key": "nettoBetaald", "label": "Net", "sortable": true}
+					{"key": "netPaid", "label": "Net", "sortable": true}
 				],
-				"defaultSort": "werknemerId",
+				"defaultSort": "employeeId",
 				"detailRoute": "LoonstrookDetail"
 			}
 		},
@@ -311,12 +311,12 @@
 				"schema": "LoonStrook",
 				"_note": "DOCUMENT (payslip) — a financial statement, not a correspondence: NO email/calendar even though it concerns a person. It is a leaf with no child schema, so the body is the full gross-to-net breakdown (taxable pay, SV base, payroll tax, net paid) that reconciles the payslip. Audit trail sidebar is the compliance record for a recalculated/corrected slip; a payslip is retained, not deleted, so history matters.",
 				"fields": [
-					{"key": "werknemerId", "label": "Employee", "type": "string"},
-					{"key": "periodeId", "label": "Period", "type": "string"},
-					{"key": "fiscaalLoon", "label": "Taxable pay", "type": "number"},
+					{"key": "employeeId", "label": "Employee", "type": "string"},
+					{"key": "periodId", "label": "Period", "type": "string"},
+					{"key": "fiscalLoon", "label": "Taxable pay", "type": "number"},
 					{"key": "premieloon_SV", "label": "SV contribution base", "type": "number"},
 					{"key": "loonheffing", "label": "Payroll tax", "type": "number"},
-					{"key": "nettoBetaald", "label": "Net paid", "type": "number"}
+					{"key": "netPaid", "label": "Net paid", "type": "number"}
 				],
 				"indexRoute": "Loonstroken",
 				"sidebarProps": {
@@ -350,13 +350,13 @@
 				"register": "shillinq",
 				"schema": "LHAfdracht",
 				"columns": [
-					{"key": "periodeId", "label": "Period", "sortable": true},
+					{"key": "periodId", "label": "Period", "sortable": true},
 					{"key": "totalPayrollTax", "label": "Payroll tax", "sortable": true},
 					{"key": "totalSocialInsuranceContributions", "label": "SV contributions", "sortable": true},
 					{"key": "totalRemittance", "label": "Total remittance", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true}
 				],
-				"defaultSort": "periodeId",
+				"defaultSort": "periodId",
 				"detailRoute": "LHAfdrachtDetail"
 			}
 		},
@@ -370,7 +370,7 @@
 				"schema": "LHAfdracht",
 				"_note": "TAX REMITTANCE (aangifte loonheffingen) — the amount owed to the Belastingdienst for a period. It aggregates the period's payslips, so the body is the component breakdown (payroll tax, WKR final levies, SV contributions, ZVW, total) plus the due date and filing status — the exact figures submitted. It has no child schema of its own. No comms leaves. Audit trail sidebar is the filing/payment record.",
 				"fields": [
-					{"key": "periodeId", "label": "Period", "type": "string"},
+					{"key": "periodId", "label": "Period", "type": "string"},
 					{"key": "totalPayrollTax", "label": "Payroll tax", "type": "number"},
 					{"key": "totalFinalLeviesWorkRelatedCosts", "label": "WKR final levies", "type": "number"},
 					{"key": "totalSocialInsuranceContributions", "label": "SV contributions", "type": "number"},
@@ -411,7 +411,7 @@
 				"register": "shillinq",
 				"schema": "Loonjournaalpost",
 				"columns": [
-					{"key": "periodeId", "label": "Period", "sortable": true},
+					{"key": "periodId", "label": "Period", "sortable": true},
 					{"key": "datum", "label": "Date", "sortable": true},
 					{"key": "balanced", "label": "Balanced", "sortable": true}
 				],
@@ -429,7 +429,7 @@
 				"schema": "Loonjournaalpost",
 				"_note": "JOURNAL ENTRY (the GL booking that posts a period's payroll to the ledger). The body shows the entry header (period, date, whether debits equal credits) — the balanced flag is the one thing an accountant checks before posting. No child line schema is declared in this register, so lines live inside the entry; no comms leaves. Audit trail sidebar is the posting/reversal record.",
 				"fields": [
-					{"key": "periodeId", "label": "Period", "type": "string"},
+					{"key": "periodId", "label": "Period", "type": "string"},
 					{"key": "datum", "label": "Date", "type": "string"},
 					{"key": "balanced", "label": "Balanced", "type": "boolean"}
 				],

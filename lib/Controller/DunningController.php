@@ -130,9 +130,9 @@ class DunningController extends Controller
         $hoofdsom     = (float) $this->request->getParam('hoofdsom', 0.0);
         $partyType    = (string) $this->request->getParam('partyType', 'B2B');
         $dagenVerzuim = (int) $this->request->getParam('dagenVerzuim', 0);
-        $factuurId    = (string) $this->request->getParam('factuurId', '');
+        $factuurId    = (string) $this->request->getParam('invoiceId', '');
         $ingangsRaw   = (string) $this->request->getParam('ingangsdatum', '');
-        $berekendRaw  = (string) $this->request->getParam('berekendOp', '');
+        $berekendRaw  = (string) $this->request->getParam('calculatedOn', '');
         $tariefB2B    = $this->request->getParam('tariefB2B');
         $tariefB2C    = $this->request->getParam('tariefB2C');
 
@@ -231,7 +231,7 @@ class DunningController extends Controller
         }
 
         $params = $this->request->getParams();
-        if (($params['factuurId'] ?? '') === '') {
+        if (($params['invoiceId'] ?? '') === '') {
             return new JSONResponse(['error' => 'factuurId is required'], Http::STATUS_BAD_REQUEST);
         }
 
@@ -280,8 +280,8 @@ class DunningController extends Controller
             return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
 
-        $factuurId    = (string) $this->request->getParam('factuurId', '');
-        $reden        = (string) $this->request->getParam('reden', '');
+        $factuurId    = (string) $this->request->getParam('invoiceId', '');
+        $reden        = (string) $this->request->getParam('reason', '');
         $details      = (string) $this->request->getParam('details', '');
         $byUser       = (string) $this->context->currentUserId();
         $evidenceRefs = $this->request->getParam('evidenceRefs');
@@ -411,8 +411,8 @@ class DunningController extends Controller
         }
 
         $params = $this->request->getParams();
-        if (($params['factuurId'] ?? '') === ''
-            || ($params['art29OBVerklaring'] ?? '') === ''
+        if (($params['invoiceId'] ?? '') === ''
+            || ($params['art29OBDeclaration'] ?? '') === ''
             || ((float) ($params['hoofdsomAfgeschreven'] ?? 0)) <= 0
         ) {
             return new JSONResponse(
@@ -466,8 +466,8 @@ class DunningController extends Controller
             return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
 
-        $factuurId = (string) $this->request->getParam('factuurId', '');
-        $klantId   = (string) $this->request->getParam('klantId', '');
+        $factuurId = (string) $this->request->getParam('invoiceId', '');
+        $klantId   = (string) $this->request->getParam('customerId', '');
         if ($factuurId === '' || $klantId === '') {
             return new JSONResponse(['error' => 'factuurId + klantId required'], Http::STATUS_BAD_REQUEST);
         }

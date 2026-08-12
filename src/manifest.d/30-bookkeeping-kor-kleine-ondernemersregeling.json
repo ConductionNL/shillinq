@@ -78,7 +78,7 @@
 					{ "key": "aanmeldDatum", "label": "Registration date", "sortable": true },
 					{ "key": "ingangsDatum", "label": "Start date", "sortable": true },
 					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
-					{ "key": "belastingdienstReferentie", "label": "BD reference" }
+					{ "key": "taxAuthorityReference", "label": "BD reference" }
 				],
 				"defaultSort": "-aanmeldDatum",
 				"lifecycleActions": true,
@@ -144,9 +144,9 @@
 					{ "key": "registrationId", "label": "Registration", "type": "string" },
 					{ "key": "year", "label": "Calendar year", "type": "integer" },
 					{ "key": "currentRevenue", "label": "Running turnover (EUR)", "type": "money" },
-					{ "key": "drempel", "label": "Threshold (EUR)", "type": "money" },
+					{ "key": "threshold", "label": "Threshold (EUR)", "type": "money" },
 					{ "key": "drempelBenutting", "label": "Utilization", "type": "number" },
-					{ "key": "perMaand", "label": "Turnover per month", "type": "json" },
+					{ "key": "perMonth", "label": "Turnover per month", "type": "json" },
 					{ "key": "uitgeslotenPosten", "label": "Excluded items", "type": "array" },
 					{ "key": "forecastYearEnd", "label": "Year-end forecast (EUR)", "type": "money" },
 					{ "key": "prognoseStatus", "label": "Forecast status", "type": "string" }

@@ -81,9 +81,9 @@ class VerplichtingGuardTest extends TestCase
         return array_merge(
             [
                 'commitmentNumber' => 'VPL-2026-0001',
-                'kostenplaats'       => 'FAC-001',
+                'costCentre'       => 'FAC-001',
                 'grootboekrekening'  => '4500',
-                'looptijdStart'      => '2026-02-01',
+                'termStart'      => '2026-02-01',
                 'termEnd'       => '2027-01-31',
                 'mijlpalen'          => [],
             ],
@@ -99,7 +99,7 @@ class VerplichtingGuardTest extends TestCase
      */
     public function testMissingKostenplaatsDeniesActivation(): void
     {
-        $this->assertFalse($this->guard->canActiveren($this->verplichting(['kostenplaats' => ''])));
+        $this->assertFalse($this->guard->canActiveren($this->verplichting(['costCentre' => ''])));
 
     }//end testMissingKostenplaatsDeniesActivation()
 
@@ -195,7 +195,7 @@ class VerplichtingGuardTest extends TestCase
     {
         $v = $this->verplichting(
             [
-                'looptijdStart' => '',
+                'termStart' => '',
                 'termEnd'  => '',
                 'mijlpalen'     => [['mijlpaalId' => 'MS-001', 'datum' => '2099-01-01']],
             ]

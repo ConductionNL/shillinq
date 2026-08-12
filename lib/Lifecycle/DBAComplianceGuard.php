@@ -405,7 +405,7 @@ class DBAComplianceGuard
      */
     public function isModelExpired(array $model, string $referenceYmd=''): bool
     {
-        $geldigTot = trim((string) ($model['geldigTot'] ?? ''));
+        $geldigTot = trim((string) ($model['validTo'] ?? ''));
         if ($geldigTot === '') {
             return false;
         }

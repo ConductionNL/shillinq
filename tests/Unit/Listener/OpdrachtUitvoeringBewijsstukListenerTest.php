@@ -62,7 +62,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->creatingEvent(
             [
-                'verplichtingId' => 'V-1',
+                'commitmentId' => 'V-1',
                 'mijlpaalId'     => 'MS-1',
                 'status'         => 'completed',
                 'bewijsstukken'  => [],
@@ -91,7 +91,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->creatingEvent(
             [
-                'verplichtingId' => 'V-1',
+                'commitmentId' => 'V-1',
                 'mijlpaalId'     => 'MS-1',
                 'status'         => 'completed',
                 'bewijsstukken'  => [['app' => 'docudesk', 'documentId' => 'doc-1']],
@@ -115,7 +115,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->updatingEvent(
             [
-                'verplichtingId' => 'V-1',
+                'commitmentId' => 'V-1',
                 'status'         => 'completed',
                 'bewijsstukken'  => [],
             ]
@@ -160,7 +160,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
     {
         $event = $this->creatingEvent(
             [
-                'verplichtingId' => 'V-1',
+                'commitmentId' => 'V-1',
                 'status'         => 'in-progress',
                 'bewijsstukken'  => [],
             ]

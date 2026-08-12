@@ -71,13 +71,13 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
+                'costCentre'               => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
         ];
         $glLines     = [
-            ['accountNumber' => '4010', 'kostenplaats' => 'rd-team-1', 'amount' => 60000.0],
+            ['accountNumber' => '4010', 'costCentre' => 'rd-team-1', 'amount' => 60000.0],
         ];
 
         $findings = $this->val->detectDuplicates($allocations, $glLines);
@@ -98,13 +98,13 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
+                'costCentre'               => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
         ];
         $glLines     = [
-            ['accountNumber' => '4100', 'kostenplaats' => 'overige', 'amount' => 5000.0],
+            ['accountNumber' => '4100', 'costCentre' => 'overige', 'amount' => 5000.0],
         ];
 
         self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
@@ -121,12 +121,12 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
+                'costCentre'               => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => false,
             ],
         ];
-        $glLines     = [['accountNumber' => '4010', 'kostenplaats' => 'rd-team-1']];
+        $glLines     = [['accountNumber' => '4010', 'costCentre' => 'rd-team-1']];
 
         self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
 
@@ -142,12 +142,12 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $allocations = [
             [
                 'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
+                'costCentre'               => 'rd-team-1',
                 'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
         ];
-        $glLines     = [['accountNumber' => '4010', 'kostenplaats' => 'sales-team']];
+        $glLines     = [['accountNumber' => '4010', 'costCentre' => 'sales-team']];
 
         self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
 

@@ -19,7 +19,7 @@
         "required": [
           "administrationId",
           "periodYear",
-          "periodeType",
+          "periodType",
           "status"
         ],
         "properties": {
@@ -49,7 +49,7 @@
             "description": "Quarter 1-4; required when periodeType=kwartaal-emu-saldo (REQ-EMU-001).",
             "title": "Periode Kwartaal"
           },
-          "periodeType": {
+          "periodType": {
             "type": "string",
             "enum": [
               "kwartaal-emu-saldo",
@@ -63,7 +63,7 @@
             "type": "string",
             "enum": [
               "concept",
-              "ingediend",
+              "submitted",
               "herzien"
             ],
             "default": "concept",
@@ -117,7 +117,7 @@
             "example": -27.8,
             "title": "Emu Saldo Afwijking Percentage"
           },
-          "emuSchuldBruto": {
+          "emuDebtGross": {
             "type": "number",
             "nullable": true,
             "description": "Bruto nominale EMU-schuld ultimo periode (sum AF.2+AF.3+AF.4) per REQ-EMU-004.",
@@ -163,7 +163,7 @@
             "description": "Reconciliation outcome (REQ-EMU-009).",
             "title": "BBV Aansluitingscontrole"
           },
-          "toelichting": {
+          "notes": {
             "type": "string",
             "nullable": true,
             "description": "Concerncontroller toelichting on significant deviations; auto-seeded with top-3 contributors (REQ-EMU-007).",
@@ -189,7 +189,7 @@
               "label": "Concept",
               "description": "Auto-generated draft; concerncontroller reviews and adjusts before submission (REQ-EMU-001)."
             },
-            "ingediend": {
+            "submitted": {
               "label": "Ingediend",
               "description": "Submitted to CBS via SBR/Digipoort; cbsBevestigingsnummer stored (REQ-EMU-006)."
             },
@@ -201,13 +201,13 @@
           "transitions": {
             "indienen": {
               "from": "concept",
-              "to": "ingediend",
+              "to": "submitted",
               "label": "Indienen bij CBS",
               "description": "Concerncontroller submits the approved concept via SBR/Digipoort; requires sign-off (REQ-EMU-006).",
               "requires": "OCA\\Shillinq\\Guard\\EmuSubmissionGuard::requireApproval"
             },
             "herzien": {
-              "from": "ingediend",
+              "from": "submitted",
               "to": "herzien",
               "label": "Herzien",
               "description": "File a correctie-aangifte after a late GL entry in a submitted period (REQ-EMU-001)."
@@ -376,7 +376,7 @@
             "example": 1240000,
             "title": "Bedrag"
           },
-          "bron": {
+          "source": {
             "type": "object",
             "nullable": true,
             "description": "Source GL reference: grootboekrekening, omschrijving, taakveld, taakveldNaam, programma (REQ-EMU-002).",
@@ -388,7 +388,7 @@
             "example": "Wet Hof art. 3 lid 2: afschrijvingen zijn geen kasuitgaven",
             "title": "Regel"
           },
-          "toelichting": {
+          "notes": {
             "type": "string",
             "nullable": true,
             "description": "Free-text business context.",
@@ -490,7 +490,7 @@
             "description": "IV3-taxonomie classification: hoofdstuk, hoofdstukNaam, functie, functieNaam, categorie, categorieNaam (REQ-EMU-010).",
             "title": "Iv3"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "nullable": true,
             "description": "BBV taakveld code (REQ-EMU-010).",
@@ -578,7 +578,7 @@
           "peildatum",
           "instrument",
           "uitstaandeSchuld",
-          "teltMeeInEmuSchuld",
+          "teltMeeInEmuDebt",
           "categorieEurostat"
         ],
         "properties": {
@@ -660,7 +660,7 @@
             "example": "2034-12-31",
             "title": "Einddatum"
           },
-          "teltMeeInEmuSchuld": {
+          "teltMeeInEmuDebt": {
             "type": "boolean",
             "description": "ESA2010: AF.2/AF.3/AF.4 = true, AF.7 derivaten = false (REQ-EMU-004).",
             "example": true,
@@ -695,7 +695,7 @@
             ],
             "filter": {
               "reportId": "@self.reportId",
-              "teltMeeInEmuSchuld": true
+              "teltMeeInEmuDebt": true
             },
             "sum": [
               "uitstaandeSchuld"
@@ -787,12 +787,12 @@
         "rsin": "001234567",
         "gemeentecode": "1742",
         "name": "Gemeente Voorbeeldam",
-        "soort": "gemeente"
+        "kind": "gemeente"
       },
       "periodYear": 2026,
       "periodeKwartaal": 2,
-      "periodeType": "kwartaal-emu-saldo",
-      "status": "ingediend",
+      "periodType": "kwartaal-emu-saldo",
+      "status": "submitted",
       "indieningsdatum": "2026-07-15T09:23:00+02:00",
       "cbsBevestigingsnummer": "CBS-EMU-2026Q2-001234567",
       "cbsTemplateVersion": "2026",
@@ -800,13 +800,13 @@
       "emuBalanceBudgeted": -1800000,
       "emuBalanceDeviation": -500000,
       "emuBalanceDeviationPercentage": -27.8,
-      "emuSchuldBruto": 142500000,
+      "emuDebtGross": 142500000,
       "emuSchuldWettelijkeNorm": 156000000,
       "emuSchuldRuimte": 13500000,
       "municipalAccountingBalanceRevenueExpenses": 4200000,
       "bbvTotaleAdjustments": -6500000,
       "bbvAansluitingscontrole": "geslaagd",
-      "toelichting": "Afwijking veroorzaakt door versnelde dotatie aan voorziening pensioen wethouders (+450K) en hogere investering MFA Centrum (+820K kas).",
+      "notes": "Afwijking veroorzaakt door versnelde dotatie aan voorziening pensioen wethouders (+450K) en hogere investering MFA Centrum (+820K kas).",
       "currency": "EUR"
     },
     {
@@ -819,15 +819,15 @@
       "type": "eliminatie-afschrijving",
       "richting": "saldo-verhogend",
       "amount": 1240000,
-      "bron": {
+      "source": {
         "grootboekrekening": "4801000",
         "description": "Afschrijving gebouwen onderwijs",
-        "taakveld": "4.2",
+        "taskField": "4.2",
         "taskFieldName": "Onderwijshuisvesting",
         "programme": "Onderwijs"
       },
       "regel": "Wet Hof art. 3 lid 2: afschrijvingen zijn geen kasuitgaven en worden geëlimineerd uit EMU-saldo",
-      "toelichting": "Lineaire afschrijving brede school De Hoeksteen, boekwaarde EUR 24,8M, looptijd 40 jaar",
+      "notes": "Lineaire afschrijving brede school De Hoeksteen, boekwaarde EUR 24,8M, looptijd 40 jaar",
       "overridden": false,
       "consolidatieEMU": "extern",
       "currency": "EUR"
@@ -846,12 +846,12 @@
         "hoofdstukNaam": "Volkshuisvesting, ruimtelijke ordening en stedelijke vernieuwing",
         "functie": "810",
         "functieNaam": "Ruimtelijke ordening",
-        "categorie": "3.4.1",
+        "category": "3.4.1",
         "categorieNaam": "Investeringen materiële vaste activa met economisch nut"
       },
-      "taakveld": "8.1",
+      "taskField": "8.1",
       "tegenrekening": {
-        "soort": "leverancier",
+        "kind": "leverancier",
         "name": "BAM Infra Nederland B.V.",
         "number": "F-2026-44218"
       },
@@ -871,7 +871,7 @@
       "instrument": "vaste-geldlening",
       "tegenpartij": {
         "name": "BNG Bank N.V.",
-        "soort": "sector-S122-bank",
+        "kind": "sector-S122-bank",
         "consolidatieEMU": "extern"
       },
       "hoofdsomOorspronkelijk": 25000000,
@@ -880,7 +880,7 @@
       "rentevorm": "vast",
       "looptijdJaren": 20,
       "einddatum": "2034-12-31",
-      "teltMeeInEmuSchuld": true,
+      "teltMeeInEmuDebt": true,
       "categorieEurostat": "AF.4-loans",
       "currency": "EUR"
     }

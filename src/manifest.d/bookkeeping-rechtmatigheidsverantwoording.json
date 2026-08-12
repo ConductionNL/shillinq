@@ -122,7 +122,7 @@
 				"schema": "Rechtmatigheidsbevinding",
 				"columns": [
 					{ "key": "bevindingsnummer", "label": "Finding number", "sortable": true },
-					{ "key": "soort", "label": "Kind", "sortable": true },
+					{ "key": "kind", "label": "Kind", "sortable": true },
 					{ "key": "criterium", "label": "Criterion", "sortable": true },
 					{ "key": "amount_error", "label": "Error amount", "sortable": true },
 					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "sortable": true },
@@ -145,7 +145,7 @@
 				"_note": "FINDING (a booked error or uncertainty that rolls up into the lawfulness paragraph). The body quantifies the finding — error vs uncertainty amount, criterion, programme, financial year — and captures cause, measure and the responsible portfolio holder, plus the linked correction entry that resolves it. This is the remediation view. No comms leaves; the audit trail sidebar tracks status from open to resolved.",
 				"fields": [
 					{ "key": "bevindingsnummer", "label": "Finding number", "type": "string" },
-					{ "key": "soort", "label": "Kind", "type": "string" },
+					{ "key": "kind", "label": "Kind", "type": "string" },
 					{ "key": "criterium", "label": "Criterion", "type": "string" },
 					{ "key": "amount_error", "label": "Error amount", "type": "string" },
 					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "type": "string" },
@@ -194,7 +194,7 @@
 					{ "key": "fout_percentage", "label": "Error %", "sortable": true },
 					{ "key": "onzekerheid_percentage", "label": "Uncertainty %", "sortable": true },
 					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Council decision", "sortable": true },
-					{ "key": "vastgesteld_op", "label": "Adopted on", "sortable": true },
+					{ "key": "determined_on", "label": "Adopted on", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "financialYear",
@@ -215,9 +215,9 @@
 					{ "key": "fout_percentage", "label": "Error %", "type": "string" },
 					{ "key": "onzekerheid_percentage", "label": "Uncertainty %", "type": "string" },
 					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Council decision", "type": "string" },
-					{ "key": "vastgesteld_op", "label": "Adopted on", "type": "string" },
-					{ "key": "geldig_vanaf", "label": "Valid from", "type": "string" },
-					{ "key": "geldig_tot", "label": "Valid until", "type": "string" },
+					{ "key": "determined_on", "label": "Adopted on", "type": "string" },
+					{ "key": "valid_from", "label": "Valid from", "type": "string" },
+					{ "key": "valid_to", "label": "Valid until", "type": "string" },
 					{ "key": "berekeningsbasis", "label": "Calculation basis", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
@@ -280,8 +280,8 @@
 					{ "key": "total_identified_errors", "label": "Total identified errors", "type": "string" },
 					{ "key": "total_identified_uncertainties", "label": "Total identified uncertainties", "type": "string" },
 					{ "key": "binnen_tolerantie", "label": "Within tolerance", "type": "string" },
-					{ "key": "verklaring_college", "label": "Executive statement", "type": "string" },
-					{ "key": "vastgesteld_door_college_op", "label": "Adopted by executive on", "type": "string" },
+					{ "key": "declaration_college", "label": "Executive statement", "type": "string" },
+					{ "key": "determined_by_college_on", "label": "Adopted by executive on", "type": "string" },
 					{ "key": "behandeld_in_raad_op", "label": "Handled by council on", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],

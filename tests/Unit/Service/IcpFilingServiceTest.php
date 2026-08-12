@@ -284,7 +284,7 @@ final class IcpFilingServiceTest extends TestCase
             ],
         ];
         $opgaven  = [
-            ['administrationId' => 'adm-1', 'period' => '2026-Q2', 'xmlPayload' => '<xbrli:xbrl/>', 'belastingdienstKenmerk' => 'BD-2026-Q2-001'],
+            ['administrationId' => 'adm-1', 'period' => '2026-Q2', 'xmlPayload' => '<xbrli:xbrl/>', 'taxAuthorityReference' => 'BD-2026-Q2-001'],
         ];
 
         $service = $this->buildService($supplies, [], $opgaven);
@@ -292,7 +292,7 @@ final class IcpFilingServiceTest extends TestCase
 
         self::assertSame('2026-Q2', $bundle['period']);
         self::assertSame(1, $bundle['supplyCount']);
-        self::assertSame('BD-2026-Q2-001', $bundle['kenmerk']);
+        self::assertSame('BD-2026-Q2-001', $bundle['reference']);
         self::assertContains('supplies.csv', $bundle['manifest']);
         self::assertContains('kenmerk.txt', $bundle['manifest']);
         self::assertFileExists($bundle['zipPath']);

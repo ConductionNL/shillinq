@@ -1070,7 +1070,7 @@
             "description": "Filing due date.",
             "title": "Filing Due Date"
           },
-          "belastingdienstReference": {
+          "taxAuthorityReference": {
             "type": "string",
             "description": "Belastingdienst submission reference (placeholder until SBR submission, T4).",
             "title": "Belastingdienst Reference"
@@ -1125,7 +1125,7 @@
           },
           "outputField": "xbrlSubmission",
           "submissionChannel": "SBR-Digipoort",
-          "submissionReferenceField": "belastingdienstReference",
+          "submissionReferenceField": "taxAuthorityReference",
           "submissionTimestampField": "submissionTimestamp",
           "filingDueDateField": "filingDueDate",
           "paymentDueDateField": "paymentDueDate",
@@ -1424,7 +1424,7 @@
             "description": "FK to the generated CbCR XML file (openconnector-owned export, T4 DEFERRED — see x-openregister-export-target on this schema for the renderer contract).",
             "title": "Cbcr XML Submission"
           },
-          "belastingdienstReference": {
+          "taxAuthorityReference": {
             "type": "string",
             "description": "Belastingdienst submission reference.",
             "title": "Belastingdienst Reference"
@@ -1538,7 +1538,7 @@
           },
           "outputField": "cbcrXmlSubmission",
           "submissionChannel": "SBR-Digipoort",
-          "submissionReferenceField": "belastingdienstReference",
+          "submissionReferenceField": "taxAuthorityReference",
           "submissionDeadlineSource": "submissionDeadline",
           "mcaaPartnersField": "mcaaPartnerJurisdictions",
           "triggerTransition": "submit",

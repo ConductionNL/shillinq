@@ -135,7 +135,7 @@ final class CreditControlDunningFragmentTest extends TestCase
         $stage  = $schema['properties']['stages']['items']['properties'];
         self::assertSame(
             ['EMAIL', 'EMAIL+POSTREGISTRATIE', 'AANGETEKENDE_POST', 'INCASSOBUREAU_API'],
-            $stage['kanaal']['enum']
+            $stage['channel']['enum']
         );
         self::assertContains('14_DAGEN_BRIEF_BIK', $stage['wettelijkEffect']['enum']);
         self::assertContains('VERZUIM_INTREDEN', $stage['wettelijkEffect']['enum']);
@@ -206,9 +206,9 @@ final class CreditControlDunningFragmentTest extends TestCase
     {
         $schema = $this->fragment()['components']['schemas']['OninbaarAfschrijving'];
         $props  = $schema['properties'];
-        self::assertArrayHasKey('art29OBVerklaring', $props);
-        self::assertArrayHasKey('btwAangiftePeriode', $props);
-        self::assertArrayHasKey('boekingId', $props);
+        self::assertArrayHasKey('art29OBDeclaration', $props);
+        self::assertArrayHasKey('btwTaxReturnPeriod', $props);
+        self::assertArrayHasKey('entryId', $props);
         self::assertSame(0.01, $props['hoofdsomAfgeschreven']['multipleOf']);
 
     }//end testOninbaarAfschrijvingFieldShape()
@@ -274,7 +274,7 @@ final class CreditControlDunningFragmentTest extends TestCase
         }
         self::assertNotNull($sample, 'Sample IncassoKostenBerekening seed must be present');
         self::assertSame(8400.0, (float) $sample['hoofdsom']);
-        self::assertSame(795.0, (float) $sample['berekening']['toegepast']);
+        self::assertSame(795.0, (float) $sample['berekening']['applied']);
         self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $sample['wettelijkeRente']['type']);
 
     }//end testExampleIncassoKostenSeedComputes795Eur()
@@ -297,10 +297,10 @@ final class CreditControlDunningFragmentTest extends TestCase
             }
         }
         self::assertNotNull($sample, 'Sample overheid override seed must be present');
-        self::assertStringContainsString('Wet betalingstermijnen overheid', (string) $sample['reden']);
+        self::assertStringContainsString('Wet betalingstermijnen overheid', (string) $sample['reason']);
         self::assertCount(4, $sample['overrides']['stages']);
         // Second stage is the 30-day reminder per design D11.
-        self::assertSame(30, (int) $sample['overrides']['stages'][1]['dagenNaVervalDatum']);
+        self::assertSame(30, (int) $sample['overrides']['stages'][1]['daysAfterExpiryDate']);
 
     }//end testOverheidOverrideSeedCarriesRationale()
 

@@ -16,7 +16,7 @@
         "required": [
           "administrationId",
           "verplichtingsnummer",
-          "soort",
+          "kind",
           "status"
         ],
         "properties": {
@@ -32,14 +32,14 @@
             "example": "PO-2026-00874",
             "title": "Verplichtingsnummer"
           },
-          "bronReferentie": {
+          "sourceReference": {
             "type": "string",
             "nullable": true,
             "description": "Provenance reference for auto-materialised commitments (REQ-VPL-010): the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Verplichting was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
             "example": "PO-2026-0207",
             "title": "Bron Referentie"
           },
-          "soort": {
+          "kind": {
             "type": "string",
             "description": "Kind of commitment.",
             "enum": [
@@ -62,7 +62,7 @@
             "example": "2026-04-15",
             "title": "Aangaandatum"
           },
-          "looptijd_van": {
+          "term_from": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -70,7 +70,7 @@
             "example": "2026-05-01",
             "title": "Looptijd Van"
           },
-          "looptijd_tot": {
+          "term_to": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -83,7 +83,7 @@
             "nullable": true,
             "description": "Embedded counterparty reference (vendor/supplier). A customer/contact is a Nextcloud entity, not a bespoke schema; this carries only the external reference fields needed for the commitment and three-way match.",
             "properties": {
-              "soort": {
+              "kind": {
                 "type": "string",
                 "description": "Counterparty kind.",
                 "enum": [
@@ -190,14 +190,14 @@
             "example": "M-INKOOP-50K",
             "title": "Mandaat Toegepast"
           },
-          "override_reden": {
+          "override_reason": {
             "type": "string",
             "nullable": true,
             "description": "Audit-trail reason recorded when a budget-exceeding commitment is force-accepted under an override-mandate (REQ-VPL-001).",
             "example": "Spoedlevering goedgekeurd door CFO",
             "title": "Override Reden"
           },
-          "interne_kenmerk": {
+          "interne_reference": {
             "type": "string",
             "nullable": true,
             "description": "Optional internal reference (contract number, dossier, etc.).",
@@ -288,7 +288,7 @@
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "Verplichtingsmutatie",
-                    "soort": "aangegaan"
+                    "kind": "aangegaan"
                   }
                 }
               ]
@@ -357,14 +357,14 @@
           "regels": {
             "localField": "verplichtingsnummer",
             "relatedSchema": "Verplichtingsregel",
-            "relatedField": "verplichting",
+            "relatedField": "commitment",
             "cardinality": "one-to-many",
             "description": "Budget-tracking line items, one per coderingscombinatie / boekjaar (D2)."
           },
-          "mutaties": {
+          "movements": {
             "localField": "verplichtingsnummer",
             "relatedSchema": "Verplichtingsmutatie",
-            "relatedField": "verplichting",
+            "relatedField": "commitment",
             "cardinality": "one-to-many",
             "description": "Immutable audit log of every state change (D1)."
           },
@@ -419,7 +419,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "verplichting",
+          "commitment",
           "regelnummer",
           "financialYear",
           "amount_excl_vat"
@@ -431,7 +431,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "verplichting": {
+          "commitment": {
             "type": "string",
             "description": "FK to the parent Verplichting (verplichtingsnummer).",
             "example": "PO-2026-00874",
@@ -476,7 +476,7 @@
             "example": "4310",
             "title": "Grootboekrekening"
           },
-          "kostenplaats": {
+          "costCentre": {
             "type": "string",
             "nullable": true,
             "description": "Cost centre code.",
@@ -543,7 +543,7 @@
         },
         "x-openregister-relations": {
           "verplichtingFk": {
-            "localField": "verplichting",
+            "localField": "commitment",
             "relatedSchema": "Verplichting",
             "relatedField": "verplichtingsnummer",
             "cardinality": "many-to-one",
@@ -556,7 +556,7 @@
             "source": "Verplichtingsregel",
             "groupBy": [
               "programme",
-              "kostenplaats",
+              "costCentre",
               "financialYear",
               "grootboekrekening"
             ],
@@ -595,9 +595,9 @@
         "type": "object",
         "required": [
           "administrationId",
-          "verplichting",
+          "commitment",
           "datum",
-          "soort",
+          "kind",
           "amount"
         ],
         "properties": {
@@ -607,7 +607,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "verplichting": {
+          "commitment": {
             "type": "string",
             "description": "FK to the parent Verplichting (verplichtingsnummer).",
             "example": "PO-2026-00874",
@@ -627,7 +627,7 @@
             "example": "2026-04-15",
             "title": "Datum"
           },
-          "soort": {
+          "kind": {
             "type": "string",
             "description": "Kind of mutation.",
             "enum": [
@@ -657,7 +657,7 @@
             "example": "EUR",
             "title": "Valuta"
           },
-          "toelichting": {
+          "notes": {
             "type": "string",
             "nullable": true,
             "description": "Free-text explanation for the audit trail.",
@@ -685,7 +685,7 @@
             "example": "glt-3001",
             "title": "Journaalpost"
           },
-          "gebruiker": {
+          "user": {
             "type": "string",
             "nullable": true,
             "description": "FK to the Nextcloud user who triggered the mutation.",
@@ -695,7 +695,7 @@
         },
         "x-openregister-relations": {
           "verplichtingFk": {
-            "localField": "verplichting",
+            "localField": "commitment",
             "relatedSchema": "Verplichting",
             "relatedField": "verplichtingsnummer",
             "cardinality": "many-to-one",
@@ -765,7 +765,7 @@
             "example": 5000000,
             "title": "Maximumbedrag"
           },
-          "soort_verplichting": {
+          "kind_commitment": {
             "type": "array",
             "description": "Commitment kinds this mandate applies to.",
             "items": {
@@ -803,7 +803,7 @@
             "example": [],
             "title": "Uitsluitingen"
           },
-          "geldig_van": {
+          "valid_from": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -811,7 +811,7 @@
             "example": "2025-01-01",
             "title": "Geldig Van"
           },
-          "geldig_tot": {
+          "valid_to": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -819,7 +819,7 @@
             "example": "2027-12-31",
             "title": "Geldig Tot"
           },
-          "vastgesteld_bij": {
+          "determined_at": {
             "type": "string",
             "nullable": true,
             "description": "Legal reference under which the mandate was established (e.g. Mandaatregeling Gemeentewet 168).",
@@ -868,9 +868,9 @@
         "type": "object",
         "required": [
           "administrationId",
-          "verplichting",
+          "commitment",
           "stapnummer",
-          "rol_vereist",
+          "rol_required",
           "status"
         ],
         "properties": {
@@ -880,7 +880,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "verplichting": {
+          "commitment": {
             "type": "string",
             "description": "FK to the Verplichting awaiting approval.",
             "example": "PO-2026-00874",
@@ -892,7 +892,7 @@
             "example": 1,
             "title": "Stapnummer"
           },
-          "rol_vereist": {
+          "rol_required": {
             "type": "string",
             "description": "Role required to action this step.",
             "enum": [
@@ -957,7 +957,7 @@
         },
         "x-openregister-relations": {
           "verplichtingFk": {
-            "localField": "verplichting",
+            "localField": "commitment",
             "relatedSchema": "Verplichting",
             "relatedField": "verplichtingsnummer",
             "cardinality": "many-to-one",
@@ -996,7 +996,7 @@
             "example": "5.1",
             "title": "Programma Code"
           },
-          "kostenplaats": {
+          "costCentre": {
             "type": "string",
             "nullable": true,
             "description": "Optional cost-centre scope for the budget.",
@@ -1118,14 +1118,14 @@
       "name": "Inkoopmandaat tot 50.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 5000000,
-      "soort_verplichting": [
+      "kind_commitment": [
         "inkooporder",
         "raamovereenkomst"
       ],
       "is_override": false,
-      "geldig_van": "2026-01-01",
-      "geldig_tot": "2026-12-31",
-      "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "vereist_tweede_handtekening_boven": 2500000
     },
     {
@@ -1139,7 +1139,7 @@
       "name": "Directeursmandaat tot 250.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 25000000,
-      "soort_verplichting": [
+      "kind_commitment": [
         "inkooporder",
         "raamovereenkomst",
         "arbeidscontract",
@@ -1147,9 +1147,9 @@
         "leasing"
       ],
       "is_override": false,
-      "geldig_van": "2026-01-01",
-      "geldig_tot": "2026-12-31",
-      "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v."
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v."
     },
     {
       "@self": {
@@ -1162,7 +1162,7 @@
       "name": "CFO override-mandaat (budgetoverschrijding)",
       "houder_type": "role",
       "maximumbedrag": 1000000000,
-      "soort_verplichting": [
+      "kind_commitment": [
         "inkooporder",
         "raamovereenkomst",
         "arbeidscontract",
@@ -1172,9 +1172,9 @@
         "overig"
       ],
       "is_override": true,
-      "geldig_van": "2026-01-01",
-      "geldig_tot": "2026-12-31",
-      "vastgesteld_bij": "Mandaatregeling 2026, art. 12 (override)"
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "determined_at": "Mandaatregeling 2026, art. 12 (override)"
     },
     {
       "@self": {
@@ -1184,7 +1184,7 @@
       },
       "administrationId": "adm-demo",
       "programmeCode": "5.1",
-      "kostenplaats": "FAC-2026",
+      "costCentre": "FAC-2026",
       "financialYear": 2026,
       "description": "Programma 5.1 Cultuur 2026",
       "authorised_amount": 50000000,
@@ -1198,7 +1198,7 @@
       },
       "administrationId": "adm-demo",
       "programmeCode": "5.1",
-      "kostenplaats": "FAC-2027",
+      "costCentre": "FAC-2027",
       "financialYear": 2027,
       "description": "Programma 5.1 Cultuur 2027",
       "authorised_amount": 30000000,
@@ -1212,14 +1212,14 @@
       },
       "administrationId": "adm-demo",
       "verplichtingsnummer": "VPL-2026-0001",
-      "bronReferentie": "PO-2026-0207",
-      "soort": "inkooporder",
+      "sourceReference": "PO-2026-0207",
+      "kind": "inkooporder",
       "status": "aangegaan",
       "aangaandatum": "2026-04-15",
       "totaalbedrag_excl_btw": 7500000,
       "mandaat_toegepast": "M-DIRECTEUR-250K",
       "tegenpartij": {
-        "soort": "leverancier",
+        "kind": "leverancier",
         "name": "ICT Leverancier B.V.",
         "kvk": "12345678"
       }
@@ -1231,13 +1231,13 @@
         "slug": "vpl-regel-0001"
       },
       "administrationId": "adm-demo",
-      "verplichting": "VPL-2026-0001",
+      "commitment": "VPL-2026-0001",
       "regelnummer": 1,
       "description": "ICT-diensten 2026",
       "financialYear": 2026,
       "amount_excl_vat": 7500000,
       "grootboekrekening": "4400",
-      "kostenplaats": "FAC-2026",
+      "costCentre": "FAC-2026",
       "programme": "5.1",
       "invoiced_amount": 2500000,
       "restant_verplicht": 5000000
@@ -1250,14 +1250,14 @@
       },
       "administrationId": "adm-demo",
       "verplichtingsnummer": "VPL-2026-0002",
-      "bronReferentie": "PO-2026-0231",
-      "soort": "raamovereenkomst",
+      "sourceReference": "PO-2026-0231",
+      "kind": "raamovereenkomst",
       "status": "aangegaan",
       "aangaandatum": "2026-03-01",
       "totaalbedrag_excl_btw": 20000000,
       "mandaat_toegepast": "M-DIRECTEUR-250K",
       "tegenpartij": {
-        "soort": "leverancier",
+        "kind": "leverancier",
         "name": "Facilitair Diensten Groep B.V.",
         "kvk": "87654321"
       }
@@ -1269,13 +1269,13 @@
         "slug": "vpl-regel-0002"
       },
       "administrationId": "adm-demo",
-      "verplichting": "VPL-2026-0002",
+      "commitment": "VPL-2026-0002",
       "regelnummer": 1,
       "description": "Facilitaire dienstverlening 2026",
       "financialYear": 2026,
       "amount_excl_vat": 10000000,
       "grootboekrekening": "4400",
-      "kostenplaats": "FAC-2026",
+      "costCentre": "FAC-2026",
       "programme": "5.1",
       "invoiced_amount": 0,
       "restant_verplicht": 10000000
@@ -1287,13 +1287,13 @@
         "slug": "vpl-regel-0003"
       },
       "administrationId": "adm-demo",
-      "verplichting": "VPL-2026-0002",
+      "commitment": "VPL-2026-0002",
       "regelnummer": 2,
       "description": "Facilitaire dienstverlening 2027",
       "financialYear": 2027,
       "amount_excl_vat": 10000000,
       "grootboekrekening": "4400",
-      "kostenplaats": "FAC-2027",
+      "costCentre": "FAC-2027",
       "programme": "5.1",
       "invoiced_amount": 0,
       "restant_verplicht": 10000000
@@ -1306,14 +1306,14 @@
       },
       "administrationId": "adm-demo",
       "verplichtingsnummer": "VPL-2026-0003",
-      "bronReferentie": "BES-2026-0044",
-      "soort": "subsidiebeschikking",
+      "sourceReference": "BES-2026-0044",
+      "kind": "subsidiebeschikking",
       "status": "aangegaan",
       "aangaandatum": "2026-02-10",
       "totaalbedrag_excl_btw": 4000000,
-      "interne_kenmerk": "Eindafrekening 20% restant nog te ontvangen",
+      "interne_reference": "Eindafrekening 20% restant nog te ontvangen",
       "tegenpartij": {
-        "soort": "subsidieontvanger",
+        "kind": "subsidieontvanger",
         "name": "Stichting Cultuurhuis Zuidoost"
       }
     },
@@ -1324,13 +1324,13 @@
         "slug": "vpl-regel-0004"
       },
       "administrationId": "adm-demo",
-      "verplichting": "VPL-2026-0003",
+      "commitment": "VPL-2026-0003",
       "regelnummer": 1,
       "description": "Subsidiebeschikking cultuurhuis 2026",
       "financialYear": 2026,
       "amount_excl_vat": 4000000,
       "grootboekrekening": "4410",
-      "kostenplaats": "FAC-2026",
+      "costCentre": "FAC-2026",
       "programme": "5.1",
       "invoiced_amount": 0,
       "restant_verplicht": 4000000

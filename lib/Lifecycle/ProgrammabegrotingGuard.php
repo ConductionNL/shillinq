@@ -134,7 +134,7 @@ final class ProgrammabegrotingGuard
         } catch (\Throwable $e) {
             $this->logger->error(
                 'ProgrammabegrotingGuard: behandelen check failed — denying transition (fail-closed)',
-                ['begrotingId' => $begrotingId, 'exception' => $e->getMessage()]
+                ['budgetId' => $begrotingId, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
@@ -192,7 +192,7 @@ final class ProgrammabegrotingGuard
         } catch (\Throwable $e) {
             $this->logger->error(
                 'ProgrammabegrotingGuard: vaststellen check failed — denying transition (fail-closed)',
-                ['begrotingId' => $begrotingId, 'exception' => $e->getMessage()]
+                ['budgetId' => $begrotingId, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
@@ -234,7 +234,7 @@ final class ProgrammabegrotingGuard
         $rows   = $objectService
             ->setRegister($register)
             ->setSchema('Paragraaf')
-            ->findAll(['filters' => ['begrotingId' => $begrotingId]]);
+            ->findAll(['filters' => ['budgetId' => $begrotingId]]);
         $result = [];
         foreach ($rows as $row) {
             if (is_array($row) === true) {

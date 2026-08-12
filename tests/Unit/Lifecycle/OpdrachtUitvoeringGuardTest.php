@@ -74,7 +74,7 @@ class OpdrachtUitvoeringGuardTest extends TestCase
     public function testNoBewijsstukDeniesCompletion(): void
     {
         $opdracht = [
-            'verplichtingId' => 'vpl-1',
+            'commitmentId' => 'vpl-1',
             'mijlpaalId'     => 'MS-001',
             'status'         => 'in-progress',
         ];

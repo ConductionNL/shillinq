@@ -107,7 +107,7 @@ class ENSIABevindingGenerator
                 'administrationId' => $administrationId,
                 'vraagId'          => $vraagId,
                 'type'             => 'tekortkoming',
-                'beschrijving'     => sprintf(
+                'description'     => sprintf(
                     '%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
                     $vraagCode,
                     $vraagLabel,

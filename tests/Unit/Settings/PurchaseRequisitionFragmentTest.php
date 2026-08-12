@@ -91,11 +91,11 @@ final class PurchaseRequisitionFragmentTest extends TestCase
         $requisition = $this->fragment()['components']['schemas']['Requisition'];
         $properties  = $requisition['properties'];
 
-        foreach (['programme', 'financialYear', 'totaalbedrag_excl_btw', 'soort', 'administrationId'] as $field) {
+        foreach (['programme', 'financialYear', 'totaalbedrag_excl_btw', 'kind', 'administrationId'] as $field) {
             self::assertArrayHasKey($field, $properties, "Requisition must declare $field for BudgetBlocker reuse");
         }
 
-        foreach (['programme', 'financialYear', 'soort'] as $required) {
+        foreach (['programme', 'financialYear', 'kind'] as $required) {
             self::assertContains($required, $requisition['required']);
         }
 

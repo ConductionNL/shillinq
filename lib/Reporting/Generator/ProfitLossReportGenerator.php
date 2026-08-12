@@ -225,8 +225,8 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator
         foreach ($accounts as $account) {
             $type   = strtolower($this->str($account, 'accountType', 'type', 'category'));
             $bucket = match ($type) {
-                'revenue', 'income', 'opbrengsten', 'baten' => 'revenue',
-                'expenses', 'expense', 'kosten', 'lasten' => 'expense',
+                'revenue', 'income', 'opbrengsten', 'revenue' => 'revenue',
+                'expenses', 'expense', 'kosten', 'expenses' => 'expense',
                 default => null,
             };
 

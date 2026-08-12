@@ -191,7 +191,7 @@
             "description": "Declarative shape of the sluitend-criterium SluitendCalculator computes (REQ-008, REQ-011). Walks the Meerjarenraming records for jaren T+1..T+4 of this begroting and sets sluitendStructureel = (every jaar has lastenStructureel ≤ batenStructureel) and sluitendReëel = (every jaar has saldoReëel ≥ 0 after nominaleOntwikkeling correction). When the aggregation engine cannot express the per-year all-quantifier with the cross-schema nominale correction, SluitendCalculator computes the same result in PHP from the real ObjectService API.",
             "source": "Meerjarenraming",
             "filter": {
-              "begrotingId": "@self.id",
+              "budgetId": "@self.id",
               "administrationId": "@self.administrationId"
             },
             "operations": {
@@ -223,7 +223,7 @@
         "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
         "type": "object",
         "required": [
-          "begrotingId",
+          "budgetId",
           "number",
           "name",
           "revenueTotal",
@@ -233,7 +233,7 @@
           "administrationId"
         ],
         "properties": {
-          "begrotingId": {
+          "budgetId": {
             "type": "string",
             "description": "FK to Programmabegroting. REQ-002.",
             "example": "pb-gem-2027",
@@ -283,7 +283,7 @@
             "example": -2250000.0,
             "title": "Saldo Voor Mutaties"
           },
-          "mutatiesReserves": {
+          "movementsReserves": {
             "type": "number",
             "nullable": true,
             "default": 0,
@@ -347,16 +347,16 @@
         "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
         "type": "object",
         "required": [
-          "begrotingId",
+          "budgetId",
           "programmeId",
-          "taakveldCode",
+          "taskFieldCode",
           "taskFieldName",
-          "baten",
-          "lasten",
+          "revenue",
+          "expenses",
           "administrationId"
         ],
         "properties": {
-          "begrotingId": {
+          "budgetId": {
             "type": "string",
             "description": "FK to Programmabegroting (carried for the uniqueness constraint). REQ-003.",
             "example": "pb-gem-2027",
@@ -368,7 +368,7 @@
             "example": "prog-veiligheid",
             "title": "Programma ID"
           },
-          "taakveldCode": {
+          "taskFieldCode": {
             "type": "string",
             "description": "BBV taakveld code (e.g. \"6.71\" = Brandweer); must match the BBVTaakveldCatalogus. REQ-003.",
             "example": "1.1",
@@ -380,14 +380,14 @@
             "example": "Crisisbeheersing en brandweer",
             "title": "Taakveld Naam"
           },
-          "baten": {
+          "revenue": {
             "type": "number",
             "minimum": 0,
             "description": "Revenue/income for this taakveld. REQ-003.",
             "example": 50000.0,
             "title": "Baten"
           },
-          "lasten": {
+          "expenses": {
             "type": "number",
             "minimum": 0,
             "description": "Expenses/expenditure for this taakveld. REQ-003.",
@@ -415,7 +415,7 @@
           "programmeId",
           "code",
           "description",
-          "eenheid",
+          "unit",
           "administrationId"
         ],
         "properties": {
@@ -437,7 +437,7 @@
             "example": "Aantal misdrijven per 1.000 inwoners",
             "title": "Omschrijving"
           },
-          "eenheid": {
+          "unit": {
             "type": "string",
             "description": "Unit (e.g. \"aantal\", \"percentage\", \"euro\"). REQ-004.",
             "example": "aantal",
@@ -464,7 +464,7 @@
             "example": null,
             "title": "Realisatie"
           },
-          "bron": {
+          "source": {
             "type": "string",
             "nullable": true,
             "description": "Data source reference or dataset URL. REQ-004.",
@@ -495,7 +495,7 @@
         "required": [
           "programmeId",
           "description",
-          "bruto",
+          "gross",
           "dekking",
           "afschrijvingstermijn",
           "eersteAfschrijvingsjaar",
@@ -515,7 +515,7 @@
             "example": "Renovatie brandweerkazerne",
             "title": "Omschrijving"
           },
-          "bruto": {
+          "gross": {
             "type": "number",
             "minimum": 0,
             "description": "Gross investment amount. REQ-005.",
@@ -528,7 +528,7 @@
               "eigen-middelen",
               "lening",
               "bijdragen-derden",
-              "subsidie"
+              "subsidy"
             ],
             "description": "Funding source. REQ-005.",
             "example": "lening",
@@ -578,7 +578,7 @@
         "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
         "type": "object",
         "required": [
-          "begrotingId",
+          "budgetId",
           "type",
           "name",
           "beginsaldo",
@@ -586,7 +586,7 @@
           "administrationId"
         ],
         "properties": {
-          "begrotingId": {
+          "budgetId": {
             "type": "string",
             "description": "FK to Programmabegroting. REQ-006.",
             "example": "pb-gem-2027",
@@ -661,15 +661,15 @@
         "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
         "type": "object",
         "required": [
-          "begrotingId",
+          "budgetId",
           "name",
-          "grondslag",
+          "basis",
           "beginsaldo",
           "eindsaldo",
           "administrationId"
         ],
         "properties": {
-          "begrotingId": {
+          "budgetId": {
             "type": "string",
             "description": "FK to Programmabegroting. REQ-006.",
             "example": "pb-gem-2027",
@@ -681,7 +681,7 @@
             "example": "Voorziening onderhoud gebouwen",
             "title": "Naam"
           },
-          "grondslag": {
+          "basis": {
             "type": "string",
             "enum": [
               "a",
@@ -747,13 +747,13 @@
         "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
         "type": "object",
         "required": [
-          "begrotingId",
+          "budgetId",
           "type",
           "kerncijfers",
           "administrationId"
         ],
         "properties": {
-          "begrotingId": {
+          "budgetId": {
             "type": "string",
             "description": "FK to Programmabegroting. REQ-007.",
             "example": "pb-gem-2027",
@@ -805,7 +805,7 @@
         "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
         "type": "object",
         "required": [
-          "begrotingId",
+          "budgetId",
           "year",
           "batenStructureel",
           "lastenStructureel",
@@ -815,7 +815,7 @@
           "administrationId"
         ],
         "properties": {
-          "begrotingId": {
+          "budgetId": {
             "type": "string",
             "description": "FK to Programmabegroting. REQ-008.",
             "example": "pb-gem-2027",
@@ -907,16 +907,16 @@
         "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
         "type": "object",
         "required": [
-          "begrotingId",
+          "budgetId",
           "wijzigingsnummer",
           "description",
-          "mutaties",
+          "movements",
           "effectiefVanaf",
           "status",
           "administrationId"
         ],
         "properties": {
-          "begrotingId": {
+          "budgetId": {
             "type": "string",
             "description": "FK to a vastgestelde Programmabegroting. REQ-009.",
             "example": "pb-gem-2027",
@@ -934,7 +934,7 @@
             "example": "Extra middelen handhaving evenementen",
             "title": "Omschrijving"
           },
-          "mutaties": {
+          "movements": {
             "type": "array",
             "description": "Delta rows: per-programma per-taakveld {taakveldCode, baten_delta, lasten_delta}. REQ-009.",
             "items": {
@@ -942,7 +942,7 @@
             },
             "example": [
               {
-                "taakveldCode": "1.1",
+                "taskFieldCode": "1.1",
                 "baten_delta": 50000.0,
                 "lasten_delta": -100000.0
               }
@@ -1041,7 +1041,7 @@
           "schema": "Programma",
           "slug": "prog-veiligheid"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "financialYear": 2027,
         "number": "1",
         "name": "Veiligheid & Handhaving",
@@ -1050,7 +1050,7 @@
         "revenueTotal": 80000.0,
         "expensesTotal": 650000.0,
         "balanceBeforeMovements": -570000.0,
-        "mutatiesReserves": 0.0,
+        "movementsReserves": 0.0,
         "balanceAfterMovements": -570000.0,
         "administrationId": "adm-gov-1",
         "lifecycleState": "published"
@@ -1061,7 +1061,7 @@
           "schema": "Programma",
           "slug": "prog-sociaal"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "financialYear": 2027,
         "number": "2",
         "name": "Sociaal Domein",
@@ -1070,7 +1070,7 @@
         "revenueTotal": 120000.0,
         "expensesTotal": 1300000.0,
         "balanceBeforeMovements": -1180000.0,
-        "mutatiesReserves": 0.0,
+        "movementsReserves": 0.0,
         "balanceAfterMovements": -1180000.0,
         "administrationId": "adm-gov-1",
         "lifecycleState": "published"
@@ -1081,12 +1081,12 @@
           "schema": "Taakveld",
           "slug": "tv-2027-1.1"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "programmeId": "prog-veiligheid",
-        "taakveldCode": "1.1",
+        "taskFieldCode": "1.1",
         "taskFieldName": "Crisisbeheersing en brandweer",
-        "baten": 50000.0,
-        "lasten": 450000.0,
+        "revenue": 50000.0,
+        "expenses": 450000.0,
         "administrationId": "adm-gov-1"
       },
       {
@@ -1095,12 +1095,12 @@
           "schema": "Taakveld",
           "slug": "tv-2027-1.2"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "programmeId": "prog-veiligheid",
-        "taakveldCode": "1.2",
+        "taskFieldCode": "1.2",
         "taskFieldName": "Openbare orde en veiligheid",
-        "baten": 30000.0,
-        "lasten": 200000.0,
+        "revenue": 30000.0,
+        "expenses": 200000.0,
         "administrationId": "adm-gov-1"
       },
       {
@@ -1109,12 +1109,12 @@
           "schema": "Taakveld",
           "slug": "tv-2027-6.1"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "programmeId": "prog-sociaal",
-        "taakveldCode": "6.1",
+        "taskFieldCode": "6.1",
         "taskFieldName": "Samenkracht en burgerparticipatie",
-        "baten": 120000.0,
-        "lasten": 1300000.0,
+        "revenue": 120000.0,
+        "expenses": 1300000.0,
         "administrationId": "adm-gov-1"
       },
       {
@@ -1126,11 +1126,11 @@
         "programmeId": "prog-veiligheid",
         "code": "VEI-001",
         "description": "Aantal misdrijven per 1.000 inwoners",
-        "eenheid": "aantal",
+        "unit": "aantal",
         "nulwaarde": 52.0,
         "streefwaarde": 45.0,
         "realisatie": null,
-        "bron": "https://www.cbs.nl/misdrijven-gemeente",
+        "source": "https://www.cbs.nl/misdrijven-gemeente",
         "administrationId": "adm-gov-1"
       },
       {
@@ -1141,7 +1141,7 @@
         },
         "programmeId": "prog-veiligheid",
         "description": "Renovatie brandweerkazerne",
-        "bruto": 400000.0,
+        "gross": 400000.0,
         "dekking": "lening",
         "afschrijvingstermijn": 20,
         "eersteAfschrijvingsjaar": 2027,
@@ -1175,7 +1175,7 @@
           "schema": "Reserve",
           "slug": "res-algemeen"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "type": "algemene-reserve",
         "name": "Algemene reserve",
         "beginsaldo": 50000.0,
@@ -1191,9 +1191,9 @@
           "schema": "Voorziening",
           "slug": "vz-onderhoud"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "name": "Voorziening onderhoud gebouwen",
-        "grondslag": "c",
+        "basis": "c",
         "beginsaldo": 80000.0,
         "dotaties": 20000.0,
         "vrijval": 0.0,
@@ -1207,7 +1207,7 @@
           "schema": "Paragraaf",
           "slug": "par-2027-lokaleHeffingen"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "financialYear": 2027,
         "type": "lokaleHeffingen",
         "narrative": "De lokale heffingen bestaan uit de OZB, afvalstoffenheffing en rioolheffing. De tarieven stijgen met de nominale ontwikkeling van 2%.",
@@ -1223,7 +1223,7 @@
           "schema": "Paragraaf",
           "slug": "par-2027-weerstandsvermogen"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "financialYear": 2027,
         "type": "weerstandsvermogenRisicobeheersing",
         "narrative": "Het weerstandsvermogen is toereikend: de weerstandsverhouding bedraagt 1,4 (ruim voldoende per IPO-kader).",
@@ -1239,7 +1239,7 @@
           "schema": "Meerjarenraming",
           "slug": "mjr-2027-2028"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "year": 2028,
         "batenStructureel": 1000000.0,
         "batenIncidenteel": 0.0,
@@ -1257,7 +1257,7 @@
           "schema": "Meerjarenraming",
           "slug": "mjr-2027-2029"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "year": 2029,
         "batenStructureel": 1020000.0,
         "batenIncidenteel": 0.0,
@@ -1275,12 +1275,12 @@
           "schema": "Begrotingswijziging",
           "slug": "bw-2027-w001"
         },
-        "begrotingId": "pb-gem-2027",
+        "budgetId": "pb-gem-2027",
         "wijzigingsnummer": "W-001",
         "description": "Extra middelen handhaving evenementen",
-        "mutaties": [
+        "movements": [
           {
-            "taakveldCode": "1.2",
+            "taskFieldCode": "1.2",
             "baten_delta": 0.0,
             "lasten_delta": 25000.0
           }

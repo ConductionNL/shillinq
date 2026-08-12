@@ -116,7 +116,7 @@ class CreditScoreService
 
         // Normalise + persist the fresh snapshot so the next call hits the cache.
         $fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
-        $fresh['klantId']          = ($fresh['klantId'] ?? $klantId);
+        $fresh['customerId']          = ($fresh['customerId'] ?? $klantId);
         $fresh['provider']         = ($fresh['provider'] ?? $provider);
         if (isset($fresh['scoreDatum']) === false || (string) $fresh['scoreDatum'] === '') {
             $fresh['scoreDatum'] = (new DateTimeImmutable())->format('Y-m-d');
@@ -203,12 +203,12 @@ class CreditScoreService
             ];
         }
 
-        $klantId = (string) ($score['klantId'] ?? '');
+        $klantId = (string) ($score['customerId'] ?? '');
         $message = sprintf(
             'Klant %s heeft lage creditscore (%s op %s). Overweeg vooruitbetaling of deelfacturatie.',
             $klantId,
             (string) $value,
-            (string) ($score['scoreSchaal'] ?? '')
+            (string) ($score['scoreScale'] ?? '')
         );
 
         return [
@@ -240,7 +240,7 @@ class CreditScoreService
                         [
                             'filters' => [
                                 'administrationId' => $administrationId,
-                                'klantId'          => $klantId,
+                                'customerId'          => $klantId,
                                 'provider'         => $provider,
                             ],
                         ]

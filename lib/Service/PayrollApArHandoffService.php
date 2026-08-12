@@ -71,7 +71,7 @@ final class PayrollApArHandoffService
     public function toApTransactionPayloads(array $lhAfdracht): array
     {
         $werkgeverId = (string) ($lhAfdracht['werkgeverId'] ?? '');
-        $periodeId   = (string) ($lhAfdracht['periodeId'] ?? '');
+        $periodeId   = (string) ($lhAfdracht['periodId'] ?? '');
         $dueDate     = ($lhAfdracht['vervaldagAfdracht'] ?? null);
         $adminId     = ($lhAfdracht['administrationId'] ?? null);
 
@@ -90,7 +90,7 @@ final class PayrollApArHandoffService
                 'currency'         => 'EUR',
                 'dueDate'          => $dueDate,
                 'werkgeverId'      => $werkgeverId,
-                'periodeId'        => $periodeId,
+                'periodId'        => $periodeId,
                 'administrationId' => $adminId,
                 'breakdown'        => [
                     'loonheffing'      => $loonheffing,
@@ -110,7 +110,7 @@ final class PayrollApArHandoffService
                 'currency'         => 'EUR',
                 'dueDate'          => $dueDate,
                 'werkgeverId'      => $werkgeverId,
-                'periodeId'        => $periodeId,
+                'periodId'        => $periodeId,
                 'administrationId' => $adminId,
                 'breakdown'        => ['premiesSV' => $premiesSV],
                 'description'     => sprintf('Premies werknemersverzekeringen periode %s', $periodeId),

@@ -92,7 +92,7 @@
 					{ "key": "vpbPligtigVanaf", "label": "Vpb-liable from", "type": "date" },
 					{ "key": "vpbPligtigTotEnMet", "label": "Vpb-liable until", "type": "date" },
 					{ "key": "accountNumbers", "label": "Vpb-liable accounts", "type": "array" },
-					{ "key": "toelichting", "label": "Explanation", "type": "string" }
+					{ "key": "notes", "label": "Explanation", "type": "string" }
 				],
 				"indexRoute": "VpbBalansLinks",
 				"sidebarProps": {

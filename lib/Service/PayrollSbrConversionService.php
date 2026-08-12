@@ -66,7 +66,7 @@ class PayrollSbrConversionService
     public function toSbrInstancePayload(array $lhAfdracht): array
     {
         $werkgeverId = (string) ($lhAfdracht['werkgeverId'] ?? '');
-        $periodeId   = (string) ($lhAfdracht['periodeId'] ?? '');
+        $periodeId   = (string) ($lhAfdracht['periodId'] ?? '');
 
         return [
             'taxonomyVersion'        => self::SBR_TAXONOMY_VERSION,
@@ -101,7 +101,7 @@ class PayrollSbrConversionService
     public function stampInstanceRef(array $lhAfdracht): array
     {
         $werkgeverId = (string) ($lhAfdracht['werkgeverId'] ?? '');
-        $periodeId   = (string) ($lhAfdracht['periodeId'] ?? '');
+        $periodeId   = (string) ($lhAfdracht['periodId'] ?? '');
 
         $stamped = $lhAfdracht;
         $stamped['sbrInstanceRef'] = $this->deriveInstanceRef(werkgeverId: $werkgeverId, periodeId: $periodeId);

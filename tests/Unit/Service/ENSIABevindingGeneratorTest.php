@@ -69,9 +69,9 @@ class ENSIABevindingGeneratorTest extends TestCase
         $this->assertSame('q1', $findings[0]['vraagId']);
         $this->assertSame('tekortkoming', $findings[0]['type']);
         $this->assertSame('open', $findings[0]['status']);
-        $this->assertStringContainsString('BIO-9.1.1', $findings[0]['beschrijving']);
-        $this->assertStringContainsString('2', $findings[0]['beschrijving']);
-        $this->assertStringContainsString('3', $findings[0]['beschrijving']);
+        $this->assertStringContainsString('BIO-9.1.1', $findings[0]['description']);
+        $this->assertStringContainsString('2', $findings[0]['description']);
+        $this->assertStringContainsString('3', $findings[0]['description']);
 
     }//end testGeneratesFindingForBelowNormScore()
 

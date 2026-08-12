@@ -211,10 +211,10 @@ class MandaatEnforcerTest extends TestCase
                 'administrationId'                  => 'adm-1',
                 'mandaatcode'                       => 'M-INKOOP-50K',
                 'maximumbedrag'                     => 5000000,
-                'soort_verplichting'                => ['inkooporder', 'raamovereenkomst'],
+                'kind_commitment'                => ['inkooporder', 'raamovereenkomst'],
                 'is_override'                       => false,
-                'geldig_van'                        => '2020-01-01',
-                'geldig_tot'                        => '2999-12-31',
+                'valid_from'                        => '2020-01-01',
+                'valid_to'                        => '2999-12-31',
                 'vereist_tweede_handtekening_boven' => null,
             ],
             $overrides
@@ -235,7 +235,7 @@ class MandaatEnforcerTest extends TestCase
         return [
             'administrationId'      => 'adm-1',
             'verplichtingsnummer'   => 'PO-1',
-            'soort'                 => $soort,
+            'kind'                 => $soort,
             'totaalbedrag_excl_btw' => $bedrag,
         ];
 
@@ -300,7 +300,7 @@ class MandaatEnforcerTest extends TestCase
      */
     public function testExpiredMandateIsIgnored(): void
     {
-        $expired = $this->mandate(['geldig_tot' => '2000-01-01']);
+        $expired = $this->mandate(['valid_to' => '2000-01-01']);
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$expired]]));
 
         $this->assertFalse(
@@ -316,7 +316,7 @@ class MandaatEnforcerTest extends TestCase
      */
     public function testFutureMandateIsIgnored(): void
     {
-        $future = $this->mandate(['geldig_van' => '2999-01-01']);
+        $future = $this->mandate(['valid_from' => '2999-01-01']);
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$future]]));
 
         $this->assertFalse(

@@ -114,7 +114,7 @@ final class ProgrammabegrotingGuardTest extends TestCase
     {
         $rows = [];
         foreach ($types as $type) {
-            $rows[] = ['type' => $type, 'narrative' => $narrative, 'begrotingId' => 'pb-1'];
+            $rows[] = ['type' => $type, 'narrative' => $narrative, 'budgetId' => 'pb-1'];
         }
 
         return $rows;

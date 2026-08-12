@@ -267,14 +267,14 @@ class BbvComplianceGuard
      */
     private function checkReserveRoute(array $line): bool
     {
-        $taakveld = ($line['taakveld'] ?? null);
+        $taakveld = ($line['taskField'] ?? null);
         if ((string) $taakveld === self::RESERVE_TAAKVELD) {
             return true;
         }
 
         $this->logger->info(
             'BbvComplianceGuard: reserve mutation off taakveld 0.10 rejected (REQ-BBV-004)',
-            ['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taakveld' => $taakveld]
+            ['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taskField' => $taakveld]
         );
 
         return false;
@@ -291,8 +291,8 @@ class BbvComplianceGuard
      */
     private function checkVoorzieningRoute(array $line, array $account): bool
     {
-        $gekoppeld = ($account['taakveld'] ?? null);
-        $taakveld  = ($line['taakveld'] ?? null);
+        $gekoppeld = ($account['taskField'] ?? null);
+        $taakveld  = ($line['taskField'] ?? null);
         if ($gekoppeld === null || (string) $taakveld === (string) $gekoppeld) {
             return true;
         }
@@ -319,7 +319,7 @@ class BbvComplianceGuard
      */
     private function checkExploitatieClassification(array $line): bool
     {
-        $taakveld  = (string) ($line['taakveld'] ?? '');
+        $taakveld  = (string) ($line['taskField'] ?? '');
         $categorie = (string) ($line['economischeCategorie'] ?? '');
         if ($taakveld !== '' && $categorie !== '') {
             return true;
@@ -410,7 +410,7 @@ class BbvComplianceGuard
                         'filters' => [
                             'administrationId' => $administrationId,
                             'financialYear'         => $boekjaar,
-                            'versie'           => 'primitief',
+                            'version'           => 'primitief',
                         ],
                     ]
                 );
@@ -440,9 +440,9 @@ class BbvComplianceGuard
                 $saldoPerHorizon[$horizon] = 0;
             }
 
-            $batenCents   = (int) ($row['batenCents'] ?? 0);
-            $lastenCents  = (int) ($row['lastenCents'] ?? 0);
-            $mutatieCents = (int) ($row['mutatieReservesCents'] ?? 0);
+            $batenCents   = (int) ($row['revenueCents'] ?? 0);
+            $lastenCents  = (int) ($row['expensesCents'] ?? 0);
+            $mutatieCents = (int) ($row['movementReservesCents'] ?? 0);
             $saldoPerHorizon[$horizon] += ($batenCents - $lastenCents + $mutatieCents);
         }
 
@@ -470,7 +470,7 @@ class BbvComplianceGuard
             return true;
         }
 
-        if (($mva['mvaCategorie'] ?? '') !== 'maatschappelijk-nut') {
+        if (($mva['mvaCategory'] ?? '') !== 'maatschappelijk-nut') {
             return true;
         }
 

@@ -155,7 +155,7 @@ class CashflowRecurringGuard
         $frequency = (string) ($recurring['frequentie'] ?? '');
 
         if (in_array($frequency, self::MONTHLY_FREQUENCIES, true) === true) {
-            if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? null)) === false) {
+            if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? null)) === false) {
                 $this->logger->info(
                     'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
                     ['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -174,7 +174,7 @@ class CashflowRecurringGuard
                 return false;
             }
 
-            if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? 1)) === false) {
+            if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? 1)) === false) {
                 $this->logger->info(
                     'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
                     ['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -196,7 +196,7 @@ class CashflowRecurringGuard
      */
     private function hasValidValidityWindow(array $recurring): bool
     {
-        $van = $this->parseDate(value: (string) ($recurring['geldigVan'] ?? ''));
+        $van = $this->parseDate(value: (string) ($recurring['validFrom'] ?? ''));
         if ($van === null) {
             $this->logger->info(
                 'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
@@ -205,7 +205,7 @@ class CashflowRecurringGuard
             return false;
         }
 
-        $totRaw = ($recurring['geldigTot'] ?? null);
+        $totRaw = ($recurring['validTo'] ?? null);
         if ($totRaw === null || $totRaw === '') {
             // Indefinite window is valid.
             return true;

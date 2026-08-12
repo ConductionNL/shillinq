@@ -275,13 +275,13 @@ class UrencriteriumYearGuard
     private function normMatchesGrondslag(array $year): bool
     {
         $norm        = (int) ($year['doelNorm'] ?? 0);
-        $grondslag   = (string) ($year['normGrondslag'] ?? '');
+        $grondslag   = (string) ($year['normBasis'] ?? '');
         $citeertLid5 = (str_contains($grondslag, 'lid 5') === true);
 
         if ($norm === self::NORM_AO && $citeertLid5 === false) {
             $this->logger->info(
                 'UrencriteriumYearGuard: 800-uren norm must cite art. 3.6 lid 5 — denying save',
-                ['normGrondslag' => $grondslag]
+                ['normBasis' => $grondslag]
             );
             return false;
         }
@@ -289,7 +289,7 @@ class UrencriteriumYearGuard
         if ($norm !== self::NORM_AO && $citeertLid5 === true) {
             $this->logger->info(
                 'UrencriteriumYearGuard: only the 800-uren norm may cite art. 3.6 lid 5 — denying save',
-                ['doelNorm' => $norm, 'normGrondslag' => $grondslag]
+                ['doelNorm' => $norm, 'normBasis' => $grondslag]
             );
             return false;
         }
@@ -354,7 +354,7 @@ class UrencriteriumYearGuard
             norm: (int) ($year['doelNorm'] ?? self::NORM_REGULIER)
         );
 
-        $actual = (string) ($year['drempelStatus'] ?? '');
+        $actual = (string) ($year['thresholdStatus'] ?? '');
         if ($actual !== $expected) {
             $this->logger->info(
                 'UrencriteriumYearGuard: drempelStatus does not match prognose/norm — denying save',

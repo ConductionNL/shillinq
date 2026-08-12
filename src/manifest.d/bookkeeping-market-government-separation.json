@@ -101,14 +101,14 @@
 					{ "key": "name", "label": "Name", "type": "string" },
 					{ "key": "bestuursorgaan", "label": "Bestuursorgaan", "type": "string" },
 					{ "key": "organisatieonderdeel", "label": "Department", "type": "string" },
-					{ "key": "beschrijving", "label": "Description", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
 					{ "key": "marktsegment", "label": "Market Segment", "type": "string" },
 					{ "key": "concurrenten", "label": "Competitors", "type": "array" },
 					{ "key": "afnemers", "label": "Customers", "type": "array" },
 					{ "key": "startDatum", "label": "Start Date", "type": "string" },
 					{ "key": "endDate", "label": "End Date", "type": "string" },
 					{ "key": "kostprijsMethode", "label": "Cost-Price Method", "type": "string" },
-					{ "key": "kostenplaatsCode", "label": "Cost Center", "type": "string" },
+					{ "key": "costCentreCode", "label": "Cost Center", "type": "string" },
 					{ "key": "kostendragerCode", "label": "Cost Object", "type": "string" },
 					{ "key": "isExempted", "label": "Is Exempted", "type": "boolean" },
 					{ "key": "exemptionBesluitId", "label": "Exemption Decision", "type": "string" },
@@ -125,7 +125,7 @@
 						"schema": "IntegralCostPrice",
 						"foreignKey": "commercialActivityId",
 						"columns": [
-							{ "key": "periode", "label": "Period" },
+							{ "key": "period", "label": "Period" },
 							{ "key": "totaleKosten", "label": "Total cost" },
 							{ "key": "kostprijsPerEenheid", "label": "Cost / unit" },
 							{ "key": "gehanteerdTarief", "label": "Applied tariff" },
@@ -198,14 +198,14 @@
 				"schema": "IntegralCostPrice",
 				"columns": [
 					{ "key": "commercialActivityId", "label": "Activity", "sortable": true },
-					{ "key": "periode", "label": "Period", "sortable": true },
+					{ "key": "period", "label": "Period", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true },
 					{ "key": "totaleKosten", "label": "Total Cost", "sortable": true },
 					{ "key": "kostprijsPerEenheid", "label": "Cost per Unit", "sortable": true },
 					{ "key": "gehanteerdTarief", "label": "Applied Tariff", "sortable": true },
 					{ "key": "compliant", "label": "Compliant", "sortable": true }
 				],
-				"defaultSort": "periode",
+				"defaultSort": "period",
 				"detailRoute": "IntegralCostPriceDetail"
 			}
 		},
@@ -220,13 +220,13 @@
 				"_note": "FINANCIAL / COST-REPORT archetype (native CnDetailPage). An integral cost price is the periodic calculation proving a commercial activity charges at least full cost (no cross-subsidy). Native contract only: fields[] carry the money outcome (total cost, unit cost, margin, applied tariff, compliant flag, sign-off). Sidebar has a file-references tab (the supporting cost model is a real source document) and an audit-trail tab for the sign-off history. lifecycleActions on (draft / signed / final). NO comms, NO relatedLists — a cost calculation is a leaf artefact with no children.",
 				"fields": [
 					{ "key": "commercialActivityId", "label": "Activity", "type": "string" },
-					{ "key": "periode", "label": "Period", "type": "string" },
-					{ "key": "berekendOp", "label": "Calculated At", "type": "string" },
+					{ "key": "period", "label": "Period", "type": "string" },
+					{ "key": "calculatedOn", "label": "Calculated At", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" },
 					{ "key": "componenten", "label": "Components", "type": "object" },
 					{ "key": "totaleKosten", "label": "Total Cost", "type": "number" },
 					{ "key": "verkochteEenheden", "label": "Units Sold", "type": "number" },
-					{ "key": "eenheidLabel", "label": "Unit", "type": "string" },
+					{ "key": "unitLabel", "label": "Unit", "type": "string" },
 					{ "key": "kostprijsPerEenheid", "label": "Cost per Unit", "type": "number" },
 					{ "key": "gehanteerdTarief", "label": "Applied Tariff", "type": "number" },
 					{ "key": "marge", "label": "Margin", "type": "number" },
@@ -234,7 +234,7 @@
 					{ "key": "compliant", "label": "Compliant", "type": "boolean" },
 					{ "key": "definitiefSignedBy", "label": "Signed By", "type": "string" },
 					{ "key": "definitiefSignedAt", "label": "Signed At", "type": "string" },
-					{ "key": "toelichting", "label": "Notes", "type": "string" }
+					{ "key": "notes", "label": "Notes", "type": "string" }
 				],
 				"lifecycleActions": true,
 				"indexRoute": "IntegralCostPrices",
@@ -330,7 +330,7 @@
 				"register": "shillinq",
 				"schema": "AlgemeenBelangBesluit",
 				"columns": [
-					{ "key": "kenmerk", "label": "Reference", "sortable": true },
+					{ "key": "reference", "label": "Reference", "sortable": true },
 					{ "key": "bestuursorgaan", "label": "Bestuursorgaan", "sortable": true },
 					{ "key": "vaststellingsdatum", "label": "Adopted On", "sortable": true },
 					{ "key": "publicatieDatum", "label": "Published", "sortable": true },
@@ -351,7 +351,7 @@
 				"schema": "AlgemeenBelangBesluit",
 				"_note": "FINANCIAL-ADJACENT / DECISION-DOCUMENT archetype (native CnDetailPage). An algemeen-belangbesluit is the formal council decision that exempts a commercial activity from the Wet Markt & Overheid cost rules — a published document with legal artefacts (DROP verification, ACM notification, Gemeenteblad publication). Native contract only: fields[] carry the decision data; a file-references sidebar tab holds the decision PDF and publication proof; an audit-trail tab records the adoption/publication chain. lifecycleActions on (draft / adopted / published / expired). NO comms — it is a published decision, not a conversation.",
 				"fields": [
-					{ "key": "kenmerk", "label": "Reference", "type": "string" },
+					{ "key": "reference", "label": "Reference", "type": "string" },
 					{ "key": "bestuursorgaan", "label": "Bestuursorgaan", "type": "string" },
 					{ "key": "vaststellingsdatum", "label": "Adopted On", "type": "string" },
 					{ "key": "publicatieGemeenteblad", "label": "Gemeenteblad Reference", "type": "string" },
@@ -575,9 +575,9 @@
 				"columns": [
 					{ "key": "commercialActivityId", "label": "Activity", "sortable": true },
 					{ "key": "peildatum", "label": "Reference Date", "sortable": true },
-					{ "key": "bron", "label": "Source", "sortable": true },
+					{ "key": "source", "label": "Source", "sortable": true },
 					{ "key": "amount", "label": "Amount", "sortable": true },
-					{ "key": "eenheid", "label": "Unit", "sortable": true },
+					{ "key": "unit", "label": "Unit", "sortable": true },
 					{ "key": "competitorName", "label": "Competitor", "sortable": true }
 				],
 				"defaultSort": "peildatum",
@@ -596,11 +596,11 @@
 				"fields": [
 					{ "key": "commercialActivityId", "label": "Activity", "type": "string" },
 					{ "key": "peildatum", "label": "Reference Date", "type": "string" },
-					{ "key": "bron", "label": "Source", "type": "string" },
+					{ "key": "source", "label": "Source", "type": "string" },
 					{ "key": "amount", "label": "Amount", "type": "number" },
-					{ "key": "eenheid", "label": "Unit", "type": "string" },
+					{ "key": "unit", "label": "Unit", "type": "string" },
 					{ "key": "competitorName", "label": "Competitor", "type": "string" },
-					{ "key": "toelichting", "label": "Notes", "type": "string" }
+					{ "key": "notes", "label": "Notes", "type": "string" }
 				],
 				"indexRoute": "MarketBenchmarks",
 				"sidebarProps": {

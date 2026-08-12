@@ -54,10 +54,10 @@ final class IntegralCostPriceCalculatorTest extends TestCase
     public function testSumDirectCostsFiltersOnTriple(): void
     {
         $lines = [
-            ['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten', 'amount' => 12345.67],
-            ['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten', 'amount' => 1000.00],
-            ['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-OTHER',     'accountKind' => 'loonkosten', 'amount' => 9999.00],
-            ['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'materialen', 'amount' => 500.00],
+            ['costCentre' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten', 'amount' => 12345.67],
+            ['costCentre' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten', 'amount' => 1000.00],
+            ['costCentre' => 'K-SP-014', 'kostendrager' => 'D-OTHER',     'accountKind' => 'loonkosten', 'amount' => 9999.00],
+            ['costCentre' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'materialen', 'amount' => 500.00],
         ];
 
         $totalCents = $this->svc->sumDirectCosts($lines, 'K-SP-014', 'D-MO-SP-014', 'loonkosten');
@@ -130,9 +130,9 @@ final class IntegralCostPriceCalculatorTest extends TestCase
     public function testComposeMonthlyVoorlopig(): void
     {
         $glLines = [
-            ['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten',     'amount' => 41250.00],
-            ['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'materialen',     'amount' => 8730.00],
-            ['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'afschrijvingen', 'amount' => 6900.00],
+            ['costCentre' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten',     'amount' => 41250.00],
+            ['costCentre' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'materialen',     'amount' => 8730.00],
+            ['costCentre' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'afschrijvingen', 'amount' => 6900.00],
         ];
 
         $rule = [
@@ -144,9 +144,9 @@ final class IntegralCostPriceCalculatorTest extends TestCase
 
         $ikp = $this->svc->compose([
             'commercialActivityId'    => 'ca-mo-sp-014',
-            'periode'                 => '2026-Q1',
+            'period'                 => '2026-Q1',
             'administrationId'        => 'adm-tilburg',
-            'kostenplaats'            => 'K-SP-014',
+            'costCentre'            => 'K-SP-014',
             'kostendrager'            => 'D-MO-SP-014',
             'glLines'                 => $glLines,
             'corporateOverheadCents'  => 36_580_000, // €365.8k
@@ -156,7 +156,7 @@ final class IntegralCostPriceCalculatorTest extends TestCase
             'periodFraction'          => 1.0,
             'winstopslagRate'         => 0.03,
             'verkochteEenheden'       => 312.0,
-            'eenheidLabel'            => 'dagdeel-zaalhuur',
+            'unitLabel'            => 'dagdeel-zaalhuur',
             'gehanteerdTarief'        => 295.0,
         ]);
 
@@ -175,7 +175,7 @@ final class IntegralCostPriceCalculatorTest extends TestCase
         self::assertSame(295.0, $ikp['gehanteerdTarief']);
         self::assertTrue($ikp['compliant']);
         self::assertGreaterThan(0, $ikp['marge']);
-        self::assertSame('dagdeel-zaalhuur', $ikp['eenheidLabel']);
+        self::assertSame('dagdeel-zaalhuur', $ikp['unitLabel']);
 
     }//end testComposeMonthlyVoorlopig()
 

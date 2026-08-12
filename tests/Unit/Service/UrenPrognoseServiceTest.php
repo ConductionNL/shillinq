@@ -84,12 +84,12 @@ final class UrenPrognoseServiceTest extends TestCase
             ]
         );
 
-        self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
+        self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersion']);
         self::assertGreaterThan(700.0, $result['totalForecast']);
-        self::assertIsArray($result['perMaandPrognose']);
-        self::assertNotEmpty($result['perMaandPrognose']);
-        self::assertArrayHasKey('2026-07', $result['perMaandPrognose']);
-        self::assertArrayHasKey('2026-12', $result['perMaandPrognose']);
+        self::assertIsArray($result['perMonthPrognose']);
+        self::assertNotEmpty($result['perMonthPrognose']);
+        self::assertArrayHasKey('2026-07', $result['perMonthPrognose']);
+        self::assertArrayHasKey('2026-12', $result['perMonthPrognose']);
         // Confidence should be high for steady input.
         self::assertGreaterThanOrEqual(0.5, $result['prognoseConfidence']);
 
@@ -113,10 +113,10 @@ final class UrenPrognoseServiceTest extends TestCase
             ]
         );
 
-        $july     = $result['perMaandPrognose']['2026-07'];
-        $augustus = $result['perMaandPrognose']['2026-08'];
-        $sept     = $result['perMaandPrognose']['2026-09'];
-        $december = $result['perMaandPrognose']['2026-12'];
+        $july     = $result['perMonthPrognose']['2026-07'];
+        $augustus = $result['perMonthPrognose']['2026-08'];
+        $sept     = $result['perMonthPrognose']['2026-09'];
+        $december = $result['perMonthPrognose']['2026-12'];
 
         // August must be lower than September (-25% vs neutral).
         self::assertLessThan($sept, $augustus);
@@ -146,7 +146,7 @@ final class UrenPrognoseServiceTest extends TestCase
             ]
         );
 
-        self::assertSame(0.0, $result['perMaandPrognose']['2026-08']);
+        self::assertSame(0.0, $result['perMonthPrognose']['2026-08']);
 
     }//end testFullMonthVakantieZeroes()
 
@@ -165,13 +165,13 @@ final class UrenPrognoseServiceTest extends TestCase
                 'lopendeUren'        => 0.0,
                 'dailyTallies'       => $this->steadyTallies('2026-06-30', 84),
                 'geplandeOpdrachten' => [
-                    ['maand' => '2026-09', 'uren' => 200.0],
+                    ['maand' => '2026-09', 'hours' => 200.0],
                 ],
                 'doelNorm'           => 1225,
             ]
         );
 
-        self::assertSame(200.0, $result['perMaandPrognose']['2026-09']);
+        self::assertSame(200.0, $result['perMonthPrognose']['2026-09']);
 
     }//end testGeplandeOpdrachtOverridesMaand()
 
@@ -266,7 +266,7 @@ final class UrenPrognoseServiceTest extends TestCase
         );
 
         self::assertSame(0.0, $result['totalForecast']);
-        self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
+        self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersion']);
 
     }//end testEmptyTalliesReturnsZeroPrognose()
 

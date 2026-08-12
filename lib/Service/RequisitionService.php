@@ -130,7 +130,7 @@ class RequisitionService
             throw new RuntimeException('justification is required');
         }
 
-        $soort = trim((string) ($payload['soort'] ?? ''));
+        $soort = trim((string) ($payload['kind'] ?? ''));
         if ($soort === '') {
             throw new RuntimeException('soort is required');
         }
@@ -151,7 +151,7 @@ class RequisitionService
             'financialYear'              => $boekjaar,
             'neededByDate'          => $neededByDate,
             'justification'         => $justification,
-            'soort'                 => $soort,
+            'kind'                 => $soort,
             'preferredSupplierId'   => trim((string) ($payload['preferredSupplierId'] ?? '')),
             'totaalbedrag_excl_btw' => $totalCent,
             'statusCode'            => 'draft',

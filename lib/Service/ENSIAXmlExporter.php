@@ -73,11 +73,11 @@ class ENSIAXmlExporter
     public function canExport(array $cyclus): bool
     {
         $status = (string) ($cyclus['status'] ?? '');
-        if ($status !== 'college-akkoord' && $status !== 'ingediend') {
+        if ($status !== 'college-akkoord' && $status !== 'submitted') {
             return false;
         }
 
-        $verklaringFile = (string) ($cyclus['verklaringFile'] ?? '');
+        $verklaringFile = (string) ($cyclus['declarationFile'] ?? '');
         return $verklaringFile !== '';
 
     }//end canExport()
@@ -101,8 +101,8 @@ class ENSIAXmlExporter
         $doc->appendChild($root);
 
         // Organisation.
-        $org   = $cyclus['organisatie'] ?? [];
-        $orgEl = $doc->createElement('organisatie');
+        $org   = $cyclus['organisation'] ?? [];
+        $orgEl = $doc->createElement('organisation');
         $orgEl->appendChild($doc->createElement('kvk', (string) ($org['kvk'] ?? '')));
         $orgEl->appendChild($doc->createElement('name', (string) ($org['name'] ?? '')));
         $root->appendChild($orgEl);
@@ -111,7 +111,7 @@ class ENSIAXmlExporter
         $root->appendChild($doc->createElement('year', (string) ($cyclus['year'] ?? '')));
         $root->appendChild($doc->createElement('status', (string) ($cyclus['status'] ?? '')));
         $root->appendChild($doc->createElement('vraagSetVersion', (string) ($cyclus['vraagSetVersion'] ?? '')));
-        $root->appendChild($doc->createElement('verklaringFile', (string) ($cyclus['verklaringFile'] ?? '')));
+        $root->appendChild($doc->createElement('declarationFile', (string) ($cyclus['declarationFile'] ?? '')));
         $root->appendChild(
             $doc->createElement('submittedAt', $submittedAt ?? (new DateTimeImmutable('now'))->format(DATE_ATOM))
         );
@@ -147,9 +147,9 @@ class ENSIAXmlExporter
                     $vraagEl->appendChild($doc->createElement('volwassenheidsScore', (string) $score));
                 }
 
-                $toelichting = (string) ($v['toelichting'] ?? '');
+                $toelichting = (string) ($v['notes'] ?? '');
                 if ($toelichting !== '') {
-                    $vraagEl->appendChild($doc->createElement('toelichting', $toelichting));
+                    $vraagEl->appendChild($doc->createElement('notes', $toelichting));
                 }
 
                 $peerReviewStatus = (string) ($v['peerReviewStatus'] ?? '');

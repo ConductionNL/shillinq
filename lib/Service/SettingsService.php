@@ -2909,7 +2909,7 @@ class SettingsService
             $files = [
                 'sportaccommodaties-gemeente.json'         => ['CommercialActivity', 'activities', 'code'],
                 'waterschap-slibruimte.json'               => ['CommercialActivity', 'activities', 'code'],
-                'abb-example-gemeente.json'                => ['AlgemeenBelangBesluit', 'besluiten', 'kenmerk'],
+                'abb-example-gemeente.json'                => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
                 'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
             ];
 
@@ -2943,7 +2943,7 @@ class SettingsService
                     $filter = ['administrationId' => $administrationId];
                     if ($dedupeKey === '__ikpKey') {
                         $filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
-                        $filter['periode'] = ($record['periode'] ?? '');
+                        $filter['period'] = ($record['period'] ?? '');
                     } else if ($dedupeKey !== '' && isset($record[$dedupeKey]) === true) {
                         $filter[$dedupeKey] = $record[$dedupeKey];
                     }

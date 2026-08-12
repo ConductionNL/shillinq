@@ -151,7 +151,7 @@ final class UrenAlertService
             [
                 'enterpriseId' => $alert['enterpriseId'],
                 'datum'         => $datum,
-                'drempelStatus' => ($year['drempelStatus'] ?? null),
+                'thresholdStatus' => ($year['thresholdStatus'] ?? null),
             ]
         );
 

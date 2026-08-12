@@ -134,10 +134,10 @@ class EmuReportingService
             'type'            => $type,
             'richting'        => $richting,
             'amount'          => abs((float) ($glLine['amount'] ?? 0)),
-            'bron'            => [
+            'source'            => [
                 'grootboekrekening' => $account,
                 'description'      => (string) ($glLine['description'] ?? ''),
-                'taakveld'          => (string) ($glLine['taakveld'] ?? ''),
+                'taskField'          => (string) ($glLine['taskField'] ?? ''),
             ],
             'regel'           => 'Wet Hof art. 3: '.$type,
             'overridden'      => false,
@@ -197,7 +197,7 @@ class EmuReportingService
         $brutoCents        = 0;
         foreach ($debtPositions as $pos) {
             $categorie = (string) ($pos['categorieEurostat'] ?? 'overig');
-            $telt      = (bool) ($pos['teltMeeInEmuSchuld'] ?? false);
+            $telt      = (bool) ($pos['teltMeeInEmuDebt'] ?? false);
             if ($telt === false || in_array($categorie, self::EMU_SCHULD_CATEGORIES, true) === false) {
                 continue;
             }
@@ -213,8 +213,8 @@ class EmuReportingService
         }
 
         return [
-            'bruto'        => (float) ($brutoCents / 100),
-            'perCategorie' => $perCategorie,
+            'gross'        => (float) ($brutoCents / 100),
+            'perCategory' => $perCategorie,
         ];
 
     }//end computeBrutoSchuld()
@@ -523,7 +523,7 @@ class EmuReportingService
             return $explicit;
         }
 
-        $taakveld = (string) ($item['taakveld'] ?? '');
+        $taakveld = (string) ($item['taskField'] ?? '');
         if ($taakveld !== '' && isset($taakveldMap[$taakveld]) === true) {
             return $taakveldMap[$taakveld];
         }
@@ -579,7 +579,7 @@ class EmuReportingService
             return 'extern';
         }
 
-        $sector = (string) ($tegenpartij['sector'] ?? ($tegenpartij['soort'] ?? ''));
+        $sector = (string) ($tegenpartij['sector'] ?? ($tegenpartij['kind'] ?? ''));
         if ($sector === 'S.1313' || str_contains($sector, 'S1313') === true) {
             return 'intern-S1313';
         }

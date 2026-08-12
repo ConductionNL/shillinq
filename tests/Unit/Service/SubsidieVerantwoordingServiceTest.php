@@ -80,7 +80,7 @@ class SubsidieVerantwoordingServiceTest extends TestCase
     public function testBuildVerantwoordingForGrant(): void
     {
         $grant = [
-            'subsidieNumber'   => 'SUB-2026-0001',
+            'subsidyNumber'   => 'SUB-2026-0001',
             'awardDate'        => '2026-01-01',
             'awardAmount'      => 50000,
             'administrationId' => 'adm-gemeente-1',
@@ -105,7 +105,7 @@ class SubsidieVerantwoordingServiceTest extends TestCase
      */
     public function testBuildVerantwoordingWithoutAwardDate(): void
     {
-        $grant   = ['subsidieNumber' => 'SUB-2', 'awardAmount' => 1000, 'administrationId' => 'adm-1'];
+        $grant   = ['subsidyNumber' => 'SUB-2', 'awardAmount' => 1000, 'administrationId' => 'adm-1'];
         $payload = $this->service->buildVerantwoordingForGrant(grant: $grant, reportDate: '2026-05-05');
 
         self::assertSame('2026-05-05 to 2026-05-05', $payload['reportingPeriod']);

@@ -160,7 +160,7 @@ final class BadoControleprotocolEndToEndTest extends TestCase
                         'auditYear'         => 2026,
                         'organisationId'    => 'gemeente-hoorn',
                         'organisationType'  => 'gemeente',
-                        'materialityBase'   => 'lasten',
+                        'materialityBase'   => 'expenses',
                         'materialityAmount' => 1000000.0,
                         'effectiveFrom'     => '2026-01-01',
                         'effectiveTo'       => '2026-12-31',

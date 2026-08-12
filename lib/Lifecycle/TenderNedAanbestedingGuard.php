@@ -114,7 +114,7 @@ class TenderNedAanbestedingGuard
                 return false;
             }
 
-            if ((float) ($aanbesteding['contractWaarde'] ?? 0) <= 0.0) {
+            if ((float) ($aanbesteding['contractValue'] ?? 0) <= 0.0) {
                 $this->logger->info(
                     'TenderNedAanbestedingGuard: contractWaarde must be positive — denying award (REQ-002)',
                     ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
@@ -159,7 +159,7 @@ class TenderNedAanbestedingGuard
     public function canAfronden(array $aanbesteding): bool
     {
         try {
-            $verplichtingId = trim((string) ($aanbesteding['verplichtingId'] ?? ''));
+            $verplichtingId = trim((string) ($aanbesteding['commitmentId'] ?? ''));
             if ($verplichtingId === '') {
                 $this->logger->warning(
                     'TenderNedAanbestedingGuard: no linked Verplichting — permitting completion without delivery check',
@@ -200,7 +200,7 @@ class TenderNedAanbestedingGuard
                 ->findAll(
                     [
                         'filters' => [
-                            'verplichtingId'  => $verplichtingId,
+                            'commitmentId'  => $verplichtingId,
                             'opleveringsType' => 'eindoplevering',
                         ],
                     ]
@@ -234,7 +234,7 @@ class TenderNedAanbestedingGuard
             'TenderNedAanbestedingGuard: no approved eindoplevering — denying completion (REQ-006)',
             [
                 'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
-                'verplichtingId' => $verplichtingId,
+                'commitmentId' => $verplichtingId,
             ]
         );
         return false;

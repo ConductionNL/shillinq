@@ -105,7 +105,7 @@ class VpbBerekeningGuard
         } catch (\Throwable $e) {
             $this->logger->error(
                 'VpbBerekeningGuard: berekenVerschuldigdeVpb failed — returning 0 (fail-closed)',
-                ['belastingjaar' => $belastingjaar, 'exception' => $e->getMessage()]
+                ['taxYear' => $belastingjaar, 'exception' => $e->getMessage()]
             );
             return 0.0;
         }//end try
@@ -210,7 +210,7 @@ class VpbBerekeningGuard
         $records = $objectService
             ->setRegister($register)
             ->setSchema('VpbTariefcatalogus')
-            ->findAll(['filters' => ['belastingjaar' => $belastingjaar]]);
+            ->findAll(['filters' => ['taxYear' => $belastingjaar]]);
 
         foreach ($records as $record) {
             if (is_array($record) === true) {

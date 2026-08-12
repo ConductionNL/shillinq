@@ -181,7 +181,7 @@ class VerplichtingTransitionListener implements IEventListener
      */
     private function emitIfTenderNed(array $verplichting): void
     {
-        if ((string) ($verplichting['bron'] ?? '') !== 'tenderned') {
+        if ((string) ($verplichting['source'] ?? '') !== 'tenderned') {
             return;
         }
 
@@ -198,6 +198,12 @@ class VerplichtingTransitionListener implements IEventListener
      */
     private function isVerplichtingSchema(string $schema): bool
     {
+        // These compare the SCHEMA SLUG, which is still `Verplichting` — this
+        // vocabulary work renames PROPERTIES, not schema names. Translating the
+        // literal here made the listener match nothing, so it silently stopped
+        // emitting budget events. A quoted string that is a contract with
+        // something else (a slug, a regex capture, a CSV header) does not move
+        // with the properties.
         $normalised = strtolower(trim($schema));
         return ($normalised === 'verplichting'
             || str_ends_with(haystack: $normalised, needle: 'verplichting'));

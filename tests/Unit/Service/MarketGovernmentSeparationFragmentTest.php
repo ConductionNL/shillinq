@@ -117,7 +117,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase
             'marktsegment',
             'concurrenten',
             'kostprijsMethode',
-            'kostenplaatsCode',
+            'costCentreCode',
             'kostendragerCode',
             'isExempted',
             'acmMelding',

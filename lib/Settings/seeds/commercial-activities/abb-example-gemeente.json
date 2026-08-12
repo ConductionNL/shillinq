@@ -10,15 +10,15 @@
 	"besluiten": [
 		{
 			"id": "abb-mo-sp-016-2023",
-			"kenmerk": "Raadsbesluit 2023-184",
+			"reference": "Raadsbesluit 2023-184",
 			"bestuursorgaan": "Gemeente Voorbeeld",
 			"vaststellingsdatum": "2023-03-14",
 			"publicatieGemeenteblad": "gmb-2023-198321",
 			"publicatieDatum": "2023-03-21",
 			"kennisgevingAcm": {
-				"ingediend": true,
+				"submitted": true,
 				"datum": "2023-03-28",
-				"kenmerk": "ACM/IN/621004"
+				"reference": "ACM/IN/621004"
 			},
 			"betreftActiviteiten": ["MO-SP-016"],
 			"publiekBelangCategorieen": ["arbeidsparticipatie", "sociaaleconomische-cohesie"],

@@ -269,7 +269,7 @@ final class RequisitionServiceTest extends TestCase
                 'financialYear'      => 2026,
                 'neededByDate'  => '2026-08-15',
                 'justification' => 'Onboarding laptops',
-                'soort'         => 'inkoop',
+                'kind'         => 'inkoop',
                 'lines'         => [
                     ['description' => 'Laptop', 'quantity' => 2, 'unitPrice' => 1000.00, 'glAccountSuggestion' => '4400'],
                     ['description' => 'Docking station', 'quantity' => 2, 'unitPrice' => 150.00, 'glAccountSuggestion' => '4400'],
@@ -307,7 +307,7 @@ final class RequisitionServiceTest extends TestCase
                 'financialYear'      => 2026,
                 'neededByDate'  => '2026-08-15',
                 'justification' => 'x',
-                'soort'         => 'inkoop',
+                'kind'         => 'inkoop',
                 'lines'         => [
                     ['description' => 'x', 'quantity' => 1, 'unitPrice' => 1, 'glAccountSuggestion' => '4400'],
                 ],
@@ -334,7 +334,7 @@ final class RequisitionServiceTest extends TestCase
                     'totaalbedrag_excl_btw' => 50000,
                     'programme'             => '5.1',
                     'financialYear'              => 2026,
-                    'soort'                 => 'inkoop',
+                    'kind'                 => 'inkoop',
                 ],
             ],
         ];
@@ -387,7 +387,7 @@ final class RequisitionServiceTest extends TestCase
                     'statusCode'            => 'submitted',
                     'programme'             => '5.1',
                     'financialYear'              => 2026,
-                    'soort'                 => 'inkoop',
+                    'kind'                 => 'inkoop',
                     'totaalbedrag_excl_btw' => 500000,
                 ],
             ],
@@ -431,7 +431,7 @@ final class RequisitionServiceTest extends TestCase
                     'statusCode'            => 'submitted',
                     'programme'             => '5.1',
                     'financialYear'              => 2026,
-                    'soort'                 => 'inkoop',
+                    'kind'                 => 'inkoop',
                     // 20,000.00 EUR requested against a 10,000.00 EUR free room.
                     'totaalbedrag_excl_btw' => 2000000,
                 ],

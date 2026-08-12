@@ -64,9 +64,9 @@ final class UrenNormDeterminationServiceTest extends TestCase
         );
 
         self::assertSame(1225, $seed['doelNorm']);
-        self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normGrondslag']);
+        self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normBasis']);
         self::assertSame('NIET_TOEPASSELIJK', $seed['grotendeelsCriterium']);
-        self::assertSame('OP_KOERS', $seed['drempelStatus']);
+        self::assertSame('OP_KOERS', $seed['thresholdStatus']);
         self::assertSame(0.0, $seed['lopendeUren']);
         self::assertSame('adm-1', $seed['administrationId']);
         self::assertSame('ond-1', $seed['enterpriseId']);
@@ -92,7 +92,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         );
 
         self::assertSame(800, $seed['doelNorm']);
-        self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normGrondslag']);
+        self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normBasis']);
 
     }//end testArbeidsongeschiktSeedYields800()
 

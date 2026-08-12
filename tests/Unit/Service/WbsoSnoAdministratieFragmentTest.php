@@ -121,7 +121,7 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase
     public function testBeschikkingFieldsAndLifecycle(): void
     {
         $schema = $this->fragment()['components']['schemas']['WbsoBeschikking'];
-        foreach (['beschikkingNumber', 'rvoReference', 'projectNumber', 'periodStart', 'periodEnd', 'grantedSoHours', 'soHourlyRate'] as $field) {
+        foreach (['decisionNumber', 'rvoReference', 'projectNumber', 'periodStart', 'periodEnd', 'grantedSoHours', 'soHourlyRate'] as $field) {
             self::assertArrayHasKey($field, $schema['properties'], "WbsoBeschikking must declare $field");
         }
 
@@ -212,7 +212,7 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase
             self::assertArrayHasKey($object['@self']['schema'], $schemas);
 
             if ($object['@self']['schema'] === 'WbsoBeschikking') {
-                $grantedByBeschikking[$object['beschikkingNumber']] = (float) $object['grantedSoHours'];
+                $grantedByBeschikking[$object['decisionNumber']] = (float) $object['grantedSoHours'];
             }
 
             if ($object['@self']['schema'] === 'SoUurregistratie') {
@@ -227,7 +227,7 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase
                 continue;
             }
 
-            $beschikkingNumber = $object['beschikkingNumber'];
+            $beschikkingNumber = $object['decisionNumber'];
             self::assertArrayHasKey($beschikkingNumber, $grantedByBeschikking);
             self::assertLessThanOrEqual(
                 $grantedByBeschikking[$beschikkingNumber],

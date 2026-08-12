@@ -116,7 +116,7 @@ class RequisitionController extends Controller
             'financialYear'            => (int) $this->request->getParam('financialYear', 0),
             'neededByDate'        => trim((string) $this->request->getParam('neededByDate', '')),
             'justification'       => trim((string) $this->request->getParam('justification', '')),
-            'soort'               => trim((string) $this->request->getParam('soort', '')),
+            'kind'               => trim((string) $this->request->getParam('kind', '')),
             'preferredSupplierId' => trim((string) $this->request->getParam('preferredSupplierId', '')),
             'lines'               => (array) $this->request->getParam('lines', []),
         ];

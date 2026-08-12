@@ -147,15 +147,15 @@ class EmuReportingServiceTest extends TestCase
     public function testComputeBrutoSchuld(): void
     {
         $positions = [
-            ['categorieEurostat' => 'AF.4-loans', 'uitstaandeSchuld' => 18750000.0, 'teltMeeInEmuSchuld' => true],
-            ['categorieEurostat' => 'AF.2-deposits', 'uitstaandeSchuld' => 2100000.0, 'teltMeeInEmuSchuld' => true],
-            ['categorieEurostat' => 'AF.7-derivatives', 'uitstaandeSchuld' => 800000.0, 'teltMeeInEmuSchuld' => false],
+            ['categorieEurostat' => 'AF.4-loans', 'uitstaandeSchuld' => 18750000.0, 'teltMeeInEmuDebt' => true],
+            ['categorieEurostat' => 'AF.2-deposits', 'uitstaandeSchuld' => 2100000.0, 'teltMeeInEmuDebt' => true],
+            ['categorieEurostat' => 'AF.7-derivatives', 'uitstaandeSchuld' => 800000.0, 'teltMeeInEmuDebt' => false],
         ];
         $result = $this->service->computeBrutoSchuld($positions);
 
-        self::assertSame(20850000.0, $result['bruto']);
-        self::assertArrayHasKey('AF.4-loans', $result['perCategorie']);
-        self::assertArrayNotHasKey('AF.7-derivatives', $result['perCategorie'], 'Derivaten tellen niet mee');
+        self::assertSame(20850000.0, $result['gross']);
+        self::assertArrayHasKey('AF.4-loans', $result['perCategory']);
+        self::assertArrayNotHasKey('AF.7-derivatives', $result['perCategory'], 'Derivaten tellen niet mee');
     }//end testComputeBrutoSchuld()
 
     /**
@@ -166,9 +166,9 @@ class EmuReportingServiceTest extends TestCase
     public function testBrutoSchuldExcludesOverigCategory(): void
     {
         $positions = [
-            ['categorieEurostat' => 'overig', 'uitstaandeSchuld' => 500000.0, 'teltMeeInEmuSchuld' => true],
+            ['categorieEurostat' => 'overig', 'uitstaandeSchuld' => 500000.0, 'teltMeeInEmuDebt' => true],
         ];
-        self::assertSame(0.0, $this->service->computeBrutoSchuld($positions)['bruto']);
+        self::assertSame(0.0, $this->service->computeBrutoSchuld($positions)['gross']);
     }//end testBrutoSchuldExcludesOverigCategory()
 
     /**
@@ -340,7 +340,7 @@ class EmuReportingServiceTest extends TestCase
      */
     public function testMapIv3ExplicitIv3Wins(): void
     {
-        $item = ['iv3' => ['hoofdstuk' => '8', 'functie' => '810', 'categorie' => '3.4.1']];
+        $item = ['iv3' => ['hoofdstuk' => '8', 'functie' => '810', 'category' => '3.4.1']];
         $iv3  = $this->service->mapIv3Classification(item: $item, taakveldMap: ['4.2' => ['hoofdstuk' => '4']]);
         self::assertSame('8', $iv3['hoofdstuk']);
     }//end testMapIv3ExplicitIv3Wins()
@@ -352,10 +352,10 @@ class EmuReportingServiceTest extends TestCase
      */
     public function testMapIv3TaakveldFallback(): void
     {
-        $item = ['taakveld' => '4.2'];
+        $item = ['taskField' => '4.2'];
         $iv3  = $this->service->mapIv3Classification(
             item: $item,
-            taakveldMap: ['4.2' => ['hoofdstuk' => '4', 'functie' => '420', 'categorie' => '3.5.1']]
+            taakveldMap: ['4.2' => ['hoofdstuk' => '4', 'functie' => '420', 'category' => '3.5.1']]
         );
         self::assertSame('4', $iv3['hoofdstuk']);
         self::assertSame('420', $iv3['functie']);
@@ -369,8 +369,8 @@ class EmuReportingServiceTest extends TestCase
     public function testMapIv3AccountPrefixLongestWins(): void
     {
         $accountMap = [
-            '4'    => ['hoofdstuk' => 'X', 'functie' => '000', 'categorie' => '0.0.0'],
-            '4801' => ['hoofdstuk' => '4', 'functie' => '420', 'categorie' => '3.5.1'],
+            '4'    => ['hoofdstuk' => 'X', 'functie' => '000', 'category' => '0.0.0'],
+            '4801' => ['hoofdstuk' => '4', 'functie' => '420', 'category' => '3.5.1'],
         ];
         $iv3 = $this->service->mapIv3Classification(item: ['accountNumber' => '4801000'], accountMap: $accountMap);
         self::assertSame('4', $iv3['hoofdstuk']);

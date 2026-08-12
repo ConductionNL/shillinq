@@ -29,7 +29,7 @@
           "financialYearStart",
           "financialYearEnd",
           "groottecategorie",
-          "rapportageGrondslag",
+          "rapportageBasis",
           "valuta",
           "status"
         ],
@@ -116,7 +116,7 @@
             },
             "title": "Groottecategorie Onderbouwing"
           },
-          "rapportageGrondslag": {
+          "rapportageBasis": {
             "type": "string",
             "enum": [
               "RJ-commercieel",
@@ -852,12 +852,12 @@
             "items": {
               "type": "object",
               "required": [
-                "categorie",
+                "category",
                 "label",
                 "amount"
               ],
               "properties": {
-                "categorie": {
+                "category": {
                   "type": "string",
                   "enum": [
                     "operationeel",
@@ -1342,7 +1342,7 @@
         ],
         "override": false
       },
-      "rapportageGrondslag": "RJ-commercieel",
+      "rapportageBasis": "RJ-commercieel",
       "valuta": "EUR",
       "status": "concept",
       "opmaakDatum": null,
@@ -1377,7 +1377,7 @@
         ],
         "override": false
       },
-      "rapportageGrondslag": "RJ-commercieel",
+      "rapportageBasis": "RJ-commercieel",
       "valuta": "EUR",
       "status": "concept",
       "opmaakDatum": null,
@@ -1559,27 +1559,27 @@
       "nettoMutatieGeldmiddelen": 11000,
       "regels": [
         {
-          "categorie": "operationeel",
+          "category": "operationeel",
           "label": "Nettoresultaat",
           "amount": 266000
         },
         {
-          "categorie": "operationeel",
+          "category": "operationeel",
           "label": "Afschrijvingen",
           "amount": 80000
         },
         {
-          "categorie": "investering",
+          "category": "investering",
           "label": "Investeringen materiële vaste activa",
           "amount": -120000
         },
         {
-          "categorie": "financiering",
+          "category": "financiering",
           "label": "Aflossing langlopende lening",
           "amount": -50000
         },
         {
-          "categorie": "financiering",
+          "category": "financiering",
           "label": "Dividenduitkering",
           "amount": -100000
         }

@@ -395,7 +395,7 @@ class FoldIntoOrder implements IRepairStep
     private function migrationKey(array $src, string $schema): string
     {
         $preferred = match ($schema) {
-            'Subsidie'      => (string) ($src['subsidieNumber'] ?? ''),
+            'Subsidie'      => (string) ($src['subsidyNumber'] ?? ''),
             'PurchaseOrder' => (string) ($src['poNumber'] ?? ''),
             default         => '',
         };
@@ -482,23 +482,23 @@ class FoldIntoOrder implements IRepairStep
 
         return [
             'administrationId' => (string) ($src['administrationId'] ?? 'unknown'),
-            'orderType'        => 'subsidie',
+            'orderType'        => 'subsidy',
             'direction'        => (string) ($src['direction'] ?? 'outgoing'),
             'orderNumber'      => $migrationKey,
             'counterpartyId'   => $this->stringOrNull($src['counterpartyId'] ?? null),
             'counterpartyName' => $this->firstNonEmpty([($src['counterpartyName'] ?? null), ($src['granteeOrganization'] ?? null)]),
             'currency'         => (string) ($src['currency'] ?? 'EUR'),
-            'orderDate'        => $this->toDateTime($src['aanvraagDate'] ?? ($src['awardDate'] ?? null)),
+            'orderDate'        => $this->toDateTime($src['requestDate'] ?? ($src['awardDate'] ?? null)),
             'totalAmount'      => ($grantedAmount === null ? null : (float) $grantedAmount),
             'description'      => $this->stringOrNull($src['purposeDescription'] ?? ($src['notes'] ?? null)),
             'state'            => (string) ($src['state'] ?? 'aanvraag'),
-            'subsidie'         => [
-                'subsidieNumber'          => $this->stringOrNull($src['subsidieNumber'] ?? null),
-                'schemeName'            => $this->firstNonEmpty([($src['schemeName'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidieName'] ?? null)]),
+            'subsidy'         => [
+                'subsidyNumber'          => $this->stringOrNull($src['subsidyNumber'] ?? null),
+                'schemeName'            => $this->firstNonEmpty([($src['schemeName'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidyName'] ?? null)]),
                 'schemeArticle'         => $this->firstNonEmpty([($src['schemeArticle'] ?? null), ($src['grantProgram'] ?? null)]),
                 'subsidyScheme'        => $this->stringOrNull($src['subsidyScheme'] ?? null),
-                'aanvraagDate'            => $this->toDate($src['aanvraagDate'] ?? null),
-                'beschikkingDate'         => $this->toDate($src['beschikkingDate'] ?? ($src['awardDate'] ?? null)),
+                'requestDate'            => $this->toDate($src['requestDate'] ?? null),
+                'decisionDate'         => $this->toDate($src['decisionDate'] ?? ($src['awardDate'] ?? null)),
                 'vaststellingDate'        => $this->toDate($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
                 'settlementDate'          => $this->toDate($src['settlementDate'] ?? null),
                 'disbursementDate'        => $this->toDate($src['disbursementDate'] ?? null),
@@ -507,7 +507,7 @@ class FoldIntoOrder implements IRepairStep
                 'determinedAmount'       => $this->floatOrNull($src['determinedAmount'] ?? null),
                 'paidOutAmount'        => $this->floatOrNull($src['paidOutAmount'] ?? null),
                 'reclaimedAmount'    => $this->floatOrNull($src['reclaimedAmount'] ?? null),
-                'beschikkingUri'          => $this->stringOrNull($src['beschikkingUri'] ?? null),
+                'decisionUri'          => $this->stringOrNull($src['decisionUri'] ?? null),
                 'vaststellingUri'         => $this->stringOrNull($src['vaststellingUri'] ?? null),
                 'attachmentUri'           => $this->stringOrNull($src['attachmentUri'] ?? null),
                 'prestatieverantwoording' => $this->stringOrNull($src['prestatieverantwoording'] ?? null),
@@ -599,8 +599,8 @@ class FoldIntoOrder implements IRepairStep
             'orderType'        => 'engagement',
             'direction'        => 'outgoing',
             'orderNumber'      => 'DBA-'.$migrationKey,
-            'counterpartyId'   => $this->stringOrNull($src['klantId'] ?? null),
-            'counterpartyName' => $this->stringOrNull($src['klantId'] ?? null),
+            'counterpartyId'   => $this->stringOrNull($src['customerId'] ?? null),
+            'counterpartyName' => $this->stringOrNull($src['customerId'] ?? null),
             'currency'         => 'EUR',
             'orderDate'        => $this->toDateTime($src['startDatum'] ?? null),
             'endDate'          => $this->toDateTime($src['expectedEndDate'] ?? null),
@@ -609,7 +609,7 @@ class FoldIntoOrder implements IRepairStep
             'state'            => (string) ($src['intakeStatus'] ?? 'DRAFT'),
             'engagement'       => [
                 'enterpriseId'           => $this->stringOrNull($src['enterpriseId'] ?? null),
-                'klantId'                 => $this->stringOrNull($src['klantId'] ?? null),
+                'customerId'                 => $this->stringOrNull($src['customerId'] ?? null),
                 'assignmentName'            => $this->stringOrNull($src['assignmentName'] ?? null),
                 'expectedEndDate'      => $this->toDate($src['expectedEndDate'] ?? null),
                 'actualEndDate'     => $this->toDate($src['actualEndDate'] ?? null),
@@ -623,7 +623,7 @@ class FoldIntoOrder implements IRepairStep
                 'openFlags'               => $this->intOrNull($src['openFlags'] ?? null),
                 'evidenceDossierId'       => $this->stringOrNull($src['evidenceDossierId'] ?? null),
                 'wbaBeoordelingResultaat' => $this->stringOrNull($src['wbaBeoordelingResultaat'] ?? null),
-                'wbaGeldigTot'            => $this->toDate($src['wbaGeldigTot'] ?? null),
+                'wbaValidTo'            => $this->toDate($src['wbaValidTo'] ?? null),
                 'intermediairMode'        => $this->boolOrNull($src['intermediairMode'] ?? null),
                 'perspectief'             => $this->stringOrNull($src['perspectief'] ?? null),
                 'retentieDeadline'        => $this->toDate($src['retentieDeadline'] ?? null),

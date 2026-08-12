@@ -35,7 +35,7 @@
     },
     {
       "id": "mkb-winstvrijstelling-2026",
-      "field": "mkbWinstvrijstellingPercentage",
+      "field": "mkbProfitExemptionPercentage",
       "label": "MKB-winstvrijstelling",
       "percentage": 0.127,
       "description": "MKB-winstvrijstelling percentage voor belastingjaar 2026 (12.7%). Toegepast op belastbare winst na aftrekposten: (winst - zelfstandigenaftrek - startersaftrek) x 12.7%. Wet IB 2001 art. 3.79a.",

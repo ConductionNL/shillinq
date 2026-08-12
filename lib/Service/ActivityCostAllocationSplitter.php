@@ -100,8 +100,8 @@ class ActivityCostAllocationSplitter
                 continue;
             }
 
-            $from = (string) ($rule['effectiveFrom'] ?? $rule['geldigVanaf'] ?? '');
-            $to   = (string) ($rule['effectiveTo'] ?? $rule['geldigTot'] ?? '');
+            $from = (string) ($rule['effectiveFrom'] ?? $rule['validFrom'] ?? '');
+            $to   = (string) ($rule['effectiveTo'] ?? $rule['validTo'] ?? '');
 
             try {
                 if ($from !== '' && new DateTimeImmutable($from) > $posting) {

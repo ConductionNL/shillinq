@@ -61,8 +61,8 @@ final class ProgrammaAggregatorTest extends TestCase
     {
         $result = $this->aggregator->aggregate(
             taakvelden: [
-                ['baten' => 100.0, 'lasten' => 500.0],
-                ['baten' => 50.0, 'lasten' => 450.0],
+                ['revenue' => 100.0, 'expenses' => 500.0],
+                ['revenue' => 50.0, 'expenses' => 450.0],
             ]
         );
 
@@ -81,7 +81,7 @@ final class ProgrammaAggregatorTest extends TestCase
     public function testSaldoNaMutatiesAppliesReserveMutation(): void
     {
         $result = $this->aggregator->aggregate(
-            taakvelden: [['baten' => 0.0, 'lasten' => 500.0]],
+            taakvelden: [['revenue' => 0.0, 'expenses' => 500.0]],
             mutatiesReserves: 200.0
         );
 
@@ -113,8 +113,8 @@ final class ProgrammaAggregatorTest extends TestCase
     {
         $result = $this->aggregator->aggregate(
             taakvelden: [
-                ['baten' => 0.10, 'lasten' => 0.0],
-                ['baten' => 0.20, 'lasten' => 0.0],
+                ['revenue' => 0.10, 'expenses' => 0.0],
+                ['revenue' => 0.20, 'expenses' => 0.0],
             ]
         );
         self::assertSame(0.30, $result['revenueTotal']);

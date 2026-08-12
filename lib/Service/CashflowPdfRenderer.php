@@ -86,7 +86,7 @@ class CashflowPdfRenderer
         $lines[] = '';
         $lines[] = 'Horizon: '.($horizon['horizonStart'] ?? '?').' .. '.($horizon['horizonEnd'] ?? '?');
         $lines[] = 'Administration: '.($horizon['administrationId'] ?? '?');
-        $lines[] = 'Model: '.($horizon['modelVersie'] ?? '?');
+        $lines[] = 'Model: '.($horizon['modelVersion'] ?? '?');
         $lines[] = 'Rolled on: '.($horizon['rolledOp'] ?? '?');
         $lines[] = '';
 
@@ -108,7 +108,7 @@ class CashflowPdfRenderer
                 (string) ($week['weeknummer'] ?? '?'),
                 (float) ($week['inflows_total'] ?? 0),
                 (float) ($week['outflows_total'] ?? 0),
-                (float) ($week['nettoMutatie'] ?? 0),
+                (float) ($week['netMovement'] ?? 0),
                 (float) ($week['closingBalance'] ?? 0),
                 (string) ($week['bufferStatus'] ?? '?')
             );
@@ -121,7 +121,7 @@ class CashflowPdfRenderer
             foreach ($topCustomers as $cust) {
                 $lines[] = sprintf(
                     '%-30s avg offset %s, confidence %.2f',
-                    (string) ($cust['klantId'] ?? '?'),
+                    (string) ($cust['customerId'] ?? '?'),
                     (string) ($cust['gemiddeldeAfwijking'] ?? '?'),
                     (float) ($cust['betrouwbaarheidScore'] ?? 0)
                 );
@@ -148,10 +148,10 @@ class CashflowPdfRenderer
             $lines[] = 'SCENARIO: '.($scenario['name'] ?? '?');
             $lines[] = '---------';
             $lines[] = ($scenario['description'] ?? '');
-            if (isset($scenario['resultaat']) === true && is_array($scenario['resultaat']) === true) {
-                $lines[] = 'Min buffer week: '.($scenario['resultaat']['minBufferWeek'] ?? '?');
-                $lines[] = 'Min buffer bedrag: '.($scenario['resultaat']['minBufferAmount'] ?? '?');
-                if (($scenario['resultaat']['onderschrijdingBuffer'] ?? false) === true) {
+            if (isset($scenario['result']) === true && is_array($scenario['result']) === true) {
+                $lines[] = 'Min buffer week: '.($scenario['result']['minBufferWeek'] ?? '?');
+                $lines[] = 'Min buffer bedrag: '.($scenario['result']['minBufferAmount'] ?? '?');
+                if (($scenario['result']['onderschrijdingBuffer'] ?? false) === true) {
                     $bufferBreached = 'YES';
                 } else {
                     $bufferBreached = 'NO';

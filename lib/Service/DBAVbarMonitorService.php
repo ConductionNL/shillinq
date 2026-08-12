@@ -181,7 +181,7 @@ class DBAVbarMonitorService
                 }
 
                 if (is_array($arr) === true
-                    && (string) (($arr['details'] ?? [])['factuurId'] ?? '') === $factuurId
+                    && (string) (($arr['details'] ?? [])['invoiceId'] ?? '') === $factuurId
                 ) {
                     return false;
                 }
@@ -202,12 +202,12 @@ class DBAVbarMonitorService
                         'detectieMoment'          => (new DateTimeImmutable())->format('c'),
                         'ernst'                   => 'MIDDEN',
                         'details'                 => [
-                            'factuurId'      => $factuurId,
+                            'invoiceId'      => $factuurId,
                             'uurtariefCents' => $uurtariefCents,
                             'vbarGrensCents' => $vbarGrensCents,
                             'peiljaar'       => DBAConstants::VBAR_GRENS_PEILJAAR,
                         ],
-                        'fiscaleBron'             => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
+                        'fiscalSource'             => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
                         'actieSuggestie'          => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
                             .'(motivatie EUR-grens uitzondering).',
                         'status'                  => 'OPEN',

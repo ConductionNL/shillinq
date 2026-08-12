@@ -96,7 +96,7 @@ class LogIb47Adapter implements Ib47AdapterInterface
         $this->logger->info(
             'Shillinq Belastingdienst IB47 submission deferred (no outbound connector bound)',
             [
-                'kenmerk' => $kenmerk,
+                'reference' => $kenmerk,
                 'payload' => $sanitised,
             ]
         );

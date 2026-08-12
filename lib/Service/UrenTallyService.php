@@ -97,12 +97,12 @@ final class UrenTallyService
                 continue;
             }
 
-            $categorie = (string) ($entry['categorie'] ?? '');
+            $categorie = (string) ($entry['category'] ?? '');
             if ($categorie === '') {
                 continue;
             }
 
-            $uren    = (float) ($entry['uren'] ?? 0);
+            $uren    = (float) ($entry['hours'] ?? 0);
             $capInfo = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
             $geteld  = $capInfo['getoldeUren'];
             $notitie = $capInfo['capNotitie'];
@@ -112,7 +112,7 @@ final class UrenTallyService
 
             if ($notitie !== null) {
                 $overages[] = [
-                    'categorie' => $categorie,
+                    'category' => $categorie,
                     'ingevoerd' => $uren,
                     'geteld'    => $geteld,
                     'notitie'   => $notitie,
@@ -122,7 +122,7 @@ final class UrenTallyService
 
         return [
             'totalHours'   => $totaal,
-            'perCategorie' => $perCategorie,
+            'perCategory' => $perCategorie,
             'overages'     => $overages,
         ];
 
@@ -150,24 +150,24 @@ final class UrenTallyService
                 continue;
             }
 
-            $categorie = (string) ($entry['categorie'] ?? '');
+            $categorie = (string) ($entry['category'] ?? '');
             if ($categorie === '') {
                 continue;
             }
 
-            $uren    = (float) ($entry['uren'] ?? 0);
+            $uren    = (float) ($entry['hours'] ?? 0);
             $cap     = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
             $totaal += $cap['getoldeUren'];
         }
 
         $this->logger->info(
             'UrenTallyService: YTD tally complete',
-            ['totalHours' => $totaal, 'berekendOp' => $now]
+            ['totalHours' => $totaal, 'calculatedOn' => $now]
         );
 
         return [
             'lopendeUren' => $totaal,
-            'berekendOp'  => $now,
+            'calculatedOn'  => $now,
         ];
 
     }//end tallyYearToDate()

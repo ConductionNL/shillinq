@@ -142,7 +142,7 @@
           "title": "EU Horizon Periodic Report — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "Grant reference",
               "type": "string"
             },
@@ -239,7 +239,7 @@
           "title": "MIT Voortgangsrapport — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "MIT referentienummer",
               "type": "string"
             },
@@ -302,7 +302,7 @@
           "title": "EFRO Progress Dossier — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "EFRO projectnummer",
               "type": "string"
             },
@@ -362,7 +362,7 @@
           "title": "EU Horizon Audit Certificate — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "Grant reference",
               "type": "string"
             },
@@ -467,7 +467,7 @@
           "title": "MIT Verklaring — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "MIT referentienummer",
               "type": "string"
             },
@@ -528,7 +528,7 @@
           "title": "EFRO Aanbestedingsdossier — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "EFRO projectnummer",
               "type": "string"
             },
@@ -579,7 +579,7 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
         "vervaldatum",
         "IBAN",
@@ -598,7 +598,7 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
         "vervaldatum",
         "IBAN",
@@ -617,7 +617,7 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
         "vervaldatum",
         "IBAN",
@@ -638,7 +638,7 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
         "vervaldatum",
         "IBAN",

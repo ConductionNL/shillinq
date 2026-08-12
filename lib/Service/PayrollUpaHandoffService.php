@@ -83,14 +83,14 @@ class PayrollUpaHandoffService
         if ($stroken === []) {
             $this->logger->debug(
                 'Shillinq payroll: no loonstroken found for UPA period',
-                ['periodeId' => $periodeId]
+                ['periodId' => $periodeId]
             );
             return [];
         }
 
         $groups = [];
         foreach ($stroken as $strook) {
-            $werknemerId = (string) ($strook['werknemerId'] ?? '');
+            $werknemerId = (string) ($strook['employeeId'] ?? '');
             $regeling    = (string) ($this->lookupWerknemerRegeling(administrationId: $administrationId, werknemerId: $werknemerId));
             if ($regeling === '') {
                 continue;
@@ -105,7 +105,7 @@ class PayrollUpaHandoffService
             if (isset($groups[$regeling]) === false) {
                 $groups[$regeling] = [
                     'pensionScheme' => $regeling,
-                    'periodeId'        => $periodeId,
+                    'periodId'        => $periodeId,
                     'administrationId' => $administrationId,
                     'totaalPremie'     => 0.0,
                     'totaalWerknemers' => 0,
@@ -116,7 +116,7 @@ class PayrollUpaHandoffService
             $groups[$regeling]['totaalPremie']    += ($premWn + $premWg);
             $groups[$regeling]['totaalWerknemers'] = ((int) $groups[$regeling]['totaalWerknemers'] + 1);
             $groups[$regeling]['regels'][]         = [
-                'werknemerId' => $werknemerId,
+                'employeeId' => $werknemerId,
                 'premieWn'    => $premWn,
                 'premieWg'    => $premWg,
             ];
@@ -184,7 +184,7 @@ class PayrollUpaHandoffService
                 [
                     'filters' => [
                         'administrationId' => $administrationId,
-                        'periodeId'        => $periodeId,
+                        'periodId'        => $periodeId,
                     ],
                 ]
             );

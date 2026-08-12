@@ -160,7 +160,7 @@ class ENSIAVerklaringGenerator
      */
     private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string
     {
-        $org     = $cyclus['organisatie'] ?? [];
+        $org     = $cyclus['organisation'] ?? [];
         $orgNaam = (string) ($org['name'] ?? '');
         $orgKvk  = (string) ($org['kvk'] ?? '');
         $jaar    = (string) ($cyclus['year'] ?? '');
@@ -189,7 +189,7 @@ class ENSIAVerklaringGenerator
             $i = 1;
             foreach ($top as $b) {
                 $type           = (string) ($b['type'] ?? 'tekortkoming');
-                $beschrijving   = (string) ($b['beschrijving'] ?? '');
+                $beschrijving   = (string) ($b['description'] ?? '');
                 $mitigatieActie = (string) ($b['mitigatieActie'] ?? 'nader te bepalen');
                 $paras[]        = $this->para(
                     text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie)

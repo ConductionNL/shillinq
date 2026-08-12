@@ -196,15 +196,15 @@ final class PayrollUpaHandoffServiceTest extends TestCase
                 ['id' => 'wn-5', 'administrationId' => 'adm-2', 'pensionScheme' => 'PME_DC'],
             ],
             'LoonStrook' => [
-                ['werknemerId' => 'wn-1', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
-                ['werknemerId' => 'wn-2', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
-                ['werknemerId' => 'wn-3', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
+                ['employeeId' => 'wn-1', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
+                ['employeeId' => 'wn-2', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
+                ['employeeId' => 'wn-3', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
                 // No regeling -> excluded.
-                ['werknemerId' => 'wn-4', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
+                ['employeeId' => 'wn-4', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
                 // Different admin -> excluded by scope.
-                ['werknemerId' => 'wn-5', 'periodeId' => 'lp-1', 'administrationId' => 'adm-2', 'pensioen' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
+                ['employeeId' => 'wn-5', 'periodId' => 'lp-1', 'administrationId' => 'adm-2', 'pensioen' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
                 // Zero pensioen -> excluded.
-                ['werknemerId' => 'wn-1', 'periodeId' => 'lp-2', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
+                ['employeeId' => 'wn-1', 'periodId' => 'lp-2', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
             ],
         ];
 
@@ -234,7 +234,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase
         $pme = $byRegeling['PME_DC'];
         $this->assertSame(2, $pme['totaalWerknemers']);
         $this->assertEqualsWithDelta(500.0, $pme['totaalPremie'], 0.005);
-        $this->assertSame('lp-1', $pme['periodeId']);
+        $this->assertSame('lp-1', $pme['periodId']);
         $this->assertSame('adm-1', $pme['administrationId']);
         $this->assertCount(2, $pme['regels']);
 

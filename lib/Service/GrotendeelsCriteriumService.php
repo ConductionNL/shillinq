@@ -77,7 +77,7 @@ final class GrotendeelsCriteriumService
                 continue;
             }
 
-            $geteld  = $entry['getoldeUren'] ?? $entry['uren'] ?? 0;
+            $geteld  = $entry['getoldeUren'] ?? $entry['hours'] ?? 0;
             $totaal += (float) $geteld;
         }
 

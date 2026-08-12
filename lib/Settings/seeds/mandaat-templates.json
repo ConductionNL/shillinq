@@ -13,10 +13,10 @@
       "name": "Medewerker inkoop tot 10.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 1000000,
-      "soort_verplichting": ["inkooporder"],
+      "kind_commitment": ["inkooporder"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": null,
-      "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
     {
@@ -24,10 +24,10 @@
       "name": "Budgethouder tot 50.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 5000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": 2500000,
-      "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
     {
@@ -35,10 +35,10 @@
       "name": "Afdelingshoofd tot 100.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 10000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": 5000000,
-      "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
     {
@@ -46,10 +46,10 @@
       "name": "Directeur tot 250.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 25000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": null,
-      "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
     {
@@ -57,10 +57,10 @@
       "name": "Concerncontroller override-mandaat",
       "houder_type": "role",
       "maximumbedrag": 1000000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
       "is_override": true,
       "vereist_tweede_handtekening_boven": null,
-      "vastgesteld_bij": "Mandaatregeling 2026 (override budgetoverschrijding)",
+      "determined_at": "Mandaatregeling 2026 (override budgetoverschrijding)",
       "doelgroep": "gemeente"
     },
     {
@@ -68,10 +68,10 @@
       "name": "Gedeputeerde tot 500.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 50000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "subsidiebeschikking"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "subsidiebeschikking"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": 25000000,
-      "vastgesteld_bij": "Mandaatregeling Provinciewet",
+      "determined_at": "Mandaatregeling Provinciewet",
       "doelgroep": "provincie"
     },
     {
@@ -79,10 +79,10 @@
       "name": "Dagelijks bestuur waterschap tot 200.000 EUR",
       "houder_type": "role",
       "maximumbedrag": 20000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "leasing"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "leasing"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": 10000000,
-      "vastgesteld_bij": "Mandaatregeling Waterschapswet",
+      "determined_at": "Mandaatregeling Waterschapswet",
       "doelgroep": "waterschap"
     },
     {
@@ -90,10 +90,10 @@
       "name": "Inkoper tot 25.000 EUR",
       "houder_type": "user",
       "maximumbedrag": 2500000,
-      "soort_verplichting": ["inkooporder"],
+      "kind_commitment": ["inkooporder"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": null,
-      "vastgesteld_bij": "Interne procuratieregeling",
+      "determined_at": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
     {
@@ -101,10 +101,10 @@
       "name": "Manager tot 100.000 EUR",
       "houder_type": "user",
       "maximumbedrag": 10000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "arbeidscontract"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "arbeidscontract"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": 5000000,
-      "vastgesteld_bij": "Interne procuratieregeling",
+      "determined_at": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
     {
@@ -112,10 +112,10 @@
       "name": "CFO tot 250.000 EUR",
       "houder_type": "user",
       "maximumbedrag": 25000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "huurovereenkomst", "leasing", "overig"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "arbeidscontract", "huurovereenkomst", "leasing", "overig"],
       "is_override": false,
       "vereist_tweede_handtekening_boven": null,
-      "vastgesteld_bij": "Interne procuratieregeling",
+      "determined_at": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
     {
@@ -123,10 +123,10 @@
       "name": "CFO override-mandaat (budgetoverschrijding)",
       "houder_type": "user",
       "maximumbedrag": 1000000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
       "is_override": true,
       "vereist_tweede_handtekening_boven": null,
-      "vastgesteld_bij": "Interne procuratieregeling (override)",
+      "determined_at": "Interne procuratieregeling (override)",
       "doelgroep": "mkb"
     },
     {
@@ -134,10 +134,10 @@
       "name": "Eigenaar (onbeperkt)",
       "houder_type": "user",
       "maximumbedrag": 1000000000,
-      "soort_verplichting": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "overig"],
+      "kind_commitment": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "overig"],
       "is_override": true,
       "vereist_tweede_handtekening_boven": null,
-      "vastgesteld_bij": "Eenmanszaak — volledige tekenbevoegdheid",
+      "determined_at": "Eenmanszaak — volledige tekenbevoegdheid",
       "doelgroep": "zzp"
     }
   ]

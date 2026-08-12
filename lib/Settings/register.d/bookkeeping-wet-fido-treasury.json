@@ -261,7 +261,7 @@
         "required": [
           "auditYear",
           "organisationId",
-          "baseBegroting",
+          "baseBudget",
           "percentage"
         ],
         "properties": {
@@ -277,7 +277,7 @@
             "example": "org-gemeente-1",
             "title": "Organisation ID"
           },
-          "baseBegroting": {
+          "baseBudget": {
             "type": "number",
             "description": "Vastgestelde begroting per 1 januari (REQ-FDO-002).",
             "example": 200000000.0,
@@ -515,7 +515,7 @@
         "type": "object",
         "required": [
           "organisationId",
-          "baseBegroting"
+          "baseBudget"
         ],
         "properties": {
           "organisationId": {
@@ -524,7 +524,7 @@
             "example": "org-waterschap-1",
             "title": "Organisation ID"
           },
-          "baseBegroting": {
+          "baseBudget": {
             "type": "number",
             "description": "Begrotingstotaal driving the drempelbedrag (REQ-FDO-005).",
             "example": 150000000.0,
@@ -542,7 +542,7 @@
             "example": 1125000.0,
             "title": "Current Rekening Courant"
           },
-          "daysAboveDrempel": {
+          "daysAboveThreshold": {
             "type": "integer",
             "description": "Consecutive banking days the saldo has been above the drempelbedrag; a sweep triggers on the third consecutive day (REQ-FDO-005).",
             "default": 0,
@@ -1026,7 +1026,7 @@
             },
             "title": "Kasgeld Status"
           },
-          "renteRisicoStatus": {
+          "renteRiskStatus": {
             "type": "object",
             "description": "Rente-risiconorm snapshot (per-year exposures, headroom per year, status) (REQ-FDO-006).",
             "nullable": true,
@@ -1229,7 +1229,7 @@
             "example": "org-gemeente-1",
             "title": "Organisation ID"
           },
-          "begrotingVersion": {
+          "budgetVersion": {
             "type": "string",
             "description": "Begroting version the projection is based on (REQ-FDO-007).",
             "nullable": true,
@@ -1372,7 +1372,7 @@
         },
         "auditYear": 2026,
         "organisationId": "org-gemeente-1",
-        "baseBegroting": 200000000.0,
+        "baseBudget": 200000000.0,
         "percentage": 8.5,
         "calculatedCeiling": 17000000.0,
         "currentExposure": 16800000.0,
@@ -1434,10 +1434,10 @@
           "slug": "schatkist-saldo-waterschap-2026q1"
         },
         "organisationId": "org-waterschap-1",
-        "baseBegroting": 150000000.0,
+        "baseBudget": 150000000.0,
         "drempelbedrag": 1125000.0,
         "currentRekeningCourant": 1125000.0,
-        "daysAboveDrempel": 3,
+        "daysAboveThreshold": 3,
         "parkedAtSchatkist": 375000.0,
         "lastSweepAt": "2026-03-31T16:00:00+02:00",
         "lastSweepStatus": "success",
@@ -1531,7 +1531,7 @@
           "headroom": 200000,
           "status": "binnen-norm"
         },
-        "renteRisicoStatus": {
+        "renteRiskStatus": {
           "ceiling": 100000000,
           "status": "binnen-norm"
         },
@@ -1570,7 +1570,7 @@
         },
         "auditYear": 2025,
         "organisationId": "org-gemeente-1",
-        "begrotingVersion": "2026-vastgesteld",
+        "budgetVersion": "2026-vastgesteld",
         "narrativeAuto": "Schatkistfunctie: Het kasgeldlimiet bedraagt 8,5% van de begroting (€17,0M). Het gemiddelde netto kortlopende schuld over Q4 was €16,8M; geen overschrijding. De rente-risiconorm (20% vaste schuld herfinancieringsrisico) toont geen overschrijding in de 4-jaars projectie. Dagelijks gemiddelde geparkt bij AGT: €0,3M. Treasurystatuut 2024 voorziet in risk-appetite \"midden\"; alle transacties voldoen aan de mandaatmatrix.",
         "narrativeManual": null,
         "kasgeldProjectie": {

@@ -62,7 +62,7 @@
 				"schema": "DBAOpdracht",
 				"columns": [
 					{"key": "assignmentName", "label": "Assignment", "sortable": true},
-					{"key": "klantId", "label": "Client", "sortable": true},
+					{"key": "customerId", "label": "Client", "sortable": true},
 					{"key": "startDatum", "label": "Start", "sortable": true},
 					{"key": "actueleRisicoscore", "label": "Risk score", "sortable": true},
 					{"key": "risicoNiveau", "label": "Risk band", "sortable": true},
@@ -90,7 +90,7 @@
 				"fields": [
 					{"key": "assignmentName", "label": "Assignment", "type": "string"},
 					{"key": "enterpriseId", "label": "Company", "type": "string"},
-					{"key": "klantId", "label": "Client", "type": "string"},
+					{"key": "customerId", "label": "Client", "type": "string"},
 					{"key": "startDatum", "label": "Start date", "type": "string"},
 					{"key": "expectedEndDate", "label": "Expected end", "type": "string"},
 					{"key": "actualEndDate", "label": "Actual end", "type": "string"},
@@ -209,9 +209,9 @@
 				"schema": "DBAModelovereenkomst",
 				"columns": [
 					{"key": "name", "label": "Model", "sortable": true},
-					{"key": "bron", "label": "Source", "sortable": true},
-					{"key": "versie", "label": "Version", "sortable": true},
-					{"key": "geldigTot", "label": "Valid until", "sortable": true},
+					{"key": "source", "label": "Source", "sortable": true},
+					{"key": "version", "label": "Version", "sortable": true},
+					{"key": "validTo", "label": "Valid until", "sortable": true},
 					{"key": "actueleVersie", "label": "Current", "sortable": true}
 				],
 				"defaultSort": "name",
@@ -229,11 +229,11 @@
 				"schema": "DBAModelovereenkomst",
 				"fields": [
 					{"key": "name", "label": "Model", "type": "string"},
-					{"key": "bron", "label": "Source", "type": "string"},
+					{"key": "source", "label": "Source", "type": "string"},
 					{"key": "publicatieURL", "label": "Publication URL", "type": "string"},
 					{"key": "goedkeuringDatum", "label": "Approval date", "type": "string"},
-					{"key": "geldigTot", "label": "Valid until", "type": "string"},
-					{"key": "versie", "label": "Version", "type": "string"},
+					{"key": "validTo", "label": "Valid until", "type": "string"},
+					{"key": "version", "label": "Version", "type": "string"},
 					{"key": "actueleVersie", "label": "Current version", "type": "boolean"},
 					{"key": "fileRef", "label": "Stored file", "type": "string"},
 					{"key": "sha256", "label": "SHA-256 integrity", "type": "string", "copyable": true}
@@ -265,7 +265,7 @@
 					{"key": "peilDatum", "label": "Reference date", "sortable": true},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "sortable": true},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "sortable": true},
-					{"key": "overallRisico", "label": "Portfolio risk", "sortable": true}
+					{"key": "overallRisk", "label": "Portfolio risk", "sortable": true}
 				],
 				"defaultSort": "peilDatum",
 				"detailRoute": "DBAPortfolioRisicoDetail"
@@ -289,12 +289,12 @@
 					{"key": "peilDatum", "label": "Reference date", "type": "string"},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "type": "number"},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "type": "number"},
-					{"key": "overallRisico", "label": "Portfolio risk", "type": "string"}
+					{"key": "overallRisk", "label": "Portfolio risk", "type": "string"}
 				],
 				"relatedLists": [
 					{"id": "engagements", "title": "Engagements in this portfolio", "schema": "DBAOpdracht", "foreignKey": "enterpriseId", "join": "enterpriseId", "columns": [
 						{"key": "assignmentName", "label": "Assignment"},
-						{"key": "klantId", "label": "Client"},
+						{"key": "customerId", "label": "Client"},
 						{"key": "risicoNiveau", "label": "Risk band"},
 						{"key": "openFlags", "label": "Open flags"}
 					], "detailRoute": "DBAOpdrachtDetail"}
@@ -394,7 +394,7 @@
 					{"key": "type", "label": "Flag type", "type": "string"},
 					{"key": "ernst", "label": "Severity", "type": "string"},
 					{"key": "detectieMoment", "label": "Detected", "type": "string"},
-					{"key": "fiscaleBron", "label": "Legal basis", "type": "string"},
+					{"key": "fiscalSource", "label": "Legal basis", "type": "string"},
 					{"key": "actieSuggestie", "label": "Suggested action", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "resolutieMemo", "label": "Resolution memo", "type": "string"}

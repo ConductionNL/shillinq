@@ -112,7 +112,7 @@ class AcmReportGenerator
                 'integraleKostprijs'   => $integraleCost,
                 'kostendekkingsratio'  => $ratio,
                 'compliant'            => $compliant,
-                'abbReferentie'        => $abbReferentie,
+                'abbReference'        => $abbReferentie,
             ];
         }//end foreach
 
@@ -123,7 +123,7 @@ class AcmReportGenerator
             }
 
             $abbSummaries[] = [
-                'kenmerk'           => (string) ($abb['kenmerk'] ?? ''),
+                'reference'           => (string) ($abb['reference'] ?? ''),
                 'motiveringExcerpt' => mb_substr(trim((string) ($abb['motivering'] ?? '')), 0, 240),
             ];
         }

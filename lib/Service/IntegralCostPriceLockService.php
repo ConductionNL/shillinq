@@ -142,8 +142,8 @@ class IntegralCostPriceLockService
 
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
-            'periode'              => $fiscalYear.'-YTD',
-            'berekendOp'           => $now->format(DateTimeImmutable::ATOM),
+            'period'              => $fiscalYear.'-YTD',
+            'calculatedOn'           => $now->format(DateTimeImmutable::ATOM),
             'status'               => 'definitief',
             'componenten'          => [
                 'directeLoonkosten'     => round($loonkostenSum, 2),
@@ -155,7 +155,7 @@ class IntegralCostPriceLockService
             ],
             'totaleKosten'         => round($totaleKostenSum, 2),
             'verkochteEenheden'    => $verkochteEenhedenOut,
-            'eenheidLabel'         => ($input['eenheidLabel'] ?? null),
+            'unitLabel'         => ($input['unitLabel'] ?? null),
             'kostprijsPerEenheid'  => $kostprijsPerEenheid,
             'gehanteerdTarief'     => $gehanteerdTarief,
             'marge'                => $marge,

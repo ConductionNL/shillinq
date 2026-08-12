@@ -95,7 +95,7 @@ class MandaatEnforcer
         } catch (\Throwable $e) {
             $this->logger->error(
                 'MandaatEnforcer: hasSufficientMandate failed — treating as not mandated (fail-closed)',
-                ['verplichting' => $verplichtingsnummer, 'exception' => $e->getMessage()]
+                ['commitment' => $verplichtingsnummer, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
@@ -143,7 +143,7 @@ class MandaatEnforcer
      */
     public function resolveApplicableMandate(array $verplichting): ?array
     {
-        $soort  = (string) ($verplichting['soort'] ?? '');
+        $soort  = (string) ($verplichting['kind'] ?? '');
         $bedrag = (int) ($verplichting['totaalbedrag_excl_btw'] ?? 0);
         $admin  = (string) ($verplichting['administrationId'] ?? '');
 
@@ -224,7 +224,7 @@ class MandaatEnforcer
             return false;
         }
 
-        $soorten = ($mandaat['soort_verplichting'] ?? []);
+        $soorten = ($mandaat['kind_commitment'] ?? []);
         if (is_array($soorten) === true && count($soorten) > 0 && in_array($soort, $soorten, true) === false) {
             return false;
         }
@@ -245,12 +245,12 @@ class MandaatEnforcer
     {
         $today = (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d');
 
-        $van = (string) ($mandaat['geldig_van'] ?? '');
+        $van = (string) ($mandaat['valid_from'] ?? '');
         if ($van !== '' && $van > $today) {
             return false;
         }
 
-        $tot = (string) ($mandaat['geldig_tot'] ?? '');
+        $tot = (string) ($mandaat['valid_to'] ?? '');
         if ($tot !== '' && $tot < $today) {
             return false;
         }

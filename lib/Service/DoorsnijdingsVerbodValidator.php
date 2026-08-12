@@ -148,7 +148,7 @@ class DoorsnijdingsVerbodValidator
         $glPairs = [];
         foreach ($glLines as $line) {
             $account = (string) ($line['accountNumber'] ?? ($line['grootboekrekening'] ?? ''));
-            $plaats  = (string) ($line['kostenplaats'] ?? '');
+            $plaats  = (string) ($line['costCentre'] ?? '');
             if ($account === '') {
                 continue;
             }
@@ -163,7 +163,7 @@ class DoorsnijdingsVerbodValidator
             }
 
             $account = (string) ($allocation['grootboekrekening'] ?? '');
-            $plaats  = (string) ($allocation['kostenplaats'] ?? '');
+            $plaats  = (string) ($allocation['costCentre'] ?? '');
             if ($account === '') {
                 continue;
             }
@@ -177,7 +177,7 @@ class DoorsnijdingsVerbodValidator
 
                 $findings[] = [
                     'grootboekrekening' => $account,
-                    'kostenplaats'      => $plaats,
+                    'costCentre'      => $plaats,
                     'amount'            => $bedrag,
                     'message'           => sprintf(
                         'EUR %s (account %s, kostenplaats %s) appears in both innovatiebox '

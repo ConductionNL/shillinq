@@ -81,7 +81,7 @@ class OpdrachtUitvoeringGuard
                 $this->logger->info(
                     'OpdrachtUitvoeringGuard: no bewijsstuk attached — denying completion (REQ-004)',
                     [
-                        'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
+                        'commitmentId' => ($opdracht['commitmentId'] ?? 'unknown'),
                         'mijlpaalId'     => ($opdracht['mijlpaalId'] ?? 'unknown'),
                     ]
                 );
@@ -93,7 +93,7 @@ class OpdrachtUitvoeringGuard
             $this->logger->error(
                 'OpdrachtUitvoeringGuard: canVoltooien failed — denying completion (fail-closed)',
                 [
-                    'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
+                    'commitmentId' => ($opdracht['commitmentId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),
                 ]
             );

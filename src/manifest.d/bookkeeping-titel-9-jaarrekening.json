@@ -97,7 +97,7 @@
 						"type": "string"
 					},
 					{
-						"key": "rapportageGrondslag",
+						"key": "rapportageBasis",
 						"label": "Reporting basis",
 						"type": "string"
 					},

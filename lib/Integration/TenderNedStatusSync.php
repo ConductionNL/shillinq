@@ -114,7 +114,7 @@ class TenderNedStatusSync
     public function syncCompletion(array $oplevering): bool
     {
         try {
-            $verplichtingId = trim((string) ($oplevering['verplichtingId'] ?? ''));
+            $verplichtingId = trim((string) ($oplevering['commitmentId'] ?? ''));
             if ($verplichtingId === '') {
                 return false;
             }
@@ -123,7 +123,7 @@ class TenderNedStatusSync
             if ($aanbesteding === null) {
                 $this->logger->info(
                     'TenderNedStatusSync: no TenderNed dossier linked — skipping sync',
-                    ['verplichtingId' => $verplichtingId]
+                    ['commitmentId' => $verplichtingId]
                 );
                 return false;
             }
@@ -174,7 +174,7 @@ class TenderNedStatusSync
                 ->setSchema(schema: 'TenderNedAanbesteding')
                 ->findAll(
                     [
-                        'filters' => ['verplichtingId' => $verplichtingId],
+                        'filters' => ['commitmentId' => $verplichtingId],
                     ]
                 );
         } catch (Throwable $e) {
@@ -241,7 +241,7 @@ class TenderNedStatusSync
             'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),
             'eindopleveringId' => (string) ($oplevering['mijlpaalId'] ?? ''),
             'bewijsstukCount'  => count($bewijsstukken),
-            'verplichtingId'   => (string) ($oplevering['verplichtingId'] ?? ''),
+            'commitmentId'   => (string) ($oplevering['commitmentId'] ?? ''),
             'administrationId' => (string) ($oplevering['administrationId'] ?? ''),
         ];
 

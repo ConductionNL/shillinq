@@ -10,8 +10,8 @@
 	"ikp": [
 		{
 			"commercialActivityId": "MO-SP-015",
-			"periode": "2026-Q1",
-			"berekendOp": "2026-04-05T03:00:00Z",
+			"period": "2026-Q1",
+			"calculatedOn": "2026-04-05T03:00:00Z",
 			"status": "voorlopig",
 			"componenten": {
 				"directeLoonkosten": 41250.00,
@@ -28,13 +28,13 @@
 			},
 			"totaleKosten": 87390.00,
 			"verkochteEenheden": 312,
-			"eenheidLabel": "dagdeel-zaalhuur",
+			"unitLabel": "dagdeel-zaalhuur",
 			"kostprijsPerEenheid": 280.10,
 			"gehanteerdTarief": 295.00,
 			"marge": 14.90,
 			"margePercentage": 5.32,
 			"compliant": true,
-			"toelichting": "BBV taakveld 0.4 overhead via personele-fte sleutel; WACC 4.5% op €40,4k inventaris; winstopslag 3% van directe kosten."
+			"notes": "BBV taakveld 0.4 overhead via personele-fte sleutel; WACC 4.5% op €40,4k inventaris; winstopslag 3% van directe kosten."
 		}
 	]
 }

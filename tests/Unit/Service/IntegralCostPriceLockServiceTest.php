@@ -57,7 +57,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase
         $voorlopig = [];
         for ($q = 1; $q <= 4; $q++) {
             $voorlopig[] = [
-                'periode'      => '2025-Q' . $q,
+                'period'      => '2025-Q' . $q,
                 'totaleKosten' => 25_000.00,
                 'componenten'  => [
                     'directeLoonkosten'     => 12_000.00,
@@ -77,12 +77,12 @@ final class IntegralCostPriceLockServiceTest extends TestCase
             'signedBy'             => 'accountant-user',
             'administrationId'     => 'adm-tilburg',
             'verkochteEenheden'    => 312.0,
-            'eenheidLabel'         => 'dagdeel-zaalhuur',
+            'unitLabel'         => 'dagdeel-zaalhuur',
             'gehanteerdTarief'     => 295.0,
         ]);
 
         self::assertSame('definitief', $definitief['status']);
-        self::assertSame('2025-YTD', $definitief['periode']);
+        self::assertSame('2025-YTD', $definitief['period']);
         self::assertSame(100_000.00, $definitief['totaleKosten']);
         self::assertSame(48_000.00, $definitief['componenten']['directeLoonkosten']);
         self::assertSame(20_000.00, $definitief['componenten']['indirecteOverhead']['huisvesting']);

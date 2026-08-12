@@ -185,7 +185,7 @@ final class WbsoAdministratieServiceTest extends TestCase
     private function beschikking(string $number, float $granted, string $admin): array
     {
         return [
-            'beschikkingNumber' => $number,
+            'decisionNumber' => $number,
             'rvoReference'      => 'S&O '.$number,
             'projectNumber'     => 'PRJ-'.$number,
             'grantedSoHours'    => $granted,
@@ -208,7 +208,7 @@ final class WbsoAdministratieServiceTest extends TestCase
     private function uur(string $number, float $hours, string $state, string $admin): array
     {
         return [
-            'beschikkingNumber' => $number,
+            'decisionNumber' => $number,
             'hours'             => $hours,
             'state'             => $state,
             'administrationId'  => $admin,
@@ -285,7 +285,7 @@ final class WbsoAdministratieServiceTest extends TestCase
 
         $result = $service->realisatieSummary('adm-a');
         self::assertSame(1, $result['total']);
-        self::assertSame('WBSO-1', $result['data'][0]['beschikkingNumber']);
+        self::assertSame('WBSO-1', $result['data'][0]['decisionNumber']);
 
     }//end testScopesToAdministration()
 

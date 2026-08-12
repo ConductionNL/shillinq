@@ -100,7 +100,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'vraagCode'           => 'BIO-9.1.1',
                 'volwassenheidsScore' => 2,
                 'bewijsstukken'       => [],
-                'toelichting'         => 'short',
+                'notes'         => 'short',
             ])
         );
 
@@ -119,7 +119,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'vraagCode'           => 'BIO-9.1.1',
                 'volwassenheidsScore' => null,
                 'bewijsstukken'       => [],
-                'toelichting'         => '',
+                'notes'         => '',
             ])
         );
 
@@ -138,7 +138,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'vraagCode'           => 'BIO-9.1.1',
                 'volwassenheidsScore' => 3,
                 'bewijsstukken'       => [],
-                'toelichting'         => str_repeat('a', 100),
+                'notes'         => str_repeat('a', 100),
             ])
         );
 
@@ -157,7 +157,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'vraagCode'           => 'BIO-9.1.1',
                 'volwassenheidsScore' => 3,
                 'bewijsstukken'       => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
-                'toelichting'         => 'too short',
+                'notes'         => 'too short',
             ])
         );
 
@@ -176,7 +176,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'vraagCode'           => 'BIO-9.1.1',
                 'volwassenheidsScore' => 4,
                 'bewijsstukken'       => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
-                'toelichting'         => str_repeat('a', 50),
+                'notes'         => str_repeat('a', 50),
             ])
         );
 
@@ -196,7 +196,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'antwoord'         => '3',
                 'peerReviewStatus' => 'nog-niet-beoordeeld',
                 'peerReviewedAt'   => null,
-                'reden'            => null,
+                'reason'            => null,
             ])
         );
 
@@ -216,7 +216,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'antwoord'         => '4',
                 'peerReviewStatus' => 'akkoord',
                 'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
-                'reden'            => '',
+                'reason'            => '',
             ])
         );
 
@@ -236,7 +236,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'antwoord'         => '4',
                 'peerReviewStatus' => 'akkoord',
                 'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
-                'reden'            => 'Aanvullend bewijs ontvangen na peer-review; antwoord verhoogd van 3 naar 4.',
+                'reason'            => 'Aanvullend bewijs ontvangen na peer-review; antwoord verhoogd van 3 naar 4.',
             ])
         );
 
@@ -255,7 +255,7 @@ class ENSIAValidationGuardTest extends TestCase
                 'vraagCode'        => 'BIO-9.1.1',
                 'peerReviewStatus' => 'wijziging-gevraagd',
                 'peerReviewedAt'   => '2026-03-15T12:00:00+00:00',
-                'reden'            => "   \t\n  ",
+                'reason'            => "   \t\n  ",
             ])
         );
 

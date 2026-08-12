@@ -53,7 +53,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
     {
         $docx = $this->generator->render(
             cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+                'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
                 'year'        => 2026,
             ],
             vragen: [],
@@ -94,7 +94,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
     {
         $docx = $this->generator->render(
             cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+                'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
                 'year'        => 2026,
             ],
             vragen: [],
@@ -119,7 +119,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
     {
         $docx = $this->generator->render(
             cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+                'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
                 'year'        => 2026,
             ],
             vragen: [
@@ -146,14 +146,14 @@ class ENSIAVerklaringGeneratorTest extends TestCase
     {
         $docx = $this->generator->render(
             cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+                'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
                 'year'        => 2026,
             ],
             vragen: [],
             bevindingen: [
                 [
                     'type'           => 'tekortkoming',
-                    'beschrijving'   => 'BIO-9.1.1 score 2 onder norm 3',
+                    'description'   => 'BIO-9.1.1 score 2 onder norm 3',
                     'mitigatieActie' => 'Implementeer access-review proces.',
                 ],
             ]
@@ -175,7 +175,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase
     {
         $docx = $this->generator->render(
             cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+                'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
                 'year'        => 2026,
             ],
             vragen: [],

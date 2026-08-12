@@ -219,7 +219,7 @@ class ENSIAValidationGuard
             return false;
         }
 
-        $toelichting = (string) ($vraag['toelichting'] ?? '');
+        $toelichting = (string) ($vraag['notes'] ?? '');
         if (mb_strlen($toelichting) < 50) {
             $this->logger->info(
                 'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires toelichting ≥ 50 chars',
@@ -262,7 +262,7 @@ class ENSIAValidationGuard
             return true;
         }
 
-        $reden = trim((string) ($vraag['reden'] ?? ''));
+        $reden = trim((string) ($vraag['reason'] ?? ''));
         if ($reden === '') {
             $this->logger->info(
                 'ENSIAValidationGuard: REQ-ENSIA-008 — post-peer-review edit requires reden',

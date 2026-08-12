@@ -105,14 +105,14 @@ class PayrollJaaropgaveService
         $ytdFiscaal = 0.0;
         $ytdVak     = 0.0;
         foreach ($stroken as $s) {
-            $fiscaalC += $this->calculator->toCents(amount: ($s['fiscaalLoon'] ?? 0));
+            $fiscaalC += $this->calculator->toCents(amount: ($s['fiscalLoon'] ?? 0));
             $loonhefC += $this->calculator->toCents(amount: ($s['loonheffing'] ?? 0));
             $svWgC    += $this->calculator->toCents(amount: ($s['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
             $zvwWgC   += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
             $pensWnC  += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));
             $pensWgC  += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));
             $vakUitbC += $this->calculator->toCents(amount: ($s['brutoComponenten']['vakantietoeslag_uitbetaling'] ?? 0));
-            $nettoC   += $this->calculator->toCents(amount: ($s['nettoBetaald'] ?? 0));
+            $nettoC   += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
 
             $cu = ($s['cumulatieven'] ?? []);
             if (is_array($cu) === true) {
@@ -125,7 +125,7 @@ class PayrollJaaropgaveService
         $cumulatievenMatch = ($this->calculator->toCents(amount: $ytdFiscaal) === $fiscaalC);
 
         return [
-            'werknemerId'            => $werknemerId,
+            'employeeId'            => $werknemerId,
             'year'                   => $jaar,
             'aantalPerioden'         => count($stroken),
             'fiscaalLoonJTD'         => $fiscaalLoon,
@@ -163,7 +163,7 @@ class PayrollJaaropgaveService
         if (($jaaropgave['cumulatievenConsistent'] ?? false) !== true) {
             $this->logger->error(
                 'Shillinq payroll: refusing to persist Jaaropgave with inconsistent cumulatieven',
-                ['werknemerId' => ($jaaropgave['werknemerId'] ?? null), 'year' => ($jaaropgave['year'] ?? null)]
+                ['employeeId' => ($jaaropgave['employeeId'] ?? null), 'year' => ($jaaropgave['year'] ?? null)]
             );
             throw new RuntimeException('Jaaropgave-cumulatieven matchen de som van de perioden niet.');
         }
@@ -191,7 +191,7 @@ class PayrollJaaropgaveService
                 [
                     'filters' => [
                         'administrationId' => $administrationId,
-                        'werknemerId'      => $werknemerId,
+                        'employeeId'      => $werknemerId,
                     ],
                 ]
             );
@@ -199,7 +199,7 @@ class PayrollJaaropgaveService
         $out = [];
         foreach ($results as $r) {
             $row     = (array) $r;
-            $perJaar = $this->extractJaarFromPeriodeId(periodeId: (string) ($row['periodeId'] ?? ''));
+            $perJaar = $this->extractJaarFromPeriodeId(periodeId: (string) ($row['periodId'] ?? ''));
             if ($perJaar !== null && $perJaar !== $jaar) {
                 continue;
             }

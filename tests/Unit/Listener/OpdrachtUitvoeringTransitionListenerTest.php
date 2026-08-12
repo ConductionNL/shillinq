@@ -225,7 +225,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-Q1',
                 'opleveringsType' => 'tussenoplevering',
                 'goedgekeurd'     => true,
@@ -266,7 +266,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
                 'goedgekeurd'     => true,
@@ -306,7 +306,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
                 'goedgekeurd'     => false,
@@ -345,7 +345,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
                 'goedgekeurd'     => true,

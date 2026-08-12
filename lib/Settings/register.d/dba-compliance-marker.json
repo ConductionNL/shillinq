@@ -9,11 +9,11 @@
         "slug": "modov-bd-2024-tussenkomstvrij-v3"
       },
       "name": "Tussenkomstvrij - algemeen (Belastingdienst v3 - 2024)",
-      "bron": "BELASTINGDIENST_GOEDGEKEURD",
+      "source": "BELASTINGDIENST_GOEDGEKEURD",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
       "goedkeuringDatum": "2024-04-12",
-      "geldigTot": "2029-04-12",
-      "versie": "v3-2024",
+      "validTo": "2029-04-12",
+      "version": "v3-2024",
       "actueleVersie": true,
       "essentieleBepalingen": [
         {
@@ -44,11 +44,11 @@
         "slug": "modov-bd-2023-leverancier-zelfstandig-v2"
       },
       "name": "Leverancier-zelfstandig (Belastingdienst v2 - 2023)",
-      "bron": "BELASTINGDIENST_GOEDGEKEURD",
+      "source": "BELASTINGDIENST_GOEDGEKEURD",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/leverancier-zelfstandig",
       "goedkeuringDatum": "2023-06-01",
-      "geldigTot": "2028-06-01",
-      "versie": "v2-2023",
+      "validTo": "2028-06-01",
+      "version": "v2-2023",
       "actueleVersie": true,
       "essentieleBepalingen": [
         {
@@ -74,11 +74,11 @@
         "slug": "modov-bd-2024-tussenkomst-v1"
       },
       "name": "Tussenkomst (Belastingdienst v1 - 2024)",
-      "bron": "BELASTINGDIENST_GOEDGEKEURD",
+      "source": "BELASTINGDIENST_GOEDGEKEURD",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomst",
       "goedkeuringDatum": "2024-02-15",
-      "geldigTot": "2029-02-15",
-      "versie": "v1-2024",
+      "validTo": "2029-02-15",
+      "version": "v1-2024",
       "actueleVersie": true,
       "essentieleBepalingen": [
         {
@@ -119,7 +119,7 @@
         "required": [
           "administrationId",
           "enterpriseId",
-          "klantId",
+          "customerId",
           "assignmentName",
           "startDatum",
           "intakeStatus",
@@ -138,7 +138,7 @@
             "example": "ond-nl-001234",
             "title": "Onderneming ID"
           },
-          "klantId": {
+          "customerId": {
             "type": "string",
             "description": "FK naar de klant (Nextcloud contact via ContactSyncService) voor wie de opdracht wordt uitgevoerd.",
             "example": "klant-acme-bv",
@@ -276,7 +276,7 @@
             "example": "BUITEN_DIENSTBETREKKING",
             "title": "Wba Beoordeling Resultaat"
           },
-          "wbaGeldigTot": {
+          "wbaValidTo": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -428,7 +428,7 @@
             "field": "realisedRevenue",
             "operation": "sum",
             "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie REQ-DBA-005.",
-            "groupBy": "klantId"
+            "groupBy": "customerId"
           }
         },
         "x-openregister-audit-trail": {
@@ -559,7 +559,7 @@
                 "description": "Mate waarin factuur-patroon op loon lijkt (0=zeer onregelmatig, 7=maandvast).",
                 "title": "Factuur Frequentie Score"
               },
-              "betalingsRisicoScore": {
+              "paymentRiskScore": {
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 7,
@@ -773,7 +773,7 @@
         "type": "object",
         "required": [
           "name",
-          "bron",
+          "source",
           "goedkeuringDatum",
           "actueleVersie"
         ],
@@ -784,7 +784,7 @@
             "example": "Tussenkomst-vrij - algemeen (Belastingdienst v3 - 2024)",
             "title": "Naam"
           },
-          "bron": {
+          "source": {
             "type": "string",
             "enum": [
               "BELASTINGDIENST_GOEDGEKEURD",
@@ -810,7 +810,7 @@
             "example": "2024-04-12",
             "title": "Goedkeuring Datum"
           },
-          "geldigTot": {
+          "validTo": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -843,7 +843,7 @@
             },
             "title": "Essentiele Bepalingen"
           },
-          "versie": {
+          "version": {
             "type": "string",
             "description": "Versie-aanduiding van het model.",
             "example": "v3-2024",
@@ -972,7 +972,7 @@
             "additionalProperties": true,
             "title": "Details"
           },
-          "fiscaleBron": {
+          "fiscalSource": {
             "type": "string",
             "nullable": true,
             "description": "Fiscale grondslag (wetsartikel, jurisprudentie, arrest).",
@@ -1054,7 +1054,7 @@
             "detectieMoment",
             "ernst",
             "details",
-            "fiscaleBron"
+            "fiscalSource"
           ]
         },
         "x-openregister-rbac": {
@@ -1119,7 +1119,7 @@
           "administrationId",
           "enterpriseId",
           "peilDatum",
-          "overallRisico"
+          "overallRisk"
         ],
         "properties": {
           "administrationId": {
@@ -1190,7 +1190,7 @@
             "items": {
               "type": "object",
               "properties": {
-                "klantId": {
+                "customerId": {
                   "type": "string",
                   "title": "Klant ID",
                   "description": "The identifier of the associated klant."
@@ -1249,7 +1249,7 @@
             },
             "title": "Multiple Engagement Concern"
           },
-          "overallRisico": {
+          "overallRisk": {
             "type": "string",
             "enum": [
               "LAAG",
@@ -1288,10 +1288,10 @@
         },
         "x-openregister-aggregations": {
           "countByOverallRisico": {
-            "field": "overallRisico",
+            "field": "overallRisk",
             "operation": "count",
             "description": "Aantal portfolio-records per overall-risico-niveau.",
-            "groupBy": "overallRisico"
+            "groupBy": "overallRisk"
           }
         },
         "x-openregister-audit-trail": {

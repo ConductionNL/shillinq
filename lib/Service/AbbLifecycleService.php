@@ -83,9 +83,9 @@ class AbbLifecycleService
         // Per-target precondition checks.
         switch ($toStatus) {
             case 'raadsbesluit':
-                $kenmerk = trim((string) ($abb['kenmerk'] ?? ''));
+                $kenmerk = trim((string) ($abb['reference'] ?? ''));
                 if ($kenmerk === '') {
-                    return ['ok' => false, 'error' => 'Transition to raadsbesluit requires kenmerk'];
+                    return ['ok' => false, 'error' => 'Transition to council resolution requires a reference'];
                 }
                 break;
 
@@ -101,11 +101,11 @@ class AbbLifecycleService
 
             case 'acm-notified':
                 $acm = (array) ($abb['kennisgevingAcm'] ?? []);
-                if (((bool) ($acm['ingediend'] ?? false)) === false) {
+                if (((bool) ($acm['submitted'] ?? false)) === false) {
                     return ['ok' => false, 'error' => 'Transition to acm-notified requires kennisgevingAcm.ingediend=true'];
                 }
 
-                if (trim((string) ($acm['kenmerk'] ?? '')) === '') {
+                if (trim((string) ($acm['reference'] ?? '')) === '') {
                     return ['ok' => false, 'error' => 'Transition to acm-notified requires kennisgevingAcm.kenmerk'];
                 }
                 break;
@@ -116,7 +116,7 @@ class AbbLifecycleService
                 }
 
                 $acm = (array) ($abb['kennisgevingAcm'] ?? []);
-                if (((bool) ($acm['ingediend'] ?? false)) === false || trim((string) ($acm['kenmerk'] ?? '')) === '') {
+                if (((bool) ($acm['submitted'] ?? false)) === false || trim((string) ($acm['reference'] ?? '')) === '') {
                     return ['ok' => false, 'error' => 'Geldig requires ACM kenmerk'];
                 }
                 break;
@@ -181,7 +181,7 @@ class AbbLifecycleService
     {
         $tasks   = [];
         $now     = new DateTimeImmutable('now');
-        $kenmerk = (string) ($abb['kenmerk'] ?? 'ABB');
+        $kenmerk = (string) ($abb['reference'] ?? 'ABB');
 
         switch ($toStatus) {
             case 'raadsbesluit':
@@ -278,7 +278,7 @@ class AbbLifecycleService
         }
 
         $flags   = [];
-        $kenmerk = (string) ($abb['kenmerk'] ?? 'ABB');
+        $kenmerk = (string) ($abb['reference'] ?? 'ABB');
         if ($status === 'intrekking') {
             $reason = sprintf('Exemption ABB %s ingetrokken; review activity', $kenmerk);
         } else {

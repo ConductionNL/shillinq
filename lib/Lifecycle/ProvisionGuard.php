@@ -342,7 +342,7 @@ class ProvisionGuard
      */
     private function canActivateClaims(array $provision): bool
     {
-        $detailId = (string) ($provision['linkedClaimsVoorzieningDetail'] ?? '');
+        $detailId = (string) ($provision['linkedClaimsProvisionDetail'] ?? '');
         if ($detailId === '') {
             return false;
         }

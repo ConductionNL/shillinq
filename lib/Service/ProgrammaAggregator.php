@@ -57,8 +57,8 @@ class ProgrammaAggregator
         $batenCents  = 0;
         $lastenCents = 0;
         foreach ($taakvelden as $taakveld) {
-            $batenCents  += (int) round(((float) ($taakveld['baten'] ?? 0)) * 100);
-            $lastenCents += (int) round(((float) ($taakveld['lasten'] ?? 0)) * 100);
+            $batenCents  += (int) round(((float) ($taakveld['revenue'] ?? 0)) * 100);
+            $lastenCents += (int) round(((float) ($taakveld['expenses'] ?? 0)) * 100);
         }
 
         $saldoVoorCents = ($batenCents - $lastenCents);

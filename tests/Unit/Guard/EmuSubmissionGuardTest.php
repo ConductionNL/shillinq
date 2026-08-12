@@ -84,7 +84,7 @@ class EmuSubmissionGuardTest extends TestCase
         $this->logger->expects(self::once())->method('info');
         self::assertFalse(
             $this->guard->requireApproval(
-                ['status' => 'ingediend', 'emuBalanceCalculated' => -2300000.0, 'bbvAansluitingscontrole' => 'geslaagd']
+                ['status' => 'submitted', 'emuBalanceCalculated' => -2300000.0, 'bbvAansluitingscontrole' => 'geslaagd']
             )
         );
     }//end testAlreadySubmittedIsBlocked()

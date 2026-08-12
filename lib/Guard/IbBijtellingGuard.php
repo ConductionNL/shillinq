@@ -81,7 +81,7 @@ class IbBijtellingGuard
     ): float {
         $this->logger->debug(
             'IbBijtellingGuard: computeBijtelling',
-            ['cataloguswaarde' => $cataloguswaarde, 'categorie' => $categorie]
+            ['cataloguswaarde' => $cataloguswaarde, 'category' => $categorie]
         );
 
         if ($cataloguswaarde <= 0.0) {
