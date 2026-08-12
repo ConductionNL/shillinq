@@ -223,35 +223,35 @@
                 "description": "When disbursed (English operations variant).",
                 "title": "Disbursement Date"
               },
-              "aangevraagdBedrag": {
+              "requestedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Applied-for amount in EUR.",
                 "title": "Aangevraagd Bedrag"
               },
-              "verleendBedrag": {
+              "grantedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Granted amount in EUR. Required on verleen transition. Mirrored to base totalAmount.",
                 "title": "Verleend Bedrag"
               },
-              "vastgesteldBedrag": {
+              "determinedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Settled amount in EUR. Required on vaststellen transition.",
                 "title": "Vastgesteld Bedrag"
               },
-              "uitbetaaldBedrag": {
+              "paidOutAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Paid amount in EUR. Required on uitbetalen transition.",
                 "title": "Uitbetaald Bedrag"
               },
-              "teruggevorderdBedrag": {
+              "reclaimedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,

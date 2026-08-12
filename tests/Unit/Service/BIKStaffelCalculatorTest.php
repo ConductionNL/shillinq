@@ -160,7 +160,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $r['type']);
         self::assertSame(22, $r['dagen']);
         // 840000 × 0.1015 × 22 / 365 = 5138.96 → 5139 cents.
-        self::assertEqualsWithDelta(51.39, $r['bedrag'], 0.01);
+        self::assertEqualsWithDelta(51.39, $r['amount'], 0.01);
 
     }//end testRenteB2BHandelsrenteOn8400Eur22Days()
 
@@ -188,7 +188,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame('WETTELIJKE_RENTE_B2C_6_119_BW', $r['type']);
         self::assertSame(31, $r['dagen']);
         // 82000 × 0.04 × 31 / 365 = 278.6 → 279 cents.
-        self::assertEqualsWithDelta(2.79, $r['bedrag'], 0.01);
+        self::assertEqualsWithDelta(2.79, $r['amount'], 0.01);
 
     }//end testRenteB2CWettelijkeRenteOn820Eur31Days()
 
@@ -292,12 +292,12 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame(795.0, $withBtw['toegepast']);
         self::assertSame(0.21, $withBtw['btwPercentage']);
         // 79500 × 0.21 = 16695 cents.
-        self::assertSame(166.95, $withBtw['btwBedrag']);
+        self::assertSame(166.95, $withBtw['vatAmount']);
         self::assertSame(961.95, $withBtw['toegepastInclBtw']);
 
         $noBtw = $this->calc->staffel(hoofdsom: 8400.00);
         self::assertTrue($noBtw['btwVerrekenbaar']);
-        self::assertSame(0.0, $noBtw['btwBedrag']);
+        self::assertSame(0.0, $noBtw['vatAmount']);
         self::assertSame(795.0, $noBtw['toegepastInclBtw']);
 
     }//end testStaffelBtwSurchargeWhenNotDeductible()
@@ -326,9 +326,9 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertCount(2, $r['perioden']);
         self::assertSame(0.06, $r['perioden'][0]['tarief']);
         self::assertSame(0.04, $r['perioden'][1]['tarief']);
-        self::assertEqualsWithDelta(24.66, $r['perioden'][0]['bedrag'], 0.01);
-        self::assertEqualsWithDelta(16.44, $r['perioden'][1]['bedrag'], 0.01);
-        self::assertEqualsWithDelta(41.10, $r['bedrag'], 0.01);
+        self::assertEqualsWithDelta(24.66, $r['perioden'][0]['amount'], 0.01);
+        self::assertEqualsWithDelta(16.44, $r['perioden'][1]['amount'], 0.01);
+        self::assertEqualsWithDelta(41.10, $r['amount'], 0.01);
         // Headline tarief is the rate in force on berekendOp (4% in 2026).
         self::assertSame(0.04, $r['tarief']);
 
@@ -352,7 +352,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame(0.12, $r['tarief']);
         self::assertCount(1, $r['perioden']);
         // 840000 × 0.12 × 22 / 365 = 6075.6 → 6076 cents.
-        self::assertEqualsWithDelta(60.76, $r['bedrag'], 0.01);
+        self::assertEqualsWithDelta(60.76, $r['amount'], 0.01);
 
     }//end testRenteHonoursExplicitOverride()
 

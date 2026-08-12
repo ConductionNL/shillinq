@@ -854,7 +854,7 @@
               "required": [
                 "categorie",
                 "label",
-                "bedrag"
+                "amount"
               ],
               "properties": {
                 "categorie": {
@@ -873,7 +873,7 @@
                   "example": "Afschrijvingen",
                   "title": "Label"
                 },
-                "bedrag": {
+                "amount": {
                   "type": "number",
                   "description": "Line amount (sign-aware).",
                   "title": "Bedrag"
@@ -1561,27 +1561,27 @@
         {
           "categorie": "operationeel",
           "label": "Nettoresultaat",
-          "bedrag": 266000
+          "amount": 266000
         },
         {
           "categorie": "operationeel",
           "label": "Afschrijvingen",
-          "bedrag": 80000
+          "amount": 80000
         },
         {
           "categorie": "investering",
           "label": "Investeringen materiële vaste activa",
-          "bedrag": -120000
+          "amount": -120000
         },
         {
           "categorie": "financiering",
           "label": "Aflossing langlopende lening",
-          "bedrag": -50000
+          "amount": -50000
         },
         {
           "categorie": "financiering",
           "label": "Dividenduitkering",
-          "bedrag": -100000
+          "amount": -100000
         }
       ]
     },

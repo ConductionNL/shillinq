@@ -576,7 +576,7 @@
 					{ "key": "commercialActivityId", "label": "Activity", "sortable": true },
 					{ "key": "peildatum", "label": "Reference Date", "sortable": true },
 					{ "key": "bron", "label": "Source", "sortable": true },
-					{ "key": "bedrag", "label": "Amount", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
 					{ "key": "eenheid", "label": "Unit", "sortable": true },
 					{ "key": "concurrentNaam", "label": "Competitor", "sortable": true }
 				],
@@ -597,7 +597,7 @@
 					{ "key": "commercialActivityId", "label": "Activity", "type": "string" },
 					{ "key": "peildatum", "label": "Reference Date", "type": "string" },
 					{ "key": "bron", "label": "Source", "type": "string" },
-					{ "key": "bedrag", "label": "Amount", "type": "number" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
 					{ "key": "eenheid", "label": "Unit", "type": "string" },
 					{ "key": "concurrentNaam", "label": "Competitor", "type": "string" },
 					{ "key": "toelichting", "label": "Notes", "type": "string" }

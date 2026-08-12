@@ -83,7 +83,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'richting'        => 'OUT',
             'frequentie'      => 'MAANDELIJKS',
             'dagVanMaand'     => 1,
-            'standaardBedrag' => 850.0,
+            'standardAmount' => 850.0,
             'indexatieRegel'  => 'FIXED',
             'geldigVan'       => '2024-09-01',
         ];
@@ -107,7 +107,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'frequentie'      => 'JAARLIJKS',
             'maandVanJaar'    => 7,
             'dagVanMaand'     => 1,
-            'standaardBedrag' => 620.0,
+            'standardAmount' => 620.0,
             'indexatieRegel'  => 'CPI_AFGELOPEN_JAAR',
             'geldigVan'       => '2024-07-01',
         ];
@@ -127,7 +127,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'recurId'         => 'rec-neg',
             'frequentie'      => 'MAANDELIJKS',
             'dagVanMaand'     => 1,
-            'standaardBedrag' => -100.0,
+            'standardAmount' => -100.0,
             'geldigVan'       => '2024-09-01',
         ];
 
@@ -145,7 +145,7 @@ final class CashflowRecurringGuardTest extends TestCase
         $recurring = [
             'recurId'         => 'rec-noday',
             'frequentie'      => 'MAANDELIJKS',
-            'standaardBedrag' => 850.0,
+            'standardAmount' => 850.0,
             'geldigVan'       => '2024-09-01',
         ];
 
@@ -164,7 +164,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'recurId'         => 'rec-nomonth',
             'frequentie'      => 'JAARLIJKS',
             'dagVanMaand'     => 1,
-            'standaardBedrag' => 620.0,
+            'standardAmount' => 620.0,
             'geldigVan'       => '2024-07-01',
         ];
 
@@ -183,7 +183,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'recurId'         => 'rec-rev',
             'frequentie'      => 'MAANDELIJKS',
             'dagVanMaand'     => 1,
-            'standaardBedrag' => 850.0,
+            'standardAmount' => 850.0,
             'geldigVan'       => '2026-09-01',
             'geldigTot'       => '2024-09-01',
         ];
@@ -203,7 +203,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'recurId'         => 'rec-bad',
             'frequentie'      => 'MAANDELIJKS',
             'dagVanMaand'     => 1,
-            'standaardBedrag' => 850.0,
+            'standardAmount' => 850.0,
             'geldigVan'       => 'not-a-date',
         ];
 
@@ -222,7 +222,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'recurId'         => 'rec-cpi-monthly',
             'frequentie'      => 'MAANDELIJKS',
             'dagVanMaand'     => 1,
-            'standaardBedrag' => 850.0,
+            'standardAmount' => 850.0,
             'indexatieRegel'  => 'CPI_AFGELOPEN_JAAR',
             'geldigVan'       => '2024-09-01',
         ];
@@ -241,7 +241,7 @@ final class CashflowRecurringGuardTest extends TestCase
         $recurring = [
             'recurId'         => 'rec-indef',
             'frequentie'      => 'WEKELIJKS',
-            'standaardBedrag' => 200.0,
+            'standardAmount' => 200.0,
             'geldigVan'       => '2024-09-01',
         ];
 

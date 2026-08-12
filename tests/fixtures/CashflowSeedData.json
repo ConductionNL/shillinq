@@ -33,7 +33,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 1,
-					"standaardBedrag": 1200.00,
+					"standardAmount": 1200.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-09-01"
 				},
@@ -44,7 +44,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 15,
-					"standaardBedrag": 185.00,
+					"standardAmount": 185.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-01-01"
 				},
@@ -55,7 +55,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 10,
-					"standaardBedrag": 240.00,
+					"standardAmount": 240.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-01-01"
 				},
@@ -66,7 +66,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 25,
-					"standaardBedrag": 3500.00,
+					"standardAmount": 3500.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-01-01"
 				}
@@ -77,7 +77,7 @@
 					"klantId": "klant-techcorp",
 					"factuurDatum": "2026-04-15",
 					"vervalDatum": "2026-05-15",
-					"openstaandBedrag": 12500.00,
+					"outstandingAmount": 12500.00,
 					"betalingsHistorie_gemiddeldeAfwijking": "+3 days",
 					"betalingsHistorie_facturen12mnd": 12,
 					"betrouwbaarheidScore": 1.0
@@ -87,7 +87,7 @@
 					"klantId": "klant-stable-bv",
 					"factuurDatum": "2026-04-20",
 					"vervalDatum": "2026-05-20",
-					"openstaandBedrag": 8200.00,
+					"outstandingAmount": 8200.00,
 					"betalingsHistorie_gemiddeldeAfwijking": "+2 days",
 					"betalingsHistorie_facturen12mnd": 11,
 					"betrouwbaarheidScore": 0.92
@@ -138,7 +138,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 1,
-					"standaardBedrag": 2800.00,
+					"standardAmount": 2800.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-01-01"
 				},
@@ -149,7 +149,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 20,
-					"standaardBedrag": 2200.00,
+					"standardAmount": 2200.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-01-01"
 				}
@@ -160,7 +160,7 @@
 					"klantId": "klant-regular-a",
 					"factuurDatum": "2026-04-10",
 					"vervalDatum": "2026-05-10",
-					"openstaandBedrag": 4500.00,
+					"outstandingAmount": 4500.00,
 					"betalingsHistorie_gemiddeldeAfwijking": "+7 days",
 					"betalingsHistorie_facturen12mnd": 10,
 					"betrouwbaarheidScore": 0.83
@@ -170,7 +170,7 @@
 					"klantId": "klant-project-x",
 					"factuurDatum": "2026-04-12",
 					"vervalDatum": "2026-05-12",
-					"openstaandBedrag": 12000.00,
+					"outstandingAmount": 12000.00,
 					"betalingsHistorie_gemiddeldeAfwijking": "+35 days",
 					"betalingsHistorie_facturen12mnd": 4,
 					"betrouwbaarheidScore": 0.45
@@ -221,7 +221,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 1,
-					"standaardBedrag": 400.00,
+					"standardAmount": 400.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-01-01"
 				},
@@ -232,7 +232,7 @@
 					"richting": "OUT",
 					"frequentie": "MAANDELIJKS",
 					"dagVanMaand": 25,
-					"standaardBedrag": 1800.00,
+					"standardAmount": 1800.00,
 					"indexatieRegel": "FIXED",
 					"geldigVan": "2024-01-01"
 				}
@@ -243,7 +243,7 @@
 					"klantId": "klant-municipality-amsterdam",
 					"factuurDatum": "2026-04-15",
 					"vervalDatum": "2026-05-15",
-					"openstaandBedrag": 12000.00,
+					"outstandingAmount": 12000.00,
 					"betalingsHistorie_gemiddeldeAfwijking": "+48 days",
 					"betalingsHistorie_facturen12mnd": 6,
 					"betrouwbaarheidScore": 0.95
@@ -253,7 +253,7 @@
 					"klantId": "klant-province-utrecht",
 					"factuurDatum": "2026-04-20",
 					"vervalDatum": "2026-05-20",
-					"openstaandBedrag": 8500.00,
+					"outstandingAmount": 8500.00,
 					"betalingsHistorie_gemiddeldeAfwijking": "+32 days",
 					"betalingsHistorie_facturen12mnd": 5,
 					"betrouwbaarheidScore": 0.88
@@ -263,7 +263,7 @@
 					"klantId": "klant-acme-bv",
 					"factuurDatum": "2026-04-22",
 					"vervalDatum": "2026-05-22",
-					"openstaandBedrag": 5200.00,
+					"outstandingAmount": 5200.00,
 					"betalingsHistorie_gemiddeldeAfwijking": "+8 days",
 					"betalingsHistorie_facturen12mnd": 8,
 					"betrouwbaarheidScore": 0.92

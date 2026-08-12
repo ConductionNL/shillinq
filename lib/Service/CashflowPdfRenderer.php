@@ -137,7 +137,7 @@ class CashflowPdfRenderer
                     '%-30s %-12s %.2f EUR (%s)',
                     (string) ($rec['label'] ?? '?'),
                     (string) ($rec['frequentie'] ?? '?'),
-                    (float) ($rec['standaardBedrag'] ?? 0),
+                    (float) ($rec['standardAmount'] ?? 0),
                     (string) ($rec['indexatieRegel'] ?? 'FIXED')
                 );
             }
@@ -150,7 +150,7 @@ class CashflowPdfRenderer
             $lines[] = ($scenario['description'] ?? '');
             if (isset($scenario['resultaat']) === true && is_array($scenario['resultaat']) === true) {
                 $lines[] = 'Min buffer week: '.($scenario['resultaat']['minBufferWeek'] ?? '?');
-                $lines[] = 'Min buffer bedrag: '.($scenario['resultaat']['minBufferBedrag'] ?? '?');
+                $lines[] = 'Min buffer bedrag: '.($scenario['resultaat']['minBufferAmount'] ?? '?');
                 if (($scenario['resultaat']['onderschrijdingBuffer'] ?? false) === true) {
                     $bufferBreached = 'YES';
                 } else {

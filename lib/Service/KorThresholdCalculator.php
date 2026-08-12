@@ -108,7 +108,7 @@ class KorThresholdCalculator
                 continue;
             }
 
-            $total += $this->toCents(amount: ($invoice['bedrag'] ?? ($invoice['netAmount'] ?? 0)));
+            $total += $this->toCents(amount: ($invoice['amount'] ?? ($invoice['netAmount'] ?? 0)));
         }
 
         return $total;
@@ -269,7 +269,7 @@ class KorThresholdCalculator
                 continue;
             }
 
-            $grossCents = $this->toCents(amount: ($invoice['bedrag'] ?? ($invoice['netAmount'] ?? 0)));
+            $grossCents = $this->toCents(amount: ($invoice['amount'] ?? ($invoice['netAmount'] ?? 0)));
             // VAT embedded in the gross KOR amount: gross * rate / (1 + rate).
             $vatCents = (int) round(($grossCents * self::STANDARD_VAT_RATE) / (1.0 + self::STANDARD_VAT_RATE));
             $total   += $vatCents;
@@ -447,7 +447,7 @@ class KorThresholdCalculator
                 continue;
             }
 
-            $cents[$lidstaat] = (($cents[$lidstaat] ?? 0) + $this->toCents(amount: ($invoice['bedrag'] ?? 0)));
+            $cents[$lidstaat] = (($cents[$lidstaat] ?? 0) + $this->toCents(amount: ($invoice['amount'] ?? 0)));
         }
 
         $result = [];

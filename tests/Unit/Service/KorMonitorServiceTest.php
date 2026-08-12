@@ -190,7 +190,7 @@ final class KorMonitorServiceTest extends TestCase
     {
         return [
             'administrationId'       => $admin,
-            'bedrag'                 => $bedrag,
+            'amount'                 => $bedrag,
             'leveringsDatum'         => $date,
             'vrijstellingsGrondslag' => $grond,
             'status'                 => $status,

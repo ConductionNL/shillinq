@@ -171,7 +171,7 @@
           "belastingjaar",
           "tarief1",
           "tarief2",
-          "belastbaarBedragGrens"
+          "taxableAmountThreshold"
         ],
         "properties": {
           "belastingjaar": {
@@ -192,7 +192,7 @@
             "example": 0.258,
             "title": "Tarief2"
           },
-          "belastbaarBedragGrens": {
+          "taxableAmountThreshold": {
             "type": "number",
             "description": "Grensbedrag tussen schijf 1 en schijf 2 (EUR). 2026: 245000.",
             "example": 245000,
@@ -342,7 +342,7 @@
             "example": "annual-report-adm-001-2026",
             "title": "Commerciele Winst"
           },
-          "commercieleWinstBedrag": {
+          "commercialProfitAmount": {
             "type": "number",
             "nullable": true,
             "description": "Commerciële winst (EUR) zoals op de vastgestelde jaarrekening; uitgangspunt voor de aansluittabel.",
@@ -550,8 +550,8 @@
           "administrationId",
           "aangifte",
           "code",
-          "commercieelBedrag",
-          "fiscaalBedrag"
+          "commercialAmount",
+          "fiscalAmount"
         ],
         "properties": {
           "administrationId": {
@@ -581,19 +581,19 @@
             "example": "Niet-aftrekbare boetes en geldelijke sancties",
             "title": "Omschrijving"
           },
-          "commercieelBedrag": {
+          "commercialAmount": {
             "type": "number",
             "description": "Bedrag in de commerciële jaarrekening (EUR).",
             "example": 0,
             "title": "Commercieel Bedrag"
           },
-          "fiscaalBedrag": {
+          "fiscalAmount": {
             "type": "number",
             "description": "Fiscaal toegestane bedrag (EUR).",
             "example": 30000,
             "title": "Fiscaal Bedrag"
           },
-          "correctieBedrag": {
+          "correctionAmount": {
             "type": "number",
             "nullable": true,
             "description": "Delta = fiscaalBedrag − commercieelBedrag (declaratief berekend).",
@@ -609,7 +609,7 @@
           }
         },
         "x-openregister-calculations": {
-          "correctieBedrag": {
+          "correctionAmount": {
             "description": "Fiscaal bedrag minus commercieel bedrag (REQ-VPB-002).",
             "expr": "(@self.fiscaalBedrag ?? 0) - (@self.commercieelBedrag ?? 0)"
           }
@@ -728,7 +728,7 @@
             "example": "SO-2026-0001234",
             "title": "So Verklaring Referentie"
           },
-          "innovatieboxBedrag": {
+          "innovationBoxAmount": {
             "type": "number",
             "nullable": true,
             "description": "Belastingvoordeel uit de innovatiebox (EUR).",
@@ -737,7 +737,7 @@
           }
         },
         "x-openregister-calculations": {
-          "innovatieboxBedrag": {
+          "innovationBoxAmount": {
             "description": "Innovatieboxwinst maal het tariefverschil tussen het reguliere schijf-2-tarief en het innovatiebox-tarief (REQ-VPB-004).",
             "expr": "(@self.innovatieboxWinst ?? 0) * (lookup(VpbTariefcatalogus, belastingjaar == VpbAangifte[@self.aangifte].belastingjaar).tarief2 - (@self.effectiefTarief ?? 0.09))"
           }
@@ -1052,7 +1052,7 @@
           "administrationId",
           "belastingplichtige",
           "verliesjaar",
-          "oorspronkelijkBedrag"
+          "originalAmount"
         ],
         "properties": {
           "administrationId": {
@@ -1075,7 +1075,7 @@
             "example": 2023,
             "title": "Verliesjaar"
           },
-          "oorspronkelijkBedrag": {
+          "originalAmount": {
             "type": "number",
             "description": "Oorspronkelijk vastgesteld verlies (EUR).",
             "example": 50000,
@@ -1228,7 +1228,7 @@
             "example": 0.4,
             "title": "Aftrek Percentage"
           },
-          "aftrekBedrag": {
+          "deductionAmount": {
             "type": "number",
             "nullable": true,
             "description": "Aftrekbedrag = investeringsbedrag × aftrekPercentage (declaratief berekend).",
@@ -1266,7 +1266,7 @@
           }
         },
         "x-openregister-calculations": {
-          "aftrekBedrag": {
+          "deductionAmount": {
             "description": "Investeringsbedrag maal aftrekpercentage (REQ-VPB-008).",
             "expr": "(@self.investeringsbedrag ?? 0) * (@self.aftrekPercentage ?? 0)"
           },
@@ -1353,7 +1353,7 @@
             "example": "2026-02-15",
             "title": "Dagtekening"
           },
-          "geschatBelastbaarBedrag": {
+          "estimatedTaxableAmount": {
             "type": "number",
             "nullable": true,
             "description": "Door de inspecteur geschat belastbaar bedrag (EUR).",
@@ -1468,7 +1468,7 @@
             "example": "2027-09-01",
             "title": "Dagtekening"
           },
-          "vastgesteldBelastbaarBedrag": {
+          "determinedTaxableAmount": {
             "type": "number",
             "nullable": true,
             "description": "Door de inspecteur vastgesteld belastbaar bedrag (EUR).",
@@ -1888,7 +1888,7 @@
         "belastingjaar": 2026,
         "tarief1": 0.19,
         "tarief2": 0.258,
-        "belastbaarBedragGrens": 245000,
+        "taxableAmountThreshold": 245000,
         "innovatieboxTarief": 0.09,
         "innovatieboxForfaitDrempel": 25000,
         "verliesverrekening50PctDrempel": 1000000,
@@ -1929,7 +1929,7 @@
         "administrationId": "adm-001",
         "belastingplichtige": "belastingplichtige-acme-bv",
         "verliesjaar": 2023,
-        "oorspronkelijkBedrag": 50000,
+        "originalAmount": 50000,
         "reedsVerrekend": 10000,
         "restant": 40000,
         "regime": "6jr",

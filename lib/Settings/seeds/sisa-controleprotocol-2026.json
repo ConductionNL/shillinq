@@ -20,7 +20,7 @@
 			"regelingCode": "C17",
 			"indicatorCode": "C17.02",
 			"indicatorOmschrijving": "Besteed bedrag aan de decentralisatie-uitkering klimaat en energie",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -68,7 +68,7 @@
 			"regelingCode": "D1",
 			"indicatorCode": "D1.05",
 			"indicatorOmschrijving": "Besteed bedrag aan toezicht en handhaving kinderopvang",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -76,7 +76,7 @@
 			"regelingCode": "D2",
 			"indicatorCode": "D2.01",
 			"indicatorOmschrijving": "Besteed bedrag aan activiteiten voor lokaal onderwijsbeleid",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -92,7 +92,7 @@
 			"regelingCode": "D2",
 			"indicatorCode": "D2.03",
 			"indicatorOmschrijving": "Besteed bedrag aan voor- en vroegschoolse educatie",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": false
 		},
@@ -100,7 +100,7 @@
 			"regelingCode": "D3",
 			"indicatorCode": "D3.01",
 			"indicatorOmschrijving": "Besteed bedrag aan programma's ter bestrijding van onderwijsachterstanden",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -132,7 +132,7 @@
 			"regelingCode": "D4",
 			"indicatorCode": "D4.01",
 			"indicatorOmschrijving": "Besteed bedrag aan vrouwenopvang",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -164,7 +164,7 @@
 			"regelingCode": "D5",
 			"indicatorCode": "D5.01",
 			"indicatorOmschrijving": "Besteed bedrag aan maatschappelijke opvang",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -172,7 +172,7 @@
 			"regelingCode": "D5",
 			"indicatorCode": "D5.02",
 			"indicatorOmschrijving": "Besteed bedrag aan verslavingszorg",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -204,7 +204,7 @@
 			"regelingCode": "D6",
 			"indicatorCode": "D6.01",
 			"indicatorOmschrijving": "Besteed bedrag aan toegankelijkheid wonen voor mensen met een beperking",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -228,7 +228,7 @@
 			"regelingCode": "D7",
 			"indicatorCode": "D7.01",
 			"indicatorOmschrijving": "Besteed bedrag aan Wmo 2015 maatwerkvoorzieningen",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -252,7 +252,7 @@
 			"regelingCode": "D7",
 			"indicatorCode": "D7.04",
 			"indicatorOmschrijving": "Besteed bedrag aan jeugdhulp in het gedwongen kader",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -276,7 +276,7 @@
 			"regelingCode": "D8",
 			"indicatorCode": "D8.02",
 			"indicatorOmschrijving": "Besteed bedrag aan participatiebudget (Participatiewet inclusief IOAW en IOAZ)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -300,7 +300,7 @@
 			"regelingCode": "D8",
 			"indicatorCode": "D8.05",
 			"indicatorOmschrijving": "Besteed bedrag aan beschut werk (art. 10b Participatiewet)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": false
 		},
@@ -308,7 +308,7 @@
 			"regelingCode": "D9",
 			"indicatorCode": "D9.01",
 			"indicatorOmschrijving": "Besteed bedrag aan jeugdhulp exclusief jeugdhulp in gedwongen kader",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -340,7 +340,7 @@
 			"regelingCode": "D9",
 			"indicatorCode": "D9.05",
 			"indicatorOmschrijving": "Besteed bedrag aan jeugdbescherming en jeugdreclassering",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": false
 		},
@@ -348,7 +348,7 @@
 			"regelingCode": "E3",
 			"indicatorCode": "E3.01",
 			"indicatorOmschrijving": "Besteed bedrag aan Regionaal Meld- en Coördinatiepunt (RMC) voortijdig schoolverlaten",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -372,7 +372,7 @@
 			"regelingCode": "E27",
 			"indicatorCode": "E27.01",
 			"indicatorOmschrijving": "Besteed bedrag aan educatie (art. 2.3.6 Wet educatie en beroepsonderwijs)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -380,7 +380,7 @@
 			"regelingCode": "E27",
 			"indicatorCode": "E27.02",
 			"indicatorOmschrijving": "Besteed bedrag ingezet voor taalschakeltrajecten inburgeraars",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -396,7 +396,7 @@
 			"regelingCode": "F1",
 			"indicatorCode": "F1.01",
 			"indicatorOmschrijving": "Besteed bedrag aan brede doeluitkering sociale integratie en veiligheid (BDU SIV)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -404,7 +404,7 @@
 			"regelingCode": "F1",
 			"indicatorCode": "F1.02",
 			"indicatorOmschrijving": "Besteed bedrag voor activiteiten inburgering",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -428,7 +428,7 @@
 			"regelingCode": "G1",
 			"indicatorCode": "G1.01",
 			"indicatorOmschrijving": "Besteed bedrag aan specifieke uitkering voor verkeer en vervoer",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -452,7 +452,7 @@
 			"regelingCode": "G5",
 			"indicatorCode": "G5.01",
 			"indicatorOmschrijving": "Besteed bedrag aan schoon en emissievrij vervoer",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -476,7 +476,7 @@
 			"regelingCode": "H1",
 			"indicatorCode": "H1.01",
 			"indicatorOmschrijving": "Besteed bedrag aan specifieke uitkering bodemsanering",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -500,7 +500,7 @@
 			"regelingCode": "I1",
 			"indicatorCode": "I1.01",
 			"indicatorOmschrijving": "Besteed bedrag aan specifieke uitkering natuur en biodiversiteit",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -524,7 +524,7 @@
 			"regelingCode": "J1",
 			"indicatorCode": "J1.01",
 			"indicatorOmschrijving": "Besteed bedrag aan specifieke uitkering impulsaanpak winkelgebieden",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -548,7 +548,7 @@
 			"regelingCode": "K1",
 			"indicatorCode": "K1.01",
 			"indicatorOmschrijving": "Besteed bedrag aan specifieke uitkering regiodeals",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -572,7 +572,7 @@
 			"regelingCode": "L1",
 			"indicatorCode": "L1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering aanpak stikstof natuur",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -596,7 +596,7 @@
 			"regelingCode": "M1",
 			"indicatorCode": "M1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering woningbouw impuls",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -636,7 +636,7 @@
 			"regelingCode": "N1",
 			"indicatorCode": "N1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering ventilatie in scholen (SUVIS)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -660,7 +660,7 @@
 			"regelingCode": "O1",
 			"indicatorCode": "O1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering brede aanpak dak- en thuisloosheid",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -684,7 +684,7 @@
 			"regelingCode": "P1",
 			"indicatorCode": "P1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering aanpak geluid",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -708,7 +708,7 @@
 			"regelingCode": "Q1",
 			"indicatorCode": "Q1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering digitale infrastructuur gemeenten",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -732,7 +732,7 @@
 			"regelingCode": "R1",
 			"indicatorCode": "R1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering Nationaal Programma Rotterdam Zuid (NPRZ)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -756,7 +756,7 @@
 			"regelingCode": "S1",
 			"indicatorCode": "S1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering aanpak problematische schulden",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -780,7 +780,7 @@
 			"regelingCode": "S1",
 			"indicatorCode": "S1.04",
 			"indicatorOmschrijving": "Gemiddelde schuldhoogte bij aanvang schuldhulpverleningstraject in euro",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": false
 		},
@@ -788,7 +788,7 @@
 			"regelingCode": "T1",
 			"indicatorCode": "T1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering volksgezondheid",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -796,7 +796,7 @@
 			"regelingCode": "T1",
 			"indicatorCode": "T1.02",
 			"indicatorOmschrijving": "Besteed bedrag aan openbare geestelijke gezondheidszorg (OGGZ)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -812,7 +812,7 @@
 			"regelingCode": "U1",
 			"indicatorCode": "U1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering erfgoed en monumenten",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -836,7 +836,7 @@
 			"regelingCode": "V1",
 			"indicatorCode": "V1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering stedelijke vernieuwing",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -860,7 +860,7 @@
 			"regelingCode": "W1",
 			"indicatorCode": "W1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering waterveiligheid en klimaatadaptatie",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -884,7 +884,7 @@
 			"regelingCode": "X1",
 			"indicatorCode": "X1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering armoedebestrijding kinderen",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -900,7 +900,7 @@
 			"regelingCode": "X1",
 			"indicatorCode": "X1.03",
 			"indicatorOmschrijving": "Besteed bedrag aan kindpakketten (sport, cultuur, school)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -916,7 +916,7 @@
 			"regelingCode": "Y1",
 			"indicatorCode": "Y1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering energietoeslag lagere inkomens",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -932,7 +932,7 @@
 			"regelingCode": "Y1",
 			"indicatorCode": "Y1.03",
 			"indicatorOmschrijving": "Gemiddelde hoogte energietoeslag per huishouden in euro",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": false
 		},
@@ -940,7 +940,7 @@
 			"regelingCode": "Z1",
 			"indicatorCode": "Z1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering zorginfrastructuur thuiswonende ouderen",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -964,7 +964,7 @@
 			"regelingCode": "AA1",
 			"indicatorCode": "AA1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering sportakkoord",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -988,7 +988,7 @@
 			"regelingCode": "BB1",
 			"indicatorCode": "BB1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering bibliotheekwerk",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -1012,7 +1012,7 @@
 			"regelingCode": "CC1",
 			"indicatorCode": "CC1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering programma aanpak stikstof (PAS) leefgebiedherstel",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -1036,7 +1036,7 @@
 			"regelingCode": "DD1",
 			"indicatorCode": "DD1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering transitievisie warmte en warmtenetten",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -1060,7 +1060,7 @@
 			"regelingCode": "EE1",
 			"indicatorCode": "EE1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering preventieve jeugdzorg (vroegsignalering)",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},
@@ -1084,7 +1084,7 @@
 			"regelingCode": "FF1",
 			"indicatorCode": "FF1.01",
 			"indicatorOmschrijving": "Besteed bedrag specifieke uitkering mantelzorg en respijtzorg",
-			"indicatorType": "bedrag",
+			"indicatorType": "amount",
 			"indicatorEenheid": "euro",
 			"verplicht": true
 		},

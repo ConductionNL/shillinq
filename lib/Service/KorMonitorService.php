@@ -202,7 +202,7 @@ class KorMonitorService
                 continue;
             }
 
-            $cents[$month] = (($cents[$month] ?? 0) + $this->calculator->toCents(amount: ($invoice['bedrag'] ?? ($invoice['netAmount'] ?? 0))));
+            $cents[$month] = (($cents[$month] ?? 0) + $this->calculator->toCents(amount: ($invoice['amount'] ?? ($invoice['netAmount'] ?? 0))));
         }
 
         ksort($cents);

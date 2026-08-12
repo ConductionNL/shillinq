@@ -368,7 +368,7 @@
           "kanaal",
           "templateId",
           "deliveryStatus",
-          "factuurBedrag",
+          "invoiceAmount",
           "administrationId"
         ],
         "properties": {
@@ -514,20 +514,20 @@
             "description": "Optional digital signature over the rendered letter.",
             "title": "Digital Signature"
           },
-          "factuurBedrag": {
+          "invoiceAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Invoice principal at the moment this run executed (EUR).",
             "title": "Factuur Bedrag"
           },
-          "incassokostenBedrag": {
+          "collectionCostAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "nullable": true,
             "description": "Incasso costs at the moment this run executed (EUR). Set when the BIK-staffel has been computed.",
             "title": "Incassokosten Bedrag"
           },
-          "renteBedrag": {
+          "interestAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "nullable": true,
@@ -757,7 +757,7 @@
                 "default": 0.0,
                 "title": "BTW Percentage"
               },
-              "btwBedrag": {
+              "vatAmount": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "BTW surcharge on the incassokosten (art. 2 lid 2 Besluit BIK); 0 when the creditor can offset VAT.",
@@ -781,7 +781,7 @@
               "ingangsdatum",
               "berekendOp",
               "dagen",
-              "bedrag"
+              "amount"
             ],
             "properties": {
               "tarief": {
@@ -817,7 +817,7 @@
                 "description": "Days between ingangsdatum and berekendOp.",
                 "title": "Dagen"
               },
-              "bedrag": {
+              "amount": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "minimum": 0,
@@ -854,7 +854,7 @@
                       "description": "Annual statutory rate in force during this sub-period, as a decimal (0.1015 = 10,15%). Per art. 6:119a BW for B2B handelsrente or art. 6:119 BW for B2C wettelijke rente.",
                       "title": "Tarief"
                     },
-                    "bedrag": {
+                    "amount": {
                       "type": "number",
                       "multipleOf": 0.01,
                       "description": "Interest accrued in this sub-period in EUR: hoofdsom x tarief x dagen / 365, rounded to cents. The sub-period bedragen sum to the parent bedrag.",
@@ -933,7 +933,7 @@
             "register": "shillinq",
             "schema": "IncassoKostenBerekening",
             "computedFields": {
-              "renteBedrag": {
+              "interestAmount": {
                 "type": "expression",
                 "expression": "(hoofdsom * wettelijkeRente.tarief * wettelijkeRente.dagen) / 365"
               }
@@ -1274,7 +1274,7 @@
             "description": "Amount written off, excluding VAT (EUR).",
             "title": "Hoofdsom Afgeschreven"
           },
-          "btwBedrag": {
+          "vatAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -1545,7 +1545,7 @@
         "opened": true,
         "openedAt": "2026-06-14T09:42:00Z"
       },
-      "factuurBedrag": 8400.0,
+      "invoiceAmount": 8400.0,
       "administrationId": "adm-1"
     },
     {
@@ -1568,7 +1568,7 @@
         "toegepast": 795.0,
         "btwVerrekenbaar": true,
         "btwPercentage": 0.0,
-        "btwBedrag": 0.0,
+        "vatAmount": 0.0,
         "toegepastInclBtw": 795.0
       },
       "wettelijkeRente": {
@@ -1577,14 +1577,14 @@
         "ingangsdatum": "2026-05-30",
         "berekendOp": "2026-06-21",
         "dagen": 22,
-        "bedrag": 51.39,
+        "amount": 51.39,
         "perioden": [
           {
             "van": "2026-05-30",
             "tot": "2026-06-21",
             "dagen": 22,
             "tarief": 0.1015,
-            "bedrag": 51.39
+            "amount": 51.39
           }
         ]
       },
@@ -1634,7 +1634,7 @@
       },
       "factuurId": "inv-2025-0089",
       "hoofdsomAfgeschreven": 4200.0,
-      "btwBedrag": 882.0,
+      "vatAmount": 882.0,
       "art29OBVerklaring": "Faillissement vonnis 2026-04-12 (Rb. Amsterdam)",
       "evidenceRef": "docudesk:files/oninb/faillissementsvonnis-2026-04-12.pdf",
       "boekingId": "gl-2026-04-15-oninb-0089",

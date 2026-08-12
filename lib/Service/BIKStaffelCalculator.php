@@ -231,7 +231,7 @@ class BIKStaffelCalculator
             'toegepast'            => $this->fromCents(cents: $toegepastCents),
             'btwVerrekenbaar'      => $btwVerrekenbaar,
             'btwPercentage'        => $appliedBtwPercentage,
-            'btwBedrag'            => $this->fromCents(cents: $btwCents),
+            'vatAmount'            => $this->fromCents(cents: $btwCents),
             'toegepastInclBtw'     => $this->fromCents(cents: ($toegepastCents + $btwCents)),
         ];
 
@@ -316,7 +316,7 @@ class BIKStaffelCalculator
                 'tot'    => $segment['tot']->format('Y-m-d'),
                 'dagen'  => $dagen,
                 'tarief' => $segment['tarief'],
-                'bedrag' => $this->fromCents(cents: $segmentCents),
+                'amount' => $this->fromCents(cents: $segmentCents),
             ];
         }
 
@@ -330,7 +330,7 @@ class BIKStaffelCalculator
             'ingangsdatum' => $ingangsdatum->format('Y-m-d'),
             'berekendOp'   => $berekendOp->format('Y-m-d'),
             'dagen'        => $totaalDagen,
-            'bedrag'       => $this->fromCents(cents: $totaalCents),
+            'amount'       => $this->fromCents(cents: $totaalCents),
             'perioden'     => $perioden,
         ];
 
@@ -488,7 +488,7 @@ class BIKStaffelCalculator
         $hoofdsomCents = $this->toCents(amount: $hoofdsom);
         // Incassokosten owed = the normed fee INCLUDING any BTW surcharge.
         $incassoCents = $this->toCents(amount: $berekening['toegepastInclBtw']);
-        $renteCents   = $this->toCents(amount: $rente['bedrag']);
+        $renteCents   = $this->toCents(amount: $rente['amount']);
         $totaalCents  = ($hoofdsomCents + $incassoCents + $renteCents);
 
         return [

@@ -110,7 +110,7 @@ final class DunningTemplateRegistryTest extends TestCase
         $fields = $this->makeRegistry()->mergeFields();
         self::assertContains('klantNaam', $fields);
         self::assertContains('factuurNummer', $fields);
-        self::assertContains('openstaandBedrag', $fields);
+        self::assertContains('outstandingAmount', $fields);
         self::assertContains('vervalDatum', $fields);
         self::assertContains('iban', $fields);
         self::assertContains('incassokosten', $fields);

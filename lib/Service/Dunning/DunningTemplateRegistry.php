@@ -63,7 +63,7 @@ final class DunningTemplateRegistry
         'klantNaam',
         'factuurNummer',
         'factuurDatum',
-        'openstaandBedrag',
+        'outstandingAmount',
         'vervalDatum',
         'iban',
         'betalingstermijn',

@@ -62,11 +62,11 @@ final class KorThresholdCalculatorTest extends TestCase
     public function testRunningOmzetOnlyCountsKorEligible(): void
     {
         $invoices = [
-            ['bedrag' => 200.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'issued', 'leveringsDatum' => '2026-08-12'],
-            ['bedrag' => 999.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'draft', 'leveringsDatum' => '2026-08-13'],
-            ['bedrag' => 500.0, 'vrijstellingsGrondslag' => 'REGULIER_21PCT_VAT', 'status' => 'issued', 'leveringsDatum' => '2026-08-14'],
-            ['bedrag' => 100.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'issued', 'leveringsDatum' => '2025-12-31'],
-            ['bedrag' => 50.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'issued', 'leveringsDatum' => '2026-01-05'],
+            ['amount' => 200.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'issued', 'leveringsDatum' => '2026-08-12'],
+            ['amount' => 999.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'draft', 'leveringsDatum' => '2026-08-13'],
+            ['amount' => 500.0, 'vrijstellingsGrondslag' => 'REGULIER_21PCT_VAT', 'status' => 'issued', 'leveringsDatum' => '2026-08-14'],
+            ['amount' => 100.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'issued', 'leveringsDatum' => '2025-12-31'],
+            ['amount' => 50.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'status' => 'issued', 'leveringsDatum' => '2026-01-05'],
         ];
 
         // 200 + 50 = 250.00 => 25000 cents (draft excluded, regulier excluded, prior-year excluded).
@@ -144,15 +144,15 @@ final class KorThresholdCalculatorTest extends TestCase
     {
         $invoices = [
             // In window: 1210 gross => embedded VAT 1210 * 0.21 / 1.21 = 210.00 => 21000 cents.
-            ['bedrag' => 1210.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-03-01'],
+            ['amount' => 1210.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-03-01'],
             // In window: 605 gross => embedded VAT 105.00 => 10500 cents.
-            ['bedrag' => 605.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-06-15'],
+            ['amount' => 605.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-06-15'],
             // On the revocatie-datum => excluded (already re-marked).
-            ['bedrag' => 1000.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-09-04'],
+            ['amount' => 1000.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-09-04'],
             // Before ingangsDatum => excluded.
-            ['bedrag' => 500.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2025-12-31'],
+            ['amount' => 500.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2025-12-31'],
             // Not KOR => excluded.
-            ['bedrag' => 1210.0, 'vrijstellingsGrondslag' => 'REGULIER_21PCT_VAT', 'leveringsDatum' => '2026-04-01'],
+            ['amount' => 1210.0, 'vrijstellingsGrondslag' => 'REGULIER_21PCT_VAT', 'leveringsDatum' => '2026-04-01'],
         ];
 
         $cents = $this->calc->suppletieBedragCents(
@@ -260,15 +260,15 @@ final class KorThresholdCalculatorTest extends TestCase
     public function testPerLidstaatAggregate(): void
     {
         $invoices = [
-            ['bedrag' => 12000.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2026-03-01'],
-            ['bedrag' => 4000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2026-05-15'],
-            ['bedrag' => 8000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'DE', 'leveringsDatum' => '2026-04-20'],
+            ['amount' => 12000.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2026-03-01'],
+            ['amount' => 4000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2026-05-15'],
+            ['amount' => 8000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'DE', 'leveringsDatum' => '2026-04-20'],
             // Different year => excluded.
-            ['bedrag' => 9999.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2025-12-31'],
+            ['amount' => 9999.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2025-12-31'],
             // No lidstaat => excluded.
-            ['bedrag' => 100.0,   'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-06-01'],
+            ['amount' => 100.0,   'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-06-01'],
             // Country without override => default 100k drempel.
-            ['bedrag' => 1000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'FR', 'leveringsDatum' => '2026-07-01'],
+            ['amount' => 1000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'FR', 'leveringsDatum' => '2026-07-01'],
         ];
 
         $aggregate = $this->calc->perLidstaatAggregate(

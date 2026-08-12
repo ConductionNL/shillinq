@@ -185,7 +185,7 @@ final class IbAangifteZzpFragmentTest extends TestCase
         self::assertTrue(method_exists('OCA\\Shillinq\\Guard\\IbFiscalAdjustmentGuard', 'representatieDrempel'));
         self::assertStringContainsString('IbFiscalAdjustmentGuard', $repr['guard']);
 
-        $bij = $schemas['IBBijtellingAuto']['x-openregister-calculations']['bijtellingBedrag'];
+        $bij = $schemas['IBBijtellingAuto']['x-openregister-calculations']['benefitInKindAmount'];
         self::assertTrue(method_exists('OCA\\Shillinq\\Guard\\IbBijtellingGuard', 'computeBijtelling'));
         self::assertStringContainsString('IbBijtellingGuard', $bij['guard']);
     }//end testCalculationsAreParameterisedAndGuardSeamsExist()

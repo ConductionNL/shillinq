@@ -182,7 +182,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
                     'writtenOffReason'          => $this->deriveWriteOffReason(declaration: $declaration),
                     'art29OBVerklaring'         => $declaration,
                     'hoofdsomAfgeschreven'      => $this->numOrNull($row['hoofdsomAfgeschreven'] ?? null),
-                    'btwBedrag'                 => $this->numOrNull($row['btwBedrag'] ?? null),
+                    'vatAmount'                 => $this->numOrNull($row['vatAmount'] ?? null),
                     'evidenceRef'               => $this->strOrNull($row['evidenceRef'] ?? null),
                     'writtenOffGLTransactionId' => ($boekingId !== '' ? $boekingId : null),
                     'btwTeruggaafPeriode'       => $this->strOrNull($row['btwAangiftePeriode'] ?? null),
@@ -325,8 +325,8 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
         return [
             'currentStage'        => (int) ($latest['stageNr'] ?? 0),
             'nextDunningDate'     => null,
-            'incassokostenBedrag' => $this->numOrNull($latest['incassokostenBedrag'] ?? null),
-            'renteBedrag'         => $this->numOrNull($latest['renteBedrag'] ?? null),
+            'collectionCostAmount' => $this->numOrNull($latest['collectionCostAmount'] ?? null),
+            'interestAmount'         => $this->numOrNull($latest['interestAmount'] ?? null),
             'activeLadderId'      => $this->strOrNull($latest['ladderId'] ?? null),
         ];
 

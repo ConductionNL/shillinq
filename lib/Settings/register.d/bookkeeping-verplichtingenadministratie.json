@@ -422,7 +422,7 @@
           "verplichting",
           "regelnummer",
           "boekjaar",
-          "bedrag_excl_btw"
+          "amount_excl_vat"
         ],
         "properties": {
           "administrationId": {
@@ -456,13 +456,13 @@
             "example": 2026,
             "title": "Boekjaar"
           },
-          "bedrag_excl_btw": {
+          "amount_excl_vat": {
             "type": "integer",
             "description": "Committed amount excluding VAT, in minor units (EUR cents).",
             "example": 6200000,
             "title": "Bedrag Excl BTW"
           },
-          "bedrag_incl_btw": {
+          "amount_incl_vat": {
             "type": "integer",
             "nullable": true,
             "description": "Committed amount including VAT, in minor units.",
@@ -505,21 +505,21 @@
             "example": "2026-09-01",
             "title": "Verwacht Geleverd Op"
           },
-          "geleverd_bedrag": {
+          "delivered_amount": {
             "type": "integer",
             "description": "Aggregated received amount, in minor units (informational; no budget impact).",
             "default": 0,
             "example": 1500000,
             "title": "Geleverd Bedrag"
           },
-          "gefactureerd_bedrag": {
+          "invoiced_amount": {
             "type": "integer",
             "description": "Aggregated invoiced amount, in minor units.",
             "default": 0,
             "example": 1500000,
             "title": "Gefactureerd Bedrag"
           },
-          "betaald_bedrag": {
+          "paid_amount": {
             "type": "integer",
             "description": "Aggregated paid amount, in minor units.",
             "default": 0,
@@ -575,7 +575,7 @@
             },
             "sum": [
               "restant_verplicht",
-              "gefactureerd_bedrag"
+              "invoiced_amount"
             ]
           }
         },
@@ -598,7 +598,7 @@
           "verplichting",
           "datum",
           "soort",
-          "bedrag"
+          "amount"
         ],
         "properties": {
           "administrationId": {
@@ -644,7 +644,7 @@
             "example": "aangegaan",
             "title": "Soort"
           },
-          "bedrag": {
+          "amount": {
             "type": "integer",
             "description": "Mutation amount in minor units (EUR cents); may be negative for verlaagd/geannuleerd/teruggevorderd.",
             "example": 5000000,
@@ -980,7 +980,7 @@
         "required": [
           "administrationId",
           "boekjaar",
-          "geautoriseerd_bedrag"
+          "authorised_amount"
         ],
         "properties": {
           "administrationId": {
@@ -1016,13 +1016,13 @@
             "example": "Programma 5.1 Cultuur 2026",
             "title": "Omschrijving"
           },
-          "geautoriseerd_bedrag": {
+          "authorised_amount": {
             "type": "integer",
             "description": "Authorised budget, in minor units (EUR cents).",
             "example": 50000000,
             "title": "Geautoriseerd Bedrag"
           },
-          "gerealiseerd_bedrag": {
+          "realised_amount": {
             "type": "integer",
             "description": "Realised (invoiced) spend, in minor units.",
             "default": 0,
@@ -1187,8 +1187,8 @@
       "kostenplaats": "FAC-2026",
       "boekjaar": 2026,
       "omschrijving": "Programma 5.1 Cultuur 2026",
-      "geautoriseerd_bedrag": 50000000,
-      "gerealiseerd_bedrag": 2500000
+      "authorised_amount": 50000000,
+      "realised_amount": 2500000
     },
     {
       "@self": {
@@ -1201,8 +1201,8 @@
       "kostenplaats": "FAC-2027",
       "boekjaar": 2027,
       "omschrijving": "Programma 5.1 Cultuur 2027",
-      "geautoriseerd_bedrag": 30000000,
-      "gerealiseerd_bedrag": 0
+      "authorised_amount": 30000000,
+      "realised_amount": 0
     },
     {
       "@self": {
@@ -1235,11 +1235,11 @@
       "regelnummer": 1,
       "omschrijving": "ICT-diensten 2026",
       "boekjaar": 2026,
-      "bedrag_excl_btw": 7500000,
+      "amount_excl_vat": 7500000,
       "grootboekrekening": "4400",
       "kostenplaats": "FAC-2026",
       "programma": "5.1",
-      "gefactureerd_bedrag": 2500000,
+      "invoiced_amount": 2500000,
       "restant_verplicht": 5000000
     },
     {
@@ -1273,11 +1273,11 @@
       "regelnummer": 1,
       "omschrijving": "Facilitaire dienstverlening 2026",
       "boekjaar": 2026,
-      "bedrag_excl_btw": 10000000,
+      "amount_excl_vat": 10000000,
       "grootboekrekening": "4400",
       "kostenplaats": "FAC-2026",
       "programma": "5.1",
-      "gefactureerd_bedrag": 0,
+      "invoiced_amount": 0,
       "restant_verplicht": 10000000
     },
     {
@@ -1291,11 +1291,11 @@
       "regelnummer": 2,
       "omschrijving": "Facilitaire dienstverlening 2027",
       "boekjaar": 2027,
-      "bedrag_excl_btw": 10000000,
+      "amount_excl_vat": 10000000,
       "grootboekrekening": "4400",
       "kostenplaats": "FAC-2027",
       "programma": "5.1",
-      "gefactureerd_bedrag": 0,
+      "invoiced_amount": 0,
       "restant_verplicht": 10000000
     },
     {
@@ -1328,11 +1328,11 @@
       "regelnummer": 1,
       "omschrijving": "Subsidiebeschikking cultuurhuis 2026",
       "boekjaar": 2026,
-      "bedrag_excl_btw": 4000000,
+      "amount_excl_vat": 4000000,
       "grootboekrekening": "4410",
       "kostenplaats": "FAC-2026",
       "programma": "5.1",
-      "gefactureerd_bedrag": 0,
+      "invoiced_amount": 0,
       "restant_verplicht": 4000000
     }
   ]

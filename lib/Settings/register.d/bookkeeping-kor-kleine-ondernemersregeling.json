@@ -266,7 +266,7 @@
                   "title": "Type",
                   "description": "The type or category classification."
                 },
-                "bedrag": {
+                "amount": {
                   "type": "number",
                   "title": "Bedrag",
                   "description": "The numeric value for bedrag."
@@ -281,7 +281,7 @@
             "example": [
               {
                 "type": "VRIJGESTELDE_PRESTATIE",
-                "bedrag": 4200.0,
+                "amount": 4200.0,
                 "grondslag": "art. 11 OB"
               }
             ],
@@ -529,7 +529,7 @@
             "example": true,
             "title": "BTW Suppletie Verschuldigd"
           },
-          "btwSuppletieBedrag": {
+          "vatSupplementaryAmount": {
             "type": "number",
             "description": "Berekend suppletie-bedrag: SUM over KOR-facturen tussen ingangsDatum en revocatieDatum-1 van bedrag * 0.21 / 1.21 (REQ-KOR-004).",
             "nullable": true,
@@ -930,7 +930,7 @@
         "uitgeslotenPosten": [
           {
             "type": "VRIJGESTELDE_PRESTATIE",
-            "bedrag": 4200.0,
+            "amount": 4200.0,
             "grondslag": "art. 11-1-o OB (onderwijs)"
           }
         ],
@@ -1017,7 +1017,7 @@
         "triggerFactuurId": "fact-2026-0240",
         "omzetOpMoment": 20360.0,
         "btwSuppletieVerschuldigd": true,
-        "btwSuppletieBedrag": 3533.55,
+        "vatSupplementaryAmount": 3533.55,
         "herrekeningRange": {
           "van": "2026-09-04",
           "tot": "2026-12-31"

@@ -73,7 +73,7 @@ class EmuReportingServiceTest extends TestCase
         self::assertSame('eliminatie-afschrijving', $adj['type']);
         self::assertSame('saldo-verhogend', $adj['richting']);
         // bedrag is the absolute value (richting carries the sign).
-        self::assertSame(1240000.0, $adj['bedrag']);
+        self::assertSame(1240000.0, $adj['amount']);
         self::assertSame('emu-2026-q2', $adj['reportId']);
     }//end testClassifyAfschrijvingLine()
 
@@ -131,9 +131,9 @@ class EmuReportingServiceTest extends TestCase
     public function testNetAdjustmentEffect(): void
     {
         $adjustments = [
-            ['bedrag' => 5200000.0, 'richting' => 'saldo-verhogend'],
-            ['bedrag' => 8700000.0, 'richting' => 'saldo-verlagend'],
-            ['bedrag' => 100000.0, 'richting' => 'saldo-neutraal'],
+            ['amount' => 5200000.0, 'richting' => 'saldo-verhogend'],
+            ['amount' => 8700000.0, 'richting' => 'saldo-verlagend'],
+            ['amount' => 100000.0, 'richting' => 'saldo-neutraal'],
         ];
         // 5.2M - 8.7M = -3.5M (the design.md worked example).
         self::assertSame(-3500000.0, $this->service->netAdjustmentEffect($adjustments));
@@ -204,10 +204,10 @@ class EmuReportingServiceTest extends TestCase
     public function testTopContributors(): void
     {
         $adjustments = [
-            ['bedrag' => 230000.0, 'type' => 'a'],
-            ['bedrag' => 820000.0, 'type' => 'b'],
-            ['bedrag' => 450000.0, 'type' => 'c'],
-            ['bedrag' => 10000.0, 'type' => 'd'],
+            ['amount' => 230000.0, 'type' => 'a'],
+            ['amount' => 820000.0, 'type' => 'b'],
+            ['amount' => 450000.0, 'type' => 'c'],
+            ['amount' => 10000.0, 'type' => 'd'],
         ];
         $top = $this->service->topContributors($adjustments, 3);
         self::assertCount(3, $top);
@@ -240,7 +240,7 @@ class EmuReportingServiceTest extends TestCase
     {
         // BBV +4.2M, adjustments net -6.5M → expected sum of quarters -2.3M.
         $adjustments = [
-            ['bedrag' => 6500000.0, 'richting' => 'saldo-verlagend'],
+            ['amount' => 6500000.0, 'richting' => 'saldo-verlagend'],
         ];
         $result = $this->service->reconcile(4200000.0, $adjustments, [-575000.0, -575000.0, -575000.0, -575000.0]);
         self::assertSame('geslaagd', $result['controle']);
@@ -316,21 +316,21 @@ class EmuReportingServiceTest extends TestCase
     public function testRenderCbsTussenregelsTenRows(): void
     {
         $adjustments = [
-            ['type' => 'eliminatie-afschrijving', 'richting' => 'saldo-verhogend', 'bedrag' => 1240000.0],
-            ['type' => 'toevoeging-bruto-investering', 'richting' => 'saldo-verlagend', 'bedrag' => 820000.0],
-            ['type' => 'eliminatie-voorzieningdotatie', 'richting' => 'saldo-verhogend', 'bedrag' => 450000.0],
+            ['type' => 'eliminatie-afschrijving', 'richting' => 'saldo-verhogend', 'amount' => 1240000.0],
+            ['type' => 'toevoeging-bruto-investering', 'richting' => 'saldo-verlagend', 'amount' => 820000.0],
+            ['type' => 'eliminatie-voorzieningdotatie', 'richting' => 'saldo-verhogend', 'amount' => 450000.0],
         ];
         $rows = $this->service->renderCbsTussenregels(4200000.0, $adjustments, -2300000.0);
         self::assertCount(10, $rows);
         // Regel 1 = BBV saldo, Regel 10 = EMU-saldo.
         self::assertSame(1, $rows[0]['regel']);
-        self::assertSame(4200000.0, $rows[0]['bedrag']);
+        self::assertSame(4200000.0, $rows[0]['amount']);
         self::assertSame(10, $rows[9]['regel']);
-        self::assertSame(-2300000.0, $rows[9]['bedrag']);
+        self::assertSame(-2300000.0, $rows[9]['amount']);
         // Regel 3 (bruto investering) negative because richting saldo-verlagend → row flipped.
-        self::assertSame(820000.0, $rows[2]['bedrag']);
+        self::assertSame(820000.0, $rows[2]['amount']);
         // Regel 6 (afschrijving) saldo-verhogend stays positive.
-        self::assertSame(1240000.0, $rows[5]['bedrag']);
+        self::assertSame(1240000.0, $rows[5]['amount']);
     }//end testRenderCbsTussenregelsTenRows()
 
     /**

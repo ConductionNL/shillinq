@@ -220,12 +220,12 @@ final class DunningRunServiceTest extends TestCase
             'renderedSubject'  => 'Reminder factuur',
             'renderedBody'     => 'Vriendelijk verzoek',
             'deliveryStatus'   => 'DELIVERED',
-            'factuurBedrag'    => 1234.56,
+            'invoiceAmount'    => 1234.56,
         ]);
 
         self::assertSame('executed', $persisted['lifecycleState']);
         self::assertSame('EMAIL', $persisted['kanaal']);
-        self::assertSame(1234.56, $persisted['factuurBedrag']);
+        self::assertSame(1234.56, $persisted['invoiceAmount']);
         self::assertNotNull($persisted['uitgevoerdOp']);
 
     }//end testExecuteStagePersistsExecutedRun()
@@ -295,7 +295,7 @@ final class DunningRunServiceTest extends TestCase
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
             'factuurId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 4200.00,
-            'btwBedrag'            => 882.00,
+            'vatAmount'            => 882.00,
             'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
             'btwAangiftePeriode'   => '2026-Q2',
         ]);
@@ -369,7 +369,7 @@ final class DunningRunServiceTest extends TestCase
         self::assertNotNull($run);
         self::assertSame(2, (int) $run['stageNr']);
         self::assertSame('EMAIL', $run['kanaal']);
-        self::assertSame(8400.0, (float) $run['factuurBedrag']);
+        self::assertSame(8400.0, (float) $run['invoiceAmount']);
         self::assertSame('executed', $run['lifecycleState']);
 
     }//end testTickInvoiceEmitsRunForApplicableStage()
@@ -478,7 +478,7 @@ final class DunningRunServiceTest extends TestCase
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
             'factuurId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 4200.00,
-            'btwBedrag'            => 882.00,
+            'vatAmount'            => 882.00,
             'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
             'btwAangiftePeriode'   => '2026-Q2',
         ]);
@@ -522,7 +522,7 @@ final class DunningRunServiceTest extends TestCase
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
             'factuurId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 4200.00,
-            'btwBedrag'            => 882.00,
+            'vatAmount'            => 882.00,
             'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
             'btwAangiftePeriode'   => '2026-Q2',
         ]);
@@ -553,7 +553,7 @@ final class DunningRunServiceTest extends TestCase
         $persisted = $service->writeOff(administrationId: 'adm-1', params: [
             'factuurId'            => 'inv-1',
             'hoofdsomAfgeschreven' => 1000.00,
-            'btwBedrag'            => 210.00,
+            'vatAmount'            => 210.00,
             'art29OBVerklaring'    => 'Schuldsanering',
             'boekingId'            => 'caller-gl-7',
         ]);

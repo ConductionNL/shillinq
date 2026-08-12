@@ -72,7 +72,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
             [
                 'grootboekrekening'          => '4010',
                 'kostenplaats'               => 'rd-team-1',
-                'bedrag'                     => 60000.0,
+                'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
         ];
@@ -83,7 +83,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
         $findings = $this->val->detectDuplicates($allocations, $glLines);
         self::assertCount(1, $findings);
         self::assertSame('4010', $findings[0]['grootboekrekening']);
-        self::assertSame(60000.0, $findings[0]['bedrag']);
+        self::assertSame(60000.0, $findings[0]['amount']);
         self::assertStringContainsString('year-end close', $findings[0]['message']);
 
     }//end testFlagsDuplicateAccountKostenplaatsPair()
@@ -99,7 +99,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
             [
                 'grootboekrekening'          => '4010',
                 'kostenplaats'               => 'rd-team-1',
-                'bedrag'                     => 60000.0,
+                'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
         ];
@@ -122,7 +122,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
             [
                 'grootboekrekening'          => '4010',
                 'kostenplaats'               => 'rd-team-1',
-                'bedrag'                     => 60000.0,
+                'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => false,
             ],
         ];
@@ -143,7 +143,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase
             [
                 'grootboekrekening'          => '4010',
                 'kostenplaats'               => 'rd-team-1',
-                'bedrag'                     => 60000.0,
+                'amount'                     => 60000.0,
                 'exclusief_in_winstbepaling' => true,
             ],
         ];

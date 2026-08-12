@@ -232,7 +232,7 @@
               "reportId": "@self.id"
             },
             "sum": [
-              "bedrag"
+              "amount"
             ]
           }
         },
@@ -335,7 +335,7 @@
           "reportId",
           "type",
           "richting",
-          "bedrag",
+          "amount",
           "regel"
         ],
         "properties": {
@@ -370,7 +370,7 @@
             "description": "Effect direction on the EMU-saldo (REQ-EMU-002).",
             "title": "Richting"
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "description": "Adjustment amount (MonetaryAmount, EUR; always non-negative — richting carries the sign).",
             "example": 1240000,
@@ -461,7 +461,7 @@
         "required": [
           "reportId",
           "datum",
-          "bedrag",
+          "amount",
           "kasOfTransactiebasis"
         ],
         "properties": {
@@ -478,7 +478,7 @@
             "example": "2026-05-22",
             "title": "Datum"
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "description": "Cash amount (MonetaryAmount, EUR; negative = uitstroom).",
             "example": -820000,
@@ -818,7 +818,7 @@
       "reportId": "emu-2026-q2-gem-1742",
       "type": "eliminatie-afschrijving",
       "richting": "saldo-verhogend",
-      "bedrag": 1240000,
+      "amount": 1240000,
       "bron": {
         "grootboekrekening": "4801000",
         "omschrijving": "Afschrijving gebouwen onderwijs",
@@ -840,7 +840,7 @@
       },
       "reportId": "emu-2026-q2-gem-1742",
       "datum": "2026-05-22",
-      "bedrag": -820000,
+      "amount": -820000,
       "iv3": {
         "hoofdstuk": "8",
         "hoofdstukNaam": "Volkshuisvesting, ruimtelijke ordening en stedelijke vernieuwing",
