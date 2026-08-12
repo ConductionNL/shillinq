@@ -124,7 +124,7 @@ class InnovatieboxAuditEventLogger
             $event['actor_uid'] = $user->getUID();
         }
 
-        foreach (['boekjaar', 'qualifying_asset_id', 'subject_schema', 'subject_id', 'reason', 'details'] as $optional) {
+        foreach (['financialYear', 'qualifying_asset_id', 'subject_schema', 'subject_id', 'reason', 'details'] as $optional) {
             if (array_key_exists($optional, $options) === true && $options[$optional] !== null) {
                 $event[$optional] = $options[$optional];
             }

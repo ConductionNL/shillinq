@@ -295,7 +295,7 @@
           "bevindingsnummer",
           "soort",
           "criterium",
-          "boekjaar",
+          "financialYear",
           "status"
         ],
         "properties": {
@@ -349,20 +349,20 @@
             "description": "Uncertainty amount (EUR). Counts towards the onzekerheid-tolerance aggregation (REQ-RV-005).",
             "title": "Bedrag Onzekerheid"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year of the finding (REQ-RV-005).",
             "example": 2026,
             "title": "Boekjaar"
           },
-          "programma": {
+          "programme": {
             "type": "string",
             "nullable": true,
             "description": "BBV programma the finding pertains to.",
             "example": "5.1",
             "title": "Programma"
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "nullable": true,
             "description": "Human-readable description of the finding.",
@@ -465,7 +465,7 @@
             "description": "REQ-RV-005: SUM bedrag_fout / bedrag_onzekerheid per boekjaar for openstaande bevindingen (status != opgelost), driving paragraaf tolerance comparison.",
             "source": "Rechtmatigheidsbevinding",
             "groupBy": [
-              "boekjaar"
+              "financialYear"
             ],
             "filter": {
               "administrationId": "@self.administrationId"
@@ -551,7 +551,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "boekjaar",
+          "financialYear",
           "status"
         ],
         "properties": {
@@ -561,13 +561,13 @@
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year of the paragraaf (one per boekjaar).",
             "example": 2026,
             "title": "Boekjaar"
           },
-          "totaal_lasten_inclusief_mutaties_reserves": {
+          "total_expenses_including_reserve_movements": {
             "type": "number",
             "default": 0,
             "description": "Basis for tolerance computation (REQ-RV-005).",
@@ -597,13 +597,13 @@
             "description": "tolerantiegrens_onzekerheid_percentage% of totaal_lasten (REQ-RV-005).",
             "title": "Tolerantiegrens Onzekerheid Bedrag"
           },
-          "totaal_geconstateerde_fouten": {
+          "total_identified_errors": {
             "type": "number",
             "default": 0,
             "description": "SUM bedrag_fout of openstaande bevindingen for the boekjaar.",
             "title": "Totaal Geconstateerde Fouten"
           },
-          "totaal_geconstateerde_onzekerheden": {
+          "total_identified_uncertainties": {
             "type": "number",
             "default": 0,
             "description": "SUM bedrag_onzekerheid of openstaande bevindingen for the boekjaar.",
@@ -774,7 +774,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "boekjaar",
+          "financialYear",
           "fout_percentage",
           "onzekerheid_percentage",
           "berekeningsbasis"
@@ -786,7 +786,7 @@
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year the tolerance applies to (one per boekjaar).",
             "example": 2026,
@@ -837,9 +837,9 @@
           "berekeningsbasis": {
             "type": "string",
             "enum": [
-              "totaal_lasten_inclusief_mutaties_reserves"
+              "total_expenses_including_reserve_movements"
             ],
-            "default": "totaal_lasten_inclusief_mutaties_reserves",
+            "default": "total_expenses_including_reserve_movements",
             "description": "Basis for the tolerance calculation (REQ-RV-003).",
             "title": "Berekeningsbasis"
           },
@@ -896,14 +896,14 @@
         "slug": "tolerantiegrens-2026-default"
       },
       "administrationId": "adm-1",
-      "boekjaar": 2026,
+      "financialYear": 2026,
       "fout_percentage": 3.0,
       "onzekerheid_percentage": 1.0,
       "vastgesteld_bij_raadsbesluit": null,
       "vastgesteld_op": null,
       "geldig_vanaf": "2026-01-01",
       "geldig_tot": "2026-12-31",
-      "berekeningsbasis": "totaal_lasten_inclusief_mutaties_reserves",
+      "berekeningsbasis": "total_expenses_including_reserve_movements",
       "status": "concept"
     }
   ]

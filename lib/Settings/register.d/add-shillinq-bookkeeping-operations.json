@@ -684,7 +684,7 @@
             "example": "0.1",
             "title": "Taakveld"
           },
-          "programmaCode": {
+          "programmeCode": {
             "type": "string",
             "nullable": true,
             "description": "Operator-defined programma code.",
@@ -802,7 +802,7 @@
             "example": "Bestuur",
             "title": "Description"
           },
-          "programmaFocus": {
+          "programmeFocus": {
             "type": "string",
             "nullable": true,
             "description": "Hint linking the taakveld to a typical programma.",

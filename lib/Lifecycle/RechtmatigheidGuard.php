@@ -204,7 +204,7 @@ class RechtmatigheidGuard
             if ($verklaring === '') {
                 $this->logger->info(
                     'RechtmatigheidGuard: paragraaf buiten tolerantie zonder toelichting — denying vaststellen',
-                    ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown')]
+                    ['financialYear' => ($paragraaf['financialYear'] ?? 'unknown')]
                 );
                 return false;
             }
@@ -213,7 +213,7 @@ class RechtmatigheidGuard
         } catch (\Throwable $e) {
             $this->logger->error(
                 'RechtmatigheidGuard: canVaststellenParagraaf failed — denying vaststellen (fail-closed)',
-                ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'exception' => $e->getMessage()]
+                ['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
@@ -242,7 +242,7 @@ class RechtmatigheidGuard
             if ($status !== 'definitief') {
                 $this->logger->info(
                     'RechtmatigheidGuard: paragraaf not definitief — denying jaarrekening-export',
-                    ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'status' => $status]
+                    ['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'status' => $status]
                 );
                 return false;
             }
@@ -251,7 +251,7 @@ class RechtmatigheidGuard
         } catch (\Throwable $e) {
             $this->logger->error(
                 'RechtmatigheidGuard: canExportParagraaf failed — denying export (fail-closed)',
-                ['boekjaar' => ($paragraaf['boekjaar'] ?? 'unknown'), 'exception' => $e->getMessage()]
+                ['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
             );
             return false;
         }//end try

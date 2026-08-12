@@ -22,7 +22,7 @@
         "type": "object",
         "required": [
           "code",
-          "naam",
+          "name",
           "bestuursorgaan",
           "organisatieonderdeel",
           "beschrijving",
@@ -43,7 +43,7 @@
             "example": "MO-SP-014",
             "title": "Code"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Human-readable activity name.",
             "example": "Dansschool de Maten",
@@ -100,7 +100,7 @@
             "example": "2024-01-15",
             "title": "Start Datum"
           },
-          "eindDatum": {
+          "endDate": {
             "type": "string",
             "format": "date",
             "description": "Closure date if the activity has ended.",
@@ -1112,7 +1112,7 @@
                   "title": "Datum",
                   "description": "The date and time for datum."
                 },
-                "omschrijving": {
+                "description": {
                   "type": "string",
                   "title": "Omschrijving",
                   "description": "The omschrijving."
@@ -1351,7 +1351,7 @@
               "required": [
                 "commercialActivityId",
                 "code",
-                "omzet",
+                "revenue",
                 "integraleKostprijs",
                 "kostendekkingsratio",
                 "compliant"
@@ -1367,12 +1367,12 @@
                   "title": "Code",
                   "description": "The classification or reference code."
                 },
-                "naam": {
+                "name": {
                   "type": "string",
                   "title": "Naam",
                   "description": "The naam."
                 },
-                "omzet": {
+                "revenue": {
                   "type": "number",
                   "minimum": 0,
                   "title": "Omzet",
@@ -2190,7 +2190,7 @@
             "description": "Unit (must match IKP eenheidLabel for comparability).",
             "title": "Eenheid"
           },
-          "concurrentNaam": {
+          "competitorName": {
             "type": "string",
             "nullable": true,
             "description": "Name of the competing provider (for offerte/prijslijst).",
@@ -2263,7 +2263,7 @@
         "lifecycleState": "archived"
       },
       "code": "MO-SP-014",
-      "naam": "Dansschool de Maten",
+      "name": "Dansschool de Maten",
       "bestuursorgaan": "Gemeente Apeldoorn",
       "organisatieonderdeel": "Afdeling Cultuur & Erfgoed",
       "beschrijving": "Verhuur zaalruimte voor commerciële danslessen",
@@ -2272,7 +2272,7 @@
         "Dansacademie Sint-Hubert"
       ],
       "startDatum": "2024-01-15",
-      "eindDatum": "2025-12-31",
+      "endDate": "2025-12-31",
       "kostprijsMethode": "integrale-kostprijs-art-25i",
       "kostenplaatsCode": "K-SP-014",
       "kostendragerCode": "D-MO-SP-014",

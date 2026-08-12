@@ -278,8 +278,8 @@ class FoldIntoOrderTest extends TestCase
             'direction'               => 'outgoing',
             'subsidieNumber'          => 'SUB-2026-001',
             'counterpartyName'        => 'Stichting Cultuur Almelo',
-            'regelingNaam'            => 'Subsidieregeling cultuur 2026',
-            'regelingArtikel'         => 'Art. 3.1',
+            'schemeName'            => 'Subsidieregeling cultuur 2026',
+            'schemeArticle'         => 'Art. 3.1',
             'aanvraagDate'            => '2026-02-01',
             'beschikkingDate'         => '2026-03-15',
             'vaststellingDate'        => '2026-10-01',
@@ -323,8 +323,8 @@ class FoldIntoOrderTest extends TestCase
         self::assertSame('SUB-2026-001', $order['migratedFrom']['key']);
 
         // No regulatory field dropped — every Subsidie field lands on the group.
-        self::assertSame('Subsidieregeling cultuur 2026', $order['subsidie']['regelingNaam']);
-        self::assertSame('Art. 3.1', $order['subsidie']['regelingArtikel']);
+        self::assertSame('Subsidieregeling cultuur 2026', $order['subsidie']['schemeName']);
+        self::assertSame('Art. 3.1', $order['subsidie']['schemeArticle']);
         self::assertSame(25000.0, $order['subsidie']['requestedAmount']);
         self::assertSame(20000.0, $order['subsidie']['grantedAmount']);
         self::assertSame(18500.0, $order['subsidie']['determinedAmount']);
@@ -397,11 +397,11 @@ class FoldIntoOrderTest extends TestCase
         $opdracht = [
             'id'                  => 'dba-opdr-2026-0042',
             'administrationId'    => 'adm-1',
-            'ondernemingId'       => 'ond-nl-001234',
+            'enterpriseId'       => 'ond-nl-001234',
             'klantId'             => 'klant-acme-bv',
-            'opdrachtNaam'        => 'Backend ontwikkeling betaalmodule',
+            'assignmentName'        => 'Backend ontwikkeling betaalmodule',
             'startDatum'          => '2026-03-01',
-            'verwachteOmzet'      => 4800000,
+            'expectedRevenue'      => 4800000,
             'intakeStatus'        => 'ACTIEF',
             'risicoNiveau'        => 'LAAG_MIDDEN',
             'modelOvereenkomstId' => 'modov-bd-2024-tussenkomstvrij-v3',
@@ -651,9 +651,9 @@ class FoldIntoOrderTest extends TestCase
             'DBAOpdracht' => [
                 [
                     'id'            => 'dba-idem-1',
-                    'ondernemingId' => 'onp-1',
+                    'enterpriseId' => 'onp-1',
                     'klantId'       => 'kl-1',
-                    'opdrachtNaam'  => 'Opdracht Idem',
+                    'assignmentName'  => 'Opdracht Idem',
                     'startDatum'    => '2026-02-01',
                     'intakeStatus'  => 'ACTIEF',
                     'risicoNiveau'  => 'LAAG',

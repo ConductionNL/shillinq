@@ -19,7 +19,7 @@
         "type": "object",
         "required": [
           "kvk",
-          "naam",
+          "name",
           "loonheffingsnummer",
           "sectorcode",
           "awfTarief",
@@ -33,7 +33,7 @@
             "example": "12345678",
             "title": "KvK"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Legal employer name.",
             "example": "Conduction B.V.",
@@ -51,7 +51,7 @@
             "example": 32,
             "title": "Sectorcode"
           },
-          "sectorOmschrijving": {
+          "sectorDescription": {
             "type": "string",
             "nullable": true,
             "description": "Human-readable sector description.",
@@ -306,7 +306,7 @@
             "example": false,
             "title": "Dertiende Maand"
           },
-          "pensioenRegeling": {
+          "pensionScheme": {
             "type": "string",
             "nullable": true,
             "description": "Pension scheme identifier.",
@@ -347,7 +347,7 @@
             "example": false,
             "title": "Is Dga"
           },
-          "expat30PctRegeling": {
+          "expat30PctScheme": {
             "type": "boolean",
             "default": false,
             "description": "Whether the 30%-ruling applies (REQ-PAY-015).",
@@ -388,7 +388,7 @@
         "readonly": true,
         "type": "object",
         "required": [
-          "jaar",
+          "year",
           "kleur",
           "periode",
           "metKorting",
@@ -397,7 +397,7 @@
           "geldigVan"
         ],
         "properties": {
-          "jaar": {
+          "year": {
             "type": "integer",
             "description": "Tax year.",
             "example": 2026,
@@ -480,10 +480,10 @@
         "required": [
           "werkgeverId",
           "periodeType",
-          "jaar",
+          "year",
           "periodeNr",
           "periodeStart",
-          "periodeEind",
+          "periodEnd",
           "status",
           "administrationId"
         ],
@@ -505,7 +505,7 @@
             "example": "MAAND",
             "title": "Periode Type"
           },
-          "jaar": {
+          "year": {
             "type": "integer",
             "description": "Calendar year.",
             "example": 2026,
@@ -524,7 +524,7 @@
             "example": "2026-05-01",
             "title": "Periode Start"
           },
-          "periodeEind": {
+          "periodEnd": {
             "type": "string",
             "format": "date",
             "description": "Period end.",
@@ -564,31 +564,31 @@
             "example": "2025-W47",
             "title": "Loonheffingstabel Versie"
           },
-          "totaalBrutoloon": {
+          "totalGrossPay": {
             "type": "number",
             "default": 0,
             "description": "Sum of gross across all payslips.",
             "title": "Totaal Brutoloon"
           },
-          "totaalNettoBetaald": {
+          "totalNetPaid": {
             "type": "number",
             "default": 0,
             "description": "Sum of net paid.",
             "title": "Totaal Netto Betaald"
           },
-          "totaalLHAfdracht": {
+          "totalPayrollTaxRemittance": {
             "type": "number",
             "default": 0,
             "description": "Sum of wage tax.",
             "title": "Totaal Lh Afdracht"
           },
-          "totaalPremiesSVAfdracht": {
+          "totalSocialInsuranceRemittance": {
             "type": "number",
             "default": 0,
             "description": "Sum of employer SV premiums.",
             "title": "Totaal Premies Sv Afdracht"
           },
-          "totaalZVWAfdracht": {
+          "totalHealthInsuranceRemittance": {
             "type": "number",
             "default": 0,
             "description": "Sum of employer ZVW contribution.",
@@ -745,8 +745,8 @@
         "required": [
           "werkgeverId",
           "periodeId",
-          "totaalLoonheffing",
-          "totaalAfdracht",
+          "totalPayrollTax",
+          "totalRemittance",
           "status",
           "administrationId"
         ],
@@ -763,34 +763,34 @@
             "example": "lp-2026-05-wg-conduction-bv",
             "title": "Periode ID"
           },
-          "totaalLoonheffing": {
+          "totalPayrollTax": {
             "type": "number",
             "description": "Total wage tax for the period.",
             "example": 18620.1,
             "title": "Totaal Loonheffing"
           },
-          "totaalEindheffingenWKR": {
+          "totalFinalLeviesWorkRelatedCosts": {
             "type": "number",
             "default": 0,
             "description": "WKR final levy fetched from the WKR app (REQ-PAY-011).",
             "example": 0,
             "title": "Totaal Eindheffingen Wkr"
           },
-          "totaalPremiesSV": {
+          "totalSocialInsuranceContributions": {
             "type": "number",
             "default": 0,
             "description": "Total employer SV premiums.",
             "example": 7559.4,
             "title": "Totaal Premies Sv"
           },
-          "totaalZVW": {
+          "totalHealthInsurance": {
             "type": "number",
             "default": 0,
             "description": "Total employer ZVW contribution.",
             "example": 3654.0,
             "title": "Totaal Zvw"
           },
-          "totaalAfdracht": {
+          "totalRemittance": {
             "type": "number",
             "description": "Grand total payable to the Belastingdienst.",
             "example": 29833.5,
@@ -892,10 +892,10 @@
           "slug": "wg-conduction-bv"
         },
         "kvk": "12345678",
-        "naam": "Conduction B.V.",
+        "name": "Conduction B.V.",
         "loonheffingsnummer": "851234567L01",
         "sectorcode": 32,
-        "sectorOmschrijving": "Overige zakelijke dienstverlening II",
+        "sectorDescription": "Overige zakelijke dienstverlening II",
         "awfTarief": "LAAG",
         "zvwTarief": "LAAG",
         "wkrBudget2026": 8742.0,
@@ -931,12 +931,12 @@
         "jaarloonSV": 59280.0,
         "jaarloonBruto": 59280.0,
         "vakantiegeldPct": 0.08,
-        "pensioenRegeling": "PME_DC",
+        "pensionScheme": "PME_DC",
         "pensioenPremiePctWerkgever": 0.182,
         "pensioenPremiePctWerknemer": 0.072,
         "thuiswerkdagenPerWeek": 2,
         "is_dga": false,
-        "expat30PctRegeling": false,
+        "expat30PctScheme": false,
         "administrationId": "adm-smb-1"
       },
       {
@@ -965,12 +965,12 @@
         "jaarloonSV": 32448.0,
         "jaarloonBruto": 32448.0,
         "vakantiegeldPct": 0.08,
-        "pensioenRegeling": "PME_DC",
+        "pensionScheme": "PME_DC",
         "pensioenPremiePctWerkgever": 0.182,
         "pensioenPremiePctWerknemer": 0.072,
         "thuiswerkdagenPerWeek": 1,
         "is_dga": false,
-        "expat30PctRegeling": false,
+        "expat30PctScheme": false,
         "administrationId": "adm-smb-1"
       },
       {
@@ -999,12 +999,12 @@
         "jaarloonSV": 48000.0,
         "jaarloonBruto": 48000.0,
         "vakantiegeldPct": 0.08,
-        "pensioenRegeling": null,
+        "pensionScheme": null,
         "pensioenPremiePctWerkgever": 0,
         "pensioenPremiePctWerknemer": 0,
         "thuiswerkdagenPerWeek": 0,
         "is_dga": true,
-        "expat30PctRegeling": false,
+        "expat30PctScheme": false,
         "gebruikelijkLoonUitzondering": null,
         "administrationId": "adm-smb-1"
       },
@@ -1014,7 +1014,7 @@
           "schema": "LoonheffingTabel2026",
           "slug": "lht-2026-wit-maand-met-korting"
         },
-        "jaar": 2026,
+        "year": 2026,
         "kleur": "WIT",
         "periode": "MAAND",
         "metKorting": true,
@@ -1059,7 +1059,7 @@
           "schema": "LoonheffingTabel2026",
           "slug": "lht-2026-wit-maand-zonder-korting"
         },
-        "jaar": 2026,
+        "year": 2026,
         "kleur": "WIT",
         "periode": "MAAND",
         "metKorting": false,
@@ -1099,19 +1099,19 @@
         },
         "werkgeverId": "wg-conduction-bv",
         "periodeType": "MAAND",
-        "jaar": 2026,
+        "year": 2026,
         "periodeNr": 5,
         "periodeStart": "2026-05-01",
-        "periodeEind": "2026-05-31",
+        "periodEnd": "2026-05-31",
         "betaaldatum": "2026-05-27",
         "status": "GESLOTEN",
         "loonheffingstabelId": "lht-2026-wit-maand-met-korting",
         "loonheffingstabelVersie": "2025-W47",
-        "totaalBrutoloon": 7644.0,
-        "totaalNettoBetaald": 5215.38,
-        "totaalLHAfdracht": 1907.05,
-        "totaalPremiesSVAfdracht": 622.85,
-        "totaalZVWAfdracht": 406.66,
+        "totalGrossPay": 7644.0,
+        "totalNetPaid": 5215.38,
+        "totalPayrollTaxRemittance": 1907.05,
+        "totalSocialInsuranceRemittance": 622.85,
+        "totalHealthInsuranceRemittance": 406.66,
         "administrationId": "adm-smb-1"
       },
       {
@@ -1208,11 +1208,11 @@
         },
         "werkgeverId": "wg-conduction-bv",
         "periodeId": "lp-2026-05-wg-conduction-bv",
-        "totaalLoonheffing": 1907.05,
-        "totaalEindheffingenWKR": 0,
-        "totaalPremiesSV": 622.85,
-        "totaalZVW": 406.66,
-        "totaalAfdracht": 2936.56,
+        "totalPayrollTax": 1907.05,
+        "totalFinalLeviesWorkRelatedCosts": 0,
+        "totalSocialInsuranceContributions": 622.85,
+        "totalHealthInsurance": 406.66,
+        "totalRemittance": 2936.56,
         "vervaldagAfdracht": "2026-06-30",
         "status": "VOORBEREID",
         "sbrInstanceRef": null,
@@ -1229,55 +1229,55 @@
         "regels": [
           {
             "rekening": "4001",
-            "naam": "Brutolonen",
+            "name": "Brutolonen",
             "debet": 7644.0,
             "credit": 0
           },
           {
             "rekening": "4002",
-            "naam": "Belastingvrije vergoedingen",
+            "name": "Belastingvrije vergoedingen",
             "debet": 28.8,
             "credit": 0
           },
           {
             "rekening": "4010",
-            "naam": "Sociale lasten WG",
+            "name": "Sociale lasten WG",
             "debet": 622.85,
             "credit": 0
           },
           {
             "rekening": "4012",
-            "naam": "ZVW-bijdrage WG",
+            "name": "ZVW-bijdrage WG",
             "debet": 406.66,
             "credit": 0
           },
           {
             "rekening": "4020",
-            "naam": "Pensioenpremie WG",
+            "name": "Pensioenpremie WG",
             "debet": 1391.21,
             "credit": 0
           },
           {
             "rekening": "1610",
-            "naam": "Te betalen netto loon",
+            "name": "Te betalen netto loon",
             "debet": 0,
             "credit": 5215.38
           },
           {
             "rekening": "1620",
-            "naam": "Af te dragen loonheffing",
+            "name": "Af te dragen loonheffing",
             "debet": 0,
             "credit": 1907.05
           },
           {
             "rekening": "1630",
-            "naam": "Af te dragen premies SV+ZVW",
+            "name": "Af te dragen premies SV+ZVW",
             "debet": 0,
             "credit": 1029.51
           },
           {
             "rekening": "1640",
-            "naam": "Af te dragen pensioenpremie",
+            "name": "Af te dragen pensioenpremie",
             "debet": 0,
             "credit": 1941.58
           }

@@ -494,9 +494,9 @@ class FoldIntoOrder implements IRepairStep
             'state'            => (string) ($src['state'] ?? 'aanvraag'),
             'subsidie'         => [
                 'subsidieNumber'          => $this->stringOrNull($src['subsidieNumber'] ?? null),
-                'regelingNaam'            => $this->firstNonEmpty([($src['regelingNaam'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidieName'] ?? null)]),
-                'regelingArtikel'         => $this->firstNonEmpty([($src['regelingArtikel'] ?? null), ($src['grantProgram'] ?? null)]),
-                'subsidieRegeling'        => $this->stringOrNull($src['subsidieRegeling'] ?? null),
+                'schemeName'            => $this->firstNonEmpty([($src['schemeName'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidieName'] ?? null)]),
+                'schemeArticle'         => $this->firstNonEmpty([($src['schemeArticle'] ?? null), ($src['grantProgram'] ?? null)]),
+                'subsidyScheme'        => $this->stringOrNull($src['subsidyScheme'] ?? null),
                 'aanvraagDate'            => $this->toDate($src['aanvraagDate'] ?? null),
                 'beschikkingDate'         => $this->toDate($src['beschikkingDate'] ?? ($src['awardDate'] ?? null)),
                 'vaststellingDate'        => $this->toDate($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
@@ -592,7 +592,7 @@ class FoldIntoOrder implements IRepairStep
      */
     private function buildEngagementOrder(array $src, string $migrationKey): array
     {
-        $verwachteOmzet = $this->intOrNull($src['verwachteOmzet'] ?? null);
+        $verwachteOmzet = $this->intOrNull($src['expectedRevenue'] ?? null);
 
         return [
             'administrationId' => (string) ($src['administrationId'] ?? 'unknown'),
@@ -603,18 +603,18 @@ class FoldIntoOrder implements IRepairStep
             'counterpartyName' => $this->stringOrNull($src['klantId'] ?? null),
             'currency'         => 'EUR',
             'orderDate'        => $this->toDateTime($src['startDatum'] ?? null),
-            'endDate'          => $this->toDateTime($src['verwachteEindDatum'] ?? null),
+            'endDate'          => $this->toDateTime($src['expectedEndDate'] ?? null),
             'totalAmount'      => ($verwachteOmzet === null ? null : ($verwachteOmzet / 100.0)),
-            'description'      => $this->stringOrNull($src['opdrachtNaam'] ?? null),
+            'description'      => $this->stringOrNull($src['assignmentName'] ?? null),
             'state'            => (string) ($src['intakeStatus'] ?? 'DRAFT'),
             'engagement'       => [
-                'ondernemingId'           => $this->stringOrNull($src['ondernemingId'] ?? null),
+                'enterpriseId'           => $this->stringOrNull($src['enterpriseId'] ?? null),
                 'klantId'                 => $this->stringOrNull($src['klantId'] ?? null),
-                'opdrachtNaam'            => $this->stringOrNull($src['opdrachtNaam'] ?? null),
-                'verwachteEindDatum'      => $this->toDate($src['verwachteEindDatum'] ?? null),
-                'feitelijkeEindDatum'     => $this->toDate($src['feitelijkeEindDatum'] ?? null),
-                'verwachteOmzet'          => $verwachteOmzet,
-                'gerealiseerdeOmzet'      => $this->intOrNull($src['gerealiseerdeOmzet'] ?? null),
+                'assignmentName'            => $this->stringOrNull($src['assignmentName'] ?? null),
+                'expectedEndDate'      => $this->toDate($src['expectedEndDate'] ?? null),
+                'actualEndDate'     => $this->toDate($src['actualEndDate'] ?? null),
+                'expectedRevenue'          => $verwachteOmzet,
+                'realisedRevenue'      => $this->intOrNull($src['realisedRevenue'] ?? null),
                 'eenmaligLageDrempel'     => $this->boolOrNull($src['eenmaligLageDrempel'] ?? null),
                 'modelOvereenkomstId'     => $this->stringOrNull($src['modelOvereenkomstId'] ?? null),
                 'intakeDatum'             => $this->toDate($src['intakeDatum'] ?? null),

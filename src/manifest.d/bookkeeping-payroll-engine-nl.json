@@ -25,13 +25,13 @@
 				"register": "shillinq",
 				"schema": "Werkgever",
 				"columns": [
-					{"key": "naam", "label": "Name", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
 					{"key": "loonheffingsnummer", "label": "Payroll tax number", "sortable": true},
 					{"key": "sectorcode", "label": "Sector", "sortable": true},
 					{"key": "awfTarief", "label": "AWF", "sortable": true},
 					{"key": "zvwTarief", "label": "ZVW", "sortable": true}
 				],
-				"defaultSort": "naam",
+				"defaultSort": "name",
 				"detailRoute": "WerkgeverDetail"
 			}
 		},
@@ -45,11 +45,11 @@
 				"schema": "Werkgever",
 				"_note": "MASTER record (employer). The body pairs the employer's fiscal/sector data with its two operational child registers — the employees on its payroll and the pay periods run under it — so a payroll officer sees who is employed here and which periods have been processed, right under the sector/AWF/ZVW rates that drive every calculation. No comms leaves: Werkgever declares no email/calendar linkedType (payroll master, not a correspondent). Audit trail sidebar tracks rate/config changes.",
 				"fields": [
-					{"key": "naam", "label": "Name", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
 					{"key": "kvk", "label": "KvK", "type": "string"},
 					{"key": "loonheffingsnummer", "label": "Payroll tax number", "type": "string"},
 					{"key": "sectorcode", "label": "Sector code", "type": "number"},
-					{"key": "sectorOmschrijving", "label": "Sector", "type": "string"},
+					{"key": "sectorDescription", "label": "Sector", "type": "string"},
 					{"key": "awfTarief", "label": "AWF rate", "type": "string"},
 					{"key": "zvwTarief", "label": "ZVW rate", "type": "string"},
 					{"key": "wkrBudget2026", "label": "WKR budget 2026", "type": "number"},
@@ -75,7 +75,7 @@
 							"register": "shillinq",
 							"schema": "LoonPeriode",
 							"filterField": "werkgeverId",
-							"columns": ["jaar", "periodeNr", "periodeType", "status", "totaalBrutoloon"]
+							"columns": ["year", "periodeNr", "periodeType", "status", "totalGrossPay"]
 						}
 					}
 				],
@@ -142,10 +142,10 @@
 					{"key": "contracturenPerWeek", "label": "Contract hours/week", "type": "number"},
 					{"key": "jaarloonBruto", "label": "Gross annual salary", "type": "number"},
 					{"key": "vakantiegeldPct", "label": "Holiday pay %", "type": "number"},
-					{"key": "pensioenRegeling", "label": "Pension scheme", "type": "string"},
+					{"key": "pensionScheme", "label": "Pension scheme", "type": "string"},
 					{"key": "thuiswerkdagenPerWeek", "label": "Home-working days/week", "type": "number"},
 					{"key": "is_dga", "label": "DGA", "type": "boolean"},
-					{"key": "expat30PctRegeling", "label": "30% ruling", "type": "boolean"}
+					{"key": "expat30PctScheme", "label": "30% ruling", "type": "boolean"}
 				],
 				"relatedObjects": [
 					{
@@ -192,11 +192,11 @@
 				"register": "shillinq",
 				"schema": "LoonPeriode",
 				"columns": [
-					{"key": "jaar", "label": "Year", "sortable": true},
+					{"key": "year", "label": "Year", "sortable": true},
 					{"key": "periodeNr", "label": "Period", "sortable": true},
 					{"key": "periodeType", "label": "Type", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
-					{"key": "totaalBrutoloon", "label": "Total gross", "sortable": true}
+					{"key": "totalGrossPay", "label": "Total gross", "sortable": true}
 				],
 				"defaultSort": "periodeNr",
 				"detailRoute": "LoonperiodeDetail"
@@ -213,16 +213,16 @@
 				"_note": "PERIOD run (the container that gets calculated + closed). The header totals (gross/net/LH) sit above the three things a period produces: the payslips generated in it, the LH remittance derived from it, and the payroll journal entries booked from it — each an object-list filtered on periodeId. This is the run-review view a payroll officer uses before closing/approving a period. No comms leaves. Audit trail sidebar records status transitions (open → calculated → closed).",
 				"fields": [
 					{"key": "periodeType", "label": "Type", "type": "string"},
-					{"key": "jaar", "label": "Year", "type": "number"},
+					{"key": "year", "label": "Year", "type": "number"},
 					{"key": "periodeNr", "label": "Period number", "type": "number"},
 					{"key": "periodeStart", "label": "Start", "type": "string"},
-					{"key": "periodeEind", "label": "End", "type": "string"},
+					{"key": "periodEnd", "label": "End", "type": "string"},
 					{"key": "betaaldatum", "label": "Payment date", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "loonheffingstabelVersie", "label": "Table version", "type": "string"},
-					{"key": "totaalBrutoloon", "label": "Total gross", "type": "number"},
-					{"key": "totaalNettoBetaald", "label": "Total net", "type": "number"},
-					{"key": "totaalLHAfdracht", "label": "Total LH", "type": "number"}
+					{"key": "totalGrossPay", "label": "Total gross", "type": "number"},
+					{"key": "totalNetPaid", "label": "Total net", "type": "number"},
+					{"key": "totalPayrollTaxRemittance", "label": "Total LH", "type": "number"}
 				],
 				"relatedObjects": [
 					{
@@ -244,7 +244,7 @@
 							"register": "shillinq",
 							"schema": "LHAfdracht",
 							"filterField": "periodeId",
-							"columns": ["totaalLoonheffing", "totaalPremiesSV", "totaalAfdracht", "status"]
+							"columns": ["totalPayrollTax", "totalSocialInsuranceContributions", "totalRemittance", "status"]
 						}
 					},
 					{
@@ -351,9 +351,9 @@
 				"schema": "LHAfdracht",
 				"columns": [
 					{"key": "periodeId", "label": "Period", "sortable": true},
-					{"key": "totaalLoonheffing", "label": "Payroll tax", "sortable": true},
-					{"key": "totaalPremiesSV", "label": "SV contributions", "sortable": true},
-					{"key": "totaalAfdracht", "label": "Total remittance", "sortable": true},
+					{"key": "totalPayrollTax", "label": "Payroll tax", "sortable": true},
+					{"key": "totalSocialInsuranceContributions", "label": "SV contributions", "sortable": true},
+					{"key": "totalRemittance", "label": "Total remittance", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true}
 				],
 				"defaultSort": "periodeId",
@@ -371,11 +371,11 @@
 				"_note": "TAX REMITTANCE (aangifte loonheffingen) — the amount owed to the Belastingdienst for a period. It aggregates the period's payslips, so the body is the component breakdown (payroll tax, WKR final levies, SV contributions, ZVW, total) plus the due date and filing status — the exact figures submitted. It has no child schema of its own. No comms leaves. Audit trail sidebar is the filing/payment record.",
 				"fields": [
 					{"key": "periodeId", "label": "Period", "type": "string"},
-					{"key": "totaalLoonheffing", "label": "Payroll tax", "type": "number"},
-					{"key": "totaalEindheffingenWKR", "label": "WKR final levies", "type": "number"},
-					{"key": "totaalPremiesSV", "label": "SV contributions", "type": "number"},
-					{"key": "totaalZVW", "label": "ZVW", "type": "number"},
-					{"key": "totaalAfdracht", "label": "Total remittance", "type": "number"},
+					{"key": "totalPayrollTax", "label": "Payroll tax", "type": "number"},
+					{"key": "totalFinalLeviesWorkRelatedCosts", "label": "WKR final levies", "type": "number"},
+					{"key": "totalSocialInsuranceContributions", "label": "SV contributions", "type": "number"},
+					{"key": "totalHealthInsurance", "label": "ZVW", "type": "number"},
+					{"key": "totalRemittance", "label": "Total remittance", "type": "number"},
 					{"key": "vervaldagAfdracht", "label": "Due date", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"}
 				],

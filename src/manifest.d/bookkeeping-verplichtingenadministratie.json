@@ -92,7 +92,7 @@
 							"register": "shillinq",
 							"schema": "Verplichtingsregel",
 							"filterField": "verplichting",
-							"columns": ["regelnummer", "omschrijving", "amount_excl_vat", "delivered_amount", "invoiced_amount", "restant_verplicht"]
+							"columns": ["regelnummer", "description", "amount_excl_vat", "delivered_amount", "invoiced_amount", "restant_verplicht"]
 						}
 					},
 					{
@@ -159,7 +159,7 @@
 				"schema": "Mandaat",
 				"columns": [
 					{"key": "mandaatcode", "label": "Code", "sortable": true},
-					{"key": "naam", "label": "Name", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
 					{"key": "maximumbedrag", "label": "Maximum amount", "sortable": true},
 					{"key": "is_override", "label": "Override", "sortable": true},
 					{"key": "geldig_tot", "label": "Valid until", "sortable": true}
@@ -179,7 +179,7 @@
 				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
 				"fields": [
 					{"key": "mandaatcode", "label": "Code", "type": "string"},
-					{"key": "naam", "label": "Name", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
 					{"key": "houder", "label": "Holder", "type": "string"},
 					{"key": "houder_type", "label": "Holder type", "type": "string"},
 					{"key": "maximumbedrag", "label": "Maximum amount", "type": "number"},

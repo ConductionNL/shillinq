@@ -85,8 +85,8 @@ class ProgrammabegrotingService
         foreach ($jaren as $jaar) {
             $result      = $this->sluitend->evaluateYear(year: $jaar, nominaleOntwikkeling: $nominale);
             $evaluated[] = [
-                'jaar'             => ($jaar['jaar'] ?? null),
-                'saldoStructureel' => $result['saldoStructureel'],
+                'year'             => ($jaar['year'] ?? null),
+                'balanceStructural' => $result['balanceStructural'],
                 'saldoReëel'       => $result['saldoReëel'],
                 'sluitend'         => $result['sluitend'],
             ];

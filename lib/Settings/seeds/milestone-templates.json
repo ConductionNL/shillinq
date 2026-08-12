@@ -9,7 +9,7 @@
 	"templates": [
 		{
 			"opdrachttype": "levering-in-fases",
-			"naam": "Gefaseerde levering — per kwartaal",
+			"name": "Gefaseerde levering — per kwartaal",
 			"beschrijving": "4 kwartaal-deelopleveringen over een contract van 1 jaar.",
 			"mijlpalen": [
 				{ "percentage": 25, "label": "Q1 deeloplevering", "fractionOfTerm": 0.25, "opleveringsType": "deeloplevering" },
@@ -20,7 +20,7 @@
 		},
 		{
 			"opdrachttype": "dienstverlening-doorlopend",
-			"naam": "Doorlopende dienstverlening — per maand",
+			"name": "Doorlopende dienstverlening — per maand",
 			"beschrijving": "12 maandelijkse deelfacturen over een contract van 1 jaar.",
 			"mijlpalen": [
 				{ "percentage": 8.37, "label": "Maand 1", "fractionOfTerm": 0.0833, "opleveringsType": "deeloplevering" },
@@ -39,7 +39,7 @@
 		},
 		{
 			"opdrachttype": "other",
-			"naam": "Standaard — halverwege en eind",
+			"name": "Standaard — halverwege en eind",
 			"beschrijving": "Fallback met 2 mijlpalen: 50% halverwege, 50% bij eindoplevering.",
 			"mijlpalen": [
 				{ "percentage": 50, "label": "Tussentijdse oplevering", "fractionOfTerm": 0.5, "opleveringsType": "deeloplevering" },

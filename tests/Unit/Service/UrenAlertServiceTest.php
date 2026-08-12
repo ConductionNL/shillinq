@@ -95,10 +95,10 @@ final class UrenAlertServiceTest extends TestCase
         $alert = $this->build()->bouwKwartaalAlert(
             year: [
                 'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-1',
+                'enterpriseId'     => 'ond-1',
                 'doelNorm'          => 1225,
                 'lopendeUren'       => 700.0,
-                'prognoseEindeJaar' => 1150.0,
+                'forecastYearEnd' => 1150.0,
                 'drempelStatus'     => 'RISICO',
             ],
             datum: '2026-09-30'
@@ -123,10 +123,10 @@ final class UrenAlertServiceTest extends TestCase
         $alert = $this->build()->bouwOmslagAlert(
             year: [
                 'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-1',
+                'enterpriseId'     => 'ond-1',
                 'doelNorm'          => 1225,
                 'lopendeUren'       => 600.0,
-                'prognoseEindeJaar' => 900.0,
+                'forecastYearEnd' => 900.0,
                 'drempelStatus'     => 'KRITIEK',
             ],
             oldStatus: 'RISICO',
@@ -153,7 +153,7 @@ final class UrenAlertServiceTest extends TestCase
             year: [
                 'doelNorm'          => 1225,
                 'lopendeUren'       => 1250.0,
-                'prognoseEindeJaar' => 1400.0,
+                'forecastYearEnd' => 1400.0,
                 'drempelStatus'     => 'BEHAALD',
             ]
         );
@@ -174,7 +174,7 @@ final class UrenAlertServiceTest extends TestCase
             year: [
                 'doelNorm'          => 1225,
                 'lopendeUren'       => 400.0,
-                'prognoseEindeJaar' => 800.0,
+                'forecastYearEnd' => 800.0,
             ]
         );
 

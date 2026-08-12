@@ -32,7 +32,7 @@
 						"sortable": true
 					},
 					{
-						"key": "boekjaarEind",
+						"key": "financialYearEnd",
 						"label": "Financial year",
 						"sortable": true
 					},
@@ -62,7 +62,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "boekjaarEind",
+				"defaultSort": "financialYearEnd",
 				"detailRoute": "JaarrekeningDetail"
 			}
 		},
@@ -82,12 +82,12 @@
 						"type": "string"
 					},
 					{
-						"key": "boekjaarStart",
+						"key": "financialYearStart",
 						"label": "Financial year start",
 						"type": "string"
 					},
 					{
-						"key": "boekjaarEind",
+						"key": "financialYearEnd",
 						"label": "Financial year end",
 						"type": "string"
 					},

@@ -65,7 +65,7 @@ final class CashflowPdfRendererTest extends TestCase
         $horizon = [
             'horizonId'        => 'horizon-test-001',
             'horizonStart'     => '2026-05-25',
-            'horizonEind'      => '2026-08-23',
+            'horizonEnd'      => '2026-08-23',
             'administrationId' => 'adm-001',
             'modelVersie'      => 'v4.1-klantspecifiek-betaalgedrag',
             'rolledOp'         => '2026-05-25T02:00:00Z',
@@ -73,10 +73,10 @@ final class CashflowPdfRendererTest extends TestCase
         $weeks   = [
             [
                 'weeknummer'     => 22,
-                'inflows_totaal' => 12500.0,
-                'outflows_totaal' => 7200.0,
+                'inflows_total' => 12500.0,
+                'outflows_total' => 7200.0,
                 'nettoMutatie'   => 5300.0,
-                'eindSaldo'      => 20120.0,
+                'closingBalance'      => 20120.0,
                 'bufferStatus'   => 'BOVEN_BUFFER',
             ],
         ];
@@ -104,8 +104,8 @@ final class CashflowPdfRendererTest extends TestCase
     {
         $horizon = ['horizonId' => 'h1', 'administrationId' => 'a1'];
         $weeks   = [
-            ['weeknummer' => 22, 'inflows_totaal' => 100.0, 'outflows_totaal' => 50.0, 'nettoMutatie' => 50.0, 'eindSaldo' => 1050.0, 'bufferStatus' => 'BOVEN_BUFFER'],
-            ['weeknummer' => 23, 'inflows_totaal' => 0.0, 'outflows_totaal' => 200.0, 'nettoMutatie' => -200.0, 'eindSaldo' => 850.0, 'bufferStatus' => 'VOORALARM'],
+            ['weeknummer' => 22, 'inflows_total' => 100.0, 'outflows_total' => 50.0, 'nettoMutatie' => 50.0, 'closingBalance' => 1050.0, 'bufferStatus' => 'BOVEN_BUFFER'],
+            ['weeknummer' => 23, 'inflows_total' => 0.0, 'outflows_total' => 200.0, 'nettoMutatie' => -200.0, 'closingBalance' => 850.0, 'bufferStatus' => 'VOORALARM'],
         ];
 
         $result = $this->renderer->render($horizon, $weeks);
@@ -127,7 +127,7 @@ final class CashflowPdfRendererTest extends TestCase
     {
         $horizon  = ['horizonId' => 'h1'];
         $scenario = [
-            'naam'        => 'Acme pays late',
+            'name'        => 'Acme pays late',
             'description' => 'Acme delays invoice by 4 weeks',
             'resultaat'   => [
                 'minBufferWeek'         => '2026-w26',

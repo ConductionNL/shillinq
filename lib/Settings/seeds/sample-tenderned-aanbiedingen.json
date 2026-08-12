@@ -17,7 +17,7 @@
 			"gunningsDatum": "2026-01-15",
 			"contractWaarde": 50000.0,
 			"looptijdStart": "2026-02-01",
-			"looptijdEind": "2027-01-31",
+			"termEnd": "2027-01-31",
 			"gegundeLeverancier": "76741850 Conduction B.V.",
 			"opdrachttype": "dienstverlening-doorlopend",
 			"status": "gegund"
@@ -32,7 +32,7 @@
 			"gunningsDatum": "2026-02-10",
 			"contractWaarde": 250000.0,
 			"looptijdStart": "2026-03-01",
-			"looptijdEind": "2028-02-29",
+			"termEnd": "2028-02-29",
 			"gegundeLeverancier": "76741850 Conduction B.V.",
 			"opdrachttype": "levering-in-fases",
 			"status": "gegund"
@@ -47,7 +47,7 @@
 			"gunningsDatum": "2026-03-05",
 			"contractWaarde": 15000.0,
 			"looptijdStart": "2026-04-01",
-			"looptijdEind": "2026-09-30",
+			"termEnd": "2026-09-30",
 			"gegundeLeverancier": "76741850 Conduction B.V.",
 			"opdrachttype": "other",
 			"status": "gegund"

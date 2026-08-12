@@ -99,7 +99,7 @@ class InnovatieboxController extends Controller
     public function aggregation(): JSONResponse
     {
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $boekjaar         = trim((string) $this->request->getParam('boekjaar', ''));
+        $boekjaar         = trim((string) $this->request->getParam('financialYear', ''));
 
         $error = $this->requireAdministration(administrationId: $administrationId);
         if ($error !== null) {
@@ -121,7 +121,7 @@ class InnovatieboxController extends Controller
                 message: 'Failed to compute innovatiebox aggregation',
                 context: [
                     'administrationId' => $administrationId,
-                    'boekjaar'         => $boekjaar,
+                    'financialYear'         => $boekjaar,
                     'exception'        => $e->getMessage(),
                 ]
             );
@@ -192,7 +192,7 @@ class InnovatieboxController extends Controller
     public function doorsnijdingsverbod(): JSONResponse
     {
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $boekjaar         = trim((string) $this->request->getParam('boekjaar', ''));
+        $boekjaar         = trim((string) $this->request->getParam('financialYear', ''));
 
         $error = $this->requireAdministration(administrationId: $administrationId);
         if ($error !== null) {
@@ -214,7 +214,7 @@ class InnovatieboxController extends Controller
                 message: 'Failed to run doorsnijdingsverbod check',
                 context: [
                     'administrationId' => $administrationId,
-                    'boekjaar'         => $boekjaar,
+                    'financialYear'         => $boekjaar,
                     'exception'        => $e->getMessage(),
                 ]
             );
@@ -248,7 +248,7 @@ class InnovatieboxController extends Controller
     public function export(): JSONResponse
     {
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $boekjaar         = trim((string) $this->request->getParam('boekjaar', ''));
+        $boekjaar         = trim((string) $this->request->getParam('financialYear', ''));
         $methode          = trim((string) $this->request->getParam('methode', 'per_asset_afpelmethode'));
 
         $error = $this->requireAdministration(administrationId: $administrationId);
@@ -293,7 +293,7 @@ class InnovatieboxController extends Controller
                 message: 'Failed to render innovatiebox SBR/PDF export',
                 context: [
                     'administrationId' => $administrationId,
-                    'boekjaar'         => $boekjaar,
+                    'financialYear'         => $boekjaar,
                     'methode'          => $methode,
                     'exception'        => $e->getMessage(),
                 ]

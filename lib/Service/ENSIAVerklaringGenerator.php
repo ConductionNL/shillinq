@@ -161,9 +161,9 @@ class ENSIAVerklaringGenerator
     private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string
     {
         $org     = $cyclus['organisatie'] ?? [];
-        $orgNaam = (string) ($org['naam'] ?? '');
+        $orgNaam = (string) ($org['name'] ?? '');
         $orgKvk  = (string) ($org['kvk'] ?? '');
-        $jaar    = (string) ($cyclus['jaar'] ?? '');
+        $jaar    = (string) ($cyclus['year'] ?? '');
 
         $paras   = [];
         $paras[] = $this->para(text: 'College-verklaring ENSIA '.$jaar, bold: true);

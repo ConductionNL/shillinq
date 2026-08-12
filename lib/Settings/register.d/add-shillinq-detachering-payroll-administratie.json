@@ -262,10 +262,10 @@
         "x-schema-org": "schema:DigitalDocument",
         "required": [
           "zzpId",
-          "zzpNaam",
+          "freelancerName",
           "opdrachtBeschrijving",
           "looptijdStart",
-          "looptijdEind",
+          "termEnd",
           "verklaringStatus",
           "risicoBeoordeling",
           "administrationId"
@@ -277,7 +277,7 @@
             "example": "zzp-001",
             "title": "ZZP ID"
           },
-          "zzpNaam": {
+          "freelancerName": {
             "type": "string",
             "description": "Full name of the ZZP-er.",
             "example": "Maria de Vries",
@@ -296,7 +296,7 @@
             "example": "2026-07-01",
             "title": "Looptijd Start"
           },
-          "looptijdEind": {
+          "termEnd": {
             "type": "string",
             "format": "date",
             "description": "Assignment end date.",
@@ -429,10 +429,10 @@
         "required": [
           "belastingjaar",
           "opdrachtgeverId",
-          "ontvangerNaam",
+          "recipientName",
           "ontvangerBSN",
           "ontvangerAdres",
-          "betalingenTotaal",
+          "paymentsTotal",
           "betalingTypeCode",
           "administrationId"
         ],
@@ -450,7 +450,7 @@
             "example": "adm-1",
             "title": "Opdrachtgever ID"
           },
-          "ontvangerNaam": {
+          "recipientName": {
             "type": "string",
             "description": "Full name of the payment recipient (ontvanger).",
             "example": "Maria de Vries",
@@ -482,7 +482,7 @@
             "example": "Voorbeeldstraat 1, 1234 AB Amsterdam",
             "title": "Ontvanger Adres"
           },
-          "betalingenTotaal": {
+          "paymentsTotal": {
             "type": "number",
             "minimum": 0,
             "description": "Total payments made to this recipient in the belastingjaar (EUR ≥ 0).",
@@ -538,12 +538,12 @@
             "groupBy": [
               "belastingjaar",
               "opdrachtgeverId",
-              "ontvangerNaam",
+              "recipientName",
               "betalingTypeCode"
             ],
             "operations": {
               "totalBetalingen": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum"
               },
               "recordCount": {
@@ -560,13 +560,13 @@
             "groupBy": [
               "belastingjaar",
               "opdrachtgeverId",
-              "ontvangerNaam",
+              "recipientName",
               "dryRunMonth",
               "betalingTypeCode"
             ],
             "operations": {
               "maandTotaalBetalingen": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum"
               }
             }
@@ -576,16 +576,16 @@
             "groupBy": [
               "belastingjaar",
               "opdrachtgeverId",
-              "ontvangerNaam"
+              "recipientName"
             ],
             "operations": {
               "finalTotal": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum",
                 "condition": "isDryRun = false"
               },
               "dryRunSumTotal": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum",
                 "condition": "isDryRun = true"
               },

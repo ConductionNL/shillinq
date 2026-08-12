@@ -58,7 +58,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId' => 'adm-1',
-                'ondernemingId'    => 'ond-1',
+                'enterpriseId'    => 'ond-1',
                 'kalenderjaar'     => 2026,
             ]
         );
@@ -69,7 +69,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         self::assertSame('OP_KOERS', $seed['drempelStatus']);
         self::assertSame(0.0, $seed['lopendeUren']);
         self::assertSame('adm-1', $seed['administrationId']);
-        self::assertSame('ond-1', $seed['ondernemingId']);
+        self::assertSame('ond-1', $seed['enterpriseId']);
         self::assertSame(2026, $seed['kalenderjaar']);
 
     }//end testRegularSeedYields1225()
@@ -85,7 +85,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-2',
+                'enterpriseId'     => 'ond-2',
                 'kalenderjaar'      => 2026,
                 'arbeidsongeschikt' => true,
             ]
@@ -107,7 +107,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'   => 'adm-1',
-                'ondernemingId'      => 'ond-3',
+                'enterpriseId'      => 'ond-3',
                 'kalenderjaar'       => 2026,
                 'meewerkendePartner' => true,
             ]
@@ -128,7 +128,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'    => 'adm-1',
-                'ondernemingId'       => 'ond-4',
+                'enterpriseId'       => 'ond-4',
                 'kalenderjaar'        => 2026,
                 'ondernemingsUrenJTD' => 300.0,
                 'loondienstUrenJTD'   => 600.0,
@@ -150,7 +150,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $this->build()->bouwSeedRecord(
             profiel: [
                 'administrationId'    => 'adm-1',
-                'ondernemingId'       => 'ond-5',
+                'enterpriseId'       => 'ond-5',
                 'kalenderjaar'        => 2026,
                 'ondernemingsUrenJTD' => 800.0,
                 'loondienstUrenJTD'   => 200.0,
@@ -176,7 +176,7 @@ final class UrenNormDeterminationServiceTest extends TestCase
         $seed = $service->bouwSeedRecord(
             profiel: [
                 'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-9',
+                'enterpriseId'     => 'ond-9',
                 'kalenderjaar'      => 2026,
                 'arbeidsongeschikt' => true,
             ]

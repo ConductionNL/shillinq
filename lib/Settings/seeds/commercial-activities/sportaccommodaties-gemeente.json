@@ -10,7 +10,7 @@
 	"activities": [
 		{
 			"code": "MO-SP-014",
-			"naam": "Dansschool de Maten",
+			"name": "Dansschool de Maten",
 			"bestuursorgaan": "Gemeente Voorbeeld",
 			"organisatieonderdeel": "Afdeling Sport & Cultuur",
 			"beschrijving": "Verhuur zaalruimte voor commerciële danslessen — concurrent met privédansscholen.",
@@ -32,7 +32,7 @@
 		},
 		{
 			"code": "MO-SP-015",
-			"naam": "Verhuur sporthal commerciële evenementen",
+			"name": "Verhuur sporthal commerciële evenementen",
 			"bestuursorgaan": "Gemeente Voorbeeld",
 			"organisatieonderdeel": "Afdeling Sport & Cultuur",
 			"beschrijving": "Verhuur sporthal aan commerciële evenementenorganisatoren buiten reguliere binding.",
@@ -53,7 +53,7 @@
 		},
 		{
 			"code": "MO-SP-016",
-			"naam": "Sportkantine-exploitatie",
+			"name": "Sportkantine-exploitatie",
 			"bestuursorgaan": "Gemeente Voorbeeld",
 			"organisatieonderdeel": "Afdeling Sport & Cultuur",
 			"beschrijving": "Horeca-exploitatie binnen gemeentelijke sporthallen voor publiek + zakelijke afnemers.",

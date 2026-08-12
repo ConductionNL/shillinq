@@ -192,7 +192,7 @@ final class InnovatieboxAuditEventLoggerTest extends TestCase
             [
                 'event_type'         => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
                 'administrationId'   => 'admin-1',
-                'boekjaar'           => 2025,
+                'financialYear'           => 2025,
                 'qualifying_asset_id' => 'qa-7',
                 'subject_schema'     => 'NexusCalculation',
                 'subject_id'         => 'nc-99',
@@ -209,7 +209,7 @@ final class InnovatieboxAuditEventLoggerTest extends TestCase
         self::assertSame(InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED, $payload['event_type']);
         self::assertSame('admin-1', $payload['administrationId']);
         self::assertSame('alice', $payload['actor_uid']);
-        self::assertSame(2025, $payload['boekjaar']);
+        self::assertSame(2025, $payload['financialYear']);
         self::assertSame('qa-7', $payload['qualifying_asset_id']);
         self::assertSame('NexusCalculation', $payload['subject_schema']);
         self::assertSame('nc-99', $payload['subject_id']);
@@ -336,14 +336,14 @@ final class InnovatieboxAuditEventLoggerTest extends TestCase
             [
                 'event_type'       => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
                 'administrationId' => 'admin-1',
-                'boekjaar'         => null,
+                'financialYear'         => null,
                 'reason'           => null,
                 'details'          => null,
             ]
         );
 
         $payload = $fake->saves[0]['payload'];
-        self::assertArrayNotHasKey('boekjaar', $payload);
+        self::assertArrayNotHasKey('financialYear', $payload);
         self::assertArrayNotHasKey('reason', $payload);
         self::assertArrayNotHasKey('details', $payload);
 

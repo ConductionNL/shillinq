@@ -18,7 +18,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "jaar",
+          "year",
           "organisatie",
           "status"
         ],
@@ -29,7 +29,7 @@
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
-          "jaar": {
+          "year": {
             "type": "integer",
             "minimum": 2020,
             "maximum": 2099,
@@ -42,7 +42,7 @@
             "description": "Organisatie-identificatie (KvK + naam) per VNG ENSIA-portal (REQ-ENSIA-001 + REQ-ENSIA-007).",
             "required": [
               "kvk",
-              "naam"
+              "name"
             ],
             "properties": {
               "kvk": {
@@ -51,7 +51,7 @@
                 "example": "12345678",
                 "title": "KvK"
               },
-              "naam": {
+              "name": {
                 "type": "string",
                 "description": "Officiële organisatienaam.",
                 "example": "Gemeente Voorbeeld",
@@ -473,7 +473,7 @@
               "type": "object",
               "required": [
                 "fileRef",
-                "omschrijving"
+                "description"
               ],
               "properties": {
                 "fileRef": {
@@ -482,7 +482,7 @@
                   "example": "docudesk://files/98765",
                   "title": "File Ref"
                 },
-                "omschrijving": {
+                "description": {
                   "type": "string",
                   "description": "Omschrijving van het bewijsstuk, bv. 'Access control policy effective 2025-01-01' (REQ-ENSIA-009).",
                   "example": "Access control policy effective 2025-01-01",

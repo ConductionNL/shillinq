@@ -230,10 +230,10 @@ class DunningGuardTest extends TestCase
     public function testPauseResolveRequiresPauzeEind(): void
     {
         self::assertFalse(
-            $this->guard->canResolvePause(pauseId: 'p-1', object: ['pauzeEind' => ''])
+            $this->guard->canResolvePause(pauseId: 'p-1', object: ['pauseEnd' => ''])
         );
         self::assertTrue(
-            $this->guard->canResolvePause(pauseId: 'p-2', object: ['pauzeEind' => '2026-06-21T10:00:00Z'])
+            $this->guard->canResolvePause(pauseId: 'p-2', object: ['pauseEnd' => '2026-06-21T10:00:00Z'])
         );
 
     }//end testPauseResolveRequiresPauzeEind()

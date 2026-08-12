@@ -105,7 +105,7 @@ final class CashflowRecurringGuardTest extends TestCase
             'categorie'       => 'RECURRING_VERZEKERING',
             'richting'        => 'OUT',
             'frequentie'      => 'JAARLIJKS',
-            'maandVanJaar'    => 7,
+            'monthOfYear'    => 7,
             'dagVanMaand'     => 1,
             'standardAmount' => 620.0,
             'indexatieRegel'  => 'CPI_AFGELOPEN_JAAR',

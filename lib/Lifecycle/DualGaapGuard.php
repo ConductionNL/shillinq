@@ -192,7 +192,7 @@ class DualGaapGuard
         }
 
         $balanceTotal = $election['sizeCriteriaBalanstotaal'] ?? null;
-        $netTurnover  = $election['sizeCriteriaNettoOmzet'] ?? null;
+        $netTurnover  = $election['sizeCriteriaNetRevenue'] ?? null;
 
         if (is_numeric($balanceTotal) === true && (float) $balanceTotal > 6000000.0) {
             return false;

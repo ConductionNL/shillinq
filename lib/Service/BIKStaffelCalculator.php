@@ -225,7 +225,7 @@ class BIKStaffelCalculator
             'schaal3_5000_10000'   => $this->fromCents(cents: $slabAmountsCents[2]),
             'schaal4_10000_200000' => $this->fromCents(cents: $slabAmountsCents[3]),
             'schaal5_200000plus'   => $this->fromCents(cents: $slabAmountsCents[4]),
-            'totaal'               => $this->fromCents(cents: $totaalCents),
+            'total'               => $this->fromCents(cents: $totaalCents),
             'minimum'              => $this->fromCents(cents: self::MINIMUM_CENTS),
             'maximum'              => $this->fromCents(cents: self::MAXIMUM_CENTS),
             'toegepast'            => $this->fromCents(cents: $toegepastCents),
@@ -497,7 +497,7 @@ class BIKStaffelCalculator
             'berekening'         => $berekening,
             'wettelijkeRente'    => $rente,
             'partyType'          => $partyType,
-            'totaalVerschuldigd' => $this->fromCents(cents: $totaalCents),
+            'totalDue' => $this->fromCents(cents: $totaalCents),
             'administrationId'   => $administrationId,
         ];
 

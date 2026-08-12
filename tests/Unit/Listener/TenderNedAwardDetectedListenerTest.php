@@ -415,7 +415,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
                 'titel'              => 'Schoonmaak',
                 'opdrachttype'       => 'levering-in-fases',
                 'looptijdStart'      => '2026-01-01',
-                'looptijdEind'       => '2026-12-31',
+                'termEnd'       => '2026-12-31',
                 'administrationId'   => 'adm-x',
             ])
         );
@@ -452,7 +452,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     public function testIdempotentOnExistingBronReferentie(): void
     {
         $existing = [
-            'verplichtingNummer' => 'TN-TN-2026-0001',
+            'commitmentNumber' => 'TN-TN-2026-0001',
             'bron'               => 'tenderned',
             'bronReferentie'     => 'TN-2026-0001',
             'status'             => 'active',

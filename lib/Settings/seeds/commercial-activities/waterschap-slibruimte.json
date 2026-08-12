@@ -10,7 +10,7 @@
 	"activities": [
 		{
 			"code": "MO-WS-SLIBRUIM-01",
-			"naam": "Commerciële slibruimingsdienst",
+			"name": "Commerciële slibruimingsdienst",
 			"bestuursorgaan": "Waterschap Voorbeeld",
 			"organisatieonderdeel": "Afdeling Operations & Services",
 			"beschrijving": "Verwerking van slib voor derden (industriële en agrarische klanten) buiten waterschapsverordening om.",

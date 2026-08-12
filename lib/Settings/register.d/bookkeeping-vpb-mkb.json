@@ -27,10 +27,10 @@
         "required": [
           "administrationId",
           "rsin",
-          "kvkNummer",
+          "chamberOfCommerceNumber",
           "rechtsvorm",
-          "boekjaarStart",
-          "boekjaarEind",
+          "financialYearStart",
+          "financialYearEnd",
           "eHerkenningsNiveau",
           "status"
         ],
@@ -41,7 +41,7 @@
             "example": "adm-001",
             "title": "Administration ID"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Statutaire naam van de belastingplichtige.",
             "example": "ACME BV",
@@ -53,7 +53,7 @@
             "example": "001234567",
             "title": "Rsin"
           },
-          "kvkNummer": {
+          "chamberOfCommerceNumber": {
             "type": "string",
             "description": "KvK-inschrijvingsnummer (8 cijfers).",
             "example": "12345678",
@@ -71,14 +71,14 @@
             "example": "BV",
             "title": "Rechtsvorm"
           },
-          "boekjaarStart": {
+          "financialYearStart": {
             "type": "string",
             "format": "date",
             "description": "Eerste dag van het reguliere boekjaar.",
             "example": "2026-01-01",
             "title": "Boekjaar Start"
           },
-          "boekjaarEind": {
+          "financialYearEnd": {
             "type": "string",
             "format": "date",
             "description": "Laatste dag (balansdatum) van het reguliere boekjaar; stuurt de aangifte- en aanslagtermijnen.",
@@ -281,8 +281,8 @@
           "administrationId",
           "belastingplichtige",
           "belastingjaar",
-          "boekjaarVan",
-          "boekjaarTot",
+          "financialYearFrom",
+          "financialYearUntil",
           "status"
         ],
         "properties": {
@@ -306,14 +306,14 @@
             "example": 2026,
             "title": "Belastingjaar"
           },
-          "boekjaarVan": {
+          "financialYearFrom": {
             "type": "string",
             "format": "date",
             "description": "Eerste dag van het boekjaar dat wordt aangegeven.",
             "example": "2026-01-01",
             "title": "Boekjaar Van"
           },
-          "boekjaarTot": {
+          "financialYearUntil": {
             "type": "string",
             "format": "date",
             "description": "Laatste dag van het boekjaar; stuurt de wettelijke aangiftetermijn (5 maanden, verlenging tot 11).",
@@ -574,7 +574,7 @@
             "example": "niet-aftrekbare-kosten-art-3-14",
             "title": "Code"
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "nullable": true,
             "description": "Korte omschrijving van de correctie.",
@@ -796,7 +796,7 @@
         "required": [
           "administrationId",
           "belastingplichtige",
-          "naam",
+          "name",
           "aandeelhouderschapPercentage"
         ],
         "properties": {
@@ -814,7 +814,7 @@
             "example": "belastingplichtige-acme-bv",
             "title": "Belastingplichtige"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Naam van de deelneming.",
             "example": "ACME Sub BV",
@@ -1909,12 +1909,12 @@
           "slug": "belastingplichtige-acme-bv"
         },
         "administrationId": "adm-001",
-        "naam": "ACME BV",
+        "name": "ACME BV",
         "rsin": "001234567",
-        "kvkNummer": "12345678",
+        "chamberOfCommerceNumber": "12345678",
         "rechtsvorm": "BV",
-        "boekjaarStart": "2026-01-01",
-        "boekjaarEind": "2026-12-31",
+        "financialYearStart": "2026-01-01",
+        "financialYearEnd": "2026-12-31",
         "fiscaalAdviseur": null,
         "digipoortCertificaat": null,
         "eHerkenningsNiveau": "EH3",

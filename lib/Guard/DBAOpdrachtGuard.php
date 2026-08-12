@@ -78,7 +78,7 @@ class DBAOpdrachtGuard
 
         // REQ-DBA-018 — BEEINDIGD requires feitelijkeEindDatum + retentieDeadline.
         if ($status === 'BEEINDIGD') {
-            $eind = (string) ($opdracht['feitelijkeEindDatum'] ?? '');
+            $eind = (string) ($opdracht['actualEndDate'] ?? '');
             if ($eind === '') {
                 $errors[] = 'REQ-DBA-018: BEEINDIGD vereist feitelijkeEindDatum.';
             } else {

@@ -61,7 +61,7 @@
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
 				"columns": [
-					{"key": "opdrachtNaam", "label": "Assignment", "sortable": true},
+					{"key": "assignmentName", "label": "Assignment", "sortable": true},
 					{"key": "klantId", "label": "Client", "sortable": true},
 					{"key": "startDatum", "label": "Start", "sortable": true},
 					{"key": "actueleRisicoscore", "label": "Risk score", "sortable": true},
@@ -83,19 +83,19 @@
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
 				"aggregations": [
-					{"id": "expectedRevenue", "title": "Expected revenue", "field": "verwachteOmzet", "metric": "value", "format": "currency"},
-					{"id": "realisedRevenue", "title": "Realised revenue", "field": "gerealiseerdeOmzet", "metric": "value", "format": "currency"},
+					{"id": "expectedRevenue", "title": "Expected revenue", "field": "expectedRevenue", "metric": "value", "format": "currency"},
+					{"id": "realisedRevenue", "title": "Realised revenue", "field": "realisedRevenue", "metric": "value", "format": "currency"},
 					{"id": "openFlags", "title": "Open risk flags", "field": "openFlags", "metric": "value"}
 				],
 				"fields": [
-					{"key": "opdrachtNaam", "label": "Assignment", "type": "string"},
-					{"key": "ondernemingId", "label": "Company", "type": "string"},
+					{"key": "assignmentName", "label": "Assignment", "type": "string"},
+					{"key": "enterpriseId", "label": "Company", "type": "string"},
 					{"key": "klantId", "label": "Client", "type": "string"},
 					{"key": "startDatum", "label": "Start date", "type": "string"},
-					{"key": "verwachteEindDatum", "label": "Expected end", "type": "string"},
-					{"key": "feitelijkeEindDatum", "label": "Actual end", "type": "string"},
-					{"key": "verwachteOmzet", "label": "Expected revenue", "type": "number"},
-					{"key": "gerealiseerdeOmzet", "label": "Realised revenue", "type": "number"},
+					{"key": "expectedEndDate", "label": "Expected end", "type": "string"},
+					{"key": "actualEndDate", "label": "Actual end", "type": "string"},
+					{"key": "expectedRevenue", "label": "Expected revenue", "type": "number"},
+					{"key": "realisedRevenue", "label": "Realised revenue", "type": "number"},
 					{"key": "modelOvereenkomstId", "label": "Model agreement", "type": "string"},
 					{"key": "intakeStatus", "label": "Intake status", "type": "string"},
 					{"key": "actueleRisicoscore", "label": "Risk score", "type": "number"},
@@ -107,7 +107,7 @@
 				"relatedLists": [
 					{"id": "intakes", "title": "Intake assessments", "schema": "DBAIntake", "foreignKey": "opdrachtId", "columns": [
 						{"key": "ingevuldOp", "label": "Filled in"},
-						{"key": "totaalScore", "label": "Total score"},
+						{"key": "totalScore", "label": "Total score"},
 						{"key": "interpretatie", "label": "Risk band"}
 					], "detailRoute": "DBAIntakeDetail"},
 					{"id": "evidence", "title": "Evidence dossiers", "schema": "DBAEvidenceDossier", "foreignKey": "opdrachtId", "columns": [
@@ -150,7 +150,7 @@
 					{"key": "gezagSubtotaal", "label": "Authority", "sortable": true},
 					{"key": "arbeidSubtotaal", "label": "Personal service", "sortable": true},
 					{"key": "financieelSubtotaal", "label": "Financial risk", "sortable": true},
-					{"key": "totaalScore", "label": "Total score", "sortable": true},
+					{"key": "totalScore", "label": "Total score", "sortable": true},
 					{"key": "interpretatie", "label": "Risk band", "sortable": true}
 				],
 				"defaultSort": "ingevuldOp",
@@ -167,7 +167,7 @@
 				"register": "shillinq",
 				"schema": "DBAIntake",
 				"aggregations": [
-					{"id": "totalScore", "title": "Total score", "field": "totaalScore", "metric": "value"},
+					{"id": "totalScore", "title": "Total score", "field": "totalScore", "metric": "value"},
 					{"id": "maxScore", "title": "Max score", "field": "maxScore", "metric": "value"}
 				],
 				"fields": [
@@ -177,7 +177,7 @@
 					{"key": "arbeidSubtotaal", "label": "Personal service", "type": "number"},
 					{"key": "financieelSubtotaal", "label": "Financial risk", "type": "number"},
 					{"key": "deliverooSubtotaal", "label": "Deliveroo criteria", "type": "number"},
-					{"key": "totaalScore", "label": "Total score", "type": "number"},
+					{"key": "totalScore", "label": "Total score", "type": "number"},
 					{"key": "interpretatie", "label": "Risk band", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
@@ -208,13 +208,13 @@
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
 				"columns": [
-					{"key": "naam", "label": "Model", "sortable": true},
+					{"key": "name", "label": "Model", "sortable": true},
 					{"key": "bron", "label": "Source", "sortable": true},
 					{"key": "versie", "label": "Version", "sortable": true},
 					{"key": "geldigTot", "label": "Valid until", "sortable": true},
 					{"key": "actueleVersie", "label": "Current", "sortable": true}
 				],
-				"defaultSort": "naam",
+				"defaultSort": "name",
 				"detailRoute": "DBAModelovereenkomstDetail"
 			}
 		},
@@ -228,7 +228,7 @@
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
 				"fields": [
-					{"key": "naam", "label": "Model", "type": "string"},
+					{"key": "name", "label": "Model", "type": "string"},
 					{"key": "bron", "label": "Source", "type": "string"},
 					{"key": "publicatieURL", "label": "Publication URL", "type": "string"},
 					{"key": "goedkeuringDatum", "label": "Approval date", "type": "string"},
@@ -261,7 +261,7 @@
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
 				"columns": [
-					{"key": "ondernemingId", "label": "Company", "sortable": true},
+					{"key": "enterpriseId", "label": "Company", "sortable": true},
 					{"key": "peilDatum", "label": "Reference date", "sortable": true},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "sortable": true},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "sortable": true},
@@ -285,15 +285,15 @@
 					{"id": "exclusiveRelations", "title": "Exclusive relations", "field": "exclusieveRelaties", "metric": "value"}
 				],
 				"fields": [
-					{"key": "ondernemingId", "label": "Company", "type": "string"},
+					{"key": "enterpriseId", "label": "Company", "type": "string"},
 					{"key": "peilDatum", "label": "Reference date", "type": "string"},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "type": "number"},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "type": "number"},
 					{"key": "overallRisico", "label": "Portfolio risk", "type": "string"}
 				],
 				"relatedLists": [
-					{"id": "engagements", "title": "Engagements in this portfolio", "schema": "DBAOpdracht", "foreignKey": "ondernemingId", "join": "ondernemingId", "columns": [
-						{"key": "opdrachtNaam", "label": "Assignment"},
+					{"id": "engagements", "title": "Engagements in this portfolio", "schema": "DBAOpdracht", "foreignKey": "enterpriseId", "join": "enterpriseId", "columns": [
+						{"key": "assignmentName", "label": "Assignment"},
 						{"key": "klantId", "label": "Client"},
 						{"key": "risicoNiveau", "label": "Risk band"},
 						{"key": "openFlags", "label": "Open flags"}

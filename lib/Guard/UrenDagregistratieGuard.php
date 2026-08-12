@@ -108,7 +108,7 @@ class UrenDagregistratieGuard
             $this->logger->error(
                 'UrenDagregistratieGuard: validateOnSave failed — denying save (fail-closed)',
                 [
-                    'ondernemingId' => ($entry['ondernemingId'] ?? 'unknown'),
+                    'enterpriseId' => ($entry['enterpriseId'] ?? 'unknown'),
                     'exception'     => $e->getMessage(),
                 ]
             );

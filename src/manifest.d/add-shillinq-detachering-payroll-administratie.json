@@ -166,7 +166,7 @@
 				"register": "shillinq",
 				"schema": "OpdrachtgeversVerklaring",				"columns": [
 					{
-						"key": "zzpNaam",
+						"key": "freelancerName",
 						"label": "Freelancer",
 						"sortable": true
 					},
@@ -176,7 +176,7 @@
 						"sortable": true
 					},
 					{
-						"key": "looptijdEind",
+						"key": "termEnd",
 						"label": "End date",
 						"sortable": true
 					},
@@ -209,7 +209,7 @@
 						"type": "string"
 					},
 					{
-						"key": "zzpNaam",
+						"key": "freelancerName",
 						"label": "Freelancer name",
 						"type": "string"
 					},
@@ -224,7 +224,7 @@
 						"type": "date"
 					},
 					{
-						"key": "looptijdEind",
+						"key": "termEnd",
 						"label": "End date",
 						"type": "date"
 					},
@@ -305,12 +305,12 @@
 						"sortable": true
 					},
 					{
-						"key": "ontvangerNaam",
+						"key": "recipientName",
 						"label": "Recipient",
 						"sortable": true
 					},
 					{
-						"key": "betalingenTotaal",
+						"key": "paymentsTotal",
 						"label": "Total payments (EUR)",
 						"sortable": true
 					},
@@ -348,7 +348,7 @@
 						"type": "string"
 					},
 					{
-						"key": "ontvangerNaam",
+						"key": "recipientName",
 						"label": "Recipient name",
 						"type": "string"
 					},
@@ -364,7 +364,7 @@
 						"type": "string"
 					},
 					{
-						"key": "betalingenTotaal",
+						"key": "paymentsTotal",
 						"label": "Total payments (EUR)",
 						"type": "number"
 					},

@@ -13,8 +13,8 @@
       "name": "micro",
       "wettelijkeBasis": "art. 2:395a BW",
       "thresholds": {
-        "balansTotaal": 450000,
-        "nettoOmzet": 900000,
+        "balanceSheetTotal": 450000,
+        "netRevenue": 900000,
         "gemiddeldAantalWerknemers": 10
       }
     },
@@ -22,8 +22,8 @@
       "name": "klein",
       "wettelijkeBasis": "art. 2:396 BW",
       "thresholds": {
-        "balansTotaal": 12000000,
-        "nettoOmzet": 24000000,
+        "balanceSheetTotal": 12000000,
+        "netRevenue": 24000000,
         "gemiddeldAantalWerknemers": 50
       }
     },
@@ -31,8 +31,8 @@
       "name": "middelgroot",
       "wettelijkeBasis": "art. 2:397 BW",
       "thresholds": {
-        "balansTotaal": 25000000,
-        "nettoOmzet": 50000000,
+        "balanceSheetTotal": 25000000,
+        "netRevenue": 50000000,
         "gemiddeldAantalWerknemers": 250
       }
     },

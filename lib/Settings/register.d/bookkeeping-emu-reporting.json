@@ -18,7 +18,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "periodeJaar",
+          "periodYear",
           "periodeType",
           "status"
         ],
@@ -35,7 +35,7 @@
             "description": "RSIN, gemeentecode, naam, soort (gemeente/provincie/waterschap/GR) of the reporting body.",
             "title": "Rapporterende Organisatie"
           },
-          "periodeJaar": {
+          "periodYear": {
             "type": "integer",
             "description": "Calendar year of the period (REQ-EMU-001).",
             "example": 2026,
@@ -89,28 +89,28 @@
             "description": "CBS-enquête template version this report conforms to (REQ-EMU-003).",
             "title": "CBS Template Version"
           },
-          "emuSaldoBerekend": {
+          "emuBalanceCalculated": {
             "type": "number",
             "nullable": true,
             "description": "Computed EMU cash saldo for the period (MonetaryAmount, EUR; negative = tekort) per REQ-EMU-002.",
             "example": -2300000,
             "title": "Emu Saldo Berekend"
           },
-          "emuSaldoBegroot": {
+          "emuBalanceBudgeted": {
             "type": "number",
             "nullable": true,
             "description": "Budgeted (begroot) EMU saldo for the period from the meerjarenraming (REQ-EMU-007).",
             "example": -1800000,
             "title": "Emu Saldo Begroot"
           },
-          "emuSaldoAfwijking": {
+          "emuBalanceDeviation": {
             "type": "number",
             "nullable": true,
             "description": "berekend − begroot (derived, REQ-EMU-007).",
             "example": -500000,
             "title": "Emu Saldo Afwijking"
           },
-          "emuSaldoAfwijkingPercentage": {
+          "emuBalanceDeviationPercentage": {
             "type": "number",
             "nullable": true,
             "description": "(afwijking / abs(begroot)) × 100 (derived, REQ-EMU-007).",
@@ -138,7 +138,7 @@
             "example": 13500000,
             "title": "Emu Schuld Ruimte"
           },
-          "bbvSaldoBatenLasten": {
+          "municipalAccountingBalanceRevenueExpenses": {
             "type": "number",
             "nullable": true,
             "description": "BBV jaarrekening saldo baten/lasten used for reconciliation (REQ-EMU-009).",
@@ -215,7 +215,7 @@
           }
         },
         "x-openregister-calculations": {
-          "emuSaldoAfwijking": {
+          "emuBalanceDeviation": {
             "description": "berekend − begroot (REQ-EMU-007).",
             "expr": "@self.emuSaldoBerekend - @self.emuSaldoBegroot"
           },
@@ -786,24 +786,24 @@
       "rapporterendeOrganisatie": {
         "rsin": "001234567",
         "gemeentecode": "1742",
-        "naam": "Gemeente Voorbeeldam",
+        "name": "Gemeente Voorbeeldam",
         "soort": "gemeente"
       },
-      "periodeJaar": 2026,
+      "periodYear": 2026,
       "periodeKwartaal": 2,
       "periodeType": "kwartaal-emu-saldo",
       "status": "ingediend",
       "indieningsdatum": "2026-07-15T09:23:00+02:00",
       "cbsBevestigingsnummer": "CBS-EMU-2026Q2-001234567",
       "cbsTemplateVersion": "2026",
-      "emuSaldoBerekend": -2300000,
-      "emuSaldoBegroot": -1800000,
-      "emuSaldoAfwijking": -500000,
-      "emuSaldoAfwijkingPercentage": -27.8,
+      "emuBalanceCalculated": -2300000,
+      "emuBalanceBudgeted": -1800000,
+      "emuBalanceDeviation": -500000,
+      "emuBalanceDeviationPercentage": -27.8,
       "emuSchuldBruto": 142500000,
       "emuSchuldWettelijkeNorm": 156000000,
       "emuSchuldRuimte": 13500000,
-      "bbvSaldoBatenLasten": 4200000,
+      "municipalAccountingBalanceRevenueExpenses": 4200000,
       "bbvTotaleAdjustments": -6500000,
       "bbvAansluitingscontrole": "geslaagd",
       "toelichting": "Afwijking veroorzaakt door versnelde dotatie aan voorziening pensioen wethouders (+450K) en hogere investering MFA Centrum (+820K kas).",
@@ -821,10 +821,10 @@
       "amount": 1240000,
       "bron": {
         "grootboekrekening": "4801000",
-        "omschrijving": "Afschrijving gebouwen onderwijs",
+        "description": "Afschrijving gebouwen onderwijs",
         "taakveld": "4.2",
-        "taakveldNaam": "Onderwijshuisvesting",
-        "programma": "Onderwijs"
+        "taskFieldName": "Onderwijshuisvesting",
+        "programme": "Onderwijs"
       },
       "regel": "Wet Hof art. 3 lid 2: afschrijvingen zijn geen kasuitgaven en worden geëlimineerd uit EMU-saldo",
       "toelichting": "Lineaire afschrijving brede school De Hoeksteen, boekwaarde EUR 24,8M, looptijd 40 jaar",
@@ -852,8 +852,8 @@
       "taakveld": "8.1",
       "tegenrekening": {
         "soort": "leverancier",
-        "naam": "BAM Infra Nederland B.V.",
-        "nummer": "F-2026-44218"
+        "name": "BAM Infra Nederland B.V.",
+        "number": "F-2026-44218"
       },
       "kasOfTransactiebasis": "kas",
       "betaalmoment": "2026-05-22T14:11:00+02:00",
@@ -870,7 +870,7 @@
       "peildatum": "2026-06-30",
       "instrument": "vaste-geldlening",
       "tegenpartij": {
-        "naam": "BNG Bank N.V.",
+        "name": "BNG Bank N.V.",
         "soort": "sector-S122-bank",
         "consolidatieEMU": "extern"
       },

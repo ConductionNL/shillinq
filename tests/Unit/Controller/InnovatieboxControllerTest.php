@@ -159,7 +159,7 @@ final class InnovatieboxControllerTest extends TestCase
      */
     public function testAggregationMissingAdministrationReturns400(): void
     {
-        $this->withParams(['boekjaar' => '2024']);
+        $this->withParams(['financialYear' => '2024']);
         self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->aggregation()->getStatus());
 
     }//end testAggregationMissingAdministrationReturns400()
@@ -171,7 +171,7 @@ final class InnovatieboxControllerTest extends TestCase
      */
     public function testAggregationBadYearReturns400(): void
     {
-        $this->withParams(['administration_id' => 'adm-1', 'boekjaar' => '24']);
+        $this->withParams(['administration_id' => 'adm-1', 'financialYear' => '24']);
         self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->aggregation()->getStatus());
 
     }//end testAggregationBadYearReturns400()
@@ -183,7 +183,7 @@ final class InnovatieboxControllerTest extends TestCase
      */
     public function testAggregationValidReturns200(): void
     {
-        $this->withParams(['administration_id' => 'adm-1', 'boekjaar' => '2024']);
+        $this->withParams(['administration_id' => 'adm-1', 'financialYear' => '2024']);
         $payload = ['data' => [], 'total' => 0, 'totals' => ['vpb_regel_23' => 0.0, 'voordeel_innovatiebox' => 0.0]];
         $this->aggregation->expects($this->once())
             ->method('aggregate')
@@ -203,7 +203,7 @@ final class InnovatieboxControllerTest extends TestCase
      */
     public function testAggregationServiceFailureReturns500(): void
     {
-        $this->withParams(['administration_id' => 'adm-1', 'boekjaar' => '2024']);
+        $this->withParams(['administration_id' => 'adm-1', 'financialYear' => '2024']);
         $this->aggregation->method('aggregate')->willThrowException(new \RuntimeException('boom'));
         $this->logger->expects($this->once())->method('error');
 
@@ -259,7 +259,7 @@ final class InnovatieboxControllerTest extends TestCase
      */
     public function testDoorsnijdingsverbodReturnsFindings(): void
     {
-        $this->withParams(['administration_id' => 'adm-1', 'boekjaar' => '2024']);
+        $this->withParams(['administration_id' => 'adm-1', 'financialYear' => '2024']);
         $payload = ['findings' => [], 'blocking' => false, 'total' => 0];
         $this->doorsnijden->expects($this->once())
             ->method('validateNoDuplication')

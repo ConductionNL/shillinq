@@ -239,7 +239,7 @@ final class ProgrammabegrotingFragmentTest extends TestCase
             }
 
             if ($schema === 'Taakveld') {
-                $pid = $object['programmaId'];
+                $pid = $object['programmeId'];
                 $taakveldByProgramma[$pid][] = $object;
             }
         }//end foreach
@@ -262,8 +262,8 @@ final class ProgrammabegrotingFragmentTest extends TestCase
                 $lastenCents += (int) round($tv['lasten'] * 100);
             }
 
-            self::assertSame($batenCents, (int) round($object['batenTotaal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');
-            self::assertSame($lastenCents, (int) round($object['lastenTotaal'] * 100), 'Programma lastenTotaal must equal Σ Taakveld.lasten');
+            self::assertSame($batenCents, (int) round($object['revenueTotal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');
+            self::assertSame($lastenCents, (int) round($object['expensesTotal'] * 100), 'Programma lastenTotaal must equal Σ Taakveld.lasten');
         }//end foreach
 
     }//end testSeedArithmeticIsConsistent()

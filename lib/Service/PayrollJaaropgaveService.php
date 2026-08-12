@@ -126,7 +126,7 @@ class PayrollJaaropgaveService
 
         return [
             'werknemerId'            => $werknemerId,
-            'jaar'                   => $jaar,
+            'year'                   => $jaar,
             'aantalPerioden'         => count($stroken),
             'fiscaalLoonJTD'         => $fiscaalLoon,
             'loonheffingJTD'         => $this->calculator->fromCents(cents: $loonhefC),
@@ -163,7 +163,7 @@ class PayrollJaaropgaveService
         if (($jaaropgave['cumulatievenConsistent'] ?? false) !== true) {
             $this->logger->error(
                 'Shillinq payroll: refusing to persist Jaaropgave with inconsistent cumulatieven',
-                ['werknemerId' => ($jaaropgave['werknemerId'] ?? null), 'jaar' => ($jaaropgave['jaar'] ?? null)]
+                ['werknemerId' => ($jaaropgave['werknemerId'] ?? null), 'year' => ($jaaropgave['year'] ?? null)]
             );
             throw new RuntimeException('Jaaropgave-cumulatieven matchen de som van de perioden niet.');
         }
@@ -220,8 +220,8 @@ class PayrollJaaropgaveService
      */
     private function extractJaarFromPeriodeId(string $periodeId): ?int
     {
-        if (preg_match('/(?<jaar>20[0-9]{2})/', $periodeId, $m) === 1) {
-            return (int) $m['jaar'];
+        if (preg_match('/(?<year>20[0-9]{2})/', $periodeId, $m) === 1) {
+            return (int) $m['year'];
         }
 
         return null;

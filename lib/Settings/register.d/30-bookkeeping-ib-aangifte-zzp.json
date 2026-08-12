@@ -18,14 +18,14 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "ondernemingId",
+          "enterpriseId",
           "belastingjaar",
           "status",
           "aangifteType",
           "administrationId"
         ],
         "properties": {
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK to the onderneming (Corporation/administration owner).",
             "example": "ond-nl-001234",
@@ -84,7 +84,7 @@
             "description": "Form type; auto-detected from profiel attributes (REQ-IB-012 routing).",
             "title": "Aangifte Type"
           },
-          "fiscalistBeconNummer": {
+          "taxAdvisorBeconNumber": {
             "type": "string",
             "nullable": true,
             "description": "Beconnummer of the filing fiscal intermediary, if Becon-route (REQ-IB-008).",
@@ -121,7 +121,7 @@
             "description": "FK to the superseded IBAangifte for a correctieaangifte (REQ-IB-012).",
             "title": "Vorige Aangifte ID"
           },
-          "winstUitOnderneming": {
+          "profitFromEnterprise": {
             "type": "number",
             "description": "Fiscal profit before ondernemersaftrek (MonetaryAmount EUR).",
             "example": 47820.0,
@@ -145,13 +145,13 @@
             "example": 36585.95,
             "title": "Belastbare Winst"
           },
-          "totaalBox1Inkomen": {
+          "totalBox1Income": {
             "type": "number",
             "description": "Aggregate box-1 income (MonetaryAmount EUR).",
             "example": 36585.95,
             "title": "Totaal Box1Inkomen"
           },
-          "totaalBox3Inkomen": {
+          "totalBox3Income": {
             "type": "number",
             "description": "Aggregate box-3 income (MonetaryAmount EUR).",
             "example": 1820.0,
@@ -341,13 +341,13 @@
             "example": "ib-aangifte-2025-ond-001234",
             "title": "Aangifte ID"
           },
-          "omzetExclusiefBtw": {
+          "revenueExcludingVat": {
             "type": "number",
             "description": "Revenue excl. VAT, aggregated from GL revenue accounts (MonetaryAmount EUR).",
             "example": 82400.0,
             "title": "Omzet Exclusief BTW"
           },
-          "kostprijsOmzet": {
+          "costOfRevenue": {
             "type": "number",
             "description": "Cost of goods sold (MonetaryAmount EUR).",
             "example": 12300.0,
@@ -381,7 +381,7 @@
             "type": "object",
             "description": "Car costs with bijtelling/aftrek split.",
             "properties": {
-              "totaal": {
+              "total": {
                 "type": "number",
                 "title": "Totaal",
                 "description": "The numeric value for totaal."
@@ -478,7 +478,7 @@
           }
         },
         "x-openregister-aggregations": {
-          "omzetExclusiefBtw": {
+          "revenueExcludingVat": {
             "description": "Revenue excl. VAT summed over GL revenue postings for the fiscal year (REQ-IB-001). The matched journaalposten are linked into IBAuditTrail.",
             "source": "GLLine",
             "filter": {
@@ -489,7 +489,7 @@
               "credit"
             ]
           },
-          "kostprijsOmzet": {
+          "costOfRevenue": {
             "description": "Cost of goods sold summed over GL cost-of-sales postings (REQ-IB-001).",
             "source": "GLLine",
             "filter": {
@@ -593,7 +593,7 @@
                 "title": "Toegestaan",
                 "description": "Indicates whether toegestaan applies."
               },
-              "jaarVanGebruik": {
+              "yearOfUse": {
                 "type": "integer",
                 "nullable": true,
                 "title": "Jaar Van Gebruik",
@@ -688,7 +688,7 @@
             "example": 5618.05,
             "title": "Mkb Winstvrijstelling"
           },
-          "totaalAftrek": {
+          "totalDeduction": {
             "type": "number",
             "description": "Sum of all allowed deductions (MonetaryAmount EUR).",
             "example": 8088.05,
@@ -772,7 +772,7 @@
             "example": 0,
             "title": "Jonggehandicaptenkorting"
           },
-          "totaalHeffingskortingen": {
+          "totalTaxCredits": {
             "type": "number",
             "description": "Sum of all credits (MonetaryAmount EUR).",
             "example": 3950.4,
@@ -905,7 +905,7 @@
             },
             "title": "Aov Premies"
           },
-          "totaalAftrekbaar": {
+          "totalDeductible": {
             "type": "number",
             "description": "Sum of benut jaarruimte + benut reserveringsruimte + AOV premies (MonetaryAmount EUR).",
             "example": 7200.0,
@@ -1019,7 +1019,7 @@
                 "title": "Prive Kilometers",
                 "description": "The numeric value for prive kilometers."
               },
-              "regelingTotZakelijk": {
+              "schemeUntilBusiness": {
                 "type": "string",
                 "enum": [
                   "FORFAIT_BIJTELLING",
@@ -1102,7 +1102,7 @@
             "example": 0,
             "title": "Schulden"
           },
-          "totaalRendementsgrondslag": {
+          "totalYieldBasis": {
             "type": "number",
             "description": "bank + overige − schulden (MonetaryAmount EUR).",
             "example": 69000.0,
@@ -1455,18 +1455,18 @@
         "schema": "IBAangifte",
         "slug": "ib-aangifte-2025-ond-001234"
       },
-      "ondernemingId": "ond-nl-001234",
+      "enterpriseId": "ond-nl-001234",
       "bsn": "******789",
       "belastingjaar": 2025,
       "status": "GEVALIDEERD",
       "indieningKanaal": "DIGID_ZELFSERVICE",
       "aangifteType": "P_FORMULIER",
-      "winstUitOnderneming": 47820.0,
+      "profitFromEnterprise": 47820.0,
       "ondernemersaftrek": 5616.0,
       "mkbWinstvrijstelling": 5618.05,
       "belastbareWinst": 36585.95,
-      "totaalBox1Inkomen": 36585.95,
-      "totaalBox3Inkomen": 1820.0,
+      "totalBox1Income": 36585.95,
+      "totalBox3Income": 1820.0,
       "verschuldigdeIB": 9420.18,
       "heffingskortingen": 3950.4,
       "teBetalenOfTeOntvangen": 5469.78,
@@ -1482,14 +1482,14 @@
         "slug": "ib-winst-2025-ond-001234"
       },
       "aangifteId": "ib-aangifte-2025-ond-001234",
-      "omzetExclusiefBtw": 82400.0,
-      "kostprijsOmzet": 12300.0,
+      "revenueExcludingVat": 82400.0,
+      "costOfRevenue": 12300.0,
       "brutoWinst": 70100.0,
       "afschrijvingen": 4800.0,
       "personeelskosten": 0,
       "huisvestingskosten": 6200.0,
       "autokosten": {
-        "totaal": 8400.0,
+        "total": 8400.0,
         "bijtellingPrive": 3960.0,
         "aftrekbaar": 4440.0
       },
@@ -1529,7 +1529,7 @@
       },
       "startersaftrek": {
         "toegestaan": false,
-        "jaarVanGebruik": null,
+        "yearOfUse": null,
         "maxKeer": 3,
         "amount": 0
       },
@@ -1549,7 +1549,7 @@
         "evidenceRef": null
       },
       "mkbWinstvrijstelling": 5618.05,
-      "totaalAftrek": 8088.05,
+      "totalDeduction": 8088.05,
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1565,7 +1565,7 @@
       "ouderenkorting": 0,
       "alleenstaandeOuderenkorting": 0,
       "jonggehandicaptenkorting": 0,
-      "totaalHeffingskortingen": 3950.4,
+      "totalTaxCredits": 3950.4,
       "berekeningsbasis": {
         "inkomenBox1": 36585.95,
         "arbeidsinkomen": 36585.95,
@@ -1595,7 +1595,7 @@
         "polisnummer": "AOV-MOVIR-789123",
         "verzekeraar": "Movir N.V."
       },
-      "totaalAftrekbaar": 7200.0,
+      "totalDeductible": 7200.0,
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1616,7 +1616,7 @@
       "kilometerAdministratie": {
         "aanwezig": false,
         "priveKilometers": null,
-        "regelingTotZakelijk": "FORFAIT_BIJTELLING"
+        "schemeUntilBusiness": "FORFAIT_BIJTELLING"
       },
       "grondslag": "art. 3.20 Wet IB 2001",
       "administrationId": "adm-consultancy-nl"
@@ -1632,7 +1632,7 @@
       "bankEnSpaartegoeden": 28000.0,
       "overigeBezittingen": 41000.0,
       "schulden": 0,
-      "totaalRendementsgrondslag": 69000.0,
+      "totalYieldBasis": 69000.0,
       "heffingvrijVermogen": 57000.0,
       "belastbareGrondslag": 12000.0,
       "berekendRendement": {
