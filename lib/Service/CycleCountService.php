@@ -52,10 +52,10 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\VarianceGate;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Per REQ-ICC-006 snapshot fan-out + REQ-ICC-007 variance posting.
@@ -607,8 +607,8 @@ class CycleCountService
     /**
      * Extract the OR id from a saveObject return value (entity or array shape).
      *
-     * ⚠️ Two stacked defects were fixed here; both matter and neither alone is
-     * enough.
+     * Delegates to {@see ObjectIdentifier::resolve()}, which carries the full
+     * reasoning and the live measurements. The short version:
      *
      * 1. WHICH BRANCH RUNS. The object arm used `method_exists()`. OpenRegister's
      *    `ObjectEntity` declares neither `getId()` nor `getUuid()` — both arrive
@@ -618,8 +618,6 @@ class CycleCountService
      *    every real call, and `emitAdjustments()` bailed at :361 — after it had
      *    already persisted a draft StockMove, and before it could stamp the
      *    `adjustmentStockMoveId` back-reference its own idempotency depends on.
-     *    Measured live: `method_exists($entity,'getId') === false`, with
-     *    `method_exists($entity,'jsonSerialize') === true` as the positive control.
      *
      *    ⚠️ `is_callable()` is NOT the fix: it returns **true for any name at all**
      *    on a `__call()` class (negative control: `is_callable($e,'totalNonsenseXyz')`
@@ -649,56 +647,7 @@ class CycleCountService
      */
     private function extractId(mixed $saved): string
     {
-        if (is_array($saved) === true) {
-            if (isset($saved['id']) === true) {
-                return (string) $saved['id'];
-            }
-
-            if (isset($saved['@self']['id']) === true) {
-                return (string) $saved['@self']['id'];
-            }
-        }
-
-        if (is_object($saved) === true) {
-            // `jsonSerialize()` IS concrete on ObjectEntity, so `method_exists()`
-            // answers it correctly, and it renders `id` as the UUID — the same
-            // identifier space the array arm above returns.
-            if (method_exists($saved, 'jsonSerialize') === true) {
-                try {
-                    $rendered = $saved->jsonSerialize();
-                    if (is_array($rendered) === true
-                        && isset($rendered['id']) === true
-                        && is_scalar($rendered['id']) === true
-                        && (string) $rendered['id'] !== ''
-                    ) {
-                        return (string) $rendered['id'];
-                    }
-                } catch (Throwable $e) {
-                    // Fall through to the uuid probe below.
-                }
-            }
-
-            // `getUuid()` is magic, so `property_exists()` on the backing property
-            // is the only correct probe — it is also exactly what `Entity::getter()`
-            // itself decides on. The accessor is invoked through a variable method
-            // name and inside try/catch, matching ListenerSchemaResolver::
-            // readAccessor(): `Entity::__call()` throws BadFunctionCallException
-            // for a property the entity does not carry, and a non-scalar value is
-            // treated as absent.
-            if (property_exists($saved, 'uuid') === true) {
-                $getter = 'getUuid';
-                try {
-                    $uuid = $saved->{$getter}();
-                    if (is_scalar($uuid) === true && (string) $uuid !== '') {
-                        return (string) $uuid;
-                    }
-                } catch (Throwable $e) {
-                    return '';
-                }
-            }
-        }//end if
-
-        return '';
+        return ObjectIdentifier::resolve(saved: $saved);
 
     }//end extractId()
 
