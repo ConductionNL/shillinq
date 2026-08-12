@@ -106,13 +106,15 @@ class DocudeskExtractionClient {
 	 * shillinq only consumes the async event path (REQ-RXC-001), never the
 	 * synchronous response body.
 	 *
+	 * Returns an outcome envelope and never throws. `extractionId` is the docudesk
+	 * `financialExtraction` object id read from the synchronous response
+	 * (REQ-GAC-001), or null when the request failed or the response body carried
+	 * no usable id.
+	 *
 	 * @param string $documentUri The docudesk source document URI.
 	 * @param string $docType `receipt` or `supplier-invoice`.
 	 *
 	 * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
-	 *                                                                                              Outcome; never throws. `extractionId` is the docudesk `financialExtraction` object
-	 *                                                                                              id read from the synchronous response (REQ-GAC-001), or null when the request
-	 *                                                                                              failed or the response body carried no usable id.
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md

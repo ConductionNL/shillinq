@@ -125,13 +125,13 @@ final class ComplianceService {
 	 * branch is kept compatible for the existing tests + the cache
 	 * invalidation listener.
 	 *
+	 * Returns a compliance envelope. Empty/unconfigured programmes return
+	 * `utilization=0.0`, `status="unconfigured"`, `budget=0` and `ytdSpend=0`.
+	 *
 	 * @param array<string,mixed>|string $programme Programme record or programmeCode.
 	 * @param int|null $fiscalYear Optional fiscal-year scope (REQ-BBVW-006).
 	 *
 	 * @return array{utilization: float, status: string, budget: int, ytdSpend: int, programmeCode: string}
-	 *                                                                                                      Compliance envelope. Empty/unconfigured programmes return
-	 *                                                                                                      `utilization=0.0`, `status="unconfigured"`, `budget=0`,
-	 *                                                                                                      `ytdSpend=0`.
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */

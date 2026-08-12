@@ -121,7 +121,9 @@ class AansluitingCalculator {
 	 * Diff two bucket lists (each keyed by an arbitrary bucketKey, e.g. a
 	 * "type:taxRate" rubriek key) into the generic AansluitingResult
 	 * lineDeltas shape (REQ-AANS-005). A bucket present in only one list is
-	 * still emitted, with the other side's amount reported as null.
+	 * still emitted, with the other side's amount reported as null. Results are
+	 * sorted by bucketKey ascending and exclude TOTAL — callers prepend their own
+	 * TOTAL row.
 	 *
 	 * @param array<string,float> $bucketsA Source A amounts keyed by bucketKey.
 	 * @param array<string,float> $bucketsB Source B amounts keyed by bucketKey.
@@ -129,7 +131,6 @@ class AansluitingCalculator {
 	 *                             is computed per bucket, consistent with differenceCents().
 	 *
 	 * @return array<int,array{bucketKey:string,sourceAAmount:?float,sourceBAmount:?float,deltaAmount:float}>
-	 *                                                                                                        Sorted by bucketKey ascending, TOTAL excluded (callers prepend their own TOTAL row).
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */

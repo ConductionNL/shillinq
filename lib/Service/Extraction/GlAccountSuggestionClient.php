@@ -97,6 +97,10 @@ class GlAccountSuggestionClient {
 	 * Request a GL-account suggestion for a prior docudesk financial
 	 * extraction (REQ-GAC-003).
 	 *
+	 * Returns an outcome envelope and never throws. `suggestion` is docudesk's
+	 * decoded response body, or null on any failure (REQ-GAC-006 graceful
+	 * degradation).
+	 *
 	 * @param string $extractionId The docudesk `financialExtraction`
 	 *                             object id.
 	 * @param array<int, array<string,string>> $candidateAccounts Candidate accounts (each
@@ -105,8 +109,6 @@ class GlAccountSuggestionClient {
 	 *                                                            (REQ-GAC-002).
 	 *
 	 * @return array{success: bool, statusCode: int, error: string|null, suggestion: array<string,mixed>|null}
-	 *                                                                                                         Outcome; never throws. `suggestion` is docudesk's decoded response body, or null on
-	 *                                                                                                         any failure (REQ-GAC-006 graceful degradation).
 	 *
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */

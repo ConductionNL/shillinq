@@ -333,12 +333,15 @@ class TimeIntakeService {
 	/**
 	 * Structurally validate + normalise the request body (HTTP 400 on failure).
 	 *
+	 * The returned tuple is, in order: batchId, organisationRef, billingModel,
+	 * currency, periodStart, periodEnd, requestRateCardId, projectRef, notes,
+	 * entries.
+	 *
 	 * @param array<string,mixed> $body Decoded JSON body.
 	 *
 	 * @throws InvalidArgumentException
 	 *
 	 * @return array{0:string,1:string,2:string,3:string,4:string,5:string,6:?string,7:?string,8:?string,9:array<int,array<string,mixed>>}
-	 *                                                                                                                                     [batchId, organisationRef, billingModel, currency, periodStart, periodEnd, requestRateCardId, projectRef, notes, entries]
 	 */
 	private function parseAndAssertStructure(array $body): array {
 		$batchId = trim((string)($body['batchId'] ?? ''));

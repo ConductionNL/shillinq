@@ -46,10 +46,11 @@ class Camt053StatementParser {
 	/**
 	 * Parse the booked outgoing entries of a CAMT.053 statement.
 	 *
+	 * Yields one entry per booked DBIT credit-transfer transaction.
+	 *
 	 * @param string $contents The raw CAMT.053 XML.
 	 *
 	 * @return array<int, array{endToEndId: string, amount: float, creditorIban: string, currency: string}>
-	 *                                                                                                      One entry per booked DBIT credit-transfer transaction.
 	 */
 	public function parse(string $contents): array {
 		$contents = trim(string: $contents);

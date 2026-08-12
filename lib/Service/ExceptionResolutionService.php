@@ -340,7 +340,6 @@ class ExceptionResolutionService {
 	 *                              rejected with a RuntimeException).
 	 *
 	 * @return array{match:array<string,mixed>,dispatch:array{accepted:bool,dispatchId:?string,error:?string}}
-	 *                                                                                                         The updated ThreeWayMatch + the dispatch outcome envelope.
 	 *
 	 * @throws \RuntimeException On cross-tenant access, missing match,
 	 *                           missing invoice, non-exception match

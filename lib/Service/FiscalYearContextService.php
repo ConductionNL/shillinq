@@ -99,7 +99,6 @@ class FiscalYearContextService {
 	 * @param DateTimeInterface|null $now Reference instant; defaults to "now" UTC.
 	 *
 	 * @return array{fiscalYear:int,startDate:string,endDate:string,administrationId:string}|null
-	 *                                                                                            Active FY window or null when access is denied / unresolved.
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
