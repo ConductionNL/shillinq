@@ -68,7 +68,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 		$this->logger->info(
 			'Shillinq UWV loonaangifte pullStatus deferred (no outbound connector bound)',
 			[
-				'kenmerk' => $kenmerk,
+				'reference' => $kenmerk,
 				'payload' => $payload,
 			]
 		);
@@ -101,7 +101,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 		$this->logger->info(
 			'Shillinq UWV Werkhervattingskas lookupSector deferred (no outbound connector bound)',
 			[
-				'kenmerk' => $kenmerk,
+				'reference' => $kenmerk,
 				'sectorCode' => $sectorCode,
 				'peiljaar' => $peiljaar,
 				'context' => $context,

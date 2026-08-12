@@ -45,24 +45,24 @@ class ProgrammabegrotingExporter {
 	 *
 	 * @param array<int,array<string,mixed>> $taakvelden The vastgestelde Taakveld rows.
 	 *
-	 * @return array<int,array{taakveldCode:string,baten:float,lasten:float}> Sorted iv3 rows.
+	 * @return array<int,array{taskFieldCode:string,revenue:float,expenses:float}> Sorted iv3 rows.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
 	 */
 	public function iv3Rows(array $taakvelden): array {
 		$byCode = [];
 		foreach ($taakvelden as $taakveld) {
-			$code = (string)($taakveld['taakveldCode'] ?? '');
+			$code = (string)($taakveld['taskFieldCode'] ?? '');
 			if ($code === '') {
 				continue;
 			}
 
 			if (isset($byCode[$code]) === false) {
-				$byCode[$code] = ['batenCents' => 0, 'lastenCents' => 0];
+				$byCode[$code] = ['revenueCents' => 0, 'expensesCents' => 0];
 			}
 
-			$byCode[$code]['batenCents'] += (int)round(((float)($taakveld['baten'] ?? 0)) * 100);
-			$byCode[$code]['lastenCents'] += (int)round(((float)($taakveld['lasten'] ?? 0)) * 100);
+			$byCode[$code]['revenueCents'] += (int)round(((float)($taakveld['revenue'] ?? 0)) * 100);
+			$byCode[$code]['expensesCents'] += (int)round(((float)($taakveld['expenses'] ?? 0)) * 100);
 		}
 
 		ksort($byCode);
@@ -70,9 +70,9 @@ class ProgrammabegrotingExporter {
 		$rows = [];
 		foreach ($byCode as $code => $cents) {
 			$rows[] = [
-				'taakveldCode' => $code,
-				'baten' => (float)($cents['batenCents'] / 100),
-				'lasten' => (float)($cents['lastenCents'] / 100),
+				'taskFieldCode' => $code,
+				'revenue' => (float)($cents['revenueCents'] / 100),
+				'expenses' => (float)($cents['expensesCents'] / 100),
 			];
 		}
 
@@ -99,13 +99,13 @@ class ProgrammabegrotingExporter {
 		$batenCents = 0;
 		$lastenCents = 0;
 		foreach ($taakvelden as $taakveld) {
-			$batenCents += (int)round(((float)($taakveld['baten'] ?? 0)) * 100);
-			$lastenCents += (int)round(((float)($taakveld['lasten'] ?? 0)) * 100);
+			$batenCents += (int)round(((float)($taakveld['revenue'] ?? 0)) * 100);
+			$lastenCents += (int)round(((float)($taakveld['expenses'] ?? 0)) * 100);
 		}
 
 		$investeringCents = 0;
 		foreach ($investeringen as $investering) {
-			$investeringCents += (int)round(((float)($investering['bruto'] ?? 0)) * 100);
+			$investeringCents += (int)round(((float)($investering['gross'] ?? 0)) * 100);
 		}
 
 		$reserveCents = (int)round($reserveMutaties * 100);
@@ -137,10 +137,10 @@ class ProgrammabegrotingExporter {
 	public function jsonExport(array $begroting, array $programmas, array $taakvelden, array $paragrafen): array {
 		return [
 			'metadata' => [
-				'begrotingsjaar' => ($begroting['begrotingsjaar'] ?? null),
+				'budgetYear' => ($begroting['budgetYear'] ?? null),
 				'organisationType' => ($begroting['organisationType'] ?? null),
 				'status' => ($begroting['status'] ?? null),
-				'vaststellingsDatum' => ($begroting['vaststellingsDatum'] ?? null),
+				'determinationDate' => ($begroting['determinationDate'] ?? null),
 				'sluitendStructureel' => ($begroting['sluitendStructureel'] ?? null),
 				'sluitendReëel' => ($begroting['sluitendReëel'] ?? null),
 				'toezichtRegime' => ($begroting['toezichtRegime'] ?? null),
@@ -157,13 +157,13 @@ class ProgrammabegrotingExporter {
 				},
 				$programmas
 			),
-			'taakvelden' => $this->iv3Rows(taakvelden: $taakvelden),
+			'taskFields' => $this->iv3Rows(taakvelden: $taakvelden),
 			'paragrafen' => array_map(
 				static function (array $paragraaf): array {
 					return [
 						'type' => ($paragraaf['type'] ?? null),
 						'narrative' => ($paragraaf['narrative'] ?? null),
-						'kerncijfers' => ($paragraaf['kerncijfers'] ?? null),
+						'keyFigures' => ($paragraaf['keyFigures'] ?? null),
 					];
 				},
 				$paragrafen

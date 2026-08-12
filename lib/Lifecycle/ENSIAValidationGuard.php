@@ -196,29 +196,29 @@ class ENSIAValidationGuard {
 	 * @return bool True when the persist is allowed; false when blocked.
 	 */
 	public function maturityEvidenceSatisfied(array $vraag): bool {
-		$score = $vraag['volwassenheidsScore'] ?? null;
+		$score = $vraag['maturityScore'] ?? null;
 		if (is_int($score) === false || $score < 3) {
 			return true;
 		}
 
-		$bewijsstukken = $vraag['bewijsstukken'] ?? [];
+		$bewijsstukken = $vraag['supportingDocuments'] ?? [];
 		if (is_array($bewijsstukken) === false || count($bewijsstukken) === 0) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires evidence',
 				[
-					'vraagCode' => (string)($vraag['vraagCode'] ?? ''),
+					'questionCode' => (string)($vraag['questionCode'] ?? ''),
 					'score' => $score,
 				]
 			);
 			return false;
 		}
 
-		$toelichting = (string)($vraag['toelichting'] ?? '');
+		$toelichting = (string)($vraag['notes'] ?? '');
 		if (mb_strlen($toelichting) < 50) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires toelichting ≥ 50 chars',
 				[
-					'vraagCode' => (string)($vraag['vraagCode'] ?? ''),
+					'questionCode' => (string)($vraag['questionCode'] ?? ''),
 					'toelichtingChars' => mb_strlen($toelichting),
 				]
 			);
@@ -254,12 +254,12 @@ class ENSIAValidationGuard {
 			return true;
 		}
 
-		$reden = trim((string)($vraag['reden'] ?? ''));
+		$reden = trim((string)($vraag['reason'] ?? ''));
 		if ($reden === '') {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-008 — post-peer-review edit requires reden',
 				[
-					'vraagCode' => (string)($vraag['vraagCode'] ?? ''),
+					'questionCode' => (string)($vraag['questionCode'] ?? ''),
 				]
 			);
 			return false;

@@ -62,13 +62,13 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	public function testToSbrInstancePayloadEchoesTotalsAndDeterministicRef(): void {
 		$lh = [
 			'werkgeverId' => 'wg-conduction-bv',
-			'periodeId' => 'lp-2026-05',
+			'periodId' => 'lp-2026-05',
 			'totalPayrollTax' => 18620.10,
 			'totalSocialInsuranceContributions' => 7559.40,
 			'totalHealthInsurance' => 3654.00,
 			'totalFinalLeviesWorkRelatedCosts' => 0.0,
 			'totalRemittance' => 29833.50,
-			'vervaldagAfdracht' => '2026-06-30',
+			'vervaldagRemittance' => '2026-06-30',
 			'status' => 'VOORBEREID',
 		];
 
@@ -83,7 +83,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 		$this->assertSame(3654.00, $payload['zvwTotaal']);
 		$this->assertSame(0.0, $payload['eindheffingenWKR']);
 		$this->assertSame(29833.50, $payload['totalRemittance']);
-		$this->assertSame('2026-06-30', $payload['vervaldagAfdracht']);
+		$this->assertSame('2026-06-30', $payload['vervaldagRemittance']);
 
 	}//end testToSbrInstancePayloadEchoesTotalsAndDeterministicRef()
 
@@ -95,7 +95,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	public function testStampInstanceRefIsIdempotent(): void {
 		$lh = [
 			'werkgeverId' => 'wg-1',
-			'periodeId' => 'lp-2026-04',
+			'periodId' => 'lp-2026-04',
 		];
 
 		$first = $this->svc->stampInstanceRef(lhAfdracht: $lh);
@@ -115,7 +115,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 		$payload = $this->svc->toSbrInstancePayload(
 			lhAfdracht: [
 				'werkgeverId' => 'wg-/?\\!1',
-				'periodeId' => 'lp 2026/05',
+				'periodId' => 'lp 2026/05',
 			]
 		);
 

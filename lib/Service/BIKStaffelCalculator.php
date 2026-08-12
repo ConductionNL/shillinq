@@ -171,7 +171,7 @@ class BIKStaffelCalculator {
 	 * @param bool $btwVerrekenbaar True when the creditor CAN offset VAT (no surcharge). Default true.
 	 * @param float $btwPercentage VAT rate applied when !btwVerrekenbaar (default 21%).
 	 *
-	 * @return array{schaal1_0_2500:float,schaal2_2500_5000:float,schaal3_5000_10000:float,schaal4_10000_200000:float,schaal5_200000plus:float,totaal:float,minimum:float,maximum:float,toegepast:float,btwVerrekenbaar:bool,btwPercentage:float,btwBedrag:float,toegepastInclBtw:float}
+	 * @return array{scale1_0_2500:float,scale2_2500_5000:float,scale3_5000_10000:float,scale4_10000_200000:float,scale5_200000plus:float,total:float,minimum:float,maximum:float,applied:float,vatOffsettable:bool,vatPercentage:float,vatAmount:float,appliedInclVat:float}
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
@@ -219,19 +219,19 @@ class BIKStaffelCalculator {
 		}
 
 		return [
-			'schaal1_0_2500' => $this->fromCents(cents: $slabAmountsCents[0]),
-			'schaal2_2500_5000' => $this->fromCents(cents: $slabAmountsCents[1]),
-			'schaal3_5000_10000' => $this->fromCents(cents: $slabAmountsCents[2]),
-			'schaal4_10000_200000' => $this->fromCents(cents: $slabAmountsCents[3]),
-			'schaal5_200000plus' => $this->fromCents(cents: $slabAmountsCents[4]),
+			'scale1_0_2500' => $this->fromCents(cents: $slabAmountsCents[0]),
+			'scale2_2500_5000' => $this->fromCents(cents: $slabAmountsCents[1]),
+			'scale3_5000_10000' => $this->fromCents(cents: $slabAmountsCents[2]),
+			'scale4_10000_200000' => $this->fromCents(cents: $slabAmountsCents[3]),
+			'scale5_200000plus' => $this->fromCents(cents: $slabAmountsCents[4]),
 			'total' => $this->fromCents(cents: $totaalCents),
 			'minimum' => $this->fromCents(cents: self::MINIMUM_CENTS),
 			'maximum' => $this->fromCents(cents: self::MAXIMUM_CENTS),
-			'toegepast' => $this->fromCents(cents: $toegepastCents),
-			'btwVerrekenbaar' => $btwVerrekenbaar,
-			'btwPercentage' => $appliedBtwPercentage,
+			'applied' => $this->fromCents(cents: $toegepastCents),
+			'vatOffsettable' => $btwVerrekenbaar,
+			'vatPercentage' => $appliedBtwPercentage,
 			'vatAmount' => $this->fromCents(cents: $btwCents),
-			'toegepastInclBtw' => $this->fromCents(cents: ($toegepastCents + $btwCents)),
+			'appliedInclVat' => $this->fromCents(cents: ($toegepastCents + $btwCents)),
 		];
 
 	}//end staffel()
@@ -252,7 +252,7 @@ class BIKStaffelCalculator {
 	 * @param float|null $tariefB2B Override the B2B handelsrente (flat, skips the table).
 	 * @param float|null $tariefB2C Override the B2C wettelijke rente (flat, skips the table).
 	 *
-	 * @return array{tarief:float,type:string,ingangsdatum:string,berekendOp:string,dagen:int,bedrag:float,perioden:array<int,array{van:string,tot:string,dagen:int,tarief:float,bedrag:float}>}
+	 * @return array{rate:float,type:string,effectiveDate:string,calculatedOn:string,days:int,amount:float,periods:array<int,array{van:string,tot:string,days:int,rate:float,amount:float}>}
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
@@ -291,7 +291,7 @@ class BIKStaffelCalculator {
 				[
 					'van' => $ingangsdatum,
 					'tot' => $berekendOp,
-					'tarief' => $override,
+					'rate' => $override,
 				],
 			];
 		} else {
@@ -307,30 +307,30 @@ class BIKStaffelCalculator {
 		$totaalDagen = 0;
 		foreach ($segments as $segment) {
 			$dagen = (int)$segment['van']->diff($segment['tot'])->days;
-			$segmentCents = (int)round((($hoofdsomCents * $segment['tarief'] * $dagen) / 365.0));
+			$segmentCents = (int)round((($hoofdsomCents * $segment['rate'] * $dagen) / 365.0));
 			$totaalCents += $segmentCents;
 			$totaalDagen += $dagen;
 			$perioden[] = [
 				'van' => $segment['van']->format('Y-m-d'),
 				'tot' => $segment['tot']->format('Y-m-d'),
-				'dagen' => $dagen,
-				'tarief' => $segment['tarief'],
+				'days' => $dagen,
+				'rate' => $segment['rate'],
 				'amount' => $this->fromCents(cents: $segmentCents),
 			];
 		}
 
 		// Headline tarief = the rate in force on berekendOp (the current rate).
 		$lastSegment = end($segments);
-		$headlineTarief = (float)$lastSegment['tarief'];
+		$headlineTarief = (float)$lastSegment['rate'];
 
 		return [
-			'tarief' => $headlineTarief,
+			'rate' => $headlineTarief,
 			'type' => $type,
-			'ingangsdatum' => $ingangsdatum->format('Y-m-d'),
-			'berekendOp' => $berekendOp->format('Y-m-d'),
-			'dagen' => $totaalDagen,
+			'effectiveDate' => $ingangsdatum->format('Y-m-d'),
+			'calculatedOn' => $berekendOp->format('Y-m-d'),
+			'days' => $totaalDagen,
 			'amount' => $this->fromCents(cents: $totaalCents),
-			'perioden' => $perioden,
+			'periods' => $perioden,
 		];
 
 	}//end rente()
@@ -370,7 +370,7 @@ class BIKStaffelCalculator {
 	 * @param DateTimeImmutable $from Start of accrual (inclusive).
 	 * @param DateTimeImmutable $to End of accrual (exclusive of the day).
 	 *
-	 * @return array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,tarief:float}>
+	 * @return array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,rate:float}>
 	 */
 	private function splitByRateBoundaries(array $table, DateTimeImmutable $from, DateTimeImmutable $to): array {
 		$fromStr = $from->format('Y-m-d');
@@ -390,7 +390,7 @@ class BIKStaffelCalculator {
 			$segments[] = [
 				'van' => $cursor,
 				'tot' => $cut,
-				'tarief' => $this->resolveRateOn(table: $table, on: $cursor),
+				'rate' => $this->resolveRateOn(table: $table, on: $cursor),
 			];
 			$cursor = $cut;
 		}
@@ -398,7 +398,7 @@ class BIKStaffelCalculator {
 		$segments[] = [
 			'van' => $cursor,
 			'tot' => $to,
-			'tarief' => $this->resolveRateOn(table: $table, on: $cursor),
+			'rate' => $this->resolveRateOn(table: $table, on: $cursor),
 		];
 
 		return $segments;
@@ -480,15 +480,15 @@ class BIKStaffelCalculator {
 
 		$hoofdsomCents = $this->toCents(amount: $hoofdsom);
 		// Incassokosten owed = the normed fee INCLUDING any BTW surcharge.
-		$incassoCents = $this->toCents(amount: $berekening['toegepastInclBtw']);
+		$incassoCents = $this->toCents(amount: $berekening['appliedInclVat']);
 		$renteCents = $this->toCents(amount: $rente['amount']);
 		$totaalCents = ($hoofdsomCents + $incassoCents + $renteCents);
 
 		return [
-			'factuurId' => $factuurId,
-			'hoofdsom' => round($hoofdsom, 2),
-			'berekening' => $berekening,
-			'wettelijkeRente' => $rente,
+			'invoiceId' => $factuurId,
+			'principal' => round($hoofdsom, 2),
+			'calculation' => $berekening,
+			'statutoryRente' => $rente,
 			'partyType' => $partyType,
 			'totalDue' => $this->fromCents(cents: $totaalCents),
 			'administrationId' => $administrationId,

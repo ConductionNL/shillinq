@@ -88,7 +88,7 @@ class ENSIAQuestionSetLoader {
 	 *                                 record.
 	 *
 	 * @return array{
-	 *     vraagSetVersion: string,
+	 *     questionSetVersion: string,
 	 *     vragen: array<int,array<string,mixed>>,
 	 * } The loaded version stamp + per-question records.
 	 */
@@ -97,7 +97,7 @@ class ENSIAQuestionSetLoader {
 
 		if (file_exists($path) === false || is_readable($path) === false) {
 			return [
-				'vraagSetVersion' => 'unknown',
+				'questionSetVersion' => 'unknown',
 				'vragen' => [],
 			];
 		}
@@ -105,7 +105,7 @@ class ENSIAQuestionSetLoader {
 		$raw = file_get_contents($path);
 		if ($raw === false) {
 			return [
-				'vraagSetVersion' => 'unknown',
+				'questionSetVersion' => 'unknown',
 				'vragen' => [],
 			];
 		}
@@ -113,12 +113,12 @@ class ENSIAQuestionSetLoader {
 		$payload = json_decode($raw, true);
 		if (is_array($payload) === false) {
 			return [
-				'vraagSetVersion' => 'unknown',
+				'questionSetVersion' => 'unknown',
 				'vragen' => [],
 			];
 		}
 
-		$version = (string)($payload['vraagSetVersion'] ?? sprintf('BIO-1.04-%d', $jaar));
+		$version = (string)($payload['questionSetVersion'] ?? sprintf('BIO-1.04-%d', $jaar));
 		$catalog = $payload['vragen'] ?? [];
 
 		if (is_array($catalog) === false) {
@@ -152,17 +152,17 @@ class ENSIAQuestionSetLoader {
 				'administrationId' => $administrationId,
 				'domein' => $domein,
 				'onderwerp' => (string)($q['onderwerp'] ?? ''),
-				'vraagCode' => (string)($q['vraagCode'] ?? ''),
-				'vraagtekst' => (string)($q['vraagtekst'] ?? ''),
-				'antwoordType' => (string)($q['antwoordType'] ?? 'ja-nee-nvt'),
+				'questionCode' => (string)($q['questionCode'] ?? ''),
+				'questionText' => (string)($q['questionText'] ?? ''),
+				'answerType' => (string)($q['answerType'] ?? 'ja-nee-nvt'),
 				'normniveau' => $normniveau,
 				'peerReviewStatus' => 'nog-niet-beoordeeld',
-				'bewijsstukken' => [],
+				'supportingDocuments' => [],
 			];
 		}//end foreach
 
 		return [
-			'vraagSetVersion' => $version,
+			'questionSetVersion' => $version,
 			'vragen' => $vragen,
 		];
 

@@ -96,8 +96,8 @@ class InnovatieboxAggregationService {
 
 			$row = $this->buildRow(asset: $asset, attribution: $attributions[$assetId], loss: ($openLosses[$assetId] ?? null));
 			$rows[] = $row;
-			$grandVpb += (float)$row['vpb_op_innovatiedeel'];
-			$grandVoordeel += (float)$row['voordeel_innovatiebox'];
+			$grandVpb += (float)$row['vpb_on_innovationshare'];
+			$grandVoordeel += (float)$row['benefit_innovatiebox'];
 		}
 
 		return [
@@ -105,7 +105,7 @@ class InnovatieboxAggregationService {
 			'total' => count($rows),
 			'totals' => [
 				'vpb_regel_23' => round($grandVpb, 2),
-				'voordeel_innovatiebox' => round($grandVoordeel, 2),
+				'benefit_innovatiebox' => round($grandVoordeel, 2),
 			],
 		];
 
@@ -122,12 +122,12 @@ class InnovatieboxAggregationService {
 	 */
 	private function buildRow(array $asset, array $attribution, ?array $loss): array {
 		$naam = (string)($asset['name'] ?? '');
-		$voorNexus = (float)($attribution['kwalificerende_winst_voor_nexus'] ?? 0);
-		$nexus = (float)($attribution['nexusbreuk_toegepast'] ?? 1.0);
-		$naNexus = (float)($attribution['kwalificerende_winst_na_nexus'] ?? 0);
-		$tarief = (float)($attribution['effectief_tarief'] ?? CarryForwardLossService::INNOVATIEBOX_TARIFF);
-		$vpb = (float)($attribution['vpb_op_innovatiedeel'] ?? round(($naNexus * $tarief), 2));
-		$voordeel = (float)($attribution['voordeel_innovatiebox'] ?? 0);
+		$voorNexus = (float)($attribution['kwalificerende_profit_for_nexus'] ?? 0);
+		$nexus = (float)($attribution['nexusbreuk_applied'] ?? 1.0);
+		$naNexus = (float)($attribution['kwalificerende_profit_after_nexus'] ?? 0);
+		$tarief = (float)($attribution['effectief_rate'] ?? CarryForwardLossService::INNOVATIEBOX_TARIFF);
+		$vpb = (float)($attribution['vpb_on_innovationshare'] ?? round(($naNexus * $tarief), 2));
+		$voordeel = (float)($attribution['benefit_innovatiebox'] ?? 0);
 		$lossOffset = null;
 
 		// REQ-IBA-007: an open loss is recovered first at the full tariff before
@@ -146,20 +146,20 @@ class InnovatieboxAggregationService {
 				'benefit_full' => $offset['lossOffsetAtFullRate'],
 				'residual' => $offset['residualProfit'],
 				'benefit_9pct' => $offset['residualProfitAt9Pct'],
-				'balance_after' => $offset['saldoNa'],
+				'balance_after' => $offset['balanceAfter'],
 			];
 		}
 
 		return [
 			'qualifying_asset_id' => $this->assetId(asset: $asset),
 			'name' => $naam,
-			'methode' => (string)($attribution['methode'] ?? ''),
-			'kwalificerende_winst_voor_nexus' => round($voorNexus, 2),
-			'nexusbreuk_toegepast' => round($nexus, 4),
-			'kwalificerende_winst_na_nexus' => round($naNexus, 2),
-			'effectief_tarief' => $tarief,
-			'vpb_op_innovatiedeel' => round($vpb, 2),
-			'voordeel_innovatiebox' => round($voordeel, 2),
+			'method' => (string)($attribution['method'] ?? ''),
+			'kwalificerende_profit_for_nexus' => round($voorNexus, 2),
+			'nexusbreuk_applied' => round($nexus, 4),
+			'kwalificerende_profit_after_nexus' => round($naNexus, 2),
+			'effectief_rate' => $tarief,
+			'vpb_on_innovationshare' => round($vpb, 2),
+			'benefit_innovatiebox' => round($voordeel, 2),
 			'loss_carry_forward' => $lossOffset,
 		];
 

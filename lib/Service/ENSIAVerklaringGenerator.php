@@ -153,7 +153,7 @@ class ENSIAVerklaringGenerator {
 	 * @return string XML.
 	 */
 	private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string {
-		$org = $cyclus['organisatie'] ?? [];
+		$org = $cyclus['organisation'] ?? [];
 		$orgNaam = (string)($org['name'] ?? '');
 		$orgKvk = (string)($org['kvk'] ?? '');
 		$jaar = (string)($cyclus['year'] ?? '');
@@ -182,8 +182,8 @@ class ENSIAVerklaringGenerator {
 			$i = 1;
 			foreach ($top as $b) {
 				$type = (string)($b['type'] ?? 'tekortkoming');
-				$beschrijving = (string)($b['beschrijving'] ?? '');
-				$mitigatieActie = (string)($b['mitigatieActie'] ?? 'nader te bepalen');
+				$beschrijving = (string)($b['description'] ?? '');
+				$mitigatieActie = (string)($b['mitigationAction'] ?? 'nader te bepalen');
 				$paras[] = $this->para(
 					text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie)
 				);
@@ -243,11 +243,11 @@ class ENSIAVerklaringGenerator {
 
 			$counts[$domein]['total']++;
 
-			$score = $v['volwassenheidsScore'] ?? null;
+			$score = $v['maturityScore'] ?? null;
 			$norm = $v['normniveau'] ?? null;
 			if (is_int($score) === true && is_int($norm) === true && $score >= $norm) {
 				$counts[$domein]['metNorm']++;
-			} elseif ($score === null && (string)($v['antwoord'] ?? '') === 'ja') {
+			} elseif ($score === null && (string)($v['answer'] ?? '') === 'ja') {
 				// Ja-nee-nvt: count 'ja' as norm-met.
 				$counts[$domein]['metNorm']++;
 			}

@@ -52,9 +52,9 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 		$service = $this->build();
 		$totaal = $service->telOndernemingsUren(
 			dagregistraties: [
-				['uren' => 8, 'getoldeUren' => 8],
-				['uren' => 6, 'getoldeUren' => 4],
-				['uren' => 2],
+				['hours' => 8, 'getoldeHours' => 8],
+				['hours' => 6, 'getoldeHours' => 4],
+				['hours' => 2],
 			]
 		);
 
@@ -71,10 +71,10 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 		$service = $this->build();
 		$totaal = $service->telOndernemingsUren(
 			dagregistraties: [
-				['uren' => 8],
+				['hours' => 8],
 				'garbage',
 				123,
-				['uren' => 4, 'getoldeUren' => 4],
+				['hours' => 4, 'getoldeHours' => 4],
 			]
 		);
 
@@ -89,7 +89,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	 */
 	public function testNoLoondienstYieldsNietToepasselijk(): void {
 		$patch = $this->build()->bouwPatch(
-			dagregistraties: [['uren' => 800]],
+			dagregistraties: [['hours' => 800]],
 			loondienstUren: 0.0
 		);
 
@@ -105,7 +105,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	 */
 	public function testGrotendeelsOndernemingDoesNotBlockAftrek(): void {
 		$patch = $this->build()->bouwPatch(
-			dagregistraties: [['uren' => 1200]],
+			dagregistraties: [['hours' => 1200]],
 			loondienstUren: 800.0
 		);
 
@@ -121,7 +121,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	 */
 	public function testLoondienstMajorityBlocksAftrek(): void {
 		$patch = $this->build()->bouwPatch(
-			dagregistraties: [['uren' => 400]],
+			dagregistraties: [['hours' => 400]],
 			loondienstUren: 1200.0
 		);
 
@@ -137,7 +137,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	 */
 	public function testFiftyFiftyIsNietGrotendeels(): void {
 		$patch = $this->build()->bouwPatch(
-			dagregistraties: [['uren' => 800]],
+			dagregistraties: [['hours' => 800]],
 			loondienstUren: 800.0
 		);
 

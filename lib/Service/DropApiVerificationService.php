@@ -56,7 +56,7 @@ class DropApiVerificationService {
 	 * @return array{ok:bool, error?:string, gemeentebladId?:string, request?:array<string,mixed>}
 	 */
 	public function composeLookupRequest(array $abb): array {
-		$gmblad = trim((string)($abb['publicatieGemeenteblad'] ?? ''));
+		$gmblad = trim((string)($abb['publicationMunicipalGazette'] ?? ''));
 		if ($gmblad === '') {
 			return ['ok' => false, 'error' => 'ABB has no publicatieGemeenteblad reference'];
 		}

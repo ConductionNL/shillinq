@@ -230,7 +230,7 @@ final class PayrollCalculatorTest extends TestCase {
 
 		// €6.500/month exceeds the €5.969 cap -> 5,32% x 5969 = 317,55.
 		$capped = $this->calc->zvwWerkgever(6500.0, 'MAAND', 'LAAG');
-		self::assertSame(5969.00, $capped['grondslag']);
+		self::assertSame(5969.00, $capped['basis']);
 		self::assertSame(317.55, $capped['afgedragen_wg']);
 
 	}//end testZvwWerkgever()

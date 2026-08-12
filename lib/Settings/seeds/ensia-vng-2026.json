@@ -4,96 +4,96 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"description": "VNG ENSIA-vragenset 2026 — bundled seed gebruikt door ENSIAQuestionSetLoader (REQ-ENSIA-001) wanneer geen externe bron is geconfigureerd. Bevat een representatieve subset van de officiele BIO-1.04-2026 + DigiD + SUWI normatiek. Voor productie-instanties is een verse vraagset van de VNG portal aanbevolen; de loader leest dit bestand alleen als fallback."
 	},
-	"vraagSetVersion": "BIO-1.04-2026",
+	"questionSetVersion": "BIO-1.04-2026",
 	"vragen": [
 		{
 			"domein": "BIO",
 			"onderwerp": "Toegangsbeveiliging",
-			"vraagCode": "BIO-9.1.1",
-			"vraagtekst": "Is er een formeel beleid voor logische toegangsbeveiliging?",
-			"antwoordType": "volwassenheidsniveau-1-5",
+			"questionCode": "BIO-9.1.1",
+			"questionText": "Is er een formeel beleid voor logische toegangsbeveiliging?",
+			"answerType": "volwassenheidsniveau-1-5",
 			"normniveau": 3
 		},
 		{
 			"domein": "BIO",
 			"onderwerp": "Toegangsbeveiliging",
-			"vraagCode": "BIO-9.2.1",
-			"vraagtekst": "Worden gebruikersregistraties periodiek gecontroleerd?",
-			"antwoordType": "volwassenheidsniveau-1-5",
+			"questionCode": "BIO-9.2.1",
+			"questionText": "Worden gebruikersregistraties periodiek gecontroleerd?",
+			"answerType": "volwassenheidsniveau-1-5",
 			"normniveau": 3
 		},
 		{
 			"domein": "BIO",
 			"onderwerp": "Logging en monitoring",
-			"vraagCode": "BIO-12.4.1",
-			"vraagtekst": "Worden security events centraal gelogd en gemonitord?",
-			"antwoordType": "volwassenheidsniveau-1-5",
+			"questionCode": "BIO-12.4.1",
+			"questionText": "Worden security events centraal gelogd en gemonitord?",
+			"answerType": "volwassenheidsniveau-1-5",
 			"normniveau": 3
 		},
 		{
 			"domein": "BIO",
 			"onderwerp": "Bedrijfscontinuiteit",
-			"vraagCode": "BIO-17.1.1",
-			"vraagtekst": "Is er een beproefd bedrijfscontinuiteitsplan voor IT?",
-			"antwoordType": "volwassenheidsniveau-1-5",
+			"questionCode": "BIO-17.1.1",
+			"questionText": "Is er een beproefd bedrijfscontinuiteitsplan voor IT?",
+			"answerType": "volwassenheidsniveau-1-5",
 			"normniveau": 3
 		},
 		{
 			"domein": "DigiD",
 			"onderwerp": "Authenticatie",
-			"vraagCode": "DigiD-1.1",
-			"vraagtekst": "Wordt DigiD-koppeling jaarlijks getoetst op Logius-norm?",
-			"antwoordType": "ja-nee-nvt"
+			"questionCode": "DigiD-1.1",
+			"questionText": "Wordt DigiD-koppeling jaarlijks getoetst op Logius-norm?",
+			"answerType": "ja-nee-nvt"
 		},
 		{
 			"domein": "DigiD",
 			"onderwerp": "Penetratietest",
-			"vraagCode": "DigiD-2.1",
-			"vraagtekst": "Is een actueel rapport van een Logius-erkende penetratietest beschikbaar?",
-			"antwoordType": "ja-nee-nvt"
+			"questionCode": "DigiD-2.1",
+			"questionText": "Is een actueel rapport van een Logius-erkende penetratietest beschikbaar?",
+			"answerType": "ja-nee-nvt"
 		},
 		{
 			"domein": "SUWI",
 			"onderwerp": "Gegevensuitwisseling",
-			"vraagCode": "SUWI-1.1",
-			"vraagtekst": "Voldoet de SUWInet-koppeling aan de NORA-eisen?",
-			"antwoordType": "ja-nee-nvt"
+			"questionCode": "SUWI-1.1",
+			"questionText": "Voldoet de SUWInet-koppeling aan de NORA-eisen?",
+			"answerType": "ja-nee-nvt"
 		},
 		{
 			"domein": "SUWI",
 			"onderwerp": "Toegang",
-			"vraagCode": "SUWI-2.1",
-			"vraagtekst": "Wordt SUWInet-toegang per kwartaal heroverwogen op rolwijzigingen?",
-			"antwoordType": "volwassenheidsniveau-1-5",
+			"questionCode": "SUWI-2.1",
+			"questionText": "Wordt SUWInet-toegang per kwartaal heroverwogen op rolwijzigingen?",
+			"answerType": "volwassenheidsniveau-1-5",
 			"normniveau": 3
 		},
 		{
 			"domein": "BAG",
 			"onderwerp": "Datakwaliteit",
-			"vraagCode": "BAG-1.1",
-			"vraagtekst": "Voldoet de BAG-registratie aan de bijhoudingsnormen?",
-			"antwoordType": "ja-nee-nvt"
+			"questionCode": "BAG-1.1",
+			"questionText": "Voldoet de BAG-registratie aan de bijhoudingsnormen?",
+			"answerType": "ja-nee-nvt"
 		},
 		{
 			"domein": "BGT",
 			"onderwerp": "Datakwaliteit",
-			"vraagCode": "BGT-1.1",
-			"vraagtekst": "Wordt de BGT-mutatieplicht op tijd uitgevoerd?",
-			"antwoordType": "ja-nee-nvt"
+			"questionCode": "BGT-1.1",
+			"questionText": "Wordt de BGT-mutatieplicht op tijd uitgevoerd?",
+			"answerType": "ja-nee-nvt"
 		},
 		{
 			"domein": "BRP",
 			"onderwerp": "Bevragingsprotocol",
-			"vraagCode": "BRP-1.1",
-			"vraagtekst": "Is autorisatiebeheer voor BRP-bevragingen ingericht conform de wet?",
-			"antwoordType": "ja-nee-nvt"
+			"questionCode": "BRP-1.1",
+			"questionText": "Is autorisatiebeheer voor BRP-bevragingen ingericht conform de wet?",
+			"answerType": "ja-nee-nvt"
 		},
 		{
 			"domein": "WOZ",
 			"onderwerp": "Taxatieproces",
-			"vraagCode": "WOZ-1.1",
-			"vraagtekst": "Is de WOZ-administratie gecontroleerd door de Waarderingskamer?",
-			"antwoordType": "ja-nee-nvt"
+			"questionCode": "WOZ-1.1",
+			"questionText": "Is de WOZ-administratie gecontroleerd door de Waarderingskamer?",
+			"answerType": "ja-nee-nvt"
 		}
 	]
 }

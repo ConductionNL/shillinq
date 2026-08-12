@@ -64,9 +64,9 @@ final class ProfitAttributionServiceTest extends TestCase {
 			750000.0,
 			1.0
 		);
-		self::assertSame(800000.0, $r['kwalificerendeWinstVoorNexus']);
-		self::assertSame(800000.0, $r['kwalificerendeWinstNaNexus']);
-		self::assertSame(72000.0, $r['vpbOpInnovatiedeel']);
+		self::assertSame(800000.0, $r['qualifyingProfitForNexus']);
+		self::assertSame(800000.0, $r['qualifyingProfitAfterNexus']);
+		self::assertSame(72000.0, $r['vpbOnInnovationShare']);
 		self::assertFalse($r['forfaitairCapApplied']);
 
 	}//end testAfpelmethodeWithFullNexus()
@@ -86,8 +86,8 @@ final class ProfitAttributionServiceTest extends TestCase {
 			750000.0,
 			0.4333
 		);
-		self::assertSame(346640.0, $r['kwalificerendeWinstNaNexus']);
-		self::assertSame(31197.6, $r['vpbOpInnovatiedeel']);
+		self::assertSame(346640.0, $r['qualifyingProfitAfterNexus']);
+		self::assertSame(31197.6, $r['vpbOnInnovationShare']);
 
 	}//end testAfpelmethodeWithReducedNexus()
 
@@ -99,9 +99,9 @@ final class ProfitAttributionServiceTest extends TestCase {
 	 */
 	public function testForfaitairCapBinds(): void {
 		$r = $this->svc->calculateKwalificerendeWinst('forfaitair_25pct', 200000.0);
-		self::assertSame('forfaitair_25pct', $r['methode']);
-		self::assertSame(25000.0, $r['kwalificerendeWinstNaNexus']);
-		self::assertSame(2250.0, $r['vpbOpInnovatiedeel']);
+		self::assertSame('forfaitair_25pct', $r['method']);
+		self::assertSame(25000.0, $r['qualifyingProfitAfterNexus']);
+		self::assertSame(2250.0, $r['vpbOnInnovationShare']);
 		self::assertTrue($r['forfaitairCapApplied']);
 
 	}//end testForfaitairCapBinds()
@@ -113,7 +113,7 @@ final class ProfitAttributionServiceTest extends TestCase {
 	 */
 	public function testForfaitairBelowCap(): void {
 		$r = $this->svc->calculateKwalificerendeWinst('forfaitair_25pct', 80000.0);
-		self::assertSame(20000.0, $r['kwalificerendeWinstNaNexus']);
+		self::assertSame(20000.0, $r['qualifyingProfitAfterNexus']);
 		self::assertFalse($r['forfaitairCapApplied']);
 
 	}//end testForfaitairBelowCap()
@@ -131,8 +131,8 @@ final class ProfitAttributionServiceTest extends TestCase {
 			50000.0,
 			1.0
 		);
-		self::assertSame(0.0, $r['kwalificerendeWinstVoorNexus']);
-		self::assertSame(0.0, $r['vpbOpInnovatiedeel']);
+		self::assertSame(0.0, $r['qualifyingProfitForNexus']);
+		self::assertSame(0.0, $r['vpbOnInnovationShare']);
 
 	}//end testNegativeResidualFlooredAtZero()
 
@@ -144,8 +144,8 @@ final class ProfitAttributionServiceTest extends TestCase {
 	public function testCostPlusUsesFullNexus(): void {
 		$r = $this->svc->calculateKwalificerendeWinst('cost_plus', 500000.0, 100000.0, 0.0, 0.5);
 		// Cost_plus ignores the supplied nexus and uses 1.0.
-		self::assertSame(1.0, $r['nexusbreukToegepast']);
-		self::assertSame(400000.0, $r['kwalificerendeWinstNaNexus']);
+		self::assertSame(1.0, $r['nexusFractionApplied']);
+		self::assertSame(400000.0, $r['qualifyingProfitAfterNexus']);
 
 	}//end testCostPlusUsesFullNexus()
 }//end class

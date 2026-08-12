@@ -92,7 +92,7 @@
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
         "required": [
-          "verantwoordingId",
+          "accountabilityId",
           "grantId",
           "reportDate",
           "reportingPeriod",
@@ -100,7 +100,7 @@
           "administrationId"
         ],
         "properties": {
-          "verantwoordingId": {
+          "accountabilityId": {
             "type": "string",
             "description": "Unique accountability record identifier (REQ-SUBV-002).",
             "example": "SV-2026-0001",
@@ -691,7 +691,7 @@
         "schema": "SubsidieVerantwoording",
         "slug": "sv-2026-sample-cultuursubsidie"
       },
-      "verantwoordingId": "SV-2026-0001",
+      "accountabilityId": "SV-2026-0001",
       "grantId": "SUB-2026-0001",
       "reportDate": "2026-03-01",
       "reportingPeriod": "2026-01-01 to 2026-03-01",

@@ -270,7 +270,7 @@ class RetireSubsidieSchema implements IRepairStep {
 	 * @return string The migration key (may be empty when unresolvable).
 	 */
 	private function migrationKey(array $src): string {
-		$subsidieNumber = (string)($src['subsidieNumber'] ?? '');
+		$subsidieNumber = (string)($src['subsidyNumber'] ?? '');
 		if ($subsidieNumber !== '') {
 			return $subsidieNumber;
 		}

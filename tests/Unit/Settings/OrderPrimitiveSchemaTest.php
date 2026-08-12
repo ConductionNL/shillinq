@@ -192,10 +192,10 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 
 		$orderTypeEnum = $order['properties']['orderType']['enum'];
 		self::assertContains('purchase', $orderTypeEnum);
-		self::assertContains('subsidie', $orderTypeEnum);
+		self::assertContains('subsidy', $orderTypeEnum);
 		self::assertContains('engagement', $orderTypeEnum);
 
-		self::assertArrayHasKey('subsidie', $order['properties']);
+		self::assertArrayHasKey('subsidy', $order['properties']);
 		self::assertArrayHasKey('purchase', $order['properties']);
 		self::assertArrayHasKey('engagement', $order['properties']);
 
@@ -210,7 +210,7 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 	public function testSubsidieLifecycleVocabularyIdenticalToRetiredSchema(): void {
 		$order = $this->orderSchema();
 		$lifecycle = $order['x-openregister-lifecycle'];
-		$subsidieStates = $this->statesForType($lifecycle, 'subsidie');
+		$subsidieStates = $this->statesForType($lifecycle, 'subsidy');
 
 		self::assertSame(
 			['aanvraag', 'verleend', 'vastgesteld', 'uitbetaald', 'teruggevorderd', 'afgehandeld'],
@@ -267,7 +267,7 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 		$lifecycle = $order['x-openregister-lifecycle'];
 
 		$statesByType = [
-			'subsidie' => $this->statesForType($lifecycle, 'subsidie'),
+			'subsidy' => $this->statesForType($lifecycle, 'subsidy'),
 			'purchase' => $this->statesForType($lifecycle, 'purchase'),
 			'engagement' => $this->statesForType($lifecycle, 'engagement'),
 		];

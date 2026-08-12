@@ -16,10 +16,10 @@
         "required": [
           "administrationId",
           "enterpriseId",
-          "kalenderjaar",
+          "calendarYear",
           "doelNorm",
-          "normGrondslag",
-          "drempelStatus"
+          "normBasis",
+          "thresholdStatus"
         ],
         "properties": {
           "administrationId": {
@@ -34,7 +34,7 @@
             "example": "ond-1",
             "title": "Onderneming ID"
           },
-          "kalenderjaar": {
+          "calendarYear": {
             "type": "integer",
             "description": "Kalenderjaar waarvoor het urencriterium wordt bijgehouden.",
             "example": 2026,
@@ -52,13 +52,13 @@
             "example": 1225,
             "title": "Doel Norm"
           },
-          "normGrondslag": {
+          "normBasis": {
             "type": "string",
             "description": "Fiscale grondslag-citatie voor de gekozen norm (bijv. 'art. 3.6 lid 1 Wet IB 2001' of 'art. 3.6 lid 5 Wet IB 2001').",
             "example": "art. 3.6 lid 1 Wet IB 2001",
             "title": "Norm Grondslag"
           },
-          "lopendeUren": {
+          "lopendeHours": {
             "type": "number",
             "minimum": 0,
             "description": "Cumulatieve gerealiseerde uren voor dit kalenderjaar, dagelijks bijgewerkt door de tally-batch uit UrenDagregistratie (REQ-URC-001).",
@@ -83,7 +83,7 @@
             "example": 0.84,
             "title": "Prognose Confidence"
           },
-          "drempelStatus": {
+          "thresholdStatus": {
             "type": "string",
             "description": "Risico-status t.o.v. de norm, afgeleid van prognose vs doelNorm (REQ-URC-003).",
             "enum": [
@@ -109,7 +109,7 @@
             "example": "GROTENDEELS_ONDERNEMING",
             "title": "Grotendeels Criterium"
           },
-          "berekendOp": {
+          "calculatedOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -119,7 +119,7 @@
           }
         },
         "x-openregister-lifecycle": {
-          "field": "drempelStatus",
+          "field": "thresholdStatus",
           "initialState": "OP_KOERS",
           "states": {
             "OP_KOERS": {
@@ -144,7 +144,7 @@
           }
         },
         "x-openregister-relations": {
-          "categorie": {
+          "category": {
             "localField": "enterpriseId",
             "relatedSchema": "UrenDagregistratie",
             "relatedField": "enterpriseId",
@@ -176,10 +176,10 @@
         },
         "x-openregister-aggregations": {
           "countByDrempelStatus": {
-            "field": "drempelStatus",
+            "field": "thresholdStatus",
             "operation": "count",
             "description": "Aantal onderneming-jaren per drempel-status.",
-            "groupBy": "drempelStatus"
+            "groupBy": "thresholdStatus"
           }
         },
         "x-openregister-audit-trail": {
@@ -199,9 +199,9 @@
         "required": [
           "administrationId",
           "enterpriseId",
-          "datum",
-          "categorie",
-          "uren"
+          "date",
+          "category",
+          "hours"
         ],
         "properties": {
           "administrationId": {
@@ -216,14 +216,14 @@
             "example": "ond-1",
             "title": "Onderneming ID"
           },
-          "datum": {
+          "date": {
             "type": "string",
             "format": "date",
             "description": "Datum waarop het werk is verricht (prestatiedatum, NIET factuurdatum).",
             "example": "2026-05-21",
             "title": "Datum"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "description": "Belastingdienst-erkende uren-categorie (FK naar UrenCategorie.code).",
             "enum": [
@@ -238,14 +238,14 @@
             "example": "ACQUISITIE",
             "title": "Categorie"
           },
-          "uren": {
+          "hours": {
             "type": "number",
             "minimum": 0,
             "description": "Aantal uren in deze categorie op deze dag. Voor REISTIJD_ZAKELIJK wordt maximaal 4 uur geteld (cap per dag, REQ-URC-001).",
             "example": 3,
             "title": "Uren"
           },
-          "getoldeUren": {
+          "getoldeHours": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -254,7 +254,7 @@
             "example": 4,
             "title": "Getolde Uren"
           },
-          "capNotitie": {
+          "capNote": {
             "type": "string",
             "nullable": true,
             "readOnly": true,
@@ -274,7 +274,7 @@
             ],
             "title": "Bronnen"
           },
-          "registratieMoment": {
+          "registrationMoment": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -290,14 +290,14 @@
             "example": "Backfill T+5 dagen",
             "title": "Backfill Label"
           },
-          "backfillReden": {
+          "backfillReason": {
             "type": "string",
             "nullable": true,
             "description": "Verplichte reden bij backfill ouder dan 7 dagen (REQ-URC-017).",
             "example": "Factuur opgemaakt op 20 mei voor werk van 5 april",
             "title": "Backfill Reden"
           },
-          "backfillBewijs": {
+          "backfillEvidence": {
             "type": "string",
             "nullable": true,
             "description": "FK naar geüpload bewijs (e-mail, factuur, agenda-event) bij backfill ouder dan 7 dagen (REQ-URC-017).",
@@ -373,14 +373,14 @@
             "example": true,
             "title": "Tel T Mee"
           },
-          "fiscaleBron": {
+          "fiscalSource": {
             "type": "string",
             "nullable": true,
             "description": "Fiscale grondslag-referentie (Hoge Raad / Rechtbank caselaw) voor het meetellen van deze categorie.",
             "example": "HR 22 mei 1996, BNB 1996/302",
             "title": "Fiscale Bron"
           },
-          "voorwaarden": {
+          "terms": {
             "type": "array",
             "items": {
               "type": "string"
@@ -400,14 +400,14 @@
             "example": 4,
             "title": "Max Per Dag"
           },
-          "bewijsVereist": {
+          "evidenceRequired": {
             "type": "boolean",
             "description": "Of registratie in deze categorie pas definitief wordt na evidence-upload (bijv. scholing, REQ-URC-004).",
             "default": false,
             "example": false,
             "title": "Bewijs Vereist"
           },
-          "voorbeelden": {
+          "examples": {
             "type": "array",
             "items": {
               "type": "string"
@@ -460,7 +460,7 @@
         "required": [
           "administrationId",
           "enterpriseId",
-          "modelVersie",
+          "modelVersion",
           "totalForecast"
         ],
         "properties": {
@@ -476,7 +476,7 @@
             "example": "ond-1",
             "title": "Onderneming ID"
           },
-          "berekendOp": {
+          "calculatedOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -484,14 +484,14 @@
             "example": "2026-09-30T08:00:00Z",
             "title": "Berekend Op"
           },
-          "modelVersie": {
+          "modelVersion": {
             "type": "string",
             "description": "Versie van het prognose-model.",
             "default": "v3.2-12wk-seasonal",
             "example": "v3.2-12wk-seasonal",
             "title": "Model Versie"
           },
-          "perMaandPrognose": {
+          "perMonthPrognose": {
             "type": "object",
             "nullable": true,
             "description": "Voorspelde uren per resterende maand, keyed op maand (bijv. {\"2026-08\": 60}). Maanden met geplande vakantie staan op 0 (REQ-URC-002).",
@@ -523,7 +523,7 @@
             "example": 1180,
             "title": "Totaal Prognose"
           },
-          "kansBehaaldNorm": {
+          "kansAchievedNorm": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -570,7 +570,7 @@
           "administrationId",
           "enterpriseId",
           "type",
-          "urgentie"
+          "urgency"
         ],
         "properties": {
           "administrationId": {
@@ -597,7 +597,7 @@
             "example": "PROGNOSE_RISICO_DROP",
             "title": "Type"
           },
-          "aanleidingDatum": {
+          "triggerDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -605,7 +605,7 @@
             "example": "2026-09-30",
             "title": "Aanleiding Datum"
           },
-          "lopendeUren": {
+          "lopendeHours": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -635,7 +635,7 @@
             "example": 45,
             "title": "Tekort"
           },
-          "urgentie": {
+          "urgency": {
             "type": "string",
             "description": "Urgentie-niveau van de alert.",
             "enum": [
@@ -647,14 +647,14 @@
             "example": "WAARSCHUWING",
             "title": "Urgentie"
           },
-          "oorzaak": {
+          "cause": {
             "type": "string",
             "nullable": true,
             "description": "Toelichting op de oorzaak van de omslag (bijv. verwijzing naar een ziekteperiode, REQ-URC-003).",
             "example": "Ziekteperiode 1-14 september verlaagde de prognose",
             "title": "Oorzaak"
           },
-          "handelingsperspectief": {
+          "actionPerspective": {
             "type": "array",
             "items": {
               "type": "string"
@@ -685,10 +685,10 @@
         },
         "x-openregister-aggregations": {
           "countByUrgentie": {
-            "field": "urgentie",
+            "field": "urgency",
             "operation": "count",
             "description": "Aantal alerts per urgentie-niveau.",
-            "groupBy": "urgentie"
+            "groupBy": "urgency"
           }
         },
         "x-openregister-audit-trail": {
@@ -708,9 +708,9 @@
         "required": [
           "administrationId",
           "enterpriseId",
-          "periode",
-          "exportFormaat",
-          "bewaarTermijn"
+          "period",
+          "exportFormat",
+          "retentionTerm"
         ],
         "properties": {
           "administrationId": {
@@ -725,7 +725,7 @@
             "example": "ond-1",
             "title": "Onderneming ID"
           },
-          "periode": {
+          "period": {
             "type": "string",
             "description": "Periode van het dossier (kwartaal), bijv. '2026-Q1'.",
             "example": "2026-Q1",
@@ -739,7 +739,7 @@
             "example": 312,
             "title": "Totaal Uren"
           },
-          "perCategorie": {
+          "perCategory": {
             "type": "object",
             "nullable": true,
             "description": "Uren per categorie in de periode, keyed op categorie-code.",
@@ -753,7 +753,7 @@
             },
             "title": "Per Categorie"
           },
-          "exportFormaat": {
+          "exportFormat": {
             "type": "string",
             "description": "Bestandsformaat van het bewijsdossier.",
             "enum": [
@@ -778,7 +778,7 @@
             "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "title": "Sha256"
           },
-          "gegenereerdOp": {
+          "gegenereerdOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -786,7 +786,7 @@
             "example": "2026-04-01T09:00:00Z",
             "title": "Gegenereerd Op"
           },
-          "bewaarTermijn": {
+          "retentionTerm": {
             "type": "string",
             "format": "date",
             "description": "Einddatum van de wettelijke bewaartermijn (7 jaar na generatie, art. 52 AWR).",
@@ -831,12 +831,12 @@
       "code": "BILLABLE_KLANTWERK",
       "label": "Billable klantwerk",
       "telTMee": true,
-      "fiscaleBron": "art. 3.6 lid 1 Wet IB 2001",
-      "voorwaarden": [
+      "fiscalSource": "art. 3.6 lid 1 Wet IB 2001",
+      "terms": [
         "Werk verricht voor of namens de onderneming"
       ],
-      "bewijsVereist": false,
-      "voorbeelden": [
+      "evidenceRequired": false,
+      "examples": [
         "Ontwikkeluren voor klant",
         "Consultancy ter plaatse"
       ]
@@ -850,12 +850,12 @@
       "code": "ACQUISITIE",
       "label": "Acquisitie",
       "telTMee": true,
-      "fiscaleBron": "HR 22 mei 1996, BNB 1996/302",
-      "voorwaarden": [
+      "fiscalSource": "HR 22 mei 1996, BNB 1996/302",
+      "terms": [
         "Gericht op het verwerven van opdrachten"
       ],
-      "bewijsVereist": false,
-      "voorbeelden": [
+      "evidenceRequired": false,
+      "examples": [
         "Offertes opstellen",
         "Prospects bellen",
         "Netwerkbijeenkomsten"
@@ -870,12 +870,12 @@
       "code": "ADMINISTRATIE",
       "label": "Administratie",
       "telTMee": true,
-      "fiscaleBron": "HR 22 mei 1996, BNB 1996/388",
-      "voorwaarden": [
+      "fiscalSource": "HR 22 mei 1996, BNB 1996/388",
+      "terms": [
         "Zakelijke administratieve verplichtingen"
       ],
-      "bewijsVereist": false,
-      "voorbeelden": [
+      "evidenceRequired": false,
+      "examples": [
         "Boekhouding bijwerken",
         "BTW-aangifte voorbereiden",
         "Facturatie"
@@ -890,13 +890,13 @@
       "code": "REISTIJD_ZAKELIJK",
       "label": "Reistijd zakelijk",
       "telTMee": true,
-      "fiscaleBron": "HR 2003, BNB 2003/258",
-      "voorwaarden": [
+      "fiscalSource": "HR 2003, BNB 2003/258",
+      "terms": [
         "Reis met een zakelijk doel"
       ],
       "maxPerDag": 4,
-      "bewijsVereist": false,
-      "voorbeelden": [
+      "evidenceRequired": false,
+      "examples": [
         "Reizen naar klant",
         "Reizen naar leverancier"
       ]
@@ -910,12 +910,12 @@
       "code": "SCHOLING",
       "label": "Scholing",
       "telTMee": true,
-      "fiscaleBron": "art. 3.6 lid 1 Wet IB 2001",
-      "voorwaarden": [
+      "fiscalSource": "art. 3.6 lid 1 Wet IB 2001",
+      "terms": [
         "Vakkennis-onderhoud relevant voor de onderneming"
       ],
-      "bewijsVereist": true,
-      "voorbeelden": [
+      "evidenceRequired": true,
+      "examples": [
         "Cursus volgen",
         "Vakliteratuur bestuderen"
       ]
@@ -929,13 +929,13 @@
       "code": "FICTIE_ZEZ",
       "label": "Fictie zwangerschap (ZEZ)",
       "telTMee": true,
-      "fiscaleBron": "Wet ZEZ (Zelfstandig en Zwanger)",
-      "voorwaarden": [
+      "fiscalSource": "Wet ZEZ (Zelfstandig en Zwanger)",
+      "terms": [
         "ZEZ-uitkering toegekend",
         "Maximaal 16 weken"
       ],
-      "bewijsVereist": true,
-      "voorbeelden": [
+      "evidenceRequired": true,
+      "examples": [
         "Geacht doorgewerkte uren tijdens zwangerschapsverlof"
       ]
     },
@@ -948,12 +948,12 @@
       "code": "R_AND_D_WBSO",
       "label": "S&O uren (WBSO)",
       "telTMee": true,
-      "fiscaleBron": "art. 3.6 lid 1 Wet IB 2001",
-      "voorwaarden": [
+      "fiscalSource": "art. 3.6 lid 1 Wet IB 2001",
+      "terms": [
         "Geregistreerd als S&O-uren in de WBSO-administratie"
       ],
-      "bewijsVereist": false,
-      "voorbeelden": [
+      "evidenceRequired": false,
+      "examples": [
         "Speur- en ontwikkelwerk onder WBSO-beschikking"
       ]
     }

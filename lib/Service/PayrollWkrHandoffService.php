@@ -77,12 +77,12 @@ class PayrollWkrHandoffService {
 		$loonsomC = 0;
 		$aantal = 0;
 		foreach ($stroken as $strook) {
-			$loonsomC += $this->calculator->toCents(amount: (float)($strook['fiscaalLoon'] ?? 0));
+			$loonsomC += $this->calculator->toCents(amount: (float)($strook['fiscalPay'] ?? 0));
 			$aantal++;
 		}
 
 		return [
-			'periodeId' => $periodeId,
+			'periodId' => $periodeId,
 			'administrationId' => $administrationId,
 			'loonsom' => $this->calculator->fromCents(cents: $loonsomC),
 			'aantalStroken' => $aantal,
@@ -108,7 +108,7 @@ class PayrollWkrHandoffService {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'periodeId' => $periodeId,
+						'periodId' => $periodeId,
 					],
 				]
 			);

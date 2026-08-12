@@ -180,9 +180,9 @@ final class KorFragmentTest extends TestCase {
 
 		self::assertNotNull($revocation, 'Expect a worked OVERSCHRIJDING revocation seed');
 		// Revocatie-datum equals the trigger invoice delivery date, not a year-end.
-		self::assertSame('2026-09-04', $revocation['revocatieDatum']);
+		self::assertSame('2026-09-04', $revocation['revocationDate']);
 		// Blokkade = revocatieDatum + 3 years.
-		self::assertSame('2029-09-04', $revocation['blokkadeHeraanmelding']);
+		self::assertSame('2029-09-04', $revocation['blokkadeReRegistration']);
 
 	}//end testSeedObjectsAreConsistent()
 

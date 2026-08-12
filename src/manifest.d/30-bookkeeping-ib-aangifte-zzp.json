@@ -48,7 +48,7 @@
 				"schema": "IBAangifte",
 				"columns": [
 					{
-						"key": "belastingjaar",
+						"key": "taxYear",
 						"label": "Tax year",
 						"sortable": true
 					},
@@ -58,7 +58,7 @@
 						"sortable": true
 					},
 					{
-						"key": "aangifteType",
+						"key": "taxReturnType",
 						"label": "Type",
 						"sortable": true
 					},
@@ -68,7 +68,7 @@
 						"sortable": true
 					},
 					{
-						"key": "belastbareWinst",
+						"key": "belastbareProfit",
 						"label": "Taxable profit",
 						"sortable": true
 					},
@@ -78,7 +78,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "belastingjaar",
+				"defaultSort": "taxYear",
 				"detailRoute": "IbAangifteZzpDetail"
 			}
 		},
@@ -97,9 +97,9 @@
 						"id": "ondernemersaftrekken",
 						"title": "Entrepreneur allowances",
 						"schema": "IBOndernemersaftrek",
-						"foreignKey": "aangifteId",
+						"foreignKey": "taxReturnId",
 						"columns": [
-							{ "key": "mkbWinstvrijstelling", "label": "MKB exemption" },
+							{ "key": "mkbProfitExemption", "label": "MKB exemption" },
 							{ "key": "totalDeduction", "label": "Total deduction" }
 						],
 						"detailRoute": "IbOndernemersaftrekDetail"
@@ -108,7 +108,7 @@
 						"id": "lijfrente",
 						"title": "Annuity & AOV",
 						"schema": "IBLijfrenteAOV",
-						"foreignKey": "aangifteId",
+						"foreignKey": "taxReturnId",
 						"columns": [
 							{ "key": "totalDeductible", "label": "Total deductible" }
 						],
@@ -118,11 +118,11 @@
 						"id": "box3",
 						"title": "Box 3 assets",
 						"schema": "IBBox3Vermogen",
-						"foreignKey": "aangifteId",
+						"foreignKey": "taxReturnId",
 						"columns": [
-							{ "key": "peildatum", "label": "Reference date" },
+							{ "key": "referenceDate", "label": "Reference date" },
 							{ "key": "totalYieldBasis", "label": "Yield basis" },
-							{ "key": "belastbareGrondslag", "label": "Taxable basis" }
+							{ "key": "belastbareBasis", "label": "Taxable basis" }
 						],
 						"detailRoute": "IbBox3VermogenDetail"
 					}
@@ -151,7 +151,7 @@
 				},
 				"fields": [
 					{
-						"key": "belastingjaar",
+						"key": "taxYear",
 						"label": "Tax year",
 						"type": "number"
 					},
@@ -161,7 +161,7 @@
 						"type": "string"
 					},
 					{
-						"key": "aangifteType",
+						"key": "taxReturnType",
 						"label": "Return type",
 						"type": "string"
 					},
@@ -171,7 +171,7 @@
 						"type": "string"
 					},
 					{
-						"key": "indieningKanaal",
+						"key": "submissionChannel",
 						"label": "Filing channel",
 						"type": "string"
 					},
@@ -181,17 +181,17 @@
 						"type": "number"
 					},
 					{
-						"key": "ondernemersaftrek",
+						"key": "entrepreneurDeduction",
 						"label": "Entrepreneur allowance",
 						"type": "number"
 					},
 					{
-						"key": "mkbWinstvrijstelling",
+						"key": "mkbProfitExemption",
 						"label": "MKB profit exemption",
 						"type": "number"
 					},
 					{
-						"key": "belastbareWinst",
+						"key": "belastbareProfit",
 						"label": "Taxable profit",
 						"type": "number"
 					},
@@ -206,7 +206,7 @@
 						"type": "number"
 					},
 					{
-						"key": "heffingskortingen",
+						"key": "taxCredits",
 						"label": "Tax credits",
 						"type": "number"
 					},
@@ -216,7 +216,7 @@
 						"type": "number"
 					},
 					{
-						"key": "digipoortOntvangstBevestigingId",
+						"key": "digipoortReceiptConfirmationId",
 						"label": "Digipoort acknowledgement",
 						"type": "string"
 					}
@@ -234,12 +234,12 @@
 				"schema": "IBOndernemersaftrek",
 				"columns": [
 					{
-						"key": "aangifteId",
+						"key": "taxReturnId",
 						"label": "Return",
 						"sortable": true
 					},
 					{
-						"key": "mkbWinstvrijstelling",
+						"key": "mkbProfitExemption",
 						"label": "MKB exemption",
 						"sortable": true
 					},
@@ -249,7 +249,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "aangifteId",
+				"defaultSort": "taxReturnId",
 				"detailRoute": "IbOndernemersaftrekDetail"
 			}
 		},
@@ -277,12 +277,12 @@
 				},
 				"fields": [
 					{
-						"key": "aangifteId",
+						"key": "taxReturnId",
 						"label": "Return",
 						"type": "string"
 					},
 					{
-						"key": "mkbWinstvrijstelling",
+						"key": "mkbProfitExemption",
 						"label": "MKB profit exemption",
 						"type": "number"
 					},
@@ -305,7 +305,7 @@
 				"schema": "IBLijfrenteAOV",
 				"columns": [
 					{
-						"key": "aangifteId",
+						"key": "taxReturnId",
 						"label": "Return",
 						"sortable": true
 					},
@@ -315,7 +315,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "aangifteId",
+				"defaultSort": "taxReturnId",
 				"detailRoute": "IbLijfrenteBeheerDetail"
 			}
 		},
@@ -343,7 +343,7 @@
 				},
 				"fields": [
 					{
-						"key": "aangifteId",
+						"key": "taxReturnId",
 						"label": "Return",
 						"type": "string"
 					},
@@ -366,12 +366,12 @@
 				"schema": "IBBox3Vermogen",
 				"columns": [
 					{
-						"key": "aangifteId",
+						"key": "taxReturnId",
 						"label": "Return",
 						"sortable": true
 					},
 					{
-						"key": "peildatum",
+						"key": "referenceDate",
 						"label": "Reference date",
 						"sortable": true
 					},
@@ -381,12 +381,12 @@
 						"sortable": true
 					},
 					{
-						"key": "belastbareGrondslag",
+						"key": "belastbareBasis",
 						"label": "Taxable basis",
 						"sortable": true
 					}
 				],
-				"defaultSort": "peildatum",
+				"defaultSort": "referenceDate",
 				"detailRoute": "IbBox3VermogenDetail"
 			}
 		},
@@ -414,17 +414,17 @@
 				},
 				"fields": [
 					{
-						"key": "aangifteId",
+						"key": "taxReturnId",
 						"label": "Return",
 						"type": "string"
 					},
 					{
-						"key": "peildatum",
+						"key": "referenceDate",
 						"label": "Reference date",
 						"type": "string"
 					},
 					{
-						"key": "bankEnSpaartegoeden",
+						"key": "bankEnSavingsBalances",
 						"label": "Bank & savings balances",
 						"type": "number"
 					},
@@ -434,7 +434,7 @@
 						"type": "number"
 					},
 					{
-						"key": "schulden",
+						"key": "debts",
 						"label": "Debts",
 						"type": "number"
 					},
@@ -444,12 +444,12 @@
 						"type": "number"
 					},
 					{
-						"key": "heffingvrijVermogen",
+						"key": "taxExemptVermogen",
 						"label": "Tax-free allowance",
 						"type": "number"
 					},
 					{
-						"key": "belastbareGrondslag",
+						"key": "belastbareBasis",
 						"label": "Taxable basis",
 						"type": "number"
 					}

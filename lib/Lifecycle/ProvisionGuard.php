@@ -294,7 +294,7 @@ class ProvisionGuard {
 	 *              activation-ready.
 	 */
 	private function canActivateHerstructurering(array $provision): bool {
-		$detailId = (string)($provision['linkedHerstructureringsvoorzieningDetail'] ?? '');
+		$detailId = (string)($provision['linkedRestructuringProvisionDetail'] ?? '');
 		if ($detailId === '') {
 			return false;
 		}
@@ -336,7 +336,7 @@ class ProvisionGuard {
 	 * @return bool True when the linked Claims detail has a legalAdviceMemo FK.
 	 */
 	private function canActivateClaims(array $provision): bool {
-		$detailId = (string)($provision['linkedClaimsVoorzieningDetail'] ?? '');
+		$detailId = (string)($provision['linkedClaimsProvisionDetail'] ?? '');
 		if ($detailId === '') {
 			return false;
 		}

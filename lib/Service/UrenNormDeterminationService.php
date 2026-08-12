@@ -60,7 +60,7 @@ final class UrenNormDeterminationService {
 	 * Profile shape (REQ-URC-000):
 	 *  - 'administrationId' string   — tenant-isolation FK.
 	 *  - 'enterpriseId'    string   — onderneming FK.
-	 *  - 'kalenderjaar'     int      — year.
+	 *  - 'calendarYear'     int      — year.
 	 *  - 'arbeidsongeschikt'  bool   — UWV AO-status (drives 800 norm).
 	 *  - 'meewerkendePartner' bool   — drives 525 norm.
 	 *  - 'ondernemingsUrenJTD' float — onderneming hours year-to-date (>0 → grotendeels test).
@@ -86,11 +86,11 @@ final class UrenNormDeterminationService {
 		$seed = [
 			'administrationId' => (string)($profiel['administrationId'] ?? ''),
 			'enterpriseId' => (string)($profiel['enterpriseId'] ?? ''),
-			'kalenderjaar' => (int)($profiel['kalenderjaar'] ?? (int)gmdate('Y')),
+			'calendarYear' => (int)($profiel['calendarYear'] ?? (int)gmdate('Y')),
 			'doelNorm' => $norm,
-			'normGrondslag' => $grondslag,
-			'lopendeUren' => 0.0,
-			'drempelStatus' => 'OP_KOERS',
+			'normBasis' => $grondslag,
+			'lopendeHours' => 0.0,
+			'thresholdStatus' => 'OP_KOERS',
 			'grotendeelsCriterium' => $grotendeels,
 		];
 
@@ -98,7 +98,7 @@ final class UrenNormDeterminationService {
 			'UrenNormDeterminationService: built seed for new urencriterium-jaar',
 			[
 				'enterpriseId' => $seed['enterpriseId'],
-				'kalenderjaar' => $seed['kalenderjaar'],
+				'calendarYear' => $seed['calendarYear'],
 				'doelNorm' => $norm,
 				'grotendeels' => $grotendeels,
 			]

@@ -69,7 +69,7 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface {
 		$this->logger->info(
 			'Shillinq dunning channel dispatch',
 			[
-				'kanaal' => $kanaal,
+				'channel' => $kanaal,
 				'payload' => $sanitised,
 			]
 		);

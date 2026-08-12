@@ -152,7 +152,7 @@ class DBAComplianceGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'DBAComplianceGuard: activate-opdracht check failed — denying transition (fail-closed)',
-				['opdrachtId' => $opdrachtId, 'exception' => $e->getMessage()]
+				['assignmentId' => $opdrachtId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -186,7 +186,7 @@ class DBAComplianceGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'DBAComplianceGuard: beeindig-opdracht check failed — denying transition (fail-closed)',
-				['opdrachtId' => $opdrachtId, 'exception' => $e->getMessage()]
+				['assignmentId' => $opdrachtId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -394,7 +394,7 @@ class DBAComplianceGuard {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function isModelExpired(array $model, string $referenceYmd = ''): bool {
-		$geldigTot = trim((string)($model['geldigTot'] ?? ''));
+		$geldigTot = trim((string)($model['validTo'] ?? ''));
 		if ($geldigTot === '') {
 			return false;
 		}

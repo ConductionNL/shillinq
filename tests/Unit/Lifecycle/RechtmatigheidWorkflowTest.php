@@ -168,7 +168,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 
 		$filter = ($trigger['filter'] ?? []);
 		self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
-		self::assertSame(expected: 'fout', actual: ($filter['soort'] ?? null));
+		self::assertSame(expected: 'fout', actual: ($filter['kind'] ?? null));
 
 		$groups = [];
 		foreach (($notif['recipients'] ?? []) as $recipient) {
@@ -252,8 +252,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$escalated = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Te kort.',
-				'rechtmatigheidsbevinding' => '',
+				'substantiation' => 'Te kort.',
+				'lawfulnessFinding' => '',
 			]
 		);
 		self::assertFalse(
@@ -265,8 +265,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$completed = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Inkoopadviseur bevestigt dat de drempel niet is overschreden; clustering blijft onder EUR 221k.',
-				'rechtmatigheidsbevinding' => 'bev-77',
+				'substantiation' => 'Inkoopadviseur bevestigt dat de drempel niet is overschreden; clustering blijft onder EUR 221k.',
+				'lawfulnessFinding' => 'bev-77',
 			]
 		);
 		self::assertTrue(
@@ -320,8 +320,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$inherited = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Inheriting PO RV-toets PO-2026-441 (bedrag 100k); factuur 105k binnen 10% tolerantie.',
-				'rechtmatigheidsbevinding' => 'bev-200',
+				'substantiation' => 'Inheriting PO RV-toets PO-2026-441 (bedrag 100k); factuur 105k binnen 10% tolerantie.',
+				'lawfulnessFinding' => 'bev-200',
 			]
 		);
 		self::assertTrue(
@@ -333,8 +333,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$retoetsedShort = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Wijkt af.',
-				'rechtmatigheidsbevinding' => 'bev-201',
+				'substantiation' => 'Wijkt af.',
+				'lawfulnessFinding' => 'bev-201',
 			]
 		);
 		self::assertFalse(
@@ -345,8 +345,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$retoetsedFull = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Factuur 130k wijkt 30% af van PO 100k; herziene toets vereist conform REQ-RV-008.',
-				'rechtmatigheidsbevinding' => 'bev-201',
+				'substantiation' => 'Factuur 130k wijkt 30% af van PO 100k; herziene toets vereist conform REQ-RV-008.',
+				'lawfulnessFinding' => 'bev-201',
 			]
 		);
 		self::assertTrue(
@@ -378,7 +378,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$properties = ($toetsSchema['properties'] ?? []);
 
 		self::assertArrayHasKey(
-			key: 'raamovereenkomst',
+			key: 'frameworkAgreement',
 			array: $properties,
 			message: 'Rechtmatigheidstoets must expose the raamovereenkomst FK (Task 17).'
 		);
@@ -400,7 +400,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$shortCircuit = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet',
-				'raamovereenkomst' => 'ro-2024-12',
+				'frameworkAgreement' => 'ro-2024-12',
 			]
 		);
 		self::assertTrue(
@@ -433,16 +433,16 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// OpenRegister auto-supplies the `id` field; the schema must expose
 		// every other column the audit-export needs to project verbatim.
 		$required = [
-			'journaalpost',
+			'journalEntry',
 			'criterium',
 			'uitkomst',
-			'toetsdatum',
+			'testDate',
 			'toetser',
-			'onderbouwing',
+			'substantiation',
 			'amount_involved',
-			'bewijsstukken',
-			'rechtmatigheidsbevinding',
-			'regelverwijzing',
+			'supportingDocuments',
+			'lawfulnessFinding',
+			'ruleReference',
 		];
 
 		foreach ($required as $field) {

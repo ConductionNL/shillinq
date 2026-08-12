@@ -10,23 +10,23 @@
 	"besluiten": [
 		{
 			"id": "abb-mo-sp-016-2023",
-			"kenmerk": "Raadsbesluit 2023-184",
-			"bestuursorgaan": "Gemeente Voorbeeld",
-			"vaststellingsdatum": "2023-03-14",
-			"publicatieGemeenteblad": "gmb-2023-198321",
-			"publicatieDatum": "2023-03-21",
-			"kennisgevingAcm": {
-				"ingediend": true,
-				"datum": "2023-03-28",
-				"kenmerk": "ACM/IN/621004"
+			"reference": "Raadsbesluit 2023-184",
+			"governingBody": "Gemeente Voorbeeld",
+			"determinationDate": "2023-03-14",
+			"publicationMunicipalGazette": "gmb-2023-198321",
+			"publicationDate": "2023-03-21",
+			"notificationAcm": {
+				"submitted": true,
+				"date": "2023-03-28",
+				"reference": "ACM/IN/621004"
 			},
 			"betreftActiviteiten": ["MO-SP-016"],
-			"publiekBelangCategorieen": ["arbeidsparticipatie", "sociaaleconomische-cohesie"],
-			"motivering": "De sportkantine-exploitatie wordt voortgezet als integratie- en arbeidsparticipatiehefboom voor mensen met een afstand tot de arbeidsmarkt (samenwerking met Wsw, banenpool). De exploitatie verstoort de concurrentie niet aantoonbaar: omzet < €60k/jaar, lokale markt, kostprijs-monitor zonder winstopslag.",
-			"evaluatieRitme": "tweejaarlijks",
-			"volgendeEvaluatie": "2025-03-14",
+			"publiekBelangCategories": ["arbeidsparticipatie", "sociaaleconomische-cohesie"],
+			"rationale": "De sportkantine-exploitatie wordt voortgezet als integratie- en arbeidsparticipatiehefboom voor mensen met een afstand tot de arbeidsmarkt (samenwerking met Wsw, banenpool). De exploitatie verstoort de concurrentie niet aantoonbaar: omzet < €60k/jaar, lokale markt, kostprijs-monitor zonder winstopslag.",
+			"evaluationRitme": "tweejaarlijks",
+			"volgendeEvaluation": "2025-03-14",
 			"status": "concept",
-			"bezwaarTermijnVerstreken": false
+			"objectionTermVerstreken": false
 		}
 	]
 }

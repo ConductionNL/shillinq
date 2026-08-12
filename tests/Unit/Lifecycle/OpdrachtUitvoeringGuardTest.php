@@ -71,8 +71,8 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 */
 	public function testNoBewijsstukDeniesCompletion(): void {
 		$opdracht = [
-			'verplichtingId' => 'vpl-1',
-			'mijlpaalId' => 'MS-001',
+			'commitmentId' => 'vpl-1',
+			'milestoneId' => 'MS-001',
 			'status' => 'in-progress',
 		];
 		$this->assertFalse($this->guard->canVoltooien($opdracht));
@@ -85,7 +85,7 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testEmptyBewijsstukkenDeniesCompletion(): void {
-		$opdracht = ['bewijsstukken' => []];
+		$opdracht = ['supportingDocuments' => []];
 		$this->assertFalse($this->guard->canVoltooien($opdracht));
 
 	}//end testEmptyBewijsstukkenDeniesCompletion()
@@ -96,7 +96,7 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testBewijsstukWithoutDocumentIdDeniesCompletion(): void {
-		$opdracht = ['bewijsstukken' => [['app' => 'docudesk', 'documentId' => '']]];
+		$opdracht = ['supportingDocuments' => [['app' => 'docudesk', 'documentId' => '']]];
 		$this->assertFalse($this->guard->canVoltooien($opdracht));
 
 	}//end testBewijsstukWithoutDocumentIdDeniesCompletion()
@@ -108,7 +108,7 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 */
 	public function testValidBewijsstukPermitsCompletion(): void {
 		$opdracht = [
-			'bewijsstukken' => [
+			'supportingDocuments' => [
 				['app' => 'docudesk', 'documentId' => 'doc-123', 'description' => 'Acceptatie-protocol'],
 			],
 		];
@@ -122,7 +122,7 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testScalarBewijsstukkenDeniesCompletion(): void {
-		$opdracht = ['bewijsstukken' => 'doc-123'];
+		$opdracht = ['supportingDocuments' => 'doc-123'];
 		$this->assertFalse($this->guard->canVoltooien($opdracht));
 
 	}//end testScalarBewijsstukkenDeniesCompletion()

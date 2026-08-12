@@ -176,7 +176,7 @@
             "example": "vies-be-0123456789-2026q2",
             "title": "Vies Validation ID"
           },
-          "reportedInOpgaafId": {
+          "reportedInReturnId": {
             "type": "string",
             "description": "FK to the IcpOpgaaf that reported this supply; null while unreported (REQ-ICP-003).",
             "nullable": true,
@@ -352,7 +352,7 @@
             "example": 5000.0,
             "title": "Total Triangulation"
           },
-          "belastingdienstKenmerk": {
+          "taxAuthorityReference": {
             "type": "string",
             "description": "Reference number from the Digipoort submission confirmation (REQ-ICP-010).",
             "nullable": true,
@@ -753,7 +753,7 @@
         "amountExclVat": 25000.0,
         "currency": "EUR",
         "viesValidationId": "vies-be-0123456789-2026q2",
-        "reportedInOpgaafId": null,
+        "reportedInReturnId": null,
         "administrationId": "adm-smb-1"
       },
       {
@@ -771,7 +771,7 @@
         "amountExclVat": 12500.0,
         "currency": "EUR",
         "viesValidationId": "vies-de-0987654321-2026q2",
-        "reportedInOpgaafId": null,
+        "reportedInReturnId": null,
         "administrationId": "adm-smb-1"
       },
       {
@@ -789,7 +789,7 @@
         "amountExclVat": 5000.0,
         "currency": "EUR",
         "viesValidationId": "vies-fr-0555666777-2026q2",
-        "reportedInOpgaafId": null,
+        "reportedInReturnId": null,
         "administrationId": "adm-smb-1"
       },
       {
@@ -825,7 +825,7 @@
         "totalGoods": 30000.0,
         "totalServices": 12500.0,
         "totalTriangulation": 5000.0,
-        "belastingdienstKenmerk": null,
+        "taxAuthorityReference": null,
         "submittedAt": null,
         "xmlPayload": null,
         "auditBundle": null,
@@ -854,7 +854,7 @@
         "totalGoods": 0.0,
         "totalServices": 1200.0,
         "totalTriangulation": 0.0,
-        "belastingdienstKenmerk": "BD-2026-Q1-CORR-001",
+        "taxAuthorityReference": "BD-2026-Q1-CORR-001",
         "submittedAt": "2026-05-02T08:00:00+00:00",
         "xmlPayload": null,
         "auditBundle": null,

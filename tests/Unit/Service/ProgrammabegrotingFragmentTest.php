@@ -221,7 +221,7 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 			}
 
 			if ($schema === 'Voorziening') {
-				$mutaties = (($object['dotaties'] ?? 0) - ($object['vrijval'] ?? 0) - ($object['aanwendingen'] ?? 0));
+				$mutaties = (($object['additions'] ?? 0) - ($object['release'] ?? 0) - ($object['utilisations'] ?? 0));
 				$expected = (int)round(($object['beginsaldo'] + $mutaties) * 100);
 				self::assertSame($expected, (int)round($object['eindsaldo'] * 100), 'Voorziening eindsaldo must balance');
 			}
@@ -246,8 +246,8 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 			$batenCents = 0;
 			$lastenCents = 0;
 			foreach ($taakveldByProgramma[$pid] as $tv) {
-				$batenCents += (int)round($tv['baten'] * 100);
-				$lastenCents += (int)round($tv['lasten'] * 100);
+				$batenCents += (int)round($tv['revenue'] * 100);
+				$lastenCents += (int)round($tv['expenses'] * 100);
 			}
 
 			self::assertSame($batenCents, (int)round($object['revenueTotal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');

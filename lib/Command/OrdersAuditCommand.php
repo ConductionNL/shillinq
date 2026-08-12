@@ -58,7 +58,7 @@ class OrdersAuditCommand extends Command {
 	 * @var array<string,string>
 	 */
 	private const SOURCE_SCHEMAS = [
-		'Subsidie' => 'subsidie',
+		'Subsidie' => 'subsidy',
 		'PurchaseOrder' => 'purchase',
 		'DBAOpdracht' => 'engagement',
 	];

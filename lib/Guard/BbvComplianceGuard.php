@@ -54,7 +54,7 @@ class BbvComplianceGuard {
 	 *
 	 * @var array<int, string>
 	 */
-	private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
+	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'provincie', 'waterschap'];
 
 	/**
 	 * Reserve mutations must always book on this taakveld (resultaatbestemming).
@@ -255,14 +255,14 @@ class BbvComplianceGuard {
 	 * @return bool True when the reserve line books on taakveld 0.10.
 	 */
 	private function checkReserveRoute(array $line): bool {
-		$taakveld = ($line['taakveld'] ?? null);
+		$taakveld = ($line['taskField'] ?? null);
 		if ((string)$taakveld === self::RESERVE_TAAKVELD) {
 			return true;
 		}
 
 		$this->logger->info(
 			'BbvComplianceGuard: reserve mutation off taakveld 0.10 rejected (REQ-BBV-004)',
-			['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taakveld' => $taakveld]
+			['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taskField' => $taakveld]
 		);
 
 		return false;
@@ -277,8 +277,8 @@ class BbvComplianceGuard {
 	 * @return bool True when the voorziening line books on the gekoppelde taakveld.
 	 */
 	private function checkVoorzieningRoute(array $line, array $account): bool {
-		$gekoppeld = ($account['taakveld'] ?? null);
-		$taakveld = ($line['taakveld'] ?? null);
+		$gekoppeld = ($account['taskField'] ?? null);
+		$taakveld = ($line['taskField'] ?? null);
 		if ($gekoppeld === null || (string)$taakveld === (string)$gekoppeld) {
 			return true;
 		}
@@ -303,8 +303,8 @@ class BbvComplianceGuard {
 	 * @return bool True when both classification fields are present.
 	 */
 	private function checkExploitatieClassification(array $line): bool {
-		$taakveld = (string)($line['taakveld'] ?? '');
-		$categorie = (string)($line['economischeCategorie'] ?? '');
+		$taakveld = (string)($line['taskField'] ?? '');
+		$categorie = (string)($line['economicCategory'] ?? '');
 		if ($taakveld !== '' && $categorie !== '') {
 			return true;
 		}
@@ -339,7 +339,7 @@ class BbvComplianceGuard {
 		// Raadsbesluit override: an explicit, audit-trailed motivation unblocks
 		// a non-sluitende begroting per art. 189 Gemeentewet.
 		$besluit = (string)($programma['councilResolutionNumber'] ?? '');
-		$datum = (string)($programma['raadsbesluitDatum'] ?? '');
+		$datum = (string)($programma['councilResolutionDate'] ?? '');
 		if ($besluit !== '' && $datum !== '') {
 			return true;
 		}
@@ -390,7 +390,7 @@ class BbvComplianceGuard {
 						'filters' => [
 							'administrationId' => $administrationId,
 							'financialYear' => $boekjaar,
-							'versie' => 'primitief',
+							'version' => 'primitief',
 						],
 					]
 				);
@@ -419,9 +419,9 @@ class BbvComplianceGuard {
 				$saldoPerHorizon[$horizon] = 0;
 			}
 
-			$batenCents = (int)($row['batenCents'] ?? 0);
-			$lastenCents = (int)($row['lastenCents'] ?? 0);
-			$mutatieCents = (int)($row['mutatieReservesCents'] ?? 0);
+			$batenCents = (int)($row['revenueCents'] ?? 0);
+			$lastenCents = (int)($row['expensesCents'] ?? 0);
+			$mutatieCents = (int)($row['movementReservesCents'] ?? 0);
 			$saldoPerHorizon[$horizon] += ($batenCents - $lastenCents + $mutatieCents);
 		}
 
@@ -447,11 +447,11 @@ class BbvComplianceGuard {
 			return true;
 		}
 
-		if (($mva['mvaCategorie'] ?? '') !== 'maatschappelijk-nut') {
+		if (($mva['mvaCategory'] ?? '') !== 'maatschappelijk-nut') {
 			return true;
 		}
 
-		$aanschafCents = (int)($mva['aanschafwaardeCents'] ?? 0);
+		$aanschafCents = (int)($mva['acquisitionValueCents'] ?? 0);
 		$grensCents = $this->getActiveringsgrensCents();
 		if ($aanschafCents <= $grensCents) {
 			return true;
@@ -585,7 +585,7 @@ class BbvComplianceGuard {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
 	 */
 	public function depreciationStartMonth(array $mva): ?string {
-		$raw = (string)($mva['ingebruiknameDatum'] ?? '');
+		$raw = (string)($mva['ingebruiknameDate'] ?? '');
 		if ($raw === '') {
 			return null;
 		}

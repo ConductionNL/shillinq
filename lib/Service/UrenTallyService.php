@@ -76,12 +76,12 @@ final class UrenTallyService {
 	 * Returns:
 	 *  - totaalUren: float — sum of counted hours after cap and category filter.
 	 *  - perCategorie: array<string, float> — counted hours per category.
-	 *  - overages: array<int, array{categorie: string, ingevoerd: float, geteld: float, notitie: string}>
+	 *  - overages: array<int, array{category: string, ingevoerd: float, geteld: float, notitie: string}>
 	 *    — entries whose hours exceeded a category cap.
 	 *
 	 * @param array<int, array<string, mixed>> $entries Day entries.
 	 *
-	 * @return array{totaalUren: float, perCategorie: array<string, float>, overages: array<int, array<string, mixed>>}
+	 * @return array{totalHours: float, perCategory: array<string, float>, overages: array<int, array<string, mixed>>}
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
 	 */
@@ -95,22 +95,22 @@ final class UrenTallyService {
 				continue;
 			}
 
-			$categorie = (string)($entry['categorie'] ?? '');
+			$categorie = (string)($entry['category'] ?? '');
 			if ($categorie === '') {
 				continue;
 			}
 
-			$uren = (float)($entry['uren'] ?? 0);
+			$uren = (float)($entry['hours'] ?? 0);
 			$capInfo = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
-			$geteld = $capInfo['getoldeUren'];
-			$notitie = $capInfo['capNotitie'];
+			$geteld = $capInfo['getoldeHours'];
+			$notitie = $capInfo['capNote'];
 
 			$totaal += $geteld;
 			$perCategorie[$categorie] = (($perCategorie[$categorie] ?? 0.0) + $geteld);
 
 			if ($notitie !== null) {
 				$overages[] = [
-					'categorie' => $categorie,
+					'category' => $categorie,
 					'ingevoerd' => $uren,
 					'geteld' => $geteld,
 					'notitie' => $notitie,
@@ -120,7 +120,7 @@ final class UrenTallyService {
 
 		return [
 			'totalHours' => $totaal,
-			'perCategorie' => $perCategorie,
+			'perCategory' => $perCategorie,
 			'overages' => $overages,
 		];
 
@@ -136,7 +136,7 @@ final class UrenTallyService {
 	 * @param array<int, array<string, mixed>> $entries YTD entries.
 	 * @param string $now ISO-8601 berekendOp timestamp.
 	 *
-	 * @return array{lopendeUren: float, berekendOp: string}
+	 * @return array{lopendeHours: float, calculatedOn: string}
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
 	 */
@@ -147,24 +147,24 @@ final class UrenTallyService {
 				continue;
 			}
 
-			$categorie = (string)($entry['categorie'] ?? '');
+			$categorie = (string)($entry['category'] ?? '');
 			if ($categorie === '') {
 				continue;
 			}
 
-			$uren = (float)($entry['uren'] ?? 0);
+			$uren = (float)($entry['hours'] ?? 0);
 			$cap = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
-			$totaal += $cap['getoldeUren'];
+			$totaal += $cap['getoldeHours'];
 		}
 
 		$this->logger->info(
 			'UrenTallyService: YTD tally complete',
-			['totalHours' => $totaal, 'berekendOp' => $now]
+			['totalHours' => $totaal, 'calculatedOn' => $now]
 		);
 
 		return [
-			'lopendeUren' => $totaal,
-			'berekendOp' => $now,
+			'lopendeHours' => $totaal,
+			'calculatedOn' => $now,
 		];
 
 	}//end tallyYearToDate()

@@ -105,15 +105,15 @@ class TenderNedAanbestedingGuard {
 			if (trim((string)($aanbesteding['gegundeLeverancier'] ?? '')) === '') {
 				$this->logger->info(
 					'TenderNedAanbestedingGuard: no gegundeLeverancier — denying award (REQ-002)',
-					['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+					['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
 				);
 				return false;
 			}
 
-			if ((float)($aanbesteding['contractWaarde'] ?? 0) <= 0.0) {
+			if ((float)($aanbesteding['contractValue'] ?? 0) <= 0.0) {
 				$this->logger->info(
 					'TenderNedAanbestedingGuard: contractWaarde must be positive — denying award (REQ-002)',
-					['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+					['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -123,7 +123,7 @@ class TenderNedAanbestedingGuard {
 			$this->logger->error(
 				'TenderNedAanbestedingGuard: canGunnen failed — denying award (fail-closed)',
 				[
-					'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+					'tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -154,11 +154,11 @@ class TenderNedAanbestedingGuard {
 	 */
 	public function canAfronden(array $aanbesteding): bool {
 		try {
-			$verplichtingId = trim((string)($aanbesteding['verplichtingId'] ?? ''));
+			$verplichtingId = trim((string)($aanbesteding['commitmentId'] ?? ''));
 			if ($verplichtingId === '') {
 				$this->logger->warning(
 					'TenderNedAanbestedingGuard: no linked Verplichting — permitting completion without delivery check',
-					['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+					['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
 				);
 				return true;
 			}
@@ -168,7 +168,7 @@ class TenderNedAanbestedingGuard {
 			$this->logger->error(
 				'TenderNedAanbestedingGuard: canAfronden failed — denying completion (fail-closed)',
 				[
-					'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+					'tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -194,8 +194,8 @@ class TenderNedAanbestedingGuard {
 				->findAll(
 					[
 						'filters' => [
-							'verplichtingId' => $verplichtingId,
-							'opleveringsType' => 'eindoplevering',
+							'commitmentId' => $verplichtingId,
+							'deliveryType' => 'eindoplevering',
 						],
 					]
 				);
@@ -203,7 +203,7 @@ class TenderNedAanbestedingGuard {
 			// OpdrachtUitvoering schema not available (T1 state) — permit completion.
 			$this->logger->debug(
 				'TenderNedAanbestedingGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
-				['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return true;
 		}//end try
@@ -227,8 +227,8 @@ class TenderNedAanbestedingGuard {
 		$this->logger->info(
 			'TenderNedAanbestedingGuard: no approved eindoplevering — denying completion (REQ-006)',
 			[
-				'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
-				'verplichtingId' => $verplichtingId,
+				'tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'),
+				'commitmentId' => $verplichtingId,
 			]
 		);
 		return false;

@@ -87,18 +87,18 @@ final class UrenAlertServiceTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-1',
 				'doelNorm' => 1225,
-				'lopendeUren' => 700.0,
+				'lopendeHours' => 700.0,
 				'forecastYearEnd' => 1150.0,
-				'drempelStatus' => 'RISICO',
+				'thresholdStatus' => 'RISICO',
 			],
 			datum: '2026-09-30'
 		);
 
 		self::assertSame('KWARTAAL_EINDE', $alert['type']);
-		self::assertSame('INFO', $alert['urgentie']);
-		self::assertSame('2026-09-30', $alert['aanleidingDatum']);
+		self::assertSame('INFO', $alert['urgency']);
+		self::assertSame('2026-09-30', $alert['triggerDate']);
 		self::assertSame(75.0, $alert['tekort']);
-		self::assertGreaterThanOrEqual(3, count($alert['handelingsperspectief']));
+		self::assertGreaterThanOrEqual(3, count($alert['actionPerspective']));
 
 	}//end testKwartaalAlertShape()
 
@@ -113,19 +113,19 @@ final class UrenAlertServiceTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-1',
 				'doelNorm' => 1225,
-				'lopendeUren' => 600.0,
+				'lopendeHours' => 600.0,
 				'forecastYearEnd' => 900.0,
-				'drempelStatus' => 'KRITIEK',
+				'thresholdStatus' => 'KRITIEK',
 			],
 			oldStatus: 'RISICO',
 			newStatus: 'KRITIEK'
 		);
 
 		self::assertSame('OMSLAG_KRITIEK', $alert['type']);
-		self::assertSame('KRITIEK', $alert['urgentie']);
-		self::assertStringContainsString('RISICO', $alert['oorzaak']);
-		self::assertStringContainsString('KRITIEK', $alert['oorzaak']);
-		self::assertGreaterThanOrEqual(3, count($alert['handelingsperspectief']));
+		self::assertSame('KRITIEK', $alert['urgency']);
+		self::assertStringContainsString('RISICO', $alert['cause']);
+		self::assertStringContainsString('KRITIEK', $alert['cause']);
+		self::assertGreaterThanOrEqual(3, count($alert['actionPerspective']));
 
 	}//end testOmslagToKritiek()
 
@@ -138,9 +138,9 @@ final class UrenAlertServiceTest extends TestCase {
 		$acties = $this->build()->handelingsperspectief(
 			year: [
 				'doelNorm' => 1225,
-				'lopendeUren' => 1250.0,
+				'lopendeHours' => 1250.0,
 				'forecastYearEnd' => 1400.0,
-				'drempelStatus' => 'BEHAALD',
+				'thresholdStatus' => 'BEHAALD',
 			]
 		);
 
@@ -157,7 +157,7 @@ final class UrenAlertServiceTest extends TestCase {
 		$acties = $this->build()->handelingsperspectief(
 			year: [
 				'doelNorm' => 1225,
-				'lopendeUren' => 400.0,
+				'lopendeHours' => 400.0,
 				'forecastYearEnd' => 800.0,
 			]
 		);

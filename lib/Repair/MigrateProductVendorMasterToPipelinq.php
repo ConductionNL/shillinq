@@ -318,7 +318,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 	 */
 	private function resolveContactUid(array $vendor, IOutput $output): string {
 		$kvkNumber = (string)($vendor['kvkNumber'] ?? '');
-		$btwNumber = (string)($vendor['btwNumber'] ?? '');
+		$btwNumber = (string)($vendor['vatNumber'] ?? '');
 		$name = (string)($vendor['name'] ?? ($vendor['tradingName'] ?? ''));
 		$iban = (string)($vendor['iban'] ?? '');
 		$vendorSlug = (string)($vendor['slug'] ?? ($vendor['id'] ?? 'unknown'));

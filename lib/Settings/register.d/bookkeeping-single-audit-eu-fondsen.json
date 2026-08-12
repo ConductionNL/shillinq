@@ -119,7 +119,7 @@
             "description": "Nationale co-financiering uitsplitsing (REQ-EUF-001).",
             "nullable": true,
             "properties": {
-              "rijk": {
+              "centralGovernment": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Rijksbijdrage in EUR.",
@@ -131,13 +131,13 @@
                 "description": "Provinciale bijdrage in EUR.",
                 "title": "Provincie"
               },
-              "gemeente": {
+              "municipality": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Gemeentelijke bijdrage in EUR.",
                 "title": "Gemeente"
               },
-              "privaat": {
+              "private": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Private bijdrage in EUR.",
@@ -526,7 +526,7 @@
           "administrationId",
           "euProjectId",
           "dedicatedAccountRange",
-          "tussenrekeningCode",
+          "suspenseAccountCode",
           "reconciliationStatus",
           "state"
         ],
@@ -562,7 +562,7 @@
             "example": "CC-EU-KVW3",
             "title": "Cost Center Code"
           },
-          "tussenrekeningCode": {
+          "suspenseAccountCode": {
             "type": "string",
             "description": "Project-specifieke tussenrekening die reguliere GL + EU-administratie reconcilieerbaar houdt; netteert naar nul (REQ-EUF-002).",
             "example": "2599-KVW3",
@@ -1762,10 +1762,10 @@
       "totalEligibleBudget": 4500000.0,
       "euCoFundingRate": 0.4,
       "nationalCoFunding": {
-        "rijk": 900000.0,
+        "centralGovernment": 900000.0,
         "provincie": 600000.0,
-        "gemeente": 300000.0,
-        "privaat": 900000.0
+        "municipality": 300000.0,
+        "private": 900000.0
       },
       "beneficiaryOrganization": "Gemeente Amsterdam",
       "beneficiaryType": "decentrale_overheid",

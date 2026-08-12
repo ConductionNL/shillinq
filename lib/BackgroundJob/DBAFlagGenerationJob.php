@@ -93,7 +93,7 @@ class DBAFlagGenerationJob extends TimedJob {
 		$dates = [];
 		$amounts = [];
 		foreach ($facturen as $row) {
-			$dateStr = (string)($row['factuurDatum'] ?? '');
+			$dateStr = (string)($row['invoiceDate'] ?? '');
 			$amountCents = (int)($row['bedragCents'] ?? 0);
 			if ($dateStr === '' || $amountCents <= 0) {
 				continue;
@@ -305,14 +305,14 @@ class DBAFlagGenerationJob extends TimedJob {
 			}
 
 			// Herbeoordeling overdue?
-			if ($this->detectHerbeoordelingOverdue(intakeDatum: (string)($opdracht['intakeDatum'] ?? ''), now: $now) === true) {
+			if ($this->detectHerbeoordelingOverdue(intakeDatum: (string)($opdracht['intakeDate'] ?? ''), now: $now) === true) {
 				if ($this->emitFlag(
 					objectService: $objectService,
 					register: $register,
 					opdracht: $opdracht,
 					type: 'HERBEOORDELING_OVERDUE',
 					ernst: 'MIDDEN',
-					details: ['intakeDatum' => (string)($opdracht['intakeDatum'] ?? '')],
+					details: ['intakeDate' => (string)($opdracht['intakeDate'] ?? '')],
 					bron: 'REQ-DBA-009; Wet DBA jaarlijkse herbeoordeling',
 					actie: 'Vraag een herbeoordeling van de DBA-intake aan de ondernemer.'
 				) === true
@@ -329,7 +329,7 @@ class DBAFlagGenerationJob extends TimedJob {
 					$modelArr = $this->toArray(entity: $model);
 					if ($modelArr !== null
 						&& $this->detectModelovereenkomstVerlopen(
-							geldigTot: (string)($modelArr['geldigTot'] ?? ''),
+							geldigTot: (string)($modelArr['validTo'] ?? ''),
 							now: $now
 						) === true
 					) {
@@ -339,7 +339,7 @@ class DBAFlagGenerationJob extends TimedJob {
 							opdracht: $opdracht,
 							type: 'MODELOVEREENKOMST_VERLOPEN',
 							ernst: 'MIDDEN',
-							details: ['modelId' => $modelId, 'geldigTot' => (string)($modelArr['geldigTot'] ?? '')],
+							details: ['modelId' => $modelId, 'validTo' => (string)($modelArr['validTo'] ?? '')],
 							bron: 'REQ-DBA-002; Belastingdienst modelovereenkomst-policy',
 							actie: 'Kies een actueel modelovereenkomst en update de opdracht.'
 						) === true
@@ -356,7 +356,7 @@ class DBAFlagGenerationJob extends TimedJob {
 			}//end if
 
 			// WBA verlopen?
-			$wbaGeldigTot = (string)($opdracht['wbaGeldigTot'] ?? '');
+			$wbaGeldigTot = (string)($opdracht['wbaValidTo'] ?? '');
 			if ($wbaGeldigTot !== ''
 				&& $this->detectModelovereenkomstVerlopen(geldigTot: $wbaGeldigTot, now: $now) === true
 			) {
@@ -366,7 +366,7 @@ class DBAFlagGenerationJob extends TimedJob {
 					opdracht: $opdracht,
 					type: 'WBA_VERLOPEN',
 					ernst: 'LAAG',
-					details: ['wbaGeldigTot' => $wbaGeldigTot],
+					details: ['wbaValidTo' => $wbaGeldigTot],
 					bron: 'REQ-DBA-013; Belastingdienst WBA-policy (1 jaar geldigheid)',
 					actie: 'Vraag een nieuwe WBA-beoordeling aan.'
 				) === true
@@ -439,7 +439,7 @@ class DBAFlagGenerationJob extends TimedJob {
 			$existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
 				[
 					'filters' => [
-						'opdrachtId' => (string)($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
+						'assignmentId' => (string)($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
 						'type' => $type,
 						'status' => 'OPEN',
 					],
@@ -463,15 +463,15 @@ class DBAFlagGenerationJob extends TimedJob {
 			$objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject(
 				[
 					'administrationId' => (string)($opdracht['administrationId'] ?? ''),
-					'opdrachtId' => (string)($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
+					'assignmentId' => (string)($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
 					'type' => $type,
 					'detectieMoment' => (new DateTimeImmutable())->format('c'),
 					'ernst' => $ernst,
 					'details' => $details,
-					'fiscaleBron' => $bron,
-					'actieSuggestie' => $actie,
+					'fiscalSource' => $bron,
+					'actionSuggestion' => $actie,
 					'status' => 'OPEN',
-					'weergegevenAanGebruiker' => true,
+					'weergegevenInUser' => true,
 				]
 			);
 			return true;

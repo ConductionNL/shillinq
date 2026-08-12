@@ -20,7 +20,7 @@
  *   - On CREATE, OpenRegister's LifecycleInitialStateListener only seeds the
  *     declared `initialState` when the caller left the lifecycle field empty
  *     ("Caller already set a value — leave it alone"). A client that POSTs
- *     `{"status": "completed", "bewijsstukken": []}` is therefore persisted
+ *     `{"status": "completed", "supportingDocuments": []}` is therefore persisted
  *     exactly as sent — born in the terminal state, with the transition and
  *     its guard never involved.
  *   - On UPDATE, a PUT that rewrites `status` to `completed` bypasses the
@@ -176,15 +176,15 @@ class OpdrachtUitvoeringBewijsstukListener implements IEventListener {
 		$this->logger->warning(
 			'Shillinq: refused an OpdrachtUitvoering write into `completed` without a bewijsstuk (REQ-004)',
 			[
-				'verplichtingId' => ($data['verplichtingId'] ?? 'unknown'),
-				'mijlpaalId' => ($data['mijlpaalId'] ?? 'unknown'),
+				'commitmentId' => ($data['commitmentId'] ?? 'unknown'),
+				'milestoneId' => ($data['milestoneId'] ?? 'unknown'),
 			]
 		);
 
 		$event->setErrors(
 			[
 				'message' => self::DENY_MESSAGE,
-				'field' => 'bewijsstukken',
+				'field' => 'supportingDocuments',
 				'requirement' => 'REQ-004',
 				'attemptedState' => self::COMPLETED_STATE,
 			]

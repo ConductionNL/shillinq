@@ -226,11 +226,11 @@ class DunningGuard {
 				return false;
 			}
 
-			if (trim((string)($writeOff['art29OBVerklaring'] ?? '')) === '') {
+			if (trim((string)($writeOff['art29OBDeclaration'] ?? '')) === '') {
 				return false;
 			}
 
-			return (float)($writeOff['hoofdsomAfgeschreven'] ?? 0) > 0.0;
+			return (float)($writeOff['principalDepreciated'] ?? 0) > 0.0;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'DunningGuard: write-off post check failed — denying transition (fail-closed)',
@@ -311,7 +311,7 @@ class DunningGuard {
 
 		$partyType = strtoupper((string)($run['partyType'] ?? ''));
 		if ($partyType === '') {
-			$partyType = strtoupper($this->lookupPartyType(factuurId: (string)($run['factuurId'] ?? '')));
+			$partyType = strtoupper($this->lookupPartyType(factuurId: (string)($run['invoiceId'] ?? '')));
 		}
 
 		return $partyType === 'B2C';
@@ -356,7 +356,7 @@ class DunningGuard {
 		$results = $objectService
 			->setRegister($register)
 			->setSchema('IncassoKostenBerekening')
-			->findAll(['filters' => ['factuurId' => $factuurId]]);
+			->findAll(['filters' => ['invoiceId' => $factuurId]]);
 
 		foreach ($results as $result) {
 			if (is_array($result) === true && isset($result['partyType']) === true) {

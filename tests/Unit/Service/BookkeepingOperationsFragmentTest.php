@@ -150,7 +150,7 @@ final class BookkeepingOperationsFragmentTest extends TestCase {
 		self::assertArrayHasKey('Subsidie', $schemas);
 
 		// Account extended additively (REQ-SBK-002).
-		self::assertArrayHasKey('isSchatkistAccount', $schemas['Account']['properties']);
+		self::assertArrayHasKey('isTreasuryAccount', $schemas['Account']['properties']);
 		self::assertGreaterThan(
 			$accountFieldCountBefore,
 			count($schemas['Account']['properties']),

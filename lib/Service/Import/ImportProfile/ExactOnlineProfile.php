@@ -112,7 +112,7 @@ class ExactOnlineProfile implements ImportProfileInterface {
 				'code' => 'Code',
 				'name' => 'Name',
 				'kvk' => 'ChamberOfCommerce',
-				'btw' => 'VATNumber',
+				'vat' => 'VATNumber',
 				'email' => 'Email',
 				'phone' => 'Phone',
 			];

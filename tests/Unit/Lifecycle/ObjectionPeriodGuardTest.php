@@ -97,7 +97,7 @@ class ObjectionPeriodGuardTest extends TestCase {
 	public function testCanBezwaarMakenWithinTermijn(): void {
 		$dagtekening = (new \DateTimeImmutable('today'))->modify('-1 week')->format('Y-m-d');
 		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['aangifte' => 'aangifte-1', 'dagtekening' => $dagtekening]]])
+			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-1', 'issueDate' => $dagtekening]]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -113,7 +113,7 @@ class ObjectionPeriodGuardTest extends TestCase {
 	public function testCannotBezwaarMakenAfterTermijn(): void {
 		$dagtekening = (new \DateTimeImmutable('today'))->modify('-8 weeks')->format('Y-m-d');
 		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['aangifte' => 'aangifte-2', 'dagtekening' => $dagtekening]]])
+			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-2', 'issueDate' => $dagtekening]]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -144,7 +144,7 @@ class ObjectionPeriodGuardTest extends TestCase {
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue(
-			$this->guard->canFileAppeal(objectionId:'bezwaar-1', object: ['uitspraakDatum' => $uitspraak])
+			$this->guard->canFileAppeal(objectionId:'bezwaar-1', object: ['rulingDate' => $uitspraak])
 		);
 
 	}//end testCanBeroepInstellenWithinTermijn()
@@ -159,7 +159,7 @@ class ObjectionPeriodGuardTest extends TestCase {
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
-			$this->guard->canFileAppeal(objectionId:'bezwaar-2', object: ['uitspraakDatum' => $uitspraak])
+			$this->guard->canFileAppeal(objectionId:'bezwaar-2', object: ['rulingDate' => $uitspraak])
 		);
 
 	}//end testCannotBeroepInstellenAfterTermijn()
@@ -172,7 +172,7 @@ class ObjectionPeriodGuardTest extends TestCase {
 	public function testCannotBeroepInstellenWithoutUitspraak(): void {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
-			$this->guard->canFileAppeal(objectionId:'bezwaar-3', object: ['uitspraakDatum' => ''])
+			$this->guard->canFileAppeal(objectionId:'bezwaar-3', object: ['rulingDate' => ''])
 		);
 
 	}//end testCannotBeroepInstellenWithoutUitspraak()

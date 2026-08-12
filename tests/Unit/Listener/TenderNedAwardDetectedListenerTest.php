@@ -260,7 +260,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		[$listener, $dispatcher] = $this->listener($container, '30280353', 'Verplichting');
 
 		$event = new ObjectCreatedEvent(
-			$this->entity('1089', ['status' => 'gegund', 'contractWaarde' => 100.0])
+			$this->entity('1089', ['status' => 'gegund', 'contractValue' => 100.0])
 		);
 
 		$listener->handle($event);
@@ -282,9 +282,9 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		$event = new ObjectCreatedEvent(
 			$this->entity('1090', [
 				'status' => 'open',
-				'contractWaarde' => 50000.0,
+				'contractValue' => 50000.0,
 				'gegundeLeverancier' => '30280353 Test BV',
-				'aanbestedingId' => 'TN-2026-0001',
+				'tenderId' => 'TN-2026-0001',
 			])
 		);
 
@@ -306,9 +306,9 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		$event = new ObjectCreatedEvent(
 			$this->entity('1090', [
 				'status' => 'gegund',
-				'contractWaarde' => 0.0,
+				'contractValue' => 0.0,
 				'gegundeLeverancier' => '30280353 Test BV',
-				'aanbestedingId' => 'TN-2026-0001',
+				'tenderId' => 'TN-2026-0001',
 			])
 		);
 
@@ -330,9 +330,9 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		$event = new ObjectCreatedEvent(
 			$this->entity('1090', [
 				'status' => 'gegund',
-				'contractWaarde' => 50000.0,
+				'contractValue' => 50000.0,
 				'gegundeLeverancier' => '30280353 Test BV',
-				'aanbestedingId' => 'TN-2026-0001',
+				'tenderId' => 'TN-2026-0001',
 			])
 		);
 
@@ -354,9 +354,9 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		$event = new ObjectCreatedEvent(
 			$this->entity('1090', [
 				'status' => 'gegund',
-				'contractWaarde' => 50000.0,
+				'contractValue' => 50000.0,
 				'gegundeLeverancier' => '30280353 Test BV',
-				'aanbestedingId' => 'TN-2026-0001',
+				'tenderId' => 'TN-2026-0001',
 			])
 		);
 
@@ -378,12 +378,12 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		$event = new ObjectCreatedEvent(
 			$this->entity('1090', [
 				'status' => 'gegund',
-				'contractWaarde' => 50000.0,
+				'contractValue' => 50000.0,
 				'gegundeLeverancier' => '30280353 Conduction B.V.',
-				'aanbestedingId' => 'TN-2026-0001',
+				'tenderId' => 'TN-2026-0001',
 				'titel' => 'Schoonmaak',
-				'opdrachttype' => 'levering-in-fases',
-				'looptijdStart' => '2026-01-01',
+				'assignmentType' => 'levering-in-fases',
+				'termStart' => '2026-01-01',
 				'termEnd' => '2026-12-31',
 				'administrationId' => 'adm-x',
 			])
@@ -401,10 +401,10 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			}
 		}
 		$this->assertNotNull($verplichtingSave);
-		$this->assertSame('tenderned', $verplichtingSave['bron']);
-		$this->assertSame('TN-2026-0001', $verplichtingSave['bronReferentie']);
+		$this->assertSame('tenderned', $verplichtingSave['source']);
+		$this->assertSame('TN-2026-0001', $verplichtingSave['sourceReference']);
 		$this->assertSame('active', $verplichtingSave['status']);
-		$this->assertNotEmpty($verplichtingSave['mijlpalen']);
+		$this->assertNotEmpty($verplichtingSave['milestones']);
 
 		// Budget impact event emitted.
 		$this->assertCount(1, $dispatcher->events);
@@ -421,8 +421,8 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	public function testIdempotentOnExistingBronReferentie(): void {
 		$existing = [
 			'commitmentNumber' => 'TN-TN-2026-0001',
-			'bron' => 'tenderned',
-			'bronReferentie' => 'TN-2026-0001',
+			'source' => 'tenderned',
+			'sourceReference' => 'TN-2026-0001',
 			'status' => 'active',
 			'amount' => 50000.0,
 			'administrationId' => 'adm-x',
@@ -433,9 +433,9 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		$event = new ObjectCreatedEvent(
 			$this->entity('1090', [
 				'status' => 'gegund',
-				'contractWaarde' => 50000.0,
+				'contractValue' => 50000.0,
 				'gegundeLeverancier' => '30280353 Conduction B.V.',
-				'aanbestedingId' => 'TN-2026-0001',
+				'tenderId' => 'TN-2026-0001',
 				'administrationId' => 'adm-x',
 			])
 		);

@@ -38,7 +38,7 @@ use Psr\Log\NullLogger;
  *
  * Measured on a live Nextcloud 32 + OpenRegister instance before the fix:
  * `POST /apps/openregister/api/objects/shillinq/OpdrachtUitvoering` with
- * `{"status":"completed","bewijsstukken":[]}` returned **201 Created** and
+ * `{"status":"completed","supportingDocuments":[]}` returned **201 Created** and
  * persisted the terminal state. After the fix the same request returns 422,
  * and the same request WITH a valid bewijsstuk still returns 201.
  *
@@ -60,17 +60,17 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 	public function testCompletionWithoutBewijsstukIsVetoed(): void {
 		$event = $this->creatingEvent(
 			[
-				'verplichtingId' => 'V-1',
-				'mijlpaalId' => 'MS-1',
+				'commitmentId' => 'V-1',
+				'milestoneId' => 'MS-1',
 				'status' => 'completed',
-				'bewijsstukken' => [],
+				'supportingDocuments' => [],
 			]
 		);
 
 		$this->listener(matches: true)->handle($event);
 
 		self::assertTrue($event->isPropagationStopped(), 'The write must be refused (REQ-004).');
-		self::assertSame('bewijsstukken', $event->getErrors()['field'] ?? null);
+		self::assertSame('supportingDocuments', $event->getErrors()['field'] ?? null);
 		self::assertSame(
 			OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
 			$event->getErrors()['message'] ?? null
@@ -88,10 +88,10 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 	public function testCompletionWithAValidBewijsstukIsAllowed(): void {
 		$event = $this->creatingEvent(
 			[
-				'verplichtingId' => 'V-1',
-				'mijlpaalId' => 'MS-1',
+				'commitmentId' => 'V-1',
+				'milestoneId' => 'MS-1',
 				'status' => 'completed',
-				'bewijsstukken' => [['app' => 'docudesk', 'documentId' => 'doc-1']],
+				'supportingDocuments' => [['app' => 'docudesk', 'documentId' => 'doc-1']],
 			]
 		);
 
@@ -111,9 +111,9 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 	public function testUpdateIntoCompletedWithoutBewijsstukIsVetoed(): void {
 		$event = $this->updatingEvent(
 			[
-				'verplichtingId' => 'V-1',
+				'commitmentId' => 'V-1',
 				'status' => 'completed',
-				'bewijsstukken' => [],
+				'supportingDocuments' => [],
 			]
 		);
 
@@ -134,7 +134,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 		$event = $this->creatingEvent(
 			[
 				'status' => 'completed',
-				'bewijsstukken' => [['app' => 'docudesk', 'documentId' => '   ']],
+				'supportingDocuments' => [['app' => 'docudesk', 'documentId' => '   ']],
 			]
 		);
 
@@ -154,9 +154,9 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 	public function testInProgressWriteIsNotGated(): void {
 		$event = $this->creatingEvent(
 			[
-				'verplichtingId' => 'V-1',
+				'commitmentId' => 'V-1',
 				'status' => 'in-progress',
-				'bewijsstukken' => [],
+				'supportingDocuments' => [],
 			]
 		);
 
@@ -174,7 +174,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
 	 */
 	public function testOtherSchemasAreUntouched(): void {
-		$event = $this->creatingEvent(['status' => 'completed', 'bewijsstukken' => []]);
+		$event = $this->creatingEvent(['status' => 'completed', 'supportingDocuments' => []]);
 
 		$this->listener(matches: false)->handle($event);
 

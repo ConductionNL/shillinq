@@ -174,7 +174,7 @@ class VerplichtingTransitionListener implements IEventListener {
 	 * @return void
 	 */
 	private function emitIfTenderNed(array $verplichting): void {
-		if ((string)($verplichting['bron'] ?? '') !== 'tenderned') {
+		if ((string)($verplichting['source'] ?? '') !== 'tenderned') {
 			return;
 		}
 

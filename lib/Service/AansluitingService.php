@@ -155,7 +155,7 @@ class AansluitingService {
 		if ($existing !== null && $existingStatus !== 'open') {
 			$this->logger->info(
 				'AansluitingService: skipping recompute of a non-open result; reopen() first',
-				['aansluitingId' => $aansluitingId, 'periodId' => $periodId, 'status' => $existingStatus]
+				['reconciliationId' => $aansluitingId, 'periodId' => $periodId, 'status' => $existingStatus]
 			);
 
 			return $existing;
@@ -164,7 +164,7 @@ class AansluitingService {
 		$administrationId = (string)($definition['administrationId'] ?? '');
 		$relationship = (string)($definition['expectedRelationship'] ?? 'equal');
 		$toleranceCents = (int)($definition['toleranceCents'] ?? 100);
-		$aansluitingType = (string)($definition['aansluitingType'] ?? '');
+		$aansluitingType = (string)($definition['reconciliationType'] ?? '');
 
 		$resolved = match ($aansluitingType) {
 			'btw-ledger-aangifte' => $this->resolveBtwLedgerAangifte(administrationId: $administrationId, periodId: $periodId),
@@ -187,7 +187,7 @@ class AansluitingService {
 		];
 
 		$result = [
-			'aansluitingId' => $aansluitingId,
+			'reconciliationId' => $aansluitingId,
 			'periodId' => $periodId,
 			'computedAt' => $this->now(),
 			'sourceATotal' => $resolved['sourceATotal'],
@@ -690,7 +690,7 @@ class AansluitingService {
 		$results = $objectService
 			->setRegister($this->register())
 			->setSchema('AansluitingResult')
-			->findAll(['filters' => ['aansluitingId' => $aansluitingId, 'periodId' => $periodId]]);
+			->findAll(['filters' => ['reconciliationId' => $aansluitingId, 'periodId' => $periodId]]);
 
 		foreach ($results as $result) {
 			return $result;

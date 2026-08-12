@@ -148,11 +148,11 @@ class InnovatieboxController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$eigen = $this->request->getParam('eigen_rd_kosten', null);
+		$eigen = $this->request->getParam('eigen_rd_cost', null);
 		$derden = $this->request->getParam('uitbesteed_derden', null);
 		$verbonden = $this->request->getParam('uitbesteed_verbonden', null);
 
-		foreach (['eigen_rd_kosten' => $eigen, 'uitbesteed_derden' => $derden, 'uitbesteed_verbonden' => $verbonden] as $name => $value) {
+		foreach (['eigen_rd_cost' => $eigen, 'uitbesteed_derden' => $derden, 'uitbesteed_verbonden' => $verbonden] as $name => $value) {
 			if ($value === null || is_numeric($value) === false || (float)$value < 0.0) {
 				return new JSONResponse(
 					['error' => $name . ' must be a non-negative number'],
@@ -241,7 +241,7 @@ class InnovatieboxController extends Controller {
 	public function export(): JSONResponse {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 		$boekjaar = trim((string)$this->request->getParam('financialYear', ''));
-		$methode = trim((string)$this->request->getParam('methode', 'per_asset_afpelmethode'));
+		$method = trim((string)$this->request->getParam('method', 'per_asset_afpelmethode'));
 
 		$error = $this->requireAdministration(administrationId: $administrationId);
 		if ($error !== null) {
@@ -254,7 +254,7 @@ class InnovatieboxController extends Controller {
 		}
 
 		$allowed = ['per_asset_afpelmethode', 'forfaitair_25pct', 'cost_plus'];
-		if (in_array($methode, $allowed, true) === false) {
+		if (in_array($method, $allowed, true) === false) {
 			return new JSONResponse(
 				['error' => 'methode must be one of ' . implode(', ', $allowed)],
 				Http::STATUS_BAD_REQUEST
@@ -271,14 +271,14 @@ class InnovatieboxController extends Controller {
 				aggregation: $aggregation,
 				administrationId: $administrationId,
 				boekjaar: (int)$boekjaar,
-				methode: $methode
+				method: $method
 			);
 
 			$pdf = $this->sbrExport->toPdfRenderContext(
 				aggregation: $aggregation,
 				administrationId: $administrationId,
 				boekjaar: (int)$boekjaar,
-				methode: $methode
+				method: $method
 			);
 		} catch (\Throwable $e) {
 			return $this->fail(
@@ -286,7 +286,7 @@ class InnovatieboxController extends Controller {
 				context: [
 					'administrationId' => $administrationId,
 					'financialYear' => $boekjaar,
-					'methode' => $methode,
+					'method' => $method,
 					'exception' => $e->getMessage(),
 				]
 			);

@@ -89,11 +89,11 @@ class MilestoneTemplateService {
 
 		$fallback = null;
 		foreach ($templates as $template) {
-			if (($template['opdrachttype'] ?? '') === $opdrachttype) {
+			if (($template['assignmentType'] ?? '') === $opdrachttype) {
 				return $template;
 			}
 
-			if (($template['opdrachttype'] ?? '') === 'other') {
+			if (($template['assignmentType'] ?? '') === 'other') {
 				$fallback = $template;
 			}
 		}
@@ -138,7 +138,7 @@ class MilestoneTemplateService {
 		$termSeconds = ($end - $start);
 		$mijlpalen = [];
 		$index = 0;
-		foreach (($template['mijlpalen'] ?? []) as $row) {
+		foreach (($template['milestones'] ?? []) as $row) {
 			$index++;
 			$fraction = (float)($row['fractionOfTerm'] ?? 0.0);
 			$fraction = max(0.0, min(1.0, $fraction));
@@ -148,13 +148,13 @@ class MilestoneTemplateService {
 			}
 
 			$mijlpalen[] = [
-				'mijlpaalId' => 'MS-' . str_pad((string)$index, 3, '0', STR_PAD_LEFT),
-				'datum' => gmdate('Y-m-d', $datum),
+				'milestoneId' => 'MS-' . str_pad((string)$index, 3, '0', STR_PAD_LEFT),
+				'date' => gmdate('Y-m-d', $datum),
 				'description' => (string)($row['label'] ?? ('Mijlpaal ' . $index)),
 				'percentage' => (float)($row['percentage'] ?? 0.0),
-				'opleveringsType' => (string)($row['opleveringsType'] ?? 'deeloplevering'),
+				'deliveryType' => (string)($row['deliveryType'] ?? 'deeloplevering'),
 				'status' => 'planned',
-				'factuurnummer' => null,
+				'invoiceNumber' => null,
 			];
 		}//end foreach
 
@@ -216,7 +216,7 @@ class MilestoneTemplateService {
 			$allocated += $bedrag;
 
 			$forecast[] = [
-				'datum' => (string)($mijlpaal['datum'] ?? ''),
+				'date' => (string)($mijlpaal['date'] ?? ''),
 				'description' => (string)($mijlpaal['description'] ?? ''),
 				'percentage' => $percentage,
 				'amount' => $bedrag,

@@ -120,7 +120,7 @@ class WmoComplianceCalculator {
 	 *                                         is a map summed internally.
 	 * @param float|null $verkochteEenheden Units sold in the period (null when not tracked).
 	 *
-	 * @return array{totaleKosten: float, kostprijsPerEenheid: float|null} The cost totals.
+	 * @return array{totaleCost: float, costPricePerUnit: float|null} The cost totals.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
@@ -130,11 +130,11 @@ class WmoComplianceCalculator {
 			$overhead = $componenten['indirecteOverhead'];
 		}
 
-		$totalCents = $this->toCents(amount: ($componenten['directeLoonkosten'] ?? 0));
+		$totalCents = $this->toCents(amount: ($componenten['directePayrollCost'] ?? 0));
 		$totalCents += $this->toCents(amount: ($componenten['directeMaterialen'] ?? 0));
-		$totalCents += $this->toCents(amount: ($componenten['directeAfschrijvingen'] ?? 0));
+		$totalCents += $this->toCents(amount: ($componenten['directeDepreciations'] ?? 0));
 		$totalCents += $this->overheadTotalCents(overhead: $overhead);
-		$totalCents += $this->toCents(amount: ($componenten['vermogenskosten'] ?? 0));
+		$totalCents += $this->toCents(amount: ($componenten['capitalCost'] ?? 0));
 		$totalCents += $this->toCents(amount: ($componenten['winstopslag'] ?? 0));
 
 		$perEenheid = null;
@@ -143,8 +143,8 @@ class WmoComplianceCalculator {
 		}
 
 		return [
-			'totaleKosten' => $this->fromCents(cents: $totalCents),
-			'kostprijsPerEenheid' => $perEenheid,
+			'totaleCost' => $this->fromCents(cents: $totalCents),
+			'costPricePerUnit' => $perEenheid,
 		];
 
 	}//end integralCostPrice()
@@ -260,10 +260,10 @@ class WmoComplianceCalculator {
 			}
 
 			$splits[] = [
-				'kostendrager' => (string)($target['kostendrager'] ?? ''),
+				'costObject' => (string)($target['costObject'] ?? ''),
 				'ratio' => $ratio,
 				'amount' => $this->fromCents(cents: $cents),
-				'grootboek' => ($target['grootboek'] ?? null),
+				'generalLedger' => ($target['generalLedger'] ?? null),
 				'dimensie' => (string)($target['dimensie'] ?? ''),
 			];
 		}

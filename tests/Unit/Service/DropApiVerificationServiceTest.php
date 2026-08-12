@@ -50,7 +50,7 @@ final class DropApiVerificationServiceTest extends TestCase {
 	 * Compose lookup uses the publicatieGemeenteblad reference.
 	 */
 	public function testComposeLookupRequest(): void {
-		$r = $this->svc->composeLookupRequest(['publicatieGemeenteblad' => 'gmb-2025-401']);
+		$r = $this->svc->composeLookupRequest(['publicationMunicipalGazette' => 'gmb-2025-401']);
 		self::assertTrue($r['ok']);
 		self::assertSame('gmb-2025-401', $r['gemeentebladId']);
 		self::assertSame(['identifier' => 'gmb-2025-401'], $r['request']['query']);

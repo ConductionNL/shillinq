@@ -281,7 +281,7 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 			$writer->writeElement('companyIdent', $kvk);
 		}
 
-		$btw = (string)($row['btwNumber'] ?? '');
+		$btw = (string)($row['vatNumber'] ?? '');
 		if ($btw !== '') {
 			$writer->startElement('taxRegistration');
 			$writer->writeElement('taxRegIdent', $btw);

@@ -94,8 +94,8 @@ class ActivityCostAllocationSplitter {
 				continue;
 			}
 
-			$from = (string)($rule['effectiveFrom'] ?? $rule['geldigVanaf'] ?? '');
-			$to = (string)($rule['effectiveTo'] ?? $rule['geldigTot'] ?? '');
+			$from = (string)($rule['effectiveFrom'] ?? $rule['validFrom'] ?? '');
+			$to = (string)($rule['effectiveTo'] ?? $rule['validTo'] ?? '');
 
 			try {
 				if ($from !== '' && new DateTimeImmutable($from) > $posting) {
@@ -171,10 +171,10 @@ class ActivityCostAllocationSplitter {
 			$partCents = (int)round($absCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
 
 			$records[] = [
-				'kostendrager' => (string)($split['kostendrager'] ?? $split['kostendragerCode'] ?? ''),
+				'costObject' => (string)($split['costObject'] ?? $split['costObjectCode'] ?? ''),
 				'ratio' => $ratio,
 				'amount' => $this->fromCents(cents: ($partCents * $sign)),
-				'grootboek' => ($split['grootboek'] ?? $split['glAccount'] ?? null),
+				'generalLedger' => ($split['generalLedger'] ?? $split['glAccount'] ?? null),
 				'dimensie' => (string)($split['dimensie'] ?? 'MO'),
 			];
 
@@ -221,7 +221,7 @@ class ActivityCostAllocationSplitter {
 			'originalAmount' => (float)$input['originalAmount'],
 			'splits' => $splits,
 			'verdeelsleutel' => (string)($input['rule']['id'] ?? ''),
-			'automatischToegepast' => true,
+			'automaticApplied' => true,
 			'handmatigeOverride' => null,
 			'postingDate' => (string)$input['postingDate'],
 			'materialised' => (bool)($input['materialised'] ?? false),
@@ -269,7 +269,7 @@ class ActivityCostAllocationSplitter {
 			'originalAmount' => (float)($original['originalAmount'] ?? 0),
 			'splits' => (array)($input['newSplits'] ?? []),
 			'verdeelsleutel' => (string)($original['verdeelsleutel'] ?? ''),
-			'automatischToegepast' => false,
+			'automaticApplied' => false,
 			'handmatigeOverride' => [
 				'approvedBy' => $unique,
 				'reason' => $reason,
@@ -315,9 +315,9 @@ class ActivityCostAllocationSplitter {
 			}
 
 			$entries[] = [
-				'grootboek' => (string)($split['grootboek'] ?? ($glAccountClass . ((string)($split['dimensie'] ?? 'MO')))),
+				'generalLedger' => (string)($split['generalLedger'] ?? ($glAccountClass . ((string)($split['dimensie'] ?? 'MO')))),
 				'amount' => $amount,
-				'kostendrager' => (string)($split['kostendrager'] ?? ''),
+				'costObject' => (string)($split['costObject'] ?? ''),
 				'dimensie' => (string)($split['dimensie'] ?? 'MO'),
 				'side' => $side,
 			];

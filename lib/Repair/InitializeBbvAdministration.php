@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class InitializeBbvAdministration implements IRepairStep {
-	private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
+	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'provincie', 'waterschap'];
 
 	private const RESERVE_TAAKVELD = '0.10';
 
@@ -213,7 +213,7 @@ class InitializeBbvAdministration implements IRepairStep {
 		$payload = [
 			'administrationId' => $administrationId,
 			'name' => self::ALGEMENE_RESERVE_NAAM,
-			'soort' => 'algemeen',
+			'kind' => 'algemeen',
 			'saldoBeginJaar' => 0,
 			'rentetoerekening' => false,
 			'_meta' => [
@@ -274,11 +274,11 @@ class InitializeBbvAdministration implements IRepairStep {
 		$payload = [
 			'code' => self::RESERVE_TAAKVELD,
 			'name' => self::RESERVE_TAAKVELD_NAAM,
-			'hoofdfunctie' => 0,
+			'mainFunction' => 0,
 			'mainFunctionName' => 'Bestuur en ondersteuning',
 			'descriptionIv3' => 'Resultaatbestemming: dotaties en onttrekkingen aan reserves (bootstrap).',
 			'overheidslaag' => $overheidslaag,
-			'geldigVanaf' => '2025-01-01',
+			'validFrom' => '2025-01-01',
 			'_meta' => [
 				'source' => 'bootstrap',
 				'createdBy' => 'InitializeBbvAdministration',

@@ -54,15 +54,15 @@
 				"register": "shillinq",
 				"schema": "Rechtmatigheidstoets",
 				"columns": [
-					{ "key": "journaalpost", "label": "Journal entry", "sortable": true },
+					{ "key": "journalEntry", "label": "Journal entry", "sortable": true },
 					{ "key": "criterium", "label": "Criterion", "sortable": true },
 					{ "key": "uitkomst", "label": "Outcome", "sortable": true },
 					{ "key": "toetstype", "label": "Assessment type", "sortable": true },
-					{ "key": "toetsdatum", "label": "Assessment date", "sortable": true },
+					{ "key": "testDate", "label": "Assessment date", "sortable": true },
 					{ "key": "amount_involved", "label": "Amount", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "toetsdatum",
+				"defaultSort": "testDate",
 				"detailRoute": "RechtmatigheidstoetsDetail"
 			}
 		},
@@ -76,17 +76,17 @@
 				"schema": "Rechtmatigheidstoets",
 				"_note": "ASSESSMENT record (a single lawfulness test against one journal entry/criterion). The body is the test itself — criterion, outcome, assessor, substantiation, the amount at stake, the rule reference and any finding it produced — everything a reviewer needs to defend the judgement, with the supporting-documents reference (bewijsstukken) inline. No comms leaves (a compliance test is not correspondence); the audit trail sidebar is the who-tested-what record that underpins the accountant's opinion.",
 				"fields": [
-					{ "key": "journaalpost", "label": "Journal entry", "type": "string" },
+					{ "key": "journalEntry", "label": "Journal entry", "type": "string" },
 					{ "key": "criterium", "label": "Criterion", "type": "string" },
 					{ "key": "uitkomst", "label": "Outcome", "type": "string" },
 					{ "key": "toetstype", "label": "Assessment type", "type": "string" },
-					{ "key": "toetsdatum", "label": "Assessment date", "type": "string" },
+					{ "key": "testDate", "label": "Assessment date", "type": "string" },
 					{ "key": "toetser", "label": "Assessor", "type": "string" },
-					{ "key": "onderbouwing", "label": "Substantiation", "type": "string" },
+					{ "key": "substantiation", "label": "Substantiation", "type": "string" },
 					{ "key": "amount_involved", "label": "Amount", "type": "string" },
-					{ "key": "bewijsstukken", "label": "Supporting documents", "type": "string" },
-					{ "key": "regelverwijzing", "label": "Rule reference", "type": "string" },
-					{ "key": "rechtmatigheidsbevinding", "label": "Finding", "type": "string" },
+					{ "key": "supportingDocuments", "label": "Supporting documents", "type": "string" },
+					{ "key": "ruleReference", "label": "Rule reference", "type": "string" },
+					{ "key": "lawfulnessFinding", "label": "Finding", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
 				"indexRoute": "Rechtmatigheidstoetsing",
@@ -121,8 +121,8 @@
 				"register": "shillinq",
 				"schema": "Rechtmatigheidsbevinding",
 				"columns": [
-					{ "key": "bevindingsnummer", "label": "Finding number", "sortable": true },
-					{ "key": "soort", "label": "Kind", "sortable": true },
+					{ "key": "findingNumber", "label": "Finding number", "sortable": true },
+					{ "key": "kind", "label": "Kind", "sortable": true },
 					{ "key": "criterium", "label": "Criterion", "sortable": true },
 					{ "key": "amount_error", "label": "Error amount", "sortable": true },
 					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "sortable": true },
@@ -130,7 +130,7 @@
 					{ "key": "programme", "label": "Programme", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "meldingsdatum",
+				"defaultSort": "reportDate",
 				"detailRoute": "BevindingDetail"
 			}
 		},
@@ -144,19 +144,19 @@
 				"schema": "Rechtmatigheidsbevinding",
 				"_note": "FINDING (a booked error or uncertainty that rolls up into the lawfulness paragraph). The body quantifies the finding — error vs uncertainty amount, criterion, programme, financial year — and captures cause, measure and the responsible portfolio holder, plus the linked correction entry that resolves it. This is the remediation view. No comms leaves; the audit trail sidebar tracks status from open to resolved.",
 				"fields": [
-					{ "key": "bevindingsnummer", "label": "Finding number", "type": "string" },
-					{ "key": "soort", "label": "Kind", "type": "string" },
+					{ "key": "findingNumber", "label": "Finding number", "type": "string" },
+					{ "key": "kind", "label": "Kind", "type": "string" },
 					{ "key": "criterium", "label": "Criterion", "type": "string" },
 					{ "key": "amount_error", "label": "Error amount", "type": "string" },
 					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "type": "string" },
 					{ "key": "financialYear", "label": "Financial year", "type": "string" },
 					{ "key": "programme", "label": "Programme", "type": "string" },
 					{ "key": "description", "label": "Description", "type": "string" },
-					{ "key": "oorzaak", "label": "Cause", "type": "string" },
-					{ "key": "maatregel", "label": "Measure", "type": "string" },
+					{ "key": "cause", "label": "Cause", "type": "string" },
+					{ "key": "measure", "label": "Measure", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "verantwoordelijke_portefeuillehouder", "label": "Portfolio holder", "type": "string" },
-					{ "key": "correctieboeking_id", "label": "Linked correction entry", "type": "string" }
+					{ "key": "responsible_portefeuillehouder", "label": "Portfolio holder", "type": "string" },
+					{ "key": "correctionentry_id", "label": "Linked correction entry", "type": "string" }
 				],
 				"indexRoute": "Bevindingen",
 				"sidebarProps": {
@@ -192,9 +192,9 @@
 				"columns": [
 					{ "key": "financialYear", "label": "Financial year", "sortable": true },
 					{ "key": "fout_percentage", "label": "Error %", "sortable": true },
-					{ "key": "onzekerheid_percentage", "label": "Uncertainty %", "sortable": true },
-					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Council decision", "sortable": true },
-					{ "key": "vastgesteld_op", "label": "Adopted on", "sortable": true },
+					{ "key": "uncertainty_percentage", "label": "Uncertainty %", "sortable": true },
+					{ "key": "determined_at_councilresolution", "label": "Council decision", "sortable": true },
+					{ "key": "determined_on", "label": "Adopted on", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "financialYear",
@@ -213,12 +213,12 @@
 				"fields": [
 					{ "key": "financialYear", "label": "Financial year", "type": "string" },
 					{ "key": "fout_percentage", "label": "Error %", "type": "string" },
-					{ "key": "onzekerheid_percentage", "label": "Uncertainty %", "type": "string" },
-					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Council decision", "type": "string" },
-					{ "key": "vastgesteld_op", "label": "Adopted on", "type": "string" },
-					{ "key": "geldig_vanaf", "label": "Valid from", "type": "string" },
-					{ "key": "geldig_tot", "label": "Valid until", "type": "string" },
-					{ "key": "berekeningsbasis", "label": "Calculation basis", "type": "string" },
+					{ "key": "uncertainty_percentage", "label": "Uncertainty %", "type": "string" },
+					{ "key": "determined_at_councilresolution", "label": "Council decision", "type": "string" },
+					{ "key": "determined_on", "label": "Adopted on", "type": "string" },
+					{ "key": "valid_from", "label": "Valid from", "type": "string" },
+					{ "key": "valid_to", "label": "Valid until", "type": "string" },
+					{ "key": "calculationBasis", "label": "Calculation basis", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
 				"indexRoute": "Toleranties",
@@ -256,7 +256,7 @@
 					{ "key": "financialYear", "label": "Financial year", "sortable": true },
 					{ "key": "total_identified_errors", "label": "Errors", "sortable": true },
 					{ "key": "total_identified_uncertainties", "label": "Uncertainties", "sortable": true },
-					{ "key": "binnen_tolerantie", "label": "Within tolerance", "sortable": true },
+					{ "key": "binnen_tolerance", "label": "Within tolerance", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "financialYear",
@@ -279,10 +279,10 @@
 					{ "key": "tolerance_uncertainty_amount", "label": "Tolerance threshold uncertainty (amount)", "type": "string" },
 					{ "key": "total_identified_errors", "label": "Total identified errors", "type": "string" },
 					{ "key": "total_identified_uncertainties", "label": "Total identified uncertainties", "type": "string" },
-					{ "key": "binnen_tolerantie", "label": "Within tolerance", "type": "string" },
-					{ "key": "verklaring_college", "label": "Executive statement", "type": "string" },
-					{ "key": "vastgesteld_door_college_op", "label": "Adopted by executive on", "type": "string" },
-					{ "key": "behandeld_in_raad_op", "label": "Handled by council on", "type": "string" },
+					{ "key": "binnen_tolerance", "label": "Within tolerance", "type": "string" },
+					{ "key": "declaration_college", "label": "Executive statement", "type": "string" },
+					{ "key": "determined_by_college_on", "label": "Adopted by executive on", "type": "string" },
+					{ "key": "behandeld_in_council_on", "label": "Handled by council on", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
 				"indexRoute": "Rechtmatigheidsparagraaf",
@@ -317,14 +317,14 @@
 				"register": "shillinq",
 				"schema": "Rechtmatigheidstoets",
 				"columns": [
-					{ "key": "journaalpost", "label": "Journal entry", "sortable": true },
+					{ "key": "journalEntry", "label": "Journal entry", "sortable": true },
 					{ "key": "criterium", "label": "Criterion", "sortable": true },
 					{ "key": "uitkomst", "label": "Outcome", "sortable": true },
-					{ "key": "toetsdatum", "label": "Assessment date", "sortable": true },
+					{ "key": "testDate", "label": "Assessment date", "sortable": true },
 					{ "key": "toetser", "label": "Assessor", "sortable": true },
 					{ "key": "amount_involved", "label": "Amount", "sortable": true }
 				],
-				"defaultSort": "toetsdatum",
+				"defaultSort": "testDate",
 				"detailRoute": "RechtmatigheidstoetsDetail"
 			}
 		}

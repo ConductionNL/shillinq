@@ -92,7 +92,7 @@ class AuditfileParser {
 	 *   [
 	 *     'company'         => ['companyName'=>..,'kvkNumber'=>..,'taxRegIdent'=>..],
 	 *     'ledgerAccounts'  => [['code','name','rgsCode','type'], ...],
-	 *     'relations'       => [['code','name','kvk','btw','email','type'], ...],
+	 *     'relations'       => [['code','name','kvk','vat','email','type'], ...],
 	 *     'openingBalances' => [['accountCode','debit','credit'], ...],
 	 *     'journals'        => [['journalId','transactions'=>[['lines'=>[...]]]], ...],
 	 *     'findings'        => [['severity','code','message','context'], ...],
@@ -377,7 +377,7 @@ class AuditfileParser {
 				'code' => $this->firstString(node: $node, xpath: './*[local-name()="custSupID"]'),
 				'name' => $this->firstString(node: $node, xpath: './*[local-name()="companyName"]'),
 				'kvk' => $this->firstString(node: $node, xpath: './*[local-name()="companyIdent"]'),
-				'btw' => $btw,
+				'vat' => $btw,
 				'email' => $this->firstString(node: $node, xpath: './/*[local-name()="eMail"]'),
 				'phone' => $this->firstString(node: $node, xpath: './/*[local-name()="telephone"]'),
 				'type' => $this->firstString(node: $node, xpath: './*[local-name()="custSupTp"]'),

@@ -99,7 +99,7 @@ class WbsoMededelingGuard {
 				return false;
 			}
 
-			$beschikkingNumber = (string)($object['beschikkingNumber'] ?? '');
+			$beschikkingNumber = (string)($object['decisionNumber'] ?? '');
 			$administrationId = (string)($object['administrationId'] ?? '');
 			if ($beschikkingNumber === '' || $administrationId === '') {
 				return false;
@@ -159,14 +159,14 @@ class WbsoMededelingGuard {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'beschikkingNumber' => $beschikkingNumber,
+						'decisionNumber' => $beschikkingNumber,
 					],
 				]
 			);
 
 		foreach ($beschikkingen as $beschikking) {
 			if (is_array($beschikking) === true
-				&& (string)($beschikking['beschikkingNumber'] ?? '') === $beschikkingNumber
+				&& (string)($beschikking['decisionNumber'] ?? '') === $beschikkingNumber
 				&& (string)($beschikking['administrationId'] ?? '') === $administrationId
 			) {
 				return $beschikking;

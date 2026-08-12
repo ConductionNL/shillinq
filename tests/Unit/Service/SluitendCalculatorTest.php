@@ -57,7 +57,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testYearSluitendWhenStructureelAndReeelHold(): void {
 		$result = $this->calculator->evaluateYear(
-			year: ['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
+			year: ['revenueStructureel' => 1000.0, 'expensesStructureel' => 900.0],
 			nominaleOntwikkeling: 2.0
 		);
 
@@ -77,7 +77,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testYearNotSluitendWhenLastenExceedBaten(): void {
 		$result = $this->calculator->evaluateYear(
-			year: ['batenStructureel' => 1000.0, 'lastenStructureel' => 1100.0],
+			year: ['revenueStructureel' => 1000.0, 'expensesStructureel' => 1100.0],
 			nominaleOntwikkeling: 2.0
 		);
 
@@ -95,7 +95,7 @@ final class SluitendCalculatorTest extends TestCase {
 	public function testYearStructureelSluitendButReeelFails(): void {
 		// Saldo structureel = 10; uplift = 5% of 1000 = 50; saldo reëel = -40.
 		$result = $this->calculator->evaluateYear(
-			year: ['batenStructureel' => 1010.0, 'lastenStructureel' => 1000.0],
+			year: ['revenueStructureel' => 1010.0, 'expensesStructureel' => 1000.0],
 			nominaleOntwikkeling: 5.0
 		);
 
@@ -112,8 +112,8 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testBegrotingSluitendOnlyWhenAllYearsHold(): void {
 		$years = [
-			['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
-			['batenStructureel' => 1020.0, 'lastenStructureel' => 950.0],
+			['revenueStructureel' => 1000.0, 'expensesStructureel' => 900.0],
+			['revenueStructureel' => 1020.0, 'expensesStructureel' => 950.0],
 		];
 
 		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
@@ -129,8 +129,8 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testBegrotingNotSluitendWhenOneYearFails(): void {
 		$years = [
-			['batenStructureel' => 1000.0, 'lastenStructureel' => 900.0],
-			['batenStructureel' => 800.0, 'lastenStructureel' => 950.0],
+			['revenueStructureel' => 1000.0, 'expensesStructureel' => 900.0],
+			['revenueStructureel' => 800.0, 'expensesStructureel' => 950.0],
 		];
 
 		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
@@ -220,7 +220,7 @@ final class SluitendCalculatorTest extends TestCase {
 	public function testIntegerCentsAvoidDrift(): void {
 		// 0.1 + 0.2 baten/lasten that would drift in float — result must be exact.
 		$result = $this->calculator->evaluateYear(
-			year: ['batenStructureel' => 0.3, 'lastenStructureel' => 0.3],
+			year: ['revenueStructureel' => 0.3, 'expensesStructureel' => 0.3],
 			nominaleOntwikkeling: 0.0
 		);
 		self::assertSame(0.0, $result['balanceStructural']);

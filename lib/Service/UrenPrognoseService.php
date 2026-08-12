@@ -99,7 +99,7 @@ final class UrenPrognoseService {
 	 *  - kalenderjaar: int — target year.
 	 *  - lopendeUren: float — current YTD total (typically the result of UrenTallyService::tallyYearToDate).
 	 *  - vakanties: array<int, string> — ISO date ranges ("2026-07-15/2026-08-09") that go to 0.
-	 *  - geplandeOpdrachten: array<int, array{maand: string, uren: float}> — overrides per maand (YYYY-MM).
+	 *  - geplandeOpdrachten: array<int, array{maand: string, hours: float}> — overrides per maand (YYYY-MM).
 	 *
 	 * @param array<string, mixed> $input Input bundle.
 	 *
@@ -109,8 +109,8 @@ final class UrenPrognoseService {
 	 */
 	public function bouwPrognose(array $input): array {
 		$asOf = (string)($input['asOf'] ?? gmdate('Y-m-d'));
-		$kalenderjaar = (int)($input['kalenderjaar'] ?? (int)substr($asOf, 0, 4));
-		$lopende = (float)($input['lopendeUren'] ?? 0.0);
+		$kalenderjaar = (int)($input['calendarYear'] ?? (int)substr($asOf, 0, 4));
+		$lopende = (float)($input['lopendeHours'] ?? 0.0);
 		$dailyTallies = (array)($input['dailyTallies'] ?? []);
 		$vakanties = (array)($input['vakanties'] ?? []);
 		$opdrachten = (array)($input['geplandeOpdrachten'] ?? []);
@@ -141,7 +141,7 @@ final class UrenPrognoseService {
 			'UrenPrognoseService: prognose computed',
 			[
 				'asOf' => $asOf,
-				'modelVersie' => self::MODEL_VERSION,
+				'modelVersion' => self::MODEL_VERSION,
 				'weekGemiddelde' => $weekGemiddelde,
 				'totalForecast' => $totaalPrognose,
 				'confidence' => $confidence,
@@ -149,12 +149,12 @@ final class UrenPrognoseService {
 		);
 
 		return [
-			'modelVersie' => self::MODEL_VERSION,
-			'berekendOp' => gmdate('c'),
-			'perMaandPrognose' => $perMaand,
+			'modelVersion' => self::MODEL_VERSION,
+			'calculatedOn' => gmdate('c'),
+			'perMonthPrognose' => $perMaand,
 			'vakanties' => array_values(array_map('strval', $vakanties)),
 			'totalForecast' => $totaalPrognose,
-			'kansBehaaldNorm' => $kansBehaaldNorm,
+			'kansAchievedNorm' => $kansBehaaldNorm,
 			'prognoseConfidence' => $confidence,
 		];
 
@@ -249,7 +249,7 @@ final class UrenPrognoseService {
 	 * @param int $kalenderjaar Target year.
 	 * @param float $weekGemiddelde Weekly mean hours.
 	 * @param array<int, string> $vakanties ISO date ranges.
-	 * @param array<int, array{maand: string, uren: float}|array<string, mixed>> $geplandeOpdrachten Per-maand overrides.
+	 * @param array<int, array{maand: string, hours: float}|array<string, mixed>> $geplandeOpdrachten Per-maand overrides.
 	 *
 	 * @return array<string, float> Forecast hours keyed by YYYY-MM.
 	 */
@@ -273,7 +273,7 @@ final class UrenPrognoseService {
 			}
 
 			$maand = (string)($opdracht['maand'] ?? '');
-			$uren = (float)($opdracht['uren'] ?? 0);
+			$uren = (float)($opdracht['hours'] ?? 0);
 			if ($maand !== '') {
 				$overridesByMaand[$maand] = $uren;
 			}

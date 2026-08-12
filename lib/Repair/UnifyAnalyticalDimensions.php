@@ -372,7 +372,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 			$record['budget'] = $source['budget'];
 		}
 
-		$record['ondernemingsActiviteit'] = (bool)($source['ondernemingsActiviteit'] ?? false);
+		$record['enterpriseActivity'] = (bool)($source['enterpriseActivity'] ?? false);
 
 		return $record;
 	}//end buildCostCenterRecord()

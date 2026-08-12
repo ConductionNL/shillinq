@@ -102,8 +102,8 @@ class IntegralCostPriceCalculator {
 				continue;
 			}
 
-			$kp = (string)($line['kostenplaats'] ?? $line['kostenplaatsCode'] ?? '');
-			$kd = (string)($line['kostendrager'] ?? $line['kostendragerCode'] ?? '');
+			$kp = (string)($line['costCentre'] ?? $line['costCentreCode'] ?? '');
+			$kd = (string)($line['costObject'] ?? $line['costObjectCode'] ?? '');
 			$kind = (string)($line['accountKind'] ?? $line['kind'] ?? '');
 
 			if ($kp !== $kostenplaats || $kd !== $kostendrager) {
@@ -114,7 +114,7 @@ class IntegralCostPriceCalculator {
 				continue;
 			}
 
-			$amount = (float)($line['amount'] ?? $line['amount'] ?? 0);
+			$amount = (float)($line['amount'] ?? 0);
 			if ($amount < 0) {
 				// Credit notes / reversals are subtracted (sign-preserved).
 				$totalCents += $this->toCents(amount: $amount);
@@ -153,12 +153,12 @@ class IntegralCostPriceCalculator {
 				continue;
 			}
 
-			$entryDrager = (string)($entry['kostendrager'] ?? $entry['kostendragerCode'] ?? '');
+			$entryDrager = (string)($entry['costObject'] ?? $entry['costObjectCode'] ?? '');
 			if ($entryDrager !== '' && $entryDrager !== $kostendrager) {
 				continue;
 			}
 
-			$bucket = (string)($entry['bucket'] ?? $entry['categorie'] ?? 'overig');
+			$bucket = (string)($entry['bucket'] ?? $entry['category'] ?? 'overig');
 			$ratio = (float)($entry['ratio'] ?? 0);
 
 			if ($ratio < 0.0) {
@@ -270,12 +270,12 @@ class IntegralCostPriceCalculator {
 	 */
 	public function compose(array $input): array {
 		$glLines = (array)($input['glLines'] ?? []);
-		$kp = (string)$input['kostenplaats'];
-		$kd = (string)$input['kostendrager'];
+		$kp = (string)$input['costCentre'];
+		$kd = (string)$input['costObject'];
 
-		$loonkostenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'loonkosten');
+		$loonkostenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'payrollCost');
 		$materialenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'materialen');
-		$afschrijvingenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'afschrijvingen');
+		$afschrijvingenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'depreciations');
 
 		$overheadBuckets = $this->distributeOverhead(
 			corporateOverheadCents: (int)($input['corporateOverheadCents'] ?? 0),
@@ -302,12 +302,12 @@ class IntegralCostPriceCalculator {
 
 		$totaleKostenCents = ($baseBeforeMarkup + $winstopslagCents);
 
-		$verkochteEenheden = (float)($input['verkochteEenheden'] ?? 0);
+		$verkochteEenheden = (float)($input['verkochteUnits'] ?? 0);
 		$kostprijsPerEenheid = $this->calculateKostprijsPerEenheid(totaleKostenCents: $totaleKostenCents, verkochteEenheden: $verkochteEenheden);
 
 		$gehanteerdTarief = null;
-		if (isset($input['gehanteerdTarief']) === true) {
-			$gehanteerdTarief = (float)$input['gehanteerdTarief'];
+		if (isset($input['gehanteerdRate']) === true) {
+			$gehanteerdTarief = (float)$input['gehanteerdRate'];
 		}
 
 		$marge = null;
@@ -341,22 +341,22 @@ class IntegralCostPriceCalculator {
 
 		return [
 			'commercialActivityId' => (string)$input['commercialActivityId'],
-			'periode' => (string)$input['periode'],
-			'berekendOp' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+			'period' => (string)$input['period'],
+			'calculatedOn' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'status' => (string)($input['status'] ?? 'voorlopig'),
 			'componenten' => [
-				'directeLoonkosten' => $this->fromCents(cents: $loonkostenCents),
+				'directePayrollCost' => $this->fromCents(cents: $loonkostenCents),
 				'directeMaterialen' => $this->fromCents(cents: $materialenCents),
-				'directeAfschrijvingen' => $this->fromCents(cents: $afschrijvingenCents),
+				'directeDepreciations' => $this->fromCents(cents: $afschrijvingenCents),
 				'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
-				'vermogenskosten' => $this->fromCents(cents: $vermogensCents),
+				'capitalCost' => $this->fromCents(cents: $vermogensCents),
 				'winstopslag' => $this->fromCents(cents: $winstopslagCents),
 			],
-			'totaleKosten' => $this->fromCents(cents: $totaleKostenCents),
-			'verkochteEenheden' => $verkochteEenhedenOut,
-			'eenheidLabel' => ($input['eenheidLabel'] ?? null),
-			'kostprijsPerEenheid' => $kostprijsPerEenheid,
-			'gehanteerdTarief' => $gehanteerdTarief,
+			'totaleCost' => $this->fromCents(cents: $totaleKostenCents),
+			'verkochteUnits' => $verkochteEenhedenOut,
+			'unitLabel' => ($input['unitLabel'] ?? null),
+			'costPricePerUnit' => $kostprijsPerEenheid,
+			'gehanteerdRate' => $gehanteerdTarief,
 			'marge' => $marge,
 			'margePercentage' => $margePercentage,
 			'compliant' => $compliant,

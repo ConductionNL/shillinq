@@ -124,7 +124,7 @@ class SubsidieVerantwoordingGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SubsidieVerantwoordingGuard: approve check failed — denying approve transition (fail-closed)',
-				['verantwoordingId' => $verantwoordingId, 'exception' => $e->getMessage()]
+				['accountabilityId' => $verantwoordingId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try

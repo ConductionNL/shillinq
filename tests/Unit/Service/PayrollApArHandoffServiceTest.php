@@ -63,12 +63,12 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 		$payloads = $this->svc->toApTransactionPayloads(
 			lhAfdracht: [
 				'werkgeverId' => 'wg-1',
-				'periodeId' => 'lp-2026-05',
+				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 18620.10,
 				'totalSocialInsuranceContributions' => 7559.40,
 				'totalHealthInsurance' => 3654.00,
 				'totalFinalLeviesWorkRelatedCosts' => 240.00,
-				'vervaldagAfdracht' => '2026-06-30',
+				'vervaldagRemittance' => '2026-06-30',
 				'administrationId' => 'adm-1',
 			]
 		);
@@ -81,10 +81,10 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 		$this->assertSame('EUR', $bld['currency']);
 		$this->assertSame('2026-06-30', $bld['dueDate']);
 		$this->assertSame('wg-1', $bld['werkgeverId']);
-		$this->assertSame('lp-2026-05', $bld['periodeId']);
+		$this->assertSame('lp-2026-05', $bld['periodId']);
 		$this->assertSame('LHAfdracht', $bld['source']);
 		$this->assertSame('wg-1/lp-2026-05', $bld['sourceRef']);
-		$this->assertSame(18620.10, $bld['breakdown']['loonheffing']);
+		$this->assertSame(18620.10, $bld['breakdown']['payrollTax']);
 		$this->assertSame(3654.00, $bld['breakdown']['zvw']);
 		$this->assertSame(240.00, $bld['breakdown']['eindheffingenWKR']);
 
@@ -105,12 +105,12 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 		$payloads = $this->svc->toApTransactionPayloads(
 			lhAfdracht: [
 				'werkgeverId' => 'wg-1',
-				'periodeId' => 'lp-2026-05',
+				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 0.0,
 				'totalSocialInsuranceContributions' => 1234.56,
 				'totalHealthInsurance' => 0.0,
 				'totalFinalLeviesWorkRelatedCosts' => 0.0,
-				'vervaldagAfdracht' => '2026-06-30',
+				'vervaldagRemittance' => '2026-06-30',
 			]
 		);
 

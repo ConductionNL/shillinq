@@ -208,7 +208,7 @@ class BudgetBlockerTest extends TestCase {
 				'financialYear' => 2026,
 				'authorised_amount' => 50000000,
 				'realised_amount' => 20000000,
-				'openstaande_verplichtingen' => 0,
+				'outstanding_verplichtingen' => 0,
 			],
 			$overrides
 		);
@@ -225,10 +225,10 @@ class BudgetBlockerTest extends TestCase {
 	private function commitment(int $bedrag): array {
 		return [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'PO-1',
-			'soort' => 'inkooporder',
-			'totaalbedrag_excl_btw' => $bedrag,
-			'regels' => [
+			'commitmentNumber' => 'PO-1',
+			'kind' => 'inkooporder',
+			'totalamount_excl_vat' => $bedrag,
+			'rules' => [
 				[
 					'programme' => '5.1',
 					'financialYear' => 2026,
@@ -248,7 +248,7 @@ class BudgetBlockerTest extends TestCase {
 		$this->assertSame(30000000, $this->guard->freeRoom($this->budget()));
 		$this->assertSame(
 			5000000,
-			$this->guard->freeRoom($this->budget(['openstaande_verplichtingen' => 25000000]))
+			$this->guard->freeRoom($this->budget(['outstanding_verplichtingen' => 25000000]))
 		);
 
 	}//end testFreeRoomCalculation()
@@ -292,12 +292,12 @@ class BudgetBlockerTest extends TestCase {
 	public function testOverrideMandateForcesAcceptance(): void {
 		$override = [
 			'administrationId' => 'adm-1',
-			'mandaatcode' => 'M-CFO-OVERRIDE',
-			'maximumbedrag' => 1000000000,
-			'soort_verplichting' => ['inkooporder'],
+			'mandateCode' => 'M-CFO-OVERRIDE',
+			'maximumAmount' => 1000000000,
+			'kind_commitment' => ['inkooporder'],
 			'is_override' => true,
-			'geldig_van' => '2020-01-01',
-			'geldig_tot' => '2999-12-31',
+			'valid_from' => '2020-01-01',
+			'valid_to' => '2999-12-31',
 		];
 
 		$this->withObjectService(
@@ -327,10 +327,10 @@ class BudgetBlockerTest extends TestCase {
 
 		$commitment = [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'RO-1',
-			'soort' => 'raamovereenkomst',
-			'totaalbedrag_excl_btw' => 20000000,
-			'regels' => [
+			'commitmentNumber' => 'RO-1',
+			'kind' => 'frameworkAgreement',
+			'totalamount_excl_vat' => 20000000,
+			'rules' => [
 				['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
 				['programme' => '5.1', 'financialYear' => 2027, 'amount_excl_vat' => 10000000],
 			],

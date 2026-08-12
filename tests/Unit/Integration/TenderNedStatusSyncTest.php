@@ -174,7 +174,7 @@ final class TenderNedStatusSyncTest extends TestCase {
 			new NullLogger()
 		);
 
-		$result = $sync->syncCompletion(['mijlpaalId' => 'M-EIND']);
+		$result = $sync->syncCompletion(['milestoneId' => 'M-EIND']);
 
 		$this->assertFalse($result);
 
@@ -192,7 +192,7 @@ final class TenderNedStatusSyncTest extends TestCase {
 			new NullLogger()
 		);
 
-		$result = $sync->syncCompletion(['verplichtingId' => 'TN-X', 'mijlpaalId' => 'M-EIND']);
+		$result = $sync->syncCompletion(['commitmentId' => 'TN-X', 'milestoneId' => 'M-EIND']);
 
 		$this->assertFalse($result);
 
@@ -207,9 +207,9 @@ final class TenderNedStatusSyncTest extends TestCase {
 		$sync = new TenderNedStatusSync(
 			$this->container(
 				[
-					'aanbestedingId' => 'TN-2026-0001',
-					'aanbestedendeDienst' => '99999999 Gemeente Anders',
-					'verplichtingId' => 'TN-X',
+					'tenderId' => 'TN-2026-0001',
+					'contractingDienst' => '99999999 Gemeente Anders',
+					'commitmentId' => 'TN-X',
 				],
 				$this->spyGateway()
 			),
@@ -219,10 +219,10 @@ final class TenderNedStatusSyncTest extends TestCase {
 
 		$result = $sync->syncCompletion(
 			[
-				'verplichtingId' => 'TN-X',
-				'mijlpaalId' => 'M-EIND',
-				'opleveringsDatum' => '2026-12-15',
-				'bewijsstukken' => [['documentId' => 'doc-1']],
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [['documentId' => 'doc-1']],
 			]
 		);
 
@@ -239,9 +239,9 @@ final class TenderNedStatusSyncTest extends TestCase {
 		$sync = new TenderNedStatusSync(
 			$this->container(
 				[
-					'aanbestedingId' => 'TN-2026-0001',
-					'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-					'verplichtingId' => 'TN-X',
+					'tenderId' => 'TN-2026-0001',
+					'contractingDienst' => '30280353 Gemeente Utrecht',
+					'commitmentId' => 'TN-X',
 				],
 				null
 			),
@@ -251,10 +251,10 @@ final class TenderNedStatusSyncTest extends TestCase {
 
 		$result = $sync->syncCompletion(
 			[
-				'verplichtingId' => 'TN-X',
-				'mijlpaalId' => 'M-EIND',
-				'opleveringsDatum' => '2026-12-15',
-				'bewijsstukken' => [['documentId' => 'doc-1']],
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [['documentId' => 'doc-1']],
 			]
 		);
 
@@ -273,9 +273,9 @@ final class TenderNedStatusSyncTest extends TestCase {
 		$sync = new TenderNedStatusSync(
 			$this->container(
 				[
-					'aanbestedingId' => 'TN-2026-0001',
-					'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-					'verplichtingId' => 'TN-X',
+					'tenderId' => 'TN-2026-0001',
+					'contractingDienst' => '30280353 Gemeente Utrecht',
+					'commitmentId' => 'TN-X',
 				],
 				$gateway
 			),
@@ -285,10 +285,10 @@ final class TenderNedStatusSyncTest extends TestCase {
 
 		$result = $sync->syncCompletion(
 			[
-				'verplichtingId' => 'TN-X',
-				'mijlpaalId' => 'M-EIND',
-				'opleveringsDatum' => '2026-12-15',
-				'bewijsstukken' => [['documentId' => 'doc-1']],
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [['documentId' => 'doc-1']],
 				'administrationId' => 'adm-utrecht',
 			]
 		);
@@ -296,7 +296,7 @@ final class TenderNedStatusSyncTest extends TestCase {
 		$this->assertTrue($result);
 		$this->assertCount(1, $gateway->sends);
 		$this->assertSame('tenderned.completion', $gateway->sends[0]['source']);
-		$this->assertSame('TN-2026-0001', $gateway->sends[0]['payload']['aanbestedingId']);
+		$this->assertSame('TN-2026-0001', $gateway->sends[0]['payload']['tenderId']);
 		$this->assertSame(TenderNedStatusSync::TENDERNED_STATUS_AFGEROND, $gateway->sends[0]['payload']['status']);
 		$this->assertSame('M-EIND', $gateway->sends[0]['payload']['eindopleveringId']);
 		$this->assertSame(1, $gateway->sends[0]['payload']['bewijsstukCount']);
@@ -319,9 +319,9 @@ final class TenderNedStatusSyncTest extends TestCase {
 		$sync = new TenderNedStatusSync(
 			$this->container(
 				[
-					'aanbestedingId' => 'TN-2026-0001',
-					'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-					'verplichtingId' => 'TN-X',
+					'tenderId' => 'TN-2026-0001',
+					'contractingDienst' => '30280353 Gemeente Utrecht',
+					'commitmentId' => 'TN-X',
 				],
 				$gateway
 			),
@@ -331,10 +331,10 @@ final class TenderNedStatusSyncTest extends TestCase {
 
 		$result = $sync->syncCompletion(
 			[
-				'verplichtingId' => 'TN-X',
-				'mijlpaalId' => 'M-EIND',
-				'opleveringsDatum' => '2026-12-15',
-				'bewijsstukken' => [],
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [],
 			]
 		);
 

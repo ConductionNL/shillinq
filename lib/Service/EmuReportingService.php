@@ -100,7 +100,7 @@ class EmuReportingService {
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function classifyAdjustment(array $glLine, string $reportId): ?array {
-		$account = (string)($glLine['accountNumber'] ?? ($glLine['grootboekrekening'] ?? ''));
+		$account = (string)($glLine['accountNumber'] ?? ($glLine['generalLedgerAccount'] ?? ''));
 		if ($account === '') {
 			return null;
 		}
@@ -121,8 +121,8 @@ class EmuReportingService {
 		$richting = $matched[2];
 
 		// Regel 7: transaction-moment correction when invoice and payment dates differ.
-		$factuur = (string)($glLine['factuurmoment'] ?? '');
-		$betaal = (string)($glLine['betaalmoment'] ?? '');
+		$factuur = (string)($glLine['invoiceMoment'] ?? '');
+		$betaal = (string)($glLine['paymentMoment'] ?? '');
 		if ($factuur !== '' && $betaal !== '' && substr($factuur, 0, 10) !== substr($betaal, 0, 10)) {
 			$type = 'correctie-transactiemoment';
 		}
@@ -130,16 +130,16 @@ class EmuReportingService {
 		return [
 			'reportId' => $reportId,
 			'type' => $type,
-			'richting' => $richting,
+			'direction' => $richting,
 			'amount' => abs((float)($glLine['amount'] ?? 0)),
-			'bron' => [
-				'grootboekrekening' => $account,
+			'source' => [
+				'generalLedgerAccount' => $account,
 				'description' => (string)($glLine['description'] ?? ''),
-				'taakveld' => (string)($glLine['taakveld'] ?? ''),
+				'taskField' => (string)($glLine['taskField'] ?? ''),
 			],
-			'regel' => 'Wet Hof art. 3: ' . $type,
+			'rule' => 'Wet Hof art. 3: ' . $type,
 			'overridden' => false,
-			'consolidatieEMU' => 'extern',
+			'consolidationEMU' => 'extern',
 			'currency' => (string)($glLine['currency'] ?? 'EUR'),
 		];
 
@@ -163,7 +163,7 @@ class EmuReportingService {
 		$cents = 0;
 		foreach ($adjustments as $adj) {
 			$bedragCents = (int)round((float)($adj['amount'] ?? 0) * 100);
-			$richting = (string)($adj['richting'] ?? 'saldo-neutraal');
+			$richting = (string)($adj['direction'] ?? 'saldo-neutraal');
 			if ($richting === 'saldo-verhogend') {
 				$cents += $bedragCents;
 			} elseif ($richting === 'saldo-verlagend') {
@@ -183,7 +183,7 @@ class EmuReportingService {
 	 *
 	 * @param array<int,array<string,mixed>> $debtPositions DebtPosition object arrays.
 	 *
-	 * @return array{bruto:float,perCategorie:array<string,float>} Total + breakdown.
+	 * @return array{gross:float,perCategory:array<string,float>} Total + breakdown.
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
@@ -191,13 +191,13 @@ class EmuReportingService {
 		$perCategorieCents = [];
 		$brutoCents = 0;
 		foreach ($debtPositions as $pos) {
-			$categorie = (string)($pos['categorieEurostat'] ?? 'overig');
-			$telt = (bool)($pos['teltMeeInEmuSchuld'] ?? false);
+			$categorie = (string)($pos['categoryEurostat'] ?? 'overig');
+			$telt = (bool)($pos['teltMeeInEmuDebt'] ?? false);
 			if ($telt === false || in_array($categorie, self::EMU_SCHULD_CATEGORIES, true) === false) {
 				continue;
 			}
 
-			$cents = (int)round((float)($pos['uitstaandeSchuld'] ?? 0) * 100);
+			$cents = (int)round((float)($pos['outstandingDebt'] ?? 0) * 100);
 			$perCategorieCents[$categorie] = ($perCategorieCents[$categorie] ?? 0) + $cents;
 			$brutoCents += $cents;
 		}//end foreach
@@ -208,8 +208,8 @@ class EmuReportingService {
 		}
 
 		return [
-			'bruto' => (float)($brutoCents / 100),
-			'perCategorie' => $perCategorie,
+			'gross' => (float)($brutoCents / 100),
+			'perCategory' => $perCategorie,
 		];
 
 	}//end computeBrutoSchuld()
@@ -421,7 +421,7 @@ class EmuReportingService {
 	 * @param array<int,array<string,mixed>> $adjustments EMUAdjustment object arrays.
 	 * @param float $emuSaldoBerekend Computed EMU-saldo (EUR).
 	 *
-	 * @return array<int,array{regel:int,label:string,bedrag:float}> The 10 CBS-tussenregels.
+	 * @return array<int,array{rule:int,label:string,amount:float}> The 10 CBS-tussenregels.
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
@@ -429,24 +429,24 @@ class EmuReportingService {
 		$sumByType = $this->sumByType(adjustments: $adjustments);
 
 		return [
-			['regel' => 1, 'label' => 'Saldo van baten en lasten BBV', 'amount' => round($bbvSaldoBatenLasten, 2)],
-			['regel' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
-			['regel' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
-			['regel' => 4, 'label' => 'Bijdragen van derden in investeringen', 'amount' => 0.0],
-			['regel' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
-			['regel' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
+			['rule' => 1, 'label' => 'Saldo van baten en lasten BBV', 'amount' => round($bbvSaldoBatenLasten, 2)],
+			['rule' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
+			['rule' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
+			['rule' => 4, 'label' => 'Bijdragen van derden in investeringen', 'amount' => 0.0],
+			['rule' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
+			['rule' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
 			[
-				'regel' => 7,
+				'rule' => 7,
 				'label' => 'Dotaties voorzieningen ten laste exploitatie',
 				'amount' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2),
 			],
-			['regel' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'amount' => 0.0],
+			['rule' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'amount' => 0.0],
 			[
-				'regel' => 9,
+				'rule' => 9,
 				'label' => 'Boekwinst / verlies desinvesteringen',
 				'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2),
 			],
-			['regel' => 10, 'label' => 'EMU-saldo', 'amount' => round($emuSaldoBerekend, 2)],
+			['rule' => 10, 'label' => 'EMU-saldo', 'amount' => round($emuSaldoBerekend, 2)],
 		];
 
 	}//end renderCbsTussenregels()
@@ -462,7 +462,7 @@ class EmuReportingService {
 		$centsByType = [];
 		foreach ($adjustments as $adj) {
 			$type = (string)($adj['type'] ?? '');
-			$richting = (string)($adj['richting'] ?? 'saldo-neutraal');
+			$richting = (string)($adj['direction'] ?? 'saldo-neutraal');
 			$bedragCents = (int)round((float)($adj['amount'] ?? 0) * 100);
 			if ($richting === 'saldo-verlagend') {
 				$bedragCents = -1 * $bedragCents;
@@ -506,7 +506,7 @@ class EmuReportingService {
 			return $explicit;
 		}
 
-		$taakveld = (string)($item['taakveld'] ?? '');
+		$taakveld = (string)($item['taskField'] ?? '');
 		if ($taakveld !== '' && isset($taakveldMap[$taakveld]) === true) {
 			return $taakveldMap[$taakveld];
 		}
@@ -551,7 +551,7 @@ class EmuReportingService {
 	 */
 	public function resolveConsolidatieEmu(array $tegenpartij): string {
 		// Explicit override always wins.
-		$explicit = (string)($tegenpartij['consolidatieEMU'] ?? '');
+		$explicit = (string)($tegenpartij['consolidationEMU'] ?? '');
 		if (in_array($explicit, ['extern', 'intern-S1313', 'internal-entity'], true) === true) {
 			return $explicit;
 		}
@@ -560,7 +560,7 @@ class EmuReportingService {
 			return 'extern';
 		}
 
-		$sector = (string)($tegenpartij['sector'] ?? ($tegenpartij['soort'] ?? ''));
+		$sector = (string)($tegenpartij['sector'] ?? ($tegenpartij['kind'] ?? ''));
 		if ($sector === 'S.1313' || str_contains($sector, 'S1313') === true) {
 			return 'intern-S1313';
 		}

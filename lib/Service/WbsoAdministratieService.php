@@ -83,7 +83,7 @@ class WbsoAdministratieService {
 			$realised = (int)($realisedTenths[$beschikkingNumber] ?? 0);
 			$remaining = ($grantedTenths - $realised);
 			$rows[] = [
-				'beschikkingNumber' => (string)$beschikkingNumber,
+				'decisionNumber' => (string)$beschikkingNumber,
 				'rvoReference' => (string)($beschikking['rvoReference'] ?? ''),
 				'projectNumber' => (string)($beschikking['projectNumber'] ?? ''),
 				'state' => (string)($beschikking['state'] ?? ''),
@@ -98,7 +98,7 @@ class WbsoAdministratieService {
 		usort(
 			$rows,
 			static function (array $a, array $b): int {
-				return strcmp((string)$a['beschikkingNumber'], (string)$b['beschikkingNumber']);
+				return strcmp((string)$a['decisionNumber'], (string)$b['decisionNumber']);
 			}
 		);
 
@@ -139,7 +139,7 @@ class WbsoAdministratieService {
 				continue;
 			}
 
-			$beschikkingNumber = (string)($entry['beschikkingNumber'] ?? '');
+			$beschikkingNumber = (string)($entry['decisionNumber'] ?? '');
 			if ($beschikkingNumber === '') {
 				continue;
 			}
@@ -179,7 +179,7 @@ class WbsoAdministratieService {
 				continue;
 			}
 
-			$number = (string)($record['beschikkingNumber'] ?? '');
+			$number = (string)($record['decisionNumber'] ?? '');
 			if ($number !== '') {
 				$byNumber[$number] = $record;
 			}

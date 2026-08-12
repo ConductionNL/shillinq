@@ -52,8 +52,8 @@ class AbbLifecycleService {
 	 */
 	private const TRANSITIONS = [
 		'concept' => ['raadsvoorstel'],
-		'raadsvoorstel' => ['raadsbesluit', 'concept'],
-		'raadsbesluit' => ['publicatie'],
+		'raadsvoorstel' => ['councilResolution', 'concept'],
+		'councilResolution' => ['publicatie'],
 		'publicatie' => ['acm-notified'],
 		'acm-notified' => ['bezwaar'],
 		'bezwaar' => ['geldig'],
@@ -80,41 +80,41 @@ class AbbLifecycleService {
 
 		// Per-target precondition checks.
 		switch ($toStatus) {
-			case 'raadsbesluit':
-				$kenmerk = trim((string)($abb['kenmerk'] ?? ''));
+			case 'councilResolution':
+				$kenmerk = trim((string)($abb['reference'] ?? ''));
 				if ($kenmerk === '') {
-					return ['ok' => false, 'error' => 'Transition to raadsbesluit requires kenmerk'];
+					return ['ok' => false, 'error' => 'Transition to council resolution requires a reference'];
 				}
 				break;
 
 			case 'publicatie':
-				if (trim((string)($abb['publicatieGemeenteblad'] ?? '')) === '') {
+				if (trim((string)($abb['publicationMunicipalGazette'] ?? '')) === '') {
 					return ['ok' => false, 'error' => 'Transition to publicatie requires publicatieGemeenteblad'];
 				}
 
-				if (trim((string)($abb['publicatieDatum'] ?? '')) === '') {
+				if (trim((string)($abb['publicationDate'] ?? '')) === '') {
 					return ['ok' => false, 'error' => 'Transition to publicatie requires publicatieDatum'];
 				}
 				break;
 
 			case 'acm-notified':
-				$acm = (array)($abb['kennisgevingAcm'] ?? []);
-				if (((bool)($acm['ingediend'] ?? false)) === false) {
+				$acm = (array)($abb['notificationAcm'] ?? []);
+				if (((bool)($acm['submitted'] ?? false)) === false) {
 					return ['ok' => false, 'error' => 'Transition to acm-notified requires kennisgevingAcm.ingediend=true'];
 				}
 
-				if (trim((string)($acm['kenmerk'] ?? '')) === '') {
+				if (trim((string)($acm['reference'] ?? '')) === '') {
 					return ['ok' => false, 'error' => 'Transition to acm-notified requires kennisgevingAcm.kenmerk'];
 				}
 				break;
 
 			case 'geldig':
-				if (trim((string)($abb['publicatieDatum'] ?? '')) === '') {
+				if (trim((string)($abb['publicationDate'] ?? '')) === '') {
 					return ['ok' => false, 'error' => 'Geldig requires publicatieDatum'];
 				}
 
-				$acm = (array)($abb['kennisgevingAcm'] ?? []);
-				if (((bool)($acm['ingediend'] ?? false)) === false || trim((string)($acm['kenmerk'] ?? '')) === '') {
+				$acm = (array)($abb['notificationAcm'] ?? []);
+				if (((bool)($acm['submitted'] ?? false)) === false || trim((string)($acm['reference'] ?? '')) === '') {
 					return ['ok' => false, 'error' => 'Geldig requires ACM kenmerk'];
 				}
 				break;
@@ -151,10 +151,10 @@ class AbbLifecycleService {
 		$abb['status'] = $toStatus;
 
 		// Auto-calculate volgendeEvaluatie when entering geldig.
-		if ($toStatus === 'geldig' && trim((string)($abb['vaststellingsdatum'] ?? '')) !== '') {
-			$abb['volgendeEvaluatie'] = $this->calculateNextEvaluation(
-				vaststellingsdatum: (string)$abb['vaststellingsdatum'],
-				ritme: (string)($abb['evaluatieRitme'] ?? 'tweejaarlijks')
+		if ($toStatus === 'geldig' && trim((string)($abb['determinationDate'] ?? '')) !== '') {
+			$abb['volgendeEvaluation'] = $this->calculateNextEvaluation(
+				vaststellingsdatum: (string)$abb['determinationDate'],
+				ritme: (string)($abb['evaluationRitme'] ?? 'tweejaarlijks')
 			);
 		}
 
@@ -176,10 +176,10 @@ class AbbLifecycleService {
 	public function generateTasks(array $abb, string $toStatus): array {
 		$tasks = [];
 		$now = new DateTimeImmutable('now');
-		$kenmerk = (string)($abb['kenmerk'] ?? 'ABB');
+		$kenmerk = (string)($abb['reference'] ?? 'ABB');
 
 		switch ($toStatus) {
-			case 'raadsbesluit':
+			case 'councilResolution':
 				$due = $now->add(new DateInterval('P14D'))->format('Y-m-d');
 				$tasks[] = [
 					'type' => 'publish-gemeenteblad',
@@ -216,7 +216,7 @@ class AbbLifecycleService {
 				$tasks[] = [
 					'type' => 'evaluate-abb',
 					'subject' => sprintf('Evaluate ABB: %s', $kenmerk),
-					'dueDate' => (string)($abb['volgendeEvaluatie'] ?? $now->format('Y-m-d')),
+					'dueDate' => (string)($abb['volgendeEvaluation'] ?? $now->format('Y-m-d')),
 					'assignedTo' => 'juridisch-beleidsadviseur',
 					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
 				];
@@ -269,7 +269,7 @@ class AbbLifecycleService {
 		}
 
 		$flags = [];
-		$kenmerk = (string)($abb['kenmerk'] ?? 'ABB');
+		$kenmerk = (string)($abb['reference'] ?? 'ABB');
 		if ($status === 'intrekking') {
 			$reason = sprintf('Exemption ABB %s ingetrokken; review activity', $kenmerk);
 		} else {

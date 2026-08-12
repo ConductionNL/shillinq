@@ -397,7 +397,7 @@ class PayrollCalculator {
 	 * @param string $periodeType WEEK|4WEKEN|MAAND.
 	 * @param string $zvwTarief LAAG|HOOG.
 	 *
-	 * @return array{grondslag:float,tarief:float,afgedragen_wg:float}
+	 * @return array{basis:float,rate:float,afgedragen_wg:float}
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
@@ -410,8 +410,8 @@ class PayrollCalculator {
 		}
 
 		return [
-			'grondslag' => $grondslag,
-			'tarief' => $tarief,
+			'basis' => $grondslag,
+			'rate' => $tarief,
 			'afgedragen_wg' => $this->pct(bedrag: $grondslag, fractie: $tarief),
 		];
 

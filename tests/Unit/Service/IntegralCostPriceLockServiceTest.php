@@ -54,14 +54,14 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 		$voorlopig = [];
 		for ($q = 1; $q <= 4; $q++) {
 			$voorlopig[] = [
-				'periode' => '2025-Q' . $q,
-				'totaleKosten' => 25_000.00,
+				'period' => '2025-Q' . $q,
+				'totaleCost' => 25_000.00,
 				'componenten' => [
-					'directeLoonkosten' => 12_000.00,
+					'directePayrollCost' => 12_000.00,
 					'directeMaterialen' => 3_000.00,
-					'directeAfschrijvingen' => 2_000.00,
+					'directeDepreciations' => 2_000.00,
 					'indirecteOverhead' => ['huisvesting' => 5_000.00, 'ict' => 2_000.00],
-					'vermogenskosten' => 500.00,
+					'capitalCost' => 500.00,
 					'winstopslag' => 500.00,
 				],
 			];
@@ -73,20 +73,20 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 			'voorlopigRecords' => $voorlopig,
 			'signedBy' => 'accountant-user',
 			'administrationId' => 'adm-tilburg',
-			'verkochteEenheden' => 312.0,
-			'eenheidLabel' => 'dagdeel-zaalhuur',
-			'gehanteerdTarief' => 295.0,
+			'verkochteUnits' => 312.0,
+			'unitLabel' => 'dagdeel-zaalhuur',
+			'gehanteerdRate' => 295.0,
 		]);
 
 		self::assertSame('definitief', $definitief['status']);
-		self::assertSame('2025-YTD', $definitief['periode']);
-		self::assertSame(100_000.00, $definitief['totaleKosten']);
-		self::assertSame(48_000.00, $definitief['componenten']['directeLoonkosten']);
+		self::assertSame('2025-YTD', $definitief['period']);
+		self::assertSame(100_000.00, $definitief['totaleCost']);
+		self::assertSame(48_000.00, $definitief['componenten']['directePayrollCost']);
 		self::assertSame(20_000.00, $definitief['componenten']['indirecteOverhead']['huisvesting']);
 		self::assertSame(8_000.00, $definitief['componenten']['indirecteOverhead']['ict']);
 		self::assertSame('accountant-user', $definitief['definitiefSignedBy']);
 		self::assertNotNull($definitief['definitiefSignedAt']);
-		self::assertEqualsWithDelta(320.51, $definitief['kostprijsPerEenheid'], 0.05);
+		self::assertEqualsWithDelta(320.51, $definitief['costPricePerUnit'], 0.05);
 
 	}//end testLockAggregatesQuarterlyVoorlopig()
 
@@ -98,7 +98,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 		$this->svc->lock([
 			'commercialActivityId' => 'ca-001',
 			'fiscalYear' => '2025',
-			'voorlopigRecords' => [['totaleKosten' => 1.0]],
+			'voorlopigRecords' => [['totaleCost' => 1.0]],
 			'signedBy' => '',
 			'administrationId' => 'adm',
 		]);

@@ -79,7 +79,7 @@ class WmoJaarrekeningBijlageService {
 			$naam = (string)($activity['name'] ?? '');
 
 			$ikp = (array)($ikpByAct[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totaleKosten'] ?? 0);
+			$integraleCost = (float)($ikp['totaleCost'] ?? 0);
 			$omzet = (float)($omzetByAct[$activityId] ?? 0);
 			$ratio = null;
 			if ($integraleCost > 0.0) {
@@ -93,7 +93,7 @@ class WmoJaarrekeningBijlageService {
 			}
 
 			$priorIkp = (array)($priorIkpByAct[$activityId] ?? []);
-			$priorCost = (float)($priorIkp['totaleKosten'] ?? 0);
+			$priorCost = (float)($priorIkp['totaleCost'] ?? 0);
 			$priorOmzet = (float)($priorOmzetByAct[$activityId] ?? 0);
 			$priorRatio = null;
 			if ($priorCost > 0.0) {
@@ -103,7 +103,7 @@ class WmoJaarrekeningBijlageService {
 			$abb = (array)($abbByAct[$activityId] ?? []);
 			$abbReferentie = null;
 			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReferentie = (string)($abb['kenmerk'] ?? $activity['exemptionBesluitId'] ?? '');
+				$abbReferentie = (string)($abb['reference'] ?? $activity['exemptionDecisionId'] ?? '');
 			}
 
 			$rows[] = [
@@ -111,14 +111,14 @@ class WmoJaarrekeningBijlageService {
 				'code' => $code,
 				'name' => $naam,
 				'revenue' => $omzet,
-				'integraleKostprijs' => $integraleCost,
-				'kostendekkingsratio' => $ratio,
+				'integraleCostPrice' => $integraleCost,
+				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
 				'complianceColor' => $colorStatus,
 				'priorYearOmzet' => $priorOmzet,
 				'priorYearIntegraleKostprijs' => $priorCost,
 				'priorYearRatio' => $priorRatio,
-				'abbReferentie' => $abbReferentie,
+				'abbReference' => $abbReferentie,
 				'manualOverrides' => (int)($overridesByAct[$activityId] ?? 0),
 			];
 
@@ -135,7 +135,7 @@ class WmoJaarrekeningBijlageService {
 			'administrationId' => (string)$input['administrationId'],
 			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'activiteiten' => $rows,
-			'samenvatting' => [
+			'summary' => [
 				'total' => $totalCount,
 				'compliant' => $compliantCount,
 				'nonCompliant' => ($totalCount - $compliantCount),
@@ -203,8 +203,8 @@ class WmoJaarrekeningBijlageService {
 			}
 
 			$ratioText = '—';
-			if ($row['kostendekkingsratio'] !== null) {
-				$ratioText = (string)$row['kostendekkingsratio'];
+			if ($row['costRecoveryRatio'] !== null) {
+				$ratioText = (string)$row['costRecoveryRatio'];
 			}
 
 			$compliantText = 'rood';
@@ -217,14 +217,14 @@ class WmoJaarrekeningBijlageService {
 				(string)($row['code'] ?? ''),
 				(string)($row['name'] ?? ''),
 				(float)($row['revenue'] ?? 0),
-				(float)($row['integraleKostprijs'] ?? 0),
+				(float)($row['integraleCostPrice'] ?? 0),
 				$ratioText,
 				$compliantText,
-				(string)($row['abbReferentie'] ?? '—')
+				(string)($row['abbReference'] ?? '—')
 			);
 		}//end foreach
 
-		$sam = (array)($bijlage['samenvatting'] ?? []);
+		$sam = (array)($bijlage['summary'] ?? []);
 		$lines[] = '';
 		$lines[] = sprintf('**Samenvatting**: %d compliant / %d totaal', (int)($sam['compliant'] ?? 0), (int)($sam['total'] ?? 0));
 
@@ -249,8 +249,8 @@ class WmoJaarrekeningBijlageService {
 			}
 
 			$ratioAttr = '';
-			if ($r['kostendekkingsratio'] !== null) {
-				$ratioAttr = (string)$r['kostendekkingsratio'];
+			if ($r['costRecoveryRatio'] !== null) {
+				$ratioAttr = (string)$r['costRecoveryRatio'];
 			}
 
 			$compliantAttr = 'false';
@@ -262,10 +262,10 @@ class WmoJaarrekeningBijlageService {
 				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s" abb="%s"/>',
 				htmlspecialchars((string)($r['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
 				(float)($r['revenue'] ?? 0),
-				(float)($r['integraleKostprijs'] ?? 0),
+				(float)($r['integraleCostPrice'] ?? 0),
 				$ratioAttr,
 				$compliantAttr,
-				htmlspecialchars((string)($r['abbReferentie'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
+				htmlspecialchars((string)($r['abbReference'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
 			);
 		}//end foreach
 

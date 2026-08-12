@@ -31,27 +31,27 @@
               "label": "Methode"
             },
             {
-              "key": "kwalificerende_winst_voor_nexus",
+              "key": "kwalificerende_profit_for_nexus",
               "label": "Kwalificerende winst voor nexus (EUR)",
               "type": "currency"
             },
             {
-              "key": "nexusbreuk_toegepast",
+              "key": "nexusbreuk_applied",
               "label": "Nexusbreuk",
               "type": "percentage"
             },
             {
-              "key": "kwalificerende_winst_na_nexus",
+              "key": "kwalificerende_profit_after_nexus",
               "label": "Kwalificerende winst na nexus (EUR)",
               "type": "currency"
             },
             {
-              "key": "effectief_tarief",
+              "key": "effectief_rate",
               "label": "Tarief",
               "type": "percentage"
             },
             {
-              "key": "vpb_op_innovatiedeel",
+              "key": "vpb_on_innovationshare",
               "label": "Vpb-impact (EUR)",
               "type": "currency"
             }
@@ -59,7 +59,7 @@
           "totals": [
             {
               "label": "Totaal — bijdrage Vpb-aangifte regel 23",
-              "field": "vpb_op_innovatiedeel",
+              "field": "vpb_on_innovationshare",
               "operation": "sum"
             }
           ]
@@ -106,11 +106,11 @@
               "label": "Activum"
             },
             {
-              "key": "ontstaansboekjaar",
+              "key": "originFinancialYear",
               "label": "Ontstaansjaar"
             },
             {
-              "key": "negatief_kwalificerend_resultaat",
+              "key": "negatief_kwalificerend_result",
               "label": "Verlies (EUR)",
               "type": "currency"
             },
@@ -142,7 +142,7 @@
           "title": "EU Horizon Periodic Report — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "Grant reference",
               "type": "string"
             },
@@ -239,7 +239,7 @@
           "title": "MIT Voortgangsrapport — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "MIT referentienummer",
               "type": "string"
             },
@@ -302,7 +302,7 @@
           "title": "EFRO Progress Dossier — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "EFRO projectnummer",
               "type": "string"
             },
@@ -362,7 +362,7 @@
           "title": "EU Horizon Audit Certificate — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "Grant reference",
               "type": "string"
             },
@@ -377,7 +377,7 @@
               "type": "string"
             },
             {
-              "key": "vaststellingDate",
+              "key": "determinationDate",
               "label": "Settlement date",
               "type": "date"
             }
@@ -404,7 +404,7 @@
               "type": "currency"
             },
             {
-              "key": "soUrenStaatUri",
+              "key": "soHoursStatementUri",
               "label": "S&O-uren-staat URI",
               "type": "uri"
             }
@@ -467,7 +467,7 @@
           "title": "MIT Verklaring — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "MIT referentienummer",
               "type": "string"
             },
@@ -528,7 +528,7 @@
           "title": "EFRO Aanbestedingsdossier — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "EFRO projectnummer",
               "type": "string"
             },
@@ -579,9 +579,9 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
-        "vervaldatum",
+        "expiryDate",
         "IBAN",
         "betaaltermijn"
       ],
@@ -598,9 +598,9 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
-        "vervaldatum",
+        "expiryDate",
         "IBAN",
         "betaaltermijn"
       ],
@@ -617,9 +617,9 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
-        "vervaldatum",
+        "expiryDate",
         "IBAN",
         "betaaltermijn",
         "incassokosten",
@@ -638,9 +638,9 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
+        "invoiceDate",
         "outstandingAmount",
-        "vervaldatum",
+        "expiryDate",
         "IBAN",
         "incassokosten",
         "rente",
@@ -697,7 +697,7 @@
           "groupBy": "costCenterId",
           "columns": [
             { "key": "costCenterId", "label": "Ondernemingsactiviteit" },
-            { "key": "vpbPligtigVanaf", "label": "Vpb-pligtig vanaf", "type": "date" },
+            { "key": "vpbPligtigFrom", "label": "Vpb-pligtig vanaf", "type": "date" },
             { "key": "activaTotal", "label": "Activa (EUR)", "type": "currency", "unit": "cents" },
             { "key": "passivaTotal", "label": "Passiva (EUR)", "type": "currency", "unit": "cents" },
             { "key": "resultaatTotal", "label": "Resultaat (EUR)", "type": "currency", "unit": "cents" },

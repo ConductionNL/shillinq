@@ -175,10 +175,10 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			'Algemene posten',
 			'Bedrag',
 			[
-				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'algemeneDekkingsmiddelen')],
+				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'algemeneFundingSources')],
 				['label' => 'Overhead', 'amount' => $this->num($plan, 'overhead')],
 				['label' => 'Heffing vennootschapsbelasting (VPB)', 'amount' => $this->num($plan, 'vpbCharge')],
-				['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'onvoorzien')],
+				['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'unforeseen')],
 			],
 			null,
 			$currency
@@ -233,7 +233,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	private function buildTaakvelden(Section $section, array $statement, string $currency): void {
 		$this->addHeading($section, 'Overzicht taakvelden');
 
-		$taakvelden = $statement['taakvelden'] ?? [];
+		$taakvelden = $statement['taskFields'] ?? [];
 		if (is_array($taakvelden) === false || $taakvelden === []) {
 			$this->addNote($section, 'Geen taakvelden opgenomen.');
 			return;
@@ -283,7 +283,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	private function buildJaarrekening(Section $section, array $statement): void {
 		$this->addHeading($section, 'Jaarrekening (art. 24 BBV)');
 
-		$jaarrekening = $statement['jaarrekening'] ?? [];
+		$jaarrekening = $statement['annualAccounts'] ?? [];
 		if (is_array($jaarrekening) === false) {
 			$jaarrekening = [];
 		}
@@ -291,9 +291,9 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 		$this->addDetailsTable(
 			$section,
 			[
-				'Overzicht van baten en lasten' => $this->yesNo($jaarrekening['overzichtBatenLasten'] ?? null),
+				'Overzicht van baten en lasten' => $this->yesNo($jaarrekening['overzichtRevenueExpenses'] ?? null),
 				'Balans' => $this->yesNo($jaarrekening['balans'] ?? null),
-				'Rechtmatigheidsverantwoording' => $this->yesNo($jaarrekening['rechtmatigheidsverantwoording'] ?? null),
+				'Rechtmatigheidsverantwoording' => $this->yesNo($jaarrekening['lawfulnessAccountability'] ?? null),
 				'Accountantsverklaring' => $this->yesNo($jaarrekening['accountantsverklaring'] ?? null),
 			]
 		);
@@ -426,7 +426,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 */
 	private function entityTypeLabel(string $type): string {
 		return match ($type) {
-			'gemeente' => 'Gemeente',
+			'municipality' => 'Gemeente',
 			'provincie' => 'Provincie',
 			'waterschap' => 'Waterschap',
 			default => $type,

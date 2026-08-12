@@ -71,7 +71,7 @@ final class Titel9SeedsTest extends TestCase {
 
 		self::assertSame(450000, $byName['micro']['thresholds']['balanceSheetTotal']);
 		self::assertSame(900000, $byName['micro']['thresholds']['netRevenue']);
-		self::assertSame(10, $byName['micro']['thresholds']['gemiddeldAantalWerknemers']);
+		self::assertSame(10, $byName['micro']['thresholds']['averageCountEmployees']);
 		self::assertSame(12000000, $byName['klein']['thresholds']['balanceSheetTotal']);
 		self::assertSame(25000000, $byName['middelgroot']['thresholds']['balanceSheetTotal']);
 		// 'groot' has no upper bound (REQ-T9-001).
@@ -125,7 +125,7 @@ final class Titel9SeedsTest extends TestCase {
 		foreach (['A-categorisch', 'E-functioneel'] as $model) {
 			$subtotals = array_filter(
 				$models[$model]['rubrieken'],
-				static fn (array $r): bool => ($r['isSubtotaal'] ?? false) === true
+				static fn (array $r): bool => ($r['isSubtotal'] ?? false) === true
 			);
 			self::assertNotEmpty($subtotals, "Model $model must declare subtotal rows.");
 		}

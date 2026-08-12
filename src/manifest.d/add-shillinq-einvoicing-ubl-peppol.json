@@ -121,7 +121,7 @@
                   "schema": "DunningRun",
                   "metric": "count",
                   "filter": {
-                    "factuurId": "@objectId"
+                    "invoiceId": "@objectId"
                   },
                   "route": "DunningRuns"
                 }
@@ -162,7 +162,7 @@
               "register": "shillinq",
               "schema": "DunningRun",
               "filter": {
-                "factuurId": "@objectId"
+                "invoiceId": "@objectId"
               },
               "sort": {
                 "field": "stageNr",
@@ -175,11 +175,11 @@
                   "label": "Stage"
                 },
                 {
-                  "key": "uitgevoerdOp",
+                  "key": "uitgevoerdOn",
                   "label": "Executed"
                 },
                 {
-                  "key": "kanaal",
+                  "key": "channel",
                   "label": "Channel"
                 },
                 {
@@ -194,7 +194,7 @@
               "rowRoute": "DunningRunDetail",
               "viewAllRoute": "DunningRuns",
               "viewAllQuery": {
-                "factuurId": "@objectId"
+                "invoiceId": "@objectId"
               },
               "emptyText": "No dunning runs have been triggered for this invoice.",
               "allowCreate": false

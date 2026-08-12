@@ -47,14 +47,14 @@
 				"register": "shillinq",
 				"schema": "Verplichting",
 				"columns": [
-					{"key": "verplichtingsnummer", "label": "Number", "sortable": true},
-					{"key": "soort", "label": "Kind", "sortable": true},
+					{"key": "commitmentNumber", "label": "Number", "sortable": true},
+					{"key": "kind", "label": "Kind", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
-					{"key": "totaalbedrag_excl_btw", "label": "Amount (excl. BTW)", "sortable": true},
-					{"key": "aangaandatum", "label": "Start date", "sortable": true},
-					{"key": "mandaat_toegepast", "label": "Mandate", "sortable": true}
+					{"key": "totalamount_excl_vat", "label": "Amount (excl. BTW)", "sortable": true},
+					{"key": "commencementDate", "label": "Start date", "sortable": true},
+					{"key": "mandate_applied", "label": "Mandate", "sortable": true}
 				],
-				"defaultSort": "verplichtingsnummer",
+				"defaultSort": "commitmentNumber",
 				"detailRoute": "VerplichtingDetail"
 			}
 		},
@@ -68,20 +68,20 @@
 				"schema": "Verplichting",
 				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `verplichting`: the budget lines (Verplichtingsregel) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (Verplichtingsmutatie) that draw it down over time, and the approval steps (Goedkeuringsstap) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
 				"fields": [
-					{"key": "verplichtingsnummer", "label": "Number", "type": "string"},
-					{"key": "soort", "label": "Kind", "type": "string"},
+					{"key": "commitmentNumber", "label": "Number", "type": "string"},
+					{"key": "kind", "label": "Kind", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "aangaandatum", "label": "Start date", "type": "string"},
-					{"key": "looptijd_van", "label": "Term from", "type": "string"},
-					{"key": "looptijd_tot", "label": "Term until", "type": "string"},
-					{"key": "totaalbedrag_excl_btw", "label": "Total amount (excl. BTW)", "type": "number"},
-					{"key": "totaalbedrag_incl_btw", "label": "Total amount (incl. BTW)", "type": "number"},
+					{"key": "commencementDate", "label": "Start date", "type": "string"},
+					{"key": "term_from", "label": "Term from", "type": "string"},
+					{"key": "term_to", "label": "Term until", "type": "string"},
+					{"key": "totalamount_excl_vat", "label": "Total amount (excl. BTW)", "type": "number"},
+					{"key": "totalamount_incl_vat", "label": "Total amount (incl. BTW)", "type": "number"},
 					{"key": "valuta", "label": "Currency", "type": "string"},
-					{"key": "btw_regime", "label": "BTW regime", "type": "string"},
-					{"key": "mandaat_toegepast", "label": "Mandate", "type": "string"},
-					{"key": "override_reden", "label": "Override reason", "type": "string"},
-					{"key": "interne_kenmerk", "label": "Internal reference", "type": "string"},
-					{"key": "bronReferentie", "label": "Source reference", "type": "string"}
+					{"key": "vat_regime", "label": "BTW regime", "type": "string"},
+					{"key": "mandate_applied", "label": "Mandate", "type": "string"},
+					{"key": "override_reason", "label": "Override reason", "type": "string"},
+					{"key": "interne_reference", "label": "Internal reference", "type": "string"},
+					{"key": "sourceReference", "label": "Source reference", "type": "string"}
 				],
 				"relatedObjects": [
 					{
@@ -91,8 +91,8 @@
 						"componentProps": {
 							"register": "shillinq",
 							"schema": "Verplichtingsregel",
-							"filterField": "verplichting",
-							"columns": ["regelnummer", "description", "amount_excl_vat", "delivered_amount", "invoiced_amount", "restant_verplicht"]
+							"filterField": "commitment",
+							"columns": ["ruleNumber", "description", "amount_excl_vat", "delivered_amount", "invoiced_amount", "restant_verplicht"]
 						}
 					},
 					{
@@ -102,8 +102,8 @@
 						"componentProps": {
 							"register": "shillinq",
 							"schema": "Verplichtingsmutatie",
-							"filterField": "verplichting",
-							"columns": ["datum", "soort", "amount", "gerelateerde_factuur", "journaalpost"]
+							"filterField": "commitment",
+							"columns": ["date", "kind", "amount", "gerelateerde_invoice", "journalEntry"]
 						}
 					},
 					{
@@ -113,8 +113,8 @@
 						"componentProps": {
 							"register": "shillinq",
 							"schema": "Goedkeuringsstap",
-							"filterField": "verplichting",
-							"columns": ["stapnummer", "rol_vereist", "toegewezen_aan", "status", "behandeld_op"]
+							"filterField": "commitment",
+							"columns": ["stepNumber", "rol_required", "toegewezen_in", "status", "behandeld_on"]
 						}
 					}
 				],
@@ -158,13 +158,13 @@
 				"register": "shillinq",
 				"schema": "Mandaat",
 				"columns": [
-					{"key": "mandaatcode", "label": "Code", "sortable": true},
+					{"key": "mandateCode", "label": "Code", "sortable": true},
 					{"key": "name", "label": "Name", "sortable": true},
-					{"key": "maximumbedrag", "label": "Maximum amount", "sortable": true},
+					{"key": "maximumAmount", "label": "Maximum amount", "sortable": true},
 					{"key": "is_override", "label": "Override", "sortable": true},
-					{"key": "geldig_tot", "label": "Valid until", "sortable": true}
+					{"key": "valid_to", "label": "Valid until", "sortable": true}
 				],
-				"defaultSort": "mandaatcode",
+				"defaultSort": "mandateCode",
 				"detailRoute": "MandaatDetail"
 			}
 		},
@@ -178,16 +178,16 @@
 				"schema": "Mandaat",
 				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
 				"fields": [
-					{"key": "mandaatcode", "label": "Code", "type": "string"},
+					{"key": "mandateCode", "label": "Code", "type": "string"},
 					{"key": "name", "label": "Name", "type": "string"},
 					{"key": "houder", "label": "Holder", "type": "string"},
 					{"key": "houder_type", "label": "Holder type", "type": "string"},
-					{"key": "maximumbedrag", "label": "Maximum amount", "type": "number"},
+					{"key": "maximumAmount", "label": "Maximum amount", "type": "number"},
 					{"key": "is_override", "label": "Override mandate", "type": "boolean"},
-					{"key": "vereist_tweede_handtekening_boven", "label": "Second signature above", "type": "number"},
-					{"key": "geldig_van", "label": "Valid from", "type": "string"},
-					{"key": "geldig_tot", "label": "Valid until", "type": "string"},
-					{"key": "vastgesteld_bij", "label": "Adopted by", "type": "string"}
+					{"key": "required_tweede_signature_boven", "label": "Second signature above", "type": "number"},
+					{"key": "valid_from", "label": "Valid from", "type": "string"},
+					{"key": "valid_to", "label": "Valid until", "type": "string"},
+					{"key": "determined_at", "label": "Adopted by", "type": "string"}
 				],
 				"indexRoute": "Mandaten",
 				"sidebarProps": {
@@ -221,13 +221,13 @@
 				"register": "shillinq",
 				"schema": "Goedkeuringsstap",
 				"columns": [
-					{"key": "verplichting", "label": "Commitment", "sortable": true},
-					{"key": "stapnummer", "label": "Step", "sortable": true},
-					{"key": "rol_vereist", "label": "Role", "sortable": true},
-					{"key": "toegewezen_aan", "label": "Assigned to", "sortable": true},
+					{"key": "commitment", "label": "Commitment", "sortable": true},
+					{"key": "stepNumber", "label": "Step", "sortable": true},
+					{"key": "rol_required", "label": "Role", "sortable": true},
+					{"key": "toegewezen_in", "label": "Assigned to", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true}
 				],
-				"defaultSort": "verplichting",
+				"defaultSort": "commitment",
 				"detailRoute": "GoedkeuringsstapDetail"
 			}
 		},
@@ -241,14 +241,14 @@
 				"schema": "Goedkeuringsstap",
 				"_note": "APPROVAL STEP (one node in a commitment's authorisation chain). The body is the step: which commitment, step number, required role, assignee, current status, when it was handled, the remark, and whether a signature is required. A single workflow item with no children; no comms. The audit trail sidebar is the sign-off evidence — approvals must be individually traceable for segregation-of-duties.",
 				"fields": [
-					{"key": "verplichting", "label": "Commitment", "type": "string"},
-					{"key": "stapnummer", "label": "Step", "type": "number"},
-					{"key": "rol_vereist", "label": "Role required", "type": "string"},
-					{"key": "toegewezen_aan", "label": "Assigned to", "type": "string"},
+					{"key": "commitment", "label": "Commitment", "type": "string"},
+					{"key": "stepNumber", "label": "Step", "type": "number"},
+					{"key": "rol_required", "label": "Role required", "type": "string"},
+					{"key": "toegewezen_in", "label": "Assigned to", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "behandeld_op", "label": "Handled on", "type": "string"},
-					{"key": "opmerking", "label": "Remark", "type": "string"},
-					{"key": "vereist_handtekening", "label": "Signature required", "type": "boolean"}
+					{"key": "behandeld_on", "label": "Handled on", "type": "string"},
+					{"key": "remark", "label": "Remark", "type": "string"},
+					{"key": "required_signature", "label": "Signature required", "type": "boolean"}
 				],
 				"indexRoute": "Goedkeuringsstappen",
 				"sidebarProps": {

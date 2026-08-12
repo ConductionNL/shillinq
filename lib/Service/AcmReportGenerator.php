@@ -87,7 +87,7 @@ class AcmReportGenerator {
 			$code = (string)($activity['code'] ?? '');
 			$naam = (string)($activity['name'] ?? '');
 			$ikp = (array)($ikpRecords[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totaleKosten'] ?? 0);
+			$integraleCost = (float)($ikp['totaleCost'] ?? 0);
 			$omzet = (float)($omzetByActivity[$activityId] ?? 0);
 			if ($integraleCost > 0.0) {
 				$ratio = round(($omzet / $integraleCost), 4);
@@ -97,7 +97,7 @@ class AcmReportGenerator {
 
 			$compliant = ($omzet >= $integraleCost);
 			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReferentie = (string)($activity['exemptionBesluitId'] ?? '');
+				$abbReferentie = (string)($activity['exemptionDecisionId'] ?? '');
 			} else {
 				$abbReferentie = null;
 			}
@@ -107,10 +107,10 @@ class AcmReportGenerator {
 				'code' => $code,
 				'name' => $naam,
 				'revenue' => $omzet,
-				'integraleKostprijs' => $integraleCost,
-				'kostendekkingsratio' => $ratio,
+				'integraleCostPrice' => $integraleCost,
+				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
-				'abbReferentie' => $abbReferentie,
+				'abbReference' => $abbReferentie,
 			];
 		}//end foreach
 
@@ -121,8 +121,8 @@ class AcmReportGenerator {
 			}
 
 			$abbSummaries[] = [
-				'kenmerk' => (string)($abb['kenmerk'] ?? ''),
-				'motiveringExcerpt' => mb_substr(trim((string)($abb['motivering'] ?? '')), 0, 240),
+				'reference' => (string)($abb['reference'] ?? ''),
+				'rationaleExcerpt' => mb_substr(trim((string)($abb['rationale'] ?? '')), 0, 240),
 			];
 		}
 
@@ -131,16 +131,16 @@ class AcmReportGenerator {
 			'format' => self::FORMAT,
 			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'activiteiten' => $activiteiten,
-			'samenvatting' => ($input['samenvatting'] ?? null),
+			'summary' => ($input['summary'] ?? null),
 			'manualOverrides' => (int)($input['manualOverrides'] ?? 0),
 			'abbList' => $abbSummaries,
 			// Deprecated legacy fields — retained for array shape compatibility; see REQ-SIGN-004.
-			'ondertekenaar' => null,
-			'ondertekendOp' => null,
+			'signatory' => null,
+			'ondertekendOn' => null,
 			'signatureFingerprint' => null,
-			'verzondenAanAcm' => false,
-			'verzondenAanAcmOp' => null,
-			'publicatieGemeenteblad' => null,
+			'verzondenInAcm' => false,
+			'verzondenInAcmOn' => null,
+			'publicationMunicipalGazette' => null,
 			'administrationId' => (string)$input['administrationId'],
 			'status' => 'draft',
 		];
@@ -162,9 +162,9 @@ class AcmReportGenerator {
 			throw new InvalidArgumentException('Only ready-for-submission reports can be submitted');
 		}
 
-		$report['verzondenAanAcm'] = true;
-		$report['verzondenAanAcmOp'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
-		$report['publicatieGemeenteblad'] = $publicatieGmblad;
+		$report['verzondenInAcm'] = true;
+		$report['verzondenInAcmOn'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+		$report['publicationMunicipalGazette'] = $publicatieGmblad;
 		$report['status'] = 'verzonden';
 
 		return $report;
@@ -209,10 +209,10 @@ class AcmReportGenerator {
 				continue;
 			}
 
-			if ($a['kostendekkingsratio'] === null) {
+			if ($a['costRecoveryRatio'] === null) {
 				$ratioAttr = '';
 			} else {
-				$ratioAttr = (string)$a['kostendekkingsratio'];
+				$ratioAttr = (string)$a['costRecoveryRatio'];
 			}
 
 			if ((bool)($a['compliant'] ?? false) === true) {
@@ -225,7 +225,7 @@ class AcmReportGenerator {
 				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
 				htmlspecialchars((string)($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
 				(float)($a['revenue'] ?? 0),
-				(float)($a['integraleKostprijs'] ?? 0),
+				(float)($a['integraleCostPrice'] ?? 0),
 				$ratioAttr,
 				$compliantAttr
 			);

@@ -53,15 +53,15 @@ class SluitendCalculator {
 	 * @param array<string,mixed> $year The meerjarenraming year row.
 	 * @param float $nominaleOntwikkeling The loon- en prijsindexatie percentage (e.g. 2.0).
 	 *
-	 * @return array{saldoStructureel:float,saldoIncidenteel:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
+	 * @return array{balanceStructural:float,balanceIncidental:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
 	public function evaluateYear(array $year, float $nominaleOntwikkeling): array {
-		$batenStrucCents = $this->toCents(amount: $year['batenStructureel'] ?? 0);
-		$lastenStrucCents = $this->toCents(amount: $year['lastenStructureel'] ?? 0);
-		$batenIncCents = $this->toCents(amount: $year['batenIncidenteel'] ?? 0);
-		$lastenIncCents = $this->toCents(amount: $year['lastenIncidenteel'] ?? 0);
+		$batenStrucCents = $this->toCents(amount: $year['revenueStructureel'] ?? 0);
+		$lastenStrucCents = $this->toCents(amount: $year['expensesStructureel'] ?? 0);
+		$batenIncCents = $this->toCents(amount: $year['revenueIncidenteel'] ?? 0);
+		$lastenIncCents = $this->toCents(amount: $year['expensesIncidenteel'] ?? 0);
 
 		$saldoStrucCents = ($batenStrucCents - $lastenStrucCents);
 		$saldoIncCents = ($batenIncCents - $lastenIncCents);

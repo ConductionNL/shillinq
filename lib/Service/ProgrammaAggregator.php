@@ -47,7 +47,7 @@ class ProgrammaAggregator {
 	 * @param array<int,array<string,mixed>> $taakvelden The child Taakveld rows.
 	 * @param float $mutatiesReserves The reserve mutation (positive = toevoeging).
 	 *
-	 * @return array{batenTotaal:float,lastenTotaal:float,saldoVoorMutaties:float,saldoNaMutaties:float}
+	 * @return array{revenueTotal:float,expensesTotal:float,balanceBeforeMovements:float,balanceAfterMovements:float}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
 	 */
@@ -55,8 +55,8 @@ class ProgrammaAggregator {
 		$batenCents = 0;
 		$lastenCents = 0;
 		foreach ($taakvelden as $taakveld) {
-			$batenCents += (int)round(((float)($taakveld['baten'] ?? 0)) * 100);
-			$lastenCents += (int)round(((float)($taakveld['lasten'] ?? 0)) * 100);
+			$batenCents += (int)round(((float)($taakveld['revenue'] ?? 0)) * 100);
+			$lastenCents += (int)round(((float)($taakveld['expenses'] ?? 0)) * 100);
 		}
 
 		$saldoVoorCents = ($batenCents - $lastenCents);

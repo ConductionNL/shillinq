@@ -211,7 +211,7 @@ final class PayrollFragmentTest extends TestCase {
 			$seen = true;
 			$debet = 0;
 			$credit = 0;
-			foreach ($object['regels'] as $regel) {
+			foreach ($object['rules'] as $regel) {
 				$debet += (int)round(((float)($regel['debet'] ?? 0)) * 100);
 				$credit += (int)round(((float)($regel['credit'] ?? 0)) * 100);
 			}

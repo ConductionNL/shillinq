@@ -144,7 +144,7 @@ class AnnualReportGuard {
 	public function canVaststellen(string $annualReportId, ?array $object = null): bool {
 		try {
 			$report = $object;
-			if ($report === null || isset($report['accountantsverklaringVereist']) === false) {
+			if ($report === null || isset($report['accountantsverklaringRequired']) === false) {
 				$report = $this->resolveAnnualReport(annualReportId: $annualReportId);
 			}
 
@@ -152,7 +152,7 @@ class AnnualReportGuard {
 				return false;
 			}
 
-			$vereist = ($report['accountantsverklaringVereist'] ?? false) === true;
+			$vereist = ($report['accountantsverklaringRequired'] ?? false) === true;
 			if ($vereist === false) {
 				return true;
 			}
@@ -215,7 +215,7 @@ class AnnualReportGuard {
 	private function sumRubriekCents(array $rubrieken, string $zijde): int {
 		$cents = 0;
 		foreach ($rubrieken as $rubriek) {
-			if (is_array($rubriek) === true && ($rubriek['zijde'] ?? '') === $zijde) {
+			if (is_array($rubriek) === true && ($rubriek['side'] ?? '') === $zijde) {
 				$cents += (int)round((float)($rubriek['currentYear'] ?? 0) * 100);
 			}
 		}

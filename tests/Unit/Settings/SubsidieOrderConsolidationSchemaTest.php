@@ -150,8 +150,8 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 		// Regulatory fields (Dutch ASV-model) MUST all survive.
 		$regulatory = [
 			'schemeName', 'schemeArticle', 'subsidyScheme',
-			'beschikkingDate', 'beschikkingUri',
-			'vaststellingDate', 'vaststellingUri',
+			'decisionDate', 'decisionUri',
+			'determinationDate', 'determinationUri',
 			'requestedAmount', 'grantedAmount', 'determinedAmount', 'paidOutAmount', 'reclaimedAmount',
 			'prestatieverantwoording', 'repaymentPlanId',
 		];
@@ -161,7 +161,7 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 
 		// The English operations vocabulary MUST also survive (union, no data loss).
 		$englishUnion = [
-			'awardAmount', 'awardDate', 'subsidieName', 'grantProgram', 'granteeOrganization',
+			'awardAmount', 'awardDate', 'subsidyName', 'grantProgram', 'granteeOrganization',
 			'approvingAuthority', 'attachmentUri', 'budgetYear', 'currency',
 			'disbursementDate', 'hasRepaymentPlan', 'notes', 'purposeDescription', 'settlementDate',
 		];

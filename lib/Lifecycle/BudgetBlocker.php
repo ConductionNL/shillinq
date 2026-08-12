@@ -88,11 +88,11 @@ class BudgetBlocker {
 	 */
 	public function canCommit(string $verplichtingsnummer, ?array $object = null): bool {
 		try {
-			$verplichting = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['verplichtingsnummer' => $verplichtingsnummer]));
+			$verplichting = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitmentNumber' => $verplichtingsnummer]));
 			if ($verplichting === null) {
 				$this->logger->info(
 					'BudgetBlocker: verplichting not found — denying commitment',
-					['verplichting' => $verplichtingsnummer]
+					['commitment' => $verplichtingsnummer]
 				);
 				return false;
 			}
@@ -111,7 +111,7 @@ class BudgetBlocker {
 					$this->logger->info(
 						'BudgetBlocker: insufficient budget — denying commitment',
 						[
-							'verplichting' => $verplichtingsnummer,
+							'commitment' => $verplichtingsnummer,
 							'programme' => ($regel['programme'] ?? null),
 							'financialYear' => ($regel['financialYear'] ?? null),
 						]
@@ -124,7 +124,7 @@ class BudgetBlocker {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BudgetBlocker: canCommit failed — denying commitment (fail-closed)',
-				['verplichting' => $verplichtingsnummer, 'exception' => $e->getMessage()]
+				['commitment' => $verplichtingsnummer, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -146,7 +146,7 @@ class BudgetBlocker {
 	public function freeRoom(array $budget): int {
 		$authorised = (int)($budget['authorised_amount'] ?? 0);
 		$realised = (int)($budget['realised_amount'] ?? 0);
-		$committed = (int)($budget['openstaande_verplichtingen'] ?? 0);
+		$committed = (int)($budget['outstanding_verplichtingen'] ?? 0);
 
 		return ($authorised - $realised - $committed);
 	}//end freeRoom()
@@ -218,15 +218,15 @@ class BudgetBlocker {
 	 * @return array<int, array<string,mixed>> The regels to validate.
 	 */
 	private function resolveRegels(array $verplichting): array {
-		$embedded = ($verplichting['regels'] ?? null);
+		$embedded = ($verplichting['rules'] ?? null);
 		if (is_array($embedded) === true && count($embedded) > 0) {
 			return array_values($embedded);
 		}
 
-		$nummer = (string)($verplichting['verplichtingsnummer'] ?? '');
+		$nummer = (string)($verplichting['commitmentNumber'] ?? '');
 		$queried = [];
 		if ($nummer !== '') {
-			$queried = $this->findMany(schema: 'Verplichtingsregel', filters: ['verplichting' => $nummer]);
+			$queried = $this->findMany(schema: 'Verplichtingsregel', filters: ['commitment' => $nummer]);
 		}
 
 		if (count($queried) > 0) {
@@ -239,7 +239,7 @@ class BudgetBlocker {
 			[
 				'programme' => (string)($verplichting['programme'] ?? ''),
 				'financialYear' => (int)($verplichting['financialYear'] ?? 0),
-				'amount_excl_vat' => (int)($verplichting['totaalbedrag_excl_btw'] ?? 0),
+				'amount_excl_vat' => (int)($verplichting['totalamount_excl_vat'] ?? 0),
 			],
 		];
 

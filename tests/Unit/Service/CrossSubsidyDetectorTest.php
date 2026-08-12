@@ -84,13 +84,13 @@ final class CrossSubsidyDetectorTest extends TestCase {
 	 */
 	public function testDetectOverheadUnderAllocation(): void {
 		$tooLow = [
-			'totaleKosten' => 100_000.0,
+			'totaleCost' => 100_000.0,
 			'componenten' => ['indirecteOverhead' => ['huisvesting' => 500.0]],
 		];
 		self::assertTrue($this->svc->detectOverheadUnderAllocation($tooLow));
 
 		$ok = [
-			'totaleKosten' => 100_000.0,
+			'totaleCost' => 100_000.0,
 			'componenten' => ['indirecteOverhead' => ['huisvesting' => 5_000.0, 'ict' => 2_500.0]],
 		];
 		self::assertFalse($this->svc->detectOverheadUnderAllocation($ok));
@@ -102,10 +102,10 @@ final class CrossSubsidyDetectorTest extends TestCase {
 	 */
 	public function testDetectAbbStale(): void {
 		$activity = ['isExempted' => true];
-		$stale = ['volgendeEvaluatie' => '2023-01-01'];
+		$stale = ['volgendeEvaluation' => '2023-01-01'];
 		self::assertTrue($this->svc->detectAbbStale($activity, $stale, '2026-01-15'));
 
-		$fresh = ['volgendeEvaluatie' => '2027-01-01'];
+		$fresh = ['volgendeEvaluation' => '2027-01-01'];
 		self::assertFalse($this->svc->detectAbbStale($activity, $fresh, '2026-01-15'));
 
 		// Non-exempted activities never trigger.
@@ -158,11 +158,11 @@ final class CrossSubsidyDetectorTest extends TestCase {
 	 * Compose an alert; default assignee is concerncontroller.
 	 */
 	public function testComposeAlert(): void {
-		$alert = $this->svc->composeAlert('loss-financing', 'ca-001', 'HIGH', 'adm-tilburg', ['periode' => '2026-02']);
+		$alert = $this->svc->composeAlert('loss-financing', 'ca-001', 'HIGH', 'adm-tilburg', ['period' => '2026-02']);
 		self::assertSame('loss-financing', $alert['alertType']);
 		self::assertSame('concerncontroller', $alert['assignedTo']);
 		self::assertSame('open', $alert['status']);
-		self::assertSame(['periode' => '2026-02'], $alert['detectionContext']);
+		self::assertSame(['period' => '2026-02'], $alert['detectionContext']);
 
 	}//end testComposeAlert()
 

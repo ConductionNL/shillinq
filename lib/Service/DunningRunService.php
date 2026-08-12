@@ -123,13 +123,13 @@ class DunningRunService {
 		usort(
 			$sorted,
 			static function (array $a, array $b): int {
-				return (int)($a['dagenNaVervalDatum'] ?? 0) <=> (int)($b['dagenNaVervalDatum'] ?? 0);
+				return (int)($a['daysAfterExpiryDate'] ?? 0) <=> (int)($b['daysAfterExpiryDate'] ?? 0);
 			}
 		);
 
 		$picked = null;
 		foreach ($sorted as $stage) {
-			$threshold = (int)($stage['dagenNaVervalDatum'] ?? 0);
+			$threshold = (int)($stage['daysAfterExpiryDate'] ?? 0);
 			if ($dagenVerzuim >= $threshold) {
 				$picked = $stage;
 				continue;
@@ -206,7 +206,7 @@ class DunningRunService {
 		}
 
 		$dagenVerzuim = (int)$dueDate->diff($now)->days;
-		$klantId = (string)($invoice['customerReference'] ?? ($invoice['klantId'] ?? ''));
+		$klantId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
 
 		if ($this->hasActivePause(administrationId: $administrationId, factuurId: $factuurId) === true) {
 			return null;
@@ -229,7 +229,7 @@ class DunningRunService {
 			schema: 'DunningRun',
 			filters: [
 				'administrationId' => $administrationId,
-				'factuurId' => $factuurId,
+				'invoiceId' => $factuurId,
 				'stageNr' => (string)$stageNr,
 			]
 		);
@@ -237,17 +237,17 @@ class DunningRunService {
 			return null;
 		}
 
-		$kanaal = (string)($params['kanaal'] ?? ($stage['kanaal'] ?? 'EMAIL'));
+		$kanaal = (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL'));
 		$tplId = (string)($params['templateId'] ?? ($stage['templateId'] ?? ''));
 
 		return $this->executeStage(
 			administrationId: $administrationId,
 			params: array_merge(
 				[
-					'factuurId' => $factuurId,
+					'invoiceId' => $factuurId,
 					'ladderId' => (string)$resolved['ladderId'],
 					'stageNr' => $stageNr,
-					'kanaal' => $kanaal,
+					'channel' => $kanaal,
 					'templateId' => $tplId,
 					'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
 					'deliveryStatus' => 'PENDING',
@@ -296,7 +296,7 @@ class DunningRunService {
 		$override = $this->fetchOne(
 			schema: 'KlantLadderOverride',
 			filters: [
-				'klantId' => $klantId,
+				'customerId' => $klantId,
 				'baseLadderId' => $baseLadderId,
 				'lifecycleState' => 'active',
 			]
@@ -383,7 +383,7 @@ class DunningRunService {
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
 	 */
 	public function executeStage(string $administrationId, array $params): array {
-		$factuurId = (string)($params['factuurId'] ?? '');
+		$factuurId = (string)($params['invoiceId'] ?? '');
 		if ($factuurId === '') {
 			throw new RuntimeException('executeStage requires factuurId.');
 		}
@@ -395,11 +395,11 @@ class DunningRunService {
 		$now = new DateTimeImmutable();
 
 		$record = [
-			'factuurId' => $factuurId,
+			'invoiceId' => $factuurId,
 			'ladderId' => (string)($params['ladderId'] ?? ''),
 			'stageNr' => (int)($params['stageNr'] ?? 1),
-			'uitgevoerdOp' => $now->format(DATE_ATOM),
-			'kanaal' => (string)($params['kanaal'] ?? 'EMAIL'),
+			'uitgevoerdOn' => $now->format(DATE_ATOM),
+			'channel' => (string)($params['channel'] ?? 'EMAIL'),
 			'ontvangerEmail' => ($params['ontvangerEmail'] ?? null),
 			'recipientName' => ($params['recipientName'] ?? null),
 			'ontvangerAdres' => ($params['ontvangerAdres'] ?? null),
@@ -457,12 +457,12 @@ class DunningRunService {
 		}
 
 		$record = [
-			'factuurId' => $factuurId,
+			'invoiceId' => $factuurId,
 			'pauzeStart' => $pauzeStart->format(DATE_ATOM),
 			'pauseEnd' => null,
-			'reden' => $reden,
+			'reason' => $reden,
 			'details' => $details,
-			'gepauzeerdDoor' => $gepauzeerdDoor,
+			'gepauzeerdBy' => $gepauzeerdDoor,
 			'evidenceRefs' => $refs,
 			'hardDeadlineEindigt' => $hardDeadline->format(DATE_ATOM),
 			'administrationId' => $administrationId,
@@ -550,11 +550,11 @@ class DunningRunService {
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
 	 */
 	public function writeOff(string $administrationId, array $params): array {
-		$factuurId = (string)($params['factuurId'] ?? '');
-		$hoofdsom = (float)($params['hoofdsomAfgeschreven'] ?? 0.0);
+		$factuurId = (string)($params['invoiceId'] ?? '');
+		$hoofdsom = (float)($params['principalDepreciated'] ?? 0.0);
 		$btwBedrag = ($params['vatAmount'] ?? null);
-		$periode = (string)($params['btwAangiftePeriode'] ?? $this->nextVATPeriod());
-		$callerBoekId = (string)($params['boekingId'] ?? '');
+		$periode = (string)($params['vatTaxReturnPeriod'] ?? $this->nextVATPeriod());
+		$callerBoekId = (string)($params['entryId'] ?? '');
 
 		// Materialise the GL posting first so we can carry its id onto the OninbaarAfschrijving record.
 		$boekingId = $callerBoekId;
@@ -579,13 +579,13 @@ class DunningRunService {
 		}
 
 		$record = [
-			'factuurId' => $factuurId,
-			'hoofdsomAfgeschreven' => $hoofdsom,
+			'invoiceId' => $factuurId,
+			'principalDepreciated' => $hoofdsom,
 			'vatAmount' => $btwBedrag,
-			'art29OBVerklaring' => (string)($params['art29OBVerklaring'] ?? ''),
+			'art29OBDeclaration' => (string)($params['art29OBDeclaration'] ?? ''),
 			'evidenceRef' => ($params['evidenceRef'] ?? null),
-			'boekingId' => $boekingIdValue,
-			'btwAangiftePeriode' => $periode,
+			'entryId' => $boekingIdValue,
+			'vatTaxReturnPeriod' => $periode,
 			'administrationId' => $administrationId,
 			'lifecycleState' => 'posted',
 		];
@@ -832,7 +832,7 @@ class DunningRunService {
 		foreach ($paidRuns as $run) {
 			// Heuristic: any prior DELIVERED run with the same klant whose
 			// invoice transitioned to paid counts as "good customer".
-			$uitgevoerd = (string)($run['uitgevoerdOp'] ?? '');
+			$uitgevoerd = (string)($run['uitgevoerdOn'] ?? '');
 			if ($uitgevoerd === '') {
 				continue;
 			}
@@ -1057,7 +1057,7 @@ class DunningRunService {
 			schema: 'DunningPauseDispute',
 			filters: [
 				'administrationId' => $administrationId,
-				'factuurId' => $factuurId,
+				'invoiceId' => $factuurId,
 				'lifecycleState' => 'active',
 			]
 		);

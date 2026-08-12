@@ -81,10 +81,10 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 				],
 			],
 			'totals' => [
-				'kwalificerende_winst_voor_nexus' => 1000000.0,
-				'kwalificerende_winst_na_nexus' => 973200.0,
-				'vpb_op_innovatiedeel' => 87588.0,
-				'voordeel_innovatiebox' => 170600.0,
+				'kwalificerende_profit_for_nexus' => 1000000.0,
+				'kwalificerende_profit_after_nexus' => 973200.0,
+				'vpb_on_innovationshare' => 87588.0,
+				'benefit_innovatiebox' => 170600.0,
 			],
 		];
 
@@ -121,10 +121,10 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 		$aggregation = [
 			'data' => [],
 			'totals' => [
-				'kwalificerende_winst_voor_nexus' => 125000.0,
-				'kwalificerende_winst_na_nexus' => 25000.0,
-				'vpb_op_innovatiedeel' => 2250.0,
-				'voordeel_innovatiebox' => 4950.0,
+				'kwalificerende_profit_for_nexus' => 125000.0,
+				'kwalificerende_profit_after_nexus' => 25000.0,
+				'vpb_on_innovationshare' => 2250.0,
+				'benefit_innovatiebox' => 4950.0,
 			],
 		];
 
@@ -179,10 +179,10 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 				],
 			],
 			'totals' => [
-				'kwalificerende_winst_voor_nexus' => 100.0,
-				'kwalificerende_winst_na_nexus' => 50.0,
-				'vpb_op_innovatiedeel' => 4.5,
-				'voordeel_innovatiebox' => 21.3,
+				'kwalificerende_profit_for_nexus' => 100.0,
+				'kwalificerende_profit_after_nexus' => 50.0,
+				'vpb_on_innovationshare' => 4.5,
+				'benefit_innovatiebox' => 21.3,
 			],
 		];
 
@@ -190,7 +190,7 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 
 		$this->assertSame(2026, $ctx['financialYear']);
 		$this->assertSame('adm-x', $ctx['administrationId']);
-		$this->assertSame('per_asset_afpelmethode', $ctx['methode']);
+		$this->assertSame('per_asset_afpelmethode', $ctx['method']);
 		$this->assertCount(1, $ctx['perAsset']);
 		$this->assertSame('IP A', $ctx['perAsset'][0]['name']);
 		$this->assertSame(50.0, $ctx['totals']['winst_na_nexus']);

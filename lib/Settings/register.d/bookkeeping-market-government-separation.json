@@ -23,15 +23,15 @@
         "required": [
           "code",
           "name",
-          "bestuursorgaan",
+          "governingBody",
           "organisatieonderdeel",
-          "beschrijving",
+          "description",
           "marktsegment",
           "concurrenten",
-          "startDatum",
-          "kostprijsMethode",
-          "kostenplaatsCode",
-          "kostendragerCode",
+          "startDate",
+          "costPriceMethode",
+          "costCentreCode",
+          "costObjectCode",
           "isExempted",
           "administrationId",
           "state"
@@ -49,7 +49,7 @@
             "example": "Dansschool de Maten",
             "title": "Naam"
           },
-          "bestuursorgaan": {
+          "governingBody": {
             "type": "string",
             "description": "Bestuursorgaan responsible for the activity (gemeente / provincie / waterschap / GR / RUD).",
             "example": "Gemeente Apeldoorn",
@@ -61,7 +61,7 @@
             "example": "Afdeling Cultuur & Erfgoed",
             "title": "Organisatieonderdeel"
           },
-          "beschrijving": {
+          "description": {
             "type": "string",
             "description": "Description of goods/services offered on market.",
             "example": "Verhuur zaalruimte voor commerciële danslessen",
@@ -93,7 +93,7 @@
             "nullable": true,
             "title": "Afnemers"
           },
-          "startDatum": {
+          "startDate": {
             "type": "string",
             "format": "date",
             "description": "Effective start date of the commercial activity.",
@@ -107,7 +107,7 @@
             "nullable": true,
             "title": "Eind Datum"
           },
-          "kostprijsMethode": {
+          "costPriceMethode": {
             "type": "string",
             "enum": [
               "integrale-kostprijs-art-25i",
@@ -117,13 +117,13 @@
             "default": "integrale-kostprijs-art-25i",
             "title": "Kostprijs Methode"
           },
-          "kostenplaatsCode": {
+          "costCentreCode": {
             "type": "string",
             "description": "FK to CostCenter.code (bookkeeping-cost-centers-dimensions).",
             "example": "K-SP-014",
             "title": "Kostenplaats Code"
           },
-          "kostendragerCode": {
+          "costObjectCode": {
             "type": "string",
             "description": "FK to KostenDrager.code (bookkeeping-cost-centers-dimensions).",
             "example": "D-MO-SP-014",
@@ -135,36 +135,36 @@
             "default": false,
             "title": "Is Exempted"
           },
-          "exemptionBesluitId": {
+          "exemptionDecisionId": {
             "type": "string",
             "description": "FK to AlgemeenBelangBesluit.id when isExempted=true.",
             "nullable": true,
             "title": "Exemption Besluit ID"
           },
-          "jaaromzet": {
+          "annualRevenue": {
             "type": "number",
             "minimum": 0,
             "description": "Last-known annual turnover in EUR (informational; not authoritative).",
             "nullable": true,
             "title": "Jaaromzet"
           },
-          "acmMelding": {
+          "acmReport": {
             "type": "object",
             "description": "ACM meldingstatus (REQ-WMO-001).",
             "properties": {
-              "ingediend": {
+              "submitted": {
                 "type": "boolean",
                 "description": "Whether reported to ACM.",
                 "title": "Ingediend"
               },
-              "datum": {
+              "date": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "ACM submission date.",
                 "title": "Datum"
               },
-              "kenmerk": {
+              "reference": {
                 "type": "string",
                 "nullable": true,
                 "description": "ACM reference number.",
@@ -173,7 +173,7 @@
               }
             },
             "required": [
-              "ingediend"
+              "submitted"
             ],
             "title": "Acm Melding"
           },
@@ -183,30 +183,30 @@
             "items": {
               "type": "object",
               "required": [
-                "organisatie",
-                "aandeelPercentage",
+                "organisation",
+                "sharePercentage",
                 "administrationId"
               ],
               "properties": {
-                "organisatie": {
+                "organisation": {
                   "type": "string",
                   "description": "Deelnemer organisation name.",
                   "title": "Organisatie"
                 },
-                "aandeelPercentage": {
+                "sharePercentage": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 100,
                   "description": "Deelnemer share percentage (sum across deelnemers SHOULD equal 100).",
                   "title": "Aandeel Percentage"
                 },
-                "kostenplaatsCode": {
+                "costCentreCode": {
                   "type": "string",
                   "nullable": true,
                   "description": "Deelnemer-specific cost-center.",
                   "title": "Kostenplaats Code"
                 },
-                "kostendragerCode": {
+                "costObjectCode": {
                   "type": "string",
                   "nullable": true,
                   "description": "Deelnemer-specific kostendrager.",
@@ -217,7 +217,7 @@
                   "description": "Deelnemer administration FK.",
                   "title": "Administration ID"
                 },
-                "exemptionBesluitId": {
+                "exemptionDecisionId": {
                   "type": "string",
                   "nullable": true,
                   "description": "Per-deelnemer ABB FK; null for non-exempted deelnemers.",
@@ -296,7 +296,7 @@
         },
         "x-openregister-relations": {
           "exemptionBesluit": {
-            "localField": "exemptionBesluitId",
+            "localField": "exemptionDecisionId",
             "relatedSchema": "AlgemeenBelangBesluit",
             "relatedField": "id",
             "cardinality": "many-to-one",
@@ -340,7 +340,7 @@
               "commercialActivityId": "@self.id"
             },
             "max": [
-              "periode"
+              "period"
             ]
           },
           "totalManualOverrides": {
@@ -349,7 +349,7 @@
             "groupBy": [],
             "filter": {
               "commercialActivityId": "@self.id",
-              "automatischToegepast": false
+              "automaticApplied": false
             },
             "count": true
           }
@@ -430,11 +430,11 @@
         "type": "object",
         "required": [
           "commercialActivityId",
-          "periode",
-          "berekendOp",
+          "period",
+          "calculatedOn",
           "status",
           "componenten",
-          "totaleKosten",
+          "totaleCost",
           "compliant",
           "administrationId"
         ],
@@ -445,14 +445,14 @@
             "example": "ca-mo-sp-014",
             "title": "Commercial Activity ID"
           },
-          "periode": {
+          "period": {
             "type": "string",
             "description": "Period identifier YYYY-MM (monthly), YYYY-Qn (quarterly) or YYYY-YTD (annual).",
             "pattern": "^[0-9]{4}-(0[1-9]|1[0-2]|Q[1-4]|YTD)(-restatement)?$",
             "example": "2026-Q1",
             "title": "Periode"
           },
-          "berekendOp": {
+          "calculatedOn": {
             "type": "string",
             "format": "date-time",
             "description": "Timestamp the calculation was run.",
@@ -472,15 +472,15 @@
             "type": "object",
             "description": "Component breakdown of integrale kostprijs in EUR (REQ-WMO-002).",
             "required": [
-              "directeLoonkosten",
+              "directePayrollCost",
               "directeMaterialen",
-              "directeAfschrijvingen",
+              "directeDepreciations",
               "indirecteOverhead",
-              "vermogenskosten",
+              "capitalCost",
               "winstopslag"
             ],
             "properties": {
-              "directeLoonkosten": {
+              "directePayrollCost": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Direct labour costs from GL accounts tagged with the activity's kostenplaatsCode.",
@@ -492,7 +492,7 @@
                 "description": "Direct materials costs from the activity's GL lines.",
                 "title": "Directe Materialen"
               },
-              "directeAfschrijvingen": {
+              "directeDepreciations": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Direct depreciation costs (FixedAsset.monthlyDepreciation × period) for assets dedicated to the activity.",
@@ -507,7 +507,7 @@
                 },
                 "title": "Indirecte Overhead"
               },
-              "vermogenskosten": {
+              "capitalCost": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Capital cost via WACC (default 4.5%, configurable per administration) on the activity's invested book value.",
@@ -522,34 +522,34 @@
             },
             "title": "Componenten"
           },
-          "totaleKosten": {
+          "totaleCost": {
             "type": "number",
             "minimum": 0,
             "description": "Sum of all components in EUR.",
             "title": "Totale Kosten"
           },
-          "verkochteEenheden": {
+          "verkochteUnits": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
             "description": "Units sold/delivered in period (e.g. 312 dagdelen-zaalhuur).",
             "title": "Verkochte Eenheden"
           },
-          "eenheidLabel": {
+          "unitLabel": {
             "type": "string",
             "nullable": true,
             "description": "Unit name (e.g. 'dagdeel-zaalhuur').",
             "example": "dagdeel-zaalhuur",
             "title": "Eenheid Label"
           },
-          "kostprijsPerEenheid": {
+          "costPricePerUnit": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
             "description": "totaleKosten / verkochteEenheden (when units are tracked).",
             "title": "Kostprijs Per Eenheid"
           },
-          "gehanteerdTarief": {
+          "gehanteerdRate": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -586,7 +586,7 @@
             "description": "Timestamp of the year-end definitief sign-off.",
             "title": "Definitief Signed At"
           },
-          "toelichting": {
+          "notes": {
             "type": "string",
             "nullable": true,
             "description": "Cost-center notes, allocation method, assumptions.",
@@ -669,7 +669,7 @@
           "originalAmount",
           "splits",
           "verdeelsleutel",
-          "automatischToegepast",
+          "automaticApplied",
           "postingDate",
           "administrationId",
           "status"
@@ -702,13 +702,13 @@
             "items": {
               "type": "object",
               "required": [
-                "kostendrager",
+                "costObject",
                 "ratio",
                 "amount",
                 "dimensie"
               ],
               "properties": {
-                "kostendrager": {
+                "costObject": {
                   "type": "string",
                   "description": "Destination kostendrager code (e.g. D-PUBL-NM-100 or D-MO-NM-001).",
                   "title": "Kostendrager"
@@ -725,7 +725,7 @@
                   "description": "Calculated EUR amount (originalAmount × ratio, rounded to cents).",
                   "title": "Amount"
                 },
-                "grootboek": {
+                "generalLedger": {
                   "type": "string",
                   "nullable": true,
                   "description": "Optional materialised GL account number when the operator runs 'post splits to ledger' mode.",
@@ -749,7 +749,7 @@
             "description": "FK to OverheadDistributionRule.id used for this split.",
             "title": "Verdeelsleutel"
           },
-          "automatischToegepast": {
+          "automaticApplied": {
             "type": "boolean",
             "description": "True for automatic split via the splitter; false for handmatige overrides.",
             "title": "Automatisch Toegepast"
@@ -924,42 +924,42 @@
         "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
         "type": "object",
         "required": [
-          "kenmerk",
-          "bestuursorgaan",
-          "vaststellingsdatum",
-          "kennisgevingAcm",
+          "reference",
+          "governingBody",
+          "determinationDate",
+          "notificationAcm",
           "betreftActiviteiten",
-          "publiekBelangCategorieen",
-          "motivering",
-          "volgendeEvaluatie",
+          "publiekBelangCategories",
+          "rationale",
+          "volgendeEvaluation",
           "status",
           "administrationId"
         ],
         "properties": {
-          "kenmerk": {
+          "reference": {
             "type": "string",
             "description": "Raadsbesluit reference.",
             "example": "Raadsbesluit 2025-184",
             "title": "Kenmerk"
           },
-          "bestuursorgaan": {
+          "governingBody": {
             "type": "string",
             "description": "Bestuursorgaan that passed the ABB.",
             "title": "Bestuursorgaan"
           },
-          "vaststellingsdatum": {
+          "determinationDate": {
             "type": "string",
             "format": "date",
             "description": "Raad-vote date.",
             "title": "Vaststellingsdatum"
           },
-          "publicatieGemeenteblad": {
+          "publicationMunicipalGazette": {
             "type": "string",
             "nullable": true,
             "description": "Gemeenteblad reference (e.g. gmb-2021-401892).",
             "title": "Publicatie Gemeenteblad"
           },
-          "publicatieDatum": {
+          "publicationDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -991,27 +991,27 @@
             },
             "title": "Drop Verification"
           },
-          "kennisgevingAcm": {
+          "notificationAcm": {
             "type": "object",
             "description": "ACM notification status.",
             "required": [
-              "ingediend"
+              "submitted"
             ],
             "properties": {
-              "ingediend": {
+              "submitted": {
                 "type": "boolean",
                 "default": false,
                 "title": "Ingediend",
                 "description": "Indicates whether ngediend applies."
               },
-              "datum": {
+              "date": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "title": "Datum",
                 "description": "The date and time for datum."
               },
-              "kenmerk": {
+              "reference": {
                 "type": "string",
                 "nullable": true,
                 "example": "ACM/IN/621004",
@@ -1029,7 +1029,7 @@
             },
             "title": "Betreft Activiteiten"
           },
-          "publiekBelangCategorieen": {
+          "publiekBelangCategories": {
             "type": "array",
             "description": "Public-interest categories per VNG handreiking.",
             "items": {
@@ -1049,12 +1049,12 @@
             },
             "title": "Publiek Belang Categorieen"
           },
-          "motivering": {
+          "rationale": {
             "type": "string",
             "description": "Reasoned justification for public interest (VNG-format).",
             "title": "Motivering"
           },
-          "evaluatieRitme": {
+          "evaluationRitme": {
             "type": "string",
             "enum": [
               "jaarlijks",
@@ -1065,7 +1065,7 @@
             "default": "tweejaarlijks",
             "title": "Evaluatie Ritme"
           },
-          "volgendeEvaluatie": {
+          "volgendeEvaluation": {
             "type": "string",
             "format": "date",
             "description": "Next scheduled evaluation date (auto-calculated from vaststellingsdatum + evaluatieRitme).",
@@ -1076,7 +1076,7 @@
             "enum": [
               "concept",
               "raadsvoorstel",
-              "raadsbesluit",
+              "councilResolution",
               "publicatie",
               "acm-notified",
               "bezwaar",
@@ -1089,24 +1089,24 @@
             "default": "concept",
             "title": "Status"
           },
-          "bezwaarTermijnVerstreken": {
+          "objectionTermVerstreken": {
             "type": "boolean",
             "description": "True when the 6-week bezwaarschrift period has expired.",
             "default": false,
             "title": "Bezwaar Termijn Verstreken"
           },
-          "bestuursrechtelijkeProcedures": {
+          "administrativeLawProcedures": {
             "type": "array",
             "description": "References to bezwaarschrift / administratief beroep records.",
             "items": {
               "type": "object",
               "properties": {
-                "kenmerk": {
+                "reference": {
                   "type": "string",
                   "title": "Kenmerk",
                   "description": "The kenmerk."
                 },
-                "datum": {
+                "date": {
                   "type": "string",
                   "format": "date",
                   "title": "Datum",
@@ -1122,7 +1122,7 @@
             "default": [],
             "title": "Bestuursrechtelijke Procedures"
           },
-          "raadsBesluitId": {
+          "councilDecisionId": {
             "type": "string",
             "nullable": true,
             "description": "Optional FK or freeform reference to bookkeeping-governance raads-besluit (Phase 3).",
@@ -1151,7 +1151,7 @@
               "label": "Raadsvoorstel",
               "description": "Submitted as raadsvoorstel."
             },
-            "raadsbesluit": {
+            "councilResolution": {
               "label": "Raadsbesluit",
               "description": "Passed by raad / Provinciale Staten."
             },
@@ -1192,11 +1192,11 @@
             },
             "pass": {
               "from": "raadsvoorstel",
-              "to": "raadsbesluit",
+              "to": "councilResolution",
               "label": "Pass raadsbesluit"
             },
             "publish": {
-              "from": "raadsbesluit",
+              "from": "councilResolution",
               "to": "publicatie",
               "label": "Publish in gemeenteblad"
             },
@@ -1352,8 +1352,8 @@
                 "commercialActivityId",
                 "code",
                 "revenue",
-                "integraleKostprijs",
-                "kostendekkingsratio",
+                "integraleCostPrice",
+                "costRecoveryRatio",
                 "compliant"
               ],
               "properties": {
@@ -1378,13 +1378,13 @@
                   "title": "Omzet",
                   "description": "The numeric value for omzet."
                 },
-                "integraleKostprijs": {
+                "integraleCostPrice": {
                   "type": "number",
                   "minimum": 0,
                   "title": "Integrale Kostprijs",
                   "description": "The numeric value for integrale kostprijs."
                 },
-                "kostendekkingsratio": {
+                "costRecoveryRatio": {
                   "type": "number",
                   "description": "omzet / integraleKostprijs.",
                   "title": "Kostendekkingsratio"
@@ -1394,7 +1394,7 @@
                   "title": "Compliant",
                   "description": "Indicates whether compliant applies."
                 },
-                "abbReferentie": {
+                "abbReference": {
                   "type": "string",
                   "nullable": true,
                   "title": "Abb Referentie",
@@ -1404,7 +1404,7 @@
             },
             "title": "Activiteiten"
           },
-          "samenvatting": {
+          "summary": {
             "type": "string",
             "nullable": true,
             "description": "Narrative summary appended to the report.",
@@ -1422,12 +1422,12 @@
             "items": {
               "type": "object",
               "properties": {
-                "kenmerk": {
+                "reference": {
                   "type": "string",
                   "title": "Kenmerk",
                   "description": "The kenmerk."
                 },
-                "motiveringExcerpt": {
+                "rationaleExcerpt": {
                   "type": "string",
                   "title": "Motivering Excerpt",
                   "description": "The motivering excerpt."
@@ -1436,13 +1436,13 @@
             },
             "title": "Abb List"
           },
-          "ondertekenaar": {
+          "signatory": {
             "type": "string",
             "nullable": true,
             "description": "Nextcloud user-id of the concerncontroller who signed.",
             "title": "Ondertekenaar"
           },
-          "ondertekendOp": {
+          "ondertekendOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -1516,20 +1516,20 @@
             "description": "Mirror of the decidesk decision outcome (REQ-SIGN-002).",
             "title": "Decision Outcome"
           },
-          "verzondenAanAcm": {
+          "verzondenInAcm": {
             "type": "boolean",
             "default": false,
             "description": "True after submission to ACM (or generation of submission-ready package).",
             "title": "Verzonden Aan Acm"
           },
-          "verzondenAanAcmOp": {
+          "verzondenInAcmOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
             "title": "Verzonden Aan Acm Op",
             "description": "The verzonden aan acm op."
           },
-          "publicatieGemeenteblad": {
+          "publicationMunicipalGazette": {
             "type": "string",
             "nullable": true,
             "description": "Optional gemeenteblad publication reference for the report itself.",
@@ -2148,10 +2148,10 @@
         "type": "object",
         "required": [
           "commercialActivityId",
-          "peildatum",
-          "bron",
+          "referenceDate",
+          "source",
           "amount",
-          "eenheid",
+          "unit",
           "administrationId"
         ],
         "properties": {
@@ -2160,13 +2160,13 @@
             "title": "Commercial Activity ID",
             "description": "The identifier of the associated commercial activity."
           },
-          "peildatum": {
+          "referenceDate": {
             "type": "string",
             "format": "date",
             "title": "Peildatum",
             "description": "The date and time for peildatum."
           },
-          "bron": {
+          "source": {
             "type": "string",
             "enum": [
               "offerte",
@@ -2185,7 +2185,7 @@
             "description": "Benchmark price in EUR.",
             "title": "Bedrag"
           },
-          "eenheid": {
+          "unit": {
             "type": "string",
             "description": "Unit (must match IKP eenheidLabel for comparability).",
             "title": "Eenheid"
@@ -2196,7 +2196,7 @@
             "description": "Name of the competing provider (for offerte/prijslijst).",
             "title": "Concurrent Naam"
           },
-          "toelichting": {
+          "notes": {
             "type": "string",
             "nullable": true,
             "title": "Toelichting",
@@ -2264,23 +2264,23 @@
       },
       "code": "MO-SP-014",
       "name": "Dansschool de Maten",
-      "bestuursorgaan": "Gemeente Apeldoorn",
+      "governingBody": "Gemeente Apeldoorn",
       "organisatieonderdeel": "Afdeling Cultuur & Erfgoed",
-      "beschrijving": "Verhuur zaalruimte voor commerciële danslessen",
+      "description": "Verhuur zaalruimte voor commerciële danslessen",
       "marktsegment": "privédansscholen Apeldoorn",
       "concurrenten": [
         "Dansacademie Sint-Hubert"
       ],
-      "startDatum": "2024-01-15",
+      "startDate": "2024-01-15",
       "endDate": "2025-12-31",
-      "kostprijsMethode": "integrale-kostprijs-art-25i",
-      "kostenplaatsCode": "K-SP-014",
-      "kostendragerCode": "D-MO-SP-014",
+      "costPriceMethode": "integrale-kostprijs-art-25i",
+      "costCentreCode": "K-SP-014",
+      "costObjectCode": "D-MO-SP-014",
       "isExempted": false,
-      "acmMelding": {
-        "ingediend": true,
-        "datum": "2024-02-01",
-        "kenmerk": "ACM/UIT/498321"
+      "acmReport": {
+        "submitted": true,
+        "date": "2024-02-01",
+        "reference": "ACM/UIT/498321"
       },
       "administrationId": "adm-gemeente-apeldoorn",
       "state": "closed"
@@ -2294,27 +2294,27 @@
         "lifecycleState": "archived"
       },
       "commercialActivityId": "ca-mo-sp-014",
-      "periode": "2024-YTD",
-      "berekendOp": "2025-03-31T04:00:00Z",
+      "period": "2024-YTD",
+      "calculatedOn": "2025-03-31T04:00:00Z",
       "status": "definitief",
       "componenten": {
-        "directeLoonkosten": 42000,
+        "directePayrollCost": 42000,
         "directeMaterialen": 8500,
-        "directeAfschrijvingen": 6200,
+        "directeDepreciations": 6200,
         "indirecteOverhead": {
           "huisvesting": 9100,
           "ict": 1800,
           "directieEnStaf": 3400,
           "facilitair": 1200
         },
-        "vermogenskosten": 2700,
+        "capitalCost": 2700,
         "winstopslag": 3100
       },
-      "totaleKosten": 78000,
-      "verkochteEenheden": 312,
-      "eenheidLabel": "dagdeel-zaalhuur",
-      "kostprijsPerEenheid": 250,
-      "gehanteerdTarief": 280,
+      "totaleCost": 78000,
+      "verkochteUnits": 312,
+      "unitLabel": "dagdeel-zaalhuur",
+      "costPricePerUnit": 250,
+      "gehanteerdRate": 280,
       "marge": 30,
       "margePercentage": 12,
       "compliant": true,
@@ -2335,20 +2335,20 @@
       "originalAmount": 12000,
       "splits": [
         {
-          "kostendrager": "D-PUBL-NM-100",
+          "costObject": "D-PUBL-NM-100",
           "ratio": 0.6,
           "amount": 7200,
           "dimensie": "PUBL"
         },
         {
-          "kostendrager": "D-MO-SP-014",
+          "costObject": "D-MO-SP-014",
           "ratio": 0.4,
           "amount": 4800,
           "dimensie": "MO"
         }
       ],
       "verdeelsleutel": "odr-bbv-taakveld-0-4-2024",
-      "automatischToegepast": true,
+      "automaticApplied": true,
       "postingDate": "2024-09-30",
       "materialised": false,
       "administrationId": "adm-gemeente-apeldoorn",

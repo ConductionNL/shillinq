@@ -114,11 +114,11 @@ class BudgetOverrunGuard {
 
 			$basis = $this->toRows(
 				rows: $objectService->setRegister($register)->setSchema('Taakveld')
-					->findAll(['filters' => ['begrotingId' => $begrotingId]])
+					->findAll(['filters' => ['budgetId' => $begrotingId]])
 			);
 			$wijzigingen = $this->toRows(
 				rows: $objectService->setRegister($register)->setSchema('Begrotingswijziging')
-					->findAll(['filters' => ['begrotingId' => $begrotingId]])
+					->findAll(['filters' => ['budgetId' => $begrotingId]])
 			);
 
 			$authorized = $this->stacker->authorizedLasten(
@@ -129,7 +129,7 @@ class BudgetOverrunGuard {
 
 			$glLines = $this->toRows(
 				rows: $objectService->setRegister($register)->setSchema('GLLine')
-					->findAll(['filters' => ['taakveldCode' => $taakveldCode, 'side' => 'debit']])
+					->findAll(['filters' => ['taskFieldCode' => $taakveldCode, 'side' => 'debit']])
 			);
 			$alreadyPostedCents = 0;
 			foreach ($glLines as $line) {
@@ -144,7 +144,7 @@ class BudgetOverrunGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BudgetOverrunGuard: budget check failed — denying GL post (fail-closed)',
-				['begrotingId' => $begrotingId, 'taakveldCode' => $taakveldCode, 'exception' => $e->getMessage()]
+				['budgetId' => $begrotingId, 'taskFieldCode' => $taakveldCode, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try

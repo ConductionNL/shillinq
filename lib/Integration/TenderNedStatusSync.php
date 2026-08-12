@@ -112,7 +112,7 @@ class TenderNedStatusSync {
 	 */
 	public function syncCompletion(array $oplevering): bool {
 		try {
-			$verplichtingId = trim((string)($oplevering['verplichtingId'] ?? ''));
+			$verplichtingId = trim((string)($oplevering['commitmentId'] ?? ''));
 			if ($verplichtingId === '') {
 				return false;
 			}
@@ -121,7 +121,7 @@ class TenderNedStatusSync {
 			if ($aanbesteding === null) {
 				$this->logger->info(
 					'TenderNedStatusSync: no TenderNed dossier linked — skipping sync',
-					['verplichtingId' => $verplichtingId]
+					['commitmentId' => $verplichtingId]
 				);
 				return false;
 			}
@@ -130,7 +130,7 @@ class TenderNedStatusSync {
 				// Vendor side cannot push completion to the public dossier (REQ-006).
 				$this->logger->info(
 					'TenderNedStatusSync: tenant is not the aanbestedende dienst — sync denied (REQ-006)',
-					['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+					['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -171,7 +171,7 @@ class TenderNedStatusSync {
 				->setSchema(schema: 'TenderNedAanbesteding')
 				->findAll(
 					[
-						'filters' => ['verplichtingId' => $verplichtingId],
+						'filters' => ['commitmentId' => $verplichtingId],
 					]
 				);
 		} catch (Throwable $e) {
@@ -206,7 +206,7 @@ class TenderNedStatusSync {
 			return false;
 		}
 
-		$dienst = trim((string)($aanbesteding['aanbestedendeDienst'] ?? ''));
+		$dienst = trim((string)($aanbesteding['contractingDienst'] ?? ''));
 		if ($dienst === '') {
 			return false;
 		}
@@ -223,18 +223,18 @@ class TenderNedStatusSync {
 	 * @return array<string, mixed>
 	 */
 	private function buildPayload(array $aanbesteding, array $oplevering): array {
-		$bewijsstukken = ($oplevering['bewijsstukken'] ?? []);
+		$bewijsstukken = ($oplevering['supportingDocuments'] ?? []);
 		if (is_array($bewijsstukken) === false) {
 			$bewijsstukken = [];
 		}
 
 		return [
-			'aanbestedingId' => (string)($aanbesteding['aanbestedingId'] ?? ''),
+			'tenderId' => (string)($aanbesteding['tenderId'] ?? ''),
 			'status' => self::TENDERNED_STATUS_AFGEROND,
-			'opleveringsDatum' => (string)($oplevering['opleveringsDatum'] ?? ''),
-			'eindopleveringId' => (string)($oplevering['mijlpaalId'] ?? ''),
+			'deliveryDate' => (string)($oplevering['deliveryDate'] ?? ''),
+			'eindopleveringId' => (string)($oplevering['milestoneId'] ?? ''),
 			'bewijsstukCount' => count($bewijsstukken),
-			'verplichtingId' => (string)($oplevering['verplichtingId'] ?? ''),
+			'commitmentId' => (string)($oplevering['commitmentId'] ?? ''),
 			'administrationId' => (string)($oplevering['administrationId'] ?? ''),
 		];
 
@@ -258,7 +258,7 @@ class TenderNedStatusSync {
 			// when the openconnector source comes online.
 			$this->logger->info(
 				'TenderNedStatusSync: openconnector gateway not bound — payload logged for replay',
-				['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'), 'payload' => $payload]
+				['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'), 'payload' => $payload]
 			);
 			return;
 		}
@@ -272,13 +272,13 @@ class TenderNedStatusSync {
 			$gateway->send('tenderned.completion', $payload);
 			$this->logger->info(
 				'TenderNedStatusSync: completion synced to TenderNed',
-				['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+				['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
 			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'TenderNedStatusSync: openconnector outbound send failed — logging only',
 				[
-					'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+					'tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);

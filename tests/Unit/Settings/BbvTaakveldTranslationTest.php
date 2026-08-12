@@ -75,8 +75,8 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 */
 	public static function catalogueProvider(): array {
 		$iv3Pairs = [
-			'name' => 'naamEn',
-			'mainFunctionName' => 'hoofdfunctieNaamEn',
+			'name' => 'nameEn',
+			'mainFunctionName' => 'mainFunctionNameEn',
 			'descriptionIv3' => 'omschrijvingIv3En',
 		];
 
@@ -108,9 +108,9 @@ class BbvTaakveldTranslationTest extends TestCase {
 
 		$data = json_decode((string)file_get_contents($path), associative: true);
 		self::assertSame(JSON_ERROR_NONE, json_last_error(), $file . ' is not valid JSON');
-		self::assertNotEmpty($data['taakvelden'], $file . ' declares no taakvelden');
+		self::assertNotEmpty($data['taskFields'], $file . ' declares no taakvelden');
 
-		return $data['taakvelden'];
+		return $data['taskFields'];
 	}
 
 	/**
@@ -218,7 +218,7 @@ class BbvTaakveldTranslationTest extends TestCase {
 		}
 
 		$expected = [
-			'Taakveld' => ['naamEn', 'hoofdfunctieNaamEn', 'omschrijvingIv3En'],
+			'Taakveld' => ['nameEn', 'mainFunctionNameEn', 'omschrijvingIv3En'],
 			'BbvTaakveld' => ['nameEn', 'descriptionEn', 'programmaFocusEn'],
 		];
 

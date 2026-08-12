@@ -229,7 +229,7 @@ class VerplichtingWorkflowTest extends TestCase {
 	 */
 	public function testInkooporderWithinBudgetAndMandateSignsCleanly(): void {
 		$budget = $this->makeBudget(['authorised_amount' => 50000000, 'realised_amount' => 0]);
-		$mandaat = $this->makeMandate(['mandaatcode' => 'M-INKOOP-100K', 'maximumbedrag' => 10000000]);
+		$mandaat = $this->makeMandate(['mandateCode' => 'M-INKOOP-100K', 'maximumAmount' => 10000000]);
 		$verplicht = $this->makeCommitment(75 * 100000);
 
 		$this->withObjectService(
@@ -250,7 +250,7 @@ class VerplichtingWorkflowTest extends TestCase {
 
 		// Vrije_ruimte after the commitment is EUR 500k - EUR 75k = EUR 425k.
 		$afterCommitment = $budget;
-		$afterCommitment['openstaande_verplichtingen'] = 75 * 100000;
+		$afterCommitment['outstanding_verplichtingen'] = 75 * 100000;
 		$this->assertSame(42500000, $this->budget->freeRoom($afterCommitment));
 
 	}//end testInkooporderWithinBudgetAndMandateSignsCleanly()
@@ -269,7 +269,7 @@ class VerplichtingWorkflowTest extends TestCase {
 	 */
 	public function testMandateExceededRoutesToApprovalWorkflow(): void {
 		$budget = $this->makeBudget();
-		$mandaat = $this->makeMandate(['mandaatcode' => 'M-INKOOP-50K', 'maximumbedrag' => 5000000]);
+		$mandaat = $this->makeMandate(['mandateCode' => 'M-INKOOP-50K', 'maximumAmount' => 5000000]);
 		$verplicht = $this->makeCommitment(75 * 100000);
 
 		$this->withObjectService(
@@ -321,10 +321,10 @@ class VerplichtingWorkflowTest extends TestCase {
 
 		$overcommit = [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'RO-1',
-			'soort' => 'raamovereenkomst',
-			'totaalbedrag_excl_btw' => 20000000,
-			'regels' => [
+			'commitmentNumber' => 'RO-1',
+			'kind' => 'frameworkAgreement',
+			'totalamount_excl_vat' => 20000000,
+			'rules' => [
 				['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
 				['programme' => '5.1', 'financialYear' => 2027, 'amount_excl_vat' => 10000000],
 			],
@@ -334,8 +334,8 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->assertFalse($this->budget->canCommit('RO-1', $overcommit));
 
 		$within = $overcommit;
-		$within['regels'][1]['amount_excl_vat'] = 5000000;
-		$within['totaalbedrag_excl_btw'] = 15000000;
+		$within['rules'][1]['amount_excl_vat'] = 5000000;
+		$within['totalamount_excl_vat'] = 15000000;
 
 		// 2027 right-sized to EUR 50k → both regels fit and the raamovereenkomst signs.
 		$this->assertTrue($this->budget->canCommit('RO-1', $within));
@@ -353,8 +353,8 @@ class VerplichtingWorkflowTest extends TestCase {
 		$budget = $this->makeBudget(['authorised_amount' => 20000000, 'realised_amount' => 0]);
 		$override = $this->makeMandate(
 			[
-				'mandaatcode' => 'M-CFO-OVERRIDE',
-				'maximumbedrag' => 1000000000,
+				'mandateCode' => 'M-CFO-OVERRIDE',
+				'maximumAmount' => 1000000000,
 				'is_override' => true,
 			]
 		);
@@ -384,9 +384,9 @@ class VerplichtingWorkflowTest extends TestCase {
 	public function testSecondSignatureRequiredAboveThreshold(): void {
 		$mandaat = $this->makeMandate(
 			[
-				'mandaatcode' => 'M-INKOOP-50K-2SIG',
-				'maximumbedrag' => 5000000,
-				'vereist_tweede_handtekening_boven' => 2500000,
+				'mandateCode' => 'M-INKOOP-50K-2SIG',
+				'maximumAmount' => 5000000,
+				'required_tweede_signature_boven' => 2500000,
 			]
 		);
 		$verplicht = $this->makeCommitment(3000000);
@@ -424,7 +424,7 @@ class VerplichtingWorkflowTest extends TestCase {
 				'financialYear' => 2026,
 				'authorised_amount' => 50000000,
 				'realised_amount' => 0,
-				'openstaande_verplichtingen' => 0,
+				'outstanding_verplichtingen' => 0,
 			],
 			$overrides
 		);
@@ -442,12 +442,12 @@ class VerplichtingWorkflowTest extends TestCase {
 		return array_merge(
 			[
 				'administrationId' => 'adm-1',
-				'mandaatcode' => 'M-INKOOP-100K',
-				'maximumbedrag' => 10000000,
-				'soort_verplichting' => ['inkooporder', 'raamovereenkomst'],
+				'mandateCode' => 'M-INKOOP-100K',
+				'maximumAmount' => 10000000,
+				'kind_commitment' => ['inkooporder', 'frameworkAgreement'],
 				'is_override' => false,
-				'geldig_van' => '2020-01-01',
-				'geldig_tot' => '2999-12-31',
+				'valid_from' => '2020-01-01',
+				'valid_to' => '2999-12-31',
 			],
 			$overrides
 		);
@@ -464,10 +464,10 @@ class VerplichtingWorkflowTest extends TestCase {
 	private function makeCommitment(int $bedrag): array {
 		return [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'PO-1',
-			'soort' => 'inkooporder',
-			'totaalbedrag_excl_btw' => $bedrag,
-			'regels' => [
+			'commitmentNumber' => 'PO-1',
+			'kind' => 'inkooporder',
+			'totalamount_excl_vat' => $bedrag,
+			'rules' => [
 				[
 					'programme' => '5.1',
 					'financialYear' => 2026,

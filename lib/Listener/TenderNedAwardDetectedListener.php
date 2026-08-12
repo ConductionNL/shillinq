@@ -201,7 +201,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			return false;
 		}
 
-		if ((float)($payload['contractWaarde'] ?? 0) < 1.0) {
+		if ((float)($payload['contractValue'] ?? 0) < 1.0) {
 			return false;
 		}
 
@@ -229,7 +229,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * @return void
 	 */
 	private function promote(array $payload): void {
-		$aanbestedingId = (string)($payload['aanbestedingId'] ?? '');
+		$aanbestedingId = (string)($payload['tenderId'] ?? '');
 		if ($aanbestedingId === '') {
 			return;
 		}
@@ -238,7 +238,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		if ($objectService === null) {
 			$this->logger->info(
 				'TenderNedAwardDetectedListener: OR ObjectService unavailable — skipping promotion',
-				['aanbestedingId' => $aanbestedingId]
+				['tenderId' => $aanbestedingId]
 			);
 			return;
 		}
@@ -257,20 +257,20 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		}
 
 		$plan = $this->safeGeneratePlan(
-			opdrachttype: (string)($payload['opdrachttype'] ?? 'other'),
-			looptijdStart: (string)($payload['looptijdStart'] ?? ''),
+			opdrachttype: (string)($payload['assignmentType'] ?? 'other'),
+			looptijdStart: (string)($payload['termStart'] ?? ''),
 			looptijdEind: (string)($payload['termEnd'] ?? '')
 		);
 
 		$verplichting = [
 			'commitmentNumber' => 'TN-' . $aanbestedingId,
 			'description' => (string)($payload['titel'] ?? $aanbestedingId),
-			'bron' => 'tenderned',
-			'bronReferentie' => $aanbestedingId,
-			'amount' => (float)($payload['contractWaarde'] ?? 0),
-			'looptijdStart' => (string)($payload['looptijdStart'] ?? ''),
+			'source' => 'tenderned',
+			'sourceReference' => $aanbestedingId,
+			'amount' => (float)($payload['contractValue'] ?? 0),
+			'termStart' => (string)($payload['termStart'] ?? ''),
 			'termEnd' => (string)($payload['termEnd'] ?? ''),
-			'mijlpalen' => $plan,
+			'milestones' => $plan,
 			'status' => 'active',
 			'administrationId' => (string)($payload['administrationId'] ?? ''),
 		];
@@ -283,7 +283,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'TenderNedAwardDetectedListener: saveObject failed — fail-soft',
-				['aanbestedingId' => $aanbestedingId, 'exception' => $e->getMessage()]
+				['tenderId' => $aanbestedingId, 'exception' => $e->getMessage()]
 			);
 			return;
 		}
@@ -293,7 +293,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		// has been created and the next polling tick will re-attempt.
 		try {
 			$payload['status'] = 'in-uitvoering';
-			$payload['verplichtingId'] = 'TN-' . $aanbestedingId;
+			$payload['commitmentId'] = 'TN-' . $aanbestedingId;
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'TenderNedAanbesteding')
@@ -301,7 +301,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		} catch (Throwable $e) {
 			$this->logger->info(
 				'TenderNedAwardDetectedListener: failed to bump aanbesteding to in-uitvoering',
-				['aanbestedingId' => $aanbestedingId, 'exception' => $e->getMessage()]
+				['tenderId' => $aanbestedingId, 'exception' => $e->getMessage()]
 			);
 		}//end try
 
@@ -357,8 +357,8 @@ class TenderNedAwardDetectedListener implements IEventListener {
 				->findAll(
 					[
 						'filters' => [
-							'bron' => 'tenderned',
-							'bronReferentie' => $bronReferentie,
+							'source' => 'tenderned',
+							'sourceReference' => $bronReferentie,
 						],
 					]
 				);

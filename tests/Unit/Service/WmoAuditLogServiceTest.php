@@ -57,7 +57,7 @@ final class WmoAuditLogServiceTest extends TestCase {
 			'entityType' => 'IntegralCostPrice',
 			'userId' => 'system',
 			'beforeValues' => null,
-			'afterValues' => ['totaleKosten' => 87_500.00],
+			'afterValues' => ['totaleCost' => 87_500.00],
 			'reason' => 'monthly calc',
 			'administrationId' => 'adm-tilburg',
 		]);

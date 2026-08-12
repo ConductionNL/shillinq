@@ -63,7 +63,7 @@ class IncassoDossierComposer {
 	 * @param string $factuurId Invoice FK.
 	 * @param string $klantId Klant FK.
 	 *
-	 * @return array{factuurId:string,inhoud:array<string,mixed>}
+	 * @return array{invoiceId:string,inhoud:array<string,mixed>}
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
@@ -75,7 +75,7 @@ class IncassoDossierComposer {
 			schema: 'DunningRun',
 			filters: [
 				'administrationId' => $administrationId,
-				'factuurId' => $factuurId,
+				'invoiceId' => $factuurId,
 			]
 		);
 		$incassoKostenAll = $this->findAll(
@@ -83,7 +83,7 @@ class IncassoDossierComposer {
 			schema: 'IncassoKostenBerekening',
 			filters: [
 				'administrationId' => $administrationId,
-				'factuurId' => $factuurId,
+				'invoiceId' => $factuurId,
 			]
 		);
 		$pauseAll = $this->findAll(
@@ -91,7 +91,7 @@ class IncassoDossierComposer {
 			schema: 'DunningPauseDispute',
 			filters: [
 				'administrationId' => $administrationId,
-				'factuurId' => $factuurId,
+				'invoiceId' => $factuurId,
 			]
 		);
 
@@ -100,8 +100,8 @@ class IncassoDossierComposer {
 			$incassoKostenAll,
 			static function (array $a, array $b): int {
 				return strcmp(
-					(string)($b['wettelijkeRente']['berekendOp'] ?? ''),
-					(string)($a['wettelijkeRente']['berekendOp'] ?? '')
+					(string)($b['statutoryRente']['calculatedOn'] ?? ''),
+					(string)($a['statutoryRente']['calculatedOn'] ?? '')
 				);
 			}
 		);
@@ -124,18 +124,18 @@ class IncassoDossierComposer {
 		}
 
 		return [
-			'factuurId' => $factuurId,
+			'invoiceId' => $factuurId,
 			'inhoud' => [
 				'invoice' => [
-					'factuurId' => $factuurId,
-					'klantId' => $klantId,
+					'invoiceId' => $factuurId,
+					'customerId' => $klantId,
 					'administrationId' => $administrationId,
 				],
 				'dunningRuns' => $dunningRuns,
 				'incassoKosten' => $latestIncassoKosten,
 				'pauseEvents' => $pauseAll,
 				'klantGegevens' => [
-					'klantId' => $klantId,
+					'customerId' => $klantId,
 				],
 				'evidenceRefs' => $evidenceRefs,
 			],

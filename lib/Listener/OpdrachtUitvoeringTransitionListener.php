@@ -120,7 +120,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 			// REQ-006 — outbound sync only when this is the approved
 			// eindoplevering (the buyer-side gate; vendor-completed
 			// openrules are denied earlier by RBAC).
-			if ((string)($oplevering['opleveringsType'] ?? '') !== 'eindoplevering') {
+			if ((string)($oplevering['deliveryType'] ?? '') !== 'eindoplevering') {
 				return;
 			}
 

@@ -162,7 +162,7 @@ final class IbAangifteZzpFragmentTest extends TestCase {
 		$schemas = $this->fragment()['components']['schemas'];
 
 		// MKB exemption rate is sourced from the parameter entity.
-		$mkb = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['mkbWinstvrijstelling'];
+		$mkb = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['mkbProfitExemption'];
 		self::assertStringContainsString('IBTaxParameterYear.mkbExemptionRate', $mkb['parameterSource']);
 
 		// Urencriterium guard points at the real existing method.
@@ -173,7 +173,7 @@ final class IbAangifteZzpFragmentTest extends TestCase {
 		);
 
 		// Representatiebeperking + bijtelling guards reference classes that exist.
-		$repr = $schemas['IBWinstOpgave']['x-openregister-calculations']['representatieCorrectie'];
+		$repr = $schemas['IBWinstOpgave']['x-openregister-calculations']['entertainmentCorrection'];
 		self::assertTrue(method_exists('OCA\\Shillinq\\Guard\\IbFiscalAdjustmentGuard', 'representatieDrempel'));
 		self::assertStringContainsString('IbFiscalAdjustmentGuard', $repr['guard']);
 

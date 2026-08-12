@@ -58,18 +58,18 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 	public function testIv3AggregatesPerTaakveld(): void {
 		$rows = $this->exporter->iv3Rows(
 			taakvelden: [
-				['taakveldCode' => '1.1', 'baten' => 50.0, 'lasten' => 450.0],
-				['taakveldCode' => '1.1', 'baten' => 10.0, 'lasten' => 50.0],
-				['taakveldCode' => '6.1', 'baten' => 120.0, 'lasten' => 1300.0],
+				['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0],
+				['taskFieldCode' => '1.1', 'revenue' => 10.0, 'expenses' => 50.0],
+				['taskFieldCode' => '6.1', 'revenue' => 120.0, 'expenses' => 1300.0],
 			]
 		);
 
 		self::assertCount(2, $rows);
 		// Sorted by code: 1.1 first, aggregated 60 / 500.
-		self::assertSame('1.1', $rows[0]['taakveldCode']);
-		self::assertSame(60.0, $rows[0]['baten']);
-		self::assertSame(500.0, $rows[0]['lasten']);
-		self::assertSame('6.1', $rows[1]['taakveldCode']);
+		self::assertSame('1.1', $rows[0]['taskFieldCode']);
+		self::assertSame(60.0, $rows[0]['revenue']);
+		self::assertSame(500.0, $rows[0]['expenses']);
+		self::assertSame('6.1', $rows[1]['taskFieldCode']);
 
 	}//end testIv3AggregatesPerTaakveld()
 
@@ -81,8 +81,8 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 	public function testEmuSaldoAppliesCorrections(): void {
 		// Σbaten - Σlasten = 100 - 600 = -500; + investering 400 + reserve 50 = -50.
 		$saldo = $this->exporter->emuSaldo(
-			taakvelden: [['baten' => 100.0, 'lasten' => 600.0]],
-			investeringen: [['bruto' => 400.0]],
+			taakvelden: [['revenue' => 100.0, 'expenses' => 600.0]],
+			investeringen: [['gross' => 400.0]],
 			reserveMutaties: 50.0
 		);
 		self::assertSame(-50.0, $saldo);
@@ -97,25 +97,25 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 	public function testJsonExportShapeIsComplete(): void {
 		$export = $this->exporter->jsonExport(
 			begroting: [
-				'begrotingsjaar' => 2027,
-				'organisationType' => 'gemeente',
+				'budgetYear' => 2027,
+				'organisationType' => 'municipality',
 				'status' => 'vastgesteld',
-				'vaststellingsDatum' => '2026-11-09',
+				'determinationDate' => '2026-11-09',
 				'sluitendStructureel' => true,
 				'sluitendReëel' => true,
 				'toezichtRegime' => 'repressief',
 			],
 			programmas: [['number' => '1', 'name' => 'Veiligheid', 'doelstellingen' => 'x', 'revenueTotal' => 80.0, 'expensesTotal' => 650.0]],
-			taakvelden: [['taakveldCode' => '1.1', 'baten' => 50.0, 'lasten' => 450.0]],
-			paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'tekst', 'kerncijfers' => []]]
+			taakvelden: [['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0]],
+			paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'tekst', 'keyFigures' => []]]
 		);
 
-		self::assertSame(2027, $export['metadata']['begrotingsjaar']);
+		self::assertSame(2027, $export['metadata']['budgetYear']);
 		self::assertTrue($export['metadata']['sluitendStructureel']);
 		self::assertCount(1, $export['programmas']);
 		self::assertSame('Veiligheid', $export['programmas'][0]['name']);
-		self::assertCount(1, $export['taakvelden']);
-		self::assertSame('1.1', $export['taakvelden'][0]['taakveldCode']);
+		self::assertCount(1, $export['taskFields']);
+		self::assertSame('1.1', $export['taskFields'][0]['taskFieldCode']);
 		self::assertCount(1, $export['paragrafen']);
 		self::assertSame('lokaleHeffingen', $export['paragrafen'][0]['type']);
 		// The whole shape must be json-encodable.

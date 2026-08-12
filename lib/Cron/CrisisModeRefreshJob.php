@@ -142,7 +142,7 @@ class CrisisModeRefreshJob extends TimedJob {
 						->saveObject(
 							object: [
 								'horizonId' => $horizonId,
-								'rolledOp' => date('c'),
+								'rolledOn' => date('c'),
 							]
 						);
 

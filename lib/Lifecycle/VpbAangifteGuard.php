@@ -78,7 +78,7 @@ class VpbAangifteGuard {
 	 *
 	 * @var array<string>
 	 */
-	private const AANSLAG_TOEGESTANE_STATES = ['ingediend', 'aanslag-ontvangen', 'bezwaar', 'beroep', 'onherroepelijk'];
+	private const AANSLAG_TOEGESTANE_STATES = ['submitted', 'aanslag-ontvangen', 'bezwaar', 'beroep', 'onherroepelijk'];
 
 	/**
 	 * Construct the guard with DI dependencies.
@@ -114,7 +114,7 @@ class VpbAangifteGuard {
 	public function canIndienen(string $aangifteId, ?array $object = null): bool {
 		try {
 			$aangifte = $object;
-			if ($aangifte === null || isset($aangifte['belastingplichtige']) === false) {
+			if ($aangifte === null || isset($aangifte['taxpayer']) === false) {
 				$aangifte = $this->resolveObject(schema: 'VpbAangifte', id: $aangifteId);
 			}
 
@@ -126,7 +126,7 @@ class VpbAangifteGuard {
 				return false;
 			}
 
-			if ($this->belastingplichtigeDigipoortReady(belastingplichtigeId: (string)($aangifte['belastingplichtige'] ?? '')) === false) {
+			if ($this->belastingplichtigeDigipoortReady(belastingplichtigeId: (string)($aangifte['taxpayer'] ?? '')) === false) {
 				return false;
 			}
 
@@ -134,7 +134,7 @@ class VpbAangifteGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'VpbAangifteGuard: canIndienen check failed — denying indienen transition (fail-closed)',
-				['aangifteId' => $aangifteId, 'exception' => $e->getMessage()]
+				['taxReturnId' => $aangifteId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -156,7 +156,7 @@ class VpbAangifteGuard {
 	public function canAanslagOntvangen(string $aanslagId, ?array $object = null): bool {
 		try {
 			$aanslag = $object;
-			if ($aanslag === null || isset($aanslag['aangifte']) === false) {
+			if ($aanslag === null || isset($aanslag['taxReturn']) === false) {
 				$aanslag = $this->resolveObject(schema: 'DefinitieveAanslag', id: $aanslagId);
 			}
 
@@ -164,7 +164,7 @@ class VpbAangifteGuard {
 				return false;
 			}
 
-			$aangifte = $this->resolveObject(schema: 'VpbAangifte', id: (string)($aanslag['aangifte'] ?? ''));
+			$aangifte = $this->resolveObject(schema: 'VpbAangifte', id: (string)($aanslag['taxReturn'] ?? ''));
 			if ($aangifte === null) {
 				return false;
 			}
@@ -206,8 +206,8 @@ class VpbAangifteGuard {
 			}
 
 			$bezit = (float)($eenheid['bezitPercentage'] ?? 0);
-			$gelijkeBoekjaar = ($eenheid['gelijkeBoekjaren'] ?? false) === true;
-			$vestigingNl = ($eenheid['vestigingNederland'] ?? false) === true;
+			$gelijkeBoekjaar = ($eenheid['equalBoekjaren'] ?? false) === true;
+			$vestigingNl = ($eenheid['establishmentNederland'] ?? false) === true;
 
 			return $bezit >= 95.0 && $gelijkeBoekjaar === true && $vestigingNl === true;
 		} catch (\Throwable $e) {
@@ -230,7 +230,7 @@ class VpbAangifteGuard {
 	 * @return bool True when the jaarrekening is vastgesteld.
 	 */
 	private function jaarrekeningVastgesteld(array $aangifte): bool {
-		$reportId = (string)($aangifte['commercieleWinst'] ?? '');
+		$reportId = (string)($aangifte['commercieleProfit'] ?? '');
 		if ($reportId === '') {
 			return false;
 		}
@@ -264,8 +264,8 @@ class VpbAangifteGuard {
 			return false;
 		}
 
-		$niveau = (string)($belastingplichtige['eHerkenningsNiveau'] ?? '');
-		$cert = (string)($belastingplichtige['digipoortCertificaat'] ?? '');
+		$niveau = (string)($belastingplichtige['eRecognitionNiveau'] ?? '');
+		$cert = (string)($belastingplichtige['digipoortCertificate'] ?? '');
 
 		return in_array($niveau, ['EH3', 'EH4'], true) && $cert !== '';
 	}//end belastingplichtigeDigipoortReady()
@@ -290,14 +290,14 @@ class VpbAangifteGuard {
 		$claims = $objectService
 			->setRegister($this->resolveRegister())
 			->setSchema('Innovatiebox')
-			->findAll(['filters' => ['aangifte' => $aangifteId]]);
+			->findAll(['filters' => ['taxReturn' => $aangifteId]]);
 
 		foreach ($claims as $claim) {
 			if (is_array($claim) === false) {
 				continue;
 			}
 
-			if ((string)($claim['soVerklaringReferentie'] ?? '') === '') {
+			if ((string)($claim['soDeclarationReference'] ?? '') === '') {
 				return false;
 			}
 		}

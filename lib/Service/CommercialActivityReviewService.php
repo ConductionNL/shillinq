@@ -82,7 +82,7 @@ class CommercialActivityReviewService {
 		$last = (string)($activity['lastReviewedAt'] ?? '');
 		if ($last === '') {
 			// Never reviewed — treat startDatum as the baseline.
-			$last = (string)($activity['startDatum'] ?? '');
+			$last = (string)($activity['startDate'] ?? '');
 		}
 
 		if ($last === '') {

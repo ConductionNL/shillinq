@@ -79,34 +79,34 @@ class ProfitAttributionService {
 	 * the result is min(25% x profit, EUR 25k) and the nexus is NOT applied; for
 	 * cost_plus the supplied qualifying profit is taxed directly.
 	 *
-	 * @param string $methode One of per_asset_afpelmethode|forfaitair_25pct|cost_plus.
+	 * @param string $method One of per_asset_afpelmethode|forfaitair_25pct|cost_plus.
 	 * @param float $brutoOpbrengst Gross revenue attributable to the asset.
 	 * @param float $directeKosten Direct costs (material, subcontracting for production).
 	 * @param float $routineWinst Sum of arm's-length routine profits (mfg + distrib + marketing).
 	 * @param float $nexusBreak Applied nexusbreuk (0..1); used by afpelmethode only.
 	 *
 	 * @return array{
-	 *   methode: string,
-	 *   kwalificerendeWinstVoorNexus: float,
-	 *   nexusbreukToegepast: float,
-	 *   kwalificerendeWinstNaNexus: float,
-	 *   effectiefTarief: float,
-	 *   vpbOpInnovatiedeel: float,
-	 *   vpbZonderInnovatiebox: float,
-	 *   voordeelInnovatiebox: float,
+	 *   method: string,
+	 *   qualifyingProfitForNexus: float,
+	 *   nexusFractionApplied: float,
+	 *   qualifyingProfitAfterNexus: float,
+	 *   effectiveRate: float,
+	 *   vpbOnInnovationShare: float,
+	 *   vpbWithoutInnovationBox: float,
+	 *   innovationBoxBenefit: float,
 	 *   forfaitairCapApplied: bool
 	 * }
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003
 	 */
 	public function calculateKwalificerendeWinst(
-		string $methode,
+		string $method,
 		float $brutoOpbrengst,
 		float $directeKosten = 0.0,
 		float $routineWinst = 0.0,
 		float $nexusBreak = 1.0,
 	): array {
-		if ($methode === 'forfaitair_25pct') {
+		if ($method === 'forfaitair_25pct') {
 			return $this->forfaitair(profit: $brutoOpbrengst);
 		}
 
@@ -118,7 +118,7 @@ class ProfitAttributionService {
 		}
 
 		$appliedNexus = max(0.0, min($nexusBreak, 1.0));
-		if ($methode === 'cost_plus') {
+		if ($method === 'cost_plus') {
 			$appliedNexus = 1.0;
 		}
 
@@ -128,14 +128,14 @@ class ProfitAttributionService {
 		$vpbZonder = ($voorNexus * self::STANDARD_RATE);
 
 		return [
-			'methode' => $methode,
-			'kwalificerendeWinstVoorNexus' => round($voorNexus, 2),
-			'nexusbreukToegepast' => round($appliedNexus, 4),
-			'kwalificerendeWinstNaNexus' => round($naNexus, 2),
-			'effectiefTarief' => self::INNOVATIEBOX_TARIFF,
-			'vpbOpInnovatiedeel' => round($vpbInnovatie, 2),
-			'vpbZonderInnovatiebox' => round($vpbZonder, 2),
-			'voordeelInnovatiebox' => round(($vpbZonder - $vpbInnovatie), 2),
+			'method' => $method,
+			'qualifyingProfitForNexus' => round($voorNexus, 2),
+			'nexusFractionApplied' => round($appliedNexus, 4),
+			'qualifyingProfitAfterNexus' => round($naNexus, 2),
+			'effectiveRate' => self::INNOVATIEBOX_TARIFF,
+			'vpbOnInnovationShare' => round($vpbInnovatie, 2),
+			'vpbWithoutInnovationBox' => round($vpbZonder, 2),
+			'innovationBoxBenefit' => round(($vpbZonder - $vpbInnovatie), 2),
 			'forfaitairCapApplied' => false,
 		];
 
@@ -151,14 +151,14 @@ class ProfitAttributionService {
 	 * @param float $profit Taxable operating profit.
 	 *
 	 * @return array{
-	 *   methode: string,
-	 *   kwalificerendeWinstVoorNexus: float,
-	 *   nexusbreukToegepast: float,
-	 *   kwalificerendeWinstNaNexus: float,
-	 *   effectiefTarief: float,
-	 *   vpbOpInnovatiedeel: float,
-	 *   vpbZonderInnovatiebox: float,
-	 *   voordeelInnovatiebox: float,
+	 *   method: string,
+	 *   qualifyingProfitForNexus: float,
+	 *   nexusFractionApplied: float,
+	 *   qualifyingProfitAfterNexus: float,
+	 *   effectiveRate: float,
+	 *   vpbOnInnovationShare: float,
+	 *   vpbWithoutInnovationBox: float,
+	 *   innovationBoxBenefit: float,
 	 *   forfaitairCapApplied: bool
 	 * }
 	 *
@@ -175,14 +175,14 @@ class ProfitAttributionService {
 		$vpbZonder = ($kwalif * self::STANDARD_RATE);
 
 		return [
-			'methode' => 'forfaitair_25pct',
-			'kwalificerendeWinstVoorNexus' => round($voorCap, 2),
-			'nexusbreukToegepast' => 1.0,
-			'kwalificerendeWinstNaNexus' => round($kwalif, 2),
-			'effectiefTarief' => self::INNOVATIEBOX_TARIFF,
-			'vpbOpInnovatiedeel' => round($vpbInnovatie, 2),
-			'vpbZonderInnovatiebox' => round($vpbZonder, 2),
-			'voordeelInnovatiebox' => round(($vpbZonder - $vpbInnovatie), 2),
+			'method' => 'forfaitair_25pct',
+			'qualifyingProfitForNexus' => round($voorCap, 2),
+			'nexusFractionApplied' => 1.0,
+			'qualifyingProfitAfterNexus' => round($kwalif, 2),
+			'effectiveRate' => self::INNOVATIEBOX_TARIFF,
+			'vpbOnInnovationShare' => round($vpbInnovatie, 2),
+			'vpbWithoutInnovationBox' => round($vpbZonder, 2),
+			'innovationBoxBenefit' => round(($vpbZonder - $vpbInnovatie), 2),
 			'forfaitairCapApplied' => $capApplied,
 		];
 

@@ -128,7 +128,7 @@ final class UrenAlertService {
 		if ($this->isKwartaalEinde(datum: $datum) === false) {
 			$this->logger->debug(
 				'UrenAlertService: bouwKwartaalAlert called on non-quarter-end date',
-				['datum' => $datum]
+				['date' => $datum]
 			);
 		}
 
@@ -139,13 +139,13 @@ final class UrenAlertService {
 			aanleidingDatum: $datum
 		);
 
-		$alert['handelingsperspectief'] = $this->handelingsperspectief(year: $year);
+		$alert['actionPerspective'] = $this->handelingsperspectief(year: $year);
 		$this->logger->info(
 			'UrenAlertService: quarter-end alert built',
 			[
 				'enterpriseId' => $alert['enterpriseId'],
-				'datum' => $datum,
-				'drempelStatus' => ($year['drempelStatus'] ?? null),
+				'date' => $datum,
+				'thresholdStatus' => ($year['thresholdStatus'] ?? null),
 			]
 		);
 
@@ -186,12 +186,12 @@ final class UrenAlertService {
 			aanleidingDatum: gmdate('Y-m-d')
 		);
 
-		$alert['oorzaak'] = sprintf(
+		$alert['cause'] = sprintf(
 			'Prognose-omslag van %s naar %s',
 			$oldStatus,
 			$newStatus
 		);
-		$alert['handelingsperspectief'] = $this->handelingsperspectief(year: $year);
+		$alert['actionPerspective'] = $this->handelingsperspectief(year: $year);
 
 		return $alert;
 	}//end bouwOmslagAlert()
@@ -262,9 +262,9 @@ final class UrenAlertService {
 			'administrationId' => (string)($year['administrationId'] ?? ''),
 			'enterpriseId' => (string)($year['enterpriseId'] ?? ''),
 			'type' => $type,
-			'urgentie' => $urgentie,
-			'aanleidingDatum' => $aanleidingDatum,
-			'lopendeUren' => (float)($year['lopendeUren'] ?? 0),
+			'urgency' => $urgentie,
+			'triggerDate' => $aanleidingDatum,
+			'lopendeHours' => (float)($year['lopendeHours'] ?? 0),
 			'norm' => $norm,
 			'forecastYearEnd' => $prognose,
 			'tekort' => $tekort,

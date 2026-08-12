@@ -274,7 +274,7 @@
             "nullable": true,
             "title": "Applied Tier Name"
           },
-          "btwRate": {
+          "vatRate": {
             "type": "number",
             "description": "BTW rate applied to this line (0 / 9 / 21).",
             "default": 21,
@@ -611,7 +611,7 @@
             "nullable": true,
             "title": "Applied Tier Name"
           },
-          "btwRate": {
+          "vatRate": {
             "type": "number",
             "description": "BTW rate (0 / 9 / 21).",
             "default": 21,
@@ -880,7 +880,7 @@
             "nullable": true,
             "title": "VAT Amount"
           },
-          "btwLegend": {
+          "vatLegend": {
             "type": "string",
             "description": "BTW legend (e.g. reverse-charge / btw verlegd, intracommunautaire levering Article 196).",
             "nullable": true,
@@ -1077,7 +1077,7 @@
             "default": 0,
             "title": "Discount Applied"
           },
-          "btwRate": {
+          "vatRate": {
             "type": "number",
             "description": "BTW rate (0 / 9 / 21).",
             "default": 21,
@@ -1787,7 +1787,7 @@
         "unitPrice": 90,
         "discount": 10,
         "appliedTierName": "Bulk widget pricing",
-        "btwRate": 21
+        "vatRate": 21
       },
       {
         "@self": {
@@ -1823,7 +1823,7 @@
         "unitPrice": 90,
         "discountApplied": 10,
         "appliedTierName": "Bulk widget pricing",
-        "btwRate": 21
+        "vatRate": 21
       },
       {
         "@self": {
@@ -1900,7 +1900,7 @@
         "quantity": 60,
         "unitPrice": 90,
         "discountApplied": 10,
-        "btwRate": 21
+        "vatRate": 21
       },
       {
         "@self": {
@@ -1915,7 +1915,7 @@
         "currency": "EUR",
         "paymentTerms": "net45",
         "invoiceType": "delivery-based",
-        "btwLegend": "21% BTW",
+        "vatLegend": "21% BTW",
         "viesValidated": false,
         "peppolMessageId": "peppol-msg-sample-0002",
         "ublXmlReference": "docudesk://ubl/2026-0002.xml",
@@ -1937,7 +1937,7 @@
         "currency": "EUR",
         "paymentTerms": "net60",
         "invoiceType": "advance",
-        "btwLegend": "Btw verlegd — intracommunautaire levering (art. 196 btw-richtlijn)",
+        "vatLegend": "Btw verlegd — intracommunautaire levering (art. 196 btw-richtlijn)",
         "viesValidated": true,
         "netAmount": 7500,
         "vatAmount": 0,

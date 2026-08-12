@@ -84,8 +84,8 @@ class RateScheduleOverlapGuard {
 		$tier = (string)($schedule['tier'] ?? '');
 		$entityId = ($schedule['entityId'] ?? null);
 		$administrationId = (string)($schedule['administrationId'] ?? '');
-		$effectiveDate = trim((string)($schedule['effectiveDate'] ?? ''));
-		if ($effectiveDate === '') {
+		$effective_date = trim((string)($schedule['effectiveDate'] ?? ''));
+		if ($effective_date === '') {
 			// No window to compare — nothing to gate against.
 			return true;
 		}
@@ -119,7 +119,7 @@ class RateScheduleOverlapGuard {
 				}
 
 				if ($this->windowsOverlap(
-					startA: $effectiveDate,
+					startA: $effective_date,
 					endA: $expiryDate,
 					startB: (string)($sibling['effectiveDate'] ?? ''),
 					endB: ($sibling['expiryDate'] ?? null)

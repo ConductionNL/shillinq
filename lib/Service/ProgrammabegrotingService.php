@@ -69,15 +69,15 @@ class ProgrammabegrotingService {
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $begrotingId The Programmabegroting.id to evaluate.
 	 *
-	 * @return array{begrotingId:string,sluitendStructureel:bool,sluitendReëel:bool,toezichtRegime:string,jaren:array<int,array<string,mixed>>}
+	 * @return array{budgetId:string,sluitendStructureel:bool,sluitendReëel:bool,toezichtRegime:string,jaren:array<int,array<string,mixed>>}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
 	public function sluitendStatus(string $administrationId, string $begrotingId): array {
 		$begroting = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $begrotingId, 'administrationId' => $administrationId]);
-		$nominale = (float)($begroting['nominaleOntwikkeling'] ?? 2.0);
+		$nominale = (float)($begroting['nominaleDevelopment'] ?? 2.0);
 
-		$jaren = $this->fetchMany(schema: 'Meerjarenraming', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
+		$jaren = $this->fetchMany(schema: 'Meerjarenraming', filters: ['budgetId' => $begrotingId, 'administrationId' => $administrationId]);
 
 		$evaluated = [];
 		foreach ($jaren as $jaar) {
@@ -97,7 +97,7 @@ class ProgrammabegrotingService {
 		);
 
 		return [
-			'begrotingId' => $begrotingId,
+			'budgetId' => $begrotingId,
 			'sluitendStructureel' => $flags['sluitendStructureel'],
 			'sluitendReëel' => $flags['sluitendReëel'],
 			'toezichtRegime' => $regime,
@@ -118,9 +118,9 @@ class ProgrammabegrotingService {
 	 */
 	public function jsonExport(string $administrationId, string $begrotingId): array {
 		$begroting = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $begrotingId, 'administrationId' => $administrationId]);
-		$programmas = $this->fetchMany(schema: 'Programma', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
-		$taakvelden = $this->fetchMany(schema: 'Taakveld', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
-		$paragrafen = $this->fetchMany(schema: 'Paragraaf', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
+		$programmas = $this->fetchMany(schema: 'Programma', filters: ['budgetId' => $begrotingId, 'administrationId' => $administrationId]);
+		$taakvelden = $this->fetchMany(schema: 'Taakveld', filters: ['budgetId' => $begrotingId, 'administrationId' => $administrationId]);
+		$paragrafen = $this->fetchMany(schema: 'Paragraaf', filters: ['budgetId' => $begrotingId, 'administrationId' => $administrationId]);
 
 		return $this->exporter->jsonExport(
 			begroting: $begroting,
@@ -137,12 +137,12 @@ class ProgrammabegrotingService {
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $begrotingId The Programmabegroting.id to export.
 	 *
-	 * @return array<int,array{taakveldCode:string,baten:float,lasten:float}> The iv3 rows.
+	 * @return array<int,array{taskFieldCode:string,revenue:float,expenses:float}> The iv3 rows.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
 	 */
 	public function iv3Export(string $administrationId, string $begrotingId): array {
-		$taakvelden = $this->fetchMany(schema: 'Taakveld', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
+		$taakvelden = $this->fetchMany(schema: 'Taakveld', filters: ['budgetId' => $begrotingId, 'administrationId' => $administrationId]);
 		return $this->exporter->iv3Rows(taakvelden: $taakvelden);
 	}//end iv3Export()
 

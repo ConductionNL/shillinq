@@ -8,14 +8,14 @@
     "schemas": {
       "JournalEntry": {
         "properties": {
-          "rechtmatigheid": {
+          "lawfulness": {
             "type": "object",
             "description": "REQ-RV-001: mandatory rechtmatigheid sub-object tracking the legitimacy-assessment status of this journaalpost. Backward-compatible: existing journaalposten default to status niet_getoetst on first access. Embedded (not a separate register) to preserve the transaction-level audit-trail.",
             "default": {
               "status": "niet_getoetst",
               "toetsen": [],
-              "samenvattend_oordeel": null,
-              "laatste_toetsdatum": null
+              "samenvattend_opinion": null,
+              "last_testdate": null
             },
             "properties": {
               "status": {
@@ -39,7 +39,7 @@
                 },
                 "title": "Toetsen"
               },
-              "samenvattend_oordeel": {
+              "samenvattend_opinion": {
                 "type": "string",
                 "enum": [
                   "voldoet",
@@ -51,7 +51,7 @@
                 "description": "Summary verdict derived from the linked toetsen uitkomsten.",
                 "title": "Samenvattend Oordeel"
               },
-              "laatste_toetsdatum": {
+              "last_testdate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -74,7 +74,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "journaalpost",
+          "journalEntry",
           "criterium",
           "uitkomst",
           "toetstype",
@@ -87,7 +87,7 @@
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
-          "journaalpost": {
+          "journalEntry": {
             "type": "string",
             "description": "FK to JournalEntry.id (journaalpost) being assessed (REQ-RV-001).",
             "example": "je-2026-0441",
@@ -97,7 +97,7 @@
             "type": "string",
             "enum": [
               "begroting",
-              "voorwaarden",
+              "terms",
               "misbruik_oneigenlijk_gebruik",
               "calculatie",
               "valutering",
@@ -121,7 +121,7 @@
             "description": "Assessment outcome (REQ-RV-001). voldoet_niet/onzeker roll up into a rechtmatigheidsbevinding.",
             "title": "Uitkomst"
           },
-          "toetsdatum": {
+          "testDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -146,7 +146,7 @@
             "description": "How the toets was produced (REQ-RV-001 automatisch / REQ-RV-002 handmatig).",
             "title": "Toetstype"
           },
-          "onderbouwing": {
+          "substantiation": {
             "type": "string",
             "nullable": true,
             "description": "Substantiation. Minimaal 50 tekens vereist wanneer uitkomst = voldoet_niet (REQ-RV-002, enforced by RechtmatigheidGuard).",
@@ -160,7 +160,7 @@
             "example": 12450.0,
             "title": "Bedrag Betrokken"
           },
-          "bewijsstukken": {
+          "supportingDocuments": {
             "type": "array",
             "description": "REQ-RV-002 / REQ-RV-004: file:uuid references to attached evidence (invoices, aanbestedingspublicaties, de-minimis-verklaringen) via OpenRegister files-attached-to-object. Immutable; deletion is audit-logged.",
             "items": {
@@ -169,14 +169,14 @@
             },
             "title": "Bewijsstukken"
           },
-          "regelverwijzing": {
+          "ruleReference": {
             "type": "string",
             "nullable": true,
             "description": "Legal / policy reference underpinning the toets.",
             "example": "BBV art. 17a lid 2; gemeentelijk inkoopbeleid 2024 art. 8.3",
             "title": "Regelverwijzing"
           },
-          "rechtmatigheidsbevinding": {
+          "lawfulnessFinding": {
             "type": "string",
             "nullable": true,
             "description": "FK to Rechtmatigheidsbevinding.id when uitkomst != voldoet (REQ-RV-002).",
@@ -192,7 +192,7 @@
             "description": "Lifecycle status (REQ-RV-002). Synced from procest task completion for handmatige toetsen.",
             "title": "Status"
           },
-          "raamovereenkomst": {
+          "frameworkAgreement": {
             "type": "string",
             "nullable": true,
             "description": "REQ-RV-007: FK to a framework agreement; when present the europees_aanbesteden toets refers to the earlier aanbesteding and auto-voldoet.",
@@ -292,8 +292,8 @@
         "type": "object",
         "required": [
           "administrationId",
-          "bevindingsnummer",
-          "soort",
+          "findingNumber",
+          "kind",
           "criterium",
           "financialYear",
           "status"
@@ -305,13 +305,13 @@
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
-          "bevindingsnummer": {
+          "findingNumber": {
             "type": "string",
             "description": "Unique finding identifier, format RV-YYYY-NNNN (auto-generated).",
             "example": "RV-2026-0142",
             "title": "Bevindingsnummer"
           },
-          "soort": {
+          "kind": {
             "type": "string",
             "enum": [
               "fout",
@@ -324,7 +324,7 @@
             "type": "string",
             "enum": [
               "begroting",
-              "voorwaarden",
+              "terms",
               "misbruik_oneigenlijk_gebruik",
               "calculatie",
               "valutering",
@@ -368,13 +368,13 @@
             "description": "Human-readable description of the finding.",
             "title": "Omschrijving"
           },
-          "oorzaak": {
+          "cause": {
             "type": "string",
             "nullable": true,
             "description": "Root cause analysis.",
             "title": "Oorzaak"
           },
-          "maatregel": {
+          "measure": {
             "type": "string",
             "nullable": true,
             "description": "Remedial measure.",
@@ -392,7 +392,7 @@
             "description": "Finding lifecycle status (REQ-RV-005 / REQ-RV-010).",
             "title": "Status"
           },
-          "gemeld_aan": {
+          "gemeld_in": {
             "type": "array",
             "description": "Stakeholders the finding has been reported to.",
             "items": {
@@ -404,20 +404,20 @@
             },
             "title": "Gemeld Aan"
           },
-          "meldingsdatum": {
+          "reportDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
             "description": "Date the finding was reported.",
             "title": "Meldingsdatum"
           },
-          "verantwoordelijke_portefeuillehouder": {
+          "responsible_portefeuillehouder": {
             "type": "string",
             "nullable": true,
             "description": "FK to the responsible bestuurder (portefeuillehouder).",
             "title": "Verantwoordelijke Portefeuillehouder"
           },
-          "correctieboeking_id": {
+          "correctionentry_id": {
             "type": "string",
             "nullable": true,
             "description": "REQ-RV-010: FK to JournalEntry.id of the linked correctieboeking; setting it transitions the bevinding to opgelost.",
@@ -482,7 +482,7 @@
               "type": "created",
               "filter": {
                 "criterium": "begroting",
-                "soort": "fout"
+                "kind": "fout"
               }
             },
             "description": "REQ-RV-001: notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
@@ -585,7 +585,7 @@
             "description": "tolerantiegrens_fout_percentage% of totaal_lasten (REQ-RV-005).",
             "title": "Tolerantiegrens Fout Bedrag"
           },
-          "tolerantiegrens_onzekerheid_percentage": {
+          "tolerantiegrens_uncertainty_percentage": {
             "type": "number",
             "default": 1.0,
             "description": "Snapshot of the onzekerheid-tolerance percentage at aggregation time.",
@@ -609,13 +609,13 @@
             "description": "SUM bedrag_onzekerheid of openstaande bevindingen for the boekjaar.",
             "title": "Totaal Geconstateerde Onzekerheden"
           },
-          "binnen_tolerantie": {
+          "binnen_tolerance": {
             "type": "boolean",
             "default": true,
             "description": "True when both fouten and onzekerheden are within their thresholds (REQ-RV-005).",
             "title": "Binnen Tolerantie"
           },
-          "verklaring_college": {
+          "declaration_college": {
             "type": "string",
             "nullable": true,
             "description": "College verklaring text (standaard when binnen_tolerantie, else gewijzigd citing overages).",
@@ -629,14 +629,14 @@
             },
             "title": "Bevindingen"
           },
-          "vastgesteld_door_college_op": {
+          "determined_by_college_on": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
             "description": "When the college vaststellingsbesluit was taken.",
             "title": "Vastgesteld Door College Op"
           },
-          "behandeld_in_raad_op": {
+          "behandeld_in_council_on": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -776,8 +776,8 @@
           "administrationId",
           "financialYear",
           "fout_percentage",
-          "onzekerheid_percentage",
-          "berekeningsbasis"
+          "uncertainty_percentage",
+          "calculationBasis"
         ],
         "properties": {
           "administrationId": {
@@ -798,27 +798,27 @@
             "description": "Maximum fout as a percentage of totaal lasten (default 3.0 per BADO).",
             "title": "Fout Percentage"
           },
-          "onzekerheid_percentage": {
+          "uncertainty_percentage": {
             "type": "number",
             "default": 1.0,
             "description": "Maximum onzekerheid as a percentage of totaal lasten (default 1.0 per BADO).",
             "title": "Onzekerheid Percentage"
           },
-          "vastgesteld_bij_raadsbesluit": {
+          "determined_at_councilresolution": {
             "type": "string",
             "nullable": true,
             "description": "Raadsbesluit reference establishing the tolerance.",
             "example": "RB-2025-117",
             "title": "Vastgesteld Bij Raadsbesluit"
           },
-          "vastgesteld_op": {
+          "determined_on": {
             "type": "string",
             "format": "date",
             "nullable": true,
             "description": "Date the raadsbesluit was taken.",
             "title": "Vastgesteld Op"
           },
-          "geldig_vanaf": {
+          "valid_from": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -826,7 +826,7 @@
             "example": "2026-01-01",
             "title": "Geldig Vanaf"
           },
-          "geldig_tot": {
+          "valid_to": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -834,7 +834,7 @@
             "example": "2026-12-31",
             "title": "Geldig Tot"
           },
-          "berekeningsbasis": {
+          "calculationBasis": {
             "type": "string",
             "enum": [
               "total_expenses_including_reserve_movements"
@@ -898,12 +898,12 @@
       "administrationId": "adm-1",
       "financialYear": 2026,
       "fout_percentage": 3.0,
-      "onzekerheid_percentage": 1.0,
-      "vastgesteld_bij_raadsbesluit": null,
-      "vastgesteld_op": null,
-      "geldig_vanaf": "2026-01-01",
-      "geldig_tot": "2026-12-31",
-      "berekeningsbasis": "total_expenses_including_reserve_movements",
+      "uncertainty_percentage": 1.0,
+      "determined_at_councilresolution": null,
+      "determined_on": null,
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "calculationBasis": "total_expenses_including_reserve_movements",
       "status": "concept"
     }
   ]

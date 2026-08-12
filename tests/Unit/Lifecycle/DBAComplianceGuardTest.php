@@ -356,9 +356,9 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testIsModelExpired(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->isModelExpired(model: ['geldigTot' => '2024-12-31'], referenceYmd: '2026-05-15'));
-		self::assertFalse($this->guard->isModelExpired(model: ['geldigTot' => '2029-04-12'], referenceYmd: '2026-05-15'));
-		self::assertFalse($this->guard->isModelExpired(model: ['geldigTot' => ''], referenceYmd: '2026-05-15'));
+		self::assertTrue($this->guard->isModelExpired(model: ['validTo' => '2024-12-31'], referenceYmd: '2026-05-15'));
+		self::assertFalse($this->guard->isModelExpired(model: ['validTo' => '2029-04-12'], referenceYmd: '2026-05-15'));
+		self::assertFalse($this->guard->isModelExpired(model: ['validTo' => ''], referenceYmd: '2026-05-15'));
 		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
 	}//end testIsModelExpired()

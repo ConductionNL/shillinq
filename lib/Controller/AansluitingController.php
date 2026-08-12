@@ -108,7 +108,7 @@ class AansluitingController extends Controller {
 			return $authError;
 		}
 
-		$error = $this->validateId(value: $aansluitingId, label: 'aansluitingId');
+		$error = $this->validateId(value: $aansluitingId, label: 'reconciliationId');
 		if ($error !== null) {
 			return $error;
 		}
@@ -122,7 +122,7 @@ class AansluitingController extends Controller {
 		return $this->run(
 			action: 'compute aansluiting',
 			compute: fn (): array => $this->aansluitingService->compute(aansluitingId: $aansluitingId, periodId: $periodId),
-			context: ['aansluitingId' => $aansluitingId, 'periodId' => $periodId]
+			context: ['reconciliationId' => $aansluitingId, 'periodId' => $periodId]
 		);
 
 	}//end compute()

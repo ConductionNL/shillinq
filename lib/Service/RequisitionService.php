@@ -128,7 +128,7 @@ class RequisitionService {
 			throw new RuntimeException('justification is required');
 		}
 
-		$soort = trim((string)($payload['soort'] ?? ''));
+		$soort = trim((string)($payload['kind'] ?? ''));
 		if ($soort === '') {
 			throw new RuntimeException('soort is required');
 		}
@@ -149,9 +149,9 @@ class RequisitionService {
 			'financialYear' => $boekjaar,
 			'neededByDate' => $neededByDate,
 			'justification' => $justification,
-			'soort' => $soort,
+			'kind' => $soort,
 			'preferredSupplierId' => trim((string)($payload['preferredSupplierId'] ?? '')),
-			'totaalbedrag_excl_btw' => $totalCent,
+			'totalamount_excl_vat' => $totalCent,
 			'statusCode' => 'draft',
 		];
 
@@ -191,7 +191,7 @@ class RequisitionService {
 			throw new RuntimeException('Requisition can only be submitted from draft');
 		}
 
-		if ((int)($requisition['totaalbedrag_excl_btw'] ?? 0) <= 0) {
+		if ((int)($requisition['totalamount_excl_vat'] ?? 0) <= 0) {
 			throw new RuntimeException('Requisition has no positive total; add lines before submitting');
 		}
 

@@ -70,12 +70,12 @@
 				"schema": "VpbBalansLink",
 				"columns": [
 					{ "key": "costCenterId", "label": "Business activity", "sortable": true },
-					{ "key": "vpbPligtigVanaf", "label": "Vpb-liable from", "sortable": true },
-					{ "key": "vpbPligtigTotEnMet", "label": "Vpb-liable until", "sortable": true },
+					{ "key": "vpbPligtigFrom", "label": "Vpb-liable from", "sortable": true },
+					{ "key": "vpbPligtigToEnWith", "label": "Vpb-liable until", "sortable": true },
 					{ "key": "accountNumbers", "label": "Number of accounts", "sortable": false }
 				],
 				"search": true,
-				"defaultSort": "vpbPligtigVanaf",
+				"defaultSort": "vpbPligtigFrom",
 				"detailRoute": "VpbBalansLinkDetail"
 			}
 		},
@@ -89,10 +89,10 @@
 				"_note": "CONFIG record (declares which business activity/cost-center is Vpb-liable, over which window, and exactly which GL accounts fall inside that liability). The body is that scoping definition — the liability period, the list of Vpb-liable account numbers and the explanation that substantiates the boundary — since this record IS the mapping that the Vpb balance report reads. No transactions of its own, no comms. The audit trail sidebar matters because moving an account in or out of the Vpb scope directly changes the taxable balance.",
 				"fields": [
 					{ "key": "costCenterId", "label": "Business activity (cost-center)", "type": "string" },
-					{ "key": "vpbPligtigVanaf", "label": "Vpb-liable from", "type": "date" },
-					{ "key": "vpbPligtigTotEnMet", "label": "Vpb-liable until", "type": "date" },
+					{ "key": "vpbPligtigFrom", "label": "Vpb-liable from", "type": "date" },
+					{ "key": "vpbPligtigToEnWith", "label": "Vpb-liable until", "type": "date" },
 					{ "key": "accountNumbers", "label": "Vpb-liable accounts", "type": "array" },
-					{ "key": "toelichting", "label": "Explanation", "type": "string" }
+					{ "key": "notes", "label": "Explanation", "type": "string" }
 				],
 				"indexRoute": "VpbBalansLinks",
 				"sidebarProps": {

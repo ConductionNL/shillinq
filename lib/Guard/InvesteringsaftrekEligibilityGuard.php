@@ -118,7 +118,7 @@ class InvesteringsaftrekEligibilityGuard {
 		$this->logger->debug(
 			'InvesteringsaftrekEligibilityGuard: classify',
 			[
-				'aanschafwaarde' => $aanschafwaarde,
+				'acquisitionValue' => $aanschafwaarde,
 				'kia' => $kia,
 				'eia' => $eia,
 				'mia' => $mia,

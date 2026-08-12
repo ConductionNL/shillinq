@@ -51,7 +51,7 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 * Invalid transition is rejected.
 	 */
 	public function testCanTransitionRejectsInvalidPath(): void {
-		$abb = ['status' => 'concept', 'kenmerk' => 'R-2025-184'];
+		$abb = ['status' => 'concept', 'reference' => 'R-2025-184'];
 		$r = $this->svc->canTransition('concept', 'publicatie', $abb);
 		self::assertFalse($r['ok']);
 
@@ -61,10 +61,10 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 * raadsbesluit requires kenmerk.
 	 */
 	public function testRaadsbesluitRequiresKenmerk(): void {
-		$abb = ['status' => 'raadsvoorstel', 'kenmerk' => ''];
-		$r = $this->svc->canTransition('raadsvoorstel', 'raadsbesluit', $abb);
+		$abb = ['status' => 'raadsvoorstel', 'reference' => ''];
+		$r = $this->svc->canTransition('raadsvoorstel', 'councilResolution', $abb);
 		self::assertFalse($r['ok']);
-		self::assertStringContainsString('kenmerk', $r['error']);
+		self::assertStringContainsString('reference', $r['error']);
 
 	}//end testRaadsbesluitRequiresKenmerk()
 
@@ -72,13 +72,13 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 * publicatie requires publicatieGemeenteblad + datum.
 	 */
 	public function testPublicatieRequiresGemeentebladAndDate(): void {
-		$abb = ['status' => 'raadsbesluit', 'kenmerk' => 'R-2025-184'];
-		$r = $this->svc->canTransition('raadsbesluit', 'publicatie', $abb);
+		$abb = ['status' => 'councilResolution', 'reference' => 'R-2025-184'];
+		$r = $this->svc->canTransition('councilResolution', 'publicatie', $abb);
 		self::assertFalse($r['ok']);
 
-		$abb['publicatieGemeenteblad'] = 'gmb-2025-401';
-		$abb['publicatieDatum'] = '2025-12-01';
-		$r2 = $this->svc->canTransition('raadsbesluit', 'publicatie', $abb);
+		$abb['publicationMunicipalGazette'] = 'gmb-2025-401';
+		$abb['publicationDate'] = '2025-12-01';
+		$r2 = $this->svc->canTransition('councilResolution', 'publicatie', $abb);
 		self::assertTrue($r2['ok']);
 
 	}//end testPublicatieRequiresGemeentebladAndDate()
@@ -89,13 +89,13 @@ final class AbbLifecycleServiceTest extends TestCase {
 	public function testGeldigRequiresAcmKenmerk(): void {
 		$abb = [
 			'status' => 'bezwaar',
-			'publicatieDatum' => '2025-12-01',
-			'kennisgevingAcm' => ['ingediend' => true, 'kenmerk' => 'ACM/IN/123'],
+			'publicationDate' => '2025-12-01',
+			'notificationAcm' => ['submitted' => true, 'reference' => 'ACM/IN/123'],
 		];
 		$r = $this->svc->canTransition('bezwaar', 'geldig', $abb);
 		self::assertTrue($r['ok']);
 
-		$abb['kennisgevingAcm']['kenmerk'] = '';
+		$abb['notificationAcm']['reference'] = '';
 		$r2 = $this->svc->canTransition('bezwaar', 'geldig', $abb);
 		self::assertFalse($r2['ok']);
 
@@ -115,9 +115,9 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 * raadsbesluit generates a publish-gemeenteblad task with +14d due date.
 	 */
 	public function testTransitionToRaadsbesluitGeneratesPublishTask(): void {
-		$abb = ['status' => 'raadsvoorstel', 'kenmerk' => 'R-2025-184'];
-		$out = $this->svc->transition($abb, 'raadsbesluit');
-		self::assertSame('raadsbesluit', $out['abb']['status']);
+		$abb = ['status' => 'raadsvoorstel', 'reference' => 'R-2025-184'];
+		$out = $this->svc->transition($abb, 'councilResolution');
+		self::assertSame('councilResolution', $out['abb']['status']);
 		self::assertCount(1, $out['tasks']);
 		self::assertSame('publish-gemeenteblad', $out['tasks'][0]['type']);
 		self::assertSame('griffier', $out['tasks'][0]['assignedTo']);
@@ -129,10 +129,10 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 */
 	public function testTransitionToPublicatieGeneratesNotifyAcmTask(): void {
 		$abb = [
-			'status' => 'raadsbesluit',
-			'kenmerk' => 'R-2025-184',
-			'publicatieGemeenteblad' => 'gmb-2025-401',
-			'publicatieDatum' => '2025-12-01',
+			'status' => 'councilResolution',
+			'reference' => 'R-2025-184',
+			'publicationMunicipalGazette' => 'gmb-2025-401',
+			'publicationDate' => '2025-12-01',
 		];
 		$out = $this->svc->transition($abb, 'publicatie');
 		self::assertCount(1, $out['tasks']);
@@ -146,13 +146,13 @@ final class AbbLifecycleServiceTest extends TestCase {
 	public function testGeldigCalculatesNextEvaluation(): void {
 		$abb = [
 			'status' => 'bezwaar',
-			'publicatieDatum' => '2025-12-01',
-			'vaststellingsdatum' => '2025-11-15',
-			'evaluatieRitme' => 'tweejaarlijks',
-			'kennisgevingAcm' => ['ingediend' => true, 'kenmerk' => 'ACM/IN/123'],
+			'publicationDate' => '2025-12-01',
+			'determinationDate' => '2025-11-15',
+			'evaluationRitme' => 'tweejaarlijks',
+			'notificationAcm' => ['submitted' => true, 'reference' => 'ACM/IN/123'],
 		];
 		$out = $this->svc->transition($abb, 'geldig');
-		self::assertSame('2027-11-15', $out['abb']['volgendeEvaluatie']);
+		self::assertSame('2027-11-15', $out['abb']['volgendeEvaluation']);
 
 	}//end testGeldigCalculatesNextEvaluation()
 
@@ -160,7 +160,7 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 * flagDependentActivities only fires for herziening / intrekking.
 	 */
 	public function testFlagDependentActivitiesOnlyForHerzieningIntrekking(): void {
-		$abb = ['status' => 'geldig', 'kenmerk' => 'R-2025-184'];
+		$abb = ['status' => 'geldig', 'reference' => 'R-2025-184'];
 		$activities = [['id' => 'ca-001'], ['id' => 'ca-002']];
 
 		self::assertSame([], $this->svc->flagDependentActivities($activities, $abb));

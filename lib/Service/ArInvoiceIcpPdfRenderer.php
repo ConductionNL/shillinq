@@ -108,7 +108,7 @@ class ArInvoiceIcpPdfRenderer {
 		}
 
 		$supplyType = (string)($icpContext['supplyType'] ?? '');
-		$sellerVatId = (string)($seller['vatId'] ?? ($seller['btwNumber'] ?? ''));
+		$sellerVatId = (string)($seller['vatId'] ?? ($seller['vatNumber'] ?? ''));
 		$sellerName = (string)($seller['legalName'] ?? ($seller['name'] ?? 'Shillinq Operator'));
 		$customerName = (string)($customer['name'] ?? ($invoice['customerId'] ?? ''));
 
@@ -189,7 +189,7 @@ class ArInvoiceIcpPdfRenderer {
 			return $canonical;
 		}
 
-		return trim((string)($customer['btwNumber'] ?? ''));
+		return trim((string)($customer['vatNumber'] ?? ''));
 	}//end resolveBuyerVatId()
 
 	/**

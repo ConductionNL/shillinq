@@ -62,14 +62,14 @@
 				"schema": "DBAOpdracht",
 				"columns": [
 					{"key": "assignmentName", "label": "Assignment", "sortable": true},
-					{"key": "klantId", "label": "Client", "sortable": true},
-					{"key": "startDatum", "label": "Start", "sortable": true},
+					{"key": "customerId", "label": "Client", "sortable": true},
+					{"key": "startDate", "label": "Start", "sortable": true},
 					{"key": "actueleRisicoscore", "label": "Risk score", "sortable": true},
-					{"key": "risicoNiveau", "label": "Risk band", "sortable": true},
+					{"key": "riskNiveau", "label": "Risk band", "sortable": true},
 					{"key": "openFlags", "label": "Open flags", "sortable": true},
 					{"key": "state", "label": "State", "sortable": true}
 				],
-				"defaultSort": "startDatum",
+				"defaultSort": "startDate",
 				"detailRoute": "DBAOpdrachtDetail"
 			}
 		},
@@ -90,8 +90,8 @@
 				"fields": [
 					{"key": "assignmentName", "label": "Assignment", "type": "string"},
 					{"key": "enterpriseId", "label": "Company", "type": "string"},
-					{"key": "klantId", "label": "Client", "type": "string"},
-					{"key": "startDatum", "label": "Start date", "type": "string"},
+					{"key": "customerId", "label": "Client", "type": "string"},
+					{"key": "startDate", "label": "Start date", "type": "string"},
 					{"key": "expectedEndDate", "label": "Expected end", "type": "string"},
 					{"key": "actualEndDate", "label": "Actual end", "type": "string"},
 					{"key": "expectedRevenue", "label": "Expected revenue", "type": "number"},
@@ -99,23 +99,23 @@
 					{"key": "modelOvereenkomstId", "label": "Model agreement", "type": "string"},
 					{"key": "intakeStatus", "label": "Intake status", "type": "string"},
 					{"key": "actueleRisicoscore", "label": "Risk score", "type": "number"},
-					{"key": "risicoNiveau", "label": "Risk band", "type": "string"},
-					{"key": "wbaBeoordelingResultaat", "label": "WBA outcome", "type": "string"},
+					{"key": "riskNiveau", "label": "Risk band", "type": "string"},
+					{"key": "wbaAssessmentResult", "label": "WBA outcome", "type": "string"},
 					{"key": "openFlags", "label": "Open flags", "type": "number"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
 				"relatedLists": [
-					{"id": "intakes", "title": "Intake assessments", "schema": "DBAIntake", "foreignKey": "opdrachtId", "columns": [
-						{"key": "ingevuldOp", "label": "Filled in"},
+					{"id": "intakes", "title": "Intake assessments", "schema": "DBAIntake", "foreignKey": "assignmentId", "columns": [
+						{"key": "ingevuldOn", "label": "Filled in"},
 						{"key": "totalScore", "label": "Total score"},
 						{"key": "interpretatie", "label": "Risk band"}
 					], "detailRoute": "DBAIntakeDetail"},
-					{"id": "evidence", "title": "Evidence dossiers", "schema": "DBAEvidenceDossier", "foreignKey": "opdrachtId", "columns": [
+					{"id": "evidence", "title": "Evidence dossiers", "schema": "DBAEvidenceDossier", "foreignKey": "assignmentId", "columns": [
 						{"key": "compleetheidScore", "label": "Completeness"},
-						{"key": "bewaarTermijn", "label": "Retention"},
+						{"key": "retentionTerm", "label": "Retention"},
 						{"key": "archiveDate", "label": "Delete-eligible"}
 					], "detailRoute": "DBAEvidenceDossierDetail"},
-					{"id": "flags", "title": "Risk flags", "schema": "DBARisicoflag", "foreignKey": "opdrachtId", "columns": [
+					{"id": "flags", "title": "Risk flags", "schema": "DBARisicoflag", "foreignKey": "assignmentId", "columns": [
 						{"key": "type", "label": "Flag type"},
 						{"key": "ernst", "label": "Severity"},
 						{"key": "detectieMoment", "label": "Detected"},
@@ -145,15 +145,15 @@
 				"register": "shillinq",
 				"schema": "DBAIntake",
 				"columns": [
-					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
-					{"key": "ingevuldOp", "label": "Filled in", "sortable": true},
+					{"key": "assignmentId", "label": "Assignment", "sortable": true},
+					{"key": "ingevuldOn", "label": "Filled in", "sortable": true},
 					{"key": "gezagSubtotaal", "label": "Authority", "sortable": true},
 					{"key": "arbeidSubtotaal", "label": "Personal service", "sortable": true},
 					{"key": "financieelSubtotaal", "label": "Financial risk", "sortable": true},
 					{"key": "totalScore", "label": "Total score", "sortable": true},
 					{"key": "interpretatie", "label": "Risk band", "sortable": true}
 				],
-				"defaultSort": "ingevuldOp",
+				"defaultSort": "ingevuldOn",
 				"detailRoute": "DBAIntakeDetail"
 			}
 		},
@@ -171,8 +171,8 @@
 					{"id": "maxScore", "title": "Max score", "field": "maxScore", "metric": "value"}
 				],
 				"fields": [
-					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
-					{"key": "ingevuldOp", "label": "Filled in", "type": "string"},
+					{"key": "assignmentId", "label": "Assignment", "type": "string"},
+					{"key": "ingevuldOn", "label": "Filled in", "type": "string"},
 					{"key": "gezagSubtotaal", "label": "Authority/control", "type": "number"},
 					{"key": "arbeidSubtotaal", "label": "Personal service", "type": "number"},
 					{"key": "financieelSubtotaal", "label": "Financial risk", "type": "number"},
@@ -182,7 +182,7 @@
 					{"key": "state", "label": "State", "type": "string"}
 				],
 				"relatedLists": [
-					{"id": "flags", "title": "Risk flags on this assignment", "schema": "DBARisicoflag", "foreignKey": "opdrachtId", "join": "opdrachtId", "columns": [
+					{"id": "flags", "title": "Risk flags on this assignment", "schema": "DBARisicoflag", "foreignKey": "assignmentId", "join": "assignmentId", "columns": [
 						{"key": "type", "label": "Flag type"},
 						{"key": "ernst", "label": "Severity"},
 						{"key": "status", "label": "Status"}
@@ -209,10 +209,10 @@
 				"schema": "DBAModelovereenkomst",
 				"columns": [
 					{"key": "name", "label": "Model", "sortable": true},
-					{"key": "bron", "label": "Source", "sortable": true},
-					{"key": "versie", "label": "Version", "sortable": true},
-					{"key": "geldigTot", "label": "Valid until", "sortable": true},
-					{"key": "actueleVersie", "label": "Current", "sortable": true}
+					{"key": "source", "label": "Source", "sortable": true},
+					{"key": "version", "label": "Version", "sortable": true},
+					{"key": "validTo", "label": "Valid until", "sortable": true},
+					{"key": "actueleVersion", "label": "Current", "sortable": true}
 				],
 				"defaultSort": "name",
 				"detailRoute": "DBAModelovereenkomstDetail"
@@ -229,12 +229,12 @@
 				"schema": "DBAModelovereenkomst",
 				"fields": [
 					{"key": "name", "label": "Model", "type": "string"},
-					{"key": "bron", "label": "Source", "type": "string"},
-					{"key": "publicatieURL", "label": "Publication URL", "type": "string"},
-					{"key": "goedkeuringDatum", "label": "Approval date", "type": "string"},
-					{"key": "geldigTot", "label": "Valid until", "type": "string"},
-					{"key": "versie", "label": "Version", "type": "string"},
-					{"key": "actueleVersie", "label": "Current version", "type": "boolean"},
+					{"key": "source", "label": "Source", "type": "string"},
+					{"key": "publicationURL", "label": "Publication URL", "type": "string"},
+					{"key": "goedkeuringDate", "label": "Approval date", "type": "string"},
+					{"key": "validTo", "label": "Valid until", "type": "string"},
+					{"key": "version", "label": "Version", "type": "string"},
+					{"key": "actueleVersion", "label": "Current version", "type": "boolean"},
 					{"key": "fileRef", "label": "Stored file", "type": "string"},
 					{"key": "sha256", "label": "SHA-256 integrity", "type": "string", "copyable": true}
 				],
@@ -262,12 +262,12 @@
 				"schema": "DBAPortfolioRisico",
 				"columns": [
 					{"key": "enterpriseId", "label": "Company", "sortable": true},
-					{"key": "peilDatum", "label": "Reference date", "sortable": true},
-					{"key": "actieveOpdrachten", "label": "Active engagements", "sortable": true},
-					{"key": "exclusieveRelaties", "label": "Exclusive relations", "sortable": true},
-					{"key": "overallRisico", "label": "Portfolio risk", "sortable": true}
+					{"key": "peilDate", "label": "Reference date", "sortable": true},
+					{"key": "actieveAssignments", "label": "Active engagements", "sortable": true},
+					{"key": "exclusieveRelationships", "label": "Exclusive relations", "sortable": true},
+					{"key": "overallRisk", "label": "Portfolio risk", "sortable": true}
 				],
-				"defaultSort": "peilDatum",
+				"defaultSort": "peilDate",
 				"detailRoute": "DBAPortfolioRisicoDetail"
 			}
 		},
@@ -281,21 +281,21 @@
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
 				"aggregations": [
-					{"id": "activeEngagements", "title": "Active engagements", "field": "actieveOpdrachten", "metric": "value"},
-					{"id": "exclusiveRelations", "title": "Exclusive relations", "field": "exclusieveRelaties", "metric": "value"}
+					{"id": "activeEngagements", "title": "Active engagements", "field": "actieveAssignments", "metric": "value"},
+					{"id": "exclusiveRelations", "title": "Exclusive relations", "field": "exclusieveRelationships", "metric": "value"}
 				],
 				"fields": [
 					{"key": "enterpriseId", "label": "Company", "type": "string"},
-					{"key": "peilDatum", "label": "Reference date", "type": "string"},
-					{"key": "actieveOpdrachten", "label": "Active engagements", "type": "number"},
-					{"key": "exclusieveRelaties", "label": "Exclusive relations", "type": "number"},
-					{"key": "overallRisico", "label": "Portfolio risk", "type": "string"}
+					{"key": "peilDate", "label": "Reference date", "type": "string"},
+					{"key": "actieveAssignments", "label": "Active engagements", "type": "number"},
+					{"key": "exclusieveRelationships", "label": "Exclusive relations", "type": "number"},
+					{"key": "overallRisk", "label": "Portfolio risk", "type": "string"}
 				],
 				"relatedLists": [
 					{"id": "engagements", "title": "Engagements in this portfolio", "schema": "DBAOpdracht", "foreignKey": "enterpriseId", "join": "enterpriseId", "columns": [
 						{"key": "assignmentName", "label": "Assignment"},
-						{"key": "klantId", "label": "Client"},
-						{"key": "risicoNiveau", "label": "Risk band"},
+						{"key": "customerId", "label": "Client"},
+						{"key": "riskNiveau", "label": "Risk band"},
 						{"key": "openFlags", "label": "Open flags"}
 					], "detailRoute": "DBAOpdrachtDetail"}
 				],
@@ -319,12 +319,12 @@
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
 				"columns": [
-					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
+					{"key": "assignmentId", "label": "Assignment", "sortable": true},
 					{"key": "compleetheidScore", "label": "Completeness", "sortable": true},
-					{"key": "bewaarTermijn", "label": "Retention", "sortable": true},
+					{"key": "retentionTerm", "label": "Retention", "sortable": true},
 					{"key": "archiveDate", "label": "Delete-eligible", "sortable": true}
 				],
-				"defaultSort": "opdrachtId",
+				"defaultSort": "assignmentId",
 				"detailRoute": "DBAEvidenceDossierDetail"
 			}
 		},
@@ -341,10 +341,10 @@
 					{"id": "completeness", "title": "Completeness score", "field": "compleetheidScore", "metric": "value", "format": "percent"}
 				],
 				"fields": [
-					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
+					{"key": "assignmentId", "label": "Assignment", "type": "string"},
 					{"key": "emailArchiveOptIn", "label": "Email archive opt-in", "type": "boolean"},
 					{"key": "compleetheidScore", "label": "Completeness", "type": "number"},
-					{"key": "bewaarTermijn", "label": "Retention period", "type": "string"},
+					{"key": "retentionTerm", "label": "Retention period", "type": "string"},
 					{"key": "archiveDate", "label": "Delete-eligible date", "type": "string"}
 				],
 				"auditTrail": true,
@@ -370,7 +370,7 @@
 				"register": "shillinq",
 				"schema": "DBARisicoflag",
 				"columns": [
-					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
+					{"key": "assignmentId", "label": "Assignment", "sortable": true},
 					{"key": "type", "label": "Flag type", "sortable": true},
 					{"key": "ernst", "label": "Severity", "sortable": true},
 					{"key": "detectieMoment", "label": "Detected", "sortable": true},
@@ -390,12 +390,12 @@
 				"register": "shillinq",
 				"schema": "DBARisicoflag",
 				"fields": [
-					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
+					{"key": "assignmentId", "label": "Assignment", "type": "string"},
 					{"key": "type", "label": "Flag type", "type": "string"},
 					{"key": "ernst", "label": "Severity", "type": "string"},
 					{"key": "detectieMoment", "label": "Detected", "type": "string"},
-					{"key": "fiscaleBron", "label": "Legal basis", "type": "string"},
-					{"key": "actieSuggestie", "label": "Suggested action", "type": "string"},
+					{"key": "fiscalSource", "label": "Legal basis", "type": "string"},
+					{"key": "actionSuggestion", "label": "Suggested action", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "resolutieMemo", "label": "Resolution memo", "type": "string"}
 				],

@@ -144,8 +144,8 @@ class DoorsnijdingsVerbodValidator {
 	public function detectDuplicates(array $allocations, array $glLines): array {
 		$glPairs = [];
 		foreach ($glLines as $line) {
-			$account = (string)($line['accountNumber'] ?? ($line['grootboekrekening'] ?? ''));
-			$plaats = (string)($line['kostenplaats'] ?? '');
+			$account = (string)($line['accountNumber'] ?? ($line['generalLedgerAccount'] ?? ''));
+			$plaats = (string)($line['costCentre'] ?? '');
 			if ($account === '') {
 				continue;
 			}
@@ -155,12 +155,12 @@ class DoorsnijdingsVerbodValidator {
 
 		$findings = [];
 		foreach ($allocations as $allocation) {
-			if (($allocation['exclusief_in_winstbepaling'] ?? false) !== true) {
+			if (($allocation['exclusief_in_profitdetermination'] ?? false) !== true) {
 				continue;
 			}
 
-			$account = (string)($allocation['grootboekrekening'] ?? '');
-			$plaats = (string)($allocation['kostenplaats'] ?? '');
+			$account = (string)($allocation['generalLedgerAccount'] ?? '');
+			$plaats = (string)($allocation['costCentre'] ?? '');
 			if ($account === '') {
 				continue;
 			}
@@ -173,8 +173,8 @@ class DoorsnijdingsVerbodValidator {
 				}
 
 				$findings[] = [
-					'grootboekrekening' => $account,
-					'kostenplaats' => $plaats,
+					'generalLedgerAccount' => $account,
+					'costCentre' => $plaats,
 					'amount' => $bedrag,
 					'message' => sprintf(
 						'EUR %s (account %s, kostenplaats %s) appears in both innovatiebox '
@@ -208,7 +208,7 @@ class DoorsnijdingsVerbodValidator {
 					'filters' => [
 						'administrationId' => $administrationId,
 						'financialYear' => $boekjaar,
-						'exclusief_in_winstbepaling' => true,
+						'exclusief_in_profitdetermination' => true,
 					],
 				]
 			);

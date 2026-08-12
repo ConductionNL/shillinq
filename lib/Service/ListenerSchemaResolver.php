@@ -11,7 +11,7 @@
  *     $result->setRegister((string) $register->getId());
  *
  * Shillinq's listeners, however, compare that value against a schema **slug**
- * literal (`'leasecontract'`, `'ACMReport'`, `'verplichting'`, ...). An id can
+ * literal (`'leasecontract'`, `'ACMReport'`, `'commitment'`, ...). An id can
  * never equal a slug, so every one of those guards returned early on every
  * event: the handler bodies had never run once. There was no exception and no
  * log line — the listeners were still constructed and invoked on every object

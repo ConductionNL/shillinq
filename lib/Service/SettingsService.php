@@ -453,7 +453,7 @@ class SettingsService {
 	public function seedBbvTaakvelden(): array {
 		return $this->seedGenericFile(
 			seedFileName: 'bbv-taakvelden-2024.json',
-			itemsKey: 'taakvelden',
+			itemsKey: 'taskFields',
 			dedupeKey: 'code',
 			schema: 'BbvTaakveld',
 			logLabel: 'BBV taakvelden'
@@ -654,7 +654,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
 	public function seedBbvAccountMappings(string $administrationId, string $administrationType): array {
-		$municipalTypes = ['gemeente', 'provincie', 'waterschap'];
+		$municipalTypes = ['municipality', 'provincie', 'waterschap'];
 		if (in_array($administrationType, $municipalTypes, true) === false) {
 			return [
 				'success' => true,
@@ -2676,7 +2676,7 @@ class SettingsService {
 					->findAll(
 						[
 							'filters' => [
-								'mandaatcode' => $template['mandaatcode'],
+								'mandateCode' => $template['mandateCode'],
 								'administrationId' => $administrationId,
 							],
 							'limit' => 1,
@@ -2867,7 +2867,7 @@ class SettingsService {
 			$files = [
 				'sportaccommodaties-gemeente.json' => ['CommercialActivity', 'activities', 'code'],
 				'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
-				'abb-example-gemeente.json' => ['AlgemeenBelangBesluit', 'besluiten', 'kenmerk'],
+				'abb-example-gemeente.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
 				'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
 			];
 
@@ -2901,7 +2901,7 @@ class SettingsService {
 					$filter = ['administrationId' => $administrationId];
 					if ($dedupeKey === '__ikpKey') {
 						$filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
-						$filter['periode'] = ($record['periode'] ?? '');
+						$filter['period'] = ($record['period'] ?? '');
 					} elseif ($dedupeKey !== '' && isset($record[$dedupeKey]) === true) {
 						$filter[$dedupeKey] = $record[$dedupeKey];
 					}

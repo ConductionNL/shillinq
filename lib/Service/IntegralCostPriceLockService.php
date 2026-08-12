@@ -89,10 +89,10 @@ class IntegralCostPriceLockService {
 
 			$componenten = (array)($record['componenten'] ?? []);
 
-			$loonkostenSum += (float)($componenten['directeLoonkosten'] ?? 0);
+			$loonkostenSum += (float)($componenten['directePayrollCost'] ?? 0);
 			$materialenSum += (float)($componenten['directeMaterialen'] ?? 0);
-			$afschrijvingenSum += (float)($componenten['directeAfschrijvingen'] ?? 0);
-			$vermogensSum += (float)($componenten['vermogenskosten'] ?? 0);
+			$afschrijvingenSum += (float)($componenten['directeDepreciations'] ?? 0);
+			$vermogensSum += (float)($componenten['capitalCost'] ?? 0);
 			$winstopslagSum += (float)($componenten['winstopslag'] ?? 0);
 
 			$overheadInRecord = (array)($componenten['indirecteOverhead'] ?? []);
@@ -100,18 +100,18 @@ class IntegralCostPriceLockService {
 				$overheadBuckets[(string)$bucket] = ($overheadBuckets[(string)$bucket] ?? 0.0) + (float)$amount;
 			}
 
-			$totaleKostenSum += (float)($record['totaleKosten'] ?? 0);
+			$totaleKostenSum += (float)($record['totaleCost'] ?? 0);
 		}
 
-		$verkochteEenheden = (float)($input['verkochteEenheden'] ?? 0);
+		$verkochteEenheden = (float)($input['verkochteUnits'] ?? 0);
 		$kostprijsPerEenheid = null;
 		if ($verkochteEenheden > 0.0) {
 			$kostprijsPerEenheid = round(($totaleKostenSum / $verkochteEenheden), 4);
 		}
 
 		$gehanteerdTarief = null;
-		if (isset($input['gehanteerdTarief']) === true) {
-			$gehanteerdTarief = (float)$input['gehanteerdTarief'];
+		if (isset($input['gehanteerdRate']) === true) {
+			$gehanteerdTarief = (float)$input['gehanteerdRate'];
 		}
 
 		$marge = null;
@@ -140,22 +140,22 @@ class IntegralCostPriceLockService {
 
 		return [
 			'commercialActivityId' => (string)$input['commercialActivityId'],
-			'periode' => $fiscalYear . '-YTD',
-			'berekendOp' => $now->format(DateTimeImmutable::ATOM),
+			'period' => $fiscalYear . '-YTD',
+			'calculatedOn' => $now->format(DateTimeImmutable::ATOM),
 			'status' => 'definitief',
 			'componenten' => [
-				'directeLoonkosten' => round($loonkostenSum, 2),
+				'directePayrollCost' => round($loonkostenSum, 2),
 				'directeMaterialen' => round($materialenSum, 2),
-				'directeAfschrijvingen' => round($afschrijvingenSum, 2),
+				'directeDepreciations' => round($afschrijvingenSum, 2),
 				'indirecteOverhead' => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
-				'vermogenskosten' => round($vermogensSum, 2),
+				'capitalCost' => round($vermogensSum, 2),
 				'winstopslag' => round($winstopslagSum, 2),
 			],
-			'totaleKosten' => round($totaleKostenSum, 2),
-			'verkochteEenheden' => $verkochteEenhedenOut,
-			'eenheidLabel' => ($input['eenheidLabel'] ?? null),
-			'kostprijsPerEenheid' => $kostprijsPerEenheid,
-			'gehanteerdTarief' => $gehanteerdTarief,
+			'totaleCost' => round($totaleKostenSum, 2),
+			'verkochteUnits' => $verkochteEenhedenOut,
+			'unitLabel' => ($input['unitLabel'] ?? null),
+			'costPricePerUnit' => $kostprijsPerEenheid,
+			'gehanteerdRate' => $gehanteerdTarief,
 			'marge' => $marge,
 			'margePercentage' => $margePercentage,
 			'compliant' => $compliant,

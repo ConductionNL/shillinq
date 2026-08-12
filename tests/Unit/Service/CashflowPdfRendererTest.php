@@ -62,15 +62,15 @@ final class CashflowPdfRendererTest extends TestCase {
 			'horizonStart' => '2026-05-25',
 			'horizonEnd' => '2026-08-23',
 			'administrationId' => 'adm-001',
-			'modelVersie' => 'v4.1-klantspecifiek-betaalgedrag',
-			'rolledOp' => '2026-05-25T02:00:00Z',
+			'modelVersion' => 'v4.1-klantspecifiek-betaalgedrag',
+			'rolledOn' => '2026-05-25T02:00:00Z',
 		];
 		$weeks = [
 			[
 				'weeknummer' => 22,
 				'inflows_total' => 12500.0,
 				'outflows_total' => 7200.0,
-				'nettoMutatie' => 5300.0,
+				'netMovement' => 5300.0,
 				'closingBalance' => 20120.0,
 				'bufferStatus' => 'BOVEN_BUFFER',
 			],
@@ -97,8 +97,8 @@ final class CashflowPdfRendererTest extends TestCase {
 	public function testRenderIncludesPerWeekRows(): void {
 		$horizon = ['horizonId' => 'h1', 'administrationId' => 'a1'];
 		$weeks = [
-			['weeknummer' => 22, 'inflows_total' => 100.0, 'outflows_total' => 50.0, 'nettoMutatie' => 50.0, 'closingBalance' => 1050.0, 'bufferStatus' => 'BOVEN_BUFFER'],
-			['weeknummer' => 23, 'inflows_total' => 0.0, 'outflows_total' => 200.0, 'nettoMutatie' => -200.0, 'closingBalance' => 850.0, 'bufferStatus' => 'VOORALARM'],
+			['weeknummer' => 22, 'inflows_total' => 100.0, 'outflows_total' => 50.0, 'netMovement' => 50.0, 'closingBalance' => 1050.0, 'bufferStatus' => 'BOVEN_BUFFER'],
+			['weeknummer' => 23, 'inflows_total' => 0.0, 'outflows_total' => 200.0, 'netMovement' => -200.0, 'closingBalance' => 850.0, 'bufferStatus' => 'VOORALARM'],
 		];
 
 		$result = $this->renderer->render($horizon, $weeks);
@@ -120,7 +120,7 @@ final class CashflowPdfRendererTest extends TestCase {
 		$scenario = [
 			'name' => 'Acme pays late',
 			'description' => 'Acme delays invoice by 4 weeks',
-			'resultaat' => [
+			'result' => [
 				'minBufferWeek' => '2026-w26',
 				'minBufferAmount' => 100.0,
 				'onderschrijdingBuffer' => true,
@@ -143,8 +143,8 @@ final class CashflowPdfRendererTest extends TestCase {
 	public function testRenderIncludesTopCustomersWhenSupplied(): void {
 		$horizon = ['horizonId' => 'h1'];
 		$topCustomers = [
-			['klantId' => 'klant-municipality-amsterdam', 'gemiddeldeAfwijking' => '+48 days', 'betrouwbaarheidScore' => 0.95],
-			['klantId' => 'klant-acme-bv', 'gemiddeldeAfwijking' => '+8 days', 'betrouwbaarheidScore' => 0.92],
+			['customerId' => 'klant-municipality-amsterdam', 'gemiddeldeAfwijking' => '+48 days', 'reliabilityScore' => 0.95],
+			['customerId' => 'klant-acme-bv', 'gemiddeldeAfwijking' => '+8 days', 'reliabilityScore' => 0.92],
 		];
 
 		$result = $this->renderer->render($horizon, [], null, $topCustomers);

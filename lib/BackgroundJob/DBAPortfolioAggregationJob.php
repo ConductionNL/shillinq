@@ -84,7 +84,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		$omzetPerKlant = [];
 		$totaal = 0;
 		foreach ($opdrachten as $opdracht) {
-			$klantId = (string)($opdracht['klantId'] ?? '');
+			$klantId = (string)($opdracht['customerId'] ?? '');
 			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
 			if ($klantId === '' || $bedrag <= 0) {
 				continue;
@@ -96,9 +96,9 @@ class DBAPortfolioAggregationJob extends TimedJob {
 
 		if ($totaal <= 0 || count($omzetPerKlant) === 0) {
 			return [
-				'grootsteKlant' => null,
+				'largestCustomer' => null,
 				'revenueShare12m' => 0.0,
-				'drempelHoog' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
+				'thresholdHigh' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
 				'status' => 'VEILIG',
 			];
 		}
@@ -121,9 +121,9 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		}
 
 		return [
-			'grootsteKlant' => $grootsteKlant,
+			'largestCustomer' => $grootsteKlant,
 			'revenueShare12m' => round($aandeel, 4),
-			'drempelHoog' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
+			'thresholdHigh' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
 			'status' => $status,
 		];
 	}//end computeConcentratie()
@@ -154,8 +154,8 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		// Group oldest startDatum + total omzet per klant.
 		$perKlant = [];
 		foreach ($opdrachten as $opdracht) {
-			$klantId = (string)($opdracht['klantId'] ?? '');
-			$startStr = (string)($opdracht['startDatum'] ?? '');
+			$klantId = (string)($opdracht['customerId'] ?? '');
+			$startStr = (string)($opdracht['startDate'] ?? '');
 			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
 			if ($klantId === '' || $startStr === '') {
 				continue;
@@ -186,9 +186,9 @@ class DBAPortfolioAggregationJob extends TimedJob {
 				&& $aandeel >= DBAConstants::LANGJARIG_DREMPEL_OMZET
 			) {
 				$result[] = [
-					'klantId' => (string)$klantId,
-					'startDatum' => $row['start']->format('Y-m-d'),
-					'duurJaren' => round($duurJaren, 2),
+					'customerId' => (string)$klantId,
+					'startDate' => $row['start']->format('Y-m-d'),
+					'durationJaren' => round($duurJaren, 2),
 					'revenueShare' => round($aandeel, 4),
 				];
 			}
@@ -285,12 +285,12 @@ class DBAPortfolioAggregationJob extends TimedJob {
 					[
 						'administrationId' => $administrationId,
 						'enterpriseId' => (string)$ondernemingId,
-						'peilDatum' => $now->format('Y-m-d'),
-						'actieveOpdrachten' => count($opdrachten),
+						'peilDate' => $now->format('Y-m-d'),
+						'actieveAssignments' => count($opdrachten),
 						'concentratie' => $concentratie,
-						'langjarigeRelaties' => $langjarig,
-						'exclusieveRelaties' => $this->countExclusief(opdrachten: $opdrachten),
-						'overallRisico' => $overall,
+						'langjarigeRelationships' => $langjarig,
+						'exclusieveRelationships' => $this->countExclusief(opdrachten: $opdrachten),
+						'overallRisk' => $overall,
 					]
 				);
 				$written++;
@@ -318,7 +318,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		$omzetPerKlant = [];
 		$totaal = 0;
 		foreach ($opdrachten as $opdracht) {
-			$klantId = (string)($opdracht['klantId'] ?? '');
+			$klantId = (string)($opdracht['customerId'] ?? '');
 			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
 			if ($klantId === '' || $bedrag <= 0) {
 				continue;

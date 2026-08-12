@@ -126,13 +126,13 @@ class UrenDagregistratieGuard {
 	 * @param string $categorie The category code.
 	 * @param float $uren The registered hours.
 	 *
-	 * @return array{getoldeUren: float, capNotitie: ?string} Counted hours + note.
+	 * @return array{getoldeHours: float, capNote: ?string} Counted hours + note.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
 	 */
 	public function pasReistijdCapToe(string $categorie, float $uren): array {
 		if ($categorie !== 'REISTIJD_ZAKELIJK' || $uren <= self::REISTIJD_CAP_PER_DAY) {
-			return ['getoldeUren' => $uren, 'capNotitie' => null];
+			return ['getoldeHours' => $uren, 'capNote' => null];
 		}
 
 		$nietGeteld = ($uren - self::REISTIJD_CAP_PER_DAY);
@@ -142,8 +142,8 @@ class UrenDagregistratieGuard {
 		);
 
 		return [
-			'getoldeUren' => self::REISTIJD_CAP_PER_DAY,
-			'capNotitie' => $notitie,
+			'getoldeHours' => self::REISTIJD_CAP_PER_DAY,
+			'capNote' => $notitie,
 		];
 
 	}//end pasReistijdCapToe()
@@ -178,16 +178,16 @@ class UrenDagregistratieGuard {
 	 * @return bool True when no evidence is required, or evidence is present.
 	 */
 	private function evidenceRequirementMet(array $entry): bool {
-		$categorie = (string)($entry['categorie'] ?? '');
+		$categorie = (string)($entry['category'] ?? '');
 		if (in_array($categorie, self::EVIDENCE_REQUIRED_CATEGORIES, true) === false) {
 			return true;
 		}
 
-		$bewijs = (string)($entry['backfillBewijs'] ?? '');
+		$bewijs = (string)($entry['backfillEvidence'] ?? '');
 		if ($bewijs === '') {
 			$this->logger->info(
 				'UrenDagregistratieGuard: category requires evidence but none supplied — denying save',
-				['categorie' => $categorie]
+				['category' => $categorie]
 			);
 			return false;
 		}
@@ -205,16 +205,16 @@ class UrenDagregistratieGuard {
 	 */
 	private function backfillRuleMet(array $entry): bool {
 		$days = $this->backfillDays(
-			datum: (string)($entry['datum'] ?? ''),
-			registratieMoment: (string)($entry['registratieMoment'] ?? '')
+			datum: (string)($entry['date'] ?? ''),
+			registratieMoment: (string)($entry['registrationMoment'] ?? '')
 		);
 
 		if ($days === null || $days <= self::BACKFILL_FREE_DAYS) {
 			return true;
 		}
 
-		$reden = (string)($entry['backfillReden'] ?? '');
-		$bewijs = (string)($entry['backfillBewijs'] ?? '');
+		$reden = (string)($entry['backfillReason'] ?? '');
+		$bewijs = (string)($entry['backfillEvidence'] ?? '');
 		if ($reden === '' || $bewijs === '') {
 			$this->logger->info(
 				'UrenDagregistratieGuard: backfill older than 7 days requires reden + bewijs — denying save',

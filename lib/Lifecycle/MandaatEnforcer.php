@@ -84,7 +84,7 @@ class MandaatEnforcer {
 	 */
 	public function hasSufficientMandate(string $verplichtingsnummer, ?array $object = null): bool {
 		try {
-			$verplichting = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['verplichtingsnummer' => $verplichtingsnummer]));
+			$verplichting = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitmentNumber' => $verplichtingsnummer]));
 			if ($verplichting === null) {
 				return false;
 			}
@@ -93,7 +93,7 @@ class MandaatEnforcer {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'MandaatEnforcer: hasSufficientMandate failed — treating as not mandated (fail-closed)',
-				['verplichting' => $verplichtingsnummer, 'exception' => $e->getMessage()]
+				['commitment' => $verplichtingsnummer, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -138,8 +138,8 @@ class MandaatEnforcer {
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
 	public function resolveApplicableMandate(array $verplichting): ?array {
-		$soort = (string)($verplichting['soort'] ?? '');
-		$bedrag = (int)($verplichting['totaalbedrag_excl_btw'] ?? 0);
+		$soort = (string)($verplichting['kind'] ?? '');
+		$bedrag = (int)($verplichting['totalamount_excl_vat'] ?? 0);
 		$admin = (string)($verplichting['administrationId'] ?? '');
 
 		$mandaten = $this->findMany(schema: 'Mandaat', filters: ['administrationId' => $admin]);
@@ -166,7 +166,7 @@ class MandaatEnforcer {
 				continue;
 			}
 
-			if ((int)($mandaat['maximumbedrag'] ?? 0) < (int)($best['maximumbedrag'] ?? 0)) {
+			if ((int)($mandaat['maximumAmount'] ?? 0) < (int)($best['maximumAmount'] ?? 0)) {
 				$best = $mandaat;
 			}
 		}//end foreach
@@ -193,12 +193,12 @@ class MandaatEnforcer {
 			return false;
 		}
 
-		$threshold = ($mandaat['vereist_tweede_handtekening_boven'] ?? null);
+		$threshold = ($mandaat['required_tweede_signature_boven'] ?? null);
 		if ($threshold === null) {
 			return false;
 		}
 
-		return (int)($verplichting['totaalbedrag_excl_btw'] ?? 0) >= (int)$threshold;
+		return (int)($verplichting['totalamount_excl_vat'] ?? 0) >= (int)$threshold;
 	}//end requiresSecondSignature()
 
 	/**
@@ -215,12 +215,12 @@ class MandaatEnforcer {
 			return false;
 		}
 
-		$soorten = ($mandaat['soort_verplichting'] ?? []);
+		$soorten = ($mandaat['kind_commitment'] ?? []);
 		if (is_array($soorten) === true && count($soorten) > 0 && in_array($soort, $soorten, true) === false) {
 			return false;
 		}
 
-		return (int)($mandaat['maximumbedrag'] ?? 0) >= $bedrag;
+		return (int)($mandaat['maximumAmount'] ?? 0) >= $bedrag;
 	}//end mandateApplies()
 
 	/**
@@ -234,12 +234,12 @@ class MandaatEnforcer {
 	private function isCurrentlyValid(array $mandaat): bool {
 		$today = (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d');
 
-		$van = (string)($mandaat['geldig_van'] ?? '');
+		$van = (string)($mandaat['valid_from'] ?? '');
 		if ($van !== '' && $van > $today) {
 			return false;
 		}
 
-		$tot = (string)($mandaat['geldig_tot'] ?? '');
+		$tot = (string)($mandaat['valid_to'] ?? '');
 		if ($tot !== '' && $tot < $today) {
 			return false;
 		}

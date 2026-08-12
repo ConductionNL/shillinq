@@ -163,7 +163,7 @@ class DBAVbarMonitorService {
 			$existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
 				[
 					'filters' => [
-						'opdrachtId' => $opdrachtId,
+						'assignmentId' => $opdrachtId,
 						'type' => 'VBAR_GRENS_ONDERSCHREDEN',
 						'status' => 'OPEN',
 					],
@@ -179,7 +179,7 @@ class DBAVbarMonitorService {
 				}
 
 				if (is_array($arr) === true
-					&& (string)(($arr['details'] ?? [])['factuurId'] ?? '') === $factuurId
+					&& (string)(($arr['details'] ?? [])['invoiceId'] ?? '') === $factuurId
 				) {
 					return false;
 				}
@@ -195,21 +195,21 @@ class DBAVbarMonitorService {
 			$objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject(
 				[
 					'administrationId' => $administrationId,
-					'opdrachtId' => $opdrachtId,
+					'assignmentId' => $opdrachtId,
 					'type' => 'VBAR_GRENS_ONDERSCHREDEN',
 					'detectieMoment' => (new DateTimeImmutable())->format('c'),
 					'ernst' => 'MIDDEN',
 					'details' => [
-						'factuurId' => $factuurId,
+						'invoiceId' => $factuurId,
 						'uurtariefCents' => $uurtariefCents,
 						'vbarGrensCents' => $vbarGrensCents,
 						'peiljaar' => DBAConstants::VBAR_GRENS_PEILJAAR,
 					],
-					'fiscaleBron' => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil ' . DBAConstants::VBAR_GRENS_PEILJAAR . ')',
-					'actieSuggestie' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
+					'fiscalSource' => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil ' . DBAConstants::VBAR_GRENS_PEILJAAR . ')',
+					'actionSuggestion' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
 						. '(motivatie EUR-grens uitzondering).',
 					'status' => 'OPEN',
-					'weergegevenAanGebruiker' => true,
+					'weergegevenInUser' => true,
 				]
 			);
 			return true;

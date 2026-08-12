@@ -96,8 +96,8 @@ class RechtmatigheidGuardTest extends TestCase {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Te kort.',
-				'rechtmatigheidsbevinding' => 'bev-1',
+				'substantiation' => 'Te kort.',
+				'lawfulnessFinding' => 'bev-1',
 			]
 		);
 		self::assertFalse(condition: $result, message: 'Short onderbouwing must deny finalisation');
@@ -113,8 +113,8 @@ class RechtmatigheidGuardTest extends TestCase {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => str_repeat('a', 60),
-				'rechtmatigheidsbevinding' => '',
+				'substantiation' => str_repeat('a', 60),
+				'lawfulnessFinding' => '',
 			]
 		);
 		self::assertFalse(condition: $result, message: 'Missing bevinding must deny finalisation');
@@ -130,8 +130,8 @@ class RechtmatigheidGuardTest extends TestCase {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (eerder Europees aanbesteed).',
-				'rechtmatigheidsbevinding' => 'bev-142',
+				'substantiation' => 'Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (eerder Europees aanbesteed).',
+				'lawfulnessFinding' => 'bev-142',
 			]
 		);
 		self::assertTrue(condition: $result, message: 'Complete negative toets must be permitted');
@@ -147,7 +147,7 @@ class RechtmatigheidGuardTest extends TestCase {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
 				'uitkomst' => 'onzeker',
-				'onderbouwing' => str_repeat('b', 55),
+				'substantiation' => str_repeat('b', 55),
 			]
 		);
 		self::assertFalse(condition: $result, message: 'onzeker without bevinding must be denied');
@@ -160,7 +160,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanResolveBevindingDeniesWithoutCorrectie(): void {
-		$result = $this->guard->canResolveBevinding(bevinding: ['bevindingsnummer' => 'RV-2026-0142']);
+		$result = $this->guard->canResolveBevinding(bevinding: ['findingNumber' => 'RV-2026-0142']);
 		self::assertFalse(condition: $result, message: 'No correctieboeking must deny resolution');
 
 	}//end testCanResolveBevindingDeniesWithoutCorrectie()
@@ -173,8 +173,8 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanResolveBevindingPermitsWithCorrectie(): void {
 		$result = $this->guard->canResolveBevinding(
 			bevinding: [
-				'bevindingsnummer' => 'RV-2026-0142',
-				'correctieboeking_id' => 'je-2026-9001',
+				'findingNumber' => 'RV-2026-0142',
+				'correctionentry_id' => 'je-2026-9001',
 			]
 		);
 		self::assertTrue(condition: $result, message: 'Linked correctieboeking must permit resolution');
@@ -187,7 +187,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenParagraafPermitsBinnenTolerantie(): void {
-		$result = $this->guard->canVaststellenParagraaf(paragraaf: ['binnen_tolerantie' => true]);
+		$result = $this->guard->canVaststellenParagraaf(paragraaf: ['binnen_tolerance' => true]);
 		self::assertTrue(condition: $result, message: 'Binnen tolerantie must permit vaststellen');
 
 	}//end testCanVaststellenParagraafPermitsBinnenTolerantie()
@@ -200,8 +200,8 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanVaststellenParagraafDeniesBuitenTolerantieZonderToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
 			paragraaf: [
-				'binnen_tolerantie' => false,
-				'verklaring_college' => '',
+				'binnen_tolerance' => false,
+				'declaration_college' => '',
 				'financialYear' => 2026,
 			]
 		);
@@ -217,8 +217,8 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanVaststellenParagraafPermitsBuitenTolerantieMetToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
 			paragraaf: [
-				'binnen_tolerantie' => false,
-				'verklaring_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
+				'binnen_tolerance' => false,
+				'declaration_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
 				'financialYear' => 2026,
 			]
 		);

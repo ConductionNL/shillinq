@@ -105,10 +105,10 @@ class BudgetImpactEmitter {
 	public function emitActivated(array $verplichting, array $source = []): void {
 		$payload = [
 			'eventName' => self::EVENT_OBLIGATION_ACTIVATED,
-			'bronReferentie' => (string)($verplichting['bronReferentie'] ?? ''),
-			'contractWaarde' => (float)($verplichting['amount'] ?? 0),
-			'kostenplaats' => (string)($verplichting['kostenplaats'] ?? ''),
-			'looptijdStart' => (string)($verplichting['looptijdStart'] ?? ''),
+			'sourceReference' => (string)($verplichting['sourceReference'] ?? ''),
+			'contractValue' => (float)($verplichting['amount'] ?? 0),
+			'costCentre' => (string)($verplichting['costCentre'] ?? ''),
+			'termStart' => (string)($verplichting['termStart'] ?? ''),
 			'termEnd' => (string)($verplichting['termEnd'] ?? ''),
 			'tenderNedUrl' => (string)($source['tenderNedUrl'] ?? ''),
 			'administrationId' => (string)($verplichting['administrationId'] ?? ''),
@@ -134,17 +134,17 @@ class BudgetImpactEmitter {
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-005
 	 */
 	public function emitMilestoneCompleted(array $oplevering): void {
-		$bewijsstukken = ($oplevering['bewijsstukken'] ?? []);
+		$bewijsstukken = ($oplevering['supportingDocuments'] ?? []);
 		if (is_array($bewijsstukken) === false) {
 			$bewijsstukken = [];
 		}
 
 		$payload = [
 			'eventName' => self::EVENT_MILESTONE_COMPLETED,
-			'verplichtingId' => (string)($oplevering['verplichtingId'] ?? ''),
-			'mijlpaalId' => (string)($oplevering['mijlpaalId'] ?? ''),
-			'opleveringsType' => (string)($oplevering['opleveringsType'] ?? ''),
-			'opleveringsDatum' => (string)($oplevering['opleveringsDatum'] ?? ''),
+			'commitmentId' => (string)($oplevering['commitmentId'] ?? ''),
+			'milestoneId' => (string)($oplevering['milestoneId'] ?? ''),
+			'deliveryType' => (string)($oplevering['deliveryType'] ?? ''),
+			'deliveryDate' => (string)($oplevering['deliveryDate'] ?? ''),
 			'goedgekeurd' => (bool)($oplevering['goedgekeurd'] ?? false),
 			'bewijsstukCount' => count($bewijsstukken),
 			'administrationId' => (string)($oplevering['administrationId'] ?? ''),

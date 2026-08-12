@@ -117,7 +117,7 @@ class BbvSeedServiceTest extends TestCase {
 		// Pre-existing gemeente row should not skip the provincie + waterschap rows
 		// for the same numeric code (0.10).
 		$existingRows = [
-			['code' => '0.10', 'overheidslaag' => 'gemeente'],
+			['code' => '0.10', 'overheidslaag' => 'municipality'],
 		];
 
 		$objectService = $this->buildObjectServiceStub(existingRows: $existingRows);

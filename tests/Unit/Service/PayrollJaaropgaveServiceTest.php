@@ -209,18 +209,18 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 		$strook = static function (string $id, string $periodeId, float $ytdFiscaal, float $ytdVak): array {
 			return [
 				'id' => $id,
-				'periodeId' => $periodeId,
-				'werknemerId' => 'wn-1',
+				'periodId' => $periodeId,
+				'employeeId' => 'wn-1',
 				'administrationId' => 'adm-1',
-				'fiscaalLoon' => 4959.20,
-				'loonheffing' => 1083.40,
+				'fiscalPay' => 4959.20,
+				'payrollTax' => 1083.40,
 				'premiesSVWerkgever' => ['totaal_werkgever' => 500.86],
 				'zvw' => ['afgedragen_wg' => 262.80],
 				'pensioen' => ['premie_wn_aandeel' => 355.68, 'premie_wg_aandeel' => 898.88],
-				'brutoComponenten' => ['totaal_bruto' => 4959.20, 'vakantietoeslag_uitbetaling' => 0.0],
-				'nettoBetaald' => 3520.12,
+				'grossComponenten' => ['totaal_bruto' => 4959.20, 'vakantietoeslag_uitbetaling' => 0.0],
+				'netPaid' => 3520.12,
 				'cumulatieven' => ['fiscaalloon_ytd' => $ytdFiscaal, 'vakantiegeld_reservering_ytd' => $ytdVak],
-				'vakantieDagenReservering' => ['opgebouwdEuro' => 395.20],
+				'holidayDaysAccrual' => ['opgebouwdEuro' => 395.20],
 			];
 		};
 
@@ -232,13 +232,13 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 				// Different werknemer in same admin (must be filtered out).
 				[
 					'id' => 'ls-x',
-					'periodeId' => 'lp-2026-01',
-					'werknemerId' => 'wn-9',
+					'periodId' => 'lp-2026-01',
+					'employeeId' => 'wn-9',
 					'administrationId' => 'adm-1',
-					'fiscaalLoon' => 99999.00,
+					'fiscalPay' => 99999.00,
 				],
 				// Different year (must be filtered out).
-				$strook('ls-y', 'lp-2025-12', 60000.00, 4800.00) + ['werknemerId' => 'wn-1', 'administrationId' => 'adm-1'],
+				$strook('ls-y', 'lp-2025-12', 60000.00, 4800.00) + ['employeeId' => 'wn-1', 'administrationId' => 'adm-1'],
 			],
 		];
 
@@ -309,7 +309,7 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$service->persistJaaropgave(
 			jaaropgave: [
-				'werknemerId' => 'wn-1',
+				'employeeId' => 'wn-1',
 				'year' => 2026,
 				'cumulatievenConsistent' => false,
 			]

@@ -83,7 +83,7 @@ class InnovatieboxSbrExportService {
 	 *                                         Expected shape: {data: list<row>, totals: assoc}.
 	 * @param string $administrationId Administration scope (server-resolved, REQ-IBA-008).
 	 * @param int $boekjaar Fiscal year.
-	 * @param string $methode Election: 'per_asset_afpelmethode' (default)
+	 * @param string $method Election: 'per_asset_afpelmethode' (default)
 	 *                        or 'forfaitair_25pct'.
 	 *
 	 * @return array<string,mixed> The SBR/XBRL instance hand-off payload.
@@ -94,7 +94,7 @@ class InnovatieboxSbrExportService {
 		array $aggregation,
 		string $administrationId,
 		int $boekjaar,
-		string $methode = 'per_asset_afpelmethode',
+		string $method = 'per_asset_afpelmethode',
 	): array {
 		$rows = $this->extractRows(aggregation: $aggregation);
 		$totals = $this->extractTotals(aggregation: $aggregation);
@@ -105,21 +105,21 @@ class InnovatieboxSbrExportService {
 			'collectie' => self::SBR_COLLECTION,
 			'identificerendePeriode' => sprintf('%04d', $boekjaar),
 			'administratie' => $administrationId,
-			'gekozenMethode' => $methode,
-			'regel23_kwalifWinst' => round((float)($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-			'regel23_vpbInnovatie' => round((float)($totals['vpb_op_innovatiedeel'] ?? 0.0), 2),
-			'regel23_voordeel' => round((float)($totals['voordeel_innovatiebox'] ?? 0.0), 2),
-			'effectiefTarief' => 0.09,
+			'gekozenMethode' => $method,
+			'regel23_kwalifWinst' => round((float)($totals['kwalificerende_profit_after_nexus'] ?? 0.0), 2),
+			'regel23_vpbInnovatie' => round((float)($totals['vpb_on_innovationshare'] ?? 0.0), 2),
+			'regel23_voordeel' => round((float)($totals['benefit_innovatiebox'] ?? 0.0), 2),
+			'effectiveRate' => 0.09,
 			'status' => 'READY_FOR_SBR',
 		];
 
-		if ($methode === 'forfaitair_25pct') {
+		if ($method === 'forfaitair_25pct') {
 			// Forfaitair: collapse to a single line per art. 12bg.
 			$payload['forfaitairLine'] = [
-				'kwalifVoorCap' => round((float)($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-				'kwalifNaCap' => round((float)($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
+				'kwalifVoorCap' => round((float)($totals['kwalificerende_profit_for_nexus'] ?? 0.0), 2),
+				'kwalifNaCap' => round((float)($totals['kwalificerende_profit_after_nexus'] ?? 0.0), 2),
 				'capEur' => 25000,
-				'capApplied' => ((float)($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
+				'capApplied' => ((float)($totals['kwalificerende_profit_for_nexus'] ?? 0.0) > 25000.0),
 			];
 			$payload['perAssetRows'] = [];
 		} else {
@@ -143,7 +143,7 @@ class InnovatieboxSbrExportService {
 	 * @param array<string,mixed> $aggregation The InnovatieboxAggregationService::aggregate result.
 	 * @param string $administrationId Administration scope.
 	 * @param int $boekjaar Fiscal year.
-	 * @param string $methode Election method.
+	 * @param string $method Election method.
 	 *
 	 * @return array<string,mixed> The docudesk template context.
 	 *
@@ -153,23 +153,23 @@ class InnovatieboxSbrExportService {
 		array $aggregation,
 		string $administrationId,
 		int $boekjaar,
-		string $methode = 'per_asset_afpelmethode',
+		string $method = 'per_asset_afpelmethode',
 	): array {
 		$rows = $this->extractRows(aggregation: $aggregation);
 		$totals = $this->extractTotals(aggregation: $aggregation);
 
-		if ($methode === 'forfaitair_25pct') {
+		if ($method === 'forfaitair_25pct') {
 			$perAsset = [];
 		} else {
 			$perAsset = $this->renderAssetRows(rows: $rows);
 		}
 
-		if ($methode === 'forfaitair_25pct') {
+		if ($method === 'forfaitair_25pct') {
 			$forfaitair = [
-				'kwalifVoorCap' => round((float)($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-				'kwalifNaCap' => round((float)($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
+				'kwalifVoorCap' => round((float)($totals['kwalificerende_profit_for_nexus'] ?? 0.0), 2),
+				'kwalifNaCap' => round((float)($totals['kwalificerende_profit_after_nexus'] ?? 0.0), 2),
 				'capEur' => 25000,
-				'capApplied' => ((float)($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
+				'capApplied' => ((float)($totals['kwalificerende_profit_for_nexus'] ?? 0.0) > 25000.0),
 			];
 		} else {
 			$forfaitair = null;
@@ -178,15 +178,15 @@ class InnovatieboxSbrExportService {
 		return [
 			'administrationId' => $administrationId,
 			'financialYear' => $boekjaar,
-			'methode' => $methode,
+			'method' => $method,
 			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
 			'perAsset' => $perAsset,
 			'forfaitair' => $forfaitair,
 			'totals' => [
-				'winst_voor_nexus' => round((float)($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-				'winst_na_nexus' => round((float)($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-				'vpb_innovatie' => round((float)($totals['vpb_op_innovatiedeel'] ?? 0.0), 2),
-				'voordeel' => round((float)($totals['voordeel_innovatiebox'] ?? 0.0), 2),
+				'winst_voor_nexus' => round((float)($totals['kwalificerende_profit_for_nexus'] ?? 0.0), 2),
+				'winst_na_nexus' => round((float)($totals['kwalificerende_profit_after_nexus'] ?? 0.0), 2),
+				'vpb_innovatie' => round((float)($totals['vpb_on_innovationshare'] ?? 0.0), 2),
+				'voordeel' => round((float)($totals['benefit_innovatiebox'] ?? 0.0), 2),
 			],
 		];
 
@@ -267,11 +267,11 @@ class InnovatieboxSbrExportService {
 			$out[] = [
 				'qualifying_asset_id' => (string)($row['qualifying_asset_id'] ?? ''),
 				'name' => (string)($row['name'] ?? ''),
-				'winst_voor_nexus' => round((float)($row['winst_voor_nexus'] ?? ($row['kwalificerende_winst_voor_nexus'] ?? 0.0)), 2),
-				'nexus_percent' => round((float)($row['nexus'] ?? ($row['nexusbreuk_toegepast'] ?? 0.0)), 4),
-				'winst_na_nexus' => round((float)($row['winst_na_nexus'] ?? ($row['kwalificerende_winst_na_nexus'] ?? 0.0)), 2),
-				'tariff' => round((float)($row['tariff'] ?? ($row['effectief_tarief'] ?? 0.09)), 4),
-				'vpb_impact' => round((float)($row['vpb_impact'] ?? ($row['vpb_op_innovatiedeel'] ?? 0.0)), 2),
+				'winst_voor_nexus' => round((float)($row['winst_voor_nexus'] ?? ($row['kwalificerende_profit_for_nexus'] ?? 0.0)), 2),
+				'nexus_percent' => round((float)($row['nexus'] ?? ($row['nexusbreuk_applied'] ?? 0.0)), 4),
+				'winst_na_nexus' => round((float)($row['winst_na_nexus'] ?? ($row['kwalificerende_profit_after_nexus'] ?? 0.0)), 2),
+				'tariff' => round((float)($row['tariff'] ?? ($row['effectief_rate'] ?? 0.09)), 4),
+				'vpb_impact' => round((float)($row['vpb_impact'] ?? ($row['vpb_on_innovationshare'] ?? 0.0)), 2),
 			];
 		}
 

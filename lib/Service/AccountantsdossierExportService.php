@@ -586,8 +586,8 @@ class AccountantsdossierExportService {
 			htmlspecialchars($effectiveFrom, ENT_QUOTES),
 			htmlspecialchars($effectiveTo, ENT_QUOTES),
 			htmlspecialchars((string)($adoptionDecision['decisionType'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['besluitnummer'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['datum'] ?? '—'), ENT_QUOTES),
+			htmlspecialchars((string)($adoptionDecision['decisionNumber'] ?? '—'), ENT_QUOTES),
+			htmlspecialchars((string)($adoptionDecision['date'] ?? '—'), ENT_QUOTES),
 			$toleranceRows,
 			$materialityRows,
 			$sampleRows,
@@ -595,9 +595,9 @@ class AccountantsdossierExportService {
 			htmlspecialchars($opinion, ENT_QUOTES),
 			htmlspecialchars($opinionRationale, ENT_QUOTES),
 			htmlspecialchars((string)($signOff['auditor'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['afmVergunningsnummer'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['datum'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['plaats'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['afmPermitNumber'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['date'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['place'] ?? ''), ENT_QUOTES),
 			$sisaRows,
 			self::RETENTION_YEARS
 		);
@@ -617,10 +617,10 @@ class AccountantsdossierExportService {
 				'<tr><td>%s</td><td class="num">%s</td><td class="num">%s</td>'
 				. '<td class="num">%s</td><td class="num">%s</td><td class="num">%s</td></tr>',
 				htmlspecialchars((string)($row['topic'] ?? ''), ENT_QUOTES),
-				$this->fmtNumber(value: $row['rechtmatigheidApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['rechtmatigheidQualificationCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['getrouwheidApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['getrouwheidQualificationCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['lawfulnessApprovalCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['lawfulnessQualificationCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['faithfulnessApprovalCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['faithfulnessQualificationCeiling'] ?? 0),
 				$this->fmtNumber(value: $row['uncertaintyCeiling'] ?? 0)
 			);
 		}
@@ -717,7 +717,7 @@ class AccountantsdossierExportService {
 			$html .= sprintf(
 				'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class="num">%d</td></tr>',
 				htmlspecialchars((string)($row['schemeCode'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['verantwoordingsplichtige'] ?? ''), ENT_QUOTES),
+				htmlspecialchars((string)($row['accountableParty'] ?? ''), ENT_QUOTES),
 				htmlspecialchars((string)($row['specifiekeUitkering'] ?? ''), ENT_QUOTES),
 				htmlspecialchars((string)($row['assuranceLevel'] ?? ''), ENT_QUOTES),
 				$count

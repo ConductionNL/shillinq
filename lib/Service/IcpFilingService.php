@@ -140,7 +140,7 @@ class IcpFilingService {
 	 * @param string $administrationId Administration scope (server-resolved, REQ-ICP-001).
 	 * @param string $period Filing period (YYYY-Qn / YYYY-MM).
 	 *
-	 * @return array{period:string,zipPath:string,supplyCount:int,manifest:array<int,string>,kenmerk:string}
+	 * @return array{period:string,zipPath:string,supplyCount:int,manifest:array<int,string>,reference:string}
 	 *
 	 * @throws RuntimeException When the ZIP cannot be created.
 	 *
@@ -150,7 +150,7 @@ class IcpFilingService {
 		$supplies = $this->icp->suppliesInPeriod(administrationId: $administrationId, period: $period);
 		$opgaaf = $this->findOpgaaf(administrationId: $administrationId, period: $period);
 		$xbrl = (string)($opgaaf['xmlPayload'] ?? '');
-		$kenmerk = (string)($opgaaf['belastingdienstKenmerk'] ?? '');
+		$kenmerk = (string)($opgaaf['taxAuthorityReference'] ?? '');
 		$requestIds = $this->requestIdMap(administrationId: $administrationId, supplies: $supplies);
 		$csv = $this->calculator->buildSuppliesCsv(supplies: $supplies, requestIds: $requestIds);
 
@@ -182,7 +182,7 @@ class IcpFilingService {
 			'zipPath' => $zipPath,
 			'supplyCount' => count($supplies),
 			'manifest' => $manifest,
-			'kenmerk' => $kenmerk,
+			'reference' => $kenmerk,
 		];
 
 	}//end exportForInspection()

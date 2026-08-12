@@ -80,7 +80,7 @@ class DBAOpdrachtGuard {
 			if ($eind === '') {
 				$errors[] = 'REQ-DBA-018: BEEINDIGD vereist feitelijkeEindDatum.';
 			} else {
-				$retentie = (string)($opdracht['retentieDeadline'] ?? '');
+				$retentie = (string)($opdracht['retentionDeadline'] ?? '');
 				if ($retentie === '') {
 					$errors[] = 'REQ-DBA-018: BEEINDIGD vereist retentieDeadline (7 jaar na einddatum).';
 				} else {
@@ -97,7 +97,7 @@ class DBAOpdrachtGuard {
 		}
 
 		// REQ-DBA-000 — risico-niveau HOOG vereist actueleRisicoscore >= 75.
-		$niveau = (string)($opdracht['risicoNiveau'] ?? 'LAAG');
+		$niveau = (string)($opdracht['riskNiveau'] ?? 'LAAG');
 		$score = $opdracht['actueleRisicoscore'] ?? null;
 		if ($niveau === 'HOOG' && is_int($score) === true) {
 			if ($score < 75) {

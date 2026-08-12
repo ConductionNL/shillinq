@@ -89,7 +89,7 @@ class SubsidieRepaymentGuard {
 			$installments = $objectService
 				->setRegister($this->register())
 				->setSchema('RepaymentInstallment')
-				->findAll(['filters' => ['subsidieId' => $subsidieId]]);
+				->findAll(['filters' => ['subsidyId' => $subsidieId]]);
 
 			if (is_array($installments) === false) {
 				$installments = [];
@@ -107,7 +107,7 @@ class SubsidieRepaymentGuard {
 			if ($outstandingCents !== 0) {
 				$this->logger->info(
 					'SubsidieRepaymentGuard: outstanding repayment balance — denying close',
-					['subsidieId' => $subsidieId, 'outstandingCents' => $outstandingCents]
+					['subsidyId' => $subsidieId, 'outstandingCents' => $outstandingCents]
 				);
 				return false;
 			}

@@ -240,8 +240,8 @@ class BadoControleprotocolService {
 				return false;
 			}
 
-			$besluitnummer = trim((string)($decision['besluitnummer'] ?? ''));
-			$datum = trim((string)($decision['datum'] ?? ''));
+			$besluitnummer = trim((string)($decision['decisionNumber'] ?? ''));
+			$datum = trim((string)($decision['date'] ?? ''));
 
 			return $besluitnummer !== '' && $datum !== '';
 		} catch (\Throwable $e) {

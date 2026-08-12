@@ -103,16 +103,16 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-1', 'status' => 'vastgesteld']],
-					'Belastingplichtige' => [['id' => 'bp-1', 'eHerkenningsNiveau' => 'EH3', 'digipoortCertificaat' => 'vault://cert']],
-					'Innovatiebox' => [['aangifte' => 'aangifte-1', 'soVerklaringReferentie' => 'SO-2026-1']],
+					'Belastingplichtige' => [['id' => 'bp-1', 'eRecognitionNiveau' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
+					'Innovatiebox' => [['taxReturn' => 'aangifte-1', 'soDeclarationReference' => 'SO-2026-1']],
 				]
 			)
 		);
 
 		$aangifte = [
 			'id' => 'aangifte-1',
-			'belastingplichtige' => 'bp-1',
-			'commercieleWinst' => 'jr-1',
+			'taxpayer' => 'bp-1',
+			'commercieleProfit' => 'jr-1',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -134,8 +134,8 @@ class VpbAangifteGuardTest extends TestCase {
 
 		$aangifte = [
 			'id' => 'aangifte-2',
-			'belastingplichtige' => 'bp-2',
-			'commercieleWinst' => 'jr-2',
+			'taxpayer' => 'bp-2',
+			'commercieleProfit' => 'jr-2',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -154,15 +154,15 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-3', 'status' => 'vastgesteld']],
-					'Belastingplichtige' => [['id' => 'bp-3', 'eHerkenningsNiveau' => 'EH2', 'digipoortCertificaat' => 'vault://cert']],
+					'Belastingplichtige' => [['id' => 'bp-3', 'eRecognitionNiveau' => 'EH2', 'digipoortCertificate' => 'vault://cert']],
 				]
 			)
 		);
 
 		$aangifte = [
 			'id' => 'aangifte-3',
-			'belastingplichtige' => 'bp-3',
-			'commercieleWinst' => 'jr-3',
+			'taxpayer' => 'bp-3',
+			'commercieleProfit' => 'jr-3',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -180,16 +180,16 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-4', 'status' => 'gedeponeerd']],
-					'Belastingplichtige' => [['id' => 'bp-4', 'eHerkenningsNiveau' => 'EH3', 'digipoortCertificaat' => 'vault://cert']],
-					'Innovatiebox' => [['aangifte' => 'aangifte-4', 'soVerklaringReferentie' => '']],
+					'Belastingplichtige' => [['id' => 'bp-4', 'eRecognitionNiveau' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
+					'Innovatiebox' => [['taxReturn' => 'aangifte-4', 'soDeclarationReference' => '']],
 				]
 			)
 		);
 
 		$aangifte = [
 			'id' => 'aangifte-4',
-			'belastingplichtige' => 'bp-4',
-			'commercieleWinst' => 'jr-4',
+			'taxpayer' => 'bp-4',
+			'commercieleProfit' => 'jr-4',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -210,7 +210,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canIndienen(
 				aangifteId: 'aangifte-x',
-				object: ['id' => 'aangifte-x', 'belastingplichtige' => 'bp-x', 'commercieleWinst' => 'jr-x']
+				object: ['id' => 'aangifte-x', 'taxpayer' => 'bp-x', 'commercieleProfit' => 'jr-x']
 			)
 		);
 
@@ -224,13 +224,13 @@ class VpbAangifteGuardTest extends TestCase {
 	public function testCanAanslagOntvangenWhenAangifteIngediend(): void {
 		$this->container->method('get')->willReturn(
 			$this->buildSchemaStub(
-				recordsBySchema: ['VpbAangifte' => [['id' => 'aangifte-5', 'status' => 'ingediend']]]
+				recordsBySchema: ['VpbAangifte' => [['id' => 'aangifte-5', 'status' => 'submitted']]]
 			)
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue(
-			$this->guard->canAanslagOntvangen(aanslagId: 'aanslag-5', object: ['aangifte' => 'aangifte-5'])
+			$this->guard->canAanslagOntvangen(aanslagId: 'aanslag-5', object: ['taxReturn' => 'aangifte-5'])
 		);
 
 	}//end testCanAanslagOntvangenWhenAangifteIngediend()
@@ -249,7 +249,7 @@ class VpbAangifteGuardTest extends TestCase {
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
-			$this->guard->canAanslagOntvangen(aanslagId: 'aanslag-6', object: ['aangifte' => 'aangifte-6'])
+			$this->guard->canAanslagOntvangen(aanslagId: 'aanslag-6', object: ['taxReturn' => 'aangifte-6'])
 		);
 
 	}//end testCannotAanslagOntvangenWhenAangifteConcept()
@@ -264,7 +264,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertTrue(
 			$this->guard->canVoegen(
 				eenheidId: 'fe-1',
-				object: ['bezitPercentage' => 100, 'gelijkeBoekjaren' => true, 'vestigingNederland' => true]
+				object: ['bezitPercentage' => 100, 'equalBoekjaren' => true, 'establishmentNederland' => true]
 			)
 		);
 
@@ -280,7 +280,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canVoegen(
 				eenheidId: 'fe-2',
-				object: ['bezitPercentage' => 80, 'gelijkeBoekjaren' => true, 'vestigingNederland' => true]
+				object: ['bezitPercentage' => 80, 'equalBoekjaren' => true, 'establishmentNederland' => true]
 			)
 		);
 
@@ -296,7 +296,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canVoegen(
 				eenheidId: 'fe-3',
-				object: ['bezitPercentage' => 100, 'gelijkeBoekjaren' => true, 'vestigingNederland' => false]
+				object: ['bezitPercentage' => 100, 'equalBoekjaren' => true, 'establishmentNederland' => false]
 			)
 		);
 

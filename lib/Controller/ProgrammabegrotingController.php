@@ -178,7 +178,7 @@ class ProgrammabegrotingController extends Controller {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProgrammabegrotingController: ' . $failure,
-				['begrotingId' => $begrotingId, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+				['budgetId' => $begrotingId, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => $failure], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}

@@ -149,10 +149,10 @@ final class BadoControleprotocolFragmentTest extends TestCase {
 	 */
 	public function testToleranceCeilingsHonourStatutoryMaxima(): void {
 		$props = (array)$this->fragment['components']['schemas']['ToleranceMatrix']['properties'];
-		self::assertSame(1, $props['getrouwheidApprovalCeiling']['maximum']);
-		self::assertSame(3, $props['getrouwheidQualificationCeiling']['maximum']);
-		self::assertSame(1, $props['rechtmatigheidApprovalCeiling']['maximum']);
-		self::assertSame(3, $props['rechtmatigheidQualificationCeiling']['maximum']);
+		self::assertSame(1, $props['faithfulnessApprovalCeiling']['maximum']);
+		self::assertSame(3, $props['faithfulnessQualificationCeiling']['maximum']);
+		self::assertSame(1, $props['lawfulnessApprovalCeiling']['maximum']);
+		self::assertSame(3, $props['lawfulnessQualificationCeiling']['maximum']);
 
 	}//end testToleranceCeilingsHonourStatutoryMaxima()
 }//end class

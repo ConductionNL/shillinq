@@ -90,11 +90,11 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-1',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-10 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-10 days'))->format('Y-m-d'),
 				'score' => 6.4,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = $this->makeNeverFetch();
@@ -119,19 +119,19 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-old',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
 				'score' => 2.0,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = new class implements CreditScoreFetchAdapterInterface {
 			public function fetch(string $administrationId, string $klantId, string $provider): ?array {
 				return [
 					'score' => 7.1,
-					'scoreSchaal' => '1-10',
-					'betalingsRisicoIndicatie' => 'LAAG',
+					'scoreScale' => '1-10',
+					'paymentRiskIndication' => 'LAAG',
 				];
 			}
 		};
@@ -159,11 +159,11 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-old',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
 				'score' => 2.5,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = new class implements CreditScoreFetchAdapterInterface {
@@ -192,11 +192,11 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-old',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
 				'score' => 4.0,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = new class implements CreditScoreFetchAdapterInterface {
@@ -222,9 +222,9 @@ final class CreditScoreServiceTest extends TestCase {
 		$service = $this->makeService(os: new InMemoryObjectService(), fetch: $this->makeNeverFetch());
 
 		$score = [
-			'klantId' => 'klant-1',
+			'customerId' => 'klant-1',
 			'score' => 2.4,
-			'scoreSchaal' => '1-10',
+			'scoreScale' => '1-10',
 			'creditLimietAdvies' => 5000.0,
 		];
 
@@ -246,9 +246,9 @@ final class CreditScoreServiceTest extends TestCase {
 		$service = $this->makeService(os: new InMemoryObjectService(), fetch: $this->makeNeverFetch());
 
 		$score = [
-			'klantId' => 'klant-1',
+			'customerId' => 'klant-1',
 			'score' => 8.0,
-			'scoreSchaal' => '1-10',
+			'scoreScale' => '1-10',
 			'creditLimietAdvies' => 50000.0,
 		];
 

@@ -170,7 +170,7 @@ class CrossSubsidyDetector {
 	 * @return bool True when overhead is under-allocated.
 	 */
 	public function detectOverheadUnderAllocation(array $ikp, float $floorRatio = self::OVERHEAD_UNDER_ALLOCATION_FLOOR_RATIO): bool {
-		$totaleKosten = (float)($ikp['totaleKosten'] ?? 0);
+		$totaleKosten = (float)($ikp['totaleCost'] ?? 0);
 		if ($totaleKosten <= 0.0) {
 			return false;
 		}
@@ -200,7 +200,7 @@ class CrossSubsidyDetector {
 			return false;
 		}
 
-		$volgendeEvaluatie = (string)($abb['volgendeEvaluatie'] ?? '');
+		$volgendeEvaluatie = (string)($abb['volgendeEvaluation'] ?? '');
 		if ($volgendeEvaluatie === '') {
 			return true;
 		}

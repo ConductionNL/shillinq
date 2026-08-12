@@ -93,7 +93,7 @@ class EBoekhoudenProfile implements ImportProfileInterface {
 				'code' => 'Code',
 				'name' => 'Bedrijf',
 				'kvk' => 'KvK-nummer',
-				'btw' => 'BTW-nummer',
+				'vat' => 'BTW-nummer',
 				'email' => 'E-mail',
 				'phone' => 'Telefoon',
 			];

@@ -147,10 +147,10 @@ class CashflowRecurringGuard {
 	 * @return bool True when the anchor is consistent with the frequency.
 	 */
 	private function hasConsistentRecurrenceAnchor(array $recurring): bool {
-		$frequency = (string)($recurring['frequentie'] ?? '');
+		$frequency = (string)($recurring['frequency'] ?? '');
 
 		if (in_array($frequency, self::MONTHLY_FREQUENCIES, true) === true) {
-			if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? null)) === false) {
+			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? null)) === false) {
 				$this->logger->info(
 					'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
 					['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -169,7 +169,7 @@ class CashflowRecurringGuard {
 				return false;
 			}
 
-			if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? 1)) === false) {
+			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? 1)) === false) {
 				$this->logger->info(
 					'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
 					['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -189,7 +189,7 @@ class CashflowRecurringGuard {
 	 * @return bool True when the validity window is well-formed.
 	 */
 	private function hasValidValidityWindow(array $recurring): bool {
-		$van = $this->parseDate(value: (string)($recurring['geldigVan'] ?? ''));
+		$van = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
 		if ($van === null) {
 			$this->logger->info(
 				'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
@@ -198,7 +198,7 @@ class CashflowRecurringGuard {
 			return false;
 		}
 
-		$totRaw = ($recurring['geldigTot'] ?? null);
+		$totRaw = ($recurring['validTo'] ?? null);
 		if ($totRaw === null || $totRaw === '') {
 			// Indefinite window is valid.
 			return true;
@@ -232,12 +232,12 @@ class CashflowRecurringGuard {
 	 * @return bool True when indexation is FIXED, absent, or annual-applicable.
 	 */
 	private function hasApplicableIndexation(array $recurring): bool {
-		$rule = (string)($recurring['indexatieRegel'] ?? 'FIXED');
+		$rule = (string)($recurring['indexationRule'] ?? 'FIXED');
 		if ($rule !== 'CPI_AFGELOPEN_JAAR') {
 			return true;
 		}
 
-		if ((string)($recurring['frequentie'] ?? '') !== 'JAARLIJKS') {
+		if ((string)($recurring['frequency'] ?? '') !== 'JAARLIJKS') {
 			$this->logger->info(
 				'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
 				['recurId' => ($recurring['recurId'] ?? 'unknown')]

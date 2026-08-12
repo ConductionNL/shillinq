@@ -59,9 +59,9 @@ final class QualifyingAssetValidatorTest extends TestCase {
 		$asset = [
 			'type' => 'software',
 			'toegangsticket' => [
-				'soort' => 'so_verklaring',
+				'kind' => 'so_declaration',
 				'rnd_declaration_number' => 'S2024/001234',
-				'so_verklaring_periode' => ['van' => '2024-01-01', 'tot' => '2024-12-31'],
+				'so_declaration_period' => ['van' => '2024-01-01', 'tot' => '2024-12-31'],
 			],
 		];
 		$result = $this->val->validateAccessTicket($asset, '2024-06-01');
@@ -78,7 +78,7 @@ final class QualifyingAssetValidatorTest extends TestCase {
 	public function testMalformedSoVerklaringIsInvalid(): void {
 		$asset = [
 			'type' => 'software',
-			'toegangsticket' => ['soort' => 'so_verklaring', 'rnd_declaration_number' => '2024-1234'],
+			'toegangsticket' => ['kind' => 'so_declaration', 'rnd_declaration_number' => '2024-1234'],
 		];
 		$result = $this->val->validateAccessTicket($asset, '2024-06-01');
 		self::assertFalse($result['valid']);
@@ -96,9 +96,9 @@ final class QualifyingAssetValidatorTest extends TestCase {
 		$asset = [
 			'type' => 'software',
 			'toegangsticket' => [
-				'soort' => 'so_verklaring',
+				'kind' => 'so_declaration',
 				'rnd_declaration_number' => 'S2023/000999',
-				'so_verklaring_periode' => ['van' => '2023-01-01', 'tot' => '2023-12-31'],
+				'so_declaration_period' => ['van' => '2023-01-01', 'tot' => '2023-12-31'],
 			],
 		];
 		$result = $this->val->validateAccessTicket($asset, '2024-06-01');
@@ -113,12 +113,12 @@ final class QualifyingAssetValidatorTest extends TestCase {
 	 */
 	public function testOctrooiRouteRequiresNumber(): void {
 		$valid = $this->val->validateAccessTicket(
-			['type' => 'octrooi', 'toegangsticket' => ['soort' => 'octrooi', 'patent_number' => 'NL2031234']]
+			['type' => 'octrooi', 'toegangsticket' => ['kind' => 'octrooi', 'patent_number' => 'NL2031234']]
 		);
 		self::assertTrue($valid['valid']);
 
 		$missing = $this->val->validateAccessTicket(
-			['type' => 'octrooi', 'toegangsticket' => ['soort' => 'octrooi']]
+			['type' => 'octrooi', 'toegangsticket' => ['kind' => 'octrooi']]
 		);
 		self::assertFalse($missing['valid']);
 

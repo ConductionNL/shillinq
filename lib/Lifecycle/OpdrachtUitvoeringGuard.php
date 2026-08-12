@@ -79,8 +79,8 @@ class OpdrachtUitvoeringGuard {
 				$this->logger->info(
 					'OpdrachtUitvoeringGuard: no bewijsstuk attached — denying completion (REQ-004)',
 					[
-						'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
-						'mijlpaalId' => ($opdracht['mijlpaalId'] ?? 'unknown'),
+						'commitmentId' => ($opdracht['commitmentId'] ?? 'unknown'),
+						'milestoneId' => ($opdracht['milestoneId'] ?? 'unknown'),
 					]
 				);
 				return false;
@@ -91,7 +91,7 @@ class OpdrachtUitvoeringGuard {
 			$this->logger->error(
 				'OpdrachtUitvoeringGuard: canVoltooien failed — denying completion (fail-closed)',
 				[
-					'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
+					'commitmentId' => ($opdracht['commitmentId'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -111,7 +111,7 @@ class OpdrachtUitvoeringGuard {
 	 * @return bool True when at least one valid bewijsstuk exists.
 	 */
 	private function hasValidBewijsstuk(array $opdracht): bool {
-		$bewijsstukken = ($opdracht['bewijsstukken'] ?? []);
+		$bewijsstukken = ($opdracht['supportingDocuments'] ?? []);
 		if (is_array($bewijsstukken) === false) {
 			return false;
 		}

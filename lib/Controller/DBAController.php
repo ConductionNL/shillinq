@@ -112,10 +112,10 @@ class DBAController extends Controller {
 		return new JSONResponse(
 			[
 				'totalScore' => $total,
-				'risicoNiveau' => $band,
-				'gezagsverhouding' => $this->scoreCalc->subtotalGezag($body),
-				'persoonlijkeArbeid' => $this->scoreCalc->subtotalArbeid($body),
-				'financieelRisico' => $this->scoreCalc->subtotalFinancieel($body),
+				'riskNiveau' => $band,
+				'authorityRelationship' => $this->scoreCalc->subtotalGezag($body),
+				'personalArbeid' => $this->scoreCalc->subtotalArbeid($body),
+				'financieelRisk' => $this->scoreCalc->subtotalFinancieel($body),
 				'deliverooCriteria' => $this->scoreCalc->subtotalDeliveroo($body),
 			]
 		);
@@ -131,7 +131,7 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function saveIntake(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
+		$opdrachtId = (string)($body['assignmentId'] ?? '');
 		if ($opdrachtId === '') {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
@@ -154,8 +154,8 @@ class DBAController extends Controller {
 
 		$body['totalScore'] = $total;
 		$body['interpretatie'] = $band;
-		$body['ingevuldDoor'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
-		$body['ingevuldOp'] ??= (new DateTimeImmutable())->format('Y-m-d');
+		$body['ingevuldBy'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
+		$body['ingevuldOn'] ??= (new DateTimeImmutable())->format('Y-m-d');
 		$body['administrationId'] = (string)($opdracht['administrationId'] ?? '');
 
 		try {
@@ -172,9 +172,9 @@ class DBAController extends Controller {
 		}
 
 		$opdracht['intakeStatus'] = 'INTAKE_VOLTOOID';
-		$opdracht['intakeDatum'] = $body['ingevuldOp'];
+		$opdracht['intakeDate'] = $body['ingevuldOn'];
 		$opdracht['actueleRisicoscore'] = $total;
-		$opdracht['risicoNiveau'] = $risicoNiveau;
+		$opdracht['riskNiveau'] = $risicoNiveau;
 		try {
 			$os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
@@ -199,10 +199,10 @@ class DBAController extends Controller {
 
 		$body = $this->jsonBody();
 		$bedragCents = (int)($body['bedragCents'] ?? 0);
-		$uren = (float)($body['uren'] ?? 0.0);
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
+		$uren = (float)($body['hours'] ?? 0.0);
+		$opdrachtId = (string)($body['assignmentId'] ?? '');
 		$administrationId = (string)($body['administrationId'] ?? '');
-		$factuurId = (string)($body['factuurId'] ?? '');
+		$factuurId = (string)($body['invoiceId'] ?? '');
 
 		$result = $this->vbarMonitor->assess(bedragCents: $bedragCents, uren: $uren, administrationId: $administrationId);
 
@@ -232,8 +232,8 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function uploadWba(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
-		$resultaat = (string)($body['wbaBeoordelingResultaat'] ?? '');
+		$opdrachtId = (string)($body['assignmentId'] ?? '');
+		$resultaat = (string)($body['wbaAssessmentResult'] ?? '');
 		if ($opdrachtId === '' || $resultaat === '') {
 			return $this->error(message: 'opdrachtId + wbaBeoordelingResultaat vereist', code: Http::STATUS_BAD_REQUEST);
 		}
@@ -251,8 +251,8 @@ class DBAController extends Controller {
 
 		$this->ensureAdministrationAccess(opdracht: $opdracht);
 
-		$opdracht['wbaBeoordelingResultaat'] = $resultaat;
-		$opdracht['wbaGeldigTot'] = (new DateTimeImmutable())
+		$opdracht['wbaAssessmentResult'] = $resultaat;
+		$opdracht['wbaValidTo'] = (new DateTimeImmutable())
 			->modify('+' . DBAConstants::WBA_GELDIGHEID_DAGEN . ' days')->format('Y-m-d');
 		try {
 			$updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
@@ -273,7 +273,7 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function beeindigen(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
+		$opdrachtId = (string)($body['assignmentId'] ?? '');
 		$einddatum = (string)($body['actualEndDate'] ?? '');
 		if ($opdrachtId === '' || $einddatum === '') {
 			return $this->error(message: 'opdrachtId + feitelijkeEindDatum vereist', code: Http::STATUS_BAD_REQUEST);
@@ -296,7 +296,7 @@ class DBAController extends Controller {
 		$opdracht['actualEndDate'] = $einddatum;
 		$retentie = $this->opdrachtGuard->computeRetentieDeadline($einddatum);
 		if ($retentie !== null) {
-			$opdracht['retentieDeadline'] = $retentie;
+			$opdracht['retentionDeadline'] = $retentie;
 		}
 
 		try {
@@ -305,7 +305,7 @@ class DBAController extends Controller {
 			return $this->error(message: 'Beeindiging mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new JSONResponse(['opdracht' => $updated, 'retentieDeadline' => $retentie]);
+		return new JSONResponse(['opdracht' => $updated, 'retentionDeadline' => $retentie]);
 	}//end beeindigen()
 
 	/**
@@ -356,7 +356,7 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function setTussenkomstMode(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
+		$opdrachtId = (string)($body['assignmentId'] ?? '');
 		$enabled = (bool)($body['intermediairMode'] ?? false);
 		if ($opdrachtId === '') {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
@@ -439,7 +439,7 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function inhuurIntake(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
+		$opdrachtId = (string)($body['assignmentId'] ?? '');
 		if ($opdrachtId === '') {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
@@ -498,7 +498,7 @@ class DBAController extends Controller {
 		try {
 			$intakeRows = $os->setRegister($register)->setSchema('DBAIntake')->findAll(
 				[
-					'filters' => ['opdrachtId' => $opdrachtId],
+					'filters' => ['assignmentId' => $opdrachtId],
 					'limit' => 1,
 				]
 			);
@@ -521,7 +521,7 @@ class DBAController extends Controller {
 		try {
 			$flagRows = $os->setRegister($register)->setSchema('DBARisicoflag')->findAll(
 				[
-					'filters' => ['opdrachtId' => $opdrachtId],
+					'filters' => ['assignmentId' => $opdrachtId],
 					'limit' => 500,
 				]
 			);

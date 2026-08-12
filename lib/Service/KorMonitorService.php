@@ -69,8 +69,8 @@ class KorMonitorService {
 	 * @param int $year Calendar year to report.
 	 *
 	 * @return array{
-	 *   administrationId:string, jaar:int, lopendeOmzet:float, drempel:float,
-	 *   drempelBenutting:float, perMaand:array<string,float>, prognoseEindeJaar:float,
+	 *   administrationId:string, year:int, currentRevenue:float, threshold:float,
+	 *   thresholdUtilisation:float, perMonth:array<string,float>, forecastYearEnd:float,
 	 *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
 	 * }
 	 *
@@ -96,9 +96,9 @@ class KorMonitorService {
 			'administrationId' => $administrationId,
 			'year' => $year,
 			'currentRevenue' => $this->calculator->fromCents(cents: $omzetCents),
-			'drempel' => $this->calculator->fromCents(cents: $drempelCents),
-			'drempelBenutting' => round($benutting, 4),
-			'perMaand' => $perMaand,
+			'threshold' => $this->calculator->fromCents(cents: $drempelCents),
+			'thresholdUtilisation' => round($benutting, 4),
+			'perMonth' => $perMaand,
 			'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
 			'prognoseStatus' => $this->calculator->prognoseStatus(
 				prognoseCents: $prognoseCents,
@@ -136,7 +136,7 @@ class KorMonitorService {
 
 		$today = date('Y-m-d');
 		foreach ($registrations as $registration) {
-			$vroegste = (string)($registration['vroegsteOpzegDatum'] ?? '');
+			$vroegste = (string)($registration['vroegsteOpzegDate'] ?? '');
 			$eind = (string)($registration['lockInEndDate'] ?? '');
 			if ($this->calculator->isOptOutPermitted(
 				today: $today,

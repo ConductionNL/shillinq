@@ -46,21 +46,21 @@ class BegrotingswijzigingStacker {
 	 * @param array<int,array<string,mixed>> $basisTaakvelden The vastgestelde basis Taakveld rows.
 	 * @param array<int,array<string,mixed>> $wijzigingen The Begrotingswijziging rows (any status).
 	 *
-	 * @return array<string,array{baten:float,lasten:float}> Effective stand keyed by taakveldCode.
+	 * @return array<string,array{revenue:float,expenses:float}> Effective stand keyed by taakveldCode.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
 	 */
 	public function currentStand(array $basisTaakvelden, array $wijzigingen): array {
 		$stand = [];
 		foreach ($basisTaakvelden as $taakveld) {
-			$code = (string)($taakveld['taakveldCode'] ?? '');
+			$code = (string)($taakveld['taskFieldCode'] ?? '');
 			if ($code === '') {
 				continue;
 			}
 
 			$stand[$code] = [
-				'batenCents' => (int)round(((float)($taakveld['baten'] ?? 0)) * 100),
-				'lastenCents' => (int)round(((float)($taakveld['lasten'] ?? 0)) * 100),
+				'revenueCents' => (int)round(((float)($taakveld['revenue'] ?? 0)) * 100),
+				'expensesCents' => (int)round(((float)($taakveld['expenses'] ?? 0)) * 100),
 			];
 		}
 
@@ -69,7 +69,7 @@ class BegrotingswijzigingStacker {
 				continue;
 			}
 
-			$mutaties = ($wijziging['mutaties'] ?? []);
+			$mutaties = ($wijziging['movements'] ?? []);
 			if (is_array($mutaties) === true) {
 				$stand = $this->applyMutaties(stand: $stand, mutaties: $mutaties);
 			}
@@ -78,8 +78,8 @@ class BegrotingswijzigingStacker {
 		$result = [];
 		foreach ($stand as $code => $cents) {
 			$result[$code] = [
-				'baten' => (float)($cents['batenCents'] / 100),
-				'lasten' => (float)($cents['lastenCents'] / 100),
+				'revenue' => (float)($cents['revenueCents'] / 100),
+				'expenses' => (float)($cents['expensesCents'] / 100),
 			];
 		}
 
@@ -89,10 +89,10 @@ class BegrotingswijzigingStacker {
 	/**
 	 * Apply one wijziging's mutaties onto the cent-keyed stand.
 	 *
-	 * @param array<string,array{batenCents:int,lastenCents:int}> $stand The accumulating cent-keyed stand.
+	 * @param array<string,array{revenueCents:int,expensesCents:int}> $stand The accumulating cent-keyed stand.
 	 * @param array<int,mixed> $mutaties The wijziging's delta rows.
 	 *
-	 * @return array<string,array{batenCents:int,lastenCents:int}> The updated stand.
+	 * @return array<string,array{revenueCents:int,expensesCents:int}> The updated stand.
 	 */
 	private function applyMutaties(array $stand, array $mutaties): array {
 		foreach ($mutaties as $mutatie) {
@@ -100,17 +100,17 @@ class BegrotingswijzigingStacker {
 				continue;
 			}
 
-			$code = (string)($mutatie['taakveldCode'] ?? '');
+			$code = (string)($mutatie['taskFieldCode'] ?? '');
 			if ($code === '') {
 				continue;
 			}
 
 			if (isset($stand[$code]) === false) {
-				$stand[$code] = ['batenCents' => 0, 'lastenCents' => 0];
+				$stand[$code] = ['revenueCents' => 0, 'expensesCents' => 0];
 			}
 
-			$stand[$code]['batenCents'] += (int)round(((float)($mutatie['baten_delta'] ?? 0)) * 100);
-			$stand[$code]['lastenCents'] += (int)round(((float)($mutatie['lasten_delta'] ?? 0)) * 100);
+			$stand[$code]['revenueCents'] += (int)round(((float)($mutatie['baten_delta'] ?? 0)) * 100);
+			$stand[$code]['expensesCents'] += (int)round(((float)($mutatie['lasten_delta'] ?? 0)) * 100);
 		}
 
 		return $stand;
@@ -133,6 +133,6 @@ class BegrotingswijzigingStacker {
 	 */
 	public function authorizedLasten(string $taakveldCode, array $basisTaakvelden, array $wijzigingen): float {
 		$stand = $this->currentStand(basisTaakvelden: $basisTaakvelden, wijzigingen: $wijzigingen);
-		return ($stand[$taakveldCode]['lasten'] ?? 0.0);
+		return ($stand[$taakveldCode]['expenses'] ?? 0.0);
 	}//end authorizedLasten()
 }//end class

@@ -104,7 +104,7 @@ class RechtmatigheidGuard {
 				return true;
 			}
 
-			$onderbouwing = trim((string)($toets['onderbouwing'] ?? ''));
+			$onderbouwing = trim((string)($toets['substantiation'] ?? ''));
 			if (mb_strlen($onderbouwing) < self::MIN_ONDERBOUWING_LENGTH) {
 				$this->logger->info(
 					'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
@@ -117,7 +117,7 @@ class RechtmatigheidGuard {
 				return false;
 			}
 
-			$bevinding = trim((string)($toets['rechtmatigheidsbevinding'] ?? ''));
+			$bevinding = trim((string)($toets['lawfulnessFinding'] ?? ''));
 			if ($bevinding === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden',
@@ -153,11 +153,11 @@ class RechtmatigheidGuard {
 	 */
 	public function canResolveBevinding(array $bevinding): bool {
 		try {
-			$correctie = trim((string)($bevinding['correctieboeking_id'] ?? ''));
+			$correctie = trim((string)($bevinding['correctionentry_id'] ?? ''));
 			if ($correctie === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: bevinding without correctieboeking_id — denying oplossen',
-					['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown')]
+					['findingNumber' => ($bevinding['findingNumber'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -166,7 +166,7 @@ class RechtmatigheidGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RechtmatigheidGuard: canResolveBevinding failed — denying oplossen (fail-closed)',
-				['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['findingNumber' => ($bevinding['findingNumber'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -191,12 +191,12 @@ class RechtmatigheidGuard {
 	 */
 	public function canVaststellenParagraaf(array $paragraaf): bool {
 		try {
-			$binnenTolerantie = (bool)($paragraaf['binnen_tolerantie'] ?? true);
+			$binnenTolerantie = (bool)($paragraaf['binnen_tolerance'] ?? true);
 			if ($binnenTolerantie === true) {
 				return true;
 			}
 
-			$verklaring = trim((string)($paragraaf['verklaring_college'] ?? ''));
+			$verklaring = trim((string)($paragraaf['declaration_college'] ?? ''));
 			if ($verklaring === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: paragraaf buiten tolerantie zonder toelichting — denying vaststellen',

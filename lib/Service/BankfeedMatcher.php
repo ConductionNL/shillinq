@@ -74,8 +74,8 @@ class BankfeedMatcher {
 		foreach ($candidateInvoices as $candidate) {
 			$candAmount = (float)($candidate['outstandingAmount'] ?? 0.0);
 			$candId = (string)($candidate['arInvoiceId'] ?? '');
-			$candKlant = (string)($candidate['klantId'] ?? '');
-			$candDate = (string)($candidate['verwachtOntvangstDatum'] ?? '');
+			$candKlant = (string)($candidate['customerId'] ?? '');
+			$candDate = (string)($candidate['expectedReceiptDate'] ?? '');
 
 			// Amount signal — 1.0 at zero delta, 0 at >= 5% delta.
 			$amountScore = 0.0;

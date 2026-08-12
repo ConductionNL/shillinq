@@ -125,9 +125,9 @@ class QualifyingAssetValidator {
 	 * @return array<int,string> Validation error codes (empty when valid).
 	 */
 	private function validateSingleRoute(array $ticket, string $referenceDate): array {
-		$soort = (string)($ticket['soort'] ?? '');
+		$soort = (string)($ticket['kind'] ?? '');
 
-		if ($soort === 'so_verklaring') {
+		if ($soort === 'so_declaration') {
 			return $this->validateSoVerklaring(ticket: $ticket, referenceDate: $referenceDate, required: true);
 		}
 
@@ -180,7 +180,7 @@ class QualifyingAssetValidator {
 			return ['so_verklaring_format_invalid'];
 		}
 
-		$tot = (string)(($ticket['so_verklaring_periode']['tot'] ?? ''));
+		$tot = (string)(($ticket['so_declaration_period']['tot'] ?? ''));
 		if ($tot !== '' && $tot < $referenceDate) {
 			return ['so_verklaring_expired'];
 		}

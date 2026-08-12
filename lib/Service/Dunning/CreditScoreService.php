@@ -113,10 +113,10 @@ class CreditScoreService {
 
 		// Normalise + persist the fresh snapshot so the next call hits the cache.
 		$fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
-		$fresh['klantId'] = ($fresh['klantId'] ?? $klantId);
+		$fresh['customerId'] = ($fresh['customerId'] ?? $klantId);
 		$fresh['provider'] = ($fresh['provider'] ?? $provider);
-		if (isset($fresh['scoreDatum']) === false || (string)$fresh['scoreDatum'] === '') {
-			$fresh['scoreDatum'] = (new DateTimeImmutable())->format('Y-m-d');
+		if (isset($fresh['scoreDate']) === false || (string)$fresh['scoreDate'] === '') {
+			$fresh['scoreDate'] = (new DateTimeImmutable())->format('Y-m-d');
 		}
 
 		try {
@@ -198,12 +198,12 @@ class CreditScoreService {
 			];
 		}
 
-		$klantId = (string)($score['klantId'] ?? '');
+		$klantId = (string)($score['customerId'] ?? '');
 		$message = sprintf(
 			'Klant %s heeft lage creditscore (%s op %s). Overweeg vooruitbetaling of deelfacturatie.',
 			$klantId,
 			(string)$value,
-			(string)($score['scoreSchaal'] ?? '')
+			(string)($score['scoreScale'] ?? '')
 		);
 
 		return [
@@ -234,7 +234,7 @@ class CreditScoreService {
 					[
 						'filters' => [
 							'administrationId' => $administrationId,
-							'klantId' => $klantId,
+							'customerId' => $klantId,
 							'provider' => $provider,
 						],
 					]
@@ -246,7 +246,7 @@ class CreditScoreService {
 			usort(
 				$rows,
 				static function (array $a, array $b): int {
-					return strcmp((string)($b['scoreDatum'] ?? ''), (string)($a['scoreDatum'] ?? ''));
+					return strcmp((string)($b['scoreDate'] ?? ''), (string)($a['scoreDate'] ?? ''));
 				}
 			);
 			return $rows[0];
@@ -266,7 +266,7 @@ class CreditScoreService {
 	 */
 	private function isFresh(array $score): bool {
 		$days = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
-		$datum = (string)($score['scoreDatum'] ?? '');
+		$datum = (string)($score['scoreDate'] ?? '');
 		if ($datum === '') {
 			return false;
 		}

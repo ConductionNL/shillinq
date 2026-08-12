@@ -86,7 +86,7 @@ class DbaInvoiceMonitorListener implements IEventListener {
 		$administrationId = (string)($payload['administrationId'] ?? '');
 		$factuurId = (string)($payload['@self']['id'] ?? ($payload['id'] ?? ''));
 		$bedragCents = (int)($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
-		$uren = (float)($payload['uren'] ?? ($payload['hoursBilled'] ?? 0.0));
+		$uren = (float)($payload['hours'] ?? ($payload['hoursBilled'] ?? 0.0));
 
 		try {
 			$result = $this->vbarMonitor->assess(
@@ -110,7 +110,7 @@ class DbaInvoiceMonitorListener implements IEventListener {
 			// be undone by a DBA monitoring hiccup.
 			$this->logger->warning(
 				'DbaInvoiceMonitorListener: VBAR assess/emit failed (non-blocking).',
-				['opdrachtId' => $opdrachtId, 'factuurId' => $factuurId, 'exception' => $e->getMessage()]
+				['assignmentId' => $opdrachtId, 'invoiceId' => $factuurId, 'exception' => $e->getMessage()]
 			);
 		}//end try
 	}//end handle()

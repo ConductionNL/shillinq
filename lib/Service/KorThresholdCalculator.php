@@ -302,7 +302,7 @@ class KorThresholdCalculator {
 	 *
 	 * @param string $ingangsDatum KOR-NL effective date (YYYY-MM-DD).
 	 *
-	 * @return array{lockInEindDatum:string,vroegsteOpzegDatum:string}|null Window or null on invalid input.
+	 * @return array{lockInEndDate:string,vroegsteOpzegDate:string}|null Window or null on invalid input.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
@@ -360,7 +360,7 @@ class KorThresholdCalculator {
 
 		return [
 			'lockInEndDate' => $lockInEinde,
-			'vroegsteOpzegDatum' => $vroegsteOpzeg,
+			'vroegsteOpzegDate' => $vroegsteOpzeg,
 		];
 
 	}//end lockInWindow()
@@ -400,7 +400,7 @@ class KorThresholdCalculator {
 	 * @param array<string,float> $drempelsPerLidstaat Per-country drempel (EUR); e.g. ['BE' => 25000, 'DE' => 22000].
 	 * @param int $year Calendar year to bound the aggregation.
 	 *
-	 * @return array<string,array{omzet:float,drempel:float,benutting:float}> Per-lidstaat aggregate.
+	 * @return array<string,array{revenue:float,threshold:float,benutting:float}> Per-lidstaat aggregate.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
@@ -434,7 +434,7 @@ class KorThresholdCalculator {
 
 			$result[$lidstaat] = [
 				'revenue' => $this->fromCents(cents: $omzetCents),
-				'drempel' => $this->fromCents(cents: $drempelCents),
+				'threshold' => $this->fromCents(cents: $drempelCents),
 				'benutting' => round($this->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents), 4),
 			];
 		}
@@ -456,7 +456,7 @@ class KorThresholdCalculator {
 	 *
 	 * @param array<string,mixed> $branche Administration's branche profile.
 	 *
-	 * @return array{verdict:string,reden:string} Verdict (OK|WARN|BLOCK) + reden.
+	 * @return array{verdict:string,reason:string} Verdict (OK|WARN|BLOCK) + reden.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
@@ -465,7 +465,7 @@ class KorThresholdCalculator {
 		if ($isFiscaleEenheid === true) {
 			return [
 				'verdict' => 'BLOCK',
-				'reden' => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; '
+				'reason' => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; '
 					. 'de eenheid zelf moet aanmelden, niet een individuele deelnemer.',
 			];
 		}
@@ -474,7 +474,7 @@ class KorThresholdCalculator {
 		if ($fullExempt === true) {
 			return [
 				'verdict' => 'BLOCK',
-				'reden' => 'Onderneming valt volledig onder art. 11 OB; KOR levert geen voordeel en blokkeert voorbelasting-aftrek.',
+				'reason' => 'Onderneming valt volledig onder art. 11 OB; KOR levert geen voordeel en blokkeert voorbelasting-aftrek.',
 			];
 		}
 
@@ -482,7 +482,7 @@ class KorThresholdCalculator {
 		if ($isMixed === true) {
 			return [
 				'verdict' => 'WARN',
-				'reden' => 'Mixed-use vrijgesteld + belast: effective KOR-drempel wordt berekend over alleen het belaste deel.',
+				'reason' => 'Mixed-use vrijgesteld + belast: effective KOR-drempel wordt berekend over alleen het belaste deel.',
 			];
 		}
 
@@ -490,11 +490,11 @@ class KorThresholdCalculator {
 		if ($isIntra === true) {
 			return [
 				'verdict' => 'WARN',
-				'reden' => 'Bedrijf doet structureel intracommunautaire leveringen; overweeg OSS-regime als alternatief.',
+				'reason' => 'Bedrijf doet structureel intracommunautaire leveringen; overweeg OSS-regime als alternatief.',
 			];
 		}
 
-		return ['verdict' => 'OK', 'reden' => 'Geen branche-specifieke contra-indicaties; KOR is geschikt.'];
+		return ['verdict' => 'OK', 'reason' => 'Geen branche-specifieke contra-indicaties; KOR is geschikt.'];
 	}//end brancheCompatibility()
 
 	/**

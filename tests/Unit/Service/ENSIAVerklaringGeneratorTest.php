@@ -48,7 +48,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderProducesValidDocxArchive(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
 				'year' => 2026,
 			],
 			vragen: [],
@@ -87,7 +87,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderIncludesOrganisationData(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
 				'year' => 2026,
 			],
 			vragen: [],
@@ -110,13 +110,13 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderIncludesPerDomeinSummary(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
 				'year' => 2026,
 			],
 			vragen: [
-				['domein' => 'BIO',   'volwassenheidsScore' => 4, 'normniveau' => 3],
-				['domein' => 'BIO',   'volwassenheidsScore' => 2, 'normniveau' => 3],
-				['domein' => 'DigiD', 'antwoord' => 'ja'],
+				['domein' => 'BIO',   'maturityScore' => 4, 'normniveau' => 3],
+				['domein' => 'BIO',   'maturityScore' => 2, 'normniveau' => 3],
+				['domein' => 'DigiD', 'answer' => 'ja'],
 			],
 			bevindingen: []
 		);
@@ -135,15 +135,15 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderListsTopFindings(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
 				'year' => 2026,
 			],
 			vragen: [],
 			bevindingen: [
 				[
 					'type' => 'tekortkoming',
-					'beschrijving' => 'BIO-9.1.1 score 2 onder norm 3',
-					'mitigatieActie' => 'Implementeer access-review proces.',
+					'description' => 'BIO-9.1.1 score 2 onder norm 3',
+					'mitigationAction' => 'Implementeer access-review proces.',
 				],
 			]
 		);
@@ -162,7 +162,7 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 	public function testRenderIncludesSignatureFields(): void {
 		$docx = $this->generator->render(
 			cyclus: [
-				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'organisation' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
 				'year' => 2026,
 			],
 			vragen: [],

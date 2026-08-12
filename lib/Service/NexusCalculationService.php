@@ -62,12 +62,12 @@ class NexusCalculationService {
 	 * @param float $upliftFactor Uplift factor, default 1.3 per OECD.
 	 *
 	 * @return array{
-	 *   tellerVoorUplift: float,
-	 *   tellerNaUplift: float,
-	 *   noemer: float,
-	 *   nexusbreukOngecapt: float,
-	 *   nexusbreukToegepast: float,
-	 *   totaleRdKosten: float
+	 *   numeratorBeforeUplift: float,
+	 *   numeratorAfterUplift: float,
+	 *   denominator: float,
+	 *   nexusFractionUncapped: float,
+	 *   nexusFractionApplied: float,
+	 *   totalRdCost: float
 	 * }
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
@@ -82,27 +82,27 @@ class NexusCalculationService {
 		$derden = max(0.0, $uitbesteedDerden);
 		$verbonden = max(0.0, $uitbesteedVerbonden);
 
-		$tellerVoorUplift = ($eigen + $derden);
+		$numeratorBeforeUplift = ($eigen + $derden);
 		$totaal = ($eigen + $derden + $verbonden);
 
 		// Teller_na_uplift never exceeds the total R&D cost (OECD cap on the teller).
-		$tellerNaUplift = min(($upliftFactor * $tellerVoorUplift), $totaal);
+		$numeratorAfterUplift = min(($upliftFactor * $numeratorBeforeUplift), $totaal);
 
 		$ongecapt = 0.0;
 		if ($totaal > 0.0) {
-			$ongecapt = ($tellerNaUplift / $totaal);
+			$ongecapt = ($numeratorAfterUplift / $totaal);
 		}
 
 		// The nexusbreuk itself is capped at 100% (1.0).
 		$toegepast = min($ongecapt, 1.0);
 
 		return [
-			'tellerVoorUplift' => round($tellerVoorUplift, 2),
-			'tellerNaUplift' => round($tellerNaUplift, 2),
-			'noemer' => round($totaal, 2),
-			'totaleRdKosten' => round($totaal, 2),
-			'nexusbreukOngecapt' => round($ongecapt, 4),
-			'nexusbreukToegepast' => round($toegepast, 4),
+			'numeratorBeforeUplift' => round($numeratorBeforeUplift, 2),
+			'numeratorAfterUplift' => round($numeratorAfterUplift, 2),
+			'denominator' => round($totaal, 2),
+			'totalRdCost' => round($totaal, 2),
+			'nexusFractionUncapped' => round($ongecapt, 4),
+			'nexusFractionApplied' => round($toegepast, 4),
 		];
 
 	}//end calculateNexusBreak()
@@ -132,6 +132,6 @@ class NexusCalculationService {
 			uitbesteedVerbonden: $uitbesteedVerbonden
 		);
 
-		return (float)$result['nexusbreukToegepast'];
+		return (float)$result['nexusFractionApplied'];
 	}//end scenarioNexusBreak()
 }//end class

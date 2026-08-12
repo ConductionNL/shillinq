@@ -332,11 +332,11 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 		$base = [
 			'administrationId' => 'adm-shillinq-bbv-1',
 			'jurisdiction' => 'NL',
-			'entityType' => 'gemeente',
+			'entityType' => 'municipality',
 			'fiscalYear' => 2026,
 			'currency' => 'EUR',
 			'paragraphs' => $paragraphs,
-			'taakvelden' => $taakvelden,
+			'taskFields' => $taakvelden,
 			'fixedAssets' => $fixedAssets,
 		];
 
@@ -348,19 +348,19 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 				['code' => '1', 'name' => 'Bestuur en ondersteuning'],
 				['code' => '2', 'name' => 'Verkeer, vervoer en waterstaat'],
 			],
-			'algemeneDekkingsmiddelen' => 38500000.00,
+			'algemeneFundingSources' => 38500000.00,
 			'overhead' => 6200000.00,
 			'vpbCharge' => 0.00,
-			'onvoorzien' => 150000.00,
+			'unforeseen' => 150000.00,
 		];
 
 		$jaarstukken = $base;
 		$jaarstukken['documentType'] = 'jaarstukken';
-		$jaarstukken['parts'] = ['jaarverslag', 'jaarrekening'];
-		$jaarstukken['jaarrekening'] = [
-			'overzichtBatenLasten' => true,
+		$jaarstukken['parts'] = ['jaarverslag', 'annualAccounts'];
+		$jaarstukken['annualAccounts'] = [
+			'overzichtRevenueExpenses' => true,
 			'balans' => true,
-			'rechtmatigheidsverantwoording' => true,
+			'lawfulnessAccountability' => true,
 			'accountantsverklaring' => true,
 		];
 
@@ -685,7 +685,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		foreach (['algemeneDekkingsmiddelen', 'overhead', 'vpbCharge', 'onvoorzien'] as $key) {
+		foreach (['algemeneFundingSources', 'overhead', 'vpbCharge', 'unforeseen'] as $key) {
 			if (is_numeric($plan[$key] ?? null) === false) {
 				return false;
 			}
@@ -732,16 +732,16 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function jaarstukkenComplete(array $o): bool {
-		if (self::hasPart($o, 'jaarverslag') === false || self::hasPart($o, 'jaarrekening') === false) {
+		if (self::hasPart($o, 'jaarverslag') === false || self::hasPart($o, 'annualAccounts') === false) {
 			return false;
 		}
 
-		$jr = ($o['jaarrekening'] ?? null);
+		$jr = ($o['annualAccounts'] ?? null);
 		if (is_array($jr) === false) {
 			return false;
 		}
 
-		foreach (['overzichtBatenLasten', 'balans', 'rechtmatigheidsverantwoording', 'accountantsverklaring'] as $key) {
+		foreach (['overzichtRevenueExpenses', 'balans', 'lawfulnessAccountability', 'accountantsverklaring'] as $key) {
 			if (self::truthyValue($jr[$key] ?? null) === false) {
 				return false;
 			}
@@ -816,7 +816,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function taakveldenComplete(array $o): bool {
-		$lines = ($o['taakvelden'] ?? null);
+		$lines = ($o['taskFields'] ?? null);
 		if (is_array($lines) === false || $lines === []) {
 			return false;
 		}

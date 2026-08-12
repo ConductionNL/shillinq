@@ -98,7 +98,7 @@ class PayrollService {
 			throw new RuntimeException('Werkgever niet gevonden in deze administratie.');
 		}
 
-		$periodeType = (string)($periode['periodeType'] ?? 'MAAND');
+		$periodeType = (string)($periode['periodType'] ?? 'MAAND');
 
 		// Resolve the immutable wage-tax table for the period (REQ-PAY-002).
 		$tabelRegels = $this->resolveTabelRegels(administrationId: $administrationId, periode: $periode, werknemer: $werknemer);
@@ -160,7 +160,7 @@ class PayrollService {
 		$svWg = $this->calculator->premiesSVWerkgever(
 			premieloonSV: $premieloonSV,
 			periodeType: $periodeType,
-			awfTarief: (string)($werkgever['awfTarief'] ?? 'LAAG'),
+			awfTarief: (string)($werkgever['awfRate'] ?? 'LAAG'),
 			kleineWerkgever: true,
 			whkTarief: (float)($werknemer['whkTarief2026'] ?? 0.0),
 			wkoTarief: (float)($werknemer['wkoTarief2026'] ?? 0.0)
@@ -168,12 +168,12 @@ class PayrollService {
 		$zvw = $this->calculator->zvwWerkgever(
 			premieloonSV: $premieloonSV,
 			periodeType: $periodeType,
-			zvwTarief: (string)($werkgever['zvwTarief'] ?? 'LAAG')
+			zvwTarief: (string)($werkgever['zvwRate'] ?? 'LAAG')
 		);
 		$pensioen = $this->calculator->pensioen(
 			grondslag: $basissalaris,
 			pctWerkgever: (float)($werknemer['pensioenPremiePctWerkgever'] ?? 0),
-			pctWerknemer: (float)($werknemer['pensioenPremiePctWerknemer'] ?? 0)
+			pctWerknemer: (float)($werknemer['pensioenPremiePctEmployee'] ?? 0)
 		);
 
 		$nettoBetaald = $this->calculator->nettoBetaald(
@@ -198,19 +198,19 @@ class PayrollService {
 		);
 
 		return [
-			'werknemerId' => $werknemerId,
-			'periodeId' => (string)($periode['id'] ?? ($periode['@self']['id'] ?? '')),
-			'brutoComponenten' => $brutoComponenten,
-			'fiscaalLoon' => $fiscaalLoon,
-			'premieloon_SV' => $premieloonSV,
-			'loonheffing' => $loonheffing,
+			'employeeId' => $werknemerId,
+			'periodId' => (string)($periode['id'] ?? ($periode['@self']['id'] ?? '')),
+			'grossComponenten' => $brutoComponenten,
+			'fiscalPay' => $fiscaalLoon,
+			'contributionpay_sv' => $premieloonSV,
+			'payrollTax' => $loonheffing,
 			'inhoudingenSV' => ['totaal_sv_wn' => 0],
 			'premiesSVWerkgever' => $svWg,
-			'zvw' => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'tarief' => $zvw['tarief']],
+			'zvw' => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
 			'pensioen' => $pensioen,
-			'nettoBetaald' => $nettoBetaald,
+			'netPaid' => $nettoBetaald,
 			'cumulatieven' => $cumulatieven,
-			'vakantieDagenReservering' => ['opgebouwdEuro' => $vakantieOpbouw],
+			'holidayDaysAccrual' => ['opgebouwdEuro' => $vakantieOpbouw],
 			'administrationId' => $administrationId,
 		];
 
@@ -233,13 +233,13 @@ class PayrollService {
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
 	public function berekenLHAfdracht(string $administrationId, string $periodeId, float $eindheffingenWKR = 0.0): array {
-		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodeId' => $periodeId]);
+		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodId' => $periodeId]);
 
 		$lhC = 0;
 		$svC = 0;
 		$zvwC = 0;
 		foreach ($stroken as $strook) {
-			$lhC += $this->calculator->toCents(amount: ($strook['loonheffing'] ?? 0));
+			$lhC += $this->calculator->toCents(amount: ($strook['payrollTax'] ?? 0));
 			$svC += $this->calculator->toCents(amount: ($strook['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
 			$zvwC += $this->calculator->toCents(amount: ($strook['zvw']['afgedragen_wg'] ?? 0));
 		}
@@ -260,13 +260,13 @@ class PayrollService {
 
 		return [
 			'werkgeverId' => $werkgeverId,
-			'periodeId' => $periodeId,
+			'periodId' => $periodeId,
 			'totalPayrollTax' => $loonheffing,
 			'totalFinalLeviesWorkRelatedCosts' => $wkr,
 			'totalSocialInsuranceContributions' => $premiesSV,
 			'totalHealthInsurance' => $zvw,
 			'totalRemittance' => $totaal,
-			'vervaldagAfdracht' => $this->laatsteDagVolgendeMaand(periode: $periode),
+			'vervaldagRemittance' => $this->laatsteDagVolgendeMaand(periode: $periode),
 			'status' => 'VOORBEREID',
 			'sbrInstanceRef' => null,
 			'administrationId' => $administrationId,
@@ -292,7 +292,7 @@ class PayrollService {
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
 	public function bouwLoonjournaalpost(string $administrationId, string $periodeId): array {
-		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodeId' => $periodeId]);
+		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodId' => $periodeId]);
 
 		$brutoC = 0;
 		$vrijC = 0;
@@ -303,16 +303,16 @@ class PayrollService {
 		$lhC = 0;
 		$nettoC = 0;
 		foreach ($stroken as $s) {
-			$totaalBruto = (float)($s['brutoComponenten']['totaal_bruto'] ?? 0);
-			$vrij = (float)($s['brutoComponenten']['thuiswerkvergoeding'] ?? 0);
+			$totaalBruto = (float)($s['grossComponenten']['totaal_bruto'] ?? 0);
+			$vrij = (float)($s['grossComponenten']['thuiswerkvergoeding'] ?? 0);
 			$brutoC += ($this->calculator->toCents(amount: $totaalBruto) - $this->calculator->toCents(amount: $vrij));
 			$vrijC += $this->calculator->toCents(amount: $vrij);
 			$svWgC += $this->calculator->toCents(amount: ($s['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
 			$zvwC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
 			$pensWgC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));
 			$pensWnC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));
-			$lhC += $this->calculator->toCents(amount: ($s['loonheffing'] ?? 0));
-			$nettoC += $this->calculator->toCents(amount: ($s['nettoBetaald'] ?? 0));
+			$lhC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
+			$nettoC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
 		}//end foreach
 
 		$f = (fn (int $c): float => $this->calculator->fromCents(cents: $c));
@@ -379,9 +379,9 @@ class PayrollService {
 		$balanced = ($debetTotaal === $creditTotaal);
 
 		return [
-			'periodeId' => $periodeId,
-			'datum' => (string)date('Y-m-d'),
-			'regels' => $regels,
+			'periodId' => $periodeId,
+			'date' => (string)date('Y-m-d'),
+			'rules' => $regels,
 			'balanced' => $balanced,
 			'administrationId' => $administrationId,
 		];
@@ -418,7 +418,7 @@ class PayrollService {
 		if (($journaalpost['balanced'] ?? false) !== true) {
 			$this->logger->error(
 				'Shillinq payroll: refusing to post unbalanced loonjournaalpost',
-				['periodeId' => ($journaalpost['periodeId'] ?? null)]
+				['periodId' => ($journaalpost['periodId'] ?? null)]
 			);
 			throw new RuntimeException('Loonjournaalpost is niet in balans (debet != credit).');
 		}
@@ -465,13 +465,13 @@ class PayrollService {
 	 * @return array{fiscaalloon_ytd:float,vakantiegeld_reservering_ytd:float}
 	 */
 	private function stampCumulatieven(string $administrationId, string $werknemerId, float $fiscaalLoon, float $vakantieOpbouw): array {
-		$priorStroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['werknemerId' => $werknemerId]);
+		$priorStroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['employeeId' => $werknemerId]);
 
 		$fiscaalC = $this->calculator->toCents($fiscaalLoon);
 		$vakC = $this->calculator->toCents($vakantieOpbouw);
 		foreach ($priorStroken as $s) {
-			$fiscaalC += $this->calculator->toCents($s['fiscaalLoon'] ?? 0);
-			$vakC += $this->calculator->toCents(($s['vakantieDagenReservering']['opgebouwdEuro'] ?? 0));
+			$fiscaalC += $this->calculator->toCents($s['fiscalPay'] ?? 0);
+			$vakC += $this->calculator->toCents(($s['holidayDaysAccrual']['opgebouwdEuro'] ?? 0));
 		}
 
 		return [
@@ -490,7 +490,7 @@ class PayrollService {
 	 * @return float Period gross.
 	 */
 	private function periodeBrutoUitJaarloon(array $werknemer, string $periodeType): float {
-		$jaar = (float)($werknemer['jaarloonBruto'] ?? ($werknemer['jaarloonSV'] ?? 0));
+		$jaar = (float)($werknemer['annualPayGross'] ?? ($werknemer['annualPaySV'] ?? 0));
 		if ($jaar <= 0.0) {
 			return 0.0;
 		}
@@ -531,16 +531,16 @@ class PayrollService {
 	private function resolveTabelRegels(string $administrationId, array $periode, array $werknemer): array {
 		unset($administrationId);
 
-		$tabelId = (string)($periode['loonheffingstabelId'] ?? '');
+		$tabelId = (string)($periode['payrollTaxTableId'] ?? '');
 		if ($tabelId !== '') {
 			$tabel = $this->findOneGlobal(schema: 'LoonheffingTabel2026', filters: ['id' => $tabelId]);
-			if ($tabel !== null && is_array(($tabel['tabelRegels'] ?? null)) === true) {
-				return $tabel['tabelRegels'];
+			if ($tabel !== null && is_array(($tabel['tabelRules'] ?? null)) === true) {
+				return $tabel['tabelRules'];
 			}
 		}
 
 		$kleur = 'WIT';
-		if (str_starts_with((string)($werknemer['loonheffingstabel'] ?? 'WIT'), 'GROEN') === true) {
+		if (str_starts_with((string)($werknemer['payrollTaxTable'] ?? 'WIT'), 'GROEN') === true) {
 			$kleur = 'GROEN';
 		}
 
@@ -548,13 +548,13 @@ class PayrollService {
 			schema: 'LoonheffingTabel2026',
 			filters: [
 				'kleur' => $kleur,
-				'periode' => (string)($periode['periodeType'] ?? 'MAAND'),
-				'metKorting' => (bool)($werknemer['loonheffingstabelKorting'] ?? true),
+				'period' => (string)($periode['periodType'] ?? 'MAAND'),
+				'withDiscount' => (bool)($werknemer['payrollTaxTableDiscount'] ?? true),
 			]
 		);
 		foreach ($tabellen as $tabel) {
-			if (is_array(($tabel['tabelRegels'] ?? null)) === true) {
-				return $tabel['tabelRegels'];
+			if (is_array(($tabel['tabelRules'] ?? null)) === true) {
+				return $tabel['tabelRules'];
 			}
 		}
 

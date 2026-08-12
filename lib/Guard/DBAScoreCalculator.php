@@ -86,16 +86,16 @@ class DBAScoreCalculator {
 
 		$booster = 0;
 		$deliverooBlock = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
-		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['persoonlijkeArbeid'] ?? []));
+		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['personalArbeid'] ?? []));
 
 		$exclusief = (bool)($deliverooBlock['exclusief'] ?? false);
-		$duur = (string)($deliverooBlock['duurRelatie'] ?? '');
+		$duur = (string)($deliverooBlock['durationRelationship'] ?? '');
 		if ($exclusief === true && in_array($duur, ['1_TOT_2_JAAR', 'MEER_DAN_2_JAAR'], true) === true) {
 			$booster += 5;
 		}
 
-		$vervBaar = (int)($arbeidBlock['vervangbaarScore'] ?? 0);
-		$vervFeitelijk = (int)($arbeidBlock['vervangingFeitelijkScore'] ?? 0);
+		$vervBaar = (int)($arbeidBlock['replaceableScore'] ?? 0);
+		$vervFeitelijk = (int)($arbeidBlock['replacementActualScore'] ?? 0);
 		if ($vervBaar < 5 && $vervFeitelijk >= 10) {
 			$booster += 5;
 		}
@@ -132,10 +132,10 @@ class DBAScoreCalculator {
 	 * @return int The subtotal in [0, 20].
 	 */
 	public function subtotalGezag(array $intake): int {
-		$block = $this->arrayOrEmpty(value: ($intake['gezagsverhouding'] ?? []));
+		$block = $this->arrayOrEmpty(value: ($intake['authorityRelationship'] ?? []));
 		$instructies = (int)($block['kwaInstructiesScore'] ?? 0);
-		$resultaat = (int)($block['kwaResultaatVrijScore'] ?? 0);
-		$werkoverleg = (int)($block['deelneemtAanWerkoverlegScore'] ?? 0);
+		$resultaat = (int)($block['kwaResultFreeScore'] ?? 0);
+		$werkoverleg = (int)($block['participatesInTeamMeetingScore'] ?? 0);
 		$value = ($instructies + $resultaat + $werkoverleg);
 		return $this->clamp(value: $value, min: 0, max: 20);
 	}//end subtotalGezag()
@@ -148,8 +148,8 @@ class DBAScoreCalculator {
 	 * @return int The subtotal in [0, 20].
 	 */
 	public function subtotalArbeid(array $intake): int {
-		$block = $this->arrayOrEmpty(value: ($intake['persoonlijkeArbeid'] ?? []));
-		$value = (int)($block['vervangbaarScore'] ?? 0) + (int)($block['vervangingFeitelijkScore'] ?? 0);
+		$block = $this->arrayOrEmpty(value: ($intake['personalArbeid'] ?? []));
+		$value = (int)($block['replaceableScore'] ?? 0) + (int)($block['replacementActualScore'] ?? 0);
 		return $this->clamp(value: $value, min: 0, max: 20);
 	}//end subtotalArbeid()
 
@@ -161,10 +161,10 @@ class DBAScoreCalculator {
 	 * @return int The subtotal in [0, 20].
 	 */
 	public function subtotalFinancieel(array $intake): int {
-		$block = $this->arrayOrEmpty(value: ($intake['financieelRisico'] ?? []));
-		$frequentie = (int)($block['factuurFrequentieScore'] ?? 0);
-		$risico = (int)($block['betalingsRisicoScore'] ?? 0);
-		$investering = (int)($block['investeringEigenMiddelenScore'] ?? 0);
+		$block = $this->arrayOrEmpty(value: ($intake['financieelRisk'] ?? []));
+		$frequentie = (int)($block['invoiceFrequencyScore'] ?? 0);
+		$risico = (int)($block['paymentRiskScore'] ?? 0);
+		$investering = (int)($block['investmentEigenMiddelenScore'] ?? 0);
 		$value = ($frequentie + $risico + $investering);
 		return $this->clamp(value: $value, min: 0, max: 20);
 	}//end subtotalFinancieel()
@@ -185,14 +185,14 @@ class DBAScoreCalculator {
 
 		$score = 0;
 
-		$duur = (string)($block['duurRelatie'] ?? '');
+		$duur = (string)($block['durationRelationship'] ?? '');
 		$score += self::DUUR_POINTS[$duur] ?? 0;
 
 		if ((bool)($block['exclusief'] ?? false) === true) {
 			$score += 8;
 		}
 
-		if ((bool)($block['aardWerkzaamhedenSpecialistisch'] ?? false) === false) {
+		if ((bool)($block['natureActivitiesSpecialist'] ?? false) === false) {
 			$score += 6;
 		}
 
@@ -204,7 +204,7 @@ class DBAScoreCalculator {
 			$score += 4;
 		}
 
-		if ((bool)($block['modelovereenkomstAanwezig'] ?? false) === false) {
+		if ((bool)($block['modelAgreementPresent'] ?? false) === false) {
 			$score += 4;
 		}
 

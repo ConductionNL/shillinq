@@ -80,8 +80,8 @@ class VerplichtingGuard {
 	 */
 	public function canActiveren(array $verplichting): bool {
 		try {
-			if (trim((string)($verplichting['kostenplaats'] ?? '')) === ''
-				|| trim((string)($verplichting['grootboekrekening'] ?? '')) === ''
+			if (trim((string)($verplichting['costCentre'] ?? '')) === ''
+				|| trim((string)($verplichting['generalLedgerAccount'] ?? '')) === ''
 			) {
 				$this->logger->info(
 					'VerplichtingGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
@@ -120,14 +120,14 @@ class VerplichtingGuard {
 	 * @return bool True when all milestone dates are in range (or no term/plan).
 	 */
 	private function milestonesWithinTerm(array $verplichting): bool {
-		$start = $this->parseDate(value: (string)($verplichting['looptijdStart'] ?? ''));
+		$start = $this->parseDate(value: (string)($verplichting['termStart'] ?? ''));
 		$end = $this->parseDate(value: (string)($verplichting['termEnd'] ?? ''));
 		if ($start === null || $end === null) {
 			// No declared term — nothing to bound.
 			return true;
 		}
 
-		$mijlpalen = ($verplichting['mijlpalen'] ?? []);
+		$mijlpalen = ($verplichting['milestones'] ?? []);
 		if (is_array($mijlpalen) === false) {
 			return true;
 		}
@@ -137,14 +137,14 @@ class VerplichtingGuard {
 				continue;
 			}
 
-			$datum = $this->parseDate(value: (string)($mijlpaal['datum'] ?? ''));
+			$datum = $this->parseDate(value: (string)($mijlpaal['date'] ?? ''));
 			if ($datum === null || $datum < $start || $datum > $end) {
 				$this->logger->info(
 					'VerplichtingGuard: milestone date out of contract term — denying activation',
 					[
 						'commitmentNumber' => ($verplichting['commitmentNumber'] ?? 'unknown'),
-						'mijlpaalId' => ($mijlpaal['mijlpaalId'] ?? 'unknown'),
-						'datum' => ($mijlpaal['datum'] ?? 'unknown'),
+						'milestoneId' => ($mijlpaal['milestoneId'] ?? 'unknown'),
+						'date' => ($mijlpaal['date'] ?? 'unknown'),
 					]
 				);
 				return false;

@@ -239,19 +239,19 @@ class DunningGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canPostWriteOff(
 				writeOffId: 'w-1',
-				object: ['art29OBVerklaring' => '', 'hoofdsomAfgeschreven' => 100.0]
+				object: ['art29OBDeclaration' => '', 'principalDepreciated' => 100.0]
 			)
 		);
 		self::assertFalse(
 			$this->guard->canPostWriteOff(
 				writeOffId: 'w-2',
-				object: ['art29OBVerklaring' => 'Faillissement', 'hoofdsomAfgeschreven' => 0.0]
+				object: ['art29OBDeclaration' => 'Faillissement', 'principalDepreciated' => 0.0]
 			)
 		);
 		self::assertTrue(
 			$this->guard->canPostWriteOff(
 				writeOffId: 'w-3',
-				object: ['art29OBVerklaring' => 'Faillissement vonnis 2026-04-12', 'hoofdsomAfgeschreven' => 4200.0]
+				object: ['art29OBDeclaration' => 'Faillissement vonnis 2026-04-12', 'principalDepreciated' => 4200.0]
 			)
 		);
 

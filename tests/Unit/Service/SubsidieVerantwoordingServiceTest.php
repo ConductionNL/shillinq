@@ -77,7 +77,7 @@ class SubsidieVerantwoordingServiceTest extends TestCase {
 	 */
 	public function testBuildVerantwoordingForGrant(): void {
 		$grant = [
-			'subsidieNumber' => 'SUB-2026-0001',
+			'subsidyNumber' => 'SUB-2026-0001',
 			'awardDate' => '2026-01-01',
 			'awardAmount' => 50000,
 			'administrationId' => 'adm-gemeente-1',
@@ -85,7 +85,7 @@ class SubsidieVerantwoordingServiceTest extends TestCase {
 
 		$payload = $this->service->buildVerantwoordingForGrant(grant: $grant, reportDate: '2026-03-01');
 
-		self::assertSame('SV-SUB-2026-0001', $payload['verantwoordingId']);
+		self::assertSame('SV-SUB-2026-0001', $payload['accountabilityId']);
 		self::assertSame('SUB-2026-0001', $payload['grantId']);
 		self::assertSame('2026-03-01', $payload['reportDate']);
 		self::assertSame('2026-01-01 to 2026-03-01', $payload['reportingPeriod']);
@@ -101,7 +101,7 @@ class SubsidieVerantwoordingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testBuildVerantwoordingWithoutAwardDate(): void {
-		$grant = ['subsidieNumber' => 'SUB-2', 'awardAmount' => 1000, 'administrationId' => 'adm-1'];
+		$grant = ['subsidyNumber' => 'SUB-2', 'awardAmount' => 1000, 'administrationId' => 'adm-1'];
 		$payload = $this->service->buildVerantwoordingForGrant(grant: $grant, reportDate: '2026-05-05');
 
 		self::assertSame('2026-05-05 to 2026-05-05', $payload['reportingPeriod']);
@@ -232,26 +232,26 @@ class SubsidieVerantwoordingServiceTest extends TestCase {
 			}//end saveObject()
 		};
 
-		$payload = ['verantwoordingId' => 'SV-1', 'grantId' => 'SUB-1'];
+		$payload = ['accountabilityId' => 'SV-1', 'grantId' => 'SUB-1'];
 
 		// First call: no existing record -> created.
 		$created = $this->service->persistChange(
 			objectService: $stub,
 			register: 'shillinq',
 			schema: 'SubsidieVerantwoording',
-			dedupeField: 'verantwoordingId',
+			dedupeField: 'accountabilityId',
 			payload: $payload
 		);
 		self::assertTrue($created);
 		self::assertSame(1, $stub->saved);
 
 		// Second call: record now exists -> skipped.
-		$stub->existing = [['verantwoordingId' => 'SV-1']];
+		$stub->existing = [['accountabilityId' => 'SV-1']];
 		$skipped = $this->service->persistChange(
 			objectService: $stub,
 			register: 'shillinq',
 			schema: 'SubsidieVerantwoording',
-			dedupeField: 'verantwoordingId',
+			dedupeField: 'accountabilityId',
 			payload: $payload
 		);
 		self::assertFalse($skipped);

@@ -93,7 +93,7 @@ class MoneybirdProfile implements ImportProfileInterface {
 				'code' => 'ContactID',
 				'name' => 'CompanyName',
 				'kvk' => 'ChamberOfCommerceID',
-				'btw' => 'TaxNumber',
+				'vat' => 'TaxNumber',
 				'email' => 'SendInvoicesToEmail',
 				'phone' => 'PhoneNumber',
 			];

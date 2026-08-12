@@ -95,13 +95,13 @@ class BadoControleprotocolCalculator {
 	 */
 	public function validateCeilings(array $row): array {
 		$approvalFields = [
-			'getrouwheidApprovalCeiling',
-			'rechtmatigheidApprovalCeiling',
+			'faithfulnessApprovalCeiling',
+			'lawfulnessApprovalCeiling',
 		];
 
 		$qualificationFields = [
-			'getrouwheidQualificationCeiling',
-			'rechtmatigheidQualificationCeiling',
+			'faithfulnessQualificationCeiling',
+			'lawfulnessQualificationCeiling',
 			'uncertaintyCeiling',
 		];
 
@@ -134,7 +134,7 @@ class BadoControleprotocolCalculator {
 	 *
 	 * @param mixed $materialityAmount Frozen materialiteit amount in EUR.
 	 * @param array<string,mixed> $row The ToleranceMatrix row for the topic.
-	 * @param string $axis Either 'rechtmatigheid' or 'getrouwheid'.
+	 * @param string $axis Either 'lawfulness' or 'faithfulness'.
 	 *
 	 * @return array{approvalCents: int, qualificationCents: int}
 	 *
@@ -143,11 +143,11 @@ class BadoControleprotocolCalculator {
 	public function ceilingCentsForAxis(mixed $materialityAmount, array $row, string $axis): array {
 		$materialityCents = $this->toCents(amount: $materialityAmount);
 
-		$approvalKey = 'rechtmatigheidApprovalCeiling';
-		$qualificationKey = 'rechtmatigheidQualificationCeiling';
-		if ($axis === 'getrouwheid') {
-			$approvalKey = 'getrouwheidApprovalCeiling';
-			$qualificationKey = 'getrouwheidQualificationCeiling';
+		$approvalKey = 'lawfulnessApprovalCeiling';
+		$qualificationKey = 'lawfulnessQualificationCeiling';
+		if ($axis === 'faithfulness') {
+			$approvalKey = 'faithfulnessApprovalCeiling';
+			$qualificationKey = 'faithfulnessQualificationCeiling';
 		}
 
 		$approvalPct = (float)($row[$approvalKey] ?? self::STATUTORY_APPROVAL_MAX);
@@ -210,29 +210,29 @@ class BadoControleprotocolCalculator {
 	 *
 	 * @param array<string,mixed> $finding The AuditFinding.
 	 *
-	 * @return string|null 'rechtmatigheid', 'getrouwheid', or null when no exception.
+	 * @return string|null 'lawfulness', 'faithfulness', or null when no exception.
 	 */
 	private function exceptionAxis(array $finding): ?string {
-		$rechtmatigheid = (string)($finding['rechtmatigheid'] ?? '');
-		$getrouwheid = (string)($finding['getrouwheid'] ?? '');
+		$rechtmatigheid = (string)($finding['lawfulness'] ?? '');
+		$getrouwheid = (string)($finding['faithfulness'] ?? '');
 
 		if ($rechtmatigheid === 'exception') {
-			return 'rechtmatigheid';
+			return 'lawfulness';
 		}
 
 		if ($getrouwheid === 'misstated') {
-			return 'getrouwheid';
+			return 'faithfulness';
 		}
 
 		// Fall back to findingType when explicit axis outcomes are not recorded.
 		if ($rechtmatigheid === '' && $getrouwheid === '') {
 			$findingType = (string)($finding['findingType'] ?? '');
-			if ($findingType === 'rechtmatigheid') {
-				return 'rechtmatigheid';
+			if ($findingType === 'lawfulness') {
+				return 'lawfulness';
 			}
 
-			if ($findingType === 'getrouwheid' || $findingType === 'onzekerheid') {
-				return 'getrouwheid';
+			if ($findingType === 'faithfulness' || $findingType === 'onzekerheid') {
+				return 'faithfulness';
 			}
 		}
 
@@ -319,8 +319,8 @@ class BadoControleprotocolCalculator {
 		$row[$countKey]++;
 
 		$axisKeys = [
-			'rechtmatigheid' => 'rechtmatigheidCents',
-			'getrouwheid' => 'getrouwheidCents',
+			'lawfulness' => 'rechtmatigheidCents',
+			'faithfulness' => 'getrouwheidCents',
 		];
 		$axis = (string)$this->exceptionAxis(finding: $finding);
 		if (isset($axisKeys[$axis]) === true) {
@@ -418,8 +418,8 @@ class BadoControleprotocolCalculator {
 	public function isFourEyeComplete(array $finding): bool {
 		$hasController = (trim((string)($finding['controllerResponse'] ?? '')) !== '');
 		$hasAuditor = (trim((string)($finding['auditorConclusion'] ?? '')) !== '');
-		$hasRecht = (trim((string)($finding['rechtmatigheid'] ?? '')) !== '');
-		$hasGetrouw = (trim((string)($finding['getrouwheid'] ?? '')) !== '');
+		$hasRecht = (trim((string)($finding['lawfulness'] ?? '')) !== '');
+		$hasGetrouw = (trim((string)($finding['faithfulness'] ?? '')) !== '');
 
 		return $hasController === true
 			&& $hasAuditor === true

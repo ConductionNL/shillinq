@@ -365,7 +365,7 @@ class InitializeSettingsTest extends TestCase {
 				return [
 					'id' => 'uuid-1',
 					'administrationCode' => 'ADM-001',
-					'administrationType' => 'gemeente',
+					'administrationType' => 'municipality',
 				];
 			}
 		};
@@ -407,7 +407,7 @@ class InitializeSettingsTest extends TestCase {
 		// before this call is ever made.
 		$this->settingsService->expects($this->once())
 			->method('seedBbvAccountMappings')
-			->with(administrationId: 'ADM-001', administrationType: 'gemeente')
+			->with(administrationId: 'ADM-001', administrationType: 'municipality')
 			->willReturn(['success' => true, 'seeded' => 2, 'skipped' => 0]);
 
 		$method = new ReflectionMethod(InitializeSettings::class, 'seedBbvMappingsForMunicipalAdministrations');

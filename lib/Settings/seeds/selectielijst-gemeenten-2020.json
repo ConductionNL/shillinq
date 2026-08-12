@@ -112,7 +112,7 @@
     {
       "selectielijstCode": "3.5.1",
       "description": "Subsidieverlening, -beschikking en -verantwoording inclusief aanvraagdossier, tussenevaluaties en eindafrekening",
-      "recordCategory": "subsidie",
+      "recordCategory": "subsidy",
       "retentionTrigger": "10 years after vaststellingDate",
       "disposition": "archive",
       "legalBasis": "Algemene wet bestuursrecht art. 4:57 + Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 3.5.1",
@@ -122,7 +122,7 @@
     {
       "selectielijstCode": "3.5.2",
       "description": "Subsidiedeclaraties en voortgangsrapportages (tussentijdse financiële verantwoording)",
-      "recordCategory": "subsidie",
+      "recordCategory": "subsidy",
       "retentionYears": 7,
       "disposition": "destroy",
       "legalBasis": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 3.5.2",
