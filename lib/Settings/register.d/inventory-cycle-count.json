@@ -28,7 +28,8 @@
             "description": "Sequential count identifier unique per administration (CC-YYYY-MM-NNNNN). Operator-visible per REQ-ICC-002.",
             "example": "CC-2026-05-00001",
             "pattern": "^CC-[0-9]{4}-[0-9]{2}-[0-9]{5}$",
-            "title": "Count ID"
+            "title": "Count ID",
+            "$ref": "InventoryCycleCountLine"
           },
           "countDate": {
             "type": "string",
@@ -58,7 +59,8 @@
             "nullable": true,
             "description": "Optional FK to Location.id when countType=partial. One of locationFilter / categoryFilter MUST be populated per REQ-ICC-002 / REQ-ICC-008.",
             "example": "loc-w01",
-            "title": "Location Filter"
+            "title": "Location Filter",
+            "$ref": "Location"
           },
           "categoryFilter": {
             "type": "string",
@@ -354,29 +356,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "initiator": {
-            "localField": "initiatedBy",
-            "relatedSchema": "Person",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "FK to the Person who initiated the count."
-          },
-          "location": {
-            "localField": "locationFilter",
-            "relatedSchema": "Location",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Optional FK for partial counts scoped to a single location."
-          },
-          "lines": {
-            "localField": "countId",
-            "relatedSchema": "InventoryCycleCountLine",
-            "relatedField": "countId",
-            "cardinality": "one-to-many",
-            "description": "Snapshot of in-scope inventory — one row per (sku, locationId) pair."
-          }
-        },
         "x-openregister-indexes": [
           {
             "fields": [
@@ -460,13 +439,15 @@
             "type": "string",
             "description": "FK to InventoryCycleCount per REQ-ICC-003.",
             "example": "CC-2026-05-00001",
-            "title": "Count ID"
+            "title": "Count ID",
+            "$ref": "InventoryCycleCount"
           },
           "sku": {
             "type": "string",
             "description": "Product SKU per REQ-ICC-003.",
             "example": "SKU-4521",
-            "title": "SKU"
+            "title": "SKU",
+            "x-external-register": "pipelinq"
           },
           "productName": {
             "type": "string",
@@ -479,7 +460,8 @@
             "type": "string",
             "description": "Bin Location.id where the count is performed. Required because the resulting variance StockMove targets this location.",
             "example": "loc-w01-z01-b100",
-            "title": "Location ID"
+            "title": "Location ID",
+            "$ref": "Location"
           },
           "expectedQuantity": {
             "type": "number",
@@ -551,7 +533,8 @@
             "nullable": true,
             "description": "FK to InventoryVarianceReason.reasonId per REQ-ICC-005. MUST be populated for lines with requiresReason=true before the count can transition counting → posted.",
             "example": "DMG",
-            "title": "Reason Code"
+            "title": "Reason Code",
+            "$ref": "InventoryVarianceReason"
           },
           "notes": {
             "type": "string",
@@ -565,7 +548,8 @@
             "nullable": true,
             "description": "Back-reference to the StockMove emitted by CycleCountService::emitAdjustments on reconcile per REQ-ICC-007. Null until reconciled or for zero-variance lines.",
             "example": "sm-2026-cc-00001-001",
-            "title": "Adjustment Stock Move ID"
+            "title": "Adjustment Stock Move ID",
+            "$ref": "StockMove"
           },
           "administrationId": {
             "type": "string",
@@ -600,43 +584,6 @@
           "requiresReason": {
             "expression": "ABS(quantityVariance) > expectedQuantity * @metadata.quantityVarianceThresholdPercent / 100 OR ABS(valueVariance) > @metadata.valueVarianceThresholdAbsolute",
             "description": "REQ-ICC-004 declarative threshold. CycleCountService::recalculateLine mirrors the same arithmetic when the engine cannot evaluate the expression (ADR-031 exception path — VarianceGate uses the PHP mirror for the post-time check)."
-          }
-        },
-        "x-openregister-relations": {
-          "count": {
-            "localField": "countId",
-            "relatedSchema": "InventoryCycleCount",
-            "relatedField": "countId",
-            "cardinality": "many-to-one",
-            "description": "Parent count batch."
-          },
-          "product": {
-            "localField": "sku",
-            "relatedSchema": "pipelinq:Product",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "FK to the pipelinq counted product. Resolved via ADR-019 integration registry."
-          },
-          "location": {
-            "localField": "locationId",
-            "relatedSchema": "Location",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Bin location of the count line."
-          },
-          "reason": {
-            "localField": "reasonCode",
-            "relatedSchema": "InventoryVarianceReason",
-            "relatedField": "reasonId",
-            "cardinality": "many-to-one",
-            "description": "Per REQ-ICC-005: reason categorisation when requiresReason=true."
-          },
-          "adjustmentStockMove": {
-            "localField": "adjustmentStockMoveId",
-            "relatedSchema": "StockMove",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "Back-reference to the variance StockMove (REQ-ICC-007)."
           }
         },
         "x-openregister-indexes": [

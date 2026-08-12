@@ -127,7 +127,10 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase
 
         self::assertSame('granted', $schema['x-openregister-lifecycle']['initialState']);
         self::assertSame(['granted', 'expired', 'withdrawn'], $schema['properties']['state']['enum']);
-        self::assertArrayHasKey('project', $schema['x-openregister-relations']);
+        // Canonical dialect (ADR-062 rule 7): a property-level $ref, not a
+        // per-schema relations block.
+        self::assertSame('WbsoBeschikking', $schema['properties']['projectNumber']['$ref']);
+        self::assertArrayNotHasKey('x-openregister-relations', $schema);
 
     }//end testBeschikkingFieldsAndLifecycle()
 

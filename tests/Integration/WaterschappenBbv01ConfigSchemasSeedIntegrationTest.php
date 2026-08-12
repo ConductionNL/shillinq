@@ -282,23 +282,28 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
     {
         $components = $this->loadMergedComponents();
 
+        // Canonical dialect (ADR-062 rule 7): relations are property-level
+        // $refs, so the assertion moves from 'a block names this relation' to
+        // 'this property points at that schema' — which is the link itself
+        // rather than its documentation. Cardinality is no longer declarable.
         $programme = $components['schemas']['BBVProgramme'];
-        self::assertArrayHasKey('x-openregister-relations', $programme);
-        self::assertArrayHasKey('administration', $programme['x-openregister-relations']);
+        self::assertSame('Administration', $programme['properties']['administrationId']['$ref']);
+        self::assertArrayNotHasKey('x-openregister-relations', $programme);
 
-        $mapping = $components['schemas']['BudgetBBVMapping'];
-        self::assertArrayHasKey('x-openregister-relations', $mapping);
-        foreach (['programme', 'account', 'administration'] as $relation) {
-            self::assertArrayHasKey(
-                $relation,
-                $mapping['x-openregister-relations'],
-                'BudgetBBVMapping MUST declare the '.$relation.' many-to-one relation.'
-            );
+        $mapping  = $components['schemas']['BudgetBBVMapping'];
+        $expected = [
+            'programmeCode'    => 'BBVProgramme',
+            'glAccountNumber'  => 'Account',
+            'administrationId' => 'Administration',
+        ];
+        foreach ($expected as $field => $target) {
             self::assertSame(
-                'many-to-one',
-                $mapping['x-openregister-relations'][$relation]['cardinality']
+                $target,
+                ($mapping['properties'][$field]['$ref'] ?? null),
+                'BudgetBBVMapping.'.$field.' MUST reference '.$target.'.'
             );
         }
+        self::assertArrayNotHasKey('x-openregister-relations', $mapping);
 
     }//end testRelationsDeclared()
 

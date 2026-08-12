@@ -78,7 +78,8 @@
             "type": "string",
             "description": "FK to Appointment.appointmentId — the appointment this token confirms (REQ-BCF-002).",
             "example": "apt-001",
-            "title": "Appointment ID"
+            "title": "Appointment ID",
+            "$ref": "Appointment"
           },
           "tokenString": {
             "type": "string",
@@ -169,15 +170,6 @@
               "label": "Expire token",
               "description": "expiresAt passed without redemption; deadline job marks the token expired."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "appointment": {
-            "localField": "appointmentId",
-            "relatedSchema": "Appointment",
-            "relatedField": "appointmentId",
-            "cardinality": "many-to-one",
-            "description": "The Appointment this token confirms (REQ-BCF-002)."
           }
         },
         "x-openregister-rbac": {

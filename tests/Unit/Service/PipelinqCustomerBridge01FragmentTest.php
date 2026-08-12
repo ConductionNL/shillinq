@@ -161,10 +161,14 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
 
         // Existing relations preserved (member 03 may add a contact relation;
         // member 01 must not perturb the create-appointment relations).
-        $relations = ($appt['x-openregister-relations'] ?? []);
-        foreach (['service', 'resource'] as $rel) {
-            self::assertArrayHasKey($rel, $relations, "Relation $rel was dropped");
-        }
+        // Canonical dialect (ADR-062 rule 7): relations are property-level
+        // $refs on the schema that OWNS the property. This bridge fragment only
+        // ADDS pipelinqContactId — it never owned serviceId/resourceId, and the
+        // duplicate relations block it used to carry is exactly what the dialect
+        // retired. A fragment that does not mention those properties now cannot
+        // perturb their links, so the original intent is structural, not asserted.
+        self::assertArrayNotHasKey('x-openregister-relations', $appt);
+        self::assertArrayHasKey('pipelinqContactId', $appt['properties']);
 
     }//end testAppointmentIsExtendedAdditively()
 

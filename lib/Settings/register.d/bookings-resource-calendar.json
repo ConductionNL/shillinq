@@ -55,7 +55,8 @@
             "type": "string",
             "description": "FK to Resource.resourceId — the resource this calendar represents.",
             "example": "res-001",
-            "title": "Resource"
+            "title": "Resource",
+            "$ref": "Resource"
           },
           "timeZone": {
             "type": "string",
@@ -133,15 +134,6 @@
             "example": "active",
             "title": "Status"
           }
-        },
-        "x-openregister-relations": {
-          "resource": {
-            "localField": "resource",
-            "relatedSchema": "Resource",
-            "relatedField": "resourceId",
-            "cardinality": "many-to-one",
-            "description": "The Resource this calendar represents."
-          }
         }
       },
       "Booking": {
@@ -181,13 +173,15 @@
             "type": "string",
             "description": "FK to Calendar.calendarId.",
             "example": "cal-001",
-            "title": "Calendar"
+            "title": "Calendar",
+            "$ref": "Calendar"
           },
           "resource": {
             "type": "string",
             "description": "FK to Resource.resourceId — denormalised from calendar.resource for direct query (design D4). API write path validates the denormalisation invariant.",
             "example": "res-001",
-            "title": "Resource"
+            "title": "Resource",
+            "$ref": "Resource"
           },
           "title": {
             "type": "string",
@@ -273,22 +267,6 @@
               "label": "Cancel pending",
               "description": "Cancel a pending booking that was never confirmed."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "calendar": {
-            "localField": "calendar",
-            "relatedSchema": "Calendar",
-            "relatedField": "calendarId",
-            "cardinality": "many-to-one",
-            "description": "The Calendar this booking belongs to."
-          },
-          "resource": {
-            "localField": "resource",
-            "relatedSchema": "Resource",
-            "relatedField": "resourceId",
-            "cardinality": "many-to-one",
-            "description": "The Resource this booking reserves (denormalised from calendar.resource)."
           }
         },
         "x-openregister-aggregations": {

@@ -201,7 +201,8 @@
             "nullable": true,
             "description": "FK naar DBAModelovereenkomst die op deze opdracht van toepassing is (REQ-DBA-002).",
             "example": "modov-bd-2024-tussenkomstvrij-v3",
-            "title": "Model Overeenkomst ID"
+            "title": "Model Overeenkomst ID",
+            "$ref": "DBAModelovereenkomst"
           },
           "intakeStatus": {
             "type": "string",
@@ -261,7 +262,8 @@
             "nullable": true,
             "description": "FK naar het DBAEvidenceDossier voor deze opdracht (REQ-DBA-007).",
             "example": "evid-dba-opdr-2026-0042",
-            "title": "Evidence Dossier ID"
+            "title": "Evidence Dossier ID",
+            "$ref": "DBAEvidenceDossier"
           },
           "wbaBeoordelingResultaat": {
             "type": "string",
@@ -359,36 +361,6 @@
             "save": "OCA\\Shillinq\\Guard\\DBAOpdrachtGuard::validateOnSave"
           }
         },
-        "x-openregister-relations": {
-          "intake": {
-            "localField": "@self.id",
-            "relatedSchema": "DBAIntake",
-            "relatedField": "opdrachtId",
-            "cardinality": "one-to-one",
-            "description": "De voltooide DBA-intake voor deze opdracht (REQ-DBA-003)."
-          },
-          "flags": {
-            "localField": "@self.id",
-            "relatedSchema": "DBARisicoflag",
-            "relatedField": "opdrachtId",
-            "cardinality": "one-to-many",
-            "description": "Alle lopende en gesloten flags voor deze opdracht (REQ-DBA-004)."
-          },
-          "evidenceDossier": {
-            "localField": "evidenceDossierId",
-            "relatedSchema": "DBAEvidenceDossier",
-            "relatedField": "@self.id",
-            "cardinality": "many-to-one",
-            "description": "Evidence-dossier voor deze opdracht (REQ-DBA-007)."
-          },
-          "modelOvereenkomst": {
-            "localField": "modelOvereenkomstId",
-            "relatedSchema": "DBAModelovereenkomst",
-            "relatedField": "@self.id",
-            "cardinality": "many-to-one",
-            "description": "Gekozen modelovereenkomst (REQ-DBA-002)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "ondernemer": {
@@ -463,7 +435,8 @@
             "type": "string",
             "description": "FK naar de DBAOpdracht waarvoor deze intake is ingevuld.",
             "example": "dba-opdr-2026-0042",
-            "title": "Opdracht ID"
+            "title": "Opdracht ID",
+            "$ref": "DBAOpdracht"
           },
           "ingevuldOp": {
             "type": "string",
@@ -927,7 +900,8 @@
             "type": "string",
             "description": "FK naar DBAOpdracht waarover deze flag is gegenereerd.",
             "example": "dba-opdr-2026-0042",
-            "title": "Opdracht ID"
+            "title": "Opdracht ID",
+            "$ref": "DBAOpdracht"
           },
           "type": {
             "type": "string",

@@ -199,7 +199,8 @@ final class AnnualReportSchemaTest extends TestCase
         $item   = $schema['properties']['rubrieken']['items'];
         self::assertContains('rubrieckCode', $item['required']);
         self::assertContains('currentYear', $item['required']);
-        self::assertSame('AnnualReport', $schema['x-openregister-relations']['annualReport']['relatedSchema']);
+        // Canonical dialect (ADR-062 rule 7): a property-level $ref.
+        self::assertSame('AnnualReport', $schema['properties']['reportId']['$ref']);
 
     }//end testBalanceSheetRubriekAndRelation()
 

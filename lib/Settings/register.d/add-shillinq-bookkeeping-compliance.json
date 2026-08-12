@@ -31,7 +31,8 @@
             "type": "string",
             "description": "Unique period code (e.g. 2026-01, 2026-Q1).",
             "example": "2026-01",
-            "title": "Period ID"
+            "title": "Period ID",
+            "$ref": "GLLine"
           },
           "name": {
             "type": "string",

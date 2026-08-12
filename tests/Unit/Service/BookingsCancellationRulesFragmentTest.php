@@ -141,9 +141,11 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
         $operator = $schema['x-openregister-rbac']['roles']['operator']['permissions'];
         self::assertNotContains(needle: 'delete', haystack: $operator, message: 'BookingCancellation must be immutable (no delete)');
 
-        $relation = $schema['x-openregister-relations']['appointment'];
-        self::assertSame(expected: 'Appointment', actual: $relation['relatedSchema']);
-        self::assertSame(expected: 'one-to-one', actual: $relation['cardinality']);
+        // Canonical dialect (ADR-062 rule 7): the link is a property-level $ref.
+        // Cardinality is no longer declarable, so it is no longer asserted —
+        // the property being singular carries that meaning now.
+        self::assertSame(expected: 'Appointment', actual: $schema['properties']['appointmentId']['$ref']);
+        self::assertArrayNotHasKey('x-openregister-relations', $schema);
 
     }//end testBookingCancellationIsImmutableAndLinked()
 

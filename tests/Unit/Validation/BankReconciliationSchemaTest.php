@@ -221,11 +221,11 @@ final class BankReconciliationSchemaTest extends TestCase
     {
         $schema = $this->fragment['components']['schemas']['BankReconciliation'];
 
-        $rel = $schema['x-openregister-relations']['matches'];
-        self::assertSame('id', $rel['localField']);
-        self::assertSame('BankReconciliationMatch', $rel['relatedSchema']);
-        self::assertSame('reconciliationId', $rel['relatedField']);
-        self::assertSame('one-to-many', $rel['cardinality']);
+        // Canonical dialect (ADR-062 rule 7). The one-to-many side has no
+        // local property to hang a $ref on, so the link now lives on the OWNING
+        // side — BankReconciliationMatch.reconciliationId — which is asserted in
+        // testMatchReconciliationRelation(). Here we assert the block is gone.
+        self::assertArrayNotHasKey('x-openregister-relations', $schema);
 
         $agg = $schema['x-openregister-aggregations']['countByStatus'];
         self::assertSame('status', $agg['field']);
@@ -399,11 +399,10 @@ final class BankReconciliationSchemaTest extends TestCase
     public function testMatchReconciliationRelation(): void
     {
         $schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        $rel    = $schema['x-openregister-relations']['reconciliation'];
-        self::assertSame('reconciliationId', $rel['localField']);
-        self::assertSame('BankReconciliation', $rel['relatedSchema']);
-        self::assertSame('id', $rel['relatedField']);
-        self::assertSame('many-to-one', $rel['cardinality']);
+        // Canonical dialect (ADR-062 rule 7): a property-level $ref. This is
+        // the owning side of the BankReconciliation -> matches relation.
+        self::assertSame('BankReconciliation', $schema['properties']['reconciliationId']['$ref']);
+        self::assertArrayNotHasKey('x-openregister-relations', $schema);
 
     }//end testMatchReconciliationRelation()
 

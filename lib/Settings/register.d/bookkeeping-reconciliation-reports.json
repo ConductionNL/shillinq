@@ -248,22 +248,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "matches": {
-            "localField": "id",
-            "relatedSchema": "ReconciliationMatch",
-            "relatedField": "reconId",
-            "cardinality": "one-to-many",
-            "description": "All ReconciliationMatch records (matched + unresolved) belonging to this session."
-          },
-          "report": {
-            "localField": "id",
-            "relatedSchema": "ReconciliationReport",
-            "relatedField": "reconId",
-            "cardinality": "one-to-one",
-            "description": "Final sign-off report produced when the session reaches verified state."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -296,7 +280,8 @@
           "reconId": {
             "type": "string",
             "description": "FK to the BankReconciliation session this match belongs to (REQ-REC-005). Empty when the match was emitted before T4 sessions existed (legacy T2-only records).",
-            "title": "Recon ID"
+            "title": "Recon ID",
+            "$ref": "BankReconciliation"
           },
           "glTransactionId": {
             "type": "string",
@@ -431,7 +416,8 @@
           "reconId": {
             "type": "string",
             "description": "FK to the BankReconciliation this report finalises (REQ-REC-001).",
-            "title": "Recon ID"
+            "title": "Recon ID",
+            "$ref": "BankReconciliation"
           },
           "reportDate": {
             "type": "string",

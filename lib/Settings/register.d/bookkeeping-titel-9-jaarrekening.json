@@ -320,50 +320,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "balanceSheet": {
-            "localField": "id",
-            "relatedSchema": "BalanceSheet",
-            "relatedField": "reportId",
-            "cardinality": "one-to-one",
-            "description": "The balans (art. 2:373 BW) of this jaarrekening (REQ-T9-002)."
-          },
-          "incomeStatement": {
-            "localField": "id",
-            "relatedSchema": "IncomeStatement",
-            "relatedField": "reportId",
-            "cardinality": "one-to-one",
-            "description": "The winst-en-verliesrekening (art. 2:377 BW) of this jaarrekening (REQ-T9-003)."
-          },
-          "cashFlowStatement": {
-            "localField": "id",
-            "relatedSchema": "CashFlowStatement",
-            "relatedField": "reportId",
-            "cardinality": "one-to-one",
-            "description": "The kasstroomoverzicht (RJ 350) for middelgroot+ (REQ-T9-005)."
-          },
-          "notes": {
-            "localField": "id",
-            "relatedSchema": "Note",
-            "relatedField": "reportId",
-            "cardinality": "one-to-many",
-            "description": "The toelichting-paragrafen of this jaarrekening (REQ-T9-004)."
-          },
-          "directorReport": {
-            "localField": "id",
-            "relatedSchema": "DirectorReport",
-            "relatedField": "reportId",
-            "cardinality": "one-to-one",
-            "description": "The bestuursverslag (art. 2:391 BW) for middelgroot+ (REQ-T9-006)."
-          },
-          "reviewWorkflow": {
-            "localField": "id",
-            "relatedSchema": "ReviewWorkflow",
-            "relatedField": "reportId",
-            "cardinality": "one-to-one",
-            "description": "The accountant-review workflow record (REQ-T9-007)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bestuur": {
@@ -472,7 +428,8 @@
             "type": "string",
             "description": "FK to the parent AnnualReport (REQ-T9-002).",
             "example": "annual-report-adm-001-2025",
-            "title": "Report ID"
+            "title": "Report ID",
+            "$ref": "AnnualReport"
           },
           "balansDate": {
             "type": "string",
@@ -566,15 +523,6 @@
             "title": "Rubrieken"
           }
         },
-        "x-openregister-relations": {
-          "annualReport": {
-            "localField": "reportId",
-            "relatedSchema": "AnnualReport",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent jaarrekening (REQ-T9-002)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bestuur": {
@@ -619,7 +567,8 @@
             "type": "string",
             "description": "FK to the parent AnnualReport (REQ-T9-003).",
             "example": "annual-report-adm-001-2025",
-            "title": "Report ID"
+            "title": "Report ID",
+            "$ref": "AnnualReport"
           },
           "vwDate": {
             "type": "string",
@@ -733,15 +682,6 @@
             "title": "Rubrieken"
           }
         },
-        "x-openregister-relations": {
-          "annualReport": {
-            "localField": "reportId",
-            "relatedSchema": "AnnualReport",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent jaarrekening (REQ-T9-003)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bestuur": {
@@ -785,7 +725,8 @@
             "type": "string",
             "description": "FK to the parent AnnualReport (REQ-T9-005).",
             "example": "annual-report-adm-003-2025",
-            "title": "Report ID"
+            "title": "Report ID",
+            "$ref": "AnnualReport"
           },
           "cashflowDate": {
             "type": "string",
@@ -883,15 +824,6 @@
             "title": "Regels"
           }
         },
-        "x-openregister-relations": {
-          "annualReport": {
-            "localField": "reportId",
-            "relatedSchema": "AnnualReport",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent jaarrekening (REQ-T9-005)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bestuur": {
@@ -935,7 +867,8 @@
             "type": "string",
             "description": "FK to the parent AnnualReport (REQ-T9-004).",
             "example": "annual-report-adm-001-2025",
-            "title": "Report ID"
+            "title": "Report ID",
+            "$ref": "AnnualReport"
           },
           "volgorde": {
             "type": "integer",
@@ -982,15 +915,6 @@
             "title": "Verplicht"
           }
         },
-        "x-openregister-relations": {
-          "annualReport": {
-            "localField": "reportId",
-            "relatedSchema": "AnnualReport",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent jaarrekening (REQ-T9-004)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bestuur": {
@@ -1032,7 +956,8 @@
             "type": "string",
             "description": "FK to the parent AnnualReport (REQ-T9-006).",
             "example": "annual-report-adm-003-2025",
-            "title": "Report ID"
+            "title": "Report ID",
+            "$ref": "AnnualReport"
           },
           "status": {
             "type": "string",
@@ -1103,15 +1028,6 @@
             "title": "Ondertekenaars"
           }
         },
-        "x-openregister-relations": {
-          "annualReport": {
-            "localField": "reportId",
-            "relatedSchema": "AnnualReport",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The parent jaarrekening (REQ-T9-006)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bestuur": {
@@ -1152,7 +1068,8 @@
             "type": "string",
             "description": "FK to the AnnualReport under review (REQ-T9-007).",
             "example": "annual-report-adm-003-2025",
-            "title": "Report ID"
+            "title": "Report ID",
+            "$ref": "AnnualReport"
           },
           "huidigStap": {
             "type": "string",
@@ -1284,15 +1201,6 @@
               }
             },
             "title": "Overdrachten Log"
-          }
-        },
-        "x-openregister-relations": {
-          "annualReport": {
-            "localField": "reportId",
-            "relatedSchema": "AnnualReport",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The jaarrekening under review (REQ-T9-007)."
           }
         },
         "x-openregister-rbac": {

@@ -110,7 +110,8 @@
             "type": "string",
             "description": "FK to the materialised Shillinq Verplichting (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
             "nullable": true,
-            "title": "Verplichting ID"
+            "title": "Verplichting ID",
+            "$ref": "Verplichting"
           },
           "administrationId": {
             "type": "string",
@@ -191,15 +192,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "commitment": {
-            "localField": "commitmentId",
-            "relatedSchema": "Verplichting",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The Shillinq Verplichting materialised from this tender on import (REQ-001)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "contractmanager": {
@@ -278,7 +270,8 @@
             "description": "TenderNed aanbestedingId when bron is tenderned; null otherwise (conditional-required, design validation rules).",
             "nullable": true,
             "x-openregister-conditional-required": "bron == 'tenderned'",
-            "title": "Bron Referentie"
+            "title": "Bron Referentie",
+            "$ref": "TenderNedAanbesteding"
           },
           "amount": {
             "type": "number",
@@ -430,15 +423,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "aanbesteding": {
-            "localField": "sourceReference",
-            "relatedSchema": "TenderNedAanbesteding",
-            "relatedField": "aanbestedingId",
-            "cardinality": "one-to-one",
-            "description": "The source TenderNed tender when bron is tenderned (REQ-005 audit-trail lineage)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "contractmanager": {
@@ -491,7 +475,8 @@
           "commitmentId": {
             "type": "string",
             "description": "FK to the parent Verplichting (design D5).",
-            "title": "Verplichting ID"
+            "title": "Verplichting ID",
+            "$ref": "Verplichting"
           },
           "mijlpaalId": {
             "type": "string",
@@ -607,15 +592,6 @@
               "label": "Annuleren",
               "description": "Cancel the delivery; record stays in the audit-trail (REQ-005)."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "commitment": {
-            "localField": "commitmentId",
-            "relatedSchema": "Verplichting",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent obligation this execution record belongs to (design D5)."
           }
         },
         "x-openregister-rbac": {

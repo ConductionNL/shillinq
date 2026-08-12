@@ -45,16 +45,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "project": {
-            "localField": "projectNumber",
-            "relatedSchema": "WbsoBeschikking",
-            "relatedField": "projectNumber",
-            "cardinality": "many-to-one",
-            "scopeField": "administrationId",
-            "description": "Links the beschikking to its WBSO project (REQ-WBSO-001). The S&O realisatie and mededeling are scoped to the same project."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -105,7 +95,8 @@
             "type": "string",
             "description": "WBSO project number the granted S&O hours belong to (REQ-WBSO-001).",
             "example": "PRJ-2026-007",
-            "title": "Project Number"
+            "title": "Project Number",
+            "$ref": "WbsoBeschikking"
           },
           "periodStart": {
             "type": "string",
@@ -193,16 +184,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "decision": {
-            "localField": "decisionNumber",
-            "relatedSchema": "WbsoBeschikking",
-            "relatedField": "decisionNumber",
-            "cardinality": "many-to-one",
-            "scopeField": "administrationId",
-            "description": "FK to the beschikking the hours are booked against (REQ-WBSO-002)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "employee": {
@@ -251,7 +232,8 @@
             "type": "string",
             "description": "RVO beschikking number the hours are booked against (REQ-WBSO-002).",
             "example": "WBSO-2026-000123",
-            "title": "Beschikking Number"
+            "title": "Beschikking Number",
+            "$ref": "WbsoBeschikking"
           },
           "workDate": {
             "type": "string",
@@ -349,16 +331,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "decision": {
-            "localField": "decisionNumber",
-            "relatedSchema": "WbsoBeschikking",
-            "relatedField": "decisionNumber",
-            "cardinality": "many-to-one",
-            "scopeField": "administrationId",
-            "description": "FK to the beschikking whose realisatie this mededeling reports (REQ-WBSO-003)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -402,7 +374,8 @@
             "type": "string",
             "description": "RVO beschikking number whose realisatie this mededeling reports (REQ-WBSO-003).",
             "example": "WBSO-2026-000123",
-            "title": "Beschikking Number"
+            "title": "Beschikking Number",
+            "$ref": "WbsoBeschikking"
           },
           "realisedSoHours": {
             "type": "number",

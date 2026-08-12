@@ -278,11 +278,11 @@
             "items": {
               "type": "string",
               "format": "uuid",
-              "$ref": "Decision",
               "x-external-register": "decidesk"
             },
             "referenceType": "decision",
-            "x-allow-create": true
+            "x-allow-create": true,
+            "x-external-register": "decidesk"
           }
         },
         "x-openregister-calculations": {

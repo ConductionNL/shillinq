@@ -129,10 +129,13 @@ final class BookingsCreateAppointmentFragmentTest extends TestCase
         $data        = json_decode((string) file_get_contents($this->fragmentPath), true);
         $appointment = $data['components']['schemas']['Appointment'];
 
-        self::assertArrayHasKey('service', $appointment['x-openregister-relations']);
-        self::assertArrayHasKey('resource', $appointment['x-openregister-relations']);
-        self::assertSame('Service', $appointment['x-openregister-relations']['service']['relatedSchema']);
-        self::assertSame('Resource', $appointment['x-openregister-relations']['resource']['relatedSchema']);
+        // Canonical dialect (ADR-062 rule 7): the relation is a property-level
+        // $ref, not a per-schema `x-openregister-relations` block. Assert the
+        // shape the register actually ships, so this test fails if the link is
+        // dropped rather than merely if a descriptive block goes missing.
+        self::assertSame('Service', $appointment['properties']['serviceId']['$ref']);
+        self::assertSame('Resource', $appointment['properties']['resourceId']['$ref']);
+        self::assertArrayNotHasKey('x-openregister-relations', $appointment);
 
         foreach (['startTime', 'endTime', 'serviceId', 'resourceId', 'customerId', 'status'] as $field) {
             self::assertContains($field, $appointment['required'], "$field must be required");

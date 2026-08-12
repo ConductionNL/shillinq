@@ -59,7 +59,8 @@
             "nullable": true,
             "description": "FK to parent AnalyticalDimension.code (within the same dimensionType and administrationId) for hierarchy navigation per REQ-CC-002. Drives the byCostCenterHierarchy / byCostObject roll-up aggregations.",
             "example": "KC-000",
-            "title": "Parent Code"
+            "title": "Parent Code",
+            "$ref": "AnalyticalDimension"
           },
           "lifecycleState": {
             "type": "string",
@@ -272,21 +273,6 @@
               "label": "Archive dimension",
               "description": "Move to historical archive; GL lines with this code remain queryable."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "parentDimension": {
-            "localField": "parentCode",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation enabling hierarchical navigation within a dimensionType per REQ-CC-002. A cost-center parents a cost-center; a cost-object parents a cost-object."
-          },
-          "referenceTarget": {
-            "description": "When dataType=reference (custom dimensions only), the dimension value MUST resolve to an object of (referenceRegister, referenceSchema). Validated by the OR relations engine.",
-            "sourceField": "referenceSchema",
-            "relatedSchema": "@self.referenceSchema",
-            "cardinality": "0..1"
           }
         },
         "x-openregister-aggregations": {

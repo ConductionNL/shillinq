@@ -38,25 +38,29 @@
             "type": "string",
             "description": "FK to Account.accountNumber — debited on sale/dispatch event (Dr COGS). Default RGS 3.5 MKB '7000' Kostprijs omzet. MUST resolve to an existing Account in the same administration (REQ-CG-001 FK invariant).",
             "example": "7000",
-            "title": "COGS Account Number"
+            "title": "COGS Account Number",
+            "$ref": "Account"
           },
           "inventoryAssetAccountNumber": {
             "type": "string",
             "description": "FK to Account.accountNumber — debited on goods receipt (Dr Inventory Asset) and credited on COGS posting / negative variance. Default RGS 3.5 MKB '1400' Voorraden. MUST resolve to an existing Account in the same administration.",
             "example": "1400",
-            "title": "Inventory Asset Account Number"
+            "title": "Inventory Asset Account Number",
+            "$ref": "Account"
           },
           "grIrClearingAccountNumber": {
             "type": "string",
             "description": "FK to Account.accountNumber — credited on goods receipt (Cr GR/IR clearing); subsequently debited by AP invoice posting per REQ-AP-003. Default RGS 3.5 MKB '1800' GR/IR clearing. MUST resolve to an existing Account in the same administration. Two-step pattern avoids double-posting (REQ-CG-003).",
             "example": "1800",
-            "title": "Gr Ir Clearing Account Number"
+            "title": "Gr Ir Clearing Account Number",
+            "$ref": "Account"
           },
           "inventoryAdjustmentAccountNumber": {
             "type": "string",
             "description": "FK to Account.accountNumber — debited on negative count variance / credited on positive count variance (REQ-CG-004). Default RGS 3.5 MKB '7100' Voorraadmutaties. MUST resolve to an existing Account in the same administration.",
             "example": "7100",
-            "title": "Inventory Adjustment Account Number"
+            "title": "Inventory Adjustment Account Number",
+            "$ref": "Account"
           },
           "isActive": {
             "type": "boolean",
@@ -70,36 +74,6 @@
             "description": "Operator notes — e.g. 'NL RGS 3.5 MKB defaults applied' or 'overridden to match parent corporate chart'.",
             "example": "Shillinq demo administratie 2026",
             "title": "Description"
-          }
-        },
-        "x-openregister-relations": {
-          "cogsAccount": {
-            "localField": "cogsAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for the COGS posting target. Validation MUST verify the Account exists within administrationId. REQ-CG-001."
-          },
-          "inventoryAssetAccount": {
-            "localField": "inventoryAssetAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for the Inventory Asset balance-sheet line. Validation MUST verify the Account exists within administrationId. REQ-CG-001."
-          },
-          "grIrClearingAccount": {
-            "localField": "grIrClearingAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for the GR/IR clearing account. Validation MUST verify the Account exists within administrationId. REQ-CG-001 + REQ-CG-003 two-step pattern."
-          },
-          "inventoryAdjustmentAccount": {
-            "localField": "inventoryAdjustmentAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for inventory adjustment / count-variance postings. Validation MUST verify the Account exists within administrationId. REQ-CG-001 + REQ-CG-004."
           }
         },
         "x-openregister-rbac": {

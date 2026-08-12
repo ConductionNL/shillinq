@@ -131,7 +131,8 @@
             "description": "Optional FK to Service.serviceId (bookings-service-catalog). Declared for T2 service-specific policy selection; phase 2 ships global policy resolution (design D7).",
             "nullable": true,
             "example": "svc-yoga-60",
-            "title": "Linked Service"
+            "title": "Linked Service",
+            "$ref": "Service"
           },
           "lifecycleState": {
             "type": "string",
@@ -176,15 +177,6 @@
               "label": "Reactivate policy",
               "description": "Return an archived policy to active so it can be resolved onto new appointments again."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "service": {
-            "localField": "linkedService",
-            "relatedSchema": "Service",
-            "relatedField": "serviceId",
-            "cardinality": "many-to-one",
-            "description": "Optional link to a Service (bookings-service-catalog). Not enforced in phase 2 (design D7)."
           }
         },
         "x-openregister-rbac": {
@@ -233,7 +225,8 @@
             "type": "string",
             "description": "Identifier of the cancelled appointment (FK to Appointment.appointmentId).",
             "example": "apt-12345",
-            "title": "Appointment ID"
+            "title": "Appointment ID",
+            "$ref": "Appointment"
           },
           "cancelledAt": {
             "type": "string",
@@ -361,15 +354,6 @@
               "label": "Cancel refund",
               "description": "Refund was cancelled before processing (edge case)."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "appointment": {
-            "localField": "appointmentId",
-            "relatedSchema": "Appointment",
-            "relatedField": "appointmentId",
-            "cardinality": "one-to-one",
-            "description": "Link to the cancelled Appointment (bookings-create-appointment). Exactly one cancellation record per appointment (REQ-BCR-008 immutability)."
           }
         },
         "x-openregister-rbac": {

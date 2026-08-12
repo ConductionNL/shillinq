@@ -67,16 +67,8 @@
             "type": "string",
             "description": "FK to the Administration owning this programme (many-to-one). Scopes uniqueness of programmeCode + fiscalYear.",
             "example": "adm-waterschap-1",
-            "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "administrationCode",
-            "cardinality": "many-to-one",
-            "description": "Many-to-one relation to the owning Administration; scopes uniqueness of programmeCode + fiscalYear (REQ-BBVW-001)."
+            "title": "Administration ID",
+            "$ref": "Administration"
           }
         }
       },
@@ -101,13 +93,15 @@
             "type": "string",
             "description": "FK to Account.accountNumber within the same administration (REQ-BBVW-002).",
             "example": "4100",
-            "title": "GL Account Number"
+            "title": "GL Account Number",
+            "$ref": "Account"
           },
           "programmeCode": {
             "type": "string",
             "description": "FK to BBVProgramme.programmeCode within the same administration (REQ-BBVW-002).",
             "example": "1.1.1",
-            "title": "Programme Code"
+            "title": "Programme Code",
+            "$ref": "BBVProgramme"
           },
           "allocationPercentage": {
             "type": "number",
@@ -136,30 +130,8 @@
             "type": "string",
             "description": "FK to the Administration owning this mapping (many-to-one). Scopes uniqueness with glAccountNumber + programmeCode + effectiveFrom.",
             "example": "adm-waterschap-1",
-            "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "programme": {
-            "localField": "programmeCode",
-            "relatedSchema": "BBVProgramme",
-            "relatedField": "programmeCode",
-            "cardinality": "many-to-one",
-            "description": "Many-to-one relation to the BBV programme this mapping allocates to (REQ-BBVW-002)."
-          },
-          "account": {
-            "localField": "glAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "Many-to-one relation to the Chart-of-Accounts GL account being allocated (REQ-BBVW-002)."
-          },
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "administrationCode",
-            "cardinality": "many-to-one",
-            "description": "Many-to-one relation to the owning Administration; scopes uniqueness of mappings."
+            "title": "Administration ID",
+            "$ref": "Administration"
           }
         }
       }

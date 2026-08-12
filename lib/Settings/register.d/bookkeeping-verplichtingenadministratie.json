@@ -30,7 +30,8 @@
             "type": "string",
             "description": "Operator-assigned unique commitment number within the administration.",
             "example": "PO-2026-00874",
-            "title": "Verplichtingsnummer"
+            "title": "Verplichtingsnummer",
+            "$ref": "Verplichtingsmutatie"
           },
           "sourceReference": {
             "type": "string",
@@ -188,7 +189,8 @@
             "nullable": true,
             "description": "FK to the Mandaat under whose authority this commitment was signed (REQ-VPL-002).",
             "example": "M-INKOOP-50K",
-            "title": "Mandaat Toegepast"
+            "title": "Mandaat Toegepast",
+            "$ref": "Mandaat"
           },
           "override_reason": {
             "type": "string",
@@ -353,29 +355,6 @@
             "onApprove": "advanceTransition"
           }
         },
-        "x-openregister-relations": {
-          "regels": {
-            "localField": "verplichtingsnummer",
-            "relatedSchema": "Verplichtingsregel",
-            "relatedField": "commitment",
-            "cardinality": "one-to-many",
-            "description": "Budget-tracking line items, one per coderingscombinatie / boekjaar (D2)."
-          },
-          "movements": {
-            "localField": "verplichtingsnummer",
-            "relatedSchema": "Verplichtingsmutatie",
-            "relatedField": "commitment",
-            "cardinality": "one-to-many",
-            "description": "Immutable audit log of every state change (D1)."
-          },
-          "mandaat": {
-            "localField": "mandaat_toegepast",
-            "relatedSchema": "Mandaat",
-            "relatedField": "mandaatcode",
-            "cardinality": "many-to-one",
-            "description": "The mandaat under whose authority the commitment was signed."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "commitment-administrator": {
@@ -435,7 +414,8 @@
             "type": "string",
             "description": "FK to the parent Verplichting (verplichtingsnummer).",
             "example": "PO-2026-00874",
-            "title": "Verplichting"
+            "title": "Verplichting",
+            "$ref": "Verplichting"
           },
           "regelnummer": {
             "type": "integer",
@@ -541,15 +521,6 @@
             "title": "Afgesloten"
           }
         },
-        "x-openregister-relations": {
-          "verplichtingFk": {
-            "localField": "commitment",
-            "relatedSchema": "Verplichting",
-            "relatedField": "verplichtingsnummer",
-            "cardinality": "many-to-one",
-            "description": "Parent commitment."
-          }
-        },
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
             "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching Budget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
@@ -611,7 +582,8 @@
             "type": "string",
             "description": "FK to the parent Verplichting (verplichtingsnummer).",
             "example": "PO-2026-00874",
-            "title": "Verplichting"
+            "title": "Verplichting",
+            "$ref": "Verplichting"
           },
           "verplichtingsregel": {
             "type": "string",
@@ -691,15 +663,6 @@
             "description": "FK to the Nextcloud user who triggered the mutation.",
             "example": "user-5",
             "title": "Gebruiker"
-          }
-        },
-        "x-openregister-relations": {
-          "verplichtingFk": {
-            "localField": "commitment",
-            "relatedSchema": "Verplichting",
-            "relatedField": "verplichtingsnummer",
-            "cardinality": "many-to-one",
-            "description": "Parent commitment."
           }
         },
         "x-openregister-audit-trail": {
@@ -884,7 +847,8 @@
             "type": "string",
             "description": "FK to the Verplichting awaiting approval.",
             "example": "PO-2026-00874",
-            "title": "Verplichting"
+            "title": "Verplichting",
+            "$ref": "Verplichting"
           },
           "stapnummer": {
             "type": "integer",
@@ -953,15 +917,6 @@
             "description": "File URI of the captured signature.",
             "example": "docudesk:sig-12",
             "title": "Handtekening Bestand"
-          }
-        },
-        "x-openregister-relations": {
-          "verplichtingFk": {
-            "localField": "commitment",
-            "relatedSchema": "Verplichting",
-            "relatedField": "verplichtingsnummer",
-            "cardinality": "many-to-one",
-            "description": "The commitment awaiting approval."
           }
         },
         "x-openregister-audit-trail": {
