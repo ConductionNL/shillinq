@@ -93,6 +93,8 @@ class IntegralCostPriceCalculator {
 	 * @param string $accountKind One of `loonkosten`, `materialen`, `afschrijvingen`.
 	 *
 	 * @return int Sum of matching GL lines in cents.
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-002
 	 */
 	public function sumDirectCosts(array $glLines, string $kostenplaats, string $kostendrager, string $accountKind): int {
 		$totalCents = 0;
