@@ -81,7 +81,7 @@
             "nullable": true,
             "title": "Looptijd Start"
           },
-          "looptijdEind": {
+          "termEnd": {
             "type": "string",
             "format": "date",
             "description": "Contract term end date — drives milestone-plan generation (REQ-003).",
@@ -242,21 +242,21 @@
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
         "required": [
-          "verplichtingNummer",
-          "omschrijving",
+          "commitmentNumber",
+          "description",
           "bron",
           "amount",
           "administrationId",
           "status"
         ],
         "properties": {
-          "verplichtingNummer": {
+          "commitmentNumber": {
             "type": "string",
             "description": "Sequential obligation number unique per administration.",
             "example": "VPL-2026-0001",
             "title": "Verplichting Nummer"
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "description": "Human-readable description of the obligation.",
             "example": "Schoonmaakcontract gemeentehuis 2026",
@@ -306,7 +306,7 @@
             "nullable": true,
             "title": "Looptijd Start"
           },
-          "looptijdEind": {
+          "termEnd": {
             "type": "string",
             "format": "date",
             "description": "Obligation term end date; bounds milestone dates (design validation rules).",
@@ -327,7 +327,7 @@
               "required": [
                 "mijlpaalId",
                 "datum",
-                "omschrijving",
+                "description",
                 "percentage",
                 "status"
               ],
@@ -344,7 +344,7 @@
                   "description": "Planned milestone date; must fall within looptijdStart..looptijdEind (design validation rules).",
                   "title": "Datum"
                 },
-                "omschrijving": {
+                "description": {
                   "type": "string",
                   "description": "Milestone description (Dutch label).",
                   "example": "Q1 deeloplevering",
@@ -549,7 +549,7 @@
                   "description": "Document identifier within the owning app.",
                   "title": "Document ID"
                 },
-                "omschrijving": {
+                "description": {
                   "type": "string",
                   "description": "Human-readable label (e.g. opleveringsdocument, acceptatie-protocol).",
                   "nullable": true,
@@ -670,7 +670,7 @@
       "gunningsDatum": "2026-01-15",
       "contractWaarde": 50000.0,
       "looptijdStart": "2026-02-01",
-      "looptijdEind": "2027-01-31",
+      "termEnd": "2027-01-31",
       "gegundeLeverancier": "76741850 Conduction B.V.",
       "opdrachttype": "dienstverlening-doorlopend",
       "administrationId": "adm-consultancy-nl",
@@ -694,7 +694,7 @@
       "gunningsDatum": "2026-02-10",
       "contractWaarde": 250000.0,
       "looptijdStart": "2026-03-01",
-      "looptijdEind": "2028-02-29",
+      "termEnd": "2028-02-29",
       "gegundeLeverancier": "76741850 Conduction B.V.",
       "opdrachttype": "levering-in-fases",
       "administrationId": "adm-consultancy-nl",
@@ -706,21 +706,21 @@
         "schema": "Verplichting",
         "slug": "vpl-sample-utrecht-schoonmaak"
       },
-      "verplichtingNummer": "VPL-2026-0001",
-      "omschrijving": "Schoonmaakcontract gemeentehuis Utrecht 2026",
+      "commitmentNumber": "VPL-2026-0001",
+      "description": "Schoonmaakcontract gemeentehuis Utrecht 2026",
       "bron": "tenderned",
       "bronReferentie": "TN-2026-0001",
       "amount": 50000.0,
       "kostenplaats": "FAC-001",
       "grootboekrekening": "4500",
       "looptijdStart": "2026-02-01",
-      "looptijdEind": "2027-01-31",
+      "termEnd": "2027-01-31",
       "gegundeLeverancierKvk": "76741850",
       "mijlpalen": [
         {
           "mijlpaalId": "MS-Q1",
           "datum": "2026-05-01",
-          "omschrijving": "Q1 deeloplevering",
+          "description": "Q1 deeloplevering",
           "percentage": 25,
           "status": "planned",
           "factuurnummer": null
@@ -728,7 +728,7 @@
         {
           "mijlpaalId": "MS-Q2",
           "datum": "2026-08-01",
-          "omschrijving": "Q2 deeloplevering",
+          "description": "Q2 deeloplevering",
           "percentage": 25,
           "status": "planned",
           "factuurnummer": null
@@ -736,7 +736,7 @@
         {
           "mijlpaalId": "MS-Q3",
           "datum": "2026-11-01",
-          "omschrijving": "Q3 deeloplevering",
+          "description": "Q3 deeloplevering",
           "percentage": 25,
           "status": "planned",
           "factuurnummer": null
@@ -744,7 +744,7 @@
         {
           "mijlpaalId": "MS-Q4",
           "datum": "2027-01-31",
-          "omschrijving": "Q4 eindoplevering",
+          "description": "Q4 eindoplevering",
           "percentage": 25,
           "status": "planned",
           "factuurnummer": null

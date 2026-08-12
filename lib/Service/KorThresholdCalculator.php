@@ -381,7 +381,7 @@ class KorThresholdCalculator
         $vroegsteOpzeg = sprintf('%04d-%02d-01', $opzegYear, $opzegMonth);
 
         return [
-            'lockInEindDatum'    => $lockInEinde,
+            'lockInEndDate'    => $lockInEinde,
             'vroegsteOpzegDatum' => $vroegsteOpzeg,
         ];
 
@@ -458,7 +458,7 @@ class KorThresholdCalculator
             }
 
             $result[$lidstaat] = [
-                'omzet'     => $this->fromCents(cents: $omzetCents),
+                'revenue'     => $this->fromCents(cents: $omzetCents),
                 'drempel'   => $this->fromCents(cents: $drempelCents),
                 'benutting' => round($this->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents), 4),
             ];

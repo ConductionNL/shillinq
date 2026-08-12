@@ -87,7 +87,7 @@ class AcmReportGenerator
 
             $activityId    = (string) ($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
             $code          = (string) ($activity['code'] ?? '');
-            $naam          = (string) ($activity['naam'] ?? '');
+            $naam          = (string) ($activity['name'] ?? '');
             $ikp           = (array) ($ikpRecords[$activityId] ?? []);
             $integraleCost = (float) ($ikp['totaleKosten'] ?? 0);
             $omzet         = (float) ($omzetByActivity[$activityId] ?? 0);
@@ -107,8 +107,8 @@ class AcmReportGenerator
             $activiteiten[] = [
                 'commercialActivityId' => $activityId,
                 'code'                 => $code,
-                'naam'                 => $naam,
-                'omzet'                => $omzet,
+                'name'                 => $naam,
+                'revenue'                => $omzet,
                 'integraleKostprijs'   => $integraleCost,
                 'kostendekkingsratio'  => $ratio,
                 'compliant'            => $compliant,
@@ -231,7 +231,7 @@ class AcmReportGenerator
             $lines[] = sprintf(
                 '  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
                 htmlspecialchars((string) ($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
-                (float) ($a['omzet'] ?? 0),
+                (float) ($a['revenue'] ?? 0),
                 (float) ($a['integraleKostprijs'] ?? 0),
                 $ratioAttr,
                 $compliantAttr

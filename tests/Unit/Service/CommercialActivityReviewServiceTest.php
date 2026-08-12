@@ -93,7 +93,7 @@ final class CommercialActivityReviewServiceTest extends TestCase
      */
     public function testComposeReviewTaskEnvelope(): void
     {
-        $task = $this->svc->composeReviewTask(['id' => 'ca-001', 'code' => 'MO-SP-014', 'naam' => 'Dansschool'], '2026-01-15');
+        $task = $this->svc->composeReviewTask(['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'Dansschool'], '2026-01-15');
         self::assertSame('wmo-annual-review', $task['type']);
         self::assertSame('Annual review due: MO-SP-014 Dansschool', $task['subject']);
         self::assertSame('concerncontroller', $task['assignedTo']);

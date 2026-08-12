@@ -65,7 +65,7 @@ final class SluitendCalculatorTest extends TestCase
         );
 
         // Saldo structureel = 100; reëel uplift = 2% of 900 = 18; saldo reëel = 82.
-        self::assertSame(100.0, $result['saldoStructureel']);
+        self::assertSame(100.0, $result['balanceStructural']);
         self::assertSame(82.0, $result['saldoReëel']);
         self::assertTrue($result['sluitendStructureel']);
         self::assertTrue($result['sluitendReëel']);
@@ -85,7 +85,7 @@ final class SluitendCalculatorTest extends TestCase
             nominaleOntwikkeling: 2.0
         );
 
-        self::assertSame(-100.0, $result['saldoStructureel']);
+        self::assertSame(-100.0, $result['balanceStructural']);
         self::assertFalse($result['sluitendStructureel']);
         self::assertFalse($result['sluitend']);
 
@@ -236,7 +236,7 @@ final class SluitendCalculatorTest extends TestCase
             year: ['batenStructureel' => 0.3, 'lastenStructureel' => 0.3],
             nominaleOntwikkeling: 0.0
         );
-        self::assertSame(0.0, $result['saldoStructureel']);
+        self::assertSame(0.0, $result['balanceStructural']);
         self::assertTrue($result['sluitendStructureel']);
 
     }//end testIntegerCentsAvoidDrift()

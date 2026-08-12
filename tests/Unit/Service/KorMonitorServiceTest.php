@@ -218,7 +218,7 @@ final class KorMonitorServiceTest extends TestCase
         $result  = $service->status(administrationId: 'adm-1', year: 2026);
 
         self::assertSame('adm-1', $result['administrationId']);
-        self::assertSame(16620.00, $result['lopendeOmzet']);
+        self::assertSame(16620.00, $result['currentRevenue']);
         self::assertSame(20000.00, $result['drempel']);
         self::assertEqualsWithDelta(0.831, $result['drempelBenutting'], 0.001);
 
@@ -259,9 +259,9 @@ final class KorMonitorServiceTest extends TestCase
 
         self::assertArrayHasKey('2026-01', $result['perMaand']);
         self::assertArrayHasKey('2026-08', $result['perMaand']);
-        self::assertSame(6000.00, $result['lopendeOmzet']);
+        self::assertSame(6000.00, $result['currentRevenue']);
         // Month 8, avg 750/mo, +4 months => 6000 + 3000 = 9000 prognose, well under drempel.
-        self::assertSame(9000.00, $result['prognoseEindeJaar']);
+        self::assertSame(9000.00, $result['forecastYearEnd']);
         self::assertSame('ONDER_DREMPEL', $result['prognoseStatus']);
 
     }//end testStatusBuildsMonthlyPrognose()
@@ -275,7 +275,7 @@ final class KorMonitorServiceTest extends TestCase
     {
         $invoices      = [$this->invoice('adm-1', 4000.00, '2026-03-01')];
         $registrations = [
-            ['administrationId' => 'adm-1', 'status' => 'ACTIEF', 'drempelJaar' => 10000],
+            ['administrationId' => 'adm-1', 'status' => 'ACTIEF', 'thresholdYear' => 10000],
         ];
 
         $service = $this->buildService($invoices, $registrations);
@@ -314,7 +314,7 @@ final class KorMonitorServiceTest extends TestCase
                 'administrationId'   => 'adm-1',
                 'status'             => 'ACTIEF',
                 'vroegsteOpzegDatum' => '1900-01-01',
-                'lockInEindDatum'    => '9999-12-31',
+                'lockInEndDate'    => '9999-12-31',
             ],
         ];
 

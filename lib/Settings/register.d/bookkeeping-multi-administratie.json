@@ -183,7 +183,7 @@
             "enum": [
               "maand",
               "kwartaal",
-              "jaar"
+              "year"
             ],
             "default": "kwartaal",
             "example": "kwartaal",

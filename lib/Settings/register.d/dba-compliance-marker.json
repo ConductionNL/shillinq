@@ -8,7 +8,7 @@
         "schema": "DBAModelovereenkomst",
         "slug": "modov-bd-2024-tussenkomstvrij-v3"
       },
-      "naam": "Tussenkomstvrij - algemeen (Belastingdienst v3 - 2024)",
+      "name": "Tussenkomstvrij - algemeen (Belastingdienst v3 - 2024)",
       "bron": "BELASTINGDIENST_GOEDGEKEURD",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
       "goedkeuringDatum": "2024-04-12",
@@ -43,7 +43,7 @@
         "schema": "DBAModelovereenkomst",
         "slug": "modov-bd-2023-leverancier-zelfstandig-v2"
       },
-      "naam": "Leverancier-zelfstandig (Belastingdienst v2 - 2023)",
+      "name": "Leverancier-zelfstandig (Belastingdienst v2 - 2023)",
       "bron": "BELASTINGDIENST_GOEDGEKEURD",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/leverancier-zelfstandig",
       "goedkeuringDatum": "2023-06-01",
@@ -73,7 +73,7 @@
         "schema": "DBAModelovereenkomst",
         "slug": "modov-bd-2024-tussenkomst-v1"
       },
-      "naam": "Tussenkomst (Belastingdienst v1 - 2024)",
+      "name": "Tussenkomst (Belastingdienst v1 - 2024)",
       "bron": "BELASTINGDIENST_GOEDGEKEURD",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomst",
       "goedkeuringDatum": "2024-02-15",
@@ -118,9 +118,9 @@
         "type": "object",
         "required": [
           "administrationId",
-          "ondernemingId",
+          "enterpriseId",
           "klantId",
-          "opdrachtNaam",
+          "assignmentName",
           "startDatum",
           "intakeStatus",
           "risicoNiveau"
@@ -132,7 +132,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming (ZZP/eenmanszaak/MKB) die deze opdracht uitvoert of inhuurt.",
             "example": "ond-nl-001234",
@@ -144,7 +144,7 @@
             "example": "klant-acme-bv",
             "title": "Klant ID"
           },
-          "opdrachtNaam": {
+          "assignmentName": {
             "type": "string",
             "description": "Vrije naam van de opdracht/engagement (REQ-DBA-001).",
             "example": "Backend ontwikkeling betaalmodule",
@@ -157,7 +157,7 @@
             "example": "2026-03-01",
             "title": "Start Datum"
           },
-          "verwachteEindDatum": {
+          "expectedEndDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -165,7 +165,7 @@
             "example": "2026-09-30",
             "title": "Verwachte Eind Datum"
           },
-          "feitelijkeEindDatum": {
+          "actualEndDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -173,7 +173,7 @@
             "example": null,
             "title": "Feitelijke Eind Datum"
           },
-          "verwachteOmzet": {
+          "expectedRevenue": {
             "type": "integer",
             "minimum": 0,
             "nullable": true,
@@ -181,7 +181,7 @@
             "example": 4800000,
             "title": "Verwachte Omzet"
           },
-          "gerealiseerdeOmzet": {
+          "realisedRevenue": {
             "type": "integer",
             "minimum": 0,
             "description": "Tot dusver gerealiseerde omzet in eurocenten (gevoed door AP/AR factuurfrequentie-hook, REQ-DBA-004).",
@@ -425,7 +425,7 @@
             "groupBy": "risicoNiveau"
           },
           "omzetPerKlant": {
-            "field": "gerealiseerdeOmzet",
+            "field": "realisedRevenue",
             "operation": "sum",
             "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie REQ-DBA-005.",
             "groupBy": "klantId"
@@ -653,7 +653,7 @@
             "default": "GEEN",
             "title": "Branchekader"
           },
-          "totaalScore": {
+          "totalScore": {
             "type": "integer",
             "minimum": 0,
             "maximum": 100,
@@ -719,7 +719,7 @@
             "formula": "financieelRisico.factuurFrequentieScore + financieelRisico.betalingsRisicoScore + financieelRisico.investeringEigenMiddelenScore",
             "description": "Som pijler-3 subscores (max 20)."
           },
-          "totaalScore": {
+          "totalScore": {
             "formula": "gezagsverhouding.subtotaal + persoonlijkeArbeid.subtotaal + financieelRisico.subtotaal + deliverooCriteria.subtotaal",
             "guard": "OCA\\Shillinq\\Guard\\DBAScoreCalculator::computeTotal",
             "description": "Som van alle pijlers + Deliveroo-criteria; guard valt terug op DBAScoreCalculator wanneer de declaratieve som niet volstaat (ADR-031 exception)."
@@ -772,13 +772,13 @@
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
         "type": "object",
         "required": [
-          "naam",
+          "name",
           "bron",
           "goedkeuringDatum",
           "actueleVersie"
         ],
         "properties": {
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Naam van de modelovereenkomst.",
             "example": "Tussenkomst-vrij - algemeen (Belastingdienst v3 - 2024)",
@@ -1117,7 +1117,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "ondernemingId",
+          "enterpriseId",
           "peilDatum",
           "overallRisico"
         ],
@@ -1128,7 +1128,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming waarvoor dit portfolio-risico is berekend.",
             "example": "ond-nl-001234",
@@ -1158,7 +1158,7 @@
                 "description": "Klant met grootste omzetaandeel.",
                 "title": "Grootste Klant"
               },
-              "aandeelOmzet12mnd": {
+              "revenueShare12m": {
                 "type": "number",
                 "minimum": 0,
                 "maximum": 1,
@@ -1207,7 +1207,7 @@
                   "title": "Duur Jaren",
                   "description": "The numeric value for duur jaren."
                 },
-                "omzetAandeel": {
+                "revenueShare": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1,
@@ -1367,7 +1367,7 @@
                   "description": "SHA-256-hash van het bestand (immutable proof).",
                   "title": "Sha256"
                 },
-                "omschrijving": {
+                "description": {
                   "type": "string",
                   "nullable": true,
                   "description": "Vrije omschrijving.",

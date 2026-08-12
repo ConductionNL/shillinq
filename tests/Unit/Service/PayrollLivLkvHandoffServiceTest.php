@@ -203,7 +203,7 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase
 
         $this->assertNotNull($payload);
         $this->assertSame('wn-1', $payload['werknemerId']);
-        $this->assertSame(2026, $payload['jaar']);
+        $this->assertSame(2026, $payload['year']);
         $this->assertSame('LIV', $payload['inkomenniveau']);
         $this->assertEqualsWithDelta(4050.00, $payload['fiscaalLoonJaar'], 0.005);
         $this->assertSame(36.0, $payload['contracturenPerWeek']);

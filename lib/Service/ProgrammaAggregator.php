@@ -66,10 +66,10 @@ class ProgrammaAggregator
         $saldoNaCents   = ($saldoVoorCents + $mutatiesCents);
 
         return [
-            'batenTotaal'       => (float) ($batenCents / 100),
-            'lastenTotaal'      => (float) ($lastenCents / 100),
-            'saldoVoorMutaties' => (float) ($saldoVoorCents / 100),
-            'saldoNaMutaties'   => (float) ($saldoNaCents / 100),
+            'revenueTotal'       => (float) ($batenCents / 100),
+            'expensesTotal'      => (float) ($lastenCents / 100),
+            'balanceBeforeMovements' => (float) ($saldoVoorCents / 100),
+            'balanceAfterMovements'   => (float) ($saldoNaCents / 100),
         ];
 
     }//end aggregate()

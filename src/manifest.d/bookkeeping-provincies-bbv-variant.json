@@ -99,7 +99,7 @@
 							"type": "bar",
 							"title": "Budget vs. actuals",
 							"orientation": "horizontal",
-							"groupBy": "programmaStructure",
+							"groupBy": "programmeStructure",
 							"series": [
 								{
 									"label": "Budget",
@@ -150,7 +150,7 @@
 						},
 						"columns": [
 							{
-								"key": "programmaStructure",
+								"key": "programmeStructure",
 								"label": "Programme"
 							},
 							{
@@ -173,7 +173,7 @@
 					},
 					"filters": [
 						{
-							"key": "programmaStructure",
+							"key": "programmeStructure",
 							"label": "Programme",
 							"type": "multi-select",
 							"options": [
@@ -219,7 +219,7 @@
 				"defaultSort": "accountNumber",
 				"pageSize": 50,
 				"mappingStatus": {
-					"unmappedField": "programmaStructure",
+					"unmappedField": "programmeStructure",
 					"label": "Unmapped GL lines",
 					"thresholds": {
 						"red": 30,
@@ -243,7 +243,7 @@
 						"sortable": true
 					},
 					{
-						"key": "programmaStructure",
+						"key": "programmeStructure",
 						"label": "Current programme",
 						"sortable": true
 					},
@@ -266,7 +266,7 @@
 						]
 					},
 					{
-						"key": "programmaStructure",
+						"key": "programmeStructure",
 						"label": "Programme",
 						"type": "select",
 						"options": [
@@ -302,7 +302,7 @@
 							"cancelLabel": "Cancel",
 							"fields": [
 								{
-									"key": "programmaStructure",
+									"key": "programmeStructure",
 									"label": "Target programme",
 									"type": "select",
 									"required": true,
@@ -317,7 +317,7 @@
 									]
 								},
 								{
-									"key": "programmaAssignedAt",
+									"key": "programmeAssignedAt",
 									"label": "Effective date",
 									"type": "date",
 									"required": true,
@@ -367,7 +367,7 @@
 						"type": "string"
 					},
 					{
-						"key": "programmaStructure",
+						"key": "programmeStructure",
 						"label": "Programme",
 						"type": "enum",
 						"options": [
@@ -381,7 +381,7 @@
 						]
 					},
 					{
-						"key": "programmaAssignedAt",
+						"key": "programmeAssignedAt",
 						"label": "Assigned at",
 						"type": "string"
 					}

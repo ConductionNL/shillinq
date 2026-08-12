@@ -729,7 +729,7 @@
             "example": 5800000.0,
             "title": "Size Criteria Balanstotaal"
           },
-          "sizeCriteriaNettoOmzet": {
+          "sizeCriteriaNetRevenue": {
             "type": "number",
             "description": "Measured net turnover used for the size test (REQ-DGAAP-010).",
             "nullable": true,
@@ -1130,7 +1130,7 @@
         "complyOrExplainMotivation": "Kleine rechtspersoon op basis van BW2 art 2:396; geen beursnotering.",
         "rjVariant": "RJk",
         "sizeCriteriaBalanstotaal": 5800000.0,
-        "sizeCriteriaNettoOmzet": 11200000.0,
+        "sizeCriteriaNetRevenue": 11200000.0,
         "sizeCriteriaGemiddeldWerknemers": 42,
         "sizeCriteriaBreachYears": 0,
         "avaBesluitReference": "AVA-2026-03-12-besluit-4",

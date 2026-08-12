@@ -356,14 +356,14 @@ class BbvComplianceGuard
 
         // Raadsbesluit override: an explicit, audit-trailed motivation unblocks
         // a non-sluitende begroting per art. 189 Gemeentewet.
-        $besluit = (string) ($programma['raadsbesluitNummer'] ?? '');
+        $besluit = (string) ($programma['councilResolutionNumber'] ?? '');
         $datum   = (string) ($programma['raadsbesluitDatum'] ?? '');
         if ($besluit !== '' && $datum !== '') {
             return true;
         }
 
         $administrationId = (string) ($programma['administrationId'] ?? '');
-        $boekjaar         = (int) ($programma['boekjaar'] ?? 0);
+        $boekjaar         = (int) ($programma['financialYear'] ?? 0);
 
         $rows = $this->loadMeerjarenBudgetRows(administrationId: $administrationId, boekjaar: $boekjaar);
         if ($rows === null) {
@@ -409,7 +409,7 @@ class BbvComplianceGuard
                     [
                         'filters' => [
                             'administrationId' => $administrationId,
-                            'boekjaar'         => $boekjaar,
+                            'financialYear'         => $boekjaar,
                             'versie'           => 'primitief',
                         ],
                     ]
@@ -482,12 +482,12 @@ class BbvComplianceGuard
 
         // Above the grens: a depreciation term must be set so the actief is
         // activated and depreciated, not expensed in one go (BBV art. 59 lid 4).
-        $termijn = (int) ($mva['afschrijvingstermijnJaar'] ?? 0);
+        $termijn = (int) ($mva['depreciationPeriodYears'] ?? 0);
         if ($termijn < 1) {
             $this->logger->info(
                 'BbvComplianceGuard: maatschappelijk-nut investering above grens not activated (REQ-BBV-005)',
                 [
-                    'omschrijving'  => ($mva['omschrijving'] ?? 'unknown'),
+                    'description'  => ($mva['description'] ?? 'unknown'),
                     'aanschafCents' => $aanschafCents,
                 ]
             );
@@ -535,7 +535,7 @@ class BbvComplianceGuard
         }
 
         $administrationId = (string) ($jaarrekening['administrationId'] ?? '');
-        $boekjaar         = (int) ($jaarrekening['boekjaar'] ?? 0);
+        $boekjaar         = (int) ($jaarrekening['financialYear'] ?? 0);
 
         if ($administrationId === '' || $boekjaar === 0) {
             $this->logger->info(
@@ -553,7 +553,7 @@ class BbvComplianceGuard
                     [
                         'filters' => [
                             'administrationId' => $administrationId,
-                            'boekjaar'         => $boekjaar,
+                            'financialYear'         => $boekjaar,
                             'status'           => 'vastgesteld',
                         ],
                     ]
@@ -583,7 +583,7 @@ class BbvComplianceGuard
                 'BbvComplianceGuard: jaarrekening mist verplichte paragrafen (REQ-BBV-007, BBV art. 9)',
                 [
                     'administrationId' => $administrationId,
-                    'boekjaar'         => $boekjaar,
+                    'financialYear'         => $boekjaar,
                     'ontbrekend'       => $ontbrekend,
                 ]
             );

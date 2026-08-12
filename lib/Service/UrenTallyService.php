@@ -121,7 +121,7 @@ final class UrenTallyService
         }//end foreach
 
         return [
-            'totaalUren'   => $totaal,
+            'totalHours'   => $totaal,
             'perCategorie' => $perCategorie,
             'overages'     => $overages,
         ];
@@ -162,7 +162,7 @@ final class UrenTallyService
 
         $this->logger->info(
             'UrenTallyService: YTD tally complete',
-            ['totaalUren' => $totaal, 'berekendOp' => $now]
+            ['totalHours' => $totaal, 'berekendOp' => $now]
         );
 
         return [

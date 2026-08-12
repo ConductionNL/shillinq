@@ -23,7 +23,7 @@
           "joinField": "administrationId",
           "columns": [
             {
-              "key": "naam",
+              "key": "name",
               "label": "Kwalificerend activum"
             },
             {
@@ -82,7 +82,7 @@
           "joinField": "administrationId",
           "columns": [
             {
-              "key": "naam",
+              "key": "name",
               "label": "Activum"
             },
             {
@@ -115,7 +115,7 @@
               "type": "currency"
             },
             {
-              "key": "saldo_open",
+              "key": "balance_open",
               "label": "Saldo open (EUR)",
               "type": "currency"
             },
@@ -152,7 +152,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "Programme",
               "type": "string"
             }
@@ -249,7 +249,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "MIT regeling",
               "type": "string"
             }
@@ -312,7 +312,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "EFRO programma",
               "type": "string"
             }
@@ -367,7 +367,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "Programme",
               "type": "string"
             },
@@ -472,7 +472,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "MIT regeling",
               "type": "string"
             },
@@ -533,7 +533,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "EFRO programma",
               "type": "string"
             }
@@ -644,7 +644,7 @@
         "IBAN",
         "incassokosten",
         "rente",
-        "totaalVerschuldigd"
+        "totalDue"
       ],
       "tone": "juridisch",
       "subject": "Ingebrekestelling — factuur {{factuurNummer}}",
@@ -659,7 +659,7 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "totaalVerschuldigd",
+        "totalDue",
         "incassobureauNaam"
       ],
       "tone": "juridisch",
@@ -681,7 +681,7 @@
         "transmissionPath": "T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint (Digipoort, eHerkenning EH3+); no new SBR client per ADR-019",
         "fields": [
           { "key": "fiscaalNummer", "source": "Belastingplichtige.fiscaalNummer" },
-          { "key": "boekjaar", "source": "VpbBalansLink.vpbPligtigVanaf -> fiscalYear" },
+          { "key": "financialYear", "source": "VpbBalansLink.vpbPligtigVanaf -> fiscalYear" },
           { "key": "activaTotaal", "source": "vpbBalansFiltered.activaTotal", "type": "currency", "unit": "cents" },
           { "key": "passivaTotaal", "source": "vpbBalansFiltered.passivaTotal", "type": "currency", "unit": "cents" },
           { "key": "resultaatTotaal", "source": "vpbBalansFiltered.resultaatTotal", "type": "currency", "unit": "cents" }

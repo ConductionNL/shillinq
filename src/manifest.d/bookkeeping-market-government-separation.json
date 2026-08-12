@@ -76,7 +76,7 @@
 				"schema": "CommercialActivity",
 				"columns": [
 					{ "key": "code", "label": "Code", "sortable": true },
-					{ "key": "naam", "label": "Name", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
 					{ "key": "bestuursorgaan", "label": "Bestuursorgaan", "sortable": true },
 					{ "key": "marktsegment", "label": "Market Segment", "sortable": true },
 					{ "key": "kostprijsMethode", "label": "Cost Method", "sortable": true },
@@ -98,7 +98,7 @@
 				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A commercial activity is the master record a municipality must ring-fence under the Wet Markt & Overheid. Native contract only: fields[] lead with the activity data (turnover, cost method, exemption). The compliance ledgers hanging off it are surfaced as relatedLists — IntegralCostPrice, ActivityCostAllocation and AlertLog, all FK commercialActivityId — so an officer walks from the master to its cost-recovery evidence. NO comms. Sidebar carries a file-references tab (the cost model and exemption ruling are real source documents) and an audit-trail tab for the immutable change log. lifecycleActions on because the activity moves through states (active / exempted / ended).",
 				"fields": [
 					{ "key": "code", "label": "Code", "type": "string" },
-					{ "key": "naam", "label": "Name", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
 					{ "key": "bestuursorgaan", "label": "Bestuursorgaan", "type": "string" },
 					{ "key": "organisatieonderdeel", "label": "Department", "type": "string" },
 					{ "key": "beschrijving", "label": "Description", "type": "string" },
@@ -106,7 +106,7 @@
 					{ "key": "concurrenten", "label": "Competitors", "type": "array" },
 					{ "key": "afnemers", "label": "Customers", "type": "array" },
 					{ "key": "startDatum", "label": "Start Date", "type": "string" },
-					{ "key": "eindDatum", "label": "End Date", "type": "string" },
+					{ "key": "endDate", "label": "End Date", "type": "string" },
 					{ "key": "kostprijsMethode", "label": "Cost-Price Method", "type": "string" },
 					{ "key": "kostenplaatsCode", "label": "Cost Center", "type": "string" },
 					{ "key": "kostendragerCode", "label": "Cost Object", "type": "string" },
@@ -578,7 +578,7 @@
 					{ "key": "bron", "label": "Source", "sortable": true },
 					{ "key": "amount", "label": "Amount", "sortable": true },
 					{ "key": "eenheid", "label": "Unit", "sortable": true },
-					{ "key": "concurrentNaam", "label": "Competitor", "sortable": true }
+					{ "key": "competitorName", "label": "Competitor", "sortable": true }
 				],
 				"defaultSort": "peildatum",
 				"detailRoute": "MarketBenchmarkDetail"
@@ -599,7 +599,7 @@
 					{ "key": "bron", "label": "Source", "type": "string" },
 					{ "key": "amount", "label": "Amount", "type": "number" },
 					{ "key": "eenheid", "label": "Unit", "type": "string" },
-					{ "key": "concurrentNaam", "label": "Competitor", "type": "string" },
+					{ "key": "competitorName", "label": "Competitor", "type": "string" },
 					{ "key": "toelichting", "label": "Notes", "type": "string" }
 				],
 				"indexRoute": "MarketBenchmarks",

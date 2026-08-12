@@ -202,7 +202,7 @@ final class KorThresholdCalculatorTest extends TestCase
     public function testLockInWindowCanonical(): void
     {
         $window = $this->calc->lockInWindow(ingangsDatum: '2026-01-01');
-        self::assertSame('2028-12-31', $window['lockInEindDatum']);
+        self::assertSame('2028-12-31', $window['lockInEndDate']);
         self::assertSame('2028-10-01', $window['vroegsteOpzegDatum']);
 
     }//end testLockInWindowCanonical()
@@ -215,7 +215,7 @@ final class KorThresholdCalculatorTest extends TestCase
     public function testLockInWindowMidYear(): void
     {
         $window = $this->calc->lockInWindow(ingangsDatum: '2026-07-15');
-        self::assertSame('2029-07-14', $window['lockInEindDatum']);
+        self::assertSame('2029-07-14', $window['lockInEndDate']);
         self::assertSame('2029-05-01', $window['vroegsteOpzegDatum']);
 
     }//end testLockInWindowMidYear()
@@ -278,7 +278,7 @@ final class KorThresholdCalculatorTest extends TestCase
         );
 
         // BE total 16.000 over drempel 25.000 => benutting 0.64.
-        self::assertEqualsWithDelta(16000.0, $aggregate['BE']['omzet'], 0.001);
+        self::assertEqualsWithDelta(16000.0, $aggregate['BE']['revenue'], 0.001);
         self::assertEqualsWithDelta(25000.0, $aggregate['BE']['drempel'], 0.001);
         self::assertEqualsWithDelta(0.64, $aggregate['BE']['benutting'], 0.001);
 

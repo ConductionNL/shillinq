@@ -18,7 +18,7 @@
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001",
         "type": "object",
         "required": [
-          "naam",
+          "name",
           "type",
           "type_immaterieel_activum",
           "voortbrenger",
@@ -27,7 +27,7 @@
           "administrationId"
         ],
         "properties": {
-          "naam": {
+          "name": {
             "type": "string",
             "description": "IP asset name.",
             "example": "Slimme routeringsalgoritme",
@@ -66,7 +66,7 @@
                 "title": "Soort",
                 "description": "The soort."
               },
-              "so_verklaring_nummer": {
+              "rnd_declaration_number": {
                 "type": "string",
                 "description": "RVO S&O-verklaring (format S{jaar}/{6-cijfer}); required if soort=so_verklaring.",
                 "example": "S2024/001234",
@@ -91,7 +91,7 @@
                 "title": "So Verklaring Periode",
                 "description": "A structured so verklaring periode object with nested properties."
               },
-              "octrooi_nummer": {
+              "patent_number": {
                 "type": "string",
                 "title": "Octrooi Nummer",
                 "description": "The octrooi nummer."
@@ -107,7 +107,7 @@
                 "title": "Octrooi Aanvraagdatum",
                 "description": "The date and time for octrooi aanvraagdatum."
               },
-              "kwekersrecht_nummer": {
+              "plantBreedersRight_number": {
                 "type": "string",
                 "title": "Kwekersrecht Nummer",
                 "description": "The kwekersrecht nummer."
@@ -221,7 +221,7 @@
         "type": "object",
         "required": [
           "qualifying_asset_id",
-          "boekjaar",
+          "financialYear",
           "eigen_rd_kosten",
           "rd_kosten_uitbesteed_derden",
           "rd_kosten_uitbesteed_verbonden",
@@ -237,7 +237,7 @@
             "example": "qa-2024-001",
             "title": "Qualifying Asset ID"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "example": 2024,
             "title": "Boekjaar",
@@ -360,7 +360,7 @@
         "type": "object",
         "required": [
           "qualifying_asset_id",
-          "boekjaar",
+          "financialYear",
           "methode",
           "bruto_opbrengst_activum",
           "kwalificerende_winst_voor_nexus",
@@ -379,7 +379,7 @@
             "title": "Qualifying Asset ID",
             "description": "The identifier of the associated qualifying asset."
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "example": 2024,
             "title": "Boekjaar",
@@ -531,7 +531,7 @@
               ]
             },
             "filter": {
-              "boekjaar": "@self.boekjaar",
+              "financialYear": "@self.boekjaar",
               "administrationId": "@self.administrationId"
             },
             "groupBy": [
@@ -562,7 +562,7 @@
         "type": "object",
         "required": [
           "qualifying_asset_id",
-          "boekjaar",
+          "financialYear",
           "periode",
           "kostensoort",
           "bron",
@@ -580,7 +580,7 @@
             "title": "Qualifying Asset ID",
             "description": "The identifier of the associated qualifying asset."
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "example": 2024,
             "title": "Boekjaar",
@@ -715,7 +715,7 @@
           "qualifying_asset_id",
           "ontstaansboekjaar",
           "negatief_kwalificerend_resultaat",
-          "saldo_open",
+          "balance_open",
           "status",
           "administrationId"
         ],
@@ -738,13 +738,13 @@
             "example": -215000.0,
             "title": "Negatief Kwalificerend Resultaat"
           },
-          "verrekend_boekjaar": {
+          "settled_financial_year": {
             "type": "array",
             "description": "Records of offset applications: [{jaar, bedrag, saldo_na}].",
             "items": {
               "type": "object",
               "properties": {
-                "jaar": {
+                "year": {
                   "type": "integer",
                   "title": "Jaar",
                   "description": "The numeric value for jaar."
@@ -754,7 +754,7 @@
                   "title": "Bedrag",
                   "description": "The numeric value for bedrag."
                 },
-                "saldo_na": {
+                "balance_after": {
                   "type": "number",
                   "title": "Saldo Na",
                   "description": "The numeric value for saldo na."
@@ -763,7 +763,7 @@
             },
             "title": "Verrekend Boekjaar"
           },
-          "saldo_open": {
+          "balance_open": {
             "type": "number",
             "minimum": 0,
             "example": 215000.0,
@@ -852,7 +852,7 @@
             "example": "adm-mkb-1",
             "title": "Administration ID"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year the event relates to.",
             "nullable": true,
@@ -904,11 +904,11 @@
           "schema": "QualifyingAsset",
           "slug": "qa-2024-001"
         },
-        "naam": "Slimme routeringsalgoritme",
+        "name": "Slimme routeringsalgoritme",
         "type": "software",
         "toegangsticket": {
           "soort": "so_verklaring",
-          "so_verklaring_nummer": "S2024/001234",
+          "rnd_declaration_number": "S2024/001234",
           "so_verklaring_periode": {
             "van": "2024-01-01",
             "tot": "2024-12-31"
@@ -933,11 +933,11 @@
           "schema": "QualifyingAsset",
           "slug": "qa-2024-002"
         },
-        "naam": "Voorspelmodel onderhoud (related-party R&D)",
+        "name": "Voorspelmodel onderhoud (related-party R&D)",
         "type": "software",
         "toegangsticket": {
           "soort": "so_verklaring",
-          "so_verklaring_nummer": "S2024/005678",
+          "rnd_declaration_number": "S2024/005678",
           "so_verklaring_periode": {
             "van": "2024-01-01",
             "tot": "2024-12-31"
@@ -959,11 +959,11 @@
           "schema": "QualifyingAsset",
           "slug": "qa-2023-003"
         },
-        "naam": "Octrooi sensorbehuizing",
+        "name": "Octrooi sensorbehuizing",
         "type": "octrooi",
         "toegangsticket": {
           "soort": "octrooi",
-          "octrooi_nummer": "NL2031234",
+          "patent_number": "NL2031234",
           "octrooi_land": "NL",
           "octrooi_aanvraagdatum": "2021-09-15"
         },
@@ -984,7 +984,7 @@
           "slug": "nx-2024-001"
         },
         "qualifying_asset_id": "qa-2024-001",
-        "boekjaar": 2024,
+        "financialYear": 2024,
         "eigen_rd_kosten": 480000.0,
         "rd_kosten_uitbesteed_derden": 120000.0,
         "rd_kosten_uitbesteed_verbonden": 80000.0,
@@ -1006,7 +1006,7 @@
           "slug": "nx-2024-002"
         },
         "qualifying_asset_id": "qa-2024-002",
-        "boekjaar": 2024,
+        "financialYear": 2024,
         "eigen_rd_kosten": 100000.0,
         "rd_kosten_uitbesteed_derden": 50000.0,
         "rd_kosten_uitbesteed_verbonden": 300000.0,
@@ -1027,7 +1027,7 @@
           "slug": "ib-pa-2024-001"
         },
         "qualifying_asset_id": "qa-2024-001",
-        "boekjaar": 2024,
+        "financialYear": 2024,
         "methode": "per_asset_afpelmethode",
         "bruto_opbrengst_activum": 2400000.0,
         "directe_kosten_activum": 850000.0,
@@ -1052,7 +1052,7 @@
           "slug": "ib-pa-2026-forfaitair"
         },
         "qualifying_asset_id": "qa-2024-001",
-        "boekjaar": 2026,
+        "financialYear": 2026,
         "methode": "forfaitair_25pct",
         "bruto_opbrengst_activum": 200000.0,
         "kwalificerende_winst_voor_nexus": 200000.0,
@@ -1073,7 +1073,7 @@
           "slug": "ib-ea-2024-001"
         },
         "qualifying_asset_id": "qa-2024-001",
-        "boekjaar": 2024,
+        "financialYear": 2024,
         "periode": "2024-Q1",
         "kostensoort": "rd_loonkosten",
         "bron": "loonadministratie",
@@ -1103,8 +1103,8 @@
         "qualifying_asset_id": "qa-2024-001",
         "ontstaansboekjaar": 2023,
         "negatief_kwalificerend_resultaat": -215000.0,
-        "verrekend_boekjaar": [],
-        "saldo_open": 215000.0,
+        "settled_financial_year": [],
+        "balance_open": 215000.0,
         "status": "open",
         "administrationId": "adm-mkb-1"
       }

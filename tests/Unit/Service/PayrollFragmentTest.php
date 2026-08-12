@@ -251,11 +251,11 @@ final class PayrollFragmentTest extends TestCase
             }
 
             $seen = true;
-            $sum  = (int) round(((float) $object['totaalLoonheffing']) * 100);
-            $sum += (int) round(((float) ($object['totaalEindheffingenWKR'] ?? 0)) * 100);
-            $sum += (int) round(((float) ($object['totaalPremiesSV'] ?? 0)) * 100);
-            $sum += (int) round(((float) ($object['totaalZVW'] ?? 0)) * 100);
-            $tot  = (int) round(((float) $object['totaalAfdracht']) * 100);
+            $sum  = (int) round(((float) $object['totalPayrollTax']) * 100);
+            $sum += (int) round(((float) ($object['totalFinalLeviesWorkRelatedCosts'] ?? 0)) * 100);
+            $sum += (int) round(((float) ($object['totalSocialInsuranceContributions'] ?? 0)) * 100);
+            $sum += (int) round(((float) ($object['totalHealthInsurance'] ?? 0)) * 100);
+            $tot  = (int) round(((float) $object['totalRemittance']) * 100);
             self::assertSame($sum, $tot, 'LHAfdracht totaalAfdracht must equal the sum of components');
         }
 

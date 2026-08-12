@@ -114,8 +114,8 @@ class BudgetBlocker
                         'BudgetBlocker: insufficient budget — denying commitment',
                         [
                             'verplichting' => $verplichtingsnummer,
-                            'programma'    => ($regel['programma'] ?? null),
-                            'boekjaar'     => ($regel['boekjaar'] ?? null),
+                            'programme'    => ($regel['programme'] ?? null),
+                            'financialYear'     => ($regel['financialYear'] ?? null),
                         ]
                     );
                     return false;
@@ -204,8 +204,8 @@ class BudgetBlocker
             schema: 'Budget',
             filters: [
                 'administrationId' => $administrationId,
-                'programmaCode'    => (string) ($regel['programma'] ?? ''),
-                'boekjaar'         => (int) ($regel['boekjaar'] ?? 0),
+                'programmeCode'    => (string) ($regel['programme'] ?? ''),
+                'financialYear'         => (int) ($regel['financialYear'] ?? 0),
             ]
         );
 
@@ -248,8 +248,8 @@ class BudgetBlocker
         // commitment without explicit regels is still validated.
         return [
             [
-                'programma'       => (string) ($verplichting['programma'] ?? ''),
-                'boekjaar'        => (int) ($verplichting['boekjaar'] ?? 0),
+                'programme'       => (string) ($verplichting['programme'] ?? ''),
+                'financialYear'        => (int) ($verplichting['financialYear'] ?? 0),
                 'amount_excl_vat' => (int) ($verplichting['totaalbedrag_excl_btw'] ?? 0),
             ],
         ];

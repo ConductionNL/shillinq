@@ -73,11 +73,11 @@ final class Titel9SeedsTest extends TestCase
             self::assertArrayHasKey($name, $byName, "Missing category: $name");
         }
 
-        self::assertSame(450000, $byName['micro']['thresholds']['balansTotaal']);
-        self::assertSame(900000, $byName['micro']['thresholds']['nettoOmzet']);
+        self::assertSame(450000, $byName['micro']['thresholds']['balanceSheetTotal']);
+        self::assertSame(900000, $byName['micro']['thresholds']['netRevenue']);
         self::assertSame(10, $byName['micro']['thresholds']['gemiddeldAantalWerknemers']);
-        self::assertSame(12000000, $byName['klein']['thresholds']['balansTotaal']);
-        self::assertSame(25000000, $byName['middelgroot']['thresholds']['balansTotaal']);
+        self::assertSame(12000000, $byName['klein']['thresholds']['balanceSheetTotal']);
+        self::assertSame(25000000, $byName['middelgroot']['thresholds']['balanceSheetTotal']);
         // 'groot' has no upper bound (REQ-T9-001).
         self::assertNull($byName['groot']['thresholds']);
 

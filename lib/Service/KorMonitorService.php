@@ -96,12 +96,12 @@ class KorMonitorService
 
         return [
             'administrationId'  => $administrationId,
-            'jaar'              => $year,
-            'lopendeOmzet'      => $this->calculator->fromCents(cents: $omzetCents),
+            'year'              => $year,
+            'currentRevenue'      => $this->calculator->fromCents(cents: $omzetCents),
             'drempel'           => $this->calculator->fromCents(cents: $drempelCents),
             'drempelBenutting'  => round($benutting, 4),
             'perMaand'          => $perMaand,
-            'prognoseEindeJaar' => $this->calculator->fromCents(cents: $prognoseCents),
+            'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
             'prognoseStatus'    => $this->calculator->prognoseStatus(
                 prognoseCents: $prognoseCents,
                 drempelCents: $drempelCents
@@ -140,7 +140,7 @@ class KorMonitorService
         $today = date('Y-m-d');
         foreach ($registrations as $registration) {
             $vroegste = (string) ($registration['vroegsteOpzegDatum'] ?? '');
-            $eind     = (string) ($registration['lockInEindDatum'] ?? '');
+            $eind     = (string) ($registration['lockInEndDate'] ?? '');
             if ($this->calculator->isOptOutPermitted(
                 today: $today,
                 vroegsteOpzegDatum: $vroegste,
@@ -262,7 +262,7 @@ class KorMonitorService
         }
 
         foreach ($registrations as $registration) {
-            $drempel = ($registration['drempelJaar'] ?? null);
+            $drempel = ($registration['thresholdYear'] ?? null);
             if ($drempel !== null) {
                 return $this->calculator->toCents(amount: $drempel);
             }

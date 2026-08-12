@@ -125,7 +125,7 @@ final class HorizonRollingJobTest extends TestCase
     {
         $horizon = [
             'horizonStart'   => '2026-05-18',
-            'horizonEind'    => '2026-08-16',
+            'horizonEnd'    => '2026-08-16',
             'rolledOp'       => '2026-05-18T02:00:00Z',
             'lifecycleState' => 'rolling',
         ];
@@ -134,7 +134,7 @@ final class HorizonRollingJobTest extends TestCase
 
         self::assertSame('2026-05-25', $rolled['horizonStart']);
         // +90 days from 2026-05-25 is 2026-08-23.
-        self::assertSame('2026-08-23', $rolled['horizonEind']);
+        self::assertSame('2026-08-23', $rolled['horizonEnd']);
         self::assertSame('active', $rolled['lifecycleState']);
         self::assertNotSame('2026-05-18T02:00:00Z', $rolled['rolledOp']);
 

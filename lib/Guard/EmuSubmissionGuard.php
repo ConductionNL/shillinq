@@ -67,8 +67,8 @@ class EmuSubmissionGuard
     public function requireApproval(array $emuReport): bool
     {
         $status        = (string) ($emuReport['status'] ?? '');
-        $saldoComputed = array_key_exists('emuSaldoBerekend', $emuReport)
-            && $emuReport['emuSaldoBerekend'] !== null;
+        $saldoComputed = array_key_exists('emuBalanceCalculated', $emuReport)
+            && $emuReport['emuBalanceCalculated'] !== null;
         $aansluiting   = (string) ($emuReport['bbvAansluitingscontrole'] ?? 'niet-uitgevoerd');
 
         $permitted = $status === 'concept'

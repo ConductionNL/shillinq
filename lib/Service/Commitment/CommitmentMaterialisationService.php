@@ -347,7 +347,7 @@ class CommitmentMaterialisationService
                 $grouped[$key] = [
                     'kostenplaats'      => $kostenplaats,
                     'grootboekrekening' => $grootboek,
-                    'boekjaar'          => $boekjaar,
+                    'financialYear'          => $boekjaar,
                     'amount_excl_vat'   => 0,
                 ];
             }
@@ -356,10 +356,10 @@ class CommitmentMaterialisationService
         }//end foreach
 
         foreach ($grouped as $key => $regel) {
-            $grouped[$key]['programma'] = $this->resolveProgramma(
+            $grouped[$key]['programme'] = $this->resolveProgramma(
                 administrationId: $administrationId,
                 kostenplaats: $regel['kostenplaats'],
-                boekjaar: $regel['boekjaar']
+                boekjaar: $regel['financialYear']
             );
         }
 
@@ -408,9 +408,9 @@ class CommitmentMaterialisationService
             $regels[] = [
                 'kostenplaats'      => $kostenplaats,
                 'grootboekrekening' => '',
-                'boekjaar'          => $boekjaar,
+                'financialYear'          => $boekjaar,
                 'amount_excl_vat'   => $bedrag,
-                'programma'         => $this->resolveProgramma(
+                'programme'         => $this->resolveProgramma(
                     administrationId: $administrationId,
                     kostenplaats: $kostenplaats,
                     boekjaar: $boekjaar
@@ -530,11 +530,11 @@ class CommitmentMaterialisationService
             filters: [
                 'administrationId' => $administrationId,
                 'kostenplaats'     => $kostenplaats,
-                'boekjaar'         => $boekjaar,
+                'financialYear'         => $boekjaar,
             ]
         );
 
-        return (string) ($budget['programmaCode'] ?? '');
+        return (string) ($budget['programmeCode'] ?? '');
 
     }//end resolveProgramma()
 
@@ -565,11 +565,11 @@ class CommitmentMaterialisationService
                         'administrationId'  => (string) ($draft['administrationId'] ?? ''),
                         'verplichting'      => (string) ($draft['verplichtingsnummer'] ?? ''),
                         'regelnummer'       => $regelnummer,
-                        'boekjaar'          => (int) ($regel['boekjaar'] ?? 0),
+                        'financialYear'          => (int) ($regel['financialYear'] ?? 0),
                         'amount_excl_vat'   => (int) ($regel['amount_excl_vat'] ?? 0),
                         'grootboekrekening' => (string) ($regel['grootboekrekening'] ?? ''),
                         'kostenplaats'      => (string) ($regel['kostenplaats'] ?? ''),
-                        'programma'         => (string) ($regel['programma'] ?? ''),
+                        'programme'         => (string) ($regel['programme'] ?? ''),
                         'restant_verplicht' => (int) ($regel['amount_excl_vat'] ?? 0),
                     ]
                 );
@@ -600,7 +600,7 @@ class CommitmentMaterialisationService
     {
         try {
             $first    = reset($regelInputs);
-            $boekjaar = (int) ($first['boekjaar'] ?? (int) (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
+            $boekjaar = (int) ($first['financialYear'] ?? (int) (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
             $bedrag   = ((float) ($verplichting['totaalbedrag_excl_btw'] ?? 0)) / 100;
 
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
@@ -613,10 +613,10 @@ class CommitmentMaterialisationService
                         'bevindingsnummer' => 'RV-'.($verplichting['verplichtingsnummer'] ?? '').'-OVERRIDE',
                         'soort'            => 'fout',
                         'criterium'        => 'begroting',
-                        'boekjaar'         => $boekjaar,
-                        'programma'        => (string) ($first['programma'] ?? ''),
+                        'financialYear'         => $boekjaar,
+                        'programme'        => (string) ($first['programme'] ?? ''),
                         'amount_error'      => $bedrag,
-                        'omschrijving'     => (string) ($verplichting['override_reden'] ?? ''),
+                        'description'     => (string) ($verplichting['override_reden'] ?? ''),
                         'oorzaak'          => sprintf(
                             'Verplichting %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
                             (string) ($verplichting['verplichtingsnummer'] ?? '')

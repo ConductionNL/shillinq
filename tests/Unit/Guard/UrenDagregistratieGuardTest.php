@@ -139,7 +139,7 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testBackfillWithinWindowPasses(): void
     {
         $entry = [
-            'ondernemingId'     => 'ond-1',
+            'enterpriseId'     => 'ond-1',
             'datum'             => '2026-05-16',
             'categorie'         => 'ACQUISITIE',
             'uren'              => 2,
@@ -157,7 +157,7 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testOldBackfillWithoutEvidenceRejected(): void
     {
         $entry = [
-            'ondernemingId'     => 'ond-1',
+            'enterpriseId'     => 'ond-1',
             'datum'             => '2026-04-05',
             'categorie'         => 'ACQUISITIE',
             'uren'              => 2,
@@ -175,7 +175,7 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testOldBackfillWithEvidenceAccepted(): void
     {
         $entry = [
-            'ondernemingId'     => 'ond-1',
+            'enterpriseId'     => 'ond-1',
             'datum'             => '2026-04-05',
             'categorie'         => 'ACQUISITIE',
             'uren'              => 2,
@@ -195,7 +195,7 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testScholingWithoutEvidenceRejected(): void
     {
         $entry = [
-            'ondernemingId'     => 'ond-1',
+            'enterpriseId'     => 'ond-1',
             'datum'             => '2026-05-21',
             'categorie'         => 'SCHOLING',
             'uren'              => 8,
@@ -213,7 +213,7 @@ class UrenDagregistratieGuardTest extends TestCase
     public function testScholingWithEvidenceAccepted(): void
     {
         $entry = [
-            'ondernemingId'     => 'ond-1',
+            'enterpriseId'     => 'ond-1',
             'datum'             => '2026-05-21',
             'categorie'         => 'SCHOLING',
             'uren'              => 8,

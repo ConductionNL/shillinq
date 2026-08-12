@@ -154,11 +154,11 @@ class ProgrammabegrotingExporter
             'programmas' => array_map(
                 static function (array $programma): array {
                     return [
-                        'nummer'         => ($programma['nummer'] ?? null),
-                        'naam'           => ($programma['naam'] ?? null),
+                        'number'         => ($programma['number'] ?? null),
+                        'name'           => ($programma['name'] ?? null),
                         'doelstellingen' => ($programma['doelstellingen'] ?? null),
-                        'batenTotaal'    => ($programma['batenTotaal'] ?? null),
-                        'lastenTotaal'   => ($programma['lastenTotaal'] ?? null),
+                        'revenueTotal'    => ($programma['revenueTotal'] ?? null),
+                        'expensesTotal'   => ($programma['expensesTotal'] ?? null),
                     ];
                 },
                 $programmas

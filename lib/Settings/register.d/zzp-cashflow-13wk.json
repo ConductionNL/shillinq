@@ -20,11 +20,11 @@
         "type": "object",
         "required": [
           "horizonId",
-          "ondernemingId",
+          "enterpriseId",
           "horizonStart",
-          "horizonEind",
+          "horizonEnd",
           "rolledOp",
-          "openingSaldo",
+          "openingBalance",
           "administrationId",
           "lifecycleState"
         ],
@@ -35,7 +35,7 @@
             "example": "hor-2026-w22-adm1",
             "title": "Horizon ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "Denormalised reference to the onderneming/corporation this horizon belongs to (REQ-CF-001).",
             "example": "ond-zzp-c001",
@@ -48,7 +48,7 @@
             "example": "2026-05-25",
             "title": "Horizon Start"
           },
-          "horizonEind": {
+          "horizonEnd": {
             "type": "string",
             "format": "date",
             "description": "Last day of the window (Sunday, +90 days) (REQ-CF-001).",
@@ -62,7 +62,7 @@
             "example": "2026-05-25T02:00:00Z",
             "title": "Rolled Op"
           },
-          "openingSaldo": {
+          "openingBalance": {
             "type": "object",
             "description": "Opening balance breakdown across the operational account and the three spaardoel buckets (REQ-CF-001/014).",
             "required": [
@@ -70,7 +70,7 @@
               "spaardoel_btw",
               "spaardoel_ib",
               "spaardoel_buffer",
-              "totaal"
+              "total"
             ],
             "properties": {
               "zakelijkeRekening": {
@@ -97,7 +97,7 @@
                 "example": 8200.0,
                 "title": "Spaardoel Buffer"
               },
-              "totaal": {
+              "total": {
                 "type": "number",
                 "description": "Sum of all four balances in EUR.",
                 "example": 32020.0,
@@ -254,14 +254,14 @@
           "horizonId",
           "weeknummer",
           "weekStart",
-          "weekEind",
-          "openingSaldo",
+          "weekEnd",
+          "openingBalance",
           "inflows_ar_geprognosticeerd",
-          "inflows_totaal",
+          "inflows_total",
           "outflows_ap_geprognosticeerd",
-          "outflows_totaal",
+          "outflows_total",
           "nettoMutatie",
-          "eindSaldo",
+          "closingBalance",
           "administrationId"
         ],
         "properties": {
@@ -292,14 +292,14 @@
             "example": "2026-05-25",
             "title": "Week Start"
           },
-          "weekEind": {
+          "weekEnd": {
             "type": "string",
             "format": "date",
             "description": "Sunday of the week (REQ-CF-002).",
             "example": "2026-05-31",
             "title": "Week Eind"
           },
-          "openingSaldo": {
+          "openingBalance": {
             "type": "number",
             "description": "Opening balance for the week (previous week's eindSaldo or horizon opening) (REQ-CF-002).",
             "example": 32020.0,
@@ -329,7 +329,7 @@
             "example": 0.0,
             "title": "Inflows Overig"
           },
-          "inflows_totaal": {
+          "inflows_total": {
             "type": "number",
             "description": "Sum of all inflows for the week (REQ-CF-002).",
             "example": 11500.0,
@@ -389,7 +389,7 @@
             "example": 0.0,
             "title": "Outflows Investeringen"
           },
-          "outflows_totaal": {
+          "outflows_total": {
             "type": "number",
             "description": "Sum of all outflows for the week (REQ-CF-002).",
             "example": 2100.0,
@@ -401,7 +401,7 @@
             "example": 9400.0,
             "title": "Netto Mutatie"
           },
-          "eindSaldo": {
+          "closingBalance": {
             "type": "number",
             "description": "openingSaldo + nettoMutatie (REQ-CF-002).",
             "example": 41420.0,
@@ -499,7 +499,7 @@
             "description": "Projected AR inflows summed per week (REQ-CF-002 weekly aggregation). Feeds the bar chart inflows series."
           },
           "outflowsByWeek": {
-            "field": "outflows_totaal",
+            "field": "outflows_total",
             "operation": "sum",
             "groupBy": "weeknummer",
             "description": "Total outflows summed per week (REQ-CF-006/007). Feeds the bar chart outflows series."
@@ -702,7 +702,7 @@
             "example": "ap-2026-0184",
             "title": "AP Transaction ID"
           },
-          "leverancierNaam": {
+          "supplierName": {
             "type": "string",
             "description": "Supplier/creditor name (denormalised) (REQ-CF-006).",
             "example": "KPN Zakelijk",
@@ -810,7 +810,7 @@
         "type": "object",
         "required": [
           "recurId",
-          "ondernemingId",
+          "enterpriseId",
           "label",
           "categorie",
           "richting",
@@ -826,7 +826,7 @@
             "example": "rec-huur-kantoor",
             "title": "Recur ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK to the onderneming/corporation (REQ-CF-005).",
             "example": "ond-zzp-c001",
@@ -882,7 +882,7 @@
             "example": 1,
             "title": "Dag Van Maand"
           },
-          "maandVanJaar": {
+          "monthOfYear": {
             "type": "integer",
             "minimum": 1,
             "maximum": 12,
@@ -992,7 +992,7 @@
         "type": "object",
         "required": [
           "policyId",
-          "ondernemingId",
+          "enterpriseId",
           "policy",
           "berekendeBuffer",
           "alertOndergrens",
@@ -1006,7 +1006,7 @@
             "example": "buf-adm1",
             "title": "Policy ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK to the onderneming/corporation (REQ-CF-009).",
             "example": "ond-zzp-c001",
@@ -1090,7 +1090,7 @@
         "required": [
           "scenarioId",
           "horizonId",
-          "naam",
+          "name",
           "aanpassingen",
           "createdAt",
           "administrationId"
@@ -1108,7 +1108,7 @@
             "example": "hor-2026-w22-adm1",
             "title": "Horizon ID"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Scenario name (REQ-CF-011).",
             "example": "Acme betaalt niet EUR 8.400",
@@ -1403,7 +1403,7 @@
             "items": {
               "type": "object",
               "properties": {
-                "dealNaam": {
+                "dealName": {
                   "type": "string",
                   "title": "Deal Naam",
                   "description": "The deal naam."
@@ -1476,16 +1476,16 @@
         "slug": "cf-horizon-erik-consultancy-w22"
       },
       "horizonId": "hor-2026-w22-erik",
-      "ondernemingId": "ond-zzp-c001",
+      "enterpriseId": "ond-zzp-c001",
       "horizonStart": "2026-05-25",
-      "horizonEind": "2026-08-23",
+      "horizonEnd": "2026-08-23",
       "rolledOp": "2026-05-25T02:00:00Z",
-      "openingSaldo": {
+      "openingBalance": {
         "zakelijkeRekening": 45000.0,
         "spaardoel_btw": 8200.0,
         "spaardoel_ib": 12500.0,
         "spaardoel_buffer": 6800.0,
-        "totaal": 72500.0
+        "total": 72500.0
       },
       "modelVersie": "v4.1-klantspecifiek-betaalgedrag",
       "kalibratieScore": 0.97,
@@ -1503,13 +1503,13 @@
       "horizonId": "hor-2026-w22-erik",
       "weeknummer": 22,
       "weekStart": "2026-05-25",
-      "weekEind": "2026-05-31",
-      "openingSaldo": 72500.0,
+      "weekEnd": "2026-05-31",
+      "openingBalance": 72500.0,
       "inflows_ar_geprognosticeerd": 12500.0,
       "inflows_ar_gerealiseerd": 0.0,
       "inflows_pipeline": 0.0,
       "inflows_overig": 0.0,
-      "inflows_totaal": 12500.0,
+      "inflows_total": 12500.0,
       "outflows_ap_geprognosticeerd": 2100.0,
       "outflows_recurring_huur": 1200.0,
       "outflows_recurring_verzekering": 185.0,
@@ -1519,9 +1519,9 @@
       "outflows_btw_afdracht": 0.0,
       "outflows_ib_aanslag": 0.0,
       "outflows_investeringen": 0.0,
-      "outflows_totaal": 7225.0,
+      "outflows_total": 7225.0,
       "nettoMutatie": 5275.0,
-      "eindSaldo": 77775.0,
+      "closingBalance": 77775.0,
       "bufferStatus": "BOVEN_BUFFER",
       "alerts": [],
       "administrationId": "adm-consultancy-nl"
@@ -1556,7 +1556,7 @@
       "schedId": "apsched-kpn-2026-05",
       "horizonId": "hor-2026-w22-erik",
       "apTransactionId": "ap-2026-0184",
-      "leverancierNaam": "KPN Zakelijk",
+      "supplierName": "KPN Zakelijk",
       "vervalDatum": "2026-05-30",
       "geplandeBetaalDatum": "2026-05-30",
       "amount": 184.0,
@@ -1571,7 +1571,7 @@
         "slug": "cf-recurring-erik-huur"
       },
       "recurId": "rec-huur-kantoor",
-      "ondernemingId": "ond-zzp-c001",
+      "enterpriseId": "ond-zzp-c001",
       "label": "Huur kantoor",
       "categorie": "RECURRING_HUUR",
       "richting": "OUT",
@@ -1590,12 +1590,12 @@
         "slug": "cf-recurring-erik-bav"
       },
       "recurId": "rec-bav-verzekering",
-      "ondernemingId": "ond-zzp-c001",
+      "enterpriseId": "ond-zzp-c001",
       "label": "BAV-verzekering",
       "categorie": "RECURRING_VERZEKERING",
       "richting": "OUT",
       "frequentie": "JAARLIJKS",
-      "maandVanJaar": 7,
+      "monthOfYear": 7,
       "standardAmount": 620.0,
       "indexatieRegel": "CPI_AFGELOPEN_JAAR",
       "geldigVan": "2024-07-01",
@@ -1609,7 +1609,7 @@
         "slug": "cf-buffer-erik"
       },
       "policyId": "buf-erik",
-      "ondernemingId": "ond-zzp-c001",
+      "enterpriseId": "ond-zzp-c001",
       "policy": "MIN_MONTHS_VASTE_KOSTEN",
       "berekendeBuffer": 7500.0,
       "alertOndergrens": 3750.0,
@@ -1624,7 +1624,7 @@
       },
       "scenarioId": "scn-acme-no-pay",
       "horizonId": "hor-2026-w22-erik",
-      "naam": "Acme betaalt niet EUR 8.400",
+      "name": "Acme betaalt niet EUR 8.400",
       "description": "Stress test: largest debtor defaults this quarter.",
       "aanpassingen": [
         {

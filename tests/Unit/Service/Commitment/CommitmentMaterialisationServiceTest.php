@@ -250,9 +250,9 @@ class CommitmentMaterialisationServiceTest extends TestCase
         return array_merge(
             [
                 'administrationId'           => 'adm-1',
-                'programmaCode'              => '5.1',
+                'programmeCode'              => '5.1',
                 'kostenplaats'               => 'FAC-2026',
-                'boekjaar'                   => 2026,
+                'financialYear'                   => 2026,
                 'authorised_amount'       => 50000000,
                 'realised_amount'        => 20000000,
                 'openstaande_verplichtingen' => 0,
@@ -349,8 +349,8 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
         self::assertCount(1, $regelSaves);
-        self::assertSame('5.1', $regelSaves[0][1]['programma']);
-        self::assertSame(2026, $regelSaves[0][1]['boekjaar']);
+        self::assertSame('5.1', $regelSaves[0][1]['programme']);
+        self::assertSame(2026, $regelSaves[0][1]['financialYear']);
         self::assertSame(7500000, $regelSaves[0][1]['amount_excl_vat']);
 
     }//end testPurchaseOrderApprovalMaterialisesCommitment()
@@ -514,8 +514,8 @@ class CommitmentMaterialisationServiceTest extends TestCase
      */
     public function testMultiYearFrameworkMaterialisesOneRegelPerBoekjaar(): void
     {
-        $budget2026 = $this->budget(['boekjaar' => 2026, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
-        $budget2027 = $this->budget(['boekjaar' => 2027, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
+        $budget2026 = $this->budget(['financialYear' => 2026, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
+        $budget2027 = $this->budget(['financialYear' => 2027, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
 
         $mandaat = [
             'administrationId'   => 'adm-1',
@@ -547,7 +547,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
         self::assertCount(2, $regelSaves);
-        $boekjaren = array_map(static fn ($s) => $s[1]['boekjaar'], $regelSaves);
+        $boekjaren = array_map(static fn ($s) => $s[1]['financialYear'], $regelSaves);
         sort($boekjaren);
         self::assertSame([2026, 2027], $boekjaren);
 
@@ -609,8 +609,8 @@ class CommitmentMaterialisationServiceTest extends TestCase
      */
     public function testContractSpanningYearsSplitsPerBoekjaar(): void
     {
-        $budget2026 = $this->budget(['boekjaar' => 2026, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
-        $budget2027 = $this->budget(['boekjaar' => 2027, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
+        $budget2026 = $this->budget(['financialYear' => 2026, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
+        $budget2027 = $this->budget(['financialYear' => 2027, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
 
         $mandaat = [
             'administrationId'   => 'adm-1',

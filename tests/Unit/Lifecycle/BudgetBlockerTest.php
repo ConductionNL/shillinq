@@ -216,8 +216,8 @@ class BudgetBlockerTest extends TestCase
         return array_merge(
             [
                 'administrationId'           => 'adm-1',
-                'programmaCode'              => '5.1',
-                'boekjaar'                   => 2026,
+                'programmeCode'              => '5.1',
+                'financialYear'                   => 2026,
                 'authorised_amount'       => 50000000,
                 'realised_amount'        => 20000000,
                 'openstaande_verplichtingen' => 0,
@@ -243,8 +243,8 @@ class BudgetBlockerTest extends TestCase
             'totaalbedrag_excl_btw' => $bedrag,
             'regels'                => [
                 [
-                    'programma'       => '5.1',
-                    'boekjaar'        => 2026,
+                    'programme'       => '5.1',
+                    'financialYear'        => 2026,
                     'amount_excl_vat' => $bedrag,
                 ],
             ],
@@ -334,8 +334,8 @@ class BudgetBlockerTest extends TestCase
      */
     public function testMultiYearPerBudgetIsolation(): void
     {
-        $budget2026 = $this->budget(['boekjaar' => 2026, 'authorised_amount' => 12000000, 'realised_amount' => 0]);
-        $budget2027 = $this->budget(['boekjaar' => 2027, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
+        $budget2026 = $this->budget(['financialYear' => 2026, 'authorised_amount' => 12000000, 'realised_amount' => 0]);
+        $budget2027 = $this->budget(['financialYear' => 2027, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
 
         $this->withObjectService(
             $this->buildObjectServiceStub(
@@ -349,8 +349,8 @@ class BudgetBlockerTest extends TestCase
             'soort'                 => 'raamovereenkomst',
             'totaalbedrag_excl_btw' => 20000000,
             'regels'                => [
-                ['programma' => '5.1', 'boekjaar' => 2026, 'amount_excl_vat' => 10000000],
-                ['programma' => '5.1', 'boekjaar' => 2027, 'amount_excl_vat' => 10000000],
+                ['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
+                ['programme' => '5.1', 'financialYear' => 2027, 'amount_excl_vat' => 10000000],
             ],
         ];
 

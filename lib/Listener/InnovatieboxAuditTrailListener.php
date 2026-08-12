@@ -158,7 +158,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
                     'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                    'boekjaar'            => $this->intOrNull(value: $data['boekjaar'] ?? null),
+                    'financialYear'            => $this->intOrNull(value: $data['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'NexusCalculation',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -183,7 +183,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
                     'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                    'boekjaar'            => $this->intOrNull(value: $data['boekjaar'] ?? null),
+                    'financialYear'            => $this->intOrNull(value: $data['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'IBProfitAttribution',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -214,7 +214,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                     options: [
                         'event_type'          => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
                         'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                        'boekjaar'            => $this->intOrNull(value: $data['boekjaar'] ?? null),
+                        'financialYear'            => $this->intOrNull(value: $data['financialYear'] ?? null),
                         'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                         'subject_schema'      => 'IBProfitAttribution',
                         'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -237,13 +237,13 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED,
                     'administrationId'    => (string) ($data['administrationId'] ?? ''),
-                    'boekjaar'            => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['boekjaar'] ?? null)),
+                    'financialYear'            => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
                     'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'CarryForwardLoss',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
                     'details'             => $this->slice(
                         data: $data,
-                        keys: ['origin_boekjaar', 'oorspronkelijk_bedrag', 'saldo_na', 'status']
+                        keys: ['origin_boekjaar', 'oorspronkelijk_bedrag', 'balance_after', 'status']
                     ),
                 ]
             );
@@ -288,7 +288,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
                     'administrationId'    => (string) ($next['administrationId'] ?? ''),
-                    'boekjaar'            => $this->intOrNull(value: $next['boekjaar'] ?? null),
+                    'financialYear'            => $this->intOrNull(value: $next['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'NexusCalculation',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -319,7 +319,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
                     'administrationId'    => (string) ($next['administrationId'] ?? ''),
-                    'boekjaar'            => $this->intOrNull(value: $next['boekjaar'] ?? null),
+                    'financialYear'            => $this->intOrNull(value: $next['financialYear'] ?? null),
                     'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'IBProfitAttribution',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -330,7 +330,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
         }
 
         $administrationId = (string) ($next['administrationId'] ?? '');
-        $boekjaar         = $this->intOrNull(value: $next['boekjaar'] ?? null);
+        $boekjaar         = $this->intOrNull(value: $next['financialYear'] ?? null);
         $alreadyLocked    = ($priorLocked === true);
         if ($alreadyLocked === false && $boekjaar !== null && $administrationId !== '') {
             // Cross-check: even if THIS record is not locked, the year may be
@@ -346,7 +346,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 options: [
                     'event_type'          => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
                     'administrationId'    => $administrationId,
-                    'boekjaar'            => $boekjaar,
+                    'financialYear'            => $boekjaar,
                     'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                     'subject_schema'      => 'IBProfitAttribution',
                     'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -370,8 +370,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener
      */
     private function handleLossUpdated(object $entity, array $next, array $prior): void
     {
-        $priorEntries = (array) ($prior['verrekend_boekjaar'] ?? []);
-        $nextEntries  = (array) ($next['verrekend_boekjaar'] ?? []);
+        $priorEntries = (array) ($prior['settled_financial_year'] ?? []);
+        $nextEntries  = (array) ($next['settled_financial_year'] ?? []);
         if (count($nextEntries) <= count($priorEntries)) {
             return;
         }
@@ -382,13 +382,13 @@ final class InnovatieboxAuditTrailListener implements IEventListener
             options: [
                 'event_type'          => InnovatieboxAuditEventLogger::EVENT_LOSS_OFFSET_APPLIED,
                 'administrationId'    => (string) ($next['administrationId'] ?? ''),
-                'boekjaar'            => $this->intOrNull(value: $next['origin_boekjaar'] ?? ($next['boekjaar'] ?? null)),
+                'financialYear'            => $this->intOrNull(value: $next['origin_boekjaar'] ?? ($next['financialYear'] ?? null)),
                 'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
                 'subject_schema'      => 'CarryForwardLoss',
                 'subject_id'          => $this->stringOrNull(value: $entity->getUuid() ?? null),
                 'details'             => [
                     'new_entries' => $newEntries,
-                    'saldo_na'    => $next['saldo_na'] ?? null,
+                    'balance_after'    => $next['balance_after'] ?? null,
                     'status'      => $next['status'] ?? null,
                 ],
             ]

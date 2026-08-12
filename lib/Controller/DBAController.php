@@ -114,7 +114,7 @@ class DBAController extends Controller
 
         return new JSONResponse(
                 [
-                    'totaalScore'        => $total,
+                    'totalScore'        => $total,
                     'risicoNiveau'       => $band,
                     'gezagsverhouding'   => $this->scoreCalc->subtotalGezag($body),
                     'persoonlijkeArbeid' => $this->scoreCalc->subtotalArbeid($body),
@@ -156,7 +156,7 @@ class DBAController extends Controller
         $total = $this->scoreCalc->computeTotal($body);
         $band  = DBAConstants::bandFromScore($total);
 
-        $body['totaalScore']      = $total;
+        $body['totalScore']      = $total;
         $body['interpretatie']    = $band;
         $body['ingevuldDoor']     = (string) (($this->userSession->getUser()?->getUID()) ?? '');
         $body['ingevuldOp']     ??= (new DateTimeImmutable())->format('Y-m-d');
@@ -281,7 +281,7 @@ class DBAController extends Controller
     {
         $body       = $this->jsonBody();
         $opdrachtId = (string) ($body['opdrachtId'] ?? '');
-        $einddatum  = (string) ($body['feitelijkeEindDatum'] ?? '');
+        $einddatum  = (string) ($body['actualEndDate'] ?? '');
         if ($opdrachtId === '' || $einddatum === '') {
             return $this->error(message: 'opdrachtId + feitelijkeEindDatum vereist', code: Http::STATUS_BAD_REQUEST);
         }
@@ -300,7 +300,7 @@ class DBAController extends Controller
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
         $opdracht['intakeStatus']        = 'BEEINDIGD';
-        $opdracht['feitelijkeEindDatum'] = $einddatum;
+        $opdracht['actualEndDate'] = $einddatum;
         $retentie = $this->opdrachtGuard->computeRetentieDeadline($einddatum);
         if ($retentie !== null) {
             $opdracht['retentieDeadline'] = $retentie;

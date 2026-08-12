@@ -122,7 +122,7 @@ class ProgrammaLinkGuard
     public function validateOnSave(array $glLine): bool
     {
         try {
-            $programme = ($glLine['programmaStructure'] ?? null);
+            $programme = ($glLine['programmeStructure'] ?? null);
             if ($programme === null || $programme === '') {
                 // Unmapped line — ordinary GL posting, never gated (REQ-BBL-001).
                 return true;
@@ -131,15 +131,15 @@ class ProgrammaLinkGuard
             if ($this->isCanonicalProgramme(programme: (string) $programme) === false) {
                 $this->logger->warning(
                     'ProgrammaLinkGuard: rejecting non-canonical BBV provincie programme',
-                    ['programmaStructure' => $programme]
+                    ['programmeStructure' => $programme]
                 );
                 return false;
             }
 
-            if ($this->isEffectiveDateValid(assignedAt: ($glLine['programmaAssignedAt'] ?? null)) === false) {
+            if ($this->isEffectiveDateValid(assignedAt: ($glLine['programmeAssignedAt'] ?? null)) === false) {
                 $this->logger->warning(
                     'ProgrammaLinkGuard: rejecting future programmaAssignedAt',
-                    ['programmaAssignedAt' => ($glLine['programmaAssignedAt'] ?? null)]
+                    ['programmeAssignedAt' => ($glLine['programmeAssignedAt'] ?? null)]
                 );
                 return false;
             }
@@ -264,7 +264,7 @@ class ProgrammaLinkGuard
                 return null;
             }
 
-            $stored = ($result['programmaStructure'] ?? null);
+            $stored = ($result['programmeStructure'] ?? null);
             if ($stored === null) {
                 return null;
             }

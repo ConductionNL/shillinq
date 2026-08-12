@@ -199,7 +199,7 @@ class DunningGuard
                 return false;
             }
 
-            return trim((string) ($pause['pauzeEind'] ?? '')) !== '';
+            return trim((string) ($pause['pauseEnd'] ?? '')) !== '';
         } catch (\Throwable $e) {
             $this->logger->error(
                 'DunningGuard: pause resolve check failed — denying transition (fail-closed)',

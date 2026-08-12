@@ -22,14 +22,14 @@
         },
         "type": "object",
         "required": [
-          "ondernemingId",
+          "enterpriseId",
           "regime",
           "status",
           "ingangsDatum",
           "administrationId"
         ],
         "properties": {
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK naar de onderneming (Corporation / Entity) waarvoor de KOR geldt. KOR geldt per onderneming per KvK-nummer (REQ-KOR-010).",
             "example": "ond-nl-001234",
@@ -74,7 +74,7 @@
             "example": "2026-01-01",
             "title": "Ingangs Datum"
           },
-          "lockInEindDatum": {
+          "lockInEndDate": {
             "type": "string",
             "format": "date",
             "description": "Laatste dag van het derde kalenderjaar na ingangsDatum; opzegging is geblokkeerd tot deze datum (REQ-KOR-007, design D10).",
@@ -108,14 +108,14 @@
             "example": "MIJN_BELASTINGDIENST_ZAKELIJK",
             "title": "Aanmeld Kanaal"
           },
-          "drempelJaar": {
+          "thresholdYear": {
             "type": "number",
             "description": "Jaardrempel in EUR. NL-KOR: 20000 (geen pro-rata bij start halverwege het jaar — context-brief edge case). KOR-EU: per-lidstaat in KOREUTurnover.",
             "default": 20000,
             "example": 20000,
             "title": "Drempel Jaar"
           },
-          "voorgaandeOmzet": {
+          "previousRevenue": {
             "type": "object",
             "description": "Historische omzet per jaar (jaar -> bedrag) voor de scenario-analyse in de aanmeldstroom (REQ-KOR-001).",
             "nullable": true,
@@ -125,7 +125,7 @@
             },
             "title": "Voorgaande Omzet"
           },
-          "omzettingsRegeling": {
+          "conversionScheme": {
             "type": "boolean",
             "description": "True wanneer dit een omgezette oude (degressieve) KOR betreft; false voor de moderne KOR per 1-1-2020.",
             "default": false,
@@ -204,8 +204,8 @@
         "type": "object",
         "required": [
           "registrationId",
-          "jaar",
-          "lopendeOmzet",
+          "year",
+          "currentRevenue",
           "drempel",
           "drempelBenutting",
           "administrationId"
@@ -217,13 +217,13 @@
             "example": "kor-reg-2026-0042",
             "title": "Registration ID"
           },
-          "jaar": {
+          "year": {
             "type": "integer",
             "description": "Kalenderjaar van de omzetregistratie.",
             "example": 2026,
             "title": "Jaar"
           },
-          "lopendeOmzet": {
+          "currentRevenue": {
             "type": "number",
             "description": "Lopende KOR-relevante omzet (SUM van KOR-eligible AR-facturen met leveringsDatum in dit jaar, status != draft) (REQ-KOR-002).",
             "minimum": 0,
@@ -287,7 +287,7 @@
             ],
             "title": "Uitgesloten Posten"
           },
-          "prognoseEindeJaar": {
+          "forecastYearEnd": {
             "type": "number",
             "description": "Lineaire eindejaars-prognose op basis van maandgemiddelde year-to-date (REQ-KOR-002).",
             "nullable": true,
@@ -327,10 +327,10 @@
               "leveringsDatumYear"
             ],
             "operations": {
-              "lopendeOmzet": {
+              "currentRevenue": {
                 "field": "ARInvoice.bedrag",
                 "operation": "sum",
-                "target": "lopendeOmzet"
+                "target": "currentRevenue"
               },
               "drempelBenutting": {
                 "operation": "expression",
@@ -358,7 +358,7 @@
           "registrationId",
           "trigger",
           "uitgeloostOp",
-          "omzetOpMoment",
+          "revenueAtMoment",
           "ernst",
           "administrationId"
         ],
@@ -387,7 +387,7 @@
             "example": "2026-08-12T14:23:00Z",
             "title": "Uitgeloost Op"
           },
-          "omzetOpMoment": {
+          "revenueAtMoment": {
             "type": "number",
             "description": "Exacte lopende omzet op het moment van uitlokken (REQ-KOR-003).",
             "example": 18120.0,
@@ -400,7 +400,7 @@
             "example": 0.906,
             "title": "Drempel Benutting"
           },
-          "prognoseEindeJaar": {
+          "forecastYearEnd": {
             "type": "number",
             "description": "Eindejaars-prognose op het moment van uitlokken.",
             "nullable": true,
@@ -515,7 +515,7 @@
             "example": "fact-2026-0287",
             "title": "Trigger Factuur ID"
           },
-          "omzetOpMoment": {
+          "revenueAtMoment": {
             "type": "number",
             "description": "Exacte lopende omzet op het moment van overschrijding.",
             "nullable": true,
@@ -630,8 +630,8 @@
         "type": "object",
         "required": [
           "registrationId",
-          "jaar",
-          "totaalEUOmzet",
+          "year",
+          "totalEuRevenue",
           "administrationId"
         ],
         "properties": {
@@ -641,20 +641,20 @@
             "example": "kor-reg-eu-2026-0019",
             "title": "Registration ID"
           },
-          "exNummer": {
+          "exNumber": {
             "type": "string",
             "description": "EX-nummer toegekend door de Belastingdienst KOR-EU portal (handmatige invoer; SBR auto-assign out of scope) (REQ-KOR-008).",
             "nullable": true,
             "example": "EX-NL-2026-019234",
             "title": "Ex Nummer"
           },
-          "jaar": {
+          "year": {
             "type": "integer",
             "description": "Kalenderjaar.",
             "example": 2026,
             "title": "Jaar"
           },
-          "totaalEUOmzet": {
+          "totalEuRevenue": {
             "type": "number",
             "description": "Totale EU-brede omzet (REQ-KOR-008).",
             "minimum": 0,
@@ -674,17 +674,17 @@
             "nullable": true,
             "example": {
               "BE": {
-                "omzet": 12400.0,
+                "revenue": 12400.0,
                 "drempel": 25000,
                 "benutting": 0.496
               },
               "DE": {
-                "omzet": 8200.0,
+                "revenue": 8200.0,
                 "drempel": 22000,
                 "benutting": 0.372
               },
               "NL": {
-                "omzet": 18100.0,
+                "revenue": 18100.0,
                 "drempel": 20000,
                 "benutting": 0.905
               }
@@ -761,21 +761,21 @@
           "schema": "KORRegistration",
           "slug": "kor-reg-zzp-fotograaf-2026"
         },
-        "ondernemingId": "ond-zzp-fotograaf",
+        "enterpriseId": "ond-zzp-fotograaf",
         "regime": "KOR_NL",
         "status": "ACTIEF",
         "aanmeldDatum": "2025-11-15",
         "ingangsDatum": "2026-01-01",
-        "lockInEindDatum": "2028-12-31",
+        "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "belastingdienstReferentie": "KOR-2025-NL-89231",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
-        "drempelJaar": 20000,
-        "voorgaandeOmzet": {
+        "thresholdYear": 20000,
+        "previousRevenue": {
           "2024": 19200.0,
           "2025": 16800.0
         },
-        "omzettingsRegeling": false,
+        "conversionScheme": false,
         "fiscalEenheidId": null,
         "administrationId": "adm-zzp-fotograaf"
       },
@@ -785,21 +785,21 @@
           "schema": "KORRegistration",
           "slug": "kor-reg-kapper-maria-2026"
         },
-        "ondernemingId": "ond-kapper-maria",
+        "enterpriseId": "ond-kapper-maria",
         "regime": "KOR_NL",
         "status": "GEEINDIGD_OVERSCHRIJDING",
         "aanmeldDatum": "2025-10-20",
         "ingangsDatum": "2026-01-01",
-        "lockInEindDatum": "2028-12-31",
+        "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "belastingdienstReferentie": "KOR-2025-NL-77410",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
-        "drempelJaar": 20000,
-        "voorgaandeOmzet": {
+        "thresholdYear": 20000,
+        "previousRevenue": {
           "2024": 18400.0,
           "2025": 19100.0
         },
-        "omzettingsRegeling": false,
+        "conversionScheme": false,
         "fiscalEenheidId": null,
         "administrationId": "adm-kapper-maria"
       },
@@ -809,21 +809,21 @@
           "schema": "KORRegistration",
           "slug": "kor-reg-eu-webshop-2026"
         },
-        "ondernemingId": "ond-webshop-handmade",
+        "enterpriseId": "ond-webshop-handmade",
         "regime": "KOR_EU",
         "status": "ACTIEF",
         "aanmeldDatum": "2026-01-20",
         "ingangsDatum": "2026-02-01",
-        "lockInEindDatum": "2028-12-31",
+        "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "belastingdienstReferentie": "KOR-EU-2026-NL-0019",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_KORUS",
-        "drempelJaar": 20000,
-        "voorgaandeOmzet": {
+        "thresholdYear": 20000,
+        "previousRevenue": {
           "2024": 21000.0,
           "2025": 34500.0
         },
-        "omzettingsRegeling": false,
+        "conversionScheme": false,
         "fiscalEenheidId": null,
         "administrationId": "adm-webshop-1"
       },
@@ -833,21 +833,21 @@
           "schema": "KORRegistration",
           "slug": "kor-reg-zzp-onderdrempel-2026"
         },
-        "ondernemingId": "ond-zzp-coach",
+        "enterpriseId": "ond-zzp-coach",
         "regime": "KOR_NL",
         "status": "ACTIEF",
         "aanmeldDatum": "2025-11-01",
         "ingangsDatum": "2026-01-01",
-        "lockInEindDatum": "2028-12-31",
+        "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "belastingdienstReferentie": "KOR-2025-NL-55120",
         "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
-        "drempelJaar": 20000,
-        "voorgaandeOmzet": {
+        "thresholdYear": 20000,
+        "previousRevenue": {
           "2024": 14900.0,
           "2025": 15600.0
         },
-        "omzettingsRegeling": false,
+        "conversionScheme": false,
         "fiscalEenheidId": null,
         "administrationId": "adm-zzp-coach"
       },
@@ -858,8 +858,8 @@
           "slug": "kor-turnover-fotograaf-2026"
         },
         "registrationId": "kor-reg-zzp-fotograaf-2026",
-        "jaar": 2026,
-        "lopendeOmzet": 9300.0,
+        "year": 2026,
+        "currentRevenue": 9300.0,
         "drempel": 20000,
         "drempelBenutting": 0.465,
         "perMaand": {
@@ -871,7 +871,7 @@
           "2026-06": 1470.0
         },
         "uitgeslotenPosten": [],
-        "prognoseEindeJaar": 18600.0,
+        "forecastYearEnd": 18600.0,
         "prognoseStatus": "WAARSCHUWING",
         "administrationId": "adm-zzp-fotograaf"
       },
@@ -882,8 +882,8 @@
           "slug": "kor-turnover-maria-2026"
         },
         "registrationId": "kor-reg-kapper-maria-2026",
-        "jaar": 2026,
-        "lopendeOmzet": 20360.0,
+        "year": 2026,
+        "currentRevenue": 20360.0,
         "drempel": 20000,
         "drempelBenutting": 1.018,
         "perMaand": {
@@ -898,7 +898,7 @@
           "2026-09": 2240.0
         },
         "uitgeslotenPosten": [],
-        "prognoseEindeJaar": 27100.0,
+        "forecastYearEnd": 27100.0,
         "prognoseStatus": "OVERSCHRIJDING_VERWACHT",
         "administrationId": "adm-kapper-maria"
       },
@@ -909,8 +909,8 @@
           "slug": "kor-turnover-coach-2026"
         },
         "registrationId": "kor-reg-zzp-onderdrempel-2026",
-        "jaar": 2026,
-        "lopendeOmzet": 19850.0,
+        "year": 2026,
+        "currentRevenue": 19850.0,
         "drempel": 20000,
         "drempelBenutting": 0.9925,
         "perMaand": {
@@ -934,7 +934,7 @@
             "grondslag": "art. 11-1-o OB (onderwijs)"
           }
         ],
-        "prognoseEindeJaar": 19850.0,
+        "forecastYearEnd": 19850.0,
         "prognoseStatus": "WAARSCHUWING",
         "administrationId": "adm-zzp-coach"
       },
@@ -947,9 +947,9 @@
         "registrationId": "kor-reg-kapper-maria-2026",
         "trigger": "DREMPEL_90PCT",
         "uitgeloostOp": "2026-08-12T14:23:00Z",
-        "omzetOpMoment": 18120.0,
+        "revenueAtMoment": 18120.0,
         "drempelBenutting": 0.906,
-        "prognoseEindeJaar": 24630.0,
+        "forecastYearEnd": 24630.0,
         "ernst": "KRITIEK",
         "aanbeveling": "Overweeg opt-out of factureer strategisch (vooruitfactureren naar januari).",
         "kanaal": [
@@ -970,9 +970,9 @@
         "registrationId": "kor-reg-kapper-maria-2026",
         "trigger": "DREMPEL_100PCT",
         "uitgeloostOp": "2026-09-04T10:05:00Z",
-        "omzetOpMoment": 20360.0,
+        "revenueAtMoment": 20360.0,
         "drempelBenutting": 1.018,
-        "prognoseEindeJaar": 27100.0,
+        "forecastYearEnd": 27100.0,
         "ernst": "OVERSCHRIJDING",
         "aanbeveling": "Je KOR is per 4 september 2026 beëindigd wegens drempel-overschrijding. Vanaf deze datum factureer je met 21% btw.",
         "kanaal": [
@@ -993,9 +993,9 @@
         "registrationId": "kor-reg-zzp-fotograaf-2026",
         "trigger": "DREMPEL_80PCT",
         "uitgeloostOp": "2026-10-02T09:00:00Z",
-        "omzetOpMoment": 16100.0,
+        "revenueAtMoment": 16100.0,
         "drempelBenutting": 0.805,
-        "prognoseEindeJaar": 18600.0,
+        "forecastYearEnd": 18600.0,
         "ernst": "VROEG",
         "aanbeveling": "Monitor je omzet; je nadert de KOR-drempel.",
         "kanaal": [
@@ -1015,7 +1015,7 @@
         "type": "OVERSCHRIJDING",
         "revocatieDatum": "2026-09-04",
         "triggerFactuurId": "fact-2026-0240",
-        "omzetOpMoment": 20360.0,
+        "revenueAtMoment": 20360.0,
         "btwSuppletieVerschuldigd": true,
         "vatSupplementaryAmount": 3533.55,
         "herrekeningRange": {
@@ -1038,23 +1038,23 @@
           "slug": "kor-eu-turnover-webshop-2026"
         },
         "registrationId": "kor-reg-eu-webshop-2026",
-        "exNummer": "EX-NL-2026-019234",
-        "jaar": 2026,
-        "totaalEUOmzet": 20700.0,
+        "exNumber": "EX-NL-2026-019234",
+        "year": 2026,
+        "totalEuRevenue": 20700.0,
         "drempelEUBrut": 100000,
         "perLidstaat": {
           "NL": {
-            "omzet": 10000.0,
+            "revenue": 10000.0,
             "drempel": 20000,
             "benutting": 0.5
           },
           "BE": {
-            "omzet": 6500.0,
+            "revenue": 6500.0,
             "drempel": 25000,
             "benutting": 0.26
           },
           "DE": {
-            "omzet": 4200.0,
+            "revenue": 4200.0,
             "drempel": 22000,
             "benutting": 0.191
           }

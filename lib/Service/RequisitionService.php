@@ -110,12 +110,12 @@ class RequisitionService
             throw new RuntimeException('Authenticated requester is required');
         }
 
-        $programma = trim((string) ($payload['programma'] ?? ''));
+        $programma = trim((string) ($payload['programme'] ?? ''));
         if ($programma === '') {
             throw new RuntimeException('programma is required');
         }
 
-        $boekjaar = (int) ($payload['boekjaar'] ?? 0);
+        $boekjaar = (int) ($payload['financialYear'] ?? 0);
         if ($boekjaar <= 0) {
             throw new RuntimeException('boekjaar is required');
         }
@@ -147,8 +147,8 @@ class RequisitionService
             'requisitionNumber'     => $requisitionNumber,
             'administrationId'      => $administrationId,
             'requester'             => $requester,
-            'programma'             => $programma,
-            'boekjaar'              => $boekjaar,
+            'programme'             => $programma,
+            'financialYear'              => $boekjaar,
             'neededByDate'          => $neededByDate,
             'justification'         => $justification,
             'soort'                 => $soort,

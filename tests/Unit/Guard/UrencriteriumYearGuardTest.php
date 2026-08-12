@@ -169,11 +169,11 @@ class UrencriteriumYearGuardTest extends TestCase
     public function testValidYearPassesSave(): void
     {
         $year = [
-            'ondernemingId'        => 'ond-1',
+            'enterpriseId'        => 'ond-1',
             'doelNorm'             => 1225,
             'normGrondslag'        => 'art. 3.6 lid 1 Wet IB 2001',
             'lopendeUren'          => 916,
-            'prognoseEindeJaar'    => 1180,
+            'forecastYearEnd'    => 1180,
             'drempelStatus'        => 'RISICO',
             'grotendeelsCriterium' => 'NIET_TOEPASSELIJK',
         ];
@@ -224,7 +224,7 @@ class UrencriteriumYearGuardTest extends TestCase
             'doelNorm'          => 1225,
             'normGrondslag'     => 'art. 3.6 lid 1 Wet IB 2001',
             'lopendeUren'       => 916,
-            'prognoseEindeJaar' => 1180,
+            'forecastYearEnd' => 1180,
             // Should be RISICO, not OP_KOERS.
             'drempelStatus'     => 'OP_KOERS',
         ];

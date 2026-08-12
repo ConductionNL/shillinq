@@ -129,7 +129,7 @@ class CrisisModeRefreshJob extends TimedJob
 
                 $hasCrisis = false;
                 foreach ($crisisWeeks as $week) {
-                    $saldo = $this->extractField(entity: $week, field: 'eindSaldo');
+                    $saldo = $this->extractField(entity: $week, field: 'closingBalance');
                     if ($saldo !== null && (float) $saldo < 0) {
                         $hasCrisis = true;
                         break;

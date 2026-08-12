@@ -112,7 +112,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase
 
         $mandatory = [
             'code',
-            'naam',
+            'name',
             'bestuursorgaan',
             'marktsegment',
             'concurrenten',

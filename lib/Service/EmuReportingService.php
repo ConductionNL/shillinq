@@ -136,7 +136,7 @@ class EmuReportingService
             'amount'          => abs((float) ($glLine['amount'] ?? 0)),
             'bron'            => [
                 'grootboekrekening' => $account,
-                'omschrijving'      => (string) ($glLine['description'] ?? ''),
+                'description'      => (string) ($glLine['description'] ?? ''),
                 'taakveld'          => (string) ($glLine['taakveld'] ?? ''),
             ],
             'regel'           => 'Wet Hof art. 3: '.$type,

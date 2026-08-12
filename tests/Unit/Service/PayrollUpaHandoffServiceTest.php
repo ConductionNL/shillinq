@@ -189,11 +189,11 @@ final class PayrollUpaHandoffServiceTest extends TestCase
     {
         return [
             'Werknemer'  => [
-                ['id' => 'wn-1', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PME_DC'],
-                ['id' => 'wn-2', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PME_DC'],
-                ['id' => 'wn-3', 'administrationId' => 'adm-1', 'pensioenRegeling' => 'PFZW'],
-                ['id' => 'wn-4', 'administrationId' => 'adm-1', 'pensioenRegeling' => ''],
-                ['id' => 'wn-5', 'administrationId' => 'adm-2', 'pensioenRegeling' => 'PME_DC'],
+                ['id' => 'wn-1', 'administrationId' => 'adm-1', 'pensionScheme' => 'PME_DC'],
+                ['id' => 'wn-2', 'administrationId' => 'adm-1', 'pensionScheme' => 'PME_DC'],
+                ['id' => 'wn-3', 'administrationId' => 'adm-1', 'pensionScheme' => 'PFZW'],
+                ['id' => 'wn-4', 'administrationId' => 'adm-1', 'pensionScheme' => ''],
+                ['id' => 'wn-5', 'administrationId' => 'adm-2', 'pensionScheme' => 'PME_DC'],
             ],
             'LoonStrook' => [
                 ['werknemerId' => 'wn-1', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
@@ -225,7 +225,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase
 
         $byRegeling = [];
         foreach ($payloads as $p) {
-            $byRegeling[$p['pensioenRegeling']] = $p;
+            $byRegeling[$p['pensionScheme']] = $p;
         }
 
         $this->assertArrayHasKey('PME_DC', $byRegeling);
@@ -272,7 +272,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase
 
         // adm-2 has wn-5 with PME_DC but we never see adm-1's wn-1/wn-2 grouped in.
         $this->assertCount(1, $payloads);
-        $this->assertSame('PME_DC', $payloads[0]['pensioenRegeling']);
+        $this->assertSame('PME_DC', $payloads[0]['pensionScheme']);
         $this->assertSame('adm-2', $payloads[0]['administrationId']);
         $this->assertSame(1, $payloads[0]['totaalWerknemers']);
 

@@ -70,7 +70,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame(170.0, $s['schaal3_5000_10000']);
         self::assertSame(0.0, $s['schaal4_10000_200000']);
         self::assertSame(0.0, $s['schaal5_200000plus']);
-        self::assertSame(795.0, $s['totaal']);
+        self::assertSame(795.0, $s['total']);
         self::assertSame(795.0, $s['toegepast']);
         self::assertSame(40.0, $s['minimum']);
 
@@ -86,7 +86,7 @@ final class BIKStaffelCalculatorTest extends TestCase
     public function testStaffelMinimumFloorAt40(): void
     {
         $s = $this->calc->staffel(hoofdsom: 100.00);
-        self::assertSame(15.0, $s['totaal']);
+        self::assertSame(15.0, $s['total']);
         self::assertSame(40.0, $s['toegepast']);
 
     }//end testStaffelMinimumFloorAt40()
@@ -248,7 +248,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame(795.0, $body['berekening']['toegepast']);
         self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $body['wettelijkeRente']['type']);
         // 8400 + 795 (no BTW surcharge, creditor can offset) + 51.39 rente = 9246.39.
-        self::assertEqualsWithDelta(9246.39, $body['totaalVerschuldigd'], 0.01);
+        self::assertEqualsWithDelta(9246.39, $body['totalDue'], 0.01);
 
     }//end testComposeYieldsPersistenceShape()
 
@@ -268,11 +268,11 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame(6775.0, $atCap['maximum']);
         self::assertSame(6775.0, $atCap['toegepast']);
         // Raw staffel at exactly €1M lands on the cap: 375+250+250+1900+4000.
-        self::assertSame(6775.0, $atCap['totaal']);
+        self::assertSame(6775.0, $atCap['total']);
 
         $overCap = $this->calc->staffel(hoofdsom: 2000000.00);
         // Uncapped totaal is €11.775, but toegepast is clamped to €6.775.
-        self::assertSame(11775.0, $overCap['totaal']);
+        self::assertSame(11775.0, $overCap['total']);
         self::assertSame(6775.0, $overCap['toegepast']);
 
     }//end testStaffelMaximumCapAt6775()

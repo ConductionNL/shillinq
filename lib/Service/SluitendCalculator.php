@@ -78,8 +78,8 @@ class SluitendCalculator
         $sluitendReeel       = ($saldoReelCents >= 0);
 
         return [
-            'saldoStructureel'    => $this->toEuro(cents: $saldoStrucCents),
-            'saldoIncidenteel'    => $this->toEuro(cents: $saldoIncCents),
+            'balanceStructural'    => $this->toEuro(cents: $saldoStrucCents),
+            'balanceIncidental'    => $this->toEuro(cents: $saldoIncCents),
             'saldoReëel'          => $this->toEuro(cents: $saldoReelCents),
             'sluitendStructureel' => $sluitendStructureel,
             'sluitendReëel'       => $sluitendReeel,

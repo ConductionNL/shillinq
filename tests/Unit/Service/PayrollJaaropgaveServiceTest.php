@@ -269,7 +269,7 @@ final class PayrollJaaropgaveServiceTest extends TestCase
             jaar: 2026
         );
 
-        $this->assertSame(2026, $statement['jaar']);
+        $this->assertSame(2026, $statement['year']);
         $this->assertSame(3, $statement['aantalPerioden']);
         $this->assertEqualsWithDelta(14877.60, $statement['fiscaalLoonJTD'], 0.005);
         $this->assertEqualsWithDelta(3250.20, $statement['loonheffingJTD'], 0.005);
@@ -322,7 +322,7 @@ final class PayrollJaaropgaveServiceTest extends TestCase
         $service->persistJaaropgave(
             jaaropgave: [
                 'werknemerId'            => 'wn-1',
-                'jaar'                   => 2026,
+                'year'                   => 2026,
                 'cumulatievenConsistent' => false,
             ]
         );

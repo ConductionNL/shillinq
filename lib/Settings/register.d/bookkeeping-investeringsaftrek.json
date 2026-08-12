@@ -16,7 +16,7 @@
         "required": [
           "administrationId",
           "fixedAssetId",
-          "omschrijving",
+          "description",
           "aanschafwaarde"
         ],
         "properties": {
@@ -32,7 +32,7 @@
             "example": "fa-2001",
             "title": "Fixed Asset ID"
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "description": "Human-readable description of the asset.",
             "example": "Zonnepaneelsysteem 20 kWp dakmontage",
@@ -225,7 +225,7 @@
         "required": [
           "code",
           "jaartal",
-          "omschrijving"
+          "description"
         ],
         "properties": {
           "code": {
@@ -247,7 +247,7 @@
             "title": "Categorie",
             "description": "The date and time for categorie."
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "example": "Zonnepaneelsysteem > 15 kWp",
             "title": "Omschrijving",
@@ -307,7 +307,7 @@
         "required": [
           "code",
           "jaartal",
-          "omschrijving",
+          "description",
           "miaPercentage"
         ],
         "properties": {
@@ -330,7 +330,7 @@
             "title": "Categorie",
             "description": "The date and time for categorie."
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "example": "Recyclemiddel textiel",
             "title": "Omschrijving",
@@ -393,7 +393,7 @@
         "required": [
           "administrationId",
           "investmentAssetId",
-          "boekjaar",
+          "financialYear",
           "scheme"
         ],
         "properties": {
@@ -409,7 +409,7 @@
             "example": "ia-3001",
             "title": "Investment Asset ID"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year the claim applies to.",
             "example": 2026,
@@ -523,7 +523,7 @@
         "required": [
           "administrationId",
           "investmentAssetId",
-          "boekjaar",
+          "financialYear",
           "aanschafwaarde"
         ],
         "properties": {
@@ -539,7 +539,7 @@
             "title": "Investment Asset ID",
             "description": "The identifier of the associated investment asset."
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "example": 2026,
             "title": "Boekjaar",

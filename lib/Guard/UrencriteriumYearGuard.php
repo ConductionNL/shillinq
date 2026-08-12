@@ -115,7 +115,7 @@ class UrencriteriumYearGuard
             $this->logger->error(
                 'UrencriteriumYearGuard: validateOnSave failed — denying save (fail-closed)',
                 [
-                    'ondernemingId' => ($year['ondernemingId'] ?? 'unknown'),
+                    'enterpriseId' => ($year['enterpriseId'] ?? 'unknown'),
                     'exception'     => $e->getMessage(),
                 ]
             );
@@ -344,13 +344,13 @@ class UrencriteriumYearGuard
      */
     private function drempelStatusMatchesPrognose(array $year): bool
     {
-        if (isset($year['prognoseEindeJaar']) === false) {
+        if (isset($year['forecastYearEnd']) === false) {
             return true;
         }
 
         $expected = $this->bepaalDrempelStatus(
             lopendeUren: (float) ($year['lopendeUren'] ?? 0),
-            prognose: (float) $year['prognoseEindeJaar'],
+            prognose: (float) $year['forecastYearEnd'],
             norm: (int) ($year['doelNorm'] ?? self::NORM_REGULIER)
         );
 

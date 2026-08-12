@@ -3717,7 +3717,7 @@
 						"sortable": true
 					},
 					{
-						"key": "aanslagJaar",
+						"key": "assessmentYear",
 						"label": "Assessment year",
 						"sortable": true
 					},
@@ -3759,7 +3759,7 @@
 						"type": "string"
 					},
 					{
-						"key": "aanslagJaar",
+						"key": "assessmentYear",
 						"label": "Assessment year",
 						"type": "integer"
 					},
@@ -4539,7 +4539,7 @@
 				"schema": "GRDeelnemer",
 				"columns": [
 					{
-						"key": "deelnemerNaam",
+						"key": "participantName",
 						"label": "Name",
 						"sortable": true
 					},
@@ -4559,7 +4559,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "deelnemerNaam",
+				"defaultSort": "participantName",
 				"detailRoute": "GRDeelnemerDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
@@ -4576,7 +4576,7 @@
 				"schema": "GRDeelnemer",
 				"fields": [
 					{
-						"key": "deelnemerNaam",
+						"key": "participantName",
 						"label": "Name",
 						"type": "string"
 					},
@@ -4641,7 +4641,7 @@
 				"schema": "GRVerdeelsleutel",
 				"columns": [
 					{
-						"key": "sleutelNaam",
+						"key": "keyName",
 						"label": "Name",
 						"sortable": true
 					},
@@ -4673,7 +4673,7 @@
 				"schema": "GRVerdeelsleutel",
 				"fields": [
 					{
-						"key": "sleutelNaam",
+						"key": "keyName",
 						"label": "Name",
 						"type": "string"
 					},
@@ -8456,7 +8456,7 @@
 				"schema": "IPAssetValuation",
 				"fields": [
 					{
-						"key": "assetNaam",
+						"key": "assetName",
 						"label": "Name",
 						"type": "string"
 					},
@@ -8466,12 +8466,12 @@
 						"type": "string"
 					},
 					{
-						"key": "wbsoVerklaringNummer",
+						"key": "rndTaxCreditDeclarationNumber",
 						"label": "WBSO-verklaringnummer",
 						"type": "string"
 					},
 					{
-						"key": "octrooiNummer",
+						"key": "patentNumber",
 						"label": "Patent number",
 						"type": "string"
 					},
@@ -8634,7 +8634,7 @@
 						},
 						"columns": [
 							{
-								"key": "assetNaam",
+								"key": "assetName",
 								"label": "Name"
 							},
 							{
@@ -8733,7 +8733,7 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"filter": {
-					"subsidieRegeling": {
+					"subsidyScheme": {
 						"not": "other"
 					}
 				},
@@ -8753,12 +8753,12 @@
 						"sortable": true
 					},
 					{
-						"key": "regelingNaam",
+						"key": "schemeName",
 						"label": "Scheme",
 						"sortable": true
 					},
 					{
-						"key": "subsidieRegeling",
+						"key": "subsidyScheme",
 						"label": "R&D scheme",
 						"sortable": true
 					},
@@ -8800,12 +8800,12 @@
 						"type": "string"
 					},
 					{
-						"key": "regelingNaam",
+						"key": "schemeName",
 						"label": "Scheme name",
 						"type": "string"
 					},
 					{
-						"key": "subsidieRegeling",
+						"key": "subsidyScheme",
 						"label": "R&D scheme",
 						"type": "string"
 					},
@@ -8942,7 +8942,7 @@
 						"type": "string"
 					},
 					{
-						"key": "subsidieRegeling",
+						"key": "subsidyScheme",
 						"label": "R&D scheme",
 						"type": "string"
 					},
@@ -11462,7 +11462,7 @@
 						"sortable": true
 					},
 					{
-						"key": "programmaCode",
+						"key": "programmeCode",
 						"label": "Programme",
 						"sortable": true
 					},
@@ -11512,7 +11512,7 @@
 						"type": "string"
 					},
 					{
-						"key": "programmaCode",
+						"key": "programmeCode",
 						"label": "Programme",
 						"type": "string"
 					},
@@ -12265,7 +12265,7 @@
 				"schema": "CashflowScenario",
 				"columns": [
 					{
-						"key": "naam",
+						"key": "name",
 						"label": "Scenario",
 						"sortable": true
 					},
@@ -12453,7 +12453,7 @@
 				"schema": "DunningLadder",
 				"columns": [
 					{
-						"key": "naam",
+						"key": "name",
 						"label": "Name",
 						"sortable": true
 					},
@@ -12473,7 +12473,7 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "naam",
+				"defaultSort": "name",
 				"detailRoute": "DunningLadderDetail",
 				"description": "Configure the multi-stage dunning ladder per customer group. REQ-CCD-001.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
@@ -12519,7 +12519,7 @@
 				"schema": "DunningLadder",
 				"fields": [
 					{
-						"key": "naam",
+						"key": "name",
 						"label": "Name",
 						"type": "string"
 					},
@@ -12529,7 +12529,7 @@
 						"type": "string"
 					},
 					{
-						"key": "ondernemingId",
+						"key": "enterpriseId",
 						"label": "Entrepreneur",
 						"type": "string"
 					},
@@ -12785,7 +12785,7 @@
 						"type": "string"
 					},
 					{
-						"key": "ontvangerNaam",
+						"key": "recipientName",
 						"label": "Recipient name",
 						"type": "string"
 					},
@@ -12906,7 +12906,7 @@
 						"sortable": true
 					},
 					{
-						"key": "totaalVerschuldigd",
+						"key": "totalDue",
 						"label": "Total owed",
 						"sortable": true
 					}
@@ -12954,7 +12954,7 @@
 						"type": "json"
 					},
 					{
-						"key": "totaalVerschuldigd",
+						"key": "totalDue",
 						"label": "Total owed",
 						"type": "money"
 					},
@@ -13143,12 +13143,12 @@
 						"sortable": true
 					},
 					{
-						"key": "programma",
+						"key": "programme",
 						"label": "Cost Centre",
 						"sortable": true
 					},
 					{
-						"key": "boekjaar",
+						"key": "financialYear",
 						"label": "Fiscal Year",
 						"sortable": true
 					},
@@ -13196,12 +13196,12 @@
 						"type": "string"
 					},
 					{
-						"key": "programma",
+						"key": "programme",
 						"label": "Cost Centre / Budget Programme",
 						"type": "string"
 					},
 					{
-						"key": "boekjaar",
+						"key": "financialYear",
 						"label": "Fiscal Year",
 						"type": "number"
 					},
@@ -17514,7 +17514,7 @@
 				"schema": "DBAOpdracht",
 				"columns": [
 					{
-						"key": "opdrachtNaam",
+						"key": "assignmentName",
 						"label": "Assignment",
 						"sortable": true
 					},
@@ -17619,7 +17619,7 @@
 				"schema": "DBAOpdracht",
 				"fields": [
 					{
-						"key": "opdrachtNaam",
+						"key": "assignmentName",
 						"label": "Assignment",
 						"type": "string"
 					},
@@ -17634,12 +17634,12 @@
 						"type": "date"
 					},
 					{
-						"key": "verwachteEindDatum",
+						"key": "expectedEndDate",
 						"label": "Expected end date",
 						"type": "date"
 					},
 					{
-						"key": "feitelijkeEindDatum",
+						"key": "actualEndDate",
 						"label": "Actual end date",
 						"type": "date"
 					},
@@ -17714,7 +17714,7 @@
 				"schema": "DBAPortfolioRisico",
 				"columns": [
 					{
-						"key": "ondernemingId",
+						"key": "enterpriseId",
 						"label": "Business",
 						"sortable": true
 					},
@@ -17771,7 +17771,7 @@
 				"schema": "DBAPortfolioRisico",
 				"fields": [
 					{
-						"key": "ondernemingId",
+						"key": "enterpriseId",
 						"label": "Business",
 						"type": "string"
 					},
@@ -17952,7 +17952,7 @@
 				"schema": "DBAModelovereenkomst",
 				"columns": [
 					{
-						"key": "naam",
+						"key": "name",
 						"label": "Name",
 						"sortable": true
 					},
@@ -18035,7 +18035,7 @@
 				"schema": "DBAModelovereenkomst",
 				"fields": [
 					{
-						"key": "naam",
+						"key": "name",
 						"label": "Name",
 						"type": "string"
 					},
@@ -18099,7 +18099,7 @@
 				"schema": "ENSIAJaarcyclus",
 				"columns": [
 					{
-						"key": "jaar",
+						"key": "year",
 						"label": "Year",
 						"sortable": true
 					},
@@ -18209,7 +18209,7 @@
 				"schema": "ENSIAJaarcyclus",
 				"fields": [
 					{
-						"key": "jaar",
+						"key": "year",
 						"label": "Year",
 						"type": "number"
 					},
@@ -18725,7 +18725,7 @@
 						"sortable": true
 					},
 					{
-						"key": "regelingNaam",
+						"key": "schemeName",
 						"label": "Scheme",
 						"sortable": true
 					},
@@ -18825,12 +18825,12 @@
 						"type": "string"
 					},
 					{
-						"key": "regelingNaam",
+						"key": "schemeName",
 						"label": "Scheme",
 						"type": "string"
 					},
 					{
-						"key": "regelingArtikel",
+						"key": "schemeArticle",
 						"label": "Article",
 						"type": "string"
 					},

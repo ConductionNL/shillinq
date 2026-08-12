@@ -20,8 +20,8 @@
         "required": [
           "requisitionNumber",
           "requester",
-          "programma",
-          "boekjaar",
+          "programme",
+          "financialYear",
           "neededByDate",
           "justification",
           "soort",
@@ -41,13 +41,13 @@
             "example": "employee-01",
             "title": "Requester"
           },
-          "programma": {
+          "programme": {
             "type": "string",
             "description": "Cost centre / budget programme code the requisition draws against. Matches Budget.programmaCode and Verplichting.programma so BudgetBlocker's budget lookup works unmodified against a Requisition.",
             "example": "PROG-IT-OPERATIONS",
             "title": "Cost Centre / Budget Programme"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year the requisition's budget impact is checked against. Matches Budget.boekjaar and Verplichting.boekjaar (BudgetBlocker field contract).",
             "example": 2026,
@@ -223,7 +223,7 @@
               ]
             },
             "budget-holder": {
-              "scope": "programma",
+              "scope": "programme",
               "capabilities": [
                 "read",
                 "update"
@@ -343,8 +343,8 @@
       "administrationId": "adm-demo",
       "requisitionNumber": "REQ-2026-adm-demo-000001",
       "requester": "employee-01",
-      "programma": "5.1",
-      "boekjaar": 2026,
+      "programme": "5.1",
+      "financialYear": 2026,
       "neededByDate": "2026-08-15",
       "justification": "Replacement laptops for the onboarding cohort starting August.",
       "soort": "inkoop",
@@ -375,8 +375,8 @@
       "administrationId": "adm-demo",
       "requisitionNumber": "REQ-2026-adm-demo-000002",
       "requester": "employee-02",
-      "programma": "5.1",
-      "boekjaar": 2026,
+      "programme": "5.1",
+      "financialYear": 2026,
       "neededByDate": "2026-09-01",
       "justification": "Standing desks for the facilities refresh (ergonomics programme).",
       "soort": "inkoop",
@@ -407,8 +407,8 @@
       "administrationId": "adm-demo",
       "requisitionNumber": "REQ-2026-adm-demo-000003",
       "requester": "employee-03",
-      "programma": "5.1",
-      "boekjaar": 2026,
+      "programme": "5.1",
+      "financialYear": 2026,
       "neededByDate": "2026-07-30",
       "justification": "Annual software licence renewal for the design team.",
       "soort": "inkoop",

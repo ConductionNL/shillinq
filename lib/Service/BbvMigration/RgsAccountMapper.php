@@ -243,7 +243,7 @@ class RgsAccountMapper
                 $confidence = 80;
                 $reason     = 'exact-rgsCode';
             } else if ($accountName !== '') {
-                $candidateName = mb_strtolower((string) ($rgsRow['omschrijvingKort'] ?? $rgsRow['naam'] ?? ''));
+                $candidateName = mb_strtolower((string) ($rgsRow['omschrijvingKort'] ?? $rgsRow['name'] ?? ''));
                 if ($candidateName !== '') {
                     $similarity = $this->similarityPercent(left: $accountName, right: $candidateName);
                     if ($similarity >= 50) {

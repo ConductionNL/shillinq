@@ -18,20 +18,20 @@
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
         "type": "object",
         "required": [
-          "naam",
+          "name",
           "klantGroep",
           "stages",
           "actief",
           "administrationId"
         ],
         "properties": {
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Operator-facing ladder name.",
             "example": "Standaard dunning-ladder ZZP",
             "title": "Naam"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "nullable": true,
             "description": "Optional FK to the owning Administration / ondernemer. When null, the ladder applies tenant-wide within the administration scope.",
@@ -59,7 +59,7 @@
               "required": [
                 "nr",
                 "dagenNaVervalDatum",
-                "naam",
+                "name",
                 "kanaal"
               ],
               "properties": {
@@ -76,7 +76,7 @@
                   "description": "Days after the invoice due date that this stage fires.",
                   "title": "Dagen Na Verval Datum"
                 },
-                "naam": {
+                "name": {
                   "type": "string",
                   "description": "Human-readable stage label (e.g. 'Vriendelijke reminder', 'Ingebrekestelling').",
                   "title": "Naam"
@@ -417,7 +417,7 @@
             "description": "Recipient e-mail (EMAIL or EMAIL+POSTREGISTRATIE kanaal).",
             "title": "Ontvanger Email"
           },
-          "ontvangerNaam": {
+          "recipientName": {
             "type": "string",
             "nullable": true,
             "description": "Recipient display name.",
@@ -665,7 +665,7 @@
           "berekening",
           "wettelijkeRente",
           "partyType",
-          "totaalVerschuldigd",
+          "totalDue",
           "administrationId"
         ],
         "properties": {
@@ -685,7 +685,7 @@
             "type": "object",
             "description": "BIK staffel breakdown. Five graduated slabs plus minimum-floor.",
             "required": [
-              "totaal",
+              "total",
               "toegepast"
             ],
             "properties": {
@@ -719,7 +719,7 @@
                 "description": "0,5% over the slice above €200.000.",
                 "title": "Schaal5 200000Plus"
               },
-              "totaal": {
+              "total": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "Sum of all staffel slices.",
@@ -877,7 +877,7 @@
             "description": "Counterparty type — controls the rente rate and the B2C 14-day grace block.",
             "title": "Party Type"
           },
-          "totaalVerschuldigd": {
+          "totalDue": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -917,7 +917,7 @@
                 "type": "expression",
                 "expression": "MAX(hoofdsom - 200000, 0) * 0.005"
               },
-              "totaal": {
+              "total": {
                 "type": "expression",
                 "expression": "schaal1_0_2500 + schaal2_2500_5000 + schaal3_5000_10000 + schaal4_10000_200000 + schaal5_200000plus"
               },
@@ -998,7 +998,7 @@
             "description": "When the pause began.",
             "title": "Pauze Start"
           },
-          "pauzeEind": {
+          "pauseEnd": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -1390,14 +1390,14 @@
         "schema": "DunningLadder",
         "slug": "ladder-zzp-default-2026"
       },
-      "naam": "Standaard dunning-ladder ZZP",
-      "ondernemingId": "ond-zzp-001",
+      "name": "Standaard dunning-ladder ZZP",
+      "enterpriseId": "ond-zzp-001",
       "klantGroep": "DEFAULT",
       "stages": [
         {
           "nr": 1,
           "dagenNaVervalDatum": 0,
-          "naam": "Vriendelijke reminder",
+          "name": "Vriendelijke reminder",
           "kanaal": "EMAIL",
           "templateId": "tpl-dunning-stage1-nl",
           "wettelijkEffect": null
@@ -1405,7 +1405,7 @@
         {
           "nr": 2,
           "dagenNaVervalDatum": 14,
-          "naam": "Herinnering",
+          "name": "Herinnering",
           "kanaal": "EMAIL",
           "templateId": "tpl-dunning-stage2-nl",
           "wettelijkEffect": null
@@ -1413,7 +1413,7 @@
         {
           "nr": 3,
           "dagenNaVervalDatum": 30,
-          "naam": "Aanmaning + 14d-brief",
+          "name": "Aanmaning + 14d-brief",
           "kanaal": "EMAIL+POSTREGISTRATIE",
           "templateId": "tpl-dunning-stage3-nl",
           "wettelijkEffect": "14_DAGEN_BRIEF_BIK"
@@ -1421,7 +1421,7 @@
         {
           "nr": 4,
           "dagenNaVervalDatum": 60,
-          "naam": "Ingebrekestelling",
+          "name": "Ingebrekestelling",
           "kanaal": "AANGETEKENDE_POST",
           "templateId": "tpl-dunning-stage4-nl",
           "wettelijkEffect": "VERZUIM_INTREDEN"
@@ -1429,7 +1429,7 @@
         {
           "nr": 5,
           "dagenNaVervalDatum": 90,
-          "naam": "Overdracht incasso",
+          "name": "Overdracht incasso",
           "kanaal": "INCASSOBUREAU_API",
           "templateId": "tpl-dunning-stage5-nl",
           "actie": "TRANSFER_INCASSO"
@@ -1444,35 +1444,35 @@
         "schema": "DunningLadder",
         "slug": "ladder-overheid-default-2026"
       },
-      "naam": "Overheid dunning-ladder (30-dagen termijn)",
-      "ondernemingId": "ond-zzp-001",
+      "name": "Overheid dunning-ladder (30-dagen termijn)",
+      "enterpriseId": "ond-zzp-001",
       "klantGroep": "OVERHEID",
       "stages": [
         {
           "nr": 1,
           "dagenNaVervalDatum": 0,
-          "naam": "Reminder",
+          "name": "Reminder",
           "kanaal": "EMAIL",
           "templateId": "tpl-dunning-stage1-nl"
         },
         {
           "nr": 2,
           "dagenNaVervalDatum": 30,
-          "naam": "Herinnering (overheid 30d)",
+          "name": "Herinnering (overheid 30d)",
           "kanaal": "EMAIL",
           "templateId": "tpl-dunning-stage2-nl"
         },
         {
           "nr": 3,
           "dagenNaVervalDatum": 60,
-          "naam": "Aanmaning",
+          "name": "Aanmaning",
           "kanaal": "EMAIL",
           "templateId": "tpl-dunning-stage3-nl"
         },
         {
           "nr": 4,
           "dagenNaVervalDatum": 90,
-          "naam": "Escalatie naar account-manager",
+          "name": "Escalatie naar account-manager",
           "kanaal": "EMAIL",
           "templateId": "tpl-dunning-stage4-nl"
         }
@@ -1493,25 +1493,25 @@
           {
             "nr": 1,
             "dagenNaVervalDatum": 0,
-            "naam": "Reminder",
+            "name": "Reminder",
             "kanaal": "EMAIL"
           },
           {
             "nr": 2,
             "dagenNaVervalDatum": 30,
-            "naam": "Herinnering (overheid 30d)",
+            "name": "Herinnering (overheid 30d)",
             "kanaal": "EMAIL"
           },
           {
             "nr": 3,
             "dagenNaVervalDatum": 60,
-            "naam": "Aanmaning",
+            "name": "Aanmaning",
             "kanaal": "EMAIL"
           },
           {
             "nr": 4,
             "dagenNaVervalDatum": 90,
-            "naam": "Escalatie naar account-manager",
+            "name": "Escalatie naar account-manager",
             "kanaal": "EMAIL"
           }
         ]
@@ -1535,7 +1535,7 @@
       "uitgevoerdOp": "2026-06-14T09:00:00Z",
       "kanaal": "EMAIL+POSTREGISTRATIE",
       "ontvangerEmail": "finance@acme.nl",
-      "ontvangerNaam": "Crediteurenadministratie Acme BV",
+      "recipientName": "Crediteurenadministratie Acme BV",
       "templateId": "tpl-dunning-stage3-nl",
       "renderedSubject": "Aanmaning factuur 2026-0247 — €8.400",
       "renderedBody": "Geachte Crediteurenadministratie Acme BV,\n\nUw factuur 2026-0247 van €8.400 staat sinds 2026-05-14 open. U krijgt 14 dagen om de factuur alsnog te voldoen zonder dat incassokosten of rente verschuldigd worden. Na deze termijn kunnen incassokosten en wettelijke rente verschuldigd zijn.\n\nMet vriendelijke groet,\nDe ondernemer",
@@ -1562,7 +1562,7 @@
         "schaal3_5000_10000": 170.0,
         "schaal4_10000_200000": 0.0,
         "schaal5_200000plus": 0.0,
-        "totaal": 795.0,
+        "total": 795.0,
         "minimum": 40.0,
         "maximum": 6775.0,
         "toegepast": 795.0,
@@ -1589,7 +1589,7 @@
         ]
       },
       "partyType": "B2B",
-      "totaalVerschuldigd": 9246.39,
+      "totalDue": 9246.39,
       "administrationId": "adm-1"
     },
     {
@@ -1600,7 +1600,7 @@
       },
       "factuurId": "inv-2026-0247",
       "pauzeStart": "2026-06-02T14:20:00Z",
-      "pauzeEind": null,
+      "pauseEnd": null,
       "reden": "DISPUTED",
       "details": "Klant betwist 4 uur uit week-22; gesprek gepland 10 juni",
       "gepauzeerdDoor": "user-zzp-ond-001",

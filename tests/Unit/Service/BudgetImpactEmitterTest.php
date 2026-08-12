@@ -191,7 +191,7 @@ final class BudgetImpactEmitterTest extends TestCase
                 'amount'           => 50000.0,
                 'kostenplaats'     => 'KP-100',
                 'looptijdStart'    => '2026-01-01',
-                'looptijdEind'     => '2026-12-31',
+                'termEnd'     => '2026-12-31',
                 'administrationId' => 'adm-x',
             ],
             ['tenderNedUrl' => 'https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001']

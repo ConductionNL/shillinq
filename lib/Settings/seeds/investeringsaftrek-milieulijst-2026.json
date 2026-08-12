@@ -8,12 +8,12 @@
 		"imported": "2026-06-05T00:00:00Z"
 	},
 	"milieulijstCodes": [
-		{"code": "A1100", "jaartal": 2026, "categorie": "Grondstoffen en water", "omschrijving": "Installatie voor hergebruik van proceswater", "miaPercentage": 27, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
-		{"code": "B2200", "jaartal": 2026, "categorie": "Voedselvoorziening en landbouwproductie", "omschrijving": "Emissiearme stalvloer", "miaPercentage": 36, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
-		{"code": "F6100", "jaartal": 2026, "categorie": "Mobiliteit", "omschrijving": "Volledig elektrische bestelauto", "miaPercentage": 36, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": 7500000, "ingangsdatum": "2026-01-01"},
-		{"code": "G3110", "jaartal": 2026, "categorie": "Circulaire economie", "omschrijving": "Recyclemiddel textiel", "miaPercentage": 45, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
-		{"code": "G3200", "jaartal": 2026, "categorie": "Circulaire economie", "omschrijving": "Installatie voor het recyclen van bouw- en sloopafval", "miaPercentage": 45, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
-		{"code": "L4220", "jaartal": 2026, "categorie": "Duurzame energie", "omschrijving": "Zonnepaneel-installatie met circulaire montage", "miaPercentage": 36, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
-		{"code": "M5100", "jaartal": 2026, "categorie": "Klimaat en lucht", "omschrijving": "Warmtepomp op natuurlijk koudemiddel", "miaPercentage": 27, "vamilToegestaan": false, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"}
+		{"code": "A1100", "jaartal": 2026, "categorie": "Grondstoffen en water", "description": "Installatie voor hergebruik van proceswater", "miaPercentage": 27, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
+		{"code": "B2200", "jaartal": 2026, "categorie": "Voedselvoorziening en landbouwproductie", "description": "Emissiearme stalvloer", "miaPercentage": 36, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
+		{"code": "F6100", "jaartal": 2026, "categorie": "Mobiliteit", "description": "Volledig elektrische bestelauto", "miaPercentage": 36, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": 7500000, "ingangsdatum": "2026-01-01"},
+		{"code": "G3110", "jaartal": 2026, "categorie": "Circulaire economie", "description": "Recyclemiddel textiel", "miaPercentage": 45, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
+		{"code": "G3200", "jaartal": 2026, "categorie": "Circulaire economie", "description": "Installatie voor het recyclen van bouw- en sloopafval", "miaPercentage": 45, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
+		{"code": "L4220", "jaartal": 2026, "categorie": "Duurzame energie", "description": "Zonnepaneel-installatie met circulaire montage", "miaPercentage": 36, "vamilToegestaan": true, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"},
+		{"code": "M5100", "jaartal": 2026, "categorie": "Klimaat en lucht", "description": "Warmtepomp op natuurlijk koudemiddel", "miaPercentage": 27, "vamilToegestaan": false, "deelpercentage": 100, "maxAmount": null, "ingangsdatum": "2026-01-01"}
 	]
 }

@@ -411,8 +411,8 @@ class AccountantsdossierExportService
         usort(
             $sisaAssurance,
             static fn (array $left, array $right): int => strcmp(
-                (string) ($left['regelingCode'] ?? ''),
-                (string) ($right['regelingCode'] ?? '')
+                (string) ($left['schemeCode'] ?? ''),
+                (string) ($right['schemeCode'] ?? '')
             )
         );
 
@@ -728,7 +728,7 @@ class AccountantsdossierExportService
             $count = count((array) ($row['findings'] ?? []));
             $html .= sprintf(
                 '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class="num">%d</td></tr>',
-                htmlspecialchars((string) ($row['regelingCode'] ?? ''), ENT_QUOTES),
+                htmlspecialchars((string) ($row['schemeCode'] ?? ''), ENT_QUOTES),
                 htmlspecialchars((string) ($row['verantwoordingsplichtige'] ?? ''), ENT_QUOTES),
                 htmlspecialchars((string) ($row['specifiekeUitkering'] ?? ''), ENT_QUOTES),
                 htmlspecialchars((string) ($row['assuranceLevel'] ?? ''), ENT_QUOTES),

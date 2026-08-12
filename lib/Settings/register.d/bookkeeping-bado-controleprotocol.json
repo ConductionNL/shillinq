@@ -406,7 +406,7 @@
             "type": "string",
             "enum": [
               "overall",
-              "programma",
+              "programme",
               "taakveld",
               "sisa"
             ],
@@ -1004,7 +1004,7 @@
         "type": "object",
         "required": [
           "protocol",
-          "regelingCode",
+          "schemeCode",
           "verantwoordingsplichtige",
           "assuranceLevel"
         ],
@@ -1014,7 +1014,7 @@
             "description": "FK to the parent Controleprotocol.",
             "title": "Protocol"
           },
-          "regelingCode": {
+          "schemeCode": {
             "type": "string",
             "description": "SiSa-bijlage regeling code.",
             "example": "JBI",
@@ -1210,7 +1210,7 @@
           "slug": "bado-sisa-hoorn-2026-jbi"
         },
         "protocol": "bado-protocol-hoorn-2026",
-        "regelingCode": "JBI",
+        "schemeCode": "JBI",
         "verantwoordingsplichtige": "gemeente",
         "specifiekeUitkering": "Jeugdbescherming Integrale Aanpak",
         "assuranceLevel": "financial-statement",
