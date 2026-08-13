@@ -95,9 +95,9 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanBezwaarMakenWithinTermijn(): void {
-		$dagtekening = (new \DateTimeImmutable('today'))->modify('-1 week')->format('Y-m-d');
+		$issueDate = (new \DateTimeImmutable('today'))->modify('-1 week')->format('Y-m-d');
 		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-1', 'issueDate' => $dagtekening]]])
+			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-1', 'issueDate' => $issueDate]]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -111,9 +111,9 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCannotBezwaarMakenAfterTermijn(): void {
-		$dagtekening = (new \DateTimeImmutable('today'))->modify('-8 weeks')->format('Y-m-d');
+		$issueDate = (new \DateTimeImmutable('today'))->modify('-8 weeks')->format('Y-m-d');
 		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-2', 'issueDate' => $dagtekening]]])
+			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-2', 'issueDate' => $issueDate]]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -140,11 +140,11 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanBeroepInstellenWithinTermijn(): void {
-		$uitspraak = (new \DateTimeImmutable('today'))->modify('-2 weeks')->format('Y-m-d');
+		$ruling = (new \DateTimeImmutable('today'))->modify('-2 weeks')->format('Y-m-d');
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue(
-			$this->guard->canFileAppeal(objectionId:'bezwaar-1', object: ['rulingDate' => $uitspraak])
+			$this->guard->canFileAppeal(objectionId:'bezwaar-1', object: ['rulingDate' => $ruling])
 		);
 
 	}//end testCanBeroepInstellenWithinTermijn()
@@ -155,11 +155,11 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCannotBeroepInstellenAfterTermijn(): void {
-		$uitspraak = (new \DateTimeImmutable('today'))->modify('-7 weeks')->format('Y-m-d');
+		$ruling = (new \DateTimeImmutable('today'))->modify('-7 weeks')->format('Y-m-d');
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
-			$this->guard->canFileAppeal(objectionId:'bezwaar-2', object: ['rulingDate' => $uitspraak])
+			$this->guard->canFileAppeal(objectionId:'bezwaar-2', object: ['rulingDate' => $ruling])
 		);
 
 	}//end testCannotBeroepInstellenAfterTermijn()

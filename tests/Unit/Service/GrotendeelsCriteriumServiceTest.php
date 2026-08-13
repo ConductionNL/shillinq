@@ -50,7 +50,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	 */
 	public function testTelOndernemingsUrenPrefersGetoldeUren(): void {
 		$service = $this->build();
-		$totaal = $service->telOndernemingsUren(
+		$total = $service->telOndernemingsUren(
 			dagregistraties: [
 				['hours' => 8, 'getoldeHours' => 8],
 				['hours' => 6, 'getoldeHours' => 4],
@@ -58,7 +58,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(14.0, $totaal);
+		self::assertSame(14.0, $total);
 
 	}//end testTelOndernemingsUrenPrefersGetoldeUren()
 
@@ -69,7 +69,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	 */
 	public function testTelOndernemingsUrenIgnoresNonArrayEntries(): void {
 		$service = $this->build();
-		$totaal = $service->telOndernemingsUren(
+		$total = $service->telOndernemingsUren(
 			dagregistraties: [
 				['hours' => 8],
 				'garbage',
@@ -78,7 +78,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(12.0, $totaal);
+		self::assertSame(12.0, $total);
 
 	}//end testTelOndernemingsUrenIgnoresNonArrayEntries()
 
@@ -90,7 +90,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	public function testNoLoondienstYieldsNietToepasselijk(): void {
 		$patch = $this->build()->bouwPatch(
 			dagregistraties: [['hours' => 800]],
-			loondienstUren: 0.0
+			employmentHours: 0.0
 		);
 
 		self::assertSame('NIET_TOEPASSELIJK', $patch['grotendeelsCriterium']);
@@ -106,7 +106,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	public function testGrotendeelsOndernemingDoesNotBlockAftrek(): void {
 		$patch = $this->build()->bouwPatch(
 			dagregistraties: [['hours' => 1200]],
-			loondienstUren: 800.0
+			employmentHours: 800.0
 		);
 
 		self::assertSame('GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
@@ -122,7 +122,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	public function testLoondienstMajorityBlocksAftrek(): void {
 		$patch = $this->build()->bouwPatch(
 			dagregistraties: [['hours' => 400]],
-			loondienstUren: 1200.0
+			employmentHours: 1200.0
 		);
 
 		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
@@ -138,7 +138,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 	public function testFiftyFiftyIsNietGrotendeels(): void {
 		$patch = $this->build()->bouwPatch(
 			dagregistraties: [['hours' => 800]],
-			loondienstUren: 800.0
+			employmentHours: 800.0
 		);
 
 		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);

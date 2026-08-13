@@ -75,7 +75,7 @@ class ENSIAQuestionSetLoader {
 	 * Load the question set and produce Evaluatievraag shapes for the
 	 * given verslagjaar + verantwoordingsdomeinen selection.
 	 *
-	 * @param int $jaar Verslagjaar (e.g. 2026).
+	 * @param int $year Verslagjaar (e.g. 2026).
 	 * @param array<int,string> $domeinen Selected domains, e.g.
 	 *                                    ['BIO', 'DigiD'].
 	 * @param string $cyclusId FK to ENSIAJaarcyclus
@@ -92,7 +92,7 @@ class ENSIAQuestionSetLoader {
 	 *     vragen: array<int,array<string,mixed>>,
 	 * } The loaded version stamp + per-question records.
 	 */
-	public function load(int $jaar, array $domeinen, string $cyclusId, string $administrationId): array {
+	public function load(int $year, array $domeinen, string $cyclusId, string $administrationId): array {
 		$path = $this->seedPath ?? self::DEFAULT_SEED;
 
 		if (file_exists($path) === false || is_readable($path) === false) {
@@ -118,7 +118,7 @@ class ENSIAQuestionSetLoader {
 			];
 		}
 
-		$version = (string)($payload['questionSetVersion'] ?? sprintf('BIO-1.04-%d', $jaar));
+		$version = (string)($payload['questionSetVersion'] ?? sprintf('BIO-1.04-%d', $year));
 		$catalog = $payload['vragen'] ?? [];
 
 		if (is_array($catalog) === false) {

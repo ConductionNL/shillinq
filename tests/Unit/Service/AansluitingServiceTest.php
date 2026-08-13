@@ -333,7 +333,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-btw-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-btw-1', periodId: '2026-Q2');
 
 		self::assertSame(4200.0, $result['sourceATotal']);
 		self::assertSame(4450.0, $result['sourceBTotal']);
@@ -416,7 +416,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-btw-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-btw-1', periodId: '2026-Q2');
 
 		self::assertSame('vatcorr-1', $result['relatedVatCorrectionId']);
 
@@ -460,7 +460,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-ar-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-ar-1', periodId: '2026-Q2');
 
 		self::assertSame(18500.0, $result['sourceATotal']);
 		self::assertSame(18500.0, $result['sourceBTotal']);
@@ -506,7 +506,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-ap-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-ap-1', periodId: '2026-Q2');
 
 		self::assertSame(-9200.0, $result['sourceATotal']);
 		self::assertSame(9350.0, $result['sourceBTotal']);
@@ -563,7 +563,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-ar-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-ar-1', periodId: '2026-Q2');
 
 		// Untouched — proves the resolver never even ran (sourceATotal/B would
 		// otherwise both come back 0.0 from the empty GL/AR seed).

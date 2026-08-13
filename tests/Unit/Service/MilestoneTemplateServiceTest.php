@@ -79,10 +79,10 @@ class MilestoneTemplateServiceTest extends TestCase {
 		$this->assertSame('eindoplevering', $plan[3]['deliveryType']);
 		$this->assertSame('planned', $plan[0]['status']);
 
-		foreach ($plan as $mijlpaal) {
-			$this->assertGreaterThanOrEqual('2026-02-01', $mijlpaal['date']);
-			$this->assertLessThanOrEqual('2027-01-31', $mijlpaal['date']);
-			$this->assertNotEmpty($mijlpaal['milestoneId']);
+		foreach ($plan as $milestone) {
+			$this->assertGreaterThanOrEqual('2026-02-01', $milestone['date']);
+			$this->assertLessThanOrEqual('2027-01-31', $milestone['date']);
+			$this->assertNotEmpty($milestone['milestoneId']);
 		}
 
 		$this->assertSame(100.0, $this->service->sumPercentage($plan));

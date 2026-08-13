@@ -180,7 +180,7 @@ final class PayrollWkrHandoffServiceTest extends TestCase {
 			]
 		);
 
-		$payload = $svc->toWkrLoonsomPayload(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payload = $svc->toWkrLoonsomPayload(administrationId: 'adm-1', periodId: 'lp-1');
 
 		$this->assertSame('lp-1', $payload['periodId']);
 		$this->assertSame('adm-1', $payload['administrationId']);
@@ -199,7 +199,7 @@ final class PayrollWkrHandoffServiceTest extends TestCase {
 	public function testLoonsomZeroForEmptyPeriod(): void {
 		$svc = $this->buildService(data: ['LoonStrook' => []]);
 
-		$payload = $svc->toWkrLoonsomPayload(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payload = $svc->toWkrLoonsomPayload(administrationId: 'adm-1', periodId: 'lp-1');
 
 		$this->assertSame(0.0, $payload['loonsom']);
 		$this->assertSame(0, $payload['aantalStroken']);

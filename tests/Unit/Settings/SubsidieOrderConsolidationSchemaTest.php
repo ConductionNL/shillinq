@@ -123,16 +123,16 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 	 * @return void
 	 */
 	public function testExactlyOneSubsidieDefinition(): void {
-		$subsidie = array_values(
+		$subsidy = array_values(
 			array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
 		);
 
 		$this->assertCount(
 			1,
-			$subsidie,
-			'Expected exactly one Subsidie schema; found: ' . implode(', ', array_column($subsidie, 'file'))
+			$subsidy,
+			'Expected exactly one Subsidie schema; found: ' . implode(', ', array_column($subsidy, 'file'))
 		);
-		$this->assertStringEndsWith('shillinq_register.json', $subsidie[0]['file']);
+		$this->assertStringEndsWith('shillinq_register.json', $subsidy[0]['file']);
 
 	}//end testExactlyOneSubsidieDefinition()
 
@@ -142,10 +142,10 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanonicalSubsidieIsTheFieldUnion(): void {
-		$subsidie = array_values(
+		$subsidy = array_values(
 			array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
 		);
-		$props = $subsidie[0]['props'];
+		$props = $subsidy[0]['props'];
 
 		// Regulatory fields (Dutch ASV-model) MUST all survive.
 		$regulatory = [

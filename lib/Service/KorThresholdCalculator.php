@@ -128,26 +128,26 @@ class KorThresholdCalculator {
 			return false;
 		}
 
-		$leveringsDatum = (string)($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
-		return (substr($leveringsDatum, 0, 4) === (string)$year);
+		$leveringsDate = (string)($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
+		return (substr($leveringsDate, 0, 4) === (string)$year);
 	}//end isKorEligible()
 
 	/**
 	 * Compute drempel-benutting as a fraction (REQ-KOR-002).
 	 *
-	 * @param int $omzetCents Running KOR omzet in cents.
-	 * @param int $drempelCents Threshold in cents (EUR 20.000 => 2_000_000).
+	 * @param int $revenueCents Running KOR omzet in cents.
+	 * @param int $thresholdCents Threshold in cents (EUR 20.000 => 2_000_000).
 	 *
 	 * @return float Benutting fraction (0..1+); zero when the threshold is zero.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function benutting(int $omzetCents, int $drempelCents): float {
-		if ($drempelCents <= 0) {
+	public function benutting(int $revenueCents, int $thresholdCents): float {
+		if ($thresholdCents <= 0) {
 			return 0.0;
 		}
 
-		return ($omzetCents / $drempelCents);
+		return ($revenueCents / $thresholdCents);
 	}//end benutting()
 
 	/**
@@ -174,14 +174,14 @@ class KorThresholdCalculator {
 	 * Resolve the prognose-status from the projected benutting (REQ-KOR-002).
 	 *
 	 * @param int $prognoseCents Projected end-of-year omzet in cents.
-	 * @param int $drempelCents Threshold in cents.
+	 * @param int $thresholdCents Threshold in cents.
 	 *
 	 * @return string ONDER_DREMPEL | WAARSCHUWING | OVERSCHRIJDING_VERWACHT.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function prognoseStatus(int $prognoseCents, int $drempelCents): string {
-		$b = $this->benutting(omzetCents: $prognoseCents, drempelCents: $drempelCents);
+	public function prognoseStatus(int $prognoseCents, int $thresholdCents): string {
+		$b = $this->benutting(revenueCents: $prognoseCents, thresholdCents: $thresholdCents);
 		if ($b >= 1.0) {
 			return 'OVERSCHRIJDING_VERWACHT';
 		}
@@ -200,14 +200,14 @@ class KorThresholdCalculator {
 	 * yet reached at the previous benutting, so each schijf fires exactly once as
 	 * omzet climbs. Returns null when no new schijf is crossed.
 	 *
-	 * @param float $previousBenutting Benutting before the posting.
-	 * @param float $newBenutting Benutting after the posting.
+	 * @param float $previousUtilisation Benutting before the posting.
+	 * @param float $newUtilisation Benutting after the posting.
 	 *
 	 * @return array{trigger:string,ernst:string}|null The crossed schijf or null.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function crossedSchijf(float $previousBenutting, float $newBenutting): ?array {
+	public function crossedSchijf(float $previousUtilisation, float $newUtilisation): ?array {
 		$schijven = [
 			['threshold' => 1.0, 'trigger' => 'DREMPEL_100PCT', 'ernst' => 'OVERSCHRIJDING'],
 			['threshold' => 0.9, 'trigger' => 'DREMPEL_90PCT', 'ernst' => 'KRITIEK'],
@@ -215,7 +215,7 @@ class KorThresholdCalculator {
 		];
 
 		foreach ($schijven as $schijf) {
-			if ($newBenutting >= $schijf['threshold'] && $previousBenutting < $schijf['threshold']) {
+			if ($newUtilisation >= $schijf['threshold'] && $previousUtilisation < $schijf['threshold']) {
 				return ['trigger' => $schijf['trigger'], 'ernst' => $schijf['ernst']];
 			}
 		}
@@ -232,22 +232,22 @@ class KorThresholdCalculator {
 	 * is the sum of those amounts. Arithmetic in cents.
 	 *
 	 * @param array<int,array<string,mixed>> $invoices KOR AR-invoice records.
-	 * @param string $ingangsDatum KOR start date (YYYY-MM-DD).
-	 * @param string $revocatieDatum Revocation date (YYYY-MM-DD), exclusive.
+	 * @param string $ingangsDate KOR start date (YYYY-MM-DD).
+	 * @param string $revocationDate Revocation date (YYYY-MM-DD), exclusive.
 	 *
 	 * @return int Suppletie-bedrag in cents.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function suppletieBedragCents(array $invoices, string $ingangsDatum, string $revocatieDatum): int {
+	public function suppletieBedragCents(array $invoices, string $ingangsDate, string $revocationDate): int {
 		$total = 0;
 		foreach ($invoices as $invoice) {
 			if ((string)($invoice['vrijstellingsGrondslag'] ?? '') !== 'KOR_ART25_OB') {
 				continue;
 			}
 
-			$leveringsDatum = (string)($invoice['leveringsDatum'] ?? '');
-			if ($leveringsDatum === '' || $leveringsDatum < $ingangsDatum || $leveringsDatum >= $revocatieDatum) {
+			$leveringsDate = (string)($invoice['leveringsDatum'] ?? '');
+			if ($leveringsDate === '' || $leveringsDate < $ingangsDate || $leveringsDate >= $revocationDate) {
 				continue;
 			}
 
@@ -300,14 +300,14 @@ class KorThresholdCalculator {
 	 * dates are exact YYYY-MM-DD strings — the caller persists them on the
 	 * KORRegistration record so the manifest pages can render the window.
 	 *
-	 * @param string $ingangsDatum KOR-NL effective date (YYYY-MM-DD).
+	 * @param string $ingangsDate KOR-NL effective date (YYYY-MM-DD).
 	 *
 	 * @return array{lockInEndDate:string,vroegsteOpzegDate:string}|null Window or null on invalid input.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function lockInWindow(string $ingangsDatum): ?array {
-		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $ingangsDatum, $match) !== 1) {
+	public function lockInWindow(string $ingangsDate): ?array {
+		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $ingangsDate, $match) !== 1) {
 			return null;
 		}
 
@@ -323,7 +323,7 @@ class KorThresholdCalculator {
 		// case as +3 years - 1 day; for the canonical 1-1 start the prior day is 31-12.
 		if ($month === 1 && $day === 1) {
 			$lockInYear = ($year - 1);
-			$lockInEinde = sprintf('%04d-12-31', $lockInYear);
+			$lockInEnd = sprintf('%04d-12-31', $lockInYear);
 		} else {
 			$priorDay = ($day - 1);
 			$priorMonth = $month;
@@ -337,13 +337,13 @@ class KorThresholdCalculator {
 				$priorDay = (int)date('t', strtotime(sprintf('%04d-%02d-01', $year, $priorMonth)));
 			}
 
-			$lockInEinde = sprintf('%04d-%02d-%02d', $year, $priorMonth, $priorDay);
+			$lockInEnd = sprintf('%04d-%02d-%02d', $year, $priorMonth, $priorDay);
 		}
 
 		// Vroegste opzeg-datum = three months before lockInEinde, rounded to the
 		// first day of that month (canonical opt-out window opens 1 October when
 		// lockInEinde is 31 December).
-		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $lockInEinde, $m2) !== 1) {
+		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $lockInEnd, $m2) !== 1) {
 			return null;
 		}
 
@@ -359,7 +359,7 @@ class KorThresholdCalculator {
 		$vroegsteOpzeg = sprintf('%04d-%02d-01', $opzegYear, $opzegMonth);
 
 		return [
-			'lockInEndDate' => $lockInEinde,
+			'lockInEndDate' => $lockInEnd,
 			'vroegsteOpzegDate' => $vroegsteOpzeg,
 		];
 
@@ -373,19 +373,19 @@ class KorThresholdCalculator {
 	 * already at its natural end (different lifecycle path).
 	 *
 	 * @param string $today Today's date (YYYY-MM-DD).
-	 * @param string $vroegsteOpzegDatum Earliest opt-out date (YYYY-MM-DD).
-	 * @param string $lockInEindDatum End of the lock-in window (YYYY-MM-DD).
+	 * @param string $vroegsteOpzegDate Earliest opt-out date (YYYY-MM-DD).
+	 * @param string $lockInEndDate End of the lock-in window (YYYY-MM-DD).
 	 *
 	 * @return bool True when an operator-initiated opt-out is permitted.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function isOptOutPermitted(string $today, string $vroegsteOpzegDatum, string $lockInEindDatum): bool {
-		if ($vroegsteOpzegDatum === '' || $lockInEindDatum === '') {
+	public function isOptOutPermitted(string $today, string $vroegsteOpzegDate, string $lockInEndDate): bool {
+		if ($vroegsteOpzegDate === '' || $lockInEndDate === '') {
 			return false;
 		}
 
-		return ($today >= $vroegsteOpzegDatum && $today <= $lockInEindDatum);
+		return ($today >= $vroegsteOpzegDate && $today <= $lockInEndDate);
 	}//end isOptOutPermitted()
 
 	/**
@@ -393,49 +393,49 @@ class KorThresholdCalculator {
 	 *
 	 * Walks the KOR-EU AR invoices, groups them by lidstaat-ISO-code, sums omzet
 	 * per country, and resolves benutting against the per-lidstaat drempel passed
-	 * in $drempelsPerLidstaat. Countries not in the drempels map fall back to
+	 * in $drempelsPerMemberState. Countries not in the drempels map fall back to
 	 * the EU-wide default 100000 EUR ceiling. Arithmetic in cents.
 	 *
 	 * @param array<int,array<string,mixed>> $invoices KOR-EU AR-invoice records (must carry `lidstaat`).
-	 * @param array<string,float> $drempelsPerLidstaat Per-country drempel (EUR); e.g. ['BE' => 25000, 'DE' => 22000].
+	 * @param array<string,float> $drempelsPerMemberState Per-country drempel (EUR); e.g. ['BE' => 25000, 'DE' => 22000].
 	 * @param int $year Calendar year to bound the aggregation.
 	 *
 	 * @return array<string,array{revenue:float,threshold:float,benutting:float}> Per-lidstaat aggregate.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function perLidstaatAggregate(array $invoices, array $drempelsPerLidstaat, int $year): array {
-		$defaultDrempelCents = $this->toCents(amount: 100000);
+	public function perLidstaatAggregate(array $invoices, array $drempelsPerMemberState, int $year): array {
+		$defaultThresholdCents = $this->toCents(amount: 100000);
 		$cents = [];
 		foreach ($invoices as $invoice) {
 			if ((string)($invoice['vrijstellingsGrondslag'] ?? '') !== 'KOR_ART25_OB') {
 				continue;
 			}
 
-			$lidstaat = strtoupper((string)($invoice['lidstaat'] ?? ''));
-			if ($lidstaat === '') {
+			$memberState = strtoupper((string)($invoice['lidstaat'] ?? ''));
+			if ($memberState === '') {
 				continue;
 			}
 
-			$leveringsDatum = (string)($invoice['leveringsDatum'] ?? '');
-			if (substr($leveringsDatum, 0, 4) !== (string)$year) {
+			$leveringsDate = (string)($invoice['leveringsDatum'] ?? '');
+			if (substr($leveringsDate, 0, 4) !== (string)$year) {
 				continue;
 			}
 
-			$cents[$lidstaat] = (($cents[$lidstaat] ?? 0) + $this->toCents(amount: ($invoice['amount'] ?? 0)));
+			$cents[$memberState] = (($cents[$memberState] ?? 0) + $this->toCents(amount: ($invoice['amount'] ?? 0)));
 		}
 
 		$result = [];
-		foreach ($cents as $lidstaat => $omzetCents) {
-			$drempelCents = ($defaultDrempelCents);
-			if (isset($drempelsPerLidstaat[$lidstaat]) === true) {
-				$drempelCents = $this->toCents(amount: $drempelsPerLidstaat[$lidstaat]);
+		foreach ($cents as $memberState => $revenueCents) {
+			$thresholdCents = ($defaultThresholdCents);
+			if (isset($drempelsPerMemberState[$memberState]) === true) {
+				$thresholdCents = $this->toCents(amount: $drempelsPerMemberState[$memberState]);
 			}
 
-			$result[$lidstaat] = [
-				'revenue' => $this->fromCents(cents: $omzetCents),
-				'threshold' => $this->fromCents(cents: $drempelCents),
-				'benutting' => round($this->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents), 4),
+			$result[$memberState] = [
+				'revenue' => $this->fromCents(cents: $revenueCents),
+				'threshold' => $this->fromCents(cents: $thresholdCents),
+				'benutting' => round($this->benutting(revenueCents: $revenueCents, thresholdCents: $thresholdCents), 4),
 			];
 		}
 
@@ -461,8 +461,8 @@ class KorThresholdCalculator {
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
 	public function brancheCompatibility(array $branche): array {
-		$isFiscaleEenheid = (bool)($branche['fiscaleEenheid'] ?? false);
-		if ($isFiscaleEenheid === true) {
+		$isFiscalUnit = (bool)($branche['fiscaleEenheid'] ?? false);
+		if ($isFiscalUnit === true) {
 			return [
 				'verdict' => 'BLOCK',
 				'reason' => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; '

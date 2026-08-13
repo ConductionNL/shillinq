@@ -47,11 +47,11 @@ final class UrenAlertServiceTest extends TestCase {
 	 */
 	public function testIsKwartaalEindeRecognisesAllFour(): void {
 		$service = $this->build();
-		self::assertTrue($service->isKwartaalEinde(datum: '2026-03-31'));
-		self::assertTrue($service->isKwartaalEinde(datum: '2026-06-30'));
-		self::assertTrue($service->isKwartaalEinde(datum: '2026-09-30'));
-		self::assertTrue($service->isKwartaalEinde(datum: '2026-12-31'));
-		self::assertFalse($service->isKwartaalEinde(datum: '2026-04-15'));
+		self::assertTrue($service->isKwartaalEinde(date: '2026-03-31'));
+		self::assertTrue($service->isKwartaalEinde(date: '2026-06-30'));
+		self::assertTrue($service->isKwartaalEinde(date: '2026-09-30'));
+		self::assertTrue($service->isKwartaalEinde(date: '2026-12-31'));
+		self::assertFalse($service->isKwartaalEinde(date: '2026-04-15'));
 
 	}//end testIsKwartaalEindeRecognisesAllFour()
 
@@ -91,7 +91,7 @@ final class UrenAlertServiceTest extends TestCase {
 				'forecastYearEnd' => 1150.0,
 				'thresholdStatus' => 'RISICO',
 			],
-			datum: '2026-09-30'
+			date: '2026-09-30'
 		);
 
 		self::assertSame('KWARTAAL_EINDE', $alert['type']);

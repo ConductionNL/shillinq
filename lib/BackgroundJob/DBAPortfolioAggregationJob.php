@@ -72,7 +72,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	/**
 	 * Compute the concentratie-aggregate for a set of opdrachten (REQ-DBA-005).
 	 *
-	 * @param array<int,array<string,mixed>> $opdrachten Per-opdracht rows containing
+	 * @param array<int,array<string,mixed>> $assignments Per-opdracht rows containing
 	 *                                                   `klantId` and `gerealiseerdeOmzet`
 	 *                                                   (eurocenten).
 	 *
@@ -80,21 +80,21 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function computeConcentratie(array $opdrachten): array {
-		$omzetPerKlant = [];
-		$totaal = 0;
-		foreach ($opdrachten as $opdracht) {
-			$klantId = (string)($opdracht['customerId'] ?? '');
-			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
-			if ($klantId === '' || $bedrag <= 0) {
+	public function computeConcentratie(array $assignments): array {
+		$revenuePerCustomer = [];
+		$total = 0;
+		foreach ($assignments as $assignment) {
+			$customerId = (string)($assignment['customerId'] ?? '');
+			$amount = (int)($assignment['realisedRevenue'] ?? 0);
+			if ($customerId === '' || $amount <= 0) {
 				continue;
 			}
 
-			$omzetPerKlant[$klantId] = ($omzetPerKlant[$klantId] ?? 0) + $bedrag;
-			$totaal += $bedrag;
+			$revenuePerCustomer[$customerId] = ($revenuePerCustomer[$customerId] ?? 0) + $amount;
+			$total += $amount;
 		}
 
-		if ($totaal <= 0 || count($omzetPerKlant) === 0) {
+		if ($total <= 0 || count($revenuePerCustomer) === 0) {
 			return [
 				'largestCustomer' => null,
 				'revenueShare12m' => 0.0,
@@ -103,26 +103,26 @@ class DBAPortfolioAggregationJob extends TimedJob {
 			];
 		}
 
-		$grootsteKlant = null;
-		$grootsteBedrag = 0;
-		foreach ($omzetPerKlant as $klantId => $bedrag) {
-			if ($bedrag > $grootsteBedrag) {
-				$grootsteBedrag = $bedrag;
-				$grootsteKlant = (string)$klantId;
+		$largestCustomer = null;
+		$largestAmount = 0;
+		foreach ($revenuePerCustomer as $customerId => $amount) {
+			if ($amount > $largestAmount) {
+				$largestAmount = $amount;
+				$largestCustomer = (string)$customerId;
 			}
 		}
 
-		$aandeel = $grootsteBedrag / $totaal;
+		$share = $largestAmount / $total;
 		$status = 'VEILIG';
-		if ($aandeel >= DBAConstants::CONCENTRATIE_DREMPEL_KRITIEK) {
+		if ($share >= DBAConstants::CONCENTRATIE_DREMPEL_KRITIEK) {
 			$status = 'KRITIEK';
-		} elseif ($aandeel >= DBAConstants::CONCENTRATIE_DREMPEL_HOOG) {
+		} elseif ($share >= DBAConstants::CONCENTRATIE_DREMPEL_HOOG) {
 			$status = 'WAARSCHUWING';
 		}
 
 		return [
-			'largestCustomer' => $grootsteKlant,
-			'revenueShare12m' => round($aandeel, 4),
+			'largestCustomer' => $largestCustomer,
+			'revenueShare12m' => round($share, 4),
 			'thresholdHigh' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
 			'status' => $status,
 		];
@@ -131,7 +131,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	/**
 	 * Compute langjarige-relaties (REQ-DBA-005).
 	 *
-	 * @param array<int,array<string,mixed>> $opdrachten Per-opdracht rows with
+	 * @param array<int,array<string,mixed>> $assignments Per-opdracht rows with
 	 *                                                   `klantId`, `startDatum`,
 	 *                                                   `gerealiseerdeOmzet`.
 	 * @param DateTimeImmutable $now Reference "now".
@@ -140,24 +140,24 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function computeLangjarigeRelaties(array $opdrachten, DateTimeImmutable $now): array {
+	public function computeLangjarigeRelaties(array $assignments, DateTimeImmutable $now): array {
 		$result = [];
-		$totaal = 0;
-		foreach ($opdrachten as $opdracht) {
-			$totaal += (int)($opdracht['realisedRevenue'] ?? 0);
+		$total = 0;
+		foreach ($assignments as $assignment) {
+			$total += (int)($assignment['realisedRevenue'] ?? 0);
 		}
 
-		if ($totaal <= 0) {
+		if ($total <= 0) {
 			return $result;
 		}
 
 		// Group oldest startDatum + total omzet per klant.
-		$perKlant = [];
-		foreach ($opdrachten as $opdracht) {
-			$klantId = (string)($opdracht['customerId'] ?? '');
-			$startStr = (string)($opdracht['startDate'] ?? '');
-			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
-			if ($klantId === '' || $startStr === '') {
+		$perCustomer = [];
+		foreach ($assignments as $assignment) {
+			$customerId = (string)($assignment['customerId'] ?? '');
+			$startStr = (string)($assignment['startDate'] ?? '');
+			$amount = (int)($assignment['realisedRevenue'] ?? 0);
+			if ($customerId === '' || $startStr === '') {
 				continue;
 			}
 
@@ -167,29 +167,29 @@ class DBAPortfolioAggregationJob extends TimedJob {
 				continue;
 			}
 
-			if (isset($perKlant[$klantId]) === false || $perKlant[$klantId]['start'] > $start) {
-				$perKlant[$klantId] = ['start' => $start, 'revenue' => $bedrag];
+			if (isset($perCustomer[$customerId]) === false || $perCustomer[$customerId]['start'] > $start) {
+				$perCustomer[$customerId] = ['start' => $start, 'revenue' => $amount];
 			} else {
-				$perKlant[$klantId]['revenue'] += $bedrag;
+				$perCustomer[$customerId]['revenue'] += $amount;
 			}
 		}
 
-		foreach ($perKlant as $klantId => $row) {
-			$duurJaren = (float)($row['start']->diff($now)->days / 365.0);
+		foreach ($perCustomer as $customerId => $row) {
+			$durationJaren = (float)($row['start']->diff($now)->days / 365.0);
 			if ($row['revenue'] > 0) {
-				$aandeel = ($row['revenue'] / $totaal);
+				$share = ($row['revenue'] / $total);
 			} else {
-				$aandeel = 0.0;
+				$share = 0.0;
 			}
 
-			if ($duurJaren >= DBAConstants::LANGJARIG_DREMPEL_JAREN
-				&& $aandeel >= DBAConstants::LANGJARIG_DREMPEL_OMZET
+			if ($durationJaren >= DBAConstants::LANGJARIG_DREMPEL_JAREN
+				&& $share >= DBAConstants::LANGJARIG_DREMPEL_OMZET
 			) {
 				$result[] = [
-					'customerId' => (string)$klantId,
+					'customerId' => (string)$customerId,
 					'startDate' => $row['start']->format('Y-m-d'),
-					'durationJaren' => round($duurJaren, 2),
-					'revenueShare' => round($aandeel, 4),
+					'durationJaren' => round($durationJaren, 2),
+					'revenueShare' => round($share, 4),
 				];
 			}
 		}
@@ -201,19 +201,19 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 * Compute overall risico-band from concentratie + langjarige relaties.
 	 *
 	 * @param array<string,mixed> $concentratie The concentratie block.
-	 * @param array<int,array<string,mixed>> $langjarigeRelaties List of langjarige relaties.
+	 * @param array<int,array<string,mixed>> $langjarigeRelationships List of langjarige relaties.
 	 *
 	 * @return string LAAG / MIDDEN / HOOG.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function computeOverallRisico(array $concentratie, array $langjarigeRelaties): string {
+	public function computeOverallRisico(array $concentratie, array $langjarigeRelationships): string {
 		$status = (string)($concentratie['status'] ?? 'VEILIG');
-		if ($status === 'KRITIEK' || count($langjarigeRelaties) >= 2) {
+		if ($status === 'KRITIEK' || count($langjarigeRelationships) >= 2) {
 			return 'HOOG';
 		}
 
-		if ($status === 'WAARSCHUWING' || count($langjarigeRelaties) === 1) {
+		if ($status === 'WAARSCHUWING' || count($langjarigeRelationships) === 1) {
 			return 'MIDDEN';
 		}
 
@@ -260,25 +260,25 @@ class DBAPortfolioAggregationJob extends TimedJob {
 
 		$perOnderneming = [];
 		foreach ($rows as $row) {
-			$opdracht = $this->toArray(entity: $row);
-			if ($opdracht === null) {
+			$assignment = $this->toArray(entity: $row);
+			if ($assignment === null) {
 				continue;
 			}
 
-			$ondernemingId = (string)($opdracht['enterpriseId'] ?? '');
+			$ondernemingId = (string)($assignment['enterpriseId'] ?? '');
 			if ($ondernemingId === '') {
 				continue;
 			}
 
 			$perOnderneming[$ondernemingId] ??= [];
-			$perOnderneming[$ondernemingId][] = $opdracht;
+			$perOnderneming[$ondernemingId][] = $assignment;
 		}
 
-		foreach ($perOnderneming as $ondernemingId => $opdrachten) {
-			$concentratie = $this->computeConcentratie(opdrachten: $opdrachten);
-			$langjarig = $this->computeLangjarigeRelaties(opdrachten: $opdrachten, now: $now);
-			$overall = $this->computeOverallRisico(concentratie: $concentratie, langjarigeRelaties: $langjarig);
-			$administrationId = (string)($opdrachten[0]['administrationId'] ?? '');
+		foreach ($perOnderneming as $ondernemingId => $assignments) {
+			$concentratie = $this->computeConcentratie(assignments: $assignments);
+			$langjarig = $this->computeLangjarigeRelaties(assignments: $assignments, now: $now);
+			$overall = $this->computeOverallRisico(concentratie: $concentratie, langjarigeRelationships: $langjarig);
+			$administrationId = (string)($assignments[0]['administrationId'] ?? '');
 
 			try {
 				$objectService->setRegister($register)->setSchema('DBAPortfolioRisico')->saveObject(
@@ -286,10 +286,10 @@ class DBAPortfolioAggregationJob extends TimedJob {
 						'administrationId' => $administrationId,
 						'enterpriseId' => (string)$ondernemingId,
 						'peilDate' => $now->format('Y-m-d'),
-						'actieveAssignments' => count($opdrachten),
+						'actieveAssignments' => count($assignments),
 						'concentratie' => $concentratie,
 						'langjarigeRelationships' => $langjarig,
-						'exclusieveRelationships' => $this->countExclusief(opdrachten: $opdrachten),
+						'exclusieveRelationships' => $this->countExclusief(assignments: $assignments),
 						'overallRisk' => $overall,
 					]
 				);
@@ -310,31 +310,31 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	/**
 	 * Count exclusive relations (klanten that account for 100% of omzet) (REQ-DBA-005).
 	 *
-	 * @param array<int,array<string,mixed>> $opdrachten Per-opdracht rows.
+	 * @param array<int,array<string,mixed>> $assignments Per-opdracht rows.
 	 *
 	 * @return int The count of exclusive relations.
 	 */
-	private function countExclusief(array $opdrachten): int {
-		$omzetPerKlant = [];
-		$totaal = 0;
-		foreach ($opdrachten as $opdracht) {
-			$klantId = (string)($opdracht['customerId'] ?? '');
-			$bedrag = (int)($opdracht['realisedRevenue'] ?? 0);
-			if ($klantId === '' || $bedrag <= 0) {
+	private function countExclusief(array $assignments): int {
+		$revenuePerCustomer = [];
+		$total = 0;
+		foreach ($assignments as $assignment) {
+			$customerId = (string)($assignment['customerId'] ?? '');
+			$amount = (int)($assignment['realisedRevenue'] ?? 0);
+			if ($customerId === '' || $amount <= 0) {
 				continue;
 			}
 
-			$omzetPerKlant[$klantId] = ($omzetPerKlant[$klantId] ?? 0) + $bedrag;
-			$totaal += $bedrag;
+			$revenuePerCustomer[$customerId] = ($revenuePerCustomer[$customerId] ?? 0) + $amount;
+			$total += $amount;
 		}
 
-		if ($totaal <= 0 || count($omzetPerKlant) === 0) {
+		if ($total <= 0 || count($revenuePerCustomer) === 0) {
 			return 0;
 		}
 
 		$count = 0;
-		foreach ($omzetPerKlant as $bedrag) {
-			if (((float)$bedrag / (float)$totaal) >= 0.99) {
+		foreach ($revenuePerCustomer as $amount) {
+			if (((float)$amount / (float)$total) >= 0.99) {
 				$count++;
 			}
 		}

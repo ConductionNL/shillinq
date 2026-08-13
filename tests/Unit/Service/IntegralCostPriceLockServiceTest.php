@@ -51,9 +51,9 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 	 * Aggregating 4 quarterly voorlopig records produces a definitief YTD record.
 	 */
 	public function testLockAggregatesQuarterlyVoorlopig(): void {
-		$voorlopig = [];
+		$provisional = [];
 		for ($q = 1; $q <= 4; $q++) {
-			$voorlopig[] = [
+			$provisional[] = [
 				'period' => '2025-Q' . $q,
 				'totaleCost' => 25_000.00,
 				'componenten' => [
@@ -70,7 +70,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 		$definitief = $this->svc->lock([
 			'commercialActivityId' => 'ca-001',
 			'fiscalYear' => '2025',
-			'voorlopigRecords' => $voorlopig,
+			'voorlopigRecords' => $provisional,
 			'signedBy' => 'accountant-user',
 			'administrationId' => 'adm-tilburg',
 			'verkochteUnits' => 312.0,

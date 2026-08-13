@@ -98,7 +98,7 @@ class EmuCalculator {
 	 * @return array<string,int> ESA sector code → net saldo in euro-cents.
 	 */
 	private function aggregateBySector(array $glLines): array {
-		$saldo = [];
+		$balance = [];
 		foreach ($glLines as $line) {
 			$sector = $line['account']['esaClassifier'] ?? ($line['esaClassifier'] ?? null);
 			if ($sector === null) {
@@ -119,9 +119,9 @@ class EmuCalculator {
 				$netCents = (int)round($netCents / 2);
 			}
 
-			$saldo[$sector] = ($saldo[$sector] ?? 0) + $netCents;
+			$balance[$sector] = ($balance[$sector] ?? 0) + $netCents;
 		}//end foreach
 
-		return $saldo;
+		return $balance;
 	}//end aggregateBySector()
 }//end class

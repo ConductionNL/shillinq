@@ -69,7 +69,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testReistijdWithinCapUnchanged(): void {
-		$result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 3.0);
+		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 3.0);
 		self::assertSame(3.0, $result['getoldeHours']);
 		self::assertNull($result['capNote']);
 
@@ -81,7 +81,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testReistijdCapAppliedWithNote(): void {
-		$result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 6.0);
+		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 6.0);
 		self::assertSame(4.0, $result['getoldeHours']);
 		self::assertSame('Reistijd-cap toegepast: 2 uur niet meegeteld', $result['capNote']);
 
@@ -93,7 +93,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testOtherCategoriesNotCapped(): void {
-		$result = $this->guard->pasReistijdCapToe(categorie: 'ACQUISITIE', uren: 9.0);
+		$result = $this->guard->pasReistijdCapToe(category: 'ACQUISITIE', hours: 9.0);
 		self::assertSame(9.0, $result['getoldeHours']);
 		self::assertNull($result['capNote']);
 
@@ -107,7 +107,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	public function testBackfillLabelStamped(): void {
 		self::assertSame(
 			'Backfill T+5 dagen',
-			$this->guard->bepaalBackfillLabel(datum: '2026-05-16', registratieMoment: '2026-05-21T10:00:00Z')
+			$this->guard->bepaalBackfillLabel(date: '2026-05-16', registrationMoment: '2026-05-21T10:00:00Z')
 		);
 
 	}//end testBackfillLabelStamped()
@@ -119,7 +119,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 */
 	public function testSameDayNotBackfill(): void {
 		self::assertNull(
-			$this->guard->bepaalBackfillLabel(datum: '2026-05-21', registratieMoment: '2026-05-21T18:00:00Z')
+			$this->guard->bepaalBackfillLabel(date: '2026-05-21', registrationMoment: '2026-05-21T18:00:00Z')
 		);
 
 	}//end testSameDayNotBackfill()

@@ -373,7 +373,7 @@ class AccountantsdossierExportService {
 		}
 
 		$auditFindings = $this->loadFindings(sampleIds: $sampleIds);
-		$verklaringDraft = $this->loadVerklaringForProtocol(protocolId: $protocolId);
+		$declarationDraft = $this->loadDeclarationForProtocol(protocolId: $protocolId);
 		$sisaAssurance = $this->loadAllByProtocol(schema: self::SCHEMA_SISA_ASSURANCE, protocolId: $protocolId);
 
 		usort(
@@ -418,7 +418,7 @@ class AccountantsdossierExportService {
 			'materialiteit' => $materialiteit,
 			'auditSamples' => $auditSamples,
 			'auditFindings' => $auditFindings,
-			'verklaringDraft' => $verklaringDraft,
+			'verklaringDraft' => $declarationDraft,
 			'sisaAssurance' => $sisaAssurance,
 		];
 	}//end collectBundle()
@@ -495,7 +495,7 @@ class AccountantsdossierExportService {
 	 */
 	private function renderSummaryHtml(array $manifest, array $bundle): string {
 		$protocol = $bundle['controleprotocol'] ?? [];
-		$verklaring = $bundle['verklaringDraft'];
+		$declaration = $bundle['verklaringDraft'];
 		$findingRows = $this->renderFindingRows(findings: $bundle['auditFindings']);
 		$toleranceRows = $this->renderToleranceRows(rows: $bundle['toleranceMatrix']);
 		$sisaRows = $this->renderSisaRows(rows: $bundle['sisaAssurance']);
@@ -505,10 +505,10 @@ class AccountantsdossierExportService {
 		$opinion = '—';
 		$opinionRationale = '';
 		$signOff = [];
-		if ($verklaring !== null) {
-			$opinion = (string)($verklaring['proposedOpinion'] ?? '—');
-			$opinionRationale = (string)($verklaring['opinionRationale'] ?? '');
-			$signOff = (array)($verklaring['signOff'] ?? []);
+		if ($declaration !== null) {
+			$opinion = (string)($declaration['proposedOpinion'] ?? '—');
+			$opinionRationale = (string)($declaration['opinionRationale'] ?? '');
+			$signOff = (array)($declaration['signOff'] ?? []);
 		}
 
 		$auditYearLabel = (int)($protocol['auditYear'] ?? 0);
@@ -950,7 +950,7 @@ class AccountantsdossierExportService {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function loadVerklaringForProtocol(string $protocolId): ?array {
+	private function loadDeclarationForProtocol(string $protocolId): ?array {
 		$found = $this->objects()
 			->setRegister($this->register())
 			->setSchema(self::SCHEMA_VERKLARING_DRAFT)

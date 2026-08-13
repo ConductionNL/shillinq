@@ -109,14 +109,14 @@ class VpbAangifteGuardTest extends TestCase {
 			)
 		);
 
-		$aangifte = [
+		$taxReturn = [
 			'id' => 'aangifte-1',
 			'taxpayer' => 'bp-1',
 			'commercieleProfit' => 'jr-1',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->canIndienen(aangifteId: 'aangifte-1', object: $aangifte));
+		self::assertTrue($this->guard->canIndienen(taxReturnId: 'aangifte-1', object: $taxReturn));
 
 	}//end testCanIndienenWhenAllPreconditionsMet()
 
@@ -132,14 +132,14 @@ class VpbAangifteGuardTest extends TestCase {
 			)
 		);
 
-		$aangifte = [
+		$taxReturn = [
 			'id' => 'aangifte-2',
 			'taxpayer' => 'bp-2',
 			'commercieleProfit' => 'jr-2',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canIndienen(aangifteId: 'aangifte-2', object: $aangifte));
+		self::assertFalse($this->guard->canIndienen(taxReturnId: 'aangifte-2', object: $taxReturn));
 
 	}//end testCannotIndienenWhenJaarrekeningNotVastgesteld()
 
@@ -159,14 +159,14 @@ class VpbAangifteGuardTest extends TestCase {
 			)
 		);
 
-		$aangifte = [
+		$taxReturn = [
 			'id' => 'aangifte-3',
 			'taxpayer' => 'bp-3',
 			'commercieleProfit' => 'jr-3',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canIndienen(aangifteId: 'aangifte-3', object: $aangifte));
+		self::assertFalse($this->guard->canIndienen(taxReturnId: 'aangifte-3', object: $taxReturn));
 
 	}//end testCannotIndienenWhenEHerkenningBelowEH3()
 
@@ -186,14 +186,14 @@ class VpbAangifteGuardTest extends TestCase {
 			)
 		);
 
-		$aangifte = [
+		$taxReturn = [
 			'id' => 'aangifte-4',
 			'taxpayer' => 'bp-4',
 			'commercieleProfit' => 'jr-4',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canIndienen(aangifteId: 'aangifte-4', object: $aangifte));
+		self::assertFalse($this->guard->canIndienen(taxReturnId: 'aangifte-4', object: $taxReturn));
 
 	}//end testCannotIndienenWhenInnovatieboxMissingSoVerklaring()
 
@@ -209,7 +209,7 @@ class VpbAangifteGuardTest extends TestCase {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
 			$this->guard->canIndienen(
-				aangifteId: 'aangifte-x',
+				taxReturnId: 'aangifte-x',
 				object: ['id' => 'aangifte-x', 'taxpayer' => 'bp-x', 'commercieleProfit' => 'jr-x']
 			)
 		);
@@ -230,7 +230,7 @@ class VpbAangifteGuardTest extends TestCase {
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue(
-			$this->guard->canAanslagOntvangen(aanslagId: 'aanslag-5', object: ['taxReturn' => 'aangifte-5'])
+			$this->guard->canAanslagOntvangen(assessmentId: 'aanslag-5', object: ['taxReturn' => 'aangifte-5'])
 		);
 
 	}//end testCanAanslagOntvangenWhenAangifteIngediend()
@@ -249,7 +249,7 @@ class VpbAangifteGuardTest extends TestCase {
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
-			$this->guard->canAanslagOntvangen(aanslagId: 'aanslag-6', object: ['taxReturn' => 'aangifte-6'])
+			$this->guard->canAanslagOntvangen(assessmentId: 'aanslag-6', object: ['taxReturn' => 'aangifte-6'])
 		);
 
 	}//end testCannotAanslagOntvangenWhenAangifteConcept()
@@ -263,7 +263,7 @@ class VpbAangifteGuardTest extends TestCase {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue(
 			$this->guard->canVoegen(
-				eenheidId: 'fe-1',
+				unitId: 'fe-1',
 				object: ['bezitPercentage' => 100, 'equalBoekjaren' => true, 'establishmentNederland' => true]
 			)
 		);
@@ -279,7 +279,7 @@ class VpbAangifteGuardTest extends TestCase {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
 			$this->guard->canVoegen(
-				eenheidId: 'fe-2',
+				unitId: 'fe-2',
 				object: ['bezitPercentage' => 80, 'equalBoekjaren' => true, 'establishmentNederland' => true]
 			)
 		);
@@ -295,7 +295,7 @@ class VpbAangifteGuardTest extends TestCase {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse(
 			$this->guard->canVoegen(
-				eenheidId: 'fe-3',
+				unitId: 'fe-3',
 				object: ['bezitPercentage' => 100, 'equalBoekjaren' => true, 'establishmentNederland' => false]
 			)
 		);

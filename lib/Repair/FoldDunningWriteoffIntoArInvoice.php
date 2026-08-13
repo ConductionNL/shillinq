@@ -123,8 +123,8 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 			$missing = 0;
 			foreach ($writeOffs as $writeOff) {
 				$row = $this->rowPayload(row: $writeOff);
-				$factuurId = (string)($row['invoiceId'] ?? '');
-				if ($factuurId === '') {
+				$invoiceId = (string)($row['invoiceId'] ?? '');
+				if ($invoiceId === '') {
 					$skipped++;
 					continue;
 				}
@@ -133,7 +133,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 				$invoice = null;
 				try {
 					$invoice = $objectService->find(
-						id: $factuurId,
+						id: $invoiceId,
 						register: $registerSlug,
 						schema: 'ARInvoice',
 						_rbac: false,
@@ -145,7 +145,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 
 				if ($invoice === null) {
 					$output->warning(
-						'Shillinq: ARInvoice ' . $factuurId . ' for OninbaarAfschrijving not found — fold skipped for this row.'
+						'Shillinq: ARInvoice ' . $invoiceId . ' for OninbaarAfschrijving not found — fold skipped for this row.'
 					);
 					$missing++;
 					continue;
@@ -155,11 +155,11 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 
 				// IDEMPOTENT: detect an already-folded write-off by the
 				// stable GLTransaction booking key carried on writeOff.
-				$boekingId = (string)($row['entryId'] ?? '');
+				$entryId = (string)($row['entryId'] ?? '');
 				$existing = (array)($invoiceArr['writeOff'] ?? []);
 				if (($existing['isWrittenOff'] ?? false) === true
-					&& $boekingId !== ''
-					&& (string)($existing['writtenOffGLTransactionId'] ?? '') === $boekingId
+					&& $entryId !== ''
+					&& (string)($existing['writtenOffGLTransactionId'] ?? '') === $entryId
 				) {
 					$skipped++;
 					continue;
@@ -180,7 +180,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 					'principalDepreciated' => $this->numOrNull($row['principalDepreciated'] ?? null),
 					'vatAmount' => $this->numOrNull($row['vatAmount'] ?? null),
 					'evidenceRef' => $this->strOrNull($row['evidenceRef'] ?? null),
-					'writtenOffGLTransactionId' => ($boekingId !== '' ? $boekingId : null),
+					'writtenOffGLTransactionId' => ($entryId !== '' ? $entryId : null),
 					'vatRefundPeriod' => $this->strOrNull($row['vatTaxReturnPeriod'] ?? null),
 					'administrationId' => $this->strOrNull($row['administrationId'] ?? null),
 				];
@@ -195,7 +195,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 				$dunning = $this->deriveDunningSummary(
 					objectService: $objectService,
 					registerSlug: $registerSlug,
-					factuurId: $factuurId
+					invoiceId: $invoiceId
 				);
 				if ($dunning !== null) {
 					$invoiceArr['dunning'] = $dunning;
@@ -266,21 +266,21 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 *
 	 * @param object $objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
-	 * @param string $factuurId The ARInvoice UUID the runs target.
+	 * @param string $invoiceId The ARInvoice UUID the runs target.
 	 *
 	 * @return array<string,mixed>|null The dunning summary group, or null.
 	 */
 	private function deriveDunningSummary(
 		object $objectService,
 		string $registerSlug,
-		string $factuurId,
+		string $invoiceId,
 	): ?array {
 		try {
 			$runs = $this->readAllRows(
 				objectService: $objectService,
 				registerSlug: $registerSlug,
 				schema: 'DunningRun',
-				filters: ['invoiceId' => $factuurId]
+				filters: ['invoiceId' => $invoiceId]
 			);
 		} catch (\Throwable $e) {
 			return null;

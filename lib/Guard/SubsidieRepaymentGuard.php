@@ -71,15 +71,15 @@ class SubsidieRepaymentGuard {
 	 * Precondition: sum of all non-`paid` RepaymentInstallment.amount for
 	 * this Subsidie must be zero.
 	 *
-	 * @param array<string, mixed> $subsidie The Subsidie object being transitioned.
+	 * @param array<string, mixed> $subsidy The Subsidie object being transitioned.
 	 *
 	 * @return bool True when the outstanding repayment balance is zero.
 	 *
 	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
 	 */
-	public function requireZeroRepaymentBalance(array $subsidie): bool {
-		$subsidieId = ($subsidie['id'] ?? null);
-		if ($subsidieId === null) {
+	public function requireZeroRepaymentBalance(array $subsidy): bool {
+		$subsidyId = ($subsidy['id'] ?? null);
+		if ($subsidyId === null) {
 			// No persisted identity to look up installments against.
 			return false;
 		}
@@ -89,7 +89,7 @@ class SubsidieRepaymentGuard {
 			$installments = $objectService
 				->setRegister($this->register())
 				->setSchema('RepaymentInstallment')
-				->findAll(['filters' => ['subsidyId' => $subsidieId]]);
+				->findAll(['filters' => ['subsidyId' => $subsidyId]]);
 
 			if (is_array($installments) === false) {
 				$installments = [];
@@ -107,7 +107,7 @@ class SubsidieRepaymentGuard {
 			if ($outstandingCents !== 0) {
 				$this->logger->info(
 					'SubsidieRepaymentGuard: outstanding repayment balance — denying close',
-					['subsidyId' => $subsidieId, 'outstandingCents' => $outstandingCents]
+					['subsidyId' => $subsidyId, 'outstandingCents' => $outstandingCents]
 				);
 				return false;
 			}

@@ -189,8 +189,8 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase {
 
 		$payload = $svc->toLivLkvEligibilityPayload(
 			administrationId: 'adm-1',
-			werknemerId: 'wn-1',
-			jaar: 2026
+			employeeId: 'wn-1',
+			year: 2026
 		);
 
 		$this->assertNotNull($payload);
@@ -221,8 +221,8 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase {
 
 		$payload = $svc->toLivLkvEligibilityPayload(
 			administrationId: 'adm-1',
-			werknemerId: 'wn-x',
-			jaar: 2026
+			employeeId: 'wn-x',
+			year: 2026
 		);
 
 		$this->assertNull($payload);
@@ -244,8 +244,8 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase {
 
 		$payload = $svc->toLivLkvEligibilityPayload(
 			administrationId: 'adm-2',
-			werknemerId: 'wn-1',
-			jaar: 2026
+			employeeId: 'wn-1',
+			year: 2026
 		);
 
 		$this->assertNull($payload);

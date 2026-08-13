@@ -110,11 +110,11 @@ class CommercialActivityReviewService {
 	 */
 	public function composeReviewTask(array $activity, string $today): array {
 		$code = (string)($activity['code'] ?? '');
-		$naam = (string)($activity['name'] ?? '');
+		$name = (string)($activity['name'] ?? '');
 
 		return [
 			'type' => 'wmo-annual-review',
-			'subject' => sprintf('Annual review due: %s %s', $code, $naam),
+			'subject' => sprintf('Annual review due: %s %s', $code, $name),
 			'assignedTo' => self::DEFAULT_ASSIGNEE,
 			'commercialActivityId' => (string)($activity['id'] ?? $activity['_id'] ?? ''),
 			'dueDate' => $today,

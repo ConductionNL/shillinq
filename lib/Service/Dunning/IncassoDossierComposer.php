@@ -60,14 +60,14 @@ class IncassoDossierComposer {
 	 * Assemble the bundle.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK.
-	 * @param string $klantId Klant FK.
+	 * @param string $invoiceId Invoice FK.
+	 * @param string $customerId Klant FK.
 	 *
 	 * @return array{invoiceId:string,inhoud:array<string,mixed>}
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
-	public function compose(string $administrationId, string $factuurId, string $klantId): array {
+	public function compose(string $administrationId, string $invoiceId, string $customerId): array {
 		$register = $this->register();
 
 		$dunningRuns = $this->findAll(
@@ -75,15 +75,15 @@ class IncassoDossierComposer {
 			schema: 'DunningRun',
 			filters: [
 				'administrationId' => $administrationId,
-				'invoiceId' => $factuurId,
+				'invoiceId' => $invoiceId,
 			]
 		);
-		$incassoKostenAll = $this->findAll(
+		$incassoCostAll = $this->findAll(
 			register: $register,
 			schema: 'IncassoKostenBerekening',
 			filters: [
 				'administrationId' => $administrationId,
-				'invoiceId' => $factuurId,
+				'invoiceId' => $invoiceId,
 			]
 		);
 		$pauseAll = $this->findAll(
@@ -91,13 +91,13 @@ class IncassoDossierComposer {
 			schema: 'DunningPauseDispute',
 			filters: [
 				'administrationId' => $administrationId,
-				'invoiceId' => $factuurId,
+				'invoiceId' => $invoiceId,
 			]
 		);
 
 		// Pick the latest IncassoKostenBerekening (highest berekendOp date).
 		usort(
-			$incassoKostenAll,
+			$incassoCostAll,
 			static function (array $a, array $b): int {
 				return strcmp(
 					(string)($b['statutoryRente']['calculatedOn'] ?? ''),
@@ -105,9 +105,9 @@ class IncassoDossierComposer {
 				);
 			}
 		);
-		$latestIncassoKosten = null;
-		if ($incassoKostenAll !== []) {
-			$latestIncassoKosten = $incassoKostenAll[0];
+		$latestIncassoCost = null;
+		if ($incassoCostAll !== []) {
+			$latestIncassoCost = $incassoCostAll[0];
 		}
 
 		$evidenceRefs = [];
@@ -124,18 +124,18 @@ class IncassoDossierComposer {
 		}
 
 		return [
-			'invoiceId' => $factuurId,
+			'invoiceId' => $invoiceId,
 			'inhoud' => [
 				'invoice' => [
-					'invoiceId' => $factuurId,
-					'customerId' => $klantId,
+					'invoiceId' => $invoiceId,
+					'customerId' => $customerId,
 					'administrationId' => $administrationId,
 				],
 				'dunningRuns' => $dunningRuns,
-				'incassoKosten' => $latestIncassoKosten,
+				'incassoKosten' => $latestIncassoCost,
 				'pauseEvents' => $pauseAll,
 				'klantGegevens' => [
-					'customerId' => $klantId,
+					'customerId' => $customerId,
 				],
 				'evidenceRefs' => $evidenceRefs,
 			],

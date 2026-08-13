@@ -66,7 +66,7 @@ final class InnovatieboxIntegrationTest extends TestCase {
 		$export = new InnovatieboxSbrExportService();
 
 		$nexusResult = $nexus->calculateNexusBreak(
-			eigenRdKosten: 480000.0,
+			eigenRdCost: 480000.0,
 			uitbesteedDerden: 120000.0,
 			uitbesteedVerbonden: 80000.0
 		);
@@ -74,9 +74,9 @@ final class InnovatieboxIntegrationTest extends TestCase {
 
 		$profitResult = $profit->calculateKwalificerendeWinst(
 			method: 'per_asset_afpelmethode',
-			brutoOpbrengst: 2400000.0,
-			directeKosten: 850000.0,
-			routineWinst: 750000.0,
+			grossRevenue: 2400000.0,
+			directeCost: 850000.0,
+			routineProfit: 750000.0,
 			nexusBreak: (float)$nexusResult['nexusFractionApplied']
 		);
 		$this->assertSame(800000.0, $profitResult['qualifyingProfitForNexus']);
@@ -138,7 +138,7 @@ final class InnovatieboxIntegrationTest extends TestCase {
 
 		$profitResult = $profit->calculateKwalificerendeWinst(
 			method: 'forfaitair_25pct',
-			brutoOpbrengst: 500000.0
+			grossRevenue: 500000.0
 		);
 		$this->assertSame(25000.0, $profitResult['qualifyingProfitAfterNexus']);
 		$this->assertTrue($profitResult['forfaitairCapApplied']);
@@ -196,13 +196,13 @@ final class InnovatieboxIntegrationTest extends TestCase {
 		$profit = new ProfitAttributionService();
 
 		$baselineNexus = $nexus->calculateNexusBreak(
-			eigenRdKosten: 480000.0,
+			eigenRdCost: 480000.0,
 			uitbesteedDerden: 120000.0,
 			uitbesteedVerbonden: 80000.0
 		);
 
 		$outsourcedNexus = $nexus->calculateNexusBreak(
-			eigenRdKosten: 200000.0,
+			eigenRdCost: 200000.0,
 			uitbesteedDerden: 50000.0,
 			uitbesteedVerbonden: 430000.0
 		);
@@ -217,17 +217,17 @@ final class InnovatieboxIntegrationTest extends TestCase {
 
 		$baseline = $profit->calculateKwalificerendeWinst(
 			method: 'per_asset_afpelmethode',
-			brutoOpbrengst: 2400000.0,
-			directeKosten: 850000.0,
-			routineWinst: 750000.0,
+			grossRevenue: 2400000.0,
+			directeCost: 850000.0,
+			routineProfit: 750000.0,
 			nexusBreak: (float)$baselineNexus['nexusFractionApplied']
 		);
 
 		$outsourced = $profit->calculateKwalificerendeWinst(
 			method: 'per_asset_afpelmethode',
-			brutoOpbrengst: 2400000.0,
-			directeKosten: 850000.0,
-			routineWinst: 750000.0,
+			grossRevenue: 2400000.0,
+			directeCost: 850000.0,
+			routineProfit: 750000.0,
 			nexusBreak: (float)$outsourcedNexus['nexusFractionApplied']
 		);
 
@@ -253,9 +253,9 @@ final class InnovatieboxIntegrationTest extends TestCase {
 		// on voor-nexus" minus "9% on na-nexus" which masks this, so we
 		// compute the true tax-benefit metric directly from the post-nexus
 		// qualifying profit.
-		$deltaTarief = (0.258 - 0.09);
-		$baselineTaxSaving = ($baseline['qualifyingProfitAfterNexus'] * $deltaTarief);
-		$outsourcedTaxSaving = ($outsourced['qualifyingProfitAfterNexus'] * $deltaTarief);
+		$deltaRate = (0.258 - 0.09);
+		$baselineTaxSaving = ($baseline['qualifyingProfitAfterNexus'] * $deltaRate);
+		$outsourcedTaxSaving = ($outsourced['qualifyingProfitAfterNexus'] * $deltaRate);
 		self::assertLessThan($baselineTaxSaving, $outsourcedTaxSaving);
 
 	}//end testOutsourcingToRelatedPartyReducesVpbBenefit()

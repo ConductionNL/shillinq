@@ -804,16 +804,16 @@ class SettingsServiceTest extends TestCase {
 		self::assertSame(JSON_ERROR_NONE, json_last_error());
 		self::assertNotEmpty($data['taskFields']);
 
-		foreach ($data['taskFields'] as $taakveld) {
+		foreach ($data['taskFields'] as $taskField) {
 			foreach (['taskFieldCode', 'name', 'category', 'legalBasis', 'effectiveFrom'] as $requiredField) {
 				self::assertArrayHasKey(
 					$requiredField,
-					$taakveld,
-					'BbvTaakveld schema requires "' . $requiredField . '" — missing on taakveld ' . ($taakveld['code'] ?? '?')
+					$taskField,
+					'BbvTaakveld schema requires "' . $requiredField . '" — missing on taakveld ' . ($taskField['code'] ?? '?')
 				);
 			}
 
-			self::assertNotSame('', $taakveld['taskFieldCode']);
+			self::assertNotSame('', $taskField['taskFieldCode']);
 		}//end foreach
 
 	}//end testBbvTaakveldSeedFileHasSchemaRequiredProperties()

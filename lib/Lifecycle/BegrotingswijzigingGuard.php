@@ -88,8 +88,8 @@ class BegrotingswijzigingGuard {
 				return false;
 			}
 
-			$raadsbesluit = (string)($wijziging['councilResolution'] ?? '');
-			return trim($raadsbesluit) !== '';
+			$councilResolution = (string)($wijziging['councilResolution'] ?? '');
+			return trim($councilResolution) !== '';
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BegrotingswijzigingGuard: vaststellen check failed — denying transition (fail-closed)',

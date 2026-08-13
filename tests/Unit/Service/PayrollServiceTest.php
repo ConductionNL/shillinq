@@ -268,15 +268,15 @@ final class PayrollServiceTest extends TestCase {
 		$saved = [];
 		$service = $this->buildService($this->dataset(), $saved);
 
-		$strook = $service->berekenLoonStrook('adm-1', 'wn-1', 'lp-1');
+		$slip = $service->berekenLoonStrook('adm-1', 'wn-1', 'lp-1');
 
-		self::assertSame(4940.0, $strook['fiscalPay']);
+		self::assertSame(4940.0, $slip['fiscalPay']);
 		// LH from the bracket: 888.60 + 0.3697*(4940-3300) - 295 = 1199.91.
-		self::assertSame(1199.91, $strook['payrollTax']);
+		self::assertSame(1199.91, $slip['payrollTax']);
 		// Net = 4940 - 1199.91 - 0 - pensioen-wn 355.68 + 0 = 3384.41.
-		self::assertSame(3384.41, $strook['netPaid']);
-		self::assertSame('adm-1', $strook['administrationId']);
-		self::assertSame(899.08, $strook['pensioen']['premie_wg_aandeel']);
+		self::assertSame(3384.41, $slip['netPaid']);
+		self::assertSame('adm-1', $slip['administrationId']);
+		self::assertSame(899.08, $slip['pensioen']['premie_wg_aandeel']);
 
 	}//end testBerekenLoonStrookComputesNetto()
 
@@ -322,14 +322,14 @@ final class PayrollServiceTest extends TestCase {
 		$saved = [];
 		$service = $this->buildService($data, $saved);
 
-		$afdracht = $service->berekenLHAfdracht('adm-1', 'lp-1', 0.0);
+		$remittance = $service->berekenLHAfdracht('adm-1', 'lp-1', 0.0);
 
-		self::assertSame(1500.0, $afdracht['totalPayrollTax']);
-		self::assertSame(500.0, $afdracht['totalSocialInsuranceContributions']);
-		self::assertSame(250.0, $afdracht['totalHealthInsurance']);
-		self::assertSame(2250.0, $afdracht['totalRemittance']);
-		self::assertSame('VOORBEREID', $afdracht['status']);
-		self::assertSame('2026-06-30', $afdracht['vervaldagRemittance']);
+		self::assertSame(1500.0, $remittance['totalPayrollTax']);
+		self::assertSame(500.0, $remittance['totalSocialInsuranceContributions']);
+		self::assertSame(250.0, $remittance['totalHealthInsurance']);
+		self::assertSame(2250.0, $remittance['totalRemittance']);
+		self::assertSame('VOORBEREID', $remittance['status']);
+		self::assertSame('2026-06-30', $remittance['vervaldagRemittance']);
 
 	}//end testBerekenLHAfdrachtAggregates()
 
@@ -361,9 +361,9 @@ final class PayrollServiceTest extends TestCase {
 		self::assertTrue($journaal['balanced']);
 		$debet = 0;
 		$credit = 0;
-		foreach ($journaal['rules'] as $regel) {
-			$debet += (int)round(((float)$regel['debet']) * 100);
-			$credit += (int)round(((float)$regel['credit']) * 100);
+		foreach ($journaal['rules'] as $rule) {
+			$debet += (int)round(((float)$rule['debet']) * 100);
+			$credit += (int)round(((float)$rule['credit']) * 100);
 		}
 
 		self::assertSame($debet, $credit);

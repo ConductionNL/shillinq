@@ -74,7 +74,7 @@ class BankfeedMatcher {
 		foreach ($candidateInvoices as $candidate) {
 			$candAmount = (float)($candidate['outstandingAmount'] ?? 0.0);
 			$candId = (string)($candidate['arInvoiceId'] ?? '');
-			$candKlant = (string)($candidate['customerId'] ?? '');
+			$candCustomer = (string)($candidate['customerId'] ?? '');
 			$candDate = (string)($candidate['expectedReceiptDate'] ?? '');
 
 			// Amount signal — 1.0 at zero delta, 0 at >= 5% delta.
@@ -88,7 +88,7 @@ class BankfeedMatcher {
 
 			// Reference signal — best similarity between tx reference and id or klant.
 			$refScore1 = $this->similarity(needle: $txReference, haystack: $candId);
-			$refScore2 = $this->similarity(needle: $txReference, haystack: $candKlant);
+			$refScore2 = $this->similarity(needle: $txReference, haystack: $candCustomer);
 			$referenceScore = max($refScore1, $refScore2);
 
 			// Date signal — 1.0 at equal, 0 at 14-day delta.

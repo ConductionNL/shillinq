@@ -79,7 +79,7 @@ class BudgetBlockerTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$mandaat = new MandaatEnforcer(
+		$mandate = new MandaatEnforcer(
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
@@ -89,7 +89,7 @@ class BudgetBlockerTest extends TestCase {
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			mandaat: $mandaat,
+			mandate: $mandate,
 		);
 
 	}//end setUp()
@@ -218,21 +218,21 @@ class BudgetBlockerTest extends TestCase {
 	/**
 	 * A single-line commitment of the given amount on programma 5.1 / 2026.
 	 *
-	 * @param int $bedrag Amount in minor units.
+	 * @param int $amount Amount in minor units.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function commitment(int $bedrag): array {
+	private function commitment(int $amount): array {
 		return [
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
 			'kind' => 'inkooporder',
-			'totalamount_excl_vat' => $bedrag,
+			'totalamount_excl_vat' => $amount,
 			'rules' => [
 				[
 					'programme' => '5.1',
 					'financialYear' => 2026,
-					'amount_excl_vat' => $bedrag,
+					'amount_excl_vat' => $amount,
 				],
 			],
 		];

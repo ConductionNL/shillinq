@@ -333,7 +333,7 @@ final class BadoControleprotocolEndToEndTest extends TestCase {
 			]
 		);
 		// Vacuously covered because no SiSaAssurance records exist (no SiSa-regelingen in scope).
-		self::assertTrue($this->service->canSignVerklaring(verklaringId: 'verklaring-1'));
+		self::assertTrue($this->service->canSignVerklaring(declarationId: 'verklaring-1'));
 
 		// 13. Export accountantsdossier.
 		$envelope = $this->exporter->exportDossier(protocolId: $protocolId);

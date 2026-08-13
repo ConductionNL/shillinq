@@ -77,31 +77,31 @@ class DbaInvoiceMonitorListener implements IEventListener {
 			return;
 		}
 
-		$opdrachtId = (string)($payload['dbaOpdrachtId'] ?? '');
-		if ($opdrachtId === '') {
+		$assignmentId = (string)($payload['dbaOpdrachtId'] ?? '');
+		if ($assignmentId === '') {
 			// Not tied to a DBA opdracht — no work to do.
 			return;
 		}
 
 		$administrationId = (string)($payload['administrationId'] ?? '');
-		$factuurId = (string)($payload['@self']['id'] ?? ($payload['id'] ?? ''));
-		$bedragCents = (int)($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
-		$uren = (float)($payload['hours'] ?? ($payload['hoursBilled'] ?? 0.0));
+		$invoiceId = (string)($payload['@self']['id'] ?? ($payload['id'] ?? ''));
+		$amountCents = (int)($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
+		$hours = (float)($payload['hours'] ?? ($payload['hoursBilled'] ?? 0.0));
 
 		try {
 			$result = $this->vbarMonitor->assess(
-				bedragCents: $bedragCents,
-				uren: $uren,
+				amountCents: $amountCents,
+				hours: $hours,
 				administrationId: $administrationId,
 			);
 			if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
-				&& $factuurId !== ''
+				&& $invoiceId !== ''
 			) {
 				$this->vbarMonitor->emitFlag(
-					opdrachtId: $opdrachtId,
+					assignmentId: $assignmentId,
 					administrationId: $administrationId,
-					factuurId: $factuurId,
-					uurtariefCents: (int)($result['uurtariefCents'] ?? 0),
+					invoiceId: $invoiceId,
+					hourlyRateCents: (int)($result['uurtariefCents'] ?? 0),
 					vbarGrensCents: (int)($result['vbarGrensCents'] ?? 0),
 				);
 			}
@@ -110,7 +110,7 @@ class DbaInvoiceMonitorListener implements IEventListener {
 			// be undone by a DBA monitoring hiccup.
 			$this->logger->warning(
 				'DbaInvoiceMonitorListener: VBAR assess/emit failed (non-blocking).',
-				['assignmentId' => $opdrachtId, 'invoiceId' => $factuurId, 'exception' => $e->getMessage()]
+				['assignmentId' => $assignmentId, 'invoiceId' => $invoiceId, 'exception' => $e->getMessage()]
 			);
 		}//end try
 	}//end handle()

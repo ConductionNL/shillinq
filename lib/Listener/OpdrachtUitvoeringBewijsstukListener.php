@@ -169,7 +169,7 @@ class OpdrachtUitvoeringBewijsstukListener implements IEventListener {
 			return;
 		}
 
-		if ($this->guard->canVoltooien(opdracht: $data) === true) {
+		if ($this->guard->canVoltooien(assignment: $data) === true) {
 			return;
 		}
 

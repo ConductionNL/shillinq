@@ -62,33 +62,33 @@ class PayrollLivLkvHandoffService {
 	 * herplaatsing, doelgroepverklaring), and the administrationId scope.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
-	 * @param string $werknemerId Employee id.
-	 * @param int $jaar Calendar year.
+	 * @param string $employeeId Employee id.
+	 * @param int $year Calendar year.
 	 *
 	 * @return array<string,mixed>|null The eligibility payload or null when werknemer not found.
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	public function toLivLkvEligibilityPayload(string $administrationId, string $werknemerId, int $jaar): ?array {
-		$werknemer = $this->findWerknemer(administrationId: $administrationId, werknemerId: $werknemerId);
-		if ($werknemer === null) {
+	public function toLivLkvEligibilityPayload(string $administrationId, string $employeeId, int $year): ?array {
+		$employee = $this->findEmployee(administrationId: $administrationId, employeeId: $employeeId);
+		if ($employee === null) {
 			return null;
 		}
 
-		$totaalFiscaal = $this->sumFiscaalLoonYear(
+		$totalFiscal = $this->sumFiscalPayYear(
 			administrationId: $administrationId,
-			werknemerId: $werknemerId,
-			jaar: $jaar
+			employeeId: $employeeId,
+			year: $year
 		);
 
 		return [
-			'employeeId' => $werknemerId,
-			'year' => $jaar,
-			'inkomenniveau' => (string)($werknemer['inkomenniveau'] ?? ''),
-			'fiscaalLoonJaar' => $totaalFiscaal,
-			'contracturenPerWeek' => (float)($werknemer['contracturenPerWeek'] ?? 0),
-			'lkvCategorie' => (string)($werknemer['lkvCategorie'] ?? ''),
-			'doelgroepverklaring' => (bool)($werknemer['doelgroepverklaring'] ?? false),
+			'employeeId' => $employeeId,
+			'year' => $year,
+			'inkomenniveau' => (string)($employee['inkomenniveau'] ?? ''),
+			'fiscaalLoonJaar' => $totalFiscal,
+			'contracturenPerWeek' => (float)($employee['contracturenPerWeek'] ?? 0),
+			'lkvCategorie' => (string)($employee['lkvCategorie'] ?? ''),
+			'doelgroepverklaring' => (bool)($employee['doelgroepverklaring'] ?? false),
 			'administrationId' => $administrationId,
 			'source' => 'Werknemer+LoonStrook',
 		];
@@ -99,11 +99,11 @@ class PayrollLivLkvHandoffService {
 	 * Look up the werknemer (administration-scoped).
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $werknemerId Employee id.
+	 * @param string $employeeId Employee id.
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function findWerknemer(string $administrationId, string $werknemerId): ?array {
+	private function findEmployee(string $administrationId, string $employeeId): ?array {
 		$results = $this->objectService()
 			->setRegister($this->register())
 			->setSchema('Werknemer')
@@ -111,7 +111,7 @@ class PayrollLivLkvHandoffService {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'id' => $werknemerId,
+						'id' => $employeeId,
 					],
 				]
 			);
@@ -127,12 +127,12 @@ class PayrollLivLkvHandoffService {
 	 * Sum LoonStrook.fiscaalLoon for the (werknemer, jaar) tuple.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $werknemerId Employee id.
-	 * @param int $jaar Calendar year.
+	 * @param string $employeeId Employee id.
+	 * @param int $year Calendar year.
 	 *
 	 * @return float Sum in euros.
 	 */
-	private function sumFiscaalLoonYear(string $administrationId, string $werknemerId, int $jaar): float {
+	private function sumFiscalPayYear(string $administrationId, string $employeeId, int $year): float {
 		$results = $this->objectService()
 			->setRegister($this->register())
 			->setSchema('LoonStrook')
@@ -140,23 +140,23 @@ class PayrollLivLkvHandoffService {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'employeeId' => $werknemerId,
+						'employeeId' => $employeeId,
 					],
 				]
 			);
 
-		$totaalC = 0;
+		$totalC = 0;
 		foreach ($results as $r) {
 			$row = (array)$r;
-			$periode = (string)($row['periodId'] ?? '');
-			if (preg_match('/(?<year>20[0-9]{2})/', $periode, $m) === 1 && (int)$m['year'] !== $jaar) {
+			$period = (string)($row['periodId'] ?? '');
+			if (preg_match('/(?<year>20[0-9]{2})/', $period, $m) === 1 && (int)$m['year'] !== $year) {
 				continue;
 			}
 
-			$totaalC += $this->calculator->toCents(amount: (float)($row['fiscalPay'] ?? 0));
+			$totalC += $this->calculator->toCents(amount: (float)($row['fiscalPay'] ?? 0));
 		}
 
-		return $this->calculator->fromCents(cents: $totaalC);
+		return $this->calculator->fromCents(cents: $totalC);
 	}//end sumFiscaalLoonYear()
 
 	/**

@@ -122,8 +122,8 @@ class CrossSubsidyDetector {
 	/**
 	 * Detect omzet-spike-without-IKP-update (REQ-WMO-007 §2).
 	 *
-	 * @param float $currentYearOmzet Current FY omzet in EUR.
-	 * @param float $priorYearOmzet Prior FY omzet in EUR.
+	 * @param float $currentYearRevenue Current FY omzet in EUR.
+	 * @param float $priorYearRevenue Prior FY omzet in EUR.
 	 * @param string|null $lastIkpPeriod Most-recent IKP period (YYYY-MM / YYYY-Qn).
 	 * @param string $today Today's ISO date (YYYY-MM-DD).
 	 * @param float $spikeRatio Spike ratio threshold (default 1.25 = 25%).
@@ -131,17 +131,17 @@ class CrossSubsidyDetector {
 	 * @return bool True when omzet jumped >= spikeRatio without an IKP update in the same FY.
 	 */
 	public function detectOmzetSpikeNoIkpUpdate(
-		float $currentYearOmzet,
-		float $priorYearOmzet,
+		float $currentYearRevenue,
+		float $priorYearRevenue,
 		?string $lastIkpPeriod,
 		string $today,
 		float $spikeRatio = self::OMZET_SPIKE_RATIO,
 	): bool {
-		if ($priorYearOmzet <= 0.0) {
+		if ($priorYearRevenue <= 0.0) {
 			return false;
 		}
 
-		if (($currentYearOmzet / $priorYearOmzet) < $spikeRatio) {
+		if (($currentYearRevenue / $priorYearRevenue) < $spikeRatio) {
 			return false;
 		}
 
@@ -170,8 +170,8 @@ class CrossSubsidyDetector {
 	 * @return bool True when overhead is under-allocated.
 	 */
 	public function detectOverheadUnderAllocation(array $ikp, float $floorRatio = self::OVERHEAD_UNDER_ALLOCATION_FLOOR_RATIO): bool {
-		$totaleKosten = (float)($ikp['totaleCost'] ?? 0);
-		if ($totaleKosten <= 0.0) {
+		$totaleCost = (float)($ikp['totaleCost'] ?? 0);
+		if ($totaleCost <= 0.0) {
 			return false;
 		}
 
@@ -182,7 +182,7 @@ class CrossSubsidyDetector {
 			$overheadTotal += (float)$bucket;
 		}
 
-		return ($overheadTotal / $totaleKosten) < $floorRatio;
+		return ($overheadTotal / $totaleCost) < $floorRatio;
 	}//end detectOverheadUnderAllocation()
 
 	/**
@@ -200,13 +200,13 @@ class CrossSubsidyDetector {
 			return false;
 		}
 
-		$volgendeEvaluatie = (string)($abb['volgendeEvaluation'] ?? '');
-		if ($volgendeEvaluatie === '') {
+		$volgendeEvaluation = (string)($abb['volgendeEvaluation'] ?? '');
+		if ($volgendeEvaluation === '') {
 			return true;
 		}
 
 		try {
-			$vol = new DateTimeImmutable($volgendeEvaluatie);
+			$vol = new DateTimeImmutable($volgendeEvaluation);
 			$now = new DateTimeImmutable($today);
 		} catch (\Throwable) {
 			return false;
@@ -279,20 +279,20 @@ class CrossSubsidyDetector {
 	/**
 	 * Detect bevoordeling-risk (Phase 3 REQ-WMO-012): gehanteerdTarief < benchmark median × discount.
 	 *
-	 * @param float $gehanteerdTarief Actual price charged per unit (EUR).
-	 * @param float $kostprijsPerEenheid IKP per unit (EUR) — must also be <= gehanteerdTarief.
+	 * @param float $gehanteerdRate Actual price charged per unit (EUR).
+	 * @param float $costPricePerUnit IKP per unit (EUR) — must also be <= gehanteerdTarief.
 	 * @param array<int,array<string,mixed>> $benchmarks MarketBenchmark records within last 12 months.
 	 * @param float $discountThreshold Discount threshold (default 0.85 = 15% below market).
 	 *
 	 * @return bool True when the price is suspiciously below market.
 	 */
 	public function detectBevoordelingRisk(
-		float $gehanteerdTarief,
-		float $kostprijsPerEenheid,
+		float $gehanteerdRate,
+		float $costPricePerUnit,
 		array $benchmarks,
 		float $discountThreshold = self::BEVOORDELING_DISCOUNT_THRESHOLD,
 	): bool {
-		if ($gehanteerdTarief < $kostprijsPerEenheid) {
+		if ($gehanteerdRate < $costPricePerUnit) {
 			// Caller already raises a non-compliant alert for this.
 			return false;
 		}
@@ -303,9 +303,9 @@ class CrossSubsidyDetector {
 				continue;
 			}
 
-			$bedrag = (float)($bench['amount'] ?? 0);
-			if ($bedrag > 0.0) {
-				$values[] = $bedrag;
+			$amount = (float)($bench['amount'] ?? 0);
+			if ($amount > 0.0) {
+				$values[] = $amount;
 			}
 		}
 
@@ -321,7 +321,7 @@ class CrossSubsidyDetector {
 			$median = (($values[($count / 2) - 1] + $values[$count / 2]) / 2);
 		}
 
-		return $gehanteerdTarief < ($median * $discountThreshold);
+		return $gehanteerdRate < ($median * $discountThreshold);
 	}//end detectBevoordelingRisk()
 
 	/**

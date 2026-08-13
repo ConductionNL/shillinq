@@ -57,7 +57,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 	 */
 	public function testIv3AggregatesPerTaakveld(): void {
 		$rows = $this->exporter->iv3Rows(
-			taakvelden: [
+			taskFields: [
 				['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0],
 				['taskFieldCode' => '1.1', 'revenue' => 10.0, 'expenses' => 50.0],
 				['taskFieldCode' => '6.1', 'revenue' => 120.0, 'expenses' => 1300.0],
@@ -80,12 +80,12 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 	 */
 	public function testEmuSaldoAppliesCorrections(): void {
 		// Σbaten - Σlasten = 100 - 600 = -500; + investering 400 + reserve 50 = -50.
-		$saldo = $this->exporter->emuSaldo(
-			taakvelden: [['revenue' => 100.0, 'expenses' => 600.0]],
+		$balance = $this->exporter->emuSaldo(
+			taskFields: [['revenue' => 100.0, 'expenses' => 600.0]],
 			investeringen: [['gross' => 400.0]],
-			reserveMutaties: 50.0
+			reserveMovements: 50.0
 		);
-		self::assertSame(-50.0, $saldo);
+		self::assertSame(-50.0, $balance);
 
 	}//end testEmuSaldoAppliesCorrections()
 
@@ -96,7 +96,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 	 */
 	public function testJsonExportShapeIsComplete(): void {
 		$export = $this->exporter->jsonExport(
-			begroting: [
+			budget: [
 				'budgetYear' => 2027,
 				'organisationType' => 'municipality',
 				'status' => 'vastgesteld',
@@ -106,7 +106,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 				'toezichtRegime' => 'repressief',
 			],
 			programmas: [['number' => '1', 'name' => 'Veiligheid', 'doelstellingen' => 'x', 'revenueTotal' => 80.0, 'expensesTotal' => 650.0]],
-			taakvelden: [['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0]],
+			taskFields: [['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0]],
 			paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'tekst', 'keyFigures' => []]]
 		);
 

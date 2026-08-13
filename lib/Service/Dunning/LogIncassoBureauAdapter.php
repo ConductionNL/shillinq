@@ -50,26 +50,26 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface {
 	 * Synthesise a DELIVERED dossier transfer + log-only dispatch.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK.
+	 * @param string $invoiceId Invoice FK.
 	 * @param array<string,mixed> $dossier Composed dossier bundle.
 	 *
 	 * @return DunningChannelSendResult The dispatch outcome.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
-	public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult {
+	public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
 		$this->logger->info(
 			'Shillinq incasso-bureau transfer deferred (no outbound connector bound)',
 			[
 				'administrationId' => $administrationId,
-				'invoiceId' => $factuurId,
+				'invoiceId' => $invoiceId,
 				'dunningRuns' => count((array)($dossier['inhoud']['dunningRuns'] ?? [])),
 				'evidenceRefs' => count((array)($dossier['inhoud']['evidenceRefs'] ?? [])),
 			]
 		);
 
 		return new DunningChannelSendResult(
-			kanaal: 'INCASSOBUREAU_API',
+			channel: 'INCASSOBUREAU_API',
 			deliveryStatus: 'DELIVERED',
 			providerMessageId: 'incasso-log-' . bin2hex(random_bytes(8)),
 			extras: ['dossierId' => 'dossier-stub-' . bin2hex(random_bytes(6))],

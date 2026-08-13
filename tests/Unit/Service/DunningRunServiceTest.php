@@ -63,9 +63,9 @@ final class DunningRunServiceTest extends TestCase {
 			static function (string $id) use ($os, $incasso, $postnl) {
 				if ($id === IncassoBureauAdapterInterface::class) {
 					return ($incasso !== null) ? $incasso : new class implements IncassoBureauAdapterInterface {
-						public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult {
+						public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
 							return new DunningChannelSendResult(
-								kanaal: 'INCASSOBUREAU_API',
+								channel: 'INCASSOBUREAU_API',
 								deliveryStatus: 'DELIVERED',
 								providerMessageId: 'noop',
 								extras: ['dossierId' => 'test-dossier'],
@@ -77,7 +77,7 @@ final class DunningRunServiceTest extends TestCase {
 					return ($postnl !== null) ? $postnl : new class implements PostNLAdapterInterface {
 						public function sendRegisteredLetter(array $payload): DunningChannelSendResult {
 							return new DunningChannelSendResult(
-								kanaal: 'AANGETEKENDE_POST',
+								channel: 'AANGETEKENDE_POST',
 								deliveryStatus: 'DELIVERED',
 								providerMessageId: 'noop',
 								extras: ['barcode' => '3S1234567890123', 'trackingUrl' => 'https://postnl.nl/tracktrace/3S1234567890123'],
@@ -124,7 +124,7 @@ final class DunningRunServiceTest extends TestCase {
 		]);
 
 		$service = $this->makeService(os: $os);
-		$resolved = $service->resolveLadderForKlant(administrationId: 'adm-1', klantId: 'klant-1', baseLadderId: 'ladder-1');
+		$resolved = $service->resolveLadderForKlant(administrationId: 'adm-1', customerId: 'klant-1', baseLadderId: 'ladder-1');
 
 		self::assertSame('base', $resolved['source']);
 		self::assertNull($resolved['override']);
@@ -158,7 +158,7 @@ final class DunningRunServiceTest extends TestCase {
 		]);
 
 		$service = $this->makeService(os: $os);
-		$resolved = $service->resolveLadderForKlant(administrationId: 'adm-1', klantId: 'klant-1', baseLadderId: 'ladder-1');
+		$resolved = $service->resolveLadderForKlant(administrationId: 'adm-1', customerId: 'klant-1', baseLadderId: 'ladder-1');
 
 		self::assertSame('override', $resolved['source']);
 		self::assertCount(2, $resolved['stages']);
@@ -233,10 +233,10 @@ final class DunningRunServiceTest extends TestCase {
 
 		$pause = $service->pause(
 			administrationId: 'adm-1',
-			factuurId: 'inv-1',
-			reden: 'DISPUTED',
+			invoiceId: 'inv-1',
+			reason: 'DISPUTED',
 			details: 'Klant betwist',
-			gepauzeerdDoor: 'user-1',
+			gepauzeerdBy: 'user-1',
 		);
 
 		self::assertSame('active', $pause['lifecycleState']);
@@ -310,11 +310,11 @@ final class DunningRunServiceTest extends TestCase {
 			['nr' => 5, 'daysAfterExpiryDate' => 90, 'channel' => 'INCASSOBUREAU_API'],
 		];
 
-		self::assertSame(1, (int)$service->stageForOverdueDays(stages: $stages, dagenVerzuim: 0)['nr']);
-		self::assertSame(2, (int)$service->stageForOverdueDays(stages: $stages, dagenVerzuim: 20)['nr']);
-		self::assertSame(3, (int)$service->stageForOverdueDays(stages: $stages, dagenVerzuim: 45)['nr']);
-		self::assertSame(5, (int)$service->stageForOverdueDays(stages: $stages, dagenVerzuim: 200)['nr']);
-		self::assertNull($service->stageForOverdueDays(stages: $stages, dagenVerzuim: -1));
+		self::assertSame(1, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 0)['nr']);
+		self::assertSame(2, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 20)['nr']);
+		self::assertSame(3, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 45)['nr']);
+		self::assertSame(5, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 200)['nr']);
+		self::assertNull($service->stageForOverdueDays(stages: $stages, daysVerzuim: -1));
 
 	}//end testStageForOverdueDaysPicksHighestApplicable()
 
@@ -564,14 +564,14 @@ final class DunningRunServiceTest extends TestCase {
 
 		self::assertTrue($service->detectAdminError(
 			administrationId: 'adm-1',
-			klantId: 'klant-1',
+			customerId: 'klant-1',
 			triggerContext: ['ibanInvalid' => true]
 		));
 
 		// No trigger context — no flag, even with prior runs.
 		self::assertFalse($service->detectAdminError(
 			administrationId: 'adm-1',
-			klantId: 'klant-1',
+			customerId: 'klant-1',
 			triggerContext: []
 		));
 
@@ -598,7 +598,7 @@ final class DunningRunServiceTest extends TestCase {
 
 		self::assertTrue($service->detectAdminError(
 			administrationId: 'adm-1',
-			klantId: 'klant-1',
+			customerId: 'klant-1',
 			triggerContext: ['paymentRefMissing' => true]
 		));
 
@@ -607,7 +607,7 @@ final class DunningRunServiceTest extends TestCase {
 		$service2 = $this->makeService(os: $os2);
 		self::assertFalse($service2->detectAdminError(
 			administrationId: 'adm-1',
-			klantId: 'klant-other',
+			customerId: 'klant-other',
 			triggerContext: ['paymentRefMissing' => true]
 		));
 
@@ -635,7 +635,7 @@ final class DunningRunServiceTest extends TestCase {
 
 		$result = $service->transferToIncasso(
 			administrationId: 'adm-1',
-			factuurId: 'inv-1',
+			invoiceId: 'inv-1',
 			dossier: ['invoiceId' => 'inv-1', 'inhoud' => []],
 			dunningRunId: 'dr-1'
 		);
@@ -666,9 +666,9 @@ final class DunningRunServiceTest extends TestCase {
 			],
 		]);
 		$incasso = new class implements IncassoBureauAdapterInterface {
-			public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult {
+			public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
 				return new DunningChannelSendResult(
-					kanaal: 'INCASSOBUREAU_API',
+					channel: 'INCASSOBUREAU_API',
 					deliveryStatus: 'FAILED',
 					errorMessage: 'connection refused',
 				);
@@ -678,7 +678,7 @@ final class DunningRunServiceTest extends TestCase {
 
 		$result = $service->transferToIncasso(
 			administrationId: 'adm-1',
-			factuurId: 'inv-1',
+			invoiceId: 'inv-1',
 			dossier: ['invoiceId' => 'inv-1', 'inhoud' => []],
 			dunningRunId: 'dr-1'
 		);
@@ -737,10 +737,10 @@ final class DunningRunServiceTest extends TestCase {
 		$this->expectException(\InvalidArgumentException::class);
 		$service->pause(
 			administrationId: 'adm-1',
-			factuurId: 'inv-1',
-			reden: 'DISPUTED',
+			invoiceId: 'inv-1',
+			reason: 'DISPUTED',
 			details: 'Klant betwist',
-			gepauzeerdDoor: 'user-1',
+			gepauzeerdBy: 'user-1',
 			evidenceRefs: ['s3://my-bucket/evidence.pdf']
 		);
 
@@ -757,10 +757,10 @@ final class DunningRunServiceTest extends TestCase {
 
 		$pause = $service->pause(
 			administrationId: 'adm-1',
-			factuurId: 'inv-1',
-			reden: 'DISPUTED',
+			invoiceId: 'inv-1',
+			reason: 'DISPUTED',
 			details: 'Klant betwist',
-			gepauzeerdDoor: 'user-1',
+			gepauzeerdBy: 'user-1',
 			evidenceRefs: ['docudesk:files/dispute/email-2026-06-02-disputereactie.eml']
 		);
 

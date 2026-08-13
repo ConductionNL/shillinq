@@ -146,14 +146,14 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 				// delivered directly to C, and C's VAT id (the reverse-charge
 				// debtor) is identified. Vacuous when this is not a triangulation.
 				'vatdir-art141-triangulation-simplification' => static fn (array $o): bool => (self::truthy($o, 'triangulation') === false
-					|| self::triangulationConditionsMet($o)),
+					|| self::triangulationConditionsWith($o)),
 
 				// --- Reverse charge on triangulation (art. 197). ---
 				// VAT is payable by the final customer C where the art.-141
 				// conditions are met AND a compliant invoice is issued — the
 				// invoice carries the reverse-charge mention. Vacuous otherwise.
 				'vatdir-art197-reverse-charge-triangulation' => static fn (array $o): bool => (self::truthy($o, 'triangulation') === false
-					|| (self::triangulationConditionsMet($o) && self::hasReverseChargeMention($o))),
+					|| (self::triangulationConditionsWith($o) && self::hasReverseChargeMention($o))),
 
 				// --- SME turnover exemption (art. 282). ---
 				// A small enterprise applying the exemption has an annual turnover
@@ -252,7 +252,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 				// estimated revenues and expenses per taakveld: a non-empty list of
 				// taakveld lines, each with a code and a numeric estimated revenue
 				// and expense, enabling inter-municipal comparison.
-				'bbv-taakvelden-overview' => static fn (array $o): bool => self::taakveldenComplete($o),
+				'bbv-taakvelden-overview' => static fn (array $o): bool => self::taskFieldsComplete($o),
 			],
 		];
 
@@ -318,7 +318,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	public static function seedObjects(): array {
 		$paragraphs = self::BBV_PARAGRAPHS;
 
-		$taakvelden = [
+		$taskFields = [
 			['code' => '0.1', 'name' => 'Bestuur', 'estimatedRevenue' => 120000.00, 'estimatedExpense' => 480000.00],
 			['code' => '2.1', 'name' => 'Verkeer en vervoer', 'estimatedRevenue' => 50000.00, 'estimatedExpense' => 900000.00],
 			['code' => '5.2', 'name' => 'Sportaccommodaties', 'estimatedRevenue' => 75000.00, 'estimatedExpense' => 260000.00],
@@ -336,14 +336,14 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 			'fiscalYear' => 2026,
 			'currency' => 'EUR',
 			'paragraphs' => $paragraphs,
-			'taskFields' => $taakvelden,
+			'taskFields' => $taskFields,
 			'fixedAssets' => $fixedAssets,
 		];
 
-		$begroting = $base;
-		$begroting['documentType'] = 'begroting';
-		$begroting['parts'] = ['beleidsbegroting', 'financielebegroting'];
-		$begroting['programmaplan'] = [
+		$budget = $base;
+		$budget['documentType'] = 'begroting';
+		$budget['parts'] = ['beleidsbegroting', 'financielebegroting'];
+		$budget['programmaplan'] = [
 			'programmes' => [
 				['code' => '1', 'name' => 'Bestuur en ondersteuning'],
 				['code' => '2', 'name' => 'Verkeer, vervoer en waterstaat'],
@@ -365,7 +365,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 		];
 
 		return [
-			'BbvStatement' => [$begroting, $jaarstukken],
+			'BbvStatement' => [$budget, $jaarstukken],
 		];
 
 	}//end seedObjects()
@@ -382,7 +382,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return bool
 	 */
-	private static function triangulationConditionsMet(array $o): bool {
+	private static function triangulationConditionsWith(array $o): bool {
 		$a = self::country((string)($o['sellerCountryCode'] ?? ''));
 		$b = self::country((string)($o['intermediaryCountryCode'] ?? ''));
 		$c = self::country((string)($o['finalCustomerCountryCode'] ?? ''));
@@ -815,7 +815,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return bool
 	 */
-	private static function taakveldenComplete(array $o): bool {
+	private static function taskFieldsComplete(array $o): bool {
 		$lines = ($o['taskFields'] ?? null);
 		if (is_array($lines) === false || $lines === []) {
 			return false;

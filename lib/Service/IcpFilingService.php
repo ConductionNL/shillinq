@@ -109,7 +109,7 @@ class IcpFilingService {
 			}
 		}//end foreach
 
-		$opgaaf = [
+		$return = [
 			'administrationId' => $administrationId,
 			'type' => 'correction',
 			'status' => 'draft',
@@ -122,9 +122,9 @@ class IcpFilingService {
 			'totalTriangulation' => $totals['totalTriangulation'],
 		];
 
-		$saved = $this->saveOpgaaf(opgaaf: $opgaaf);
+		$saved = $this->saveReturn(return: $return);
 
-		return ($opgaaf + ['evidence' => $evidence, 'saved' => $saved]);
+		return ($return + ['evidence' => $evidence, 'saved' => $saved]);
 	}//end createCorrection()
 
 	/**
@@ -148,9 +148,9 @@ class IcpFilingService {
 	 */
 	public function exportForInspection(string $administrationId, string $period): array {
 		$supplies = $this->icp->suppliesInPeriod(administrationId: $administrationId, period: $period);
-		$opgaaf = $this->findOpgaaf(administrationId: $administrationId, period: $period);
-		$xbrl = (string)($opgaaf['xmlPayload'] ?? '');
-		$kenmerk = (string)($opgaaf['taxAuthorityReference'] ?? '');
+		$return = $this->findReturn(administrationId: $administrationId, period: $period);
+		$xbrl = (string)($return['xmlPayload'] ?? '');
+		$reference = (string)($return['taxAuthorityReference'] ?? '');
 		$requestIds = $this->requestIdMap(administrationId: $administrationId, supplies: $supplies);
 		$csv = $this->calculator->buildSuppliesCsv(supplies: $supplies, requestIds: $requestIds);
 
@@ -166,7 +166,7 @@ class IcpFilingService {
 			$manifest[] = 'opgaaf.xbrl';
 		}
 
-		$zip->addFromString('kenmerk.txt', 'Belastingdienst kenmerk: ' . $kenmerk . "\nperiod: " . $period . "\n");
+		$zip->addFromString('kenmerk.txt', 'Belastingdienst kenmerk: ' . $reference . "\nperiod: " . $period . "\n");
 		$manifest[] = 'kenmerk.txt';
 		$zip->addFromString('supplies.csv', $csv);
 		$manifest[] = 'supplies.csv';
@@ -182,7 +182,7 @@ class IcpFilingService {
 			'zipPath' => $zipPath,
 			'supplyCount' => count($supplies),
 			'manifest' => $manifest,
-			'reference' => $kenmerk,
+			'reference' => $reference,
 		];
 
 	}//end exportForInspection()
@@ -281,15 +281,15 @@ class IcpFilingService {
 	 *
 	 * @return array<string,mixed> The opgaaf record, or [] when none exists.
 	 */
-	private function findOpgaaf(string $administrationId, string $period): array {
+	private function findReturn(string $administrationId, string $period): array {
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$opgaven = $objectService
 			->setRegister($this->register())
 			->setSchema('IcpOpgaaf')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'period' => $period]]);
 
-		foreach ($opgaven as $opgaaf) {
-			return $opgaaf;
+		foreach ($opgaven as $return) {
+			return $return;
 		}
 
 		return [];
@@ -298,15 +298,15 @@ class IcpFilingService {
 	/**
 	 * Persist an IcpOpgaaf record (correction filing) via the real ObjectService API.
 	 *
-	 * @param array<string,mixed> $opgaaf The opgaaf to save.
+	 * @param array<string,mixed> $return The opgaaf to save.
 	 *
 	 * @return bool True when the save succeeded.
 	 */
-	private function saveOpgaaf(array $opgaaf): bool {
+	private function saveReturn(array $return): bool {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$objectService->saveObject(
-				object: $opgaaf,
+				object: $return,
 				register: $this->register(),
 				schema: 'IcpOpgaaf',
 			);

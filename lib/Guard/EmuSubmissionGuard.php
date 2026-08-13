@@ -65,21 +65,21 @@ class EmuSubmissionGuard {
 	 */
 	public function requireApproval(array $emuReport): bool {
 		$status = (string)($emuReport['status'] ?? '');
-		$saldoComputed = array_key_exists('emuBalanceCalculated', $emuReport)
+		$balanceComputed = array_key_exists('emuBalanceCalculated', $emuReport)
 			&& $emuReport['emuBalanceCalculated'] !== null;
-		$aansluiting = (string)($emuReport['bbvReconciliationCheck'] ?? 'niet-uitgevoerd');
+		$reconciliation = (string)($emuReport['bbvReconciliationCheck'] ?? 'niet-uitgevoerd');
 
 		$permitted = $status === 'concept'
-			&& $saldoComputed === true
-			&& $aansluiting !== 'mislukt';
+			&& $balanceComputed === true
+			&& $reconciliation !== 'mislukt';
 
 		if ($permitted === false) {
 			$this->logger->info(
 				'EmuSubmissionGuard: indiening blocked',
 				[
 					'status' => $status,
-					'saldoComputed' => $saldoComputed,
-					'aansluitingscontrole' => $aansluiting,
+					'saldoComputed' => $balanceComputed,
+					'aansluitingscontrole' => $reconciliation,
 				]
 			);
 		}

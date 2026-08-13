@@ -464,10 +464,10 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function sameCountry(string $a, string $b): bool {
-		$na = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $a) ?? '', 0, 2));
+		$after = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $a) ?? '', 0, 2));
 		$nb = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $b) ?? '', 0, 2));
 
-		return $na !== '' && $na === $nb;
+		return $after !== '' && $after === $nb;
 	}//end sameCountry()
 
 	/**

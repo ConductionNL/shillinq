@@ -104,13 +104,13 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$this->objectServiceStub = $this->buildObjectServiceStub(recordsBySchema: $recordsBySchema);
 		$this->container->method('get')->willReturn($this->objectServiceStub);
 
-		$mandaat = new MandaatEnforcer(container: $this->container, appConfig: $this->appConfig, logger: $this->logger);
-		$budget = new BudgetBlocker(container: $this->container, appConfig: $this->appConfig, logger: $this->logger, mandaat: $mandaat);
+		$mandate = new MandaatEnforcer(container: $this->container, appConfig: $this->appConfig, logger: $this->logger);
+		$budget = new BudgetBlocker(container: $this->container, appConfig: $this->appConfig, logger: $this->logger, mandate: $mandate);
 
 		return new CommitmentMaterialisationService(
 			container: $this->container,
 			appConfig: $this->appConfig,
-			mandaat: $mandaat,
+			mandate: $mandate,
 			budget: $budget,
 			dispatcher: $this->dispatcher,
 			logger: $this->logger,
@@ -330,11 +330,11 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		self::assertSame('aangegaan', $result['status']);
 		self::assertSame(7500000, $result['totalamount_excl_vat']);
 
-		$regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
-		self::assertCount(1, $regelSaves);
-		self::assertSame('5.1', $regelSaves[0][1]['programme']);
-		self::assertSame(2026, $regelSaves[0][1]['financialYear']);
-		self::assertSame(7500000, $regelSaves[0][1]['amount_excl_vat']);
+		$ruleSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
+		self::assertCount(1, $ruleSaves);
+		self::assertSame('5.1', $ruleSaves[0][1]['programme']);
+		self::assertSame(2026, $ruleSaves[0][1]['financialYear']);
+		self::assertSame(7500000, $ruleSaves[0][1]['amount_excl_vat']);
 
 	}//end testPurchaseOrderApprovalMaterialisesCommitment()
 
@@ -366,8 +366,8 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder());
 
 		self::assertSame($existing, $result);
-		$verplichtingSaves = array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichting');
-		self::assertCount(0, $verplichtingSaves);
+		$commitmentSaves = array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichting');
+		self::assertCount(0, $commitmentSaves);
 
 	}//end testMaterialisationIsIdempotent()
 
@@ -409,8 +409,8 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		try {
 			$service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder());
 		} finally {
-			$verplichtingSaves = array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichting');
-			self::assertCount(0, $verplichtingSaves, 'No Verplichting must be persisted when budget denies');
+			$commitmentSaves = array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichting');
+			self::assertCount(0, $commitmentSaves, 'No Verplichting must be persisted when budget denies');
 		}
 
 	}//end testInsufficientBudgetBlocksPurchaseOrderApproval()
@@ -495,7 +495,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$budget2026 = $this->budget(['financialYear' => 2026, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
 		$budget2027 = $this->budget(['financialYear' => 2027, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
 
-		$mandaat = [
+		$mandate = [
 			'administrationId' => 'adm-1',
 			'mandateCode' => 'M-DIRECTEUR-250K',
 			'maximumAmount' => 25000000,
@@ -510,7 +510,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'Verplichting' => [],
 				'Verplichtingsregel' => [],
 				'Budget' => [$budget2026, $budget2027],
-				'Mandaat' => [$mandaat],
+				'Mandaat' => [$mandate],
 				'PurchaseOrderLine' => [
 					$this->purchaseOrderLine(['lineNumber' => 1, 'expectedDeliveryDate' => '2026-03-01', 'lineTotal' => 10000000]),
 					$this->purchaseOrderLine(['lineNumber' => 2, 'expectedDeliveryDate' => '2027-03-01', 'lineTotal' => 10000000]),
@@ -523,9 +523,9 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		self::assertNotNull($result);
 		self::assertSame('aangegaan', $result['status']);
 
-		$regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
-		self::assertCount(2, $regelSaves);
-		$boekjaren = array_map(static fn ($s) => $s[1]['financialYear'], $regelSaves);
+		$ruleSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
+		self::assertCount(2, $ruleSaves);
+		$boekjaren = array_map(static fn ($s) => $s[1]['financialYear'], $ruleSaves);
 		sort($boekjaren);
 		self::assertSame([2026, 2027], $boekjaren);
 
@@ -573,8 +573,8 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$result = $service->materialiseFromContract(contract: $contract);
 
 		self::assertNull($result);
-		$verplichtingSaves = array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichting');
-		self::assertCount(0, $verplichtingSaves);
+		$commitmentSaves = array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichting');
+		self::assertCount(0, $commitmentSaves);
 
 	}//end testContractActivationIsFailSoftOnBudgetDenial()
 
@@ -588,7 +588,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$budget2026 = $this->budget(['financialYear' => 2026, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
 		$budget2027 = $this->budget(['financialYear' => 2027, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
 
-		$mandaat = [
+		$mandate = [
 			'administrationId' => 'adm-1',
 			'mandateCode' => 'M-DIRECTEUR-250K',
 			'maximumAmount' => 25000000,
@@ -603,7 +603,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'Verplichting' => [],
 				'Verplichtingsregel' => [],
 				'Budget' => [$budget2026, $budget2027],
-				'Mandaat' => [$mandaat],
+				'Mandaat' => [$mandate],
 			]
 		);
 
@@ -623,12 +623,12 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 
 		self::assertNotNull($result);
 		self::assertSame('overig', $result['kind']);
-		$regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
-		self::assertCount(2, $regelSaves);
+		$ruleSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
+		self::assertCount(2, $ruleSaves);
 		// EUR 20.000,00 = 2.000.000 cents, split evenly across 2026 + 2027.
-		$totalCents = array_sum(array_map(static fn ($s) => $s[1]['amount_excl_vat'], $regelSaves));
+		$totalCents = array_sum(array_map(static fn ($s) => $s[1]['amount_excl_vat'], $ruleSaves));
 		self::assertSame(2000000, $totalCents);
-		foreach ($regelSaves as $save) {
+		foreach ($ruleSaves as $save) {
 			self::assertSame(1000000, $save[1]['amount_excl_vat']);
 		}
 

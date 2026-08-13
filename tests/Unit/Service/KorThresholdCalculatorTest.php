@@ -78,8 +78,8 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 */
 	public function testBenutting(): void {
 		// 16.620 / 20.000 = 0.831.
-		self::assertEqualsWithDelta(0.831, $this->calc->benutting(omzetCents: 1662000, drempelCents: 2000000), 0.0001);
-		self::assertSame(0.0, $this->calc->benutting(omzetCents: 100, drempelCents: 0));
+		self::assertEqualsWithDelta(0.831, $this->calc->benutting(revenueCents: 1662000, thresholdCents: 2000000), 0.0001);
+		self::assertSame(0.0, $this->calc->benutting(revenueCents: 100, thresholdCents: 0));
 
 	}//end testBenutting()
 
@@ -90,15 +90,15 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 */
 	public function testCrossedSchijf(): void {
 		// Crossing 80% from below.
-		self::assertSame('DREMPEL_80PCT', $this->calc->crossedSchijf(previousBenutting: 0.79, newBenutting: 0.83)['trigger']);
+		self::assertSame('DREMPEL_80PCT', $this->calc->crossedSchijf(previousUtilisation: 0.79, newUtilisation: 0.83)['trigger']);
 		// Crossing 90% from below.
-		self::assertSame('DREMPEL_90PCT', $this->calc->crossedSchijf(previousBenutting: 0.85, newBenutting: 0.906)['trigger']);
+		self::assertSame('DREMPEL_90PCT', $this->calc->crossedSchijf(previousUtilisation: 0.85, newUtilisation: 0.906)['trigger']);
 		// Crossing 100% from below => OVERSCHRIJDING.
-		$hit = $this->calc->crossedSchijf(previousBenutting: 0.95, newBenutting: 1.018);
+		$hit = $this->calc->crossedSchijf(previousUtilisation: 0.95, newUtilisation: 1.018);
 		self::assertSame('DREMPEL_100PCT', $hit['trigger']);
 		self::assertSame('OVERSCHRIJDING', $hit['ernst']);
 		// No new schijf when staying within the same band.
-		self::assertNull($this->calc->crossedSchijf(previousBenutting: 0.82, newBenutting: 0.84));
+		self::assertNull($this->calc->crossedSchijf(previousUtilisation: 0.82, newUtilisation: 0.84));
 
 	}//end testCrossedSchijf()
 
@@ -120,9 +120,9 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPrognoseStatus(): void {
-		self::assertSame('ONDER_DREMPEL', $this->calc->prognoseStatus(prognoseCents: 1500000, drempelCents: 2000000));
-		self::assertSame('WAARSCHUWING', $this->calc->prognoseStatus(prognoseCents: 1700000, drempelCents: 2000000));
-		self::assertSame('OVERSCHRIJDING_VERWACHT', $this->calc->prognoseStatus(prognoseCents: 2463000, drempelCents: 2000000));
+		self::assertSame('ONDER_DREMPEL', $this->calc->prognoseStatus(prognoseCents: 1500000, thresholdCents: 2000000));
+		self::assertSame('WAARSCHUWING', $this->calc->prognoseStatus(prognoseCents: 1700000, thresholdCents: 2000000));
+		self::assertSame('OVERSCHRIJDING_VERWACHT', $this->calc->prognoseStatus(prognoseCents: 2463000, thresholdCents: 2000000));
 
 	}//end testPrognoseStatus()
 
@@ -149,8 +149,8 @@ final class KorThresholdCalculatorTest extends TestCase {
 
 		$cents = $this->calc->suppletieBedragCents(
 			invoices: $invoices,
-			ingangsDatum: '2026-01-01',
-			revocatieDatum: '2026-09-04'
+			ingangsDate: '2026-01-01',
+			revocationDate: '2026-09-04'
 		);
 
 		// 21000 + 10500 = 31500 cents = EUR 315.00.
@@ -190,7 +190,7 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testLockInWindowCanonical(): void {
-		$window = $this->calc->lockInWindow(ingangsDatum: '2026-01-01');
+		$window = $this->calc->lockInWindow(ingangsDate: '2026-01-01');
 		self::assertSame('2028-12-31', $window['lockInEndDate']);
 		self::assertSame('2028-10-01', $window['vroegsteOpzegDate']);
 
@@ -202,7 +202,7 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testLockInWindowMidYear(): void {
-		$window = $this->calc->lockInWindow(ingangsDatum: '2026-07-15');
+		$window = $this->calc->lockInWindow(ingangsDate: '2026-07-15');
 		self::assertSame('2029-07-14', $window['lockInEndDate']);
 		self::assertSame('2029-05-01', $window['vroegsteOpzegDate']);
 
@@ -214,8 +214,8 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testLockInWindowInvalid(): void {
-		self::assertNull($this->calc->lockInWindow(ingangsDatum: 'nope'));
-		self::assertNull($this->calc->lockInWindow(ingangsDatum: '2026-13-01'));
+		self::assertNull($this->calc->lockInWindow(ingangsDate: 'nope'));
+		self::assertNull($this->calc->lockInWindow(ingangsDate: '2026-13-01'));
 
 	}//end testLockInWindowInvalid()
 
@@ -226,15 +226,15 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 */
 	public function testIsOptOutPermitted(): void {
 		// Before vroegsteOpzeg => blocked.
-		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-09-30', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-09-30', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// Inside the window => permitted.
-		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// On the boundary => permitted.
-		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-01', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-01', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// After lockInEindDatum => blocked (different lifecycle path).
-		self::assertFalse($this->calc->isOptOutPermitted(today: '2029-01-01', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+		self::assertFalse($this->calc->isOptOutPermitted(today: '2029-01-01', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// Empty windows are unsafe => blocked.
-		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDatum: '', lockInEindDatum: '2028-12-31'));
+		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDate: '', lockInEndDate: '2028-12-31'));
 
 	}//end testIsOptOutPermitted()
 
@@ -258,7 +258,7 @@ final class KorThresholdCalculatorTest extends TestCase {
 
 		$aggregate = $this->calc->perLidstaatAggregate(
 			invoices: $invoices,
-			drempelsPerLidstaat: ['BE' => 25000, 'DE' => 22000],
+			drempelsPerMemberState: ['BE' => 25000, 'DE' => 22000],
 			year: 2026
 		);
 
@@ -282,8 +282,8 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testBrancheCompatibilityBlocking(): void {
-		$eenheid = $this->calc->brancheCompatibility(branche: ['fiscaleEenheid' => true]);
-		self::assertSame('BLOCK', $eenheid['verdict']);
+		$unit = $this->calc->brancheCompatibility(branche: ['fiscaleEenheid' => true]);
+		self::assertSame('BLOCK', $unit['verdict']);
 
 		$art11 = $this->calc->brancheCompatibility(branche: ['art11Vrijstelling' => true]);
 		self::assertSame('BLOCK', $art11['verdict']);

@@ -73,24 +73,24 @@ final class TenderNedStatusSyncTest extends TestCase {
 	 * returning a fixed aanbesteding, and resolves the openconnector gateway
 	 * either to a recorder or to a not-bound exception.
 	 *
-	 * @param array<string,mixed>|null $aanbesteding Aanbesteding row or null.
+	 * @param array<string,mixed>|null $tender Aanbesteding row or null.
 	 * @param object|null $gateway Spy gateway or null.
 	 *
 	 * @return ContainerInterface
 	 */
-	private function container(?array $aanbesteding, ?object $gateway): ContainerInterface {
-		$objectService = new class($aanbesteding) {
+	private function container(?array $tender, ?object $gateway): ContainerInterface {
+		$objectService = new class($tender) {
 
 			/**
 			 * @var array<string,mixed>|null
 			 */
-			private ?array $aanbesteding;
+			private ?array $tender;
 
 			/**
-			 * @param array<string,mixed>|null $aanbesteding Aanbesteding.
+			 * @param array<string,mixed>|null $tender Aanbesteding.
 			 */
-			public function __construct(?array $aanbesteding) {
-				$this->aanbesteding = $aanbesteding;
+			public function __construct(?array $tender) {
+				$this->tender = $tender;
 			}
 
 			public function setRegister(string $register): self {
@@ -102,11 +102,11 @@ final class TenderNedStatusSyncTest extends TestCase {
 			}
 
 			public function findAll(array $opts = []): array {
-				if ($this->aanbesteding === null) {
+				if ($this->tender === null) {
 					return [];
 				}
 
-				return [$this->aanbesteding];
+				return [$this->tender];
 			}
 		};
 

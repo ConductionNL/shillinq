@@ -78,15 +78,15 @@ class DoorsnijdingsVerbodValidator {
 	 * pairs. Returns the findings and whether the year-end close may proceed.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
-	 * @param int $boekjaar Fiscal year to validate.
+	 * @param int $financialYear Fiscal year to validate.
 	 *
 	 * @return array{findings: array<int,array<string,mixed>>, blocking: bool, total: int}
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
 	 */
-	public function validateNoDuplication(string $administrationId, int $boekjaar): array {
-		$allocations = $this->fetchExclusiveAllocations(administrationId: $administrationId, boekjaar: $boekjaar);
-		$glLines = $this->fetchGlDeductions(administrationId: $administrationId, boekjaar: $boekjaar);
+	public function validateNoDuplication(string $administrationId, int $financialYear): array {
+		$allocations = $this->fetchExclusiveAllocations(administrationId: $administrationId, financialYear: $financialYear);
+		$glLines = $this->fetchGlDeductions(administrationId: $administrationId, financialYear: $financialYear);
 
 		$findings = $this->detectDuplicates(allocations: $allocations, glLines: $glLines);
 
@@ -106,7 +106,7 @@ class DoorsnijdingsVerbodValidator {
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN,
 					'administrationId' => $administrationId,
-					'financialYear' => $boekjaar,
+					'financialYear' => $financialYear,
 					'reason' => $auditReason,
 					'details' => [
 						'findings' => $findings,
@@ -145,12 +145,12 @@ class DoorsnijdingsVerbodValidator {
 		$glPairs = [];
 		foreach ($glLines as $line) {
 			$account = (string)($line['accountNumber'] ?? ($line['generalLedgerAccount'] ?? ''));
-			$plaats = (string)($line['costCentre'] ?? '');
+			$place = (string)($line['costCentre'] ?? '');
 			if ($account === '') {
 				continue;
 			}
 
-			$glPairs[$account . '|' . $plaats] = true;
+			$glPairs[$account . '|' . $place] = true;
 		}
 
 		$findings = [];
@@ -160,28 +160,28 @@ class DoorsnijdingsVerbodValidator {
 			}
 
 			$account = (string)($allocation['generalLedgerAccount'] ?? '');
-			$plaats = (string)($allocation['costCentre'] ?? '');
+			$place = (string)($allocation['costCentre'] ?? '');
 			if ($account === '') {
 				continue;
 			}
 
-			if (isset($glPairs[$account . '|' . $plaats]) === true) {
-				$bedrag = (float)($allocation['amount'] ?? 0);
-				$plaatsText = '-';
-				if ($plaats !== '') {
-					$plaatsText = $plaats;
+			if (isset($glPairs[$account . '|' . $place]) === true) {
+				$amount = (float)($allocation['amount'] ?? 0);
+				$placeText = '-';
+				if ($place !== '') {
+					$placeText = $place;
 				}
 
 				$findings[] = [
 					'generalLedgerAccount' => $account,
-					'costCentre' => $plaats,
-					'amount' => $bedrag,
+					'costCentre' => $place,
+					'amount' => $amount,
 					'message' => sprintf(
 						'EUR %s (account %s, kostenplaats %s) appears in both innovatiebox '
 						. 'allocation AND GL regular deduction. Resolve conflict before year-end close.',
-						number_format($bedrag, 0, ',', '.'),
+						number_format($amount, 0, ',', '.'),
 						$account,
-						$plaatsText
+						$placeText
 					),
 				];
 			}
@@ -194,11 +194,11 @@ class DoorsnijdingsVerbodValidator {
 	 * Fetch the exclusive IBExpenseAllocation rows for an administration + year.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 *
 	 * @return array<int,array<string,mixed>> Exclusive allocation rows.
 	 */
-	private function fetchExclusiveAllocations(string $administrationId, int $boekjaar): array {
+	private function fetchExclusiveAllocations(string $administrationId, int $financialYear): array {
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$rows = $objectService
 			->setRegister($this->register())
@@ -207,7 +207,7 @@ class DoorsnijdingsVerbodValidator {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'financialYear' => $boekjaar,
+						'financialYear' => $financialYear,
 						'exclusief_in_profitdetermination' => true,
 					],
 				]
@@ -224,16 +224,16 @@ class DoorsnijdingsVerbodValidator {
 	 * Fetch the GL deduction lines for an administration + year.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 *
 	 * @return array<int,array<string,mixed>> GL lines carrying accountNumber + kostenplaats.
 	 */
-	private function fetchGlDeductions(string $administrationId, int $boekjaar): array {
+	private function fetchGlDeductions(string $administrationId, int $financialYear): array {
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$rows = $objectService
 			->setRegister($this->register())
 			->setSchema('GLLine')
-			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $boekjaar]]);
+			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $financialYear]]);
 
 		if (is_array($rows) === false) {
 			return [];

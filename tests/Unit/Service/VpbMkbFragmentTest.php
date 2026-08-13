@@ -147,15 +147,15 @@ final class VpbMkbFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testAangifteUniqueAndIndienenGuard(): void {
-		$aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
+		$taxReturn = $this->fragment()['components']['schemas']['VpbAangifte'];
 
 		self::assertContains(
 			['taxpayer', 'taxYear'],
-			$aangifte['x-openregister-unique'],
+			$taxReturn['x-openregister-unique'],
 			'VpbAangifte must be unique per (belastingplichtige, belastingjaar) (REQ-VPB-001)'
 		);
 
-		$indienen = $aangifte['x-openregister-lifecycle']['transitions']['indienen'];
+		$indienen = $taxReturn['x-openregister-lifecycle']['transitions']['indienen'];
 		self::assertSame('concept', $indienen['from']);
 		self::assertSame('submitted', $indienen['to']);
 		self::assertSame('OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canIndienen', $indienen['requires']);
@@ -202,16 +202,16 @@ final class VpbMkbFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testObjectionPeriodGuardReferenced(): void {
-		$aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
+		$taxReturn = $this->fragment()['components']['schemas']['VpbAangifte'];
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection',
-			$aangifte['x-openregister-lifecycle']['transitions']['bezwaarMaken']['requires']
+			$taxReturn['x-openregister-lifecycle']['transitions']['bezwaarMaken']['requires']
 		);
 
-		$bezwaar = $this->fragment()['components']['schemas']['BezwaarBeroep'];
+		$objection = $this->fragment()['components']['schemas']['BezwaarBeroep'];
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal',
-			$bezwaar['x-openregister-lifecycle']['transitions']['beroepInstellen']['requires']
+			$objection['x-openregister-lifecycle']['transitions']['beroepInstellen']['requires']
 		);
 
 	}//end testObjectionPeriodGuardReferenced()

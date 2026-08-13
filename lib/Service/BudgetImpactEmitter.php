@@ -95,23 +95,23 @@ class BudgetImpactEmitter {
 	 * failure on the openconnector outbound source) do not double-count
 	 * the committed expense.
 	 *
-	 * @param array<string, mixed> $verplichting Activated Verplichting payload.
+	 * @param array<string, mixed> $commitment Activated Verplichting payload.
 	 * @param array<string, mixed> $source Source TenderNedAanbesteding payload (dossier URL).
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-007
 	 */
-	public function emitActivated(array $verplichting, array $source = []): void {
+	public function emitActivated(array $commitment, array $source = []): void {
 		$payload = [
 			'eventName' => self::EVENT_OBLIGATION_ACTIVATED,
-			'sourceReference' => (string)($verplichting['sourceReference'] ?? ''),
-			'contractValue' => (float)($verplichting['amount'] ?? 0),
-			'costCentre' => (string)($verplichting['costCentre'] ?? ''),
-			'termStart' => (string)($verplichting['termStart'] ?? ''),
-			'termEnd' => (string)($verplichting['termEnd'] ?? ''),
+			'sourceReference' => (string)($commitment['sourceReference'] ?? ''),
+			'contractValue' => (float)($commitment['amount'] ?? 0),
+			'costCentre' => (string)($commitment['costCentre'] ?? ''),
+			'termStart' => (string)($commitment['termStart'] ?? ''),
+			'termEnd' => (string)($commitment['termEnd'] ?? ''),
 			'tenderNedUrl' => (string)($source['tenderNedUrl'] ?? ''),
-			'administrationId' => (string)($verplichting['administrationId'] ?? ''),
+			'administrationId' => (string)($commitment['administrationId'] ?? ''),
 			'emittedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
 		];
 
@@ -134,9 +134,9 @@ class BudgetImpactEmitter {
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-005
 	 */
 	public function emitMilestoneCompleted(array $oplevering): void {
-		$bewijsstukken = ($oplevering['supportingDocuments'] ?? []);
-		if (is_array($bewijsstukken) === false) {
-			$bewijsstukken = [];
+		$supportingDocuments = ($oplevering['supportingDocuments'] ?? []);
+		if (is_array($supportingDocuments) === false) {
+			$supportingDocuments = [];
 		}
 
 		$payload = [
@@ -146,7 +146,7 @@ class BudgetImpactEmitter {
 			'deliveryType' => (string)($oplevering['deliveryType'] ?? ''),
 			'deliveryDate' => (string)($oplevering['deliveryDate'] ?? ''),
 			'goedgekeurd' => (bool)($oplevering['goedgekeurd'] ?? false),
-			'bewijsstukCount' => count($bewijsstukken),
+			'bewijsstukCount' => count($supportingDocuments),
 			'administrationId' => (string)($oplevering['administrationId'] ?? ''),
 			'emittedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
 		];

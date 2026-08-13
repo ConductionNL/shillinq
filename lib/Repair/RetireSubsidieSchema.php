@@ -169,10 +169,10 @@ class RetireSubsidieSchema implements IRepairStep {
 
 		foreach ($this->readSubsidies($objectService, $registerSlug, $output) as $row) {
 			$src = $this->rowPayload(row: $row);
-			$subsidieId = (string)($src['id'] ?? ($src['uuid'] ?? ''));
+			$subsidyId = (string)($src['id'] ?? ($src['uuid'] ?? ''));
 			$migrationKey = $this->migrationKey($src);
 
-			if ($migrationKey === '' || $subsidieId === '') {
+			if ($migrationKey === '' || $subsidyId === '') {
 				$output->warning('Shillinq: RetireSubsidieSchema — Subsidie row without subsidieNumber or id; left in place.');
 				$kept++;
 				continue;
@@ -190,7 +190,7 @@ class RetireSubsidieSchema implements IRepairStep {
 				$objectService
 					->setRegister($registerSlug)
 					->setSchema(self::SCHEMA)
-					->deleteObject($subsidieId, _rbac: false, _multitenancy: false);
+					->deleteObject($subsidyId, _rbac: false, _multitenancy: false);
 
 				$deleted++;
 			} catch (\Throwable $e) {
@@ -270,9 +270,9 @@ class RetireSubsidieSchema implements IRepairStep {
 	 * @return string The migration key (may be empty when unresolvable).
 	 */
 	private function migrationKey(array $src): string {
-		$subsidieNumber = (string)($src['subsidyNumber'] ?? '');
-		if ($subsidieNumber !== '') {
-			return $subsidieNumber;
+		$subsidyNumber = (string)($src['subsidyNumber'] ?? '');
+		if ($subsidyNumber !== '') {
+			return $subsidyNumber;
 		}
 
 		return (string)($src['id'] ?? ($src['uuid'] ?? ''));

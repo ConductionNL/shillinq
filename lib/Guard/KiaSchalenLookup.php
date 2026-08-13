@@ -67,9 +67,9 @@ class KiaSchalenLookup {
 	 */
 	public function resolveTier(array $tiers, int $jaartotaal): ?array {
 		foreach ($tiers as $tier) {
-			$vanaf = (int)($tier['vanaf'] ?? 0);
+			$from = (int)($tier['vanaf'] ?? 0);
 			$tot = $tier['tot'];
-			if ($jaartotaal < $vanaf) {
+			if ($jaartotaal < $from) {
 				continue;
 			}
 
@@ -108,7 +108,7 @@ class KiaSchalenLookup {
 			return 0;
 		}
 
-		return max(0, $this->aftrekForTier(tier: $tier, jaartotaal: $jaartotaal));
+		return max(0, $this->deductionForTier(tier: $tier, jaartotaal: $jaartotaal));
 	}//end computeAftrek()
 
 	/**
@@ -119,20 +119,20 @@ class KiaSchalenLookup {
 	 *
 	 * @return int The (possibly negative, capped by the caller) tier aftrek in EUR cents.
 	 */
-	private function aftrekForTier(array $tier, int $jaartotaal): int {
+	private function deductionForTier(array $tier, int $jaartotaal): int {
 		$percentage = $tier['percentage'];
-		$vastBedrag = $tier['fixedAmount'];
-		$vanaf = (int)($tier['vanaf'] ?? 0);
+		$vastAmount = $tier['fixedAmount'];
+		$from = (int)($tier['vanaf'] ?? 0);
 
 		// Tier-4 taper: flat anchor minus a percentage of the excess over `vanaf`.
-		if ($percentage !== null && (float)$percentage < 0.0 && $vastBedrag !== null) {
-			$excess = ($jaartotaal - $vanaf);
-			return ((int)$vastBedrag + (int)round(((float)$percentage / 100.0) * $excess));
+		if ($percentage !== null && (float)$percentage < 0.0 && $vastAmount !== null) {
+			$excess = ($jaartotaal - $from);
+			return ((int)$vastAmount + (int)round(((float)$percentage / 100.0) * $excess));
 		}
 
 		// Flat-amount band (tier 3): no percentage, fixed maximum.
 		if ($percentage === null) {
-			return (int)($vastBedrag ?? 0);
+			return (int)($vastAmount ?? 0);
 		}
 
 		// Percentage band (tier 2) and below-drempel / above-plafond (0%) band.
@@ -148,16 +148,16 @@ class KiaSchalenLookup {
 	 * boekjaar and may straddle tier boundaries.
 	 *
 	 * @param array<int,array<string,mixed>> $tiers KIA-tier rows.
-	 * @param int $priorTotaal Boekjaar total BEFORE this asset, EUR cents.
+	 * @param int $priorTotal Boekjaar total BEFORE this asset, EUR cents.
 	 * @param int $assetValue This asset's KIA grondslag, EUR cents.
 	 *
 	 * @return int Marginal KIA contribution of the asset, EUR cents (may be zero, never negative).
 	 *
 	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
 	 */
-	public function marginalEffect(array $tiers, int $priorTotaal, int $assetValue): int {
-		$before = $this->computeAftrek(tiers: $tiers, jaartotaal: max(0, $priorTotaal));
-		$after = $this->computeAftrek(tiers: $tiers, jaartotaal: max(0, ($priorTotaal + $assetValue)));
+	public function marginalEffect(array $tiers, int $priorTotal, int $assetValue): int {
+		$before = $this->computeAftrek(tiers: $tiers, jaartotaal: max(0, $priorTotal));
+		$after = $this->computeAftrek(tiers: $tiers, jaartotaal: max(0, ($priorTotal + $assetValue)));
 
 		return max(0, ($after - $before));
 	}//end marginalEffect()

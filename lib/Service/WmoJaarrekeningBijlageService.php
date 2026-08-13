@@ -60,8 +60,8 @@ class WmoJaarrekeningBijlageService {
 		$activities = (array)$input['activities'];
 		$ikpByAct = (array)$input['definitiefIkpByActivity'];
 		$priorIkpByAct = (array)($input['priorYearIkpByActivity'] ?? []);
-		$omzetByAct = (array)$input['omzetByActivity'];
-		$priorOmzetByAct = (array)($input['priorYearOmzetByActivity'] ?? []);
+		$revenueByAct = (array)$input['omzetByActivity'];
+		$priorRevenueByAct = (array)($input['priorYearOmzetByActivity'] ?? []);
 		$abbByAct = (array)($input['abbByActivity'] ?? []);
 		$overridesByAct = (array)($input['manualOverridesByActivity'] ?? []);
 
@@ -76,17 +76,17 @@ class WmoJaarrekeningBijlageService {
 
 			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
 			$code = (string)($activity['code'] ?? '');
-			$naam = (string)($activity['name'] ?? '');
+			$name = (string)($activity['name'] ?? '');
 
 			$ikp = (array)($ikpByAct[$activityId] ?? []);
 			$integraleCost = (float)($ikp['totaleCost'] ?? 0);
-			$omzet = (float)($omzetByAct[$activityId] ?? 0);
+			$revenue = (float)($revenueByAct[$activityId] ?? 0);
 			$ratio = null;
 			if ($integraleCost > 0.0) {
-				$ratio = round(($omzet / $integraleCost), 4);
+				$ratio = round(($revenue / $integraleCost), 4);
 			}
 
-			$compliant = ($omzet >= $integraleCost);
+			$compliant = ($revenue >= $integraleCost);
 			$colorStatus = 'rood';
 			if ($compliant === true) {
 				$colorStatus = 'groen';
@@ -94,31 +94,31 @@ class WmoJaarrekeningBijlageService {
 
 			$priorIkp = (array)($priorIkpByAct[$activityId] ?? []);
 			$priorCost = (float)($priorIkp['totaleCost'] ?? 0);
-			$priorOmzet = (float)($priorOmzetByAct[$activityId] ?? 0);
+			$priorRevenue = (float)($priorRevenueByAct[$activityId] ?? 0);
 			$priorRatio = null;
 			if ($priorCost > 0.0) {
-				$priorRatio = round(($priorOmzet / $priorCost), 4);
+				$priorRatio = round(($priorRevenue / $priorCost), 4);
 			}
 
 			$abb = (array)($abbByAct[$activityId] ?? []);
-			$abbReferentie = null;
+			$abbReference = null;
 			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReferentie = (string)($abb['reference'] ?? $activity['exemptionDecisionId'] ?? '');
+				$abbReference = (string)($abb['reference'] ?? $activity['exemptionDecisionId'] ?? '');
 			}
 
 			$rows[] = [
 				'commercialActivityId' => $activityId,
 				'code' => $code,
-				'name' => $naam,
-				'revenue' => $omzet,
+				'name' => $name,
+				'revenue' => $revenue,
 				'integraleCostPrice' => $integraleCost,
 				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
 				'complianceColor' => $colorStatus,
-				'priorYearOmzet' => $priorOmzet,
+				'priorYearOmzet' => $priorRevenue,
 				'priorYearIntegraleKostprijs' => $priorCost,
 				'priorYearRatio' => $priorRatio,
-				'abbReference' => $abbReferentie,
+				'abbReference' => $abbReference,
 				'manualOverrides' => (int)($overridesByAct[$activityId] ?? 0),
 			];
 

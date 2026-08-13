@@ -61,8 +61,8 @@ class IbBijtellingGuard {
 	 * the tier-2 percentage to the excess. All percentages/caps are supplied by
 	 * the caller from IBTaxParameterYear so no tariff is hard-coded (REQ-IB-013).
 	 *
-	 * @param float $cataloguswaarde Catalogue value when new (>= 0).
-	 * @param string $categorie Bijtelling category (REGULIER_22PCT / EV_TIERED_17_22PCT / ZERO_EMISSION / OTHER).
+	 * @param float $listValue Catalogue value when new (>= 0).
+	 * @param string $category Bijtelling category (REGULIER_22PCT / EV_TIERED_17_22PCT / ZERO_EMISSION / OTHER).
 	 * @param float $staffel1Pct Tier-1 (EV) percentage, e.g. 0.17.
 	 * @param float $staffel1Cap Tier-1 cap, e.g. 30000.0.
 	 * @param float $staffel2Pct Tier-2 / regular percentage, e.g. 0.22.
@@ -72,28 +72,28 @@ class IbBijtellingGuard {
 	 * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
 	 */
 	public function computeBijtelling(
-		float $cataloguswaarde,
-		string $categorie,
+		float $listValue,
+		string $category,
 		float $staffel1Pct,
 		float $staffel1Cap,
 		float $staffel2Pct,
 	): float {
 		$this->logger->debug(
 			'IbBijtellingGuard: computeBijtelling',
-			['cataloguswaarde' => $cataloguswaarde, 'category' => $categorie]
+			['cataloguswaarde' => $listValue, 'category' => $category]
 		);
 
-		if ($cataloguswaarde <= 0.0) {
+		if ($listValue <= 0.0) {
 			return 0.0;
 		}
 
-		if ($categorie === 'EV_TIERED_17_22PCT') {
-			$tier1Base = min($cataloguswaarde, $staffel1Cap);
-			$tier2Base = max(($cataloguswaarde - $staffel1Cap), 0.0);
-			$bijtelling = (($tier1Base * $staffel1Pct) + ($tier2Base * $staffel2Pct));
-			return round($bijtelling, 2);
+		if ($category === 'EV_TIERED_17_22PCT') {
+			$tier1Base = min($listValue, $staffel1Cap);
+			$tier2Base = max(($listValue - $staffel1Cap), 0.0);
+			$benefitInKind = (($tier1Base * $staffel1Pct) + ($tier2Base * $staffel2Pct));
+			return round($benefitInKind, 2);
 		}
 
-		return round(($cataloguswaarde * $staffel2Pct), 2);
+		return round(($listValue * $staffel2Pct), 2);
 	}//end computeBijtelling()
 }//end class

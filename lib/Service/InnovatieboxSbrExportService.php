@@ -82,7 +82,7 @@ class InnovatieboxSbrExportService {
 	 * @param array<string,mixed> $aggregation The InnovatieboxAggregationService::aggregate result.
 	 *                                         Expected shape: {data: list<row>, totals: assoc}.
 	 * @param string $administrationId Administration scope (server-resolved, REQ-IBA-008).
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 * @param string $method Election: 'per_asset_afpelmethode' (default)
 	 *                       or 'forfaitair_25pct'.
 	 *
@@ -93,7 +93,7 @@ class InnovatieboxSbrExportService {
 	public function toSbrInstancePayload(
 		array $aggregation,
 		string $administrationId,
-		int $boekjaar,
+		int $financialYear,
 		string $method = 'per_asset_afpelmethode',
 	): array {
 		$rows = $this->extractRows(aggregation: $aggregation);
@@ -101,9 +101,9 @@ class InnovatieboxSbrExportService {
 
 		$payload = [
 			'taxonomyVersion' => self::SBR_TAXONOMY_VERSION,
-			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
+			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, financialYear: $financialYear),
 			'collectie' => self::SBR_COLLECTION,
-			'identificerendePeriode' => sprintf('%04d', $boekjaar),
+			'identificerendePeriode' => sprintf('%04d', $financialYear),
 			'administratie' => $administrationId,
 			'gekozenMethode' => $method,
 			'regel23_kwalifWinst' => round((float)($totals['kwalificerende_profit_after_nexus'] ?? 0.0), 2),
@@ -142,7 +142,7 @@ class InnovatieboxSbrExportService {
 	 *
 	 * @param array<string,mixed> $aggregation The InnovatieboxAggregationService::aggregate result.
 	 * @param string $administrationId Administration scope.
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 * @param string $method Election method.
 	 *
 	 * @return array<string,mixed> The docudesk template context.
@@ -152,7 +152,7 @@ class InnovatieboxSbrExportService {
 	public function toPdfRenderContext(
 		array $aggregation,
 		string $administrationId,
-		int $boekjaar,
+		int $financialYear,
 		string $method = 'per_asset_afpelmethode',
 	): array {
 		$rows = $this->extractRows(aggregation: $aggregation);
@@ -177,9 +177,9 @@ class InnovatieboxSbrExportService {
 
 		return [
 			'administrationId' => $administrationId,
-			'financialYear' => $boekjaar,
+			'financialYear' => $financialYear,
 			'method' => $method,
-			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
+			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, financialYear: $financialYear),
 			'perAsset' => $perAsset,
 			'forfaitair' => $forfaitair,
 			'totals' => [
@@ -200,17 +200,17 @@ class InnovatieboxSbrExportService {
 	 * resubmissions before they reach Digipoort.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 *
 	 * @return string Instance reference (taxonomy-administration-boekjaar).
 	 */
-	public function deriveInstanceRef(string $administrationId, int $boekjaar): string {
+	public function deriveInstanceRef(string $administrationId, int $financialYear): string {
 		$safeAdm = preg_replace('/[^A-Za-z0-9_.\-]/', '', $administrationId);
 		if (is_string($safeAdm) === false) {
 			$safeAdm = '';
 		}
 
-		return sprintf('%s-%s-%04d', self::SBR_TAXONOMY_VERSION, $safeAdm, $boekjaar);
+		return sprintf('%s-%s-%04d', self::SBR_TAXONOMY_VERSION, $safeAdm, $financialYear);
 	}//end deriveInstanceRef()
 
 	/**

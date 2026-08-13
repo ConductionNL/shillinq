@@ -254,7 +254,7 @@ class FoldIntoOrderTest extends TestCase {
 	 * field preserved on the `subsidie` group and no field dropped.
 	 */
 	public function testFoldsSubsidieIntoOrderLosslessly(): void {
-		$subsidie = [
+		$subsidy = [
 			'id' => 'sub-1',
 			'administrationId' => 'adm-1',
 			'direction' => 'outgoing',
@@ -280,7 +280,7 @@ class FoldIntoOrderTest extends TestCase {
 			'currency' => 'EUR',
 		];
 
-		$fakeOs = $this->fakeObjectService(['Subsidie' => [$subsidie]]);
+		$fakeOs = $this->fakeObjectService(['Subsidie' => [$subsidy]]);
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new FoldIntoOrder(
@@ -374,7 +374,7 @@ class FoldIntoOrderTest extends TestCase {
 	 * its intakeStatus lifecycle vocabulary preserved verbatim on state.
 	 */
 	public function testFoldsDbaOpdrachtIntoEngagementOrder(): void {
-		$opdracht = [
+		$assignment = [
 			'id' => 'dba-opdr-2026-0042',
 			'administrationId' => 'adm-1',
 			'enterpriseId' => 'ond-nl-001234',
@@ -387,7 +387,7 @@ class FoldIntoOrderTest extends TestCase {
 			'modelOvereenkomstId' => 'modov-bd-2024-tussenkomstvrij-v3',
 		];
 
-		$fakeOs = $this->fakeObjectService(['DBAOpdracht' => [$opdracht]]);
+		$fakeOs = $this->fakeObjectService(['DBAOpdracht' => [$assignment]]);
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new FoldIntoOrder(
@@ -417,7 +417,7 @@ class FoldIntoOrderTest extends TestCase {
 	 * skipped — idempotency.
 	 */
 	public function testSkipsAlreadyFoldedRows(): void {
-		$subsidie = [
+		$subsidy = [
 			'id' => 'sub-2',
 			'subsidyNumber' => 'SUB-2026-002',
 		];
@@ -429,7 +429,7 @@ class FoldIntoOrderTest extends TestCase {
 
 		$fakeOs = $this->fakeObjectService(
 			[
-				'Subsidie' => [$subsidie],
+				'Subsidie' => [$subsidy],
 				'OrderPrimitive' => [$alreadyFolded],
 			]
 		);

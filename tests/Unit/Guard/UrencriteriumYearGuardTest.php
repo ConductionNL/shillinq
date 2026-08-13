@@ -104,7 +104,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDrempelStatusBehaald(): void {
-		self::assertSame('BEHAALD', $this->guard->bepaalDrempelStatus(lopendeUren: 1300, prognose: 1300, norm: 1225));
+		self::assertSame('BEHAALD', $this->guard->bepaalDrempelStatus(lopendeHours: 1300, prognose: 1300, norm: 1225));
 
 	}//end testDrempelStatusBehaald()
 
@@ -114,10 +114,10 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDrempelStatusFromPrognose(): void {
-		self::assertSame('OP_KOERS', $this->guard->bepaalDrempelStatus(lopendeUren: 600, prognose: 1300, norm: 1225));
+		self::assertSame('OP_KOERS', $this->guard->bepaalDrempelStatus(lopendeHours: 600, prognose: 1300, norm: 1225));
 		// 1180 is >= 80% of 1225 (980) but < 1225 → RISICO (the Q3 scenario).
-		self::assertSame('RISICO', $this->guard->bepaalDrempelStatus(lopendeUren: 916, prognose: 1180, norm: 1225));
-		self::assertSame('KRITIEK', $this->guard->bepaalDrempelStatus(lopendeUren: 400, prognose: 700, norm: 1225));
+		self::assertSame('RISICO', $this->guard->bepaalDrempelStatus(lopendeHours: 916, prognose: 1180, norm: 1225));
+		self::assertSame('KRITIEK', $this->guard->bepaalDrempelStatus(lopendeHours: 400, prognose: 700, norm: 1225));
 
 	}//end testDrempelStatusFromPrognose()
 
@@ -129,7 +129,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	public function testGrotendeelsNotApplicableWithoutLoondienst(): void {
 		self::assertSame(
 			'NIET_TOEPASSELIJK',
-			$this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1240, loondienstUren: 0)
+			$this->guard->bepaalGrotendeelsCriterium(enterpriseHours: 1240, employmentHours: 0)
 		);
 
 	}//end testGrotendeelsNotApplicableWithoutLoondienst()
@@ -143,11 +143,11 @@ class UrencriteriumYearGuardTest extends TestCase {
 	public function testGrotendeelsFailsWhenLoondienstDominates(): void {
 		self::assertSame(
 			'NIET_GROTENDEELS_ONDERNEMING',
-			$this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1240, loondienstUren: 1670)
+			$this->guard->bepaalGrotendeelsCriterium(enterpriseHours: 1240, employmentHours: 1670)
 		);
 		self::assertSame(
 			'GROTENDEELS_ONDERNEMING',
-			$this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1800, loondienstUren: 600)
+			$this->guard->bepaalGrotendeelsCriterium(enterpriseHours: 1800, employmentHours: 600)
 		);
 
 	}//end testGrotendeelsFailsWhenLoondienstDominates()

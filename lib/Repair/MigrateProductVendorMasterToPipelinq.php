@@ -318,7 +318,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 	 */
 	private function resolveContactUid(array $vendor, IOutput $output): string {
 		$kvkNumber = (string)($vendor['kvkNumber'] ?? '');
-		$btwNumber = (string)($vendor['vatNumber'] ?? '');
+		$vatNumber = (string)($vendor['vatNumber'] ?? '');
 		$name = (string)($vendor['name'] ?? ($vendor['tradingName'] ?? ''));
 		$iban = (string)($vendor['iban'] ?? '');
 		$vendorSlug = (string)($vendor['slug'] ?? ($vendor['id'] ?? 'unknown'));
@@ -333,10 +333,10 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 		}
 
 		// Priority 2: BTW / VAT number.
-		if ($btwNumber !== '') {
-			$uid = $this->searchContactByProperty(property: 'X-CUSTOM-BTW', value: $btwNumber);
+		if ($vatNumber !== '') {
+			$uid = $this->searchContactByProperty(property: 'X-CUSTOM-BTW', value: $vatNumber);
 			if ($uid !== null) {
-				$output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via BTW ' . $btwNumber . '.');
+				$output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via BTW ' . $vatNumber . '.');
 				return $uid;
 			}
 		}

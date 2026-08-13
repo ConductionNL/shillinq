@@ -75,18 +75,18 @@ class WbsoAdministratieService {
 	 */
 	public function realisatieSummary(string $administrationId): array {
 		$beschikkingen = $this->fetchBeschikkingen(administrationId: $administrationId);
-		$realisedTenths = $this->realisedHoursByBeschikking(administrationId: $administrationId);
+		$realisedTenths = $this->realisedHoursByDecision(administrationId: $administrationId);
 
 		$rows = [];
-		foreach ($beschikkingen as $beschikkingNumber => $beschikking) {
-			$grantedTenths = (int)round(((float)($beschikking['grantedSoHours'] ?? 0)) * 10);
-			$realised = (int)($realisedTenths[$beschikkingNumber] ?? 0);
+		foreach ($beschikkingen as $decisionNumber => $decision) {
+			$grantedTenths = (int)round(((float)($decision['grantedSoHours'] ?? 0)) * 10);
+			$realised = (int)($realisedTenths[$decisionNumber] ?? 0);
 			$remaining = ($grantedTenths - $realised);
 			$rows[] = [
-				'decisionNumber' => (string)$beschikkingNumber,
-				'rvoReference' => (string)($beschikking['rvoReference'] ?? ''),
-				'projectNumber' => (string)($beschikking['projectNumber'] ?? ''),
-				'state' => (string)($beschikking['state'] ?? ''),
+				'decisionNumber' => (string)$decisionNumber,
+				'rvoReference' => (string)($decision['rvoReference'] ?? ''),
+				'projectNumber' => (string)($decision['projectNumber'] ?? ''),
+				'state' => (string)($decision['state'] ?? ''),
 				'grantedSoHours' => ((float)$grantedTenths / 10),
 				'realisedSoHours' => ((float)$realised / 10),
 				'remainingSoHours' => ((float)$remaining / 10),
@@ -119,7 +119,7 @@ class WbsoAdministratieService {
 	 *
 	 * @return array<string,int> beschikkingNumber => realised hours in tenths.
 	 */
-	private function realisedHoursByBeschikking(string $administrationId): array {
+	private function realisedHoursByDecision(string $administrationId): array {
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
@@ -128,7 +128,7 @@ class WbsoAdministratieService {
 			->setSchema('SoUurregistratie')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-		$byBeschikking = [];
+		$byDecision = [];
 		foreach ($entries as $entry) {
 			if (is_array($entry) === false) {
 				continue;
@@ -139,8 +139,8 @@ class WbsoAdministratieService {
 				continue;
 			}
 
-			$beschikkingNumber = (string)($entry['decisionNumber'] ?? '');
-			if ($beschikkingNumber === '') {
+			$decisionNumber = (string)($entry['decisionNumber'] ?? '');
+			if ($decisionNumber === '') {
 				continue;
 			}
 
@@ -149,14 +149,14 @@ class WbsoAdministratieService {
 				continue;
 			}
 
-			if (isset($byBeschikking[$beschikkingNumber]) === false) {
-				$byBeschikking[$beschikkingNumber] = 0;
+			if (isset($byDecision[$decisionNumber]) === false) {
+				$byDecision[$decisionNumber] = 0;
 			}
 
-			$byBeschikking[$beschikkingNumber] += $tenths;
+			$byDecision[$decisionNumber] += $tenths;
 		}//end foreach
 
-		return $byBeschikking;
+		return $byDecision;
 	}//end realisedHoursByBeschikking()
 
 	/**

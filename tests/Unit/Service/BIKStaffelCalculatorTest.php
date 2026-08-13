@@ -61,7 +61,7 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelOn8400EurEquals795(): void {
-		$s = $this->calc->staffel(hoofdsom: 8400.00);
+		$s = $this->calc->staffel(principal: 8400.00);
 		self::assertSame(375.0, $s['scale1_0_2500']);
 		self::assertSame(250.0, $s['scale2_2500_5000']);
 		self::assertSame(170.0, $s['scale3_5000_10000']);
@@ -81,7 +81,7 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelMinimumFloorAt40(): void {
-		$s = $this->calc->staffel(hoofdsom: 100.00);
+		$s = $this->calc->staffel(principal: 100.00);
 		self::assertSame(15.0, $s['total']);
 		self::assertSame(40.0, $s['applied']);
 
@@ -93,7 +93,7 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelAt5000EurExactly(): void {
-		$s = $this->calc->staffel(hoofdsom: 5000.00);
+		$s = $this->calc->staffel(principal: 5000.00);
 		self::assertSame(625.0, $s['applied']);
 
 	}//end testStaffelAt5000EurExactly()
@@ -107,7 +107,7 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelOn250000(): void {
-		$s = $this->calc->staffel(hoofdsom: 250000.00);
+		$s = $this->calc->staffel(principal: 250000.00);
 		self::assertSame(375.0, $s['scale1_0_2500']);
 		self::assertSame(250.0, $s['scale2_2500_5000']);
 		self::assertSame(250.0, $s['scale3_5000_10000']);
@@ -124,7 +124,7 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testStaffelRejectsNegativeHoofdsom(): void {
 		$this->expectException(InvalidArgumentException::class);
-		$this->calc->staffel(hoofdsom: -10.00);
+		$this->calc->staffel(principal: -10.00);
 
 	}//end testStaffelRejectsNegativeHoofdsom()
 
@@ -143,9 +143,9 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteB2BHandelsrenteOn8400Eur22Days(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2B',
-			hoofdsom: 8400.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-21')
+			principal: 8400.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-21')
 		);
 
 		self::assertSame(0.1015, $r['rate']);
@@ -170,9 +170,9 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteB2CWettelijkeRenteOn820Eur31Days(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2C',
-			hoofdsom: 820.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-30')
+			principal: 820.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-30')
 		);
 
 		self::assertSame(0.04, $r['rate']);
@@ -192,9 +192,9 @@ final class BIKStaffelCalculatorTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->calc->rente(
 			partyType: 'B2B',
-			hoofdsom: 1000,
-			ingangsdatum: new DateTimeImmutable('2026-06-01'),
-			berekendOp: new DateTimeImmutable('2026-05-01')
+			principal: 1000,
+			effectiveDate: new DateTimeImmutable('2026-06-01'),
+			calculatedOn: new DateTimeImmutable('2026-05-01')
 		);
 
 	}//end testRenteRejectsBerekendOpBeforeIngangsdatum()
@@ -205,12 +205,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testB2C_14DayGraceBlocksBeforeDay44(): void {
-		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 35));
-		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 43));
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 44));
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 60));
+		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 35));
+		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 43));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 44));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 60));
 		// B2B has no grace — verzuim van rechtswege per art. 6:83 BW.
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2B', dagenVerzuim: 0));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2B', daysVerzuim: 0));
 
 	}//end testB2C_14DayGraceBlocksBeforeDay44()
 
@@ -221,12 +221,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testComposeYieldsPersistenceShape(): void {
 		$body = $this->calc->compose(
-			factuurId: 'inv-2026-0247',
+			invoiceId: 'inv-2026-0247',
 			administrationId: 'adm-1',
 			partyType: 'B2B',
-			hoofdsom: 8400.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-21')
+			principal: 8400.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-21')
 		);
 
 		self::assertSame('inv-2026-0247', $body['invoiceId']);
@@ -251,13 +251,13 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelMaximumCapAt6775(): void {
-		$atCap = $this->calc->staffel(hoofdsom: 1000000.00);
+		$atCap = $this->calc->staffel(principal: 1000000.00);
 		self::assertSame(6775.0, $atCap['maximum']);
 		self::assertSame(6775.0, $atCap['applied']);
 		// Raw staffel at exactly €1M lands on the cap: 375+250+250+1900+4000.
 		self::assertSame(6775.0, $atCap['total']);
 
-		$overCap = $this->calc->staffel(hoofdsom: 2000000.00);
+		$overCap = $this->calc->staffel(principal: 2000000.00);
 		// Uncapped totaal is €11.775, but toegepast is clamped to €6.775.
 		self::assertSame(11775.0, $overCap['total']);
 		self::assertSame(6775.0, $overCap['applied']);
@@ -274,17 +274,17 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelBtwSurchargeWhenNotDeductible(): void {
-		$withBtw = $this->calc->staffel(hoofdsom: 8400.00, btwVerrekenbaar: false);
-		self::assertSame(795.0, $withBtw['applied']);
-		self::assertSame(0.21, $withBtw['vatPercentage']);
+		$withVat = $this->calc->staffel(principal: 8400.00, vatOffsettable: false);
+		self::assertSame(795.0, $withVat['applied']);
+		self::assertSame(0.21, $withVat['vatPercentage']);
 		// 79500 × 0.21 = 16695 cents.
-		self::assertSame(166.95, $withBtw['vatAmount']);
-		self::assertSame(961.95, $withBtw['appliedInclVat']);
+		self::assertSame(166.95, $withVat['vatAmount']);
+		self::assertSame(961.95, $withVat['appliedInclVat']);
 
-		$noBtw = $this->calc->staffel(hoofdsom: 8400.00);
-		self::assertTrue($noBtw['vatOffsettable']);
-		self::assertSame(0.0, $noBtw['vatAmount']);
-		self::assertSame(795.0, $noBtw['appliedInclVat']);
+		$noVat = $this->calc->staffel(principal: 8400.00);
+		self::assertTrue($noVat['vatOffsettable']);
+		self::assertSame(0.0, $noVat['vatAmount']);
+		self::assertSame(795.0, $noVat['appliedInclVat']);
 
 	}//end testStaffelBtwSurchargeWhenNotDeductible()
 
@@ -302,9 +302,9 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteSplitsAcrossRateBoundary(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2C',
-			hoofdsom: 10000.00,
-			ingangsdatum: new DateTimeImmutable('2025-12-17'),
-			berekendOp: new DateTimeImmutable('2026-01-16')
+			principal: 10000.00,
+			effectiveDate: new DateTimeImmutable('2025-12-17'),
+			calculatedOn: new DateTimeImmutable('2026-01-16')
 		);
 
 		self::assertSame(30, $r['days']);
@@ -327,10 +327,10 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteHonoursExplicitOverride(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2B',
-			hoofdsom: 8400.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-21'),
-			tariefB2B: 0.12
+			principal: 8400.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-21'),
+			rateB2B: 0.12
 		);
 
 		self::assertSame(0.12, $r['rate']);

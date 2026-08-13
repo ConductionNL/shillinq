@@ -172,17 +172,17 @@ final class KorMonitorServiceTest extends TestCase {
 	 * Build an ARInvoice fixture row.
 	 *
 	 * @param string $admin Administration id.
-	 * @param float $bedrag Gross amount.
+	 * @param float $amount Gross amount.
 	 * @param string $date Delivery date (YYYY-MM-DD).
 	 * @param string $grond vrijstellingsGrondslag.
 	 * @param string $status Invoice status.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function invoice(string $admin, float $bedrag, string $date, string $grond = 'KOR_ART25_OB', string $status = 'issued'): array {
+	private function invoice(string $admin, float $amount, string $date, string $grond = 'KOR_ART25_OB', string $status = 'issued'): array {
 		return [
 			'administrationId' => $admin,
-			'amount' => $bedrag,
+			'amount' => $amount,
 			'leveringsDatum' => $date,
 			'vrijstellingsGrondslag' => $grond,
 			'status' => $status,

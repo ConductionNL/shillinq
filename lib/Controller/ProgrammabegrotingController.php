@@ -83,8 +83,8 @@ class ProgrammabegrotingController extends Controller {
 		}
 
 		return $this->dispatch(
-			handler: fn (string $admin, string $begroting): array
-				=> $this->service->sluitendStatus(administrationId: $admin, begrotingId: $begroting),
+			handler: fn (string $admin, string $budget): array
+				=> $this->service->sluitendStatus(administrationId: $admin, budgetId: $budget),
 			failure: 'Failed to compute sluitend status'
 		);
 
@@ -105,8 +105,8 @@ class ProgrammabegrotingController extends Controller {
 		}
 
 		return $this->dispatch(
-			handler: fn (string $admin, string $begroting): array
-				=> ['data' => $this->service->iv3Export(administrationId: $admin, begrotingId: $begroting)],
+			handler: fn (string $admin, string $budget): array
+				=> ['data' => $this->service->iv3Export(administrationId: $admin, budgetId: $budget)],
 			failure: 'Failed to produce iv3 export'
 		);
 
@@ -127,8 +127,8 @@ class ProgrammabegrotingController extends Controller {
 		}
 
 		return $this->dispatch(
-			handler: fn (string $admin, string $begroting): array
-				=> $this->service->jsonExport(administrationId: $admin, begrotingId: $begroting),
+			handler: fn (string $admin, string $budget): array
+				=> $this->service->jsonExport(administrationId: $admin, budgetId: $budget),
 			failure: 'Failed to produce JSON export'
 		);
 
@@ -162,10 +162,10 @@ class ProgrammabegrotingController extends Controller {
 	 * @return JSONResponse
 	 */
 	private function dispatch(callable $handler, string $failure): JSONResponse {
-		$begrotingId = trim((string)$this->request->getParam('begroting_id', ''));
+		$budgetId = trim((string)$this->request->getParam('begroting_id', ''));
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 
-		if ($begrotingId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $begrotingId) !== 1) {
+		if ($budgetId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $budgetId) !== 1) {
 			return new JSONResponse(['error' => 'begroting_id is required and must be a valid identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
@@ -174,11 +174,11 @@ class ProgrammabegrotingController extends Controller {
 		}
 
 		try {
-			$result = $handler($administrationId, $begrotingId);
+			$result = $handler($administrationId, $budgetId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProgrammabegrotingController: ' . $failure,
-				['budgetId' => $begrotingId, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+				['budgetId' => $budgetId, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => $failure], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}

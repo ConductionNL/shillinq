@@ -152,40 +152,40 @@ class DBAFlagGenerationJob extends TimedJob {
 	/**
 	 * Detect VBAR uurtarief-onderschrijding (REQ-DBA-016).
 	 *
-	 * @param int $bedragCents Factuurbedrag in eurocenten.
-	 * @param float $uren Aantal gefactureerde uren.
+	 * @param int $amountCents Factuurbedrag in eurocenten.
+	 * @param float $hours Aantal gefactureerde uren.
 	 * @param int $vbarGrensCents VBAR-grens (eurocenten).
 	 *
 	 * @return bool True when the effective hourly rate falls below threshold.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function detectVbarGrensOnderschreden(int $bedragCents, float $uren, int $vbarGrensCents): bool {
-		if ($uren <= 0.0 || $bedragCents <= 0) {
+	public function detectVbarGrensOnderschreden(int $amountCents, float $hours, int $vbarGrensCents): bool {
+		if ($hours <= 0.0 || $amountCents <= 0) {
 			return false;
 		}
 
-		$effectiefCents = (int)round($bedragCents / $uren);
+		$effectiefCents = (int)round($amountCents / $hours);
 		return $effectiefCents < $vbarGrensCents;
 	}//end detectVbarGrensOnderschreden()
 
 	/**
 	 * Detect MODELOVEREENKOMST_VERLOPEN (REQ-DBA-002).
 	 *
-	 * @param string|null $geldigTot The model's geldigTot date (Y-m-d) or null.
+	 * @param string|null $validTo The model's geldigTot date (Y-m-d) or null.
 	 * @param DateTimeImmutable $now Reference "now".
 	 *
 	 * @return bool True when the model's geldigheid has expired.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function detectModelovereenkomstVerlopen(?string $geldigTot, DateTimeImmutable $now): bool {
-		if ($geldigTot === null || $geldigTot === '') {
+	public function detectModelovereenkomstVerlopen(?string $validTo, DateTimeImmutable $now): bool {
+		if ($validTo === null || $validTo === '') {
 			return false;
 		}
 
 		try {
-			$expiry = new DateTimeImmutable($geldigTot);
+			$expiry = new DateTimeImmutable($validTo);
 		} catch (Throwable) {
 			return false;
 		}
@@ -199,54 +199,54 @@ class DBAFlagGenerationJob extends TimedJob {
 	 * Contractually vervangbaar (vervangbaarScore < 5) AND vervanging never
 	 * happened (vervangingFeitelijkScore >= 10), with relation duration >= 18 months.
 	 *
-	 * @param int $vervangbaarScore Contractuele vervangbaarheid (0-10).
-	 * @param int $vervangingFeitelijkScore Feitelijke vervanging (0-10).
-	 * @param float $duurInMaanden Relatieduur in maanden.
+	 * @param int $replaceableScore Contractuele vervangbaarheid (0-10).
+	 * @param int $replacementActualScore Feitelijke vervanging (0-10).
+	 * @param float $durationInMonths Relatieduur in maanden.
 	 *
 	 * @return bool True when theoretical-only substitutability is detected.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function detectVervangbaarheidTheoretisch(int $vervangbaarScore, int $vervangingFeitelijkScore, float $duurInMaanden): bool {
-		if ($duurInMaanden < (float)DBAConstants::VERVANGBAARHEID_THEORETISCH_MIN_MAANDEN) {
+	public function detectVervangbaarheidTheoretisch(int $replaceableScore, int $replacementActualScore, float $durationInMonths): bool {
+		if ($durationInMonths < (float)DBAConstants::VERVANGBAARHEID_THEORETISCH_MIN_MAANDEN) {
 			return false;
 		}
 
-		return $vervangbaarScore < 5 && $vervangingFeitelijkScore >= 10;
+		return $replaceableScore < 5 && $replacementActualScore >= 10;
 	}//end detectVervangbaarheidTheoretisch()
 
 	/**
 	 * Detect LANGJARIGE_HOOFDRELATIE (REQ-DBA-005).
 	 *
-	 * @param float $duurInJaren Relatieduur (jaren).
-	 * @param float $omzetAandeel Omzetaandeel (0-1).
+	 * @param float $durationInJaren Relatieduur (jaren).
+	 * @param float $revenueShare Omzetaandeel (0-1).
 	 *
 	 * @return bool True when the relation qualifies as langjarige hoofdrelatie.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function detectLangjarigeHoofdrelatie(float $duurInJaren, float $omzetAandeel): bool {
-		return $duurInJaren >= DBAConstants::LANGJARIG_DREMPEL_JAREN
-			&& $omzetAandeel >= DBAConstants::LANGJARIG_DREMPEL_OMZET;
+	public function detectLangjarigeHoofdrelatie(float $durationInJaren, float $revenueShare): bool {
+		return $durationInJaren >= DBAConstants::LANGJARIG_DREMPEL_JAREN
+			&& $revenueShare >= DBAConstants::LANGJARIG_DREMPEL_OMZET;
 	}//end detectLangjarigeHoofdrelatie()
 
 	/**
 	 * Detect HERBEOORDELING_OVERDUE (REQ-DBA-009).
 	 *
-	 * @param string|null $intakeDatum Y-m-d of last intake.
+	 * @param string|null $intakeDate Y-m-d of last intake.
 	 * @param DateTimeImmutable $now Reference "now".
 	 *
 	 * @return bool True when intake is older than 12 months + 30 days grace.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function detectHerbeoordelingOverdue(?string $intakeDatum, DateTimeImmutable $now): bool {
-		if ($intakeDatum === null || $intakeDatum === '') {
+	public function detectHerbeoordelingOverdue(?string $intakeDate, DateTimeImmutable $now): bool {
+		if ($intakeDate === null || $intakeDate === '') {
 			return false;
 		}
 
 		try {
-			$intake = new DateTimeImmutable($intakeDatum);
+			$intake = new DateTimeImmutable($intakeDate);
 		} catch (Throwable) {
 			return false;
 		}
@@ -286,7 +286,7 @@ class DBAFlagGenerationJob extends TimedJob {
 		$generated = 0;
 
 		try {
-			$opdrachten = $objectService
+			$assignments = $objectService
 				->setRegister($register)
 				->setSchema('DBAOpdracht')
 				->findAll(['filters' => ['intakeStatus' => 'ACTIEF'], 'limit' => 1000]);
@@ -298,23 +298,23 @@ class DBAFlagGenerationJob extends TimedJob {
 			return;
 		}
 
-		foreach ($opdrachten as $entity) {
-			$opdracht = $this->toArray(entity: $entity);
-			if ($opdracht === null) {
+		foreach ($assignments as $entity) {
+			$assignment = $this->toArray(entity: $entity);
+			if ($assignment === null) {
 				continue;
 			}
 
 			// Herbeoordeling overdue?
-			if ($this->detectHerbeoordelingOverdue(intakeDatum: (string)($opdracht['intakeDate'] ?? ''), now: $now) === true) {
+			if ($this->detectHerbeoordelingOverdue(intakeDate: (string)($assignment['intakeDate'] ?? ''), now: $now) === true) {
 				if ($this->emitFlag(
 					objectService: $objectService,
 					register: $register,
-					opdracht: $opdracht,
+					assignment: $assignment,
 					type: 'HERBEOORDELING_OVERDUE',
 					ernst: 'MIDDEN',
-					details: ['intakeDate' => (string)($opdracht['intakeDate'] ?? '')],
-					bron: 'REQ-DBA-009; Wet DBA jaarlijkse herbeoordeling',
-					actie: 'Vraag een herbeoordeling van de DBA-intake aan de ondernemer.'
+					details: ['intakeDate' => (string)($assignment['intakeDate'] ?? '')],
+					source: 'REQ-DBA-009; Wet DBA jaarlijkse herbeoordeling',
+					action: 'Vraag een herbeoordeling van de DBA-intake aan de ondernemer.'
 				) === true
 				) {
 					$generated++;
@@ -322,26 +322,26 @@ class DBAFlagGenerationJob extends TimedJob {
 			}
 
 			// Modelovereenkomst verlopen?
-			$modelId = (string)($opdracht['modelOvereenkomstId'] ?? '');
+			$modelId = (string)($assignment['modelOvereenkomstId'] ?? '');
 			if ($modelId !== '') {
 				try {
 					$model = $objectService->setRegister($register)->setSchema('DBAModelovereenkomst')->find($modelId);
 					$modelArr = $this->toArray(entity: $model);
 					if ($modelArr !== null
 						&& $this->detectModelovereenkomstVerlopen(
-							geldigTot: (string)($modelArr['validTo'] ?? ''),
+							validTo: (string)($modelArr['validTo'] ?? ''),
 							now: $now
 						) === true
 					) {
 						if ($this->emitFlag(
 							objectService: $objectService,
 							register: $register,
-							opdracht: $opdracht,
+							assignment: $assignment,
 							type: 'MODELOVEREENKOMST_VERLOPEN',
 							ernst: 'MIDDEN',
 							details: ['modelId' => $modelId, 'validTo' => (string)($modelArr['validTo'] ?? '')],
-							bron: 'REQ-DBA-002; Belastingdienst modelovereenkomst-policy',
-							actie: 'Kies een actueel modelovereenkomst en update de opdracht.'
+							source: 'REQ-DBA-002; Belastingdienst modelovereenkomst-policy',
+							action: 'Kies een actueel modelovereenkomst en update de opdracht.'
 						) === true
 						) {
 							$generated++;
@@ -356,19 +356,19 @@ class DBAFlagGenerationJob extends TimedJob {
 			}//end if
 
 			// WBA verlopen?
-			$wbaGeldigTot = (string)($opdracht['wbaValidTo'] ?? '');
-			if ($wbaGeldigTot !== ''
-				&& $this->detectModelovereenkomstVerlopen(geldigTot: $wbaGeldigTot, now: $now) === true
+			$wbaValidTo = (string)($assignment['wbaValidTo'] ?? '');
+			if ($wbaValidTo !== ''
+				&& $this->detectModelovereenkomstVerlopen(validTo: $wbaValidTo, now: $now) === true
 			) {
 				if ($this->emitFlag(
 					objectService: $objectService,
 					register: $register,
-					opdracht: $opdracht,
+					assignment: $assignment,
 					type: 'WBA_VERLOPEN',
 					ernst: 'LAAG',
-					details: ['wbaValidTo' => $wbaGeldigTot],
-					bron: 'REQ-DBA-013; Belastingdienst WBA-policy (1 jaar geldigheid)',
-					actie: 'Vraag een nieuwe WBA-beoordeling aan.'
+					details: ['wbaValidTo' => $wbaValidTo],
+					source: 'REQ-DBA-013; Belastingdienst WBA-policy (1 jaar geldigheid)',
+					action: 'Vraag een nieuwe WBA-beoordeling aan.'
 				) === true
 				) {
 					$generated++;
@@ -416,30 +416,30 @@ class DBAFlagGenerationJob extends TimedJob {
 	 *
 	 * @param object $objectService The OR ObjectService.
 	 * @param string $register Register slug.
-	 * @param array<string,mixed> $opdracht The owning DBAOpdracht.
+	 * @param array<string,mixed> $assignment The owning DBAOpdracht.
 	 * @param string $type Flag type enum.
 	 * @param string $ernst LAAG/MIDDEN/HOOG.
 	 * @param array<string,mixed> $details Detail-payload.
-	 * @param string $bron Fiscale grondslag.
-	 * @param string $actie Aanbevolen actie.
+	 * @param string $source Fiscale grondslag.
+	 * @param string $action Aanbevolen actie.
 	 *
 	 * @return bool True when a new flag was written.
 	 */
 	private function emitFlag(
 		object $objectService,
 		string $register,
-		array $opdracht,
+		array $assignment,
 		string $type,
 		string $ernst,
 		array $details,
-		string $bron,
-		string $actie,
+		string $source,
+		string $action,
 	): bool {
 		try {
 			$existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
 				[
 					'filters' => [
-						'assignmentId' => (string)($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
+						'assignmentId' => (string)($assignment['@self']['id'] ?? ($assignment['id'] ?? '')),
 						'type' => $type,
 						'status' => 'OPEN',
 					],
@@ -462,14 +462,14 @@ class DBAFlagGenerationJob extends TimedJob {
 		try {
 			$objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject(
 				[
-					'administrationId' => (string)($opdracht['administrationId'] ?? ''),
-					'assignmentId' => (string)($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
+					'administrationId' => (string)($assignment['administrationId'] ?? ''),
+					'assignmentId' => (string)($assignment['@self']['id'] ?? ($assignment['id'] ?? '')),
 					'type' => $type,
 					'detectieMoment' => (new DateTimeImmutable())->format('c'),
 					'ernst' => $ernst,
 					'details' => $details,
-					'fiscalSource' => $bron,
-					'actionSuggestion' => $actie,
+					'fiscalSource' => $source,
+					'actionSuggestion' => $action,
 					'status' => 'OPEN',
 					'weergegevenInUser' => true,
 				]

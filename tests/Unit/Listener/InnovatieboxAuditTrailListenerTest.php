@@ -127,7 +127,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 
 			}//end __construct()
 
-			public function isYearLocked(string $administrationId, int $boekjaar): bool {
+			public function isYearLocked(string $administrationId, int $financialYear): bool {
 				return $this->constantLock;
 			}//end isYearLocked()
 		};

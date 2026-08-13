@@ -77,32 +77,32 @@ class KorMonitorService {
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
 	public function status(string $administrationId, int $year): array {
-		$drempelCents = $this->resolveDrempelCents(administrationId: $administrationId);
+		$thresholdCents = $this->resolveThresholdCents(administrationId: $administrationId);
 		$invoices = $this->fetchKorInvoices(administrationId: $administrationId, year: $year);
 
-		$omzetCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
-		$perMaand = $this->monthlyBreakdown(invoices: $invoices, year: $year);
+		$revenueCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
+		$perMonth = $this->monthlyBreakdown(invoices: $invoices, year: $year);
 
-		$currentMonth = $this->lastMonthWithOmzet(perMaand: $perMaand);
+		$currentMonth = $this->lastMonthWithRevenue(perMonth: $perMonth);
 		$prognoseCents = $this->calculator->prognoseEndOfYearCents(
-			lopendeCents: $omzetCents,
+			lopendeCents: $revenueCents,
 			currentMonth: $currentMonth
 		);
 
-		$benutting = $this->calculator->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents);
-		$schijf = $this->calculator->crossedSchijf(previousBenutting: 0.0, newBenutting: $benutting);
+		$utilisation = $this->calculator->benutting(revenueCents: $revenueCents, thresholdCents: $thresholdCents);
+		$schijf = $this->calculator->crossedSchijf(previousUtilisation: 0.0, newUtilisation: $utilisation);
 
 		return [
 			'administrationId' => $administrationId,
 			'year' => $year,
-			'currentRevenue' => $this->calculator->fromCents(cents: $omzetCents),
-			'threshold' => $this->calculator->fromCents(cents: $drempelCents),
-			'thresholdUtilisation' => round($benutting, 4),
-			'perMonth' => $perMaand,
+			'currentRevenue' => $this->calculator->fromCents(cents: $revenueCents),
+			'threshold' => $this->calculator->fromCents(cents: $thresholdCents),
+			'thresholdUtilisation' => round($utilisation, 4),
+			'perMonth' => $perMonth,
 			'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
 			'prognoseStatus' => $this->calculator->prognoseStatus(
 				prognoseCents: $prognoseCents,
-				drempelCents: $drempelCents
+				thresholdCents: $thresholdCents
 			),
 			'ernst' => ($schijf['ernst'] ?? null),
 			'trigger' => ($schijf['trigger'] ?? null),
@@ -137,11 +137,11 @@ class KorMonitorService {
 		$today = date('Y-m-d');
 		foreach ($registrations as $registration) {
 			$vroegste = (string)($registration['vroegsteOpzegDate'] ?? '');
-			$eind = (string)($registration['lockInEndDate'] ?? '');
+			$end = (string)($registration['lockInEndDate'] ?? '');
 			if ($this->calculator->isOptOutPermitted(
 				today: $today,
-				vroegsteOpzegDatum: $vroegste,
-				lockInEindDatum: $eind
+				vroegsteOpzegDate: $vroegste,
+				lockInEndDate: $end
 			) === true
 			) {
 				return true;
@@ -189,8 +189,8 @@ class KorMonitorService {
 	private function monthlyBreakdown(array $invoices, int $year): array {
 		$cents = [];
 		foreach ($invoices as $invoice) {
-			$leveringsDatum = (string)($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
-			$month = substr($leveringsDatum, 0, 7);
+			$leveringsDate = (string)($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
+			$month = substr($leveringsDate, 0, 7);
 			if ($month === '' || substr($month, 0, 4) !== (string)$year) {
 				continue;
 			}
@@ -199,24 +199,24 @@ class KorMonitorService {
 		}
 
 		ksort($cents);
-		$perMaand = [];
+		$perMonth = [];
 		foreach ($cents as $month => $value) {
-			$perMaand[$month] = $this->calculator->fromCents(cents: $value);
+			$perMonth[$month] = $this->calculator->fromCents(cents: $value);
 		}
 
-		return $perMaand;
+		return $perMonth;
 	}//end monthlyBreakdown()
 
 	/**
 	 * Resolve the latest calendar month that has omzet, for the prognose base (REQ-KOR-002).
 	 *
-	 * @param array<string,float> $perMaand Month key (YYYY-MM) => omzet.
+	 * @param array<string,float> $perMonth Month key (YYYY-MM) => omzet.
 	 *
 	 * @return int Latest month number with omzet (1..12); 1 when none.
 	 */
-	private function lastMonthWithOmzet(array $perMaand): int {
+	private function lastMonthWithRevenue(array $perMonth): int {
 		$last = 1;
-		foreach (array_keys($perMaand) as $month) {
+		foreach (array_keys($perMonth) as $month) {
 			$num = (int)substr((string)$month, 5, 2);
 			if ($num > $last) {
 				$last = $num;
@@ -235,7 +235,7 @@ class KorMonitorService {
 	 *
 	 * @return int Threshold in cents.
 	 */
-	private function resolveDrempelCents(string $administrationId): int {
+	private function resolveThresholdCents(string $administrationId): int {
 		$default = $this->calculator->toCents(amount: 20000);
 
 		try {
@@ -251,9 +251,9 @@ class KorMonitorService {
 		}
 
 		foreach ($registrations as $registration) {
-			$drempel = ($registration['thresholdYear'] ?? null);
-			if ($drempel !== null) {
-				return $this->calculator->toCents(amount: $drempel);
+			$threshold = ($registration['thresholdYear'] ?? null);
+			if ($threshold !== null) {
+				return $this->calculator->toCents(amount: $threshold);
 			}
 		}
 

@@ -60,7 +60,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private function verplichting(): array {
+	private function commitment(): array {
 		$schemas = ($this->fragment()['components']['schemas'] ?? []);
 		self::assertArrayHasKey('Verplichting', $schemas, 'Fragment must declare the Verplichting schema');
 		return $schemas['Verplichting'];
@@ -72,7 +72,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function chain(): array {
-		$schema = $this->verplichting();
+		$schema = $this->commitment();
 		self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Verplichting must declare x-openregister-approval-chains');
 		$chains = $schema['x-openregister-approval-chains'];
 		self::assertArrayHasKey('verplichting-goedkeuring', $chains);
@@ -101,7 +101,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 		$chain = $this->chain();
 		self::assertSame('goedkeuren', $chain['transition']);
 
-		$lifecycle = $this->verplichting()['x-openregister-lifecycle'];
+		$lifecycle = $this->commitment()['x-openregister-lifecycle'];
 		$transitions = ($lifecycle['transitions'] ?? []);
 		self::assertArrayHasKey('goedkeuren', $transitions, 'goedkeuren transition must exist for the gate to bind to');
 		self::assertSame('in_goedkeuring', $transitions['goedkeuren']['from']);
@@ -118,7 +118,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 		$chain = $this->chain();
 		self::assertSame('totalamount_excl_vat', $chain['amountField']);
 
-		$properties = ($this->verplichting()['properties'] ?? []);
+		$properties = ($this->commitment()['properties'] ?? []);
 		self::assertArrayHasKey('totalamount_excl_vat', $properties, 'amountField must name a real property');
 		self::assertSame('integer', $properties['totalamount_excl_vat']['type']);
 
@@ -163,7 +163,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testApproverRolesAreDeclaredRbacRoles(): void {
-		$roles = ($this->verplichting()['x-openregister-rbac']['roles'] ?? []);
+		$roles = ($this->commitment()['x-openregister-rbac']['roles'] ?? []);
 		foreach ($this->chain()['approvers'] as $tier) {
 			self::assertArrayHasKey($tier['role'], $roles, $tier['role'] . ' must be a declared RBAC role');
 		}
@@ -192,7 +192,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 	public function testMandateEnforcerIsRetained(): void {
 		self::assertFileExists(__DIR__ . '/../../../lib/Lifecycle/MandaatEnforcer.php');
 
-		$transitions = ($this->verplichting()['x-openregister-lifecycle']['transitions'] ?? []);
+		$transitions = ($this->commitment()['x-openregister-lifecycle']['transitions'] ?? []);
 		self::assertArrayHasKey('indienen', $transitions);
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval',

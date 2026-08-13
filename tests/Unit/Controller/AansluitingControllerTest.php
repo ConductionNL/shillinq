@@ -97,7 +97,7 @@ final class AansluitingControllerTest extends TestCase {
 
 		$this->controller = new AansluitingController(
 			request: $this->request,
-			aansluitingService: $this->service,
+			reconciliationService: $this->service,
 			userSession: $this->userSession,
 			logger: $this->logger,
 		);
@@ -130,12 +130,12 @@ final class AansluitingControllerTest extends TestCase {
 		$this->userSession->method('getUser')->willReturn(null);
 		$this->controller = new AansluitingController(
 			request: $this->request,
-			aansluitingService: $this->service,
+			reconciliationService: $this->service,
 			userSession: $this->userSession,
 			logger: $this->logger,
 		);
 
-		$response = $this->controller->compute(aansluitingId: 'aansl-1');
+		$response = $this->controller->compute(reconciliationId: 'aansl-1');
 
 		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
@@ -148,7 +148,7 @@ final class AansluitingControllerTest extends TestCase {
 	 */
 	public function testComputeMissingPeriodReturns400(): void {
 		$this->withParams([]);
-		$response = $this->controller->compute(aansluitingId: 'aansl-1');
+		$response = $this->controller->compute(reconciliationId: 'aansl-1');
 
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
@@ -161,7 +161,7 @@ final class AansluitingControllerTest extends TestCase {
 	 */
 	public function testComputeMalformedAansluitingIdReturns400(): void {
 		$this->withParams(['period_id' => '2026-Q2']);
-		$response = $this->controller->compute(aansluitingId: '../../etc');
+		$response = $this->controller->compute(reconciliationId: '../../etc');
 
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
@@ -180,7 +180,7 @@ final class AansluitingControllerTest extends TestCase {
 			->with('aansl-1', '2026-Q2')
 			->willReturn($payload);
 
-		$response = $this->controller->compute(aansluitingId: 'aansl-1');
+		$response = $this->controller->compute(reconciliationId: 'aansl-1');
 
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 		self::assertSame($payload, $response->getData());
@@ -197,7 +197,7 @@ final class AansluitingControllerTest extends TestCase {
 		$this->service->method('compute')->willThrowException(new RuntimeException('No filed VATReturn found — internal detail'));
 		$this->logger->expects($this->once())->method('error');
 
-		$response = $this->controller->compute(aansluitingId: 'aansl-1');
+		$response = $this->controller->compute(reconciliationId: 'aansl-1');
 
 		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
 		self::assertStringNotContainsString('internal detail', (string)json_encode($response->getData()));

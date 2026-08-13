@@ -210,11 +210,11 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 	public function testSubsidieLifecycleVocabularyIdenticalToRetiredSchema(): void {
 		$order = $this->orderSchema();
 		$lifecycle = $order['x-openregister-lifecycle'];
-		$subsidieStates = $this->statesForType($lifecycle, 'subsidy');
+		$subsidyStates = $this->statesForType($lifecycle, 'subsidy');
 
 		self::assertSame(
 			['aanvraag', 'verleend', 'vastgesteld', 'uitbetaald', 'teruggevorderd', 'afgehandeld'],
-			$subsidieStates
+			$subsidyStates
 		);
 
 	}//end testSubsidieLifecycleVocabularyIdenticalToRetiredSchema()

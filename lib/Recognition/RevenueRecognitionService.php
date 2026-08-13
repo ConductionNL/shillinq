@@ -283,13 +283,13 @@ class RevenueRecognitionService {
 	 * @return int Monthly rate in whole cents.
 	 */
 	private function monthlyRateCents(array $line): int {
-		$frequentie = (string)($line['frequency'] ?? '');
-		if (isset(self::FREQUENCY_FACTORS[$frequentie]) === false) {
+		$frequency = (string)($line['frequency'] ?? '');
+		if (isset(self::FREQUENCY_FACTORS[$frequency]) === false) {
 			$this->logger->warning(
 				'RevenueRecognitionService: RECURRING line with null/unknown frequentie contributes 0',
 				[
 					'lineId' => (string)($line['lineId'] ?? ''),
-					'frequency' => $frequentie,
+					'frequency' => $frequency,
 				]
 			);
 
@@ -298,7 +298,7 @@ class RevenueRecognitionService {
 
 		$amountCents = $this->toCents(amount: ($line['amount'] ?? 0));
 
-		return (int)round($amountCents * self::FREQUENCY_FACTORS[$frequentie]);
+		return (int)round($amountCents * self::FREQUENCY_FACTORS[$frequency]);
 	}//end monthlyRateCents()
 
 	/**

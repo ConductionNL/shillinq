@@ -74,15 +74,15 @@ class CreditScoreService {
 	 * Fetch the most recent CreditScore for a klant, refreshing when stale.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $klantId Customer FK.
+	 * @param string $customerId Customer FK.
 	 * @param string $provider GRAYDON / CREDITSAFE / ATRADIUS_INSIGHTS.
 	 *
 	 * @return array<string,mixed>|null The score record, null when none is available.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
 	 */
-	public function getOrRefresh(string $administrationId, string $klantId, string $provider): ?array {
-		$cached = $this->latestForKlant(administrationId: $administrationId, klantId: $klantId, provider: $provider);
+	public function getOrRefresh(string $administrationId, string $customerId, string $provider): ?array {
+		$cached = $this->latestForCustomer(administrationId: $administrationId, customerId: $customerId, provider: $provider);
 		if ($cached !== null && $this->isFresh(score: $cached) === true) {
 			return $cached;
 		}
@@ -97,7 +97,7 @@ class CreditScoreService {
 		try {
 			$fresh = $this->fetch->fetch(
 				administrationId: $administrationId,
-				klantId: $klantId,
+				customerId: $customerId,
 				provider: $provider
 			);
 		} catch (\Throwable $e) {
@@ -107,13 +107,13 @@ class CreditScoreService {
 		}
 
 		if ($fresh === null) {
-			$this->logger->info('Shillinq: CreditScore live refresh unavailable for ' . $klantId . ' / ' . $provider . '; using cached snapshot.');
+			$this->logger->info('Shillinq: CreditScore live refresh unavailable for ' . $customerId . ' / ' . $provider . '; using cached snapshot.');
 			return $cached;
 		}
 
 		// Normalise + persist the fresh snapshot so the next call hits the cache.
 		$fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
-		$fresh['customerId'] = ($fresh['customerId'] ?? $klantId);
+		$fresh['customerId'] = ($fresh['customerId'] ?? $customerId);
 		$fresh['provider'] = ($fresh['provider'] ?? $provider);
 		if (isset($fresh['scoreDate']) === false || (string)$fresh['scoreDate'] === '') {
 			$fresh['scoreDate'] = (new DateTimeImmutable())->format('Y-m-d');
@@ -163,13 +163,13 @@ class CreditScoreService {
 	 * Render a UI warning payload for an invoice when the klant has a low score.
 	 *
 	 * @param array<string,mixed>|null $score The CreditScore record.
-	 * @param float $invoiceBedrag Invoice principal (EUR).
+	 * @param float $invoiceAmount Invoice principal (EUR).
 	 *
 	 * @return array{warning:bool,message:string,creditLimietAdvies:?float,deelfacturatieAdvies:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
 	 */
-	public function evaluateForInvoice(?array $score, float $invoiceBedrag): array {
+	public function evaluateForInvoice(?array $score, float $invoiceAmount): array {
 		if ($score === null) {
 			return [
 				'warning' => false,
@@ -187,7 +187,7 @@ class CreditScoreService {
 		}
 
 		$belowThreshold = ($value < $threshold);
-		$overLimit = ($limit !== null && $invoiceBedrag > $limit);
+		$overLimit = ($limit !== null && $invoiceAmount > $limit);
 
 		if ($belowThreshold === false && $overLimit === false) {
 			return [
@@ -198,10 +198,10 @@ class CreditScoreService {
 			];
 		}
 
-		$klantId = (string)($score['customerId'] ?? '');
+		$customerId = (string)($score['customerId'] ?? '');
 		$message = sprintf(
 			'Klant %s heeft lage creditscore (%s op %s). Overweeg vooruitbetaling of deelfacturatie.',
-			$klantId,
+			$customerId,
 			(string)$value,
 			(string)($score['scoreScale'] ?? '')
 		);
@@ -219,12 +219,12 @@ class CreditScoreService {
 	 * The most recent CreditScore for a klant / provider tuple.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $klantId Customer FK.
+	 * @param string $customerId Customer FK.
 	 * @param string $provider Provider id.
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function latestForKlant(string $administrationId, string $klantId, string $provider): ?array {
+	private function latestForCustomer(string $administrationId, string $customerId, string $provider): ?array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$rows = $objectService
@@ -234,7 +234,7 @@ class CreditScoreService {
 					[
 						'filters' => [
 							'administrationId' => $administrationId,
-							'customerId' => $klantId,
+							'customerId' => $customerId,
 							'provider' => $provider,
 						],
 					]
@@ -266,13 +266,13 @@ class CreditScoreService {
 	 */
 	private function isFresh(array $score): bool {
 		$days = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
-		$datum = (string)($score['scoreDate'] ?? '');
-		if ($datum === '') {
+		$date = (string)($score['scoreDate'] ?? '');
+		if ($date === '') {
 			return false;
 		}
 
 		try {
-			$when = new DateTimeImmutable($datum);
+			$when = new DateTimeImmutable($date);
 		} catch (\Throwable $e) {
 			return false;
 		}

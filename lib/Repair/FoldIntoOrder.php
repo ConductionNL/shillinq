@@ -147,7 +147,7 @@ class FoldIntoOrder implements IRepairStep {
 		$seen = $this->loadFoldedMarkers($objectService, $registerSlug, $output);
 
 		$summary = [];
-		$summary['Subsidie'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'Subsidie', $this->buildSubsidieOrder(...), $seen);
+		$summary['Subsidie'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'Subsidie', $this->buildSubsidyOrder(...), $seen);
 		$summary['PurchaseOrder'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'PurchaseOrder', $this->buildPurchaseOrder(...), $seen);
 		$summary['DBAOpdracht'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'DBAOpdracht', $this->buildEngagementOrder(...), $seen);
 
@@ -457,7 +457,7 @@ class FoldIntoOrder implements IRepairStep {
 	 *
 	 * @return array<string,mixed> The Order record.
 	 */
-	private function buildSubsidieOrder(array $src, string $migrationKey): array {
+	private function buildSubsidyOrder(array $src, string $migrationKey): array {
 		$grantedAmount = $src['grantedAmount'] ?? ($src['awardAmount'] ?? null);
 
 		return [
@@ -570,7 +570,7 @@ class FoldIntoOrder implements IRepairStep {
 	 * @return array<string,mixed> The Order record.
 	 */
 	private function buildEngagementOrder(array $src, string $migrationKey): array {
-		$verwachteOmzet = $this->intOrNull($src['expectedRevenue'] ?? null);
+		$expectedRevenue = $this->intOrNull($src['expectedRevenue'] ?? null);
 
 		return [
 			'administrationId' => (string)($src['administrationId'] ?? 'unknown'),
@@ -582,7 +582,7 @@ class FoldIntoOrder implements IRepairStep {
 			'currency' => 'EUR',
 			'orderDate' => $this->toDateTime($src['startDate'] ?? null),
 			'endDate' => $this->toDateTime($src['expectedEndDate'] ?? null),
-			'totalAmount' => ($verwachteOmzet === null ? null : ($verwachteOmzet / 100.0)),
+			'totalAmount' => ($expectedRevenue === null ? null : ($expectedRevenue / 100.0)),
 			'description' => $this->stringOrNull($src['assignmentName'] ?? null),
 			'state' => (string)($src['intakeStatus'] ?? 'DRAFT'),
 			'engagement' => [
@@ -591,7 +591,7 @@ class FoldIntoOrder implements IRepairStep {
 				'assignmentName' => $this->stringOrNull($src['assignmentName'] ?? null),
 				'expectedEndDate' => $this->toDate($src['expectedEndDate'] ?? null),
 				'actualEndDate' => $this->toDate($src['actualEndDate'] ?? null),
-				'expectedRevenue' => $verwachteOmzet,
+				'expectedRevenue' => $expectedRevenue,
 				'realisedRevenue' => $this->intOrNull($src['realisedRevenue'] ?? null),
 				'oneOffLageThreshold' => $this->boolOrNull($src['oneOffLageThreshold'] ?? null),
 				'modelOvereenkomstId' => $this->stringOrNull($src['modelOvereenkomstId'] ?? null),

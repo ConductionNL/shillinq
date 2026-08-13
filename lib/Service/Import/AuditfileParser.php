@@ -371,13 +371,13 @@ class AuditfileParser {
 		}
 
 		foreach ($nodes as $node) {
-			$btw = $this->firstString(node: $node, xpath: './/*[local-name()="taxRegIdent"]');
+			$vat = $this->firstString(node: $node, xpath: './/*[local-name()="taxRegIdent"]');
 
 			$relations[] = [
 				'code' => $this->firstString(node: $node, xpath: './*[local-name()="custSupID"]'),
 				'name' => $this->firstString(node: $node, xpath: './*[local-name()="companyName"]'),
 				'kvk' => $this->firstString(node: $node, xpath: './*[local-name()="companyIdent"]'),
-				'vat' => $btw,
+				'vat' => $vat,
 				'email' => $this->firstString(node: $node, xpath: './/*[local-name()="eMail"]'),
 				'phone' => $this->firstString(node: $node, xpath: './/*[local-name()="telephone"]'),
 				'type' => $this->firstString(node: $node, xpath: './*[local-name()="custSupTp"]'),

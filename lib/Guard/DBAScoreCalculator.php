@@ -89,14 +89,14 @@ class DBAScoreCalculator {
 		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['personalArbeid'] ?? []));
 
 		$exclusief = (bool)($deliverooBlock['exclusief'] ?? false);
-		$duur = (string)($deliverooBlock['durationRelationship'] ?? '');
-		if ($exclusief === true && in_array($duur, ['1_TOT_2_JAAR', 'MEER_DAN_2_JAAR'], true) === true) {
+		$duration = (string)($deliverooBlock['durationRelationship'] ?? '');
+		if ($exclusief === true && in_array($duration, ['1_TOT_2_JAAR', 'MEER_DAN_2_JAAR'], true) === true) {
 			$booster += 5;
 		}
 
 		$vervBaar = (int)($arbeidBlock['replaceableScore'] ?? 0);
-		$vervFeitelijk = (int)($arbeidBlock['replacementActualScore'] ?? 0);
-		if ($vervBaar < 5 && $vervFeitelijk >= 10) {
+		$vervActual = (int)($arbeidBlock['replacementActualScore'] ?? 0);
+		if ($vervBaar < 5 && $vervActual >= 10) {
 			$booster += 5;
 		}
 
@@ -134,9 +134,9 @@ class DBAScoreCalculator {
 	public function subtotalGezag(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['authorityRelationship'] ?? []));
 		$instructies = (int)($block['kwaInstructiesScore'] ?? 0);
-		$resultaat = (int)($block['kwaResultFreeScore'] ?? 0);
-		$werkoverleg = (int)($block['participatesInTeamMeetingScore'] ?? 0);
-		$value = ($instructies + $resultaat + $werkoverleg);
+		$result = (int)($block['kwaResultFreeScore'] ?? 0);
+		$teamMeeting = (int)($block['participatesInTeamMeetingScore'] ?? 0);
+		$value = ($instructies + $result + $teamMeeting);
 		return $this->clamp(value: $value, min: 0, max: 20);
 	}//end subtotalGezag()
 
@@ -162,10 +162,10 @@ class DBAScoreCalculator {
 	 */
 	public function subtotalFinancieel(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['financieelRisk'] ?? []));
-		$frequentie = (int)($block['invoiceFrequencyScore'] ?? 0);
-		$risico = (int)($block['paymentRiskScore'] ?? 0);
-		$investering = (int)($block['investmentEigenMiddelenScore'] ?? 0);
-		$value = ($frequentie + $risico + $investering);
+		$frequency = (int)($block['invoiceFrequencyScore'] ?? 0);
+		$risk = (int)($block['paymentRiskScore'] ?? 0);
+		$investment = (int)($block['investmentEigenMiddelenScore'] ?? 0);
+		$value = ($frequency + $risk + $investment);
 		return $this->clamp(value: $value, min: 0, max: 20);
 	}//end subtotalFinancieel()
 
@@ -185,8 +185,8 @@ class DBAScoreCalculator {
 
 		$score = 0;
 
-		$duur = (string)($block['durationRelationship'] ?? '');
-		$score += self::DUUR_POINTS[$duur] ?? 0;
+		$duration = (string)($block['durationRelationship'] ?? '');
+		$score += self::DUUR_POINTS[$duration] ?? 0;
 
 		if ((bool)($block['exclusief'] ?? false) === true) {
 			$score += 8;

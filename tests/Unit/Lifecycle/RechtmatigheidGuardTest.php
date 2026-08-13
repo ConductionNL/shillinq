@@ -187,7 +187,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenParagraafPermitsBinnenTolerantie(): void {
-		$result = $this->guard->canVaststellenParagraaf(paragraaf: ['binnen_tolerance' => true]);
+		$result = $this->guard->canVaststellenParagraaf(paragraph: ['binnen_tolerance' => true]);
 		self::assertTrue(condition: $result, message: 'Binnen tolerantie must permit vaststellen');
 
 	}//end testCanVaststellenParagraafPermitsBinnenTolerantie()
@@ -199,7 +199,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 */
 	public function testCanVaststellenParagraafDeniesBuitenTolerantieZonderToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
-			paragraaf: [
+			paragraph: [
 				'binnen_tolerance' => false,
 				'declaration_college' => '',
 				'financialYear' => 2026,
@@ -216,7 +216,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 */
 	public function testCanVaststellenParagraafPermitsBuitenTolerantieMetToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
-			paragraaf: [
+			paragraph: [
 				'binnen_tolerance' => false,
 				'declaration_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
 				'financialYear' => 2026,
@@ -232,7 +232,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanExportParagraafPermitsDefinitief(): void {
-		$result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'definitief', 'financialYear' => 2026]);
+		$result = $this->guard->canExportParagraaf(paragraph: ['status' => 'definitief', 'financialYear' => 2026]);
 		self::assertTrue(condition: $result, message: 'Definitief paragraaf must permit export');
 
 	}//end testCanExportParagraafPermitsDefinitief()
@@ -243,7 +243,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanExportParagraafDeniesConcept(): void {
-		$result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'concept', 'financialYear' => 2026]);
+		$result = $this->guard->canExportParagraaf(paragraph: ['status' => 'concept', 'financialYear' => 2026]);
 		self::assertFalse(condition: $result, message: 'Concept paragraaf must block export');
 
 	}//end testCanExportParagraafDeniesConcept()
@@ -254,7 +254,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanExportParagraafDeniesVastgesteldCollege(): void {
-		$result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'vastgesteld_college', 'financialYear' => 2026]);
+		$result = $this->guard->canExportParagraaf(paragraph: ['status' => 'vastgesteld_college', 'financialYear' => 2026]);
 		self::assertFalse(condition: $result, message: 'Non-definitief paragraaf must block export');
 
 	}//end testCanExportParagraafDeniesVastgesteldCollege()

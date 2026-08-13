@@ -166,7 +166,7 @@ final class AansluitingenFragmentTest extends TestCase {
 		self::assertNotEmpty($objects);
 
 		$slugs = [];
-		$aansluitingTypes = [];
+		$reconciliationTypes = [];
 		$relationships = [];
 		foreach ($objects as $object) {
 			self::assertSame('shillinq', $object['@self']['register']);
@@ -174,14 +174,14 @@ final class AansluitingenFragmentTest extends TestCase {
 			$slugs[] = $object['@self']['slug'];
 
 			if ($object['@self']['schema'] === 'Aansluiting') {
-				$aansluitingTypes[] = $object['reconciliationType'];
+				$reconciliationTypes[] = $object['reconciliationType'];
 				$relationships[] = $object['expectedRelationship'];
 			}
 		}
 
 		self::assertSame(count($slugs), count(array_unique($slugs)), 'Seed slugs must be unique');
-		self::assertContains('btw-ledger-aangifte', $aansluitingTypes);
-		self::assertContains('subledger-gl-control', $aansluitingTypes);
+		self::assertContains('btw-ledger-aangifte', $reconciliationTypes);
+		self::assertContains('subledger-gl-control', $reconciliationTypes);
 		self::assertContains('equal', $relationships);
 		self::assertContains('equal-with-sign-flip', $relationships);
 	}//end testSeedObjectsAreConsistent()

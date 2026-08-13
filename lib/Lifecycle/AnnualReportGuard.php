@@ -152,8 +152,8 @@ class AnnualReportGuard {
 				return false;
 			}
 
-			$vereist = ($report['accountantsverklaringRequired'] ?? false) === true;
-			if ($vereist === false) {
+			$required = ($report['accountantsverklaringRequired'] ?? false) === true;
+			if ($required === false) {
 				return true;
 			}
 
@@ -199,8 +199,8 @@ class AnnualReportGuard {
 		}
 
 		return [
-			$this->sumRubriekCents(rubrieken: $rubrieken, zijde: 'activa'),
-			$this->sumRubriekCents(rubrieken: $rubrieken, zijde: 'passiva'),
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'activa'),
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'passiva'),
 		];
 	}//end balanceTotalsInCents()
 
@@ -208,14 +208,14 @@ class AnnualReportGuard {
 	 * Sum the huidigJaar amounts (in integer cents) of the rubrieken on one zijde.
 	 *
 	 * @param array<int,mixed> $rubrieken The balans rubriek rows.
-	 * @param string $zijde The side to total ('activa' or 'passiva').
+	 * @param string $side The side to total ('activa' or 'passiva').
 	 *
 	 * @return int The summed amount in integer cents.
 	 */
-	private function sumRubriekCents(array $rubrieken, string $zijde): int {
+	private function sumRubriekCents(array $rubrieken, string $side): int {
 		$cents = 0;
 		foreach ($rubrieken as $rubriek) {
-			if (is_array($rubriek) === true && ($rubriek['side'] ?? '') === $zijde) {
+			if (is_array($rubriek) === true && ($rubriek['side'] ?? '') === $side) {
 				$cents += (int)round((float)($rubriek['currentYear'] ?? 0) * 100);
 			}
 		}

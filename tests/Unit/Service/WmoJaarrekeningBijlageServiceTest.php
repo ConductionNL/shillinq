@@ -87,10 +87,10 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 		self::assertNull($bijlage['activiteiten'][0]['abbReference']);
 		self::assertSame(2, $bijlage['activiteiten'][0]['manualOverrides']);
 
-		$samenvatting = $bijlage['summary'];
-		self::assertSame(2, $samenvatting['total']);
-		self::assertSame(1, $samenvatting['compliant']);
-		self::assertSame(1, $samenvatting['nonCompliant']);
+		$summary = $bijlage['summary'];
+		self::assertSame(2, $summary['total']);
+		self::assertSame(1, $summary['compliant']);
+		self::assertSame(1, $summary['nonCompliant']);
 
 	}//end testComposeBuildsActivityRows()
 

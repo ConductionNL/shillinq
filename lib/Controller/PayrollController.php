@@ -91,14 +91,14 @@ class PayrollController extends Controller {
 		}
 
 		$administrationId = $this->scopeParam(name: 'administration_id');
-		$werknemerId = $this->scopeParam(name: 'werknemer_id');
-		$periodeId = $this->scopeParam(name: 'periode_id');
+		$employeeId = $this->scopeParam(name: 'werknemer_id');
+		$periodId = $this->scopeParam(name: 'periode_id');
 
 		$error = $this->firstBlank(
 			values: [
 				'administration_id' => $administrationId,
-				'werknemer_id' => $werknemerId,
-				'periode_id' => $periodeId,
+				'werknemer_id' => $employeeId,
+				'periode_id' => $periodId,
 			]
 		);
 		if ($error !== null) {
@@ -106,22 +106,22 @@ class PayrollController extends Controller {
 		}
 
 		try {
-			$strook = $this->payrollService->berekenLoonStrook(
+			$slip = $this->payrollService->berekenLoonStrook(
 				administrationId: $administrationId,
-				werknemerId: $werknemerId,
-				periodeId: $periodeId
+				employeeId: $employeeId,
+				periodId: $periodId
 			);
 		} catch (\RuntimeException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PayrollController: failed to compute loonstrook',
-				['administrationId' => $administrationId, 'periodId' => $periodeId, 'exception' => $e->getMessage()]
+				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => 'Kon loonstrook niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 
-		return new JSONResponse($strook, Http::STATUS_OK);
+		return new JSONResponse($slip, Http::STATUS_OK);
 	}//end loonstrook()
 
 	/**
@@ -140,9 +140,9 @@ class PayrollController extends Controller {
 		}
 
 		$administrationId = $this->scopeParam(name: 'administration_id');
-		$periodeId = $this->scopeParam(name: 'periode_id');
+		$periodId = $this->scopeParam(name: 'periode_id');
 
-		$error = $this->firstBlank(values: ['administration_id' => $administrationId, 'periode_id' => $periodeId]);
+		$error = $this->firstBlank(values: ['administration_id' => $administrationId, 'periode_id' => $periodId]);
 		if ($error !== null) {
 			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
 		}
@@ -153,20 +153,20 @@ class PayrollController extends Controller {
 		}
 
 		try {
-			$afdracht = $this->payrollService->berekenLHAfdracht(
+			$remittance = $this->payrollService->berekenLHAfdracht(
 				administrationId: $administrationId,
-				periodeId: $periodeId,
-				eindheffingenWKR: $wkr
+				periodId: $periodId,
+				finalLeviesWKR: $wkr
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PayrollController: failed to compute LH-afdracht',
-				['administrationId' => $administrationId, 'periodId' => $periodeId, 'exception' => $e->getMessage()]
+				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => 'Kon LH-afdracht niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new JSONResponse($afdracht, Http::STATUS_OK);
+		return new JSONResponse($remittance, Http::STATUS_OK);
 	}//end lhAfdracht()
 
 	/**
@@ -185,9 +185,9 @@ class PayrollController extends Controller {
 		}
 
 		$administrationId = $this->scopeParam(name: 'administration_id');
-		$periodeId = $this->scopeParam(name: 'periode_id');
+		$periodId = $this->scopeParam(name: 'periode_id');
 
-		$error = $this->firstBlank(values: ['administration_id' => $administrationId, 'periode_id' => $periodeId]);
+		$error = $this->firstBlank(values: ['administration_id' => $administrationId, 'periode_id' => $periodId]);
 		if ($error !== null) {
 			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
 		}
@@ -195,12 +195,12 @@ class PayrollController extends Controller {
 		try {
 			$journaal = $this->payrollService->bouwLoonjournaalpost(
 				administrationId: $administrationId,
-				periodeId: $periodeId
+				periodId: $periodId
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PayrollController: failed to build journaalpost',
-				['administrationId' => $administrationId, 'periodId' => $periodeId, 'exception' => $e->getMessage()]
+				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => 'Kon loonjournaalpost niet opbouwen'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}

@@ -205,8 +205,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 			// see the binding cap and the resulting benefit reduction (task
 			// 5.4 + REQ-IBA-003).
 			if ($this->isForfaitairCapHit(data: $data) === true) {
-				$kwalifVoor = (float)($data['kwalificerende_profit_for_nexus'] ?? 0);
-				$kwalifNa = (float)($data['kwalificerende_profit_after_nexus'] ?? 0);
+				$kwalifFor = (float)($data['kwalificerende_profit_for_nexus'] ?? 0);
+				$kwalifAfter = (float)($data['kwalificerende_profit_after_nexus'] ?? 0);
 				$this->logger->record(
 					options: [
 						'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
@@ -217,9 +217,9 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 						'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
 						'reason' => 'cap_hit',
 						'details' => [
-							'voor_cap' => $kwalifVoor,
-							'na_cap' => $kwalifNa,
-							'benefit_reduction' => max(0.0, ($kwalifVoor - $kwalifNa)),
+							'voor_cap' => $kwalifFor,
+							'na_cap' => $kwalifAfter,
+							'benefit_reduction' => max(0.0, ($kwalifFor - $kwalifAfter)),
 							'forfaitair_cap_eur' => 25000,
 						],
 					]
@@ -325,14 +325,14 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		}
 
 		$administrationId = (string)($next['administrationId'] ?? '');
-		$boekjaar = $this->intOrNull(value: $next['financialYear'] ?? null);
+		$financialYear = $this->intOrNull(value: $next['financialYear'] ?? null);
 		$alreadyLocked = ($priorLocked === true);
-		if ($alreadyLocked === false && $boekjaar !== null && $administrationId !== '') {
+		if ($alreadyLocked === false && $financialYear !== null && $administrationId !== '') {
 			// Cross-check: even if THIS record is not locked, the year may be
 			// locked by another row in the same administration + boekjaar.
 			$alreadyLocked = $this->vsoValidator->isYearLocked(
 				administrationId: $administrationId,
-				boekjaar: $boekjaar
+				financialYear: $financialYear
 			);
 		}
 
@@ -341,7 +341,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
 					'administrationId' => $administrationId,
-					'financialYear' => $boekjaar,
+					'financialYear' => $financialYear,
 					'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
 					'subject_schema' => 'IBProfitAttribution',
 					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
@@ -526,8 +526,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 			return false;
 		}
 
-		$voorCap = (float)($data['kwalificerende_profit_for_nexus'] ?? 0);
-		return ($voorCap > 25000.0);
+		$forCap = (float)($data['kwalificerende_profit_for_nexus'] ?? 0);
+		return ($forCap > 25000.0);
 	}//end isForfaitairCapHit()
 
 	/**

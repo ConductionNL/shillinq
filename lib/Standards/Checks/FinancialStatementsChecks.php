@@ -136,7 +136,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 
 				// art. 393: entities that are not small (medium/large) must be audited
 				// by a registered external auditor.
-				'bw-art393-audit' => static fn (array $o): bool => self::auditDutyMet($o),
+				'bw-art393-audit' => static fn (array $o): bool => self::auditDutyWith($o),
 
 				// ===== DE — Handelsgesetzbuch. =====
 				// §242 + §242(3): the Jahresabschluss comprises a balance sheet and a
@@ -183,7 +183,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 				'hgb-267a-micro' => static fn (array $o): bool => self::sizeClassConsistent($o, self::DE_THRESHOLDS, 'micro'),
 
 				// §316: corporations that are not small must be audited.
-				'hgb-316-audit-duty' => static fn (array $o): bool => self::auditDutyMet($o),
+				'hgb-316-audit-duty' => static fn (array $o): bool => self::auditDutyWith($o),
 
 				// §325: disclosure within one year (12 months) of the balance-sheet
 				// date.
@@ -594,7 +594,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 *
 	 * @return bool
 	 */
-	private static function auditDutyMet(array $o): bool {
+	private static function auditDutyWith(array $o): bool {
 		if (self::sizeClassDeclared($o) === false) {
 			return false;
 		}

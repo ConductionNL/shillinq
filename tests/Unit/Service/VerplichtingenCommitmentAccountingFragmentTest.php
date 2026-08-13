@@ -68,10 +68,10 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testVerplichtingDeclaresBronReferentie(): void {
-		$verplichting = $this->fragment()['components']['schemas']['Verplichting'];
-		self::assertArrayHasKey('sourceReference', $verplichting['properties']);
-		self::assertTrue($verplichting['properties']['sourceReference']['nullable'] ?? false);
-		self::assertArrayNotContains('sourceReference', ($verplichting['required'] ?? []));
+		$commitment = $this->fragment()['components']['schemas']['Verplichting'];
+		self::assertArrayHasKey('sourceReference', $commitment['properties']);
+		self::assertTrue($commitment['properties']['sourceReference']['nullable'] ?? false);
+		self::assertArrayNotContains('sourceReference', ($commitment['required'] ?? []));
 
 	}//end testVerplichtingDeclaresBronReferentie()
 
@@ -96,11 +96,11 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testVerplichtingsregelDeclaresCommittedVsRealisedAggregation(): void {
-		$regel = $this->fragment()['components']['schemas']['Verplichtingsregel'];
-		self::assertArrayHasKey('x-openregister-aggregations', $regel);
-		self::assertArrayHasKey('committedVsRealisedPerBudgetLine', $regel['x-openregister-aggregations']);
+		$rule = $this->fragment()['components']['schemas']['Verplichtingsregel'];
+		self::assertArrayHasKey('x-openregister-aggregations', $rule);
+		self::assertArrayHasKey('committedVsRealisedPerBudgetLine', $rule['x-openregister-aggregations']);
 
-		$agg = $regel['x-openregister-aggregations']['committedVsRealisedPerBudgetLine'];
+		$agg = $rule['x-openregister-aggregations']['committedVsRealisedPerBudgetLine'];
 		self::assertSame('Verplichtingsregel', $agg['source']);
 		self::assertSame(
 			['programme', 'costCentre', 'financialYear', 'generalLedgerAccount'],
@@ -171,7 +171,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 		$objects = $this->fragment()['objects'];
 
 		$verplichtingen = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Verplichting'));
-		$regels = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Verplichtingsregel'));
+		$rules = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Verplichtingsregel'));
 		$budgets = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Budget'));
 
 		self::assertGreaterThanOrEqual(3, count($verplichtingen));
@@ -184,17 +184,17 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 
 		foreach ($verplichtingen as $v) {
 			self::assertNotEmpty($v['sourceReference'] ?? '', "Seeded Verplichting {$v['commitmentNumber']} must carry a bronReferentie");
-			$ownRegels = array_filter($regels, static fn ($r) => $r['commitment'] === $v['commitmentNumber']);
-			self::assertNotEmpty($ownRegels, "Seeded Verplichting {$v['commitmentNumber']} must have at least one Verplichtingsregel");
+			$ownRules = array_filter($rules, static fn ($r) => $r['commitment'] === $v['commitmentNumber']);
+			self::assertNotEmpty($ownRules, "Seeded Verplichting {$v['commitmentNumber']} must have at least one Verplichtingsregel");
 
-			foreach ($ownRegels as $regel) {
+			foreach ($ownRules as $rule) {
 				$matchingBudget = array_filter(
 					$budgets,
-					static fn ($b) => $b['programmeCode'] === $regel['programme']
-						&& $b['financialYear'] === $regel['financialYear']
-						&& $b['costCentre'] === $regel['costCentre']
+					static fn ($b) => $b['programmeCode'] === $rule['programme']
+						&& $b['financialYear'] === $rule['financialYear']
+						&& $b['costCentre'] === $rule['costCentre']
 				);
-				$slug = $regel['@self']['slug'];
+				$slug = $rule['@self']['slug'];
 				self::assertNotEmpty($matchingBudget, "Regel $slug must have a matching seeded Budget");
 			}
 		}//end foreach

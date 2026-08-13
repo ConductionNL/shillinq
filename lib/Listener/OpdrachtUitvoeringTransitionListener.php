@@ -105,7 +105,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 			}
 
 			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isOpdrachtUitvoeringSchema(schema: $schema) === false) {
+			if ($this->isAssignmentUitvoeringSchema(schema: $schema) === false) {
 				return;
 			}
 
@@ -145,7 +145,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 	 *
 	 * @return bool
 	 */
-	private function isOpdrachtUitvoeringSchema(string $schema): bool {
+	private function isAssignmentUitvoeringSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
 		return ($normalised === 'opdrachtuitvoering'
 			|| str_ends_with(haystack: $normalised, needle: 'opdrachtuitvoering'));

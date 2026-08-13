@@ -56,7 +56,7 @@ class NexusCalculationService {
 	 * every intermediate value. All monetary inputs are plain euros; the ratios
 	 * are rounded to four decimals to keep the result stable.
 	 *
-	 * @param float $eigenRdKosten Internal R&D cost (loon + material).
+	 * @param float $eigenRdCost Internal R&D cost (loon + material).
 	 * @param float $uitbesteedDerden R&D outsourced to unrelated third parties (teller).
 	 * @param float $uitbesteedVerbonden R&D outsourced to related entities (noemer only).
 	 * @param float $upliftFactor Uplift factor, default 1.3 per OECD.
@@ -73,36 +73,36 @@ class NexusCalculationService {
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
 	 */
 	public function calculateNexusBreak(
-		float $eigenRdKosten,
+		float $eigenRdCost,
 		float $uitbesteedDerden,
 		float $uitbesteedVerbonden,
 		float $upliftFactor = self::UPLIFT_FACTOR,
 	): array {
-		$eigen = max(0.0, $eigenRdKosten);
+		$eigen = max(0.0, $eigenRdCost);
 		$derden = max(0.0, $uitbesteedDerden);
 		$verbonden = max(0.0, $uitbesteedVerbonden);
 
 		$numeratorBeforeUplift = ($eigen + $derden);
-		$totaal = ($eigen + $derden + $verbonden);
+		$total = ($eigen + $derden + $verbonden);
 
 		// Teller_na_uplift never exceeds the total R&D cost (OECD cap on the teller).
-		$numeratorAfterUplift = min(($upliftFactor * $numeratorBeforeUplift), $totaal);
+		$numeratorAfterUplift = min(($upliftFactor * $numeratorBeforeUplift), $total);
 
 		$ongecapt = 0.0;
-		if ($totaal > 0.0) {
-			$ongecapt = ($numeratorAfterUplift / $totaal);
+		if ($total > 0.0) {
+			$ongecapt = ($numeratorAfterUplift / $total);
 		}
 
 		// The nexusbreuk itself is capped at 100% (1.0).
-		$toegepast = min($ongecapt, 1.0);
+		$applied = min($ongecapt, 1.0);
 
 		return [
 			'numeratorBeforeUplift' => round($numeratorBeforeUplift, 2),
 			'numeratorAfterUplift' => round($numeratorAfterUplift, 2),
-			'denominator' => round($totaal, 2),
-			'totalRdCost' => round($totaal, 2),
+			'denominator' => round($total, 2),
+			'totalRdCost' => round($total, 2),
 			'nexusFractionUncapped' => round($ongecapt, 4),
-			'nexusFractionApplied' => round($toegepast, 4),
+			'nexusFractionApplied' => round($applied, 4),
 		];
 
 	}//end calculateNexusBreak()
@@ -113,7 +113,7 @@ class NexusCalculationService {
 	 * Convenience wrapper that returns only the applied nexusbreuk so the
 	 * scenario endpoint can compare a base position against a what-if change.
 	 *
-	 * @param float $eigenRdKosten Internal R&D cost.
+	 * @param float $eigenRdCost Internal R&D cost.
 	 * @param float $uitbesteedDerden Unrelated third-party R&D.
 	 * @param float $uitbesteedVerbonden Related-party R&D.
 	 *
@@ -122,12 +122,12 @@ class NexusCalculationService {
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
 	 */
 	public function scenarioNexusBreak(
-		float $eigenRdKosten,
+		float $eigenRdCost,
 		float $uitbesteedDerden,
 		float $uitbesteedVerbonden,
 	): float {
 		$result = $this->calculateNexusBreak(
-			eigenRdKosten: $eigenRdKosten,
+			eigenRdCost: $eigenRdCost,
 			uitbesteedDerden: $uitbesteedDerden,
 			uitbesteedVerbonden: $uitbesteedVerbonden
 		);

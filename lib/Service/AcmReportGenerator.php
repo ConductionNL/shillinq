@@ -74,7 +74,7 @@ class AcmReportGenerator {
 
 		$activities = (array)$input['activities'];
 		$ikpRecords = (array)($input['ikpRecords'] ?? []);
-		$omzetByActivity = (array)($input['omzetByActivity'] ?? []);
+		$revenueByActivity = (array)($input['omzetByActivity'] ?? []);
 		$abbList = (array)($input['abbList'] ?? []);
 
 		$activiteiten = [];
@@ -85,32 +85,32 @@ class AcmReportGenerator {
 
 			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
 			$code = (string)($activity['code'] ?? '');
-			$naam = (string)($activity['name'] ?? '');
+			$name = (string)($activity['name'] ?? '');
 			$ikp = (array)($ikpRecords[$activityId] ?? []);
 			$integraleCost = (float)($ikp['totaleCost'] ?? 0);
-			$omzet = (float)($omzetByActivity[$activityId] ?? 0);
+			$revenue = (float)($revenueByActivity[$activityId] ?? 0);
 			if ($integraleCost > 0.0) {
-				$ratio = round(($omzet / $integraleCost), 4);
+				$ratio = round(($revenue / $integraleCost), 4);
 			} else {
 				$ratio = null;
 			}
 
-			$compliant = ($omzet >= $integraleCost);
+			$compliant = ($revenue >= $integraleCost);
 			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReferentie = (string)($activity['exemptionDecisionId'] ?? '');
+				$abbReference = (string)($activity['exemptionDecisionId'] ?? '');
 			} else {
-				$abbReferentie = null;
+				$abbReference = null;
 			}
 
 			$activiteiten[] = [
 				'commercialActivityId' => $activityId,
 				'code' => $code,
-				'name' => $naam,
-				'revenue' => $omzet,
+				'name' => $name,
+				'revenue' => $revenue,
 				'integraleCostPrice' => $integraleCost,
 				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
-				'abbReference' => $abbReferentie,
+				'abbReference' => $abbReference,
 			];
 		}//end foreach
 
@@ -151,20 +151,20 @@ class AcmReportGenerator {
 	 * Submit a signed report (REQ-WMO-006 §submit). Status flips to `verzonden`.
 	 *
 	 * @param array<string,mixed> $report A signed report.
-	 * @param string|null $publicatieGmblad Optional gemeenteblad reference.
+	 * @param string|null $publicationGmblad Optional gemeenteblad reference.
 	 *
 	 * @return array<string,mixed> Submitted report (immutable from here).
 	 *
 	 * @throws InvalidArgumentException When the report is not signed.
 	 */
-	public function submit(array $report, ?string $publicatieGmblad = null): array {
+	public function submit(array $report, ?string $publicationGmblad = null): array {
 		if ((string)($report['status'] ?? '') !== 'ready-for-submission') {
 			throw new InvalidArgumentException('Only ready-for-submission reports can be submitted');
 		}
 
 		$report['verzondenInAcm'] = true;
 		$report['verzondenInAcmOn'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
-		$report['publicationMunicipalGazette'] = $publicatieGmblad;
+		$report['publicationMunicipalGazette'] = $publicationGmblad;
 		$report['status'] = 'verzonden';
 
 		return $report;

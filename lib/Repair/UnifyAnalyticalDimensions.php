@@ -135,7 +135,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 			);
 
 			$output->info('Shillinq: UnifyAnalyticalDimensions — migrating KostenDrager → cost-object …');
-			$kdResult = $this->migrateKostenDragers(
+			$kdResult = $this->migrateCostDragers(
 				objectService: $objectService,
 				registerSlug: $registerSlug,
 				output: $output
@@ -239,19 +239,19 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
-	private function migrateKostenDragers(object $objectService, string $registerSlug, IOutput $output): array {
+	private function migrateCostDragers(object $objectService, string $registerSlug, IOutput $output): array {
 		$created = 0;
 		$skipped = 0;
 
-		$kostenDragers = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'KostenDrager');
+		$costDragers = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'KostenDrager');
 
-		if ($kostenDragers === []) {
+		if ($costDragers === []) {
 			$output->info('Shillinq: no KostenDrager records found — skipping cost-object migration.');
 			return ['created' => 0, 'skipped' => 0];
 		}
 
-		foreach ($kostenDragers as $kostenDrager) {
-			$arr = $this->rowPayload(row: $kostenDrager);
+		foreach ($costDragers as $costDrager) {
+			$arr = $this->rowPayload(row: $costDrager);
 			$code = (string)($arr['code'] ?? '');
 			$administrationId = (string)($arr['administrationId'] ?? '');
 
@@ -273,7 +273,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 					continue;
 				}
 
-				$record = $this->buildKostenDragerRecord(source: $arr);
+				$record = $this->buildCostDragerRecord(source: $arr);
 
 				$objectService->saveObject(
 					object: $record,
@@ -388,7 +388,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	 *
 	 * @return array<string,mixed> The AnalyticalDimension record to save.
 	 */
-	private function buildKostenDragerRecord(array $source): array {
+	private function buildCostDragerRecord(array $source): array {
 		$record = [
 			'dimensionType' => 'cost-object',
 			'code' => (string)($source['code'] ?? ''),

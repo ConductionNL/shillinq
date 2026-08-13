@@ -118,13 +118,13 @@ class WmoComplianceCalculator {
 	 *
 	 * @param array<string,mixed> $componenten The six component groups. indirecteOverhead
 	 *                                         is a map summed internally.
-	 * @param float|null $verkochteEenheden Units sold in the period (null when not tracked).
+	 * @param float|null $verkochteUnits Units sold in the period (null when not tracked).
 	 *
 	 * @return array{totaleCost: float, costPricePerUnit: float|null} The cost totals.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function integralCostPrice(array $componenten, ?float $verkochteEenheden = null): array {
+	public function integralCostPrice(array $componenten, ?float $verkochteUnits = null): array {
 		$overhead = [];
 		if (isset($componenten['indirecteOverhead']) === true && is_array($componenten['indirecteOverhead']) === true) {
 			$overhead = $componenten['indirecteOverhead'];
@@ -137,14 +137,14 @@ class WmoComplianceCalculator {
 		$totalCents += $this->toCents(amount: ($componenten['capitalCost'] ?? 0));
 		$totalCents += $this->toCents(amount: ($componenten['winstopslag'] ?? 0));
 
-		$perEenheid = null;
-		if ($verkochteEenheden !== null && $verkochteEenheden > 0.0) {
-			$perEenheid = round(($this->fromCents(cents: $totalCents) / $verkochteEenheden), 2);
+		$perUnit = null;
+		if ($verkochteUnits !== null && $verkochteUnits > 0.0) {
+			$perUnit = round(($this->fromCents(cents: $totalCents) / $verkochteUnits), 2);
 		}
 
 		return [
 			'totaleCost' => $this->fromCents(cents: $totalCents),
-			'costPricePerUnit' => $perEenheid,
+			'costPricePerUnit' => $perUnit,
 		];
 
 	}//end integralCostPrice()
@@ -188,16 +188,16 @@ class WmoComplianceCalculator {
 	 * totaleKosten. When no tarief is recorded the activity cannot yet be judged
 	 * and is treated as non-compliant (a price MUST be set to prove cost coverage).
 	 *
-	 * @param float|null $gehanteerdTarief The price charged (per unit or total) in EUR.
-	 * @param float $totaleKosten The integral cost total in EUR.
-	 * @param float|null $kostprijsPerEenheid The per-unit IKP in EUR (null when units not tracked).
+	 * @param float|null $gehanteerdRate The price charged (per unit or total) in EUR.
+	 * @param float $totaleCost The integral cost total in EUR.
+	 * @param float|null $costPricePerUnit The per-unit IKP in EUR (null when units not tracked).
 	 *
 	 * @return array{compliant: bool, marge: float, margePercentage: float} The compliance verdict.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function complianceVerdict(?float $gehanteerdTarief, float $totaleKosten, ?float $kostprijsPerEenheid = null): array {
-		if ($gehanteerdTarief === null) {
+	public function complianceVerdict(?float $gehanteerdRate, float $totaleCost, ?float $costPricePerUnit = null): array {
+		if ($gehanteerdRate === null) {
 			return [
 				'compliant' => false,
 				'marge' => 0.0,
@@ -205,12 +205,12 @@ class WmoComplianceCalculator {
 			];
 		}
 
-		$reference = $totaleKosten;
-		if ($kostprijsPerEenheid !== null) {
-			$reference = $kostprijsPerEenheid;
+		$reference = $totaleCost;
+		if ($costPricePerUnit !== null) {
+			$reference = $costPricePerUnit;
 		}
 
-		$margeCents = ($this->toCents(amount: $gehanteerdTarief) - $this->toCents(amount: $reference));
+		$margeCents = ($this->toCents(amount: $gehanteerdRate) - $this->toCents(amount: $reference));
 		$referenceCents = $this->toCents(amount: $reference);
 
 		$margePercentage = 0.0;
@@ -305,23 +305,23 @@ class WmoComplianceCalculator {
 	 * integrale kostprijs yields a 0.0 ratio and a non-compliant verdict rather
 	 * than a division by zero.
 	 *
-	 * @param float $omzet Annual revenue from customer billings in EUR.
-	 * @param float $integraleKostprijs The definitief IKP total in EUR.
+	 * @param float $revenue Annual revenue from customer billings in EUR.
+	 * @param float $integraleCostPrice The definitief IKP total in EUR.
 	 *
 	 * @return array{ratio: float, compliant: bool} The coverage ratio and compliance verdict.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function kostendekkingsratio(float $omzet, float $integraleKostprijs): array {
-		$kostprijsCents = $this->toCents(amount: $integraleKostprijs);
-		if ($kostprijsCents <= 0) {
+	public function kostendekkingsratio(float $revenue, float $integraleCostPrice): array {
+		$costPriceCents = $this->toCents(amount: $integraleCostPrice);
+		if ($costPriceCents <= 0) {
 			return [
 				'ratio' => 0.0,
 				'compliant' => false,
 			];
 		}
 
-		$ratio = round((($this->toCents(amount: $omzet) / $kostprijsCents) * 100), 2);
+		$ratio = round((($this->toCents(amount: $revenue) / $costPriceCents) * 100), 2);
 
 		return [
 			'ratio' => $ratio,

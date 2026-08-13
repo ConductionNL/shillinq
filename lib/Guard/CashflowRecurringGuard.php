@@ -189,8 +189,8 @@ class CashflowRecurringGuard {
 	 * @return bool True when the validity window is well-formed.
 	 */
 	private function hasValidValidityWindow(array $recurring): bool {
-		$van = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
-		if ($van === null) {
+		$from = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
+		if ($from === null) {
 			$this->logger->info(
 				'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
 				['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -198,13 +198,13 @@ class CashflowRecurringGuard {
 			return false;
 		}
 
-		$totRaw = ($recurring['validTo'] ?? null);
-		if ($totRaw === null || $totRaw === '') {
+		$toRaw = ($recurring['validTo'] ?? null);
+		if ($toRaw === null || $toRaw === '') {
 			// Indefinite window is valid.
 			return true;
 		}
 
-		$tot = $this->parseDate(value: (string)$totRaw);
+		$tot = $this->parseDate(value: (string)$toRaw);
 		if ($tot === null) {
 			$this->logger->info(
 				'CashflowRecurringGuard: unparseable geldigTot — denying save',
@@ -213,7 +213,7 @@ class CashflowRecurringGuard {
 			return false;
 		}
 
-		if ($tot < $van) {
+		if ($tot < $from) {
 			$this->logger->info(
 				'CashflowRecurringGuard: geldigTot precedes geldigVan — denying save',
 				['recurId' => ($recurring['recurId'] ?? 'unknown')]

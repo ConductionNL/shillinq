@@ -154,14 +154,14 @@ class ENSIAVerklaringGenerator {
 	 */
 	private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string {
 		$org = $cyclus['organisation'] ?? [];
-		$orgNaam = (string)($org['name'] ?? '');
+		$orgName = (string)($org['name'] ?? '');
 		$orgKvk = (string)($org['kvk'] ?? '');
-		$jaar = (string)($cyclus['year'] ?? '');
+		$year = (string)($cyclus['year'] ?? '');
 
 		$paras = [];
-		$paras[] = $this->para(text: 'College-verklaring ENSIA ' . $jaar, bold: true);
-		$paras[] = $this->para(text: 'Organisatie: ' . $orgNaam . ' (KvK ' . $orgKvk . ')');
-		$paras[] = $this->para(text: 'Verslagjaar: ' . $jaar);
+		$paras[] = $this->para(text: 'College-verklaring ENSIA ' . $year, bold: true);
+		$paras[] = $this->para(text: 'Organisatie: ' . $orgName . ' (KvK ' . $orgKvk . ')');
+		$paras[] = $this->para(text: 'Verslagjaar: ' . $year);
 		$paras[] = $this->para(text: 'Datum opmaak: ' . (new DateTimeImmutable('now'))->format('Y-m-d'));
 		$paras[] = $this->para(text: '');
 
@@ -182,10 +182,10 @@ class ENSIAVerklaringGenerator {
 			$i = 1;
 			foreach ($top as $b) {
 				$type = (string)($b['type'] ?? 'tekortkoming');
-				$beschrijving = (string)($b['description'] ?? '');
-				$mitigatieActie = (string)($b['mitigationAction'] ?? 'nader te bepalen');
+				$description = (string)($b['description'] ?? '');
+				$mitigationAction = (string)($b['mitigationAction'] ?? 'nader te bepalen');
 				$paras[] = $this->para(
-					text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie)
+					text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $description, $mitigationAction)
 				);
 				$i++;
 			}

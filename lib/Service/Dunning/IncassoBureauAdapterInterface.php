@@ -43,7 +43,7 @@ interface IncassoBureauAdapterInterface {
 	 * evidenceRefs URIs needed to satisfy the bureau's Wki / Wsnp claims.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK (for back-correlation).
+	 * @param string $invoiceId Invoice FK (for back-correlation).
 	 * @param array<string,mixed> $dossier The dossier bundle (composed by IncassoDossierComposer).
 	 *
 	 * @return DunningChannelSendResult The dispatch attempt outcome. On success the
@@ -51,5 +51,5 @@ interface IncassoBureauAdapterInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
-	public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult;
+	public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult;
 }//end interface

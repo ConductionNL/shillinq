@@ -132,7 +132,7 @@ class InitializeBbvAdministration implements IRepairStep {
 
 		$totalSeededReserves = 0;
 		$totalSkippedReserves = 0;
-		$totalSeededTaakvelden = 0;
+		$totalSeededTaskFields = 0;
 
 		foreach ($administrations as $administration) {
 			$row = $this->toArray(object: $administration);
@@ -155,12 +155,12 @@ class InitializeBbvAdministration implements IRepairStep {
 			$totalSeededReserves += $reserveResult['seeded'];
 			$totalSkippedReserves += $reserveResult['skipped'];
 
-			$taakveldResult = $this->ensureReserveTaakveld(
+			$taskFieldResult = $this->ensureReserveTaskField(
 				objectService: $objectService,
 				registerSlug: $registerSlug,
 				overheidslaag: (string)$type
 			);
-			$totalSeededTaakvelden += $taakveldResult['seeded'];
+			$totalSeededTaskFields += $taskFieldResult['seeded'];
 		}//end foreach
 
 		$output->info(
@@ -168,7 +168,7 @@ class InitializeBbvAdministration implements IRepairStep {
 				'BBV-administration bootstrap: %d algemene reserve(s) created, %d skipped; %d reserve-taakveld(en) created.',
 				$totalSeededReserves,
 				$totalSkippedReserves,
-				$totalSeededTaakvelden
+				$totalSeededTaskFields
 			)
 		);
 
@@ -244,7 +244,7 @@ class InitializeBbvAdministration implements IRepairStep {
 	 *
 	 * @return array{seeded:int,skipped:int}
 	 */
-	private function ensureReserveTaakveld(object $objectService, string $registerSlug, string $overheidslaag): array {
+	private function ensureReserveTaskField(object $objectService, string $registerSlug, string $overheidslaag): array {
 		try {
 			$existing = $objectService
 				->setRegister($registerSlug)

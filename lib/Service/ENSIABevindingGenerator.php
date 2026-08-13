@@ -90,25 +90,25 @@ class ENSIABevindingGenerator {
 				continue;
 			}
 
-			$vraagCode = (string)($v['questionCode'] ?? '');
-			$vraagTxt = (string)($v['questionText'] ?? '');
-			$vraagId = (string)($v['id'] ?? $v['uuid'] ?? '');
+			$questionCode = (string)($v['questionCode'] ?? '');
+			$questionTxt = (string)($v['questionText'] ?? '');
+			$questionId = (string)($v['id'] ?? $v['uuid'] ?? '');
 
-			if ($vraagTxt !== '') {
-				$vraagLabel = $vraagTxt;
+			if ($questionTxt !== '') {
+				$questionLabel = $questionTxt;
 			} else {
-				$vraagLabel = 'evaluatievraag';
+				$questionLabel = 'evaluatievraag';
 			}
 
 			$findings[] = [
 				'cyclusId' => $cyclusId,
 				'administrationId' => $administrationId,
-				'questionId' => $vraagId,
+				'questionId' => $questionId,
 				'type' => 'tekortkoming',
 				'description' => sprintf(
 					'%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
-					$vraagCode,
-					$vraagLabel,
+					$questionCode,
+					$questionLabel,
 					$score,
 					$normniveau
 				),

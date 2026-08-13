@@ -88,10 +88,10 @@ final class CashflowAggregationLogicTest extends TestCase {
 	 * @return void
 	 */
 	public function testBtwQuarterlyDueDates(): void {
-		self::assertSame('2026-04-30', $this->btwDueDate(year: 2026, quarter: 1));
-		self::assertSame('2026-07-31', $this->btwDueDate(year: 2026, quarter: 2));
-		self::assertSame('2026-10-31', $this->btwDueDate(year: 2026, quarter: 3));
-		self::assertSame('2027-01-31', $this->btwDueDate(year: 2026, quarter: 4));
+		self::assertSame('2026-04-30', $this->vatDueDate(year: 2026, quarter: 1));
+		self::assertSame('2026-07-31', $this->vatDueDate(year: 2026, quarter: 2));
+		self::assertSame('2026-10-31', $this->vatDueDate(year: 2026, quarter: 3));
+		self::assertSame('2027-01-31', $this->vatDueDate(year: 2026, quarter: 4));
 
 	}//end testBtwQuarterlyDueDates()
 
@@ -149,9 +149,9 @@ final class CashflowAggregationLogicTest extends TestCase {
 	 * @return void
 	 */
 	public function testBufferStatusClassifier(): void {
-		self::assertSame('CRISIS', $this->bufferStatus(saldo: 2000.0, ondergrens: 2600.0, vooralarm: 7800.0));
-		self::assertSame('VOORALARM', $this->bufferStatus(saldo: 7500.0, ondergrens: 2600.0, vooralarm: 7800.0));
-		self::assertSame('BOVEN_BUFFER', $this->bufferStatus(saldo: 12000.0, ondergrens: 2600.0, vooralarm: 7800.0));
+		self::assertSame('CRISIS', $this->bufferStatus(balance: 2000.0, ondergrens: 2600.0, vooralarm: 7800.0));
+		self::assertSame('VOORALARM', $this->bufferStatus(balance: 7500.0, ondergrens: 2600.0, vooralarm: 7800.0));
+		self::assertSame('BOVEN_BUFFER', $this->bufferStatus(balance: 12000.0, ondergrens: 2600.0, vooralarm: 7800.0));
 
 	}//end testBufferStatusClassifier()
 
@@ -303,7 +303,7 @@ final class CashflowAggregationLogicTest extends TestCase {
 	 *
 	 * @return string Due date Y-m-d.
 	 */
-	private function btwDueDate(int $year, int $quarter): string {
+	private function vatDueDate(int $year, int $quarter): string {
 		switch ($quarter) {
 			case 1:
 				return sprintf('%d-04-30', $year);
@@ -322,18 +322,18 @@ final class CashflowAggregationLogicTest extends TestCase {
 	/**
 	 * Buffer-status classifier per REQ-CF-009.
 	 *
-	 * @param float $saldo Eind-saldo of the week.
+	 * @param float $balance Eind-saldo of the week.
 	 * @param float $ondergrens Critical threshold.
 	 * @param float $vooralarm Pre-alert threshold.
 	 *
 	 * @return string
 	 */
-	private function bufferStatus(float $saldo, float $ondergrens, float $vooralarm): string {
-		if ($saldo < $ondergrens) {
+	private function bufferStatus(float $balance, float $ondergrens, float $vooralarm): string {
+		if ($balance < $ondergrens) {
 			return 'CRISIS';
 		}
 
-		if ($saldo < $vooralarm) {
+		if ($balance < $vooralarm) {
 			return 'VOORALARM';
 		}
 

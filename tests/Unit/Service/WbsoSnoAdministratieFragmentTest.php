@@ -193,14 +193,14 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase {
 
 		self::assertNotEmpty($objects);
 
-		$grantedByBeschikking = [];
+		$grantedByDecision = [];
 		foreach ($objects as $object) {
 			self::assertArrayHasKey('@self', $object);
 			self::assertSame('shillinq', $object['@self']['register']);
 			self::assertArrayHasKey($object['@self']['schema'], $schemas);
 
 			if ($object['@self']['schema'] === 'WbsoBeschikking') {
-				$grantedByBeschikking[$object['decisionNumber']] = (float)$object['grantedSoHours'];
+				$grantedByDecision[$object['decisionNumber']] = (float)$object['grantedSoHours'];
 			}
 
 			if ($object['@self']['schema'] === 'SoUurregistratie') {
@@ -215,10 +215,10 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase {
 				continue;
 			}
 
-			$beschikkingNumber = $object['decisionNumber'];
-			self::assertArrayHasKey($beschikkingNumber, $grantedByBeschikking);
+			$decisionNumber = $object['decisionNumber'];
+			self::assertArrayHasKey($decisionNumber, $grantedByDecision);
 			self::assertLessThanOrEqual(
-				$grantedByBeschikking[$beschikkingNumber],
+				$grantedByDecision[$decisionNumber],
 				(float)$object['realisedSoHours'],
 				'Seed mededeling realisatie must not exceed its beschikking ceiling (REQ-WBSO-005)'
 			);

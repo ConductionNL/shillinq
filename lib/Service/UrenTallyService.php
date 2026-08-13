@@ -86,8 +86,8 @@ final class UrenTallyService {
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
 	 */
 	public function tallyDag(array $entries): array {
-		$totaal = 0.0;
-		$perCategorie = [];
+		$total = 0.0;
+		$perCategory = [];
 		$overages = [];
 
 		foreach ($entries as $entry) {
@@ -95,32 +95,32 @@ final class UrenTallyService {
 				continue;
 			}
 
-			$categorie = (string)($entry['category'] ?? '');
-			if ($categorie === '') {
+			$category = (string)($entry['category'] ?? '');
+			if ($category === '') {
 				continue;
 			}
 
-			$uren = (float)($entry['hours'] ?? 0);
-			$capInfo = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
+			$hours = (float)($entry['hours'] ?? 0);
+			$capInfo = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
 			$geteld = $capInfo['getoldeHours'];
-			$notitie = $capInfo['capNote'];
+			$note = $capInfo['capNote'];
 
-			$totaal += $geteld;
-			$perCategorie[$categorie] = (($perCategorie[$categorie] ?? 0.0) + $geteld);
+			$total += $geteld;
+			$perCategory[$category] = (($perCategory[$category] ?? 0.0) + $geteld);
 
-			if ($notitie !== null) {
+			if ($note !== null) {
 				$overages[] = [
-					'category' => $categorie,
-					'ingevoerd' => $uren,
+					'category' => $category,
+					'ingevoerd' => $hours,
 					'geteld' => $geteld,
-					'notitie' => $notitie,
+					'notitie' => $note,
 				];
 			}
 		}//end foreach
 
 		return [
-			'totalHours' => $totaal,
-			'perCategory' => $perCategorie,
+			'totalHours' => $total,
+			'perCategory' => $perCategory,
 			'overages' => $overages,
 		];
 
@@ -141,29 +141,29 @@ final class UrenTallyService {
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
 	 */
 	public function tallyYearToDate(array $entries, string $now): array {
-		$totaal = 0.0;
+		$total = 0.0;
 		foreach ($entries as $entry) {
 			if (is_array($entry) === false) {
 				continue;
 			}
 
-			$categorie = (string)($entry['category'] ?? '');
-			if ($categorie === '') {
+			$category = (string)($entry['category'] ?? '');
+			if ($category === '') {
 				continue;
 			}
 
-			$uren = (float)($entry['hours'] ?? 0);
-			$cap = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
-			$totaal += $cap['getoldeHours'];
+			$hours = (float)($entry['hours'] ?? 0);
+			$cap = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
+			$total += $cap['getoldeHours'];
 		}
 
 		$this->logger->info(
 			'UrenTallyService: YTD tally complete',
-			['totalHours' => $totaal, 'calculatedOn' => $now]
+			['totalHours' => $total, 'calculatedOn' => $now]
 		);
 
 		return [
-			'lopendeHours' => $totaal,
+			'lopendeHours' => $total,
 			'calculatedOn' => $now,
 		];
 

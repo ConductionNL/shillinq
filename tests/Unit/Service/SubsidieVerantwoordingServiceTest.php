@@ -114,14 +114,14 @@ class SubsidieVerantwoordingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAuditorStatementTriggeredForLargeGrant(): void {
-		$verantwoording = [
+		$accountability = [
 			'grantId' => 'SUB-2026-0001',
 			'awardedAmount' => 30000.0,
 			'administrationId' => 'adm-gemeente-1',
 		];
 
 		$payload = $this->service->buildAuditorStatementForVerantwoording(
-			verantwoording: $verantwoording,
+			accountability: $accountability,
 			auditorUserId: 'auditor-jansen',
 			auditDate: '2026-03-15'
 		);
@@ -141,10 +141,10 @@ class SubsidieVerantwoordingServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testNoAuditorStatementForSmallGrant(): void {
-		$verantwoording = ['grantId' => 'SUB-2', 'awardedAmount' => 10000.0, 'administrationId' => 'adm-1'];
+		$accountability = ['grantId' => 'SUB-2', 'awardedAmount' => 10000.0, 'administrationId' => 'adm-1'];
 
 		$payload = $this->service->buildAuditorStatementForVerantwoording(
-			verantwoording: $verantwoording,
+			accountability: $accountability,
 			auditorUserId: 'auditor-jansen'
 		);
 

@@ -81,8 +81,8 @@ class AbbLifecycleService {
 		// Per-target precondition checks.
 		switch ($toStatus) {
 			case 'councilResolution':
-				$kenmerk = trim((string)($abb['reference'] ?? ''));
-				if ($kenmerk === '') {
+				$reference = trim((string)($abb['reference'] ?? ''));
+				if ($reference === '') {
 					return ['ok' => false, 'error' => 'Transition to council resolution requires a reference'];
 				}
 				break;
@@ -153,7 +153,7 @@ class AbbLifecycleService {
 		// Auto-calculate volgendeEvaluatie when entering geldig.
 		if ($toStatus === 'geldig' && trim((string)($abb['determinationDate'] ?? '')) !== '') {
 			$abb['volgendeEvaluation'] = $this->calculateNextEvaluation(
-				vaststellingsdatum: (string)$abb['determinationDate'],
+				determinationDate: (string)$abb['determinationDate'],
 				ritme: (string)($abb['evaluationRitme'] ?? 'tweejaarlijks')
 			);
 		}
@@ -176,14 +176,14 @@ class AbbLifecycleService {
 	public function generateTasks(array $abb, string $toStatus): array {
 		$tasks = [];
 		$now = new DateTimeImmutable('now');
-		$kenmerk = (string)($abb['reference'] ?? 'ABB');
+		$reference = (string)($abb['reference'] ?? 'ABB');
 
 		switch ($toStatus) {
 			case 'councilResolution':
 				$due = $now->add(new DateInterval('P14D'))->format('Y-m-d');
 				$tasks[] = [
 					'type' => 'publish-gemeenteblad',
-					'subject' => sprintf('Publish in gemeenteblad: %s', $kenmerk),
+					'subject' => sprintf('Publish in gemeenteblad: %s', $reference),
 					'dueDate' => $due,
 					'assignedTo' => 'griffier',
 					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
@@ -194,7 +194,7 @@ class AbbLifecycleService {
 				$due = $now->add(new DateInterval('P7D'))->format('Y-m-d');
 				$tasks[] = [
 					'type' => 'notify-acm',
-					'subject' => sprintf('Notify ACM: %s', $kenmerk),
+					'subject' => sprintf('Notify ACM: %s', $reference),
 					'dueDate' => $due,
 					'assignedTo' => 'juridisch-beleidsadviseur',
 					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
@@ -205,7 +205,7 @@ class AbbLifecycleService {
 				$due = $now->add(new DateInterval('P42D'))->format('Y-m-d');
 				$tasks[] = [
 					'type' => 'review-bezwaarschriften',
-					'subject' => sprintf('Review bezwaarschriften (6 weeks): %s', $kenmerk),
+					'subject' => sprintf('Review bezwaarschriften (6 weeks): %s', $reference),
 					'dueDate' => $due,
 					'assignedTo' => 'juridisch-beleidsadviseur',
 					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
@@ -215,7 +215,7 @@ class AbbLifecycleService {
 			case 'evaluatie-due':
 				$tasks[] = [
 					'type' => 'evaluate-abb',
-					'subject' => sprintf('Evaluate ABB: %s', $kenmerk),
+					'subject' => sprintf('Evaluate ABB: %s', $reference),
 					'dueDate' => (string)($abb['volgendeEvaluation'] ?? $now->format('Y-m-d')),
 					'assignedTo' => 'juridisch-beleidsadviseur',
 					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
@@ -232,14 +232,14 @@ class AbbLifecycleService {
 	/**
 	 * Calculate volgendeEvaluatie based on vaststellingsdatum + ritme.
 	 *
-	 * @param string $vaststellingsdatum Vaststellingsdatum (ISO date).
+	 * @param string $determinationDate Vaststellingsdatum (ISO date).
 	 * @param string $ritme One of jaarlijks / tweejaarlijks / driejaarlijks.
 	 *
 	 * @return string Next evaluation date (ISO).
 	 */
-	public function calculateNextEvaluation(string $vaststellingsdatum, string $ritme): string {
+	public function calculateNextEvaluation(string $determinationDate, string $ritme): string {
 		try {
-			$base = new DateTimeImmutable($vaststellingsdatum);
+			$base = new DateTimeImmutable($determinationDate);
 		} catch (\Throwable) {
 			return '';
 		}
@@ -269,11 +269,11 @@ class AbbLifecycleService {
 		}
 
 		$flags = [];
-		$kenmerk = (string)($abb['reference'] ?? 'ABB');
+		$reference = (string)($abb['reference'] ?? 'ABB');
 		if ($status === 'intrekking') {
-			$reason = sprintf('Exemption ABB %s ingetrokken; review activity', $kenmerk);
+			$reason = sprintf('Exemption ABB %s ingetrokken; review activity', $reference);
 		} else {
-			$reason = sprintf('Exemption ABB %s in herziening; review activity', $kenmerk);
+			$reason = sprintf('Exemption ABB %s in herziening; review activity', $reference);
 		}
 
 		foreach ($activities as $activity) {

@@ -97,11 +97,11 @@ class UrenDagregistratieGuard {
 	 */
 	public function validateOnSave(array $entry): bool {
 		try {
-			if ($this->evidenceRequirementMet(entry: $entry) === false) {
+			if ($this->evidenceRequirementWith(entry: $entry) === false) {
 				return false;
 			}
 
-			return $this->backfillRuleMet(entry: $entry);
+			return $this->backfillRuleWith(entry: $entry);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'UrenDagregistratieGuard: validateOnSave failed — denying save (fail-closed)',
@@ -123,27 +123,27 @@ class UrenDagregistratieGuard {
 	 * are counted and a "Reistijd-cap toegepast: N uur niet meegeteld" note is
 	 * produced. All other categories count their hours unchanged.
 	 *
-	 * @param string $categorie The category code.
-	 * @param float $uren The registered hours.
+	 * @param string $category The category code.
+	 * @param float $hours The registered hours.
 	 *
 	 * @return array{getoldeHours: float, capNote: ?string} Counted hours + note.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
 	 */
-	public function pasReistijdCapToe(string $categorie, float $uren): array {
-		if ($categorie !== 'REISTIJD_ZAKELIJK' || $uren <= self::REISTIJD_CAP_PER_DAY) {
-			return ['getoldeHours' => $uren, 'capNote' => null];
+	public function pasReistijdCapToe(string $category, float $hours): array {
+		if ($category !== 'REISTIJD_ZAKELIJK' || $hours <= self::REISTIJD_CAP_PER_DAY) {
+			return ['getoldeHours' => $hours, 'capNote' => null];
 		}
 
-		$nietGeteld = ($uren - self::REISTIJD_CAP_PER_DAY);
-		$notitie = sprintf(
+		$nietGeteld = ($hours - self::REISTIJD_CAP_PER_DAY);
+		$note = sprintf(
 			'Reistijd-cap toegepast: %s uur niet meegeteld',
 			rtrim(rtrim(number_format($nietGeteld, 2, '.', ''), '0'), '.')
 		);
 
 		return [
 			'getoldeHours' => self::REISTIJD_CAP_PER_DAY,
-			'capNote' => $notitie,
+			'capNote' => $note,
 		];
 
 	}//end pasReistijdCapToe()
@@ -152,16 +152,16 @@ class UrenDagregistratieGuard {
 	 * Compute the backfill label for an entry given its work date and the date it
 	 * is registered (REQ-URC-017).
 	 *
-	 * @param string $datum Work date (Y-m-d).
-	 * @param string $registratieMoment Registration timestamp (any strtotime value).
+	 * @param string $date Work date (Y-m-d).
+	 * @param string $registrationMoment Registration timestamp (any strtotime value).
 	 *
 	 * @return string|null "Backfill T+N dagen" when registered after the work date,
 	 *                     or null when registered on the same day or earlier.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
 	 */
-	public function bepaalBackfillLabel(string $datum, string $registratieMoment): ?string {
-		$days = $this->backfillDays(datum: $datum, registratieMoment: $registratieMoment);
+	public function bepaalBackfillLabel(string $date, string $registrationMoment): ?string {
+		$days = $this->backfillDays(date: $date, registrationMoment: $registrationMoment);
 		if ($days === null || $days <= 0) {
 			return null;
 		}
@@ -177,17 +177,17 @@ class UrenDagregistratieGuard {
 	 *
 	 * @return bool True when no evidence is required, or evidence is present.
 	 */
-	private function evidenceRequirementMet(array $entry): bool {
-		$categorie = (string)($entry['category'] ?? '');
-		if (in_array($categorie, self::EVIDENCE_REQUIRED_CATEGORIES, true) === false) {
+	private function evidenceRequirementWith(array $entry): bool {
+		$category = (string)($entry['category'] ?? '');
+		if (in_array($category, self::EVIDENCE_REQUIRED_CATEGORIES, true) === false) {
 			return true;
 		}
 
-		$bewijs = (string)($entry['backfillEvidence'] ?? '');
-		if ($bewijs === '') {
+		$evidence = (string)($entry['backfillEvidence'] ?? '');
+		if ($evidence === '') {
 			$this->logger->info(
 				'UrenDagregistratieGuard: category requires evidence but none supplied — denying save',
-				['category' => $categorie]
+				['category' => $category]
 			);
 			return false;
 		}
@@ -203,25 +203,25 @@ class UrenDagregistratieGuard {
 	 *
 	 * @return bool True when within the free window, or reden + bewijs present.
 	 */
-	private function backfillRuleMet(array $entry): bool {
+	private function backfillRuleWith(array $entry): bool {
 		$days = $this->backfillDays(
-			datum: (string)($entry['date'] ?? ''),
-			registratieMoment: (string)($entry['registrationMoment'] ?? '')
+			date: (string)($entry['date'] ?? ''),
+			registrationMoment: (string)($entry['registrationMoment'] ?? '')
 		);
 
 		if ($days === null || $days <= self::BACKFILL_FREE_DAYS) {
 			return true;
 		}
 
-		$reden = (string)($entry['backfillReason'] ?? '');
-		$bewijs = (string)($entry['backfillEvidence'] ?? '');
-		if ($reden === '' || $bewijs === '') {
+		$reason = (string)($entry['backfillReason'] ?? '');
+		$evidence = (string)($entry['backfillEvidence'] ?? '');
+		if ($reason === '' || $evidence === '') {
 			$this->logger->info(
 				'UrenDagregistratieGuard: backfill older than 7 days requires reden + bewijs — denying save',
 				[
 					'days' => $days,
-					'hasReden' => ($reden !== ''),
-					'hasBewijs' => ($bewijs !== ''),
+					'hasReden' => ($reason !== ''),
+					'hasBewijs' => ($evidence !== ''),
 				]
 			);
 			return false;
@@ -235,18 +235,18 @@ class UrenDagregistratieGuard {
 	 * moment. Returns null when either value is unparseable or no registration
 	 * moment is given (treated as same-day, not a backfill).
 	 *
-	 * @param string $datum Work date (Y-m-d).
-	 * @param string $registratieMoment Registration timestamp.
+	 * @param string $date Work date (Y-m-d).
+	 * @param string $registrationMoment Registration timestamp.
 	 *
 	 * @return int|null Whole days of delay, or null when not computable.
 	 */
-	private function backfillDays(string $datum, string $registratieMoment): ?int {
-		if ($datum === '' || $registratieMoment === '') {
+	private function backfillDays(string $date, string $registrationMoment): ?int {
+		if ($date === '' || $registrationMoment === '') {
 			return null;
 		}
 
-		$work = strtotime($datum);
-		$reg = strtotime($registratieMoment);
+		$work = strtotime($date);
+		$reg = strtotime($registrationMoment);
 		if ($work === false || $reg === false) {
 			return null;
 		}

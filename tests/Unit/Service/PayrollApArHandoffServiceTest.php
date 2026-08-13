@@ -61,7 +61,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	 */
 	public function testSplitsIntoBelastingdienstAndUwv(): void {
 		$payloads = $this->svc->toApTransactionPayloads(
-			lhAfdracht: [
+			lhRemittance: [
 				'werkgeverId' => 'wg-1',
 				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 18620.10,
@@ -103,7 +103,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	 */
 	public function testOmitsZeroAmountPayloads(): void {
 		$payloads = $this->svc->toApTransactionPayloads(
-			lhAfdracht: [
+			lhRemittance: [
 				'werkgeverId' => 'wg-1',
 				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 0.0,
@@ -125,7 +125,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReturnsEmptyWhenLhAfdrachtEmpty(): void {
-		$payloads = $this->svc->toApTransactionPayloads(lhAfdracht: []);
+		$payloads = $this->svc->toApTransactionPayloads(lhRemittance: []);
 		$this->assertSame([], $payloads);
 
 	}//end testReturnsEmptyWhenLhAfdrachtEmpty()

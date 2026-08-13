@@ -59,8 +59,8 @@ class IbBijtellingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testRegularCarFlatRate(): void {
-		$bijtelling = $this->guard->computeBijtelling(38000.0, 'REGULIER_22PCT', 0.17, 30000.0, 0.22);
-		self::assertSame(8360.0, $bijtelling);
+		$benefitInKind = $this->guard->computeBijtelling(38000.0, 'REGULIER_22PCT', 0.17, 30000.0, 0.22);
+		self::assertSame(8360.0, $benefitInKind);
 	}//end testRegularCarFlatRate()
 
 	/**
@@ -71,8 +71,8 @@ class IbBijtellingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testEvTieredStaffel(): void {
-		$bijtelling = $this->guard->computeBijtelling(52000.0, 'EV_TIERED_17_22PCT', 0.17, 30000.0, 0.22);
-		self::assertSame(9940.0, $bijtelling);
+		$benefitInKind = $this->guard->computeBijtelling(52000.0, 'EV_TIERED_17_22PCT', 0.17, 30000.0, 0.22);
+		self::assertSame(9940.0, $benefitInKind);
 	}//end testEvTieredStaffel()
 
 	/**
@@ -82,8 +82,8 @@ class IbBijtellingGuardTest extends TestCase {
 	 */
 	public function testEvUnderCapUsesTier1Only(): void {
 		// 25.000 < 30.000 cap: 0.17 × 25.000 = 4.250.
-		$bijtelling = $this->guard->computeBijtelling(25000.0, 'EV_TIERED_17_22PCT', 0.17, 30000.0, 0.22);
-		self::assertSame(4250.0, $bijtelling);
+		$benefitInKind = $this->guard->computeBijtelling(25000.0, 'EV_TIERED_17_22PCT', 0.17, 30000.0, 0.22);
+		self::assertSame(4250.0, $benefitInKind);
 	}//end testEvUnderCapUsesTier1Only()
 
 	/**
@@ -103,7 +103,7 @@ class IbBijtellingGuardTest extends TestCase {
 	 */
 	public function testRateIsNotHardCoded(): void {
 		// Hypothetical 25% rate from a future IBTaxParameterYear.
-		$bijtelling = $this->guard->computeBijtelling(40000.0, 'REGULIER_22PCT', 0.17, 30000.0, 0.25);
-		self::assertSame(10000.0, $bijtelling);
+		$benefitInKind = $this->guard->computeBijtelling(40000.0, 'REGULIER_22PCT', 0.17, 30000.0, 0.25);
+		self::assertSame(10000.0, $benefitInKind);
 	}//end testRateIsNotHardCoded()
 }//end class

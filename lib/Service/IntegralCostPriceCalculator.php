@@ -88,13 +88,13 @@ class IntegralCostPriceCalculator {
 	 * Sum direct GL lines matching the activity's kostenplaats/kostendrager (REQ-WMO-002).
 	 *
 	 * @param array<int,array<string,mixed>> $glLines GL lines to scan.
-	 * @param string $kostenplaats Kostenplaats code to match.
-	 * @param string $kostendrager Kostendrager code to match.
+	 * @param string $costCentre Kostenplaats code to match.
+	 * @param string $costObject Kostendrager code to match.
 	 * @param string $accountKind One of `loonkosten`, `materialen`, `afschrijvingen`.
 	 *
 	 * @return int Sum of matching GL lines in cents.
 	 */
-	public function sumDirectCosts(array $glLines, string $kostenplaats, string $kostendrager, string $accountKind): int {
+	public function sumDirectCosts(array $glLines, string $costCentre, string $costObject, string $accountKind): int {
 		$totalCents = 0;
 
 		foreach ($glLines as $line) {
@@ -106,7 +106,7 @@ class IntegralCostPriceCalculator {
 			$kd = (string)($line['costObject'] ?? $line['costObjectCode'] ?? '');
 			$kind = (string)($line['accountKind'] ?? $line['kind'] ?? '');
 
-			if ($kp !== $kostenplaats || $kd !== $kostendrager) {
+			if ($kp !== $costCentre || $kd !== $costObject) {
 				continue;
 			}
 
@@ -136,11 +136,11 @@ class IntegralCostPriceCalculator {
 	 *
 	 * @param int $corporateOverheadCents Corporate overhead pool in cents.
 	 * @param array<string,mixed> $rule The OverheadDistributionRule.
-	 * @param string $kostendrager Kostendrager code (filter ratios to this drager).
+	 * @param string $costObject Kostendrager code (filter ratios to this drager).
 	 *
 	 * @return array<string,int> Per-bucket overhead in cents (huisvesting, ict, directieEnStaf, facilitair, custom).
 	 */
-	public function distributeOverhead(int $corporateOverheadCents, array $rule, string $kostendrager): array {
+	public function distributeOverhead(int $corporateOverheadCents, array $rule, string $costObject): array {
 		$buckets = [];
 
 		$ratios = $rule['ratios'] ?? $rule['verdeelsleutel'] ?? [];
@@ -154,7 +154,7 @@ class IntegralCostPriceCalculator {
 			}
 
 			$entryDrager = (string)($entry['costObject'] ?? $entry['costObjectCode'] ?? '');
-			if ($entryDrager !== '' && $entryDrager !== $kostendrager) {
+			if ($entryDrager !== '' && $entryDrager !== $costObject) {
 				continue;
 			}
 
@@ -219,37 +219,37 @@ class IntegralCostPriceCalculator {
 	/**
 	 * Calculate kostprijs per eenheid (REQ-WMO-002).
 	 *
-	 * @param int $totaleKostenCents Total cost in cents.
-	 * @param float $verkochteEenheden Units sold (must be > 0).
+	 * @param int $totaleCostCents Total cost in cents.
+	 * @param float $verkochteUnits Units sold (must be > 0).
 	 *
 	 * @return float|null Cost per unit in EUR, or null if eenheden is 0.
 	 */
-	public function calculateKostprijsPerEenheid(int $totaleKostenCents, float $verkochteEenheden): ?float {
-		if ($verkochteEenheden <= 0.0) {
+	public function calculateKostprijsPerEenheid(int $totaleCostCents, float $verkochteUnits): ?float {
+		if ($verkochteUnits <= 0.0) {
 			return null;
 		}
 
-		return round(($totaleKostenCents / 100) / $verkochteEenheden, 4);
+		return round(($totaleCostCents / 100) / $verkochteUnits, 4);
 	}//end calculateKostprijsPerEenheid()
 
 	/**
 	 * Determine compliance status: gehanteerdTarief >= kostprijsPerEenheid (REQ-WMO-004 / Art. 25i).
 	 *
-	 * @param float|null $gehanteerdTarief Actual price charged per unit (EUR).
-	 * @param float|null $kostprijsPerEenheid IKP per unit (EUR).
-	 * @param int $totaleKostenCents Total cost in cents (fallback when no eenheden).
-	 * @param float|null $omzetEur Omzet in EUR (fallback when no eenheden).
+	 * @param float|null $gehanteerdRate Actual price charged per unit (EUR).
+	 * @param float|null $costPricePerUnit IKP per unit (EUR).
+	 * @param int $totaleCostCents Total cost in cents (fallback when no eenheden).
+	 * @param float|null $revenueEur Omzet in EUR (fallback when no eenheden).
 	 *
 	 * @return bool True when compliant (Art. 25i integrale-kostprijs rule).
 	 */
-	public function isCompliant(?float $gehanteerdTarief, ?float $kostprijsPerEenheid, int $totaleKostenCents, ?float $omzetEur = null): bool {
-		if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-			return $gehanteerdTarief >= $kostprijsPerEenheid;
+	public function isCompliant(?float $gehanteerdRate, ?float $costPricePerUnit, int $totaleCostCents, ?float $revenueEur = null): bool {
+		if ($gehanteerdRate !== null && $costPricePerUnit !== null) {
+			return $gehanteerdRate >= $costPricePerUnit;
 		}
 
-		if ($omzetEur !== null) {
-			$omzetCents = $this->toCents(amount: $omzetEur);
-			return $omzetCents >= $totaleKostenCents;
+		if ($revenueEur !== null) {
+			$revenueCents = $this->toCents(amount: $revenueEur);
+			return $revenueCents >= $totaleCostCents;
 		}
 
 		// Insufficient data — default to non-compliant so the operator sees the gap.
@@ -273,14 +273,14 @@ class IntegralCostPriceCalculator {
 		$kp = (string)$input['costCentre'];
 		$kd = (string)$input['costObject'];
 
-		$loonkostenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'payrollCost');
-		$materialenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'materialen');
-		$afschrijvingenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'depreciations');
+		$payrollCostCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'payrollCost');
+		$materialenCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'materialen');
+		$depreciationsCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'depreciations');
 
 		$overheadBuckets = $this->distributeOverhead(
 			corporateOverheadCents: (int)($input['corporateOverheadCents'] ?? 0),
 			rule: (array)($input['overheadRule'] ?? []),
-			kostendrager: $kd
+			costObject: $kd
 		);
 
 		$overheadTotalCents = 0;
@@ -294,49 +294,49 @@ class IntegralCostPriceCalculator {
 			periodFraction: (float)($input['periodFraction'] ?? 1.0)
 		);
 
-		$baseBeforeMarkup = ($loonkostenCents + $materialenCents + $afschrijvingenCents + $overheadTotalCents + $vermogensCents);
+		$baseBeforeMarkup = ($payrollCostCents + $materialenCents + $depreciationsCents + $overheadTotalCents + $vermogensCents);
 		$winstopslagCents = $this->calculateWinstopslag(
 			baseCents: $baseBeforeMarkup,
 			rate: (float)($input['winstopslagRate'] ?? self::DEFAULT_WINSTOPSLAG)
 		);
 
-		$totaleKostenCents = ($baseBeforeMarkup + $winstopslagCents);
+		$totaleCostCents = ($baseBeforeMarkup + $winstopslagCents);
 
-		$verkochteEenheden = (float)($input['verkochteUnits'] ?? 0);
-		$kostprijsPerEenheid = $this->calculateKostprijsPerEenheid(totaleKostenCents: $totaleKostenCents, verkochteEenheden: $verkochteEenheden);
+		$verkochteUnits = (float)($input['verkochteUnits'] ?? 0);
+		$costPricePerUnit = $this->calculateKostprijsPerEenheid(totaleCostCents: $totaleCostCents, verkochteUnits: $verkochteUnits);
 
-		$gehanteerdTarief = null;
+		$gehanteerdRate = null;
 		if (isset($input['gehanteerdRate']) === true) {
-			$gehanteerdTarief = (float)$input['gehanteerdRate'];
+			$gehanteerdRate = (float)$input['gehanteerdRate'];
 		}
 
 		$marge = null;
 		$margePercentage = null;
-		if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-			$marge = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
+		if ($gehanteerdRate !== null && $costPricePerUnit !== null) {
+			$marge = round(($gehanteerdRate - $costPricePerUnit), 4);
 			$base = 1.0;
-			if ($kostprijsPerEenheid > 0.0) {
-				$base = $kostprijsPerEenheid;
+			if ($costPricePerUnit > 0.0) {
+				$base = $costPricePerUnit;
 			}
 
 			$margePercentage = round((($marge / $base) * 100), 4);
 		}
 
-		$omzetEur = null;
+		$revenueEur = null;
 		if (isset($input['omzetEur']) === true) {
-			$omzetEur = (float)$input['omzetEur'];
+			$revenueEur = (float)$input['omzetEur'];
 		}
 
 		$compliant = $this->isCompliant(
-			gehanteerdTarief: $gehanteerdTarief,
-			kostprijsPerEenheid: $kostprijsPerEenheid,
-			totaleKostenCents: $totaleKostenCents,
-			omzetEur: $omzetEur
+			gehanteerdRate: $gehanteerdRate,
+			costPricePerUnit: $costPricePerUnit,
+			totaleCostCents: $totaleCostCents,
+			revenueEur: $revenueEur
 		);
 
-		$verkochteEenhedenOut = null;
-		if ($verkochteEenheden > 0.0) {
-			$verkochteEenhedenOut = $verkochteEenheden;
+		$verkochteUnitsOut = null;
+		if ($verkochteUnits > 0.0) {
+			$verkochteUnitsOut = $verkochteUnits;
 		}
 
 		return [
@@ -345,18 +345,18 @@ class IntegralCostPriceCalculator {
 			'calculatedOn' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'status' => (string)($input['status'] ?? 'voorlopig'),
 			'componenten' => [
-				'directePayrollCost' => $this->fromCents(cents: $loonkostenCents),
+				'directePayrollCost' => $this->fromCents(cents: $payrollCostCents),
 				'directeMaterialen' => $this->fromCents(cents: $materialenCents),
-				'directeDepreciations' => $this->fromCents(cents: $afschrijvingenCents),
+				'directeDepreciations' => $this->fromCents(cents: $depreciationsCents),
 				'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
 				'capitalCost' => $this->fromCents(cents: $vermogensCents),
 				'winstopslag' => $this->fromCents(cents: $winstopslagCents),
 			],
-			'totaleCost' => $this->fromCents(cents: $totaleKostenCents),
-			'verkochteUnits' => $verkochteEenhedenOut,
+			'totaleCost' => $this->fromCents(cents: $totaleCostCents),
+			'verkochteUnits' => $verkochteUnitsOut,
 			'unitLabel' => ($input['unitLabel'] ?? null),
-			'costPricePerUnit' => $kostprijsPerEenheid,
-			'gehanteerdRate' => $gehanteerdTarief,
+			'costPricePerUnit' => $costPricePerUnit,
+			'gehanteerdRate' => $gehanteerdRate,
 			'marge' => $marge,
 			'margePercentage' => $margePercentage,
 			'compliant' => $compliant,

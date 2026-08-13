@@ -125,16 +125,16 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$hoofdsom = (float)$this->request->getParam('principal', 0.0);
+		$principal = (float)$this->request->getParam('principal', 0.0);
 		$partyType = (string)$this->request->getParam('partyType', 'B2B');
-		$dagenVerzuim = (int)$this->request->getParam('dagenVerzuim', 0);
-		$factuurId = (string)$this->request->getParam('invoiceId', '');
+		$daysVerzuim = (int)$this->request->getParam('dagenVerzuim', 0);
+		$invoiceId = (string)$this->request->getParam('invoiceId', '');
 		$ingangsRaw = (string)$this->request->getParam('effectiveDate', '');
-		$berekendRaw = (string)$this->request->getParam('calculatedOn', '');
-		$tariefB2B = $this->request->getParam('tariefB2B');
-		$tariefB2C = $this->request->getParam('tariefB2C');
+		$calculatedRaw = (string)$this->request->getParam('calculatedOn', '');
+		$rateB2B = $this->request->getParam('tariefB2B');
+		$rateB2C = $this->request->getParam('tariefB2C');
 
-		if ($hoofdsom < 0) {
+		if ($principal < 0) {
 			return new JSONResponse(['error' => 'hoofdsom must be non-negative'], Http::STATUS_BAD_REQUEST);
 		}
 
@@ -142,7 +142,7 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'partyType must be one of B2B/B2C/GOVERNMENT'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->bik->isCalculationPermitted(partyType: $partyType, dagenVerzuim: $dagenVerzuim) === false) {
+		if ($this->bik->isCalculationPermitted(partyType: $partyType, daysVerzuim: $daysVerzuim) === false) {
 			return new JSONResponse(
 				[
 					'error' => 'B2C incassokostenberekening niet toegestaan voor dag 44 (14-dagenperiode per art. 6:96 BW)',
@@ -154,39 +154,39 @@ class DunningController extends Controller {
 
 		try {
 			if ($ingangsRaw === '') {
-				$ingangsdatum = new DateTimeImmutable();
+				$effectiveDate = new DateTimeImmutable();
 			} else {
-				$ingangsdatum = new DateTimeImmutable($ingangsRaw);
+				$effectiveDate = new DateTimeImmutable($ingangsRaw);
 			}
 
-			if ($berekendRaw === '') {
-				$berekendOp = new DateTimeImmutable();
+			if ($calculatedRaw === '') {
+				$calculatedOn = new DateTimeImmutable();
 			} else {
-				$berekendOp = new DateTimeImmutable($berekendRaw);
+				$calculatedOn = new DateTimeImmutable($calculatedRaw);
 			}
 		} catch (\Throwable $e) {
 			return new JSONResponse(['error' => 'Invalid ingangsdatum / berekendOp'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$tariefB2BValue = null;
-		if ($tariefB2B !== null) {
-			$tariefB2BValue = (float)$tariefB2B;
+		$rateB2BValue = null;
+		if ($rateB2B !== null) {
+			$rateB2BValue = (float)$rateB2B;
 		}
 
-		$tariefB2CValue = null;
-		if ($tariefB2C !== null) {
-			$tariefB2CValue = (float)$tariefB2C;
+		$rateB2CValue = null;
+		if ($rateB2C !== null) {
+			$rateB2CValue = (float)$rateB2C;
 		}
 
 		$body = $this->bik->compose(
-			factuurId: $factuurId,
+			invoiceId: $invoiceId,
 			administrationId: $administrationId,
 			partyType: $partyType,
-			hoofdsom: $hoofdsom,
-			ingangsdatum: $ingangsdatum,
-			berekendOp: $berekendOp,
-			tariefB2B: $tariefB2BValue,
-			tariefB2C: $tariefB2CValue,
+			principal: $principal,
+			effectiveDate: $effectiveDate,
+			calculatedOn: $calculatedOn,
+			rateB2B: $rateB2BValue,
+			rateB2C: $rateB2CValue,
 		);
 
 		return new JSONResponse($body, Http::STATUS_OK);
@@ -274,13 +274,13 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$factuurId = (string)$this->request->getParam('invoiceId', '');
-		$reden = (string)$this->request->getParam('reason', '');
+		$invoiceId = (string)$this->request->getParam('invoiceId', '');
+		$reason = (string)$this->request->getParam('reason', '');
 		$details = (string)$this->request->getParam('details', '');
 		$byUser = (string)$this->context->currentUserId();
 		$evidenceRefs = $this->request->getParam('evidenceRefs');
 
-		if ($factuurId === '' || in_array($reden, ['DISPUTED', 'PAYMENT_PLAN', 'OTHER'], true) === false) {
+		if ($invoiceId === '' || in_array($reason, ['DISPUTED', 'PAYMENT_PLAN', 'OTHER'], true) === false) {
 			return new JSONResponse(['error' => 'factuurId + valid reden are required'], Http::STATUS_BAD_REQUEST);
 		}
 
@@ -292,10 +292,10 @@ class DunningController extends Controller {
 		try {
 			$persisted = $this->runs->pause(
 				administrationId: $administrationId,
-				factuurId: $factuurId,
-				reden: $reden,
+				invoiceId: $invoiceId,
+				reason: $reason,
 				details: $details,
-				gepauzeerdDoor: $byUser,
+				gepauzeerdBy: $byUser,
 				evidenceRefs: $evidenceRefsValue,
 			);
 		} catch (\Throwable $e) {
@@ -454,17 +454,17 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$factuurId = (string)$this->request->getParam('invoiceId', '');
-		$klantId = (string)$this->request->getParam('customerId', '');
-		if ($factuurId === '' || $klantId === '') {
+		$invoiceId = (string)$this->request->getParam('invoiceId', '');
+		$customerId = (string)$this->request->getParam('customerId', '');
+		if ($invoiceId === '' || $customerId === '') {
 			return new JSONResponse(['error' => 'factuurId + klantId required'], Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
 			$bundle = $this->dossier->compose(
 				administrationId: $administrationId,
-				factuurId: $factuurId,
-				klantId: $klantId,
+				invoiceId: $invoiceId,
+				customerId: $customerId,
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error('Shillinq: dossier compose failed: ' . $e->getMessage());

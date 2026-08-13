@@ -44,12 +44,12 @@ interface CreditScoreFetchAdapterInterface {
 	 * the caller treats it as "stay on the cached snapshot if any".
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $klantId Customer FK.
+	 * @param string $customerId Customer FK.
 	 * @param string $provider One of GRAYDON / CREDITSAFE / ATRADIUS_INSIGHTS.
 	 *
 	 * @return array<string,mixed>|null The fresh snapshot, or null on temporary failure.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
 	 */
-	public function fetch(string $administrationId, string $klantId, string $provider): ?array;
+	public function fetch(string $administrationId, string $customerId, string $provider): ?array;
 }//end interface

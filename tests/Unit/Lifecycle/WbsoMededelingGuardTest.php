@@ -106,7 +106,7 @@ class WbsoMededelingGuardTest extends TestCase {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function beschikkingRecord(int|float $grantedSoHours, string $state): array {
+	private function decisionRecord(int|float $grantedSoHours, string $state): array {
 		return [
 			'decisionNumber' => 'WBSO-2026-0001',
 			'grantedSoHours' => $grantedSoHours,
@@ -138,7 +138,7 @@ class WbsoMededelingGuardTest extends TestCase {
 	 */
 	public function testRealisatieBelowCeilingCanSubmit(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
+			$this->buildObjectServiceStub(records: [$this->decisionRecord(grantedSoHours: 1200, state: 'granted')])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -153,7 +153,7 @@ class WbsoMededelingGuardTest extends TestCase {
 	 */
 	public function testRealisatieAtCeilingCanSubmit(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200.5, state: 'granted')])
+			$this->buildObjectServiceStub(records: [$this->decisionRecord(grantedSoHours: 1200.5, state: 'granted')])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -168,7 +168,7 @@ class WbsoMededelingGuardTest extends TestCase {
 	 */
 	public function testRealisatieAboveCeilingCannotSubmit(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
+			$this->buildObjectServiceStub(records: [$this->decisionRecord(grantedSoHours: 1200, state: 'granted')])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -183,7 +183,7 @@ class WbsoMededelingGuardTest extends TestCase {
 	 */
 	public function testExpiredBeschikkingCannotSubmit(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'expired')])
+			$this->buildObjectServiceStub(records: [$this->decisionRecord(grantedSoHours: 1200, state: 'expired')])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -282,7 +282,7 @@ class WbsoMededelingGuardTest extends TestCase {
 	 */
 	public function testNegativeRealisedHoursFailsClosed(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
+			$this->buildObjectServiceStub(records: [$this->decisionRecord(grantedSoHours: 1200, state: 'granted')])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters

@@ -213,17 +213,17 @@ class MandaatEnforcerTest extends TestCase {
 	/**
 	 * A commitment of the given soort and amount for the demo administration.
 	 *
-	 * @param string $soort Commitment soort.
-	 * @param int $bedrag Amount in minor units.
+	 * @param string $kind Commitment soort.
+	 * @param int $amount Amount in minor units.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function commitment(string $soort, int $bedrag): array {
+	private function commitment(string $kind, int $amount): array {
 		return [
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
-			'kind' => $soort,
-			'totalamount_excl_vat' => $bedrag,
+			'kind' => $kind,
+			'totalamount_excl_vat' => $amount,
 		];
 
 	}//end commitment()

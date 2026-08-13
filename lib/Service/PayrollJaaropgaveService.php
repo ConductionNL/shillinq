@@ -78,64 +78,64 @@ class PayrollJaaropgaveService {
 	 * false when they disagree, which the dashboard surfaces as a warning.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
-	 * @param string $werknemerId Employee id.
-	 * @param int $jaar Calendar year.
+	 * @param string $employeeId Employee id.
+	 * @param int $year Calendar year.
 	 *
 	 * @return array<string,mixed> The Jaaropgave payload.
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	public function bouwJaaropgave(string $administrationId, string $werknemerId, int $jaar): array {
-		$stroken = $this->findLoonStrokenVoorJaar(
+	public function bouwJaaropgave(string $administrationId, string $employeeId, int $year): array {
+		$stroken = $this->findPayStrokenForYear(
 			administrationId: $administrationId,
-			werknemerId: $werknemerId,
-			jaar: $jaar
+			employeeId: $employeeId,
+			year: $year
 		);
 
-		$fiscaalC = 0;
-		$loonhefC = 0;
+		$fiscalC = 0;
+		$payrollTaxC = 0;
 		$svWgC = 0;
 		$zvwWgC = 0;
 		$pensWnC = 0;
 		$pensWgC = 0;
 		$vakUitbC = 0;
-		$nettoC = 0;
-		$ytdFiscaal = 0.0;
+		$netC = 0;
+		$ytdFiscal = 0.0;
 		$ytdVak = 0.0;
 		foreach ($stroken as $s) {
-			$fiscaalC += $this->calculator->toCents(amount: ($s['fiscalPay'] ?? 0));
-			$loonhefC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
+			$fiscalC += $this->calculator->toCents(amount: ($s['fiscalPay'] ?? 0));
+			$payrollTaxC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
 			$svWgC += $this->calculator->toCents(amount: ($s['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
 			$zvwWgC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
 			$pensWnC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));
 			$pensWgC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));
 			$vakUitbC += $this->calculator->toCents(amount: ($s['grossComponenten']['vakantietoeslag_uitbetaling'] ?? 0));
-			$nettoC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
+			$netC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
 
 			$cu = ($s['cumulatieven'] ?? []);
 			if (is_array($cu) === true) {
-				$ytdFiscaal = (float)($cu['fiscaalloon_ytd'] ?? $ytdFiscaal);
+				$ytdFiscal = (float)($cu['fiscaalloon_ytd'] ?? $ytdFiscal);
 				$ytdVak = (float)($cu['vakantiegeld_reservering_ytd'] ?? $ytdVak);
 			}
 		}//end foreach
 
-		$fiscaalLoon = $this->calculator->fromCents(cents: $fiscaalC);
-		$cumulatievenMatch = ($this->calculator->toCents(amount: $ytdFiscaal) === $fiscaalC);
+		$fiscalPay = $this->calculator->fromCents(cents: $fiscalC);
+		$cumulatievenMatch = ($this->calculator->toCents(amount: $ytdFiscal) === $fiscalC);
 
 		return [
-			'employeeId' => $werknemerId,
-			'year' => $jaar,
+			'employeeId' => $employeeId,
+			'year' => $year,
 			'aantalPerioden' => count($stroken),
-			'fiscaalLoonJTD' => $fiscaalLoon,
-			'loonheffingJTD' => $this->calculator->fromCents(cents: $loonhefC),
+			'fiscaalLoonJTD' => $fiscalPay,
+			'loonheffingJTD' => $this->calculator->fromCents(cents: $payrollTaxC),
 			'premiesSVWgJTD' => $this->calculator->fromCents(cents: $svWgC),
 			'zvwWgJTD' => $this->calculator->fromCents(cents: $zvwWgC),
 			'pensioenWnJTD' => $this->calculator->fromCents(cents: $pensWnC),
 			'pensioenWgJTD' => $this->calculator->fromCents(cents: $pensWgC),
 			'vakantieUitbJTD' => $this->calculator->fromCents(cents: $vakUitbC),
-			'nettoUitbetaaldJTD' => $this->calculator->fromCents(cents: $nettoC),
+			'nettoUitbetaaldJTD' => $this->calculator->fromCents(cents: $netC),
 			'ytdSnapshot' => [
-				'fiscaalloon_ytd' => $ytdFiscaal,
+				'fiscaalloon_ytd' => $ytdFiscal,
 				'vakantiegeld_reservering_ytd' => $ytdVak,
 			],
 			'cumulatievenConsistent' => $cumulatievenMatch,
@@ -174,12 +174,12 @@ class PayrollJaaropgaveService {
 	 * Read every LoonStrook for the calendar year, administration-scoped.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $werknemerId Employee id.
-	 * @param int $jaar Calendar year.
+	 * @param string $employeeId Employee id.
+	 * @param int $year Calendar year.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function findLoonStrokenVoorJaar(string $administrationId, string $werknemerId, int $jaar): array {
+	private function findPayStrokenForYear(string $administrationId, string $employeeId, int $year): array {
 		$results = $this->objectService()
 			->setRegister($this->register())
 			->setSchema('LoonStrook')
@@ -187,7 +187,7 @@ class PayrollJaaropgaveService {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'employeeId' => $werknemerId,
+						'employeeId' => $employeeId,
 					],
 				]
 			);
@@ -195,8 +195,8 @@ class PayrollJaaropgaveService {
 		$out = [];
 		foreach ($results as $r) {
 			$row = (array)$r;
-			$perJaar = $this->extractJaarFromPeriodeId(periodeId: (string)($row['periodId'] ?? ''));
-			if ($perJaar !== null && $perJaar !== $jaar) {
+			$perYear = $this->extractYearFromPeriodId(periodId: (string)($row['periodId'] ?? ''));
+			if ($perYear !== null && $perYear !== $year) {
 				continue;
 			}
 
@@ -209,12 +209,12 @@ class PayrollJaaropgaveService {
 	/**
 	 * Best-effort year extractor from a periodeId of shape lp-YYYY-...
 	 *
-	 * @param string $periodeId Period id.
+	 * @param string $periodId Period id.
 	 *
 	 * @return int|null Year or null when not encoded.
 	 */
-	private function extractJaarFromPeriodeId(string $periodeId): ?int {
-		if (preg_match('/(?<year>20[0-9]{2})/', $periodeId, $m) === 1) {
+	private function extractYearFromPeriodId(string $periodId): ?int {
+		if (preg_match('/(?<year>20[0-9]{2})/', $periodId, $m) === 1) {
 			return (int)$m['year'];
 		}
 

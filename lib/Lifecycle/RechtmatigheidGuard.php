@@ -104,14 +104,14 @@ class RechtmatigheidGuard {
 				return true;
 			}
 
-			$onderbouwing = trim((string)($toets['substantiation'] ?? ''));
-			if (mb_strlen($onderbouwing) < self::MIN_ONDERBOUWING_LENGTH) {
+			$substantiation = trim((string)($toets['substantiation'] ?? ''));
+			if (mb_strlen($substantiation) < self::MIN_ONDERBOUWING_LENGTH) {
 				$this->logger->info(
 					'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
 					[
 						'toetsId' => ($toets['id'] ?? 'unknown'),
 						'uitkomst' => $uitkomst,
-						'length' => mb_strlen($onderbouwing),
+						'length' => mb_strlen($substantiation),
 					]
 				);
 				return false;
@@ -153,8 +153,8 @@ class RechtmatigheidGuard {
 	 */
 	public function canResolveBevinding(array $bevinding): bool {
 		try {
-			$correctie = trim((string)($bevinding['correctionentry_id'] ?? ''));
-			if ($correctie === '') {
+			$correction = trim((string)($bevinding['correctionentry_id'] ?? ''));
+			if ($correction === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: bevinding without correctieboeking_id — denying oplossen',
 					['findingNumber' => ($bevinding['findingNumber'] ?? 'unknown')]
@@ -183,24 +183,24 @@ class RechtmatigheidGuard {
 	 *
 	 * Fail-closed: returns false on any exception.
 	 *
-	 * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
+	 * @param array<string, mixed> $paragraph Rechtmatigheidsparagraaf object array.
 	 *
 	 * @return bool True when the paragraaf may be vastgesteld by college.
 	 *
 	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
-	public function canVaststellenParagraaf(array $paragraaf): bool {
+	public function canVaststellenParagraaf(array $paragraph): bool {
 		try {
-			$binnenTolerantie = (bool)($paragraaf['binnen_tolerance'] ?? true);
-			if ($binnenTolerantie === true) {
+			$binnenTolerance = (bool)($paragraph['binnen_tolerance'] ?? true);
+			if ($binnenTolerance === true) {
 				return true;
 			}
 
-			$verklaring = trim((string)($paragraaf['declaration_college'] ?? ''));
-			if ($verklaring === '') {
+			$declaration = trim((string)($paragraph['declaration_college'] ?? ''));
+			if ($declaration === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: paragraaf buiten tolerantie zonder toelichting — denying vaststellen',
-					['financialYear' => ($paragraaf['financialYear'] ?? 'unknown')]
+					['financialYear' => ($paragraph['financialYear'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -209,7 +209,7 @@ class RechtmatigheidGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RechtmatigheidGuard: canVaststellenParagraaf failed — denying vaststellen (fail-closed)',
-				['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['financialYear' => ($paragraph['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -225,19 +225,19 @@ class RechtmatigheidGuard {
 	 *
 	 * Fail-closed: returns false on any exception.
 	 *
-	 * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
+	 * @param array<string, mixed> $paragraph Rechtmatigheidsparagraaf object array.
 	 *
 	 * @return bool True when the paragraaf may be exported.
 	 *
 	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
-	public function canExportParagraaf(array $paragraaf): bool {
+	public function canExportParagraaf(array $paragraph): bool {
 		try {
-			$status = (string)($paragraaf['status'] ?? '');
+			$status = (string)($paragraph['status'] ?? '');
 			if ($status !== 'definitief') {
 				$this->logger->info(
 					'RechtmatigheidGuard: paragraaf not definitief — denying jaarrekening-export',
-					['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'status' => $status]
+					['financialYear' => ($paragraph['financialYear'] ?? 'unknown'), 'status' => $status]
 				);
 				return false;
 			}
@@ -246,7 +246,7 @@ class RechtmatigheidGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RechtmatigheidGuard: canExportParagraaf failed — denying export (fail-closed)',
-				['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['financialYear' => ($paragraph['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try

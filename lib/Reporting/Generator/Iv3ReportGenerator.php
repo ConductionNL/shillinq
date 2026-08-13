@@ -96,7 +96,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 * @return GeneratedFile
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
-		$totals = $this->aggregateByTaakveld($context);
+		$totals = $this->aggregateByTaskField($context);
 		ksort($totals);
 
 		if ($format === 'csv') {
@@ -116,7 +116,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @return array<string,array{expenses:float,revenue:float}>
 	 */
-	private function aggregateByTaakveld(array $context): array {
+	private function aggregateByTaskField(array $context): array {
 		$accounts = $this->indexAccountsByNumber($this->loadAll('Account', $this->administrationFilter($context)));
 		$lines = $this->loadAll('GLLine', $this->lineFilters($context));
 
@@ -127,20 +127,20 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 			}
 
 			$accountNumber = (string)($line['accountNumber'] ?? '');
-			$taakveld = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
-			if ($taakveld === '') {
-				$taakveld = '0.0';
+			$taskField = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
+			if ($taskField === '') {
+				$taskField = '0.0';
 			}
 
-			if (isset($totals[$taakveld]) === false) {
-				$totals[$taakveld] = ['expenses' => 0.0, 'revenue' => 0.0];
+			if (isset($totals[$taskField]) === false) {
+				$totals[$taskField] = ['expenses' => 0.0, 'revenue' => 0.0];
 			}
 
 			$amount = $this->toFloat($line['amount'] ?? 0);
 			if ((string)($line['side'] ?? '') === 'debit') {
-				$totals[$taakveld]['expenses'] += $amount;
+				$totals[$taskField]['expenses'] += $amount;
 			} else {
-				$totals[$taakveld]['revenue'] += $amount;
+				$totals[$taskField]['revenue'] += $amount;
 			}
 		}//end foreach
 
@@ -158,11 +158,11 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	private function renderCsv(array $totals, array $context): GeneratedFile {
 		$handle = fopen('php://temp', 'r+');
 		fputcsv($handle, ['taskField', 'expenses', 'revenue', 'saldo']);
-		foreach ($totals as $taakveld => $row) {
+		foreach ($totals as $taskField => $row) {
 			fputcsv(
 				$handle,
 				[
-					$taakveld,
+					$taskField,
 					$this->money($row['expenses']),
 					$this->money($row['revenue']),
 					$this->money(($row['revenue'] - $row['expenses'])),
@@ -204,9 +204,9 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 		$writer->writeAttribute('valuta', 'EUR');
 		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
 
-		foreach ($totals as $taakveld => $row) {
+		foreach ($totals as $taskField => $row) {
 			$writer->startElement('Taakveld');
-			$writer->writeAttribute('code', (string)$taakveld);
+			$writer->writeAttribute('code', (string)$taskField);
 			$writer->writeElement('Lasten', $this->money($row['expenses']));
 			$writer->writeElement('Baten', $this->money($row['revenue']));
 			$writer->writeElement('Saldo', $this->money(($row['revenue'] - $row['expenses'])));

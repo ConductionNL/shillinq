@@ -82,10 +82,10 @@ class InvesteringsaftrekEligibilityGuard {
 	 * The result is the baseline machine classification BEFORE any boekhouder
 	 * override; each flag carries a human-readable rationale.
 	 *
-	 * @param int $aanschafwaarde Acquisition value in EUR cents.
-	 * @param bool $energielijstHit Whether an EnergielijstCode matched (EIA).
-	 * @param bool $milieulijstHit Whether a MilieulijstCode matched (MIA/Vamil).
-	 * @param bool $vamilToegestaan Whether the matched MilieulijstCode permits Vamil.
+	 * @param int $acquisitionValue Acquisition value in EUR cents.
+	 * @param bool $energyListHit Whether an EnergielijstCode matched (EIA).
+	 * @param bool $environmentListHit Whether a MilieulijstCode matched (MIA/Vamil).
+	 * @param bool $vamilPermitted Whether the matched MilieulijstCode permits Vamil.
 	 * @param bool $kiaExcluded Whether the asset is excluded under art. 3.45 (woonhuis, grond, etc.).
 	 *
 	 * @return array{kia: bool, eia: bool, mia: bool, vamil: bool, rationale: array<string,string>}
@@ -93,32 +93,32 @@ class InvesteringsaftrekEligibilityGuard {
 	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
 	 */
 	public function classify(
-		int $aanschafwaarde,
-		bool $energielijstHit,
-		bool $milieulijstHit,
-		bool $vamilToegestaan,
+		int $acquisitionValue,
+		bool $energyListHit,
+		bool $environmentListHit,
+		bool $vamilPermitted,
 		bool $kiaExcluded,
 	): array {
 		// KIA: between EUR 450 and EUR 392.230 per asset, not art. 3.45-excluded.
 		$kia = ($kiaExcluded === false
-			&& $aanschafwaarde >= self::MIN_KIA
-			&& $aanschafwaarde <= self::MAX_KIA);
+			&& $acquisitionValue >= self::MIN_KIA
+			&& $acquisitionValue <= self::MAX_KIA);
 
 		// EIA: Energielijst match + EUR 2.5k minimum.
-		$eia = ($energielijstHit === true && $aanschafwaarde >= self::MIN_EIA_MIA_VAMIL);
+		$eia = ($energyListHit === true && $acquisitionValue >= self::MIN_EIA_MIA_VAMIL);
 
 		// MIA: Milieulijst match + EUR 2.5k minimum.
-		$mia = ($milieulijstHit === true && $aanschafwaarde >= self::MIN_EIA_MIA_VAMIL);
+		$mia = ($environmentListHit === true && $acquisitionValue >= self::MIN_EIA_MIA_VAMIL);
 
 		// Vamil: Milieulijst match + vamilToegestaan + EUR 2.5k minimum.
-		$vamil = ($milieulijstHit === true
-			&& $vamilToegestaan === true
-			&& $aanschafwaarde >= self::MIN_EIA_MIA_VAMIL);
+		$vamil = ($environmentListHit === true
+			&& $vamilPermitted === true
+			&& $acquisitionValue >= self::MIN_EIA_MIA_VAMIL);
 
 		$this->logger->debug(
 			'InvesteringsaftrekEligibilityGuard: classify',
 			[
-				'acquisitionValue' => $aanschafwaarde,
+				'acquisitionValue' => $acquisitionValue,
 				'kia' => $kia,
 				'eia' => $eia,
 				'mia' => $mia,
@@ -132,23 +132,23 @@ class InvesteringsaftrekEligibilityGuard {
 			'mia' => $mia,
 			'vamil' => $vamil,
 			'rationale' => [
-				'kia' => $this->kiaRationale(value: $aanschafwaarde, excluded: $kiaExcluded),
+				'kia' => $this->kiaRationale(value: $acquisitionValue, excluded: $kiaExcluded),
 				'eia' => $this->thresholdRationale(
 					label: 'EIA',
-					hit: $energielijstHit,
+					hit: $energyListHit,
 					hitLabel: 'Energielijst-code',
-					value: $aanschafwaarde
+					value: $acquisitionValue
 				),
 				'mia' => $this->thresholdRationale(
 					label: 'MIA',
-					hit: $milieulijstHit,
+					hit: $environmentListHit,
 					hitLabel: 'Milieulijst-code',
-					value: $aanschafwaarde
+					value: $acquisitionValue
 				),
 				'vamil' => $this->vamilRationale(
-					value: $aanschafwaarde,
-					milieulijstHit: $milieulijstHit,
-					vamilToegestaan: $vamilToegestaan
+					value: $acquisitionValue,
+					environmentListHit: $environmentListHit,
+					vamilPermitted: $vamilPermitted
 				),
 			],
 		];
@@ -183,17 +183,17 @@ class InvesteringsaftrekEligibilityGuard {
 	 * Build the Vamil rationale string (REQ-INV-001 / REQ-INV-003).
 	 *
 	 * @param int $value Acquisition value in EUR cents.
-	 * @param bool $milieulijstHit Whether a MilieulijstCode matched.
-	 * @param bool $vamilToegestaan Whether the matched code permits Vamil.
+	 * @param bool $environmentListHit Whether a MilieulijstCode matched.
+	 * @param bool $vamilPermitted Whether the matched code permits Vamil.
 	 *
 	 * @return string
 	 */
-	private function vamilRationale(int $value, bool $milieulijstHit, bool $vamilToegestaan): string {
-		if ($milieulijstHit === false) {
+	private function vamilRationale(int $value, bool $environmentListHit, bool $vamilPermitted): string {
+		if ($environmentListHit === false) {
 			return 'Vamil: geen Milieulijst-code match';
 		}
 
-		if ($vamilToegestaan === false) {
+		if ($vamilPermitted === false) {
 			return 'Vamil: code staat geen willekeurige afschrijving toe';
 		}
 

@@ -354,7 +354,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 		unlink($written['zipPath']);
 
 		// Sanity: signature delegation still pending (no signer configured).
-		self::assertTrue($this->service->canSignVerklaring(verklaringId: 'verklaring-sisa'));
+		self::assertTrue($this->service->canSignVerklaring(declarationId: 'verklaring-sisa'));
 
 	}//end testSisaBijlageRollupAndDossierInclusion()
 

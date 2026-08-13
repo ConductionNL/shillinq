@@ -69,17 +69,17 @@ final class GrotendeelsCriteriumService {
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
 	 */
 	public function telOndernemingsUren(array $dagregistraties): float {
-		$totaal = 0.0;
+		$total = 0.0;
 		foreach ($dagregistraties as $entry) {
 			if (is_array($entry) === false) {
 				continue;
 			}
 
 			$geteld = $entry['getoldeHours'] ?? $entry['hours'] ?? 0;
-			$totaal += (float)$geteld;
+			$total += (float)$geteld;
 		}
 
-		return $totaal;
+		return $total;
 	}//end telOndernemingsUren()
 
 	/**
@@ -89,17 +89,17 @@ final class GrotendeelsCriteriumService {
 	 * single canonical policy is used by both the year-init service and the
 	 * daily batch.
 	 *
-	 * @param float $ondernemingsUren YTD onderneming hours.
-	 * @param float $loondienstUren YTD payroll hours.
+	 * @param float $enterpriseHours YTD onderneming hours.
+	 * @param float $employmentHours YTD payroll hours.
 	 *
 	 * @return string NIET_TOEPASSELIJK / GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
 	 */
-	public function classifeer(float $ondernemingsUren, float $loondienstUren): string {
+	public function classifeer(float $enterpriseHours, float $employmentHours): string {
 		return $this->guard->bepaalGrotendeelsCriterium(
-			ondernemingsUren: $ondernemingsUren,
-			loondienstUren: $loondienstUren
+			enterpriseHours: $enterpriseHours,
+			employmentHours: $employmentHours
 		);
 
 	}//end classifeer()
@@ -112,17 +112,17 @@ final class GrotendeelsCriteriumService {
 	 * (REQ-URC-007), the other markings do not.
 	 *
 	 * @param array<int, array<string, mixed>> $dagregistraties YTD onderneming entries.
-	 * @param float $loondienstUren YTD payroll hours.
+	 * @param float $employmentHours YTD payroll hours.
 	 *
 	 * @return array{grotendeelsCriterium: string, blokkeertZelfstandigenaftrek: bool}
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
 	 */
-	public function bouwPatch(array $dagregistraties, float $loondienstUren): array {
-		$ondernemingsUren = $this->telOndernemingsUren(dagregistraties: $dagregistraties);
+	public function bouwPatch(array $dagregistraties, float $employmentHours): array {
+		$enterpriseHours = $this->telOndernemingsUren(dagregistraties: $dagregistraties);
 		$marking = $this->classifeer(
-			ondernemingsUren: $ondernemingsUren,
-			loondienstUren: $loondienstUren
+			enterpriseHours: $enterpriseHours,
+			employmentHours: $employmentHours
 		);
 
 		$blokkeert = ($marking === 'NIET_GROTENDEELS_ONDERNEMING');
@@ -130,8 +130,8 @@ final class GrotendeelsCriteriumService {
 			$this->logger->warning(
 				'GrotendeelsCriteriumService: grotendeels-criterium niet behaald — zelfstandigenaftrek geblokkeerd',
 				[
-					'ondernemingsUren' => $ondernemingsUren,
-					'loondienstUren' => $loondienstUren,
+					'ondernemingsUren' => $enterpriseHours,
+					'loondienstUren' => $employmentHours,
 				]
 			);
 		}

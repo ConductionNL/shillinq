@@ -102,7 +102,7 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
-	private function taakvelden(string $file): array {
+	private function taskFields(string $file): array {
 		$path = __DIR__ . '/../../../lib/Settings/seeds/' . $file;
 		self::assertFileExists($path);
 
@@ -124,12 +124,12 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 * @dataProvider catalogueProvider
 	 */
 	public function testEveryDutchFieldIsPairedWithAnEnglishOne(string $file, array $pairs): void {
-		foreach ($this->taakvelden($file) as $taakveld) {
-			$code = $taakveld['code'] ?? '(no code)';
+		foreach ($this->taskFields($file) as $taskField) {
+			$code = $taskField['code'] ?? '(no code)';
 
 			foreach ($pairs as $dutch => $english) {
-				$hasDutch = ($taakveld[$dutch] ?? '') !== '';
-				$hasEnglish = ($taakveld[$english] ?? '') !== '';
+				$hasDutch = ($taskField[$dutch] ?? '') !== '';
+				$hasEnglish = ($taskField[$english] ?? '') !== '';
 
 				self::assertSame(
 					$hasDutch,
@@ -168,18 +168,18 @@ class BbvTaakveldTranslationTest extends TestCase {
 		$dutchName = isset($pairs['name']) ? 'name' : 'name';
 		$englishName = $pairs[$dutchName];
 
-		$taakvelden = $this->taakvelden($file);
+		$taskFields = $this->taskFields($file);
 
-		foreach ($taakvelden as $taakveld) {
-			$code = $taakveld['code'] ?? '(no code)';
+		foreach ($taskFields as $taskField) {
+			$code = $taskField['code'] ?? '(no code)';
 
 			self::assertNotEmpty(
-				$taakveld[$dutchName] ?? '',
+				$taskField[$dutchName] ?? '',
 				$file . ' taakveld ' . $code . ': the STATUTORY Dutch name must never be dropped — '
 				. 'it is what a CBS Iv3 submission carries and what legalBasis cites.'
 			);
 			self::assertNotEmpty(
-				$taakveld[$englishName] ?? '',
+				$taskField[$englishName] ?? '',
 				$file . ' taakveld ' . $code . ' has no ' . $englishName . ', so an English UI shows Dutch here.'
 			);
 		}

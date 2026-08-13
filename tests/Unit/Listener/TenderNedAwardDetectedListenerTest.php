@@ -393,18 +393,18 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 
 		// 1 Verplichting + 1 update of the aanbesteding to in-uitvoering = 2 saves.
 		$this->assertGreaterThanOrEqual(1, count($recorder->saves));
-		$verplichtingSave = null;
+		$commitmentSave = null;
 		foreach ($recorder->saves as $save) {
 			if ($save['schema'] === 'Verplichting') {
-				$verplichtingSave = $save['object'];
+				$commitmentSave = $save['object'];
 				break;
 			}
 		}
-		$this->assertNotNull($verplichtingSave);
-		$this->assertSame('tenderned', $verplichtingSave['source']);
-		$this->assertSame('TN-2026-0001', $verplichtingSave['sourceReference']);
-		$this->assertSame('active', $verplichtingSave['status']);
-		$this->assertNotEmpty($verplichtingSave['milestones']);
+		$this->assertNotNull($commitmentSave);
+		$this->assertSame('tenderned', $commitmentSave['source']);
+		$this->assertSame('TN-2026-0001', $commitmentSave['sourceReference']);
+		$this->assertSame('active', $commitmentSave['status']);
+		$this->assertNotEmpty($commitmentSave['milestones']);
 
 		// Budget impact event emitted.
 		$this->assertCount(1, $dispatcher->events);

@@ -651,7 +651,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testParagrafenCompletenessRejectsMissingTypes(): void {
 		$this->container->method('get')
-			->willReturn($this->buildParagraafStub(rows: [
+			->willReturn($this->buildParagraphStub(rows: [
 				['type' => 'lokale-heffingen'],
 				['type' => 'weerstandsvermogen'],
 			]));
@@ -675,7 +675,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testParagrafenCompletenessPermitsWhenAllSeven(): void {
 		$this->container->method('get')
-			->willReturn($this->buildParagraafStub(rows: [
+			->willReturn($this->buildParagraphStub(rows: [
 				['type' => 'lokale-heffingen'],
 				['type' => 'weerstandsvermogen'],
 				['type' => 'onderhoud-kapitaalgoederen'],
@@ -792,7 +792,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 *
 	 * @return object
 	 */
-	private function buildParagraafStub(array $rows): object {
+	private function buildParagraphStub(array $rows): object {
 		return new class($rows) {
 			/**
 			 * The rows.

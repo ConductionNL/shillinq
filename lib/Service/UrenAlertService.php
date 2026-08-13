@@ -82,14 +82,14 @@ final class UrenAlertService {
 	/**
 	 * Decide whether the given Y-m-d is a quarter-end date.
 	 *
-	 * @param string $datum Y-m-d.
+	 * @param string $date Y-m-d.
 	 *
 	 * @return bool
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
 	 */
-	public function isKwartaalEinde(string $datum): bool {
-		return in_array(substr($datum, 5), self::QUARTER_END_MD, true);
+	public function isKwartaalEinde(string $date): bool {
+		return in_array(substr($date, 5), self::QUARTER_END_MD, true);
 	}//end isKwartaalEinde()
 
 	/**
@@ -118,25 +118,25 @@ final class UrenAlertService {
 	 * Build a quarterly informative alert for an onderneming.
 	 *
 	 * @param array<string, mixed> $year UrencriteriumYear record.
-	 * @param string $datum Quarter-end Y-m-d.
+	 * @param string $date Quarter-end Y-m-d.
 	 *
 	 * @return array<string, mixed> UrenAlert shape.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
 	 */
-	public function bouwKwartaalAlert(array $year, string $datum): array {
-		if ($this->isKwartaalEinde(datum: $datum) === false) {
+	public function bouwKwartaalAlert(array $year, string $date): array {
+		if ($this->isKwartaalEinde(date: $date) === false) {
 			$this->logger->debug(
 				'UrenAlertService: bouwKwartaalAlert called on non-quarter-end date',
-				['date' => $datum]
+				['date' => $date]
 			);
 		}
 
 		$alert = $this->seedAlert(
 			year: $year,
 			type: 'KWARTAAL_EINDE',
-			urgentie: 'INFO',
-			aanleidingDatum: $datum
+			urgency: 'INFO',
+			triggerDate: $date
 		);
 
 		$alert['actionPerspective'] = $this->handelingsperspectief(year: $year);
@@ -144,7 +144,7 @@ final class UrenAlertService {
 			'UrenAlertService: quarter-end alert built',
 			[
 				'enterpriseId' => $alert['enterpriseId'],
-				'date' => $datum,
+				'date' => $date,
 				'thresholdStatus' => ($year['thresholdStatus'] ?? null),
 			]
 		);
@@ -173,17 +173,17 @@ final class UrenAlertService {
 
 		if ($newStatus === 'KRITIEK') {
 			$type = 'OMSLAG_KRITIEK';
-			$urgentie = 'KRITIEK';
+			$urgency = 'KRITIEK';
 		} else {
 			$type = 'OMSLAG_RISICO';
-			$urgentie = 'WAARSCHUWING';
+			$urgency = 'WAARSCHUWING';
 		}
 
 		$alert = $this->seedAlert(
 			year: $year,
 			type: $type,
-			urgentie: $urgentie,
-			aanleidingDatum: gmdate('Y-m-d')
+			urgency: $urgency,
+			triggerDate: gmdate('Y-m-d')
 		);
 
 		$alert['cause'] = sprintf(
@@ -248,12 +248,12 @@ final class UrenAlertService {
 	 *
 	 * @param array<string, mixed> $year UrencriteriumYear record.
 	 * @param string $type Alert type enum.
-	 * @param string $urgentie Alert urgency enum.
-	 * @param string $aanleidingDatum Trigger date Y-m-d.
+	 * @param string $urgency Alert urgency enum.
+	 * @param string $triggerDate Trigger date Y-m-d.
 	 *
 	 * @return array<string, mixed> Alert seed.
 	 */
-	private function seedAlert(array $year, string $type, string $urgentie, string $aanleidingDatum): array {
+	private function seedAlert(array $year, string $type, string $urgency, string $triggerDate): array {
 		$norm = (int)($year['doelNorm'] ?? 1225);
 		$prognose = (float)($year['forecastYearEnd'] ?? 0);
 		$tekort = max(0.0, ($norm - $prognose));
@@ -262,8 +262,8 @@ final class UrenAlertService {
 			'administrationId' => (string)($year['administrationId'] ?? ''),
 			'enterpriseId' => (string)($year['enterpriseId'] ?? ''),
 			'type' => $type,
-			'urgency' => $urgentie,
-			'triggerDate' => $aanleidingDatum,
+			'urgency' => $urgency,
+			'triggerDate' => $triggerDate,
 			'lopendeHours' => (float)($year['lopendeHours'] ?? 0),
 			'norm' => $norm,
 			'forecastYearEnd' => $prognose,

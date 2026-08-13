@@ -56,7 +56,7 @@ final class KapitaallastenCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testEvenScheduleAcrossTwentyYears(): void {
-		$schedule = $this->calculator->schedule(bruto: 400000.0, eersteAfschrijvingsjaar: 2027, afschrijvingstermijn: 20);
+		$schedule = $this->calculator->schedule(gross: 400000.0, eersteDepreciationYear: 2027, depreciationTerm: 20);
 
 		self::assertCount(20, $schedule);
 		self::assertSame(20000.0, $schedule['2027']);
@@ -72,7 +72,7 @@ final class KapitaallastenCalculatorTest extends TestCase {
 	 */
 	public function testScheduleSumsExactlyToGross(): void {
 		// 100 / 3 = 33.33... — cents: 3333 + 3333 + 3334 = 10000.
-		$schedule = $this->calculator->schedule(bruto: 100.0, eersteAfschrijvingsjaar: 2027, afschrijvingstermijn: 3);
+		$schedule = $this->calculator->schedule(gross: 100.0, eersteDepreciationYear: 2027, depreciationTerm: 3);
 
 		self::assertSame(33.33, $schedule['2027']);
 		self::assertSame(33.33, $schedule['2028']);
@@ -87,7 +87,7 @@ final class KapitaallastenCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testZeroTermijnYieldsEmptySchedule(): void {
-		self::assertSame([], $this->calculator->schedule(bruto: 1000.0, eersteAfschrijvingsjaar: 2027, afschrijvingstermijn: 0));
+		self::assertSame([], $this->calculator->schedule(gross: 1000.0, eersteDepreciationYear: 2027, depreciationTerm: 0));
 
 	}//end testZeroTermijnYieldsEmptySchedule()
 

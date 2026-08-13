@@ -100,7 +100,7 @@ class UrencriteriumYearGuard {
 				return false;
 			}
 
-			if ($this->normMatchesGrondslag(year: $year) === false) {
+			if ($this->normMatchesBasis(year: $year) === false) {
 				return false;
 			}
 
@@ -108,7 +108,7 @@ class UrencriteriumYearGuard {
 				return false;
 			}
 
-			return $this->drempelStatusMatchesPrognose(year: $year);
+			return $this->thresholdStatusMatchesPrognose(year: $year);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'UrencriteriumYearGuard: validateOnSave failed — denying save (fail-closed)',
@@ -176,7 +176,7 @@ class UrencriteriumYearGuard {
 	 *   - prognose >= 80% of norm                   → RISICO.
 	 *   - prognose <  80% of norm                   → KRITIEK.
 	 *
-	 * @param float $lopendeUren Cumulative realised hours.
+	 * @param float $lopendeHours Cumulative realised hours.
 	 * @param float $prognose Forecast year-end hours.
 	 * @param int $norm Applicable doel-norm.
 	 *
@@ -184,8 +184,8 @@ class UrencriteriumYearGuard {
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
 	 */
-	public function bepaalDrempelStatus(float $lopendeUren, float $prognose, int $norm): string {
-		if ($lopendeUren >= $norm) {
+	public function bepaalDrempelStatus(float $lopendeHours, float $prognose, int $norm): string {
+		if ($lopendeHours >= $norm) {
 			return 'BEHAALD';
 		}
 
@@ -207,25 +207,25 @@ class UrencriteriumYearGuard {
 	 * works in paid employment, more than 50% of total working time must be spent
 	 * on the onderneming.
 	 *
-	 * @param float $ondernemingsUren Hours spent on the onderneming.
-	 * @param float $loondienstUren Hours spent in paid employment (0 = none).
+	 * @param float $enterpriseHours Hours spent on the onderneming.
+	 * @param float $employmentHours Hours spent in paid employment (0 = none).
 	 *
 	 * @return string NIET_TOEPASSELIJK when no loondienst, otherwise
 	 *                GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
 	 */
-	public function bepaalGrotendeelsCriterium(float $ondernemingsUren, float $loondienstUren): string {
-		if ($loondienstUren <= 0.0) {
+	public function bepaalGrotendeelsCriterium(float $enterpriseHours, float $employmentHours): string {
+		if ($employmentHours <= 0.0) {
 			return 'NIET_TOEPASSELIJK';
 		}
 
-		$totaal = ($ondernemingsUren + $loondienstUren);
-		if ($totaal <= 0.0) {
+		$total = ($enterpriseHours + $employmentHours);
+		if ($total <= 0.0) {
 			return 'NIET_TOEPASSELIJK';
 		}
 
-		if (($ondernemingsUren / $totaal) > 0.5) {
+		if (($enterpriseHours / $total) > 0.5) {
 			return 'GROTENDEELS_ONDERNEMING';
 		}
 
@@ -261,15 +261,15 @@ class UrencriteriumYearGuard {
 	 *
 	 * @return bool True when the citation is consistent with the norm.
 	 */
-	private function normMatchesGrondslag(array $year): bool {
+	private function normMatchesBasis(array $year): bool {
 		$norm = (int)($year['doelNorm'] ?? 0);
-		$grondslag = (string)($year['normBasis'] ?? '');
-		$citeertLid5 = (str_contains($grondslag, 'lid 5') === true);
+		$basis = (string)($year['normBasis'] ?? '');
+		$citeertLid5 = (str_contains($basis, 'lid 5') === true);
 
 		if ($norm === self::NORM_AO && $citeertLid5 === false) {
 			$this->logger->info(
 				'UrencriteriumYearGuard: 800-uren norm must cite art. 3.6 lid 5 — denying save',
-				['normBasis' => $grondslag]
+				['normBasis' => $basis]
 			);
 			return false;
 		}
@@ -277,7 +277,7 @@ class UrencriteriumYearGuard {
 		if ($norm !== self::NORM_AO && $citeertLid5 === true) {
 			$this->logger->info(
 				'UrencriteriumYearGuard: only the 800-uren norm may cite art. 3.6 lid 5 — denying save',
-				['doelNorm' => $norm, 'normBasis' => $grondslag]
+				['doelNorm' => $norm, 'normBasis' => $basis]
 			);
 			return false;
 		}
@@ -327,13 +327,13 @@ class UrencriteriumYearGuard {
 	 *
 	 * @return bool True when consistent (or no prognose yet).
 	 */
-	private function drempelStatusMatchesPrognose(array $year): bool {
+	private function thresholdStatusMatchesPrognose(array $year): bool {
 		if (isset($year['forecastYearEnd']) === false) {
 			return true;
 		}
 
 		$expected = $this->bepaalDrempelStatus(
-			lopendeUren: (float)($year['lopendeHours'] ?? 0),
+			lopendeHours: (float)($year['lopendeHours'] ?? 0),
 			prognose: (float)$year['forecastYearEnd'],
 			norm: (int)($year['doelNorm'] ?? self::NORM_REGULIER)
 		);

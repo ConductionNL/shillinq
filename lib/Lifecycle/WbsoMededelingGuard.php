@@ -99,9 +99,9 @@ class WbsoMededelingGuard {
 				return false;
 			}
 
-			$beschikkingNumber = (string)($object['decisionNumber'] ?? '');
+			$decisionNumber = (string)($object['decisionNumber'] ?? '');
 			$administrationId = (string)($object['administrationId'] ?? '');
-			if ($beschikkingNumber === '' || $administrationId === '') {
+			if ($decisionNumber === '' || $administrationId === '') {
 				return false;
 			}
 
@@ -112,21 +112,21 @@ class WbsoMededelingGuard {
 				return false;
 			}
 
-			$beschikking = $this->resolveBeschikking(
+			$decision = $this->resolveDecision(
 				administrationId: $administrationId,
-				beschikkingNumber: $beschikkingNumber
+				decisionNumber: $decisionNumber
 			);
-			if ($beschikking === null) {
+			if ($decision === null) {
 				return false;
 			}
 
 			// The beschikking must still be granted; an expired or withdrawn
 			// beschikking may not receive a new realisatie filing.
-			if (($beschikking['state'] ?? '') !== 'granted') {
+			if (($decision['state'] ?? '') !== 'granted') {
 				return false;
 			}
 
-			$grantedCenti = (int)round((float)($beschikking['grantedSoHours'] ?? 0) * 100);
+			$grantedCenti = (int)round((float)($decision['grantedSoHours'] ?? 0) * 100);
 
 			return $realisedCenti <= $grantedCenti;
 		} catch (\Throwable $e) {
@@ -144,11 +144,11 @@ class WbsoMededelingGuard {
 	 * referenced (REQ-WBSO-004).
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $beschikkingNumber The WbsoBeschikking.beschikkingNumber to look up.
+	 * @param string $decisionNumber The WbsoBeschikking.beschikkingNumber to look up.
 	 *
 	 * @return array<string,mixed>|null The beschikking object, or null when not found.
 	 */
-	private function resolveBeschikking(string $administrationId, string $beschikkingNumber): ?array {
+	private function resolveDecision(string $administrationId, string $decisionNumber): ?array {
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
@@ -159,17 +159,17 @@ class WbsoMededelingGuard {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'decisionNumber' => $beschikkingNumber,
+						'decisionNumber' => $decisionNumber,
 					],
 				]
 			);
 
-		foreach ($beschikkingen as $beschikking) {
-			if (is_array($beschikking) === true
-				&& (string)($beschikking['decisionNumber'] ?? '') === $beschikkingNumber
-				&& (string)($beschikking['administrationId'] ?? '') === $administrationId
+		foreach ($beschikkingen as $decision) {
+			if (is_array($decision) === true
+				&& (string)($decision['decisionNumber'] ?? '') === $decisionNumber
+				&& (string)($decision['administrationId'] ?? '') === $administrationId
 			) {
-				return $beschikking;
+				return $decision;
 			}
 		}
 

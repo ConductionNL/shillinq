@@ -94,26 +94,26 @@ class TenderNedAanbestedingGuard {
 	 *
 	 * Fail-closed: returns false on any exception (denies the award) per CWE-863.
 	 *
-	 * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
+	 * @param array<string, mixed> $tender TenderNedAanbesteding object array.
 	 *
 	 * @return bool True when the award may be recorded.
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
 	 */
-	public function canGunnen(array $aanbesteding): bool {
+	public function canGunnen(array $tender): bool {
 		try {
-			if (trim((string)($aanbesteding['gegundeLeverancier'] ?? '')) === '') {
+			if (trim((string)($tender['gegundeLeverancier'] ?? '')) === '') {
 				$this->logger->info(
 					'TenderNedAanbestedingGuard: no gegundeLeverancier — denying award (REQ-002)',
-					['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
+					['tenderId' => ($tender['tenderId'] ?? 'unknown')]
 				);
 				return false;
 			}
 
-			if ((float)($aanbesteding['contractValue'] ?? 0) <= 0.0) {
+			if ((float)($tender['contractValue'] ?? 0) <= 0.0) {
 				$this->logger->info(
 					'TenderNedAanbestedingGuard: contractWaarde must be positive — denying award (REQ-002)',
-					['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
+					['tenderId' => ($tender['tenderId'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -123,7 +123,7 @@ class TenderNedAanbestedingGuard {
 			$this->logger->error(
 				'TenderNedAanbestedingGuard: canGunnen failed — denying award (fail-closed)',
 				[
-					'tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'),
+					'tenderId' => ($tender['tenderId'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -146,29 +146,29 @@ class TenderNedAanbestedingGuard {
 	 *
 	 * Fail-closed: returns false on any exception (denies completion) per CWE-863.
 	 *
-	 * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
+	 * @param array<string, mixed> $tender TenderNedAanbesteding object array.
 	 *
 	 * @return bool True when the tender may be completed.
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
 	 */
-	public function canAfronden(array $aanbesteding): bool {
+	public function canAfronden(array $tender): bool {
 		try {
-			$verplichtingId = trim((string)($aanbesteding['commitmentId'] ?? ''));
-			if ($verplichtingId === '') {
+			$commitmentId = trim((string)($tender['commitmentId'] ?? ''));
+			if ($commitmentId === '') {
 				$this->logger->warning(
 					'TenderNedAanbestedingGuard: no linked Verplichting — permitting completion without delivery check',
-					['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown')]
+					['tenderId' => ($tender['tenderId'] ?? 'unknown')]
 				);
 				return true;
 			}
 
-			return $this->hasApprovedEindoplevering(verplichtingId: $verplichtingId, aanbesteding: $aanbesteding);
+			return $this->hasApprovedEindoplevering(commitmentId: $commitmentId, tender: $tender);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'TenderNedAanbestedingGuard: canAfronden failed — denying completion (fail-closed)',
 				[
-					'tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'),
+					'tenderId' => ($tender['tenderId'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -180,12 +180,12 @@ class TenderNedAanbestedingGuard {
 	/**
 	 * Verify an approved eindoplevering exists for the linked obligation.
 	 *
-	 * @param string $verplichtingId The linked obligation id.
-	 * @param array<string, mixed> $aanbesteding TenderNedAanbesteding for log context.
+	 * @param string $commitmentId The linked obligation id.
+	 * @param array<string, mixed> $tender TenderNedAanbesteding for log context.
 	 *
 	 * @return bool True when an approved eindoplevering OpdrachtUitvoering exists.
 	 */
-	private function hasApprovedEindoplevering(string $verplichtingId, array $aanbesteding): bool {
+	private function hasApprovedEindoplevering(string $commitmentId, array $tender): bool {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$records = $objectService
@@ -194,7 +194,7 @@ class TenderNedAanbestedingGuard {
 				->findAll(
 					[
 						'filters' => [
-							'commitmentId' => $verplichtingId,
+							'commitmentId' => $commitmentId,
 							'deliveryType' => 'eindoplevering',
 						],
 					]
@@ -203,7 +203,7 @@ class TenderNedAanbestedingGuard {
 			// OpdrachtUitvoering schema not available (T1 state) — permit completion.
 			$this->logger->debug(
 				'TenderNedAanbestedingGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
-				['tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['tenderId' => ($tender['tenderId'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return true;
 		}//end try
@@ -227,8 +227,8 @@ class TenderNedAanbestedingGuard {
 		$this->logger->info(
 			'TenderNedAanbestedingGuard: no approved eindoplevering — denying completion (REQ-006)',
 			[
-				'tenderId' => ($aanbesteding['tenderId'] ?? 'unknown'),
-				'commitmentId' => $verplichtingId,
+				'tenderId' => ($tender['tenderId'] ?? 'unknown'),
+				'commitmentId' => $commitmentId,
 			]
 		);
 		return false;

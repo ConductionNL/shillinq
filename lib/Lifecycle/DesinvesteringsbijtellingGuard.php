@@ -78,18 +78,18 @@ class DesinvesteringsbijtellingGuard {
 	 * authoritative — NOT the invoice or delivery date. Malformed input yields
 	 * null so callers fail closed rather than computing a bogus deadline.
 	 *
-	 * @param string $opdrachtDatum Order date as YYYY-MM-DD.
+	 * @param string $assignmentDate Order date as YYYY-MM-DD.
 	 *
 	 * @return string|null Deadline as YYYY-MM-DD, or null if the input is malformed.
 	 *
 	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
 	 */
-	public function computeMeldingDeadline(string $opdrachtDatum): ?string {
-		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $opdrachtDatum) !== 1) {
+	public function computeMeldingDeadline(string $assignmentDate): ?string {
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $assignmentDate) !== 1) {
 			return null;
 		}
 
-		$base = new DateTimeImmutable($opdrachtDatum . ' 00:00:00', new DateTimeZone('UTC'));
+		$base = new DateTimeImmutable($assignmentDate . ' 00:00:00', new DateTimeZone('UTC'));
 
 		return $base->add(new DateInterval('P3M'))->format('Y-m-d');
 	}//end computeMeldingDeadline()
@@ -100,15 +100,15 @@ class DesinvesteringsbijtellingGuard {
 	 * Once the deadline has passed the aftrek is irrevocably forfeited; the
 	 * system MUST NOT silently proceed.
 	 *
-	 * @param string $opdrachtDatum Order date as YYYY-MM-DD.
+	 * @param string $assignmentDate Order date as YYYY-MM-DD.
 	 * @param string $onDate The date the melding would be marked, YYYY-MM-DD.
 	 *
 	 * @return bool True when on/before the deadline; false when past it or input is malformed.
 	 *
 	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
 	 */
-	public function canSubmitDefinitief(string $opdrachtDatum, string $onDate): bool {
-		$deadline = $this->computeMeldingDeadline(opdrachtDatum: $opdrachtDatum);
+	public function canSubmitDefinitief(string $assignmentDate, string $onDate): bool {
+		$deadline = $this->computeMeldingDeadline(assignmentDate: $assignmentDate);
 		if ($deadline === null || preg_match('/^\d{4}-\d{2}-\d{2}$/', $onDate) !== 1) {
 			return false;
 		}
@@ -119,14 +119,14 @@ class DesinvesteringsbijtellingGuard {
 	/**
 	 * Reminder dates at deadline minus 14 days and minus 3 days (REQ-INV-007).
 	 *
-	 * @param string $opdrachtDatum Order date as YYYY-MM-DD.
+	 * @param string $assignmentDate Order date as YYYY-MM-DD.
 	 *
 	 * @return array{0: string, 1: string}|null [reminder-14d, reminder-3d], or null if malformed.
 	 *
 	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
 	 */
-	public function reminderDates(string $opdrachtDatum): ?array {
-		$deadline = $this->computeMeldingDeadline(opdrachtDatum: $opdrachtDatum);
+	public function reminderDates(string $assignmentDate): ?array {
+		$deadline = $this->computeMeldingDeadline(assignmentDate: $assignmentDate);
 		if ($deadline === null) {
 			return null;
 		}
@@ -184,32 +184,32 @@ class DesinvesteringsbijtellingGuard {
 	 * capped at the original aftrek so er nooit meer wordt teruggepakt dan
 	 * oorspronkelijk is afgetrokken.
 	 *
-	 * @param float $aftrekPercentage Original aftrek percentage (e.g. 40 for EIA).
-	 * @param int $opbrengst Disposal proceeds in EUR cents.
-	 * @param int $aanschafwaarde Original acquisition value in EUR cents.
-	 * @param int $origineleAftrek Original aftrek amount in EUR cents (cap).
+	 * @param float $deductionPercentage Original aftrek percentage (e.g. 40 for EIA).
+	 * @param int $revenue Disposal proceeds in EUR cents.
+	 * @param int $acquisitionValue Original acquisition value in EUR cents.
+	 * @param int $origineleDeduction Original aftrek amount in EUR cents (cap).
 	 *
 	 * @return int Desinvesteringsbijtelling in EUR cents (never negative, never above the cap).
 	 *
 	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
 	 */
 	public function computeBijtelling(
-		float $aftrekPercentage,
-		int $opbrengst,
-		int $aanschafwaarde,
-		int $origineleAftrek,
+		float $deductionPercentage,
+		int $revenue,
+		int $acquisitionValue,
+		int $origineleDeduction,
 	): int {
-		$grondslag = min(max(0, $opbrengst), max(0, $aanschafwaarde));
-		$bijtelling = (int)round(($aftrekPercentage / 100.0) * $grondslag);
+		$basis = min(max(0, $revenue), max(0, $acquisitionValue));
+		$benefitInKind = (int)round(($deductionPercentage / 100.0) * $basis);
 
-		$capped = min($bijtelling, max(0, $origineleAftrek));
+		$capped = min($benefitInKind, max(0, $origineleDeduction));
 
 		$this->logger->debug(
 			'DesinvesteringsbijtellingGuard: computeBijtelling',
 			[
-				'percentage' => $aftrekPercentage,
-				'basis' => $grondslag,
-				'raw' => $bijtelling,
+				'percentage' => $deductionPercentage,
+				'basis' => $basis,
+				'raw' => $benefitInKind,
 				'capped' => $capped,
 			]
 		);

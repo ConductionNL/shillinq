@@ -74,7 +74,7 @@ class VerplichtingGuardTest extends TestCase {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private function verplichting(array $overrides = []): array {
+	private function commitment(array $overrides = []): array {
 		return array_merge(
 			[
 				'commitmentNumber' => 'VPL-2026-0001',
@@ -95,7 +95,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testMissingKostenplaatsDeniesActivation(): void {
-		$this->assertFalse($this->guard->canActiveren($this->verplichting(['costCentre' => ''])));
+		$this->assertFalse($this->guard->canActiveren($this->commitment(['costCentre' => ''])));
 
 	}//end testMissingKostenplaatsDeniesActivation()
 
@@ -105,7 +105,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testMissingGrootboekrekeningDeniesActivation(): void {
-		$this->assertFalse($this->guard->canActiveren($this->verplichting(['generalLedgerAccount' => ''])));
+		$this->assertFalse($this->guard->canActiveren($this->commitment(['generalLedgerAccount' => ''])));
 
 	}//end testMissingGrootboekrekeningDeniesActivation()
 
@@ -115,7 +115,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testEnrichedWithoutMilestonesPermitted(): void {
-		$this->assertTrue($this->guard->canActiveren($this->verplichting()));
+		$this->assertTrue($this->guard->canActiveren($this->commitment()));
 
 	}//end testEnrichedWithoutMilestonesPermitted()
 
@@ -125,7 +125,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testMilestoneWithinTermPermitted(): void {
-		$v = $this->verplichting(
+		$v = $this->commitment(
 			['milestones' => [['milestoneId' => 'MS-001', 'date' => '2026-08-01']]]
 		);
 		$this->assertTrue($this->guard->canActiveren($v));
@@ -138,7 +138,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testMilestoneBeforeStartDenied(): void {
-		$v = $this->verplichting(
+		$v = $this->commitment(
 			['milestones' => [['milestoneId' => 'MS-001', 'date' => '2026-01-01']]]
 		);
 		$this->assertFalse($this->guard->canActiveren($v));
@@ -151,7 +151,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testMilestoneAfterEndDenied(): void {
-		$v = $this->verplichting(
+		$v = $this->commitment(
 			['milestones' => [['milestoneId' => 'MS-001', 'date' => '2027-03-01']]]
 		);
 		$this->assertFalse($this->guard->canActiveren($v));
@@ -164,7 +164,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testMilestoneOnBoundaryDatesPermitted(): void {
-		$v = $this->verplichting(
+		$v = $this->commitment(
 			[
 				'milestones' => [
 					['milestoneId' => 'MS-001', 'date' => '2026-02-01'],
@@ -182,7 +182,7 @@ class VerplichtingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testNoTermSkipsMilestoneBound(): void {
-		$v = $this->verplichting(
+		$v = $this->commitment(
 			[
 				'termStart' => '',
 				'termEnd' => '',

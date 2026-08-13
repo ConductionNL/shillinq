@@ -320,7 +320,7 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testMapIv3ExplicitIv3Wins(): void {
 		$item = ['iv3' => ['hoofdstuk' => '8', 'functie' => '810', 'category' => '3.4.1']];
-		$iv3 = $this->service->mapIv3Classification(item: $item, taakveldMap: ['4.2' => ['hoofdstuk' => '4']]);
+		$iv3 = $this->service->mapIv3Classification(item: $item, taskFieldMap: ['4.2' => ['hoofdstuk' => '4']]);
 		self::assertSame('8', $iv3['hoofdstuk']);
 	}//end testMapIv3ExplicitIv3Wins()
 
@@ -333,7 +333,7 @@ class EmuReportingServiceTest extends TestCase {
 		$item = ['taskField' => '4.2'];
 		$iv3 = $this->service->mapIv3Classification(
 			item: $item,
-			taakveldMap: ['4.2' => ['hoofdstuk' => '4', 'functie' => '420', 'category' => '3.5.1']]
+			taskFieldMap: ['4.2' => ['hoofdstuk' => '4', 'functie' => '420', 'category' => '3.5.1']]
 		);
 		self::assertSame('4', $iv3['hoofdstuk']);
 		self::assertSame('420', $iv3['functie']);
@@ -370,7 +370,7 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testResolveConsolidatieEmuS1313(): void {
 		$tegen = ['sector' => 'S.1313', 'name' => 'Veiligheidsregio Brabant-Zuid'];
-		self::assertSame('intern-S1313', $this->service->resolveConsolidatieEmu(tegenpartij: $tegen));
+		self::assertSame('intern-S1313', $this->service->resolveConsolidatieEmu(counterparty: $tegen));
 	}//end testResolveConsolidatieEmuS1313()
 
 	/**
@@ -380,7 +380,7 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testResolveConsolidatieEmuWetFidoExemptionWins(): void {
 		$tegen = ['sector' => 'S.1313', 'wetFidoExemption' => true];
-		self::assertSame('extern', $this->service->resolveConsolidatieEmu(tegenpartij: $tegen));
+		self::assertSame('extern', $this->service->resolveConsolidatieEmu(counterparty: $tegen));
 	}//end testResolveConsolidatieEmuWetFidoExemptionWins()
 
 	/**
@@ -390,6 +390,6 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testResolveConsolidatieEmuExplicitOverrideWins(): void {
 		$tegen = ['sector' => 'S.1313', 'consolidationEMU' => 'internal-entity'];
-		self::assertSame('internal-entity', $this->service->resolveConsolidatieEmu(tegenpartij: $tegen));
+		self::assertSame('internal-entity', $this->service->resolveConsolidatieEmu(counterparty: $tegen));
 	}//end testResolveConsolidatieEmuExplicitOverrideWins()
 }//end class

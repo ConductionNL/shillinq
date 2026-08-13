@@ -70,12 +70,12 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testNoBewijsstukDeniesCompletion(): void {
-		$opdracht = [
+		$assignment = [
 			'commitmentId' => 'vpl-1',
 			'milestoneId' => 'MS-001',
 			'status' => 'in-progress',
 		];
-		$this->assertFalse($this->guard->canVoltooien($opdracht));
+		$this->assertFalse($this->guard->canVoltooien($assignment));
 
 	}//end testNoBewijsstukDeniesCompletion()
 
@@ -85,8 +85,8 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testEmptyBewijsstukkenDeniesCompletion(): void {
-		$opdracht = ['supportingDocuments' => []];
-		$this->assertFalse($this->guard->canVoltooien($opdracht));
+		$assignment = ['supportingDocuments' => []];
+		$this->assertFalse($this->guard->canVoltooien($assignment));
 
 	}//end testEmptyBewijsstukkenDeniesCompletion()
 
@@ -96,8 +96,8 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testBewijsstukWithoutDocumentIdDeniesCompletion(): void {
-		$opdracht = ['supportingDocuments' => [['app' => 'docudesk', 'documentId' => '']]];
-		$this->assertFalse($this->guard->canVoltooien($opdracht));
+		$assignment = ['supportingDocuments' => [['app' => 'docudesk', 'documentId' => '']]];
+		$this->assertFalse($this->guard->canVoltooien($assignment));
 
 	}//end testBewijsstukWithoutDocumentIdDeniesCompletion()
 
@@ -107,12 +107,12 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testValidBewijsstukPermitsCompletion(): void {
-		$opdracht = [
+		$assignment = [
 			'supportingDocuments' => [
 				['app' => 'docudesk', 'documentId' => 'doc-123', 'description' => 'Acceptatie-protocol'],
 			],
 		];
-		$this->assertTrue($this->guard->canVoltooien($opdracht));
+		$this->assertTrue($this->guard->canVoltooien($assignment));
 
 	}//end testValidBewijsstukPermitsCompletion()
 
@@ -122,8 +122,8 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testScalarBewijsstukkenDeniesCompletion(): void {
-		$opdracht = ['supportingDocuments' => 'doc-123'];
-		$this->assertFalse($this->guard->canVoltooien($opdracht));
+		$assignment = ['supportingDocuments' => 'doc-123'];
+		$this->assertFalse($this->guard->canVoltooien($assignment));
 
 	}//end testScalarBewijsstukkenDeniesCompletion()
 }//end class

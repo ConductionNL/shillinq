@@ -220,12 +220,12 @@ class RetireSubsidieSchemaTest extends TestCase {
 	 * A Subsidie with a matching folded Order (migratedFrom marker) is deleted.
 	 */
 	public function testDeletesSubsidieWithMatchingOrder(): void {
-		$subsidie = ['id' => 'sub-1', 'subsidyNumber' => 'SUB-2026-001'];
+		$subsidy = ['id' => 'sub-1', 'subsidyNumber' => 'SUB-2026-001'];
 		$order = ['migratedFrom' => ['schema' => 'Subsidie', 'key' => 'SUB-2026-001']];
 
 		$fakeOs = $this->fakeObjectService(
 			[
-				'Subsidie' => [$subsidie],
+				'Subsidie' => [$subsidy],
 				'OrderPrimitive' => [$order],
 			]
 		);
@@ -248,9 +248,9 @@ class RetireSubsidieSchemaTest extends TestCase {
 	 * A Subsidie with NO matching folded Order is left in place (data-safety).
 	 */
 	public function testKeepsUnmigratedSubsidie(): void {
-		$subsidie = ['id' => 'sub-2', 'subsidyNumber' => 'SUB-2026-002'];
+		$subsidy = ['id' => 'sub-2', 'subsidyNumber' => 'SUB-2026-002'];
 
-		$fakeOs = $this->fakeObjectService(['Subsidie' => [$subsidie]]);
+		$fakeOs = $this->fakeObjectService(['Subsidie' => [$subsidy]]);
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new RetireSubsidieSchema(
@@ -271,12 +271,12 @@ class RetireSubsidieSchemaTest extends TestCase {
 	 * not be mistaken as proof this Subsidie was migrated.
 	 */
 	public function testDoesNotMatchOrderFromDifferentSourceSchema(): void {
-		$subsidie = ['id' => 'sub-3', 'subsidyNumber' => 'SUB-2026-003'];
+		$subsidy = ['id' => 'sub-3', 'subsidyNumber' => 'SUB-2026-003'];
 		$unrelatedOrder = ['migratedFrom' => ['schema' => 'PurchaseOrder', 'key' => 'SUB-2026-003']];
 
 		$fakeOs = $this->fakeObjectService(
 			[
-				'Subsidie' => [$subsidie],
+				'Subsidie' => [$subsidy],
 				'OrderPrimitive' => [$unrelatedOrder],
 			]
 		);

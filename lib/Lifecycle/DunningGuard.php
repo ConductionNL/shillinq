@@ -248,13 +248,13 @@ class DunningGuard {
 	 * B2B incassokosten apply from verzuim van rechtswege and are never blocked.
 	 *
 	 * @param string $partyType The party type (B2B / B2C).
-	 * @param int $dagenNaVervalDatum Days since the invoice vervaldatum.
+	 * @param int $daysAfterExpiryDate Days since the invoice vervaldatum.
 	 *
 	 * @return bool True when the calculation must be blocked.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
 	 */
-	public function blocksB2cIncassokosten(string $partyType, int $dagenNaVervalDatum): bool {
+	public function blocksB2cIncassokosten(string $partyType, int $daysAfterExpiryDate): bool {
 		if (strtoupper($partyType) !== 'B2C') {
 			return false;
 		}
@@ -265,7 +265,7 @@ class DunningGuard {
 			self::DEFAULT_B2C_INCASSOKOSTEN_DAG
 		);
 
-		return $dagenNaVervalDatum < $threshold;
+		return $daysAfterExpiryDate < $threshold;
 	}//end blocksB2cIncassokosten()
 
 	/**
@@ -311,7 +311,7 @@ class DunningGuard {
 
 		$partyType = strtoupper((string)($run['partyType'] ?? ''));
 		if ($partyType === '') {
-			$partyType = strtoupper($this->lookupPartyType(factuurId: (string)($run['invoiceId'] ?? '')));
+			$partyType = strtoupper($this->lookupPartyType(invoiceId: (string)($run['invoiceId'] ?? '')));
 		}
 
 		return $partyType === 'B2C';
@@ -341,12 +341,12 @@ class DunningGuard {
 	 * Look up the partyType for an invoice via its IncassoKostenBerekening record
 	 * (ADR-022 real ObjectService API). Returns an empty string when unknown.
 	 *
-	 * @param string $factuurId The invoice id.
+	 * @param string $invoiceId The invoice id.
 	 *
 	 * @return string The party type, or an empty string.
 	 */
-	private function lookupPartyType(string $factuurId): string {
-		if ($factuurId === '') {
+	private function lookupPartyType(string $invoiceId): string {
+		if ($invoiceId === '') {
 			return '';
 		}
 
@@ -356,7 +356,7 @@ class DunningGuard {
 		$results = $objectService
 			->setRegister($register)
 			->setSchema('IncassoKostenBerekening')
-			->findAll(['filters' => ['invoiceId' => $factuurId]]);
+			->findAll(['filters' => ['invoiceId' => $invoiceId]]);
 
 		foreach ($results as $result) {
 			if (is_array($result) === true && isset($result['partyType']) === true) {

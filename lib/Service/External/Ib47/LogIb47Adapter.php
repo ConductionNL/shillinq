@@ -91,18 +91,18 @@ class LogIb47Adapter implements Ib47AdapterInterface {
 			];
 		}//end if
 
-		$kenmerk = 'ib47-log-' . bin2hex(random_bytes(8));
+		$reference = 'ib47-log-' . bin2hex(random_bytes(8));
 		$this->logger->info(
 			'Shillinq Belastingdienst IB47 submission deferred (no outbound connector bound)',
 			[
-				'reference' => $kenmerk,
+				'reference' => $reference,
 				'payload' => $sanitised,
 			]
 		);
 
 		return new Ib47SubmissionResult(
 			deliveryStatus: 'DEFERRED',
-			kenmerk: $kenmerk,
+			reference: $reference,
 			dormant: true,
 			extras: [
 				'reason' => 'no-outbound-connector-bound',

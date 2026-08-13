@@ -210,7 +210,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 	public function testGroupsByUitvoerderAndSumsCorrectly(): void {
 		$svc = $this->buildService(data: $this->dataset());
 
-		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodId: 'lp-1');
 
 		$this->assertCount(2, $payloads);
 
@@ -243,7 +243,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 	public function testReturnsEmptyWhenNoStroken(): void {
 		$svc = $this->buildService(data: ['Werknemer' => [], 'LoonStrook' => []]);
 
-		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodId: 'lp-1');
 
 		$this->assertSame([], $payloads);
 
@@ -257,7 +257,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 	public function testDoesNotLeakCrossAdministration(): void {
 		$svc = $this->buildService(data: $this->dataset());
 
-		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-2', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-2', periodId: 'lp-1');
 
 		// adm-2 has wn-5 with PME_DC but we never see adm-1's wn-1/wn-2 grouped in.
 		$this->assertCount(1, $payloads);

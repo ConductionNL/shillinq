@@ -299,11 +299,11 @@ class RechtmatigheidWorkflowTest extends TestCase {
 	 */
 	public function testPoToetsInheritsWhenAmountWithinTenPercent(): void {
 		$poAmount = 100000.00;
-		$factuurClose = 105000.00;
-		$factuurDeviation = 130000.00;
+		$invoiceClose = 105000.00;
+		$invoiceDeviation = 130000.00;
 
-		$deltaClose = (abs(($factuurClose - $poAmount)) / $poAmount);
-		$deltaDeviation = (abs(($factuurDeviation - $poAmount)) / $poAmount);
+		$deltaClose = (abs(($invoiceClose - $poAmount)) / $poAmount);
+		$deltaDeviation = (abs(($invoiceDeviation - $poAmount)) / $poAmount);
 
 		self::assertLessThanOrEqual(
 			expected: 0.10,
@@ -533,7 +533,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 	public function testJaarrekeningExportGateOnlyAcceptsDefinitief(): void {
 		foreach (['concept', 'vastgesteld_college', 'behandeld_raad'] as $blockedStatus) {
 			$result = $this->guard->canExportParagraaf(
-				paragraaf: ['status' => $blockedStatus, 'financialYear' => 2026]
+				paragraph: ['status' => $blockedStatus, 'financialYear' => 2026]
 			);
 			self::assertFalse(
 				condition: $result,
@@ -542,7 +542,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		}
 
 		$definitief = $this->guard->canExportParagraaf(
-			paragraaf: ['status' => 'definitief', 'financialYear' => 2026]
+			paragraph: ['status' => 'definitief', 'financialYear' => 2026]
 		);
 		self::assertTrue(
 			condition: $definitief,
@@ -551,8 +551,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 
 		// The paragraaf schema must also declare the four-state lifecycle so
 		// the financial-statements module can subscribe to status changes.
-		$paragraafSchema = $this->schema(name: 'Rechtmatigheidsparagraaf');
-		$statusEnum = ((($paragraafSchema['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
+		$paragraphSchema = $this->schema(name: 'Rechtmatigheidsparagraaf');
+		$statusEnum = ((($paragraphSchema['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
 		self::assertSame(
 			expected: ['concept', 'vastgesteld_college', 'behandeld_raad', 'definitief'],
 			actual: $statusEnum,

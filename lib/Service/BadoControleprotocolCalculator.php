@@ -213,19 +213,19 @@ class BadoControleprotocolCalculator {
 	 * @return string|null 'lawfulness', 'faithfulness', or null when no exception.
 	 */
 	private function exceptionAxis(array $finding): ?string {
-		$rechtmatigheid = (string)($finding['lawfulness'] ?? '');
-		$getrouwheid = (string)($finding['faithfulness'] ?? '');
+		$lawfulness = (string)($finding['lawfulness'] ?? '');
+		$faithfulness = (string)($finding['faithfulness'] ?? '');
 
-		if ($rechtmatigheid === 'exception') {
+		if ($lawfulness === 'exception') {
 			return 'lawfulness';
 		}
 
-		if ($getrouwheid === 'misstated') {
+		if ($faithfulness === 'misstated') {
 			return 'faithfulness';
 		}
 
 		// Fall back to findingType when explicit axis outcomes are not recorded.
-		if ($rechtmatigheid === '' && $getrouwheid === '') {
+		if ($lawfulness === '' && $faithfulness === '') {
 			$findingType = (string)($finding['findingType'] ?? '');
 			if ($findingType === 'lawfulness') {
 				return 'lawfulness';

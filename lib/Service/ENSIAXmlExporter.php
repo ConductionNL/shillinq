@@ -74,8 +74,8 @@ class ENSIAXmlExporter {
 			return false;
 		}
 
-		$verklaringFile = (string)($cyclus['declarationFile'] ?? '');
-		return $verklaringFile !== '';
+		$declarationFile = (string)($cyclus['declarationFile'] ?? '');
+		return $declarationFile !== '';
 	}//end canExport()
 
 	/**
@@ -128,34 +128,34 @@ class ENSIAXmlExporter {
 			$domeinEl->setAttribute('code', $domein);
 
 			foreach ($domeinVragen as $v) {
-				$vraagEl = $doc->createElement('vraag');
-				$vraagEl->setAttribute('code', (string)($v['questionCode'] ?? ''));
-				$vraagEl->appendChild($doc->createElement('answerType', (string)($v['answerType'] ?? '')));
+				$questionEl = $doc->createElement('vraag');
+				$questionEl->setAttribute('code', (string)($v['questionCode'] ?? ''));
+				$questionEl->appendChild($doc->createElement('answerType', (string)($v['answerType'] ?? '')));
 
-				$antwoord = $v['answer'] ?? null;
-				if ($antwoord !== null) {
-					$vraagEl->appendChild($doc->createElement('answer', (string)$antwoord));
+				$answer = $v['answer'] ?? null;
+				if ($answer !== null) {
+					$questionEl->appendChild($doc->createElement('answer', (string)$answer));
 				}
 
 				$score = $v['maturityScore'] ?? null;
 				if ($score !== null) {
-					$vraagEl->appendChild($doc->createElement('maturityScore', (string)$score));
+					$questionEl->appendChild($doc->createElement('maturityScore', (string)$score));
 				}
 
-				$toelichting = (string)($v['notes'] ?? '');
-				if ($toelichting !== '') {
-					$vraagEl->appendChild($doc->createElement('notes', $toelichting));
+				$notes = (string)($v['notes'] ?? '');
+				if ($notes !== '') {
+					$questionEl->appendChild($doc->createElement('notes', $notes));
 				}
 
 				$peerReviewStatus = (string)($v['peerReviewStatus'] ?? '');
 				if ($peerReviewStatus !== '') {
-					$vraagEl->appendChild($doc->createElement('peerReviewStatus', $peerReviewStatus));
+					$questionEl->appendChild($doc->createElement('peerReviewStatus', $peerReviewStatus));
 				}
 
-				$bewijsstukken = $v['supportingDocuments'] ?? [];
-				if (is_array($bewijsstukken) === true && count($bewijsstukken) > 0) {
-					$bewijsEl = $doc->createElement('supportingDocuments');
-					foreach ($bewijsstukken as $bw) {
+				$supportingDocuments = $v['supportingDocuments'] ?? [];
+				if (is_array($supportingDocuments) === true && count($supportingDocuments) > 0) {
+					$evidenceEl = $doc->createElement('supportingDocuments');
+					foreach ($supportingDocuments as $bw) {
 						$bewijsstukEl = $doc->createElement('bewijsstuk');
 						$bewijsstukEl->appendChild(
 							$doc->createElement('fileRef', (string)($bw['fileRef'] ?? ''))
@@ -168,13 +168,13 @@ class ENSIAXmlExporter {
 							$bewijsstukEl->appendChild($doc->createElement('sha256', $sha));
 						}
 
-						$bewijsEl->appendChild($bewijsstukEl);
+						$evidenceEl->appendChild($bewijsstukEl);
 					}
 
-					$vraagEl->appendChild($bewijsEl);
+					$questionEl->appendChild($evidenceEl);
 				}
 
-				$domeinEl->appendChild($vraagEl);
+				$domeinEl->appendChild($questionEl);
 			}//end foreach
 
 			$domeinenEl->appendChild($domeinEl);

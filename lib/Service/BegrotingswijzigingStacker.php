@@ -43,24 +43,24 @@ class BegrotingswijzigingStacker {
 	 * Draft wijzigingen are ignored (only `vastgesteld` status counts). The
 	 * result is keyed by taakveldCode with effective baten/lasten in euro.
 	 *
-	 * @param array<int,array<string,mixed>> $basisTaakvelden The vastgestelde basis Taakveld rows.
+	 * @param array<int,array<string,mixed>> $basisTaskFields The vastgestelde basis Taakveld rows.
 	 * @param array<int,array<string,mixed>> $wijzigingen The Begrotingswijziging rows (any status).
 	 *
 	 * @return array<string,array{revenue:float,expenses:float}> Effective stand keyed by taakveldCode.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
 	 */
-	public function currentStand(array $basisTaakvelden, array $wijzigingen): array {
-		$stand = [];
-		foreach ($basisTaakvelden as $taakveld) {
-			$code = (string)($taakveld['taskFieldCode'] ?? '');
+	public function currentStand(array $basisTaskFields, array $wijzigingen): array {
+		$position = [];
+		foreach ($basisTaskFields as $taskField) {
+			$code = (string)($taskField['taskFieldCode'] ?? '');
 			if ($code === '') {
 				continue;
 			}
 
-			$stand[$code] = [
-				'revenueCents' => (int)round(((float)($taakveld['revenue'] ?? 0)) * 100),
-				'expensesCents' => (int)round(((float)($taakveld['expenses'] ?? 0)) * 100),
+			$position[$code] = [
+				'revenueCents' => (int)round(((float)($taskField['revenue'] ?? 0)) * 100),
+				'expensesCents' => (int)round(((float)($taskField['expenses'] ?? 0)) * 100),
 			];
 		}
 
@@ -69,14 +69,14 @@ class BegrotingswijzigingStacker {
 				continue;
 			}
 
-			$mutaties = ($wijziging['movements'] ?? []);
-			if (is_array($mutaties) === true) {
-				$stand = $this->applyMutaties(stand: $stand, mutaties: $mutaties);
+			$movements = ($wijziging['movements'] ?? []);
+			if (is_array($movements) === true) {
+				$position = $this->applyMovements(position: $position, movements: $movements);
 			}
 		}
 
 		$result = [];
-		foreach ($stand as $code => $cents) {
+		foreach ($position as $code => $cents) {
 			$result[$code] = [
 				'revenue' => (float)($cents['revenueCents'] / 100),
 				'expenses' => (float)($cents['expensesCents'] / 100),
@@ -89,31 +89,31 @@ class BegrotingswijzigingStacker {
 	/**
 	 * Apply one wijziging's mutaties onto the cent-keyed stand.
 	 *
-	 * @param array<string,array{revenueCents:int,expensesCents:int}> $stand The accumulating cent-keyed stand.
-	 * @param array<int,mixed> $mutaties The wijziging's delta rows.
+	 * @param array<string,array{revenueCents:int,expensesCents:int}> $position The accumulating cent-keyed stand.
+	 * @param array<int,mixed> $movements The wijziging's delta rows.
 	 *
 	 * @return array<string,array{revenueCents:int,expensesCents:int}> The updated stand.
 	 */
-	private function applyMutaties(array $stand, array $mutaties): array {
-		foreach ($mutaties as $mutatie) {
-			if (is_array($mutatie) === false) {
+	private function applyMovements(array $position, array $movements): array {
+		foreach ($movements as $movement) {
+			if (is_array($movement) === false) {
 				continue;
 			}
 
-			$code = (string)($mutatie['taskFieldCode'] ?? '');
+			$code = (string)($movement['taskFieldCode'] ?? '');
 			if ($code === '') {
 				continue;
 			}
 
-			if (isset($stand[$code]) === false) {
-				$stand[$code] = ['revenueCents' => 0, 'expensesCents' => 0];
+			if (isset($position[$code]) === false) {
+				$position[$code] = ['revenueCents' => 0, 'expensesCents' => 0];
 			}
 
-			$stand[$code]['revenueCents'] += (int)round(((float)($mutatie['baten_delta'] ?? 0)) * 100);
-			$stand[$code]['expensesCents'] += (int)round(((float)($mutatie['lasten_delta'] ?? 0)) * 100);
+			$position[$code]['revenueCents'] += (int)round(((float)($movement['baten_delta'] ?? 0)) * 100);
+			$position[$code]['expensesCents'] += (int)round(((float)($movement['lasten_delta'] ?? 0)) * 100);
 		}
 
-		return $stand;
+		return $position;
 	}//end applyMutaties()
 
 	/**
@@ -123,16 +123,16 @@ class BegrotingswijzigingStacker {
 	 * vastgestelde basis lasten plus all vastgestelde wijziging deltas for one
 	 * taakveld, in euro. Returns 0.0 when the taakveld is unknown.
 	 *
-	 * @param string $taakveldCode The taakveld to look up.
-	 * @param array<int,array<string,mixed>> $basisTaakvelden The vastgestelde basis Taakveld rows.
+	 * @param string $taskFieldCode The taakveld to look up.
+	 * @param array<int,array<string,mixed>> $basisTaskFields The vastgestelde basis Taakveld rows.
 	 * @param array<int,array<string,mixed>> $wijzigingen The Begrotingswijziging rows.
 	 *
 	 * @return float The effective authorized lasten in euro.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
 	 */
-	public function authorizedLasten(string $taakveldCode, array $basisTaakvelden, array $wijzigingen): float {
-		$stand = $this->currentStand(basisTaakvelden: $basisTaakvelden, wijzigingen: $wijzigingen);
-		return ($stand[$taakveldCode]['expenses'] ?? 0.0);
+	public function authorizedLasten(string $taskFieldCode, array $basisTaskFields, array $wijzigingen): float {
+		$position = $this->currentStand(basisTaskFields: $basisTaskFields, wijzigingen: $wijzigingen);
+		return ($position[$taskFieldCode]['expenses'] ?? 0.0);
 	}//end authorizedLasten()
 }//end class

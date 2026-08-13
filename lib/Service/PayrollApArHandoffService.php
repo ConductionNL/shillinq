@@ -61,43 +61,43 @@ final class PayrollApArHandoffService {
 	 * + WKR-eindheffingen) and one to UWV (premies SV werkgever). A payload is
 	 * omitted when its amount is zero.
 	 *
-	 * @param array<string,mixed> $lhAfdracht The LHAfdracht in VOORBEREID status.
+	 * @param array<string,mixed> $lhRemittance The LHAfdracht in VOORBEREID status.
 	 *
 	 * @return array<int,array<string,mixed>> AP transaction payloads.
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	public function toApTransactionPayloads(array $lhAfdracht): array {
-		$werkgeverId = (string)($lhAfdracht['werkgeverId'] ?? '');
-		$periodeId = (string)($lhAfdracht['periodId'] ?? '');
-		$dueDate = ($lhAfdracht['vervaldagRemittance'] ?? null);
-		$adminId = ($lhAfdracht['administrationId'] ?? null);
+	public function toApTransactionPayloads(array $lhRemittance): array {
+		$werkgeverId = (string)($lhRemittance['werkgeverId'] ?? '');
+		$periodId = (string)($lhRemittance['periodId'] ?? '');
+		$dueDate = ($lhRemittance['vervaldagRemittance'] ?? null);
+		$adminId = ($lhRemittance['administrationId'] ?? null);
 
-		$loonheffing = (float)($lhAfdracht['totalPayrollTax'] ?? 0.0);
-		$zvw = (float)($lhAfdracht['totalHealthInsurance'] ?? 0.0);
-		$wkr = (float)($lhAfdracht['totalFinalLeviesWorkRelatedCosts'] ?? 0.0);
-		$premiesSV = (float)($lhAfdracht['totalSocialInsuranceContributions'] ?? 0.0);
+		$payrollTax = (float)($lhRemittance['totalPayrollTax'] ?? 0.0);
+		$zvw = (float)($lhRemittance['totalHealthInsurance'] ?? 0.0);
+		$wkr = (float)($lhRemittance['totalFinalLeviesWorkRelatedCosts'] ?? 0.0);
+		$premiesSV = (float)($lhRemittance['totalSocialInsuranceContributions'] ?? 0.0);
 
-		$belastingdienstBedrag = ($loonheffing + $zvw + $wkr);
+		$taxAuthorityAmount = ($payrollTax + $zvw + $wkr);
 
 		$payloads = [];
-		if ($belastingdienstBedrag > 0.0) {
+		if ($taxAuthorityAmount > 0.0) {
 			$payloads[] = [
 				'payee' => self::PAYEE_BELASTINGDIENST,
-				'amount' => round($belastingdienstBedrag, 2),
+				'amount' => round($taxAuthorityAmount, 2),
 				'currency' => 'EUR',
 				'dueDate' => $dueDate,
 				'werkgeverId' => $werkgeverId,
-				'periodId' => $periodeId,
+				'periodId' => $periodId,
 				'administrationId' => $adminId,
 				'breakdown' => [
-					'payrollTax' => $loonheffing,
+					'payrollTax' => $payrollTax,
 					'zvw' => $zvw,
 					'eindheffingenWKR' => $wkr,
 				],
-				'description' => sprintf('Loonheffing + ZVW + WKR afdracht periode %s', $periodeId),
+				'description' => sprintf('Loonheffing + ZVW + WKR afdracht periode %s', $periodId),
 				'source' => 'LHAfdracht',
-				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodeId),
+				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodId),
 			];
 		}
 
@@ -108,12 +108,12 @@ final class PayrollApArHandoffService {
 				'currency' => 'EUR',
 				'dueDate' => $dueDate,
 				'werkgeverId' => $werkgeverId,
-				'periodId' => $periodeId,
+				'periodId' => $periodId,
 				'administrationId' => $adminId,
 				'breakdown' => ['premiesSV' => $premiesSV],
-				'description' => sprintf('Premies werknemersverzekeringen periode %s', $periodeId),
+				'description' => sprintf('Premies werknemersverzekeringen periode %s', $periodId),
 				'source' => 'LHAfdracht',
-				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodeId),
+				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodId),
 			];
 		}
 

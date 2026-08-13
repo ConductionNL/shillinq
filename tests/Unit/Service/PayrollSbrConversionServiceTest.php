@@ -72,7 +72,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 			'status' => 'VOORBEREID',
 		];
 
-		$payload = $this->svc->toSbrInstancePayload(lhAfdracht: $lh);
+		$payload = $this->svc->toSbrInstancePayload(lhRemittance: $lh);
 
 		$this->assertSame(PayrollSbrConversionService::SBR_TAXONOMY_VERSION, $payload['taxonomyVersion']);
 		$this->assertSame('LA-XX-2026-wg-conduction-bv-lp-2026-05', $payload['instanceRef']);
@@ -98,8 +98,8 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 			'periodId' => 'lp-2026-04',
 		];
 
-		$first = $this->svc->stampInstanceRef(lhAfdracht: $lh);
-		$second = $this->svc->stampInstanceRef(lhAfdracht: $first);
+		$first = $this->svc->stampInstanceRef(lhRemittance: $lh);
+		$second = $this->svc->stampInstanceRef(lhRemittance: $first);
 
 		$this->assertSame('LA-XX-2026-wg-1-lp-2026-04', $first['sbrInstanceRef']);
 		$this->assertSame($first['sbrInstanceRef'], $second['sbrInstanceRef']);
@@ -113,7 +113,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	 */
 	public function testInstanceRefSanitisesIdentifierCharacters(): void {
 		$payload = $this->svc->toSbrInstancePayload(
-			lhAfdracht: [
+			lhRemittance: [
 				'werkgeverId' => 'wg-/?\\!1',
 				'periodId' => 'lp 2026/05',
 			]

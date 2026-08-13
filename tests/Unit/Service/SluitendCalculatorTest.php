@@ -58,7 +58,7 @@ final class SluitendCalculatorTest extends TestCase {
 	public function testYearSluitendWhenStructureelAndReeelHold(): void {
 		$result = $this->calculator->evaluateYear(
 			year: ['revenueStructureel' => 1000.0, 'expensesStructureel' => 900.0],
-			nominaleOntwikkeling: 2.0
+			nominaleDevelopment: 2.0
 		);
 
 		// Saldo structureel = 100; reëel uplift = 2% of 900 = 18; saldo reëel = 82.
@@ -78,7 +78,7 @@ final class SluitendCalculatorTest extends TestCase {
 	public function testYearNotSluitendWhenLastenExceedBaten(): void {
 		$result = $this->calculator->evaluateYear(
 			year: ['revenueStructureel' => 1000.0, 'expensesStructureel' => 1100.0],
-			nominaleOntwikkeling: 2.0
+			nominaleDevelopment: 2.0
 		);
 
 		self::assertSame(-100.0, $result['balanceStructural']);
@@ -96,7 +96,7 @@ final class SluitendCalculatorTest extends TestCase {
 		// Saldo structureel = 10; uplift = 5% of 1000 = 50; saldo reëel = -40.
 		$result = $this->calculator->evaluateYear(
 			year: ['revenueStructureel' => 1010.0, 'expensesStructureel' => 1000.0],
-			nominaleOntwikkeling: 5.0
+			nominaleDevelopment: 5.0
 		);
 
 		self::assertTrue($result['sluitendStructureel']);
@@ -116,7 +116,7 @@ final class SluitendCalculatorTest extends TestCase {
 			['revenueStructureel' => 1020.0, 'expensesStructureel' => 950.0],
 		];
 
-		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
+		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleDevelopment: 2.0);
 		self::assertTrue($flags['sluitendStructureel']);
 		self::assertTrue($flags['sluitendReëel']);
 
@@ -133,7 +133,7 @@ final class SluitendCalculatorTest extends TestCase {
 			['revenueStructureel' => 800.0, 'expensesStructureel' => 950.0],
 		];
 
-		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleOntwikkeling: 2.0);
+		$flags = $this->calculator->evaluateBegroting(years: $years, nominaleDevelopment: 2.0);
 		self::assertFalse($flags['sluitendStructureel']);
 
 	}//end testBegrotingNotSluitendWhenOneYearFails()
@@ -144,7 +144,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testEmptyBegrotingIsNotSluitend(): void {
-		$flags = $this->calculator->evaluateBegroting(years: [], nominaleOntwikkeling: 2.0);
+		$flags = $this->calculator->evaluateBegroting(years: [], nominaleDevelopment: 2.0);
 		self::assertFalse($flags['sluitendStructureel']);
 		self::assertFalse($flags['sluitendReëel']);
 
@@ -221,7 +221,7 @@ final class SluitendCalculatorTest extends TestCase {
 		// 0.1 + 0.2 baten/lasten that would drift in float — result must be exact.
 		$result = $this->calculator->evaluateYear(
 			year: ['revenueStructureel' => 0.3, 'expensesStructureel' => 0.3],
-			nominaleOntwikkeling: 0.0
+			nominaleDevelopment: 0.0
 		);
 		self::assertSame(0.0, $result['balanceStructural']);
 		self::assertTrue($result['sluitendStructureel']);
