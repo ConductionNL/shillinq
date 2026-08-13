@@ -51,10 +51,7 @@ const REGISTER_SLUG = 'shillinq'
 const SCHEMA_SLUG = 'BudgetBBVMapping'
 
 const useBaseStore = createObjectStore('budget-bbv-mapping', {
-	plugins: [
-		relationsPlugin(),
-		auditTrailsPlugin(),
-	],
+	plugins: [relationsPlugin(), auditTrailsPlugin()],
 	baseUrl: generateUrl('/apps/openregister/api/objects'),
 })
 
@@ -69,14 +66,14 @@ const useBaseStore = createObjectStore('budget-bbv-mapping', {
  */
 export function useBudgetBBVMappingStore() {
 	const store = useBaseStore()
-	if (typeof store.registerObjectType === 'function'
-		&& !store.objectTypeRegistry[TYPE_SLUG]) {
-		store.registerObjectType(
-			TYPE_SLUG,
-			SCHEMA_SLUG,
-			REGISTER_SLUG,
-			{ registerSlug: REGISTER_SLUG, schemaSlug: SCHEMA_SLUG },
-		)
+	if (
+		typeof store.registerObjectType === 'function'
+		&& !store.objectTypeRegistry[TYPE_SLUG]
+	) {
+		store.registerObjectType(TYPE_SLUG, SCHEMA_SLUG, REGISTER_SLUG, {
+			registerSlug: REGISTER_SLUG,
+			schemaSlug: SCHEMA_SLUG,
+		})
 	}
 	return store
 }

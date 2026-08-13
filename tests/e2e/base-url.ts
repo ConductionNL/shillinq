@@ -25,7 +25,11 @@
  * names are accepted; only the absence of all three is an error.
  */
 
-export const BASE_URL_ENV_NAMES = ['PLAYWRIGHT_BASE_URL', 'BASE_URL', 'NEXTCLOUD_URL'] as const
+export const BASE_URL_ENV_NAMES = [
+	'PLAYWRIGHT_BASE_URL',
+	'BASE_URL',
+	'NEXTCLOUD_URL',
+] as const
 
 /**
  * Resolve the base URL, or throw.
@@ -39,9 +43,9 @@ export function resolveBaseURL(): string {
 	}
 	throw new Error(
 		`No Nextcloud base URL configured. Set one of ${BASE_URL_ENV_NAMES.join(' / ')} `
-		+ '— e.g. PLAYWRIGHT_BASE_URL=http://localhost:8087. '
-		+ 'There is deliberately no default: the old fallback was the SHARED dev '
-		+ 'container on :8080, so an unset environment silently drove somebody '
-		+ "else's instance.",
+			+ '— e.g. PLAYWRIGHT_BASE_URL=http://localhost:8087. '
+			+ 'There is deliberately no default: the old fallback was the SHARED dev '
+			+ 'container on :8080, so an unset environment silently drove somebody '
+			+ "else's instance.",
 	)
 }

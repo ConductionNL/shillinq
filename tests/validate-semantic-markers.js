@@ -32,7 +32,12 @@ const fs = require('fs')
 const path = require('path')
 
 const REPO_ROOT = path.resolve(__dirname, '..')
-const MAIN_REGISTER = path.join(REPO_ROOT, 'lib', 'Settings', 'shillinq_register.json')
+const MAIN_REGISTER = path.join(
+	REPO_ROOT,
+	'lib',
+	'Settings',
+	'shillinq_register.json',
+)
 const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 
 // A valid marker is either a CURIE (`prefix:LocalName`) or the `ns#Local`
@@ -84,7 +89,9 @@ function main() {
 		try {
 			parsed = loadJson(fp)
 		} catch (err) {
-			console.error(`[validate-semantic-markers] failed to parse ${fp}: ${err.message}`)
+			console.error(
+				`[validate-semantic-markers] failed to parse ${fp}: ${err.message}`,
+			)
 			process.exit(1)
 		}
 		const before = offenders.length
@@ -96,14 +103,22 @@ function main() {
 	}
 
 	if (offenders.length > 0) {
-		console.error('[validate-semantic-markers] FAIL — bare / malformed x-schema-org markers:')
+		console.error(
+			'[validate-semantic-markers] FAIL — bare / malformed x-schema-org markers:',
+		)
 		for (const o of offenders) {
-			console.error(`  ${path.relative(REPO_ROOT, o.file)} — ${o.name}: ${JSON.stringify(o.marker)}`)
+			console.error(
+				`  ${path.relative(REPO_ROOT, o.file)} — ${o.name}: ${JSON.stringify(o.marker)}`,
+			)
 		}
-		console.error(`\n${offenders.length} offending marker(s). Every marker MUST be a CURIE (prefix:Type or ns#Type).`)
+		console.error(
+			`\n${offenders.length} offending marker(s). Every marker MUST be a CURIE (prefix:Type or ns#Type).`,
+		)
 		process.exit(1)
 	}
-	console.log(`[validate-semantic-markers] OK — ${markerCount} x-schema-org marker(s) are valid CURIEs.`)
+	console.log(
+		`[validate-semantic-markers] OK — ${markerCount} x-schema-org marker(s) are valid CURIEs.`,
+	)
 }
 
 function countMarkers(node, box) {

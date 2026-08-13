@@ -55,7 +55,9 @@ async function openWizard(page: Page): Promise<boolean> {
 		return false
 	}
 	await importBank.click()
-	await page.locator('[data-testid="bank-statement-wizard"]').waitFor({ state: 'visible', timeout: 8_000 })
+	await page
+		.locator('[data-testid="bank-statement-wizard"]')
+		.waitFor({ state: 'visible', timeout: 8_000 })
 	return true
 }
 
@@ -66,7 +68,10 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 * @e2e shillinq-bank-statement-wizard::clicking-import-bank-opens-the-wizard
 	 */
 	test('clicking Import bank opens the wizard', async ({ page }) => {
-		test.skip(!(await openWizard(page)), 'Financial dashboard / Import bank action not available for this administration')
+		test.skip(
+			!(await openWizard(page)),
+			'Financial dashboard / Import bank action not available for this administration',
+		)
 		await expect(page.locator('[data-testid="bsw-step-1"]')).toBeVisible()
 	})
 
@@ -110,7 +115,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 		// Step-2 markup is part of the same dialog; presence of the wizard shell
 		// proves the mapping step is reachable. The skip/remember branch logic is
 		// unit-tested (bankStatementWizard.spec.js: buildMappingDecision).
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -131,7 +138,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 *
 	 * @e2e shillinq-bank-statement-wizard::a-valid-camt053-upload-creates-a-statement-and-lines
 	 */
-	test('a valid CAMT.053 upload creates a statement and lines', async ({ page }) => {
+	test('a valid CAMT.053 upload creates a statement and lines', async ({
+		page,
+	}) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
 		await expect(page.locator('[data-testid="bsw-step-1"]')).toBeVisible()
 	})
@@ -145,7 +154,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 */
 	test('unparseable input is rejected', async ({ page }) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -158,7 +169,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 */
 	test('the endpoint never trusts a client administrationId', async ({ page }) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -169,7 +182,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 */
 	test('import and review navigates to reconciliation', async ({ page }) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**

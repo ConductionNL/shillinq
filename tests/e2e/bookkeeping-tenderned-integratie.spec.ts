@@ -26,7 +26,9 @@ import { test, expect } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 
-const dismissWizard = async (page: import('@playwright/test').Page): Promise<void> => {
+const dismissWizard = async (
+	page: import('@playwright/test').Page,
+): Promise<void> => {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => {})
@@ -39,7 +41,9 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		page.setViewportSize({ width: 1280, height: 800 })
 	})
 
-	test('TenderNed Aanbestedingen index — mounts on /inkoop/tenderned', async ({ page }) => {
+	test('TenderNed Aanbestedingen index — mounts on /inkoop/tenderned', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/inkoop/tenderned')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -49,7 +53,9 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Verplichtingen index — mounts on /inkoop/verplichtingen', async ({ page }) => {
+	test('Verplichtingen index — mounts on /inkoop/verplichtingen', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/inkoop/verplichtingen')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -58,7 +64,9 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Mijn Contracten index — mounts on /inkoop/mijn-contracten (REQ-008)', async ({ page }) => {
+	test('Mijn Contracten index — mounts on /inkoop/mijn-contracten (REQ-008)', async ({
+		page,
+	}) => {
 		// Mijn Contracten is the bron=tenderned filtered view consumed by
 		// inschrijvers (REQ-008). The manifest declares `config.filters.bron`
 		// = "tenderned" so vendors only see their own contracted obligations.
@@ -70,7 +78,9 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Inkoop navigation entry is reachable from the shillinq shell', async ({ page }) => {
+	test('Inkoop navigation entry is reachable from the shillinq shell', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -81,10 +91,14 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		// renderer version — accept any link surface that targets one of our
 		// new routes.
 		const inkoopLink = page
-			.locator('a[href*="/inkoop/tenderned"], a[href*="/inkoop/verplichtingen"], a[href*="/inkoop/mijn-contracten"], a:has-text("Inkoop"), a:has-text("TenderNed")')
+			.locator(
+				'a[href*="/inkoop/tenderned"], a[href*="/inkoop/verplichtingen"], a[href*="/inkoop/mijn-contracten"], a:has-text("Inkoop"), a:has-text("TenderNed")',
+			)
 			.first()
 
-		await inkoopLink.waitFor({ state: 'attached', timeout: 5_000 }).catch(() => {})
+		await inkoopLink
+			.waitFor({ state: 'attached', timeout: 5_000 })
+			.catch(() => {})
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 })

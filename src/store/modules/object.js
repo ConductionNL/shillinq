@@ -64,7 +64,9 @@ export const useObjectStore = defineStore('object', {
 				const url = new URL(this.baseUrl, window.location.origin)
 				url.searchParams.set('register', register)
 				url.searchParams.set('schema', schema)
-				Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+				Object.entries(params).forEach(([k, v]) =>
+					url.searchParams.set(k, v),
+				)
 
 				const response = await fetch(url.toString(), {
 					headers: { requesttoken: OC.requestToken },

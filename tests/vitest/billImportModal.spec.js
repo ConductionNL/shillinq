@@ -62,7 +62,9 @@ describe('billImportModal — honest PDF-OCR deferral (REQ-BIM-002)', () => {
 	})
 
 	it('exposes the honest deferral message (no fake extraction)', () => {
-		expect(PDF_DEFERRAL_MESSAGE).toContain('PDF OCR extraction is not yet available')
+		expect(PDF_DEFERRAL_MESSAGE).toContain(
+			'PDF OCR extraction is not yet available',
+		)
 		expect(PDF_DEFERRAL_MESSAGE).toContain('UBL/e-invoice XML or CSV')
 	})
 })
@@ -71,9 +73,9 @@ describe('billImportModal — import payload', () => {
 	it('builds a FormData carrying file + explicit format', () => {
 		const calls = []
 		class FakeFormData {
-
-			append(k, v) { calls.push([k, v]) }
-
+			append(k, v) {
+				calls.push([k, v])
+			}
 		}
 		buildImportFormData({ name: 'invoice.xml' }, 'ubl', FakeFormData)
 		expect(calls).toEqual([
@@ -119,19 +121,28 @@ describe('billImportModal — review form (REQ-BIM-003)', () => {
 describe('billImportModal — duplicate 409 (REQ-BIM-005)', () => {
 	it('maps a 409 to the canonical inline warning', () => {
 		const msg = importErrorMessage({
-			response: { status: 409, data: { error: 'This invoice number already exists for this supplier' } },
+			response: {
+				status: 409,
+				data: {
+					error: 'This invoice number already exists for this supplier',
+				},
+			},
 		})
 		expect(msg).toBe('This invoice number already exists for this supplier')
 	})
 
 	it('falls back to the canonical text when 409 carries no body', () => {
-		expect(importErrorMessage({ response: { status: 409, data: {} } }))
-			.toBe('This invoice number already exists for this supplier')
+		expect(importErrorMessage({ response: { status: 409, data: {} } })).toBe(
+			'This invoice number already exists for this supplier',
+		)
 	})
 
 	it('surfaces other server errors verbatim', () => {
-		expect(importErrorMessage({ response: { status: 422, data: { error: 'UBL is malformed' } } }))
-			.toBe('UBL is malformed')
+		expect(
+			importErrorMessage({
+				response: { status: 422, data: { error: 'UBL is malformed' } },
+			}),
+		).toBe('UBL is malformed')
 	})
 })
 
@@ -173,9 +184,16 @@ describe('billImportModal — extraction confidence (REQ-RXC-001/002/004/006)', 
 	})
 
 	it('summarises a pending draft for the review list', () => {
-		expect(pendingDraftSummary({ id: 'd1', invoiceNumber: 'F-88', overallConfidence: 0.93 }))
-			.toEqual({ id: 'd1', label: 'F-88', overallConfidence: 0.93 })
-		expect(pendingDraftSummary({ id: 'd2', supplierId: 'ACME' }).label).toBe('ACME')
+		expect(
+			pendingDraftSummary({
+				id: 'd1',
+				invoiceNumber: 'F-88',
+				overallConfidence: 0.93,
+			}),
+		).toEqual({ id: 'd1', label: 'F-88', overallConfidence: 0.93 })
+		expect(pendingDraftSummary({ id: 'd2', supplierId: 'ACME' }).label).toBe(
+			'ACME',
+		)
 	})
 })
 
@@ -194,7 +212,8 @@ describe('billImportModal — GL-account suggestion (REQ-GAC-001/003/006)', () =
 				code: '4300',
 				label: 'Kantoorkosten',
 				confidence: 0.8,
-				rationale: 'Booked to 4300 in 8 of the last 10 invoices from this supplier',
+				rationale:
+					'Booked to 4300 in 8 of the last 10 invoices from this supplier',
 				source: 'history',
 			},
 		})
@@ -202,14 +221,25 @@ describe('billImportModal — GL-account suggestion (REQ-GAC-001/003/006)', () =
 			code: '4300',
 			label: 'Kantoorkosten',
 			confidence: 0.8,
-			rationale: 'Booked to 4300 in 8 of the last 10 invoices from this supplier',
+			rationale:
+				'Booked to 4300 in 8 of the last 10 invoices from this supplier',
 			source: 'history',
 		})
 	})
 
 	it('degrades to null for a graceful "no suggestion" response (REQ-GAC-006)', () => {
-		expect(glAccountSuggestionSummary({ suggestion: null, reason: 'extraction-id-unknown' })).toBeNull()
-		expect(glAccountSuggestionSummary({ suggestion: null, reason: 'provider-unavailable' })).toBeNull()
+		expect(
+			glAccountSuggestionSummary({
+				suggestion: null,
+				reason: 'extraction-id-unknown',
+			}),
+		).toBeNull()
+		expect(
+			glAccountSuggestionSummary({
+				suggestion: null,
+				reason: 'provider-unavailable',
+			}),
+		).toBeNull()
 		expect(glAccountSuggestionSummary({})).toBeNull()
 		expect(glAccountSuggestionSummary(null)).toBeNull()
 	})

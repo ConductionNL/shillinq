@@ -30,7 +30,11 @@ import {
 	replaceLocations,
 	purgeOldPendingOps,
 } from '../../composables/useInventoryDb.js'
-import { createSyncScheduler, fetchLocations, newTransactionId } from '../../composables/useInventorySync.js'
+import {
+	createSyncScheduler,
+	fetchLocations,
+	newTransactionId,
+} from '../../composables/useInventorySync.js'
 
 const PURGE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -57,7 +61,8 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 	}),
 
 	getters: {
-		isOnline: () => typeof navigator === 'undefined' || navigator.onLine !== false,
+		isOnline: () =>
+			typeof navigator === 'undefined' || navigator.onLine !== false,
 		statusLabel: (state) => {
 			if (state.syncState === STATE_SYNCED) {
 				return state.lastSyncedAt ? `Synced ${state.lastSyncedAt}` : 'Synced'
@@ -66,7 +71,9 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 				return 'Syncing…'
 			}
 			if (state.syncState === STATE_PENDING) {
-				return state.pendingCount > 0 ? `Pending (${state.pendingCount})` : 'Pending'
+				return state.pendingCount > 0
+					? `Pending (${state.pendingCount})`
+					: 'Pending'
 			}
 			if (state.syncState === STATE_FAILED) {
 				return `Sync failed; retry in ${Math.ceil((state.retryInMs || 0) / 1000)}s`
@@ -198,14 +205,42 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 
 			let localQuantity = null
 			if (op.type === 'receive') {
-				localQuantity = await applyDelta(this.db, op.sku, op.location, Number(op.quantity), timestamp)
+				localQuantity = await applyDelta(
+					this.db,
+					op.sku,
+					op.location,
+					Number(op.quantity),
+					timestamp,
+				)
 			} else if (op.type === 'pick') {
-				localQuantity = await applyDelta(this.db, op.sku, op.location, -Math.abs(Number(op.quantity)), timestamp)
+				localQuantity = await applyDelta(
+					this.db,
+					op.sku,
+					op.location,
+					-Math.abs(Number(op.quantity)),
+					timestamp,
+				)
 			} else if (op.type === 'transfer') {
-				await applyDelta(this.db, op.sku, op.location, -Math.abs(Number(op.quantity)), timestamp)
-				localQuantity = await applyDelta(this.db, op.sku, op.toLocation, Math.abs(Number(op.quantity)), timestamp)
+				await applyDelta(
+					this.db,
+					op.sku,
+					op.location,
+					-Math.abs(Number(op.quantity)),
+					timestamp,
+				)
+				localQuantity = await applyDelta(
+					this.db,
+					op.sku,
+					op.toLocation,
+					Math.abs(Number(op.quantity)),
+					timestamp,
+				)
 			} else if (op.type === 'count') {
-				const systemQty = await readStockQuantity(this.db, op.sku, op.location)
+				const systemQty = await readStockQuantity(
+					this.db,
+					op.sku,
+					op.location,
+				)
 				if (op.reconcile === true) {
 					localQuantity = await applyDelta(
 						this.db,
@@ -228,7 +263,8 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 				toLocation: op.toLocation,
 				orderLineId: op.orderLineId,
 				quantity: op.quantity != null ? Number(op.quantity) : null,
-				physicalQuantity: op.physicalQuantity != null ? Number(op.physicalQuantity) : null,
+				physicalQuantity:
+					op.physicalQuantity != null ? Number(op.physicalQuantity) : null,
 				reconcile: op.reconcile === true,
 				timestamp,
 				synced: false,

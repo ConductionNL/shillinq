@@ -26,12 +26,22 @@
 			:disabled="!canSend || sending"
 			data-testid="ar-einvoice-send"
 			@click="onSend">
-			{{ sending ? t('shillinq', 'Sending...') : t('shillinq', 'Send e-invoice') }}
+			{{
+				sending
+					? t('shillinq', 'Sending...')
+					: t('shillinq', 'Send e-invoice')
+			}}
 		</NcButton>
-		<p v-if="sendError" class="ar-einvoice-actions__error" data-testid="ar-einvoice-send-error">
+		<p
+			v-if="sendError"
+			class="ar-einvoice-actions__error"
+			data-testid="ar-einvoice-send-error">
 			{{ sendError }}
 		</p>
-		<p v-if="fallbackNotice" class="ar-einvoice-actions__notice" data-testid="ar-einvoice-fallback-notice">
+		<p
+			v-if="fallbackNotice"
+			class="ar-einvoice-actions__notice"
+			data-testid="ar-einvoice-fallback-notice">
 			{{ fallbackNotice }}
 		</p>
 	</div>
@@ -105,11 +115,16 @@ export default {
 					generateUrl(sendEInvoiceEndpoint(this.invoiceNumber)),
 					{ administrationId: this.administrationId },
 				)
-				const { deliveryStatus, fallbackNotice } = mapSendResult(response.data || {}, this.t)
+				const { deliveryStatus, fallbackNotice } = mapSendResult(
+					response.data || {},
+					this.t,
+				)
 				this.localDeliveryStatus = deliveryStatus
 				this.fallbackNotice = fallbackNotice
 				if (fallbackNotice === '') {
-					showSuccess(this.t('shillinq', 'Invoice queued for Peppol delivery.'))
+					showSuccess(
+						this.t('shillinq', 'Invoice queued for Peppol delivery.'),
+					)
 				}
 			} catch (e) {
 				this.sendError = extractSendErrorMessage(e, this.t)

@@ -46,7 +46,9 @@ test.describe('bookkeeping-period-close — Tier-2 manifest pages', () => {
 		page.setViewportSize({ width: 1280, height: 800 })
 	})
 
-	test('Period Close index — page mounts on /bookkeeping/period-close', async ({ page }) => {
+	test('Period Close index — page mounts on /bookkeeping/period-close', async ({
+		page,
+	}) => {
 		await page.goto(APP + INDEX_PATH)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -58,7 +60,9 @@ test.describe('bookkeeping-period-close — Tier-2 manifest pages', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Period Close detail — custom component mounts on /bookkeeping/period-close/:id', async ({ page }) => {
+	test('Period Close detail — custom component mounts on /bookkeeping/period-close/:id', async ({
+		page,
+	}) => {
 		await page.goto(APP + DETAIL_PATH)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -78,6 +82,8 @@ test.describe('bookkeeping-period-close — Tier-2 manifest pages', () => {
 		const body = page.locator('[data-testid="period-close-detail-header"]')
 
 		const any = root.or(loading).or(errorMsg).or(body).first()
-		await expect(any).toBeVisible({ timeout: 15_000 }).catch(() => {})
+		await expect(any)
+			.toBeVisible({ timeout: 15_000 })
+			.catch(() => {})
 	})
 })

@@ -29,7 +29,11 @@
 				v-if="state === 'ok'"
 				class="pipelinq-profile-card__kind"
 				data-testid="pipelinq-profile-kind">
-				{{ kind === 'organization' ? label('Organization') : label('Individual') }}
+				{{
+					kind === 'organization'
+						? label('Organization')
+						: label('Individual')
+				}}
 			</span>
 		</header>
 
@@ -46,7 +50,10 @@
 					</dt>
 					<dd
 						class="pipelinq-profile-card__value"
-						:class="{ 'pipelinq-profile-card__value--emphasis': field.emphasis === true }"
+						:class="{
+							'pipelinq-profile-card__value--emphasis':
+								field.emphasis === true,
+						}"
 						:data-testid="`pipelinq-profile-${field.key}`">
 						<a
 							v-if="field.href"
@@ -158,7 +165,10 @@ export default {
 			return String(this.booking?.pipelinqContactId || '').trim()
 		},
 		pipelinqLink() {
-			return buildPipelinqLink(this.pipelinqBaseUrl, this.payload?.contact?.externalId)
+			return buildPipelinqLink(
+				this.pipelinqBaseUrl,
+				this.payload?.contact?.externalId,
+			)
 		},
 	},
 	methods: {

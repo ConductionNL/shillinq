@@ -14,11 +14,7 @@
 -->
 
 <template>
-	<span
-		class="fcb"
-		:class="badgeClass"
-		:data-testid="testId"
-		:title="label">
+	<span class="fcb" :class="badgeClass" :data-testid="testId" :title="label">
 		<span class="fcb__pct">{{ percentLabel }}</span>
 		<span class="fcb__label">{{ label }}</span>
 	</span>
@@ -61,7 +57,10 @@ export default {
 	},
 	computed: {
 		hasConfidence() {
-			return typeof this.confidence === 'number' && Number.isFinite(this.confidence)
+			return (
+				typeof this.confidence === 'number'
+				&& Number.isFinite(this.confidence)
+			)
 		},
 		needsReview() {
 			return this.hasConfidence && this.confidence < this.reviewThreshold

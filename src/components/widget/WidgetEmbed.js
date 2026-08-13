@@ -123,7 +123,9 @@ export const BookingWidget = {
 	 * @return {string} Iframe src URL.
 	 */
 	iframeUrl(config) {
-		const error = validateConfig(Object.assign({}, config, { containerId: 'iframe' }))
+		const error = validateConfig(
+			Object.assign({}, config, { containerId: 'iframe' }),
+		)
 		if (error) {
 			// eslint-disable-next-line no-console
 			console.error('[BookingWidget] ' + error)
@@ -138,7 +140,9 @@ export const BookingWidget = {
 		if (config.primaryColor) {
 			params.set('primaryColor', config.primaryColor)
 		}
-		return config.apiBase.replace(/\/$/, '') + '/widget/iframe?' + params.toString()
+		return (
+			config.apiBase.replace(/\/$/, '') + '/widget/iframe?' + params.toString()
+		)
 	},
 }
 

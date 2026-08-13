@@ -28,11 +28,15 @@
 <template>
 	<NcAppContent>
 		<div class="adapter-detail" :data-adapter-id="effectiveAdapterId">
-			<NcLoadingIcon v-if="loading"
+			<NcLoadingIcon
+				v-if="loading"
 				:size="20"
 				:name="t('shillinq', 'Loading adapter')" />
 
-			<section v-else-if="errorMessage" class="adapter-detail__error" role="alert">
+			<section
+				v-else-if="errorMessage"
+				class="adapter-detail__error"
+				role="alert">
 				{{ errorMessage }}
 			</section>
 
@@ -42,10 +46,15 @@
 						<h2 class="adapter-detail__title">
 							{{ adapter.title }}
 						</h2>
-						<span class="adapter-detail__badge"
+						<span
+							class="adapter-detail__badge"
 							:class="badgeClass"
 							:data-state="adapter.dormant ? 'dormant' : 'live'">
-							{{ adapter.dormant ? t('shillinq', 'Dormant') : t('shillinq', 'Live') }}
+							{{
+								adapter.dormant
+									? t('shillinq', 'Dormant')
+									: t('shillinq', 'Live')
+							}}
 						</span>
 					</div>
 					<p class="adapter-detail__description">
@@ -55,37 +64,67 @@
 
 				<section class="adapter-detail__facts">
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'Category') }}</span>
-						<span class="adapter-detail__fact-value">{{ adapter.category }}</span>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'Category')
+						}}</span>
+						<span class="adapter-detail__fact-value">{{
+							adapter.category
+						}}</span>
 					</div>
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'OpenSpec change') }}</span>
-						<span class="adapter-detail__fact-value">{{ adapter.specSlug }}</span>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'OpenSpec change')
+						}}</span>
+						<span class="adapter-detail__fact-value">{{
+							adapter.specSlug
+						}}</span>
 					</div>
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'Requirements') }}</span>
-						<span class="adapter-detail__fact-value">{{ (adapter.requirements || []).join(', ') }}</span>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'Requirements')
+						}}</span>
+						<span class="adapter-detail__fact-value">{{
+							(adapter.requirements || []).join(', ')
+						}}</span>
 					</div>
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'Adapter interface') }}</span>
-						<code class="adapter-detail__fact-value">{{ adapter.interface }}</code>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'Adapter interface')
+						}}</span>
+						<code class="adapter-detail__fact-value">{{
+							adapter.interface
+						}}</code>
 					</div>
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'Log-only default') }}</span>
-						<code class="adapter-detail__fact-value">{{ adapter.logClass }}</code>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'Log-only default')
+						}}</span>
+						<code class="adapter-detail__fact-value">{{
+							adapter.logClass
+						}}</code>
 					</div>
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'openconnector source slug') }}</span>
-						<code class="adapter-detail__fact-value">{{ adapter.sourceSlug }}</code>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'openconnector source slug')
+						}}</span>
+						<code class="adapter-detail__fact-value">{{
+							adapter.sourceSlug
+						}}</code>
 					</div>
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'Feature flag') }}</span>
-						<code class="adapter-detail__fact-value">{{ adapter.featureFlag || t('shillinq', 'n/a') }}</code>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'Feature flag')
+						}}</span>
+						<code class="adapter-detail__fact-value">{{
+							adapter.featureFlag || t('shillinq', 'n/a')
+						}}</code>
 					</div>
 					<div class="adapter-detail__fact">
-						<span class="adapter-detail__fact-label">{{ t('shillinq', 'App-config keys') }}</span>
+						<span class="adapter-detail__fact-label">{{
+							t('shillinq', 'App-config keys')
+						}}</span>
 						<ul class="adapter-detail__keys">
-							<li v-for="key in (adapter.configKeys || [])" :key="key">
+							<li v-for="key in adapter.configKeys || []" :key="key">
 								<code>{{ key }}</code>
 							</li>
 						</ul>
@@ -97,17 +136,30 @@
 						{{ t('shillinq', 'Activation steps') }}
 					</h3>
 					<ol class="adapter-detail__steps">
-						<li v-for="(step, idx) in (adapter.steps || [])"
+						<li
+							v-for="(step, idx) in adapter.steps || []"
 							:key="idx"
 							class="adapter-detail__step">
 							{{ step }}
 						</li>
 					</ol>
 					<p v-if="adapter.dormant" class="adapter-detail__hint">
-						{{ t('shillinq', 'This adapter is dormant. The surrounding lifecycle advances safely — submissions are recorded in the structured log but never sent to a third party — until the activation steps above are completed.') }}
+						{{
+							t(
+								'shillinq',
+								'This adapter is dormant. The surrounding lifecycle advances safely — submissions are recorded in the structured log but never sent to a third party — until the activation steps above are completed.',
+							)
+						}}
 					</p>
-					<p v-else class="adapter-detail__hint adapter-detail__hint--live">
-						{{ t('shillinq', 'This adapter is live. Submissions are sent to the configured third party. Audit oc_jobs + the relevant register lifecycle for delivery confirmations.') }}
+					<p
+						v-else
+						class="adapter-detail__hint adapter-detail__hint--live">
+						{{
+							t(
+								'shillinq',
+								'This adapter is live. Submissions are sent to the configured third party. Audit oc_jobs + the relevant register lifecycle for delivery confirmations.',
+							)
+						}}
 					</p>
 				</section>
 
@@ -157,9 +209,9 @@ export default {
 			}
 			// Fallback: trailing segment of the current path
 			// (deep-link entry without the manifest props blob).
-			const path = (this.$route?.path ?? '')
+			const path = this.$route?.path ?? ''
 			const parts = path.split('/').filter(Boolean)
-			return (parts.length > 0 ? parts[parts.length - 1] : '')
+			return parts.length > 0 ? parts[parts.length - 1] : ''
 		},
 		badgeClass() {
 			if (!this.adapter) {
@@ -192,14 +244,23 @@ export default {
 			this.errorMessage = ''
 			this.adapter = null
 			try {
-				const url = generateUrl('/apps/shillinq/api/admin/external-adapters/{id}', { id })
+				const url = generateUrl(
+					'/apps/shillinq/api/admin/external-adapters/{id}',
+					{ id },
+				)
 				const { data } = await axios.get(url)
 				this.adapter = data
 			} catch (err) {
 				if (err?.response?.status === 404) {
-					this.errorMessage = t('shillinq', 'Unknown adapter: {id}', { id })
+					this.errorMessage = t('shillinq', 'Unknown adapter: {id}', {
+						id,
+					})
 				} else {
-					this.errorMessage = t('shillinq', 'Could not load adapter: {message}', { message: err?.message ?? 'unknown error' })
+					this.errorMessage = t(
+						'shillinq',
+						'Could not load adapter: {message}',
+						{ message: err?.message ?? 'unknown error' },
+					)
 				}
 			} finally {
 				this.loading = false

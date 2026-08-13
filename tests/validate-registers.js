@@ -47,7 +47,12 @@ const fs = require('fs')
 const path = require('path')
 
 const REPO_ROOT = path.resolve(__dirname, '..')
-const MAIN_REGISTER = path.join(REPO_ROOT, 'lib', 'Settings', 'shillinq_register.json')
+const MAIN_REGISTER = path.join(
+	REPO_ROOT,
+	'lib',
+	'Settings',
+	'shillinq_register.json',
+)
 const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 
 // Schemas that are NOT bookkeeping and therefore NOT subject to
@@ -125,12 +130,16 @@ function collectSchemas() {
 		try {
 			parsed = loadJson(fp)
 		} catch (err) {
-			console.error(`[validate-registers] failed to parse ${fp}: ${err.message}`)
+			console.error(
+				`[validate-registers] failed to parse ${fp}: ${err.message}`,
+			)
 			process.exit(1)
 		}
-		const schemas = (parsed && parsed.components && parsed.components.schemas) || {}
+		const schemas =
+			(parsed && parsed.components && parsed.components.schemas) || {}
 		for (const [slug, def] of Object.entries(schemas)) {
-			if (!registry[slug]) registry[slug] = { files: [], auditDeclaredIn: [], slug }
+			if (!registry[slug])
+				registry[slug] = { files: [], auditDeclaredIn: [], slug }
 			registry[slug].files.push(fp)
 			// The DB slug is the explicit `slug` when present, else the
 			// components.schemas key. OpenRegister resolves the slug, not the
@@ -196,23 +205,37 @@ function checkSlugCaseCollisions(registry) {
 
 	console.log(`[validate-registers] distinct lower-cased slugs: ${byLower.size}`)
 	if (collisions.length === 0) {
-		console.log('[validate-registers] PASS — no two schemas share a slug that differs only by case')
+		console.log(
+			'[validate-registers] PASS — no two schemas share a slug that differs only by case',
+		)
 		return true
 	}
 
-	console.error('[validate-registers] FAIL — schemas whose slugs collide case-insensitively:')
+	console.error(
+		'[validate-registers] FAIL — schemas whose slugs collide case-insensitively:',
+	)
 	for (const { lower, entries } of collisions) {
 		console.error(`  - "${lower}" is claimed by ${entries.length} schemas:`)
 		for (const e of entries) {
 			const files = e.files.map((f) => path.relative(REPO_ROOT, f)).join(', ')
-			console.error(`      slug "${e.slug}" (components key "${e.key}") declared in ${files}`)
+			console.error(
+				`      slug "${e.slug}" (components key "${e.key}") declared in ${files}`,
+			)
 		}
 	}
 	console.error('')
-	console.error('[validate-registers] OpenRegister matches LOWER(slug) with LIMIT 1 and no ORDER BY,')
-	console.error('[validate-registers] so only ONE of these is ever reachable and which one is undefined.')
-	console.error('[validate-registers] Fix: give one of them a genuinely distinct slug (and update every')
-	console.error('[validate-registers] setSchema()/find() call site), or merge them into a single schema.')
+	console.error(
+		'[validate-registers] OpenRegister matches LOWER(slug) with LIMIT 1 and no ORDER BY,',
+	)
+	console.error(
+		'[validate-registers] so only ONE of these is ever reachable and which one is undefined.',
+	)
+	console.error(
+		'[validate-registers] Fix: give one of them a genuinely distinct slug (and update every',
+	)
+	console.error(
+		'[validate-registers] setSchema()/find() call site), or merge them into a single schema.',
+	)
 	return false
 }
 
@@ -220,31 +243,49 @@ function main() {
 	const registry = collectSchemas()
 	const all = Object.keys(registry).sort()
 	const bookkeeping = all.filter((s) => !NON_BOOKKEEPING.has(s))
-	const offenders = bookkeeping.filter((s) => registry[s].auditDeclaredIn.length === 0)
+	const offenders = bookkeeping.filter(
+		(s) => registry[s].auditDeclaredIn.length === 0,
+	)
 
 	console.log(`[validate-registers] total schemas: ${all.length}`)
-	console.log(`[validate-registers] non-bookkeeping (skipped): ${all.length - bookkeeping.length}`)
-	console.log(`[validate-registers] bookkeeping (audit-trail required): ${bookkeeping.length}`)
-	console.log(`[validate-registers] schemas with x-openregister-audit-trail.enabled=true: ${bookkeeping.length - offenders.length}`)
+	console.log(
+		`[validate-registers] non-bookkeeping (skipped): ${all.length - bookkeeping.length}`,
+	)
+	console.log(
+		`[validate-registers] bookkeeping (audit-trail required): ${bookkeeping.length}`,
+	)
+	console.log(
+		`[validate-registers] schemas with x-openregister-audit-trail.enabled=true: ${bookkeeping.length - offenders.length}`,
+	)
 
 	const slugsOk = checkSlugCaseCollisions(registry)
 
 	if (offenders.length === 0) {
 		if (slugsOk === false) process.exit(1)
-		console.log('[validate-registers] PASS — every bookkeeping + procurement schema declares x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001)')
+		console.log(
+			'[validate-registers] PASS — every bookkeeping + procurement schema declares x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001)',
+		)
 		process.exit(0)
 	}
 
-	console.error('[validate-registers] FAIL — the following bookkeeping/procurement schemas are missing x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001):')
+	console.error(
+		'[validate-registers] FAIL — the following bookkeeping/procurement schemas are missing x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001):',
+	)
 	for (const slug of offenders) {
 		const file = registry[slug].files[0] || '(unknown)'
 		console.error(`  - ${slug} (declared in ${path.relative(REPO_ROOT, file)})`)
 	}
 	console.error('')
 	console.error('[validate-registers] Fix: add')
-	console.error('  "x-openregister-audit-trail": { "enabled": true, "description": "..." }')
-	console.error('[validate-registers] to the schema fragment (typically the same register.d file that declares the schema).')
-	console.error('[validate-registers] If the schema is NOT bookkeeping (e.g. inventory or bookings), add its slug to NON_BOOKKEEPING in tests/validate-registers.js with a one-line comment.')
+	console.error(
+		'  "x-openregister-audit-trail": { "enabled": true, "description": "..." }',
+	)
+	console.error(
+		'[validate-registers] to the schema fragment (typically the same register.d file that declares the schema).',
+	)
+	console.error(
+		'[validate-registers] If the schema is NOT bookkeeping (e.g. inventory or bookings), add its slug to NON_BOOKKEEPING in tests/validate-registers.js with a one-line comment.',
+	)
 	process.exit(1)
 }
 

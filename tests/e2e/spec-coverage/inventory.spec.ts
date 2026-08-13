@@ -9,9 +9,14 @@
  */
 
 import { test } from '@playwright/test'
-import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+import {
+	gotoPage,
+	assertIndexSurface,
+	assertNoShillinqFailures,
+	recordShillinqErrors,
+} from './_helpers'
 
-const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
+const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/inventory/products', title: 'Products' },
 	{ route: '/inventory/product-attributes', title: 'Product Attributes' },
 	{ route: '/inventory/reorder-rules', title: 'Reorder Rules' },
@@ -21,11 +26,23 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/inventory/stock-by-location', title: 'Stock by Location' },
 	{ route: '/inventory/reserve-stock', title: 'Reserve Stock' },
 	{ route: '/inventory/barcodes', title: 'Barcodes' },
-	{ route: '/inventory/valuation', title: 'Valuation', titleRe: /Valuation|Waarder/i },
+	{
+		route: '/inventory/valuation',
+		title: 'Valuation',
+		titleRe: /Valuation|Waarder/i,
+	},
 	{ route: '/inventory/lots', title: 'Lots', titleRe: /Lots|Batch/i },
 	{ route: '/inventory/expiry-alerts', title: 'Expiry Alerts' },
-	{ route: '/inventory/posting-config', title: 'Posting', titleRe: /Posting|Configurat/i },
-	{ route: '/inventory/posting-history', title: 'Posting', titleRe: /Posting|Histor/i },
+	{
+		route: '/inventory/posting-config',
+		title: 'Posting',
+		titleRe: /Posting|Configurat/i,
+	},
+	{
+		route: '/inventory/posting-history',
+		title: 'Posting',
+		titleRe: /Posting|Histor/i,
+	},
 ]
 
 test.describe('shillinq spec-coverage — Inventory', () => {

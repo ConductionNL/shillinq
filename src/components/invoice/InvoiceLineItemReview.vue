@@ -47,20 +47,24 @@
 					<td class="num">
 						{{ formatRate(line.rateApplied) }}
 					</td>
-					<td class="num">
-						€ {{ formatMoney(line.costAmount) }}
-					</td>
-					<td class="num">
-						{{ line.vatRate }}%
-					</td>
+					<td class="num">€ {{ formatMoney(line.costAmount) }}</td>
+					<td class="num">{{ line.vatRate }}%</td>
 				</tr>
 			</tbody>
 		</table>
 
 		<footer class="invoice-line-review__totals">
 			<p>{{ t('shillinq', 'Net') }}: € {{ formatMoney(summary.netAmount) }}</p>
-			<p>{{ t('shillinq', 'VAT/BTW') }}: € {{ formatMoney(summary.vatAmount) }}</p>
-			<p><strong>{{ t('shillinq', 'Gross') }}: € {{ formatMoney(summary.grossAmount) }}</strong></p>
+			<p>
+				{{ t('shillinq', 'VAT/BTW') }}: €
+				{{ formatMoney(summary.vatAmount) }}
+			</p>
+			<p>
+				<strong
+					>{{ t('shillinq', 'Gross') }}: €
+					{{ formatMoney(summary.grossAmount) }}</strong
+				>
+			</p>
 		</footer>
 	</section>
 </template>
@@ -96,7 +100,10 @@ export default {
 		},
 		formatMoney(value) {
 			const n = Number(value || 0)
-			return n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+			return n.toLocaleString('nl-NL', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			})
 		},
 		formatUnits(value) {
 			if (value === null || value === undefined) return ''

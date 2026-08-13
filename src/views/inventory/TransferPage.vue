@@ -28,9 +28,20 @@ export default {
 </script>
 
 <style scoped>
-.transfer-page { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+.transfer-page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
 
-.transfer-page__header { display: flex; justify-content: space-between; align-items: center; }
+.transfer-page__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
 
-.transfer-page__back { text-decoration: none; }
+.transfer-page__back {
+	text-decoration: none;
+}
 </style>

@@ -54,7 +54,10 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 	let api: import('@playwright/test').APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
-		api = await pwRequest.newContext({ baseURL, storageState: 'tests/e2e/.auth/admin.json' })
+		api = await pwRequest.newContext({
+			baseURL,
+			storageState: 'tests/e2e/.auth/admin.json',
+		})
 		fx = new OrFixtures(api)
 	})
 
@@ -113,10 +116,15 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 		})
 
 		const res = await fx.transition(id, 'verleen')
-		expect(res.ok(), `verleen should be allowed on a subsidie in aanvraag: HTTP ${res.status()} ${await res.text()}`).toBeTruthy()
+		expect(
+			res.ok(),
+			`verleen should be allowed on a subsidie in aanvraag: HTTP ${res.status()} ${await res.text()}`,
+		).toBeTruthy()
 
 		const after = await fx.get(SCHEMA, id)
-		const state = (after['@self'] as Record<string, unknown> | undefined)?.state ?? after.state
+		const state =
+			(after['@self'] as Record<string, unknown> | undefined)?.state
+			?? after.state
 		expect(state).toBe('verleend')
 	})
 
@@ -133,6 +141,9 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 		// on a subsidie in aanvraag — the orderType gate (REQ-ORD-002). The refusal
 		// itself is the contract under test.
 		const res = await fx.transition(id, 'approve')
-		expect(res.ok(), 'a purchase transition must NOT succeed on a subsidie').toBeFalsy()
+		expect(
+			res.ok(),
+			'a purchase transition must NOT succeed on a subsidie',
+		).toBeFalsy()
 	})
 })

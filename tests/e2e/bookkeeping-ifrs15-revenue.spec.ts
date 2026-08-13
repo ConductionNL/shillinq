@@ -44,7 +44,9 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 
-	test('Contract entry route resolves in the manifest shell (REQ-IFRS15-001)', async ({ page }) => {
+	test('Contract entry route resolves in the manifest shell (REQ-IFRS15-001)', async ({
+		page,
+	}) => {
 		// Browser-Test 1 in tasks.md: contract entry form — required fields
 		// validate, SSP auto-calculate relative allocation, dueDate auto-
 		// populated. The full form is rendered by manifest-v2 's `type: detail`
@@ -57,7 +59,9 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Revenue Waterfall route resolves in the manifest shell (REQ-IFRS15-008)', async ({ page }) => {
+	test('Revenue Waterfall route resolves in the manifest shell (REQ-IFRS15-008)', async ({
+		page,
+	}) => {
 		// Browser-Test 2 in tasks.md: 60-month waterfall chart renders, segment
 		// filter (customer, geography, product) updates chart. Smoke here is
 		// the SPA route mount; the chart's 60-month forecast + segment filter
@@ -68,7 +72,9 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Contract Balances route resolves in the manifest shell (REQ-IFRS15-007)', async ({ page }) => {
+	test('Contract Balances route resolves in the manifest shell (REQ-IFRS15-007)', async ({
+		page,
+	}) => {
 		// Browser-Test 3 in tasks.md: contract-asset/liability bar chart by
 		// customer with drill-down to contract detail. Smoke here is the SPA
 		// route mount; the bar chart + drill-down need a live OR with
@@ -79,7 +85,9 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Contract Modifications route resolves in the manifest shell (REQ-IFRS15-006)', async ({ page }) => {
+	test('Contract Modifications route resolves in the manifest shell (REQ-IFRS15-006)', async ({
+		page,
+	}) => {
 		// Browser-Test 4 in tasks.md: variable-consideration re-estimation
 		// modal — prior estimate / new estimate / reason / delta / pending-
 		// approval workflow. The re-estimation modal lives under the
@@ -92,7 +100,9 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Contract Cost Assets + Performance Obligations routes resolve (REQ-IFRS15-009)', async ({ page }) => {
+	test('Contract Cost Assets + Performance Obligations routes resolve (REQ-IFRS15-009)', async ({
+		page,
+	}) => {
 		// Browser-Test 5 in tasks.md: disclosure pack viewer (toggle sections,
 		// PDF/XBRL export buttons functional). The disclosure pack itself is
 		// T4-deferred (per Scope); the underlying ContractCostAsset and

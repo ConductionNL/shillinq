@@ -53,7 +53,11 @@
 			class="bookings-confirmation-portal__success"
 			data-testid="bk-confirm-success">
 			<h2>{{ label('Appointment confirmed!') }}</h2>
-			<p>{{ label('Your appointment is confirmed. A copy is in your inbox.') }}</p>
+			<p>
+				{{
+					label('Your appointment is confirmed. A copy is in your inbox.')
+				}}
+			</p>
 			<dl class="bookings-confirmation-portal__details">
 				<dt>{{ label('Service') }}</dt>
 				<dd>{{ appointment.serviceName }}</dd>
@@ -99,7 +103,9 @@
 				:disabled="confirming"
 				data-testid="bk-confirm-button"
 				@click="confirm">
-				{{ confirming ? label('Confirming…') : label('Confirm appointment') }}
+				{{
+					confirming ? label('Confirming…') : label('Confirm appointment')
+				}}
 			</button>
 		</section>
 	</div>
@@ -114,9 +120,11 @@ const REASON_MESSAGES = {
 	revoked: 'This confirmation link is no longer valid; a newer one was sent.',
 	invalid: 'This confirmation link is not valid.',
 	not_found: 'We could not find this appointment. Please check your email link.',
-	missing_appointment_id: 'This confirmation link is missing required information.',
+	missing_appointment_id:
+		'This confirmation link is missing required information.',
 	invalid_input: 'This confirmation link is incomplete.',
-	or_unavailable: 'The booking service is temporarily unavailable. Please try again later.',
+	or_unavailable:
+		'The booking service is temporarily unavailable. Please try again later.',
 }
 
 export default {
@@ -256,7 +264,9 @@ export default {
 			}
 			this.resending = true
 			try {
-				await confirmationApi.resendConfirmationEmail(this.appointmentIdFromUrl)
+				await confirmationApi.resendConfirmationEmail(
+					this.appointmentIdFromUrl,
+				)
 				this.error = null
 				this.confirmed = false
 				this.appointment.status = 'pending_confirmation'

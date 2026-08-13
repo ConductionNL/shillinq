@@ -32,7 +32,10 @@ const DEFAULT_FORMATS = ['qr_code', 'ean_13', 'code_128', 'code_39', 'code_93']
  * @return {Promise<boolean>} True when a native decoder is available.
  */
 export async function nativeDetectorAvailable(formats = DEFAULT_FORMATS) {
-	if (typeof window === 'undefined' || typeof window.BarcodeDetector !== 'function') {
+	if (
+		typeof window === 'undefined'
+		|| typeof window.BarcodeDetector !== 'function'
+	) {
 		return false
 	}
 	try {
@@ -54,7 +57,11 @@ export async function nativeDetectorAvailable(formats = DEFAULT_FORMATS) {
  * @return {Promise<MediaStream>} The live camera stream.
  */
 export async function requestCameraStream() {
-	if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+	if (
+		typeof navigator === 'undefined'
+		|| !navigator.mediaDevices
+		|| !navigator.mediaDevices.getUserMedia
+	) {
 		throw new Error('Camera not supported by this browser')
 	}
 	return navigator.mediaDevices.getUserMedia({
@@ -89,14 +96,20 @@ export function releaseStream(stream) {
  * @return {Promise<{rawValue:string, format:string}|null>} Decoded result.
  */
 export async function decodeFrame(source, formats = DEFAULT_FORMATS) {
-	if (typeof window === 'undefined' || typeof window.BarcodeDetector !== 'function') {
+	if (
+		typeof window === 'undefined'
+		|| typeof window.BarcodeDetector !== 'function'
+	) {
 		return null
 	}
 	try {
 		const detector = new window.BarcodeDetector({ formats })
 		const codes = await detector.detect(source)
 		if (Array.isArray(codes) && codes.length > 0) {
-			return { rawValue: codes[0].rawValue, format: codes[0].format || 'unknown' }
+			return {
+				rawValue: codes[0].rawValue,
+				format: codes[0].format || 'unknown',
+			}
 		}
 	} catch (e) {
 		// Returning null lets the caller try the next frame / format / fallback.
@@ -118,7 +131,7 @@ export async function decodeWithJsQrFallback(imageData) {
 	try {
 		// eslint-disable-next-line import/no-unresolved
 		const mod = await import(/* webpackIgnore: true */ 'jsqr')
-		const jsQR = (mod && mod.default) ? mod.default : mod
+		const jsQR = mod && mod.default ? mod.default : mod
 		if (typeof jsQR !== 'function') {
 			return null
 		}

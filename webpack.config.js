@@ -29,7 +29,13 @@ webpackConfig.entry = {
 	// entrypoints re-import the same loader, so this is the single
 	// authoritative bundle for all four embed methods.
 	widget: {
-		import: path.join(__dirname, 'src', 'components', 'widget', 'WidgetEmbed.js'),
+		import: path.join(
+			__dirname,
+			'src',
+			'components',
+			'widget',
+			'WidgetEmbed.js',
+		),
 		filename: 'widget.js',
 		library: { name: 'BookingWidget', type: 'umd', export: 'default' },
 	},
@@ -47,13 +53,15 @@ const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
 const localLibPkg = path.resolve(__dirname, '../nextcloud-vue/package.json')
 let useLocalLib = process.env.USE_LOCAL_LIB === 'true' && fs.existsSync(localLib)
 if (useLocalLib && fs.existsSync(localLibPkg)) {
-	const localVersion = String(JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '')
+	const localVersion = String(
+		JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '',
+	)
 	const localMajor = parseInt(localVersion, 10)
 	if (!Number.isNaN(localMajor) && localMajor < 2) {
 		// eslint-disable-next-line no-console
 		console.warn(
 			`[shillinq] IGNORING sibling @conduction/nextcloud-vue@${localVersion} — `
-			+ 'that is the Vue 2 line and this app is Vue 3. Building against the npm dist.',
+				+ 'that is the Vue 2 line and this app is Vue 3. Building against the npm dist.',
 		)
 		useLocalLib = false
 	}
@@ -69,8 +77,8 @@ webpackConfig.resolve = {
 		...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
 		// Deduplicate shared packages so the aliased library source uses
 		// the same instances as the app (prevents dual-Pinia / dual-Vue bugs).
-		'vue$': path.resolve(__dirname, 'node_modules/vue'),
-		'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
+		vue$: path.resolve(__dirname, 'node_modules/vue'),
+		pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 		// @nextcloud/vue@9, @nextcloud/dialogs@7 and vue-router@5 are ESM-only:
 		// their package.json has NO `main` and NO `module`, only an `exports`
 		// map. A Vue-2-era alias to the package DIRECTORY bypasses `exports`
@@ -78,7 +86,10 @@ webpackConfig.resolve = {
 		// every import fails with "Can't resolve '@nextcloud/vue'". Alias to
 		// the absolute FILE; the `$` (exact-match) form keeps deep imports
 		// going through the exports map.
-		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue/dist/index.mjs'),
+		'@nextcloud/vue$': path.resolve(
+			__dirname,
+			'node_modules/@nextcloud/vue/dist/index.mjs',
+		),
 		// @nextcloud/vue@9 hard-depends on vue-router ^5.1.0 while this app is
 		// on vue-router 4, so npm installs a SECOND nested copy under
 		// node_modules/@nextcloud/vue/node_modules/vue-router. Two router
@@ -86,7 +97,10 @@ webpackConfig.resolve = {
 		// RouterLink would look up a router this app never provided and
 		// navigation dies with no console error. Force every `vue-router`
 		// specifier onto this app's single copy.
-		'vue-router$': path.resolve(__dirname, 'node_modules/vue-router/dist/vue-router.mjs'),
+		'vue-router$': path.resolve(
+			__dirname,
+			'node_modules/vue-router/dist/vue-router.mjs',
+		),
 	},
 }
 
@@ -122,7 +136,9 @@ webpackConfig.module = {
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
-	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
+	new webpack.DefinePlugin({
+		appVersion: JSON.stringify(process.env.npm_package_version),
+	}),
 ]
 
 // Force @nextcloud/dialogs to resolve from this app's node_modules.
@@ -131,10 +147,16 @@ webpackConfig.plugins = [
 // '@nextcloud/dialogs/style.css' (imported by nextcloud-vue's useAppInstaller)
 // must be caught first. dialogs v7 ships the stylesheet at dist/style.css
 // behind its "exports" map.
-webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/style.css')
+webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(
+	__dirname,
+	'node_modules/@nextcloud/dialogs/dist/style.css',
+)
 // Exact-match, absolute FILE — see the @nextcloud/vue note above; dialogs v7 is
 // exports-map-only too, so a directory alias resolves to nothing.
-webpackConfig.resolve.alias['@nextcloud/dialogs$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/index.mjs')
+webpackConfig.resolve.alias['@nextcloud/dialogs$'] = path.resolve(
+	__dirname,
+	'node_modules/@nextcloud/dialogs/dist/index.mjs',
+)
 
 // @nextcloud/dialogs@7 and @conduction/nextcloud-vue drag in a FilePicker
 // chunk that imports node's `path`, and webpack 5 no longer auto-polyfills
@@ -165,9 +187,7 @@ webpackConfig.output = {
 // memory bounded while still parallelising minification.
 webpackConfig.optimization = {
 	...(webpackConfig.optimization || {}),
-	minimizer: [
-		new TerserPlugin({ parallel: 2 }),
-	],
+	minimizer: [new TerserPlugin({ parallel: 2 })],
 }
 
 module.exports = webpackConfig

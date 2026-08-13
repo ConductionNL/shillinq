@@ -40,7 +40,6 @@ async function dismissWizard(page: Page): Promise<void> {
 }
 
 test.describe('BBV — Iv3-aanlevering dashboard shell', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + ROUTE_IV3_AANLEVERING)
 		await page.waitForLoadState('domcontentloaded')
@@ -50,22 +49,27 @@ test.describe('BBV — Iv3-aanlevering dashboard shell', () => {
 	/**
 	 * @e2e bookkeeping-bbv-compliance/REQ-BBV-006/iv3-aanlevering-shell-renders
 	 */
-	test('Iv3-aanlevering dashboard mounts on a gemeente administration', async ({ page }) => {
+	test('Iv3-aanlevering dashboard mounts on a gemeente administration', async ({
+		page,
+	}) => {
 		// The dashboard route should return 200 and mount the page shell. On a
 		// non-BBV admin the menu hides — in that case the route 404s and the
 		// spec is implicitly skipped by the test environment fixture.
 		const status = page.url()
-		test.skip(!status.includes(ROUTE_IV3_AANLEVERING),
-			'Iv3-aanlevering dashboard hidden on this administration type')
+		test.skip(
+			!status.includes(ROUTE_IV3_AANLEVERING),
+			'Iv3-aanlevering dashboard hidden on this administration type',
+		)
 
 		// Dashboard page wrapper renders. The manifest declares
 		// `type: dashboard`, so the CnDashboardPage shell should be present.
-		await expect(page.locator('main, [role="main"]')).toBeVisible({ timeout: 15_000 })
+		await expect(page.locator('main, [role="main"]')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 })
 
 test.describe('BBV — Iv3-rapportages index shell', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + ROUTE_IV3_RAPPORTAGES)
 		await page.waitForLoadState('domcontentloaded')
@@ -76,12 +80,13 @@ test.describe('BBV — Iv3-rapportages index shell', () => {
 	 * @e2e bookkeeping-bbv-compliance/REQ-BBV-006/iv3-rapportages-index-renders
 	 */
 	test('Iv3-rapportages index mounts', async ({ page }) => {
-		await expect(page.locator('main, [role="main"]')).toBeVisible({ timeout: 15_000 })
+		await expect(page.locator('main, [role="main"]')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 })
 
 test.describe('BBV — BBV-mapping index shell', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + ROUTE_BBV_MAPPING)
 		await page.waitForLoadState('domcontentloaded')
@@ -91,8 +96,12 @@ test.describe('BBV — BBV-mapping index shell', () => {
 	/**
 	 * @e2e bookkeeping-bbv-compliance/REQ-BBV-001/bbv-mapping-index-renders
 	 */
-	test('BBV-mapping index renders with at least the search affordance', async ({ page }) => {
-		await expect(page.locator('main, [role="main"]')).toBeVisible({ timeout: 15_000 })
+	test('BBV-mapping index renders with at least the search affordance', async ({
+		page,
+	}) => {
+		await expect(page.locator('main, [role="main"]')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 })
 
