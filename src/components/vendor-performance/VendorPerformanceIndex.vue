@@ -26,7 +26,12 @@
 				{{ t('shillinq', 'Vendor performance') }}
 			</h2>
 			<p class="vp-index__hint">
-				{{ t('shillinq', 'Latest monthly scorecard per supplier. Suppliers above 96 % are flagged for auto-review once the 90-day bootstrap window has passed.') }}
+				{{
+					t(
+						'shillinq',
+						'Latest monthly scorecard per supplier. Suppliers above 96 % are flagged for auto-review once the 90-day bootstrap window has passed.',
+					)
+				}}
 			</p>
 		</header>
 
@@ -93,11 +98,17 @@
 			<template #cell-automatedReviewEligible="{ row }">
 				<span
 					class="vp-index__pill"
-					:class="row.automatedReviewEligible ? 'vp-index__pill--eligible' : 'vp-index__pill--ineligible'"
+					:class="
+						row.automatedReviewEligible
+							? 'vp-index__pill--eligible'
+							: 'vp-index__pill--ineligible'
+					"
 					:data-testid="`vp-eligible-${row.id}`">
-					{{ row.automatedReviewEligible
-						? t('shillinq', 'Yes')
-						: t('shillinq', 'No') }}
+					{{
+						row.automatedReviewEligible
+							? t('shillinq', 'Yes')
+							: t('shillinq', 'No')
+					}}
 				</span>
 			</template>
 			<template #cell-actions="{ row }">
@@ -139,12 +150,36 @@ export default {
 		 */
 		columns() {
 			return [
-				{ key: 'supplierId', label: this.t('shillinq', 'Supplier'), sortable: true },
-				{ key: 'period', label: this.t('shillinq', 'Period'), sortable: true },
-				{ key: 'overallScore', label: this.t('shillinq', 'Overall score'), sortable: true },
-				{ key: 'scoreTrend', label: this.t('shillinq', 'Trend'), sortable: true },
-				{ key: 'disputeCount', label: this.t('shillinq', 'Disputes'), sortable: true },
-				{ key: 'automatedReviewEligible', label: this.t('shillinq', 'Auto-review eligible'), sortable: true },
+				{
+					key: 'supplierId',
+					label: this.t('shillinq', 'Supplier'),
+					sortable: true,
+				},
+				{
+					key: 'period',
+					label: this.t('shillinq', 'Period'),
+					sortable: true,
+				},
+				{
+					key: 'overallScore',
+					label: this.t('shillinq', 'Overall score'),
+					sortable: true,
+				},
+				{
+					key: 'scoreTrend',
+					label: this.t('shillinq', 'Trend'),
+					sortable: true,
+				},
+				{
+					key: 'disputeCount',
+					label: this.t('shillinq', 'Disputes'),
+					sortable: true,
+				},
+				{
+					key: 'automatedReviewEligible',
+					label: this.t('shillinq', 'Auto-review eligible'),
+					sortable: true,
+				},
 				{ key: 'actions', label: '', sortable: false },
 			]
 		},
@@ -164,15 +199,21 @@ export default {
 				}
 			}
 			const list = [...map.values()]
-			list.sort((a, b) => Number(b.overallScore || 0) - Number(a.overallScore || 0))
+			list.sort(
+				(a, b) => Number(b.overallScore || 0) - Number(a.overallScore || 0),
+			)
 			return list
 		},
 		filteredRows() {
 			if (this.eligibilityFilter === 'eligible') {
-				return this.latestPerSupplier.filter(r => r.automatedReviewEligible === true)
+				return this.latestPerSupplier.filter(
+					(r) => r.automatedReviewEligible === true,
+				)
 			}
 			if (this.eligibilityFilter === 'ineligible') {
-				return this.latestPerSupplier.filter(r => r.automatedReviewEligible !== true)
+				return this.latestPerSupplier.filter(
+					(r) => r.automatedReviewEligible !== true,
+				)
 			}
 			return this.latestPerSupplier
 		},
@@ -186,12 +227,16 @@ export default {
 			this.error = ''
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/VendorPerformance'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/VendorPerformance',
+					),
 				)
 				const rows = response.data?.results || response.data || []
 				this.rows = Array.isArray(rows) ? rows : []
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load vendor scorecards')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load vendor scorecards')
 			} finally {
 				this.loading = false
 			}

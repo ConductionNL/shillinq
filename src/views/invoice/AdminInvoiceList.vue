@@ -29,11 +29,11 @@
 		<div class="admin-invoice-list__filters">
 			<label>
 				{{ t('shillinq', 'From') }}
-				<input v-model="filters.fromDate" type="date" @change="reload">
+				<input v-model="filters.fromDate" type="date" @change="reload" />
 			</label>
 			<label>
 				{{ t('shillinq', 'To') }}
-				<input v-model="filters.toDate" type="date" @change="reload">
+				<input v-model="filters.toDate" type="date" @change="reload" />
 			</label>
 			<label>
 				{{ t('shillinq', 'Billing model') }}
@@ -48,11 +48,16 @@
 			</label>
 			<label>
 				{{ t('shillinq', 'Status') }}
-				<select v-model="filters.status" data-testid="admin-invoice-status-filter" @change="reload">
+				<select
+					v-model="filters.status"
+					data-testid="admin-invoice-status-filter"
+					@change="reload">
 					<option value="">{{ t('shillinq', 'All') }}</option>
 					<option value="draft">{{ t('shillinq', 'Draft') }}</option>
 					<option value="posted">{{ t('shillinq', 'Posted') }}</option>
-					<option value="cancelled">{{ t('shillinq', 'Cancelled') }}</option>
+					<option value="cancelled">
+						{{ t('shillinq', 'Cancelled') }}
+					</option>
 				</select>
 			</label>
 		</div>
@@ -71,7 +76,10 @@
 					<router-link :to="`/invoice/${row.id}`">
 						{{ t('shillinq', 'View') }}
 					</router-link>
-					<button type="button" :disabled="row.status !== 'draft'" @click="post(row)">
+					<button
+						type="button"
+						:disabled="row.status !== 'draft'"
+						@click="post(row)">
 						{{ t('shillinq', 'Post') }}
 					</button>
 					<button type="button" @click="pdf(row)">
@@ -116,14 +124,47 @@ export default {
 		 */
 		columns() {
 			return [
-				{ key: 'invoiceNumber', label: this.t('shillinq', 'Invoice #'), sortable: true },
-				{ key: 'invoiceDate', label: this.t('shillinq', 'Invoice date'), sortable: true },
-				{ key: 'dueDate', label: this.t('shillinq', 'Due date'), sortable: true },
-				{ key: 'customerId', label: this.t('shillinq', 'Customer'), sortable: true },
-				{ key: 'billingModel', label: this.t('shillinq', 'Billing model'), sortable: true },
-				{ key: 'grossAmount', label: this.t('shillinq', 'Gross'), sortable: true, align: 'right' },
-				{ key: 'status', label: this.t('shillinq', 'Status'), sortable: true },
-				{ key: 'actions', label: this.t('shillinq', 'Actions'), sortable: false },
+				{
+					key: 'invoiceNumber',
+					label: this.t('shillinq', 'Invoice #'),
+					sortable: true,
+				},
+				{
+					key: 'invoiceDate',
+					label: this.t('shillinq', 'Invoice date'),
+					sortable: true,
+				},
+				{
+					key: 'dueDate',
+					label: this.t('shillinq', 'Due date'),
+					sortable: true,
+				},
+				{
+					key: 'customerId',
+					label: this.t('shillinq', 'Customer'),
+					sortable: true,
+				},
+				{
+					key: 'billingModel',
+					label: this.t('shillinq', 'Billing model'),
+					sortable: true,
+				},
+				{
+					key: 'grossAmount',
+					label: this.t('shillinq', 'Gross'),
+					sortable: true,
+					align: 'right',
+				},
+				{
+					key: 'status',
+					label: this.t('shillinq', 'Status'),
+					sortable: true,
+				},
+				{
+					key: 'actions',
+					label: this.t('shillinq', 'Actions'),
+					sortable: false,
+				},
 			]
 		},
 	},
@@ -136,7 +177,10 @@ export default {
 		t,
 		formatMoney(value) {
 			const n = Number(value || 0)
-			return n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+			return n.toLocaleString('nl-NL', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			})
 		},
 		async reload() {
 			try {

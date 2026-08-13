@@ -336,7 +336,10 @@ import BankImportPage from './components/settings/BankImportPage.vue'
 import AccountantPortalDashboard from './views/AccountantPortalDashboard.vue'
 
 export default {
-	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
+	RecurringInvoiceProfileModal: {
+		kind: 'modal',
+		component: RecurringInvoiceProfileModal,
+	},
 
 	// ADR-049 Phase-4: modals launched by declarative headerActions (open-modal).
 	InvoiceQuickDraftModal: { kind: 'modal', component: InvoiceQuickDraftModal },
@@ -354,7 +357,10 @@ export default {
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
 	AdminInvoiceDetail: { kind: 'page', component: AdminInvoiceDetail },
 
-	BookingsConfirmationPortal: { kind: 'page', component: BookingsConfirmationPortal },
+	BookingsConfirmationPortal: {
+		kind: 'page',
+		component: BookingsConfirmationPortal,
+	},
 	AfspraakDetail: { kind: 'page', component: AfspraakDetail },
 	ReceiptCapture: { kind: 'page', component: ReceiptCapture },
 
@@ -368,7 +374,10 @@ export default {
 
 	ThreeWayMatchIndex: { kind: 'page', component: ThreeWayMatchIndex },
 
-	ThreeWayMatchExceptionPanel: { kind: 'page', component: ThreeWayMatchExceptionPanel },
+	ThreeWayMatchExceptionPanel: {
+		kind: 'page',
+		component: ThreeWayMatchExceptionPanel,
+	},
 
 	VendorPerformanceIndex: { kind: 'page', component: VendorPerformanceIndex },
 	VendorPerformanceDetail: { kind: 'page', component: VendorPerformanceDetail },
@@ -379,7 +388,10 @@ export default {
 
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
-	AdministrationSwitcherPage: { kind: 'page', component: AdministrationSwitcherPage },
+	AdministrationSwitcherPage: {
+		kind: 'page',
+		component: AdministrationSwitcherPage,
+	},
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
 	BookingsCalendar: { kind: 'page', component: CalendarView },
@@ -429,10 +441,16 @@ export default {
 	},
 
 	// reporting-compliance-consolidation: Reporting & Compliance pages.
-	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },
+	ReportingComplianceOverview: {
+		kind: 'page',
+		component: ReportingComplianceOverview,
+	},
 	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
 	BankImportPage: { kind: 'page', component: BankImportPage },
 
 	// accountant-portal: scoped multi-client dashboard + handover-pack export.
-	AccountantPortalDashboard: { kind: 'page', component: AccountantPortalDashboard },
+	AccountantPortalDashboard: {
+		kind: 'page',
+		component: AccountantPortalDashboard,
+	},
 }

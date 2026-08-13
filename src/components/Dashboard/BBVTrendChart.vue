@@ -37,8 +37,20 @@
 import { CnChartWidget } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 
-const MONTH_KEYS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_KEYS = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec',
+]
 
 export default {
 	name: 'BBVTrendChart',
@@ -62,7 +74,7 @@ export default {
 	},
 	computed: {
 		categories() {
-			return MONTH_KEYS.map(key => this.t('shillinq', key))
+			return MONTH_KEYS.map((key) => this.t('shillinq', key))
 		},
 		series() {
 			if (this.timeline.length > 0) {
@@ -99,9 +111,14 @@ export default {
 				if (!grouped.has(code)) {
 					grouped.set(code, new Array(12).fill(0))
 				}
-				const monthIndex = Math.max(0, Math.min(11, Number(row.month || 1) - 1))
+				const monthIndex = Math.max(
+					0,
+					Math.min(11, Number(row.month || 1) - 1),
+				)
 				const cents = Number(row.cumulativeSpendCents || 0)
-				grouped.get(code)[monthIndex] = Number.isFinite(cents) ? cents / 100 : 0
+				grouped.get(code)[monthIndex] = Number.isFinite(cents)
+					? cents / 100
+					: 0
 			}
 			const out = []
 			for (const programme of this.programmes) {
@@ -143,7 +160,11 @@ export default {
 			return out
 		},
 		formatEuro(cents) {
-			if (cents === null || cents === undefined || !Number.isFinite(Number(cents))) {
+			if (
+				cents === null
+				|| cents === undefined
+				|| !Number.isFinite(Number(cents))
+			) {
 				return '—'
 			}
 			return new Intl.NumberFormat('nl-NL', {

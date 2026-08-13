@@ -24,10 +24,18 @@ test.describe('Shillinq — visual baselines', () => {
 	// activation panel; baseline their chrome. Adapter status is dormant-by-
 	// default + static, so the shots are deterministic.
 	test('external adapters status', async ({ page }) => {
-		await shootSurface(page, `${APP}/external-adapters`, 'external-adapters-status.png')
+		await shootSurface(
+			page,
+			`${APP}/external-adapters`,
+			'external-adapters-status.png',
+		)
 	})
 
 	test('external adapter detail', async ({ page }) => {
-		await shootSurface(page, `${APP}/external-adapters/digipoort-sbr`, 'external-adapter-detail.png')
+		await shootSurface(
+			page,
+			`${APP}/external-adapters/digipoort-sbr`,
+			'external-adapter-detail.png',
+		)
 	})
 })

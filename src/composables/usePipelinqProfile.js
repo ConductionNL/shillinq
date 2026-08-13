@@ -59,7 +59,12 @@ export function buildProfileFields(contact) {
 	const fields = []
 	const legalName = trimmed(contact.legalName)
 	if (legalName) {
-		fields.push({ key: 'legalName', label: 'Name', value: legalName, emphasis: true })
+		fields.push({
+			key: 'legalName',
+			label: 'Name',
+			value: legalName,
+			emphasis: true,
+		})
 	}
 	const kvk = trimmed(contact.kvkNumber)
 	if (kvk) {
@@ -67,11 +72,21 @@ export function buildProfileFields(contact) {
 	}
 	const email = trimmed(contact.email)
 	if (email) {
-		fields.push({ key: 'email', label: 'Email', value: email, href: `mailto:${email}` })
+		fields.push({
+			key: 'email',
+			label: 'Email',
+			value: email,
+			href: `mailto:${email}`,
+		})
 	}
 	const phone = trimmed(contact.phone)
 	if (phone) {
-		fields.push({ key: 'phone', label: 'Phone', value: phone, href: `tel:${phone.replace(/\s+/g, '')}` })
+		fields.push({
+			key: 'phone',
+			label: 'Phone',
+			value: phone,
+			href: `tel:${phone.replace(/\s+/g, '')}`,
+		})
 	}
 	const address = trimmed(contact.address)
 	if (address) {
@@ -99,7 +114,10 @@ export function selectProfileState(payload) {
 	if (payload.notLinkedToPipelinq === true) {
 		return 'unlinked'
 	}
-	if (typeof payload.contactError === 'string' && payload.contactError.length > 0) {
+	if (
+		typeof payload.contactError === 'string'
+		&& payload.contactError.length > 0
+	) {
 		return 'error'
 	}
 	if (!payload.contact || payload.contact.found === false) {
@@ -133,7 +151,9 @@ export function selectHistoryState(payload) {
 	if (k.unavailable === true) {
 		return 'unavailable'
 	}
-	const empty = (k.empty === true) || (Array.isArray(k.transactions) && k.transactions.length === 0)
+	const empty =
+		k.empty === true
+		|| (Array.isArray(k.transactions) && k.transactions.length === 0)
 	if (empty) {
 		return 'empty'
 	}
@@ -184,8 +204,12 @@ export function formatTransactionDate(iso) {
  * @return {{ limit: number, offset: number }}
  */
 export function nextPageParams(klantbeeld, defaultLimit = 5) {
-	const limit = Number.isFinite(Number(klantbeeld?.limit)) ? Number(klantbeeld.limit) : defaultLimit
-	const offset = Number.isFinite(Number(klantbeeld?.offset)) ? Number(klantbeeld.offset) : 0
+	const limit = Number.isFinite(Number(klantbeeld?.limit))
+		? Number(klantbeeld.limit)
+		: defaultLimit
+	const offset = Number.isFinite(Number(klantbeeld?.offset))
+		? Number(klantbeeld.offset)
+		: 0
 	return {
 		limit: Math.max(1, limit),
 		offset: Math.max(0, offset) + Math.max(1, limit),

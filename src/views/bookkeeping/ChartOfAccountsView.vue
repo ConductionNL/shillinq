@@ -20,22 +20,32 @@
 				</NcButton>
 			</header>
 
-			<NcEmptyContent v-if="!loading && roots.length === 0"
+			<NcEmptyContent
+				v-if="!loading && roots.length === 0"
 				:name="t('shillinq', 'No accounts yet')"
-				:description="t('shillinq', 'Create the first account in the chart-of-accounts to start bookkeeping.')" />
+				:description="
+					t(
+						'shillinq',
+						'Create the first account in the chart-of-accounts to start bookkeeping.',
+					)
+				" />
 
 			<div v-else-if="loading" class="wbso-chart-of-accounts__loading">
 				{{ t('shillinq', 'Loading…') }}
 			</div>
 
 			<ul v-else class="wbso-chart-of-accounts__tree" role="tree">
-				<AccountNode v-for="account in roots"
+				<AccountNode
+					v-for="account in roots"
 					:key="account.accountNumber"
 					:account="account"
 					:depth="0" />
 			</ul>
 
-			<p v-if="errorMessage" class="wbso-chart-of-accounts__error" role="alert">
+			<p
+				v-if="errorMessage"
+				class="wbso-chart-of-accounts__error"
+				role="alert">
 				{{ errorMessage }}
 			</p>
 		</div>
@@ -84,9 +94,13 @@ export default {
 				const url = generateOcsUrl('apps/shillinq/api/v1/accounts/hierarchy')
 				const { data } = await axios.get(url)
 				this.roots = data?.ocs?.data?.tree ?? data?.tree ?? []
-				this.canCreate = data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
+				this.canCreate =
+					data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
 			} catch (error) {
-				this.errorMessage = t('shillinq', 'Failed to load Chart of Accounts.')
+				this.errorMessage = t(
+					'shillinq',
+					'Failed to load Chart of Accounts.',
+				)
 			} finally {
 				this.loading = false
 			}

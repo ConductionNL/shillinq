@@ -70,7 +70,6 @@ async function dismissWizard(page: Page): Promise<void> {
 }
 
 test.describe('Provincies BBV — Compliance Dashboard shell', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -80,9 +79,12 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-001/dashboard-kpi-cards-render
 	 */
-	test('dashboard mounts the four KPI cards declared by the manifest', async ({ page }) => {
-		await expect(page.getByTestId('bbv-compliance-dashboard'))
-			.toBeVisible({ timeout: 15_000 })
+	test('dashboard mounts the four KPI cards declared by the manifest', async ({
+		page,
+	}) => {
+		await expect(page.getByTestId('bbv-compliance-dashboard')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// The four declared KPIs (total budget, committed, spent, remaining)
 		// from manifest.d/bookkeeping-provincies-bbv-variant.json.
@@ -95,9 +97,12 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-001/dashboard-charts-render
 	 */
-	test('dashboard renders the budget-vs-actuals and trend charts', async ({ page }) => {
-		await expect(page.getByTestId('bbv-compliance-dashboard'))
-			.toBeVisible({ timeout: 15_000 })
+	test('dashboard renders the budget-vs-actuals and trend charts', async ({
+		page,
+	}) => {
+		await expect(page.getByTestId('bbv-compliance-dashboard')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// The two declared charts (horizontal bar + cumulative line).
 		await expect(page.getByTestId('bbv-chart-budget-vs-actuals')).toBeVisible()
@@ -107,7 +112,9 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-003/exceptions-block-renders
 	 */
-	test('dashboard mounts the exceptions block with link affordance', async ({ page }) => {
+	test('dashboard mounts the exceptions block with link affordance', async ({
+		page,
+	}) => {
 		const exceptions = page.getByTestId('bbv-dashboard-exceptions')
 		await expect(exceptions).toBeVisible({ timeout: 15_000 })
 		// Either the empty-state copy ("No overspends") or the list of
@@ -131,7 +138,9 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-002/programme-filter-narrows-dashboard
 	 */
-	test('programme filter accepts a selection and updates the URL state', async ({ page }) => {
+	test('programme filter accepts a selection and updates the URL state', async ({
+		page,
+	}) => {
 		const filter = page.getByTestId('bbv-filter-programmaStructure')
 		if (await filter.isVisible().catch(() => false)) {
 			// The manifest declares a multi-select with seven options;
@@ -144,11 +153,9 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 		// Smoke-pass: dashboard does not 500 on filter interaction.
 		await expect(page.getByTestId('bbv-compliance-dashboard')).toBeVisible()
 	})
-
 })
 
 test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + LINKER_INDEX_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -159,18 +166,21 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-004/linker-mapping-status-badge
 	 */
 	test('linker index renders the mapping-status badge', async ({ page }) => {
-		await expect(page.getByTestId('bbv-linker-index'))
-			.toBeVisible({ timeout: 15_000 })
-		await expect(page.getByTestId('bbv-linker-mapping-status'))
-			.toBeVisible()
+		await expect(page.getByTestId('bbv-linker-index')).toBeVisible({
+			timeout: 15_000,
+		})
+		await expect(page.getByTestId('bbv-linker-mapping-status')).toBeVisible()
 	})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-bulk-select-and-action
 	 */
-	test('linker shows the GL-line table with multi-select and a disabled bulk action', async ({ page }) => {
-		await expect(page.getByTestId('bbv-linker-table'))
-			.toBeVisible({ timeout: 15_000 })
+	test('linker shows the GL-line table with multi-select and a disabled bulk action', async ({
+		page,
+	}) => {
+		await expect(page.getByTestId('bbv-linker-table')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// The CnDataTable's master-select checkbox + the per-row checkboxes
 		// from the manifest `selectable: true` config.
@@ -193,7 +203,9 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-bulk-dialog-fields
 	 */
-	test('opening the bulk dialog renders the Target Programme + Effective Date fields', async ({ page }) => {
+	test('opening the bulk dialog renders the Target Programme + Effective Date fields', async ({
+		page,
+	}) => {
 		// If seed data is loaded, select the master checkbox to enable
 		// the bulk action, then open the CnFormDialog.
 		const masterSelect = page.getByTestId('bbv-linker-select-all')
@@ -206,10 +218,12 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 			// The CnFormDialog mounts with the two declared fields.
 			const dialog = page.getByTestId('bbv-linker-dialog')
 			if (await dialog.isVisible().catch(() => false)) {
-				await expect(page.getByTestId('bbv-linker-dialog-programmaStructure'))
-					.toBeVisible()
-				await expect(page.getByTestId('bbv-linker-dialog-programmaAssignedAt'))
-					.toBeVisible()
+				await expect(
+					page.getByTestId('bbv-linker-dialog-programmaStructure'),
+				).toBeVisible()
+				await expect(
+					page.getByTestId('bbv-linker-dialog-programmaAssignedAt'),
+				).toBeVisible()
 			}
 		}
 	})
@@ -217,21 +231,26 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-filter-facets
 	 */
-	test('linker index renders the three declared filter facets', async ({ page }) => {
-		await expect(page.getByTestId('bbv-linker-filters'))
-			.toBeVisible({ timeout: 15_000 })
+	test('linker index renders the three declared filter facets', async ({
+		page,
+	}) => {
+		await expect(page.getByTestId('bbv-linker-filters')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// accountType + programmaStructure + assignmentStatus from the
 		// manifest filters[] block.
 		await expect(page.getByTestId('bbv-linker-filter-accountType')).toBeVisible()
-		await expect(page.getByTestId('bbv-linker-filter-programmaStructure')).toBeVisible()
-		await expect(page.getByTestId('bbv-linker-filter-assignmentStatus')).toBeVisible()
+		await expect(
+			page.getByTestId('bbv-linker-filter-programmaStructure'),
+		).toBeVisible()
+		await expect(
+			page.getByTestId('bbv-linker-filter-assignmentStatus'),
+		).toBeVisible()
 	})
-
 })
 
 test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + LINKER_DETAIL_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -241,15 +260,20 @@ test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-003/linker-detail-renders
 	 */
-	test('detail page mounts with the programme + assignedAt fields', async ({ page }) => {
-		await expect(page.getByTestId('bbv-linker-detail'))
-			.toBeVisible({ timeout: 15_000 })
+	test('detail page mounts with the programme + assignedAt fields', async ({
+		page,
+	}) => {
+		await expect(page.getByTestId('bbv-linker-detail')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// The two editable fields declared by the manifest detail config.
-		await expect(page.getByTestId('bbv-linker-detail-programmaStructure'))
-			.toBeVisible()
-		await expect(page.getByTestId('bbv-linker-detail-programmaAssignedAt'))
-			.toBeVisible()
+		await expect(
+			page.getByTestId('bbv-linker-detail-programmaStructure'),
+		).toBeVisible()
+		await expect(
+			page.getByTestId('bbv-linker-detail-programmaAssignedAt'),
+		).toBeVisible()
 	})
 
 	/**
@@ -266,15 +290,15 @@ test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
 			expect(page.url()).toMatch(/budget-to-programme/)
 		}
 	})
-
 })
 
 test.describe('Provincies BBV — admin settings refresh interval', () => {
-
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-004/refresh-interval-dropdown
 	 */
-	test('Dashboard Refresh Interval dropdown is present and saveable in admin settings', async ({ page }) => {
+	test('Dashboard Refresh Interval dropdown is present and saveable in admin settings', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/admin')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -289,5 +313,4 @@ test.describe('Provincies BBV — admin settings refresh interval', () => {
 			await expect(refresh).toBeVisible()
 		}
 	})
-
 })

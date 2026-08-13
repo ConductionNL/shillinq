@@ -26,13 +26,14 @@ const MAPPING_NEW_API = APP + '/budget-mappings/new'
 const MAPPING_DETAIL_API = APP + '/budget-mappings/smoke-id'
 
 test.describe('BBV routes — 200 OK + envelope shape', () => {
-
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-001/dashboard-route-200
 	 */
-	test('GET /bbv-dashboard responds 200 with the widget envelope', async ({ request }) => {
+	test('GET /bbv-dashboard responds 200 with the widget envelope', async ({
+		request,
+	}) => {
 		const res = await request.get(DASHBOARD_API, {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'application/json' },
+			headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
 		})
 		// Routes are #[NoAdminRequired] + session-guarded; the storage
 		// state from globalSetup carries the admin session so a 200 is
@@ -57,9 +58,11 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-index-route-200
 	 */
-	test('GET /budget-mappings responds 200 with the index envelope', async ({ request }) => {
+	test('GET /budget-mappings responds 200 with the index envelope', async ({
+		request,
+	}) => {
 		const res = await request.get(MAPPING_INDEX_API, {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'application/json' },
+			headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
 		})
 		expect([200, 302, 401, 412].includes(res.status())).toBeTruthy()
 
@@ -75,12 +78,14 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-new-route-200
 	 */
-	test('GET /budget-mappings/new responds 200 (new = synthetic id)', async ({ request }) => {
+	test('GET /budget-mappings/new responds 200 (new = synthetic id)', async ({
+		request,
+	}) => {
 		// The route is `/budget-mappings/{id}` — "new" is treated as a
 		// synthetic id by the controller (no record lookup; the detail
 		// page itself handles the new-vs-edit branching).
 		const res = await request.get(APP + '/budget-mappings/new', {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'application/json' },
+			headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
 		})
 		expect([200, 302, 401, 412].includes(res.status())).toBeTruthy()
 
@@ -94,9 +99,11 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-detail-route-200
 	 */
-	test('GET /budget-mappings/:id responds 200 with the detail envelope', async ({ request }) => {
+	test('GET /budget-mappings/:id responds 200 with the detail envelope', async ({
+		request,
+	}) => {
 		const res = await request.get(MAPPING_DETAIL_API, {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'application/json' },
+			headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
 		})
 		expect([200, 302, 401, 412].includes(res.status())).toBeTruthy()
 
@@ -109,5 +116,4 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 			expect(body.id).toBe('smoke-id')
 		}
 	})
-
 })

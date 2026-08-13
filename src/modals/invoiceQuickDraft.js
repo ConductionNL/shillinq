@@ -119,7 +119,10 @@ export function periodIdFromDate(invoiceDate) {
  * @return {string} A unique provisional invoice number.
  */
 export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
-	const datePart = String(invoiceDate || '').slice(0, 10).replace(/-/g, '') || 'DRAFT'
+	const datePart =
+		String(invoiceDate || '')
+			.slice(0, 10)
+			.replace(/-/g, '') || 'DRAFT'
 	const hh = String(now.getHours()).padStart(2, '0')
 	const mm = String(now.getMinutes()).padStart(2, '0')
 	const ss = String(now.getSeconds()).padStart(2, '0')
@@ -146,7 +149,10 @@ export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
 export function buildInvoicePayload(input) {
 	const totals = computeTotals(input.lines)
 	const lines = (input.lines || [])
-		.filter((l) => (l.description || '').trim().length > 0 || Number(l.unitPrice) > 0)
+		.filter(
+			(l) =>
+				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
+		)
 		.map((l, idx) => ({
 			lineNumber: idx + 1,
 			description: (l.description || '').trim(),
@@ -156,7 +162,8 @@ export function buildInvoicePayload(input) {
 			glAccount: input.glAccount || '',
 		}))
 	return {
-		invoiceNumber: input.invoiceNumber || provisionalInvoiceNumber(input.invoiceDate),
+		invoiceNumber:
+			input.invoiceNumber || provisionalInvoiceNumber(input.invoiceDate),
 		administrationId: String(input.administrationId || ''),
 		periodId: input.periodId || periodIdFromDate(input.invoiceDate),
 		customerId: String(input.customerId),

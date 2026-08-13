@@ -34,7 +34,11 @@
 					{{ label('Notifications') }}
 				</h2>
 				<p class="bk-notification-modal__subtitle">
-					{{ label('Configure how this booking notifies customers, organizers and administrators.') }}
+					{{
+						label(
+							'Configure how this booking notifies customers, organizers and administrators.',
+						)
+					}}
 				</p>
 			</header>
 
@@ -42,7 +46,10 @@
 				<p v-if="loading" data-testid="bk-notification-loading">
 					{{ label('Loading triggers…') }}
 				</p>
-				<p v-else-if="error" class="bk-notification-modal__error" data-testid="bk-notification-error">
+				<p
+					v-else-if="error"
+					class="bk-notification-modal__error"
+					data-testid="bk-notification-error">
 					{{ error }}
 				</p>
 				<ul
@@ -60,10 +67,12 @@
 									type="checkbox"
 									:checked="t.status === 'enabled'"
 									:data-testid="`bk-notification-${t.slug}-enabled`"
-									@change="setEnabled(t, $event.target.checked)">
+									@change="setEnabled(t, $event.target.checked)" />
 								<span>{{ t.name }}</span>
 							</label>
-							<span class="bk-notification-modal__type">{{ t.triggerType }}</span>
+							<span class="bk-notification-modal__type">{{
+								t.triggerType
+							}}</span>
 						</header>
 						<div class="bk-notification-modal__channels">
 							<label
@@ -74,7 +83,9 @@
 									type="checkbox"
 									:checked="t.channels.includes(c)"
 									:data-testid="`bk-notification-${t.slug}-channel-${c}`"
-									@change="toggleChannel(t, c, $event.target.checked)">
+									@change="
+										toggleChannel(t, c, $event.target.checked)
+									" />
 								<span>{{ label(channelLabel(c)) }}</span>
 							</label>
 						</div>
@@ -170,8 +181,14 @@ export default {
 		 * @return {string} Capitalised label.
 		 */
 		channelLabel(channel) {
-			const map = { email: 'Email', sms: 'SMS', chat: 'Chat', teams: 'Teams', slack: 'Slack' }
-			return (map[channel] || channel)
+			const map = {
+				email: 'Email',
+				sms: 'SMS',
+				chat: 'Chat',
+				teams: 'Teams',
+				slack: 'Slack',
+			}
+			return map[channel] || channel
 		},
 		/**
 		 * Reset the editable copy from the incoming triggers prop.

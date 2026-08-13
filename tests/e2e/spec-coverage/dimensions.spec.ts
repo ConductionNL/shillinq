@@ -9,9 +9,14 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+import {
+	gotoPage,
+	assertIndexSurface,
+	assertNoShillinqFailures,
+	recordShillinqErrors,
+} from './_helpers'
 
-const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
+const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/bookkeeping/dimensions/cost-centers', title: 'Cost Centers' },
 	{ route: '/bookkeeping/dimensions/kostendragers', title: 'Kostendragers' },
 	{ route: '/bookkeeping/dimensions/projects', title: 'Projects' },
@@ -31,14 +36,27 @@ test.describe('shillinq spec-coverage — Dimensions', () => {
 
 	// Cost Centers ships a primary "Add Item" create affordance — open it and
 	// confirm a create dialog/form mounts (no submit, data-independent).
-	test('Dimensions › Cost Centers — Add opens a create dialog', async ({ page }) => {
+	test('Dimensions › Cost Centers — Add opens a create dialog', async ({
+		page,
+	}) => {
 		const rec = recordShillinqErrors(page)
 		await gotoPage(page, '/bookkeeping/dimensions/cost-centers')
-		const addBtn = page.locator('#content-vue button:has-text("Add"), #content-vue button:has-text("Nieuw"), #content-vue button:has-text("Toevoegen")').first()
+		const addBtn = page
+			.locator(
+				'#content-vue button:has-text("Add"), #content-vue button:has-text("Nieuw"), #content-vue button:has-text("Toevoegen")',
+			)
+			.first()
 		if (await addBtn.isVisible().catch(() => false)) {
 			await addBtn.click({ timeout: 5_000 }).catch(() => {})
-			const dialog = page.locator('.modal-container:visible, [role="dialog"]:visible, form:visible').first()
-			await expect(dialog, 'create dialog/form should mount after Add').toBeVisible({ timeout: 8_000 })
+			const dialog = page
+				.locator(
+					'.modal-container:visible, [role="dialog"]:visible, form:visible',
+				)
+				.first()
+			await expect(
+				dialog,
+				'create dialog/form should mount after Add',
+			).toBeVisible({ timeout: 8_000 })
 			await page.keyboard.press('Escape').catch(() => {})
 		}
 		assertNoShillinqFailures(rec, '/bookkeeping/dimensions/cost-centers add')

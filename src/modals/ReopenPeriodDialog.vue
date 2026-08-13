@@ -35,13 +35,22 @@
 			</header>
 			<section class="reopen-period-dialog__body">
 				<p v-if="periodName">
-					{{ t('shillinq', 'Reopening period:') }} <strong>{{ periodName }}</strong>
+					{{ t('shillinq', 'Reopening period:') }}
+					<strong>{{ periodName }}</strong>
 				</p>
 				<p class="reopen-period-dialog__hint">
-					{{ t('shillinq', 'Provide a close reason — the original close timestamp and actor are preserved in the audit history.') }}
+					{{
+						t(
+							'shillinq',
+							'Provide a close reason — the original close timestamp and actor are preserved in the audit history.',
+						)
+					}}
 				</p>
-				<label class="reopen-period-dialog__label" for="reopen-period-dialog-reason">
-					{{ t('shillinq', 'Close reason') }} <span class="reopen-period-dialog__required">*</span>
+				<label
+					class="reopen-period-dialog__label"
+					for="reopen-period-dialog-reason">
+					{{ t('shillinq', 'Close reason') }}
+					<span class="reopen-period-dialog__required">*</span>
 				</label>
 				<textarea
 					id="reopen-period-dialog-reason"
@@ -51,8 +60,16 @@
 					rows="3"
 					:disabled="submitting"
 					data-testid="reopen-period-dialog-reason"
-					:placeholder="t('shillinq', 'e.g. Adjusting journal for tax authority correction')" />
-				<p v-if="error" class="reopen-period-dialog__error" data-testid="reopen-period-dialog-error">
+					:placeholder="
+						t(
+							'shillinq',
+							'e.g. Adjusting journal for tax authority correction',
+						)
+					" />
+				<p
+					v-if="error"
+					class="reopen-period-dialog__error"
+					data-testid="reopen-period-dialog-error">
 					{{ error }}
 				</p>
 			</section>
@@ -71,7 +88,11 @@
 					:disabled="!canConfirm"
 					data-testid="reopen-period-dialog-confirm"
 					@click="onConfirm">
-					{{ submitting ? t('shillinq', 'Working…') : t('shillinq', 'Reopen') }}
+					{{
+						submitting
+							? t('shillinq', 'Working…')
+							: t('shillinq', 'Reopen')
+					}}
 				</button>
 			</footer>
 		</div>
@@ -115,7 +136,10 @@ export default {
 			if (next === true) {
 				this.closeReason = ''
 				this.$nextTick(() => {
-					if (this.$refs.reasonInput && typeof this.$refs.reasonInput.focus === 'function') {
+					if (
+						this.$refs.reasonInput
+						&& typeof this.$refs.reasonInput.focus === 'function'
+					) {
 						this.$refs.reasonInput.focus()
 					}
 				})

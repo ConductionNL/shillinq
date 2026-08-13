@@ -32,9 +32,16 @@
 			</header>
 			<section class="bbv-delete-dialog__body">
 				<p>
-					{{ label('This permanently removes the GL → programme allocation. Deletion is logged in the audit trail.') }}
+					{{
+						label(
+							'This permanently removes the GL → programme allocation. Deletion is logged in the audit trail.',
+						)
+					}}
 				</p>
-				<dl v-if="mapping" class="bbv-delete-dialog__summary" data-testid="bbv-delete-dialog-summary">
+				<dl
+					v-if="mapping"
+					class="bbv-delete-dialog__summary"
+					data-testid="bbv-delete-dialog-summary">
 					<dt>{{ label('GL account') }}</dt>
 					<dd>{{ mapping.glAccountNumber || '—' }}</dd>
 					<dt>{{ label('Programme') }}</dt>

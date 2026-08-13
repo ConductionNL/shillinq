@@ -15,8 +15,16 @@
 -->
 <template>
 	<div class="cashflow-dashboard">
-		<div v-if="crisisActive" class="cashflow-dashboard__crisis-banner" role="alert">
-			{{ t('shillinq', 'CRISIS ACTIVE: predicted negative saldo within 4 weeks. Review action suggestions below.') }}
+		<div
+			v-if="crisisActive"
+			class="cashflow-dashboard__crisis-banner"
+			role="alert">
+			{{
+				t(
+					'shillinq',
+					'CRISIS ACTIVE: predicted negative saldo within 4 weeks. Review action suggestions below.',
+				)
+			}}
 		</div>
 
 		<div class="cashflow-dashboard__header">
@@ -46,17 +54,30 @@
 		</div>
 
 		<!-- The chart itself is rendered by the manifest widget; this is a placeholder slot. -->
-		<div class="cashflow-dashboard__chart-slot" data-widget="cashflow-13week-chart">
+		<div
+			class="cashflow-dashboard__chart-slot"
+			data-widget="cashflow-13week-chart">
 			<slot name="chart" />
 		</div>
 
 		<div v-if="selectedWeek" class="cashflow-dashboard__week-detail">
 			<h3>{{ t('shillinq', 'Week') }} {{ selectedWeek.weeknummer }}</h3>
 			<ul>
-				<li>{{ t('shillinq', 'Inflows AR') }}: {{ selectedWeek.inflows_ar_geprognosticeerd }}</li>
-				<li>{{ t('shillinq', 'Outflows AP') }}: {{ selectedWeek.outflows_ap_geprognosticeerd }}</li>
-				<li>{{ t('shillinq', 'Net Mutatie') }}: {{ selectedWeek.nettoMutatie }}</li>
-				<li>{{ t('shillinq', 'Eind Saldo') }}: {{ selectedWeek.eindSaldo }}</li>
+				<li>
+					{{ t('shillinq', 'Inflows AR') }}:
+					{{ selectedWeek.inflows_ar_geprognosticeerd }}
+				</li>
+				<li>
+					{{ t('shillinq', 'Outflows AP') }}:
+					{{ selectedWeek.outflows_ap_geprognosticeerd }}
+				</li>
+				<li>
+					{{ t('shillinq', 'Net Mutatie') }}:
+					{{ selectedWeek.nettoMutatie }}
+				</li>
+				<li>
+					{{ t('shillinq', 'Eind Saldo') }}: {{ selectedWeek.eindSaldo }}
+				</li>
 			</ul>
 		</div>
 	</div>
@@ -96,7 +117,7 @@ export default {
 				return false
 			}
 			const leading = this.weeks.slice(0, 4)
-			return leading.some(w => Number(w.eindSaldo) < 0)
+			return leading.some((w) => Number(w.eindSaldo) < 0)
 		},
 	},
 

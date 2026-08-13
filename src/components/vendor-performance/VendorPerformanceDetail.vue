@@ -29,30 +29,51 @@
 				{{ t('shillinq', 'Vendor performance') }}
 			</h2>
 			<p class="vp-detail__hint">
-				{{ t('shillinq', 'Monthly scorecard computed by the vendor performance aggregation cron.') }}
+				{{
+					t(
+						'shillinq',
+						'Monthly scorecard computed by the vendor performance aggregation cron.',
+					)
+				}}
 			</p>
 		</header>
 
-		<div v-if="loading" class="vp-detail__loading" data-testid="vp-detail-loading">
+		<div
+			v-if="loading"
+			class="vp-detail__loading"
+			data-testid="vp-detail-loading">
 			{{ t('shillinq', 'Loading scorecard...') }}
 		</div>
 
-		<div v-else-if="error" class="vp-detail__error" data-testid="vp-detail-error">
+		<div
+			v-else-if="error"
+			class="vp-detail__error"
+			data-testid="vp-detail-error">
 			{{ error }}
 		</div>
 
 		<div v-else-if="scorecard" class="vp-detail__body">
 			<section class="vp-detail__summary" data-testid="vp-detail-summary">
 				<div class="vp-detail__field">
-					<span class="vp-detail__label">{{ t('shillinq', 'Supplier') }}</span>
-					<span class="vp-detail__value" data-testid="vp-supplier">{{ scorecard.supplierId || '—' }}</span>
+					<span class="vp-detail__label">{{
+						t('shillinq', 'Supplier')
+					}}</span>
+					<span class="vp-detail__value" data-testid="vp-supplier">{{
+						scorecard.supplierId || '—'
+					}}</span>
 				</div>
 				<div class="vp-detail__field">
-					<span class="vp-detail__label">{{ t('shillinq', 'Period') }}</span>
-					<span class="vp-detail__value" data-testid="vp-period">{{ scorecard.period || '—' }}</span>
+					<span class="vp-detail__label">{{
+						t('shillinq', 'Period')
+					}}</span>
+					<span class="vp-detail__value" data-testid="vp-period">{{
+						scorecard.period || '—'
+					}}</span>
 				</div>
 				<div class="vp-detail__field">
-					<span class="vp-detail__label">{{ t('shillinq', 'Overall score') }}</span>
+					<span class="vp-detail__label">{{
+						t('shillinq', 'Overall score')
+					}}</span>
 					<span
 						class="vp-detail__score"
 						:class="scoreClass(scorecard.overallScore)"
@@ -61,7 +82,9 @@
 					</span>
 				</div>
 				<div class="vp-detail__field">
-					<span class="vp-detail__label">{{ t('shillinq', 'Trend') }}</span>
+					<span class="vp-detail__label">{{
+						t('shillinq', 'Trend')
+					}}</span>
 					<span
 						class="vp-detail__pill"
 						:class="`vp-detail__pill--${scorecard.scoreTrend || 'stable'}`"
@@ -70,14 +93,22 @@
 					</span>
 				</div>
 				<div class="vp-detail__field">
-					<span class="vp-detail__label">{{ t('shillinq', 'Auto-review eligible') }}</span>
+					<span class="vp-detail__label">{{
+						t('shillinq', 'Auto-review eligible')
+					}}</span>
 					<span
 						class="vp-detail__pill"
-						:class="scorecard.automatedReviewEligible ? 'vp-detail__pill--eligible' : 'vp-detail__pill--ineligible'"
+						:class="
+							scorecard.automatedReviewEligible
+								? 'vp-detail__pill--eligible'
+								: 'vp-detail__pill--ineligible'
+						"
 						data-testid="vp-eligible-badge">
-						{{ scorecard.automatedReviewEligible
-							? t('shillinq', 'Yes')
-							: t('shillinq', 'No') }}
+						{{
+							scorecard.automatedReviewEligible
+								? t('shillinq', 'Yes')
+								: t('shillinq', 'No')
+						}}
 					</span>
 				</div>
 			</section>
@@ -137,7 +168,10 @@
 					<li>
 						<router-link
 							v-if="scorecard.supplierId"
-							:to="{ name: 'PurchaseOrderIndex', query: { supplierId: scorecard.supplierId } }"
+							:to="{
+								name: 'PurchaseOrderIndex',
+								query: { supplierId: scorecard.supplierId },
+							}"
 							data-testid="vp-link-pos">
 							{{ t('shillinq', 'Purchase orders for this supplier') }}
 						</router-link>
@@ -145,7 +179,10 @@
 					<li>
 						<router-link
 							v-if="scorecard.supplierId"
-							:to="{ name: 'SupplierInvoiceIndex', query: { supplierId: scorecard.supplierId } }"
+							:to="{
+								name: 'SupplierInvoiceIndex',
+								query: { supplierId: scorecard.supplierId },
+							}"
 							data-testid="vp-link-invoices">
 							{{ t('shillinq', 'Supplier invoices') }}
 						</router-link>
@@ -212,11 +249,15 @@ export default {
 			}
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/VendorPerformance/${id}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/VendorPerformance/${id}`,
+					),
 				)
 				this.scorecard = response.data || null
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load scorecard')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load scorecard')
 			} finally {
 				this.loading = false
 			}

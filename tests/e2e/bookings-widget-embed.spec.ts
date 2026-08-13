@@ -38,11 +38,12 @@ const SLOTS_API = APP + '/api/widget/slots'
 const APPOINTMENTS_API = APP + '/api/widget/appointments'
 
 test.describe('widget public API — bearer-token gate', () => {
-
 	/**
 	 * @e2e bookings-self-service-widget/REQ-WSW-001/services-without-bearer-401
 	 */
-	test('GET /api/widget/services without bearer returns 401', async ({ request }) => {
+	test('GET /api/widget/services without bearer returns 401', async ({
+		request,
+	}) => {
 		const res = await request.get(SERVICES_API, {
 			headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
 		})
@@ -56,7 +57,9 @@ test.describe('widget public API — bearer-token gate', () => {
 	/**
 	 * @e2e bookings-self-service-widget/REQ-WSW-001/services-with-bad-bearer-401
 	 */
-	test('GET /api/widget/services with bad bearer returns 401', async ({ request }) => {
+	test('GET /api/widget/services with bad bearer returns 401', async ({
+		request,
+	}) => {
 		const res = await request.get(SERVICES_API + '?businessId=salon-demo', {
 			headers: {
 				'OCS-APIREQUEST': 'true',
@@ -71,16 +74,21 @@ test.describe('widget public API — bearer-token gate', () => {
 	 * @e2e bookings-self-service-widget/REQ-WSW-001/slots-without-bearer-401
 	 */
 	test('GET /api/widget/slots without bearer returns 401', async ({ request }) => {
-		const res = await request.get(SLOTS_API + '?serviceId=haircut&resourceId=chair-1&date=2026-06-09', {
-			headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
-		})
+		const res = await request.get(
+			SLOTS_API + '?serviceId=haircut&resourceId=chair-1&date=2026-06-09',
+			{
+				headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
+			},
+		)
 		expect([401, 412].includes(res.status())).toBeTruthy()
 	})
 
 	/**
 	 * @e2e bookings-self-service-widget/REQ-WSW-001/appointments-without-bearer-401
 	 */
-	test('POST /api/widget/appointments without bearer returns 401', async ({ request }) => {
+	test('POST /api/widget/appointments without bearer returns 401', async ({
+		request,
+	}) => {
 		const res = await request.post(APPOINTMENTS_API, {
 			headers: {
 				'OCS-APIREQUEST': 'true',
@@ -97,5 +105,4 @@ test.describe('widget public API — bearer-token gate', () => {
 		})
 		expect([401, 412].includes(res.status())).toBeTruthy()
 	})
-
 })

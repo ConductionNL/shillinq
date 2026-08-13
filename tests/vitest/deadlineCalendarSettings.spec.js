@@ -50,7 +50,13 @@ describe('normaliseSettings', () => {
 	})
 
 	it('falls back to documented defaults on null/malformed input', () => {
-		for (const raw of [null, undefined, {}, { categories: 'nope' }, { categories: { filing: 'x' } }]) {
+		for (const raw of [
+			null,
+			undefined,
+			{},
+			{ categories: 'nope' },
+			{ categories: { filing: 'x' } },
+		]) {
 			const rows = normaliseSettings(raw)
 			const byId = Object.fromEntries(rows.map((row) => [row.id, row]))
 			expect(byId.filing.enabled).toBe(true)
@@ -62,7 +68,10 @@ describe('normaliseSettings', () => {
 
 	it('rejects negative or non-numeric lead days', () => {
 		const rows = normaliseSettings({
-			categories: { filing: { enabled: true, leadDays: -4 }, contract: { enabled: true, leadDays: 'abc' } },
+			categories: {
+				filing: { enabled: true, leadDays: -4 },
+				contract: { enabled: true, leadDays: 'abc' },
+			},
 		})
 		const byId = Object.fromEntries(rows.map((row) => [row.id, row]))
 		expect(byId.filing.leadDays).toBe(10)
@@ -87,7 +96,9 @@ describe('buildSavePayload', () => {
 	})
 
 	it('clamps invalid lead days to 0 and tolerates non-array input', () => {
-		const payload = buildSavePayload([{ id: 'filing', enabled: true, leadDays: -3 }])
+		const payload = buildSavePayload([
+			{ id: 'filing', enabled: true, leadDays: -3 },
+		])
 		expect(payload.categories.filing.leadDays).toBe(0)
 		expect(buildSavePayload('nope')).toEqual({ categories: {} })
 	})

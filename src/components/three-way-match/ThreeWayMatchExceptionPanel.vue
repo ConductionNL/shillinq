@@ -30,11 +30,17 @@
 -->
 <template>
 	<div class="twm-exception" data-testid="twm-exception-panel">
-		<div v-if="loading" class="twm-exception__loading" data-testid="twm-exception-loading">
+		<div
+			v-if="loading"
+			class="twm-exception__loading"
+			data-testid="twm-exception-loading">
 			{{ t('shillinq', 'Loading match...') }}
 		</div>
 
-		<div v-else-if="error" class="twm-exception__error" data-testid="twm-exception-error">
+		<div
+			v-else-if="error"
+			class="twm-exception__error"
+			data-testid="twm-exception-error">
 			{{ error }}
 		</div>
 
@@ -49,7 +55,8 @@
 						{{ t('shillinq', 'Invoice') }}: {{ invoice.invoiceNumber }}
 					</span>
 					<span v-if="match.createdAt">
-						{{ t('shillinq', 'Created') }}: {{ formatTimestamp(match.createdAt) }}
+						{{ t('shillinq', 'Created') }}:
+						{{ formatTimestamp(match.createdAt) }}
 					</span>
 				</p>
 			</header>
@@ -63,13 +70,18 @@
 					<thead>
 						<tr>
 							<th scope="col">{{ t('shillinq', 'Field') }}</th>
-							<th scope="col">{{ t('shillinq', 'Purchase Order') }}</th>
+							<th scope="col">
+								{{ t('shillinq', 'Purchase Order') }}
+							</th>
 							<th scope="col">{{ t('shillinq', 'Goods Receipt') }}</th>
 							<th scope="col">{{ t('shillinq', 'Invoice') }}</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in comparisonRows" :key="row.field" :data-testid="`twm-exception-row-${row.field}`">
+						<tr
+							v-for="row in comparisonRows"
+							:key="row.field"
+							:data-testid="`twm-exception-row-${row.field}`">
 							<td>{{ row.label }}</td>
 							<td>{{ row.po }}</td>
 							<td>{{ row.grn }}</td>
@@ -86,14 +98,26 @@
 				data-testid="twm-exception-divergence">
 				<h3>{{ t('shillinq', 'Divergence details') }}</h3>
 				<ul>
-					<li v-for="(entry, index) in divergenceRows" :key="index" :data-testid="`twm-exception-div-${index}`">
-						<strong>{{ entry.field }}</strong>:
-						{{ t('shillinq', 'expected') }} {{ entry.expected }} ·
+					<li
+						v-for="(entry, index) in divergenceRows"
+						:key="index"
+						:data-testid="`twm-exception-div-${index}`">
+						<strong>{{ entry.field }}</strong
+						>: {{ t('shillinq', 'expected') }} {{ entry.expected }} ·
 						{{ t('shillinq', 'actual') }} {{ entry.actual }}
-						<span v-if="entry.deltaCents !== null && entry.deltaCents !== undefined">
-							· {{ t('shillinq', 'Δ') }} {{ formatMoney(entry.deltaCents) }}
+						<span
+							v-if="
+								entry.deltaCents !== null
+								&& entry.deltaCents !== undefined
+							">
+							· {{ t('shillinq', 'Δ') }}
+							{{ formatMoney(entry.deltaCents) }}
 						</span>
-						<span v-if="entry.deltaPercentage !== null && entry.deltaPercentage !== undefined">
+						<span
+							v-if="
+								entry.deltaPercentage !== null
+								&& entry.deltaPercentage !== undefined
+							">
 							· {{ formatBasisPoints(entry.deltaPercentage) }}
 						</span>
 					</li>
@@ -116,8 +140,11 @@
 					<dt>{{ t('shillinq', 'Notes') }}</dt>
 					<dd>{{ match.resolutionNotes || '—' }}</dd>
 				</dl>
-				<p v-if="dispatch && dispatch.dispatchId" data-testid="twm-exception-dispatch-id">
-					{{ t('shillinq', 'CreditNote dispatch') }}: {{ dispatch.dispatchId }}
+				<p
+					v-if="dispatch && dispatch.dispatchId"
+					data-testid="twm-exception-dispatch-id">
+					{{ t('shillinq', 'CreditNote dispatch') }}:
+					{{ dispatch.dispatchId }}
 				</p>
 			</section>
 
@@ -128,7 +155,12 @@
 				data-testid="twm-exception-actions">
 				<h3>{{ t('shillinq', 'Resolution') }}</h3>
 				<p class="twm-exception__hint">
-					{{ t('shillinq', 'Payment is blocked until this exception is resolved.') }}
+					{{
+						t(
+							'shillinq',
+							'Payment is blocked until this exception is resolved.',
+						)
+					}}
 				</p>
 				<label class="twm-exception__notes-label" for="twm-exception-notes">
 					{{ t('shillinq', 'Motivation / reason') }}
@@ -139,9 +171,17 @@
 					data-testid="twm-exception-notes"
 					rows="3"
 					maxlength="2000"
-					:placeholder="t('shillinq', 'Document the motivation, dispute reason or rejection reason.')" />
+					:placeholder="
+						t(
+							'shillinq',
+							'Document the motivation, dispute reason or rejection reason.',
+						)
+					" />
 
-				<div v-if="actionError" class="twm-exception__action-error" data-testid="twm-exception-action-error">
+				<div
+					v-if="actionError"
+					class="twm-exception__action-error"
+					data-testid="twm-exception-action-error">
 					{{ actionError }}
 				</div>
 
@@ -279,14 +319,18 @@ export default {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/ThreeWayMatch/${this.id}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/ThreeWayMatch/${this.id}`,
+					),
 				)
 				this.match = response.data || null
 				if (this.match) {
 					await this.loadRelated()
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load match')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load match')
 			} finally {
 				this.loading = false
 			}
@@ -299,11 +343,15 @@ export default {
 			if (this.match.invoiceId) {
 				tasks.push(this.loadInvoice())
 			}
-			const matchedPoIds = Array.isArray(this.match.matchedPoIds) ? this.match.matchedPoIds : []
+			const matchedPoIds = Array.isArray(this.match.matchedPoIds)
+				? this.match.matchedPoIds
+				: []
 			if (matchedPoIds.length > 0) {
 				tasks.push(this.loadPo(matchedPoIds[0]))
 			}
-			const matchedGrnIds = Array.isArray(this.match.matchedGrnIds) ? this.match.matchedGrnIds : []
+			const matchedGrnIds = Array.isArray(this.match.matchedGrnIds)
+				? this.match.matchedGrnIds
+				: []
 			if (matchedGrnIds.length > 0) {
 				tasks.push(this.loadGrn(matchedGrnIds[0]))
 			}
@@ -312,7 +360,9 @@ export default {
 		async loadInvoice() {
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.match.invoiceId}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.match.invoiceId}`,
+					),
 				)
 				this.invoice = response.data || null
 			} catch (e) {
@@ -322,7 +372,9 @@ export default {
 		async loadPo(poId) {
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/PurchaseOrder/${poId}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/PurchaseOrder/${poId}`,
+					),
 				)
 				this.po = response.data || null
 			} catch (e) {
@@ -332,7 +384,9 @@ export default {
 		async loadGrn(grnId) {
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/GoodsReceiptNote/${grnId}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/GoodsReceiptNote/${grnId}`,
+					),
 				)
 				this.grn = response.data || null
 			} catch (e) {
@@ -356,7 +410,10 @@ export default {
 		},
 		async submitResolution(path, extra) {
 			if (this.notes.trim() === '') {
-				this.actionError = this.t('shillinq', 'A motivation / reason is required.')
+				this.actionError = this.t(
+					'shillinq',
+					'A motivation / reason is required.',
+				)
 				return
 			}
 			this.submitting = true
@@ -380,7 +437,9 @@ export default {
 				}
 				this.notes = ''
 			} catch (e) {
-				this.actionError = e?.response?.data?.error || this.t('shillinq', 'Resolution failed')
+				this.actionError =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Resolution failed')
 			} finally {
 				this.submitting = false
 			}
@@ -401,7 +460,10 @@ export default {
 			const labels = {
 				accepted: this.t('shillinq', 'Accepted with motivation'),
 				rejected: this.t('shillinq', 'Rejected — payment blocked'),
-				credit_note_requested: this.t('shillinq', 'Dispute filed (UBL CreditNote)'),
+				credit_note_requested: this.t(
+					'shillinq',
+					'Dispute filed (UBL CreditNote)',
+				),
 				supplier_contacted: this.t('shillinq', 'Supplier contacted'),
 				po_adjusted: this.t('shillinq', 'PO adjusted'),
 				tolerance_override: this.t('shillinq', 'Tolerance override'),

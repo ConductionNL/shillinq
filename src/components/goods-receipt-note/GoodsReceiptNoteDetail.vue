@@ -26,7 +26,10 @@
 			{{ t('shillinq', 'Loading goods receipt note...') }}
 		</div>
 
-		<div v-else-if="error" class="grn-detail__error" data-testid="grn-detail-error">
+		<div
+			v-else-if="error"
+			class="grn-detail__error"
+			data-testid="grn-detail-error">
 			{{ error }}
 		</div>
 
@@ -34,16 +37,22 @@
 			<header class="grn-detail__header" data-testid="grn-detail-header">
 				<h2>{{ grn.grnNumber }}</h2>
 				<p>
-					<span class="grn-detail__pill" :class="`grn-detail__pill--${grn.statusCode}`">
+					<span
+						class="grn-detail__pill"
+						:class="`grn-detail__pill--${grn.statusCode}`">
 						{{ statusLabel(grn.statusCode) }}
 					</span>
-					<span v-if="grn.carrier">{{ t('shillinq', 'Carrier') }}: {{ grn.carrier }}</span>
+					<span v-if="grn.carrier"
+						>{{ t('shillinq', 'Carrier') }}: {{ grn.carrier }}</span
+					>
 					<span v-if="grn.deliveryNoteReference">
-						{{ t('shillinq', 'Delivery note') }}: {{ grn.deliveryNoteReference }}
+						{{ t('shillinq', 'Delivery note') }}:
+						{{ grn.deliveryNoteReference }}
 					</span>
 				</p>
 				<p>
-					{{ t('shillinq', 'Received') }}: {{ formatTimestamp(grn.receivedAt) }}
+					{{ t('shillinq', 'Received') }}:
+					{{ formatTimestamp(grn.receivedAt) }}
 					<template v-if="grn.receivedBy">
 						— {{ grn.receivedBy }}
 					</template>
@@ -96,7 +105,10 @@
 
 			<section class="grn-detail__photos">
 				<h3>{{ t('shillinq', 'Delivery photos') }}</h3>
-				<ul v-if="(grn.photos || []).length > 0" class="grn-detail__photo-grid" data-testid="grn-detail-photos">
+				<ul
+					v-if="(grn.photos || []).length > 0"
+					class="grn-detail__photo-grid"
+					data-testid="grn-detail-photos">
 					<li v-for="photoId in grn.photos" :key="photoId">
 						<a :href="photoUrl(photoId)" target="_blank" rel="noopener">
 							{{ photoId }}
@@ -112,13 +124,22 @@
 				<h3>{{ t('shillinq', 'Three-way matches') }}</h3>
 				<ul v-if="matches.length > 0" data-testid="grn-detail-matches">
 					<li v-for="match in matches" :key="match.id">
-						<router-link :to="{ name: 'ThreeWayMatchDetail', params: { id: match.id } }">
+						<router-link
+							:to="{
+								name: 'ThreeWayMatchDetail',
+								params: { id: match.id },
+							}">
 							{{ match.matchReference || match.id }}
 						</router-link>
 					</li>
 				</ul>
 				<p v-else class="grn-detail__matches-empty">
-					{{ t('shillinq', 'No matches yet — invoices will populate them.') }}
+					{{
+						t(
+							'shillinq',
+							'No matches yet — invoices will populate them.',
+						)
+					}}
 				</p>
 			</section>
 
@@ -129,7 +150,11 @@
 					:disabled="transitioning"
 					data-testid="grn-detail-quality-check"
 					@click="onQualityCheck">
-					{{ transitioning ? t('shillinq', 'Working...') : t('shillinq', 'Quality check passed') }}
+					{{
+						transitioning
+							? t('shillinq', 'Working...')
+							: t('shillinq', 'Quality check passed')
+					}}
 				</NcButton>
 				<NcButton
 					v-if="canAccept"
@@ -137,9 +162,16 @@
 					:disabled="transitioning"
 					data-testid="grn-detail-accept"
 					@click="onAccept">
-					{{ transitioning ? t('shillinq', 'Working...') : t('shillinq', 'Accept goods') }}
+					{{
+						transitioning
+							? t('shillinq', 'Working...')
+							: t('shillinq', 'Accept goods')
+					}}
 				</NcButton>
-				<p v-if="transitionError" class="grn-detail__error" data-testid="grn-detail-transition-error">
+				<p
+					v-if="transitionError"
+					class="grn-detail__error"
+					data-testid="grn-detail-transition-error">
 					{{ transitionError }}
 				</p>
 			</footer>
@@ -194,7 +226,9 @@ export default {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/GoodsReceiptNote/${this.id}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/GoodsReceiptNote/${this.id}`,
+					),
 				)
 				this.grn = response.data || null
 				if (this.grn) {
@@ -203,7 +237,9 @@ export default {
 					await this.loadMatches()
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load goods receipt note')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load goods receipt note')
 			} finally {
 				this.loading = false
 			}
@@ -211,7 +247,9 @@ export default {
 		async loadLines() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/GoodsReceiptLine'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/GoodsReceiptLine',
+					),
 					{ params: { filter: { grnId: this.id } } },
 				)
 				this.lines = response.data?.results || response.data || []
@@ -224,7 +262,9 @@ export default {
 			for (const poId of this.grn.poIds || []) {
 				try {
 					const response = await axios.get(
-						generateUrl(`/apps/shillinq/api/openregister/objects/PurchaseOrder/${poId}`),
+						generateUrl(
+							`/apps/shillinq/api/openregister/objects/PurchaseOrder/${poId}`,
+						),
 					)
 					map[poId] = response.data || null
 				} catch (e) {
@@ -236,7 +276,9 @@ export default {
 		async loadMatches() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/ThreeWayMatch'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+					),
 					{ params: { filter: { grnIds: this.id } } },
 				)
 				this.matches = response.data?.results || response.data || []
@@ -256,12 +298,16 @@ export default {
 			this.transitioning = true
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/shillinq/api/goods-receipt-notes/${this.id}/quality-check`),
+					generateUrl(
+						`/apps/shillinq/api/goods-receipt-notes/${this.id}/quality-check`,
+					),
 					{ administrationId: this.grn?.administrationId },
 				)
 				this.grn = response.data || this.grn
 			} catch (e) {
-				this.transitionError = e?.response?.data?.error || this.t('shillinq', 'Quality check failed')
+				this.transitionError =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Quality check failed')
 			} finally {
 				this.transitioning = false
 			}
@@ -271,13 +317,16 @@ export default {
 			this.transitioning = true
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/shillinq/api/goods-receipt-notes/${this.id}/accept`),
+					generateUrl(
+						`/apps/shillinq/api/goods-receipt-notes/${this.id}/accept`,
+					),
 					{ administrationId: this.grn?.administrationId },
 				)
 				this.grn = response.data || this.grn
 				await this.loadLines()
 			} catch (e) {
-				this.transitionError = e?.response?.data?.error || this.t('shillinq', 'Accept failed')
+				this.transitionError =
+					e?.response?.data?.error || this.t('shillinq', 'Accept failed')
 			} finally {
 				this.transitioning = false
 			}

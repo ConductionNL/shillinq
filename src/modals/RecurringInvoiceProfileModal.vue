@@ -31,24 +31,30 @@
 		<div class="rip">
 			<div class="rip__row">
 				<div class="rip__field">
-					<label class="rip__label" for="rip-name">{{ t('shillinq', 'Profile name') }}</label>
+					<label class="rip__label" for="rip-name">{{
+						t('shillinq', 'Profile name')
+					}}</label>
 					<input
 						id="rip-name"
 						v-model="form.name"
 						type="text"
 						class="rip__input"
 						data-testid="rip-name"
-						:placeholder="t('shillinq', 'e.g. Hosting Acme')">
+						:placeholder="t('shillinq', 'e.g. Hosting Acme')" />
 				</div>
 				<div class="rip__field">
-					<label class="rip__label" for="rip-customer">{{ t('shillinq', 'Customer') }}</label>
+					<label class="rip__label" for="rip-customer">{{
+						t('shillinq', 'Customer')
+					}}</label>
 					<input
 						id="rip-customer"
 						v-model="form.customerReference"
 						type="text"
 						class="rip__input"
 						data-testid="rip-customer"
-						:placeholder="t('shillinq', 'Nextcloud contact reference')">
+						:placeholder="
+							t('shillinq', 'Nextcloud contact reference')
+						" />
 				</div>
 			</div>
 
@@ -65,17 +71,21 @@
 						@update:model-value="(o) => onSelect('frequency', o)" />
 				</div>
 				<div class="rip__field">
-					<label class="rip__label" for="rip-interval">{{ t('shillinq', 'Interval') }}</label>
+					<label class="rip__label" for="rip-interval">{{
+						t('shillinq', 'Interval')
+					}}</label>
 					<input
 						id="rip-interval"
 						v-model.number="form.interval"
 						type="number"
 						min="1"
 						class="rip__input"
-						data-testid="rip-interval">
+						data-testid="rip-interval" />
 				</div>
 				<div class="rip__field">
-					<label class="rip__label" for="rip-invoice-day">{{ t('shillinq', 'Invoice day') }}</label>
+					<label class="rip__label" for="rip-invoice-day">{{
+						t('shillinq', 'Invoice day')
+					}}</label>
 					<input
 						id="rip-invoice-day"
 						v-model.number="form.invoiceDay"
@@ -83,29 +93,33 @@
 						min="1"
 						max="31"
 						class="rip__input"
-						data-testid="rip-invoice-day">
+						data-testid="rip-invoice-day" />
 				</div>
 			</div>
 
 			<div class="rip__row">
 				<div class="rip__field">
-					<label class="rip__label" for="rip-start-date">{{ t('shillinq', 'Start date') }}</label>
+					<label class="rip__label" for="rip-start-date">{{
+						t('shillinq', 'Start date')
+					}}</label>
 					<input
 						id="rip-start-date"
 						v-model="form.startDate"
 						type="date"
 						class="rip__input"
-						data-testid="rip-start-date">
+						data-testid="rip-start-date" />
 				</div>
 				<div class="rip__field">
-					<label class="rip__label" for="rip-payment-terms">{{ t('shillinq', 'Payment terms (days)') }}</label>
+					<label class="rip__label" for="rip-payment-terms">{{
+						t('shillinq', 'Payment terms (days)')
+					}}</label>
 					<input
 						id="rip-payment-terms"
 						v-model.number="form.paymentTermsDays"
 						type="number"
 						min="0"
 						class="rip__input"
-						data-testid="rip-payment-terms">
+						data-testid="rip-payment-terms" />
 				</div>
 				<div class="rip__field">
 					<NcSelect
@@ -124,7 +138,12 @@
 			<div class="rip__lines">
 				<span class="rip__label">{{ t('shillinq', 'Line items') }}</span>
 				<p class="rip__hint">
-					{{ t('shillinq', 'Use {period}, {month} and {year} tokens in the description — they expand per generated period.') }}
+					{{
+						t(
+							'shillinq',
+							'Use {period}, {month} and {year} tokens in the description — they expand per generated period.',
+						)
+					}}
 				</p>
 				<div
 					v-for="(line, idx) in form.lines"
@@ -136,8 +155,13 @@
 						type="text"
 						class="rip__input rip__input--desc"
 						:aria-label="t('shillinq', 'Line description')"
-						:placeholder="t('shillinq', 'Description (e.g. Hosting {month} {year})')"
-						data-testid="rip-line-description">
+						:placeholder="
+							t(
+								'shillinq',
+								'Description (e.g. Hosting {month} {year})',
+							)
+						"
+						data-testid="rip-line-description" />
 					<input
 						v-model.number="line.quantity"
 						type="number"
@@ -146,7 +170,7 @@
 						class="rip__input rip__input--qty"
 						:aria-label="t('shillinq', 'Line quantity')"
 						:placeholder="t('shillinq', 'Qty')"
-						data-testid="rip-line-quantity">
+						data-testid="rip-line-quantity" />
 					<input
 						v-model.number="line.unitPrice"
 						type="number"
@@ -155,7 +179,7 @@
 						class="rip__input rip__input--price"
 						:aria-label="t('shillinq', 'Line unit price')"
 						:placeholder="t('shillinq', 'Unit price')"
-						data-testid="rip-line-unit-price">
+						data-testid="rip-line-unit-price" />
 					<NcSelect
 						:model-value="vatOptionFor(line)"
 						:options="vatOptions"
@@ -176,7 +200,8 @@
 						×
 					</button>
 				</div>
-				<button type="button"
+				<button
+					type="button"
 					class="rip__add-line"
 					data-testid="rip-add-line"
 					@click="addLine">
@@ -186,12 +211,17 @@
 
 			<!-- Next-invoice preview (REQ-RIN-008) -->
 			<div class="rip__preview" data-testid="rip-preview">
-				<span class="rip__label">{{ t('shillinq', 'Next invoice preview') }}</span>
+				<span class="rip__label">{{
+					t('shillinq', 'Next invoice preview')
+				}}</span>
 				<ul class="rip__preview-list">
-					<li v-for="(desc, i) in previewDescriptions" :key="i">{{ desc }}</li>
+					<li v-for="(desc, i) in previewDescriptions" :key="i">
+						{{ desc }}
+					</li>
 				</ul>
 				<div class="rip__preview-total">
-					{{ t('shillinq', 'Per period (net)') }}: {{ formatEuro(perPeriodNetAmount) }}
+					{{ t('shillinq', 'Per period (net)') }}:
+					{{ formatEuro(perPeriodNetAmount) }}
 				</div>
 			</div>
 
@@ -209,7 +239,9 @@
 				:disabled="saving"
 				data-testid="rip-save"
 				@click="onSave">
-				{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save profile') }}
+				{{
+					saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save profile')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -231,8 +263,20 @@ import {
 const REGISTER_SLUG = 'shillinq'
 const SCHEMA_SLUG = 'RecurringInvoiceProfile'
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-	'July', 'August', 'September', 'October', 'November', 'December']
+const MONTHS = [
+	'January',
+	'February',
+	'March',
+	'April',
+	'May',
+	'June',
+	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December',
+]
 
 export default {
 	name: 'RecurringInvoiceProfileModal',
@@ -260,7 +304,10 @@ export default {
 				{ value: 'annually', display: t('shillinq', 'Annually') },
 			],
 			issueModeOptions: [
-				{ value: 'draft-for-review', display: t('shillinq', 'Draft for review') },
+				{
+					value: 'draft-for-review',
+					display: t('shillinq', 'Draft for review'),
+				},
 				{ value: 'auto-issue', display: t('shillinq', 'Auto-issue') },
 			],
 			vatOptions: [
@@ -274,11 +321,17 @@ export default {
 	computed: {
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		frequencyOption() {
-			return this.frequencyOptions.find((o) => o.value === this.form.frequency) || this.frequencyOptions[1]
+			return (
+				this.frequencyOptions.find((o) => o.value === this.form.frequency)
+				|| this.frequencyOptions[1]
+			)
 		},
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		issueModeOption() {
-			return this.issueModeOptions.find((o) => o.value === this.form.issueMode) || this.issueModeOptions[0]
+			return (
+				this.issueModeOptions.find((o) => o.value === this.form.issueMode)
+				|| this.issueModeOptions[0]
+			)
 		},
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		perPeriodNetAmount() {
@@ -290,10 +343,12 @@ export default {
 			const year = String(new Date().getFullYear())
 			return this.form.lines
 				.filter((l) => (l.description || '').trim().length > 0)
-				.map((l) => l.description
-					.replace(/\{period\}/g, `${month} ${year}`)
-					.replace(/\{month\}/g, month)
-					.replace(/\{year\}/g, year))
+				.map((l) =>
+					l.description
+						.replace(/\{period\}/g, `${month} ${year}`)
+						.replace(/\{month\}/g, month)
+						.replace(/\{year\}/g, year),
+				)
 		},
 	},
 	watch: {
@@ -329,11 +384,17 @@ export default {
 		},
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		formatEuro(amount) {
-			return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(Number(amount) || 0)
+			return new Intl.NumberFormat('nl-NL', {
+				style: 'currency',
+				currency: 'EUR',
+			}).format(Number(amount) || 0)
 		},
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		vatOptionFor(line) {
-			return this.vatOptions.find((o) => o.value === Number(line.vatCode)) || this.vatOptions[0]
+			return (
+				this.vatOptions.find((o) => o.value === Number(line.vatCode))
+				|| this.vatOptions[0]
+			)
 		},
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		onSelect(field, option) {
@@ -356,10 +417,19 @@ export default {
 		async fetchProfile() {
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
+					),
 				)
 				const obj = response.data?.object ?? response.data ?? {}
-				this.form = { ...this.blankForm(), ...obj, lines: (obj.lines && obj.lines.length) ? obj.lines : [defaultRecurringLine()] }
+				this.form = {
+					...this.blankForm(),
+					...obj,
+					lines:
+						obj.lines && obj.lines.length
+							? obj.lines
+							: [defaultRecurringLine()],
+				}
 			} catch (e) {
 				showError(t('shillinq', 'Failed to load recurring profile.'))
 			}
@@ -378,13 +448,17 @@ export default {
 				const payload = buildProfilePayload(this.form)
 				if (this.recordId) {
 					await axios.put(
-						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`),
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
+						),
 						payload,
 					)
 					showSuccess(t('shillinq', 'Recurring profile updated.'))
 				} else {
 					await axios.post(
-						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+						),
 						payload,
 					)
 					showSuccess(t('shillinq', 'Recurring profile created.'))
@@ -392,7 +466,10 @@ export default {
 				this.$emit('saved')
 				this.$emit('close')
 			} catch (e) {
-				const msg = e?.response?.data?.error || e?.message || t('shillinq', 'Failed to save recurring profile.')
+				const msg =
+					e?.response?.data?.error
+					|| e?.message
+					|| t('shillinq', 'Failed to save recurring profile.')
 				this.errors = [msg]
 				showError(msg)
 			} finally {
@@ -461,13 +538,24 @@ export default {
 	align-items: center;
 }
 
-.rip__input--desc { flex: 3; }
+.rip__input--desc {
+	flex: 3;
+}
 
-.rip__input--qty { flex: 1; max-width: 70px; }
+.rip__input--qty {
+	flex: 1;
+	max-width: 70px;
+}
 
-.rip__input--price { flex: 1; max-width: 110px; }
+.rip__input--price {
+	flex: 1;
+	max-width: 110px;
+}
 
-.rip__input--vat { flex: 1; min-width: 90px; }
+.rip__input--vat {
+	flex: 1;
+	min-width: 90px;
+}
 
 .rip__line-remove {
 	border: none;

@@ -49,8 +49,11 @@
 
 			<section class="generate-report-dialog__body">
 				<div class="generate-report-dialog__field">
-					<label class="generate-report-dialog__label" for="generate-report-administration">
-						{{ t('shillinq', 'Administration') }} <span class="generate-report-dialog__required">*</span>
+					<label
+						class="generate-report-dialog__label"
+						for="generate-report-administration">
+						{{ t('shillinq', 'Administration') }}
+						<span class="generate-report-dialog__required">*</span>
 					</label>
 					<select
 						v-if="administrationOptions.length > 0"
@@ -77,12 +80,14 @@
 						class="generate-report-dialog__control"
 						:disabled="submitting"
 						data-testid="generate-report-administration"
-						:placeholder="t('shillinq', 'Administration id')">
+						:placeholder="t('shillinq', 'Administration id')" />
 				</div>
 
 				<div class="generate-report-dialog__row">
 					<div class="generate-report-dialog__field">
-						<label class="generate-report-dialog__label" for="generate-report-period-type">
+						<label
+							class="generate-report-dialog__label"
+							for="generate-report-period-type">
 							{{ t('shillinq', 'Period type') }}
 						</label>
 						<select
@@ -104,8 +109,11 @@
 					</div>
 
 					<div class="generate-report-dialog__field">
-						<label class="generate-report-dialog__label" for="generate-report-year">
-							{{ t('shillinq', 'Fiscal year') }} <span class="generate-report-dialog__required">*</span>
+						<label
+							class="generate-report-dialog__label"
+							for="generate-report-year">
+							{{ t('shillinq', 'Fiscal year') }}
+							<span class="generate-report-dialog__required">*</span>
 						</label>
 						<input
 							id="generate-report-year"
@@ -113,14 +121,17 @@
 							type="number"
 							class="generate-report-dialog__control"
 							:disabled="submitting"
-							data-testid="generate-report-year">
+							data-testid="generate-report-year" />
 					</div>
 
 					<div
 						v-if="form.periodType !== 'year'"
 						class="generate-report-dialog__field">
-						<label class="generate-report-dialog__label" for="generate-report-period-number">
-							{{ periodNumberLabel }} <span class="generate-report-dialog__required">*</span>
+						<label
+							class="generate-report-dialog__label"
+							for="generate-report-period-number">
+							{{ periodNumberLabel }}
+							<span class="generate-report-dialog__required">*</span>
 						</label>
 						<select
 							id="generate-report-period-number"
@@ -139,8 +150,11 @@
 				</div>
 
 				<div class="generate-report-dialog__field">
-					<label class="generate-report-dialog__label" for="generate-report-format">
-						{{ t('shillinq', 'Format') }} <span class="generate-report-dialog__required">*</span>
+					<label
+						class="generate-report-dialog__label"
+						for="generate-report-format">
+						{{ t('shillinq', 'Format') }}
+						<span class="generate-report-dialog__required">*</span>
 					</label>
 					<select
 						id="generate-report-format"
@@ -149,7 +163,7 @@
 						:disabled="submitting"
 						data-testid="generate-report-format">
 						<option
-							v-for="fmt in (report.formats || [])"
+							v-for="fmt in report.formats || []"
 							:key="fmt"
 							:value="fmt">
 							{{ fmt.toUpperCase() }}
@@ -180,7 +194,11 @@
 					:disabled="!canSubmit"
 					data-testid="generate-report-dialog-submit"
 					@click="onSubmit">
-					{{ submitting ? t('shillinq', 'Generating…') : t('shillinq', 'Generate') }}
+					{{
+						submitting
+							? t('shillinq', 'Generating…')
+							: t('shillinq', 'Generate')
+					}}
 				</button>
 			</footer>
 		</div>
@@ -230,7 +248,10 @@ export default {
 				periodType: 'year',
 				periodYear: new Date().getFullYear(),
 				periodNumber: 1,
-				format: this.format || (this.report.formats && this.report.formats[0]) || '',
+				format:
+					this.format
+					|| (this.report.formats && this.report.formats[0])
+					|| '',
 			},
 		}
 	},
@@ -293,13 +314,17 @@ export default {
 						format: this.form.format,
 						periodType: this.form.periodType,
 						periodYear: this.form.periodYear,
-						periodNumber: this.form.periodType === 'year' ? null : this.form.periodNumber,
+						periodNumber:
+							this.form.periodType === 'year'
+								? null
+								: this.form.periodNumber,
 						period: this.periodLabel(),
 					},
 				)
 				this.$emit('generated', response.data || {})
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Report generation failed')
 			} finally {
 				this.submitting = false

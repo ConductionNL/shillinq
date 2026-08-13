@@ -24,16 +24,27 @@
 export function normaliseBudgetLineRows(payload) {
 	const buckets = Array.isArray(payload?.buckets)
 		? payload.buckets
-		: (Array.isArray(payload) ? payload : [])
+		: Array.isArray(payload)
+			? payload
+			: []
 
 	return buckets.map((bucket) => {
-		const geautoriseerd = Number(bucket?.['Budget.geautoriseerd_bedrag'] ?? bucket?.geautoriseerd ?? 0)
+		const geautoriseerd = Number(
+			bucket?.['Budget.geautoriseerd_bedrag'] ?? bucket?.geautoriseerd ?? 0,
+		)
 		const verplicht = Number(bucket?.restant_verplicht ?? bucket?.verplicht ?? 0)
-		const gerealiseerd = Number(bucket?.gefactureerd_bedrag ?? bucket?.gerealiseerd ?? 0)
+		const gerealiseerd = Number(
+			bucket?.gefactureerd_bedrag ?? bucket?.gerealiseerd ?? 0,
+		)
 		const vrij = geautoriseerd - verplicht - gerealiseerd
 
 		return {
-			key: [bucket?.programma, bucket?.kostenplaats, bucket?.boekjaar, bucket?.grootboekrekening].join('|'),
+			key: [
+				bucket?.programma,
+				bucket?.kostenplaats,
+				bucket?.boekjaar,
+				bucket?.grootboekrekening,
+			].join('|'),
 			programma: String(bucket?.programma ?? ''),
 			kostenplaats: String(bucket?.kostenplaats ?? ''),
 			boekjaar: bucket?.boekjaar ?? null,

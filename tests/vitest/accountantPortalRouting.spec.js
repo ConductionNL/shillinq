@@ -30,8 +30,14 @@ import fs from 'fs'
 import path from 'path'
 
 const repoRoot = path.resolve(__dirname, '..', '..')
-const routesSource = fs.readFileSync(path.join(repoRoot, 'appinfo', 'routes.php'), 'utf8')
-const clientSource = fs.readFileSync(path.join(repoRoot, 'src', 'api', 'accountantApi.js'), 'utf8')
+const routesSource = fs.readFileSync(
+	path.join(repoRoot, 'appinfo', 'routes.php'),
+	'utf8',
+)
+const clientSource = fs.readFileSync(
+	path.join(repoRoot, 'src', 'api', 'accountantApi.js'),
+	'utf8',
+)
 
 /**
  * Extract every declared route as {name, url, verb} from appinfo/routes.php.
@@ -45,7 +51,8 @@ const clientSource = fs.readFileSync(path.join(repoRoot, 'src', 'api', 'accounta
  */
 function parseDeclaredRoutes() {
 	const routes = []
-	const re = /'name'\s*=>\s*'([^']+)'\s*,\s*'url'\s*=>\s*'([^']+)'\s*,\s*'verb'\s*=>\s*'([^']+)'/g
+	const re =
+		/'name'\s*=>\s*'([^']+)'\s*,\s*'url'\s*=>\s*'([^']+)'\s*,\s*'verb'\s*=>\s*'([^']+)'/g
 	let m
 	while ((m = re.exec(routesSource)) !== null) {
 		routes.push({ name: m[1], url: m[2], verb: m[3] })
@@ -80,7 +87,9 @@ describe('accountant portal routing contract', () => {
 	it('declares a route for every URL src/api/accountantApi.js requests', () => {
 		const declaredUrls = parseDeclaredRoutes().map((r) => r.url)
 		for (const requested of parseClientPaths()) {
-			expect(declaredUrls, `no route declared for ${requested}`).toContain(requested)
+			expect(declaredUrls, `no route declared for ${requested}`).toContain(
+				requested,
+			)
 		}
 	})
 

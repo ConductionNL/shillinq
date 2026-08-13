@@ -23,7 +23,8 @@
 -->
 
 <template>
-	<div :class="rootClass"
+	<div
+		:class="rootClass"
 		:lang="lang"
 		role="form"
 		:aria-label="t('Book an appointment')">
@@ -38,7 +39,9 @@
 
 		<!-- STEP 1 — Service -->
 		<section v-if="step === 'service'">
-			<label class="wsw-widget__label" :for="ids.service">{{ t('Select a service') }}</label>
+			<label class="wsw-widget__label" :for="ids.service">{{
+				t('Select a service')
+			}}</label>
 			<select
 				:id="ids.service"
 				v-model="selectedServiceId"
@@ -48,7 +51,10 @@
 				<option value="">
 					{{ t('Select a service') }}
 				</option>
-				<option v-for="service in services" :key="service.serviceId" :value="service.serviceId">
+				<option
+					v-for="service in services"
+					:key="service.serviceId"
+					:value="service.serviceId">
 					{{ service.name }} ({{ service.duration }} {{ t('minutes') }})
 				</option>
 			</select>
@@ -57,7 +63,8 @@
 			</p>
 
 			<div class="wsw-widget__actions">
-				<button type="button"
+				<button
+					type="button"
 					class="wsw-widget__button"
 					:disabled="!selectedServiceId"
 					@click="goToDateStep">
@@ -68,17 +75,22 @@
 
 		<!-- STEP 2 — Date + time -->
 		<section v-if="step === 'datetime'">
-			<label class="wsw-widget__label" :for="ids.date">{{ t('Select a date') }}</label>
+			<label class="wsw-widget__label" :for="ids.date">{{
+				t('Select a date')
+			}}</label>
 			<input
 				:id="ids.date"
 				v-model="selectedDate"
 				class="wsw-widget__input"
 				type="date"
 				:min="todayIso"
-				@change="loadSlots">
+				@change="loadSlots" />
 
-			<label class="wsw-widget__label" :for="ids.slot">{{ t('Select a time') }}</label>
-			<div :id="ids.slot"
+			<label class="wsw-widget__label" :for="ids.slot">{{
+				t('Select a time')
+			}}</label>
+			<div
+				:id="ids.slot"
 				class="wsw-widget__slot-grid"
 				role="radiogroup"
 				:aria-label="t('Select a time')">
@@ -87,7 +99,11 @@
 					:key="slot.startTime"
 					type="button"
 					role="radio"
-					:aria-checked="selectedSlot && selectedSlot.startTime === slot.startTime ? 'true' : 'false'"
+					:aria-checked="
+						selectedSlot && selectedSlot.startTime === slot.startTime
+							? 'true'
+							: 'false'
+					"
 					:class="slotClasses(slot)"
 					@click="selectedSlot = slot">
 					{{ formatTime(slot.startTime) }}
@@ -98,10 +114,14 @@
 			</p>
 
 			<div class="wsw-widget__actions">
-				<button type="button" class="wsw-widget__button wsw-widget__button--secondary" @click="step = 'service'">
+				<button
+					type="button"
+					class="wsw-widget__button wsw-widget__button--secondary"
+					@click="step = 'service'">
 					{{ t('Back') }}
 				</button>
-				<button type="button"
+				<button
+					type="button"
 					class="wsw-widget__button"
 					:disabled="!selectedSlot"
 					@click="step = 'details'">
@@ -112,40 +132,52 @@
 
 		<!-- STEP 3 — Customer details -->
 		<section v-if="step === 'details'">
-			<label class="wsw-widget__label" :for="ids.name">{{ t('Your name') }}</label>
-			<input :id="ids.name"
+			<label class="wsw-widget__label" :for="ids.name">{{
+				t('Your name')
+			}}</label>
+			<input
+				:id="ids.name"
 				v-model="customerName"
 				class="wsw-widget__input"
 				type="text"
 				required
-				maxlength="255">
+				maxlength="255" />
 			<p class="wsw-widget__error" role="alert">
 				{{ errors.name }}
 			</p>
 
-			<label class="wsw-widget__label" :for="ids.email">{{ t('Email address') }}</label>
-			<input :id="ids.email"
+			<label class="wsw-widget__label" :for="ids.email">{{
+				t('Email address')
+			}}</label>
+			<input
+				:id="ids.email"
 				v-model="email"
 				class="wsw-widget__input"
 				type="email"
 				autocomplete="email"
-				required>
+				required />
 			<p class="wsw-widget__error" role="alert">
 				{{ errors.email }}
 			</p>
 
-			<label class="wsw-widget__label" :for="ids.phone">{{ t('Phone (optional)') }}</label>
-			<input :id="ids.phone"
+			<label class="wsw-widget__label" :for="ids.phone">{{
+				t('Phone (optional)')
+			}}</label>
+			<input
+				:id="ids.phone"
 				v-model="phone"
 				class="wsw-widget__input"
 				type="tel"
-				autocomplete="tel">
+				autocomplete="tel" />
 			<p class="wsw-widget__error" role="alert">
 				{{ errors.phone }}
 			</p>
 
-			<label class="wsw-widget__label" :for="ids.notes">{{ t('Notes (optional)') }}</label>
-			<textarea :id="ids.notes"
+			<label class="wsw-widget__label" :for="ids.notes">{{
+				t('Notes (optional)')
+			}}</label>
+			<textarea
+				:id="ids.notes"
 				v-model="notes"
 				class="wsw-widget__textarea"
 				maxlength="500"
@@ -155,10 +187,14 @@
 			</p>
 
 			<div class="wsw-widget__actions">
-				<button type="button" class="wsw-widget__button wsw-widget__button--secondary" @click="step = 'datetime'">
+				<button
+					type="button"
+					class="wsw-widget__button wsw-widget__button--secondary"
+					@click="step = 'datetime'">
 					{{ t('Back') }}
 				</button>
-				<button type="button"
+				<button
+					type="button"
 					class="wsw-widget__button"
 					:disabled="!detailsValid"
 					@click="step = 'review'">
@@ -187,10 +223,14 @@
 			</p>
 
 			<div class="wsw-widget__actions">
-				<button type="button" class="wsw-widget__button wsw-widget__button--secondary" @click="step = 'details'">
+				<button
+					type="button"
+					class="wsw-widget__button wsw-widget__button--secondary"
+					@click="step = 'details'">
 					{{ t('Back') }}
 				</button>
-				<button type="button"
+				<button
+					type="button"
 					class="wsw-widget__button"
 					:disabled="submitting"
 					@click="submit">
@@ -200,7 +240,10 @@
 		</section>
 
 		<!-- STEP 5 — Result -->
-		<section v-if="step === 'confirmed'" class="wsw-widget__status wsw-widget__status--success" role="status">
+		<section
+			v-if="step === 'confirmed'"
+			class="wsw-widget__status wsw-widget__status--success"
+			role="status">
 			<strong>{{ t('Booking confirmed') }}</strong>
 			<p>{{ confirmationMessage }}</p>
 		</section>
@@ -301,12 +344,19 @@ export default {
 			return steps[this.step] || ''
 		},
 		selectedServiceName() {
-			const found = this.services.find(s => s.serviceId === this.selectedServiceId)
+			const found = this.services.find(
+				(s) => s.serviceId === this.selectedServiceId,
+			)
 			return found ? found.name : ''
 		},
 		detailsValid() {
 			this.validateDetails()
-			return !this.errors.name && !this.errors.email && !this.errors.phone && !this.errors.notes
+			return (
+				!this.errors.name
+				&& !this.errors.email
+				&& !this.errors.phone
+				&& !this.errors.notes
+			)
 		},
 	},
 	mounted() {
@@ -333,13 +383,20 @@ export default {
 		slotClasses(slot) {
 			return [
 				'wsw-widget__slot',
-				{ 'wsw-widget__slot--selected': this.selectedSlot && this.selectedSlot.startTime === slot.startTime },
+				{
+					'wsw-widget__slot--selected':
+						this.selectedSlot
+						&& this.selectedSlot.startTime === slot.startTime,
+				},
 			]
 		},
 		formatTime(iso) {
 			try {
 				const date = new Date(iso)
-				return date.toLocaleTimeString(this.lang, { hour: '2-digit', minute: '2-digit' })
+				return date.toLocaleTimeString(this.lang, {
+					hour: '2-digit',
+					minute: '2-digit',
+				})
 			} catch (e) {
 				return iso
 			}
@@ -351,10 +408,15 @@ export default {
 			}
 		},
 		buildUrl(path, params) {
-			const url = new URL(this.apiBase.replace(/\/$/, '') + path, window.location.origin)
+			const url = new URL(
+				this.apiBase.replace(/\/$/, '') + path,
+				window.location.origin,
+			)
 			url.searchParams.set('businessId', this.businessId)
 			if (params) {
-				Object.keys(params).forEach(k => url.searchParams.set(k, params[k]))
+				Object.keys(params).forEach((k) =>
+					url.searchParams.set(k, params[k]),
+				)
 			}
 			return url.toString()
 		},
@@ -367,17 +429,23 @@ export default {
 					headers: this.authHeaders(),
 				})
 				if (response.status === 401 || response.status === 403) {
-					this.servicesError = this.t('Configuration error. Please contact the website owner.')
+					this.servicesError = this.t(
+						'Configuration error. Please contact the website owner.',
+					)
 					return
 				}
 				if (!response.ok) {
-					this.servicesError = this.t('We could not load the available services. Please try again later.')
+					this.servicesError = this.t(
+						'We could not load the available services. Please try again later.',
+					)
 					return
 				}
 				const payload = await response.json()
-				this.services = (payload && payload.services) ? payload.services : []
+				this.services = payload && payload.services ? payload.services : []
 			} catch (e) {
-				this.servicesError = this.t('Network error. Please check your connection and try again.')
+				this.servicesError = this.t(
+					'Network error. Please check your connection and try again.',
+				)
 			} finally {
 				this.loadingServices = false
 			}
@@ -406,38 +474,56 @@ export default {
 					{ method: 'GET', headers: this.authHeaders() },
 				)
 				if (response.status === 401 || response.status === 403) {
-					this.slotsError = this.t('Configuration error. Please contact the website owner.')
+					this.slotsError = this.t(
+						'Configuration error. Please contact the website owner.',
+					)
 					return
 				}
 				if (response.status === 404) {
-					this.slotsError = this.t('This service is no longer available. Please refresh the page.')
+					this.slotsError = this.t(
+						'This service is no longer available. Please refresh the page.',
+					)
 					return
 				}
 				if (!response.ok) {
-					this.slotsError = this.t('We could not load available times. Please try another date.')
+					this.slotsError = this.t(
+						'We could not load available times. Please try another date.',
+					)
 					return
 				}
 				const payload = await response.json()
-				this.slots = (payload && payload.slots) ? payload.slots : []
+				this.slots = payload && payload.slots ? payload.slots : []
 			} catch (e) {
-				this.slotsError = this.t('Network error. Please check your connection and try again.')
+				this.slotsError = this.t(
+					'Network error. Please check your connection and try again.',
+				)
 			}
 		},
 		validateDetails() {
 			const nameLength = (this.customerName || '').trim().length
-			this.errors.name = nameLength >= 1 ? '' : this.t('Please enter your name')
+			this.errors.name =
+				nameLength >= 1 ? '' : this.t('Please enter your name')
 
 			// Simple RFC-5322-light email check; the server re-validates strictly.
 			const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-			this.errors.email = emailRe.test(this.email || '') ? '' : this.t('Please enter a valid email address')
+			this.errors.email = emailRe.test(this.email || '')
+				? ''
+				: this.t('Please enter a valid email address')
 
 			this.errors.phone = ''
 			if (this.phone) {
 				const phoneRe = /^\+?[1-9]\d{1,14}$/
-				this.errors.phone = phoneRe.test(this.phone) ? '' : this.t('Phone number must be in international format (e.g. +31612345678)')
+				this.errors.phone = phoneRe.test(this.phone)
+					? ''
+					: this.t(
+							'Phone number must be in international format (e.g. +31612345678)',
+						)
 			}
 
-			this.errors.notes = (this.notes || '').length <= 500 ? '' : this.t('Notes must be at most 500 characters')
+			this.errors.notes =
+				(this.notes || '').length <= 500
+					? ''
+					: this.t('Notes must be at most 500 characters')
 		},
 		async submit() {
 			if (!this.selectedSlot) {
@@ -446,48 +532,69 @@ export default {
 			this.submitting = true
 			this.submitError = ''
 			try {
-				const response = await fetch(this.buildUrl('/api/widget/appointments'), {
-					method: 'POST',
-					headers: this.authHeaders(),
-					body: JSON.stringify({
-						serviceId: this.selectedServiceId,
-						resourceId: this.resourceId,
-						startTime: this.selectedSlot.startTime,
-						endTime: this.selectedSlot.endTime,
-						customerName: this.customerName,
-						email: this.email,
-						phone: this.phone || null,
-						notes: this.notes || null,
-					}),
-				})
+				const response = await fetch(
+					this.buildUrl('/api/widget/appointments'),
+					{
+						method: 'POST',
+						headers: this.authHeaders(),
+						body: JSON.stringify({
+							serviceId: this.selectedServiceId,
+							resourceId: this.resourceId,
+							startTime: this.selectedSlot.startTime,
+							endTime: this.selectedSlot.endTime,
+							customerName: this.customerName,
+							email: this.email,
+							phone: this.phone || null,
+							notes: this.notes || null,
+						}),
+					},
+				)
 				if (response.status === 409) {
-					this.submitError = this.t('This slot was just booked. Please select another time.')
+					this.submitError = this.t(
+						'This slot was just booked. Please select another time.',
+					)
 					await this.loadSlots()
 					this.step = 'datetime'
 					return
 				}
 				if (response.status === 401 || response.status === 403) {
-					this.submitError = this.t('Configuration error. Please contact the website owner.')
+					this.submitError = this.t(
+						'Configuration error. Please contact the website owner.',
+					)
 					return
 				}
 				if (response.status === 404) {
-					this.submitError = this.t('This service is no longer available. Please refresh the page.')
+					this.submitError = this.t(
+						'This service is no longer available. Please refresh the page.',
+					)
 					return
 				}
 				if (response.status >= 500) {
-					this.submitError = this.t('Something went wrong. Our team has been notified. Please try again later.')
+					this.submitError = this.t(
+						'Something went wrong. Our team has been notified. Please try again later.',
+					)
 					return
 				}
 				if (!response.ok) {
 					const payload = await response.json().catch(() => ({}))
-					this.submitError = (payload && payload.message) ? payload.message : this.t('Network error. Please check your connection and try again.')
+					this.submitError =
+						payload && payload.message
+							? payload.message
+							: this.t(
+									'Network error. Please check your connection and try again.',
+								)
 					return
 				}
 				const payload = await response.json()
-				this.confirmationMessage = (payload && payload.confirmationMessage) ? payload.confirmationMessage : this.t('Booking confirmed')
+				this.confirmationMessage =
+					payload && payload.confirmationMessage
+						? payload.confirmationMessage
+						: this.t('Booking confirmed')
 				this.step = 'confirmed'
 			} catch (e) {
-				this.submitError = this.t('Network error. Please check your connection and try again.')
+				this.submitError = this.t(
+					'Network error. Please check your connection and try again.',
+				)
 			} finally {
 				this.submitting = false
 			}

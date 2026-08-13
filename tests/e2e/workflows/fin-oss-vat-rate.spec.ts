@@ -40,7 +40,10 @@ test.describe('shillinq finance — OSS/BTW VAT rate resolution (computed number
 	let api: import('@playwright/test').APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
-		api = await pwRequest.newContext({ baseURL, storageState: 'tests/e2e/.auth/admin.json' })
+		api = await pwRequest.newContext({
+			baseURL,
+			storageState: 'tests/e2e/.auth/admin.json',
+		})
 		fx = new OrFixtures(api)
 	})
 
@@ -54,7 +57,10 @@ test.describe('shillinq finance — OSS/BTW VAT rate resolution (computed number
 		// the prior import blocker is fixed, so a missing schema is now a real
 		// regression.
 		const missing = await fx.missingSchema(NEEDED)
-		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
+		expect(
+			missing,
+			`shillinq register/schema not imported (missing: ${missing})`,
+		).toBeNull()
 
 		// Seed a known DE standard rate.
 		await fx.create('EuVatRate', {
@@ -71,7 +77,10 @@ test.describe('shillinq finance — OSS/BTW VAT rate resolution (computed number
 			`/index.php${APP}/api/oss/rate?country=DE&category=standard&date=2026-03-15`,
 			{ headers: { 'OCS-APIRequest': 'true' } },
 		)
-		expect(res.ok(), `oss rate endpoint HTTP ${res.status()}: ${await res.text()}`).toBeTruthy()
+		expect(
+			res.ok(),
+			`oss rate endpoint HTTP ${res.status()}: ${await res.text()}`,
+		).toBeTruthy()
 		const body = await res.json()
 
 		// Exact resolved rate.

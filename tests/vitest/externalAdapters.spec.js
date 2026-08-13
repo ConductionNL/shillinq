@@ -43,14 +43,28 @@ function tIdentity(app, text, vars) {
 	if (!vars) {
 		return text
 	}
-	return text.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`))
+	return text.replace(/\{(\w+)\}/g, (_, k) =>
+		k in vars ? String(vars[k]) : `{${k}}`,
+	)
 }
 
 /** All 14 adapter family slugs the W8 manifest ships. */
 const ALL_SLUGS = [
-	'digipoort-sbr', 'salarisbureau', 'rvo', 'ib47', 'cbs-bestanden',
-	'cbs-iv3', 'bzk-sisa', 'mollie', 'bunq', 'kvk', 'uwv',
-	'treasury-rates', 'ccm-rule-engine', 'csrd-esrs-xbrl', 'deposit-payment',
+	'digipoort-sbr',
+	'salarisbureau',
+	'rvo',
+	'ib47',
+	'cbs-bestanden',
+	'cbs-iv3',
+	'bzk-sisa',
+	'mollie',
+	'bunq',
+	'kvk',
+	'uwv',
+	'treasury-rates',
+	'ccm-rule-engine',
+	'csrd-esrs-xbrl',
+	'deposit-payment',
 ]
 
 beforeEach(() => {
@@ -72,20 +86,32 @@ describe('ExternalAdaptersStatus.vue', () => {
 	})
 
 	it('badgeClass maps dormant -> dormant modifier, live -> live modifier', () => {
-		expect(StatusView.methods.badgeClass(true)).toBe('external-adapters__badge--dormant')
-		expect(StatusView.methods.badgeClass(false)).toBe('external-adapters__badge--live')
+		expect(StatusView.methods.badgeClass(true)).toBe(
+			'external-adapters__badge--dormant',
+		)
+		expect(StatusView.methods.badgeClass(false)).toBe(
+			'external-adapters__badge--live',
+		)
 	})
 
 	it('routeIdForAdapter resolves every one of the 14 families to a distinct route name', () => {
-		const routes = ALL_SLUGS.map((slug) => StatusView.methods.routeIdForAdapter(slug))
+		const routes = ALL_SLUGS.map((slug) =>
+			StatusView.methods.routeIdForAdapter(slug),
+		)
 		// Every family maps to a non-null route name.
 		expect(routes.every((r) => typeof r === 'string' && r.length > 0)).toBe(true)
 		// And all 14 route names are distinct (no collision dead-ending a nav).
 		expect(new Set(routes).size).toBe(ALL_SLUGS.length)
 		// Spot-check a couple of the trickier dash-vs-camel mappings.
-		expect(StatusView.methods.routeIdForAdapter('digipoort-sbr')).toBe('ExternalAdapterDigipoort')
-		expect(StatusView.methods.routeIdForAdapter('bzk-sisa')).toBe('ExternalAdapterSisa')
-		expect(StatusView.methods.routeIdForAdapter('treasury-rates')).toBe('ExternalAdapterTreasuryRates')
+		expect(StatusView.methods.routeIdForAdapter('digipoort-sbr')).toBe(
+			'ExternalAdapterDigipoort',
+		)
+		expect(StatusView.methods.routeIdForAdapter('bzk-sisa')).toBe(
+			'ExternalAdapterSisa',
+		)
+		expect(StatusView.methods.routeIdForAdapter('treasury-rates')).toBe(
+			'ExternalAdapterTreasuryRates',
+		)
 	})
 
 	it('routeIdForAdapter returns null for an unknown slug', () => {
@@ -94,7 +120,10 @@ describe('ExternalAdaptersStatus.vue', () => {
 
 	it('openDetail pushes the resolved route for a known slug, no-ops for an unknown one', () => {
 		const push = vi.fn()
-		const ctx = { $router: { push }, routeIdForAdapter: StatusView.methods.routeIdForAdapter }
+		const ctx = {
+			$router: { push },
+			routeIdForAdapter: StatusView.methods.routeIdForAdapter,
+		}
 
 		StatusView.methods.openDetail.call(ctx, 'mollie')
 		expect(push).toHaveBeenCalledWith({ name: 'ExternalAdapterMollie' })
@@ -112,12 +141,16 @@ describe('ExternalAdaptersStatus.vue', () => {
 			],
 			summary: { total: 2, dormant: 1, live: 1 },
 		}
-		const getSpy = vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: payload })
+		const getSpy = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValueOnce({ data: payload })
 
 		const ctx = { loading: false, errorMessage: '', adapters: [], summary: {} }
 		await StatusView.methods.loadStatus.call(ctx)
 
-		expect(getSpy).toHaveBeenCalledWith('/index.php/apps/shillinq/api/admin/external-adapters')
+		expect(getSpy).toHaveBeenCalledWith(
+			'/index.php/apps/shillinq/api/admin/external-adapters',
+		)
 		expect(ctx.adapters).toHaveLength(2)
 		expect(ctx.summary).toEqual({ total: 2, dormant: 1, live: 1 })
 		expect(ctx.loading).toBe(false)
@@ -126,7 +159,12 @@ describe('ExternalAdaptersStatus.vue', () => {
 
 	it('loadStatus tolerates a missing/partial response body', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: undefined })
-		const ctx = { loading: true, errorMessage: 'stale', adapters: [{ id: 'x' }], summary: { total: 9 } }
+		const ctx = {
+			loading: true,
+			errorMessage: 'stale',
+			adapters: [{ id: 'x' }],
+			summary: { total: 9 },
+		}
 		await StatusView.methods.loadStatus.call(ctx)
 		expect(ctx.adapters).toEqual([])
 		expect(ctx.summary).toEqual({ total: 0, dormant: 0, live: 0 })
@@ -144,13 +182,21 @@ describe('ExternalAdaptersStatus.vue', () => {
 
 describe('ExternalAdapterDetail.vue', () => {
 	it('effectiveAdapterId prefers the manifest adapterId prop', () => {
-		const ctx = { adapterId: 'mollie', $route: { path: '/external-adapters/mollie' } }
+		const ctx = {
+			adapterId: 'mollie',
+			$route: { path: '/external-adapters/mollie' },
+		}
 		expect(DetailView.computed.effectiveAdapterId.call(ctx)).toBe('mollie')
 	})
 
 	it('effectiveAdapterId falls back to the trailing path segment for a deep-link', () => {
-		const ctx = { adapterId: '', $route: { path: '/external-adapters/csrd-esrs-xbrl' } }
-		expect(DetailView.computed.effectiveAdapterId.call(ctx)).toBe('csrd-esrs-xbrl')
+		const ctx = {
+			adapterId: '',
+			$route: { path: '/external-adapters/csrd-esrs-xbrl' },
+		}
+		expect(DetailView.computed.effectiveAdapterId.call(ctx)).toBe(
+			'csrd-esrs-xbrl',
+		)
 	})
 
 	it('effectiveAdapterId is empty-string-safe with no prop and no route', () => {
@@ -160,20 +206,36 @@ describe('ExternalAdapterDetail.vue', () => {
 
 	it('badgeClass is null-safe before the adapter loads, then maps dormant/live', () => {
 		expect(DetailView.computed.badgeClass.call({ adapter: null })).toBe('')
-		expect(DetailView.computed.badgeClass.call({ adapter: { dormant: true } }))
-			.toBe('adapter-detail__badge--dormant')
-		expect(DetailView.computed.badgeClass.call({ adapter: { dormant: false } }))
-			.toBe('adapter-detail__badge--live')
+		expect(
+			DetailView.computed.badgeClass.call({ adapter: { dormant: true } }),
+		).toBe('adapter-detail__badge--dormant')
+		expect(
+			DetailView.computed.badgeClass.call({ adapter: { dormant: false } }),
+		).toBe('adapter-detail__badge--live')
 	})
 
 	it('loadAdapter GETs the per-id endpoint and stores the adapter', async () => {
-		const adapter = { id: 'bunq', title: 'Bunq Bank Connector', dormant: true, steps: ['a', 'b'] }
-		const getSpy = vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: adapter })
+		const adapter = {
+			id: 'bunq',
+			title: 'Bunq Bank Connector',
+			dormant: true,
+			steps: ['a', 'b'],
+		}
+		const getSpy = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValueOnce({ data: adapter })
 
-		const ctx = { effectiveAdapterId: 'bunq', loading: false, errorMessage: 'x', adapter: null }
+		const ctx = {
+			effectiveAdapterId: 'bunq',
+			loading: false,
+			errorMessage: 'x',
+			adapter: null,
+		}
 		await DetailView.methods.loadAdapter.call(ctx)
 
-		expect(getSpy).toHaveBeenCalledWith('/index.php/apps/shillinq/api/admin/external-adapters/bunq')
+		expect(getSpy).toHaveBeenCalledWith(
+			'/index.php/apps/shillinq/api/admin/external-adapters/bunq',
+		)
 		expect(ctx.adapter).toEqual(adapter)
 		expect(ctx.loading).toBe(false)
 		expect(ctx.errorMessage).toBe('')
@@ -181,7 +243,12 @@ describe('ExternalAdapterDetail.vue', () => {
 
 	it('loadAdapter surfaces a distinct Unknown-adapter message on a 404', async () => {
 		vi.spyOn(axios, 'get').mockRejectedValueOnce({ response: { status: 404 } })
-		const ctx = { effectiveAdapterId: 'nope', loading: true, errorMessage: '', adapter: { stale: true } }
+		const ctx = {
+			effectiveAdapterId: 'nope',
+			loading: true,
+			errorMessage: '',
+			adapter: { stale: true },
+		}
 		await DetailView.methods.loadAdapter.call(ctx)
 		expect(ctx.errorMessage).toBe('Unknown adapter: nope')
 		expect(ctx.adapter).toBeNull()
@@ -190,7 +257,12 @@ describe('ExternalAdapterDetail.vue', () => {
 
 	it('loadAdapter surfaces a generic message on a non-404 failure', async () => {
 		vi.spyOn(axios, 'get').mockRejectedValueOnce(new Error('network down'))
-		const ctx = { effectiveAdapterId: 'mollie', loading: true, errorMessage: '', adapter: null }
+		const ctx = {
+			effectiveAdapterId: 'mollie',
+			loading: true,
+			errorMessage: '',
+			adapter: null,
+		}
 		await DetailView.methods.loadAdapter.call(ctx)
 		expect(ctx.errorMessage).toContain('network down')
 		expect(ctx.loading).toBe(false)
@@ -198,7 +270,12 @@ describe('ExternalAdapterDetail.vue', () => {
 
 	it('loadAdapter guards the empty-id case without calling the API', async () => {
 		const getSpy = vi.spyOn(axios, 'get')
-		const ctx = { effectiveAdapterId: '', loading: true, errorMessage: '', adapter: null }
+		const ctx = {
+			effectiveAdapterId: '',
+			loading: true,
+			errorMessage: '',
+			adapter: null,
+		}
 		await DetailView.methods.loadAdapter.call(ctx)
 		expect(getSpy).not.toHaveBeenCalled()
 		expect(ctx.errorMessage).toBe('No adapter id provided.')

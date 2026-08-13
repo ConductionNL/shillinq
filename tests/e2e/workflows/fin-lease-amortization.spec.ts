@@ -71,7 +71,10 @@ test.describe('shillinq finance — IFRS 16 lease amortization (computed numbers
 		// prior import blocker is fixed, so a missing schema is now a real
 		// regression.
 		const missing = await fx.missingSchema(NEEDED)
-		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
+		expect(
+			missing,
+			`shillinq register/schema not imported (missing: ${missing})`,
+		).toBeNull()
 
 		// Seed a capitalised lease with the known inputs above.
 		const { id: leaseId } = await fx.create('LeaseContract', {
@@ -99,7 +102,10 @@ test.describe('shillinq finance — IFRS 16 lease amortization (computed numbers
 			`/index.php${APP}/api/leases/schedule?lease_id=${leaseId}&administration_id=${ADMIN_ID}`,
 			{ headers: { 'OCS-APIRequest': 'true' } },
 		)
-		expect(res.ok(), `schedule endpoint HTTP ${res.status()}: ${await res.text()}`).toBeTruthy()
+		expect(
+			res.ok(),
+			`schedule endpoint HTTP ${res.status()}: ${await res.text()}`,
+		).toBeTruthy()
 		const body = await res.json()
 		const rows = (body.data ?? []) as ScheduleRow[]
 
@@ -125,12 +131,16 @@ test.describe('shillinq finance — IFRS 16 lease amortization (computed numbers
 		expect(money(rows[2].closingLeaseLiability)).toBe(0)
 
 		// Conservation: principal portions sum back to the opening liability.
-		const principalSum = money(rows.reduce((s, r) => s + r.paymentPrincipalPortion, 0))
+		const principalSum = money(
+			rows.reduce((s, r) => s + r.paymentPrincipalPortion, 0),
+		)
 		expect(principalSum).toBe(2970.25)
 
 		// Each period: payment = interest + principal (the cash identity).
 		for (const r of rows) {
-			expect(money(r.paymentInterestPortion + r.paymentPrincipalPortion)).toBe(money(r.paymentAppliedTotal))
+			expect(money(r.paymentInterestPortion + r.paymentPrincipalPortion)).toBe(
+				money(r.paymentAppliedTotal),
+			)
 		}
 	})
 })

@@ -17,7 +17,6 @@ import { test, expect } from '@playwright/test'
 const APP = '/apps/shillinq'
 
 test.describe('inventory mobile scanner — manifest pages mount', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
@@ -73,5 +72,4 @@ test.describe('inventory mobile scanner — manifest pages mount', () => {
 		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/inventory/mobile/count')
 	})
-
 })

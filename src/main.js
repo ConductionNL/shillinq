@@ -7,7 +7,11 @@ import './setPublicPath.js'
 
 import { createApp, h, reactive } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import {
+	translate as t,
+	translatePlural as n,
+	loadTranslations,
+} from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	buildManifest,
@@ -27,7 +31,10 @@ import manifestShell from './manifest.d.shell.json'
 import menuLayout from './menu-layout.json'
 import registry from './registry.js'
 import appIcons from './icons.js'
-import { mergeFullFragmentIntoManifest, buildPageFragmentIndex } from './utils/mergeFragmentIntoManifest.js'
+import {
+	mergeFullFragmentIntoManifest,
+	buildPageFragmentIndex,
+} from './utils/mergeFragmentIntoManifest.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -74,7 +81,10 @@ try {
 } catch (e) {
 	// Non-fatal — lib translations fall back to English source.
 	// eslint-disable-next-line no-console
-	console.warn('[shillinq] registerTranslations failed; falling back to English', e)
+	console.warn(
+		'[shillinq] registerTranslations failed; falling back to English',
+		e,
+	)
 }
 
 // Fire-and-forget translation load. Some Nextcloud installs (including
@@ -89,7 +99,10 @@ function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('shillinq', () => {})
 		if (result && typeof result.then === 'function') {
-			result.then(() => {}, () => {})
+			result.then(
+				() => {},
+				() => {},
+			)
 		}
 	} catch {
 		// no-op
@@ -117,7 +130,9 @@ const RoutePageRenderer = { ...CnPageRenderer }
 // CnPageRenderer's reactive `resolvedProps` computed (it reads
 // `currentPage.config`; Vue 3's Proxy tracks the brand-new key too — see
 // src/utils/mergeFragmentIntoManifest.js for the full contract).
-const mergedManifest = reactive(buildManifest(bundledManifest, manifestShell.fragments, menuLayout))
+const mergedManifest = reactive(
+	buildManifest(bundledManifest, manifestShell.fragments, menuLayout),
+)
 
 // pageId → fragment filename stem, built once from the shell-derived slim
 // pages (each carries `_fragment`; base-manifest pages carry none and are
@@ -154,12 +169,18 @@ async function loadFragment(fragmentStem) {
 		// resolve to either the plain object or an ES module namespace
 		// wrapping it in `.default`, depending on loader/mode configuration.
 		// Unwrap defensively rather than assume one shape.
-		const fullFragment = (imported && typeof imported === 'object' && Array.isArray(imported.pages)) ? imported : imported?.default
+		const fullFragment =
+			imported && typeof imported === 'object' && Array.isArray(imported.pages)
+				? imported
+				: imported?.default
 		mergeFullFragmentIntoManifest(mergedManifest, fullFragment)
 		loadedFragments.add(fragmentStem)
 	} catch (e) {
 		// eslint-disable-next-line no-console
-		console.warn(`[shillinq] failed to lazy-load manifest fragment "${fragmentStem}"; navigating with slim page data.`, e)
+		console.warn(
+			`[shillinq] failed to lazy-load manifest fragment "${fragmentStem}"; navigating with slim page data.`,
+			e,
+		)
 	}
 }
 
@@ -246,12 +267,13 @@ const customComponentsProp = Object.fromEntries(
 // renamed to `#shillinq-app` (templates/index.php) rather than reasoning
 // about which of the two divs wins.
 const app = createApp({
-	render: () => h(App, {
-		manifest: mergedManifest,
-		pageTypes: pageTypesProp,
-		registry: registryProp,
-		customComponents: customComponentsProp,
-	}),
+	render: () =>
+		h(App, {
+			manifest: mergedManifest,
+			pageTypes: pageTypesProp,
+			registry: registryProp,
+			customComponents: customComponentsProp,
+		}),
 })
 
 // Vue 3 has no global `Vue.mixin` / `Vue.use` — everything is per-app.

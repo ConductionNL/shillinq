@@ -21,11 +21,17 @@
 -->
 <template>
 	<div class="si-detail">
-		<div v-if="loading" class="si-detail__loading" data-testid="si-detail-loading">
+		<div
+			v-if="loading"
+			class="si-detail__loading"
+			data-testid="si-detail-loading">
 			{{ t('shillinq', 'Loading supplier invoice...') }}
 		</div>
 
-		<div v-else-if="error" class="si-detail__error" data-testid="si-detail-error">
+		<div
+			v-else-if="error"
+			class="si-detail__error"
+			data-testid="si-detail-error">
 			{{ error }}
 		</div>
 
@@ -33,12 +39,18 @@
 			<header class="si-detail__header" data-testid="si-detail-header">
 				<h2>{{ invoice.invoiceNumber }}</h2>
 				<p>
-					<span class="si-detail__pill" :class="`si-detail__pill--${invoice.statusCode}`">
+					<span
+						class="si-detail__pill"
+						:class="`si-detail__pill--${invoice.statusCode}`">
 						{{ statusLabel(invoice.statusCode) }}
 					</span>
-					<span>{{ t('shillinq', 'Supplier') }}: {{ invoice.supplierId }}</span>
+					<span
+						>{{ t('shillinq', 'Supplier') }}:
+						{{ invoice.supplierId }}</span
+					>
 					<span v-if="invoice.invoiceDate">
-						{{ t('shillinq', 'Invoice date') }}: {{ formatDate(invoice.invoiceDate) }}
+						{{ t('shillinq', 'Invoice date') }}:
+						{{ formatDate(invoice.invoiceDate) }}
 					</span>
 					<span v-if="invoice.dueDate">
 						{{ t('shillinq', 'Due') }}: {{ formatDate(invoice.dueDate) }}
@@ -47,9 +59,15 @@
 				<p>
 					{{ t('shillinq', 'Total (incl. VAT)') }}:
 					<strong>{{ formatMoney(invoice.totalInclVat) }}</strong>
-					<span v-if="invoice.totalExclVat !== null && invoice.totalExclVat !== undefined">
-						({{ t('shillinq', 'excl.') }} {{ formatMoney(invoice.totalExclVat) }} ·
-						{{ t('shillinq', 'VAT') }} {{ formatMoney(invoice.totalVat) }})
+					<span
+						v-if="
+							invoice.totalExclVat !== null
+							&& invoice.totalExclVat !== undefined
+						">
+						({{ t('shillinq', 'excl.') }}
+						{{ formatMoney(invoice.totalExclVat) }} ·
+						{{ t('shillinq', 'VAT') }}
+						{{ formatMoney(invoice.totalVat) }})
 					</span>
 				</p>
 			</header>
@@ -67,10 +85,20 @@
 							:style="{ width: ocrPercent }" />
 					</div>
 					<span class="si-detail__ocr-value">{{ ocrPercent }}</span>
-					<span class="si-detail__ocr-tier">{{ ocrConfidenceTierLabel }}</span>
+					<span class="si-detail__ocr-tier">{{
+						ocrConfidenceTierLabel
+					}}</span>
 				</div>
-				<p v-if="isLowConfidence" class="si-detail__ocr-hint" data-testid="si-detail-ocr-low">
-					{{ t('shillinq', 'Low OCR confidence — lines will route to manual confirmation downstream.') }}
+				<p
+					v-if="isLowConfidence"
+					class="si-detail__ocr-hint"
+					data-testid="si-detail-ocr-low">
+					{{
+						t(
+							'shillinq',
+							'Low OCR confidence — lines will route to manual confirmation downstream.',
+						)
+					}}
 				</p>
 			</section>
 
@@ -81,7 +109,9 @@
 				<h3>{{ t('shillinq', 'Peppol / UBL provenance') }}</h3>
 				<dl>
 					<dt>{{ t('shillinq', 'UBL source') }}</dt>
-					<dd>{{ invoice.ublSourceUri || t('shillinq', '(not recorded)') }}</dd>
+					<dd>
+						{{ invoice.ublSourceUri || t('shillinq', '(not recorded)') }}
+					</dd>
 					<dt>{{ t('shillinq', 'Received via Peppol') }}</dt>
 					<dd>{{ formatTimestamp(invoice.peppolReceivedAt) }}</dd>
 				</dl>
@@ -125,14 +155,22 @@
 				<h3>{{ t('shillinq', '3-way match status') }}</h3>
 				<ul v-if="matches.length > 0">
 					<li v-for="match in matches" :key="match.id">
-						<router-link :to="{ name: 'ThreeWayMatchDetail', params: { id: match.id } }">
+						<router-link
+							:to="{
+								name: 'ThreeWayMatchDetail',
+								params: { id: match.id },
+							}">
 							{{ match.matchReference || match.id }}
 						</router-link>
-						<span class="si-detail__match-status">{{ match.matchStatus || '—' }}</span>
+						<span class="si-detail__match-status">{{
+							match.matchStatus || '—'
+						}}</span>
 					</li>
 				</ul>
 				<p v-else class="si-detail__matches-empty">
-					{{ t('shillinq', 'No match yet — awaiting the matching engine.') }}
+					{{
+						t('shillinq', 'No match yet — awaiting the matching engine.')
+					}}
 				</p>
 			</section>
 		</div>
@@ -172,7 +210,10 @@ export default {
 			}
 			// Defensive: a non-null ocrConfidenceScore implies the PDF/OCR path
 			// even when sourceFormat is absent (older ingestion runs).
-			return this.invoice.ocrConfidenceScore !== null && this.invoice.ocrConfidenceScore !== undefined
+			return (
+				this.invoice.ocrConfidenceScore !== null
+				&& this.invoice.ocrConfidenceScore !== undefined
+			)
 		},
 		isUblIngestion() {
 			if (!this.invoice) {
@@ -217,14 +258,18 @@ export default {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.id}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.id}`,
+					),
 				)
 				this.invoice = response.data || null
 				if (this.invoice) {
 					await this.loadMatches()
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load supplier invoice')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load supplier invoice')
 			} finally {
 				this.loading = false
 			}
@@ -234,7 +279,9 @@ export default {
 			// through to the empty state when the lookup isn't available yet.
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/ThreeWayMatch'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+					),
 					{ params: { filter: { invoiceId: this.id } } },
 				)
 				this.matches = response.data?.results || response.data || []
