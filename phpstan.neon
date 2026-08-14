@@ -1,24 +1,24 @@
+# Shillinq — Conduction PHPStan config.
+#
+# The shared base is the single source of truth. Everything here is either the
+# app's own tracked debt or an ignore naming a symbol that exists in no other
+# fleet app. Anything you are tempted to add that another app would also need
+# belongs in the base, not here.
 includes:
-    # Per-app tracked lint debt lives here (auto-generated via `phpstan --generate-baseline`).
-    # Apps without debt ship an empty baseline file; canonical includes are otherwise byte-identical
-    # across the fleet.
+    - vendor/conduction/hydra-gates/quality-config/phpstan-base.neon
+    # Per-app tracked lint debt (auto-generated via `phpstan --generate-baseline`).
     - phpstan-baseline.neon
 
 parameters:
-    level: 5
-    paths:
-        - lib
-    bootstrapFiles:
-        - phpstan-bootstrap.php
+    # App-specific only. The base already sets level, paths, bootstrapFiles,
+    # excludePaths, scanDirectories and every fleet-wide ignore.
+
     # PHPDoc @return bool / @return array types are often intentionally broader than the
     # inferred type (e.g. SimpleXMLElement methods, third-party SDKs). Treating PHPDoc
     # types as certain causes spurious `=== true/false` / `=== null` "always false" errors.
     treatPhpDocTypesAsCertain: false
+
     excludePaths:
-        - vendor
-        - vendor-bin
-        # Apps that ship a verbatim template snapshot under lib/Resources/template/ (e.g. openbuilt).
-        - lib/Resources/template
         # CustomerBridgeMetricsService implements OCA\OpenRegister\AppHost\IMetricsProvider which is
         # unavailable at analysis time (cross-app interface, present only at runtime). PHPStan requires
         # excludePaths for this class of error (not suppressible via ignoreErrors or baseline).
@@ -40,28 +40,8 @@ parameters:
         # OCA\OpenRegister\Lifecycle\LifecycleActionInterface — same non-ignorable
         # "implements unknown interface" class as the guards above.
         - lib/Lifecycle/Action/AppendReopenHistoryAction.php
-    scanDirectories:
-        - vendor/nextcloud/ocp
-    reportUnmatchedIgnoredErrors: false
+
     ignoreErrors:
-        # Nextcloud server internals (\OC, OC_App, OC\) not stubbed in nextcloud/ocp
-        - '#Call to an undefined method OC::#'
-        - '#Class OC not found#'
-        - '#Access to static property \$server on an unknown class OC#'
-        - '#unknown class OC\\#'
-        - '#Caught class OC\\#'
-        - '#unknown class OC_App#'
-        - '#Class OC_App not found#'
-        # OCA\DAV is server-internal and not in nextcloud/ocp stubs
-        - '#unknown class OCA\\DAV\\#'
-        - '#Class OCA\\DAV\\#'
-        # OCA classes from other apps (OpenRegister) not available during static analysis
-        - '#unknown class OCA\\OpenRegister\\#'
-        - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class OCA\\OpenRegister\\#'
-        - '#has invalid return type OCA\\OpenRegister\\#'
-        - '#has invalid type OCA\\OpenRegister\\#'
-        - '#implements unknown interface OCA\\OpenRegister\\#'
         # OCA\Decidesk (decision module) — cross-app dep, present only at runtime
         - '#unknown class OCA\\Decidesk\\#'
         - '#OCA\\Decidesk\\[a-zA-Z\\]+.*not found#'
@@ -97,23 +77,10 @@ parameters:
         - '#Instantiated class PhpOffice\\#'
         - '#Call to method .+ on an unknown class PhpOffice\\#'
         - '#Call to static method .+ on an unknown class PhpOffice\\#'
-        # GuzzleHttp is available at runtime via Nextcloud but not in composer require
-        - '#unknown class GuzzleHttp\\#'
-        - '#GuzzleHttp\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class GuzzleHttp\\#'
-        - '#invalid type GuzzleHttp\\#'
-        - '#Caught class GuzzleHttp\\#'
-        # Doctrine\DBAL is shipped by Nextcloud server but not stubbed in nextcloud/ocp
-        - '#unknown class Doctrine\\DBAL\\#'
-        - '#Doctrine\\DBAL\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class Doctrine\\DBAL\\#'
         # AuthorizedAdminSetting attribute — NC allows passing the app-id string (e.g. Application::APP_ID)
         # at runtime; PHPStan's attribute ctor type is stricter (class-string<IDelegatedSettings>).
         # This is intentional: all controllers use the fleet-canonical app-id pattern.
         - '#Parameter (\#\d+ )?\$settings of attribute class OCP\\AppFramework\\Http\\Attribute\\AuthorizedAdminSetting#'
-        # Dynamic HTTP status codes from business rule validation results
-        # (matches both `Parameter $statusCode` and `Parameter #N $statusCode` forms emitted by phpstan)
-        - '#Parameter (\#\d+ )?\$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
         # DataResponse body type — NC31's DataResponseType generic is `array<int|string,mixed>|string|int|bool|float|null`
         # but PHPStan infers stricter union types for complex nested arrays and string bodies (e.g. markdown/PDF).
         # At runtime DataResponse accepts any serialisable value; the mismatch is a PHPStan generic inference gap.
@@ -124,13 +91,6 @@ parameters:
         # RuleEngine::providerSeedObjects narrows via class_implements, but PHPStan still sees
         # CheckProvider (the base type) which does not declare seedObjects().
         - '#Call to an undefined static method OCA\\Shillinq\\Standards\\Checks\\CheckProvider::seedObjects#'
-        # registerRepairStep exists on server; not yet in nextcloud/ocp stub used for analysis
-        - '#Call to an undefined method OCP\\AppFramework\\Bootstrap\\IRegistrationContext::registerRepairStep#'
-        # OCP stub gaps for methods that exist at runtime
-        - '#Call to an undefined method OCP\\IRequest::getContent\(\)#'
-        - '#Call to an undefined method OCP\\IRequest::setParameter\(\)#'
-        - '#Call to an undefined method OCP\\Mail\\IMessage::attachFile\(\)#'
-        - '#Call to an undefined method OCP\\AppFramework\\Db\\Entity::jsonSerialize#'
         # OpenRegister's stoppable pre-save events (ObjectCreatingEvent /
         # ObjectUpdatingEvent) declare setErrors(); they are cross-app classes
         # absent at analysis time, so PHPStan only sees the OCP base Event and

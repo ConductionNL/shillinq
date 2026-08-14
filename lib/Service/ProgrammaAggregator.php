@@ -5,9 +5,9 @@
  *
  * ADR-031 exception-path calculator for the Programma roll-up (REQ-002,
  * design D1). The Taakveld is the canonical brondata; the Programma's
- * batenTotaal / lastenTotaal / saldoVoorMutaties / saldoNaMutaties are sums of
- * its child Taakvelden. Computed in integer euro-cents so the programma-view
- * exactly equals the taakveld-view (no rounding drift between the political and
+ * revenueTotal / expensesTotal / balanceBeforeMovements / balanceAfterMovements are sums of
+ * its child Taakvelden. Computed in integer euro-cents so the programme-view
+ * exactly equals the task_field-view (no rounding drift between the political and
  * the BBV-mandated technical indeling). Documented as the `programmaRollup`
  * aggregation on the Programma schema. No persistence, no I/O.
  *
@@ -39,10 +39,10 @@ class ProgrammaAggregator {
 	/**
 	 * Aggregate the child Taakvelden into a Programma's totals.
 	 *
-	 * Computes batenTotaal = Σ(Taakveld.baten); lastenTotaal = Σ(Taakveld.lasten);
-	 * saldoVoorMutaties = batenTotaal - lastenTotaal; saldoNaMutaties =
-	 * saldoVoorMutaties + mutatiesReserves. All sums are accumulated in integer
-	 * cents to guarantee the programma-view equals the taakveld-view exactly.
+	 * Computes revenueTotal = Σ(Taakveld.revenue); expensesTotal = Σ(Taakveld.expenses);
+	 * balanceBeforeMovements = revenueTotal - expensesTotal; balanceAfterMovements =
+	 * balanceBeforeMovements + movementsReserves. All sums are accumulated in integer
+	 * cents to guarantee the programme-view equals the task_field-view exactly.
 	 *
 	 * @param array<int,array<string,mixed>> $taskFields The child Taakveld rows.
 	 * @param float $movementsReserves The reserve mutation (positive = toevoeging).

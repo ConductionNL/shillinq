@@ -34,7 +34,9 @@ test.describe('retire-cost-project — navigation contract', () => {
 		page.setViewportSize({ width: 1280, height: 800 })
 	})
 
-	test('CostProjects nav entry is absent after retirement (REQ-RCP-004)', async ({ page }) => {
+	test('CostProjects nav entry is absent after retirement (REQ-RCP-004)', async ({
+		page,
+	}) => {
 		await page.goto(APP)
 		await page.waitForLoadState('domcontentloaded')
 
@@ -47,7 +49,9 @@ test.describe('retire-cost-project — navigation contract', () => {
 
 		// The "Cost Projects" nav entry must NOT be visible in the rendered menu.
 		// Check both the exact label and the route attribute.
-		const costProjectsLink = page.locator('[data-nav-id="CostProjects"], a[href*="/cost-projects"]')
+		const costProjectsLink = page.locator(
+			'[data-nav-id="CostProjects"], a[href*="/cost-projects"]',
+		)
 		await expect(costProjectsLink).toHaveCount(0)
 
 		// Also confirm no visible text "Cost Projects" in the navigation.
@@ -56,7 +60,9 @@ test.describe('retire-cost-project — navigation contract', () => {
 		expect(navText).not.toContain('Cost Projects')
 	})
 
-	test('former CostProjects route resolves without 404 (deep-link contract)', async ({ page }) => {
+	test('former CostProjects route resolves without 404 (deep-link contract)', async ({
+		page,
+	}) => {
 		// Per menu-layout.json removals contract the page must stay routable.
 		const response = await page.goto(APP + '/cost-projects')
 		// Accept 200 (route found) or a redirect; reject hard 404.
@@ -65,11 +71,16 @@ test.describe('retire-cost-project — navigation contract', () => {
 		}
 		// The SPA must still mount (no blank white page or error boundary).
 		await page.waitForLoadState('domcontentloaded')
-		const body = await page.locator('body').innerText().catch(() => '')
+		const body = await page
+			.locator('body')
+			.innerText()
+			.catch(() => '')
 		expect(body.toLowerCase()).not.toContain('page not found')
 	})
 
-	test('Projects (RJ 270) has exactly one nav home and ProjectenOverzicht is absent (REQ-RCP-004)', async ({ page }) => {
+	test('Projects (RJ 270) has exactly one nav home and ProjectenOverzicht is absent (REQ-RCP-004)', async ({
+		page,
+	}) => {
 		await page.goto(APP)
 		await page.waitForLoadState('domcontentloaded')
 
@@ -83,7 +94,7 @@ test.describe('retire-cost-project — navigation contract', () => {
 		// There must be AT MOST one nav entry whose id is "Projects" or whose
 		// visible text is exactly "Projects".
 		const projectLinks = page.locator(
-			'[data-nav-id="Projects"], a[href*="/projects"]:not([href*="cost-projects"]):not([href*="openproject"])'
+			'[data-nav-id="Projects"], a[href*="/projects"]:not([href*="cost-projects"]):not([href*="openproject"])',
 		)
 		const count = await projectLinks.count()
 		// Exactly one home: ≤1 link in the nav (zero is also acceptable if the
@@ -95,7 +106,9 @@ test.describe('retire-cost-project — navigation contract', () => {
 		await expect(projectenOverzicht).toHaveCount(0)
 	})
 
-	test('AnalyticalDimensions index page mounts and accepts project-type filter (REQ-RCP-001)', async ({ page }) => {
+	test('AnalyticalDimensions index page mounts and accepts project-type filter (REQ-RCP-001)', async ({
+		page,
+	}) => {
 		// Navigate to the AnalyticalDimensions / Dimensions page (cost-centers surface).
 		await page.goto(APP + '/dimensions')
 		await page.waitForLoadState('domcontentloaded')
@@ -108,17 +121,26 @@ test.describe('retire-cost-project — navigation contract', () => {
 		}
 
 		// Page must mount — no blank body, no PHP error.
-		const body = await page.locator('body').innerText().catch(() => '')
+		const body = await page
+			.locator('body')
+			.innerText()
+			.catch(() => '')
 		expect(body.length).toBeGreaterThan(10)
 		expect(body.toLowerCase()).not.toContain('internal server error')
 
 		// The dimensionType filter should be able to surface "project" type rows.
 		// (The filter widget may be present; if absent, the page still mounted correctly.)
-		const dimensionTypeFilter = page.locator('[data-filter-dimension-type], select[name="dimensionType"]')
-		if (await dimensionTypeFilter.count() > 0) {
+		const dimensionTypeFilter = page.locator(
+			'[data-filter-dimension-type], select[name="dimensionType"]',
+		)
+		if ((await dimensionTypeFilter.count()) > 0) {
 			// Confirm "project" is a valid option in the filter (REQ-RCP-001).
-			const options = await dimensionTypeFilter.locator('option').allInnerTexts()
-			const hasProjectOption = options.some(o => o.toLowerCase().includes('project'))
+			const options = await dimensionTypeFilter
+				.locator('option')
+				.allInnerTexts()
+			const hasProjectOption = options.some((o) =>
+				o.toLowerCase().includes('project'),
+			)
 			expect(hasProjectOption).toBe(true)
 		}
 	})

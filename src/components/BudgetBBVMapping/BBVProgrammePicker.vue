@@ -105,11 +105,17 @@ export default {
 			if (!this.modelValue) {
 				return null
 			}
-			const match = this.options.find((o) => o.value === String(this.modelValue))
+			const match = this.options.find(
+				(o) => o.value === String(this.modelValue),
+			)
 			if (match) {
 				return match
 			}
-			return { value: String(this.modelValue), display: String(this.modelValue), programme: null }
+			return {
+				value: String(this.modelValue),
+				display: String(this.modelValue),
+				programme: null,
+			}
 		},
 	},
 	watch: {
@@ -162,21 +168,31 @@ export default {
 					params.administrationId = this.administrationId
 				}
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+					),
 					{ params },
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				this.programmes = Array.isArray(rows) ? rows : []
 				if (this.modelValue) {
-					const match = this.programmes.find((p) =>
-						String(p.programmeCode || p.id) === String(this.modelValue))
+					const match = this.programmes.find(
+						(p) =>
+							String(p.programmeCode || p.id)
+							=== String(this.modelValue),
+					)
 					if (match) {
 						this.$emit('selected', match)
 					}
 				}
 			} catch (e) {
 				this.programmes = []
-				this.fetchError = e?.response?.data?.error
+				this.fetchError =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load BBV programmes.')
 			} finally {
 				this.loading = false

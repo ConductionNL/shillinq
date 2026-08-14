@@ -13,7 +13,10 @@ export function generateUrl(url, params) {
 	// that pass no params (the settings store) are unaffected.
 	if (params && typeof params === 'object') {
 		for (const [key, value] of Object.entries(params)) {
-			path = path.replace(new RegExp(`\\{${key}\\}`, 'g'), encodeURIComponent(String(value)))
+			path = path.replace(
+				new RegExp(`\\{${key}\\}`, 'g'),
+				encodeURIComponent(String(value)),
+			)
 		}
 	}
 	return `/index.php${path.startsWith('/') ? path : `/${path}`}`

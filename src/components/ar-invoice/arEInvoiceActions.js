@@ -57,9 +57,13 @@ export function sendEInvoiceEndpoint(invoiceNumber) {
  */
 export function mapSendResult(result, t) {
 	const deliveryStatus = result?.deliveryStatus || 'queued'
-	const fallbackNotice = result?.fallback === true
-		? t('shillinq', 'No Peppol participant found for this debtor — use PDF + email instead.')
-		: ''
+	const fallbackNotice =
+		result?.fallback === true
+			? t(
+					'shillinq',
+					'No Peppol participant found for this debtor — use PDF + email instead.',
+				)
+			: ''
 	return { deliveryStatus, fallbackNotice }
 }
 

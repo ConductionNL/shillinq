@@ -34,9 +34,15 @@ async function dismissOverlays(page: Page): Promise<void> {
 		await page.keyboard.press('Escape').catch(() => {})
 		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
-	const support = page.locator('[data-testid-modal="cn-support-dialog"], .cn-support-dialog').first()
+	const support = page
+		.locator('[data-testid-modal="cn-support-dialog"], .cn-support-dialog')
+		.first()
 	if (await support.isVisible().catch(() => false)) {
-		await support.getByRole('button', { name: /close|sluiten|dismiss/i }).first().click().catch(() => {})
+		await support
+			.getByRole('button', { name: /close|sluiten|dismiss/i })
+			.first()
+			.click()
+			.catch(() => {})
 		await support.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
 }
@@ -56,7 +62,8 @@ async function openAdapterStatus(page: Page): Promise<void> {
 /** Collect shillinq-origin console errors + 5xx, filtering NC-core / env noise. */
 function trackShillinqErrors(page: Page): () => string[] {
 	const errors: string[] = []
-	const noise = /Failed to load resource|favicon|net::ERR|\b404\b|user status|status\.php|Download the (React|Vue) DevTools/i
+	const noise =
+		/Failed to load resource|favicon|net::ERR|\b404\b|user status|status\.php|Download the (React|Vue) DevTools/i
 	page.on('console', (m: ConsoleMessage) => {
 		if (m.type() !== 'error') return
 		const t = m.text()
@@ -72,48 +79,79 @@ function trackShillinqErrors(page: Page): () => string[] {
 }
 
 test.describe('Shillinq — external-adapter admin UI', () => {
-	test('Adapter Status index lists adapter families from the live API', async ({ page }) => {
+	test('Adapter Status index lists adapter families from the live API', async ({
+		page,
+	}) => {
 		const errors = trackShillinqErrors(page)
 
 		await openAdapterStatus(page)
 
 		// The status surface renders its header + summary pills.
-		await expect(page.locator('.external-adapters__title')).toContainText(/External Connections/i, { timeout: 15_000 })
-		await expect(page.locator('.external-adapters__summary')).toBeVisible({ timeout: 10_000 })
-		await expect(page.locator('.external-adapters__pill--total')).toContainText(/\d+\s+families/i)
+		await expect(page.locator('.external-adapters__title')).toContainText(
+			/External Connections/i,
+			{ timeout: 15_000 },
+		)
+		await expect(page.locator('.external-adapters__summary')).toBeVisible({
+			timeout: 10_000,
+		})
+		await expect(page.locator('.external-adapters__pill--total')).toContainText(
+			/\d+\s+families/i,
+		)
 
 		// At least one adapter family is listed (sourced from
 		// GET /api/admin/external-adapters). Assert the list + a known family.
 		const items = page.locator('.external-adapters__item')
 		await expect(items.first()).toBeVisible({ timeout: 10_000 })
 		expect(await items.count()).toBeGreaterThan(0)
-		await expect(page.locator('.external-adapters__item[data-adapter-id="digipoort-sbr"]')).toBeVisible({ timeout: 10_000 })
+		await expect(
+			page.locator(
+				'.external-adapters__item[data-adapter-id="digipoort-sbr"]',
+			),
+		).toBeVisible({ timeout: 10_000 })
 
-		expect(errors(), `shillinq-origin errors:\n${errors().join('\n')}`).toEqual([])
+		expect(errors(), `shillinq-origin errors:\n${errors().join('\n')}`).toEqual(
+			[],
+		)
 	})
 
-	test('opening a family routes to its activation/detail panel', async ({ page }) => {
+	test('opening a family routes to its activation/detail panel', async ({
+		page,
+	}) => {
 		const errors = trackShillinqErrors(page)
 
 		await openAdapterStatus(page)
 
 		// Open the Digipoort/SBR family via its "open detail" button.
-		const row = page.locator('.external-adapters__item[data-adapter-id="digipoort-sbr"]')
+		const row = page.locator(
+			'.external-adapters__item[data-adapter-id="digipoort-sbr"]',
+		)
 		await expect(row).toBeVisible({ timeout: 15_000 })
 		await row.locator('button').first().click()
 
 		// We land on the detail/activation panel for the adapter.
-		await expect(page).toHaveURL(/external-adapters\/digipoort-sbr/, { timeout: 10_000 })
+		await expect(page).toHaveURL(/external-adapters\/digipoort-sbr/, {
+			timeout: 10_000,
+		})
 		await dismissOverlays(page)
 
 		// The detail panel renders the adapter title + dormant/live status badge
 		// + the activation-steps section (the W8 detail UI).
-		await expect(page.locator('.adapter-detail__title')).toBeVisible({ timeout: 15_000 })
-		await expect(page.locator('.adapter-detail__activation')).toBeVisible({ timeout: 10_000 })
-		await expect(page.locator('.adapter-detail__section-title')).toContainText(/Activation steps/i)
+		await expect(page.locator('.adapter-detail__title')).toBeVisible({
+			timeout: 15_000,
+		})
+		await expect(page.locator('.adapter-detail__activation')).toBeVisible({
+			timeout: 10_000,
+		})
+		await expect(page.locator('.adapter-detail__section-title')).toContainText(
+			/Activation steps/i,
+		)
 		// A "Back to External Connections" control closes the loop.
-		await expect(page.getByRole('button', { name: /Back to External Connections/i })).toBeVisible()
+		await expect(
+			page.getByRole('button', { name: /Back to External Connections/i }),
+		).toBeVisible()
 
-		expect(errors(), `shillinq-origin errors:\n${errors().join('\n')}`).toEqual([])
+		expect(errors(), `shillinq-origin errors:\n${errors().join('\n')}`).toEqual(
+			[],
+		)
 	})
 })

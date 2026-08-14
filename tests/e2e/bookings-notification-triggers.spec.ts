@@ -24,7 +24,6 @@ const NOTIFICATION_TRIGGERS_ROUTE = '/communication/notification-triggers'
 const NOTIFICATION_MONITOR_ROUTE = '/communication/notification-monitor'
 
 test.describe('notification triggers — admin index page renders', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + NOTIFICATION_TRIGGERS_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -46,11 +45,9 @@ test.describe('notification triggers — admin index page renders', () => {
 		const list = page.getByRole('main')
 		await expect(list).toBeVisible({ timeout: 5_000 })
 	})
-
 })
 
 test.describe('notification monitor — admin dashboard renders', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + NOTIFICATION_MONITOR_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -63,11 +60,9 @@ test.describe('notification monitor — admin dashboard renders', () => {
 		const main = page.getByRole('main')
 		await expect(main).toBeVisible({ timeout: 5_000 })
 	})
-
 })
 
 test.describe('notification config modal — per-booking override', () => {
-
 	/**
 	 * @e2e bookings-notification-triggers/REQ-BNT-007/modal-toggle-trigger
 	 *
@@ -96,5 +91,4 @@ test.describe('notification config modal — per-booking override', () => {
 		// schema migration.
 		await expect(page.getByRole('main')).toBeVisible({ timeout: 5_000 })
 	})
-
 })

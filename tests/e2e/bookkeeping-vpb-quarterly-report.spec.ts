@@ -38,7 +38,9 @@ import { test, expect } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 
-const dismissWizard = async (page: import('@playwright/test').Page): Promise<void> => {
+const dismissWizard = async (
+	page: import('@playwright/test').Page,
+): Promise<void> => {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => {})
@@ -51,7 +53,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 		page.setViewportSize({ width: 1280, height: 800 })
 	})
 
-	test('Quarterly statement index — mounts on /bookkeeping/vpb/reports (REQ-VPB-009)', async ({ page }) => {
+	test('Quarterly statement index — mounts on /bookkeeping/vpb/reports (REQ-VPB-009)', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/bookkeeping/vpb/reports')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -63,7 +67,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Quarterly statement detail — mounts on /bookkeeping/vpb/reports/:year/:quarter (REQ-VPB-009)', async ({ page }) => {
+	test('Quarterly statement detail — mounts on /bookkeeping/vpb/reports/:year/:quarter (REQ-VPB-009)', async ({
+		page,
+	}) => {
 		// Detail route is parameterised by fiscal year + quarter. With no
 		// fixture loaded the page renders an empty aggregation state with
 		// account-hierarchy headers; the SPA route must resolve and the
@@ -76,7 +82,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Vpb settings — mounts on /bookkeeping/vpb/settings (REQ-VPB-014, REQ-VPB-015)', async ({ page }) => {
+	test('Vpb settings — mounts on /bookkeeping/vpb/settings (REQ-VPB-014, REQ-VPB-015)', async ({
+		page,
+	}) => {
 		// The settings page hosts deadline-template configuration plus the
 		// tax-treatment tag configuration that drives the untagged-posting
 		// warning on the quarterly report. Smoke: route resolves, SPA

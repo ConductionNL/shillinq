@@ -15,9 +15,17 @@
 		<form class="count-op__form" @submit.prevent="handleConfirm">
 			<label>
 				<span>{{ t('shillinq', 'Location') }}</span>
-				<select v-model="location" required :aria-label="t('shillinq', 'Count location')">
-					<option value="">{{ t('shillinq', 'Select a location') }}</option>
-					<option v-for="loc in store.locations" :key="loc.code" :value="loc.code">
+				<select
+					v-model="location"
+					required
+					:aria-label="t('shillinq', 'Count location')">
+					<option value="">
+						{{ t('shillinq', 'Select a location') }}
+					</option>
+					<option
+						v-for="loc in store.locations"
+						:key="loc.code"
+						:value="loc.code">
 						{{ loc.name }} ({{ loc.code }})
 					</option>
 				</select>
@@ -31,7 +39,7 @@
 						type="text"
 						required
 						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')">
+						:aria-label="t('shillinq', 'Stock keeping unit')" />
 					<button type="button" @click="scanning = true">
 						{{ t('shillinq', 'Scan') }}
 					</button>
@@ -47,18 +55,26 @@
 					step="0.01"
 					required
 					:aria-label="t('shillinq', 'Physical count')"
-					@input="recomputeVariance">
+					@input="recomputeVariance" />
 			</label>
 
-			<div v-if="systemQuantity !== null" class="count-op__variance" role="status">
+			<div
+				v-if="systemQuantity !== null"
+				class="count-op__variance"
+				role="status">
 				{{ t('shillinq', 'System qty: {sys}', { sys: systemQuantity }) }}
 				—
 				{{ t('shillinq', 'Variance: {variance}', { variance: variance }) }}
 			</div>
 
 			<label>
-				<input v-model="reconcile" type="checkbox">
-				{{ t('shillinq', 'Update InventoryStock to physical count (reconcile)') }}
+				<input v-model="reconcile" type="checkbox" />
+				{{
+					t(
+						'shillinq',
+						'Update InventoryStock to physical count (reconcile)',
+					)
+				}}
 			</label>
 
 			<div v-if="error" class="count-op__error" role="alert">
@@ -135,7 +151,11 @@ export default {
 				return
 			}
 			try {
-				this.systemQuantity = await readStockQuantity(this.store.db, this.sku, this.location)
+				this.systemQuantity = await readStockQuantity(
+					this.store.db,
+					this.sku,
+					this.location,
+				)
 			} catch (e) {
 				this.systemQuantity = 0
 			}
@@ -144,14 +164,25 @@ export default {
 			this.error = null
 			this.successMessage = null
 
-			if (!this.location || !this.sku || this.physicalQuantity === null || this.physicalQuantity < 0) {
-				this.error = this.t('shillinq', 'Location, SKU and a non-negative physical count are required.')
+			if (
+				!this.location
+				|| !this.sku
+				|| this.physicalQuantity === null
+				|| this.physicalQuantity < 0
+			) {
+				this.error = this.t(
+					'shillinq',
+					'Location, SKU and a non-negative physical count are required.',
+				)
 				return
 			}
 
 			const now = Date.now()
 			if (now - this.lastSubmittedAt < 5000) {
-				this.error = this.t('shillinq', 'Already submitted; waiting for server ACK.')
+				this.error = this.t(
+					'shillinq',
+					'Already submitted; waiting for server ACK.',
+				)
 				return
 			}
 			this.lastSubmittedAt = now
@@ -175,7 +206,10 @@ export default {
 				this.systemQuantity = null
 				this.reconcile = false
 			} catch (e) {
-				this.error = e && e.message ? e.message : this.t('shillinq', 'Could not record count.')
+				this.error =
+					e && e.message
+						? e.message
+						: this.t('shillinq', 'Could not record count.')
 			} finally {
 				this.submitting = false
 			}
@@ -185,19 +219,42 @@ export default {
 </script>
 
 <style scoped>
-.count-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+.count-op {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
 
-.count-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
+.count-op__form label {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: var(--default-grid-baseline, 4px);
+}
 
-.count-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
+.count-op__sku-row {
+	display: flex;
+	gap: var(--default-grid-baseline, 4px);
+}
 
-.count-op__sku-row input { flex: 1; }
+.count-op__sku-row input {
+	flex: 1;
+}
 
-.count-op__variance { color: var(--color-text-maxcontrast); }
+.count-op__variance {
+	color: var(--color-text-maxcontrast);
+}
 
-.count-op__error { color: var(--color-error); }
+.count-op__error {
+	color: var(--color-error);
+}
 
-.count-op__success { color: var(--color-success); }
+.count-op__success {
+	color: var(--color-success);
+}
 
-.count-op__actions { display: flex; justify-content: flex-end; }
+.count-op__actions {
+	display: flex;
+	justify-content: flex-end;
+}
 </style>

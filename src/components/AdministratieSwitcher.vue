@@ -46,7 +46,9 @@
 				:close-after-click="true"
 				@click="onSelect(administration.administrationId)">
 				<template #icon>
-					<CheckBold v-if="administration.administrationId === activeId" :size="18" />
+					<CheckBold
+						v-if="administration.administrationId === activeId"
+						:size="18" />
 					<OfficeBuildingOutline v-else :size="18" />
 				</template>
 				{{ formatLabel(administration) }}
@@ -205,7 +207,11 @@ export default {
 				const response = await switchAdministration(administrationId)
 				this.activeId = response.activeAdministrationId
 				this.$emit('switched', this.activeId)
-				if (this.reloadAfterSwitch && typeof window !== 'undefined' && window.location) {
+				if (
+					this.reloadAfterSwitch
+					&& typeof window !== 'undefined'
+					&& window.location
+				) {
 					window.location.reload()
 				}
 			} catch (error) {
@@ -215,7 +221,10 @@ export default {
 				} else if (status === 401) {
 					this.errorMessage = t('shillinq', 'Not authenticated')
 				} else {
-					this.errorMessage = t('shillinq', 'Failed to switch administration')
+					this.errorMessage = t(
+						'shillinq',
+						'Failed to switch administration',
+					)
 				}
 				this.$emit('error', error)
 			} finally {

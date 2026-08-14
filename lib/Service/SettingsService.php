@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -420,18 +421,18 @@ class SettingsService {
 	}//end readDefaultAdministrationCode()
 
 	/**
-	 * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.
+	 * Seed statutory BTW tariffs from vat-tariffs-2026.json, idempotently.
 	 *
 	 * Imports the current Dutch VAT rates into the VatTariff schema. Deduplication
 	 * key is code. Idempotent on re-run; operator-added rates are preserved.
 	 *
 	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
 	 *
-	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/specs/bookkeeping-vat-vat-filing/spec.md
 	 */
 	public function seedBtwTariffs(): array {
 		return $this->seedGenericFile(
-			seedFileName: 'btw-tariffs-2026.json',
+			seedFileName: 'vat-tariffs-2026.json',
 			itemsKey: 'tariffs',
 			dedupeKey: 'code',
 			schema: 'VatTariff',
@@ -441,9 +442,9 @@ class SettingsService {
 	}//end seedBtwTariffs()
 
 	/**
-	 * Seed the BBV taakveld catalogue from bbv-taakvelden-2024.json, idempotently.
+	 * Seed the BBV task_field catalogue from bbv-task_fields-2024.json, idempotently.
 	 *
-	 * Imports the canonical Besluit BBV bijlage IV taakvelden into the BbvTaakveld
+	 * Imports the canonical Besluit BBV bijlage IV task_fields into the BbvTaakveld
 	 * schema. Deduplication key is code. Idempotent on re-run.
 	 *
 	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
@@ -452,11 +453,11 @@ class SettingsService {
 	 */
 	public function seedBbvTaakvelden(): array {
 		return $this->seedGenericFile(
-			seedFileName: 'bbv-taakvelden-2024.json',
+			seedFileName: 'bbv-task_fields-2024.json',
 			itemsKey: 'taskFields',
 			dedupeKey: 'code',
 			schema: 'BbvTaakveld',
-			logLabel: 'BBV taakvelden'
+			logLabel: 'BBV task_fields'
 		);
 
 	}//end seedBbvTaakvelden()
@@ -538,10 +539,9 @@ class SettingsService {
 					$skippedAssets++;
 					// Cache the existing UUID for schedule linking.
 					$firstRow = $existing[0];
-					if (is_array($firstRow) === true && isset($firstRow['id']) === true) {
-						$assetUuidByNumber[$asset['assetNumber']] = (string)$firstRow['id'];
-					} elseif (is_object($firstRow) === true && method_exists($firstRow, 'getId') === true) {
-						$assetUuidByNumber[$asset['assetNumber']] = (string)$firstRow->getId();
+					$existingUuid = ObjectIdentifier::resolve(saved: $firstRow);
+					if ($existingUuid !== '') {
+						$assetUuidByNumber[$asset['assetNumber']] = $existingUuid;
 					}
 
 					continue;
@@ -554,10 +554,9 @@ class SettingsService {
 				);
 				$seededAssets++;
 
-				if (is_array($saved) === true && isset($saved['id']) === true) {
-					$assetUuidByNumber[$asset['assetNumber']] = (string)$saved['id'];
-				} elseif (is_object($saved) === true && method_exists($saved, 'getId') === true) {
-					$assetUuidByNumber[$asset['assetNumber']] = (string)$saved->getId();
+				$savedUuid = ObjectIdentifier::resolve(saved: $saved);
+				if ($savedUuid !== '') {
+					$assetUuidByNumber[$asset['assetNumber']] = $savedUuid;
 				}
 			}//end foreach
 
@@ -629,7 +628,7 @@ class SettingsService {
 	/**
 	 * Seed the default RGS → BBV account mapping for a municipal administration
 	 * from rgs-to-bbv-mapping.json, idempotently (REQ-BBV-006). Only runs for
-	 * administrations whose `administrationType` is in {gemeente, provincie,
+	 * administrations whose `administrationType` is in {municipality, provincie,
 	 * waterschap}; other types are out of BBV scope.
 	 *
 	 * Deduplication key is (administrationId, accountNumber) — the natural
@@ -2119,7 +2118,7 @@ class SettingsService {
 	 * Seed the default `InventoryGLConfig` record for an administration
 	 * (inventory-cogs-posting REQ-CG-001 + Task 11).
 	 *
-	 * Loads the RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400
+	 * Loads the RGS 3.5 MKB defaults (7000 Kostprijs revenue / 1400
 	 * Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties) from
 	 * `seeds/inventory-gl-config-2026.json` and writes one row per
 	 * administration via ObjectService. Idempotent: deduplicates on
@@ -2614,7 +2613,7 @@ class SettingsService {
 	 *
 	 * Reads lib/Settings/seeds/mandaat-templates.json and imports Mandaat records
 	 * via OpenRegister's ObjectService, stamping the tenant administrationId.
-	 * Already-existing records (matched by mandaatcode + administrationId) are
+	 * Already-existing records (matched by mandate_code + administrationId) are
 	 * skipped, preserving operator edits. Per REQ-VPL-002. Requires a non-empty
 	 * administrationId (C2).
 	 *
@@ -2813,13 +2812,13 @@ class SettingsService {
 	 *
 	 * Reads the four JSON files under `lib/Settings/seeds/commercial-activities/`:
 	 *
-	 *   - sportaccommodaties-gemeente.json      → CommercialActivity records (state=paused)
+	 *   - sportaccommodaties-municipality.json      → CommercialActivity records (state=paused)
 	 *   - waterschap-slibruimte.json            → CommercialActivity records (state=paused)
-	 *   - abb-example-gemeente.json             → AlgemeenBelangBesluit records (status=concept)
+	 *   - abb-example-municipality.json             → AlgemeenBelangBesluit records (status=concept)
 	 *   - integral-cost-price-example-q1-2026.json → IntegralCostPrice records (status=voorlopig)
 	 *
 	 * Each record is stamped with the configured administrationId and deduped on its
-	 * natural key (`code` for activities, `kenmerk` for ABBs, `(commercialActivityId,periode)`
+	 * natural key (`code` for activities, `reference` for ABBs, `(commercialActivityId,period)`
 	 * for IKPs) so re-runs preserve operator edits per REQ-WMO-001 / REQ-WMO-002 /
 	 * REQ-WMO-005. All seeded records ship in paused / concept / voorlopig lifecycle
 	 * states; operators promote them through the workflow when adopting the seed.
@@ -2865,9 +2864,9 @@ class SettingsService {
 			$registerSlug = $this->getRegisterSlug();
 
 			$files = [
-				'sportaccommodaties-gemeente.json' => ['CommercialActivity', 'activities', 'code'],
+				'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
 				'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
-				'abb-example-gemeente.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
+				'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
 				'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
 			];
 

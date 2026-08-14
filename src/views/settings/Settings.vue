@@ -9,17 +9,14 @@
 					id="register"
 					v-model="form.register"
 					type="text"
-					:placeholder="t('shillinq', 'OpenRegister register ID')">
+					:placeholder="t('shillinq', 'OpenRegister register ID')" />
 			</div>
 
 			<div v-if="successMessage" class="success-message">
 				{{ successMessage }}
 			</div>
 
-			<NcButton
-				variant="primary"
-				type="submit"
-				:disabled="saving">
+			<NcButton variant="primary" type="submit" :disabled="saving">
 				{{ saving ? t('shillinq', 'Saving...') : t('shillinq', 'Save') }}
 			</NcButton>
 		</form>

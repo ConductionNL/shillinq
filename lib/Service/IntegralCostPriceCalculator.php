@@ -5,9 +5,9 @@
  *
  * Pure-logic calculator for the integrale-kostprijs (IKP) per commercial
  * activity per period (REQ-WMO-002). The calculator sums the 6 component
- * groups — directeLoonkosten, directeMaterialen, directeAfschrijvingen,
- * indirecteOverhead (via BBV taakveld 0.4 sleutel), vermogenskosten (WACC),
- * winstopslag — and computes compliance against the gehanteerd tarief
+ * groups — directPayrollCost, directeMaterialen, directDepreciations,
+ * indirecteOverhead (via BBV task_field 0.4 sleutel), capital_cost (WACC),
+ * winstopslag — and computes compliance against the gehanteerd rate
  * (Art. 25i Mededingingswet integrale-kostprijs check).
  *
  * All money arithmetic uses integer cents to avoid IEEE-754 drift, mirroring
@@ -45,7 +45,7 @@ use DateTimeZone;
  */
 class IntegralCostPriceCalculator {
 	/**
-	 * Default WACC vermogenskosten rate (4.5%, configurable per administration).
+	 * Default WACC capital_cost rate (4.5%, configurable per administration).
 	 *
 	 * @var float
 	 */
@@ -85,14 +85,16 @@ class IntegralCostPriceCalculator {
 	}//end fromCents()
 
 	/**
-	 * Sum direct GL lines matching the activity's kostenplaats/kostendrager (REQ-WMO-002).
+	 * Sum direct GL lines matching the activity's cost_centre/cost_object (REQ-WMO-002).
 	 *
 	 * @param array<int,array<string,mixed>> $glLines GL lines to scan.
 	 * @param string $costCentre Kostenplaats code to match.
 	 * @param string $costObject Kostendrager code to match.
-	 * @param string $accountKind One of `loonkosten`, `materialen`, `afschrijvingen`.
+	 * @param string $accountKind One of `payroll_cost`, `materialen`, `depreciations`.
 	 *
 	 * @return int Sum of matching GL lines in cents.
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-002
 	 */
 	public function sumDirectCosts(array $glLines, string $costCentre, string $costObject, string $accountKind): int {
 		$totalCents = 0;
@@ -131,7 +133,7 @@ class IntegralCostPriceCalculator {
 	 * Apply the geldende OverheadDistributionRule to the corporate overhead pool (REQ-WMO-002).
 	 *
 	 * Implements the BBV-sleutel inheritance: the rule.bronTaakvelden / rule.basis
-	 * carry the BBV taakveld 0.4 overhead, the rule's per-bucket ratios distribute
+	 * carry the BBV task_field 0.4 overhead, the rule's per-bucket ratios distribute
 	 * it to the activity's overhead components.
 	 *
 	 * @param int $corporateOverheadCents Corporate overhead pool in cents.
@@ -177,7 +179,7 @@ class IntegralCostPriceCalculator {
 	}//end distributeOverhead()
 
 	/**
-	 * Calculate vermogenskosten via WACC on invested book value (REQ-WMO-002).
+	 * Calculate capital_cost via WACC on invested book value (REQ-WMO-002).
 	 *
 	 * Vermogenskosten = invested book value × WACC × period-fraction. Period-fraction
 	 * defaults to 1.0 (annual); pass 0.25 for a quarter, ~0.0833 for a month.
@@ -203,7 +205,7 @@ class IntegralCostPriceCalculator {
 	/**
 	 * Calculate winstopslag as a markup on the sum of all other components (REQ-WMO-002).
 	 *
-	 * @param int $baseCents Sum of direct + indirect + vermogenskosten in cents.
+	 * @param int $baseCents Sum of direct + indirect + capital_cost in cents.
 	 * @param float $rate Winstopslag rate (default 0.03 = 3%).
 	 *
 	 * @return int Winstopslag in cents.
@@ -217,7 +219,7 @@ class IntegralCostPriceCalculator {
 	}//end calculateWinstopslag()
 
 	/**
-	 * Calculate kostprijs per eenheid (REQ-WMO-002).
+	 * Calculate kostprijs per unit (REQ-WMO-002).
 	 *
 	 * @param int $totaleCostCents Total cost in cents.
 	 * @param float $soldUnits Units sold (must be > 0).
@@ -233,7 +235,7 @@ class IntegralCostPriceCalculator {
 	}//end calculateKostprijsPerEenheid()
 
 	/**
-	 * Determine compliance status: gehanteerdTarief >= kostprijsPerEenheid (REQ-WMO-004 / Art. 25i).
+	 * Determine compliance status: appliedRate >= costPricePerUnit (REQ-WMO-004 / Art. 25i).
 	 *
 	 * @param float|null $appliedRate Actual price charged per unit (EUR).
 	 * @param float|null $costPricePerUnit IKP per unit (EUR).
@@ -260,11 +262,11 @@ class IntegralCostPriceCalculator {
 	 * Compose a full IntegralCostPrice record (REQ-WMO-002).
 	 *
 	 * @param array<string,mixed> $input Calculation inputs (commercialActivityId,
-	 *                                   periode, administrationId, kostenplaats,
-	 *                                   kostendrager, glLines, corporateOverheadCents,
+	 *                                   period, administrationId, cost_centre,
+	 *                                   cost_object, glLines, corporateOverheadCents,
 	 *                                   overheadRule, investedBookValueCents, waccRate,
-	 *                                   winstopslagRate, periodFraction, verkochteEenheden,
-	 *                                   eenheidLabel, gehanteerdTarief, omzetEur, status).
+	 *                                   winstopslagRate, periodFraction, soldUnits,
+	 *                                   unitLabel, appliedRate, omzetEur, status).
 	 *
 	 * @return array<string,mixed> IKP record matching the schema.
 	 */

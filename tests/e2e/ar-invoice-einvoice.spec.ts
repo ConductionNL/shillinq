@@ -53,8 +53,14 @@ async function openInvoiceByState(page: Page, state: string): Promise<boolean> {
 		return false
 	}
 	await row.click()
-	await page.locator('[data-testid="ar-einvoice-actions"]').waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {})
-	return await page.locator('[data-testid="ar-einvoice-actions"]').isVisible().catch(() => false)
+	await page
+		.locator('[data-testid="ar-einvoice-actions"]')
+		.waitFor({ state: 'visible', timeout: 10_000 })
+		.catch(() => {})
+	return await page
+		.locator('[data-testid="ar-einvoice-actions"]')
+		.isVisible()
+		.catch(() => false)
 }
 
 test.describe('add-invoice-pdf-export-with-ubl-peppol-support — Send e-invoice + delivery status (REQ-EINV-007)', () => {
@@ -62,7 +68,9 @@ test.describe('add-invoice-pdf-export-with-ubl-peppol-support — Send e-invoice
 		page.setViewportSize({ width: 1600, height: 1200 })
 	})
 
-	test('issued invoice: status chip renders and Send e-invoice is enabled', async ({ page }) => {
+	test('issued invoice: status chip renders and Send e-invoice is enabled', async ({
+		page,
+	}) => {
 		const opened = await openInvoiceByState(page, 'issued')
 		test.skip(!opened, 'no issued ARInvoice seeded in this administration')
 

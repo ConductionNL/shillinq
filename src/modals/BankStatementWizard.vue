@@ -35,7 +35,9 @@
 		<div class="bsw">
 			<!-- Step 1: format selection + file upload -->
 			<div v-if="step === 1" class="bsw__step" data-testid="bsw-step-1">
-				<p class="bsw__heading">{{ t('shillinq', 'How does your bank export statements?') }}</p>
+				<p class="bsw__heading">
+					{{ t('shillinq', 'How does your bank export statements?') }}
+				</p>
 				<NcSelect
 					:model-value="selectedFormatOption"
 					:options="formatSelectOptions"
@@ -46,12 +48,17 @@
 					data-testid="bsw-format"
 					@update:model-value="onFormatSelected" />
 
-				<p v-if="form.format" class="bsw__hint" data-testid="bsw-format-hint">
+				<p
+					v-if="form.format"
+					class="bsw__hint"
+					data-testid="bsw-format-hint">
 					{{ formatInstructions }}
 				</p>
 
 				<div v-if="form.format" class="bsw__field">
-					<label class="bsw__label" for="bsw-file">{{ t('shillinq', 'Statement file') }}</label>
+					<label class="bsw__label" for="bsw-file">{{
+						t('shillinq', 'Statement file')
+					}}</label>
 					<input
 						id="bsw-file"
 						ref="file"
@@ -59,12 +66,18 @@
 						:accept="acceptFor(form.format)"
 						class="bsw__input"
 						data-testid="bsw-file"
-						@change="onFileChosen">
+						@change="onFileChosen" />
 				</div>
 
 				<p class="bsw__psd2">
-					{{ t('shillinq', 'Or connect your bank directly and skip manual uploads:') }}
-					<a href="#"
+					{{
+						t(
+							'shillinq',
+							'Or connect your bank directly and skip manual uploads:',
+						)
+					}}
+					<a
+						href="#"
 						class="bsw__link"
 						data-testid="bsw-psd2"
 						@click.prevent="goToBankConnections">
@@ -75,10 +88,14 @@
 
 			<!-- Step 2: account mapping -->
 			<div v-else-if="step === 2" class="bsw__step" data-testid="bsw-step-2">
-				<p class="bsw__heading">{{ t('shillinq', 'Map to Shillinq account') }}</p>
+				<p class="bsw__heading">
+					{{ t('shillinq', 'Map to Shillinq account') }}
+				</p>
 				<dl class="bsw__meta">
 					<dt>{{ t('shillinq', 'Statement IBAN') }}</dt>
-					<dd data-testid="bsw-iban">{{ statementIban || t('shillinq', 'Unknown') }}</dd>
+					<dd data-testid="bsw-iban">
+						{{ statementIban || t('shillinq', 'Unknown') }}
+					</dd>
 					<dt>{{ t('shillinq', 'Statement name') }}</dt>
 					<dd>{{ statementName || '—' }}</dd>
 				</dl>
@@ -90,22 +107,34 @@
 			<!-- Step 3: import summary -->
 			<div v-else class="bsw__step" data-testid="bsw-step-3">
 				<p v-if="importing" class="bsw__heading" data-testid="bsw-importing">
-					{{ t('shillinq', 'Importing {count} transactions', { count: result ? result.transactionCount : '…' }) }}
+					{{
+						t('shillinq', 'Importing {count} transactions', {
+							count: result ? result.transactionCount : '…',
+						})
+					}}
 				</p>
 				<template v-else-if="result">
 					<p class="bsw__heading" data-testid="bsw-summary">
-						{{ t('shillinq', 'Importing {count} transactions', { count: result.transactionCount }) }}
+						{{
+							t('shillinq', 'Importing {count} transactions', {
+								count: result.transactionCount,
+							})
+						}}
 					</p>
 					<ul class="bsw__counts">
 						<li data-testid="bsw-matched">
-							{{ result.matchedCount }} {{ t('shillinq', 'automatically matched') }}
+							{{ result.matchedCount }}
+							{{ t('shillinq', 'automatically matched') }}
 						</li>
 						<li data-testid="bsw-unmatched">
-							{{ result.unmatchedCount }} {{ t('shillinq', 'unmatched — require manual review') }}
+							{{ result.unmatchedCount }}
+							{{ t('shillinq', 'unmatched — require manual review') }}
 						</li>
 					</ul>
 				</template>
-				<p v-if="error" class="bsw__error" data-testid="bsw-error">{{ error }}</p>
+				<p v-if="error" class="bsw__error" data-testid="bsw-error">
+					{{ error }}
+				</p>
 			</div>
 		</div>
 
@@ -194,14 +223,26 @@ export default {
 		},
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		selectedFormatOption() {
-			return this.formatSelectOptions.find((o) => o.value === this.form.format) || null
+			return (
+				this.formatSelectOptions.find((o) => o.value === this.form.format)
+				|| null
+			)
 		},
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		formatInstructions() {
 			const map = {
-				camt053: t('shillinq', 'Most Dutch banks (ING, Rabobank, ABN AMRO, SNS). Export from your bank: Downloads → Account overview → Format: CAMT.053 → Date range: last 30 days.'),
-				mt940: t('shillinq', 'Older SWIFT format (Triodos, some ING accounts). Export the MT940 / .STA file from your bank portal.'),
-				csv: t('shillinq', 'Custom export with a header row (valueDate, amount, currency, remittanceInfo, counterpartyName, counterpartyIban).'),
+				camt053: t(
+					'shillinq',
+					'Most Dutch banks (ING, Rabobank, ABN AMRO, SNS). Export from your bank: Downloads → Account overview → Format: CAMT.053 → Date range: last 30 days.',
+				),
+				mt940: t(
+					'shillinq',
+					'Older SWIFT format (Triodos, some ING accounts). Export the MT940 / .STA file from your bank portal.',
+				),
+				csv: t(
+					'shillinq',
+					'Custom export with a header row (valueDate, amount, currency, remittanceInfo, counterpartyName, counterpartyIban).',
+				),
 			}
 			return map[this.form.format] || ''
 		},
@@ -259,7 +300,9 @@ export default {
 		extractStatementMeta() {
 			// Lightweight pre-parse: pull the first IBAN-shaped token so the
 			// account-mapping step can show it and consult the IBAN memory.
-			const m = String(this.form.contents).match(/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/)
+			const m = String(this.form.contents).match(
+				/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/,
+			)
 			this.statementIban = m ? m[1] : ''
 		},
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
@@ -297,7 +340,8 @@ export default {
 				}
 				this.$emit('imported', this.result)
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| e?.message
 					|| t('shillinq', 'Failed to import the bank statement.')
 				showError(this.error)

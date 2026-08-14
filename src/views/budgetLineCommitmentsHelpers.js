@@ -5,9 +5,9 @@
  * Pure helpers for BudgetLineCommitments.vue (REQ-VPL-011).
  *
  * Normalises the `committedVsRealisedPerBudgetLine` aggregation response
- * (Verplichtingsregel buckets grouped by programma/kostenplaats/boekjaar/
- * grootboekrekening, joined to Budget.geautoriseerd_bedrag /
- * Budget.gerealiseerd_bedrag) into display rows with the four BBV columns
+ * (Verplichtingsregel buckets grouped by programme/cost_centre/financial_year/
+ * general_ledger_account, joined to Budget.authorised_amount /
+ * Budget.realised_amount) into display rows with the four BBV columns
  * (geautoriseerd / verplicht / gerealiseerd / vrij). `vrij` is computed
  * client-side from the three declared figures — display arithmetic, not a
  * parallel PHP reporting service (ADR-031 / REQ-VPL-011).
@@ -19,24 +19,35 @@
  * Normalise the raw aggregation payload into budget-line rows.
  *
  * @param {object} payload Raw response from the aggregation endpoint.
- * @return {Array<object>} Rows with programma/kostenplaats/boekjaar/grootboekrekening + the four amount columns (minor units).
+ * @return {Array<object>} Rows with programme/cost_centre/financial_year/general_ledger_account + the four amount columns (minor units).
  */
 export function normaliseBudgetLineRows(payload) {
 	const buckets = Array.isArray(payload?.buckets)
 		? payload.buckets
-		: (Array.isArray(payload) ? payload : [])
+		: Array.isArray(payload)
+			? payload
+			: []
 
 	return buckets.map((bucket) => {
-		const geautoriseerd = Number(bucket?.['Budget.geautoriseerd_bedrag'] ?? bucket?.geautoriseerd ?? 0)
+		const geautoriseerd = Number(
+			bucket?.['Budget.authorised_amount'] ?? bucket?.geautoriseerd ?? 0,
+		)
 		const verplicht = Number(bucket?.restant_verplicht ?? bucket?.verplicht ?? 0)
-		const gerealiseerd = Number(bucket?.gefactureerd_bedrag ?? bucket?.gerealiseerd ?? 0)
+		const gerealiseerd = Number(
+			bucket?.invoiced_amount ?? bucket?.gerealiseerd ?? 0,
+		)
 		const vrij = geautoriseerd - verplicht - gerealiseerd
 
 		return {
-			key: [bucket?.programma, bucket?.cost_centre, bucket?.boekjaar, bucket?.general_ledger_account].join('|'),
-			programma: String(bucket?.programma ?? ''),
+			key: [
+				bucket?.programme,
+				bucket?.cost_centre,
+				bucket?.financial_year,
+				bucket?.general_ledger_account,
+			].join('|'),
+			programme: String(bucket?.programme ?? ''),
 			cost_centre: String(bucket?.cost_centre ?? ''),
-			boekjaar: bucket?.boekjaar ?? null,
+			financial_year: bucket?.financial_year ?? null,
 			general_ledger_account: String(bucket?.general_ledger_account ?? ''),
 			geautoriseerd,
 			verplicht,
@@ -75,14 +86,14 @@ export function formatAmount(cents) {
  */
 export function drilldownFilters(row) {
 	const filters = {}
-	if (row.programma) {
-		filters.programma = row.programma
+	if (row.programme) {
+		filters.programme = row.programme
 	}
 	if (row.cost_centre) {
 		filters.cost_centre = row.cost_centre
 	}
-	if (row.boekjaar !== null && row.boekjaar !== undefined) {
-		filters.boekjaar = row.boekjaar
+	if (row.financial_year !== null && row.financial_year !== undefined) {
+		filters.financial_year = row.financial_year
 	}
 	if (row.general_ledger_account) {
 		filters.general_ledger_account = row.general_ledger_account

@@ -3,8 +3,8 @@
 /**
  * KOR Monitor Service
  *
- * Tier-2 read-only KOR drempel-bewaking (REQ-KOR-002, REQ-KOR-003). Materialises
- * the running KOR omzet, drempel-benutting, monthly breakdown, linear end-of-year
+ * Tier-2 read-only KOR threshold-bewaking (REQ-KOR-002, REQ-KOR-003). Materialises
+ * the running KOR revenue, threshold-benutting, monthly breakdown, linear end-of-year
  * prognose, and the highest reached 80/90/100 % alert-schijf for one administration
  * + calendar year from existing KORRegistration + ARInvoice data via the real
  * OpenRegister ObjectService API (find / findAll). There is NO KORAnnualTurnover
@@ -36,14 +36,14 @@ use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 
 /**
- * Computes the KOR drempel-status for one administration + year from the AR ledger.
+ * Computes the KOR threshold-status for one administration + year from the AR ledger.
  *
  * Reads are scoped to a single administration (REQ-KOR-002 IDOR safety): callers
  * pass the administrationId resolved from the authenticated user's context, never a
- * client-supplied trust boundary. The KOR omzet is summed over KOR-eligible AR
+ * client-supplied trust boundary. The KOR revenue is summed over KOR-eligible AR
  * invoices (vrijstellingsGrondslag = KOR_ART25_OB) whose leveringsDatum is in the
- * year; vrijgestelde / intracommunautaire / onroerend-goed omzet is excluded because
- * it never carries that grondslag. The arithmetic lives in KorThresholdCalculator.
+ * year; vrijgestelde / intracommunautaire / onroerend-goed revenue is excluded because
+ * it never carries that basis. The arithmetic lives in KorThresholdCalculator.
  *
  * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
@@ -63,7 +63,7 @@ class KorMonitorService {
 	}//end __construct()
 
 	/**
-	 * Compute the KOR drempel-status for one administration + year (REQ-KOR-002, REQ-KOR-003).
+	 * Compute the KOR threshold-status for one administration + year (REQ-KOR-002, REQ-KOR-003).
 	 *
 	 * @param string $administrationId Administration scope (server-resolved, REQ-KOR-002).
 	 * @param int $year Calendar year to report.
@@ -77,32 +77,32 @@ class KorMonitorService {
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
 	public function status(string $administrationId, int $year): array {
-		$thresholdCents = $this->resolveThresholdCents(administrationId: $administrationId);
+		$drempelCents = $this->resolveDrempelCents(administrationId: $administrationId);
 		$invoices = $this->fetchKorInvoices(administrationId: $administrationId, year: $year);
 
-		$revenueCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
+		$omzetCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
 		$perMonth = $this->monthlyBreakdown(invoices: $invoices, year: $year);
 
-		$currentMonth = $this->lastMonthWithRevenue(perMonth: $perMonth);
+		$currentMonth = $this->lastMonthWithOmzet(perMonth: $perMonth);
 		$prognoseCents = $this->calculator->prognoseEndOfYearCents(
-			lopendeCents: $revenueCents,
+			lopendeCents: $omzetCents,
 			currentMonth: $currentMonth
 		);
 
-		$utilisation = $this->calculator->benutting(revenueCents: $revenueCents, thresholdCents: $thresholdCents);
-		$schijf = $this->calculator->crossedSchijf(previousUtilisation: 0.0, newUtilisation: $utilisation);
+		$benutting = $this->calculator->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents);
+		$schijf = $this->calculator->crossedSchijf(previousBenutting: 0.0, newBenutting: $benutting);
 
 		return [
 			'administrationId' => $administrationId,
 			'year' => $year,
-			'currentRevenue' => $this->calculator->fromCents(cents: $revenueCents),
-			'threshold' => $this->calculator->fromCents(cents: $thresholdCents),
-			'thresholdUtilisation' => round($utilisation, 4),
+			'currentRevenue' => $this->calculator->fromCents(cents: $omzetCents),
+			'threshold' => $this->calculator->fromCents(cents: $drempelCents),
+			'thresholdUtilisation' => round($benutting, 4),
 			'perMonth' => $perMonth,
 			'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
 			'prognoseStatus' => $this->calculator->prognoseStatus(
 				prognoseCents: $prognoseCents,
-				thresholdCents: $thresholdCents
+				drempelCents: $drempelCents
 			),
 			'ernst' => ($schijf['ernst'] ?? null),
 			'trigger' => ($schijf['trigger'] ?? null),
@@ -137,11 +137,11 @@ class KorMonitorService {
 		$today = date('Y-m-d');
 		foreach ($registrations as $registration) {
 			$vroegste = (string)($registration['earliestTerminationDate'] ?? '');
-			$end = (string)($registration['lockInEndDate'] ?? '');
+			$eind = (string)($registration['lockInEndDate'] ?? '');
 			if ($this->calculator->isOptOutPermitted(
 				today: $today,
 				earliestTerminationDate: $vroegste,
-				lockInEndDate: $end
+				lockInEndDate: $eind
 			) === true
 			) {
 				return true;
@@ -179,18 +179,18 @@ class KorMonitorService {
 	}//end fetchKorInvoices()
 
 	/**
-	 * Build the YYYY-MM => omzet breakdown for the year (REQ-KOR-002).
+	 * Build the YYYY-MM => revenue breakdown for the year (REQ-KOR-002).
 	 *
 	 * @param array<int,array<string,mixed>> $invoices KOR-eligible AR invoices.
 	 * @param int $year Calendar year.
 	 *
-	 * @return array<string,float> Month key (YYYY-MM) => omzet.
+	 * @return array<string,float> Month key (YYYY-MM) => revenue.
 	 */
 	private function monthlyBreakdown(array $invoices, int $year): array {
 		$cents = [];
 		foreach ($invoices as $invoice) {
-			$leveringsDate = (string)($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
-			$month = substr($leveringsDate, 0, 7);
+			$leveringsDatum = (string)($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
+			$month = substr($leveringsDatum, 0, 7);
 			if ($month === '' || substr($month, 0, 4) !== (string)$year) {
 				continue;
 			}
@@ -208,13 +208,13 @@ class KorMonitorService {
 	}//end monthlyBreakdown()
 
 	/**
-	 * Resolve the latest calendar month that has omzet, for the prognose base (REQ-KOR-002).
+	 * Resolve the latest calendar month that has revenue, for the prognose base (REQ-KOR-002).
 	 *
-	 * @param array<string,float> $perMonth Month key (YYYY-MM) => omzet.
+	 * @param array<string,float> $perMonth Month key (YYYY-MM) => revenue.
 	 *
-	 * @return int Latest month number with omzet (1..12); 1 when none.
+	 * @return int Latest month number with revenue (1..12); 1 when none.
 	 */
-	private function lastMonthWithRevenue(array $perMonth): int {
+	private function lastMonthWithOmzet(array $perMonth): int {
 		$last = 1;
 		foreach (array_keys($perMonth) as $month) {
 			$num = (int)substr((string)$month, 5, 2);
@@ -227,15 +227,15 @@ class KorMonitorService {
 	}//end lastMonthWithOmzet()
 
 	/**
-	 * Resolve the configured KOR drempel for an administration, in cents (REQ-KOR-002).
+	 * Resolve the configured KOR threshold for an administration, in cents (REQ-KOR-002).
 	 *
-	 * Defaults to EUR 20.000 when no ACTIEF KORRegistration overrides drempelJaar.
+	 * Defaults to EUR 20.000 when no ACTIEF KORRegistration overrides thresholdYear.
 	 *
 	 * @param string $administrationId Administration scope.
 	 *
 	 * @return int Threshold in cents.
 	 */
-	private function resolveThresholdCents(string $administrationId): int {
+	private function resolveDrempelCents(string $administrationId): int {
 		$default = $this->calculator->toCents(amount: 20000);
 
 		try {

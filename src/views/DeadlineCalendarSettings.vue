@@ -20,20 +20,31 @@
 					{{ t('shillinq', 'Deadline calendar') }}
 				</h2>
 				<p class="deadline-calendar-settings__description">
-					{{ t('shillinq', 'Choose which deadline categories appear on your deadline calendar and when you want to be reminded. Filing, payment-run and contract deadlines are on by default; invoice due dates are opt-in.') }}
+					{{
+						t(
+							'shillinq',
+							'Choose which deadline categories appear on your deadline calendar and when you want to be reminded. Filing, payment-run and contract deadlines are on by default; invoice due dates are opt-in.',
+						)
+					}}
 				</p>
 			</header>
 
 			<section class="deadline-calendar-settings__body">
-				<NcLoadingIcon v-if="loading"
+				<NcLoadingIcon
+					v-if="loading"
 					:size="32"
 					:name="t('shillinq', 'Loading deadline calendar settings')" />
-				<form v-else class="deadline-calendar-settings__form" @submit.prevent="save">
-					<fieldset v-for="row in rows"
+				<form
+					v-else
+					class="deadline-calendar-settings__form"
+					@submit.prevent="save">
+					<fieldset
+						v-for="row in rows"
 						:key="row.id"
 						class="deadline-calendar-settings__category"
 						:data-testid="'deadline-category-' + row.id">
-						<NcCheckboxRadioSwitch v-model="row.enabled"
+						<NcCheckboxRadioSwitch
+							v-model="row.enabled"
 							type="switch"
 							:data-testid="'deadline-toggle-' + row.id">
 							{{ t('shillinq', row.label) }}
@@ -41,7 +52,8 @@
 						<p class="deadline-calendar-settings__category-description">
 							{{ t('shillinq', row.description) }}
 						</p>
-						<NcTextField v-if="row.enabled"
+						<NcTextField
+							v-if="row.enabled"
 							v-model="row.leadDaysInput"
 							type="number"
 							min="0"
@@ -53,17 +65,28 @@
 					</fieldset>
 
 					<div class="deadline-calendar-settings__actions">
-						<NcButton variant="primary"
+						<NcButton
+							variant="primary"
 							type="submit"
 							:disabled="saving"
 							data-testid="deadline-settings-save">
-							{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}
+							{{
+								saving
+									? t('shillinq', 'Saving…')
+									: t('shillinq', 'Save')
+							}}
 						</NcButton>
-						<span v-if="savedMessage" class="deadline-calendar-settings__saved" role="status">
+						<span
+							v-if="savedMessage"
+							class="deadline-calendar-settings__saved"
+							role="status">
 							{{ savedMessage }}
 						</span>
 					</div>
-					<p v-if="errorMessage" class="deadline-calendar-settings__error" role="alert">
+					<p
+						v-if="errorMessage"
+						class="deadline-calendar-settings__error"
+						role="alert">
 						{{ errorMessage }}
 					</p>
 				</form>
@@ -73,10 +96,19 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcCheckboxRadioSwitch, NcLoadingIcon, NcTextField } from '@nextcloud/vue'
+import {
+	NcAppContent,
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
+	NcTextField,
+} from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
-import { normaliseSettings, buildSavePayload } from './deadlineCalendarSettingsHelpers.js'
+import {
+	normaliseSettings,
+	buildSavePayload,
+} from './deadlineCalendarSettingsHelpers.js'
 
 export default {
 	name: 'DeadlineCalendarSettings',
@@ -110,7 +142,9 @@ export default {
 			this.errorMessage = ''
 
 			try {
-				const url = generateUrl('/apps/shillinq/api/deadline-calendar/settings')
+				const url = generateUrl(
+					'/apps/shillinq/api/deadline-calendar/settings',
+				)
 				const { data } = await axios.get(url)
 				this.rows = normaliseSettings(data).map((row) => ({
 					...row,
@@ -122,7 +156,10 @@ export default {
 					...row,
 					leadDaysInput: String(row.leadDays),
 				}))
-				this.errorMessage = this.t('shillinq', 'Failed to load deadline calendar settings.')
+				this.errorMessage = this.t(
+					'shillinq',
+					'Failed to load deadline calendar settings.',
+				)
 			} finally {
 				this.loading = false
 			}
@@ -135,20 +172,30 @@ export default {
 			this.savedMessage = ''
 
 			try {
-				const payload = buildSavePayload(this.rows.map((row) => ({
-					id: row.id,
-					enabled: row.enabled,
-					leadDays: Number.parseInt(row.leadDaysInput, 10),
-				})))
-				const url = generateUrl('/apps/shillinq/api/deadline-calendar/settings')
+				const payload = buildSavePayload(
+					this.rows.map((row) => ({
+						id: row.id,
+						enabled: row.enabled,
+						leadDays: Number.parseInt(row.leadDaysInput, 10),
+					})),
+				)
+				const url = generateUrl(
+					'/apps/shillinq/api/deadline-calendar/settings',
+				)
 				const { data } = await axios.post(url, payload)
 				this.rows = normaliseSettings(data).map((row) => ({
 					...row,
 					leadDaysInput: String(row.leadDays),
 				}))
-				this.savedMessage = this.t('shillinq', 'Deadline calendar settings saved.')
+				this.savedMessage = this.t(
+					'shillinq',
+					'Deadline calendar settings saved.',
+				)
 			} catch (error) {
-				this.errorMessage = this.t('shillinq', 'Failed to save deadline calendar settings.')
+				this.errorMessage = this.t(
+					'shillinq',
+					'Failed to save deadline calendar settings.',
+				)
 			} finally {
 				this.saving = false
 			}

@@ -9,34 +9,34 @@
 
 export interface BookingWidgetConfig {
 	/** Public partner business id used in widget embeds (e.g. "salon-001"). */
-	businessId: string;
+	businessId: string
 	/** Shillinq API base URL, e.g. https://shillinq.example.com/index.php/apps/shillinq */
-	apiBase: string;
+	apiBase: string
 	/** Bearer API key (bk_live_...). Shown to the partner once at creation. */
-	apiKey: string;
+	apiKey: string
 	/** DOM id of the mount container (mutually exclusive with `element`). */
-	containerId?: string;
+	containerId?: string
 	/** DOM element to mount into (mutually exclusive with `containerId`). */
-	element?: HTMLElement;
+	element?: HTMLElement
 	/** Logical resource id to book (defaults to "res-001"). */
-	resourceId?: string;
+	resourceId?: string
 	/** BCP-47 language code (defaults to "en"). */
-	lang?: string;
+	lang?: string
 	/** Hex/CSS colour applied to --wsw-primary-color. */
-	primaryColor?: string;
+	primaryColor?: string
 	/** When true, applies the wsw-widget--dark surface palette. */
-	darkMode?: boolean;
+	darkMode?: boolean
 	/** Override the bundled translation table. */
-	translations?: Record<string, string>;
+	translations?: Record<string, string>
 }
 
 export interface BookingWidgetInstance {
-	$destroy(): void;
+	$destroy(): void
 }
 
 export interface BookingWidgetApi {
-	init(_config: BookingWidgetConfig): BookingWidgetInstance | null;
-	iframeUrl(_config: BookingWidgetConfig): string;
+	init(_config: BookingWidgetConfig): BookingWidgetInstance | null
+	iframeUrl(_config: BookingWidgetConfig): string
 }
 
 export const BookingWidget: BookingWidgetApi

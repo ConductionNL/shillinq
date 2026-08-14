@@ -47,7 +47,9 @@ test.describe('accountant-portal — scoped multi-client dashboard (REQ-ACP-001/
 		page.setViewportSize({ width: 1600, height: 1200 })
 	})
 
-	test('renders client cards or the no-memberships empty state', async ({ page }) => {
+	test('renders client cards or the no-memberships empty state', async ({
+		page,
+	}) => {
 		await page.goto(`${APP}${ROUTE}`)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -67,14 +69,20 @@ test.describe('accountant-portal — scoped multi-client dashboard (REQ-ACP-001/
 		await expect(card).toBeVisible()
 	})
 
-	test('the handover-pack action requests the scoped export endpoint', async ({ page, context }) => {
+	test('the handover-pack action requests the scoped export endpoint', async ({
+		page,
+		context,
+	}) => {
 		await page.goto(`${APP}${ROUTE}`)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		const button = page.getByTestId('accountant-handover-pack-button').first()
 		const hasButton = await button.isVisible().catch(() => false)
-		test.skip(!hasButton, 'no client administration available to test the handover-pack action against')
+		test.skip(
+			!hasButton,
+			'no client administration available to test the handover-pack action against',
+		)
 
 		const [popup] = await Promise.all([
 			context.waitForEvent('page', { timeout: 5_000 }).catch(() => null),

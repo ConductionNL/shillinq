@@ -30,7 +30,12 @@
 		@closing="onClose">
 		<div class="prr">
 			<p class="prr__intro">
-				{{ t('shillinq', 'Import a CAMT.053 bank statement for this payment run. Its booked entries are matched to the run\'s payment lines; on a full match the run is reconciled.') }}
+				{{
+					t(
+						'shillinq',
+						"Import a CAMT.053 bank statement for this payment run. Its booked entries are matched to the run's payment lines; on a full match the run is reconciled.",
+					)
+				}}
 			</p>
 
 			<input
@@ -39,7 +44,7 @@
 				accept=".xml,application/xml,text/xml"
 				:aria-label="t('shillinq', 'Choose a CAMT.053 bank statement file')"
 				data-testid="payment-run-reconcile-file"
-				@change="onFileSelected">
+				@change="onFileSelected" />
 
 			<p v-if="fileName" class="prr__filename">
 				{{ t('shillinq', 'Selected') }}: {{ fileName }}
@@ -118,7 +123,9 @@ export default {
 			if (!this.result) {
 				return ''
 			}
-			return this.result.result === 'full' ? 'prr__result--ok' : 'prr__result--warn'
+			return this.result.result === 'full'
+				? 'prr__result--ok'
+				: 'prr__result--warn'
 		},
 	},
 	methods: {
@@ -145,7 +152,9 @@ export default {
 			this.result = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/shillinq/api/v1/payment-runs/${this.runId}/reconcile`),
+					generateUrl(
+						`/apps/shillinq/api/v1/payment-runs/${this.runId}/reconcile`,
+					),
 					{ contents: this.fileContents },
 				)
 				this.result = response.data
@@ -154,12 +163,17 @@ export default {
 					emit('cn:widget:refresh', { widget: 'PaymentRunDetail' })
 					this.$emit('reconciled', this.result)
 				} else {
-					showError(t('shillinq', 'Partial match — the run stays exported.'))
+					showError(
+						t('shillinq', 'Partial match — the run stays exported.'),
+					)
 				}
 			} catch (error) {
-				const message = error.response && error.response.data && error.response.data.error
-					? error.response.data.error
-					: t('shillinq', 'Could not reconcile the payment run.')
+				const message =
+					error.response
+					&& error.response.data
+					&& error.response.data.error
+						? error.response.data.error
+						: t('shillinq', 'Could not reconcile the payment run.')
 				showError(message)
 			} finally {
 				this.submitting = false

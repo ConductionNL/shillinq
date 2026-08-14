@@ -25,7 +25,9 @@ import { test, expect } from '@playwright/test'
 const APP = '/apps/shillinq'
 
 test.describe('shillinq — Innovatiebox Administratie SPA smoke', () => {
-	test('Innovatiebox navigation entries resolve in the manifest shell', async ({ page }) => {
+	test('Innovatiebox navigation entries resolve in the manifest shell', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 

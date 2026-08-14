@@ -42,7 +42,12 @@ describe('receiptCapture — review form (REQ-RXC-003)', () => {
 })
 
 describe('receiptCapture — save gate (REQ-EC-002 required fields)', () => {
-	const base = { amount: 45, currency: 'EUR', receiptDate: '2026-02-10', category: 'meals' }
+	const base = {
+		amount: 45,
+		currency: 'EUR',
+		receiptDate: '2026-02-10',
+		category: 'meals',
+	}
 
 	it('allows save when amount/currency/receiptDate/category are present', () => {
 		expect(canSaveReceipt(base)).toBe(true)
@@ -133,7 +138,11 @@ describe('receiptCapture — GL account (gl-account-suggestion-consume)', () => 
 
 describe('receiptCapture — error mapping', () => {
 	it('prefers the server error message', () => {
-		expect(receiptErrorMessage({ response: { data: { error: 'Draft not found' } } })).toBe('Draft not found')
+		expect(
+			receiptErrorMessage({
+				response: { data: { error: 'Draft not found' } },
+			}),
+		).toBe('Draft not found')
 	})
 
 	it('falls back to a generic message', () => {

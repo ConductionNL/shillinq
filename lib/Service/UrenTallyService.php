@@ -4,16 +4,16 @@
  * Uren Tally Service
  *
  * End-of-day idempotent tally service per REQ-URC-001. Sums UrenDagregistratie
- * entries for a given (ondernemingId, datum) pair, applies the reistijd-cap
+ * entries for a given (enterpriseId, date) pair, applies the reistijd-cap
  * (REISTIJD_ZAKELIJK ≤ 4 uur/dag) via UrenDagregistratieGuard::pasReistijdCapToe,
  * filters categories that have telTMee=false on the UrenCategorie definition,
  * and produces a per-day total that the year-tally batch adds to
- * UrencriteriumYear.lopendeUren.
+ * UrencriteriumYear.currentHours.
  *
  * Idempotent by construction: the service is a pure aggregator over the supplied
- * collection. Calling it twice on the same (entries, datum) yields the same total.
+ * collection. Calling it twice on the same (entries, date) yields the same total.
  * The scheduler's idempotency check (REQ-URC-001) is the caller's responsibility:
- * once a tally for (ondernemingId, datum) is written, the scheduler must skip the
+ * once a tally for (enterpriseId, date) is written, the scheduler must skip the
  * day. This service does not write OR records — it returns the canonical patch
  * shape the caller persists.
  *
@@ -74,8 +74,8 @@ final class UrenTallyService {
 	 * Aggregate UrenDagregistratie entries for one day.
 	 *
 	 * Returns:
-	 *  - totaalUren: float — sum of counted hours after cap and category filter.
-	 *  - perCategorie: array<string, float> — counted hours per category.
+	 *  - totalHours: float — sum of counted hours after cap and category filter.
+	 *  - perCategory: array<string, float> — counted hours per category.
 	 *  - overages: array<int, array{category: string, ingevoerd: float, geteld: float, notitie: string}>
 	 *    — entries whose hours exceeded a category cap.
 	 *
@@ -103,17 +103,17 @@ final class UrenTallyService {
 			$hours = (float)($entry['hours'] ?? 0);
 			$capInfo = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
 			$geteld = $capInfo['countedHours'];
-			$note = $capInfo['capNote'];
+			$notitie = $capInfo['capNote'];
 
 			$total += $geteld;
 			$perCategory[$category] = (($perCategory[$category] ?? 0.0) + $geteld);
 
-			if ($note !== null) {
+			if ($notitie !== null) {
 				$overages[] = [
 					'category' => $category,
 					'ingevoerd' => $hours,
 					'geteld' => $geteld,
-					'notitie' => $note,
+					'notitie' => $notitie,
 				];
 			}
 		}//end foreach
@@ -130,11 +130,11 @@ final class UrenTallyService {
 	 * Aggregate YTD UrenDagregistratie entries into a UrencriteriumYear patch.
 	 *
 	 * Sums every counted hour across the supplied YTD entries and returns the
-	 * canonical {lopendeUren, berekendOp} patch shape. The caller persists this
+	 * canonical {currentHours, calculatedOn} patch shape. The caller persists this
 	 * onto the UrencriteriumYear record.
 	 *
 	 * @param array<int, array<string, mixed>> $entries YTD entries.
-	 * @param string $now ISO-8601 berekendOp timestamp.
+	 * @param string $now ISO-8601 calculatedOn timestamp.
 	 *
 	 * @return array{currentHours: float, calculatedOn: string}
 	 *

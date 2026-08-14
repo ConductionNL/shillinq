@@ -194,7 +194,7 @@ class BudgetBlockerTest extends TestCase {
 	}//end withObjectService()
 
 	/**
-	 * A budget record for the demo administration / programma / boekjaar.
+	 * A budget record for the demo administration / programme / financial_year.
 	 *
 	 * @param array<string,mixed> $overrides Field overrides.
 	 *
@@ -216,7 +216,7 @@ class BudgetBlockerTest extends TestCase {
 	}//end budget()
 
 	/**
-	 * A single-line commitment of the given amount on programma 5.1 / 2026.
+	 * A single-line commitment of the given amount on programme 5.1 / 2026.
 	 *
 	 * @param int $amount Amount in minor units.
 	 *
@@ -310,8 +310,8 @@ class BudgetBlockerTest extends TestCase {
 	}//end testOverrideMandateForcesAcceptance()
 
 	/**
-	 * REQ-VPL-001 / REQ-VPL-004: each regel is validated against its own
-	 * programma + boekjaar budget independently.
+	 * REQ-VPL-001 / REQ-VPL-004: each rule is validated against its own
+	 * programme + financial_year budget independently.
 	 *
 	 * @return void
 	 */
@@ -342,7 +342,7 @@ class BudgetBlockerTest extends TestCase {
 	}//end testMultiYearPerBudgetIsolation()
 
 	/**
-	 * A commitment whose regel has no matching budget is rejected (fail-closed:
+	 * A commitment whose rule has no matching budget is rejected (fail-closed:
 	 * a missing budget is not free budget).
 	 *
 	 * @return void
@@ -367,4 +367,74 @@ class BudgetBlockerTest extends TestCase {
 		$this->assertFalse($this->guard->canCommit('PO-1', $this->commitment(1000000)));
 
 	}//end testFailClosedOnException()
+
+	/**
+	 * A rule whose amount cannot be read is DENIED, not treated as zero.
+	 *
+	 * The shipped code coalesced a missing amount to 0, and `fits()` is
+	 * `$amount <= freeRoom()`, so every unreadable rule fitted every budget
+	 * that was not already overcommitted — the commitment was approved against
+	 * a figure nothing had read (CWE-863).
+	 *
+	 * The amount here (EUR 5.000.000) is far beyond the free room, so the
+	 * ONLY way this can return true is the coalesce-to-zero path. That makes
+	 * the assertion unable to pass for an unrelated reason.
+	 *
+	 * @return void
+	 */
+	public function testRegelWithUnreadableAmountIsDenied(): void {
+		$this->withObjectService(
+			$this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => []])
+		);
+
+		$commitment = $this->commitment(500000000);
+		// The amount arrives under a key this guard does not read — exactly what
+		// a vocabulary drift on either side of the flow produces.
+		$commitment['rules'][0]['amount_excl_vat'] = $commitment['rules'][0]['amount_excl_vat'];
+		unset($commitment['rules'][0]['amount_excl_vat']);
+
+		$this->assertFalse(
+			$this->guard->canCommit('PO-1', $commitment),
+			'an unreadable amount must deny, not coalesce to a zero that fits every budget'
+		);
+
+	}//end testRegelWithUnreadableAmountIsDenied()
+
+	/**
+	 * A non-numeric amount is DENIED for the same reason.
+	 *
+	 * `array_key_exists()` alone would accept `'onbekend'`, which `(int)` casts
+	 * to 0 — the same fail-open through a different door.
+	 *
+	 * @return void
+	 */
+	public function testRegelWithNonNumericAmountIsDenied(): void {
+		$this->withObjectService(
+			$this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => []])
+		);
+
+		$commitment = $this->commitment(500000000);
+		$commitment['rules'][0]['amount_excl_vat'] = 'onbekend';
+
+		$this->assertFalse($this->guard->canCommit('PO-1', $commitment));
+
+	}//end testRegelWithNonNumericAmountIsDenied()
+
+	/**
+	 * POSITIVE CONTROL: a readable amount within free room is still allowed.
+	 *
+	 * Without this, the two denials above would also be satisfied by a guard
+	 * that had started denying everything — which is precisely how a
+	 * fail-closed repair goes wrong.
+	 *
+	 * @return void
+	 */
+	public function testReadableAmountWithinBudgetIsStillAllowed(): void {
+		$this->withObjectService(
+			$this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => []])
+		);
+
+		$this->assertTrue($this->guard->canCommit('PO-1', $this->commitment(10000000)));
+
+	}//end testReadableAmountWithinBudgetIsStillAllowed()
 }//end class

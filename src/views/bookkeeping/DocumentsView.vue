@@ -30,24 +30,36 @@
 						<option value="">{{ t('shillinq', 'All') }}</option>
 						<option value="draft">{{ t('shillinq', 'Draft') }}</option>
 						<option value="filed">{{ t('shillinq', 'Filed') }}</option>
-						<option value="archived">{{ t('shillinq', 'Archived') }}</option>
+						<option value="archived">
+							{{ t('shillinq', 'Archived') }}
+						</option>
 					</select>
 				</label>
 				<label>
 					<span>{{ t('shillinq', 'Type') }}</span>
 					<select v-model="filters.type" @change="load">
 						<option value="">{{ t('shillinq', 'All') }}</option>
-						<option value="invoice">{{ t('shillinq', 'Invoice') }}</option>
-						<option value="receipt">{{ t('shillinq', 'Receipt') }}</option>
-						<option value="contract">{{ t('shillinq', 'Contract') }}</option>
-						<option value="tax-form">{{ t('shillinq', 'Tax Form') }}</option>
-						<option value="bank-statement">{{ t('shillinq', 'Bank Statement') }}</option>
+						<option value="invoice">
+							{{ t('shillinq', 'Invoice') }}
+						</option>
+						<option value="receipt">
+							{{ t('shillinq', 'Receipt') }}
+						</option>
+						<option value="contract">
+							{{ t('shillinq', 'Contract') }}
+						</option>
+						<option value="tax-form">
+							{{ t('shillinq', 'Tax Form') }}
+						</option>
+						<option value="bank-statement">
+							{{ t('shillinq', 'Bank Statement') }}
+						</option>
 						<option value="memo">{{ t('shillinq', 'Memo') }}</option>
 					</select>
 				</label>
 				<label>
 					<span>{{ t('shillinq', 'Filed from') }}</span>
-					<input v-model="filters.filedFrom" type="date" @change="load">
+					<input v-model="filters.filedFrom" type="date" @change="load" />
 				</label>
 			</div>
 
@@ -60,15 +72,23 @@
 				class="wbso-documents__table"
 				:columns="columns"
 				:rows="documents"
-				:empty-label="t('shillinq', 'Upload the first document to track an invoice, receipt, or contract.')">
+				:empty-label="
+					t(
+						'shillinq',
+						'Upload the first document to track an invoice, receipt, or contract.',
+					)
+				">
 				<template #cell-documentType="{ row }">
 					{{ translateType(row.documentType) }}
 				</template>
 				<template #cell-status="{ row }">
-					<span :data-status="row.status">{{ translateStatus(row.status) }}</span>
+					<span :data-status="row.status">{{
+						translateStatus(row.status)
+					}}</span>
 				</template>
 				<template #cell-fileReference="{ row }">
-					<a v-if="row.fileReference"
+					<a
+						v-if="row.fileReference"
 						:href="row.fileReference"
 						target="_blank"
 						rel="noopener">
@@ -123,11 +143,27 @@ export default {
 		 */
 		columns() {
 			return [
-				{ key: 'documentNumber', label: t('shillinq', 'Document Number'), sortable: true },
-				{ key: 'documentType', label: t('shillinq', 'Document Type'), sortable: true },
-				{ key: 'documentDate', label: t('shillinq', 'Document Date'), sortable: true },
+				{
+					key: 'documentNumber',
+					label: t('shillinq', 'Document Number'),
+					sortable: true,
+				},
+				{
+					key: 'documentType',
+					label: t('shillinq', 'Document Type'),
+					sortable: true,
+				},
+				{
+					key: 'documentDate',
+					label: t('shillinq', 'Document Date'),
+					sortable: true,
+				},
 				{ key: 'status', label: t('shillinq', 'Status'), sortable: true },
-				{ key: 'fileReference', label: t('shillinq', 'File Reference'), sortable: false },
+				{
+					key: 'fileReference',
+					label: t('shillinq', 'File Reference'),
+					sortable: false,
+				},
 			]
 		},
 	},
@@ -148,7 +184,8 @@ export default {
 				if (this.filters.filedFrom) params.filedFrom = this.filters.filedFrom
 				const { data } = await axios.get(url, { params })
 				this.documents = data?.ocs?.data?.documents ?? data?.documents ?? []
-				this.canCreate = data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
+				this.canCreate =
+					data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
 			} catch (error) {
 				this.errorMessage = t('shillinq', 'Failed to load documents.')
 			} finally {

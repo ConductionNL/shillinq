@@ -58,7 +58,7 @@
 						type="date"
 						class="iqd__input"
 						data-testid="iqd-invoice-date"
-						@change="recomputeDueDate">
+						@change="recomputeDueDate" />
 				</div>
 				<div class="iqd__field">
 					<label class="iqd__label" for="iqd-due-date">
@@ -69,7 +69,7 @@
 						v-model="form.dueDate"
 						type="date"
 						class="iqd__input"
-						data-testid="iqd-due-date">
+						data-testid="iqd-due-date" />
 				</div>
 			</div>
 
@@ -84,7 +84,7 @@
 					type="text"
 					class="iqd__input"
 					data-testid="iqd-reference"
-					:placeholder="t('shillinq', 'Optional')">
+					:placeholder="t('shillinq', 'Optional')" />
 			</div>
 
 			<!-- Line items -->
@@ -103,7 +103,7 @@
 						class="iqd__input iqd__input--desc"
 						:aria-label="t('shillinq', 'Line description')"
 						:placeholder="t('shillinq', 'Description')"
-						data-testid="iqd-line-description">
+						data-testid="iqd-line-description" />
 					<input
 						v-model.number="line.quantity"
 						type="number"
@@ -112,7 +112,7 @@
 						class="iqd__input iqd__input--qty"
 						:aria-label="t('shillinq', 'Line quantity')"
 						:placeholder="t('shillinq', 'Qty')"
-						data-testid="iqd-line-quantity">
+						data-testid="iqd-line-quantity" />
 					<input
 						v-model.number="line.unitPrice"
 						type="number"
@@ -121,7 +121,7 @@
 						class="iqd__input iqd__input--price"
 						:aria-label="t('shillinq', 'Line unit price')"
 						:placeholder="t('shillinq', 'Unit price')"
-						data-testid="iqd-line-unit-price">
+						data-testid="iqd-line-unit-price" />
 					<NcSelect
 						:model-value="vatOptionFor(line)"
 						:options="vatOptions"
@@ -162,7 +162,10 @@
 			<div class="iqd__totals" data-testid="iqd-totals">
 				<span>{{ t('shillinq', 'Net') }}: {{ formatEuro(netAmount) }}</span>
 				<span>{{ t('shillinq', 'VAT') }}: {{ formatEuro(vatAmount) }}</span>
-				<strong>{{ t('shillinq', 'Total') }}: {{ formatEuro(grossAmount) }}</strong>
+				<strong
+					>{{ t('shillinq', 'Total') }}:
+					{{ formatEuro(grossAmount) }}</strong
+				>
 			</div>
 
 			<p v-if="error" class="iqd__error" data-testid="iqd-error">
@@ -171,10 +174,7 @@
 		</div>
 
 		<template #actions>
-			<NcButton
-				:disabled="saving"
-				data-testid="iqd-cancel"
-				@click="onClose">
+			<NcButton :disabled="saving" data-testid="iqd-cancel" @click="onClose">
 				{{ t('shillinq', 'Cancel') }}
 			</NcButton>
 			<NcButton
@@ -266,9 +266,11 @@ export default {
 		canSave() {
 			if (this.saving) return false
 			if (!this.selectedCustomer || !this.selectedCustomer.value) return false
-			return this.form.lines.some((l) =>
-				(l.description || '').trim().length > 0
-				&& Number(l.unitPrice) > 0)
+			return this.form.lines.some(
+				(l) =>
+					(l.description || '').trim().length > 0
+					&& Number(l.unitPrice) > 0,
+			)
 		},
 	},
 	watch: {
@@ -301,8 +303,10 @@ export default {
 		},
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		vatOptionFor(line) {
-			return this.vatOptions.find((o) => o.value === Number(line.vatRate))
+			return (
+				this.vatOptions.find((o) => o.value === Number(line.vatRate))
 				|| this.vatOptions[0]
+			)
 		},
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		reset() {
@@ -321,10 +325,16 @@ export default {
 			this.loadingCustomers = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${CUSTOMER_SCHEMA}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${CUSTOMER_SCHEMA}`,
+					),
 					{ params: { _limit: 500 } },
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				this.customers = Array.isArray(rows) ? rows : []
 			} catch (e) {
 				this.customers = []
@@ -343,8 +353,11 @@ export default {
 		 */
 		async fetchAdministrationId() {
 			try {
-				const { data } = await axios.get(generateUrl('/apps/shillinq/api/settings'))
-				this.administrationId = data?.administration_id ?? data?.administrationId ?? ''
+				const { data } = await axios.get(
+					generateUrl('/apps/shillinq/api/settings'),
+				)
+				this.administrationId =
+					data?.administration_id ?? data?.administrationId ?? ''
 			} catch (e) {
 				this.administrationId = ''
 			}
@@ -364,18 +377,22 @@ export default {
 				if (prefs.glAccount) this.form.glAccount = String(prefs.glAccount)
 				const line = this.form.lines[0]
 				if (line) {
-					if (prefs.description && !line.description) line.description = prefs.description
-					if (prefs.unitPrice && !line.unitPrice) line.unitPrice = prefs.unitPrice
-					if (prefs.vatCode !== undefined && prefs.vatCode !== null) line.vatRate = prefs.vatCode
+					if (prefs.description && !line.description)
+						line.description = prefs.description
+					if (prefs.unitPrice && !line.unitPrice)
+						line.unitPrice = prefs.unitPrice
+					if (prefs.vatCode !== undefined && prefs.vatCode !== null)
+						line.vatRate = prefs.vatCode
 				}
 			}
 			this.recomputeDueDate(customer)
 		},
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		recomputeDueDate(customerOrEvent) {
-			const customer = customerOrEvent && customerOrEvent.customerId
-				? customerOrEvent
-				: this.selectedCustomer?.customer
+			const customer =
+				customerOrEvent && customerOrEvent.customerId
+					? customerOrEvent
+					: this.selectedCustomer?.customer
 			const terms = customer?.paymentTerms || 'net30'
 			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, terms)
 		},
@@ -413,12 +430,15 @@ export default {
 					lines: this.form.lines,
 				})
 				const response = await axios.post(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${AR_SCHEMA}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${AR_SCHEMA}`,
+					),
 					payload,
 				)
 				const created = response.data?.object ?? response.data ?? {}
 				const invoiceId = created.id ?? created.uuid ?? ''
-				const invoiceNumber = created.invoiceNumber || payload.invoiceNumber || ''
+				const invoiceNumber =
+					created.invoiceNumber || payload.invoiceNumber || ''
 
 				// Persist per-customer preferences for next time (REQ-IQD-004).
 				const firstLine = this.form.lines[0] || {}
@@ -430,14 +450,17 @@ export default {
 				})
 
 				showSuccess(
-					t('shillinq', 'Draft invoice {number} created.', { number: invoiceNumber || invoiceId }),
+					t('shillinq', 'Draft invoice {number} created.', {
+						number: invoiceNumber || invoiceId,
+					}),
 				)
 				// REQ-IQD-005: refresh the receivables widget without navigation.
 				emit('cn:widget:refresh', { widget: 'widget-open-debtors' })
 				this.$emit('created', { id: invoiceId, invoiceNumber })
 				this.$emit('close')
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| e?.response?.data?.message
 					|| e?.message
 					|| t('shillinq', 'Failed to create draft invoice.')

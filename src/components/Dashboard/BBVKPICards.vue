@@ -78,13 +78,17 @@ export default {
 			return this.programmes.length
 		},
 		onTrackCount() {
-			return this.programmes.filter(p => p.complianceStatus === 'on-track').length
+			return this.programmes.filter((p) => p.complianceStatus === 'on-track')
+				.length
 		},
 		atRiskCount() {
-			return this.programmes.filter(p => p.complianceStatus === 'at-risk').length
+			return this.programmes.filter((p) => p.complianceStatus === 'at-risk')
+				.length
 		},
 		nonCompliantCount() {
-			return this.programmes.filter(p => p.complianceStatus === 'non-compliant').length
+			return this.programmes.filter(
+				(p) => p.complianceStatus === 'non-compliant',
+			).length
 		},
 	},
 	methods: { t },

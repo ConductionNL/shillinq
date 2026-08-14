@@ -54,8 +54,9 @@ export function validateProfile(form) {
 		errors.push('A customer is required.')
 	}
 	const lines = form.lines || []
-	const hasPricedLine = lines.some((l) =>
-		(l.description || '').trim().length > 0 && Number(l.unitPrice) > 0)
+	const hasPricedLine = lines.some(
+		(l) => (l.description || '').trim().length > 0 && Number(l.unitPrice) > 0,
+	)
 	if (!hasPricedLine) {
 		errors.push('At least one line with a description and a price is required.')
 	}
@@ -79,7 +80,10 @@ export function validateProfile(form) {
  */
 export function buildProfilePayload(form) {
 	const lines = (form.lines || [])
-		.filter((l) => (l.description || '').trim().length > 0 || Number(l.unitPrice) > 0)
+		.filter(
+			(l) =>
+				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
+		)
 		.map((l) => ({
 			description: (l.description || '').trim(),
 			quantity: Number(l.quantity) || 1,
@@ -103,7 +107,11 @@ export function buildProfilePayload(form) {
 		status: form.status || 'draft',
 	}
 
-	if (form.indexationPercent !== undefined && form.indexationPercent !== null && form.indexationPercent !== '') {
+	if (
+		form.indexationPercent !== undefined
+		&& form.indexationPercent !== null
+		&& form.indexationPercent !== ''
+	) {
 		payload.indexationPercent = Number(form.indexationPercent)
 	}
 	if (form.endDate) {

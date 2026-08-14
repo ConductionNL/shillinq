@@ -95,7 +95,10 @@
 			</template>
 		</CnDashboardPage>
 
-		<p v-if="error" class="bbv-dashboard__error" data-testid="bbv-dashboard-error">
+		<p
+			v-if="error"
+			class="bbv-dashboard__error"
+			data-testid="bbv-dashboard-error">
 			{{ error }}
 		</p>
 	</div>
@@ -141,18 +144,63 @@ export default {
 	computed: {
 		widgets() {
 			return [
-				{ id: 'bbv-kpis', title: this.t('shillinq', 'Key compliance metrics'), type: 'custom' },
-				{ id: 'bbv-pie', title: this.t('shillinq', 'Compliance status distribution'), type: 'custom' },
-				{ id: 'bbv-trend', title: this.t('shillinq', 'YTD cumulative spend per programme'), type: 'custom' },
-				{ id: 'bbv-table', title: this.t('shillinq', 'Programme utilization'), type: 'custom' },
+				{
+					id: 'bbv-kpis',
+					title: this.t('shillinq', 'Key compliance metrics'),
+					type: 'custom',
+				},
+				{
+					id: 'bbv-pie',
+					title: this.t('shillinq', 'Compliance status distribution'),
+					type: 'custom',
+				},
+				{
+					id: 'bbv-trend',
+					title: this.t('shillinq', 'YTD cumulative spend per programme'),
+					type: 'custom',
+				},
+				{
+					id: 'bbv-table',
+					title: this.t('shillinq', 'Programme utilization'),
+					type: 'custom',
+				},
 			]
 		},
 		layout() {
 			return [
-				{ id: 'layout-kpis', widgetId: 'bbv-kpis', gridX: 0, gridY: 0, gridWidth: 12, gridHeight: 2, showTitle: false },
-				{ id: 'layout-pie', widgetId: 'bbv-pie', gridX: 0, gridY: 2, gridWidth: 6, gridHeight: 4 },
-				{ id: 'layout-trend', widgetId: 'bbv-trend', gridX: 6, gridY: 2, gridWidth: 6, gridHeight: 4 },
-				{ id: 'layout-table', widgetId: 'bbv-table', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
+				{
+					id: 'layout-kpis',
+					widgetId: 'bbv-kpis',
+					gridX: 0,
+					gridY: 0,
+					gridWidth: 12,
+					gridHeight: 2,
+					showTitle: false,
+				},
+				{
+					id: 'layout-pie',
+					widgetId: 'bbv-pie',
+					gridX: 0,
+					gridY: 2,
+					gridWidth: 6,
+					gridHeight: 4,
+				},
+				{
+					id: 'layout-trend',
+					widgetId: 'bbv-trend',
+					gridX: 6,
+					gridY: 2,
+					gridWidth: 6,
+					gridHeight: 4,
+				},
+				{
+					id: 'layout-table',
+					widgetId: 'bbv-table',
+					gridX: 0,
+					gridY: 6,
+					gridWidth: 12,
+					gridHeight: 5,
+				},
 			]
 		},
 		fyLabel() {
@@ -163,7 +211,10 @@ export default {
 		},
 		scopeDescription() {
 			if (!this.scope.fiscalYear) {
-				return this.t('shillinq', 'Fiscal-year overview of programme utilization and compliance status.')
+				return this.t(
+					'shillinq',
+					'Fiscal-year overview of programme utilization and compliance status.',
+				)
 			}
 			return this.t(
 				'shillinq',
@@ -180,7 +231,9 @@ export default {
 		t,
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/administrations/context'),
+				)
 				const admins = response.data?.administrations || []
 				this.administrationOptions = admins.map((a) => ({
 					value: a.administrationId,
@@ -191,7 +244,10 @@ export default {
 				}
 			} catch (e) {
 				// Inline error; the dashboard still renders an empty envelope.
-				this.error = this.t('shillinq', 'Failed to load administration context')
+				this.error = this.t(
+					'shillinq',
+					'Failed to load administration context',
+				)
 			}
 		},
 		async onAdministrationChange() {
@@ -213,7 +269,9 @@ export default {
 					{ params },
 				)
 				const data = response.data || {}
-				this.programmes = Array.isArray(data.programmes) ? data.programmes : []
+				this.programmes = Array.isArray(data.programmes)
+					? data.programmes
+					: []
 				this.mappings = Array.isArray(data.mappings) ? data.mappings : []
 				this.timeline = Array.isArray(data.timeline) ? data.timeline : []
 				this.scope = data.scope || {
@@ -226,8 +284,14 @@ export default {
 				this.programmes = []
 				this.timeline = []
 				this.mappings = []
-				this.scope = { administrationId: null, fiscalYear: null, startDate: null, endDate: null }
-				this.error = e?.response?.data?.error
+				this.scope = {
+					administrationId: null,
+					fiscalYear: null,
+					startDate: null,
+					endDate: null,
+				}
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load BBV programmes')
 			} finally {
 				this.loading = false

@@ -516,16 +516,16 @@
         },
         {
             "name": "conduction/hydra-gates",
-            "version": "v1.7.0",
+            "version": "v1.7.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ConductionNL/.github.git",
-                "reference": "b9c6520a648468ab2055ba4ce498348b31ab1f57"
+                "reference": "9b9896abf87167e97b821d8ee86c5422f0b32e80"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ConductionNL/.github/zipball/b9c6520a648468ab2055ba4ce498348b31ab1f57",
-                "reference": "b9c6520a648468ab2055ba4ce498348b31ab1f57",
+                "url": "https://api.github.com/repos/ConductionNL/.github/zipball/9b9896abf87167e97b821d8ee86c5422f0b32e80",
+                "reference": "9b9896abf87167e97b821d8ee86c5422f0b32e80",
                 "shasum": ""
             },
             "require": {
@@ -564,9 +564,9 @@
             "support": {
                 "docs": "https://github.com/ConductionNL/.github/blob/main/hydra-gates/README.md",
                 "issues": "https://github.com/ConductionNL/.github/issues",
-                "source": "https://github.com/ConductionNL/.github/tree/v1.7.0"
+                "source": "https://github.com/ConductionNL/.github/tree/v1.7.3"
             },
-            "time": "2026-08-12T09:38:06+00:00"
+            "time": "2026-08-12T22:32:31+00:00"
         },
         {
             "name": "consolidation/annotated-command",
@@ -8158,9 +8158,9 @@
         "php": "^8.3",
         "ext-zip": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.3"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

@@ -33,7 +33,10 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 	let api: import('@playwright/test').APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
-		api = await pwRequest.newContext({ baseURL, storageState: 'tests/e2e/.auth/admin.json' })
+		api = await pwRequest.newContext({
+			baseURL,
+			storageState: 'tests/e2e/.auth/admin.json',
+		})
 		fx = new OrFixtures(api)
 	})
 
@@ -52,7 +55,10 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 		// The shillinq register and its Account schema MUST be imported; the prior
 		// import blocker is fixed, so a missing schema is now a real regression.
 		const missing = await fx.missingSchema(NEEDED)
-		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
+		expect(
+			missing,
+			`shillinq register/schema not imported (missing: ${missing})`,
+		).toBeNull()
 
 		const accountNumber = `${UNIQUE_PREFIX}-4100`
 
@@ -79,8 +85,13 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 		)
 		expect(listRes.ok()).toBeTruthy()
 		const listBody = await listRes.json()
-		const list: Array<Record<string, unknown>> = listBody.results ?? listBody ?? []
-		const found = list.find((o) => o.accountNumber === accountNumber || (o['@self'] as Record<string, unknown>)?.id === id)
+		const list: Array<Record<string, unknown>> =
+			listBody.results ?? listBody ?? []
+		const found = list.find(
+			(o) =>
+				o.accountNumber === accountNumber
+				|| (o['@self'] as Record<string, unknown>)?.id === id,
+		)
 		expect(found, 'created Account must appear in the listing').toBeTruthy()
 
 		// UPDATE — rename, then assert the NEW value persisted on a fresh read.

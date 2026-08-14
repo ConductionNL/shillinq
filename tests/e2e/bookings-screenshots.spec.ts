@@ -30,7 +30,15 @@ import { test, expect, type Page } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 
-const SHOT_ROOT = path.resolve(__dirname, '..', '..', 'docs', 'static', 'screenshots', 'bookings')
+const SHOT_ROOT = path.resolve(
+	__dirname,
+	'..',
+	'..',
+	'docs',
+	'static',
+	'screenshots',
+	'bookings',
+)
 const APP = '/apps/shillinq'
 
 /**
@@ -43,7 +51,11 @@ async function shoot(page: Page, file: string): Promise<void> {
 	if (!fs.existsSync(SHOT_ROOT)) {
 		fs.mkdirSync(SHOT_ROOT, { recursive: true })
 	}
-	await page.screenshot({ path: path.join(SHOT_ROOT, file), fullPage: false, type: 'png' })
+	await page.screenshot({
+		path: path.join(SHOT_ROOT, file),
+		fullPage: false,
+		type: 'png',
+	})
 }
 
 /**
@@ -53,7 +65,9 @@ async function shoot(page: Page, file: string): Promise<void> {
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
-		const close = wizard.getByRole('button', { name: /close|got it|finish|skip/i }).first()
+		const close = wizard
+			.getByRole('button', { name: /close|got it|finish|skip/i })
+			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click().catch(() => {})
 		} else {
@@ -62,22 +76,32 @@ async function dismissOverlays(page: Page): Promise<void> {
 		await wizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
 	}
 	const stray = page.locator('[role="dialog"]:not(#firstrunwizard)')
-	if (await stray.first().isVisible().catch(() => false)) {
+	if (
+		await stray
+			.first()
+			.isVisible()
+			.catch(() => false)
+	) {
 		await page.keyboard.press('Escape').catch(() => {})
 		await page.waitForTimeout(300)
 	}
 }
 
 async function go(page: Page, route: string): Promise<void> {
-	const url = (route.startsWith('/apps/') || route.startsWith('/settings'))
-		? route
-		: `${APP}${route.startsWith('/') ? route : `/${route}`}`
-	await page.goto(url).catch(() => { /* tolerate 404 — caller decides */ })
+	const url =
+		route.startsWith('/apps/') || route.startsWith('/settings')
+			? route
+			: `${APP}${route.startsWith('/') ? route : `/${route}`}`
+	await page.goto(url).catch(() => {
+		/* tolerate 404 — caller decides */
+	})
 	// ADR-074 rule 4: `networkidle` never settles on Nextcloud — the shell keeps
 	// long-poll/notification requests open, so the wait always burned its full
 	// timeout and was swallowed by the .catch(). domcontentloaded is the state
 	// that actually arrives; the settle-time wait below covers rendering.
-	await page.waitForLoadState('domcontentloaded').catch(() => { /* tolerate an already-detached navigation */ })
+	await page.waitForLoadState('domcontentloaded').catch(() => {
+		/* tolerate an already-detached navigation */
+	})
 	await dismissOverlays(page)
 	await page.waitForTimeout(900)
 }

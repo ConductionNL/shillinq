@@ -54,7 +54,9 @@ async function openModal(page: Page): Promise<boolean> {
 		return false
 	}
 	await importBill.click()
-	await page.locator('[data-testid="bill-import-modal"]').waitFor({ state: 'visible', timeout: 8_000 })
+	await page
+		.locator('[data-testid="bill-import-modal"]')
+		.waitFor({ state: 'visible', timeout: 8_000 })
 	return true
 }
 
@@ -66,11 +68,16 @@ test.describe('shillinq-bill-import-modal', () => {
 	 * @e2e shillinq-bill-import-modal::ubl-file-uploaded-from-the-dashboard
 	 */
 	test('UBL file uploaded from the dashboard', async ({ page }) => {
-		test.skip(!(await openModal(page)), 'Financial dashboard / Import bill action not available for this administration')
+		test.skip(
+			!(await openModal(page)),
+			'Financial dashboard / Import bill action not available for this administration',
+		)
 		await expect(page.locator('[data-testid="bim-upload-step"]')).toBeVisible()
 		await expect(page.locator('[data-testid="bim-dropzone"]')).toBeVisible()
 		// The hidden file input accepts UBL/e-invoice XML (and CSV/PDF).
-		const accept = await page.locator('[data-testid="bim-file-input"]').getAttribute('accept')
+		const accept = await page
+			.locator('[data-testid="bim-file-input"]')
+			.getAttribute('accept')
 		expect(accept).toContain('.xml')
 	})
 

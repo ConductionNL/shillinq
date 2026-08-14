@@ -32,7 +32,9 @@ import { test, expect } from '@playwright/test'
 const APP = '/apps/shillinq'
 
 test.describe('shillinq — ICP-opgaaf SPA smoke', () => {
-	test('ICP-opgaaf navigation entry is reachable in the manifest shell', async ({ page }) => {
+	test('ICP-opgaaf navigation entry is reachable in the manifest shell', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 

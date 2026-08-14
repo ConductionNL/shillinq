@@ -28,7 +28,9 @@
 				autoplay
 				playsinline
 				muted
-				:aria-label="t('shillinq', 'Live camera preview for barcode scanning')" />
+				:aria-label="
+					t('shillinq', 'Live camera preview for barcode scanning')
+				" />
 			<p class="barcode-scanner__hint">
 				{{ t('shillinq', 'Point the camera at the barcode') }}
 			</p>
@@ -43,7 +45,7 @@
 					:placeholder="t('shillinq', 'Enter barcode or SKU')"
 					autocomplete="off"
 					inputmode="search"
-					:aria-label="t('shillinq', 'Manual barcode or SKU entry')">
+					:aria-label="t('shillinq', 'Manual barcode or SKU entry')" />
 			</label>
 			<button type="submit" :disabled="!manualValue">
 				{{ t('shillinq', 'Use this code') }}
@@ -91,7 +93,10 @@ export default {
 	async mounted() {
 		const available = await nativeDetectorAvailable(this.formats)
 		if (!available) {
-			this.cameraError = this.t('shillinq', 'No barcode decoder available; use manual entry.')
+			this.cameraError = this.t(
+				'shillinq',
+				'No barcode decoder available; use manual entry.',
+			)
 			return
 		}
 		try {
@@ -109,7 +114,10 @@ export default {
 				}
 			}
 		} catch (e) {
-			this.cameraError = this.t('shillinq', 'Camera unavailable; use manual entry.')
+			this.cameraError = this.t(
+				'shillinq',
+				'Camera unavailable; use manual entry.',
+			)
 		}
 	},
 	beforeUnmount() {

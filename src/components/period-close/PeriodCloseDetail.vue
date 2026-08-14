@@ -33,56 +33,84 @@
 -->
 <template>
 	<div class="period-close-detail" data-testid="period-close-detail">
-		<div v-if="loading" class="period-close-detail__loading" data-testid="period-close-detail-loading">
+		<div
+			v-if="loading"
+			class="period-close-detail__loading"
+			data-testid="period-close-detail-loading">
 			{{ t('shillinq', 'Loading period…') }}
 		</div>
 
-		<div v-else-if="loadError" class="period-close-detail__error" data-testid="period-close-detail-error">
+		<div
+			v-else-if="loadError"
+			class="period-close-detail__error"
+			data-testid="period-close-detail-error">
 			{{ loadError }}
 		</div>
 
 		<div v-else-if="period" class="period-close-detail__body">
-			<header class="period-close-detail__header" data-testid="period-close-detail-header">
+			<header
+				class="period-close-detail__header"
+				data-testid="period-close-detail-header">
 				<h2>{{ period.name || period.periodId }}</h2>
 				<p class="period-close-detail__meta">
-					<span class="period-close-detail__pill" :class="`period-close-detail__pill--${stateSlug}`">
+					<span
+						class="period-close-detail__pill"
+						:class="`period-close-detail__pill--${stateSlug}`">
 						{{ stateLabel }}
 					</span>
 					<span class="period-close-detail__chip">
-						{{ t('shillinq', 'Period') }}: <strong>{{ period.periodId }}</strong>
+						{{ t('shillinq', 'Period') }}:
+						<strong>{{ period.periodId }}</strong>
 					</span>
-					<span v-if="period.administrationId" class="period-close-detail__chip">
-						{{ t('shillinq', 'Administration') }}: <strong>{{ period.administrationId }}</strong>
+					<span
+						v-if="period.administrationId"
+						class="period-close-detail__chip">
+						{{ t('shillinq', 'Administration') }}:
+						<strong>{{ period.administrationId }}</strong>
 					</span>
 					<span v-if="period.fiscalYear" class="period-close-detail__chip">
-						{{ t('shillinq', 'Fiscal year') }}: <strong>{{ period.fiscalYear }}</strong>
+						{{ t('shillinq', 'Fiscal year') }}:
+						<strong>{{ period.fiscalYear }}</strong>
 					</span>
 				</p>
 				<p class="period-close-detail__dates">
-					<span>{{ formatDate(period.startDate) }} – {{ formatDate(period.endDate) }}</span>
+					<span
+						>{{ formatDate(period.startDate) }} –
+						{{ formatDate(period.endDate) }}</span
+					>
 				</p>
 				<p v-if="period.closedAt" class="period-close-detail__close-info">
-					{{ t('shillinq', 'Closed at') }}: {{ formatTimestamp(period.closedAt) }}
+					{{ t('shillinq', 'Closed at') }}:
+					{{ formatTimestamp(period.closedAt) }}
 					<template v-if="period.closedBy">
 						— {{ period.closedBy }}
 					</template>
 				</p>
-				<p v-if="period.auditLockedAt" class="period-close-detail__lock-info">
-					{{ t('shillinq', 'Audit locked at') }}: {{ formatTimestamp(period.auditLockedAt) }}
+				<p
+					v-if="period.auditLockedAt"
+					class="period-close-detail__lock-info">
+					{{ t('shillinq', 'Audit locked at') }}:
+					{{ formatTimestamp(period.auditLockedAt) }}
 					<template v-if="period.auditLockedBy">
 						— {{ period.auditLockedBy }}
 					</template>
 				</p>
 			</header>
 
-			<section class="period-close-detail__actions" data-testid="period-close-detail-actions">
+			<section
+				class="period-close-detail__actions"
+				data-testid="period-close-detail-actions">
 				<NcButton
 					v-if="canStartClose"
 					variant="primary"
 					:disabled="transitioning"
 					data-testid="period-close-detail-start-close"
 					@click="onStartClose">
-					{{ transitioning ? t('shillinq', 'Working…') : t('shillinq', 'Start close') }}
+					{{
+						transitioning
+							? t('shillinq', 'Working…')
+							: t('shillinq', 'Start close')
+					}}
 				</NcButton>
 				<NcButton
 					v-if="canClose"
@@ -90,7 +118,11 @@
 					:disabled="transitioning"
 					data-testid="period-close-detail-close"
 					@click="onClose">
-					{{ transitioning ? t('shillinq', 'Working…') : t('shillinq', 'Close period') }}
+					{{
+						transitioning
+							? t('shillinq', 'Working…')
+							: t('shillinq', 'Close period')
+					}}
 				</NcButton>
 				<NcButton
 					v-if="canReopen"
@@ -106,19 +138,33 @@
 					:disabled="transitioning"
 					data-testid="period-close-detail-lock-audit"
 					@click="onLockAudit">
-					{{ transitioning ? t('shillinq', 'Working…') : t('shillinq', 'Lock for audit') }}
+					{{
+						transitioning
+							? t('shillinq', 'Working…')
+							: t('shillinq', 'Lock for audit')
+					}}
 				</NcButton>
-				<p v-if="transitionError" class="period-close-detail__error" data-testid="period-close-detail-transition-error">
+				<p
+					v-if="transitionError"
+					class="period-close-detail__error"
+					data-testid="period-close-detail-transition-error">
 					{{ transitionError }}
 				</p>
-				<p v-if="transitionNotice" class="period-close-detail__notice" data-testid="period-close-detail-transition-notice">
+				<p
+					v-if="transitionNotice"
+					class="period-close-detail__notice"
+					data-testid="period-close-detail-transition-notice">
 					{{ transitionNotice }}
 				</p>
 			</section>
 
-			<section class="period-close-detail__checklist" data-testid="period-close-detail-checklist">
+			<section
+				class="period-close-detail__checklist"
+				data-testid="period-close-detail-checklist">
 				<h3>{{ t('shillinq', 'Close checklist') }}</h3>
-				<table v-if="checklistItems.length > 0" class="period-close-detail__checklist-table">
+				<table
+					v-if="checklistItems.length > 0"
+					class="period-close-detail__checklist-table">
 					<thead>
 						<tr>
 							<th scope="col">{{ t('shillinq', 'Category') }}</th>
@@ -136,21 +182,37 @@
 							<td>{{ categoryLabel(item.category) }}</td>
 							<td>{{ item.description }}</td>
 							<td>
-								<span :class="`period-close-detail__pill period-close-detail__pill--${item.resolved ? 'closed' : 'open'}`">
-									{{ item.resolved ? t('shillinq', 'Resolved') : t('shillinq', 'Open') }}
+								<span
+									:class="`period-close-detail__pill period-close-detail__pill--${item.resolved ? 'closed' : 'open'}`">
+									{{
+										item.resolved
+											? t('shillinq', 'Resolved')
+											: t('shillinq', 'Open')
+									}}
 								</span>
 							</td>
-							<td>{{ item.resolvedAt ? formatTimestamp(item.resolvedAt) : '—' }}</td>
+							<td>
+								{{
+									item.resolvedAt
+										? formatTimestamp(item.resolvedAt)
+										: '—'
+								}}
+							</td>
 							<td>{{ item.resolvedBy || '—' }}</td>
 						</tr>
 					</tbody>
 				</table>
-				<p v-else class="period-close-detail__empty" data-testid="period-close-detail-checklist-empty">
+				<p
+					v-else
+					class="period-close-detail__empty"
+					data-testid="period-close-detail-checklist-empty">
 					{{ t('shillinq', 'No checklist items yet.') }}
 				</p>
 			</section>
 
-			<section class="period-close-detail__flags" data-testid="period-close-detail-flags">
+			<section
+				class="period-close-detail__flags"
+				data-testid="period-close-detail-flags">
 				<h3>{{ t('shillinq', 'AI close assistant') }}</h3>
 				<ul v-if="aiFlags.length > 0" class="period-close-detail__flag-list">
 					<li
@@ -160,18 +222,28 @@
 						:class="`period-close-detail__flag--${flag.severity || 'warning'}`"
 						:data-testid="`period-close-detail-flag-${flag.id || flag.code}`">
 						<strong>{{ flag.title || flag.code }}</strong>
-						<span v-if="flag.description"> — {{ flag.description }}</span>
-						<span v-if="flag.count !== undefined" class="period-close-detail__flag-count">
+						<span v-if="flag.description">
+							— {{ flag.description }}</span
+						>
+						<span
+							v-if="flag.count !== undefined"
+							class="period-close-detail__flag-count">
 							({{ flag.count }})
 						</span>
 					</li>
 				</ul>
-				<p v-else class="period-close-detail__empty" data-testid="period-close-detail-flags-empty">
+				<p
+					v-else
+					class="period-close-detail__empty"
+					data-testid="period-close-detail-flags-empty">
 					{{ t('shillinq', 'No close assistant flags raised.') }}
 				</p>
 			</section>
 
-			<section v-if="reopenedHistory.length > 0" class="period-close-detail__history" data-testid="period-close-detail-history">
+			<section
+				v-if="reopenedHistory.length > 0"
+				class="period-close-detail__history"
+				data-testid="period-close-detail-history">
 				<h3>{{ t('shillinq', 'Reopen history') }}</h3>
 				<ol>
 					<li
@@ -179,12 +251,20 @@
 						:key="`reopen-${idx}`"
 						:data-testid="`period-close-detail-history-${idx}`">
 						<strong>{{ formatTimestamp(entry.reopenedAt) }}</strong>
-						<span v-if="entry.reopenedBy"> — {{ entry.reopenedBy }}</span>
-						<p v-if="entry.closeReason" class="period-close-detail__history-reason">
-							{{ t('shillinq', 'Close reason') }}: {{ entry.closeReason }}
+						<span v-if="entry.reopenedBy">
+							— {{ entry.reopenedBy }}</span
+						>
+						<p
+							v-if="entry.closeReason"
+							class="period-close-detail__history-reason">
+							{{ t('shillinq', 'Close reason') }}:
+							{{ entry.closeReason }}
 						</p>
-						<p v-if="entry.originalClosedAt" class="period-close-detail__history-orig">
-							{{ t('shillinq', 'Original close') }}: {{ formatTimestamp(entry.originalClosedAt) }}
+						<p
+							v-if="entry.originalClosedAt"
+							class="period-close-detail__history-orig">
+							{{ t('shillinq', 'Original close') }}:
+							{{ formatTimestamp(entry.originalClosedAt) }}
 							<template v-if="entry.originalClosedBy">
 								— {{ entry.originalClosedBy }}
 							</template>
@@ -193,7 +273,9 @@
 				</ol>
 			</section>
 
-			<section class="period-close-detail__links" data-testid="period-close-detail-links">
+			<section
+				class="period-close-detail__links"
+				data-testid="period-close-detail-links">
 				<h3>{{ t('shillinq', 'Related views') }}</h3>
 				<ul>
 					<li>
@@ -272,16 +354,16 @@ export default {
 		stateLabel() {
 			const state = (this.period && this.period.state) || STATE_OPEN
 			switch (state) {
-			case STATE_OPEN:
-				return t('shillinq', 'Open')
-			case STATE_CLOSING:
-				return t('shillinq', 'Closing')
-			case STATE_CLOSED:
-				return t('shillinq', 'Closed')
-			case STATE_AUDIT_LOCKED:
-				return t('shillinq', 'Audit locked')
-			default:
-				return state
+				case STATE_OPEN:
+					return t('shillinq', 'Open')
+				case STATE_CLOSING:
+					return t('shillinq', 'Closing')
+				case STATE_CLOSED:
+					return t('shillinq', 'Closed')
+				case STATE_AUDIT_LOCKED:
+					return t('shillinq', 'Audit locked')
+				default:
+					return state
 			}
 		},
 		canStartClose() {
@@ -297,13 +379,17 @@ export default {
 			return this.period && this.period.state === STATE_CLOSED
 		},
 		checklistItems() {
-			return Array.isArray(this.period?.taskChecklistItems) ? this.period.taskChecklistItems : []
+			return Array.isArray(this.period?.taskChecklistItems)
+				? this.period.taskChecklistItems
+				: []
 		},
 		aiFlags() {
 			return Array.isArray(this.period?.aiFlags) ? this.period.aiFlags : []
 		},
 		reopenedHistory() {
-			return Array.isArray(this.period?.reopenedHistory) ? this.period.reopenedHistory : []
+			return Array.isArray(this.period?.reopenedHistory)
+				? this.period.reopenedHistory
+				: []
 		},
 		reopenDialogPeriodName() {
 			if (!this.period) {
@@ -336,7 +422,9 @@ export default {
 			this.loading = true
 			this.loadError = ''
 			try {
-				const url = generateUrl(`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}`)
+				const url = generateUrl(
+					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}`,
+				)
 				const response = await axios.get(url)
 				const data = response?.data?.data
 				if (!data || typeof data !== 'object') {
@@ -346,7 +434,10 @@ export default {
 					this.period = data
 				}
 			} catch (err) {
-				this.loadError = this.extractErrorMessage(err, t('shillinq', 'Failed to load period.'))
+				this.loadError = this.extractErrorMessage(
+					err,
+					t('shillinq', 'Failed to load period.'),
+				)
 			} finally {
 				this.loading = false
 			}
@@ -381,26 +472,32 @@ export default {
 		},
 		categoryLabel(category) {
 			switch (category) {
-			case 'ap':
-				return t('shillinq', 'Accounts payable')
-			case 'ar':
-				return t('shillinq', 'Accounts receivable')
-			case 'bank':
-				return t('shillinq', 'Bank reconciliation')
-			case 'expense':
-				return t('shillinq', 'Expense claims')
-			default:
-				return category || t('shillinq', 'Other')
+				case 'ap':
+					return t('shillinq', 'Accounts payable')
+				case 'ar':
+					return t('shillinq', 'Accounts receivable')
+				case 'bank':
+					return t('shillinq', 'Bank reconciliation')
+				case 'expense':
+					return t('shillinq', 'Expense claims')
+				default:
+					return category || t('shillinq', 'Other')
 			}
 		},
 		async onStartClose() {
-			await this.transition('start-close', t('shillinq', 'Period close initiated.'))
+			await this.transition(
+				'start-close',
+				t('shillinq', 'Period close initiated.'),
+			)
 		},
 		async onClose() {
 			await this.transition('close', t('shillinq', 'Period closed.'))
 		},
 		async onLockAudit() {
-			await this.transition('lock-audit', t('shillinq', 'Period locked for audit.'))
+			await this.transition(
+				'lock-audit',
+				t('shillinq', 'Period locked for audit.'),
+			)
 		},
 		async transition(action, successMessage, body = {}) {
 			if (!this.recordId) {
@@ -410,7 +507,9 @@ export default {
 			this.transitionError = ''
 			this.transitionNotice = ''
 			try {
-				const url = generateUrl(`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/${action}`)
+				const url = generateUrl(
+					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/${action}`,
+				)
 				const response = await axios.post(url, body || {})
 				const next = response?.data?.data
 				if (next && typeof next === 'object') {
@@ -420,7 +519,10 @@ export default {
 				}
 				this.transitionNotice = successMessage
 			} catch (err) {
-				this.transitionError = this.extractErrorMessage(err, t('shillinq', 'Transition failed.'))
+				this.transitionError = this.extractErrorMessage(
+					err,
+					t('shillinq', 'Transition failed.'),
+				)
 			} finally {
 				this.transitioning = false
 			}
@@ -448,7 +550,9 @@ export default {
 			this.reopenSubmitting = true
 			this.reopenError = ''
 			try {
-				const url = generateUrl(`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/reopen`)
+				const url = generateUrl(
+					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/reopen`,
+				)
 				const response = await axios.post(url, { closeReason: trimmed })
 				const next = response?.data?.data
 				if (next && typeof next === 'object') {
@@ -459,7 +563,10 @@ export default {
 				this.reopenDialogOpen = false
 				this.transitionNotice = t('shillinq', 'Period reopened.')
 			} catch (err) {
-				this.reopenError = this.extractErrorMessage(err, t('shillinq', 'Reopen failed.'))
+				this.reopenError = this.extractErrorMessage(
+					err,
+					t('shillinq', 'Reopen failed.'),
+				)
 			} finally {
 				this.reopenSubmitting = false
 			}
@@ -468,7 +575,10 @@ export default {
 			const status = err?.response?.status
 			const message = err?.response?.data?.message
 			if (status === 403) {
-				return t('shillinq', 'You do not have permission to perform this action.')
+				return t(
+					'shillinq',
+					'You do not have permission to perform this action.',
+				)
 			}
 			if (typeof message === 'string' && message.length > 0) {
 				return message

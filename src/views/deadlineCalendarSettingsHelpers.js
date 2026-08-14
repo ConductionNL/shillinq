@@ -19,7 +19,8 @@ export const CATEGORY_META = [
 	{
 		id: 'filing',
 		label: 'Filing deadlines (BTW / ICP / VPB)',
-		description: 'Publish BTW, ICP and VPB filing deadlines on your deadline calendar.',
+		description:
+			'Publish BTW, ICP and VPB filing deadlines on your deadline calendar.',
 		defaultEnabled: true,
 		defaultLeadDays: 10,
 	},
@@ -33,14 +34,16 @@ export const CATEGORY_META = [
 	{
 		id: 'ar-due',
 		label: 'Invoice due dates',
-		description: 'Publish open AR invoice due dates (off by default — these can be high-volume).',
+		description:
+			'Publish open AR invoice due dates (off by default — these can be high-volume).',
 		defaultEnabled: false,
 		defaultLeadDays: 7,
 	},
 	{
 		id: 'contract',
 		label: 'Contract deadlines',
-		description: 'Publish contract renewal and notice-period (opzegtermijn) deadlines.',
+		description:
+			'Publish contract renewal and notice-period (opzegtermijn) deadlines.',
 		defaultEnabled: true,
 		defaultLeadDays: 7,
 	},
@@ -56,19 +59,30 @@ export const CATEGORY_META = [
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 export function normaliseSettings(data) {
-	const categories = (data && typeof data === 'object' && data.categories && typeof data.categories === 'object')
-		? data.categories
-		: {}
+	const categories =
+		data
+		&& typeof data === 'object'
+		&& data.categories
+		&& typeof data.categories === 'object'
+			? data.categories
+			: {}
 
 	return CATEGORY_META.map((meta) => {
-		const raw = (categories[meta.id] && typeof categories[meta.id] === 'object') ? categories[meta.id] : {}
+		const raw =
+			categories[meta.id] && typeof categories[meta.id] === 'object'
+				? categories[meta.id]
+				: {}
 		const leadDays = Number.parseInt(raw.leadDays, 10)
 		return {
 			id: meta.id,
 			label: meta.label,
 			description: meta.description,
-			enabled: typeof raw.enabled === 'boolean' ? raw.enabled : meta.defaultEnabled,
-			leadDays: Number.isFinite(leadDays) && leadDays >= 0 ? leadDays : meta.defaultLeadDays,
+			enabled:
+				typeof raw.enabled === 'boolean' ? raw.enabled : meta.defaultEnabled,
+			leadDays:
+				Number.isFinite(leadDays) && leadDays >= 0
+					? leadDays
+					: meta.defaultLeadDays,
 		}
 	})
 }
@@ -84,7 +98,7 @@ export function normaliseSettings(data) {
 export function buildSavePayload(rows) {
 	const known = new Set(CATEGORY_META.map((meta) => meta.id))
 	const categories = {}
-	for (const row of (Array.isArray(rows) ? rows : [])) {
+	for (const row of Array.isArray(rows) ? rows : []) {
 		if (!row || !known.has(row.id)) {
 			continue
 		}
