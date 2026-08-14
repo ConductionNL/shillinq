@@ -27,6 +27,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
+use OCP\Security\Bruteforce\IThrottler;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -126,6 +127,7 @@ final class ConfirmationApiControllerTest extends TestCase {
 			$this->context,
 			$this->tokens,
 			$this->time,
+			$this->createMock(IThrottler::class),
 			$this->logger,
 		);
 	}//end setUp()

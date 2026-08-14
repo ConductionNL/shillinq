@@ -69,8 +69,8 @@ class KorMonitorService {
 	 * @param int $year Calendar year to report.
 	 *
 	 * @return array{
-	 *   administrationId:string, jaar:int, lopendeOmzet:float, drempel:float,
-	 *   drempelBenutting:float, perMaand:array<string,float>, prognoseEindeJaar:float,
+	 *   administrationId:string, year:int, currentRevenue:float, drempel:float,
+	 *   drempelBenutting:float, perMaand:array<string,float>, forecastYearEnd:float,
 	 *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
 	 * }
 	 *

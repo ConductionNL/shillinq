@@ -414,14 +414,14 @@ class EmuReportingService {
 	 *
 	 * Maps the eight EMUAdjustment macro types and the BBV saldo + computed
 	 * EMU-saldo to the 10-row CBS kwartaal-EMU template. Returns a
-	 * regelnummer-keyed array; each row carries label + bedrag (EUR, signed).
+	 * regelnummer-keyed array; each row carries label + amount (EUR, signed).
 	 * Pure function — caller is responsible for exporting (XBRL/CSV/Excel).
 	 *
 	 * @param float $bbvSaldoBatenLasten BBV saldo baten/lasten (EUR).
 	 * @param array<int,array<string,mixed>> $adjustments EMUAdjustment object arrays.
 	 * @param float $emuSaldoBerekend Computed EMU-saldo (EUR).
 	 *
-	 * @return array<int,array{regel:int,label:string,bedrag:float}> The 10 CBS-tussenregels.
+	 * @return array<int,array{regel:int,label:string,amount:float}> The 10 CBS-tussenregels.
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
