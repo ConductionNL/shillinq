@@ -356,6 +356,9 @@
     }
   },
   "src/views/settings/StandardsPolicyEditor.vue": {
+    "@nextcloud/l10n-non-breaking-space": {
+      "count": 1
+    },
     "@typescript-eslint/no-unused-vars": {
       "count": 1
     },
