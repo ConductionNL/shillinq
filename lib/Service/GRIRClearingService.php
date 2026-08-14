@@ -80,9 +80,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Member 09 of bookkeeping-purchase-order-3way: GR/IR clearing + settlement
@@ -286,10 +286,10 @@ class GRIRClearingService {
 	 * canonical name fleet-wide.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -1346,8 +1346,7 @@ class GRIRClearingService {
 	 * @throws \RuntimeException When the row type is unsupported.
 	 */
 	private function saveOnSchema(string $schema, array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);
@@ -1400,8 +1399,7 @@ class GRIRClearingService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

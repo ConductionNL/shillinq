@@ -54,9 +54,9 @@ use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Repair step that backfills forward-looking FiscalPeriod records for
@@ -84,7 +84,7 @@ class PeriodCloseBackfill implements IRepairStep {
 	public function __construct(
 		private SettingsService $settingsService,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -111,7 +111,6 @@ class PeriodCloseBackfill implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
 			// List every Administration record. The repair step is
@@ -164,7 +163,7 @@ class PeriodCloseBackfill implements IRepairStep {
 					// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so
 					// the backfill persists instead of throwing "User 'Anonymous'
 					// does not have permission to 'create'".
-					$objectService->saveObject(
+					$this->objectService->saveObject(
 						object: $record,
 						register: $registerSlug,
 						schema: 'FiscalPeriod',
@@ -212,7 +211,7 @@ class PeriodCloseBackfill implements IRepairStep {
 			'administrationId' => $administrationId,
 		];
 
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($registerSlug)
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => $filters, 'limit' => 1]);

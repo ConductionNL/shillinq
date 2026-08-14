@@ -46,7 +46,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Computes a period-scoped, per-account trial balance from the general ledger.
@@ -79,9 +79,9 @@ class TrialBalanceService {
 	 * @param TrialBalanceCalculator $calculator Pure-logic arithmetic helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly TrialBalanceCalculator $calculator,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -185,11 +185,10 @@ class TrialBalanceService {
 	 * @return array<string,array{debit:int,credit:int}> accountNumber => debit/credit cents.
 	 */
 	private function movementsByAccount(string $administrationId, string $periodId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
 		// Transactions that belong to this administration + period (REQ-TB-017 scoping).
-		$transactions = $objectService
+		$transactions = $this->objectService
 			->setRegister($register)
 			->setSchema('GLTransaction')
 			->findAll(
@@ -207,7 +206,7 @@ class TrialBalanceService {
 		}
 
 		// GLLines for the period; cross-check the parent transaction is in scope.
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($register)
 			->setSchema('GLLine')
 			->findAll(['filters' => ['periodId' => $periodId]]);
@@ -269,8 +268,7 @@ class TrialBalanceService {
 	 * @return array<string,array<string,mixed>> accountNumber => Account object.
 	 */
 	private function fetchAccounts(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$accounts = $objectService
+		$accounts = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

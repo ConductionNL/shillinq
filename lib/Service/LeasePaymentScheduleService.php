@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Materialises the LeasePaymentSchedule rows for an active lease (REQ-LA-002).
@@ -55,10 +55,10 @@ class LeasePaymentScheduleService {
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LeaseAmortizationCalculator $calculator,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -223,7 +223,7 @@ class LeasePaymentScheduleService {
 	 * @return object The ObjectService instance.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

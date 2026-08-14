@@ -48,8 +48,8 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * HTTP API for BillableInvoice drafting + posting.
@@ -70,10 +70,10 @@ class InvoiceApiController extends Controller {
 		IRequest $request,
 		private readonly InvoiceGenerationService $service,
 		private readonly InvoicePdfGenerator $pdfGenerator,
-		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -140,8 +140,7 @@ class InvoiceApiController extends Controller {
 				$filters['status'] = $status;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$all = $objectService
+			$all = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoice')
 				->findAll(['filters' => $filters]);
@@ -174,9 +173,8 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-			$invoice = $objectService
+			$invoice = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoice')
 				->find($invoiceId);
@@ -189,7 +187,7 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 			}
 
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoiceLine')
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
@@ -229,8 +227,7 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$invoice = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$invoice = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
 			if (is_array($invoice) === false) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
@@ -273,8 +270,7 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$invoice = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$invoice = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
 			if (is_array($invoice) === false) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
@@ -284,7 +280,7 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 			}
 
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoiceLine')
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);

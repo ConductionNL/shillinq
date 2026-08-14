@@ -36,8 +36,8 @@ use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Makes the local test data compliant with the enforced rules (idempotent).
@@ -61,11 +61,11 @@ class RuleTestDataSeeder {
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserManager $userManager,
 		private readonly IGroupManager $groupManager,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -359,7 +359,7 @@ class RuleTestDataSeeder {
 	 * @return mixed The OpenRegister ObjectService.
 	 */
 	private function objectService(): mixed {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

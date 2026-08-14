@@ -36,9 +36,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
 use ZipArchive;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Owns the ICP filing write path: corrections, audit-export bundles, outage scan.
@@ -56,11 +56,11 @@ class IcpFilingService {
 	 * @param ViesService $vies VIES validation / evidence-reuse helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IcpCalculator $calculator,
 		private readonly IcpService $icp,
 		private readonly ViesService $vies,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -210,8 +210,7 @@ class IcpFilingService {
 			}
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$validations = $objectService
+		$validations = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ViesValidation')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'outage' => true]]);
@@ -254,8 +253,7 @@ class IcpFilingService {
 			}
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$validations = $objectService
+		$validations = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ViesValidation')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -282,8 +280,7 @@ class IcpFilingService {
 	 * @return array<string,mixed> The opgaaf record, or [] when none exists.
 	 */
 	private function findOpgaaf(string $administrationId, string $period): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$opgaven = $objectService
+		$opgaven = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IcpOpgaaf')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'period' => $period]]);
@@ -304,8 +301,7 @@ class IcpFilingService {
 	 */
 	private function saveOpgaaf(array $opgaaf): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $opgaaf,
 				register: $this->register(),
 				schema: 'IcpOpgaaf',

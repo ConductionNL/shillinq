@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Resolves destination-country VAT rates from the seeded EuVatRate (TEDB) table.
@@ -94,8 +94,8 @@ class OssRateResolver {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -171,8 +171,7 @@ class OssRateResolver {
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
 	public function resolve(string $countryCode, string $rateCategory, string $invoiceDate): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rates = $objectService
+		$rates = $this->objectService
 			->setRegister($this->register())
 			->setSchema('EuVatRate')
 			->findAll(

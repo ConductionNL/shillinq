@@ -43,8 +43,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Zero-stock precondition guard for InventoryValuation transitions
@@ -61,9 +61,9 @@ class InventoryValuationMethodGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -136,8 +136,7 @@ class InventoryValuationMethodGuard {
 				return true;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$existing = $objectService
+			$existing = $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryValuation')
 				->findAll(

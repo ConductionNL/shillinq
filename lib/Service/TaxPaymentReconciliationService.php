@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Reconciles a Vpb payment record against the general ledger (REQ-VPB-008).
@@ -53,9 +53,9 @@ class TaxPaymentReconciliationService {
 	 * @param TaxReportCalculator $calculator Pure-logic cents helper (reused for precision).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly TaxReportCalculator $calculator,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -140,8 +140,7 @@ class TaxPaymentReconciliationService {
 	 * @return array{0:int,1:int} [summed cents, matched line count].
 	 */
 	private function glMovementForAccount(string $periodId, string $accountNumber): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($this->register())
 			->setSchema('GLLine')
 			->findAll(['filters' => ['periodId' => $periodId, 'accountNumber' => $accountNumber]]);
@@ -173,8 +172,7 @@ class TaxPaymentReconciliationService {
 	 * @return array<string,mixed>|null The payment record, or null when absent.
 	 */
 	private function findPayment(string $administrationId, string $paymentId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$payments = $objectService
+		$payments = $this->objectService
 			->setRegister($this->register())
 			->setSchema('TaxPaymentTracking')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

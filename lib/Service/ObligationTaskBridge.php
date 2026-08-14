@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Service;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Creates / links the NC Tasks VTODO (or Deck card) for a ContractObligation.
@@ -64,6 +65,7 @@ class ObligationTaskBridge {
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -227,8 +229,7 @@ class ObligationTaskBridge {
 	 */
 	public function listOpenObligationDeadlines(): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister(register: $this->registerSlug())
 				->setSchema(schema: 'ContractObligation')
 				->findAll([]);

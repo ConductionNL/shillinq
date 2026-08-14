@@ -66,6 +66,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Repair step that re-saves every existing object on the 17 schemas whose
@@ -117,6 +118,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 		private SettingsService $settingsService,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -145,7 +147,6 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
 			// Re-saving an object that carries a folder association goes through
@@ -256,7 +257,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 			}
 
 			try {
-				$objectService->saveObject(
+				$this->objectService->saveObject(
 					object: $arr,
 					register: $registerSlug,
 					schema: $schema,

@@ -35,9 +35,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ZipArchive;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Builds the SEPA mandate audit dossier ZIP (REQ-SDD-010).
@@ -54,10 +54,10 @@ class SepaAuditService {
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -87,7 +87,6 @@ class SepaAuditService {
 		}
 
 		$register = $this->resolveRegister();
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
 		$mandate = $this->findOne(
 			objectService: $objectService,
@@ -334,7 +333,7 @@ class SepaAuditService {
 	 * @return array<int,mixed> The matching records.
 	 */
 	private function findMany(object $objectService, string $register, string $schema, array $filters): array {
-		$result = $objectService
+		$result = $this->objectService
 			->setRegister($register)
 			->setSchema($schema)
 			->findAll(['filters' => $filters]);

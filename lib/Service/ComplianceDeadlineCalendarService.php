@@ -87,6 +87,7 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Publishes compliance deadlines as calendar VEVENTs + NC notifications.
@@ -241,6 +242,7 @@ class ComplianceDeadlineCalendarService {
 		private readonly INotificationManager $notificationMgr,
 		private readonly ObligationTaskBridge $obligationTaskBridge,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -1217,8 +1219,7 @@ class ComplianceDeadlineCalendarService {
 	 */
 	private function fetchRows(string $schema): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister(register: $this->registerSlug())
 				->setSchema(schema: $schema)
 				->findAll([]);

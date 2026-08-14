@@ -39,8 +39,8 @@ use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Transaction-register helper service (REQ-WBSO-002 / REQ-WBSO-008).
@@ -71,9 +71,9 @@ class WbsoTransactionService {
 	 * @param IUserSession $userSession Authenticated session (used to record createdBy).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -86,8 +86,7 @@ class WbsoTransactionService {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function listTransactions(string $administrationId, array $filters = []): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$transactions = $objectService
+		$transactions = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Transaction')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -163,9 +162,8 @@ class WbsoTransactionService {
 
 		$this->validateTransactionPayload(payload: $payload);
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Transaction')
 			->saveObject($payload);
@@ -198,9 +196,8 @@ class WbsoTransactionService {
 		$existing['status'] = 'posted';
 		$existing['postedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Transaction')
 			->saveObject($existing);
@@ -252,9 +249,8 @@ class WbsoTransactionService {
 			'reversalReason' => $reason,
 		];
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Transaction')
 			->saveObject($reversal);

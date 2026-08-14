@@ -39,8 +39,8 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Variance calculation + driver decomposition for continuous-close (REQ-CLS-005..007).
@@ -76,9 +76,9 @@ class FluxService {
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -620,7 +620,6 @@ class FluxService {
 		array $summary,
 	): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$run = [
 				'administrationId' => $administrationId,
 				'periodId' => $periodId,
@@ -633,7 +632,7 @@ class FluxService {
 				'resultSummary' => $summary,
 			];
 
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $run,
 				register: $this->register(),
 				schema: 'FluxRun',
@@ -643,7 +642,7 @@ class FluxService {
 				$attributions = (array)($item['attributions'] ?? []);
 				unset($item['attributions']);
 
-				$objectService->saveObject(
+				$this->objectService->saveObject(
 					object: $item,
 					register: $this->register(),
 					schema: 'FluxItem',
@@ -651,7 +650,7 @@ class FluxService {
 
 				foreach ($attributions as $attribution) {
 					$attribution['fluxItemId'] = $item['glAccountNumber'] . '@' . $fluxRunId;
-					$objectService->saveObject(
+					$this->objectService->saveObject(
 						object: $attribution,
 						register: $this->register(),
 						schema: 'FluxAttribution',

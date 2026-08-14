@@ -38,9 +38,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Reads OssReturn / OssPayment records through the real ObjectService API.
@@ -71,9 +71,9 @@ class OssRecordResolver {
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -144,8 +144,7 @@ class OssRecordResolver {
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
 	public function savePayment(array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema(self::SCHEMA_PAYMENT)
 			->saveObject($data);
@@ -181,8 +180,7 @@ class OssRecordResolver {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

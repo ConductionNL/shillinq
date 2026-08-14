@@ -38,8 +38,8 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle guard enforcing machine-checkable rules on issue/post.
@@ -54,10 +54,10 @@ class RuleComplianceGuard {
 	 * @param BalanceGuard $balanceGuard Existing double-entry balance guard (reused).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly BalanceGuard $balanceGuard,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -150,8 +150,7 @@ class RuleComplianceGuard {
 	 * @return array<string, mixed>|null
 	 */
 	private function loadObject(string $schema, string $id): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$entity = $objectService->find(id: $id, register: $this->register(), schema: $schema);
+		$entity = $this->objectService->find(id: $id, register: $this->register(), schema: $schema);
 		if ($entity === null) {
 			return null;
 		}
@@ -172,7 +171,6 @@ class RuleComplianceGuard {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function loadLines(array $transaction): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$keys = array_values(
 			array_unique(
 				array_filter(
@@ -186,7 +184,7 @@ class RuleComplianceGuard {
 
 		$lines = [];
 		foreach ($keys as $key) {
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema('GLLine')
 				->findAll(['filters' => ['transactionId' => $key]]);

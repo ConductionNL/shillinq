@@ -48,9 +48,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Creates the mirrored intercompany side and reconciles the pair (REQ-GLTAX-002).
@@ -82,10 +82,10 @@ class IntercompanyLinkService {
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IntercompanyJournalService $journalService,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -257,8 +257,7 @@ class IntercompanyLinkService {
 	 * @throws \RuntimeException When the row type is unsupported.
 	 */
 	private function saveEntry(array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema(self::SCHEMA_ENTRY)
 			->saveObject($data);
@@ -294,8 +293,7 @@ class IntercompanyLinkService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

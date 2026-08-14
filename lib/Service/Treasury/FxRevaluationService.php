@@ -50,9 +50,9 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Period-end FX revaluation of open FXPosition balances (ADR-031 exception).
@@ -106,10 +106,10 @@ class FxRevaluationService {
 	 * @param LoggerInterface $logger Structured logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly TreasuryRateService $treasuryRateService,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -338,8 +338,7 @@ class FxRevaluationService {
 		$record['unrealisedPL'] = $unrealisedPL;
 		$record['lastUpdated'] = $asOf->format(DateTimeInterface::ATOM);
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $record,
 			register: $this->register(),
 			schema: 'FXPosition',
@@ -409,8 +408,7 @@ class FxRevaluationService {
 			'reversalState' => 'posted',
 		];
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $posting,
 			register: $this->register(),
 			schema: 'FxRevaluationPosting',
@@ -427,8 +425,7 @@ class FxRevaluationService {
 	 */
 	private function functionalCurrencyFor(string $administrationId): string {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$found = $objectService
+			$found = $this->objectService
 				->setRegister($this->register())
 				->setSchema('Administration')
 				->findAll(
@@ -467,8 +464,7 @@ class FxRevaluationService {
 	 */
 	private function findOpenPositions(string $administrationId): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$found = $objectService
+			$found = $this->objectService
 				->setRegister($this->register())
 				->setSchema('FXPosition')
 				->findAll(['filters' => ['administrationId' => $administrationId]]);

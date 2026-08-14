@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Generates draft OssReturn line items by aggregating OSS-eligible documents.
@@ -51,8 +51,8 @@ class OssReturnGenerator {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -172,10 +172,9 @@ class OssReturnGenerator {
 	 */
 	public function generateDraft(string $administrationId, int $periodYear, string $periodQuarter, string $registrationId): array {
 		$period = $periodYear . '-' . $periodQuarter;
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
-		$invoices = $objectService
+		$invoices = $this->objectService
 			->setRegister($register)
 			->setSchema('Invoice')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

@@ -34,8 +34,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Single-method compliance precondition for TreasuryAccount lifecycle transitions.
@@ -60,9 +60,9 @@ class ComplianceValidator {
 	 * @param LoggerInterface $logger Nextcloud logger for compliance audit logging.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -108,9 +108,7 @@ class ComplianceValidator {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-			$rules = $objectService
+			$rules = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankingRule')
 				->findAll(
@@ -280,7 +278,7 @@ class ComplianceValidator {
 		}
 
 		try {
-			$siblings = $objectService
+			$siblings = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('TreasuryAccount')
 				->findAll(

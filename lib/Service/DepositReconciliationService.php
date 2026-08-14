@@ -33,8 +33,8 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Idempotent reconciliation of DepositPayment records against gateway outcomes.
@@ -126,9 +126,9 @@ class DepositReconciliationService {
 	 * @return void
 	 */
 	public function __construct(
-		private ContainerInterface $container,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 		private ?DepositPaymentAdapterInterface $adapter = null,
 	) {
 	}//end __construct()
@@ -166,10 +166,9 @@ class DepositReconciliationService {
 			return self::RESULT_NOT_FOUND;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$registerSlug = $this->getRegisterSlug();
 
-		$matches = $objectService
+		$matches = $this->objectService
 			->setRegister($registerSlug)
 			->setSchema('DepositPayment')
 			->findAll(
@@ -212,7 +211,7 @@ class DepositReconciliationService {
 			$deposit['lastErrorMessage'] = ($errorMessage ?? 'Payment failed at gateway.');
 		}
 
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $deposit,
 			register: $registerSlug,
 			schema: 'DepositPayment',
@@ -240,7 +239,6 @@ class DepositReconciliationService {
 	 * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-007)
 	 */
 	public function pollPending(callable $statusProvider): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$registerSlug = $this->getRegisterSlug();
 
 		$pageSize = 200;
@@ -250,7 +248,7 @@ class DepositReconciliationService {
 		$batchSize = 0;
 
 		do {
-			$batch = $objectService
+			$batch = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('DepositPayment')
 				->findAll(

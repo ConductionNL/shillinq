@@ -37,8 +37,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guard for the SupportingDocument certify transition.
@@ -58,9 +58,9 @@ class SupportingDocumentGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -116,8 +116,7 @@ class SupportingDocumentGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$documents = $objectService
+		$documents = $this->objectService
 			->setRegister($this->resolveRegister())
 			->setSchema('SupportingDocument')
 			->findAll(['filters' => ['id' => $supportingDocumentId], 'limit' => 1]);

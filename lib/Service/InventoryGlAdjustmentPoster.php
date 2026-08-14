@@ -46,9 +46,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Balanced two-line GLTransaction poster for inventory adjustments.
@@ -66,9 +66,9 @@ class InventoryGlAdjustmentPoster {
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -227,8 +227,7 @@ class InventoryGlAdjustmentPoster {
 	 * @return array<string,mixed>
 	 */
 	private function saveOnSchema(string $schema, array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);

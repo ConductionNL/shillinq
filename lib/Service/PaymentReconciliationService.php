@@ -56,6 +56,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Idempotent reconciliation of PaymentRequest AND DepositPayment records against
@@ -192,6 +193,7 @@ class PaymentReconciliationService {
 		private ContainerInterface $container,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -230,14 +232,13 @@ class PaymentReconciliationService {
 			return ['result' => self::RESULT_NOT_FOUND, 'schema' => null];
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$registerSlug = $this->getRegisterSlug();
 
 		// Resolve across both schemas — the shared surface (REQ-APL-004).
 		$record = null;
 		$schema = null;
 		foreach (self::SCHEMAS as $candidateSchema) {
-			$matches = $objectService
+			$matches = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema($candidateSchema)
 				->findAll(
@@ -304,7 +305,7 @@ class PaymentReconciliationService {
 			);
 			if ($settledInvoice === null) {
 				$record['state'] = 'captured_unapplied';
-				$objectService->saveObject(
+				$this->objectService->saveObject(
 					object: $record,
 					register: $registerSlug,
 					schema: $schema,
@@ -318,7 +319,7 @@ class PaymentReconciliationService {
 			$record['confirmationSummary'] = $this->buildConfirmationSummary(invoice: $settledInvoice, request: $record);
 		}//end if
 
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $record,
 			register: $registerSlug,
 			schema: $schema,
@@ -356,7 +357,7 @@ class PaymentReconciliationService {
 		}
 
 		try {
-			$invoices = $objectService
+			$invoices = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('ARInvoice')
 				->findAll(
@@ -367,7 +368,7 @@ class PaymentReconciliationService {
 				);
 
 			if (empty($invoices) === true) {
-				$invoices = $objectService
+				$invoices = $this->objectService
 					->setRegister($registerSlug)
 					->setSchema('ARInvoice')
 					->findAll(
@@ -406,7 +407,7 @@ class PaymentReconciliationService {
 			$invoice['paymentEvidenceRef'] = (string)($request['paymentIntentId'] ?? '');
 			$invoice['settlementReference'] = (string)($request['settlementReference'] ?? '');
 
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $invoice,
 				register: $registerSlug,
 				schema: 'ARInvoice',
@@ -521,7 +522,6 @@ class PaymentReconciliationService {
 	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
 	 */
 	public function pollPending(callable $statusProvider): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$registerSlug = $this->getRegisterSlug();
 
 		$pageSize = 200;
@@ -533,7 +533,7 @@ class PaymentReconciliationService {
 			$batchSize = 0;
 
 			do {
-				$batch = $objectService
+				$batch = $this->objectService
 					->setRegister($registerSlug)
 					->setSchema($schema)
 					->findAll(

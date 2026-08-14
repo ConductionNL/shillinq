@@ -57,8 +57,8 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Repair step that folds DunningRun + OninbaarAfschrijving onto ARInvoice.
@@ -80,7 +80,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 		private SettingsService $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -104,7 +104,6 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 			$actingUser = $this->resolveAdminUser();
 
@@ -132,7 +131,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 				// Load the linked ARInvoice. factuurId is the ARInvoice UUID.
 				$invoice = null;
 				try {
-					$invoice = $objectService->find(
+					$invoice = $this->objectService->find(
 						id: $factuurId,
 						register: $registerSlug,
 						schema: 'ARInvoice',
@@ -201,7 +200,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 					$invoiceArr['dunning'] = $dunning;
 				}
 
-				$objectService->saveObject(
+				$this->objectService->saveObject(
 					object: $invoiceArr,
 					register: $registerSlug,
 					schema: 'ARInvoice',

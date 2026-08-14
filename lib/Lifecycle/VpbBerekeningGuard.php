@@ -44,8 +44,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Pure fiscal calculation fallbacks for the Vpb registers.
@@ -65,9 +65,9 @@ class VpbBerekeningGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -198,10 +198,9 @@ class VpbBerekeningGuard {
 	 * @return array<string,mixed>|null The tarief record, or null when absent.
 	 */
 	private function resolveTariefcatalogus(int $belastingjaar): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$records = $objectService
+		$records = $this->objectService
 			->setRegister($register)
 			->setSchema('VpbTariefcatalogus')
 			->findAll(['filters' => ['belastingjaar' => $belastingjaar]]);

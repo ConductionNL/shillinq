@@ -69,8 +69,8 @@ namespace OCA\Shillinq\Lifecycle;
 use Closure;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guards for the Sales Funnel (Q2C) registers.
@@ -91,9 +91,9 @@ class QuoteOrderInvoiceGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -643,7 +643,7 @@ class QuoteOrderInvoiceGuard {
 	 * @return object The OpenRegister ObjectService.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

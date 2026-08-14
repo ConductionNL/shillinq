@@ -41,8 +41,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guard for ExpenseClaimEntry dual-mode settlement
@@ -74,9 +74,9 @@ class ExpenseReimbursementGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -332,7 +332,6 @@ class ExpenseReimbursementGuard {
 		array $mileageIds,
 		array $perDiemIds,
 	): bool {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->getRegisterSlug();
 
 		$checks = [
@@ -348,7 +347,7 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$item = $objectService
+				$item = $this->objectService
 					->setRegister($register)
 					->setSchema($check['schema'])
 					->find($stringId);
@@ -409,10 +408,9 @@ class ExpenseReimbursementGuard {
 	 * @return float|null The threshold amount in base currency, or null.
 	 */
 	private function getMarkupApprovalThresholdForPolicy(string $policyId): ?float {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->getRegisterSlug();
 
-		$matches = $objectService
+		$matches = $this->objectService
 			->setRegister($register)
 			->setSchema('ReimbursementPolicy')
 			->findAll(
@@ -484,7 +482,6 @@ class ExpenseReimbursementGuard {
 	 * @return float|null The weighted average, or null when no rates can be resolved.
 	 */
 	private function weightedAverageMarkupRate(array $claim): ?float {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->getRegisterSlug();
 
 		$totalCost = 0.0;
@@ -503,7 +500,7 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$item = $objectService
+				$item = $this->objectService
 					->setRegister($register)
 					->setSchema($source['schema'])
 					->find($stringId);
@@ -549,10 +546,9 @@ class ExpenseReimbursementGuard {
 	 * @return bool True when the GL transaction is reversed.
 	 */
 	private function isGlTransactionReversed(string $glTxnId): bool {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->getRegisterSlug();
 
-		$txn = $objectService
+		$txn = $this->objectService
 			->setRegister($register)
 			->setSchema('GLTransaction')
 			->find($glTxnId);

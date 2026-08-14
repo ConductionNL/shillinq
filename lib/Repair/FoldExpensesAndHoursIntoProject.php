@@ -48,8 +48,8 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Repair step that folds Receipt/MileageEntry/PerDiem into
@@ -70,7 +70,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 		private SettingsService $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -93,7 +93,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 			$admin = $this->resolveAdmin();
 
@@ -170,7 +169,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 				$record = $projectArrays[$projectKey];
 				try {
-					$objectService
+					$this->objectService
 						->setRegister($registerSlug)
 						->setSchema('Project')
 						->saveObject(

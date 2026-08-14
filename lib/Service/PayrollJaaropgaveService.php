@@ -38,9 +38,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Aggregates the yearly Jaaropgave per employee from the period loonstroken.
@@ -61,10 +61,10 @@ class PayrollJaaropgaveService {
 	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -227,7 +227,7 @@ class PayrollJaaropgaveService {
 	 * @return object The ObjectService.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

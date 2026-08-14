@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Computes the ICP ledger, periodicity decision, and reconciliation for a period.
@@ -58,9 +58,9 @@ class IcpService {
 	 * @param IcpCalculator $calculator Pure-logic ICP helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IcpCalculator $calculator,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -175,8 +175,7 @@ class IcpService {
 	 * @return array<int,array<string,mixed>> In-period IcpSupply records.
 	 */
 	private function suppliesForPeriod(string $administrationId, string $period): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$supplies = $objectService
+		$supplies = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IcpSupply')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -206,8 +205,7 @@ class IcpService {
 	 * @return float|null The rubriek 3b value, or null when no BTW-aangifte exists.
 	 */
 	private function rubriek3bForPeriod(string $administrationId, string $period): ?float {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$returns = $objectService
+		$returns = $this->objectService
 			->setRegister($this->register())
 			->setSchema('VatReturn')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

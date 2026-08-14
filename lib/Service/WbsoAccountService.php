@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service;
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Account-register helper service (REQ-WBSO-001 / REQ-WBSO-006).
@@ -59,8 +59,8 @@ class WbsoAccountService {
 	 * @param IAppConfig $appConfig App config (register slug).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -72,8 +72,7 @@ class WbsoAccountService {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function getAccountsByAdministration(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -179,9 +178,8 @@ class WbsoAccountService {
 			parent: (string)($payload['parentAccountNumber'] ?? ''),
 		);
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->saveObject($payload);
@@ -224,9 +222,8 @@ class WbsoAccountService {
 			parent: (string)($merged['parentAccountNumber'] ?? ''),
 		);
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->saveObject($merged);

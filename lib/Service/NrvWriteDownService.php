@@ -47,9 +47,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lower-of-cost-or-NRV period-end write-down + balanced GL (ADR-031 exception).
@@ -89,10 +89,10 @@ class NrvWriteDownService {
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly InventoryGlAdjustmentPoster $poster,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -259,8 +259,7 @@ class NrvWriteDownService {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function activeValuations(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryValuation')
 			->findAll(
@@ -292,8 +291,7 @@ class NrvWriteDownService {
 	 * @return array<string,mixed>
 	 */
 	private function saveValuation(array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryValuation')
 			->saveObject($data);

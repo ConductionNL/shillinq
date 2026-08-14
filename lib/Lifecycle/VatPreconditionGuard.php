@@ -31,8 +31,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guard for ARInvoice VAT validation on the issue transition.
@@ -69,9 +69,9 @@ class VatPreconditionGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -93,7 +93,6 @@ class VatPreconditionGuard {
 	 */
 	public function validate(string $invoiceId, string $administrationId): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($register === '') {
 				$register = 'shillinq';
@@ -112,7 +111,7 @@ class VatPreconditionGuard {
 				return false;
 			}
 
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister($register)
 				->setSchema('InvoiceLine')
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
@@ -166,7 +165,7 @@ class VatPreconditionGuard {
 		string $register,
 		string $administrationId,
 	): bool {
-		$records = $objectService
+		$records = $this->objectService
 			->setRegister($register)
 			->setSchema('VATGLAccounts')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -201,7 +200,7 @@ class VatPreconditionGuard {
 		string $register,
 		string $administrationId,
 	): array {
-		$overrideRecords = $objectService
+		$overrideRecords = $this->objectService
 			->setRegister($register)
 			->setSchema('ServiceCategoryOverride')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

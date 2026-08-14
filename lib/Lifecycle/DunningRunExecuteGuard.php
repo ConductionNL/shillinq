@@ -35,8 +35,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guard for DunningRun.execute.
@@ -61,9 +61,9 @@ class DunningRunExecuteGuard {
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -78,13 +78,12 @@ class DunningRunExecuteGuard {
 	 */
 	public function canExecute(string $runId): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($register === '') {
 				$register = 'shillinq';
 			}
 
-			$runs = $objectService
+			$runs = $this->objectService
 				->setRegister($register)
 				->setSchema('DunningRun')
 				->findAll(['filters' => ['id' => $runId]]);
@@ -99,7 +98,7 @@ class DunningRunExecuteGuard {
 				return false;
 			}
 
-			$pauses = $objectService
+			$pauses = $this->objectService
 				->setRegister($register)
 				->setSchema('DunningPauseDispute')
 				->findAll(

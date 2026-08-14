@@ -65,9 +65,9 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Detects filed-vs-ledger drift on a VATReturn and compiles a VatCorrection.
@@ -124,10 +124,10 @@ class VatSuppletieDetectionService {
 	 * @param VATReturnService $vatReturnService The GL-derivation engine this service diffs against.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly VATReturnService $vatReturnService,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -392,8 +392,7 @@ class VatSuppletieDetectionService {
 	private function attachAccounts(array $deltas, string $originalReturnId): array {
 		$lines = [];
 		if ($originalReturnId !== '') {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister($this->register())
 				->setSchema('VATLine')
 				->findAll(['filters' => ['returnId' => $originalReturnId]]);
@@ -561,8 +560,7 @@ class VatSuppletieDetectionService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchCorrection(string $vatCorrectionId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$correction = $objectService
+		$correction = $this->objectService
 			->setRegister($this->register())
 			->setSchema('VatCorrection')
 			->find($vatCorrectionId);
@@ -583,8 +581,7 @@ class VatSuppletieDetectionService {
 	 * @return array<string,mixed> The saved record (with id).
 	 */
 	private function saveObject(string $schema, array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);

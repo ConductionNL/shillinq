@@ -33,8 +33,8 @@ namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Guards BankReconciliation + BankReconciliationMatch lifecycle invariants.
@@ -57,9 +57,9 @@ class BankReconciliationGuard {
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -297,8 +297,7 @@ class BankReconciliationGuard {
 			$reconciledCents = $openingCents + $approvedCents;
 			$varianceCents = $closingCents - $reconciledCents;
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService
+			$this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankReconciliation')
 				->updateObject(
@@ -331,14 +330,12 @@ class BankReconciliationGuard {
 	 * @return array<int, array<string, mixed>> The match object arrays.
 	 */
 	private function findMatches(string $reconciliationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
 		$pageSize = 500;
 		$page = 1;
 		$matches = [];
 		$batchSize = 0;
 		do {
-			$batch = $objectService
+			$batch = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankReconciliationMatch')
 				->findAll(
@@ -367,8 +364,7 @@ class BankReconciliationGuard {
 	 */
 	private function fetchObject(string $schema, string $id): ?array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema($schema)
 				->find($id);

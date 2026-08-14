@@ -55,9 +55,9 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
@@ -100,8 +100,8 @@ class SupplierInvoiceImportController extends Controller {
 		private readonly SupplierInvoiceService $supplierInvoiceService,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $session,
-		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -307,8 +307,7 @@ class SupplierInvoiceImportController extends Controller {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister(self::REGISTER_SLUG)
 				->setSchema(self::SUPPLIER_INVOICE_SCHEMA)
 				->findAll(
@@ -350,8 +349,7 @@ class SupplierInvoiceImportController extends Controller {
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
 	private function saveSupplierInvoice(array $record): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$result = $objectService
+		$result = $this->objectService
 			->setRegister(self::REGISTER_SLUG)
 			->setSchema(self::SUPPLIER_INVOICE_SCHEMA)
 			->saveObject($record);

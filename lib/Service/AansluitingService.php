@@ -63,9 +63,9 @@ use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Computes, explains, resolves, and reopens AansluitingResult records.
@@ -116,12 +116,12 @@ class AansluitingService {
 	 * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly AansluitingCalculator $calculator,
 		private readonly VATReturnService $vatReturnService,
 		private readonly AansluitingResolutionGuard $resolutionGuard,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -440,10 +440,9 @@ class AansluitingService {
 			return 0.0;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
-		$transactions = $objectService
+		$transactions = $this->objectService
 			->setRegister($register)
 			->setSchema('GLTransaction')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -455,7 +454,7 @@ class AansluitingService {
 			}
 		}
 
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($register)
 			->setSchema('GLLine')
 			->findAll(['filters' => ['accountNumber' => $accountNumber]]);
@@ -491,8 +490,7 @@ class AansluitingService {
 	 * @return array<int,array{itemId:string,amount:float}>
 	 */
 	private function openArInvoices(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$invoices = $objectService
+		$invoices = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ARInvoice')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -522,8 +520,7 @@ class AansluitingService {
 	 * @return array<int,array{itemId:string,amount:float}>
 	 */
 	private function openApTransactions(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$transactions = $objectService
+		$transactions = $this->objectService
 			->setRegister($this->register())
 			->setSchema('APTransaction')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -555,8 +552,7 @@ class AansluitingService {
 	 * @return array<string,mixed>|null The VATReturn record, or null when none is filed for the period.
 	 */
 	private function findFiledVatReturn(string $administrationId, string $periodId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$returns = $objectService
+		$returns = $this->objectService
 			->setRegister($this->register())
 			->setSchema('BtwAangifte')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -610,8 +606,7 @@ class AansluitingService {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$corrections = $objectService
+		$corrections = $this->objectService
 			->setRegister($this->register())
 			->setSchema('VatCorrection')
 			->findAll(['filters' => ['originalVatReturnId' => $originalVatReturnId]]);
@@ -643,8 +638,7 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchAansluiting(string $aansluitingId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$definition = $objectService
+		$definition = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Aansluiting')
 			->find($aansluitingId);
@@ -664,8 +658,7 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchResult(string $resultId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$result = $objectService
+		$result = $this->objectService
 			->setRegister($this->register())
 			->setSchema('AansluitingResult')
 			->find($resultId);
@@ -686,8 +679,7 @@ class AansluitingService {
 	 * @return array<string,mixed>|null
 	 */
 	private function fetchExistingResult(string $aansluitingId, string $periodId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$results = $objectService
+		$results = $this->objectService
 			->setRegister($this->register())
 			->setSchema('AansluitingResult')
 			->findAll(['filters' => ['aansluitingId' => $aansluitingId, 'periodId' => $periodId]]);
@@ -708,8 +700,7 @@ class AansluitingService {
 	 * @return array<string,mixed> The saved record (with id).
 	 */
 	private function saveObject(string $schema, array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);

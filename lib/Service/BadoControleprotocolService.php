@@ -43,8 +43,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Computes BADO finding aggregation + opinion and guards the protocol/finding
@@ -73,10 +73,10 @@ class BadoControleprotocolService {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics (no stack traces to client).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly BadoControleprotocolCalculator $calculator,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -645,7 +645,7 @@ class BadoControleprotocolService {
 	 * @return mixed The OpenRegister ObjectService.
 	 */
 	private function objects(): mixed {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objects()
 
 	/**

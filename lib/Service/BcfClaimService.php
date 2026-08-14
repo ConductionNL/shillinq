@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Computes a quarter-scoped, per-account BCF compensable-VAT claim from the GL.
@@ -62,9 +62,9 @@ class BcfClaimService {
 	 * @param BcfCompensationCalculator $calculator Pure-logic compensable-VAT helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly BcfCompensationCalculator $calculator,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -122,11 +122,10 @@ class BcfClaimService {
 	 * @return array<string,float> accountNumber => posted amount in currency units.
 	 */
 	private function compensableAmountsByAccount(string $administrationId, string $claimQuarter): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
 		// Transactions that belong to this administration + quarter (REQ-BCF-012 scoping).
-		$transactions = $objectService
+		$transactions = $this->objectService
 			->setRegister($register)
 			->setSchema('GLTransaction')
 			->findAll(
@@ -149,7 +148,7 @@ class BcfClaimService {
 		}
 
 		// GLLines for the quarter; cross-check the parent transaction is in scope.
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($register)
 			->setSchema('GLLine')
 			->findAll(['filters' => ['periodId' => $claimQuarter]]);
@@ -216,8 +215,7 @@ class BcfClaimService {
 	 * @return array<string,array<string,mixed>> accountNumber => BbvAccountMapping object.
 	 */
 	private function mappingsByAccount(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$mappings = $objectService
+		$mappings = $this->objectService
 			->setRegister($this->register())
 			->setSchema('BbvAccountMapping')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

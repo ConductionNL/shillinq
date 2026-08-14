@@ -77,9 +77,9 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\Notification\IManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Dispatcher from pipelinq's PosStockMovedEvent -> SalesDispatchStockIssueService.
@@ -119,12 +119,12 @@ class PosStockDecrementListener implements IEventListener {
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly SalesDispatchStockIssueService $dispatchService,
 		private readonly IAppConfig $appConfig,
 		private readonly IGroupManager $groupManager,
 		private readonly IManager $notificationMgr,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -380,7 +380,7 @@ class PosStockDecrementListener implements IEventListener {
 	 * @return object
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

@@ -49,8 +49,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * CBS Submission CRUD + lifecycle controller.
@@ -80,11 +80,11 @@ class CBSSubmissionController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ContainerInterface $container,
 		private readonly CBSExportService $exportService,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -540,7 +540,7 @@ class CBSSubmissionController extends Controller {
 	 * @return object The ObjectService instance.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

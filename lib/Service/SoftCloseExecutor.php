@@ -47,6 +47,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Orchestrates the nightly soft-close execution per administratie (ADR-031 exception).
@@ -85,6 +86,7 @@ class SoftCloseExecutor {
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -318,13 +320,12 @@ class SoftCloseExecutor {
 	 * @return array<int,array<string,mixed>> The active rules (possibly empty).
 	 */
 	private function findActiveRules(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$filters = ['lifecycleState' => 'active'];
 		if ($administrationId !== '') {
 			$filters['administrationId'] = $administrationId;
 		}
 
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('AutoAccrualRule')
 			->findAll(['filters' => $filters]);
@@ -359,8 +360,7 @@ class SoftCloseExecutor {
 			'reversalState' => 'posted',
 		];
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $posting,
 			register: $this->register(),
 			schema: 'AutoAccrualPosting',
@@ -520,8 +520,7 @@ class SoftCloseExecutor {
 			return;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('PeriodStatus')
 			->findAll(
@@ -560,7 +559,7 @@ class SoftCloseExecutor {
 		];
 		$record['stageChangeHistory'] = $history;
 
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $record,
 			register: $this->register(),
 			schema: 'PeriodStatus',
@@ -591,8 +590,7 @@ class SoftCloseExecutor {
 		];
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $alert,
 				register: $this->register(),
 				schema: 'ContinuousCloseAlert',

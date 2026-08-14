@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Guards the ARInvoice `issue` transition against the customer credit limit.
@@ -67,9 +67,9 @@ class CreditLimitGuard {
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -124,11 +124,10 @@ class CreditLimitGuard {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->getRegisterSlug();
 
 			// Resolve the customer to read their credit limit.
-			$customers = $objectService
+			$customers = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('CustomerMaster')
 				->findAll(
@@ -213,7 +212,7 @@ class CreditLimitGuard {
 		$batchSize = 0;
 
 		do {
-			$batch = $objectService
+			$batch = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('ARInvoice')
 				->findAll(

@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Computes a per-beschikking realisatie summary from the S&O hour administration.
@@ -54,8 +54,8 @@ class WbsoAdministratieService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -120,10 +120,9 @@ class WbsoAdministratieService {
 	 * @return array<string,int> beschikkingNumber => realised hours in tenths.
 	 */
 	private function realisedHoursByBeschikking(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
-		$entries = $objectService
+		$entries = $this->objectService
 			->setRegister($register)
 			->setSchema('SoUurregistratie')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -167,8 +166,7 @@ class WbsoAdministratieService {
 	 * @return array<string,array<string,mixed>> beschikkingNumber => beschikking object.
 	 */
 	private function fetchBeschikkingen(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$records = $objectService
+		$records = $this->objectService
 			->setRegister($this->register())
 			->setSchema('WbsoBeschikking')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

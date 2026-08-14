@@ -36,9 +36,9 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Precondition for a framework-agreement call-off: does it fit the remaining ceiling?
@@ -54,9 +54,9 @@ class FrameworkAgreementDrawdownGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -180,8 +180,7 @@ class FrameworkAgreementDrawdownGuard {
 	 * @return array<string,mixed>|null
 	 */
 	private function findOne(string $schema, array $filters): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->findAll(['filters' => $filters]);

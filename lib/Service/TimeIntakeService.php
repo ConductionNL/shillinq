@@ -68,9 +68,9 @@ use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Validates, materialises, and delegates a pipelinq time-billing batch.
@@ -104,10 +104,10 @@ class TimeIntakeService {
 	 * @param InvoiceGenerationService $invoices Existing, unmodified draftInvoice() machinery.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly InvoiceGenerationService $invoices,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -717,8 +717,7 @@ class TimeIntakeService {
 	 */
 	private function find(string $schema, string $id): ?array {
 		try {
-			$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rs = $svc->setRegister($this->register())->setSchema($schema)->find($id);
+			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->find($id);
 			if (is_array($rs) === true) {
 				return $rs;
 			}
@@ -740,8 +739,7 @@ class TimeIntakeService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rs = $svc->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
+			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
 			if (is_array($rs) === true) {
 				return $rs;
 			}
@@ -763,8 +761,7 @@ class TimeIntakeService {
 	 * @return array<string,mixed>
 	 */
 	private function saveObject(string $schema, array $data): array {
-		$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $svc->setRegister($this->register())->setSchema($schema)->saveObject($data);
+		$saved = $this->objectService->setRegister($this->register())->setSchema($schema)->saveObject($data);
 
 		if (is_array($saved) === false) {
 			throw new RuntimeException(sprintf('ObjectService::saveObject(%s) did not return an array', $schema));

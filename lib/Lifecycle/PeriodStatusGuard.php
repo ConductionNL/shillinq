@@ -38,8 +38,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guard for the continuous-close feature.
@@ -85,9 +85,9 @@ class PeriodStatusGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -184,8 +184,7 @@ class PeriodStatusGuard {
 			return $transaction;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('GLTransaction')
 			->findAll(['filters' => ['id' => $transaction], 'limit' => 1]);
@@ -212,13 +211,12 @@ class PeriodStatusGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$filters = ['periodYear' => $year, 'periodMonth' => $month];
 		if ($administrationId !== '') {
 			$filters['administrationId'] = $administrationId;
 		}
 
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('PeriodStatus')
 			->findAll(['filters' => $filters, 'limit' => 1]);

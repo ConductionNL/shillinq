@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Reads programmabegroting data and produces sluitend-status and exports.
@@ -52,10 +52,10 @@ class ProgrammabegrotingService {
 	 * @param ProgrammabegrotingExporter $exporter Produces iv3 / EMU / JSON export shapes.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly SluitendCalculator $sluitend,
 		private readonly ProgrammabegrotingExporter $exporter,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -171,10 +171,9 @@ class ProgrammabegrotingService {
 	 * @return array<int,array<string,mixed>> The matching rows.
 	 */
 	private function fetchMany(string $schema, array $filters): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$rows = $objectService->setRegister($register)->setSchema($schema)->findAll(['filters' => $filters]);
+		$rows = $this->objectService->setRegister($register)->setSchema($schema)->findAll(['filters' => $filters]);
 		$result = [];
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {

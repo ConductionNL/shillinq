@@ -30,8 +30,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guard for KlantLadderOverride.activate.
@@ -54,9 +54,9 @@ class KlantLadderOverrideApprovalGuard {
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -71,13 +71,12 @@ class KlantLadderOverrideApprovalGuard {
 	 */
 	public function isApprovedForElevatedStages(string $overrideId): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($register === '') {
 				$register = 'shillinq';
 			}
 
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($register)
 				->setSchema('KlantLadderOverride')
 				->findAll(['filters' => ['id' => $overrideId]]);

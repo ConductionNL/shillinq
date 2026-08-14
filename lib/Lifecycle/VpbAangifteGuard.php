@@ -53,8 +53,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Lifecycle precondition guards for the Vpb registers.
@@ -88,9 +88,9 @@ class VpbAangifteGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -285,9 +285,8 @@ class VpbAangifteGuard {
 			return false;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		$claims = $objectService
+		$claims = $this->objectService
 			->setRegister($this->resolveRegister())
 			->setSchema('Innovatiebox')
 			->findAll(['filters' => ['aangifte' => $aangifteId]]);
@@ -318,9 +317,8 @@ class VpbAangifteGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		$records = $objectService
+		$records = $this->objectService
 			->setRegister($this->resolveRegister())
 			->setSchema($schema)
 			->findAll(['filters' => ['id' => $id]]);

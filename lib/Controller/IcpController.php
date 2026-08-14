@@ -44,8 +44,8 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * GET ICP ledger / reconciliation / periodicity endpoints.
@@ -80,9 +80,9 @@ class IcpController extends Controller {
 		private readonly IcpFilingService $filingService,
 		private readonly ViesService $viesService,
 		private readonly ArInvoiceIcpPdfRenderer $pdfRenderer,
-		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -474,9 +474,7 @@ class IcpController extends Controller {
 	 * @return array{invoice:?array<string,mixed>,customer:array<string,mixed>,seller:array<string,mixed>}
 	 */
 	private function loadInvoiceContext(string $invoiceId, string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-		$invoices = $objectService
+		$invoices = $this->objectService
 			->setRegister('shillinq')
 			->setSchema('ARInvoice')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -499,7 +497,7 @@ class IcpController extends Controller {
 		$customer = [];
 		$customerKey = trim((string)($invoice['customerId'] ?? ''));
 		if ($customerKey !== '') {
-			$candidates = $objectService
+			$candidates = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('CustomerMaster')
 				->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -517,7 +515,7 @@ class IcpController extends Controller {
 		}
 
 		$seller = [];
-		$administrations = $objectService
+		$administrations = $this->objectService
 			->setRegister('shillinq')
 			->setSchema('Administration')
 			->findAll(['filters' => []]);

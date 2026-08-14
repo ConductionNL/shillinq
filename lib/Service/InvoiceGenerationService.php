@@ -30,9 +30,9 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Drafting, validation, and GL posting of BillableInvoice rows.
@@ -56,7 +56,6 @@ class InvoiceGenerationService {
 	 * @param UsageRatingCalculator $usageRating Meter-quantity rating (usage model).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly RateCardResolver $rateCards,
@@ -65,6 +64,7 @@ class InvoiceGenerationService {
 		private readonly InvoiceDeduplicationService $deduper,
 		private readonly VATCalculationService $vat,
 		private readonly UsageRatingCalculator $usageRating,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -698,9 +698,8 @@ class InvoiceGenerationService {
 	 * @return string Invoice number.
 	 */
 	private function generateInvoiceNumber(string $administrationId, string $invoiceDate): string {
-		$existing = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		try {
-			$rs = $existing->setRegister($this->register())
+			$rs = $this->objectService->setRegister($this->register())
 				->setSchema('BillableInvoice')
 				->findAll(['filters' => ['administrationId' => $administrationId]]);
 			if (is_array($rs) === true) {
@@ -759,8 +758,7 @@ class InvoiceGenerationService {
 	 */
 	private function find(string $schema, string $id): ?array {
 		try {
-			$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rs = $svc->setRegister($this->register())->setSchema($schema)->find($id);
+			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->find($id);
 			if (is_array($rs) === true) {
 				return $rs;
 			}
@@ -781,8 +779,7 @@ class InvoiceGenerationService {
 	 * @return array<string,mixed>
 	 */
 	private function saveObject(string $schema, array $data): array {
-		$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $svc
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);

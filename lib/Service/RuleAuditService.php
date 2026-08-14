@@ -35,8 +35,8 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Standards\RuleCatalogue;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Read-only compliance auditor over the register's bookkeeping objects.
@@ -58,9 +58,9 @@ class RuleAuditService {
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -226,7 +226,7 @@ class RuleAuditService {
 	 * @return mixed The OpenRegister ObjectService.
 	 */
 	private function objectService(): mixed {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

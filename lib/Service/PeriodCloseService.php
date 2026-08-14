@@ -42,8 +42,8 @@ use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Orchestrates the PeriodClose lifecycle with server-side role enforcement.
@@ -89,11 +89,11 @@ class PeriodCloseService {
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IGroupManager $groupManager,
 		private readonly SuspenseAgeingService $suspenseAgeing,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -443,7 +443,6 @@ class PeriodCloseService {
 	 * @return array<string,mixed>|null The record, or null when not found.
 	 */
 	private function find(string $periodId, string $administrationId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
 		// Match on the business periodId within the administration first (the
@@ -453,7 +452,7 @@ class PeriodCloseService {
 			$filters['administrationId'] = $administrationId;
 		}
 
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($register)
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => $filters, 'limit' => 1]);
@@ -463,7 +462,7 @@ class PeriodCloseService {
 		}
 
 		// Fall back to the record-id lookup, still scoped to the administration.
-		$byId = $objectService
+		$byId = $this->objectService
 			->setRegister($register)
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => ['id' => $periodId], 'limit' => 1]);
@@ -532,8 +531,7 @@ class PeriodCloseService {
 	 * @return array<string,mixed> The saved record (echoes the input on stub backends).
 	 */
 	private function persist(array $record): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $record,
 			register: $this->register(),
 			schema: 'FiscalPeriod',

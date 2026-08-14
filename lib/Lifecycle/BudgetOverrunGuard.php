@@ -39,8 +39,8 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\BegrotingswijzigingStacker;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Precondition guard preventing GL lasten postings beyond the authorized budget.
@@ -57,10 +57,10 @@ class BudgetOverrunGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly BegrotingswijzigingStacker $stacker,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 	}//end __construct()
 
@@ -109,15 +109,14 @@ class BudgetOverrunGuard {
 				return false;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$register = $this->resolveRegister();
 
 			$basis = $this->toRows(
-				rows: $objectService->setRegister($register)->setSchema('Taakveld')
+				rows: $this->objectService->setRegister($register)->setSchema('Taakveld')
 					->findAll(['filters' => ['begrotingId' => $begrotingId]])
 			);
 			$wijzigingen = $this->toRows(
-				rows: $objectService->setRegister($register)->setSchema('Begrotingswijziging')
+				rows: $this->objectService->setRegister($register)->setSchema('Begrotingswijziging')
 					->findAll(['filters' => ['begrotingId' => $begrotingId]])
 			);
 
@@ -128,7 +127,7 @@ class BudgetOverrunGuard {
 			);
 
 			$glLines = $this->toRows(
-				rows: $objectService->setRegister($register)->setSchema('GLLine')
+				rows: $this->objectService->setRegister($register)->setSchema('GLLine')
 					->findAll(['filters' => ['taakveldCode' => $taakveldCode, 'side' => 'debit']])
 			);
 			$alreadyPostedCents = 0;

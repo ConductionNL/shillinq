@@ -50,9 +50,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Service\ObjectService;
 
 /**
  * Imperative moving-average engine driving {@see CogsPosterService}.
@@ -73,9 +73,9 @@ class MovingAverageValuationService {
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectService $objectService,
 	) {
 
 	}//end __construct()
@@ -229,8 +229,7 @@ class MovingAverageValuationService {
 		string $warehouse,
 		string $administrationId,
 	): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$existing = $objectService
+		$existing = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryValuation')
 			->findAll(
@@ -276,8 +275,7 @@ class MovingAverageValuationService {
 	 * @return array<string,mixed> Persisted snapshot (with id).
 	 */
 	private function saveValuation(array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryValuation')
 			->saveObject($data);
