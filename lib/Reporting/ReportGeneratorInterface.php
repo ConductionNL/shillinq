@@ -29,7 +29,12 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
  *
  * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  * The change directory it names was never committed, and the `reporting`
