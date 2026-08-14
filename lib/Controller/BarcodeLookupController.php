@@ -37,6 +37,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -106,6 +107,10 @@ class BarcodeLookupController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// Barcode lookup against published product data — the code is a GTIN, not
+	// a credential, so a volume ceiling and no brute-force counter. Loose,
+	// because a scanner in a stockroom fires these in rapid succession.
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function lookup(string $code, ?string $uomCode = null): JSONResponse {
 		$guardResponse = $this->guard();
 		if ($guardResponse instanceof JSONResponse) {

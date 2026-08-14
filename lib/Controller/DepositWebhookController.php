@@ -34,6 +34,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\DepositReconciliationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -84,6 +85,10 @@ class DepositWebhookController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// Payment gateway callback: the caller retries on its own schedule and
+	// authenticates by its own signature. Generous ceiling — dropping a
+	// deposit notification is worse than absorbing a burst.
+	#[AnonRateLimit(limit: 300, period: 60)]
 	public function handle(string $gateway): JSONResponse {
 		$gateway = strtolower($gateway);
 		if (in_array($gateway, ['mollie', 'stripe'], true) === false) {
