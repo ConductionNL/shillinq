@@ -42,6 +42,7 @@ use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -101,6 +102,10 @@ class PortalPaymentInitiationController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// Citizen-facing: starts a payment. Tighter than the receivers because a
+	// human clicks this, and each call creates a payment intent at the
+	// provider — real work, and real cost, per request.
+	#[AnonRateLimit(limit: 20, period: 60)]
 	public function initiate(): JSONResponse {
 		// 1. Verify — the assertion is the ONLY credential (fail-closed 401).
 		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifier::HEADER));

@@ -38,6 +38,7 @@ use OCA\Shillinq\Service\WidgetAuthService;
 use OCA\Shillinq\Service\WidgetService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -98,6 +99,10 @@ class WidgetApiController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// Public booking widget. These back a citizen-facing embed: services and
+	// slots are read repeatedly as someone picks a date, so the ceiling is
+	// generous. No credential in play, so no brute-force counter.
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function services(): JSONResponse {
 		$authResult = $this->guard();
 		if ($authResult instanceof JSONResponse) {
@@ -177,6 +182,7 @@ class WidgetApiController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function slots(string $serviceId = '', string $resourceId = '', string $date = ''): JSONResponse {
 		$authResult = $this->guard();
 		if ($authResult instanceof JSONResponse) {
@@ -245,6 +251,9 @@ class WidgetApiController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// Tighter than its siblings: this one BOOKS. services/slots are reads a
+	// visitor repeats while choosing; a booking is a write and a commitment.
+	#[AnonRateLimit(limit: 20, period: 60)]
 	public function appointments(
 		string $serviceId = '',
 		string $resourceId = '',
