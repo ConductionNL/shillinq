@@ -1012,7 +1012,6 @@ class RenameDutchColumns implements IRepairStep {
 		'zvw_tarief' => 'zvw_rate',
 		'accountantsverklaring' => 'auditors_statement',
 		'accountantsverklaring_status' => 'auditors_statement_status',
-		'activiteiten' => 'activities',
 		'afschrijvingsmethode' => 'depreciation_method',
 		'alert_ondergrens' => 'alert_lower_limit',
 		'alert_vooralarm' => 'alert_pre_alert',
@@ -1144,7 +1143,6 @@ class RenameDutchColumns implements IRepairStep {
 		'vpb_balans_link_id' => 'vpb_balance_link_id',
 		'vpb_zonder_innovatiebox' => 'vpb_without_innovation_box',
 		'wanneer' => 'when',
-		'werkgever_id' => 'employer_id',
 	];
 
 	/**

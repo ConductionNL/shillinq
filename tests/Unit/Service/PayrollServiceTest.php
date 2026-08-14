@@ -220,7 +220,7 @@ final class PayrollServiceTest extends TestCase {
 			'Werknemer' => [
 				[
 					'id' => 'wn-1',
-					'employerId' => 'wg-1',
+					'werkgeverId' => 'wg-1',
 					'personId' => 'person-1',
 					'bsn' => '123456789',
 					'periodeBruto' => 4940.0,
@@ -237,7 +237,7 @@ final class PayrollServiceTest extends TestCase {
 			'LoonPeriode' => [
 				[
 					'id' => 'lp-1',
-					'employerId' => 'wg-1',
+					'werkgeverId' => 'wg-1',
 					'periodType' => 'MAAND',
 					'periodEnd' => '2026-05-31',
 					'payrollTaxTableId' => 'lht-1',

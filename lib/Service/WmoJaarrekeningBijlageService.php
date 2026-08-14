@@ -134,7 +134,7 @@ class WmoJaarrekeningBijlageService {
 			'fiscalYear' => (string)$input['fiscalYear'],
 			'administrationId' => (string)$input['administrationId'],
 			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
-			'activities' => $rows,
+			'activiteiten' => $rows,
 			'summary' => [
 				'total' => $totalCount,
 				'compliant' => $compliantCount,
@@ -155,7 +155,7 @@ class WmoJaarrekeningBijlageService {
 		$compliant = 0;
 		$nonCompliant = 0;
 
-		foreach ((array)($bijlage['activities'] ?? []) as $row) {
+		foreach ((array)($bijlage['activiteiten'] ?? []) as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
@@ -197,7 +197,7 @@ class WmoJaarrekeningBijlageService {
 		$lines[] = '| Code | Naam | Omzet | Integrale Kostprijs | Ratio | Compliant | ABB |';
 		$lines[] = '|------|------|-------|---------------------|-------|-----------|-----|';
 
-		foreach ((array)($bijlage['activities'] ?? []) as $row) {
+		foreach ((array)($bijlage['activiteiten'] ?? []) as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
@@ -243,7 +243,7 @@ class WmoJaarrekeningBijlageService {
 		$administrationId = htmlspecialchars((string)($bijlage['administrationId'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
 		$rows = [];
-		foreach ((array)($bijlage['activities'] ?? []) as $r) {
+		foreach ((array)($bijlage['activiteiten'] ?? []) as $r) {
 			if (is_array($r) === false) {
 				continue;
 			}

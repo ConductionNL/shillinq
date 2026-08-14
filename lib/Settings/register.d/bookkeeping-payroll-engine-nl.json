@@ -131,7 +131,7 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-000-werkgever-setup.md",
         "type": "object",
         "required": [
-          "employerId",
+          "werkgeverId",
           "personId",
           "lastName",
           "inServiceSinds",
@@ -141,7 +141,7 @@
           "administrationId"
         ],
         "properties": {
-          "employerId": {
+          "werkgeverId": {
             "type": "string",
             "description": "Employer this employee belongs to (FK to Werkgever).",
             "example": "wg-conduction-bv",
@@ -478,7 +478,7 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-014-mutaties.md",
         "type": "object",
         "required": [
-          "employerId",
+          "werkgeverId",
           "periodType",
           "year",
           "periodNr",
@@ -488,7 +488,7 @@
           "administrationId"
         ],
         "properties": {
-          "employerId": {
+          "werkgeverId": {
             "type": "string",
             "description": "Employer (FK to Werkgever).",
             "example": "wg-conduction-bv",
@@ -743,7 +743,7 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md",
         "type": "object",
         "required": [
-          "employerId",
+          "werkgeverId",
           "periodId",
           "totalPayrollTax",
           "totalRemittance",
@@ -751,7 +751,7 @@
           "administrationId"
         ],
         "properties": {
-          "employerId": {
+          "werkgeverId": {
             "type": "string",
             "description": "Employer (FK to Werkgever).",
             "example": "wg-conduction-bv",
@@ -911,7 +911,7 @@
           "schema": "Werknemer",
           "slug": "wn-2024-0042"
         },
-        "employerId": "wg-conduction-bv",
+        "werkgeverId": "wg-conduction-bv",
         "personId": "person-jansen",
         "bsn": "123456789",
         "initials": "J.M.",
@@ -945,7 +945,7 @@
           "schema": "Werknemer",
           "slug": "wn-2024-0043"
         },
-        "employerId": "wg-conduction-bv",
+        "werkgeverId": "wg-conduction-bv",
         "personId": "person-devries",
         "bsn": "234567890",
         "initials": "A.",
@@ -979,7 +979,7 @@
           "schema": "Werknemer",
           "slug": "wn-dga-0001"
         },
-        "employerId": "wg-conduction-bv",
+        "werkgeverId": "wg-conduction-bv",
         "personId": "person-bakker",
         "bsn": "345678901",
         "initials": "R.",
@@ -1097,7 +1097,7 @@
           "schema": "LoonPeriode",
           "slug": "lp-2026-05-wg-conduction-bv"
         },
-        "employerId": "wg-conduction-bv",
+        "werkgeverId": "wg-conduction-bv",
         "periodType": "MAAND",
         "year": 2026,
         "periodNr": 5,
@@ -1206,7 +1206,7 @@
           "schema": "LHAfdracht",
           "slug": "lha-2026-05-wg-conduction-bv"
         },
-        "employerId": "wg-conduction-bv",
+        "werkgeverId": "wg-conduction-bv",
         "periodId": "lp-2026-05-wg-conduction-bv",
         "totalPayrollTax": 1907.05,
         "totalFinalLeviesWorkRelatedCosts": 0,

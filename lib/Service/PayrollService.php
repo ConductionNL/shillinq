@@ -92,8 +92,8 @@ class PayrollService {
 			throw new RuntimeException('Loonperiode of werknemer niet gevonden in deze administratie.');
 		}
 
-		$employerId = (string)($employee['employerId'] ?? '');
-		$werkgever = $this->findOne(schema: 'Werkgever', administrationId: $administrationId, filters: ['id' => $employerId]);
+		$werkgeverId = (string)($employee['werkgeverId'] ?? '');
+		$werkgever = $this->findOne(schema: 'Werkgever', administrationId: $administrationId, filters: ['id' => $werkgeverId]);
 		if ($werkgever === null) {
 			throw new RuntimeException('Werkgever niet gevonden in deze administratie.');
 		}
@@ -244,10 +244,10 @@ class PayrollService {
 			$zvwC += $this->calculator->toCents(amount: ($slip['zvw']['afgedragen_wg'] ?? 0));
 		}
 
-		$employerId = '';
+		$werkgeverId = '';
 		$period = $this->findOne(schema: 'LoonPeriode', administrationId: $administrationId, filters: ['id' => $periodId]);
 		if ($period !== null) {
-			$employerId = (string)($period['employerId'] ?? '');
+			$werkgeverId = (string)($period['werkgeverId'] ?? '');
 		}
 
 		$payrollTax = $this->calculator->fromCents(cents: $lhC);
@@ -259,7 +259,7 @@ class PayrollService {
 		);
 
 		return [
-			'employerId' => $employerId,
+			'werkgeverId' => $werkgeverId,
 			'periodId' => $periodId,
 			'totalPayrollTax' => $payrollTax,
 			'totalFinalLeviesWorkRelatedCosts' => $wkr,

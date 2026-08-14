@@ -1316,7 +1316,7 @@
           "period",
           "format",
           "generatedAt",
-          "activities",
+          "activiteiten",
           "administrationId",
           "status"
         ],
@@ -1343,7 +1343,7 @@
             "title": "Generated At",
             "description": "The date and time for generated at."
           },
-          "activities": {
+          "activiteiten": {
             "type": "array",
             "description": "Per-activity reporting line.",
             "items": {

@@ -68,7 +68,7 @@ final class PayrollApArHandoffService {
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
 	public function toApTransactionPayloads(array $lhRemittance): array {
-		$employerId = (string)($lhRemittance['employerId'] ?? '');
+		$werkgeverId = (string)($lhRemittance['werkgeverId'] ?? '');
 		$periodId = (string)($lhRemittance['periodId'] ?? '');
 		$dueDate = ($lhRemittance['dueDateRemittance'] ?? null);
 		$adminId = ($lhRemittance['administrationId'] ?? null);
@@ -87,7 +87,7 @@ final class PayrollApArHandoffService {
 				'amount' => round($taxAuthorityAmount, 2),
 				'currency' => 'EUR',
 				'dueDate' => $dueDate,
-				'employerId' => $employerId,
+				'werkgeverId' => $werkgeverId,
 				'periodId' => $periodId,
 				'administrationId' => $adminId,
 				'breakdown' => [
@@ -97,7 +97,7 @@ final class PayrollApArHandoffService {
 				],
 				'description' => sprintf('Loonheffing + ZVW + WKR afdracht periode %s', $periodId),
 				'source' => 'LHAfdracht',
-				'sourceRef' => sprintf('%s/%s', $employerId, $periodId),
+				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodId),
 			];
 		}
 
@@ -107,13 +107,13 @@ final class PayrollApArHandoffService {
 				'amount' => round($premiesSV, 2),
 				'currency' => 'EUR',
 				'dueDate' => $dueDate,
-				'employerId' => $employerId,
+				'werkgeverId' => $werkgeverId,
 				'periodId' => $periodId,
 				'administrationId' => $adminId,
 				'breakdown' => ['premiesSV' => $premiesSV],
 				'description' => sprintf('Premies werknemersverzekeringen periode %s', $periodId),
 				'source' => 'LHAfdracht',
-				'sourceRef' => sprintf('%s/%s', $employerId, $periodId),
+				'sourceRef' => sprintf('%s/%s', $werkgeverId, $periodId),
 			];
 		}
 
