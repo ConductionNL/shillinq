@@ -204,7 +204,33 @@ class BudgetBlocker {
 			return false;
 		}
 
-		return $this->fits(budget: $budget, bedrag: (int)($regel['amount_excl_vat'] ?? 0));
+		// AN UNREADABLE AMOUNT IS NOT A ZERO AMOUNT.
+		//
+		// This used to be `(int) ($regel['amount_excl_vat'] ?? 0)`, so a regel
+		// carrying its amount under any other key produced 0 — and `fits()` is
+		// `$bedrag <= freeRoom()`, so 0 fits every budget that is not already
+		// overcommitted. The commitment was then APPROVED against a figure that
+		// had never been read: a budget control passing for the wrong reason
+		// (CWE-863).
+		//
+		// Deny instead. Fail-closed matches the rest of this guard — a missing
+		// Budget row above already denies.
+		if (array_key_exists('amount_excl_vat', $regel) === false
+			|| is_numeric($regel['amount_excl_vat']) === false
+		) {
+			$this->logger->error(
+				'BudgetBlocker: regel carries no readable amount — denying commitment (fail-closed)',
+				[
+					'administrationId' => $administrationId,
+					'programme' => ($regel['programme'] ?? null),
+					'financialYear' => ($regel['financialYear'] ?? null),
+					'regelKeys' => array_keys($regel),
+				]
+			);
+			return false;
+		}
+
+		return $this->fits(budget: $budget, bedrag: (int)$regel['amount_excl_vat']);
 	}//end regelFitsBudget()
 
 	/**
