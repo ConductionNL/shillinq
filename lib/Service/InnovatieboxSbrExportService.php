@@ -271,7 +271,7 @@ class InnovatieboxSbrExportService {
 				'nexus_percent' => round((float)($row['nexus'] ?? ($row['nexus_fraction_applied'] ?? 0.0)), 4),
 				'winst_na_nexus' => round((float)($row['winst_na_nexus'] ?? ($row['qualifying_profit_after_nexus'] ?? 0.0)), 2),
 				'tariff' => round((float)($row['tariff'] ?? ($row['effective_rate'] ?? 0.09)), 4),
-				'vpb_impact' => round((float)($row['vpbImpact'] ?? ($row['vpb_on_innovation_share'] ?? 0.0)), 2),
+				'vpb_impact' => round((float)($row['vpb_impact'] ?? ($row['vpb_on_innovation_share'] ?? 0.0)), 2),
 			];
 		}
 

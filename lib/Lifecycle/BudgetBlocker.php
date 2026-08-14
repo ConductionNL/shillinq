@@ -88,7 +88,7 @@ class BudgetBlocker {
 	 */
 	public function canCommit(string $commitmentNumber, ?array $object = null): bool {
 		try {
-			$commitment = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitment_number' => $commitmentNumber]));
+			$commitment = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitmentNumber' => $commitmentNumber]));
 			if ($commitment === null) {
 				$this->logger->info(
 					'BudgetBlocker: commitment not found — denying commitment',
