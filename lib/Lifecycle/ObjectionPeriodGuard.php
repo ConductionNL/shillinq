@@ -103,10 +103,10 @@ class ObjectionPeriodGuard {
 				return false;
 			}
 
-			// 'dagtekening' is a SCHEMA PROPERTY KEY, not an identifier: it names a
+			// 'issueDate' is a SCHEMA PROPERTY KEY, not an identifier: it names a
 			// column on the DefinitieveAanslag shard table. It moves when that
 			// schema is renamed, together with its data migration — not here.
-			return $this->withinPeriod(startDate: (string)($assessment['dagtekening'] ?? ''));
+			return $this->withinPeriod(startDate: (string)($assessment['issueDate'] ?? ''));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ObjectionPeriodGuard: canFileObjection check failed — denying transition (fail-closed)',
@@ -131,11 +131,11 @@ class ObjectionPeriodGuard {
 	 */
 	public function canFileAppeal(string $objectionId, ?array $object = null): bool {
 		try {
-			// 'BezwaarBeroep' and 'uitspraakDatum' are the SCHEMA NAME and a
+			// 'BezwaarBeroep' and 'rulingDate' are the SCHEMA NAME and a
 			// SCHEMA PROPERTY KEY — the data contract, renamed with their
 			// migration, not with this class.
 			$objection = $object;
-			if ($objection === null || isset($objection['uitspraakDatum']) === false) {
+			if ($objection === null || isset($objection['rulingDate']) === false) {
 				$objection = $this->resolveObject(schema: 'BezwaarBeroep', id: $objectionId);
 			}
 
@@ -143,7 +143,7 @@ class ObjectionPeriodGuard {
 				return false;
 			}
 
-			$rulingDate = (string)($objection['uitspraakDatum'] ?? '');
+			$rulingDate = (string)($objection['rulingDate'] ?? '');
 			if ($rulingDate === '') {
 				return false;
 			}
@@ -197,13 +197,13 @@ class ObjectionPeriodGuard {
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		// 'DefinitieveAanslag' and the 'aangifte' filter key are the data
+		// 'DefinitieveAanslag' and the 'taxReturn' filter key are the data
 		// contract — the registered schema title and one of its property
 		// columns. Both move with the schema rename and its migration.
 		$assessments = $objectService
 			->setRegister($register)
 			->setSchema('DefinitieveAanslag')
-			->findAll(['filters' => ['aangifte' => $taxReturnId]]);
+			->findAll(['filters' => ['taxReturn' => $taxReturnId]]);
 
 		foreach ($assessments as $assessment) {
 			if (is_array($assessment) === true) {

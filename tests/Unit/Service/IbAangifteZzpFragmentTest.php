@@ -119,15 +119,15 @@ final class IbAangifteZzpFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testHeaderDeclaresLifecycleAndRbac(): void {
-		$aangifte = $this->fragment()['components']['schemas']['IBAangifte'];
+		$taxReturn = $this->fragment()['components']['schemas']['IBAangifte'];
 
-		self::assertArrayHasKey('x-openregister-lifecycle', $aangifte);
-		self::assertSame('status', $aangifte['x-openregister-lifecycle']['field']);
-		self::assertSame('CONCEPT', $aangifte['x-openregister-lifecycle']['initialState']);
-		self::assertArrayHasKey('INGEDIEND', $aangifte['x-openregister-lifecycle']['states']);
+		self::assertArrayHasKey('x-openregister-lifecycle', $taxReturn);
+		self::assertSame('status', $taxReturn['x-openregister-lifecycle']['field']);
+		self::assertSame('CONCEPT', $taxReturn['x-openregister-lifecycle']['initialState']);
+		self::assertArrayHasKey('INGEDIEND', $taxReturn['x-openregister-lifecycle']['states']);
 
-		self::assertArrayHasKey('x-openregister-rbac', $aangifte);
-		$roles = $aangifte['x-openregister-rbac']['roles'];
+		self::assertArrayHasKey('x-openregister-rbac', $taxReturn);
+		$roles = $taxReturn['x-openregister-rbac']['roles'];
 		// Auditors and bookkeepers are read-only.
 		self::assertSame(['read'], $roles['auditor']['permissions']);
 		self::assertSame(['read'], $roles['bookkeeper']['permissions']);
@@ -162,18 +162,18 @@ final class IbAangifteZzpFragmentTest extends TestCase {
 		$schemas = $this->fragment()['components']['schemas'];
 
 		// MKB exemption rate is sourced from the parameter entity.
-		$mkb = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['mkbWinstvrijstelling'];
+		$mkb = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['mkbProfitExemption'];
 		self::assertStringContainsString('IBTaxParameterYear.mkbExemptionRate', $mkb['parameterSource']);
 
 		// Urencriterium guard points at the real existing method.
-		$uren = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['urencriterium'];
+		$hours = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['urencriterium'];
 		self::assertSame(
 			'OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours',
-			$uren['guard']
+			$hours['guard']
 		);
 
 		// Representatiebeperking + bijtelling guards reference classes that exist.
-		$repr = $schemas['IBWinstOpgave']['x-openregister-calculations']['representatieCorrectie'];
+		$repr = $schemas['IBWinstOpgave']['x-openregister-calculations']['entertainmentCorrection'];
 		self::assertTrue(method_exists('OCA\\Shillinq\\Guard\\IbFiscalAdjustmentGuard', 'representatieDrempel'));
 		self::assertStringContainsString('IbFiscalAdjustmentGuard', $repr['guard']);
 

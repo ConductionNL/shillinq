@@ -107,21 +107,21 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		$mandatory = [
 			'code',
 			'name',
-			'bestuursorgaan',
+			'governingBody',
 			'marktsegment',
 			'concurrenten',
-			'kostprijsMethode',
-			'kostenplaatsCode',
-			'kostendragerCode',
+			'costPriceMethod',
+			'costCentreCode',
+			'costObjectCode',
 			'isExempted',
-			'acmMelding',
+			'acmReport',
 		];
 		foreach ($mandatory as $field) {
 			self::assertArrayHasKey($field, $props, "CommercialActivity must declare $field");
 		}
 
 		// The kostprijsMethode is the statutory enum.
-		self::assertContains('integrale-kostprijs-art-25i', $props['kostprijsMethode']['enum']);
+		self::assertContains('integrale-kostprijs-art-25i', $props['costPriceMethod']['enum']);
 
 	}//end testCommercialActivityHasMandatoryFields()
 
@@ -136,11 +136,11 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		$components = $schema['properties']['componenten']['properties'];
 
 		$expected = [
-			'directeLoonkosten',
+			'directPayrollCost',
 			'directeMaterialen',
-			'directeAfschrijvingen',
+			'directDepreciations',
 			'indirecteOverhead',
-			'vermogenskosten',
+			'capitalCost',
 			'winstopslag',
 		];
 		foreach ($expected as $component) {
@@ -162,7 +162,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 
 		self::assertArrayHasKey('splits', $props);
 		self::assertArrayHasKey('verdeelsleutel', $props);
-		self::assertArrayHasKey('automatischToegepast', $props);
+		self::assertArrayHasKey('automaticApplied', $props);
 		self::assertArrayHasKey('handmatigeOverride', $props);
 		// Status enum supports the override / reversal lifecycle.
 		self::assertSame(['active', 'overridden', 'reversed'], $props['status']['enum']);

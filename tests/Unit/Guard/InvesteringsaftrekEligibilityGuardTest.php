@@ -70,10 +70,10 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testFullEligibilityWhenAllConditionsMet(): void {
 		$result = $this->guard->classify(
-			aanschafwaarde: 5000000,
-			energielijstHit: true,
-			milieulijstHit: true,
-			vamilToegestaan: true,
+			acquisitionValue: 5000000,
+			energyListHit: true,
+			environmentListHit: true,
+			vamilPermitted: true,
 			kiaExcluded: false
 		);
 
@@ -91,10 +91,10 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testKiaExcludedAssetIsNotEligible(): void {
 		$result = $this->guard->classify(
-			aanschafwaarde: 5000000,
-			energielijstHit: false,
-			milieulijstHit: false,
-			vamilToegestaan: false,
+			acquisitionValue: 5000000,
+			energyListHit: false,
+			environmentListHit: false,
+			vamilPermitted: false,
 			kiaExcluded: true
 		);
 
@@ -110,10 +110,10 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testKiaBelowMinimumNotEligible(): void {
 		$result = $this->guard->classify(
-			aanschafwaarde: 40000,
-			energielijstHit: false,
-			milieulijstHit: false,
-			vamilToegestaan: false,
+			acquisitionValue: 40000,
+			energyListHit: false,
+			environmentListHit: false,
+			vamilPermitted: false,
 			kiaExcluded: false
 		);
 
@@ -128,10 +128,10 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testKiaAbovePlafondNotEligible(): void {
 		$result = $this->guard->classify(
-			aanschafwaarde: 40000000,
-			energielijstHit: false,
-			milieulijstHit: false,
-			vamilToegestaan: false,
+			acquisitionValue: 40000000,
+			energyListHit: false,
+			environmentListHit: false,
+			vamilPermitted: false,
 			kiaExcluded: false
 		);
 
@@ -146,10 +146,10 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testEiaMiaVamilBelowMinimumNotEligible(): void {
 		$result = $this->guard->classify(
-			aanschafwaarde: 200000,
-			energielijstHit: true,
-			milieulijstHit: true,
-			vamilToegestaan: true,
+			acquisitionValue: 200000,
+			energyListHit: true,
+			environmentListHit: true,
+			vamilPermitted: true,
 			kiaExcluded: false
 		);
 
@@ -166,10 +166,10 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testVamilRequiresVamilToegestaan(): void {
 		$result = $this->guard->classify(
-			aanschafwaarde: 5000000,
-			energielijstHit: false,
-			milieulijstHit: true,
-			vamilToegestaan: false,
+			acquisitionValue: 5000000,
+			energyListHit: false,
+			environmentListHit: true,
+			vamilPermitted: false,
 			kiaExcluded: false
 		);
 

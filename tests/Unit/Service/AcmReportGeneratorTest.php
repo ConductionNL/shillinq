@@ -56,11 +56,11 @@ final class AcmReportGeneratorTest extends TestCase {
 			'administrationId' => 'adm-tilburg',
 			'activities' => [
 				['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'Dansschool', 'isExempted' => false],
-				['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true, 'exemptionBesluitId' => 'abb-001'],
+				['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true, 'exemptionDecisionId' => 'abb-001'],
 			],
 			'ikpRecords' => [
-				'ca-001' => ['totaleKosten' => 87_500.00],
-				'ca-002' => ['totaleKosten' => 56_000.00],
+				'ca-001' => ['totalCost' => 87_500.00],
+				'ca-002' => ['totalCost' => 56_000.00],
 			],
 			'omzetByActivity' => [
 				'ca-001' => 92_000.00,
@@ -72,7 +72,7 @@ final class AcmReportGeneratorTest extends TestCase {
 		self::assertCount(2, $report['activiteiten']);
 		self::assertTrue($report['activiteiten'][0]['compliant']);
 		self::assertFalse($report['activiteiten'][1]['compliant']);
-		self::assertSame('abb-001', $report['activiteiten'][1]['abbReferentie']);
+		self::assertSame('abb-001', $report['activiteiten'][1]['abbReference']);
 		self::assertSame('draft', $report['status']);
 
 	}//end testComposeAggregatesActivities()
@@ -98,9 +98,9 @@ final class AcmReportGeneratorTest extends TestCase {
 	public function testSubmitFlipsToVerzonden(): void {
 		$report = ['status' => 'ready-for-submission'];
 		$verzond = $this->svc->submit($report, 'gmb-2026-001');
-		self::assertTrue($verzond['verzondenAanAcm']);
+		self::assertTrue($verzond['sentInAcm']);
 		self::assertSame('verzonden', $verzond['status']);
-		self::assertSame('gmb-2026-001', $verzond['publicatieGemeenteblad']);
+		self::assertSame('gmb-2026-001', $verzond['publicationMunicipalGazette']);
 
 	}//end testSubmitFlipsToVerzonden()
 
@@ -112,7 +112,7 @@ final class AcmReportGeneratorTest extends TestCase {
 			'period' => '2026-Q1',
 			'administrationId' => 'adm-tilburg',
 			'activities' => [['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'X', 'isExempted' => false]],
-			'ikpRecords' => ['ca-001' => ['totaleKosten' => 1.0]],
+			'ikpRecords' => ['ca-001' => ['totalCost' => 1.0]],
 			'omzetByActivity' => ['ca-001' => 2.0],
 		]);
 

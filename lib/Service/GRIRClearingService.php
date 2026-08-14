@@ -718,15 +718,15 @@ class GRIRClearingService {
 			}
 		}
 
-		$saldoCents = $debitCents - $creditCents;
+		$balanceCents = $debitCents - $creditCents;
 
 		return [
 			'periodId' => $periodId,
 			'clearingAccount' => $clearingAccount,
 			'debitCents' => $debitCents,
 			'creditCents' => $creditCents,
-			'saldoCents' => $saldoCents,
-			'balanced' => ($saldoCents === 0),
+			'saldoCents' => $balanceCents,
+			'balanced' => ($balanceCents === 0),
 		];
 
 	}//end reconcileGRIRSaldoForPeriod()

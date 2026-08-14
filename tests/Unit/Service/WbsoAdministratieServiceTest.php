@@ -69,12 +69,12 @@ final class WbsoAdministratieServiceTest extends TestCase {
 	 * Build the service with an ObjectService stub returning the given data sets.
 	 *
 	 * @param array<int,array<string,mixed>> $beschikkingen WbsoBeschikking records.
-	 * @param array<int,array<string,mixed>> $uren SoUurregistratie records.
+	 * @param array<int,array<string,mixed>> $hours SoUurregistratie records.
 	 *
 	 * @return WbsoAdministratieService
 	 */
-	private function buildService(array $beschikkingen, array $uren): WbsoAdministratieService {
-		$stub = new class($beschikkingen, $uren) {
+	private function buildService(array $beschikkingen, array $hours): WbsoAdministratieService {
+		$stub = new class($beschikkingen, $hours) {
 
 			/**
 			 * Data sets keyed by schema slug.
@@ -94,12 +94,12 @@ final class WbsoAdministratieServiceTest extends TestCase {
 			 * Constructor.
 			 *
 			 * @param array<int,array<string,mixed>> $beschikkingen WbsoBeschikking records.
-			 * @param array<int,array<string,mixed>> $uren SoUurregistratie records.
+			 * @param array<int,array<string,mixed>> $hours SoUurregistratie records.
 			 */
-			public function __construct(array $beschikkingen, array $uren) {
+			public function __construct(array $beschikkingen, array $hours) {
 				$this->data = [
 					'WbsoBeschikking' => $beschikkingen,
-					'SoUurregistratie' => $uren,
+					'SoUurregistratie' => $hours,
 				];
 			}//end __construct()
 
@@ -175,9 +175,9 @@ final class WbsoAdministratieServiceTest extends TestCase {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function beschikking(string $number, float $granted, string $admin): array {
+	private function decision(string $number, float $granted, string $admin): array {
 		return [
-			'beschikkingNumber' => $number,
+			'decisionNumber' => $number,
 			'rvoReference' => 'S&O ' . $number,
 			'projectNumber' => 'PRJ-' . $number,
 			'grantedSoHours' => $granted,
@@ -199,7 +199,7 @@ final class WbsoAdministratieServiceTest extends TestCase {
 	 */
 	private function uur(string $number, float $hours, string $state, string $admin): array {
 		return [
-			'beschikkingNumber' => $number,
+			'decisionNumber' => $number,
 			'hours' => $hours,
 			'state' => $state,
 			'administrationId' => $admin,
@@ -214,7 +214,7 @@ final class WbsoAdministratieServiceTest extends TestCase {
 	 */
 	public function testRollsUpConfirmedAndLockedHoursOnly(): void {
 		$service = $this->buildService(
-			[$this->beschikking('WBSO-1', 1200.0, 'adm-a')],
+			[$this->decision('WBSO-1', 1200.0, 'adm-a')],
 			[
 				$this->uur('WBSO-1', 6.5, 'confirmed', 'adm-a'),
 				$this->uur('WBSO-1', 7.0, 'locked', 'adm-a'),
@@ -240,7 +240,7 @@ final class WbsoAdministratieServiceTest extends TestCase {
 	 */
 	public function testExceededFlagSet(): void {
 		$service = $this->buildService(
-			[$this->beschikking('WBSO-1', 10.0, 'adm-a')],
+			[$this->decision('WBSO-1', 10.0, 'adm-a')],
 			[
 				$this->uur('WBSO-1', 8.0, 'locked', 'adm-a'),
 				$this->uur('WBSO-1', 5.0, 'confirmed', 'adm-a'),
@@ -262,8 +262,8 @@ final class WbsoAdministratieServiceTest extends TestCase {
 	public function testScopesToAdministration(): void {
 		$service = $this->buildService(
 			[
-				$this->beschikking('WBSO-1', 1200.0, 'adm-a'),
-				$this->beschikking('WBSO-9', 999.0, 'adm-other'),
+				$this->decision('WBSO-1', 1200.0, 'adm-a'),
+				$this->decision('WBSO-9', 999.0, 'adm-other'),
 			],
 			[
 				$this->uur('WBSO-1', 6.5, 'confirmed', 'adm-a'),
@@ -273,7 +273,7 @@ final class WbsoAdministratieServiceTest extends TestCase {
 
 		$result = $service->realisatieSummary('adm-a');
 		self::assertSame(1, $result['total']);
-		self::assertSame('WBSO-1', $result['data'][0]['beschikkingNumber']);
+		self::assertSame('WBSO-1', $result['data'][0]['decisionNumber']);
 
 	}//end testScopesToAdministration()
 
@@ -284,7 +284,7 @@ final class WbsoAdministratieServiceTest extends TestCase {
 	 */
 	public function testZeroRealisationForEmptyBeschikking(): void {
 		$service = $this->buildService(
-			[$this->beschikking('WBSO-1', 100.0, 'adm-a')],
+			[$this->decision('WBSO-1', 100.0, 'adm-a')],
 			[]
 		);
 

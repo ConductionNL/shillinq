@@ -190,13 +190,13 @@ final class SetupControllerTest extends TestCase {
 		$this->request->method('getParams')->willReturn(
 			[
 				'_route' => 'shillinq.setup.saveConfig',
-				'legal_region' => 'gemeente',
+				'legal_region' => 'municipality',
 			]
 		);
 
 		$this->appConfig->expects($this->once())
 			->method('setValueString')
-			->with('shillinq', 'legal_region', 'gemeente');
+			->with('shillinq', 'legal_region', 'municipality');
 
 		$response = $this->controller->saveConfig();
 

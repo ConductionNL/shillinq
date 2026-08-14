@@ -56,10 +56,10 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	 */
 	private array $defaultRow = [
 		'topic' => 'Sociaal Domein',
-		'getrouwheidApprovalCeiling' => 1,
-		'getrouwheidQualificationCeiling' => 3,
-		'rechtmatigheidApprovalCeiling' => 1,
-		'rechtmatigheidQualificationCeiling' => 3,
+		'faithfulnessApprovalCeiling' => 1,
+		'faithfulnessQualificationCeiling' => 3,
+		'lawfulnessApprovalCeiling' => 1,
+		'lawfulnessQualificationCeiling' => 3,
 		'uncertaintyCeiling' => 3,
 	];
 
@@ -91,8 +91,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	 */
 	public function testValidateCeilingsAcceptsTightenedCeilings(): void {
 		$row = $this->defaultRow;
-		$row['rechtmatigheidApprovalCeiling'] = 0.5;
-		$row['rechtmatigheidQualificationCeiling'] = 1.5;
+		$row['lawfulnessApprovalCeiling'] = 0.5;
+		$row['lawfulnessQualificationCeiling'] = 1.5;
 		self::assertSame([], $this->calc->validateCeilings($row));
 
 	}//end testValidateCeilingsAcceptsTightenedCeilings()
@@ -104,8 +104,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	 */
 	public function testValidateCeilingsRejectsApprovalAboveOne(): void {
 		$row = $this->defaultRow;
-		$row['getrouwheidApprovalCeiling'] = 2;
-		self::assertContains('getrouwheidApprovalCeiling', $this->calc->validateCeilings($row));
+		$row['faithfulnessApprovalCeiling'] = 2;
+		self::assertContains('faithfulnessApprovalCeiling', $this->calc->validateCeilings($row));
 
 	}//end testValidateCeilingsRejectsApprovalAboveOne()
 
@@ -116,8 +116,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	 */
 	public function testValidateCeilingsRejectsQualificationAboveThree(): void {
 		$row = $this->defaultRow;
-		$row['rechtmatigheidQualificationCeiling'] = 5;
-		self::assertContains('rechtmatigheidQualificationCeiling', $this->calc->validateCeilings($row));
+		$row['lawfulnessQualificationCeiling'] = 5;
+		self::assertContains('lawfulnessQualificationCeiling', $this->calc->validateCeilings($row));
 
 	}//end testValidateCeilingsRejectsQualificationAboveThree()
 
@@ -141,7 +141,7 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testCeilingCentsForAxis(): void {
-		$ceilings = $this->calc->ceilingCentsForAxis(1200000.0, $this->defaultRow, 'rechtmatigheid');
+		$ceilings = $this->calc->ceilingCentsForAxis(1200000.0, $this->defaultRow, 'lawfulness');
 		self::assertSame(1200000, $ceilings['approvalCents']);
 		self::assertSame(3600000, $ceilings['qualificationCents']);
 
@@ -155,8 +155,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	public function testClassifySeverityCompliantIsAcceptabel(): void {
 		$finding = [
 			'amount' => 5000000.0,
-			'rechtmatigheid' => 'compliant',
-			'getrouwheid' => 'faithful',
+			'lawfulness' => 'compliant',
+			'faithfulness' => 'faithful',
 		];
 		self::assertSame('acceptabel', $this->calc->classifySeverity($finding, $this->defaultRow, 1200000.0));
 
@@ -172,8 +172,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	public function testClassifySeverityBelowApprovalIsAcceptabel(): void {
 		$finding = [
 			'amount' => 8000.0,
-			'rechtmatigheid' => 'exception',
-			'getrouwheid' => 'faithful',
+			'lawfulness' => 'exception',
+			'faithfulness' => 'faithful',
 		];
 		self::assertSame('acceptabel', $this->calc->classifySeverity($finding, $this->defaultRow, 1200000.0));
 
@@ -189,8 +189,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	public function testClassifySeverityBetweenCeilingsIsTeCorrigeren(): void {
 		$finding = [
 			'amount' => 20000.0,
-			'rechtmatigheid' => 'exception',
-			'getrouwheid' => 'faithful',
+			'lawfulness' => 'exception',
+			'faithfulness' => 'faithful',
 		];
 		self::assertSame('te-corrigeren', $this->calc->classifySeverity($finding, $this->defaultRow, 1200000.0));
 
@@ -206,8 +206,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	public function testClassifySeverityAboveQualificationIsMaterieel(): void {
 		$finding = [
 			'amount' => 40000.0,
-			'rechtmatigheid' => 'compliant',
-			'getrouwheid' => 'misstated',
+			'lawfulness' => 'compliant',
+			'faithfulness' => 'misstated',
 		];
 		self::assertSame('materieel', $this->calc->classifySeverity($finding, $this->defaultRow, 1200000.0));
 
@@ -234,8 +234,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	 */
 	public function testAggregateFindingsIgnoresOpenFindings(): void {
 		$findings = [
-			['topic' => 'Sociaal Domein', 'severity' => 'materieel', 'status' => 'open', 'amount' => 40000.0, 'getrouwheid' => 'misstated'],
-			['topic' => 'Sociaal Domein', 'severity' => 'acceptabel', 'status' => 'resolved', 'amount' => 5000.0, 'rechtmatigheid' => 'exception'],
+			['topic' => 'Sociaal Domein', 'severity' => 'materieel', 'status' => 'open', 'amount' => 40000.0, 'faithfulness' => 'misstated'],
+			['topic' => 'Sociaal Domein', 'severity' => 'acceptabel', 'status' => 'resolved', 'amount' => 5000.0, 'lawfulness' => 'exception'],
 		];
 		$rows = $this->calc->aggregateFindings($findings);
 		self::assertCount(1, $rows);
@@ -251,7 +251,7 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	 */
 	public function testAggregateFindingsMaterieelIsAdverseVerdict(): void {
 		$findings = [
-			['topic' => 'Sociaal Domein', 'severity' => 'materieel', 'status' => 'resolved', 'amount' => 40000.0, 'getrouwheid' => 'misstated'],
+			['topic' => 'Sociaal Domein', 'severity' => 'materieel', 'status' => 'resolved', 'amount' => 40000.0, 'faithfulness' => 'misstated'],
 		];
 		$rows = $this->calc->aggregateFindings($findings);
 		self::assertSame('adverse', $rows[0]['verdict']);
@@ -335,8 +335,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 		$complete = [
 			'controllerResponse' => 'response',
 			'auditorConclusion' => 'conclusion',
-			'rechtmatigheid' => 'exception',
-			'getrouwheid' => 'faithful',
+			'lawfulness' => 'exception',
+			'faithfulness' => 'faithful',
 		];
 		self::assertTrue($this->calc->isFourEyeComplete($complete));
 
@@ -351,8 +351,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 		$incomplete = [
 			'controllerResponse' => 'response',
 			'auditorConclusion' => '',
-			'rechtmatigheid' => 'exception',
-			'getrouwheid' => 'faithful',
+			'lawfulness' => 'exception',
+			'faithfulness' => 'faithful',
 		];
 		self::assertFalse($this->calc->isFourEyeComplete($incomplete));
 
@@ -367,8 +367,8 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 		$incomplete = [
 			'controllerResponse' => 'response',
 			'auditorConclusion' => 'conclusion',
-			'rechtmatigheid' => 'exception',
-			'getrouwheid' => '',
+			'lawfulness' => 'exception',
+			'faithfulness' => '',
 		];
 		self::assertFalse($this->calc->isFourEyeComplete($incomplete));
 

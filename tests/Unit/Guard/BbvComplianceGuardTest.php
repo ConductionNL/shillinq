@@ -119,7 +119,7 @@ class BbvComplianceGuardTest extends TestCase {
 		$result = $this->guard->requireBbvAccountMapping(
 			[
 				'accountNumber' => '4100',
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 			]
 		);
 
@@ -136,7 +136,7 @@ class BbvComplianceGuardTest extends TestCase {
 		$result = $this->guard->requireBbvAccountMapping(
 			[
 				'accountNumber' => '4100',
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'rgsDecentraalCode' => 'WLasLes',
 			]
 		);
@@ -162,7 +162,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'accountNumber' => '4310',
 				'administrationId' => 'gem-1',
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 			]
 		);
 
@@ -183,9 +183,9 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'accountNumber' => '4310',
 				'administrationId' => 'gem-1',
-				'administrationType' => 'gemeente',
-				'taakveld' => '7.5',
-				'economischeCategorie' => '3.4.3',
+				'administrationType' => 'municipality',
+				'taskField' => '7.5',
+				'economicCategory' => '3.4.3',
 			]
 		);
 
@@ -229,8 +229,8 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'accountNumber' => '2310',
 				'administrationId' => 'gem-1',
-				'administrationType' => 'gemeente',
-				'taakveld' => '4.2',
+				'administrationType' => 'municipality',
+				'taskField' => '4.2',
 			]
 		);
 
@@ -251,8 +251,8 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'accountNumber' => '2310',
 				'administrationId' => 'gem-1',
-				'administrationType' => 'gemeente',
-				'taakveld' => '0.10',
+				'administrationType' => 'municipality',
+				'taskField' => '0.10',
 			]
 		);
 
@@ -270,7 +270,7 @@ class BbvComplianceGuardTest extends TestCase {
 			'accountNumber' => '2420',
 			'administrationId' => 'gem-1',
 			'bbvClassificatie' => 'voorziening',
-			'taakveld' => '2.1',
+			'taskField' => '2.1',
 		];
 		$this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
@@ -278,8 +278,8 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'accountNumber' => '2420',
 				'administrationId' => 'gem-1',
-				'administrationType' => 'gemeente',
-				'taakveld' => '2.1',
+				'administrationType' => 'municipality',
+				'taskField' => '2.1',
 			]
 		);
 
@@ -297,7 +297,7 @@ class BbvComplianceGuardTest extends TestCase {
 			'accountNumber' => '2420',
 			'administrationId' => 'gem-1',
 			'bbvClassificatie' => 'voorziening',
-			'taakveld' => '2.1',
+			'taskField' => '2.1',
 		];
 		$this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
@@ -305,8 +305,8 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'accountNumber' => '2420',
 				'administrationId' => 'gem-1',
-				'administrationType' => 'gemeente',
-				'taakveld' => '7.2',
+				'administrationType' => 'municipality',
+				'taskField' => '7.2',
 			]
 		);
 
@@ -326,7 +326,7 @@ class BbvComplianceGuardTest extends TestCase {
 			[
 				'accountNumber' => '9999',
 				'administrationId' => 'gem-1',
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 			]
 		);
 
@@ -345,14 +345,14 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testSluitendeMeerjarenramingPermitsPublish(): void {
 		$rows = [
-			['meerjarenHorizon' => 0, 'batenCents' => 100, 'lastenCents' => 90, 'mutatieReservesCents' => 0],
-			['meerjarenHorizon' => 1, 'batenCents' => 100, 'lastenCents' => 100, 'mutatieReservesCents' => 5],
+			['meerjarenHorizon' => 0, 'revenueCents' => 100, 'expensesCents' => 90, 'movementReservesCents' => 0],
+			['meerjarenHorizon' => 1, 'revenueCents' => 100, 'expensesCents' => 100, 'movementReservesCents' => 5],
 		];
 		$this->container->method('get')->willReturn($this->buildBudgetStub(rows: $rows));
 
 		$result = $this->guard->requireMeerjarenramingSluitend(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'administrationId' => 'gem-1',
 				'financialYear' => 2026,
 			]
@@ -369,14 +369,14 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testNonSluitendeMeerjarenramingBlocksPublish(): void {
 		$rows = [
-			['meerjarenHorizon' => 0, 'batenCents' => 100, 'lastenCents' => 90, 'mutatieReservesCents' => 0],
-			['meerjarenHorizon' => 2, 'batenCents' => 100, 'lastenCents' => 220, 'mutatieReservesCents' => 0],
+			['meerjarenHorizon' => 0, 'revenueCents' => 100, 'expensesCents' => 90, 'movementReservesCents' => 0],
+			['meerjarenHorizon' => 2, 'revenueCents' => 100, 'expensesCents' => 220, 'movementReservesCents' => 0],
 		];
 		$this->container->method('get')->willReturn($this->buildBudgetStub(rows: $rows));
 
 		$result = $this->guard->requireMeerjarenramingSluitend(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'administrationId' => 'gem-1',
 				'financialYear' => 2026,
 			]
@@ -397,11 +397,11 @@ class BbvComplianceGuardTest extends TestCase {
 
 		$result = $this->guard->requireMeerjarenramingSluitend(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'administrationId' => 'gem-1',
 				'financialYear' => 2026,
 				'councilResolutionNumber' => 'RB-2026-12',
-				'raadsbesluitDatum' => '2026-06-26',
+				'councilResolutionDate' => '2026-06-26',
 			]
 		);
 
@@ -419,7 +419,7 @@ class BbvComplianceGuardTest extends TestCase {
 
 		$result = $this->guard->requireMeerjarenramingSluitend(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'administrationId' => 'gem-1',
 				'financialYear' => 2026,
 			]
@@ -441,10 +441,10 @@ class BbvComplianceGuardTest extends TestCase {
 	public function testMaatschappelijkNutAboveGrensWithoutTermijnIsRejected(): void {
 		$result = $this->guard->requireMvaActivation(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'description' => 'Rondweg',
-				'mvaCategorie' => 'maatschappelijk-nut',
-				'aanschafwaardeCents' => 840000000,
+				'mvaCategory' => 'maatschappelijk-nut',
+				'acquisitionValueCents' => 840000000,
 			]
 		);
 
@@ -460,10 +460,10 @@ class BbvComplianceGuardTest extends TestCase {
 	public function testMaatschappelijkNutAboveGrensWithTermijnIsPermitted(): void {
 		$result = $this->guard->requireMvaActivation(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'description' => 'Rondweg',
-				'mvaCategorie' => 'maatschappelijk-nut',
-				'aanschafwaardeCents' => 840000000,
+				'mvaCategory' => 'maatschappelijk-nut',
+				'acquisitionValueCents' => 840000000,
 				'depreciationPeriodYears' => 40,
 			]
 		);
@@ -480,10 +480,10 @@ class BbvComplianceGuardTest extends TestCase {
 	public function testMaatschappelijkNutBelowGrensIsPermitted(): void {
 		$result = $this->guard->requireMvaActivation(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'description' => 'Bankje',
-				'mvaCategorie' => 'maatschappelijk-nut',
-				'aanschafwaardeCents' => 100000,
+				'mvaCategory' => 'maatschappelijk-nut',
+				'acquisitionValueCents' => 100000,
 			]
 		);
 
@@ -499,10 +499,10 @@ class BbvComplianceGuardTest extends TestCase {
 	public function testEconomischNutMvaIsExempt(): void {
 		$result = $this->guard->requireMvaActivation(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'description' => 'Gemeentehuis',
-				'mvaCategorie' => 'economisch-nut',
-				'aanschafwaardeCents' => 5000000000,
+				'mvaCategory' => 'economisch-nut',
+				'acquisitionValueCents' => 5000000000,
 			]
 		);
 
@@ -611,7 +611,7 @@ class BbvComplianceGuardTest extends TestCase {
 
 		$result = $guard->requireLineClassification(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'administrationId' => 'gem-1',
 				'accountNumber' => '4310',
 				'postingDate' => '2025-12-31',
@@ -651,14 +651,14 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testParagrafenCompletenessRejectsMissingTypes(): void {
 		$this->container->method('get')
-			->willReturn($this->buildParagraafStub(rows: [
+			->willReturn($this->buildParagraphStub(rows: [
 				['type' => 'lokale-heffingen'],
 				['type' => 'weerstandsvermogen'],
 			]));
 
 		$result = $this->guard->requireParagrafenCompleet(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'administrationId' => 'gem-1',
 				'financialYear' => 2026,
 			]
@@ -675,7 +675,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testParagrafenCompletenessPermitsWhenAllSeven(): void {
 		$this->container->method('get')
-			->willReturn($this->buildParagraafStub(rows: [
+			->willReturn($this->buildParagraphStub(rows: [
 				['type' => 'lokale-heffingen'],
 				['type' => 'weerstandsvermogen'],
 				['type' => 'onderhoud-kapitaalgoederen'],
@@ -687,7 +687,7 @@ class BbvComplianceGuardTest extends TestCase {
 
 		$result = $this->guard->requireParagrafenCompleet(
 			[
-				'administrationType' => 'gemeente',
+				'administrationType' => 'municipality',
 				'administrationId' => 'gem-1',
 				'financialYear' => 2026,
 			]
@@ -708,7 +708,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testDepreciationStartsMonthAfterIngebruikname(): void {
 		$result = $this->guard->depreciationStartMonth(
-			['ingebruiknameDatum' => '2026-09-15']
+			['commissioningDate' => '2026-09-15']
 		);
 
 		self::assertSame(expected: '2026-10', actual: $result, message: 'REQ-BBV-005: first depreciation in 2026-10');
@@ -722,7 +722,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testDepreciationStartsRollsOverYearBoundary(): void {
 		$result = $this->guard->depreciationStartMonth(
-			['ingebruiknameDatum' => '2026-12-31']
+			['commissioningDate' => '2026-12-31']
 		);
 
 		self::assertSame(expected: '2027-01', actual: $result);
@@ -735,7 +735,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDepreciationStartReturnsNullWithoutDate(): void {
-		self::assertNull(actual: $this->guard->depreciationStartMonth(['ingebruiknameDatum' => '']));
+		self::assertNull(actual: $this->guard->depreciationStartMonth(['commissioningDate' => '']));
 
 	}//end testDepreciationStartReturnsNullWithoutDate()
 
@@ -792,7 +792,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 *
 	 * @return object
 	 */
-	private function buildParagraafStub(array $rows): object {
+	private function buildParagraphStub(array $rows): object {
 		return new class($rows) {
 			/**
 			 * The rows.

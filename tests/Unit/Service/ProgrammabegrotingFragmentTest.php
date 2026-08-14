@@ -212,7 +212,7 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 	public function testSeedArithmeticIsConsistent(): void {
 		$objects = $this->fragment()['components']['objects'];
 
-		$taakveldByProgramma = [];
+		$taskFieldByProgramma = [];
 		foreach ($objects as $object) {
 			$schema = $object['@self']['schema'];
 			if ($schema === 'Reserve') {
@@ -221,14 +221,14 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 			}
 
 			if ($schema === 'Voorziening') {
-				$mutaties = (($object['dotaties'] ?? 0) - ($object['vrijval'] ?? 0) - ($object['aanwendingen'] ?? 0));
-				$expected = (int)round(($object['beginsaldo'] + $mutaties) * 100);
+				$movements = (($object['additions'] ?? 0) - ($object['release'] ?? 0) - ($object['utilisations'] ?? 0));
+				$expected = (int)round(($object['beginsaldo'] + $movements) * 100);
 				self::assertSame($expected, (int)round($object['eindsaldo'] * 100), 'Voorziening eindsaldo must balance');
 			}
 
 			if ($schema === 'Taakveld') {
 				$pid = $object['programmeId'];
-				$taakveldByProgramma[$pid][] = $object;
+				$taskFieldByProgramma[$pid][] = $object;
 			}
 		}//end foreach
 
@@ -239,19 +239,19 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 			}
 
 			$pid = $object['@self']['slug'];
-			if (isset($taakveldByProgramma[$pid]) === false) {
+			if (isset($taskFieldByProgramma[$pid]) === false) {
 				continue;
 			}
 
-			$batenCents = 0;
-			$lastenCents = 0;
-			foreach ($taakveldByProgramma[$pid] as $tv) {
-				$batenCents += (int)round($tv['baten'] * 100);
-				$lastenCents += (int)round($tv['lasten'] * 100);
+			$revenueCents = 0;
+			$expensesCents = 0;
+			foreach ($taskFieldByProgramma[$pid] as $tv) {
+				$revenueCents += (int)round($tv['revenue'] * 100);
+				$expensesCents += (int)round($tv['expenses'] * 100);
 			}
 
-			self::assertSame($batenCents, (int)round($object['revenueTotal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');
-			self::assertSame($lastenCents, (int)round($object['expensesTotal'] * 100), 'Programma lastenTotaal must equal Σ Taakveld.lasten');
+			self::assertSame($revenueCents, (int)round($object['revenueTotal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');
+			self::assertSame($expensesCents, (int)round($object['expensesTotal'] * 100), 'Programma lastenTotaal must equal Σ Taakveld.lasten');
 		}//end foreach
 
 	}//end testSeedArithmeticIsConsistent()

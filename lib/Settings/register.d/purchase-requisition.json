@@ -24,7 +24,7 @@
           "financialYear",
           "neededByDate",
           "justification",
-          "soort",
+          "kind",
           "statusCode",
           "administrationId"
         ],
@@ -66,7 +66,7 @@
             "example": "Replacement laptops for the onboarding cohort starting August.",
             "title": "Justification"
           },
-          "soort": {
+          "kind": {
             "type": "string",
             "description": "Commitment type used to resolve the applicable Mandaat (MandaatEnforcer's soort_verplichting match). Matches the soort vocabulary already used by Verplichting (e.g. 'inkoop').",
             "example": "inkoop",
@@ -81,7 +81,7 @@
             "example": "vendor-001",
             "title": "Preferred Supplier"
           },
-          "totaalbedrag_excl_btw": {
+          "total_amount_excl_vat": {
             "type": "integer",
             "description": "Estimated total requisition amount in euro cents, excluding VAT (sum of RequisitionLine.lineTotal). Integer cents per ADR-022. Computed server-side by RequisitionService when the requisition is created/updated; read by BudgetBlocker's budget check on approve.",
             "nullable": true,
@@ -347,8 +347,8 @@
       "financialYear": 2026,
       "neededByDate": "2026-08-15",
       "justification": "Replacement laptops for the onboarding cohort starting August.",
-      "soort": "inkoop",
-      "totaalbedrag_excl_btw": 150000,
+      "kind": "inkoop",
+      "total_amount_excl_vat": 150000,
       "statusCode": "draft"
     },
     {
@@ -379,8 +379,8 @@
       "financialYear": 2026,
       "neededByDate": "2026-09-01",
       "justification": "Standing desks for the facilities refresh (ergonomics programme).",
-      "soort": "inkoop",
-      "totaalbedrag_excl_btw": 500000,
+      "kind": "inkoop",
+      "total_amount_excl_vat": 500000,
       "statusCode": "submitted"
     },
     {
@@ -411,9 +411,9 @@
       "financialYear": 2026,
       "neededByDate": "2026-07-30",
       "justification": "Annual software licence renewal for the design team.",
-      "soort": "inkoop",
+      "kind": "inkoop",
       "preferredSupplierId": "vendor-001",
-      "totaalbedrag_excl_btw": 240000,
+      "total_amount_excl_vat": 240000,
       "statusCode": "approved",
       "approvedBy": "controller-01",
       "approvedAt": "2026-07-10T09:00:00+00:00"

@@ -96,7 +96,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 * @return GeneratedFile
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
-		$totals = $this->aggregateByTaakveld($context);
+		$totals = $this->aggregateByTaskField($context);
 		ksort($totals);
 
 		if ($format === 'csv') {
@@ -114,9 +114,9 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	 *
 	 * @param array<string,mixed> $context Report context.
 	 *
-	 * @return array<string,array{lasten:float,baten:float}>
+	 * @return array<string,array{expenses:float,revenue:float}>
 	 */
-	private function aggregateByTaakveld(array $context): array {
+	private function aggregateByTaskField(array $context): array {
 		$accounts = $this->indexAccountsByNumber($this->loadAll('Account', $this->administrationFilter($context)));
 		$lines = $this->loadAll('GLLine', $this->lineFilters($context));
 
@@ -127,20 +127,20 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 			}
 
 			$accountNumber = (string)($line['accountNumber'] ?? '');
-			$taakveld = (string)($line['taakveld'] ?? $accounts[$accountNumber]['taakveld'] ?? '');
-			if ($taakveld === '') {
-				$taakveld = '0.0';
+			$taskField = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
+			if ($taskField === '') {
+				$taskField = '0.0';
 			}
 
-			if (isset($totals[$taakveld]) === false) {
-				$totals[$taakveld] = ['lasten' => 0.0, 'baten' => 0.0];
+			if (isset($totals[$taskField]) === false) {
+				$totals[$taskField] = ['expenses' => 0.0, 'revenue' => 0.0];
 			}
 
 			$amount = $this->toFloat($line['amount'] ?? 0);
 			if ((string)($line['side'] ?? '') === 'debit') {
-				$totals[$taakveld]['lasten'] += $amount;
+				$totals[$taskField]['expenses'] += $amount;
 			} else {
-				$totals[$taakveld]['baten'] += $amount;
+				$totals[$taskField]['revenue'] += $amount;
 			}
 		}//end foreach
 
@@ -150,22 +150,22 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	/**
 	 * Render the taakveld totals as CSV.
 	 *
-	 * @param array<string,array{lasten:float,baten:float}> $totals Aggregated totals.
+	 * @param array<string,array{expenses:float,revenue:float}> $totals Aggregated totals.
 	 * @param array<string,mixed> $context Report context.
 	 *
 	 * @return GeneratedFile
 	 */
 	private function renderCsv(array $totals, array $context): GeneratedFile {
 		$handle = fopen('php://temp', 'r+');
-		fputcsv($handle, ['taakveld', 'lasten', 'baten', 'saldo']);
-		foreach ($totals as $taakveld => $row) {
+		fputcsv($handle, ['taskField', 'expenses', 'revenue', 'saldo']);
+		foreach ($totals as $taskField => $row) {
 			fputcsv(
 				$handle,
 				[
-					$taakveld,
-					$this->money($row['lasten']),
-					$this->money($row['baten']),
-					$this->money(($row['baten'] - $row['lasten'])),
+					$taskField,
+					$this->money($row['expenses']),
+					$this->money($row['revenue']),
+					$this->money(($row['revenue'] - $row['expenses'])),
 				]
 			);
 		}
@@ -186,7 +186,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 	/**
 	 * Render the taakveld totals as IV3 XML.
 	 *
-	 * @param array<string,array{lasten:float,baten:float}> $totals Aggregated totals.
+	 * @param array<string,array{expenses:float,revenue:float}> $totals Aggregated totals.
 	 * @param array<string,mixed> $context Report context.
 	 *
 	 * @return GeneratedFile
@@ -199,17 +199,17 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 		$writer->startDocument('1.0', 'UTF-8');
 
 		$writer->startElement('Iv3Rapportage');
-		$writer->writeAttribute('periode', $this->contextString($context, 'period'));
+		$writer->writeAttribute('period', $this->contextString($context, 'period'));
 		$writer->writeAttribute('administratie', $this->contextString($context, 'administrationId'));
 		$writer->writeAttribute('valuta', 'EUR');
 		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
 
-		foreach ($totals as $taakveld => $row) {
+		foreach ($totals as $taskField => $row) {
 			$writer->startElement('Taakveld');
-			$writer->writeAttribute('code', (string)$taakveld);
-			$writer->writeElement('Lasten', $this->money($row['lasten']));
-			$writer->writeElement('Baten', $this->money($row['baten']));
-			$writer->writeElement('Saldo', $this->money(($row['baten'] - $row['lasten'])));
+			$writer->writeAttribute('code', (string)$taskField);
+			$writer->writeElement('Lasten', $this->money($row['expenses']));
+			$writer->writeElement('Baten', $this->money($row['revenue']));
+			$writer->writeElement('Saldo', $this->money(($row['revenue'] - $row['expenses'])));
 			$writer->endElement();
 		}
 

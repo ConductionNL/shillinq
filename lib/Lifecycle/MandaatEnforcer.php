@@ -75,25 +75,25 @@ class MandaatEnforcer {
 	 *
 	 * Fail-closed: returns false on any exception or when no mandaat applies.
 	 *
-	 * @param string $verplichtingsnummer The verplichting identifier (lifecycle-engine call parity).
+	 * @param string $commitmentNumber The verplichting identifier (lifecycle-engine call parity).
 	 * @param array<string,mixed>|null $object The Verplichting object being transitioned.
 	 *
 	 * @return bool True when a valid mandaat covers the commitment amount and soort.
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
-	public function hasSufficientMandate(string $verplichtingsnummer, ?array $object = null): bool {
+	public function hasSufficientMandate(string $commitmentNumber, ?array $object = null): bool {
 		try {
-			$verplichting = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['verplichtingsnummer' => $verplichtingsnummer]));
-			if ($verplichting === null) {
+			$commitment = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitmentNumber' => $commitmentNumber]));
+			if ($commitment === null) {
 				return false;
 			}
 
-			return $this->resolveApplicableMandate(verplichting: $verplichting) !== null;
+			return $this->resolveApplicableMandate(commitment: $commitment) !== null;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'MandaatEnforcer: hasSufficientMandate failed — treating as not mandated (fail-closed)',
-				['verplichting' => $verplichtingsnummer, 'exception' => $e->getMessage()]
+				['commitment' => $commitmentNumber, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -108,15 +108,15 @@ class MandaatEnforcer {
 	 * any error routes the commitment to in_goedkeuring rather than letting it skip
 	 * authorization.
 	 *
-	 * @param string $verplichtingsnummer The verplichting identifier.
+	 * @param string $commitmentNumber The verplichting identifier.
 	 * @param array<string,mixed>|null $object The Verplichting object being transitioned.
 	 *
 	 * @return bool True when approval is required (mandate insufficient or absent).
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
-	public function requiresApproval(string $verplichtingsnummer, ?array $object = null): bool {
-		return $this->hasSufficientMandate(verplichtingsnummer: $verplichtingsnummer, object: $object) === false;
+	public function requiresApproval(string $commitmentNumber, ?array $object = null): bool {
+		return $this->hasSufficientMandate(commitmentNumber: $commitmentNumber, object: $object) === false;
 	}//end requiresApproval()
 
 	/**
@@ -131,43 +131,43 @@ class MandaatEnforcer {
 	 * Among applicable mandaten the one with the lowest sufficient ceiling is
 	 * returned (least-privilege), preferring non-override mandates.
 	 *
-	 * @param array<string,mixed> $verplichting The commitment being signed.
+	 * @param array<string,mixed> $commitment The commitment being signed.
 	 *
 	 * @return array<string,mixed>|null The applicable mandaat record, or null.
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
-	public function resolveApplicableMandate(array $verplichting): ?array {
-		$soort = (string)($verplichting['soort'] ?? '');
-		$bedrag = (int)($verplichting['totaalbedrag_excl_btw'] ?? 0);
-		$admin = (string)($verplichting['administrationId'] ?? '');
+	public function resolveApplicableMandate(array $commitment): ?array {
+		$kind = (string)($commitment['kind'] ?? '');
+		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);
+		$admin = (string)($commitment['administrationId'] ?? '');
 
 		$mandaten = $this->findMany(schema: 'Mandaat', filters: ['administrationId' => $admin]);
 
 		$best = null;
-		foreach ($mandaten as $mandaat) {
-			if ($this->mandateApplies(mandaat: $mandaat, soort: $soort, bedrag: $bedrag) === false) {
+		foreach ($mandaten as $mandate) {
+			if ($this->mandateApplies(mandate: $mandate, kind: $kind, amount: $amount) === false) {
 				continue;
 			}
 
 			if ($best === null) {
-				$best = $mandaat;
+				$best = $mandate;
 				continue;
 			}
 
 			// Prefer non-override, then the lowest sufficient ceiling (least-privilege).
 			$bestOverride = (bool)($best['is_override'] ?? false);
-			$candOverride = (bool)($mandaat['is_override'] ?? false);
+			$candOverride = (bool)($mandate['is_override'] ?? false);
 			if ($bestOverride !== $candOverride) {
 				if ($candOverride === false) {
-					$best = $mandaat;
+					$best = $mandate;
 				}
 
 				continue;
 			}
 
-			if ((int)($mandaat['maximumbedrag'] ?? 0) < (int)($best['maximumbedrag'] ?? 0)) {
-				$best = $mandaat;
+			if ((int)($mandate['maximumAmount'] ?? 0) < (int)($best['maximumAmount'] ?? 0)) {
+				$best = $mandate;
 			}
 		}//end foreach
 
@@ -181,65 +181,65 @@ class MandaatEnforcer {
 	 * True when the applicable mandaat declares vereist_tweede_handtekening_boven and
 	 * the commitment amount meets or exceeds it.
 	 *
-	 * @param array<string,mixed> $verplichting The commitment being signed.
+	 * @param array<string,mixed> $commitment The commitment being signed.
 	 *
 	 * @return bool True when a second signature is required.
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
-	public function requiresSecondSignature(array $verplichting): bool {
-		$mandaat = $this->resolveApplicableMandate(verplichting: $verplichting);
-		if ($mandaat === null) {
+	public function requiresSecondSignature(array $commitment): bool {
+		$mandate = $this->resolveApplicableMandate(commitment: $commitment);
+		if ($mandate === null) {
 			return false;
 		}
 
-		$threshold = ($mandaat['vereist_tweede_handtekening_boven'] ?? null);
+		$threshold = ($mandate['required_second_signature_above'] ?? null);
 		if ($threshold === null) {
 			return false;
 		}
 
-		return (int)($verplichting['totaalbedrag_excl_btw'] ?? 0) >= (int)$threshold;
+		return (int)($commitment['total_amount_excl_vat'] ?? 0) >= (int)$threshold;
 	}//end requiresSecondSignature()
 
 	/**
 	 * Evaluate whether a single mandaat covers a commitment of the given soort and amount.
 	 *
-	 * @param array<string,mixed> $mandaat The mandaat record.
-	 * @param string $soort The commitment soort.
-	 * @param int $bedrag The commitment amount in minor units.
+	 * @param array<string,mixed> $mandate The mandaat record.
+	 * @param string $kind The commitment soort.
+	 * @param int $amount The commitment amount in minor units.
 	 *
 	 * @return bool True when the mandaat is valid, covers the soort, and the ceiling suffices.
 	 */
-	private function mandateApplies(array $mandaat, string $soort, int $bedrag): bool {
-		if ($this->isCurrentlyValid(mandaat: $mandaat) === false) {
+	private function mandateApplies(array $mandate, string $kind, int $amount): bool {
+		if ($this->isCurrentlyValid(mandate: $mandate) === false) {
 			return false;
 		}
 
-		$soorten = ($mandaat['soort_verplichting'] ?? []);
-		if (is_array($soorten) === true && count($soorten) > 0 && in_array($soort, $soorten, true) === false) {
+		$soorten = ($mandate['kind_commitment'] ?? []);
+		if (is_array($soorten) === true && count($soorten) > 0 && in_array($kind, $soorten, true) === false) {
 			return false;
 		}
 
-		return (int)($mandaat['maximumbedrag'] ?? 0) >= $bedrag;
+		return (int)($mandate['maximumAmount'] ?? 0) >= $amount;
 	}//end mandateApplies()
 
 	/**
 	 * Whether a mandaat is valid as of today (REQ-VPL-002). Expired or not-yet-valid
 	 * mandates are treated as absent.
 	 *
-	 * @param array<string,mixed> $mandaat The mandaat record.
+	 * @param array<string,mixed> $mandate The mandaat record.
 	 *
 	 * @return bool True when today falls within geldig_van..geldig_tot (inclusive).
 	 */
-	private function isCurrentlyValid(array $mandaat): bool {
+	private function isCurrentlyValid(array $mandate): bool {
 		$today = (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d');
 
-		$van = (string)($mandaat['geldig_van'] ?? '');
-		if ($van !== '' && $van > $today) {
+		$from = (string)($mandate['valid_from'] ?? '');
+		if ($from !== '' && $from > $today) {
 			return false;
 		}
 
-		$tot = (string)($mandaat['geldig_tot'] ?? '');
+		$tot = (string)($mandate['valid_to'] ?? '');
 		if ($tot !== '' && $tot < $today) {
 			return false;
 		}

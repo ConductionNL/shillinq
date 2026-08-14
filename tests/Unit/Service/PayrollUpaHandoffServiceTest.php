@@ -188,15 +188,15 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 				['id' => 'wn-5', 'administrationId' => 'adm-2', 'pensionScheme' => 'PME_DC'],
 			],
 			'LoonStrook' => [
-				['werknemerId' => 'wn-1', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
-				['werknemerId' => 'wn-2', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
-				['werknemerId' => 'wn-3', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
+				['employeeId' => 'wn-1', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
+				['employeeId' => 'wn-2', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
+				['employeeId' => 'wn-3', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
 				// No regeling -> excluded.
-				['werknemerId' => 'wn-4', 'periodeId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
+				['employeeId' => 'wn-4', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
 				// Different admin -> excluded by scope.
-				['werknemerId' => 'wn-5', 'periodeId' => 'lp-1', 'administrationId' => 'adm-2', 'pensioen' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
+				['employeeId' => 'wn-5', 'periodId' => 'lp-1', 'administrationId' => 'adm-2', 'pensioen' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
 				// Zero pensioen -> excluded.
-				['werknemerId' => 'wn-1', 'periodeId' => 'lp-2', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
+				['employeeId' => 'wn-1', 'periodId' => 'lp-2', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
 			],
 		];
 
@@ -210,7 +210,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 	public function testGroupsByUitvoerderAndSumsCorrectly(): void {
 		$svc = $this->buildService(data: $this->dataset());
 
-		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodId: 'lp-1');
 
 		$this->assertCount(2, $payloads);
 
@@ -225,9 +225,9 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 		$pme = $byRegeling['PME_DC'];
 		$this->assertSame(2, $pme['totaalWerknemers']);
 		$this->assertEqualsWithDelta(500.0, $pme['totaalPremie'], 0.005);
-		$this->assertSame('lp-1', $pme['periodeId']);
+		$this->assertSame('lp-1', $pme['periodId']);
 		$this->assertSame('adm-1', $pme['administrationId']);
-		$this->assertCount(2, $pme['regels']);
+		$this->assertCount(2, $pme['rules']);
 
 		$pfzw = $byRegeling['PFZW'];
 		$this->assertSame(1, $pfzw['totaalWerknemers']);
@@ -243,7 +243,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 	public function testReturnsEmptyWhenNoStroken(): void {
 		$svc = $this->buildService(data: ['Werknemer' => [], 'LoonStrook' => []]);
 
-		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-1', periodId: 'lp-1');
 
 		$this->assertSame([], $payloads);
 
@@ -257,7 +257,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 	public function testDoesNotLeakCrossAdministration(): void {
 		$svc = $this->buildService(data: $this->dataset());
 
-		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-2', periodeId: 'lp-1');
+		$payloads = $svc->toUpaSubmissionPayloads(administrationId: 'adm-2', periodId: 'lp-1');
 
 		// adm-2 has wn-5 with PME_DC but we never see adm-1's wn-1/wn-2 grouped in.
 		$this->assertCount(1, $payloads);

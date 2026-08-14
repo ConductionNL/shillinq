@@ -23,7 +23,7 @@
           "enterpriseId",
           "horizonStart",
           "horizonEnd",
-          "rolledOp",
+          "rolledOn",
           "openingBalance",
           "administrationId",
           "lifecycleState"
@@ -55,7 +55,7 @@
             "example": "2026-08-23",
             "title": "Horizon Eind"
           },
-          "rolledOp": {
+          "rolledOn": {
             "type": "string",
             "format": "date-time",
             "description": "Timestamp of the last weekly roll (REQ-CF-001).",
@@ -66,32 +66,32 @@
             "type": "object",
             "description": "Opening balance breakdown across the operational account and the three spaardoel buckets (REQ-CF-001/014).",
             "required": [
-              "zakelijkeRekening",
-              "spaardoel_btw",
-              "spaardoel_ib",
-              "spaardoel_buffer",
+              "businessAccount",
+              "savings_goal_vat",
+              "savings_goal_ib",
+              "savings_goal_buffer",
               "total"
             ],
             "properties": {
-              "zakelijkeRekening": {
+              "businessAccount": {
                 "type": "number",
                 "description": "Operational business account balance in EUR.",
                 "example": 14820.0,
                 "title": "Zakelijke Rekening"
               },
-              "spaardoel_btw": {
+              "savings_goal_vat": {
                 "type": "number",
                 "description": "BTW reserve bucket in EUR (trust money owed to the Belastingdienst).",
                 "example": 3200.0,
                 "title": "Spaardoel BTW"
               },
-              "spaardoel_ib": {
+              "savings_goal_ib": {
                 "type": "number",
                 "description": "IB/VPB reserve bucket in EUR.",
                 "example": 5800.0,
                 "title": "Spaardoel Ib"
               },
-              "spaardoel_buffer": {
+              "savings_goal_buffer": {
                 "type": "number",
                 "description": "Emergency buffer bucket in EUR (1-3 months fixed costs).",
                 "example": 8200.0,
@@ -106,7 +106,7 @@
             },
             "title": "Opening Saldo"
           },
-          "modelVersie": {
+          "modelVersion": {
             "type": "string",
             "description": "Forecast model version string (REQ-CF-017).",
             "example": "v4.1-klantspecifiek-betaalgedrag",
@@ -260,7 +260,7 @@
           "inflows_total",
           "outflows_ap_geprognosticeerd",
           "outflows_total",
-          "nettoMutatie",
+          "netMovement",
           "closingBalance",
           "administrationId"
         ],
@@ -359,7 +359,7 @@
             "example": 0.0,
             "title": "Outflows Recurring Abonnementen"
           },
-          "outflows_recurring_dga_loon": {
+          "outflows_recurring_dga_pay": {
             "type": "number",
             "description": "DGA salary withdrawal for the week (REQ-CF-002/005).",
             "example": 0.0,
@@ -371,13 +371,13 @@
             "example": 0.0,
             "title": "Outflows Recurring Lijfrentepremie"
           },
-          "outflows_btw_afdracht": {
+          "outflows_vat_remittance": {
             "type": "number",
             "description": "Quarterly BTW settlement, if due this week (REQ-CF-002/007).",
             "example": 0.0,
             "title": "Outflows BTW Afdracht"
           },
-          "outflows_ib_aanslag": {
+          "outflows_ib_assessment": {
             "type": "number",
             "description": "Annual IB/VPB settlement, if due this week (REQ-CF-002/008).",
             "example": 0.0,
@@ -395,7 +395,7 @@
             "example": 2100.0,
             "title": "Outflows Totaal"
           },
-          "nettoMutatie": {
+          "netMovement": {
             "type": "number",
             "description": "inflows_totaal - outflows_totaal (REQ-CF-002).",
             "example": 9400.0,
@@ -526,10 +526,10 @@
           "projId",
           "horizonId",
           "arInvoiceId",
-          "factuurDatum",
-          "vervalDatum",
+          "invoiceDate",
+          "expiryDate",
           "outstandingAmount",
-          "verwachtOntvangstDatum",
+          "expectedReceiptDate",
           "administrationId"
         ],
         "properties": {
@@ -551,20 +551,20 @@
             "example": "fact-2026-0247",
             "title": "AR Invoice ID"
           },
-          "klantId": {
+          "customerId": {
             "type": "string",
             "description": "Denormalised customer identifier for reporting (REQ-CF-004).",
             "example": "klant-acme-bv",
             "title": "Klant ID"
           },
-          "factuurDatum": {
+          "invoiceDate": {
             "type": "string",
             "format": "date",
             "description": "Invoice issuance date (REQ-CF-004).",
             "example": "2026-04-15",
             "title": "Factuur Datum"
           },
-          "vervalDatum": {
+          "expiryDate": {
             "type": "string",
             "format": "date",
             "description": "Contractual due date (REQ-CF-004).",
@@ -577,40 +577,40 @@
             "example": 8400.0,
             "title": "Openstaand Bedrag"
           },
-          "verwachtOntvangstDatum": {
+          "expectedReceiptDate": {
             "type": "string",
             "format": "date",
             "description": "Projected receipt date = vervalDatum + mean betalingsgedrag offset (REQ-CF-003/004).",
             "example": "2026-05-28",
             "title": "Verwacht Ontvangst Datum"
           },
-          "verwachtOntvangstWeek": {
+          "expectedReceiptWeek": {
             "type": "string",
             "description": "ISO week string of the projected receipt (REQ-CF-004).",
             "example": "2026-w22",
             "title": "Verwacht Ontvangst Week"
           },
-          "betalingsHistorie_gemiddeldeAfwijking": {
+          "payment_history_average_deviation": {
             "type": "string",
             "description": "Mean offset from due date as a signed-days string (REQ-CF-004).",
             "example": "+13 days",
             "title": "Betalingshistorie Gemiddeldeafwijking"
           },
-          "betalingsHistorie_facturen12mnd": {
+          "payment_history_invoices12m": {
             "type": "integer",
             "minimum": 0,
             "description": "Count of settled invoices in the 12-month sample (REQ-CF-003/004).",
             "example": 9,
             "title": "Betalingshistorie Facturen12Mnd"
           },
-          "betalingsHistorie_betaaldVoorVerval": {
+          "payment_history_paid_for_expiry": {
             "type": "integer",
             "minimum": 0,
             "description": "Count of invoices paid on or before the due date (REQ-CF-004).",
             "example": 2,
             "title": "Betalingshistorie Betaaldvoorverval"
           },
-          "betrouwbaarheidScore": {
+          "reliabilityScore": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -659,7 +659,7 @@
           "projectedReceiptsByWeek": {
             "field": "outstandingAmount",
             "operation": "sum",
-            "groupBy": "verwachtOntvangstWeek",
+            "groupBy": "expectedReceiptWeek",
             "description": "Sum of outstanding AR amounts grouped by projected receipt week (REQ-CF-002/003). This is the source aggregation for CashflowWeek.inflows_ar_geprognosticeerd."
           }
         }
@@ -678,8 +678,8 @@
           "schedId",
           "horizonId",
           "apTransactionId",
-          "vervalDatum",
-          "geplandeBetaalDatum",
+          "expiryDate",
+          "plannedPaymentDate",
           "amount",
           "administrationId"
         ],
@@ -708,14 +708,14 @@
             "example": "KPN Zakelijk",
             "title": "Leverancier Naam"
           },
-          "vervalDatum": {
+          "expiryDate": {
             "type": "string",
             "format": "date",
             "description": "AP invoice due date (REQ-CF-006).",
             "example": "2026-05-30",
             "title": "Verval Datum"
           },
-          "geplandeBetaalDatum": {
+          "plannedPaymentDate": {
             "type": "string",
             "format": "date",
             "description": "Planned payment date (defaults to vervalDatum) (REQ-CF-006).",
@@ -728,7 +728,7 @@
             "example": 184.0,
             "title": "Bedrag"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "enum": [
               "LEVERANCIER",
@@ -793,7 +793,7 @@
           "scheduledPaymentsByCategory": {
             "field": "amount",
             "operation": "sum",
-            "groupBy": "categorie",
+            "groupBy": "category",
             "description": "Sum of scheduled AP outflows grouped by category (REQ-CF-006). Feeds CashflowWeek.outflows_ap_geprognosticeerd."
           }
         }
@@ -812,11 +812,11 @@
           "recurId",
           "enterpriseId",
           "label",
-          "categorie",
-          "richting",
-          "frequentie",
+          "category",
+          "direction",
+          "frequency",
           "standardAmount",
-          "geldigVan",
+          "validFrom",
           "administrationId"
         ],
         "properties": {
@@ -838,7 +838,7 @@
             "example": "Huur kantoorruimte De Werkfabriek",
             "title": "Label"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "enum": [
               "RECURRING_HUUR",
@@ -853,7 +853,7 @@
             "description": "Recurring category (REQ-CF-005).",
             "title": "Categorie"
           },
-          "richting": {
+          "direction": {
             "type": "string",
             "enum": [
               "IN",
@@ -862,7 +862,7 @@
             "description": "Direction: inflow or outflow (REQ-CF-005).",
             "title": "Richting"
           },
-          "frequentie": {
+          "frequency": {
             "type": "string",
             "enum": [
               "WEKELIJKS",
@@ -874,7 +874,7 @@
             "description": "Recurrence frequency (REQ-CF-005).",
             "title": "Frequentie"
           },
-          "dagVanMaand": {
+          "dagFromMonth": {
             "type": "integer",
             "minimum": 1,
             "maximum": 31,
@@ -896,7 +896,7 @@
             "example": 850.0,
             "title": "Standaard Bedrag"
           },
-          "indexatieRegel": {
+          "indexationRule": {
             "type": "string",
             "enum": [
               "FIXED",
@@ -906,14 +906,14 @@
             "description": "Indexation rule: fixed amount or annual CBS-CPI update (REQ-CF-005).",
             "title": "Indexatie Regel"
           },
-          "geldigVan": {
+          "validFrom": {
             "type": "string",
             "format": "date",
             "description": "Effective start date; weeks before this are ignored (REQ-CF-005).",
             "example": "2024-09-01",
             "title": "Geldig Van"
           },
-          "geldigTot": {
+          "validTo": {
             "type": "string",
             "format": "date",
             "description": "Expiration date; null if indefinite; weeks after this are ignored (REQ-CF-005).",
@@ -934,7 +934,7 @@
           }
         },
         "x-openregister-lifecycle": {
-          "field": "richting",
+          "field": "direction",
           "initialState": "OUT",
           "states": {
             "IN": {
@@ -973,9 +973,9 @@
         },
         "x-openregister-aggregations": {
           "countByCategorie": {
-            "field": "categorie",
+            "field": "category",
             "operation": "count",
-            "groupBy": "categorie",
+            "groupBy": "category",
             "description": "Number of recurring items per category (REQ-CF-005)."
           }
         }
@@ -1150,7 +1150,7 @@
                   "description": "Number of weeks to shift the receipt for AR_PROJECTION_OVERRIDE.",
                   "title": "Week Shift"
                 },
-                "kansVanBetaling": {
+                "kansFromPayment": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1,
@@ -1216,7 +1216,7 @@
             },
             "title": "Aanpassingen"
           },
-          "resultaat": {
+          "result": {
             "type": "object",
             "description": "Computed forecast results, populated after recalculation (REQ-CF-011).",
             "properties": {
@@ -1378,17 +1378,17 @@
             "items": {
               "type": "object",
               "properties": {
-                "klantId": {
+                "customerId": {
                   "type": "string",
                   "title": "Klant ID",
                   "description": "The identifier of the associated klant."
                 },
-                "nieuweGemiddeldeAfwijking": {
+                "newAverageDeviation": {
                   "type": "string",
                   "title": "Nieuwe Gemiddelde Afwijking",
                   "description": "The nieuwe gemiddelde afwijking."
                 },
-                "nieuweBetrouwbaarheid": {
+                "newReliability": {
                   "type": "number",
                   "title": "Nieuwe Betrouwbaarheid",
                   "description": "The numeric value for nieuwe betrouwbaarheid."
@@ -1479,15 +1479,15 @@
       "enterpriseId": "ond-zzp-c001",
       "horizonStart": "2026-05-25",
       "horizonEnd": "2026-08-23",
-      "rolledOp": "2026-05-25T02:00:00Z",
+      "rolledOn": "2026-05-25T02:00:00Z",
       "openingBalance": {
-        "zakelijkeRekening": 45000.0,
-        "spaardoel_btw": 8200.0,
-        "spaardoel_ib": 12500.0,
-        "spaardoel_buffer": 6800.0,
+        "businessAccount": 45000.0,
+        "savings_goal_vat": 8200.0,
+        "savings_goal_ib": 12500.0,
+        "savings_goal_buffer": 6800.0,
         "total": 72500.0
       },
-      "modelVersie": "v4.1-klantspecifiek-betaalgedrag",
+      "modelVersion": "v4.1-klantspecifiek-betaalgedrag",
       "kalibratieScore": 0.97,
       "crisisModeActief": false,
       "administrationId": "adm-consultancy-nl",
@@ -1514,13 +1514,13 @@
       "outflows_recurring_huur": 1200.0,
       "outflows_recurring_verzekering": 185.0,
       "outflows_recurring_abonnementen": 240.0,
-      "outflows_recurring_dga_loon": 3500.0,
+      "outflows_recurring_dga_pay": 3500.0,
       "outflows_recurring_lijfrentepremie": 0.0,
-      "outflows_btw_afdracht": 0.0,
-      "outflows_ib_aanslag": 0.0,
+      "outflows_vat_remittance": 0.0,
+      "outflows_ib_assessment": 0.0,
       "outflows_investeringen": 0.0,
       "outflows_total": 7225.0,
-      "nettoMutatie": 5275.0,
+      "netMovement": 5275.0,
       "closingBalance": 77775.0,
       "bufferStatus": "BOVEN_BUFFER",
       "alerts": [],
@@ -1535,16 +1535,16 @@
       "projId": "arproj-fact-2026-0247",
       "horizonId": "hor-2026-w22-erik",
       "arInvoiceId": "fact-2026-0247",
-      "klantId": "klant-acme-bv",
-      "factuurDatum": "2026-04-15",
-      "vervalDatum": "2026-05-15",
+      "customerId": "klant-acme-bv",
+      "invoiceDate": "2026-04-15",
+      "expiryDate": "2026-05-15",
       "outstandingAmount": 8400.0,
-      "verwachtOntvangstDatum": "2026-05-28",
-      "verwachtOntvangstWeek": "2026-w22",
-      "betalingsHistorie_gemiddeldeAfwijking": "+13 days",
-      "betalingsHistorie_facturen12mnd": 9,
-      "betalingsHistorie_betaaldVoorVerval": 2,
-      "betrouwbaarheidScore": 0.75,
+      "expectedReceiptDate": "2026-05-28",
+      "expectedReceiptWeek": "2026-w22",
+      "payment_history_average_deviation": "+13 days",
+      "payment_history_invoices12m": 9,
+      "payment_history_paid_for_expiry": 2,
+      "reliabilityScore": 0.75,
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1557,10 +1557,10 @@
       "horizonId": "hor-2026-w22-erik",
       "apTransactionId": "ap-2026-0184",
       "supplierName": "KPN Zakelijk",
-      "vervalDatum": "2026-05-30",
-      "geplandeBetaalDatum": "2026-05-30",
+      "expiryDate": "2026-05-30",
+      "plannedPaymentDate": "2026-05-30",
       "amount": 184.0,
-      "categorie": "LEVERANCIER",
+      "category": "LEVERANCIER",
       "betalingsmethode": "AUTOMATISCHE_INCASSO_SEPA",
       "administrationId": "adm-consultancy-nl"
     },
@@ -1573,13 +1573,13 @@
       "recurId": "rec-huur-kantoor",
       "enterpriseId": "ond-zzp-c001",
       "label": "Huur kantoor",
-      "categorie": "RECURRING_HUUR",
-      "richting": "OUT",
-      "frequentie": "MAANDELIJKS",
-      "dagVanMaand": 1,
+      "category": "RECURRING_HUUR",
+      "direction": "OUT",
+      "frequency": "MAANDELIJKS",
+      "dagFromMonth": 1,
       "standardAmount": 1200.0,
-      "indexatieRegel": "FIXED",
-      "geldigVan": "2024-09-01",
+      "indexationRule": "FIXED",
+      "validFrom": "2024-09-01",
       "accountNumberExpense": "4300",
       "administrationId": "adm-consultancy-nl"
     },
@@ -1592,13 +1592,13 @@
       "recurId": "rec-bav-verzekering",
       "enterpriseId": "ond-zzp-c001",
       "label": "BAV-verzekering",
-      "categorie": "RECURRING_VERZEKERING",
-      "richting": "OUT",
-      "frequentie": "JAARLIJKS",
+      "category": "RECURRING_VERZEKERING",
+      "direction": "OUT",
+      "frequency": "JAARLIJKS",
       "monthOfYear": 7,
       "standardAmount": 620.0,
-      "indexatieRegel": "CPI_AFGELOPEN_JAAR",
-      "geldigVan": "2024-07-01",
+      "indexationRule": "CPI_AFGELOPEN_JAAR",
+      "validFrom": "2024-07-01",
       "accountNumberExpense": "4310",
       "administrationId": "adm-consultancy-nl"
     },
@@ -1631,10 +1631,10 @@
           "type": "AR_PROJECTION_OVERRIDE",
           "arInvoiceId": "fact-2026-0247",
           "weekShift": 100,
-          "kansVanBetaling": 0
+          "kansFromPayment": 0
         }
       ],
-      "resultaat": {
+      "result": {
         "minBufferWeek": "2026-w26",
         "minBufferAmount": 64100.0,
         "onderschrijdingBuffer": false,
@@ -1662,9 +1662,9 @@
       "tax_mape": 0.0,
       "betalingsgedragUpdates": [
         {
-          "klantId": "klant-acme-bv",
-          "nieuweGemiddeldeAfwijking": "+12 days",
-          "nieuweBetrouwbaarheid": 0.83
+          "customerId": "klant-acme-bv",
+          "newAverageDeviation": "+12 days",
+          "newReliability": 0.83
         }
       ],
       "pipelineConversionUpdates": [],

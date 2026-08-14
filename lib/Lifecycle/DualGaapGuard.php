@@ -152,7 +152,7 @@ class DualGaapGuard {
 			}
 
 			$motivation = trim((string)($election['complyOrExplainMotivation'] ?? ''));
-			$avaRef = trim((string)($election['avaBesluitReference'] ?? ''));
+			$avaRef = trim((string)($election['avaDecisionReference'] ?? ''));
 			if ($motivation === '' || $avaRef === '') {
 				return false;
 			}
@@ -187,7 +187,7 @@ class DualGaapGuard {
 			return true;
 		}
 
-		$balanceTotal = $election['sizeCriteriaBalanstotaal'] ?? null;
+		$balanceTotal = $election['sizeCriteriaBalanceSheetTotal'] ?? null;
 		$netTurnover = $election['sizeCriteriaNetRevenue'] ?? null;
 
 		if (is_numeric($balanceTotal) === true && (float)$balanceTotal > 6000000.0) {

@@ -77,7 +77,7 @@ final class CommercialActivityReviewServiceTest extends TestCase {
 	 * Activities never reviewed fall back to startDatum.
 	 */
 	public function testNeverReviewedFallbackToStart(): void {
-		$activity = ['state' => 'active', 'startDatum' => '2024-01-15'];
+		$activity = ['state' => 'active', 'startDate' => '2024-01-15'];
 		self::assertTrue($this->svc->reviewOverdueState($activity, '2026-01-16'));
 
 	}//end testNeverReviewedFallbackToStart()

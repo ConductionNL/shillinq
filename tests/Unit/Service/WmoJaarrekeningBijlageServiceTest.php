@@ -58,21 +58,21 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 				['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true],
 			],
 			'definitiefIkpByActivity' => [
-				'ca-001' => ['totaleKosten' => 87_500.00],
-				'ca-002' => ['totaleKosten' => 56_000.00],
+				'ca-001' => ['totalCost' => 87_500.00],
+				'ca-002' => ['totalCost' => 56_000.00],
 			],
 			'omzetByActivity' => [
 				'ca-001' => 92_000.00,
 				'ca-002' => 50_000.00,
 			],
 			'priorYearIkpByActivity' => [
-				'ca-001' => ['totaleKosten' => 80_000.00],
+				'ca-001' => ['totalCost' => 80_000.00],
 			],
 			'priorYearOmzetByActivity' => [
 				'ca-001' => 81_000.00,
 			],
 			'abbByActivity' => [
-				'ca-002' => ['kenmerk' => 'R-2023-184'],
+				'ca-002' => ['reference' => 'R-2023-184'],
 			],
 			'manualOverridesByActivity' => [
 				'ca-001' => 2,
@@ -83,14 +83,14 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 		self::assertCount(2, $bijlage['activiteiten']);
 		self::assertSame('groen', $bijlage['activiteiten'][0]['complianceColor']);
 		self::assertSame('rood', $bijlage['activiteiten'][1]['complianceColor']);
-		self::assertSame('R-2023-184', $bijlage['activiteiten'][1]['abbReferentie']);
-		self::assertNull($bijlage['activiteiten'][0]['abbReferentie']);
+		self::assertSame('R-2023-184', $bijlage['activiteiten'][1]['abbReference']);
+		self::assertNull($bijlage['activiteiten'][0]['abbReference']);
 		self::assertSame(2, $bijlage['activiteiten'][0]['manualOverrides']);
 
-		$samenvatting = $bijlage['samenvatting'];
-		self::assertSame(2, $samenvatting['total']);
-		self::assertSame(1, $samenvatting['compliant']);
-		self::assertSame(1, $samenvatting['nonCompliant']);
+		$summary = $bijlage['summary'];
+		self::assertSame(2, $summary['total']);
+		self::assertSame(1, $summary['compliant']);
+		self::assertSame(1, $summary['nonCompliant']);
 
 	}//end testComposeBuildsActivityRows()
 
@@ -114,7 +114,7 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 			'fiscalYear' => '2025',
 			'administrationId' => 'adm',
 			'activities' => [['id' => 'x', 'code' => 'X', 'name' => 'X', 'isExempted' => false]],
-			'definitiefIkpByActivity' => ['x' => ['totaleKosten' => 10.0]],
+			'definitiefIkpByActivity' => ['x' => ['totalCost' => 10.0]],
 			'omzetByActivity' => ['x' => 20.0],
 		]);
 		$md = $this->svc->toMarkdown($bijlage);

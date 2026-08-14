@@ -112,7 +112,7 @@
 							}
 						],
 						"subject": {
-							"nl": "Inkooporder goedgekeurd: {{poNumber}}",
+							"nl": "Inkooporder approved: {{poNumber}}",
 							"en": "Purchase order approved: {{poNumber}}"
 						}
 					}

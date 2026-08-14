@@ -275,7 +275,7 @@ class FidoTreasuryGuard {
 
 		$statuut = $this->resolveAdoptedStatuut(
 			organisationId: (string)($lening['organisationId'] ?? ''),
-			statuutId: (string)($lening['treasurystatuutId'] ?? '')
+			statuutId: (string)($lening['treasuryStatuteId'] ?? '')
 		);
 		if ($statuut === null) {
 			return false;

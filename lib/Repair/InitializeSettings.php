@@ -639,7 +639,7 @@ class InitializeSettings implements IRepairStep {
 					[
 						'register' => 'shillinq',
 						'schema' => 'Iv3Export',
-						'administrationType' => ['gemeente', 'provincie', 'waterschap'],
+						'administrationType' => ['municipality', 'provincie', 'waterschap'],
 					]
 				),
 			]
@@ -769,7 +769,7 @@ class InitializeSettings implements IRepairStep {
 					[
 						'register' => 'shillinq',
 						'schema' => 'BcfClaim',
-						'administrationType' => ['gemeente', 'provincie', 'waterschap'],
+						'administrationType' => ['municipality', 'provincie', 'waterschap'],
 					]
 				),
 			]
@@ -861,15 +861,15 @@ class InitializeSettings implements IRepairStep {
 	 */
 	private function seedComplianceReferenceData(IOutput $output): void {
 		$output->info('Seeding BTW tariffs...');
-		$btwResult = $this->settingsService->seedBtwTariffs();
-		if (($btwResult['success'] ?? false) === true) {
+		$vatResult = $this->settingsService->seedBtwTariffs();
+		if (($vatResult['success'] ?? false) === true) {
 			$output->info(
-				'BTW tariffs seeded: ' . ($btwResult['seeded'] ?? 0) . ' created, ' . ($btwResult['skipped'] ?? 0) . ' skipped.'
+				'BTW tariffs seeded: ' . ($vatResult['seeded'] ?? 0) . ' created, ' . ($vatResult['skipped'] ?? 0) . ' skipped.'
 			);
 		}
 
-		if (($btwResult['success'] ?? false) !== true) {
-			$output->warning('BTW tariffs seeding issue: ' . ($btwResult['message'] ?? 'unknown error'));
+		if (($vatResult['success'] ?? false) !== true) {
+			$output->warning('BTW tariffs seeding issue: ' . ($vatResult['message'] ?? 'unknown error'));
 		}
 
 		$output->info('Seeding BBV taakvelden...');
@@ -988,7 +988,7 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
-		$municipalTypes = ['gemeente', 'provincie', 'waterschap'];
+		$municipalTypes = ['municipality', 'provincie', 'waterschap'];
 		$totalSeeded = 0;
 		$totalSkipped = 0;
 

@@ -27,7 +27,7 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/tax-estimates', title: 'Tax Estimates' },
 	{ route: '/tax-configuration', title: 'Tax Configuration' },
 	{
-		route: '/belastingen/btw-aangiften',
+		route: '/belastingen/vat-aangiften',
 		title: 'BTW-aangiften',
 		titleRe: /BTW-?aangift/i,
 	},
@@ -42,7 +42,7 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		titleRe: /ICP-?opgaaf|ICP/i,
 	},
 	{
-		route: '/belastingen/btw-correcties',
+		route: '/belastingen/vat-correcties',
 		title: 'BTW-correcties',
 		titleRe: /BTW-?correct/i,
 	},
@@ -53,8 +53,8 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		titleRe: /ZZP-?aftrek/i,
 	},
 	{
-		route: '/belastingen/ib-aangifte',
-		title: 'IB-aangifte',
+		route: '/belastingen/ib-tax_return',
+		title: 'IB-tax_return',
 		titleRe: /IB-?aangift/i,
 	},
 	// Uitgestelde belastingen (deferred tax)
@@ -68,7 +68,7 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		title: 'Tijdelijke verschillen',
 	},
 	{
-		route: '/belastingen/uitgestelde-belastingen/mutaties',
+		route: '/belastingen/uitgestelde-belastingen/movements',
 		title: 'Mutatieoverzicht',
 		titleRe: /Mutatie/i,
 	},

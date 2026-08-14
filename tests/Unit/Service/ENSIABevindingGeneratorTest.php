@@ -48,10 +48,10 @@ class ENSIABevindingGeneratorTest extends TestCase {
 		$vragen = [
 			[
 				'id' => 'q1',
-				'vraagCode' => 'BIO-9.1.1',
-				'vraagtekst' => 'Logische toegangsbeveiliging',
+				'questionCode' => 'BIO-9.1.1',
+				'questionText' => 'Logische toegangsbeveiliging',
 				'peerReviewStatus' => 'akkoord',
-				'volwassenheidsScore' => 2,
+				'maturityScore' => 2,
 				'normniveau' => 3,
 			],
 		];
@@ -61,12 +61,12 @@ class ENSIABevindingGeneratorTest extends TestCase {
 		$this->assertCount(1, $findings);
 		$this->assertSame('cyc-2026', $findings[0]['cyclusId']);
 		$this->assertSame('adm-1', $findings[0]['administrationId']);
-		$this->assertSame('q1', $findings[0]['vraagId']);
+		$this->assertSame('q1', $findings[0]['questionId']);
 		$this->assertSame('tekortkoming', $findings[0]['type']);
 		$this->assertSame('open', $findings[0]['status']);
-		$this->assertStringContainsString('BIO-9.1.1', $findings[0]['beschrijving']);
-		$this->assertStringContainsString('2', $findings[0]['beschrijving']);
-		$this->assertStringContainsString('3', $findings[0]['beschrijving']);
+		$this->assertStringContainsString('BIO-9.1.1', $findings[0]['description']);
+		$this->assertStringContainsString('2', $findings[0]['description']);
+		$this->assertStringContainsString('3', $findings[0]['description']);
 
 	}//end testGeneratesFindingForBelowNormScore()
 
@@ -80,16 +80,16 @@ class ENSIABevindingGeneratorTest extends TestCase {
 		$vragen = [
 			[
 				'id' => 'q1',
-				'vraagCode' => 'BIO-9.1.1',
+				'questionCode' => 'BIO-9.1.1',
 				'peerReviewStatus' => 'akkoord',
-				'volwassenheidsScore' => 3,
+				'maturityScore' => 3,
 				'normniveau' => 3,
 			],
 			[
 				'id' => 'q2',
-				'vraagCode' => 'BIO-9.2.1',
+				'questionCode' => 'BIO-9.2.1',
 				'peerReviewStatus' => 'akkoord',
-				'volwassenheidsScore' => 5,
+				'maturityScore' => 5,
 				'normniveau' => 3,
 			],
 		];
@@ -109,16 +109,16 @@ class ENSIABevindingGeneratorTest extends TestCase {
 		$vragen = [
 			[
 				'id' => 'q1',
-				'vraagCode' => 'BIO-9.1.1',
+				'questionCode' => 'BIO-9.1.1',
 				'peerReviewStatus' => 'wijziging-gevraagd',
-				'volwassenheidsScore' => 2,
+				'maturityScore' => 2,
 				'normniveau' => 3,
 			],
 			[
 				'id' => 'q2',
-				'vraagCode' => 'BIO-9.2.1',
+				'questionCode' => 'BIO-9.2.1',
 				'peerReviewStatus' => 'nog-niet-beoordeeld',
-				'volwassenheidsScore' => 1,
+				'maturityScore' => 1,
 				'normniveau' => 3,
 			],
 		];
@@ -137,16 +137,16 @@ class ENSIABevindingGeneratorTest extends TestCase {
 		$vragen = [
 			[
 				'id' => 'q1',
-				'vraagCode' => 'BIO-9.1.1',
+				'questionCode' => 'BIO-9.1.1',
 				'peerReviewStatus' => 'akkoord',
-				'volwassenheidsScore' => null,
+				'maturityScore' => null,
 				'normniveau' => 3,
 			],
 			[
 				'id' => 'q2',
-				'vraagCode' => 'BIO-9.2.1',
+				'questionCode' => 'BIO-9.2.1',
 				'peerReviewStatus' => 'akkoord',
-				'volwassenheidsScore' => 2,
+				'maturityScore' => 2,
 				'normniveau' => null,
 			],
 		];

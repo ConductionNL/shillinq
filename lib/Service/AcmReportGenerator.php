@@ -74,7 +74,7 @@ class AcmReportGenerator {
 
 		$activities = (array)$input['activities'];
 		$ikpRecords = (array)($input['ikpRecords'] ?? []);
-		$omzetByActivity = (array)($input['omzetByActivity'] ?? []);
+		$revenueByActivity = (array)($input['omzetByActivity'] ?? []);
 		$abbList = (array)($input['abbList'] ?? []);
 
 		$activiteiten = [];
@@ -85,32 +85,32 @@ class AcmReportGenerator {
 
 			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
 			$code = (string)($activity['code'] ?? '');
-			$naam = (string)($activity['name'] ?? '');
+			$name = (string)($activity['name'] ?? '');
 			$ikp = (array)($ikpRecords[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totaleKosten'] ?? 0);
-			$omzet = (float)($omzetByActivity[$activityId] ?? 0);
+			$integraleCost = (float)($ikp['totalCost'] ?? 0);
+			$revenue = (float)($revenueByActivity[$activityId] ?? 0);
 			if ($integraleCost > 0.0) {
-				$ratio = round(($omzet / $integraleCost), 4);
+				$ratio = round(($revenue / $integraleCost), 4);
 			} else {
 				$ratio = null;
 			}
 
-			$compliant = ($omzet >= $integraleCost);
+			$compliant = ($revenue >= $integraleCost);
 			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReferentie = (string)($activity['exemptionBesluitId'] ?? '');
+				$abbReference = (string)($activity['exemptionDecisionId'] ?? '');
 			} else {
-				$abbReferentie = null;
+				$abbReference = null;
 			}
 
 			$activiteiten[] = [
 				'commercialActivityId' => $activityId,
 				'code' => $code,
-				'name' => $naam,
-				'revenue' => $omzet,
-				'integraleKostprijs' => $integraleCost,
-				'kostendekkingsratio' => $ratio,
+				'name' => $name,
+				'revenue' => $revenue,
+				'integralCostPrice' => $integraleCost,
+				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
-				'abbReferentie' => $abbReferentie,
+				'abbReference' => $abbReference,
 			];
 		}//end foreach
 
@@ -121,8 +121,8 @@ class AcmReportGenerator {
 			}
 
 			$abbSummaries[] = [
-				'kenmerk' => (string)($abb['kenmerk'] ?? ''),
-				'motiveringExcerpt' => mb_substr(trim((string)($abb['motivering'] ?? '')), 0, 240),
+				'reference' => (string)($abb['reference'] ?? ''),
+				'rationaleExcerpt' => mb_substr(trim((string)($abb['rationale'] ?? '')), 0, 240),
 			];
 		}
 
@@ -131,16 +131,16 @@ class AcmReportGenerator {
 			'format' => self::FORMAT,
 			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'activiteiten' => $activiteiten,
-			'samenvatting' => ($input['samenvatting'] ?? null),
+			'summary' => ($input['summary'] ?? null),
 			'manualOverrides' => (int)($input['manualOverrides'] ?? 0),
 			'abbList' => $abbSummaries,
 			// Deprecated legacy fields — retained for array shape compatibility; see REQ-SIGN-004.
-			'ondertekenaar' => null,
-			'ondertekendOp' => null,
+			'signatory' => null,
+			'signedOn' => null,
 			'signatureFingerprint' => null,
-			'verzondenAanAcm' => false,
-			'verzondenAanAcmOp' => null,
-			'publicatieGemeenteblad' => null,
+			'sentInAcm' => false,
+			'sentInAcmOn' => null,
+			'publicationMunicipalGazette' => null,
 			'administrationId' => (string)$input['administrationId'],
 			'status' => 'draft',
 		];
@@ -151,20 +151,20 @@ class AcmReportGenerator {
 	 * Submit a signed report (REQ-WMO-006 §submit). Status flips to `verzonden`.
 	 *
 	 * @param array<string,mixed> $report A signed report.
-	 * @param string|null $publicatieGmblad Optional gemeenteblad reference.
+	 * @param string|null $publicationGmblad Optional gemeenteblad reference.
 	 *
 	 * @return array<string,mixed> Submitted report (immutable from here).
 	 *
 	 * @throws InvalidArgumentException When the report is not signed.
 	 */
-	public function submit(array $report, ?string $publicatieGmblad = null): array {
+	public function submit(array $report, ?string $publicationGmblad = null): array {
 		if ((string)($report['status'] ?? '') !== 'ready-for-submission') {
 			throw new InvalidArgumentException('Only ready-for-submission reports can be submitted');
 		}
 
-		$report['verzondenAanAcm'] = true;
-		$report['verzondenAanAcmOp'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
-		$report['publicatieGemeenteblad'] = $publicatieGmblad;
+		$report['sentInAcm'] = true;
+		$report['sentInAcmOn'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+		$report['publicationMunicipalGazette'] = $publicationGmblad;
 		$report['status'] = 'verzonden';
 
 		return $report;
@@ -209,10 +209,10 @@ class AcmReportGenerator {
 				continue;
 			}
 
-			if ($a['kostendekkingsratio'] === null) {
+			if ($a['costRecoveryRatio'] === null) {
 				$ratioAttr = '';
 			} else {
-				$ratioAttr = (string)$a['kostendekkingsratio'];
+				$ratioAttr = (string)$a['costRecoveryRatio'];
 			}
 
 			if ((bool)($a['compliant'] ?? false) === true) {
@@ -225,7 +225,7 @@ class AcmReportGenerator {
 				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
 				htmlspecialchars((string)($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
 				(float)($a['revenue'] ?? 0),
-				(float)($a['integraleKostprijs'] ?? 0),
+				(float)($a['integralCostPrice'] ?? 0),
 				$ratioAttr,
 				$compliantAttr
 			);

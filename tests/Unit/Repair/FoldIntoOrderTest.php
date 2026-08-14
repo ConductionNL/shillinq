@@ -254,33 +254,33 @@ class FoldIntoOrderTest extends TestCase {
 	 * field preserved on the `subsidie` group and no field dropped.
 	 */
 	public function testFoldsSubsidieIntoOrderLosslessly(): void {
-		$subsidie = [
+		$subsidy = [
 			'id' => 'sub-1',
 			'administrationId' => 'adm-1',
 			'direction' => 'outgoing',
-			'subsidieNumber' => 'SUB-2026-001',
+			'subsidyNumber' => 'SUB-2026-001',
 			'counterpartyName' => 'Stichting Cultuur Almelo',
 			'schemeName' => 'Subsidieregeling cultuur 2026',
 			'schemeArticle' => 'Art. 3.1',
-			'aanvraagDate' => '2026-02-01',
-			'beschikkingDate' => '2026-03-15',
-			'vaststellingDate' => '2026-10-01',
+			'requestDate' => '2026-02-01',
+			'decisionDate' => '2026-03-15',
+			'determinationDate' => '2026-10-01',
 			'requestedAmount' => 25000.0,
 			'grantedAmount' => 20000.0,
 			'determinedAmount' => 18500.0,
 			'paidOutAmount' => 18500.0,
 			'reclaimedAmount' => null,
-			'beschikkingUri' => 'docudesk://x/verlening.pdf',
-			'vaststellingUri' => null,
+			'decisionUri' => 'docudesk://x/verlening.pdf',
+			'determinationUri' => null,
 			'prestatieverantwoording' => 'Aangewend zoals beschreven.',
-			'afwijzingsReden' => null,
+			'rejectionReason' => null,
 			'repaymentPlanId' => null,
 			'hasRepaymentPlan' => false,
 			'state' => 'vastgesteld',
 			'currency' => 'EUR',
 		];
 
-		$fakeOs = $this->fakeObjectService(['Subsidie' => [$subsidie]]);
+		$fakeOs = $this->fakeObjectService(['Subsidie' => [$subsidy]]);
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new FoldIntoOrder(
@@ -295,7 +295,7 @@ class FoldIntoOrderTest extends TestCase {
 		self::assertCount(1, $saved);
 
 		$order = $saved[0];
-		self::assertSame('subsidie', $order['orderType']);
+		self::assertSame('subsidy', $order['orderType']);
 		self::assertSame('outgoing', $order['direction']);
 		self::assertSame('SUB-2026-001', $order['orderNumber']);
 		self::assertSame('Stichting Cultuur Almelo', $order['counterpartyName']);
@@ -305,14 +305,14 @@ class FoldIntoOrderTest extends TestCase {
 		self::assertSame('SUB-2026-001', $order['migratedFrom']['key']);
 
 		// No regulatory field dropped — every Subsidie field lands on the group.
-		self::assertSame('Subsidieregeling cultuur 2026', $order['subsidie']['schemeName']);
-		self::assertSame('Art. 3.1', $order['subsidie']['schemeArticle']);
-		self::assertSame(25000.0, $order['subsidie']['requestedAmount']);
-		self::assertSame(20000.0, $order['subsidie']['grantedAmount']);
-		self::assertSame(18500.0, $order['subsidie']['determinedAmount']);
-		self::assertSame(18500.0, $order['subsidie']['paidOutAmount']);
-		self::assertSame('docudesk://x/verlening.pdf', $order['subsidie']['beschikkingUri']);
-		self::assertSame('Aangewend zoals beschreven.', $order['subsidie']['prestatieverantwoording']);
+		self::assertSame('Subsidieregeling cultuur 2026', $order['subsidy']['schemeName']);
+		self::assertSame('Art. 3.1', $order['subsidy']['schemeArticle']);
+		self::assertSame(25000.0, $order['subsidy']['requestedAmount']);
+		self::assertSame(20000.0, $order['subsidy']['grantedAmount']);
+		self::assertSame(18500.0, $order['subsidy']['determinedAmount']);
+		self::assertSame(18500.0, $order['subsidy']['paidOutAmount']);
+		self::assertSame('docudesk://x/verlening.pdf', $order['subsidy']['decisionUri']);
+		self::assertSame('Aangewend zoals beschreven.', $order['subsidy']['prestatieverantwoording']);
 
 	}//end testFoldsSubsidieIntoOrderLosslessly()
 
@@ -374,20 +374,20 @@ class FoldIntoOrderTest extends TestCase {
 	 * its intakeStatus lifecycle vocabulary preserved verbatim on state.
 	 */
 	public function testFoldsDbaOpdrachtIntoEngagementOrder(): void {
-		$opdracht = [
+		$assignment = [
 			'id' => 'dba-opdr-2026-0042',
 			'administrationId' => 'adm-1',
 			'enterpriseId' => 'ond-nl-001234',
-			'klantId' => 'klant-acme-bv',
+			'customerId' => 'klant-acme-bv',
 			'assignmentName' => 'Backend ontwikkeling betaalmodule',
-			'startDatum' => '2026-03-01',
+			'startDate' => '2026-03-01',
 			'expectedRevenue' => 4800000,
 			'intakeStatus' => 'ACTIEF',
-			'risicoNiveau' => 'LAAG_MIDDEN',
+			'riskLevel' => 'LAAG_MIDDEN',
 			'modelOvereenkomstId' => 'modov-bd-2024-tussenkomstvrij-v3',
 		];
 
-		$fakeOs = $this->fakeObjectService(['DBAOpdracht' => [$opdracht]]);
+		$fakeOs = $this->fakeObjectService(['DBAOpdracht' => [$assignment]]);
 		$this->container->method('get')->willReturn($fakeOs);
 
 		$step = new FoldIntoOrder(
@@ -406,7 +406,7 @@ class FoldIntoOrderTest extends TestCase {
 		self::assertSame('DBA-dba-opdr-2026-0042', $order['orderNumber']);
 		self::assertSame('ACTIEF', $order['state'], 'engagement state vocabulary preserved verbatim');
 		self::assertSame(48000.0, $order['totalAmount']);
-		self::assertSame('LAAG_MIDDEN', $order['engagement']['risicoNiveau']);
+		self::assertSame('LAAG_MIDDEN', $order['engagement']['riskLevel']);
 		self::assertSame('modov-bd-2024-tussenkomstvrij-v3', $order['engagement']['modelOvereenkomstId']);
 		self::assertSame('DBAOpdracht', $order['migratedFrom']['schema']);
 
@@ -417,19 +417,19 @@ class FoldIntoOrderTest extends TestCase {
 	 * skipped — idempotency.
 	 */
 	public function testSkipsAlreadyFoldedRows(): void {
-		$subsidie = [
+		$subsidy = [
 			'id' => 'sub-2',
-			'subsidieNumber' => 'SUB-2026-002',
+			'subsidyNumber' => 'SUB-2026-002',
 		];
 		$alreadyFolded = [
-			'orderType' => 'subsidie',
+			'orderType' => 'subsidy',
 			'orderNumber' => 'SUB-2026-002',
 			'migratedFrom' => ['schema' => 'Subsidie', 'key' => 'SUB-2026-002'],
 		];
 
 		$fakeOs = $this->fakeObjectService(
 			[
-				'Subsidie' => [$subsidie],
+				'Subsidie' => [$subsidy],
 				'OrderPrimitive' => [$alreadyFolded],
 			]
 		);
@@ -486,7 +486,7 @@ class FoldIntoOrderTest extends TestCase {
 				'id' => 'sub-' . $i,
 				'administrationId' => 'adm-1',
 				'direction' => 'outgoing',
-				'subsidieNumber' => sprintf('SUB-2026-%04d', $i),
+				'subsidyNumber' => sprintf('SUB-2026-%04d', $i),
 				'counterpartyName' => 'Stichting ' . $i,
 				'requestedAmount' => 1000.0,
 				'grantedAmount' => 900.0,
@@ -534,7 +534,7 @@ class FoldIntoOrderTest extends TestCase {
 			'id' => 'sub-obj-1',
 			'administrationId' => 'adm-1',
 			'direction' => 'outgoing',
-			'subsidieNumber' => 'SUB-2026-777',
+			'subsidyNumber' => 'SUB-2026-777',
 			'counterpartyName' => 'Stichting Entity',
 			'requestedAmount' => 5000.0,
 			'grantedAmount' => 4500.0,
@@ -590,7 +590,7 @@ class FoldIntoOrderTest extends TestCase {
 		$saved = $fakeOs->saved('OrderPrimitive');
 		self::assertCount(1, $saved, 'an ObjectEntity row must fold, not be skipped as id-less');
 		self::assertSame('SUB-2026-777', $saved[0]['orderNumber']);
-		self::assertSame('subsidie', $saved[0]['orderType']);
+		self::assertSame('subsidy', $saved[0]['orderType']);
 		self::assertSame('Stichting Entity', $saved[0]['counterpartyName']);
 
 	}//end testFoldsRowsDeliveredAsObjectEntities()
@@ -613,7 +613,7 @@ class FoldIntoOrderTest extends TestCase {
 					'id' => 'sub-idem-1',
 					'administrationId' => 'adm-1',
 					'direction' => 'outgoing',
-					'subsidieNumber' => 'SUB-IDEM-1',
+					'subsidyNumber' => 'SUB-IDEM-1',
 					'counterpartyName' => 'Stichting Idem',
 					'grantedAmount' => 100.0,
 					'state' => 'verleend',
@@ -624,11 +624,11 @@ class FoldIntoOrderTest extends TestCase {
 				[
 					'id' => 'dba-idem-1',
 					'enterpriseId' => 'onp-1',
-					'klantId' => 'kl-1',
+					'customerId' => 'kl-1',
 					'assignmentName' => 'Opdracht Idem',
-					'startDatum' => '2026-02-01',
+					'startDate' => '2026-02-01',
 					'intakeStatus' => 'ACTIEF',
-					'risicoNiveau' => 'LAAG',
+					'riskLevel' => 'LAAG',
 				],
 			],
 		];

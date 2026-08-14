@@ -287,7 +287,7 @@ final class AansluitingServiceTest extends TestCase {
 				'Aansluiting' => [
 					[
 						'id' => 'aansl-btw-1',
-						'aansluitingType' => 'btw-ledger-aangifte',
+						'reconciliationType' => 'btw-ledger-aangifte',
 						'toleranceCents' => 100,
 						'expectedRelationship' => 'equal',
 						'administrationId' => 'adm-1',
@@ -333,7 +333,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-btw-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-btw-1', periodId: '2026-Q2');
 
 		self::assertSame(4200.0, $result['sourceATotal']);
 		self::assertSame(4450.0, $result['sourceBTotal']);
@@ -367,7 +367,7 @@ final class AansluitingServiceTest extends TestCase {
 				'Aansluiting' => [
 					[
 						'id' => 'aansl-btw-1',
-						'aansluitingType' => 'btw-ledger-aangifte',
+						'reconciliationType' => 'btw-ledger-aangifte',
 						'toleranceCents' => 100,
 						'expectedRelationship' => 'equal',
 						'administrationId' => 'adm-1',
@@ -416,7 +416,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-btw-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-btw-1', periodId: '2026-Q2');
 
 		self::assertSame('vatcorr-1', $result['relatedVatCorrectionId']);
 
@@ -436,7 +436,7 @@ final class AansluitingServiceTest extends TestCase {
 				'Aansluiting' => [
 					[
 						'id' => 'aansl-ar-1',
-						'aansluitingType' => 'subledger-gl-control',
+						'reconciliationType' => 'subledger-gl-control',
 						'controlAccountNumber' => '1300',
 						'subLedgerType' => 'ar',
 						'toleranceCents' => 100,
@@ -460,7 +460,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-ar-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-ar-1', periodId: '2026-Q2');
 
 		self::assertSame(18500.0, $result['sourceATotal']);
 		self::assertSame(18500.0, $result['sourceBTotal']);
@@ -485,7 +485,7 @@ final class AansluitingServiceTest extends TestCase {
 				'Aansluiting' => [
 					[
 						'id' => 'aansl-ap-1',
-						'aansluitingType' => 'subledger-gl-control',
+						'reconciliationType' => 'subledger-gl-control',
 						'controlAccountNumber' => '1600',
 						'subLedgerType' => 'ap',
 						'toleranceCents' => 100,
@@ -506,7 +506,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-ap-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-ap-1', periodId: '2026-Q2');
 
 		self::assertSame(-9200.0, $result['sourceATotal']);
 		self::assertSame(9350.0, $result['sourceBTotal']);
@@ -537,7 +537,7 @@ final class AansluitingServiceTest extends TestCase {
 				'Aansluiting' => [
 					[
 						'id' => 'aansl-ar-1',
-						'aansluitingType' => 'subledger-gl-control',
+						'reconciliationType' => 'subledger-gl-control',
 						'controlAccountNumber' => '1300',
 						'subLedgerType' => 'ar',
 						'toleranceCents' => 100,
@@ -548,7 +548,7 @@ final class AansluitingServiceTest extends TestCase {
 				'AansluitingResult' => [
 					[
 						'id' => 'aanslres-1',
-						'aansluitingId' => 'aansl-ar-1',
+						'reconciliationId' => 'aansl-ar-1',
 						'periodId' => '2026-Q2',
 						'status' => 'explained',
 						'explanationReasonText' => 'Already investigated.',
@@ -563,7 +563,7 @@ final class AansluitingServiceTest extends TestCase {
 		);
 
 		$service = $this->buildService(stub: $stub);
-		$result = $service->compute(aansluitingId: 'aansl-ar-1', periodId: '2026-Q2');
+		$result = $service->compute(reconciliationId: 'aansl-ar-1', periodId: '2026-Q2');
 
 		// Untouched — proves the resolver never even ran (sourceATotal/B would
 		// otherwise both come back 0.0 from the empty GL/AR seed).
@@ -583,7 +583,7 @@ final class AansluitingServiceTest extends TestCase {
 		$stub = $this->fakeObjectService(
 			[
 				'AansluitingResult' => [
-					['id' => 'aanslres-1', 'aansluitingId' => 'aansl-1', 'periodId' => '2026-Q2', 'status' => 'open'],
+					['id' => 'aanslres-1', 'reconciliationId' => 'aansl-1', 'periodId' => '2026-Q2', 'status' => 'open'],
 				],
 			]
 		);

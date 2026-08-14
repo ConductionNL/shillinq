@@ -113,8 +113,8 @@ class RequisitionService {
 			throw new RuntimeException('programma is required');
 		}
 
-		$boekjaar = (int)($payload['financialYear'] ?? 0);
-		if ($boekjaar <= 0) {
+		$financialYear = (int)($payload['financialYear'] ?? 0);
+		if ($financialYear <= 0) {
 			throw new RuntimeException('boekjaar is required');
 		}
 
@@ -128,8 +128,8 @@ class RequisitionService {
 			throw new RuntimeException('justification is required');
 		}
 
-		$soort = trim((string)($payload['soort'] ?? ''));
-		if ($soort === '') {
+		$kind = trim((string)($payload['kind'] ?? ''));
+		if ($kind === '') {
 			throw new RuntimeException('soort is required');
 		}
 
@@ -146,12 +146,12 @@ class RequisitionService {
 			'administrationId' => $administrationId,
 			'requester' => $requester,
 			'programme' => $programma,
-			'financialYear' => $boekjaar,
+			'financialYear' => $financialYear,
 			'neededByDate' => $neededByDate,
 			'justification' => $justification,
-			'soort' => $soort,
+			'kind' => $kind,
 			'preferredSupplierId' => trim((string)($payload['preferredSupplierId'] ?? '')),
-			'totaalbedrag_excl_btw' => $totalCent,
+			'total_amount_excl_vat' => $totalCent,
 			'statusCode' => 'draft',
 		];
 
@@ -191,7 +191,7 @@ class RequisitionService {
 			throw new RuntimeException('Requisition can only be submitted from draft');
 		}
 
-		if ((int)($requisition['totaalbedrag_excl_btw'] ?? 0) <= 0) {
+		if ((int)($requisition['total_amount_excl_vat'] ?? 0) <= 0) {
 			throw new RuntimeException('Requisition has no positive total; add lines before submitting');
 		}
 
@@ -232,7 +232,7 @@ class RequisitionService {
 		// Reuse BudgetBlocker unmodified: it reads programma/boekjaar/
 		// totaalbedrag_excl_btw/administrationId/soort straight off $requisition
 		// because $object is supplied directly (no Verplichting lookup happens).
-		if ($this->budgetBlocker->canCommit(verplichtingsnummer: $requisitionId, object: $requisition) === false) {
+		if ($this->budgetBlocker->canCommit(commitmentNumber: $requisitionId, object: $requisition) === false) {
 			throw new RuntimeException('Requisition exceeds available budget');
 		}
 

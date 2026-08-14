@@ -265,8 +265,8 @@ export function forecastByMonth(weeks, afterMonth) {
 		const key = monthKey(week.weekStart)
 		if (!key || key <= afterMonth) continue
 		const bucket = byMonth.get(key) || { cashIn: 0, cashOut: 0 }
-		bucket.cashIn += Number(week.inflows_totaal) || 0
-		bucket.cashOut += Number(week.outflows_totaal) || 0
+		bucket.cashIn += Number(week.inflows_total) || 0
+		bucket.cashOut += Number(week.outflows_total) || 0
 		byMonth.set(key, bucket)
 	}
 	const months = [...byMonth.keys()].sort()

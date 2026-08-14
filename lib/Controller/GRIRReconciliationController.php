@@ -126,7 +126,7 @@ class GRIRReconciliationController extends Controller {
 		}
 
 		try {
-			$saldo = $this->grirClearingService->reconcileGRIRSaldoForPeriod(
+			$balance = $this->grirClearingService->reconcileGRIRSaldoForPeriod(
 				administrationId: $administrationId,
 				periodId: $periodId
 			);
@@ -151,7 +151,7 @@ class GRIRReconciliationController extends Controller {
 			);
 		}//end try
 
-		return new JSONResponse($saldo, Http::STATUS_OK);
+		return new JSONResponse($balance, Http::STATUS_OK);
 	}//end saldo()
 
 	/**

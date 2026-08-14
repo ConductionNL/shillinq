@@ -239,19 +239,19 @@ class DunningGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canPostWriteOff(
 				writeOffId: 'w-1',
-				object: ['art29OBVerklaring' => '', 'hoofdsomAfgeschreven' => 100.0]
+				object: ['art29OBDeclaration' => '', 'principalDepreciated' => 100.0]
 			)
 		);
 		self::assertFalse(
 			$this->guard->canPostWriteOff(
 				writeOffId: 'w-2',
-				object: ['art29OBVerklaring' => 'Faillissement', 'hoofdsomAfgeschreven' => 0.0]
+				object: ['art29OBDeclaration' => 'Faillissement', 'principalDepreciated' => 0.0]
 			)
 		);
 		self::assertTrue(
 			$this->guard->canPostWriteOff(
 				writeOffId: 'w-3',
-				object: ['art29OBVerklaring' => 'Faillissement vonnis 2026-04-12', 'hoofdsomAfgeschreven' => 4200.0]
+				object: ['art29OBDeclaration' => 'Faillissement vonnis 2026-04-12', 'principalDepreciated' => 4200.0]
 			)
 		);
 
@@ -264,10 +264,10 @@ class DunningGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testB2cIncassokostenBlockedBeforeDay44(): void {
-		self::assertTrue($this->guard->blocksB2cIncassokosten(partyType: 'B2C', dagenNaVervalDatum: 40));
-		self::assertFalse($this->guard->blocksB2cIncassokosten(partyType: 'B2C', dagenNaVervalDatum: 44));
-		self::assertFalse($this->guard->blocksB2cIncassokosten(partyType: 'B2C', dagenNaVervalDatum: 60));
-		self::assertFalse($this->guard->blocksB2cIncassokosten(partyType: 'B2B', dagenNaVervalDatum: 5));
+		self::assertTrue($this->guard->blocksB2cIncassokosten(partyType: 'B2C', daysAfterExpiryDate: 40));
+		self::assertFalse($this->guard->blocksB2cIncassokosten(partyType: 'B2C', daysAfterExpiryDate: 44));
+		self::assertFalse($this->guard->blocksB2cIncassokosten(partyType: 'B2C', daysAfterExpiryDate: 60));
+		self::assertFalse($this->guard->blocksB2cIncassokosten(partyType: 'B2B', daysAfterExpiryDate: 5));
 
 	}//end testB2cIncassokostenBlockedBeforeDay44()
 

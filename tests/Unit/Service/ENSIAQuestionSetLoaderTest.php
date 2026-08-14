@@ -40,29 +40,29 @@ class ENSIAQuestionSetLoaderTest extends TestCase {
 
 		$this->seedPath = sys_get_temp_dir() . '/ensia-vng-test-' . uniqid() . '.json';
 		$payload = [
-			'vraagSetVersion' => 'BIO-1.04-2026',
+			'questionSetVersion' => 'BIO-1.04-2026',
 			'vragen' => [
 				[
 					'domein' => 'BIO',
 					'onderwerp' => 'Toegangsbeveiliging',
-					'vraagCode' => 'BIO-9.1.1',
-					'vraagtekst' => 'Is er een formeel beleid?',
-					'antwoordType' => 'volwassenheidsniveau-1-5',
+					'questionCode' => 'BIO-9.1.1',
+					'questionText' => 'Is er een formeel beleid?',
+					'answerType' => 'volwassenheidsniveau-1-5',
 					'normniveau' => 3,
 				],
 				[
 					'domein' => 'DigiD',
 					'onderwerp' => 'Authenticatie',
-					'vraagCode' => 'DigiD-1.1',
-					'vraagtekst' => 'Wordt DigiD-koppeling jaarlijks getoetst?',
-					'antwoordType' => 'ja-nee-nvt',
+					'questionCode' => 'DigiD-1.1',
+					'questionText' => 'Wordt DigiD-koppeling jaarlijks getoetst?',
+					'answerType' => 'ja-nee-nvt',
 				],
 				[
 					'domein' => 'SUWI',
 					'onderwerp' => 'Toegang',
-					'vraagCode' => 'SUWI-1.1',
-					'vraagtekst' => 'Voldoet SUWInet aan NORA?',
-					'antwoordType' => 'ja-nee-nvt',
+					'questionCode' => 'SUWI-1.1',
+					'questionText' => 'Voldoet SUWInet aan NORA?',
+					'answerType' => 'ja-nee-nvt',
 				],
 			],
 		];
@@ -89,10 +89,10 @@ class ENSIAQuestionSetLoaderTest extends TestCase {
 	public function testLoadFiltersByDomeinen(): void {
 		$result = $this->loader->load(2026, ['BIO', 'DigiD'], 'cyc-1', 'adm-1');
 
-		$this->assertSame('BIO-1.04-2026', $result['vraagSetVersion']);
+		$this->assertSame('BIO-1.04-2026', $result['questionSetVersion']);
 		$this->assertCount(2, $result['vragen']);
 
-		$codes = array_map(static fn (array $v) => $v['vraagCode'], $result['vragen']);
+		$codes = array_map(static fn (array $v) => $v['questionCode'], $result['vragen']);
 		$this->assertContains('BIO-9.1.1', $codes);
 		$this->assertContains('DigiD-1.1', $codes);
 		$this->assertNotContains('SUWI-1.1', $codes);
@@ -121,7 +121,7 @@ class ENSIAQuestionSetLoaderTest extends TestCase {
 		$result = $this->loader->load(2026, ['BIO'], 'cyc-1', 'adm-1');
 		foreach ($result['vragen'] as $v) {
 			$this->assertSame('nog-niet-beoordeeld', $v['peerReviewStatus']);
-			$this->assertSame([], $v['bewijsstukken']);
+			$this->assertSame([], $v['supportingDocuments']);
 		}
 
 	}//end testLoadInitialisesPeerReviewStatus()
@@ -134,7 +134,7 @@ class ENSIAQuestionSetLoaderTest extends TestCase {
 	 */
 	public function testLoadRecordsQuestionSetVersionForAuditTrail(): void {
 		$result = $this->loader->load(2026, ['BIO'], 'cyc-1', 'adm-1');
-		$this->assertSame('BIO-1.04-2026', $result['vraagSetVersion']);
+		$this->assertSame('BIO-1.04-2026', $result['questionSetVersion']);
 
 	}//end testLoadRecordsQuestionSetVersionForAuditTrail()
 
@@ -146,7 +146,7 @@ class ENSIAQuestionSetLoaderTest extends TestCase {
 	public function testLoadFailsSafeWhenSeedMissing(): void {
 		$loader = new ENSIAQuestionSetLoader('/nonexistent/path/to/missing.json');
 		$result = $loader->load(2026, ['BIO'], 'cyc-1', 'adm-1');
-		$this->assertSame('unknown', $result['vraagSetVersion']);
+		$this->assertSame('unknown', $result['questionSetVersion']);
 		$this->assertSame([], $result['vragen']);
 
 	}//end testLoadFailsSafeWhenSeedMissing()

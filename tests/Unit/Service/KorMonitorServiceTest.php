@@ -172,17 +172,17 @@ final class KorMonitorServiceTest extends TestCase {
 	 * Build an ARInvoice fixture row.
 	 *
 	 * @param string $admin Administration id.
-	 * @param float $bedrag Gross amount.
+	 * @param float $amount Gross amount.
 	 * @param string $date Delivery date (YYYY-MM-DD).
 	 * @param string $grond vrijstellingsGrondslag.
 	 * @param string $status Invoice status.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function invoice(string $admin, float $bedrag, string $date, string $grond = 'KOR_ART25_OB', string $status = 'issued'): array {
+	private function invoice(string $admin, float $amount, string $date, string $grond = 'KOR_ART25_OB', string $status = 'issued'): array {
 		return [
 			'administrationId' => $admin,
-			'amount' => $bedrag,
+			'amount' => $amount,
 			'leveringsDatum' => $date,
 			'vrijstellingsGrondslag' => $grond,
 			'status' => $status,
@@ -210,8 +210,8 @@ final class KorMonitorServiceTest extends TestCase {
 
 		self::assertSame('adm-1', $result['administrationId']);
 		self::assertSame(16620.00, $result['currentRevenue']);
-		self::assertSame(20000.00, $result['drempel']);
-		self::assertEqualsWithDelta(0.831, $result['drempelBenutting'], 0.001);
+		self::assertSame(20000.00, $result['threshold']);
+		self::assertEqualsWithDelta(0.831, $result['thresholdUtilisation'], 0.001);
 
 	}//end testStatusScopesToAdministration()
 
@@ -246,8 +246,8 @@ final class KorMonitorServiceTest extends TestCase {
 		$service = $this->buildService($invoices, []);
 		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-		self::assertArrayHasKey('2026-01', $result['perMaand']);
-		self::assertArrayHasKey('2026-08', $result['perMaand']);
+		self::assertArrayHasKey('2026-01', $result['perMonth']);
+		self::assertArrayHasKey('2026-08', $result['perMonth']);
 		self::assertSame(6000.00, $result['currentRevenue']);
 		// Month 8, avg 750/mo, +4 months => 6000 + 3000 = 9000 prognose, well under drempel.
 		self::assertSame(9000.00, $result['forecastYearEnd']);
@@ -269,8 +269,8 @@ final class KorMonitorServiceTest extends TestCase {
 		$service = $this->buildService($invoices, $registrations);
 		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-		self::assertSame(10000.00, $result['drempel']);
-		self::assertEqualsWithDelta(0.4, $result['drempelBenutting'], 0.0001);
+		self::assertSame(10000.00, $result['threshold']);
+		self::assertEqualsWithDelta(0.4, $result['thresholdUtilisation'], 0.0001);
 
 	}//end testRegistrationDrempelOverride()
 
@@ -299,7 +299,7 @@ final class KorMonitorServiceTest extends TestCase {
 			[
 				'administrationId' => 'adm-1',
 				'status' => 'ACTIEF',
-				'vroegsteOpzegDatum' => '1900-01-01',
+				'earliestTerminationDate' => '1900-01-01',
 				'lockInEndDate' => '9999-12-31',
 			],
 		];

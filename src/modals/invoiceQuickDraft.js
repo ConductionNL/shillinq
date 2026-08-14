@@ -22,7 +22,7 @@ export function defaultDraftLine() {
 		description: '',
 		quantity: 1,
 		unitPrice: 0,
-		btwRate: 21,
+		vatRate: 21,
 	}
 }
 
@@ -39,7 +39,7 @@ function round2(value) {
 
 /**
  * Compute net, VAT and gross totals from the line items. Each line's
- * net is quantity * unitPrice; VAT applies its btwRate percentage.
+ * net is quantity * unitPrice; VAT applies its vatRate percentage.
  *
  * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
  * @param {Array<object>} lines The draft lines.
@@ -52,7 +52,7 @@ export function computeTotals(lines) {
 		const qty = Number(line.quantity) || 0
 		const price = Number(line.unitPrice) || 0
 		const lineNet = qty * price
-		const rate = Number(line.btwRate) || 0
+		const rate = Number(line.vatRate) || 0
 		net += lineNet
 		vat += lineNet * (rate / 100)
 	}
@@ -158,7 +158,7 @@ export function buildInvoicePayload(input) {
 			description: (l.description || '').trim(),
 			quantity: Number(l.quantity) || 0,
 			unitPrice: Number(l.unitPrice) || 0,
-			btwRate: Number(l.btwRate) || 0,
+			vatRate: Number(l.vatRate) || 0,
 			glAccount: input.glAccount || '',
 		}))
 	return {

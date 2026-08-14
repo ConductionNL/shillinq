@@ -49,7 +49,7 @@
               "stichting",
               "vereniging",
               "cooperatie",
-              "gemeente",
+              "municipality",
               "provincie",
               "waterschap",
               "gr",
@@ -182,11 +182,11 @@
             "description": "BTW-aangifte frequentie.",
             "enum": [
               "maand",
-              "kwartaal",
+              "quarter",
               "year"
             ],
-            "default": "kwartaal",
-            "example": "kwartaal",
+            "default": "quarter",
+            "example": "quarter",
             "title": "VAT Filing Frequency"
           },
           "chartOfAccountsId": {
@@ -1097,7 +1097,7 @@
         "presentationCurrency": "EUR",
         "functionalCurrency": "EUR",
         "vatRegime": "standaard",
-        "vatFilingFrequency": "kwartaal",
+        "vatFilingFrequency": "quarter",
         "consolidationMethod": "integraal",
         "activeFrom": "2020-01-01",
         "status": "actief",
@@ -1153,7 +1153,7 @@
         "presentationCurrency": "EUR",
         "functionalCurrency": "EUR",
         "vatRegime": "standaard",
-        "vatFilingFrequency": "kwartaal",
+        "vatFilingFrequency": "quarter",
         "consolidationMethod": "niet_consolideren",
         "activeFrom": "2023-07-01",
         "status": "actief",

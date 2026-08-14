@@ -13,7 +13,7 @@
  * owned by other layers and referenced here so the spec Scenario carries
  * an @e2e proof —
  *   - the materialisation glue (idempotency, budget/mandate guard reuse,
- *     multi-year regel splitting) lives in
+ *     multi-year rule splitting) lives in
  *     `tests/Unit/Service/Commitment/CommitmentMaterialisationServiceTest.php`
  *     and `tests/Unit/Listener/CommitmentMaterialisationListenerTest.php`
  *     (PHPUnit);

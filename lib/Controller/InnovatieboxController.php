@@ -97,14 +97,14 @@ class InnovatieboxController extends Controller {
 	#[NoAdminRequired]
 	public function aggregation(): JSONResponse {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$boekjaar = trim((string)$this->request->getParam('financialYear', ''));
+		$financialYear = trim((string)$this->request->getParam('financialYear', ''));
 
 		$error = $this->requireAdministration(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
 
-		$yearError = $this->requireYear(boekjaar: $boekjaar);
+		$yearError = $this->requireYear(financialYear: $financialYear);
 		if ($yearError !== null) {
 			return $yearError;
 		}
@@ -112,14 +112,14 @@ class InnovatieboxController extends Controller {
 		try {
 			$result = $this->aggregation->aggregate(
 				administrationId: $administrationId,
-				boekjaar: (int)$boekjaar
+				financialYear: (int)$financialYear
 			);
 		} catch (\Throwable $e) {
 			return $this->fail(
 				message: 'Failed to compute innovatiebox aggregation',
 				context: [
 					'administrationId' => $administrationId,
-					'financialYear' => $boekjaar,
+					'financialYear' => $financialYear,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -148,11 +148,11 @@ class InnovatieboxController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$eigen = $this->request->getParam('eigen_rd_kosten', null);
+		$eigen = $this->request->getParam('own_rd_cost', null);
 		$derden = $this->request->getParam('uitbesteed_derden', null);
 		$verbonden = $this->request->getParam('uitbesteed_verbonden', null);
 
-		foreach (['eigen_rd_kosten' => $eigen, 'uitbesteed_derden' => $derden, 'uitbesteed_verbonden' => $verbonden] as $name => $value) {
+		foreach (['own_rd_cost' => $eigen, 'uitbesteed_derden' => $derden, 'uitbesteed_verbonden' => $verbonden] as $name => $value) {
 			if ($value === null || is_numeric($value) === false || (float)$value < 0.0) {
 				return new JSONResponse(
 					['error' => $name . ' must be a non-negative number'],
@@ -162,7 +162,7 @@ class InnovatieboxController extends Controller {
 		}
 
 		$result = $this->nexus->calculateNexusBreak(
-			eigenRdKosten: (float)$eigen,
+			eigenRdCost: (float)$eigen,
 			uitbesteedDerden: (float)$derden,
 			uitbesteedVerbonden: (float)$verbonden
 		);
@@ -186,14 +186,14 @@ class InnovatieboxController extends Controller {
 	#[NoAdminRequired]
 	public function doorsnijdingsverbod(): JSONResponse {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$boekjaar = trim((string)$this->request->getParam('financialYear', ''));
+		$financialYear = trim((string)$this->request->getParam('financialYear', ''));
 
 		$error = $this->requireAdministration(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
 
-		$yearError = $this->requireYear(boekjaar: $boekjaar);
+		$yearError = $this->requireYear(financialYear: $financialYear);
 		if ($yearError !== null) {
 			return $yearError;
 		}
@@ -201,14 +201,14 @@ class InnovatieboxController extends Controller {
 		try {
 			$result = $this->doorsnijden->validateNoDuplication(
 				administrationId: $administrationId,
-				boekjaar: (int)$boekjaar
+				financialYear: (int)$financialYear
 			);
 		} catch (\Throwable $e) {
 			return $this->fail(
 				message: 'Failed to run doorsnijdingsverbod check',
 				context: [
 					'administrationId' => $administrationId,
-					'financialYear' => $boekjaar,
+					'financialYear' => $financialYear,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -240,21 +240,21 @@ class InnovatieboxController extends Controller {
 	#[NoAdminRequired]
 	public function export(): JSONResponse {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$boekjaar = trim((string)$this->request->getParam('financialYear', ''));
-		$methode = trim((string)$this->request->getParam('methode', 'per_asset_afpelmethode'));
+		$financialYear = trim((string)$this->request->getParam('financialYear', ''));
+		$method = trim((string)$this->request->getParam('method', 'per_asset_afpelmethode'));
 
 		$error = $this->requireAdministration(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
 
-		$yearError = $this->requireYear(boekjaar: $boekjaar);
+		$yearError = $this->requireYear(financialYear: $financialYear);
 		if ($yearError !== null) {
 			return $yearError;
 		}
 
 		$allowed = ['per_asset_afpelmethode', 'forfaitair_25pct', 'cost_plus'];
-		if (in_array($methode, $allowed, true) === false) {
+		if (in_array($method, $allowed, true) === false) {
 			return new JSONResponse(
 				['error' => 'methode must be one of ' . implode(', ', $allowed)],
 				Http::STATUS_BAD_REQUEST
@@ -264,29 +264,29 @@ class InnovatieboxController extends Controller {
 		try {
 			$aggregation = $this->aggregation->aggregate(
 				administrationId: $administrationId,
-				boekjaar: (int)$boekjaar
+				financialYear: (int)$financialYear
 			);
 
 			$sbr = $this->sbrExport->toSbrInstancePayload(
 				aggregation: $aggregation,
 				administrationId: $administrationId,
-				boekjaar: (int)$boekjaar,
-				methode: $methode
+				financialYear: (int)$financialYear,
+				method: $method
 			);
 
 			$pdf = $this->sbrExport->toPdfRenderContext(
 				aggregation: $aggregation,
 				administrationId: $administrationId,
-				boekjaar: (int)$boekjaar,
-				methode: $methode
+				financialYear: (int)$financialYear,
+				method: $method
 			);
 		} catch (\Throwable $e) {
 			return $this->fail(
 				message: 'Failed to render innovatiebox SBR/PDF export',
 				context: [
 					'administrationId' => $administrationId,
-					'financialYear' => $boekjaar,
-					'methode' => $methode,
+					'financialYear' => $financialYear,
+					'method' => $method,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -321,12 +321,12 @@ class InnovatieboxController extends Controller {
 	/**
 	 * Validate the boekjaar parameter (4-digit year).
 	 *
-	 * @param string $boekjaar The raw parameter value.
+	 * @param string $financialYear The raw parameter value.
 	 *
 	 * @return JSONResponse|null A 400 response when invalid, null when valid.
 	 */
-	private function requireYear(string $boekjaar): ?JSONResponse {
-		if ($boekjaar === '' || preg_match('/^\d{4}$/', $boekjaar) !== 1) {
+	private function requireYear(string $financialYear): ?JSONResponse {
+		if ($financialYear === '' || preg_match('/^\d{4}$/', $financialYear) !== 1) {
 			return new JSONResponse(['error' => 'boekjaar must be a 4-digit fiscal year'], Http::STATUS_BAD_REQUEST);
 		}
 

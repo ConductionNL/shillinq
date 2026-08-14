@@ -41,7 +41,7 @@
 						v-for="scenario in scenarios"
 						:key="scenario.scenarioId"
 						:value="scenario.scenarioId">
-						{{ scenario.naam }}
+						{{ scenario.name }}
 					</option>
 				</select>
 				<button
@@ -73,10 +73,11 @@
 				</li>
 				<li>
 					{{ t('shillinq', 'Net Mutatie') }}:
-					{{ selectedWeek.nettoMutatie }}
+					{{ selectedWeek.netMovement }}
 				</li>
 				<li>
-					{{ t('shillinq', 'Eind Saldo') }}: {{ selectedWeek.eindSaldo }}
+					{{ t('shillinq', 'Eind Saldo') }}:
+					{{ selectedWeek.closingBalance }}
 				</li>
 			</ul>
 		</div>
@@ -119,7 +120,7 @@ export default {
 				return false
 			}
 			const leading = this.weeks.slice(0, 4)
-			return leading.some((w) => Number(w.eindSaldo) < 0)
+			return leading.some((w) => Number(w.closingBalance) < 0)
 		},
 	},
 

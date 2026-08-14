@@ -95,31 +95,31 @@ final class ProgrammabegrotingGuard {
 	 * the loon- en prijsindexatie figure is configured (so reëel-sluitend can
 	 * be computed). Fail-closed: returns false on any exception (CWE-863).
 	 *
-	 * @param string $begrotingId The Programmabegroting.id being transitioned.
+	 * @param string $budgetId The Programmabegroting.id being transitioned.
 	 * @param array<string,mixed>|null $object The Programmabegroting object being transitioned.
 	 *
 	 * @return bool True when the begroting may move to in-behandeling.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
 	 */
-	public function canBehandelen(string $begrotingId, ?array $object = null): bool {
+	public function canBehandelen(string $budgetId, ?array $object = null): bool {
 		try {
-			$begroting = ($object ?? $this->resolveBegroting(begrotingId: $begrotingId));
-			if ($begroting === null) {
+			$budget = ($object ?? $this->resolveBudget(budgetId: $budgetId));
+			if ($budget === null) {
 				return false;
 			}
 
-			$nominale = ($begroting['nominaleOntwikkeling'] ?? null);
+			$nominale = ($budget['nominalDevelopment'] ?? null);
 			if ($nominale === null || $nominale === '') {
 				return false;
 			}
 
-			$id = $this->resolveId(begrotingId: $begrotingId, object: $object);
-			$paragrafen = $this->fetchParagrafen(begrotingId: $id);
+			$id = $this->resolveId(budgetId: $budgetId, object: $object);
+			$paragrafen = $this->fetchParagrafen(budgetId: $id);
 
 			$types = [];
-			foreach ($paragrafen as $paragraaf) {
-				$types[(string)($paragraaf['type'] ?? '')] = true;
+			foreach ($paragrafen as $paragraph) {
+				$types[(string)($paragraph['type'] ?? '')] = true;
 			}
 
 			foreach (self::VERPLICHTE_PARAGRAFEN as $type) {
@@ -132,7 +132,7 @@ final class ProgrammabegrotingGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProgrammabegrotingGuard: behandelen check failed — denying transition (fail-closed)',
-				['begrotingId' => $begrotingId, 'exception' => $e->getMessage()]
+				['budgetId' => $budgetId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -146,32 +146,32 @@ final class ProgrammabegrotingGuard {
 	 * true result the caller computes and persists the sluitend-flags via
 	 * SluitendCalculator. Fail-closed: returns false on any exception (CWE-863).
 	 *
-	 * @param string $begrotingId The Programmabegroting.id being transitioned.
+	 * @param string $budgetId The Programmabegroting.id being transitioned.
 	 * @param array<string,mixed>|null $object The Programmabegroting object being transitioned.
 	 *
 	 * @return bool True when the begroting may be vastgesteld.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
 	 */
-	public function canVaststellen(string $begrotingId, ?array $object = null): bool {
+	public function canVaststellen(string $budgetId, ?array $object = null): bool {
 		try {
-			$begroting = ($object ?? $this->resolveBegroting(begrotingId: $begrotingId));
-			if ($begroting === null) {
+			$budget = ($object ?? $this->resolveBudget(budgetId: $budgetId));
+			if ($budget === null) {
 				return false;
 			}
 
-			$besluit = (string)($begroting['vaststellingsBesluit'] ?? '');
-			if (trim($besluit) === '') {
+			$decision = (string)($budget['determinationDecision'] ?? '');
+			if (trim($decision) === '') {
 				return false;
 			}
 
-			$id = $this->resolveId(begrotingId: $begrotingId, object: $object);
-			$paragrafen = $this->fetchParagrafen(begrotingId: $id);
+			$id = $this->resolveId(budgetId: $budgetId, object: $object);
+			$paragrafen = $this->fetchParagrafen(budgetId: $id);
 
 			$types = [];
-			foreach ($paragrafen as $paragraaf) {
-				$type = (string)($paragraaf['type'] ?? '');
-				$narrative = trim((string)($paragraaf['narrative'] ?? ''));
+			foreach ($paragrafen as $paragraph) {
+				$type = (string)($paragraph['type'] ?? '');
+				$narrative = trim((string)($paragraph['narrative'] ?? ''));
 				if ($narrative === '') {
 					return false;
 				}
@@ -189,7 +189,7 @@ final class ProgrammabegrotingGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProgrammabegrotingGuard: vaststellen check failed — denying transition (fail-closed)',
-				['begrotingId' => $begrotingId, 'exception' => $e->getMessage()]
+				['budgetId' => $budgetId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -198,28 +198,28 @@ final class ProgrammabegrotingGuard {
 	/**
 	 * Resolve the begroting id from the in-flight object or the passed id.
 	 *
-	 * @param string $begrotingId The Programmabegroting.id.
+	 * @param string $budgetId The Programmabegroting.id.
 	 * @param array<string,mixed>|null $object The in-flight object, if provided.
 	 *
 	 * @return string The id, or '' when unresolvable.
 	 */
-	private function resolveId(string $begrotingId, ?array $object): string {
+	private function resolveId(string $budgetId, ?array $object): string {
 		if ($object !== null && isset($object['id']) === true && (string)$object['id'] !== '') {
 			return (string)$object['id'];
 		}
 
-		return $begrotingId;
+		return $budgetId;
 	}//end resolveId()
 
 	/**
 	 * Fetch the Paragraaf rows for a begroting via ObjectService.
 	 *
-	 * @param string $begrotingId The Programmabegroting.id whose paragrafen to fetch.
+	 * @param string $budgetId The Programmabegroting.id whose paragrafen to fetch.
 	 *
 	 * @return array<int,array<string,mixed>> The Paragraaf rows.
 	 */
-	private function fetchParagrafen(string $begrotingId): array {
-		if ($begrotingId === '') {
+	private function fetchParagrafen(string $budgetId): array {
+		if ($budgetId === '') {
 			return [];
 		}
 
@@ -229,7 +229,7 @@ final class ProgrammabegrotingGuard {
 		$rows = $objectService
 			->setRegister($register)
 			->setSchema('Paragraaf')
-			->findAll(['filters' => ['begrotingId' => $begrotingId]]);
+			->findAll(['filters' => ['budgetId' => $budgetId]]);
 		$result = [];
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {
@@ -243,12 +243,12 @@ final class ProgrammabegrotingGuard {
 	/**
 	 * Resolve the Programmabegroting object by id via ObjectService.
 	 *
-	 * @param string $begrotingId The Programmabegroting.id to look up.
+	 * @param string $budgetId The Programmabegroting.id to look up.
 	 *
 	 * @return array<string,mixed>|null The begroting, or null when not found.
 	 */
-	private function resolveBegroting(string $begrotingId): ?array {
-		if ($begrotingId === '') {
+	private function resolveBudget(string $budgetId): ?array {
+		if ($budgetId === '') {
 			return null;
 		}
 
@@ -258,7 +258,7 @@ final class ProgrammabegrotingGuard {
 		$rows = $objectService
 			->setRegister($register)
 			->setSchema('Programmabegroting')
-			->findAll(['filters' => ['id' => $begrotingId]]);
+			->findAll(['filters' => ['id' => $budgetId]]);
 
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {

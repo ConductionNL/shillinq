@@ -72,7 +72,7 @@ class CarryForwardLossService {
 	 *   residualProfit: float,
 	 *   residualProfitAt9Pct: float,
 	 *   totalBenefit: float,
-	 *   saldoNa: float,
+	 *   balanceAfter: float,
 	 *   status: string
 	 * }
 	 *
@@ -96,11 +96,11 @@ class CarryForwardLossService {
 		$benefitFull = ($lossOffset * $fullTariff);
 		$benefit9 = (($residual * $nexus) * self::INNOVATIEBOX_TARIFF);
 
-		$saldoNa = ($openLoss - $lossOffset);
+		$balanceAfter = ($openLoss - $lossOffset);
 		$status = 'open';
-		if ($saldoNa <= 0.0) {
+		if ($balanceAfter <= 0.0) {
 			$status = 'volledig_verrekend';
-			$saldoNa = 0.0;
+			$balanceAfter = 0.0;
 		}
 
 		return [
@@ -109,7 +109,7 @@ class CarryForwardLossService {
 			'residualProfit' => round($residual, 2),
 			'residualProfitAt9Pct' => round($benefit9, 2),
 			'totalBenefit' => round(($benefitFull + $benefit9), 2),
-			'saldoNa' => round($saldoNa, 2),
+			'balanceAfter' => round($balanceAfter, 2),
 			'status' => $status,
 		];
 

@@ -106,7 +106,7 @@ class DBAComplianceGuardTest extends TestCase {
 		$object = ['intakeStatus' => 'VOLTOOID'];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->canActivateOpdracht(opdrachtId: 'dba-opdr-1', object: $object));
+		self::assertTrue($this->guard->canActivateOpdracht(assignmentId: 'dba-opdr-1', object: $object));
 
 	}//end testCanActivateOpdrachtWithCompletedIntake()
 
@@ -118,10 +118,10 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testCannotActivateOpdrachtWithoutCompletedIntake(): void {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canActivateOpdracht(opdrachtId: 'dba-opdr-2', object: ['intakeStatus' => 'DRAFT']));
+		self::assertFalse($this->guard->canActivateOpdracht(assignmentId: 'dba-opdr-2', object: ['intakeStatus' => 'DRAFT']));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canActivateOpdracht(opdrachtId: 'dba-opdr-3', object: ['intakeStatus' => 'GEEN']));
+		self::assertFalse($this->guard->canActivateOpdracht(assignmentId: 'dba-opdr-3', object: ['intakeStatus' => 'GEEN']));
 
 	}//end testCannotActivateOpdrachtWithoutCompletedIntake()
 
@@ -133,13 +133,13 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testCanBeeindigOpdrachtRequiresEndDate(): void {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-4', object: ['actualEndDate' => '2026-09-30']));
+		self::assertTrue($this->guard->canBeeindigOpdracht(assignmentId: 'dba-opdr-4', object: ['actualEndDate' => '2026-09-30']));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-5', object: ['actualEndDate' => '']));
+		self::assertFalse($this->guard->canBeeindigOpdracht(assignmentId: 'dba-opdr-5', object: ['actualEndDate' => '']));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canBeeindigOpdracht(opdrachtId: 'dba-opdr-6', object: []));
+		self::assertFalse($this->guard->canBeeindigOpdracht(assignmentId: 'dba-opdr-6', object: []));
 
 	}//end testCanBeeindigOpdrachtRequiresEndDate()
 
@@ -306,7 +306,7 @@ class DBAComplianceGuardTest extends TestCase {
 	public function testVbarBreachBelowGrens(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
 		// 40 hours x EUR 28 -> EUR 28/hour, below the EUR 33 grens.
-		$result = $this->guard->effectiveHourlyRateBreach(bedrag: 1120.0, uren: 40.0);
+		$result = $this->guard->effectiveHourlyRateBreach(amount: 1120.0, hours: 40.0);
 
 		self::assertTrue($result['breach']);
 		self::assertEqualsWithDelta(28.0, $result['rate'], 0.001);
@@ -324,7 +324,7 @@ class DBAComplianceGuardTest extends TestCase {
 	public function testVbarNoBreachAboveGrens(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
 		// EUR 12.000 / 280 hours -> EUR 42,86/hour, above the grens.
-		$result = $this->guard->effectiveHourlyRateBreach(bedrag: 12000.0, uren: 280.0);
+		$result = $this->guard->effectiveHourlyRateBreach(amount: 12000.0, hours: 280.0);
 
 		self::assertFalse($result['breach']);
 		self::assertEqualsWithDelta(42.857, $result['rate'], 0.001);
@@ -340,7 +340,7 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testVbarNoBreachOnZeroHours(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		$result = $this->guard->effectiveHourlyRateBreach(bedrag: 1000.0, uren: 0.0);
+		$result = $this->guard->effectiveHourlyRateBreach(amount: 1000.0, hours: 0.0);
 
 		self::assertFalse($result['breach']);
 		self::assertSame(0.0, $result['rate']);
@@ -356,9 +356,9 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testIsModelExpired(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->isModelExpired(model: ['geldigTot' => '2024-12-31'], referenceYmd: '2026-05-15'));
-		self::assertFalse($this->guard->isModelExpired(model: ['geldigTot' => '2029-04-12'], referenceYmd: '2026-05-15'));
-		self::assertFalse($this->guard->isModelExpired(model: ['geldigTot' => ''], referenceYmd: '2026-05-15'));
+		self::assertTrue($this->guard->isModelExpired(model: ['validTo' => '2024-12-31'], referenceYmd: '2026-05-15'));
+		self::assertFalse($this->guard->isModelExpired(model: ['validTo' => '2029-04-12'], referenceYmd: '2026-05-15'));
+		self::assertFalse($this->guard->isModelExpired(model: ['validTo' => ''], referenceYmd: '2026-05-15'));
 		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
 	}//end testIsModelExpired()
@@ -390,7 +390,7 @@ class DBAComplianceGuardTest extends TestCase {
 
 		// 40 hours x EUR 34 -> EUR 34/hour, above the constant 33 but below the
 		// overridden 35 -> breach.
-		$result = $guard->effectiveHourlyRateBreach(bedrag: 1360.0, uren: 40.0);
+		$result = $guard->effectiveHourlyRateBreach(amount: 1360.0, hours: 40.0);
 
 		self::assertTrue($result['breach']);
 		self::assertSame(35.0, $result['grens']);

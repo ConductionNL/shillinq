@@ -11,34 +11,34 @@
   "categories": [
     {
       "name": "micro",
-      "wettelijkeBasis": "art. 2:395a BW",
+      "statutoryBasis": "art. 2:395a BW",
       "thresholds": {
         "balanceSheetTotal": 450000,
         "netRevenue": 900000,
-        "gemiddeldAantalWerknemers": 10
+        "averageCountEmployees": 10
       }
     },
     {
       "name": "klein",
-      "wettelijkeBasis": "art. 2:396 BW",
+      "statutoryBasis": "art. 2:396 BW",
       "thresholds": {
         "balanceSheetTotal": 12000000,
         "netRevenue": 24000000,
-        "gemiddeldAantalWerknemers": 50
+        "averageCountEmployees": 50
       }
     },
     {
       "name": "middelgroot",
-      "wettelijkeBasis": "art. 2:397 BW",
+      "statutoryBasis": "art. 2:397 BW",
       "thresholds": {
         "balanceSheetTotal": 25000000,
         "netRevenue": 50000000,
-        "gemiddeldAantalWerknemers": 250
+        "averageCountEmployees": 250
       }
     },
     {
       "name": "groot",
-      "wettelijkeBasis": "art. 2:398 BW",
+      "statutoryBasis": "art. 2:398 BW",
       "thresholds": null
     }
   ],
@@ -46,7 +46,7 @@
     "micro": {
       "balans": "verkort",
       "winstEnVerlies": false,
-      "toelichting": "minimaal",
+      "notes": "minimaal",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
       "accountantsverklaring": false
@@ -54,7 +54,7 @@
     "klein": {
       "balans": "verkort",
       "winstEnVerlies": "niet-gedeponeerd",
-      "toelichting": "beperkt",
+      "notes": "beperkt",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
       "accountantsverklaring": "optioneel"
@@ -62,7 +62,7 @@
     "middelgroot": {
       "balans": "volledig",
       "winstEnVerlies": true,
-      "toelichting": "volledig",
+      "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
       "accountantsverklaring": true
@@ -70,7 +70,7 @@
     "groot": {
       "balans": "volledig",
       "winstEnVerlies": true,
-      "toelichting": "volledig",
+      "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
       "accountantsverklaring": true,

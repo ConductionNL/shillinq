@@ -117,11 +117,11 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 
 		// --- Taakvelden ---
 		$section->addTextBreak(1);
-		$this->buildTaakvelden($section, $statement, $currency);
+		$this->buildTaskFields($section, $statement, $currency);
 
 		// --- Jaarrekening (art. 24) ---
 		$section->addTextBreak(1);
-		$this->buildJaarrekening($section, $statement);
+		$this->buildAnnualAccounts($section, $statement);
 
 		// --- Vaste activa (arts. 59/62) ---
 		$section->addTextBreak(1);
@@ -175,10 +175,10 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			'Algemene posten',
 			'Bedrag',
 			[
-				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'algemeneDekkingsmiddelen')],
+				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'generalFundingSources')],
 				['label' => 'Overhead', 'amount' => $this->num($plan, 'overhead')],
 				['label' => 'Heffing vennootschapsbelasting (VPB)', 'amount' => $this->num($plan, 'vpbCharge')],
-				['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'onvoorzien')],
+				['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'unforeseen')],
 			],
 			null,
 			$currency
@@ -230,11 +230,11 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return void
 	 */
-	private function buildTaakvelden(Section $section, array $statement, string $currency): void {
+	private function buildTaskFields(Section $section, array $statement, string $currency): void {
 		$this->addHeading($section, 'Overzicht taakvelden');
 
-		$taakvelden = $statement['taakvelden'] ?? [];
-		if (is_array($taakvelden) === false || $taakvelden === []) {
+		$taskFields = $statement['taskFields'] ?? [];
+		if (is_array($taskFields) === false || $taskFields === []) {
 			$this->addNote($section, 'Geen taakvelden opgenomen.');
 			return;
 		}
@@ -248,19 +248,19 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 
 		$totalRevenue = 0.0;
 		$totalExpense = 0.0;
-		foreach ($taakvelden as $taakveld) {
-			if (is_array($taakveld) === false) {
+		foreach ($taskFields as $taskField) {
+			if (is_array($taskField) === false) {
 				continue;
 			}
 
-			$revenue = $this->num($taakveld, 'estimatedRevenue');
-			$expense = $this->num($taakveld, 'estimatedExpense');
+			$revenue = $this->num($taskField, 'estimatedRevenue');
+			$expense = $this->num($taskField, 'estimatedExpense');
 			$totalRevenue += $revenue;
 			$totalExpense += $expense;
 
 			$table->addRow();
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taakveld, 'code'), 'value');
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taakveld, 'name'), 'value');
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taskField, 'code'), 'value');
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taskField, 'name'), 'value');
 			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($revenue, $currency), 'amount', ['alignment' => 'end']);
 			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($expense, $currency), 'amount', ['alignment' => 'end']);
 		}
@@ -280,21 +280,21 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @return void
 	 */
-	private function buildJaarrekening(Section $section, array $statement): void {
+	private function buildAnnualAccounts(Section $section, array $statement): void {
 		$this->addHeading($section, 'Jaarrekening (art. 24 BBV)');
 
-		$jaarrekening = $statement['jaarrekening'] ?? [];
-		if (is_array($jaarrekening) === false) {
-			$jaarrekening = [];
+		$annualAccounts = $statement['annualAccounts'] ?? [];
+		if (is_array($annualAccounts) === false) {
+			$annualAccounts = [];
 		}
 
 		$this->addDetailsTable(
 			$section,
 			[
-				'Overzicht van baten en lasten' => $this->yesNo($jaarrekening['overzichtBatenLasten'] ?? null),
-				'Balans' => $this->yesNo($jaarrekening['balans'] ?? null),
-				'Rechtmatigheidsverantwoording' => $this->yesNo($jaarrekening['rechtmatigheidsverantwoording'] ?? null),
-				'Accountantsverklaring' => $this->yesNo($jaarrekening['accountantsverklaring'] ?? null),
+				'Overzicht van baten en lasten' => $this->yesNo($annualAccounts['overviewRevenueExpenses'] ?? null),
+				'Balans' => $this->yesNo($annualAccounts['balans'] ?? null),
+				'Rechtmatigheidsverantwoording' => $this->yesNo($annualAccounts['lawfulnessAccountability'] ?? null),
+				'Accountantsverklaring' => $this->yesNo($annualAccounts['accountantsverklaring'] ?? null),
 			]
 		);
 
@@ -426,7 +426,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 */
 	private function entityTypeLabel(string $type): string {
 		return match ($type) {
-			'gemeente' => 'Gemeente',
+			'municipality' => 'Gemeente',
 			'provincie' => 'Provincie',
 			'waterschap' => 'Waterschap',
 			default => $type,

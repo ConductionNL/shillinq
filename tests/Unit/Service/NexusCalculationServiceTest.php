@@ -59,9 +59,9 @@ final class NexusCalculationServiceTest extends TestCase {
 	 */
 	public function testFullNexusWithCapBinding(): void {
 		$r = $this->svc->calculateNexusBreak(480000.0, 120000.0, 80000.0);
-		self::assertSame(600000.0, $r['tellerVoorUplift']);
-		self::assertSame(680000.0, $r['tellerNaUplift']);
-		self::assertSame(1.0, $r['nexusbreukToegepast']);
+		self::assertSame(600000.0, $r['numeratorBeforeUplift']);
+		self::assertSame(680000.0, $r['numeratorAfterUplift']);
+		self::assertSame(1.0, $r['nexusFractionApplied']);
 
 	}//end testFullNexusWithCapBinding()
 
@@ -74,7 +74,7 @@ final class NexusCalculationServiceTest extends TestCase {
 	 */
 	public function testPartialNexusWhenRelatedPartyDominates(): void {
 		$r = $this->svc->calculateNexusBreak(100000.0, 50000.0, 300000.0);
-		self::assertSame(0.4333, $r['nexusbreukToegepast']);
+		self::assertSame(0.4333, $r['nexusFractionApplied']);
 
 	}//end testPartialNexusWhenRelatedPartyDominates()
 
@@ -87,7 +87,7 @@ final class NexusCalculationServiceTest extends TestCase {
 	 */
 	public function testLowNexusWhenAlmostAllRelatedParty(): void {
 		$r = $this->svc->calculateNexusBreak(10000.0, 0.0, 990000.0);
-		self::assertSame(0.013, $r['nexusbreukToegepast']);
+		self::assertSame(0.013, $r['nexusFractionApplied']);
 
 	}//end testLowNexusWhenAlmostAllRelatedParty()
 
@@ -98,7 +98,7 @@ final class NexusCalculationServiceTest extends TestCase {
 	 */
 	public function testZeroTotalYieldsZeroNexus(): void {
 		$r = $this->svc->calculateNexusBreak(0.0, 0.0, 0.0);
-		self::assertSame(0.0, $r['nexusbreukToegepast']);
+		self::assertSame(0.0, $r['nexusFractionApplied']);
 
 	}//end testZeroTotalYieldsZeroNexus()
 

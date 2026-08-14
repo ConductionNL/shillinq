@@ -75,8 +75,8 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 */
 	public static function catalogueProvider(): array {
 		$iv3Pairs = [
-			'name' => 'naamEn',
-			'mainFunctionName' => 'hoofdfunctieNaamEn',
+			'name' => 'nameEn',
+			'mainFunctionName' => 'mainFunctionNameEn',
 			'descriptionIv3' => 'omschrijvingIv3En',
 		];
 
@@ -102,15 +102,15 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
-	private function taakvelden(string $file): array {
+	private function taskFields(string $file): array {
 		$path = __DIR__ . '/../../../lib/Settings/seeds/' . $file;
 		self::assertFileExists($path);
 
 		$data = json_decode((string)file_get_contents($path), associative: true);
 		self::assertSame(JSON_ERROR_NONE, json_last_error(), $file . ' is not valid JSON');
-		self::assertNotEmpty($data['taakvelden'], $file . ' declares no taakvelden');
+		self::assertNotEmpty($data['taskFields'], $file . ' declares no taakvelden');
 
-		return $data['taakvelden'];
+		return $data['taskFields'];
 	}
 
 	/**
@@ -124,12 +124,12 @@ class BbvTaakveldTranslationTest extends TestCase {
 	 * @dataProvider catalogueProvider
 	 */
 	public function testEveryDutchFieldIsPairedWithAnEnglishOne(string $file, array $pairs): void {
-		foreach ($this->taakvelden($file) as $taakveld) {
-			$code = $taakveld['code'] ?? '(no code)';
+		foreach ($this->taskFields($file) as $taskField) {
+			$code = $taskField['code'] ?? '(no code)';
 
 			foreach ($pairs as $dutch => $english) {
-				$hasDutch = ($taakveld[$dutch] ?? '') !== '';
-				$hasEnglish = ($taakveld[$english] ?? '') !== '';
+				$hasDutch = ($taskField[$dutch] ?? '') !== '';
+				$hasEnglish = ($taskField[$english] ?? '') !== '';
 
 				self::assertSame(
 					$hasDutch,
@@ -168,18 +168,18 @@ class BbvTaakveldTranslationTest extends TestCase {
 		$dutchName = isset($pairs['name']) ? 'name' : 'name';
 		$englishName = $pairs[$dutchName];
 
-		$taakvelden = $this->taakvelden($file);
+		$taskFields = $this->taskFields($file);
 
-		foreach ($taakvelden as $taakveld) {
-			$code = $taakveld['code'] ?? '(no code)';
+		foreach ($taskFields as $taskField) {
+			$code = $taskField['code'] ?? '(no code)';
 
 			self::assertNotEmpty(
-				$taakveld[$dutchName] ?? '',
+				$taskField[$dutchName] ?? '',
 				$file . ' taakveld ' . $code . ': the STATUTORY Dutch name must never be dropped — '
 				. 'it is what a CBS Iv3 submission carries and what legalBasis cites.'
 			);
 			self::assertNotEmpty(
-				$taakveld[$englishName] ?? '',
+				$taskField[$englishName] ?? '',
 				$file . ' taakveld ' . $code . ' has no ' . $englishName . ', so an English UI shows Dutch here.'
 			);
 		}
@@ -218,7 +218,7 @@ class BbvTaakveldTranslationTest extends TestCase {
 		}
 
 		$expected = [
-			'Taakveld' => ['naamEn', 'hoofdfunctieNaamEn', 'omschrijvingIv3En'],
+			'Taakveld' => ['nameEn', 'mainFunctionNameEn', 'omschrijvingIv3En'],
 			'BbvTaakveld' => ['nameEn', 'descriptionEn', 'programmaFocusEn'],
 		];
 

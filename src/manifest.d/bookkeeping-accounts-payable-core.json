@@ -86,7 +86,7 @@
 					{"key": "name", "label": "Legal Name", "type": "string"},
 					{"key": "tradingName", "label": "Trading Name", "type": "string"},
 					{"key": "kvkNumber", "label": "KvK Number", "type": "string"},
-					{"key": "btwNumber", "label": "BTW Number", "type": "string"},
+					{"key": "vatNumber", "label": "BTW Number", "type": "string"},
 					{"key": "payeeType", "label": "Payee Type", "type": "string"},
 					{"key": "bankAccount.iban", "label": "IBAN", "type": "string"},
 					{"key": "bankAccount.bic", "label": "BIC / SWIFT", "type": "string"},

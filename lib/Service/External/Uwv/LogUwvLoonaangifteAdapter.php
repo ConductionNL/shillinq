@@ -64,18 +64,18 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 	 * @return UwvStatusResult The dispatch outcome.
 	 */
 	public function pullStatus(array $payload): UwvStatusResult {
-		$kenmerk = 'uwv-pull-log-' . bin2hex(random_bytes(8));
+		$reference = 'uwv-pull-log-' . bin2hex(random_bytes(8));
 		$this->logger->info(
 			'Shillinq UWV loonaangifte pullStatus deferred (no outbound connector bound)',
 			[
-				'kenmerk' => $kenmerk,
+				'reference' => $reference,
 				'payload' => $payload,
 			]
 		);
 
 		return new UwvStatusResult(
 			outcome: 'STATUS_DEFERRED',
-			kenmerk: $kenmerk,
+			reference: $reference,
 			dormant: true,
 			extras: [
 				'reason' => 'no-outbound-connector-bound',
@@ -97,11 +97,11 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 	 * @return UwvStatusResult The lookup outcome.
 	 */
 	public function lookupSector(string $sectorCode, int $peiljaar, array $context = []): UwvStatusResult {
-		$kenmerk = 'uwv-sector-log-' . bin2hex(random_bytes(6));
+		$reference = 'uwv-sector-log-' . bin2hex(random_bytes(6));
 		$this->logger->info(
 			'Shillinq UWV Werkhervattingskas lookupSector deferred (no outbound connector bound)',
 			[
-				'kenmerk' => $kenmerk,
+				'reference' => $reference,
 				'sectorCode' => $sectorCode,
 				'peiljaar' => $peiljaar,
 				'context' => $context,
@@ -110,7 +110,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
 
 		return new UwvStatusResult(
 			outcome: 'SECTOR_DEFERRED',
-			kenmerk: $kenmerk,
+			reference: $reference,
 			dormant: true,
 			extras: [
 				'reason' => 'no-outbound-connector-bound',

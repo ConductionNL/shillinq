@@ -92,7 +92,7 @@
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
         "required": [
-          "verantwoordingId",
+          "accountabilityId",
           "grantId",
           "reportDate",
           "reportingPeriod",
@@ -100,7 +100,7 @@
           "administrationId"
         ],
         "properties": {
-          "verantwoordingId": {
+          "accountabilityId": {
             "type": "string",
             "description": "Unique accountability record identifier (REQ-SUBV-002).",
             "example": "SV-2026-0001",
@@ -305,7 +305,7 @@
               "nc-notification"
             ],
             "subject": {
-              "nl": "Subsidieverantwoording {{verantwoordingId}} is goedgekeurd",
+              "nl": "Subsidieverantwoording {{verantwoordingId}} is approved",
               "en": "Grant accountability report {{verantwoordingId}} is approved"
             }
           },
@@ -613,7 +613,7 @@
               "email"
             ],
             "subject": {
-              "nl": "Accountantsverklaring {{statementId}} is goedgekeurd",
+              "nl": "Accountantsverklaring {{statementId}} is approved",
               "en": "Auditor statement {{statementId}} is approved"
             }
           },
@@ -655,7 +655,7 @@
               "email"
             ],
             "subject": {
-              "nl": "Accountantsverklaring {{statementId}} is met voorbehoud goedgekeurd",
+              "nl": "Accountantsverklaring {{statementId}} is met voorbehoud approved",
               "en": "Auditor statement {{statementId}} is conditionally approved, with caveats"
             }
           }
@@ -691,7 +691,7 @@
         "schema": "SubsidieVerantwoording",
         "slug": "sv-2026-sample-cultuursubsidie"
       },
-      "verantwoordingId": "SV-2026-0001",
+      "accountabilityId": "SV-2026-0001",
       "grantId": "SUB-2026-0001",
       "reportDate": "2026-03-01",
       "reportingPeriod": "2026-01-01 to 2026-03-01",

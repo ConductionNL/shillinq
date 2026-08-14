@@ -25,7 +25,7 @@
  * enters the OSS pipeline), so the destination-country case (DE 19%) is used
  * here and the gross/VAT identity is asserted explicitly.
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/changes/bookkeeping-vat-oss-eu/specs/bookkeeping-vat-oss-eu/spec.md
  */
 
 import { test, expect, request as pwRequest } from '@playwright/test'

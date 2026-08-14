@@ -105,11 +105,11 @@ class QualifyingAssetValidator {
 	 * @return array<int,string> Validation error codes (empty when valid).
 	 */
 	private function validateCombinatie(array $ticket, string $referenceDate): array {
-		$errors = $this->validateSoVerklaring(ticket: $ticket, referenceDate: $referenceDate, required: true);
-		$octrooi = (string)($ticket['patent_number'] ?? '');
+		$errors = $this->validateSoDeclaration(ticket: $ticket, referenceDate: $referenceDate, required: true);
+		$patent = (string)($ticket['patent_number'] ?? '');
 		$kweker = (string)($ticket['plantBreedersRight_number'] ?? '');
 
-		if ($octrooi === '' && $kweker === '') {
+		if ($patent === '' && $kweker === '') {
 			$errors[] = 'combinatie_requires_octrooi_or_kwekersrecht';
 		}
 
@@ -125,13 +125,13 @@ class QualifyingAssetValidator {
 	 * @return array<int,string> Validation error codes (empty when valid).
 	 */
 	private function validateSingleRoute(array $ticket, string $referenceDate): array {
-		$soort = (string)($ticket['soort'] ?? '');
+		$kind = (string)($ticket['kind'] ?? '');
 
-		if ($soort === 'so_verklaring') {
-			return $this->validateSoVerklaring(ticket: $ticket, referenceDate: $referenceDate, required: true);
+		if ($kind === 'so_declaration') {
+			return $this->validateSoDeclaration(ticket: $ticket, referenceDate: $referenceDate, required: true);
 		}
 
-		if ($soort === 'octrooi') {
+		if ($kind === 'octrooi') {
 			if ((string)($ticket['patent_number'] ?? '') === '') {
 				return ['octrooi_nummer_required'];
 			}
@@ -139,7 +139,7 @@ class QualifyingAssetValidator {
 			return [];
 		}
 
-		if ($soort === 'kwekersrecht') {
+		if ($kind === 'kwekersrecht') {
 			if ((string)($ticket['plantBreedersRight_number'] ?? '') === '') {
 				return ['kwekersrecht_nummer_required'];
 			}
@@ -147,7 +147,7 @@ class QualifyingAssetValidator {
 			return [];
 		}
 
-		if ($soort === '') {
+		if ($kind === '') {
 			return ['toegangsticket_soort_required'];
 		}
 
@@ -165,7 +165,7 @@ class QualifyingAssetValidator {
 	 *
 	 * @return array<int,string> Validation error codes (empty when valid).
 	 */
-	private function validateSoVerklaring(array $ticket, string $referenceDate, bool $required): array {
+	private function validateSoDeclaration(array $ticket, string $referenceDate, bool $required): array {
 		$number = (string)($ticket['rnd_declaration_number'] ?? '');
 
 		if ($number === '') {
@@ -180,7 +180,7 @@ class QualifyingAssetValidator {
 			return ['so_verklaring_format_invalid'];
 		}
 
-		$tot = (string)(($ticket['so_verklaring_periode']['tot'] ?? ''));
+		$tot = (string)(($ticket['so_declaration_period']['tot'] ?? ''));
 		if ($tot !== '' && $tot < $referenceDate) {
 			return ['so_verklaring_expired'];
 		}

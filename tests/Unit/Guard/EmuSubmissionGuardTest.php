@@ -65,7 +65,7 @@ class EmuSubmissionGuardTest extends TestCase {
 				[
 					'status' => 'concept',
 					'emuBalanceCalculated' => -2300000.0,
-					'bbvAansluitingscontrole' => 'geslaagd',
+					'bbvReconciliationCheck' => 'geslaagd',
 				]
 			)
 		);
@@ -80,7 +80,7 @@ class EmuSubmissionGuardTest extends TestCase {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
 			$this->guard->requireApproval(
-				['status' => 'ingediend', 'emuBalanceCalculated' => -2300000.0, 'bbvAansluitingscontrole' => 'geslaagd']
+				['status' => 'submitted', 'emuBalanceCalculated' => -2300000.0, 'bbvReconciliationCheck' => 'geslaagd']
 			)
 		);
 	}//end testAlreadySubmittedIsBlocked()
@@ -93,7 +93,7 @@ class EmuSubmissionGuardTest extends TestCase {
 	public function testConceptWithoutSaldoIsBlocked(): void {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
-			$this->guard->requireApproval(['status' => 'concept', 'bbvAansluitingscontrole' => 'geslaagd'])
+			$this->guard->requireApproval(['status' => 'concept', 'bbvReconciliationCheck' => 'geslaagd'])
 		);
 	}//end testConceptWithoutSaldoIsBlocked()
 
@@ -106,7 +106,7 @@ class EmuSubmissionGuardTest extends TestCase {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
 			$this->guard->requireApproval(
-				['status' => 'concept', 'emuBalanceCalculated' => 1.0, 'bbvAansluitingscontrole' => 'mislukt']
+				['status' => 'concept', 'emuBalanceCalculated' => 1.0, 'bbvReconciliationCheck' => 'mislukt']
 			)
 		);
 	}//end testFailedReconciliationBlocks()
@@ -120,7 +120,7 @@ class EmuSubmissionGuardTest extends TestCase {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
 			$this->guard->requireApproval(
-				['status' => 'concept', 'emuBalanceCalculated' => null, 'bbvAansluitingscontrole' => 'geslaagd']
+				['status' => 'concept', 'emuBalanceCalculated' => null, 'bbvReconciliationCheck' => 'geslaagd']
 			)
 		);
 	}//end testNullSaldoIsBlocked()

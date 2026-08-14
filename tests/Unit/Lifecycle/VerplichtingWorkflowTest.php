@@ -77,7 +77,7 @@ class VerplichtingWorkflowTest extends TestCase {
 	 *
 	 * @var MandaatEnforcer
 	 */
-	private MandaatEnforcer $mandaat;
+	private MandaatEnforcer $mandate;
 
 	/**
 	 * Budget-room guard under test.
@@ -100,7 +100,7 @@ class VerplichtingWorkflowTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->mandaat = new MandaatEnforcer(
+		$this->mandate = new MandaatEnforcer(
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
@@ -110,7 +110,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			mandaat: $this->mandaat,
+			mandate: $this->mandate,
 		);
 
 	}//end setUp()
@@ -229,28 +229,28 @@ class VerplichtingWorkflowTest extends TestCase {
 	 */
 	public function testInkooporderWithinBudgetAndMandateSignsCleanly(): void {
 		$budget = $this->makeBudget(['authorised_amount' => 50000000, 'realised_amount' => 0]);
-		$mandaat = $this->makeMandate(['mandaatcode' => 'M-INKOOP-100K', 'maximumbedrag' => 10000000]);
+		$mandate = $this->makeMandate(['mandateCode' => 'M-INKOOP-100K', 'maximumAmount' => 10000000]);
 		$verplicht = $this->makeCommitment(75 * 100000);
 
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
 				[
 					'Budget' => [$budget],
-					'Mandaat' => [$mandaat],
+					'Mandaat' => [$mandate],
 				]
 			)
 		);
 
 		// Mandate check passes — user can sign EUR 75k under M-INKOOP-100K.
-		$this->assertTrue($this->mandaat->hasSufficientMandate('PO-1', $verplicht));
-		$this->assertFalse($this->mandaat->requiresApproval('PO-1', $verplicht));
+		$this->assertTrue($this->mandate->hasSufficientMandate('PO-1', $verplicht));
+		$this->assertFalse($this->mandate->requiresApproval('PO-1', $verplicht));
 
 		// Budget check passes — vrije_ruimte EUR 500k > EUR 75k.
 		$this->assertTrue($this->budget->canCommit('PO-1', $verplicht));
 
 		// Vrije_ruimte after the commitment is EUR 500k - EUR 75k = EUR 425k.
 		$afterCommitment = $budget;
-		$afterCommitment['openstaande_verplichtingen'] = 75 * 100000;
+		$afterCommitment['outstanding_commitments'] = 75 * 100000;
 		$this->assertSame(42500000, $this->budget->freeRoom($afterCommitment));
 
 	}//end testInkooporderWithinBudgetAndMandateSignsCleanly()
@@ -269,21 +269,21 @@ class VerplichtingWorkflowTest extends TestCase {
 	 */
 	public function testMandateExceededRoutesToApprovalWorkflow(): void {
 		$budget = $this->makeBudget();
-		$mandaat = $this->makeMandate(['mandaatcode' => 'M-INKOOP-50K', 'maximumbedrag' => 5000000]);
+		$mandate = $this->makeMandate(['mandateCode' => 'M-INKOOP-50K', 'maximumAmount' => 5000000]);
 		$verplicht = $this->makeCommitment(75 * 100000);
 
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
 				[
 					'Budget' => [$budget],
-					'Mandaat' => [$mandaat],
+					'Mandaat' => [$mandate],
 				]
 			)
 		);
 
 		// Mandate check fails → must route to in_goedkeuring (Goedkeuringsstap created).
-		$this->assertFalse($this->mandaat->hasSufficientMandate('PO-1', $verplicht));
-		$this->assertTrue($this->mandaat->requiresApproval('PO-1', $verplicht));
+		$this->assertFalse($this->mandate->hasSufficientMandate('PO-1', $verplicht));
+		$this->assertTrue($this->mandate->requiresApproval('PO-1', $verplicht));
 
 		// Budget still fits — the rejection here is mandate-based, not budget-based.
 		$this->assertTrue($this->budget->canCommit('PO-1', $verplicht));
@@ -321,10 +321,10 @@ class VerplichtingWorkflowTest extends TestCase {
 
 		$overcommit = [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'RO-1',
-			'soort' => 'raamovereenkomst',
-			'totaalbedrag_excl_btw' => 20000000,
-			'regels' => [
+			'commitmentNumber' => 'RO-1',
+			'kind' => 'frameworkAgreement',
+			'total_amount_excl_vat' => 20000000,
+			'rules' => [
 				['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
 				['programme' => '5.1', 'financialYear' => 2027, 'amount_excl_vat' => 10000000],
 			],
@@ -334,8 +334,8 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->assertFalse($this->budget->canCommit('RO-1', $overcommit));
 
 		$within = $overcommit;
-		$within['regels'][1]['amount_excl_vat'] = 5000000;
-		$within['totaalbedrag_excl_btw'] = 15000000;
+		$within['rules'][1]['amount_excl_vat'] = 5000000;
+		$within['total_amount_excl_vat'] = 15000000;
 
 		// 2027 right-sized to EUR 50k → both regels fit and the raamovereenkomst signs.
 		$this->assertTrue($this->budget->canCommit('RO-1', $within));
@@ -353,8 +353,8 @@ class VerplichtingWorkflowTest extends TestCase {
 		$budget = $this->makeBudget(['authorised_amount' => 20000000, 'realised_amount' => 0]);
 		$override = $this->makeMandate(
 			[
-				'mandaatcode' => 'M-CFO-OVERRIDE',
-				'maximumbedrag' => 1000000000,
+				'mandateCode' => 'M-CFO-OVERRIDE',
+				'maximumAmount' => 1000000000,
 				'is_override' => true,
 			]
 		);
@@ -382,11 +382,11 @@ class VerplichtingWorkflowTest extends TestCase {
 	 * @return void
 	 */
 	public function testSecondSignatureRequiredAboveThreshold(): void {
-		$mandaat = $this->makeMandate(
+		$mandate = $this->makeMandate(
 			[
-				'mandaatcode' => 'M-INKOOP-50K-2SIG',
-				'maximumbedrag' => 5000000,
-				'vereist_tweede_handtekening_boven' => 2500000,
+				'mandateCode' => 'M-INKOOP-50K-2SIG',
+				'maximumAmount' => 5000000,
+				'required_second_signature_above' => 2500000,
 			]
 		);
 		$verplicht = $this->makeCommitment(3000000);
@@ -395,16 +395,16 @@ class VerplichtingWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'Budget' => [$this->makeBudget()],
-					'Mandaat' => [$mandaat],
+					'Mandaat' => [$mandate],
 				]
 			)
 		);
 
-		$this->assertTrue($this->mandaat->hasSufficientMandate('PO-1', $verplicht));
-		$this->assertTrue($this->mandaat->requiresSecondSignature($verplicht));
+		$this->assertTrue($this->mandate->hasSufficientMandate('PO-1', $verplicht));
+		$this->assertTrue($this->mandate->requiresSecondSignature($verplicht));
 
 		$small = $this->makeCommitment(2000000);
-		$this->assertFalse($this->mandaat->requiresSecondSignature($small));
+		$this->assertFalse($this->mandate->requiresSecondSignature($small));
 
 	}//end testSecondSignatureRequiredAboveThreshold()
 
@@ -424,7 +424,7 @@ class VerplichtingWorkflowTest extends TestCase {
 				'financialYear' => 2026,
 				'authorised_amount' => 50000000,
 				'realised_amount' => 0,
-				'openstaande_verplichtingen' => 0,
+				'outstanding_commitments' => 0,
 			],
 			$overrides
 		);
@@ -442,12 +442,12 @@ class VerplichtingWorkflowTest extends TestCase {
 		return array_merge(
 			[
 				'administrationId' => 'adm-1',
-				'mandaatcode' => 'M-INKOOP-100K',
-				'maximumbedrag' => 10000000,
-				'soort_verplichting' => ['inkooporder', 'raamovereenkomst'],
+				'mandateCode' => 'M-INKOOP-100K',
+				'maximumAmount' => 10000000,
+				'kind_commitment' => ['inkooporder', 'frameworkAgreement'],
 				'is_override' => false,
-				'geldig_van' => '2020-01-01',
-				'geldig_tot' => '2999-12-31',
+				'valid_from' => '2020-01-01',
+				'valid_to' => '2999-12-31',
 			],
 			$overrides
 		);
@@ -457,21 +457,21 @@ class VerplichtingWorkflowTest extends TestCase {
 	/**
 	 * Helper: build a single-line inkooporder commitment on programma 5.1 / 2026.
 	 *
-	 * @param int $bedrag Amount in minor units.
+	 * @param int $amount Amount in minor units.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function makeCommitment(int $bedrag): array {
+	private function makeCommitment(int $amount): array {
 		return [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'PO-1',
-			'soort' => 'inkooporder',
-			'totaalbedrag_excl_btw' => $bedrag,
-			'regels' => [
+			'commitmentNumber' => 'PO-1',
+			'kind' => 'inkooporder',
+			'total_amount_excl_vat' => $amount,
+			'rules' => [
 				[
 					'programme' => '5.1',
 					'financialYear' => 2026,
-					'amount_excl_vat' => $bedrag,
+					'amount_excl_vat' => $amount,
 				],
 			],
 		];

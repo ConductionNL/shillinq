@@ -12,7 +12,7 @@
     {
       "code": "watersysteembeheer",
       "name": "Watersysteembeheer",
-      "beschrijving": "Beheer en onderhoud van het watersysteem inclusief waterveiligheid, waterkwaliteit en kwantiteitsbeheer conform BBV-waterschappen art. 5.",
+      "description": "Beheer en onderhoud van het watersysteem inclusief waterveiligheid, waterkwaliteit en kwantiteitsbeheer conform BBV-waterschappen art. 5.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -20,7 +20,7 @@
     {
       "code": "watersysteembeheer-waterveiligheid",
       "name": "Waterveiligheid",
-      "beschrijving": "Beheer, onderhoud en verbetering van waterkeringen (dijken, kades, stuwen) ter voorkoming van overstromingen.",
+      "description": "Beheer, onderhoud en verbetering van waterkeringen (dijken, kades, stuwen) ter voorkoming van overstromingen.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "watersysteembeheer",
@@ -29,7 +29,7 @@
     {
       "code": "watersysteembeheer-waterkwaliteit",
       "name": "Waterkwaliteit en -ecologie",
-      "beschrijving": "Beheer van de kwaliteit van oppervlaktewater en grondwater, inclusief ecologisch herstel en Kaderrichtlijn Water-doelen.",
+      "description": "Beheer van de kwaliteit van oppervlaktewater en grondwater, inclusief ecologisch herstel en Kaderrichtlijn Water-doelen.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "watersysteembeheer",
@@ -38,7 +38,7 @@
     {
       "code": "watersysteembeheer-kwantiteit",
       "name": "Waterkwantiteit",
-      "beschrijving": "Beheer van de hoeveelheid water in het systeem: peilbeheer, afvoer, wateraanvoer en droogtebeheer.",
+      "description": "Beheer van de hoeveelheid water in het systeem: peilbeheer, afvoer, wateraanvoer en droogtebeheer.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "watersysteembeheer",
@@ -47,7 +47,7 @@
     {
       "code": "watersysteembeheer-kunstwerken",
       "name": "Kunstwerken watersysteem",
-      "beschrijving": "Beheer en onderhoud van kunstwerken in het watersysteem: gemalen, sluizen, stuwen en duikers.",
+      "description": "Beheer en onderhoud van kunstwerken in het watersysteem: gemalen, sluizen, stuwen en duikers.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "watersysteembeheer",
@@ -56,7 +56,7 @@
     {
       "code": "watersysteembeheer-baggeren",
       "name": "Baggeren en onderhoud waterlopen",
-      "beschrijving": "Onderhoud van waterlopen door baggeren, maaien en onderhoud oevers en taluds.",
+      "description": "Onderhoud van waterlopen door baggeren, maaien en onderhoud oevers en taluds.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "watersysteembeheer",
@@ -65,7 +65,7 @@
     {
       "code": "zuiveringsbeheer",
       "name": "Zuiveringsbeheer",
-      "beschrijving": "Transport en behandeling van afvalwater conform BBV-waterschappen art. 6. Omvat rioolwaterzuiveringsinstallaties (RWZI), transport en slibverwerking.",
+      "description": "Transport en behandeling van afvalwater conform BBV-waterschappen art. 6. Omvat rioolwaterzuiveringsinstallaties (RWZI), transport en slibverwerking.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -73,7 +73,7 @@
     {
       "code": "zuiveringsbeheer-transport",
       "name": "Transport afvalwater",
-      "beschrijving": "Beheer en onderhoud van rioolgemalen, persleidingen en aanvoerende infrastructuur voor afvalwater.",
+      "description": "Beheer en onderhoud van rioolgemalen, persleidingen en aanvoerende infrastructuur voor afvalwater.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "zuiveringsbeheer",
@@ -82,7 +82,7 @@
     {
       "code": "zuiveringsbeheer-rwzi",
       "name": "Zuivering afvalwater (RWZI)",
-      "beschrijving": "Behandeling van afvalwater op rioolwaterzuiveringsinstallaties. Omvat exploitatie, onderhoud en vervanging van RWZI's.",
+      "description": "Behandeling van afvalwater op rioolwaterzuiveringsinstallaties. Omvat exploitatie, onderhoud en vervanging van RWZI's.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "zuiveringsbeheer",
@@ -91,7 +91,7 @@
     {
       "code": "zuiveringsbeheer-slib",
       "name": "Slibverwerking",
-      "beschrijving": "Verwerking van het bij de RWZI vrijkomende slib tot eindproduct (thermische verwerking, vergisting, export).",
+      "description": "Verwerking van het bij de RWZI vrijkomende slib tot eindproduct (thermische verwerking, vergisting, export).",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "zuiveringsbeheer",
@@ -100,7 +100,7 @@
     {
       "code": "zuiveringsbeheer-effluentkwaliteit",
       "name": "Effluentkwaliteit en monitoring",
-      "beschrijving": "Monitoring van de effluentkwaliteit en naleving van lozingsvergunningen. Inclusief laboratoriumactiviteiten.",
+      "description": "Monitoring van de effluentkwaliteit en naleving van lozingsvergunningen. Inclusief laboratoriumactiviteiten.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "zuiveringsbeheer",
@@ -109,7 +109,7 @@
     {
       "code": "wegenbeheer",
       "name": "Wegenbeheer",
-      "beschrijving": "Beheer en onderhoud van wegen en kunstwerken in eigendom en beheer bij het waterschap conform BBV-waterschappen art. 7.",
+      "description": "Beheer en onderhoud van wegen en kunstwerken in eigendom en beheer bij het waterschap conform BBV-waterschappen art. 7.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -117,7 +117,7 @@
     {
       "code": "wegenbeheer-wegen",
       "name": "Wegen en fietspaden",
-      "beschrijving": "Beheer, onderhoud en vervanging van waterschapswegen, rijbanen en fietspaden.",
+      "description": "Beheer, onderhoud en vervanging van waterschapswegen, rijbanen en fietspaden.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "wegenbeheer",
@@ -126,7 +126,7 @@
     {
       "code": "wegenbeheer-kunstwerken",
       "name": "Kunstwerken wegen",
-      "beschrijving": "Beheer en onderhoud van bruggen, duikers en viaducten langs waterschapswegen.",
+      "description": "Beheer en onderhoud van bruggen, duikers en viaducten langs waterschapswegen.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "wegenbeheer",
@@ -135,7 +135,7 @@
     {
       "code": "muskusratbestrijding",
       "name": "Muskusratbestrijding",
-      "beschrijving": "Bestrijding van muskus- en beverratten ter bescherming van waterkeringen en oevers conform de Wet natuurbescherming en BBVW art. 8.",
+      "description": "Bestrijding van muskus- en beverratten ter bescherming van waterkeringen en oevers conform de Wet natuurbescherming en BBVW art. 8.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -143,7 +143,7 @@
     {
       "code": "muskusratbestrijding-veldwerk",
       "name": "Veldbestrijding",
-      "beschrijving": "Plaatsing en controle van vangkooien, bestrijdingswerkzaamheden in het veld.",
+      "description": "Plaatsing en controle van vangkooien, bestrijdingswerkzaamheden in het veld.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "muskusratbestrijding",
@@ -152,7 +152,7 @@
     {
       "code": "muskusratbestrijding-monitoring",
       "name": "Monitoring en rapportage",
-      "beschrijving": "Monitoring van populaties en rapportage aan de provincies conform wettelijke verplichtingen.",
+      "description": "Monitoring van populaties en rapportage aan de provincies conform wettelijke verplichtingen.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "muskusratbestrijding",
@@ -161,7 +161,7 @@
     {
       "code": "bestuur-org",
       "name": "Bestuur en organisatie",
-      "beschrijving": "Algemeen bestuur, management, ondersteunende functies en organisatieontwikkeling van het waterschap.",
+      "description": "Algemeen bestuur, management, ondersteunende functies en organisatieontwikkeling van het waterschap.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -169,7 +169,7 @@
     {
       "code": "bestuur-org-bestuur",
       "name": "Bestuur",
-      "beschrijving": "Kosten van het algemeen en dagelijks bestuur, Rekenkamer en accountantscontrole.",
+      "description": "Kosten van het algemeen en dagelijks bestuur, Rekenkamer en accountantscontrole.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "bestuur-org",
@@ -178,7 +178,7 @@
     {
       "code": "bestuur-org-bedrijfsvoering",
       "name": "Bedrijfsvoering",
-      "beschrijving": "Overhead, staf en ondersteunende diensten (ICT, HRM, financiën, juridische zaken, communicatie).",
+      "description": "Overhead, staf en ondersteunende diensten (ICT, HRM, financiën, juridische zaken, communicatie).",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "bestuur-org",
@@ -187,7 +187,7 @@
     {
       "code": "bestuur-org-huisvesting",
       "name": "Huisvesting en facilitaire zaken",
-      "beschrijving": "Kantoorhuisvesting, facilitaire diensten en wagenpark niet direct toerekenbaar aan een kostentoedeling.",
+      "description": "Kantoorhuisvesting, facilitaire diensten en wagenpark niet direct toerekenbaar aan een kostentoedeling.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "bestuur-org",
@@ -196,7 +196,7 @@
     {
       "code": "innovatie-duurzaamheid",
       "name": "Innovatie en duurzaamheid",
-      "beschrijving": "Programma voor innovatieprojecten, energietransitie en circulaire economie-initiatieven.",
+      "description": "Programma voor innovatieprojecten, energietransitie en circulaire economie-initiatieven.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -204,7 +204,7 @@
     {
       "code": "innovatie-energietransitie",
       "name": "Energietransitie",
-      "beschrijving": "Projecten gericht op energieneutraliteit: zon-pv op gemalen en RWZI's, warmteterugwinning, biogas.",
+      "description": "Projecten gericht op energieneutraliteit: zon-pv op gemalen en RWZI's, warmteterugwinning, biogas.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "innovatie-duurzaamheid",
@@ -213,7 +213,7 @@
     {
       "code": "innovatie-circulair",
       "name": "Circulaire economie",
-      "beschrijving": "Winning van grondstoffen uit afvalwater en slib: struviet, cellulose, fosfaatterugwinning.",
+      "description": "Winning van grondstoffen uit afvalwater en slib: struviet, cellulose, fosfaatterugwinning.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "innovatie-duurzaamheid",
@@ -222,7 +222,7 @@
     {
       "code": "klimaatadaptatie",
       "name": "Klimaatadaptatie",
-      "beschrijving": "Programmering van klimaatadaptatieprojecten: droogtebestrijding, hittestress, waterbergingsprojecten.",
+      "description": "Programmering van klimaatadaptatieprojecten: droogtebestrijding, hittestress, waterbergingsprojecten.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -230,7 +230,7 @@
     {
       "code": "klimaatadaptatie-droogte",
       "name": "Droogtebestrijding",
-      "beschrijving": "Maatregelen tegen droogte: wateraanvoer, peilverhogingen, waterconservering.",
+      "description": "Maatregelen tegen droogte: wateraanvoer, peilverhogingen, waterconservering.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "klimaatadaptatie",
@@ -239,7 +239,7 @@
     {
       "code": "klimaatadaptatie-wateroverlast",
       "name": "Wateroverlast",
-      "beschrijving": "Maatregelen ter voorkoming van wateroverlast door hevige neerslag: retentiegebieden, infiltratieprojecten.",
+      "description": "Maatregelen ter voorkoming van wateroverlast door hevige neerslag: retentiegebieden, infiltratieprojecten.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "parentCode": "klimaatadaptatie",
@@ -248,7 +248,7 @@
     {
       "code": "vergunningverlening-handhaving",
       "name": "Vergunningverlening en handhaving",
-      "beschrijving": "Vergunningverlening (Waterwet, Omgevingswet), toezicht en handhaving op lozingen en onttrekkingen.",
+      "description": "Vergunningverlening (Waterwet, Omgevingswet), toezicht en handhaving op lozingen en onttrekkingen.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -256,7 +256,7 @@
     {
       "code": "reserveringen-voorzieningen",
       "name": "Reserveringen en voorzieningen",
-      "beschrijving": "Reserveringen voor groot onderhoud, vervangingsinvesteringen en algemene reserves van het waterschap.",
+      "description": "Reserveringen voor groot onderhoud, vervangingsinvesteringen en algemene reserves van het waterschap.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"
@@ -264,7 +264,7 @@
     {
       "code": "financiering",
       "name": "Financiering",
-      "beschrijving": "Rente en aflossingen op langlopende leningen, schatkistbankieren en treasury-activiteiten.",
+      "description": "Rente en aflossingen op langlopende leningen, schatkistbankieren en treasury-activiteiten.",
       "programmeStructure": "kostentoedeling",
       "bbvVariant": "waterschap",
       "administrationId": "template"

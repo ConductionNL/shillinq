@@ -190,36 +190,36 @@ class ENSIAValidationGuard {
 	 * returns true. When volwassenheidsScore ≥ 3, bewijsstukken MUST be a
 	 * non-empty array AND toelichting MUST be ≥ 50 chars.
 	 *
-	 * @param array<string,mixed> $vraag The Evaluatievraag record being
+	 * @param array<string,mixed> $question The Evaluatievraag record being
 	 *                                   persisted.
 	 *
 	 * @return bool True when the persist is allowed; false when blocked.
 	 */
-	public function maturityEvidenceSatisfied(array $vraag): bool {
-		$score = $vraag['volwassenheidsScore'] ?? null;
+	public function maturityEvidenceSatisfied(array $question): bool {
+		$score = $question['maturityScore'] ?? null;
 		if (is_int($score) === false || $score < 3) {
 			return true;
 		}
 
-		$bewijsstukken = $vraag['bewijsstukken'] ?? [];
-		if (is_array($bewijsstukken) === false || count($bewijsstukken) === 0) {
+		$supportingDocuments = $question['supportingDocuments'] ?? [];
+		if (is_array($supportingDocuments) === false || count($supportingDocuments) === 0) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires evidence',
 				[
-					'vraagCode' => (string)($vraag['vraagCode'] ?? ''),
+					'questionCode' => (string)($question['questionCode'] ?? ''),
 					'score' => $score,
 				]
 			);
 			return false;
 		}
 
-		$toelichting = (string)($vraag['toelichting'] ?? '');
-		if (mb_strlen($toelichting) < 50) {
+		$notes = (string)($question['notes'] ?? '');
+		if (mb_strlen($notes) < 50) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires toelichting ≥ 50 chars',
 				[
-					'vraagCode' => (string)($vraag['vraagCode'] ?? ''),
-					'toelichtingChars' => mb_strlen($toelichting),
+					'questionCode' => (string)($question['questionCode'] ?? ''),
+					'toelichtingChars' => mb_strlen($notes),
 				]
 			);
 			return false;
@@ -240,26 +240,26 @@ class ENSIAValidationGuard {
 	 * peerReviewStatus≠nog-niet-beoordeeld), the `reden` field MUST be a
 	 * non-empty string.
 	 *
-	 * @param array<string,mixed> $vraag The Evaluatievraag record being
+	 * @param array<string,mixed> $question The Evaluatievraag record being
 	 *                                   persisted (post-edit shape).
 	 *
 	 * @return bool True when the persist is allowed; false when blocked.
 	 */
-	public function postPeerReviewReasonRequired(array $vraag): bool {
-		$peerReviewedAt = (string)($vraag['peerReviewedAt'] ?? '');
-		$peerReviewStatus = (string)($vraag['peerReviewStatus'] ?? 'nog-niet-beoordeeld');
+	public function postPeerReviewReasonRequired(array $question): bool {
+		$peerReviewedAt = (string)($question['peerReviewedAt'] ?? '');
+		$peerReviewStatus = (string)($question['peerReviewStatus'] ?? 'nog-niet-beoordeeld');
 
 		$hasBeenReviewed = $peerReviewedAt !== '' || $peerReviewStatus !== 'nog-niet-beoordeeld';
 		if ($hasBeenReviewed === false) {
 			return true;
 		}
 
-		$reden = trim((string)($vraag['reden'] ?? ''));
-		if ($reden === '') {
+		$reason = trim((string)($question['reason'] ?? ''));
+		if ($reason === '') {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-008 — post-peer-review edit requires reden',
 				[
-					'vraagCode' => (string)($vraag['vraagCode'] ?? ''),
+					'questionCode' => (string)($question['questionCode'] ?? ''),
 				]
 			);
 			return false;

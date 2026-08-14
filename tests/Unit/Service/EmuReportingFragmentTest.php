@@ -98,7 +98,7 @@ final class EmuReportingFragmentTest extends TestCase {
 
 		self::assertSame('status', $lifecycle['field']);
 		self::assertSame('concept', $lifecycle['initialState']);
-		foreach (['concept', 'ingediend', 'herzien'] as $state) {
+		foreach (['concept', 'submitted', 'herzien'] as $state) {
 			self::assertArrayHasKey($state, $lifecycle['states'], "EMUReport must declare state $state");
 		}
 
@@ -147,14 +147,14 @@ final class EmuReportingFragmentTest extends TestCase {
 		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
 		$schema = $data['components']['schemas']['DebtPosition'];
 
-		$enum = $schema['properties']['categorieEurostat']['enum'];
+		$enum = $schema['properties']['categoryEurostat']['enum'];
 		foreach (['AF.2-deposits', 'AF.3-securities', 'AF.4-loans', 'AF.7-derivatives'] as $cat) {
 			self::assertContains($cat, $enum, "categorieEurostat must include $cat");
 		}
 
 		$agg = $schema['x-openregister-aggregations']['brutoSchuldPerCategorie'];
-		self::assertTrue($agg['filter']['teltMeeInEmuSchuld']);
-		self::assertContains('uitstaandeSchuld', $agg['sum']);
+		self::assertTrue($agg['filter']['teltMeeInEmuDebt']);
+		self::assertContains('outstandingDebt', $agg['sum']);
 	}//end testDebtPositionEsa2010ClassificationAndAggregation()
 
 	/**

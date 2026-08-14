@@ -147,17 +147,17 @@ final class VpbMkbFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testAangifteUniqueAndIndienenGuard(): void {
-		$aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
+		$taxReturn = $this->fragment()['components']['schemas']['VpbAangifte'];
 
 		self::assertContains(
-			['belastingplichtige', 'belastingjaar'],
-			$aangifte['x-openregister-unique'],
+			['taxpayer', 'taxYear'],
+			$taxReturn['x-openregister-unique'],
 			'VpbAangifte must be unique per (belastingplichtige, belastingjaar) (REQ-VPB-001)'
 		);
 
-		$indienen = $aangifte['x-openregister-lifecycle']['transitions']['indienen'];
+		$indienen = $taxReturn['x-openregister-lifecycle']['transitions']['indienen'];
 		self::assertSame('concept', $indienen['from']);
-		self::assertSame('ingediend', $indienen['to']);
+		self::assertSame('submitted', $indienen['to']);
 		self::assertSame('OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canIndienen', $indienen['requires']);
 
 	}//end testAangifteUniqueAndIndienenGuard()
@@ -169,12 +169,12 @@ final class VpbMkbFragmentTest extends TestCase {
 	 */
 	public function testAangifteCalculations(): void {
 		$calc = $this->fragment()['components']['schemas']['VpbAangifte']['x-openregister-calculations'];
-		self::assertArrayHasKey('verschuldigdeVpb', $calc);
+		self::assertArrayHasKey('dueVpb', $calc);
 		self::assertArrayHasKey('teBetalen', $calc);
-		self::assertArrayHasKey('fiscaleWinstVoorVerliezen', $calc);
+		self::assertArrayHasKey('fiscalProfitForLosses', $calc);
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::berekenVerschuldigdeVpb',
-			$calc['verschuldigdeVpb']['guard']
+			$calc['dueVpb']['guard']
 		);
 
 	}//end testAangifteCalculations()
@@ -187,7 +187,7 @@ final class VpbMkbFragmentTest extends TestCase {
 	public function testVoorvoegingsverliesCalculations(): void {
 		$calc = $this->fragment()['components']['schemas']['Voorvoegingsverlies']['x-openregister-calculations'];
 		self::assertArrayHasKey('regime', $calc);
-		self::assertArrayHasKey('verjaartIn', $calc);
+		self::assertArrayHasKey('expiresIn', $calc);
 		self::assertArrayHasKey('restant', $calc);
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerliesRegime',
@@ -202,16 +202,16 @@ final class VpbMkbFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testObjectionPeriodGuardReferenced(): void {
-		$aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
+		$taxReturn = $this->fragment()['components']['schemas']['VpbAangifte'];
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection',
-			$aangifte['x-openregister-lifecycle']['transitions']['bezwaarMaken']['requires']
+			$taxReturn['x-openregister-lifecycle']['transitions']['bezwaarMaken']['requires']
 		);
 
-		$bezwaar = $this->fragment()['components']['schemas']['BezwaarBeroep'];
+		$objection = $this->fragment()['components']['schemas']['BezwaarBeroep'];
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal',
-			$bezwaar['x-openregister-lifecycle']['transitions']['beroepInstellen']['requires']
+			$objection['x-openregister-lifecycle']['transitions']['beroepInstellen']['requires']
 		);
 
 	}//end testObjectionPeriodGuardReferenced()
@@ -285,13 +285,13 @@ final class VpbMkbFragmentTest extends TestCase {
 		}
 
 		self::assertArrayHasKey('VpbTariefcatalogus', $bySchema);
-		self::assertSame(2026, $bySchema['VpbTariefcatalogus']['belastingjaar']);
+		self::assertSame(2026, $bySchema['VpbTariefcatalogus']['taxYear']);
 		self::assertSame(0.19, $bySchema['VpbTariefcatalogus']['tarief1']);
 		self::assertSame(0.258, $bySchema['VpbTariefcatalogus']['tarief2']);
 		self::assertSame(245000, $bySchema['VpbTariefcatalogus']['taxableAmountThreshold']);
 
 		self::assertArrayHasKey('Belastingplichtige', $bySchema);
-		self::assertSame('EH3', $bySchema['Belastingplichtige']['eHerkenningsNiveau']);
+		self::assertSame('EH3', $bySchema['Belastingplichtige']['eHerkenningLevel']);
 
 	}//end testSeedObjects()
 }//end class

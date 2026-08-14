@@ -179,22 +179,22 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase {
 					],
 				],
 				'LoonStrook' => [
-					['werknemerId' => 'wn-1', 'administrationId' => 'adm-1', 'periodeId' => 'lp-2026-01', 'fiscaalLoon' => 2000.00],
-					['werknemerId' => 'wn-1', 'administrationId' => 'adm-1', 'periodeId' => 'lp-2026-02', 'fiscaalLoon' => 2050.00],
-					['werknemerId' => 'wn-1', 'administrationId' => 'adm-1', 'periodeId' => 'lp-2025-12', 'fiscaalLoon' => 9999.00], // wrong year
-					['werknemerId' => 'wn-2', 'administrationId' => 'adm-1', 'periodeId' => 'lp-2026-01', 'fiscaalLoon' => 9999.00], // wrong werknemer
+					['employeeId' => 'wn-1', 'administrationId' => 'adm-1', 'periodId' => 'lp-2026-01', 'fiscalPay' => 2000.00],
+					['employeeId' => 'wn-1', 'administrationId' => 'adm-1', 'periodId' => 'lp-2026-02', 'fiscalPay' => 2050.00],
+					['employeeId' => 'wn-1', 'administrationId' => 'adm-1', 'periodId' => 'lp-2025-12', 'fiscalPay' => 9999.00], // wrong year
+					['employeeId' => 'wn-2', 'administrationId' => 'adm-1', 'periodId' => 'lp-2026-01', 'fiscalPay' => 9999.00], // wrong werknemer
 				],
 			]
 		);
 
 		$payload = $svc->toLivLkvEligibilityPayload(
 			administrationId: 'adm-1',
-			werknemerId: 'wn-1',
-			jaar: 2026
+			employeeId: 'wn-1',
+			year: 2026
 		);
 
 		$this->assertNotNull($payload);
-		$this->assertSame('wn-1', $payload['werknemerId']);
+		$this->assertSame('wn-1', $payload['employeeId']);
 		$this->assertSame(2026, $payload['year']);
 		$this->assertSame('LIV', $payload['inkomenniveau']);
 		$this->assertEqualsWithDelta(4050.00, $payload['fiscaalLoonJaar'], 0.005);
@@ -221,8 +221,8 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase {
 
 		$payload = $svc->toLivLkvEligibilityPayload(
 			administrationId: 'adm-1',
-			werknemerId: 'wn-x',
-			jaar: 2026
+			employeeId: 'wn-x',
+			year: 2026
 		);
 
 		$this->assertNull($payload);
@@ -244,8 +244,8 @@ final class PayrollLivLkvHandoffServiceTest extends TestCase {
 
 		$payload = $svc->toLivLkvEligibilityPayload(
 			administrationId: 'adm-2',
-			werknemerId: 'wn-1',
-			jaar: 2026
+			employeeId: 'wn-1',
+			year: 2026
 		);
 
 		$this->assertNull($payload);

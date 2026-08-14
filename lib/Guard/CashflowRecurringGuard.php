@@ -147,10 +147,10 @@ class CashflowRecurringGuard {
 	 * @return bool True when the anchor is consistent with the frequency.
 	 */
 	private function hasConsistentRecurrenceAnchor(array $recurring): bool {
-		$frequency = (string)($recurring['frequentie'] ?? '');
+		$frequency = (string)($recurring['frequency'] ?? '');
 
 		if (in_array($frequency, self::MONTHLY_FREQUENCIES, true) === true) {
-			if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? null)) === false) {
+			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? null)) === false) {
 				$this->logger->info(
 					'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
 					['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -169,7 +169,7 @@ class CashflowRecurringGuard {
 				return false;
 			}
 
-			if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? 1)) === false) {
+			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? 1)) === false) {
 				$this->logger->info(
 					'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
 					['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -189,8 +189,8 @@ class CashflowRecurringGuard {
 	 * @return bool True when the validity window is well-formed.
 	 */
 	private function hasValidValidityWindow(array $recurring): bool {
-		$van = $this->parseDate(value: (string)($recurring['geldigVan'] ?? ''));
-		if ($van === null) {
+		$from = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
+		if ($from === null) {
 			$this->logger->info(
 				'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
 				['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -198,13 +198,13 @@ class CashflowRecurringGuard {
 			return false;
 		}
 
-		$totRaw = ($recurring['geldigTot'] ?? null);
-		if ($totRaw === null || $totRaw === '') {
+		$toRaw = ($recurring['validTo'] ?? null);
+		if ($toRaw === null || $toRaw === '') {
 			// Indefinite window is valid.
 			return true;
 		}
 
-		$tot = $this->parseDate(value: (string)$totRaw);
+		$tot = $this->parseDate(value: (string)$toRaw);
 		if ($tot === null) {
 			$this->logger->info(
 				'CashflowRecurringGuard: unparseable geldigTot — denying save',
@@ -213,7 +213,7 @@ class CashflowRecurringGuard {
 			return false;
 		}
 
-		if ($tot < $van) {
+		if ($tot < $from) {
 			$this->logger->info(
 				'CashflowRecurringGuard: geldigTot precedes geldigVan — denying save',
 				['recurId' => ($recurring['recurId'] ?? 'unknown')]
@@ -232,12 +232,12 @@ class CashflowRecurringGuard {
 	 * @return bool True when indexation is FIXED, absent, or annual-applicable.
 	 */
 	private function hasApplicableIndexation(array $recurring): bool {
-		$rule = (string)($recurring['indexatieRegel'] ?? 'FIXED');
+		$rule = (string)($recurring['indexationRule'] ?? 'FIXED');
 		if ($rule !== 'CPI_AFGELOPEN_JAAR') {
 			return true;
 		}
 
-		if ((string)($recurring['frequentie'] ?? '') !== 'JAARLIJKS') {
+		if ((string)($recurring['frequency'] ?? '') !== 'JAARLIJKS') {
 			$this->logger->info(
 				'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
 				['recurId' => ($recurring['recurId'] ?? 'unknown')]

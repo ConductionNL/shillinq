@@ -212,8 +212,8 @@ final class PayrollServiceTest extends TestCase {
 			'Werkgever' => [
 				[
 					'id' => 'wg-1',
-					'awfTarief' => 'LAAG',
-					'zvwTarief' => 'LAAG',
+					'awfRate' => 'LAAG',
+					'zvwRate' => 'LAAG',
 					'administrationId' => 'adm-1',
 				],
 			],
@@ -227,10 +227,10 @@ final class PayrollServiceTest extends TestCase {
 					'thuiswerkdagenPerWeek' => 0,
 					'expat30PctScheme' => false,
 					'pensioenPremiePctWerkgever' => 0.182,
-					'pensioenPremiePctWerknemer' => 0.072,
+					'pensionPremiumPctEmployee' => 0.072,
 					'vakantiegeldPct' => 0.08,
-					'loonheffingstabel' => 'WIT_REGULIER',
-					'loonheffingstabelKorting' => true,
+					'payrollTaxTable' => 'WIT_REGULIER',
+					'payrollTaxTableDiscount' => true,
 					'administrationId' => 'adm-1',
 				],
 			],
@@ -238,9 +238,9 @@ final class PayrollServiceTest extends TestCase {
 				[
 					'id' => 'lp-1',
 					'werkgeverId' => 'wg-1',
-					'periodeType' => 'MAAND',
+					'periodType' => 'MAAND',
 					'periodEnd' => '2026-05-31',
-					'loonheffingstabelId' => 'lht-1',
+					'payrollTaxTableId' => 'lht-1',
 					'administrationId' => 'adm-1',
 				],
 			],
@@ -248,9 +248,9 @@ final class PayrollServiceTest extends TestCase {
 				[
 					'id' => 'lht-1',
 					'kleur' => 'WIT',
-					'periode' => 'MAAND',
-					'metKorting' => true,
-					'tabelRegels' => [
+					'period' => 'MAAND',
+					'withDiscount' => true,
+					'tableRules' => [
 						['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
 					],
 				],
@@ -268,15 +268,15 @@ final class PayrollServiceTest extends TestCase {
 		$saved = [];
 		$service = $this->buildService($this->dataset(), $saved);
 
-		$strook = $service->berekenLoonStrook('adm-1', 'wn-1', 'lp-1');
+		$slip = $service->berekenLoonStrook('adm-1', 'wn-1', 'lp-1');
 
-		self::assertSame(4940.0, $strook['fiscaalLoon']);
+		self::assertSame(4940.0, $slip['fiscalPay']);
 		// LH from the bracket: 888.60 + 0.3697*(4940-3300) - 295 = 1199.91.
-		self::assertSame(1199.91, $strook['loonheffing']);
+		self::assertSame(1199.91, $slip['payrollTax']);
 		// Net = 4940 - 1199.91 - 0 - pensioen-wn 355.68 + 0 = 3384.41.
-		self::assertSame(3384.41, $strook['nettoBetaald']);
-		self::assertSame('adm-1', $strook['administrationId']);
-		self::assertSame(899.08, $strook['pensioen']['premie_wg_aandeel']);
+		self::assertSame(3384.41, $slip['netPaid']);
+		self::assertSame('adm-1', $slip['administrationId']);
+		self::assertSame(899.08, $slip['pensioen']['premie_wg_aandeel']);
 
 	}//end testBerekenLoonStrookComputesNetto()
 
@@ -304,15 +304,15 @@ final class PayrollServiceTest extends TestCase {
 		$data = $this->dataset();
 		$data['LoonStrook'] = [
 			[
-				'periodeId' => 'lp-1',
-				'loonheffing' => 1000.0,
+				'periodId' => 'lp-1',
+				'payrollTax' => 1000.0,
 				'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
 				'zvw' => ['afgedragen_wg' => 200.0],
 				'administrationId' => 'adm-1',
 			],
 			[
-				'periodeId' => 'lp-1',
-				'loonheffing' => 500.0,
+				'periodId' => 'lp-1',
+				'payrollTax' => 500.0,
 				'premiesSVWerkgever' => ['totaal_werkgever' => 100.0],
 				'zvw' => ['afgedragen_wg' => 50.0],
 				'administrationId' => 'adm-1',
@@ -322,14 +322,14 @@ final class PayrollServiceTest extends TestCase {
 		$saved = [];
 		$service = $this->buildService($data, $saved);
 
-		$afdracht = $service->berekenLHAfdracht('adm-1', 'lp-1', 0.0);
+		$remittance = $service->berekenLHAfdracht('adm-1', 'lp-1', 0.0);
 
-		self::assertSame(1500.0, $afdracht['totalPayrollTax']);
-		self::assertSame(500.0, $afdracht['totalSocialInsuranceContributions']);
-		self::assertSame(250.0, $afdracht['totalHealthInsurance']);
-		self::assertSame(2250.0, $afdracht['totalRemittance']);
-		self::assertSame('VOORBEREID', $afdracht['status']);
-		self::assertSame('2026-06-30', $afdracht['vervaldagAfdracht']);
+		self::assertSame(1500.0, $remittance['totalPayrollTax']);
+		self::assertSame(500.0, $remittance['totalSocialInsuranceContributions']);
+		self::assertSame(250.0, $remittance['totalHealthInsurance']);
+		self::assertSame(2250.0, $remittance['totalRemittance']);
+		self::assertSame('VOORBEREID', $remittance['status']);
+		self::assertSame('2026-06-30', $remittance['dueDateRemittance']);
 
 	}//end testBerekenLHAfdrachtAggregates()
 
@@ -342,13 +342,13 @@ final class PayrollServiceTest extends TestCase {
 		$data = $this->dataset();
 		$data['LoonStrook'] = [
 			[
-				'periodeId' => 'lp-1',
-				'brutoComponenten' => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
+				'periodId' => 'lp-1',
+				'grossComponents' => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
 				'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
 				'zvw' => ['afgedragen_wg' => 262.81],
 				'pensioen' => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],
-				'loonheffing' => 1199.91,
-				'nettoBetaald' => 3384.41,
+				'payrollTax' => 1199.91,
+				'netPaid' => 3384.41,
 				'administrationId' => 'adm-1',
 			],
 		];
@@ -361,9 +361,9 @@ final class PayrollServiceTest extends TestCase {
 		self::assertTrue($journaal['balanced']);
 		$debet = 0;
 		$credit = 0;
-		foreach ($journaal['regels'] as $regel) {
-			$debet += (int)round(((float)$regel['debet']) * 100);
-			$credit += (int)round(((float)$regel['credit']) * 100);
+		foreach ($journaal['rules'] as $rule) {
+			$debet += (int)round(((float)$rule['debet']) * 100);
+			$credit += (int)round(((float)$rule['credit']) * 100);
 		}
 
 		self::assertSame($debet, $credit);
@@ -382,9 +382,9 @@ final class PayrollServiceTest extends TestCase {
 		$this->expectException(\RuntimeException::class);
 		$service->persistLoonjournaalpost(
 			[
-				'periodeId' => 'lp-1',
+				'periodId' => 'lp-1',
 				'balanced' => false,
-				'regels' => [],
+				'rules' => [],
 			]
 		);
 
@@ -399,7 +399,7 @@ final class PayrollServiceTest extends TestCase {
 		$saved = [];
 		$service = $this->buildService($this->dataset(), $saved);
 
-		$service->persistLoonStrook(['werknemerId' => 'wn-1', 'administrationId' => 'adm-1']);
+		$service->persistLoonStrook(['employeeId' => 'wn-1', 'administrationId' => 'adm-1']);
 
 		self::assertCount(1, $saved);
 		self::assertSame('LoonStrook', $saved[0]['@self']['schema']);

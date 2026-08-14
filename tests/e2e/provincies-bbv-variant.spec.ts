@@ -23,14 +23,14 @@
  *    a required Target Programme dropdown and an Effective Date
  *    picker defaulting to today. Selecting at least one row enables
  *    the bulk action; submitting writes
- *    `programmaStructure` + `programmaAssignedAt` per row via
+ *    `programmeStructure` + `programmeAssignedAt` per row via
  *    ObjectService.updateObject(). The OR audit trail logs the
  *    assignment per ADR-022.
  *    (REQ-BBL-001, REQ-BBL-002, REQ-BBL-003, REQ-BBL-004, REQ-BBL-005.)
  *
  *  - Linker detail page (`/bbv-provincie/budget-to-programme/:id`)
- *    — single-row form with a `programmaStructure` enum picker and a
- *    `programmaAssignedAt` date. Saving captures before/after in the
+ *    — single-row form with a `programmeStructure` enum picker and a
+ *    `programmeAssignedAt` date. Saving captures before/after in the
  *    OR audit trail (REQ-BBL-003).
  *
  *  - Admin settings: the Dashboard Refresh Interval dropdown is
@@ -130,7 +130,7 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 
 		// Programme + fiscal year + budget status filters from the
 		// manifest filters[] block.
-		await expect(page.getByTestId('bbv-filter-programmaStructure')).toBeVisible()
+		await expect(page.getByTestId('bbv-filter-programmeStructure')).toBeVisible()
 		await expect(page.getByTestId('bbv-filter-fiscalYear')).toBeVisible()
 		await expect(page.getByTestId('bbv-filter-status')).toBeVisible()
 	})
@@ -141,7 +141,7 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	test('programme filter accepts a selection and updates the URL state', async ({
 		page,
 	}) => {
-		const filter = page.getByTestId('bbv-filter-programmaStructure')
+		const filter = page.getByTestId('bbv-filter-programmeStructure')
 		if (await filter.isVisible().catch(() => false)) {
 			// The manifest declares a multi-select with seven options;
 			// selecting "mobiliteit" narrows the dashboard envelope. The
@@ -219,10 +219,10 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 			const dialog = page.getByTestId('bbv-linker-dialog')
 			if (await dialog.isVisible().catch(() => false)) {
 				await expect(
-					page.getByTestId('bbv-linker-dialog-programmaStructure'),
+					page.getByTestId('bbv-linker-dialog-programmeStructure'),
 				).toBeVisible()
 				await expect(
-					page.getByTestId('bbv-linker-dialog-programmaAssignedAt'),
+					page.getByTestId('bbv-linker-dialog-programmeAssignedAt'),
 				).toBeVisible()
 			}
 		}
@@ -238,11 +238,11 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 			timeout: 15_000,
 		})
 
-		// accountType + programmaStructure + assignmentStatus from the
+		// accountType + programmeStructure + assignmentStatus from the
 		// manifest filters[] block.
 		await expect(page.getByTestId('bbv-linker-filter-accountType')).toBeVisible()
 		await expect(
-			page.getByTestId('bbv-linker-filter-programmaStructure'),
+			page.getByTestId('bbv-linker-filter-programmeStructure'),
 		).toBeVisible()
 		await expect(
 			page.getByTestId('bbv-linker-filter-assignmentStatus'),
@@ -269,10 +269,10 @@ test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
 
 		// The two editable fields declared by the manifest detail config.
 		await expect(
-			page.getByTestId('bbv-linker-detail-programmaStructure'),
+			page.getByTestId('bbv-linker-detail-programmeStructure'),
 		).toBeVisible()
 		await expect(
-			page.getByTestId('bbv-linker-detail-programmaAssignedAt'),
+			page.getByTestId('bbv-linker-detail-programmeAssignedAt'),
 		).toBeVisible()
 	})
 

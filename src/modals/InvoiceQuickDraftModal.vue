@@ -321,7 +321,7 @@ export default {
 		 */
 		vatOptionFor(line) {
 			return (
-				this.vatOptions.find((o) => o.value === Number(line.btwRate))
+				this.vatOptions.find((o) => o.value === Number(line.vatRate))
 				|| this.vatOptions[0]
 			)
 		},
@@ -406,7 +406,7 @@ export default {
 					if (prefs.unitPrice && !line.unitPrice)
 						line.unitPrice = prefs.unitPrice
 					if (prefs.vatCode !== undefined && prefs.vatCode !== null)
-						line.btwRate = prefs.vatCode
+						line.vatRate = prefs.vatCode
 				}
 			}
 			this.recomputeDueDate(customer)
@@ -431,7 +431,7 @@ export default {
 		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 		 */
 		onVatSelected(line, option) {
-			line.btwRate = option ? Number(option.value) : 21
+			line.vatRate = option ? Number(option.value) : 21
 		},
 
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
@@ -484,7 +484,7 @@ export default {
 				const firstLine = this.form.lines[0] || {}
 				saveQuickDraftPrefs(this.selectedCustomer.value, {
 					glAccount: this.form.glAccount,
-					vatCode: Number(firstLine.btwRate),
+					vatCode: Number(firstLine.vatRate),
 					description: firstLine.description,
 					unitPrice: Number(firstLine.unitPrice),
 				})

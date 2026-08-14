@@ -211,9 +211,9 @@ final class PayrollFragmentTest extends TestCase {
 			$seen = true;
 			$debet = 0;
 			$credit = 0;
-			foreach ($object['regels'] as $regel) {
-				$debet += (int)round(((float)($regel['debet'] ?? 0)) * 100);
-				$credit += (int)round(((float)($regel['credit'] ?? 0)) * 100);
+			foreach ($object['rules'] as $rule) {
+				$debet += (int)round(((float)($rule['debet'] ?? 0)) * 100);
+				$credit += (int)round(((float)($rule['credit'] ?? 0)) * 100);
 			}
 
 			self::assertSame($debet, $credit, 'Seeded loonjournaalpost must balance');

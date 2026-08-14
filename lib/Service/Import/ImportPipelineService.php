@@ -494,10 +494,10 @@ class ImportPipelineService {
 	 */
 	private function dedupePreview(array $staging): array {
 		$findings = [];
-		$seen = ['kvk' => [], 'btw' => [], 'email' => [], 'name' => []];
+		$seen = ['kvk' => [], 'vat' => [], 'email' => [], 'name' => []];
 
 		foreach (($staging['relations'] ?? []) as $relation) {
-			foreach (['kvk', 'btw', 'email', 'name'] as $key) {
+			foreach (['kvk', 'vat', 'email', 'name'] as $key) {
 				$value = strtolower(trim((string)($relation[$key] ?? '')));
 				if ($value === '') {
 					continue;
@@ -582,7 +582,7 @@ class ImportPipelineService {
 		$contacts = [];
 		foreach (($staging['relations'] ?? []) as $relation) {
 			$key = '';
-			foreach (['kvk', 'btw', 'email'] as $dedupeKey) {
+			foreach (['kvk', 'vat', 'email'] as $dedupeKey) {
 				if (trim((string)($relation[$dedupeKey] ?? '')) !== '') {
 					$key = $dedupeKey;
 					break;
@@ -598,7 +598,7 @@ class ImportPipelineService {
 			$contacts[] = [
 				'name' => ($relation['name'] ?? ''),
 				'kvk' => ($relation['kvk'] ?? ''),
-				'btw' => ($relation['btw'] ?? ''),
+				'vat' => ($relation['vat'] ?? ''),
 				'email' => ($relation['email'] ?? ''),
 				'dedupeKey' => $key,
 				'wouldOutcome' => $wouldOutcome,

@@ -79,7 +79,7 @@ class BudgetBlockerTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$mandaat = new MandaatEnforcer(
+		$mandate = new MandaatEnforcer(
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
@@ -89,7 +89,7 @@ class BudgetBlockerTest extends TestCase {
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			mandaat: $mandaat,
+			mandate: $mandate,
 		);
 
 	}//end setUp()
@@ -194,7 +194,7 @@ class BudgetBlockerTest extends TestCase {
 	}//end withObjectService()
 
 	/**
-	 * A budget record for the demo administration / programma / boekjaar.
+	 * A budget record for the demo administration / programme / financial_year.
 	 *
 	 * @param array<string,mixed> $overrides Field overrides.
 	 *
@@ -208,7 +208,7 @@ class BudgetBlockerTest extends TestCase {
 				'financialYear' => 2026,
 				'authorised_amount' => 50000000,
 				'realised_amount' => 20000000,
-				'openstaande_verplichtingen' => 0,
+				'outstanding_commitments' => 0,
 			],
 			$overrides
 		);
@@ -216,23 +216,23 @@ class BudgetBlockerTest extends TestCase {
 	}//end budget()
 
 	/**
-	 * A single-line commitment of the given amount on programma 5.1 / 2026.
+	 * A single-line commitment of the given amount on programme 5.1 / 2026.
 	 *
-	 * @param int $bedrag Amount in minor units.
+	 * @param int $amount Amount in minor units.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function commitment(int $bedrag): array {
+	private function commitment(int $amount): array {
 		return [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'PO-1',
-			'soort' => 'inkooporder',
-			'totaalbedrag_excl_btw' => $bedrag,
-			'regels' => [
+			'commitmentNumber' => 'PO-1',
+			'kind' => 'inkooporder',
+			'total_amount_excl_vat' => $amount,
+			'rules' => [
 				[
 					'programme' => '5.1',
 					'financialYear' => 2026,
-					'amount_excl_vat' => $bedrag,
+					'amount_excl_vat' => $amount,
 				],
 			],
 		];
@@ -248,7 +248,7 @@ class BudgetBlockerTest extends TestCase {
 		$this->assertSame(30000000, $this->guard->freeRoom($this->budget()));
 		$this->assertSame(
 			5000000,
-			$this->guard->freeRoom($this->budget(['openstaande_verplichtingen' => 25000000]))
+			$this->guard->freeRoom($this->budget(['outstanding_commitments' => 25000000]))
 		);
 
 	}//end testFreeRoomCalculation()
@@ -292,12 +292,12 @@ class BudgetBlockerTest extends TestCase {
 	public function testOverrideMandateForcesAcceptance(): void {
 		$override = [
 			'administrationId' => 'adm-1',
-			'mandaatcode' => 'M-CFO-OVERRIDE',
-			'maximumbedrag' => 1000000000,
-			'soort_verplichting' => ['inkooporder'],
+			'mandateCode' => 'M-CFO-OVERRIDE',
+			'maximumAmount' => 1000000000,
+			'kind_commitment' => ['inkooporder'],
 			'is_override' => true,
-			'geldig_van' => '2020-01-01',
-			'geldig_tot' => '2999-12-31',
+			'valid_from' => '2020-01-01',
+			'valid_to' => '2999-12-31',
 		];
 
 		$this->withObjectService(
@@ -310,8 +310,8 @@ class BudgetBlockerTest extends TestCase {
 	}//end testOverrideMandateForcesAcceptance()
 
 	/**
-	 * REQ-VPL-001 / REQ-VPL-004: each regel is validated against its own
-	 * programma + boekjaar budget independently.
+	 * REQ-VPL-001 / REQ-VPL-004: each rule is validated against its own
+	 * programme + financial_year budget independently.
 	 *
 	 * @return void
 	 */
@@ -327,10 +327,10 @@ class BudgetBlockerTest extends TestCase {
 
 		$commitment = [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'RO-1',
-			'soort' => 'raamovereenkomst',
-			'totaalbedrag_excl_btw' => 20000000,
-			'regels' => [
+			'commitmentNumber' => 'RO-1',
+			'kind' => 'frameworkAgreement',
+			'total_amount_excl_vat' => 20000000,
+			'rules' => [
 				['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
 				['programme' => '5.1', 'financialYear' => 2027, 'amount_excl_vat' => 10000000],
 			],
@@ -342,7 +342,7 @@ class BudgetBlockerTest extends TestCase {
 	}//end testMultiYearPerBudgetIsolation()
 
 	/**
-	 * A commitment whose regel has no matching budget is rejected (fail-closed:
+	 * A commitment whose rule has no matching budget is rejected (fail-closed:
 	 * a missing budget is not free budget).
 	 *
 	 * @return void
@@ -369,10 +369,10 @@ class BudgetBlockerTest extends TestCase {
 	}//end testFailClosedOnException()
 
 	/**
-	 * A regel whose amount cannot be read is DENIED, not treated as zero.
+	 * A rule whose amount cannot be read is DENIED, not treated as zero.
 	 *
 	 * The shipped code coalesced a missing amount to 0, and `fits()` is
-	 * `$bedrag <= freeRoom()`, so every unreadable regel fitted every budget
+	 * `$amount <= freeRoom()`, so every unreadable rule fitted every budget
 	 * that was not already overcommitted — the commitment was approved against
 	 * a figure nothing had read (CWE-863).
 	 *
@@ -390,8 +390,8 @@ class BudgetBlockerTest extends TestCase {
 		$commitment = $this->commitment(500000000);
 		// The amount arrives under a key this guard does not read — exactly what
 		// a vocabulary drift on either side of the flow produces.
-		$commitment['regels'][0]['bedrag_excl_btw'] = $commitment['regels'][0]['amount_excl_vat'];
-		unset($commitment['regels'][0]['amount_excl_vat']);
+		$commitment['rules'][0]['amount_excl_vat'] = $commitment['rules'][0]['amount_excl_vat'];
+		unset($commitment['rules'][0]['amount_excl_vat']);
 
 		$this->assertFalse(
 			$this->guard->canCommit('PO-1', $commitment),
@@ -414,7 +414,7 @@ class BudgetBlockerTest extends TestCase {
 		);
 
 		$commitment = $this->commitment(500000000);
-		$commitment['regels'][0]['amount_excl_vat'] = 'onbekend';
+		$commitment['rules'][0]['amount_excl_vat'] = 'onbekend';
 
 		$this->assertFalse($this->guard->canCommit('PO-1', $commitment));
 

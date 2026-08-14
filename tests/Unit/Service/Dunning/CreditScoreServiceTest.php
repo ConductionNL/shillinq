@@ -90,17 +90,17 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-1',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-10 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-10 days'))->format('Y-m-d'),
 				'score' => 6.4,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = $this->makeNeverFetch();
 		$service = $this->makeService(os: $os, fetch: $fetch);
 
-		$score = $service->getOrRefresh(administrationId: 'adm-1', klantId: 'klant-1', provider: 'GRAYDON');
+		$score = $service->getOrRefresh(administrationId: 'adm-1', customerId: 'klant-1', provider: 'GRAYDON');
 
 		self::assertNotNull($score);
 		self::assertSame(6.4, (float)$score['score']);
@@ -119,25 +119,25 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-old',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
 				'score' => 2.0,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = new class implements CreditScoreFetchAdapterInterface {
-			public function fetch(string $administrationId, string $klantId, string $provider): ?array {
+			public function fetch(string $administrationId, string $customerId, string $provider): ?array {
 				return [
 					'score' => 7.1,
-					'scoreSchaal' => '1-10',
-					'betalingsRisicoIndicatie' => 'LAAG',
+					'scoreScale' => '1-10',
+					'paymentRiskIndication' => 'LAAG',
 				];
 			}
 		};
 		$service = $this->makeService(os: $os, fetch: $fetch);
 
-		$score = $service->getOrRefresh(administrationId: 'adm-1', klantId: 'klant-1', provider: 'GRAYDON');
+		$score = $service->getOrRefresh(administrationId: 'adm-1', customerId: 'klant-1', provider: 'GRAYDON');
 
 		self::assertNotNull($score);
 		self::assertSame(7.1, (float)$score['score']);
@@ -159,21 +159,21 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-old',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
 				'score' => 2.5,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = new class implements CreditScoreFetchAdapterInterface {
-			public function fetch(string $administrationId, string $klantId, string $provider): ?array {
+			public function fetch(string $administrationId, string $customerId, string $provider): ?array {
 				return null;
 			}
 		};
 		$service = $this->makeService(os: $os, fetch: $fetch);
 
-		$score = $service->getOrRefresh(administrationId: 'adm-1', klantId: 'klant-1', provider: 'GRAYDON');
+		$score = $service->getOrRefresh(administrationId: 'adm-1', customerId: 'klant-1', provider: 'GRAYDON');
 
 		self::assertNotNull($score);
 		self::assertSame(2.5, (float)$score['score']);
@@ -192,21 +192,21 @@ final class CreditScoreServiceTest extends TestCase {
 			[
 				'id' => 'cs-old',
 				'administrationId' => 'adm-1',
-				'klantId' => 'klant-1',
+				'customerId' => 'klant-1',
 				'provider' => 'GRAYDON',
-				'scoreDatum' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+				'scoreDate' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
 				'score' => 4.0,
-				'scoreSchaal' => '1-10',
+				'scoreScale' => '1-10',
 			],
 		]);
 		$fetch = new class implements CreditScoreFetchAdapterInterface {
-			public function fetch(string $administrationId, string $klantId, string $provider): ?array {
+			public function fetch(string $administrationId, string $customerId, string $provider): ?array {
 				throw new RuntimeException('upstream unavailable');
 			}
 		};
 		$service = $this->makeService(os: $os, fetch: $fetch);
 
-		$score = $service->getOrRefresh(administrationId: 'adm-1', klantId: 'klant-1', provider: 'GRAYDON');
+		$score = $service->getOrRefresh(administrationId: 'adm-1', customerId: 'klant-1', provider: 'GRAYDON');
 
 		self::assertNotNull($score);
 		self::assertSame(4.0, (float)$score['score']);
@@ -222,13 +222,13 @@ final class CreditScoreServiceTest extends TestCase {
 		$service = $this->makeService(os: new InMemoryObjectService(), fetch: $this->makeNeverFetch());
 
 		$score = [
-			'klantId' => 'klant-1',
+			'customerId' => 'klant-1',
 			'score' => 2.4,
-			'scoreSchaal' => '1-10',
+			'scoreScale' => '1-10',
 			'creditLimietAdvies' => 5000.0,
 		];
 
-		$result = $service->evaluateForInvoice(score: $score, invoiceBedrag: 12000.0);
+		$result = $service->evaluateForInvoice(score: $score, invoiceAmount: 12000.0);
 
 		self::assertTrue($result['warning']);
 		self::assertTrue($result['deelfacturatieAdvies']);
@@ -246,13 +246,13 @@ final class CreditScoreServiceTest extends TestCase {
 		$service = $this->makeService(os: new InMemoryObjectService(), fetch: $this->makeNeverFetch());
 
 		$score = [
-			'klantId' => 'klant-1',
+			'customerId' => 'klant-1',
 			'score' => 8.0,
-			'scoreSchaal' => '1-10',
+			'scoreScale' => '1-10',
 			'creditLimietAdvies' => 50000.0,
 		];
 
-		$result = $service->evaluateForInvoice(score: $score, invoiceBedrag: 1500.0);
+		$result = $service->evaluateForInvoice(score: $score, invoiceAmount: 1500.0);
 
 		self::assertFalse($result['warning']);
 		self::assertFalse($result['deelfacturatieAdvies']);
@@ -266,7 +266,7 @@ final class CreditScoreServiceTest extends TestCase {
 	 */
 	private function makeNeverFetch(): CreditScoreFetchAdapterInterface {
 		return new class implements CreditScoreFetchAdapterInterface {
-			public function fetch(string $administrationId, string $klantId, string $provider): ?array {
+			public function fetch(string $administrationId, string $customerId, string $provider): ?array {
 				throw new RuntimeException('fetch must not be called in this scenario');
 			}
 		};

@@ -64,9 +64,9 @@ final class BankfeedMatcherTest extends TestCase {
 		];
 		$candidate = [
 			'arInvoiceId' => 'fact-2026-0247',
-			'klantId' => 'klant-acme-bv',
+			'customerId' => 'klant-acme-bv',
 			'outstandingAmount' => 8400.00,
-			'verwachtOntvangstDatum' => '2026-05-28',
+			'expectedReceiptDate' => '2026-05-28',
 		];
 
 		$result = $this->matcher->matchTransaction($tx, [$candidate]);
@@ -90,9 +90,9 @@ final class BankfeedMatcherTest extends TestCase {
 		];
 		$candidate = [
 			'arInvoiceId' => 'fact-2026-0247',
-			'klantId' => 'klant-acme-bv',
+			'customerId' => 'klant-acme-bv',
 			'outstandingAmount' => 100.00,
-			'verwachtOntvangstDatum' => '2026-05-28',
+			'expectedReceiptDate' => '2026-05-28',
 		];
 
 		$result = $this->matcher->matchTransaction($tx, [$candidate]);
@@ -132,15 +132,15 @@ final class BankfeedMatcherTest extends TestCase {
 		$candidates = [
 			[
 				'arInvoiceId' => 'fact-2026-0247',
-				'klantId' => 'klant-acme-bv',
+				'customerId' => 'klant-acme-bv',
 				'outstandingAmount' => 1210.00,
-				'verwachtOntvangstDatum' => '2026-05-28',
+				'expectedReceiptDate' => '2026-05-28',
 			],
 			[
 				'arInvoiceId' => 'fact-2026-0250',
-				'klantId' => 'klant-other',
+				'customerId' => 'klant-other',
 				'outstandingAmount' => 1209.00,
-				'verwachtOntvangstDatum' => '2026-07-15',
+				'expectedReceiptDate' => '2026-07-15',
 			],
 		];
 
@@ -164,9 +164,9 @@ final class BankfeedMatcherTest extends TestCase {
 		];
 		$candidate = [
 			'arInvoiceId' => 'fact-jan-2026-023',
-			'klantId' => 'klant-acme-bv',
+			'customerId' => 'klant-acme-bv',
 			'outstandingAmount' => 5200.00,
-			'verwachtOntvangstDatum' => '2026-06-10',
+			'expectedReceiptDate' => '2026-06-10',
 		];
 
 		$result = $this->matcher->matchTransaction($tx, [$candidate]);
@@ -185,9 +185,9 @@ final class BankfeedMatcherTest extends TestCase {
 	public function testDateProximityScoring(): void {
 		$candidate = [
 			'arInvoiceId' => 'fact-x',
-			'klantId' => 'klant-x',
+			'customerId' => 'klant-x',
 			'outstandingAmount' => 1000.00,
-			'verwachtOntvangstDatum' => '2026-06-01',
+			'expectedReceiptDate' => '2026-06-01',
 		];
 
 		$near = $this->matcher->matchTransaction(

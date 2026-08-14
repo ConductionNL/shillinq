@@ -11,7 +11,7 @@
         "x-schema-org": "schema:DataFeed",
         "required": [
           "salarisbureauSlug",
-          "loontijdvak",
+          "payrollPeriod",
           "employeeId",
           "rawPayload",
           "administrationId",
@@ -30,7 +30,7 @@
             "example": "adp-salaris-nl",
             "title": "Salarisbureau Slug"
           },
-          "loontijdvak": {
+          "payrollPeriod": {
             "type": "string",
             "description": "Payroll period identifier (YYYY-MM format). Each batch covers one loontijdvak per employee.",
             "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
@@ -50,14 +50,14 @@
             "example": "Jan Jansen",
             "title": "Employee Name"
           },
-          "loonkosten": {
+          "payrollCost": {
             "type": "number",
             "minimum": 0,
             "description": "Total loonkosten (gross wage cost) for this employee in this loontijdvak in EUR. This is the DR side of the journal entry.",
             "example": 4000.0,
             "title": "Loonkosten"
           },
-          "nettoloon": {
+          "netPay": {
             "type": "number",
             "minimum": 0,
             "description": "Net salary to be paid to the employee (CR side).",
@@ -71,7 +71,7 @@
             "example": 600.0,
             "title": "Sociale Premies"
           },
-          "loonheffing": {
+          "payrollTax": {
             "type": "number",
             "minimum": 0,
             "description": "Wage tax withheld (loonbelasting + premie volksverzekeringen) — CR side.",
@@ -164,7 +164,7 @@
             },
             "fields": {
               "subtype": {
-                "value": "loonkosten"
+                "value": "payrollCost"
               },
               "description": {
                 "expression": "'Loonkosten ' + @source.employeeName + ' ' + @source.loontijdvak"
@@ -263,11 +263,11 @@
         "required": [
           "zzpId",
           "freelancerName",
-          "opdrachtBeschrijving",
-          "looptijdStart",
+          "assignmentDescription",
+          "termStart",
           "termEnd",
-          "verklaringStatus",
-          "risicoBeoordeling",
+          "declarationStatus",
+          "riskAssessment",
           "administrationId"
         ],
         "properties": {
@@ -283,13 +283,13 @@
             "example": "Maria de Vries",
             "title": "ZZP Naam"
           },
-          "opdrachtBeschrijving": {
+          "assignmentDescription": {
             "type": "string",
             "description": "Description of the assignment (opdracht) that this verklaring covers.",
             "example": "IT-consultancy voor ERP-migratie project Q3-2026",
             "title": "Opdracht Beschrijving"
           },
-          "looptijdStart": {
+          "termStart": {
             "type": "string",
             "format": "date",
             "description": "Assignment start date.",
@@ -303,7 +303,7 @@
             "example": "2026-09-30",
             "title": "Looptijd Eind"
           },
-          "verklaringStatus": {
+          "declarationStatus": {
             "type": "string",
             "description": "Current lifecycle status of the opdrachtgeversverklaring per REQ-DPA-003.",
             "enum": [
@@ -322,14 +322,14 @@
             "example": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/bijzondere_situaties/freelance/modelovereenkomsten/overeenkomst-van-opdracht-001",
             "title": "Model Overeenkomst"
           },
-          "verklaringDocumentUri": {
+          "declarationDocumentUri": {
             "type": "string",
             "description": "docudesk attachment URI of the generated opdrachtgeversverklaring document. Populated after the 'generate document' action triggers the docudesk template render.",
             "nullable": true,
             "example": "docudesk://attachments/shillinq/opdrachtgeversverklaring-2026-001.pdf",
             "title": "Verklaring Document URI"
           },
-          "risicoBeoordeling": {
+          "riskAssessment": {
             "type": "string",
             "description": "Wet DBA risk classification. Operator-classified per REQ-DPA-003. The docudesk template renders the chosen risico.",
             "enum": [
@@ -349,7 +349,7 @@
           }
         },
         "x-openregister-lifecycle": {
-          "field": "verklaringStatus",
+          "field": "declarationStatus",
           "initialState": "concept",
           "states": {
             "concept": {
@@ -386,7 +386,7 @@
               "action": "x-openregister-docudesk-render",
               "actionParameters": {
                 "templateSlug": "shillinq-opdrachtgeversverklaring",
-                "outputField": "verklaringDocumentUri"
+                "outputField": "declarationDocumentUri"
               }
             }
           }
@@ -427,24 +427,24 @@
         "type": "object",
         "x-schema-org": "schema:TaxForm",
         "required": [
-          "belastingjaar",
-          "opdrachtgeverId",
+          "taxYear",
+          "clientId",
           "recipientName",
           "ontvangerBSN",
           "ontvangerAdres",
           "paymentsTotal",
-          "betalingTypeCode",
+          "paymentTypeCode",
           "administrationId"
         ],
         "properties": {
-          "belastingjaar": {
+          "taxYear": {
             "type": "integer",
             "description": "Tax year this IB47 record covers.",
             "minimum": 2000,
             "example": 2026,
             "title": "Belastingjaar"
           },
-          "opdrachtgeverId": {
+          "clientId": {
             "type": "string",
             "description": "FK to the Administration (opdrachtgever) that made the betalingen.",
             "example": "adm-1",
@@ -489,7 +489,7 @@
             "example": 15000.0,
             "title": "Betalingen Totaal"
           },
-          "betalingTypeCode": {
+          "paymentTypeCode": {
             "type": "string",
             "description": "Belastingdienst IB47 payment type code per the IB47 schema 2026.",
             "enum": [
@@ -536,10 +536,10 @@
               "isDryRun": false
             },
             "groupBy": [
-              "belastingjaar",
-              "opdrachtgeverId",
+              "taxYear",
+              "clientId",
               "recipientName",
-              "betalingTypeCode"
+              "paymentTypeCode"
             ],
             "operations": {
               "totalBetalingen": {
@@ -558,11 +558,11 @@
               "isDryRun": true
             },
             "groupBy": [
-              "belastingjaar",
-              "opdrachtgeverId",
+              "taxYear",
+              "clientId",
               "recipientName",
               "dryRunMonth",
-              "betalingTypeCode"
+              "paymentTypeCode"
             ],
             "operations": {
               "maandTotaalBetalingen": {
@@ -574,8 +574,8 @@
           "ib47ReconciliationCheck": {
             "description": "Invariant check: final yearly batch totals per recipient MUST equal the sum of 12 monthly dry-run totals (€0 tolerance) per REQ-DPA-005. Surfaced as a non-blocking warning when the invariant is violated before submission.",
             "groupBy": [
-              "belastingjaar",
-              "opdrachtgeverId",
+              "taxYear",
+              "clientId",
               "recipientName"
             ],
             "operations": {

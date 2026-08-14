@@ -95,11 +95,11 @@
 								@click="toggleDrilldown(row)"
 								@keyup.enter="toggleDrilldown(row)">
 								<th scope="row">
-									{{ row.programma || '—' }}
+									{{ row.programme || '—' }}
 								</th>
-								<td>{{ row.kostenplaats || '—' }}</td>
-								<td>{{ row.boekjaar ?? '—' }}</td>
-								<td>{{ row.grootboekrekening || '—' }}</td>
+								<td>{{ row.cost_centre || '—' }}</td>
+								<td>{{ row.financial_year ?? '—' }}</td>
+								<td>{{ row.general_ledger_account || '—' }}</td>
 								<td class="budget-line-commitments__amount-cell">
 									{{ formatAmount(row.geautoriseerd) }}
 								</td>
@@ -141,16 +141,16 @@
 										data-testid="budget-line-drilldown">
 										<li
 											v-for="item in drilldownItems"
-											:key="item.id || item.verplichting">
+											:key="item.id || item.commitment">
 											<span
-												class="budget-line-commitments__drilldown-verplichting"
-												>{{ item.verplichting }}</span
+												class="budget-line-commitments__drilldown-commitment"
+												>{{ item.commitment }}</span
 											>
 											<span
 												class="budget-line-commitments__drilldown-amount"
 												>{{
 													formatAmount(
-														item.bedrag_excl_btw,
+														item.amount_excl_vat,
 													)
 												}}</span
 											>

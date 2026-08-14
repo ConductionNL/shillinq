@@ -80,7 +80,7 @@ class ENSIABevindingGenerator {
 				continue;
 			}
 
-			$score = $v['volwassenheidsScore'] ?? null;
+			$score = $v['maturityScore'] ?? null;
 			$normniveau = $v['normniveau'] ?? null;
 			if (is_int($score) === false || is_int($normniveau) === false) {
 				continue;
@@ -90,25 +90,25 @@ class ENSIABevindingGenerator {
 				continue;
 			}
 
-			$vraagCode = (string)($v['vraagCode'] ?? '');
-			$vraagTxt = (string)($v['vraagtekst'] ?? '');
-			$vraagId = (string)($v['id'] ?? $v['uuid'] ?? '');
+			$questionCode = (string)($v['questionCode'] ?? '');
+			$questionTxt = (string)($v['questionText'] ?? '');
+			$questionId = (string)($v['id'] ?? $v['uuid'] ?? '');
 
-			if ($vraagTxt !== '') {
-				$vraagLabel = $vraagTxt;
+			if ($questionTxt !== '') {
+				$questionLabel = $questionTxt;
 			} else {
-				$vraagLabel = 'evaluatievraag';
+				$questionLabel = 'evaluatievraag';
 			}
 
 			$findings[] = [
 				'cyclusId' => $cyclusId,
 				'administrationId' => $administrationId,
-				'vraagId' => $vraagId,
+				'questionId' => $questionId,
 				'type' => 'tekortkoming',
-				'beschrijving' => sprintf(
+				'description' => sprintf(
 					'%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
-					$vraagCode,
-					$vraagLabel,
+					$questionCode,
+					$questionLabel,
 					$score,
 					$normniveau
 				),

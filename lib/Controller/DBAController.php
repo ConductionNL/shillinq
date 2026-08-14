@@ -75,7 +75,7 @@ class DBAController extends Controller {
 	 * @param IAppConfig $appConfig App config.
 	 * @param IUserSession $userSession User session.
 	 * @param DBAScoreCalculator $scoreCalc Score calculator guard.
-	 * @param DBAOpdrachtGuard $opdrachtGuard Save-precondition guard.
+	 * @param DBAOpdrachtGuard $assignmentGuard Save-precondition guard.
 	 * @param DBAVbarMonitorService $vbarMonitor VBAR monitor service.
 	 * @param LoggerInterface $logger Logger.
 	 */
@@ -85,7 +85,7 @@ class DBAController extends Controller {
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
 		private readonly DBAScoreCalculator $scoreCalc,
-		private readonly DBAOpdrachtGuard $opdrachtGuard,
+		private readonly DBAOpdrachtGuard $assignmentGuard,
 		private readonly DBAVbarMonitorService $vbarMonitor,
 		private readonly LoggerInterface $logger,
 	) {
@@ -112,10 +112,10 @@ class DBAController extends Controller {
 		return new JSONResponse(
 			[
 				'totalScore' => $total,
-				'risicoNiveau' => $band,
-				'gezagsverhouding' => $this->scoreCalc->subtotalGezag($body),
-				'persoonlijkeArbeid' => $this->scoreCalc->subtotalArbeid($body),
-				'financieelRisico' => $this->scoreCalc->subtotalFinancieel($body),
+				'riskLevel' => $band,
+				'authorityRelationship' => $this->scoreCalc->subtotalGezag($body),
+				'personalLabour' => $this->scoreCalc->subtotalArbeid($body),
+				'financialRisk' => $this->scoreCalc->subtotalFinancieel($body),
 				'deliverooCriteria' => $this->scoreCalc->subtotalDeliveroo($body),
 			]
 		);
@@ -131,8 +131,8 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function saveIntake(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
-		if ($opdrachtId === '') {
+		$assignmentId = (string)($body['assignmentId'] ?? '');
+		if ($assignmentId === '') {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -142,21 +142,21 @@ class DBAController extends Controller {
 		}
 
 		$register = $this->register();
-		$opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
-		if ($opdracht === null) {
+		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
+		if ($assignment === null) {
 			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
 		}
 
-		$this->ensureAdministrationAccess(opdracht: $opdracht);
+		$this->ensureAdministrationAccess(assignment: $assignment);
 
 		$total = $this->scoreCalc->computeTotal($body);
 		$band = DBAConstants::bandFromScore($total);
 
 		$body['totalScore'] = $total;
 		$body['interpretatie'] = $band;
-		$body['ingevuldDoor'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
-		$body['ingevuldOp'] ??= (new DateTimeImmutable())->format('Y-m-d');
-		$body['administrationId'] = (string)($opdracht['administrationId'] ?? '');
+		$body['filledBy'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
+		$body['filledOn'] ??= (new DateTimeImmutable())->format('Y-m-d');
+		$body['administrationId'] = (string)($assignment['administrationId'] ?? '');
 
 		try {
 			$intake = $os->saveObject(object: $body, register: $register, schema: 'DBAIntake');
@@ -166,22 +166,22 @@ class DBAController extends Controller {
 		}
 
 		if (($body['verkortType'] ?? false) === true) {
-			$risicoNiveau = 'VERKORT_LAGE_DREMPEL';
+			$riskLevel = 'VERKORT_LAGE_DREMPEL';
 		} else {
-			$risicoNiveau = $band;
+			$riskLevel = $band;
 		}
 
-		$opdracht['intakeStatus'] = 'INTAKE_VOLTOOID';
-		$opdracht['intakeDatum'] = $body['ingevuldOp'];
-		$opdracht['actueleRisicoscore'] = $total;
-		$opdracht['risicoNiveau'] = $risicoNiveau;
+		$assignment['intakeStatus'] = 'INTAKE_VOLTOOID';
+		$assignment['intakeDate'] = $body['filledOn'];
+		$assignment['actueleRisicoscore'] = $total;
+		$assignment['riskLevel'] = $riskLevel;
 		try {
-			$os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
+			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
 			$this->logger->error('DBA opdracht update failed', ['exception' => $e->getMessage()]);
 		}
 
-		return new JSONResponse(['intake' => $intake, 'opdracht' => $opdracht]);
+		return new JSONResponse(['intake' => $intake, 'opdracht' => $assignment]);
 	}//end saveIntake()
 
 	/**
@@ -198,23 +198,23 @@ class DBAController extends Controller {
 		}
 
 		$body = $this->jsonBody();
-		$bedragCents = (int)($body['bedragCents'] ?? 0);
-		$uren = (float)($body['uren'] ?? 0.0);
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
+		$amountCents = (int)($body['bedragCents'] ?? 0);
+		$hours = (float)($body['hours'] ?? 0.0);
+		$assignmentId = (string)($body['assignmentId'] ?? '');
 		$administrationId = (string)($body['administrationId'] ?? '');
-		$factuurId = (string)($body['factuurId'] ?? '');
+		$invoiceId = (string)($body['invoiceId'] ?? '');
 
-		$result = $this->vbarMonitor->assess(bedragCents: $bedragCents, uren: $uren, administrationId: $administrationId);
+		$result = $this->vbarMonitor->assess(amountCents: $amountCents, hours: $hours, administrationId: $administrationId);
 
 		if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
-			&& $opdrachtId !== ''
-			&& $factuurId !== ''
+			&& $assignmentId !== ''
+			&& $invoiceId !== ''
 		) {
 			$this->vbarMonitor->emitFlag(
-				opdrachtId: $opdrachtId,
+				assignmentId: $assignmentId,
 				administrationId: $administrationId,
-				factuurId: $factuurId,
-				uurtariefCents: (int)($result['uurtariefCents'] ?? 0),
+				invoiceId: $invoiceId,
+				hourlyRateCents: (int)($result['uurtariefCents'] ?? 0),
 				vbarGrensCents: (int)($result['vbarGrensCents'] ?? 0),
 			);
 		}
@@ -232,9 +232,9 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function uploadWba(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
-		$resultaat = (string)($body['wbaBeoordelingResultaat'] ?? '');
-		if ($opdrachtId === '' || $resultaat === '') {
+		$assignmentId = (string)($body['assignmentId'] ?? '');
+		$result = (string)($body['wbaAssessmentResult'] ?? '');
+		if ($assignmentId === '' || $result === '') {
 			return $this->error(message: 'opdrachtId + wbaBeoordelingResultaat vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -244,18 +244,18 @@ class DBAController extends Controller {
 		}
 
 		$register = $this->register();
-		$opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
-		if ($opdracht === null) {
+		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
+		if ($assignment === null) {
 			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
 		}
 
-		$this->ensureAdministrationAccess(opdracht: $opdracht);
+		$this->ensureAdministrationAccess(assignment: $assignment);
 
-		$opdracht['wbaBeoordelingResultaat'] = $resultaat;
-		$opdracht['wbaGeldigTot'] = (new DateTimeImmutable())
+		$assignment['wbaAssessmentResult'] = $result;
+		$assignment['wbaValidTo'] = (new DateTimeImmutable())
 			->modify('+' . DBAConstants::WBA_GELDIGHEID_DAGEN . ' days')->format('Y-m-d');
 		try {
-			$updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
 			return $this->error(message: 'WBA-upload mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -273,9 +273,9 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function beeindigen(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
-		$einddatum = (string)($body['actualEndDate'] ?? '');
-		if ($opdrachtId === '' || $einddatum === '') {
+		$assignmentId = (string)($body['assignmentId'] ?? '');
+		$endDate = (string)($body['actualEndDate'] ?? '');
+		if ($assignmentId === '' || $endDate === '') {
 			return $this->error(message: 'opdrachtId + feitelijkeEindDatum vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -285,27 +285,27 @@ class DBAController extends Controller {
 		}
 
 		$register = $this->register();
-		$opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
-		if ($opdracht === null) {
+		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
+		if ($assignment === null) {
 			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
 		}
 
-		$this->ensureAdministrationAccess(opdracht: $opdracht);
+		$this->ensureAdministrationAccess(assignment: $assignment);
 
-		$opdracht['intakeStatus'] = 'BEEINDIGD';
-		$opdracht['actualEndDate'] = $einddatum;
-		$retentie = $this->opdrachtGuard->computeRetentieDeadline($einddatum);
-		if ($retentie !== null) {
-			$opdracht['retentieDeadline'] = $retentie;
+		$assignment['intakeStatus'] = 'BEEINDIGD';
+		$assignment['actualEndDate'] = $endDate;
+		$retention = $this->assignmentGuard->computeRetentieDeadline($endDate);
+		if ($retention !== null) {
+			$assignment['retentionDeadline'] = $retention;
 		}
 
 		try {
-			$updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
 			return $this->error(message: 'Beeindiging mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new JSONResponse(['opdracht' => $updated, 'retentieDeadline' => $retentie]);
+		return new JSONResponse(['opdracht' => $updated, 'retentionDeadline' => $retention]);
 	}//end beeindigen()
 
 	/**
@@ -356,9 +356,9 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function setTussenkomstMode(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
+		$assignmentId = (string)($body['assignmentId'] ?? '');
 		$enabled = (bool)($body['intermediairMode'] ?? false);
-		if ($opdrachtId === '') {
+		if ($assignmentId === '') {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -368,15 +368,15 @@ class DBAController extends Controller {
 		}
 
 		$register = $this->register();
-		$opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
-		if ($opdracht === null) {
+		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
+		if ($assignment === null) {
 			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
 		}
 
-		$this->ensureAdministrationAccess(opdracht: $opdracht);
-		$opdracht['intermediairMode'] = $enabled;
+		$this->ensureAdministrationAccess(assignment: $assignment);
+		$assignment['intermediairMode'] = $enabled;
 		try {
-			$updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
 			return $this->error(message: 'Tussenkomst-mode opslaan mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -412,7 +412,7 @@ class DBAController extends Controller {
 			return $this->error(message: 'Dossier niet gevonden', code: Http::STATUS_NOT_FOUND);
 		}
 
-		$this->ensureAdministrationAccess(opdracht: $dossier);
+		$this->ensureAdministrationAccess(assignment: $dossier);
 		$dossier['emailArchiveOptIn'] = $optIn;
 		if ($optIn === true && $consentId !== '') {
 			$dossier['emailArchiveConsentRecordId'] = $consentId;
@@ -439,8 +439,8 @@ class DBAController extends Controller {
 	#[NoAdminRequired]
 	public function inhuurIntake(): JSONResponse {
 		$body = $this->jsonBody();
-		$opdrachtId = (string)($body['opdrachtId'] ?? '');
-		if ($opdrachtId === '') {
+		$assignmentId = (string)($body['assignmentId'] ?? '');
+		if ($assignmentId === '') {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -450,15 +450,15 @@ class DBAController extends Controller {
 		}
 
 		$register = $this->register();
-		$opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
-		if ($opdracht === null) {
+		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
+		if ($assignment === null) {
 			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
 		}
 
-		$this->ensureAdministrationAccess(opdracht: $opdracht);
-		$opdracht['perspectief'] = 'OPDRACHTGEVER';
+		$this->ensureAdministrationAccess(assignment: $assignment);
+		$assignment['perspectief'] = 'OPDRACHTGEVER';
 		try {
-			$os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
+			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
 			$this->logger->warning('Inhuur-intake perspectief update failed', ['exception' => $e->getMessage()]);
 		}
@@ -473,32 +473,32 @@ class DBAController extends Controller {
 	 * via openregister or docudesk PDF-pipeline). The SHA-256 hash of the payload
 	 * is appended to the response for audit-trail recording.
 	 *
-	 * @param string $opdrachtId Path parameter; FK to the DBAOpdracht.
+	 * @param string $assignmentId Path parameter; FK to the DBAOpdracht.
 	 *
 	 * @return JSONResponse|DataDownloadResponse The audit-rapport payload.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	#[NoAdminRequired]
-	public function auditReport(string $opdrachtId): JSONResponse|DataDownloadResponse {
+	public function auditReport(string $assignmentId): JSONResponse|DataDownloadResponse {
 		$os = $this->objectService();
 		if ($os === null) {
 			return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
 		$register = $this->register();
-		$opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
-		if ($opdracht === null) {
+		$assignment = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $assignmentId);
+		if ($assignment === null) {
 			return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
 		}
 
-		$this->ensureAdministrationAccess(opdracht: $opdracht);
+		$this->ensureAdministrationAccess(assignment: $assignment);
 
 		$intake = null;
 		try {
 			$intakeRows = $os->setRegister($register)->setSchema('DBAIntake')->findAll(
 				[
-					'filters' => ['opdrachtId' => $opdrachtId],
+					'filters' => ['assignmentId' => $assignmentId],
 					'limit' => 1,
 				]
 			);
@@ -521,7 +521,7 @@ class DBAController extends Controller {
 		try {
 			$flagRows = $os->setRegister($register)->setSchema('DBARisicoflag')->findAll(
 				[
-					'filters' => ['opdrachtId' => $opdrachtId],
+					'filters' => ['assignmentId' => $assignmentId],
 					'limit' => 500,
 				]
 			);
@@ -543,13 +543,13 @@ class DBAController extends Controller {
 		}//end try
 
 		$dossier = null;
-		$dossierId = (string)($opdracht['evidenceDossierId'] ?? '');
+		$dossierId = (string)($assignment['evidenceDossierId'] ?? '');
 		if ($dossierId !== '') {
 			$dossier = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
 		}
 
 		$payload = [
-			'opdracht' => $opdracht,
+			'opdracht' => $assignment,
 			'intake' => $intake,
 			'flags' => $flags,
 			'evidenceDossier' => $dossier,
@@ -570,7 +570,7 @@ class DBAController extends Controller {
 		if (str_contains($accept, 'application/pdf') === true) {
 			return new DataDownloadResponse(
 				data: $json,
-				filename: 'dba-audit-' . $opdrachtId . '.json',
+				filename: 'dba-audit-' . $assignmentId . '.json',
 				contentType: 'application/json',
 			);
 		}
@@ -692,12 +692,12 @@ class DBAController extends Controller {
 	 * permit; the production implementation calls an `AdministrationMembership`
 	 * service.
 	 *
-	 * @param array<string,mixed> $opdracht The fetched object.
+	 * @param array<string,mixed> $assignment The fetched object.
 	 *
 	 * @return void
 	 */
-	private function ensureAdministrationAccess(array $opdracht): void {
-		$administrationId = (string)($opdracht['administrationId'] ?? '');
+	private function ensureAdministrationAccess(array $assignment): void {
+		$administrationId = (string)($assignment['administrationId'] ?? '');
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			$this->logger->warning('DBA controller: anonymous request rejected');

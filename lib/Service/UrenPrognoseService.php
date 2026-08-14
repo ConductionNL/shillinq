@@ -99,7 +99,7 @@ final class UrenPrognoseService {
 	 *  - kalenderjaar: int — target year.
 	 *  - lopendeUren: float — current YTD total (typically the result of UrenTallyService::tallyYearToDate).
 	 *  - vakanties: array<int, string> — ISO date ranges ("2026-07-15/2026-08-09") that go to 0.
-	 *  - geplandeOpdrachten: array<int, array{maand: string, uren: float}> — overrides per maand (YYYY-MM).
+	 *  - geplandeOpdrachten: array<int, array{maand: string, hours: float}> — overrides per maand (YYYY-MM).
 	 *
 	 * @param array<string, mixed> $input Input bundle.
 	 *
@@ -109,30 +109,30 @@ final class UrenPrognoseService {
 	 */
 	public function bouwPrognose(array $input): array {
 		$asOf = (string)($input['asOf'] ?? gmdate('Y-m-d'));
-		$kalenderjaar = (int)($input['kalenderjaar'] ?? (int)substr($asOf, 0, 4));
-		$lopende = (float)($input['lopendeUren'] ?? 0.0);
+		$calendarYear = (int)($input['calendarYear'] ?? (int)substr($asOf, 0, 4));
+		$lopende = (float)($input['currentHours'] ?? 0.0);
 		$dailyTallies = (array)($input['dailyTallies'] ?? []);
 		$vakanties = (array)($input['vakanties'] ?? []);
-		$opdrachten = (array)($input['geplandeOpdrachten'] ?? []);
+		$assignments = (array)($input['geplandeOpdrachten'] ?? []);
 
 		$weeklyWindow = $this->bouwWeeklyWindow(dailyTallies: $dailyTallies, asOf: $asOf);
 		$weekGemiddelde = $this->weekGemiddelde(weeklyWindow: $weeklyWindow);
 		$confidence = $this->confidence(weeklyWindow: $weeklyWindow);
 
-		$perMaand = $this->perMaandPrognose(
+		$perMonth = $this->perMonthPrognose(
 			asOf: $asOf,
-			kalenderjaar: $kalenderjaar,
+			calendarYear: $calendarYear,
 			weekGemiddelde: $weekGemiddelde,
 			vakanties: $vakanties,
-			geplandeOpdrachten: $opdrachten
+			plannedAssignments: $assignments
 		);
 
-		$resterend = array_sum($perMaand);
-		$totaalPrognose = ($lopende + $resterend);
+		$resterend = array_sum($perMonth);
+		$totalPrognose = ($lopende + $resterend);
 
 		$norm = (int)($input['doelNorm'] ?? 1225);
-		$kansBehaaldNorm = $this->kansBehaaldNorm(
-			totaalPrognose: $totaalPrognose,
+		$kansAchievedNorm = $this->kansAchievedNorm(
+			totalPrognose: $totalPrognose,
 			norm: $norm,
 			confidence: $confidence
 		);
@@ -141,20 +141,20 @@ final class UrenPrognoseService {
 			'UrenPrognoseService: prognose computed',
 			[
 				'asOf' => $asOf,
-				'modelVersie' => self::MODEL_VERSION,
+				'modelVersion' => self::MODEL_VERSION,
 				'weekGemiddelde' => $weekGemiddelde,
-				'totalForecast' => $totaalPrognose,
+				'totalForecast' => $totalPrognose,
 				'confidence' => $confidence,
 			]
 		);
 
 		return [
-			'modelVersie' => self::MODEL_VERSION,
-			'berekendOp' => gmdate('c'),
-			'perMaandPrognose' => $perMaand,
+			'modelVersion' => self::MODEL_VERSION,
+			'calculatedOn' => gmdate('c'),
+			'perMonthPrognose' => $perMonth,
 			'vakanties' => array_values(array_map('strval', $vakanties)),
-			'totalForecast' => $totaalPrognose,
-			'kansBehaaldNorm' => $kansBehaaldNorm,
+			'totalForecast' => $totalPrognose,
+			'kansAchievedNorm' => $kansAchievedNorm,
 			'prognoseConfidence' => $confidence,
 		];
 
@@ -246,19 +246,19 @@ final class UrenPrognoseService {
 	 * geplande-opdracht overrides applied.
 	 *
 	 * @param string $asOf Y-m-d.
-	 * @param int $kalenderjaar Target year.
+	 * @param int $calendarYear Target year.
 	 * @param float $weekGemiddelde Weekly mean hours.
 	 * @param array<int, string> $vakanties ISO date ranges.
-	 * @param array<int, array{maand: string, uren: float}|array<string, mixed>> $geplandeOpdrachten Per-maand overrides.
+	 * @param array<int, array{maand: string, hours: float}|array<string, mixed>> $plannedAssignments Per-maand overrides.
 	 *
 	 * @return array<string, float> Forecast hours keyed by YYYY-MM.
 	 */
-	private function perMaandPrognose(
+	private function perMonthPrognose(
 		string $asOf,
-		int $kalenderjaar,
+		int $calendarYear,
 		float $weekGemiddelde,
 		array $vakanties,
-		array $geplandeOpdrachten,
+		array $plannedAssignments,
 	): array {
 		$startTs = strtotime($asOf);
 		if ($startTs === false) {
@@ -266,30 +266,30 @@ final class UrenPrognoseService {
 		}
 
 		$startMonth = (int)gmdate('n', $startTs);
-		$overridesByMaand = [];
-		foreach ($geplandeOpdrachten as $opdracht) {
-			if (is_array($opdracht) === false) {
+		$overridesByMonth = [];
+		foreach ($plannedAssignments as $assignment) {
+			if (is_array($assignment) === false) {
 				continue;
 			}
 
-			$maand = (string)($opdracht['maand'] ?? '');
-			$uren = (float)($opdracht['uren'] ?? 0);
-			if ($maand !== '') {
-				$overridesByMaand[$maand] = $uren;
+			$month = (string)($assignment['maand'] ?? '');
+			$hours = (float)($assignment['hours'] ?? 0);
+			if ($month !== '') {
+				$overridesByMonth[$month] = $hours;
 			}
 		}
 
-		$vakantieMonths = $this->vakantieMonths(vakanties: $vakanties);
+		$holidayMonths = $this->holidayMonths(vakanties: $vakanties);
 
 		$forecast = [];
 		for ($m = $startMonth; $m <= 12; $m++) {
-			$key = sprintf('%04d-%02d', $kalenderjaar, $m);
-			if (isset($overridesByMaand[$key]) === true) {
-				$forecast[$key] = $overridesByMaand[$key];
+			$key = sprintf('%04d-%02d', $calendarYear, $m);
+			if (isset($overridesByMonth[$key]) === true) {
+				$forecast[$key] = $overridesByMonth[$key];
 				continue;
 			}
 
-			if (isset($vakantieMonths[$key]) === true && $vakantieMonths[$key] === 'full') {
+			if (isset($holidayMonths[$key]) === true && $holidayMonths[$key] === 'full') {
 				$forecast[$key] = 0.0;
 				continue;
 			}
@@ -297,7 +297,7 @@ final class UrenPrognoseService {
 			$seasonal = (self::SEASONAL_FACTORS[$m] ?? 1.0);
 			// 4.33 weeks per maand average.
 			$monthHours = ($weekGemiddelde * 4.33 * $seasonal);
-			if (isset($vakantieMonths[$key]) === true && $vakantieMonths[$key] === 'partial') {
+			if (isset($holidayMonths[$key]) === true && $holidayMonths[$key] === 'partial') {
 				$monthHours *= 0.5;
 			}
 
@@ -314,7 +314,7 @@ final class UrenPrognoseService {
 	 *
 	 * @return array<string, string> Maand → 'full' | 'partial'.
 	 */
-	private function vakantieMonths(array $vakanties): array {
+	private function holidayMonths(array $vakanties): array {
 		$months = [];
 		foreach ($vakanties as $range) {
 			if (is_string($range) === false || str_contains($range, '/') === false) {
@@ -359,22 +359,22 @@ final class UrenPrognoseService {
 	 *  - if forecast >= 0.8 * norm → confidence * 0.5 (around break-even).
 	 *  - else → confidence * 0.1 (low).
 	 *
-	 * @param float $totaalPrognose Forecast year-end total.
+	 * @param float $totalPrognose Forecast year-end total.
 	 * @param int $norm Applicable doel-norm.
 	 * @param float $confidence Confidence score [0.5..0.99].
 	 *
 	 * @return float Probability in [0.0, 0.99].
 	 */
-	private function kansBehaaldNorm(float $totaalPrognose, int $norm, float $confidence): float {
+	private function kansAchievedNorm(float $totalPrognose, int $norm, float $confidence): float {
 		if ($norm <= 0) {
 			return 0.0;
 		}
 
-		if ($totaalPrognose >= $norm) {
+		if ($totalPrognose >= $norm) {
 			return round($confidence, 2);
 		}
 
-		if ($totaalPrognose >= ($norm * 0.8)) {
+		if ($totalPrognose >= ($norm * 0.8)) {
 			return round(($confidence * 0.5), 2);
 		}
 

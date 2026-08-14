@@ -373,7 +373,7 @@ class AccountantsdossierExportService {
 		}
 
 		$auditFindings = $this->loadFindings(sampleIds: $sampleIds);
-		$verklaringDraft = $this->loadVerklaringForProtocol(protocolId: $protocolId);
+		$declarationDraft = $this->loadDeclarationForProtocol(protocolId: $protocolId);
 		$sisaAssurance = $this->loadAllByProtocol(schema: self::SCHEMA_SISA_ASSURANCE, protocolId: $protocolId);
 
 		usort(
@@ -418,7 +418,7 @@ class AccountantsdossierExportService {
 			'materialiteit' => $materialiteit,
 			'auditSamples' => $auditSamples,
 			'auditFindings' => $auditFindings,
-			'verklaringDraft' => $verklaringDraft,
+			'verklaringDraft' => $declarationDraft,
 			'sisaAssurance' => $sisaAssurance,
 		];
 	}//end collectBundle()
@@ -495,7 +495,7 @@ class AccountantsdossierExportService {
 	 */
 	private function renderSummaryHtml(array $manifest, array $bundle): string {
 		$protocol = $bundle['controleprotocol'] ?? [];
-		$verklaring = $bundle['verklaringDraft'];
+		$declaration = $bundle['verklaringDraft'];
 		$findingRows = $this->renderFindingRows(findings: $bundle['auditFindings']);
 		$toleranceRows = $this->renderToleranceRows(rows: $bundle['toleranceMatrix']);
 		$sisaRows = $this->renderSisaRows(rows: $bundle['sisaAssurance']);
@@ -505,10 +505,10 @@ class AccountantsdossierExportService {
 		$opinion = '—';
 		$opinionRationale = '';
 		$signOff = [];
-		if ($verklaring !== null) {
-			$opinion = (string)($verklaring['proposedOpinion'] ?? '—');
-			$opinionRationale = (string)($verklaring['opinionRationale'] ?? '');
-			$signOff = (array)($verklaring['signOff'] ?? []);
+		if ($declaration !== null) {
+			$opinion = (string)($declaration['proposedOpinion'] ?? '—');
+			$opinionRationale = (string)($declaration['opinionRationale'] ?? '');
+			$signOff = (array)($declaration['signOff'] ?? []);
 		}
 
 		$auditYearLabel = (int)($protocol['auditYear'] ?? 0);
@@ -586,8 +586,8 @@ class AccountantsdossierExportService {
 			htmlspecialchars($effectiveFrom, ENT_QUOTES),
 			htmlspecialchars($effectiveTo, ENT_QUOTES),
 			htmlspecialchars((string)($adoptionDecision['decisionType'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['besluitnummer'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['datum'] ?? '—'), ENT_QUOTES),
+			htmlspecialchars((string)($adoptionDecision['decisionNumber'] ?? '—'), ENT_QUOTES),
+			htmlspecialchars((string)($adoptionDecision['date'] ?? '—'), ENT_QUOTES),
 			$toleranceRows,
 			$materialityRows,
 			$sampleRows,
@@ -595,9 +595,9 @@ class AccountantsdossierExportService {
 			htmlspecialchars($opinion, ENT_QUOTES),
 			htmlspecialchars($opinionRationale, ENT_QUOTES),
 			htmlspecialchars((string)($signOff['auditor'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['afmVergunningsnummer'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['datum'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['plaats'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['afmPermitNumber'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['date'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['place'] ?? ''), ENT_QUOTES),
 			$sisaRows,
 			self::RETENTION_YEARS
 		);
@@ -617,10 +617,10 @@ class AccountantsdossierExportService {
 				'<tr><td>%s</td><td class="num">%s</td><td class="num">%s</td>'
 				. '<td class="num">%s</td><td class="num">%s</td><td class="num">%s</td></tr>',
 				htmlspecialchars((string)($row['topic'] ?? ''), ENT_QUOTES),
-				$this->fmtNumber(value: $row['rechtmatigheidApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['rechtmatigheidQualificationCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['getrouwheidApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['getrouwheidQualificationCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['lawfulnessApprovalCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['lawfulnessQualificationCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['faithfulnessApprovalCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['faithfulnessQualificationCeiling'] ?? 0),
 				$this->fmtNumber(value: $row['uncertaintyCeiling'] ?? 0)
 			);
 		}
@@ -717,7 +717,7 @@ class AccountantsdossierExportService {
 			$html .= sprintf(
 				'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class="num">%d</td></tr>',
 				htmlspecialchars((string)($row['schemeCode'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['verantwoordingsplichtige'] ?? ''), ENT_QUOTES),
+				htmlspecialchars((string)($row['accountableParty'] ?? ''), ENT_QUOTES),
 				htmlspecialchars((string)($row['specifiekeUitkering'] ?? ''), ENT_QUOTES),
 				htmlspecialchars((string)($row['assuranceLevel'] ?? ''), ENT_QUOTES),
 				$count
@@ -950,7 +950,7 @@ class AccountantsdossierExportService {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function loadVerklaringForProtocol(string $protocolId): ?array {
+	private function loadDeclarationForProtocol(string $protocolId): ?array {
 		$found = $this->objects()
 			->setRegister($this->register())
 			->setSchema(self::SCHEMA_VERKLARING_DRAFT)

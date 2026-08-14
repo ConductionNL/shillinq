@@ -89,7 +89,7 @@ class SubsidieVerantwoordingGuard {
 	 *
 	 * Fail-closed: returns false on any exception (REQ-SUBV-003 / CWE-863).
 	 *
-	 * @param string $verantwoordingId The SubsidieVerantwoording.id
+	 * @param string $accountabilityId The SubsidieVerantwoording.id
 	 *                                 (call-signature parity; the
 	 *                                 in-flight object is preferred).
 	 * @param array<string,mixed>|null $object The SubsidieVerantwoording being transitioned.
@@ -98,10 +98,10 @@ class SubsidieVerantwoordingGuard {
 	 *
 	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
 	 */
-	public function canApprove(string $verantwoordingId, ?array $object = null): bool {
+	public function canApprove(string $accountabilityId, ?array $object = null): bool {
 		try {
 			if ($object === null) {
-				$object = $this->resolveVerantwoording(verantwoordingId: $verantwoordingId);
+				$object = $this->resolveAccountability(accountabilityId: $accountabilityId);
 			}
 
 			if ($object === null) {
@@ -124,7 +124,7 @@ class SubsidieVerantwoordingGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SubsidieVerantwoordingGuard: approve check failed — denying approve transition (fail-closed)',
-				['verantwoordingId' => $verantwoordingId, 'exception' => $e->getMessage()]
+				['accountabilityId' => $accountabilityId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -160,12 +160,12 @@ class SubsidieVerantwoordingGuard {
 	/**
 	 * Resolve a SubsidieVerantwoording object array by id.
 	 *
-	 * @param string $verantwoordingId The SubsidieVerantwoording.id to look up.
+	 * @param string $accountabilityId The SubsidieVerantwoording.id to look up.
 	 *
 	 * @return array<string,mixed>|null The object array, or null when not found.
 	 */
-	private function resolveVerantwoording(string $verantwoordingId): ?array {
-		if ($verantwoordingId === '') {
+	private function resolveAccountability(string $accountabilityId): ?array {
+		if ($accountabilityId === '') {
 			return null;
 		}
 
@@ -175,7 +175,7 @@ class SubsidieVerantwoordingGuard {
 		$records = $objectService
 			->setRegister($register)
 			->setSchema('SubsidieVerantwoording')
-			->findAll(['filters' => ['id' => $verantwoordingId]]);
+			->findAll(['filters' => ['id' => $accountabilityId]]);
 
 		foreach ($records as $record) {
 			return $this->toArray(entity: $record);

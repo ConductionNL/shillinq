@@ -69,9 +69,9 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testReistijdWithinCapUnchanged(): void {
-		$result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 3.0);
-		self::assertSame(3.0, $result['getoldeUren']);
-		self::assertNull($result['capNotitie']);
+		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 3.0);
+		self::assertSame(3.0, $result['countedHours']);
+		self::assertNull($result['capNote']);
 
 	}//end testReistijdWithinCapUnchanged()
 
@@ -81,9 +81,9 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testReistijdCapAppliedWithNote(): void {
-		$result = $this->guard->pasReistijdCapToe(categorie: 'REISTIJD_ZAKELIJK', uren: 6.0);
-		self::assertSame(4.0, $result['getoldeUren']);
-		self::assertSame('Reistijd-cap toegepast: 2 uur niet meegeteld', $result['capNotitie']);
+		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 6.0);
+		self::assertSame(4.0, $result['countedHours']);
+		self::assertSame('Reistijd-cap toegepast: 2 uur niet meegeteld', $result['capNote']);
 
 	}//end testReistijdCapAppliedWithNote()
 
@@ -93,9 +93,9 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testOtherCategoriesNotCapped(): void {
-		$result = $this->guard->pasReistijdCapToe(categorie: 'ACQUISITIE', uren: 9.0);
-		self::assertSame(9.0, $result['getoldeUren']);
-		self::assertNull($result['capNotitie']);
+		$result = $this->guard->pasReistijdCapToe(category: 'ACQUISITIE', hours: 9.0);
+		self::assertSame(9.0, $result['countedHours']);
+		self::assertNull($result['capNote']);
 
 	}//end testOtherCategoriesNotCapped()
 
@@ -107,7 +107,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	public function testBackfillLabelStamped(): void {
 		self::assertSame(
 			'Backfill T+5 dagen',
-			$this->guard->bepaalBackfillLabel(datum: '2026-05-16', registratieMoment: '2026-05-21T10:00:00Z')
+			$this->guard->bepaalBackfillLabel(date: '2026-05-16', registrationMoment: '2026-05-21T10:00:00Z')
 		);
 
 	}//end testBackfillLabelStamped()
@@ -119,7 +119,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 */
 	public function testSameDayNotBackfill(): void {
 		self::assertNull(
-			$this->guard->bepaalBackfillLabel(datum: '2026-05-21', registratieMoment: '2026-05-21T18:00:00Z')
+			$this->guard->bepaalBackfillLabel(date: '2026-05-21', registrationMoment: '2026-05-21T18:00:00Z')
 		);
 
 	}//end testSameDayNotBackfill()
@@ -132,10 +132,10 @@ class UrenDagregistratieGuardTest extends TestCase {
 	public function testBackfillWithinWindowPasses(): void {
 		$entry = [
 			'enterpriseId' => 'ond-1',
-			'datum' => '2026-05-16',
-			'categorie' => 'ACQUISITIE',
-			'uren' => 2,
-			'registratieMoment' => '2026-05-21T10:00:00Z',
+			'date' => '2026-05-16',
+			'category' => 'ACQUISITIE',
+			'hours' => 2,
+			'registrationMoment' => '2026-05-21T10:00:00Z',
 		];
 		self::assertTrue($this->guard->validateOnSave(entry: $entry));
 
@@ -149,10 +149,10 @@ class UrenDagregistratieGuardTest extends TestCase {
 	public function testOldBackfillWithoutEvidenceRejected(): void {
 		$entry = [
 			'enterpriseId' => 'ond-1',
-			'datum' => '2026-04-05',
-			'categorie' => 'ACQUISITIE',
-			'uren' => 2,
-			'registratieMoment' => '2026-05-21T10:00:00Z',
+			'date' => '2026-04-05',
+			'category' => 'ACQUISITIE',
+			'hours' => 2,
+			'registrationMoment' => '2026-05-21T10:00:00Z',
 		];
 		self::assertFalse($this->guard->validateOnSave(entry: $entry));
 
@@ -166,12 +166,12 @@ class UrenDagregistratieGuardTest extends TestCase {
 	public function testOldBackfillWithEvidenceAccepted(): void {
 		$entry = [
 			'enterpriseId' => 'ond-1',
-			'datum' => '2026-04-05',
-			'categorie' => 'ACQUISITIE',
-			'uren' => 2,
-			'registratieMoment' => '2026-05-21T10:00:00Z',
-			'backfillReden' => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
-			'backfillBewijs' => 'file-77',
+			'date' => '2026-04-05',
+			'category' => 'ACQUISITIE',
+			'hours' => 2,
+			'registrationMoment' => '2026-05-21T10:00:00Z',
+			'backfillReason' => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
+			'backfillEvidence' => 'file-77',
 		];
 		self::assertTrue($this->guard->validateOnSave(entry: $entry));
 
@@ -185,10 +185,10 @@ class UrenDagregistratieGuardTest extends TestCase {
 	public function testScholingWithoutEvidenceRejected(): void {
 		$entry = [
 			'enterpriseId' => 'ond-1',
-			'datum' => '2026-05-21',
-			'categorie' => 'SCHOLING',
-			'uren' => 8,
-			'registratieMoment' => '2026-05-21T18:00:00Z',
+			'date' => '2026-05-21',
+			'category' => 'SCHOLING',
+			'hours' => 8,
+			'registrationMoment' => '2026-05-21T18:00:00Z',
 		];
 		self::assertFalse($this->guard->validateOnSave(entry: $entry));
 
@@ -202,11 +202,11 @@ class UrenDagregistratieGuardTest extends TestCase {
 	public function testScholingWithEvidenceAccepted(): void {
 		$entry = [
 			'enterpriseId' => 'ond-1',
-			'datum' => '2026-05-21',
-			'categorie' => 'SCHOLING',
-			'uren' => 8,
-			'registratieMoment' => '2026-05-21T18:00:00Z',
-			'backfillBewijs' => 'file-cursus-99',
+			'date' => '2026-05-21',
+			'category' => 'SCHOLING',
+			'hours' => 8,
+			'registrationMoment' => '2026-05-21T18:00:00Z',
+			'backfillEvidence' => 'file-cursus-99',
 		];
 		self::assertTrue($this->guard->validateOnSave(entry: $entry));
 

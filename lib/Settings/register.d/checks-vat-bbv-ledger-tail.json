@@ -265,11 +265,11 @@
             "nullable": true,
             "description": "Type of NL public body the BBV governs: gemeente (municipality), provincie (province) or waterschap (water authority).",
             "enum": [
-              "gemeente",
+              "municipality",
               "provincie",
               "waterschap"
             ],
-            "example": "gemeente",
+            "example": "municipality",
             "title": "Entity Type"
           },
           "fiscalYear": {
@@ -318,7 +318,7 @@
                 },
                 "title": "Programmes"
               },
-              "algemeneDekkingsmiddelen": {
+              "generalFundingSources": {
                 "type": "number",
                 "description": "Overview of general cover funds (algemene dekkingsmiddelen).",
                 "title": "Algemene Dekkingsmiddelen"
@@ -333,7 +333,7 @@
                 "description": "Corporate income tax (VPB) charge.",
                 "title": "VpB Charge"
               },
-              "onvoorzien": {
+              "unforeseen": {
                 "type": "number",
                 "description": "Amount for unforeseen expenditure (onvoorzien).",
                 "title": "Onvoorzien"
@@ -350,12 +350,12 @@
             },
             "title": "Paragraphs"
           },
-          "jaarrekening": {
+          "annualAccounts": {
             "type": "object",
             "nullable": true,
             "description": "The financial statements of the jaarstukken (art. 24 BBV): the overview of revenues and expenses, the balance sheet, the lawfulness statement (rechtmatigheidsverantwoording) and the auditor's report (accountantsverklaring).",
             "properties": {
-              "overzichtBatenLasten": {
+              "overviewRevenueExpenses": {
                 "type": "boolean",
                 "description": "Overview of revenues and expenses present.",
                 "title": "Overzicht Baten Lasten"
@@ -365,7 +365,7 @@
                 "description": "Balance sheet present.",
                 "title": "Balans"
               },
-              "rechtmatigheidsverantwoording": {
+              "lawfulnessAccountability": {
                 "type": "boolean",
                 "description": "Lawfulness statement present.",
                 "title": "Rechtmatigheidsverantwoording"
@@ -422,7 +422,7 @@
             },
             "title": "Fixed Assets"
           },
-          "taakvelden": {
+          "taskFields": {
             "type": "array",
             "nullable": true,
             "description": "Mandatory overview of estimated revenues and expenses per taakveld (task field), enabling inter-municipal comparison (bbv-taakvelden-overview).",

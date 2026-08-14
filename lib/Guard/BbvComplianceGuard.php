@@ -54,7 +54,7 @@ class BbvComplianceGuard {
 	 *
 	 * @var array<int, string>
 	 */
-	private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
+	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'provincie', 'waterschap'];
 
 	/**
 	 * Reserve mutations must always book on this taakveld (resultaatbestemming).
@@ -202,7 +202,7 @@ class BbvComplianceGuard {
 		}
 
 		if ($classificatie === 'voorziening') {
-			return $this->checkVoorzieningRoute(line: $line, account: $account);
+			return $this->checkProvisionRoute(line: $line, account: $account);
 		}
 
 		// Default (exploitatie): taakveld + economische_categorie are verplicht.
@@ -255,14 +255,14 @@ class BbvComplianceGuard {
 	 * @return bool True when the reserve line books on taakveld 0.10.
 	 */
 	private function checkReserveRoute(array $line): bool {
-		$taakveld = ($line['taakveld'] ?? null);
-		if ((string)$taakveld === self::RESERVE_TAAKVELD) {
+		$taskField = ($line['taskField'] ?? null);
+		if ((string)$taskField === self::RESERVE_TAAKVELD) {
 			return true;
 		}
 
 		$this->logger->info(
 			'BbvComplianceGuard: reserve mutation off taakveld 0.10 rejected (REQ-BBV-004)',
-			['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taakveld' => $taakveld]
+			['accountNumber' => ($line['accountNumber'] ?? 'unknown'), 'taskField' => $taskField]
 		);
 
 		return false;
@@ -276,10 +276,10 @@ class BbvComplianceGuard {
 	 *
 	 * @return bool True when the voorziening line books on the gekoppelde taakveld.
 	 */
-	private function checkVoorzieningRoute(array $line, array $account): bool {
-		$gekoppeld = ($account['taakveld'] ?? null);
-		$taakveld = ($line['taakveld'] ?? null);
-		if ($gekoppeld === null || (string)$taakveld === (string)$gekoppeld) {
+	private function checkProvisionRoute(array $line, array $account): bool {
+		$gekoppeld = ($account['taskField'] ?? null);
+		$taskField = ($line['taskField'] ?? null);
+		if ($gekoppeld === null || (string)$taskField === (string)$gekoppeld) {
 			return true;
 		}
 
@@ -288,7 +288,7 @@ class BbvComplianceGuard {
 			[
 				'accountNumber' => ($line['accountNumber'] ?? 'unknown'),
 				'expected' => $gekoppeld,
-				'found' => $taakveld,
+				'found' => $taskField,
 			]
 		);
 
@@ -303,9 +303,9 @@ class BbvComplianceGuard {
 	 * @return bool True when both classification fields are present.
 	 */
 	private function checkExploitatieClassification(array $line): bool {
-		$taakveld = (string)($line['taakveld'] ?? '');
-		$categorie = (string)($line['economischeCategorie'] ?? '');
-		if ($taakveld !== '' && $categorie !== '') {
+		$taskField = (string)($line['taskField'] ?? '');
+		$category = (string)($line['economicCategory'] ?? '');
+		if ($taskField !== '' && $category !== '') {
 			return true;
 		}
 
@@ -338,30 +338,30 @@ class BbvComplianceGuard {
 
 		// Raadsbesluit override: an explicit, audit-trailed motivation unblocks
 		// a non-sluitende begroting per art. 189 Gemeentewet.
-		$besluit = (string)($programma['councilResolutionNumber'] ?? '');
-		$datum = (string)($programma['raadsbesluitDatum'] ?? '');
-		if ($besluit !== '' && $datum !== '') {
+		$decision = (string)($programma['councilResolutionNumber'] ?? '');
+		$date = (string)($programma['councilResolutionDate'] ?? '');
+		if ($decision !== '' && $date !== '') {
 			return true;
 		}
 
 		$administrationId = (string)($programma['administrationId'] ?? '');
-		$boekjaar = (int)($programma['financialYear'] ?? 0);
+		$financialYear = (int)($programma['financialYear'] ?? 0);
 
-		$rows = $this->loadMeerjarenBudgetRows(administrationId: $administrationId, boekjaar: $boekjaar);
+		$rows = $this->loadMeerjarenBudgetRows(administrationId: $administrationId, financialYear: $financialYear);
 		if ($rows === null) {
 			// Lookup failed — fail closed.
 			return false;
 		}
 
-		$saldoPerHorizon = $this->computeSaldoPerHorizon(rows: $rows);
-		foreach ($saldoPerHorizon as $horizon => $saldoCents) {
-			if ($saldoCents < 0) {
+		$balancePerHorizon = $this->computeBalancePerHorizon(rows: $rows);
+		foreach ($balancePerHorizon as $horizon => $balanceCents) {
+			if ($balanceCents < 0) {
 				$this->logger->info(
 					'BbvComplianceGuard: meerjarenraming not sluitend (REQ-BBV-003)',
 					[
 						'administrationId' => $administrationId,
 						'horizon' => $horizon,
-						'saldoCents' => $saldoCents,
+						'saldoCents' => $balanceCents,
 					]
 				);
 				return false;
@@ -375,11 +375,11 @@ class BbvComplianceGuard {
 	 * Load the primitieve MeerjarenBudget rows for an administration + boekjaar.
 	 *
 	 * @param string $administrationId Owning administration.
-	 * @param int $boekjaar Base fiscal year T.
+	 * @param int $financialYear Base fiscal year T.
 	 *
 	 * @return array<int, array<string, mixed>>|null Rows, or null on lookup failure.
 	 */
-	private function loadMeerjarenBudgetRows(string $administrationId, int $boekjaar): ?array {
+	private function loadMeerjarenBudgetRows(string $administrationId, int $financialYear): ?array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			return $objectService
@@ -389,8 +389,8 @@ class BbvComplianceGuard {
 					[
 						'filters' => [
 							'administrationId' => $administrationId,
-							'financialYear' => $boekjaar,
-							'versie' => 'primitief',
+							'financialYear' => $financialYear,
+							'version' => 'primitief',
 						],
 					]
 				);
@@ -411,21 +411,21 @@ class BbvComplianceGuard {
 	 *
 	 * @return array<int, int> Saldo in cents keyed by meerjarenHorizon.
 	 */
-	private function computeSaldoPerHorizon(array $rows): array {
-		$saldoPerHorizon = [];
+	private function computeBalancePerHorizon(array $rows): array {
+		$balancePerHorizon = [];
 		foreach ($rows as $row) {
 			$horizon = (int)($row['meerjarenHorizon'] ?? 0);
-			if (isset($saldoPerHorizon[$horizon]) === false) {
-				$saldoPerHorizon[$horizon] = 0;
+			if (isset($balancePerHorizon[$horizon]) === false) {
+				$balancePerHorizon[$horizon] = 0;
 			}
 
-			$batenCents = (int)($row['batenCents'] ?? 0);
-			$lastenCents = (int)($row['lastenCents'] ?? 0);
-			$mutatieCents = (int)($row['mutatieReservesCents'] ?? 0);
-			$saldoPerHorizon[$horizon] += ($batenCents - $lastenCents + $mutatieCents);
+			$revenueCents = (int)($row['revenueCents'] ?? 0);
+			$expensesCents = (int)($row['expensesCents'] ?? 0);
+			$movementCents = (int)($row['movementReservesCents'] ?? 0);
+			$balancePerHorizon[$horizon] += ($revenueCents - $expensesCents + $movementCents);
 		}
 
-		return $saldoPerHorizon;
+		return $balancePerHorizon;
 	}//end computeSaldoPerHorizon()
 
 	/**
@@ -447,11 +447,11 @@ class BbvComplianceGuard {
 			return true;
 		}
 
-		if (($mva['mvaCategorie'] ?? '') !== 'maatschappelijk-nut') {
+		if (($mva['mvaCategory'] ?? '') !== 'maatschappelijk-nut') {
 			return true;
 		}
 
-		$aanschafCents = (int)($mva['aanschafwaardeCents'] ?? 0);
+		$aanschafCents = (int)($mva['acquisitionValueCents'] ?? 0);
 		$grensCents = $this->getActiveringsgrensCents();
 		if ($aanschafCents <= $grensCents) {
 			return true;
@@ -459,8 +459,8 @@ class BbvComplianceGuard {
 
 		// Above the grens: a depreciation term must be set so the actief is
 		// activated and depreciated, not expensed in one go (BBV art. 59 lid 4).
-		$termijn = (int)($mva['depreciationPeriodYears'] ?? 0);
-		if ($termijn < 1) {
+		$term = (int)($mva['depreciationPeriodYears'] ?? 0);
+		if ($term < 1) {
 			$this->logger->info(
 				'BbvComplianceGuard: maatschappelijk-nut investering above grens not activated (REQ-BBV-005)',
 				[
@@ -498,21 +498,21 @@ class BbvComplianceGuard {
 	 * `status = vastgesteld` and checks that all seven mandatory types are
 	 * present. Non-BBV tenants bypass.
 	 *
-	 * @param array<string, mixed> $jaarrekening Jaarrekening record (administrationId + boekjaar).
+	 * @param array<string, mixed> $annualAccounts Jaarrekening record (administrationId + boekjaar).
 	 *
 	 * @return bool True when all seven paragrafen are vastgesteld, false otherwise.
 	 *
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-007)
 	 */
-	public function requireParagrafenCompleet(array $jaarrekening): bool {
-		if ($this->isBbvTenant(record: $jaarrekening) === false) {
+	public function requireParagrafenCompleet(array $annualAccounts): bool {
+		if ($this->isBbvTenant(record: $annualAccounts) === false) {
 			return true;
 		}
 
-		$administrationId = (string)($jaarrekening['administrationId'] ?? '');
-		$boekjaar = (int)($jaarrekening['financialYear'] ?? 0);
+		$administrationId = (string)($annualAccounts['administrationId'] ?? '');
+		$financialYear = (int)($annualAccounts['financialYear'] ?? 0);
 
-		if ($administrationId === '' || $boekjaar === 0) {
+		if ($administrationId === '' || $financialYear === 0) {
 			$this->logger->info(
 				'BbvComplianceGuard: jaarrekening missing administrationId or boekjaar (REQ-BBV-007)'
 			);
@@ -528,7 +528,7 @@ class BbvComplianceGuard {
 					[
 						'filters' => [
 							'administrationId' => $administrationId,
-							'financialYear' => $boekjaar,
+							'financialYear' => $financialYear,
 							'status' => 'vastgesteld',
 						],
 					]
@@ -541,14 +541,14 @@ class BbvComplianceGuard {
 			return false;
 		}//end try
 
-		$aanwezig = [];
+		$present = [];
 		foreach ($rows as $row) {
-			$aanwezig[(string)($row['type'] ?? '')] = true;
+			$present[(string)($row['type'] ?? '')] = true;
 		}
 
 		$ontbrekend = [];
 		foreach (self::REQUIRED_PARAGRAFEN as $type) {
-			if (isset($aanwezig[$type]) === false) {
+			if (isset($present[$type]) === false) {
 				$ontbrekend[] = $type;
 			}
 		}
@@ -558,7 +558,7 @@ class BbvComplianceGuard {
 				'BbvComplianceGuard: jaarrekening mist verplichte paragrafen (REQ-BBV-007, BBV art. 9)',
 				[
 					'administrationId' => $administrationId,
-					'financialYear' => $boekjaar,
+					'financialYear' => $financialYear,
 					'ontbrekend' => $ontbrekend,
 				]
 			);
@@ -585,7 +585,7 @@ class BbvComplianceGuard {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
 	 */
 	public function depreciationStartMonth(array $mva): ?string {
-		$raw = (string)($mva['ingebruiknameDatum'] ?? '');
+		$raw = (string)($mva['commissioningDate'] ?? '');
 		if ($raw === '') {
 			return null;
 		}

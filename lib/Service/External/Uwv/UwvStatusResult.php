@@ -40,7 +40,7 @@ final class UwvStatusResult {
 	 * @param string $outcome ACCEPTED / REJECTED / FOUND /
 	 *                        NOT_FOUND / STATUS_DEFERRED /
 	 *                        SECTOR_DEFERRED / ERROR.
-	 * @param string $kenmerk UWV-side correlation kenmerk
+	 * @param string $reference UWV-side correlation kenmerk
 	 *                        (synthetic for dormant).
 	 * @param bool $dormant TRUE when the adapter was
 	 *                      dormant.
@@ -51,7 +51,7 @@ final class UwvStatusResult {
 	 */
 	public function __construct(
 		public readonly string $outcome,
-		public readonly string $kenmerk,
+		public readonly string $reference,
 		public readonly bool $dormant,
 		public readonly array $extras = [],
 	) {

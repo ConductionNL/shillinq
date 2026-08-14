@@ -200,7 +200,7 @@ class FidoTreasuryGuardTest extends TestCase {
 
 		$lening = [
 			'organisationId' => 'org-1',
-			'treasurystatuutId' => 'stat-1',
+			'treasuryStatuteId' => 'stat-1',
 			'signingMandateRole' => 'treasurer',
 			'type' => 'kasgeld',
 			'principal' => 2500000,

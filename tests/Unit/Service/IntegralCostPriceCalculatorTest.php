@@ -51,13 +51,13 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 	 */
 	public function testSumDirectCostsFiltersOnTriple(): void {
 		$lines = [
-			['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten', 'amount' => 12345.67],
-			['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten', 'amount' => 1000.00],
-			['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-OTHER',     'accountKind' => 'loonkosten', 'amount' => 9999.00],
-			['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'materialen', 'amount' => 500.00],
+			['costCentre' => 'K-SP-014', 'costObject' => 'D-MO-SP-014', 'accountKind' => 'payrollCost', 'amount' => 12345.67],
+			['costCentre' => 'K-SP-014', 'costObject' => 'D-MO-SP-014', 'accountKind' => 'payrollCost', 'amount' => 1000.00],
+			['costCentre' => 'K-SP-014', 'costObject' => 'D-OTHER',     'accountKind' => 'payrollCost', 'amount' => 9999.00],
+			['costCentre' => 'K-SP-014', 'costObject' => 'D-MO-SP-014', 'accountKind' => 'materialen', 'amount' => 500.00],
 		];
 
-		$totalCents = $this->svc->sumDirectCosts($lines, 'K-SP-014', 'D-MO-SP-014', 'loonkosten');
+		$totalCents = $this->svc->sumDirectCosts($lines, 'K-SP-014', 'D-MO-SP-014', 'payrollCost');
 		self::assertSame(1334567, $totalCents);
 
 	}//end testSumDirectCostsFiltersOnTriple()
@@ -68,10 +68,10 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 	public function testDistributeOverheadAggregatesPerBucket(): void {
 		$rule = [
 			'ratios' => [
-				['bucket' => 'huisvesting', 'ratio' => 0.40, 'kostendrager' => 'D-MO-SP-014'],
-				['bucket' => 'ict',         'ratio' => 0.20, 'kostendrager' => 'D-MO-SP-014'],
-				['bucket' => 'huisvesting', 'ratio' => 0.10, 'kostendrager' => 'D-MO-SP-014'],
-				['bucket' => 'directieEnStaf', 'ratio' => 0.05, 'kostendrager' => 'D-OTHER'],
+				['bucket' => 'huisvesting', 'ratio' => 0.40, 'costObject' => 'D-MO-SP-014'],
+				['bucket' => 'ict',         'ratio' => 0.20, 'costObject' => 'D-MO-SP-014'],
+				['bucket' => 'huisvesting', 'ratio' => 0.10, 'costObject' => 'D-MO-SP-014'],
+				['bucket' => 'directieEnStaf', 'ratio' => 0.05, 'costObject' => 'D-OTHER'],
 			],
 		];
 
@@ -122,24 +122,24 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 	 */
 	public function testComposeMonthlyVoorlopig(): void {
 		$glLines = [
-			['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'loonkosten',     'amount' => 41250.00],
-			['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'materialen',     'amount' => 8730.00],
-			['kostenplaats' => 'K-SP-014', 'kostendrager' => 'D-MO-SP-014', 'accountKind' => 'afschrijvingen', 'amount' => 6900.00],
+			['costCentre' => 'K-SP-014', 'costObject' => 'D-MO-SP-014', 'accountKind' => 'payrollCost',     'amount' => 41250.00],
+			['costCentre' => 'K-SP-014', 'costObject' => 'D-MO-SP-014', 'accountKind' => 'materialen',     'amount' => 8730.00],
+			['costCentre' => 'K-SP-014', 'costObject' => 'D-MO-SP-014', 'accountKind' => 'depreciations', 'amount' => 6900.00],
 		];
 
 		$rule = [
 			'id' => 'odr-bbv-2026',
 			'ratios' => [
-				['bucket' => 'directieEnStaf', 'ratio' => 0.072, 'kostendrager' => 'D-MO-SP-014'],
+				['bucket' => 'directieEnStaf', 'ratio' => 0.072, 'costObject' => 'D-MO-SP-014'],
 			],
 		];
 
 		$ikp = $this->svc->compose([
 			'commercialActivityId' => 'ca-mo-sp-014',
-			'periode' => '2026-Q1',
+			'period' => '2026-Q1',
 			'administrationId' => 'adm-tilburg',
-			'kostenplaats' => 'K-SP-014',
-			'kostendrager' => 'D-MO-SP-014',
+			'costCentre' => 'K-SP-014',
+			'costObject' => 'D-MO-SP-014',
 			'glLines' => $glLines,
 			'corporateOverheadCents' => 36_580_000, // €365.8k
 			'overheadRule' => $rule,
@@ -147,27 +147,27 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 			'waccRate' => 0.045,
 			'periodFraction' => 1.0,
 			'winstopslagRate' => 0.03,
-			'verkochteEenheden' => 312.0,
-			'eenheidLabel' => 'dagdeel-zaalhuur',
-			'gehanteerdTarief' => 295.0,
+			'soldUnits' => 312.0,
+			'unitLabel' => 'dagdeel-zaalhuur',
+			'appliedRate' => 295.0,
 		]);
 
 		self::assertSame('voorlopig', $ikp['status']);
-		self::assertSame(41_250.00, $ikp['componenten']['directeLoonkosten']);
+		self::assertSame(41_250.00, $ikp['componenten']['directPayrollCost']);
 		self::assertSame(8_730.00, $ikp['componenten']['directeMaterialen']);
-		self::assertSame(6_900.00, $ikp['componenten']['directeAfschrijvingen']);
+		self::assertSame(6_900.00, $ikp['componenten']['directDepreciations']);
 		// Overhead: 36_580_000 × 7.2% = 2_633_760 cents = €26 337.60.
 		self::assertSame(26_337.60, $ikp['componenten']['indirecteOverhead']['directieEnStaf']);
 		// Vermogenskosten: 4_040_000 × 4.5% = 181_800 cents = €1818.
-		self::assertSame(1_818.00, $ikp['componenten']['vermogenskosten']);
+		self::assertSame(1_818.00, $ikp['componenten']['capitalCost']);
 		// Base = 41 250 + 8 730 + 6 900 + 26 337.60 + 1 818 = 85 035.60; winstopslag 3% = 2 551.07
 		self::assertSame(2_551.07, $ikp['componenten']['winstopslag']);
-		self::assertSame(87_586.67, $ikp['totaleKosten']);
-		self::assertEqualsWithDelta(280.7265, $ikp['kostprijsPerEenheid'], 0.01);
-		self::assertSame(295.0, $ikp['gehanteerdTarief']);
+		self::assertSame(87_586.67, $ikp['totalCost']);
+		self::assertEqualsWithDelta(280.7265, $ikp['costPricePerUnit'], 0.01);
+		self::assertSame(295.0, $ikp['appliedRate']);
 		self::assertTrue($ikp['compliant']);
 		self::assertGreaterThan(0, $ikp['marge']);
-		self::assertSame('dagdeel-zaalhuur', $ikp['eenheidLabel']);
+		self::assertSame('dagdeel-zaalhuur', $ikp['unitLabel']);
 
 	}//end testComposeMonthlyVoorlopig()
 

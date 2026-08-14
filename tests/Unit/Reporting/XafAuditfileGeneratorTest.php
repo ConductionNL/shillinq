@@ -148,7 +148,7 @@ final class XafAuditfileGeneratorTest extends TestCase {
 				['accountNumber' => '9999', 'name' => 'Foreign account', 'accountType' => 'asset', 'administrationId' => 'WERK-002'],
 			],
 			'CustomerMaster' => [
-				['customerNumber' => 'D001', 'name' => 'Acme B.V.', 'kvkNumber' => '87654321', 'btwNumber' => 'NL876543210B01', 'email' => 'facturen@acme.nl', 'phone' => '+31201234567', 'administrationId' => 'WERK-001'],
+				['customerNumber' => 'D001', 'name' => 'Acme B.V.', 'kvkNumber' => '87654321', 'vatNumber' => 'NL876543210B01', 'email' => 'facturen@acme.nl', 'phone' => '+31201234567', 'administrationId' => 'WERK-001'],
 				['customerNumber' => 'DX', 'name' => 'Foreign customer', 'administrationId' => 'WERK-002'],
 			],
 			'Payee' => [

@@ -68,19 +68,19 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$result = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => '2026-06-30',
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 700.0,
+				'calendarYear' => 2026,
+				'currentHours' => 700.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'doelNorm' => 1225,
 			]
 		);
 
-		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
+		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersion']);
 		self::assertGreaterThan(700.0, $result['totalForecast']);
-		self::assertIsArray($result['perMaandPrognose']);
-		self::assertNotEmpty($result['perMaandPrognose']);
-		self::assertArrayHasKey('2026-07', $result['perMaandPrognose']);
-		self::assertArrayHasKey('2026-12', $result['perMaandPrognose']);
+		self::assertIsArray($result['perMonthPrognose']);
+		self::assertNotEmpty($result['perMonthPrognose']);
+		self::assertArrayHasKey('2026-07', $result['perMonthPrognose']);
+		self::assertArrayHasKey('2026-12', $result['perMonthPrognose']);
 		// Confidence should be high for steady input.
 		self::assertGreaterThanOrEqual(0.5, $result['prognoseConfidence']);
 
@@ -95,17 +95,17 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$result = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => '2026-06-30',
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 0.0,
+				'calendarYear' => 2026,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'doelNorm' => 1225,
 			]
 		);
 
-		$july = $result['perMaandPrognose']['2026-07'];
-		$augustus = $result['perMaandPrognose']['2026-08'];
-		$sept = $result['perMaandPrognose']['2026-09'];
-		$december = $result['perMaandPrognose']['2026-12'];
+		$july = $result['perMonthPrognose']['2026-07'];
+		$augustus = $result['perMonthPrognose']['2026-08'];
+		$sept = $result['perMonthPrognose']['2026-09'];
+		$december = $result['perMonthPrognose']['2026-12'];
 
 		// August must be lower than September (-25% vs neutral).
 		self::assertLessThan($sept, $augustus);
@@ -125,15 +125,15 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$result = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => '2026-06-30',
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 0.0,
+				'calendarYear' => 2026,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'vakanties' => ['2026-08-01/2026-08-31'],
 				'doelNorm' => 1225,
 			]
 		);
 
-		self::assertSame(0.0, $result['perMaandPrognose']['2026-08']);
+		self::assertSame(0.0, $result['perMonthPrognose']['2026-08']);
 
 	}//end testFullMonthVakantieZeroes()
 
@@ -146,17 +146,17 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$result = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => '2026-06-30',
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 0.0,
+				'calendarYear' => 2026,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'geplandeOpdrachten' => [
-					['maand' => '2026-09', 'uren' => 200.0],
+					['maand' => '2026-09', 'hours' => 200.0],
 				],
 				'doelNorm' => 1225,
 			]
 		);
 
-		self::assertSame(200.0, $result['perMaandPrognose']['2026-09']);
+		self::assertSame(200.0, $result['perMonthPrognose']['2026-09']);
 
 	}//end testGeplandeOpdrachtOverridesMaand()
 
@@ -178,8 +178,8 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$steady = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => $end,
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 0.0,
+				'calendarYear' => 2026,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies($end, 84),
 				'doelNorm' => 1225,
 			]
@@ -188,8 +188,8 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$noisyResult = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => $end,
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 0.0,
+				'calendarYear' => 2026,
+				'currentHours' => 0.0,
 				'dailyTallies' => $noisy,
 				'doelNorm' => 1225,
 			]
@@ -216,15 +216,15 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$result = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => '2026-02-28',
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 300.0,
+				'calendarYear' => 2026,
+				'currentHours' => 300.0,
 				'dailyTallies' => $tallies,
 				'doelNorm' => 1225,
 			]
 		);
 
 		// Forecast should clear the norm comfortably → high kansBehaaldNorm.
-		self::assertGreaterThanOrEqual(0.5, $result['kansBehaaldNorm']);
+		self::assertGreaterThanOrEqual(0.5, $result['kansAchievedNorm']);
 
 	}//end testKansBehaaldNormReflectsForecastVsNorm()
 
@@ -237,15 +237,15 @@ final class UrenPrognoseServiceTest extends TestCase {
 		$result = $this->build()->bouwPrognose(
 			input: [
 				'asOf' => '2026-06-30',
-				'kalenderjaar' => 2026,
-				'lopendeUren' => 0.0,
+				'calendarYear' => 2026,
+				'currentHours' => 0.0,
 				'dailyTallies' => [],
 				'doelNorm' => 1225,
 			]
 		);
 
 		self::assertSame(0.0, $result['totalForecast']);
-		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersie']);
+		self::assertSame(UrenPrognoseService::MODEL_VERSION, $result['modelVersion']);
 
 	}//end testEmptyTalliesReturnsZeroPrognose()
 

@@ -257,15 +257,15 @@ final class TimeIntakeServiceTest extends TestCase {
 		self::assertSame(2, $result['lines']);
 		self::assertFalse($result['duplicated']);
 
-		$uren = ($this->fake->stored['UrenRegistratie'] ?? []);
-		self::assertCount(2, $uren);
-		self::assertSame('pl-time-1001', $uren[0]['externalId']);
-		self::assertSame('pipelinq', $uren[0]['sourceApp']);
-		self::assertSame('B1', $uren[0]['sourceBatchId']);
-		self::assertSame(2.0, $uren[0]['hours']);
-		self::assertSame(150.0, $uren[0]['recognisedRate']);
-		self::assertSame(1.5, $uren[1]['hours']);
-		self::assertSame(100.0, $uren[1]['recognisedRate']);
+		$hours = ($this->fake->stored['UrenRegistratie'] ?? []);
+		self::assertCount(2, $hours);
+		self::assertSame('pl-time-1001', $hours[0]['externalId']);
+		self::assertSame('pipelinq', $hours[0]['sourceApp']);
+		self::assertSame('B1', $hours[0]['sourceBatchId']);
+		self::assertSame(2.0, $hours[0]['hours']);
+		self::assertSame(150.0, $hours[0]['recognisedRate']);
+		self::assertSame(1.5, $hours[1]['hours']);
+		self::assertSame(100.0, $hours[1]['recognisedRate']);
 
 		$batches = ($this->fake->stored['TimeIntakeBatch'] ?? []);
 		self::assertCount(1, $batches);

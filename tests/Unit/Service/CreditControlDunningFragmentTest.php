@@ -127,10 +127,10 @@ final class CreditControlDunningFragmentTest extends TestCase {
 		$stage = $schema['properties']['stages']['items']['properties'];
 		self::assertSame(
 			['EMAIL', 'EMAIL+POSTREGISTRATIE', 'AANGETEKENDE_POST', 'INCASSOBUREAU_API'],
-			$stage['kanaal']['enum']
+			$stage['channel']['enum']
 		);
-		self::assertContains('14_DAGEN_BRIEF_BIK', $stage['wettelijkEffect']['enum']);
-		self::assertContains('VERZUIM_INTREDEN', $stage['wettelijkEffect']['enum']);
+		self::assertContains('14_DAGEN_BRIEF_BIK', $stage['statutoryEffect']['enum']);
+		self::assertContains('VERZUIM_INTREDEN', $stage['statutoryEffect']['enum']);
 
 	}//end testDunningLadderDeclaresKanaalAndWettelijkEffect()
 
@@ -162,14 +162,14 @@ final class CreditControlDunningFragmentTest extends TestCase {
 		self::assertArrayHasKey('renteAccrual', $aggs);
 
 		// The rente type enum must cite the two BW articles per REQ-CCD-003.
-		$type = $schema['properties']['wettelijkeRente']['properties']['type']['enum'];
+		$type = $schema['properties']['statutoryRente']['properties']['type']['enum'];
 		self::assertSame(
 			['HANDELSRENTE_B2B_6_119A_BW', 'WETTELIJKE_RENTE_B2C_6_119_BW'],
 			$type
 		);
 
 		// Money fields use multipleOf 0.01 (REQ-CCD-003 + global money rule).
-		self::assertSame(0.01, $schema['properties']['hoofdsom']['multipleOf']);
+		self::assertSame(0.01, $schema['properties']['principal']['multipleOf']);
 		self::assertSame(0.01, $schema['properties']['totalDue']['multipleOf']);
 
 	}//end testIncassoKostenDeclaresAggregations()
@@ -194,10 +194,10 @@ final class CreditControlDunningFragmentTest extends TestCase {
 	public function testOninbaarAfschrijvingFieldShape(): void {
 		$schema = $this->fragment()['components']['schemas']['OninbaarAfschrijving'];
 		$props = $schema['properties'];
-		self::assertArrayHasKey('art29OBVerklaring', $props);
-		self::assertArrayHasKey('btwAangiftePeriode', $props);
-		self::assertArrayHasKey('boekingId', $props);
-		self::assertSame(0.01, $props['hoofdsomAfgeschreven']['multipleOf']);
+		self::assertArrayHasKey('art29OBDeclaration', $props);
+		self::assertArrayHasKey('vatTaxReturnPeriod', $props);
+		self::assertArrayHasKey('entryId', $props);
+		self::assertSame(0.01, $props['principalDepreciated']['multipleOf']);
 
 	}//end testOninbaarAfschrijvingFieldShape()
 
@@ -258,9 +258,9 @@ final class CreditControlDunningFragmentTest extends TestCase {
 			}
 		}
 		self::assertNotNull($sample, 'Sample IncassoKostenBerekening seed must be present');
-		self::assertSame(8400.0, (float)$sample['hoofdsom']);
-		self::assertSame(795.0, (float)$sample['berekening']['toegepast']);
-		self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $sample['wettelijkeRente']['type']);
+		self::assertSame(8400.0, (float)$sample['principal']);
+		self::assertSame(795.0, (float)$sample['calculation']['applied']);
+		self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $sample['statutoryRente']['type']);
 
 	}//end testExampleIncassoKostenSeedComputes795Eur()
 
@@ -281,10 +281,10 @@ final class CreditControlDunningFragmentTest extends TestCase {
 			}
 		}
 		self::assertNotNull($sample, 'Sample overheid override seed must be present');
-		self::assertStringContainsString('Wet betalingstermijnen overheid', (string)$sample['reden']);
+		self::assertStringContainsString('Wet betalingstermijnen overheid', (string)$sample['reason']);
 		self::assertCount(4, $sample['overrides']['stages']);
 		// Second stage is the 30-day reminder per design D11.
-		self::assertSame(30, (int)$sample['overrides']['stages'][1]['dagenNaVervalDatum']);
+		self::assertSame(30, (int)$sample['overrides']['stages'][1]['daysAfterExpiryDate']);
 
 	}//end testOverheidOverrideSeedCarriesRationale()
 

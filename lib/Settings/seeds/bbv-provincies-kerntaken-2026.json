@@ -12,7 +12,7 @@
     {
       "code": "ruimte",
       "name": "Ruimte",
-      "beschrijving": "Ruimtelijke ordening en gebiedsontwikkeling, inclusief omgevingsvisie, omgevingsplan en vergunningverlening conform de Omgevingswet.",
+      "description": "Ruimtelijke ordening en gebiedsontwikkeling, inclusief omgevingsvisie, omgevingsplan en vergunningverlening conform de Omgevingswet.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "administrationId": "template"
@@ -20,7 +20,7 @@
     {
       "code": "ruimte-omgevingsvisie",
       "name": "Omgevingsvisie en -beleid",
-      "beschrijving": "Opstellen en actualiseren van de provinciale omgevingsvisie en omgevingsverordening.",
+      "description": "Opstellen en actualiseren van de provinciale omgevingsvisie en omgevingsverordening.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "ruimte",
@@ -29,7 +29,7 @@
     {
       "code": "ruimte-gebiedsontwikkeling",
       "name": "Gebiedsontwikkeling",
-      "beschrijving": "Provinciale inbreng in gebiedsontwikkelingsprojecten: woningbouw, bedrijventerreinen, landinrichting.",
+      "description": "Provinciale inbreng in gebiedsontwikkelingsprojecten: woningbouw, bedrijventerreinen, landinrichting.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "ruimte",
@@ -38,7 +38,7 @@
     {
       "code": "mobiliteit",
       "name": "Mobiliteit",
-      "beschrijving": "Provinciale wegen, openbaar vervoer en regionale bereikbaarheid conform het Provinciaal Verkeers- en Vervoersplan.",
+      "description": "Provinciale wegen, openbaar vervoer en regionale bereikbaarheid conform het Provinciaal Verkeers- en Vervoersplan.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "administrationId": "template"
@@ -46,7 +46,7 @@
     {
       "code": "mobiliteit-wegen",
       "name": "Provinciale wegen en bruggen",
-      "beschrijving": "Beheer, onderhoud en vervanging van provinciale wegen, bruggen en viaducten.",
+      "description": "Beheer, onderhoud en vervanging van provinciale wegen, bruggen en viaducten.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "mobiliteit",
@@ -55,7 +55,7 @@
     {
       "code": "mobiliteit-ov",
       "name": "Openbaar vervoer",
-      "beschrijving": "Concessieverlening en toezicht op regionaal openbaar vervoer (bus, trein, veerverbindingen).",
+      "description": "Concessieverlening en toezicht op regionaal openbaar vervoer (bus, trein, veerverbindingen).",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "mobiliteit",
@@ -64,7 +64,7 @@
     {
       "code": "water",
       "name": "Water",
-      "beschrijving": "Provinciaal waterbeleid: grondwaterbeheer, regionale watersystemen en waterkeringen conform de Waterwet en Omgevingswet.",
+      "description": "Provinciaal waterbeleid: grondwaterbeheer, regionale watersystemen en waterkeringen conform de Waterwet en Omgevingswet.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "administrationId": "template"
@@ -72,7 +72,7 @@
     {
       "code": "water-grondwater",
       "name": "Grondwater",
-      "beschrijving": "Vergunningverlening en toezicht op grondwateronttrekkingen, peilbeheer en grondwaterkwaliteit.",
+      "description": "Vergunningverlening en toezicht op grondwateronttrekkingen, peilbeheer en grondwaterkwaliteit.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "water",
@@ -81,7 +81,7 @@
     {
       "code": "water-oppervlaktewater",
       "name": "Regionale watersystemen",
-      "beschrijving": "Afstemming met waterschappen over regionaal oppervlaktewaterbeheer en KRW-doelstellingen.",
+      "description": "Afstemming met waterschappen over regionaal oppervlaktewaterbeheer en KRW-doelstellingen.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "water",
@@ -90,7 +90,7 @@
     {
       "code": "milieu",
       "name": "Milieu",
-      "beschrijving": "Provinciaal milieubeleid: vergunningverlening, toezicht en handhaving op milieubelastende activiteiten, luchtkwaliteit en bodem.",
+      "description": "Provinciaal milieubeleid: vergunningverlening, toezicht en handhaving op milieubelastende activiteiten, luchtkwaliteit en bodem.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "administrationId": "template"
@@ -98,7 +98,7 @@
     {
       "code": "milieu-vth",
       "name": "Vergunningverlening, toezicht en handhaving",
-      "beschrijving": "VTH-taken voor Wabo/Omgevingswet-plichtige activiteiten (BRZO, IPPC, grote industriële installaties).",
+      "description": "VTH-taken voor Wabo/Omgevingswet-plichtige activiteiten (BRZO, IPPC, grote industriële installaties).",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "milieu",
@@ -107,7 +107,7 @@
     {
       "code": "milieu-luchtkwaliteit",
       "name": "Luchtkwaliteit en klimaat",
-      "beschrijving": "Monitoring en beleid voor luchtkwaliteit en regionale klimaatdoelstellingen.",
+      "description": "Monitoring en beleid voor luchtkwaliteit en regionale klimaatdoelstellingen.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "milieu",
@@ -116,7 +116,7 @@
     {
       "code": "cultuur",
       "name": "Cultuur",
-      "beschrijving": "Provinciale cultuursubsidies, erfgoedbeheer en regionale culturele infrastructuur conform de Erfgoedwet.",
+      "description": "Provinciale cultuursubsidies, erfgoedbeheer en regionale culturele infrastructuur conform de Erfgoedwet.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "administrationId": "template"
@@ -124,7 +124,7 @@
     {
       "code": "cultuur-erfgoed",
       "name": "Erfgoed",
-      "beschrijving": "Monumentenzorg, archeologie en cultureel erfgoedbeleid op provinciaal niveau.",
+      "description": "Monumentenzorg, archeologie en cultureel erfgoedbeleid op provinciaal niveau.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "cultuur",
@@ -133,7 +133,7 @@
     {
       "code": "cultuur-subsidies",
       "name": "Culturele subsidies en instellingen",
-      "beschrijving": "Subsidieverlening aan regionale culturele instellingen (theaters, musea, bibliotheken, podia).",
+      "description": "Subsidieverlening aan regionale culturele instellingen (theaters, musea, bibliotheken, podia).",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "cultuur",
@@ -142,7 +142,7 @@
     {
       "code": "economie",
       "name": "Economie",
-      "beschrijving": "Regionale economische ontwikkeling: bedrijventerreinen, innovatie, arbeidsmarkt en Europese fondsen (EFRO).",
+      "description": "Regionale economische ontwikkeling: bedrijventerreinen, innovatie, arbeidsmarkt en Europese fondsen (EFRO).",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "administrationId": "template"
@@ -150,7 +150,7 @@
     {
       "code": "economie-innovatie",
       "name": "Innovatie en kenniseconomie",
-      "beschrijving": "Stimuleren van regionale innovatie, smart industry en samenwerking met kennisinstellingen.",
+      "description": "Stimuleren van regionale innovatie, smart industry en samenwerking met kennisinstellingen.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "economie",
@@ -159,7 +159,7 @@
     {
       "code": "economie-efro",
       "name": "Europese fondsen (EFRO/JTF)",
-      "beschrijving": "Beheer en verantwoording van EFRO- en JTF-programma's voor regionale economische ontwikkeling.",
+      "description": "Beheer en verantwoording van EFRO- en JTF-programma's voor regionale economische ontwikkeling.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "economie",
@@ -168,7 +168,7 @@
     {
       "code": "bestuur",
       "name": "Bestuur",
-      "beschrijving": "Provinciebestuur, bedrijfsvoering, interbestuurlijke samenwerking en financiering.",
+      "description": "Provinciebestuur, bedrijfsvoering, interbestuurlijke samenwerking en financiering.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "administrationId": "template"
@@ -176,7 +176,7 @@
     {
       "code": "bestuur-bestuurorg",
       "name": "Bestuur en organisatie",
-      "beschrijving": "Kosten van Provinciale Staten, Gedeputeerde Staten, griffie en rekenkamer.",
+      "description": "Kosten van Provinciale Staten, Gedeputeerde Staten, griffie en rekenkamer.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "bestuur",
@@ -185,7 +185,7 @@
     {
       "code": "bestuur-bedrijfsvoering",
       "name": "Bedrijfsvoering",
-      "beschrijving": "Overhead, staf en ondersteunende diensten (ICT, HRM, financiën, juridisch, communicatie).",
+      "description": "Overhead, staf en ondersteunende diensten (ICT, HRM, financiën, juridisch, communicatie).",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "bestuur",
@@ -194,7 +194,7 @@
     {
       "code": "bestuur-financiering",
       "name": "Financiering en provinciale opcenten",
-      "beschrijving": "Rente en aflossingen, schatkistbankieren, opcenten motorrijtuigenbelasting en algemene dekkingsmiddelen.",
+      "description": "Rente en aflossingen, schatkistbankieren, opcenten motorrijtuigenbelasting en algemene dekkingsmiddelen.",
       "programmeStructure": "kerntaak",
       "bbvVariant": "provincie",
       "parentCode": "bestuur",

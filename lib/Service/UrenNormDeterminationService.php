@@ -60,7 +60,7 @@ final class UrenNormDeterminationService {
 	 * Profile shape (REQ-URC-000):
 	 *  - 'administrationId' string   — tenant-isolation FK.
 	 *  - 'enterpriseId'    string   — onderneming FK.
-	 *  - 'kalenderjaar'     int      — year.
+	 *  - 'calendarYear'     int      — year.
 	 *  - 'arbeidsongeschikt'  bool   — UWV AO-status (drives 800 norm).
 	 *  - 'meewerkendePartner' bool   — drives 525 norm.
 	 *  - 'ondernemingsUrenJTD' float — onderneming hours year-to-date (>0 → grotendeels test).
@@ -77,20 +77,20 @@ final class UrenNormDeterminationService {
 	 */
 	public function bouwSeedRecord(array $profiel): array {
 		$norm = $this->guard->bepaalDoelNorm(profiel: $profiel);
-		$grondslag = $this->guard->bepaalNormGrondslag(doelNorm: $norm);
+		$basis = $this->guard->bepaalNormGrondslag(doelNorm: $norm);
 		$grotendeels = $this->guard->bepaalGrotendeelsCriterium(
-			ondernemingsUren: (float)($profiel['ondernemingsUrenJTD'] ?? 0.0),
-			loondienstUren: (float)($profiel['loondienstUrenJTD'] ?? 0.0)
+			enterpriseHours: (float)($profiel['ondernemingsUrenJTD'] ?? 0.0),
+			employmentHours: (float)($profiel['loondienstUrenJTD'] ?? 0.0)
 		);
 
 		$seed = [
 			'administrationId' => (string)($profiel['administrationId'] ?? ''),
 			'enterpriseId' => (string)($profiel['enterpriseId'] ?? ''),
-			'kalenderjaar' => (int)($profiel['kalenderjaar'] ?? (int)gmdate('Y')),
+			'calendarYear' => (int)($profiel['calendarYear'] ?? (int)gmdate('Y')),
 			'doelNorm' => $norm,
-			'normGrondslag' => $grondslag,
-			'lopendeUren' => 0.0,
-			'drempelStatus' => 'OP_KOERS',
+			'normBasis' => $basis,
+			'currentHours' => 0.0,
+			'thresholdStatus' => 'OP_KOERS',
 			'grotendeelsCriterium' => $grotendeels,
 		];
 
@@ -98,7 +98,7 @@ final class UrenNormDeterminationService {
 			'UrenNormDeterminationService: built seed for new urencriterium-jaar',
 			[
 				'enterpriseId' => $seed['enterpriseId'],
-				'kalenderjaar' => $seed['kalenderjaar'],
+				'calendarYear' => $seed['calendarYear'],
 				'doelNorm' => $norm,
 				'grotendeels' => $grotendeels,
 			]

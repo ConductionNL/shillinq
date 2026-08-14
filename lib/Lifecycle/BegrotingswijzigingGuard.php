@@ -80,7 +80,7 @@ class BegrotingswijzigingGuard {
 	public function canVaststellen(string $wijzigingId, ?array $object = null): bool {
 		try {
 			$wijziging = $object;
-			if ($wijziging === null || array_key_exists('raadsbesluit', $wijziging) === false) {
+			if ($wijziging === null || array_key_exists('councilResolution', $wijziging) === false) {
 				$wijziging = $this->resolveWijziging(wijzigingId: $wijzigingId);
 			}
 
@@ -88,8 +88,8 @@ class BegrotingswijzigingGuard {
 				return false;
 			}
 
-			$raadsbesluit = (string)($wijziging['raadsbesluit'] ?? '');
-			return trim($raadsbesluit) !== '';
+			$councilResolution = (string)($wijziging['councilResolution'] ?? '');
+			return trim($councilResolution) !== '';
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BegrotingswijzigingGuard: vaststellen check failed — denying transition (fail-closed)',

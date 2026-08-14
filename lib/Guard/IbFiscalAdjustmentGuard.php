@@ -69,27 +69,27 @@ class IbFiscalAdjustmentGuard {
 	 * correction is 0.0.
 	 *
 	 * @param float $representatiekosten Booked representation costs (>= 0).
-	 * @param float $winstBasis Profit base the 5% cap is computed over.
+	 * @param float $profitBasis Profit base the 5% cap is computed over.
 	 *
 	 * @return float The non-deductible correction to add back to fiscal profit (>= 0).
 	 *
 	 * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
 	 */
-	public function representatieDrempel(float $representatiekosten, float $winstBasis): float {
+	public function representatieDrempel(float $representatiekosten, float $profitBasis): float {
 		$this->logger->debug(
 			'IbFiscalAdjustmentGuard: representatieDrempel',
-			['representatiekosten' => $representatiekosten, 'winstBasis' => $winstBasis]
+			['representatiekosten' => $representatiekosten, 'winstBasis' => $profitBasis]
 		);
 
-		if ($representatiekosten <= 0.0 || $winstBasis <= 0.0) {
+		if ($representatiekosten <= 0.0 || $profitBasis <= 0.0) {
 			return 0.0;
 		}
 
-		$aftrekbaar = ($winstBasis * self::REPRESENTATIE_CAP_RATE);
-		if ($representatiekosten <= $aftrekbaar) {
+		$deductible = ($profitBasis * self::REPRESENTATIE_CAP_RATE);
+		if ($representatiekosten <= $deductible) {
 			return 0.0;
 		}
 
-		return round(($representatiekosten - $aftrekbaar), 2);
+		return round(($representatiekosten - $deductible), 2);
 	}//end representatieDrempel()
 }//end class

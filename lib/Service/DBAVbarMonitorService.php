@@ -69,19 +69,19 @@ class DBAVbarMonitorService {
 	 *   - WARN: rate < threshold and compliance-mode is soft/intermediair;
 	 *   - BLOCK: rate < threshold and compliance-mode is hard.
 	 *
-	 * @param int $bedragCents Factuurbedrag (eurocenten).
-	 * @param float $uren Aantal gefactureerde uren.
+	 * @param int $amountCents Factuurbedrag (eurocenten).
+	 * @param float $hours Aantal gefactureerde uren.
 	 * @param string $administrationId Per-administration scoping.
 	 *
 	 * @return array<string,mixed> { result, uurtariefCents, vbarGrensCents, message }
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function assess(int $bedragCents, float $uren, string $administrationId): array {
+	public function assess(int $amountCents, float $hours, string $administrationId): array {
 		$vbarGrens = DBAConstants::vbarGrensCents($this->appConfig, Application::APP_ID, $administrationId);
 		$mode = DBAConstants::complianceMode($this->appConfig, Application::APP_ID, $administrationId);
 
-		if ($uren <= 0.0 || $bedragCents <= 0) {
+		if ($hours <= 0.0 || $amountCents <= 0) {
 			return [
 				'result' => self::RESULT_OK,
 				'uurtariefCents' => null,
@@ -90,15 +90,15 @@ class DBAVbarMonitorService {
 			];
 		}
 
-		$uurtarief = (int)round($bedragCents / $uren);
-		if ($uurtarief >= $vbarGrens) {
+		$hourlyRate = (int)round($amountCents / $hours);
+		if ($hourlyRate >= $vbarGrens) {
 			return [
 				'result' => self::RESULT_OK,
-				'uurtariefCents' => $uurtarief,
+				'uurtariefCents' => $hourlyRate,
 				'vbarGrensCents' => $vbarGrens,
 				'message' => sprintf(
 					'Effectief uurtarief EUR %.2f voldoet aan VBAR-rechtsvermoeden-grens EUR %.2f.',
-					$uurtarief / 100,
+					$hourlyRate / 100,
 					$vbarGrens / 100
 				),
 			];
@@ -111,11 +111,11 @@ class DBAVbarMonitorService {
 
 		return [
 			'result' => $result,
-			'uurtariefCents' => $uurtarief,
+			'uurtariefCents' => $hourlyRate,
 			'vbarGrensCents' => $vbarGrens,
 			'message' => sprintf(
 				'Effectief uurtarief EUR %.2f onder VBAR-rechtsvermoeden-grens EUR %.2f.',
-				$uurtarief / 100,
+				$hourlyRate / 100,
 				$vbarGrens / 100
 			),
 		];
@@ -127,10 +127,10 @@ class DBAVbarMonitorService {
 	 * Idempotent: a single OPEN flag per (opdrachtId, factuurId) is enforced via
 	 * a details-payload check.
 	 *
-	 * @param string $opdrachtId FK to DBAOpdracht.
+	 * @param string $assignmentId FK to DBAOpdracht.
 	 * @param string $administrationId Administration scoping.
-	 * @param string $factuurId The factuur that triggered the check.
-	 * @param int $uurtariefCents The computed effective rate.
+	 * @param string $invoiceId The factuur that triggered the check.
+	 * @param int $hourlyRateCents The computed effective rate.
 	 * @param int $vbarGrensCents The threshold applied.
 	 *
 	 * @return bool True when a flag record was written.
@@ -138,10 +138,10 @@ class DBAVbarMonitorService {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function emitFlag(
-		string $opdrachtId,
+		string $assignmentId,
 		string $administrationId,
-		string $factuurId,
-		int $uurtariefCents,
+		string $invoiceId,
+		int $hourlyRateCents,
 		int $vbarGrensCents,
 	): bool {
 		try {
@@ -163,7 +163,7 @@ class DBAVbarMonitorService {
 			$existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
 				[
 					'filters' => [
-						'opdrachtId' => $opdrachtId,
+						'assignmentId' => $assignmentId,
 						'type' => 'VBAR_GRENS_ONDERSCHREDEN',
 						'status' => 'OPEN',
 					],
@@ -179,7 +179,7 @@ class DBAVbarMonitorService {
 				}
 
 				if (is_array($arr) === true
-					&& (string)(($arr['details'] ?? [])['factuurId'] ?? '') === $factuurId
+					&& (string)(($arr['details'] ?? [])['invoiceId'] ?? '') === $invoiceId
 				) {
 					return false;
 				}
@@ -195,21 +195,21 @@ class DBAVbarMonitorService {
 			$objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject(
 				[
 					'administrationId' => $administrationId,
-					'opdrachtId' => $opdrachtId,
+					'assignmentId' => $assignmentId,
 					'type' => 'VBAR_GRENS_ONDERSCHREDEN',
 					'detectieMoment' => (new DateTimeImmutable())->format('c'),
 					'ernst' => 'MIDDEN',
 					'details' => [
-						'factuurId' => $factuurId,
-						'uurtariefCents' => $uurtariefCents,
+						'invoiceId' => $invoiceId,
+						'uurtariefCents' => $hourlyRateCents,
 						'vbarGrensCents' => $vbarGrensCents,
 						'peiljaar' => DBAConstants::VBAR_GRENS_PEILJAAR,
 					],
-					'fiscaleBron' => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil ' . DBAConstants::VBAR_GRENS_PEILJAAR . ')',
-					'actieSuggestie' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
+					'fiscalSource' => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil ' . DBAConstants::VBAR_GRENS_PEILJAAR . ')',
+					'actionSuggestion' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
 						. '(motivatie EUR-grens uitzondering).',
 					'status' => 'OPEN',
-					'weergegevenAanGebruiker' => true,
+					'displayedInUser' => true,
 				]
 			);
 			return true;
