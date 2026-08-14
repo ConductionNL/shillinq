@@ -33,7 +33,7 @@
 			:title="t('shillinq', 'Switch administration')"
 			:disabled="loading"
 			:forceName="true"
-			variant="tertiary"
+			type="tertiary"
 			:aria-label="t('shillinq', 'Switch administration')">
 			<template #icon>
 				<OfficeBuilding :size="20" />
