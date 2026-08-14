@@ -292,7 +292,7 @@
 
 		<ReopenPeriodDialog
 			:open="reopenDialogOpen"
-			:period-name="reopenDialogPeriodName"
+			:periodName="reopenDialogPeriodName"
 			:submitting="reopenSubmitting"
 			:error="reopenError"
 			@cancel="closeReopenDialog"
@@ -301,10 +301,9 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
-
+import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 import ReopenPeriodDialog from '../../modals/ReopenPeriodDialog.vue'
 
 const STATE_OPEN = 'open'
@@ -318,6 +317,7 @@ export default {
 		NcButton,
 		ReopenPeriodDialog,
 	},
+
 	props: {
 		// The manifest router passes the route param as `id` for type=detail
 		// pages. Also accept `periodId` for direct usage.
@@ -325,11 +325,13 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		periodId: {
 			type: String,
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			period: null,
@@ -343,14 +345,17 @@ export default {
 			reopenError: '',
 		}
 	},
+
 	computed: {
 		recordId() {
 			return this.id || this.periodId || this.$route?.params?.id || ''
 		},
+
 		stateSlug() {
 			const state = (this.period && this.period.state) || STATE_OPEN
 			return state.replace(/[^a-z0-9]+/gi, '-').toLowerCase()
 		},
+
 		stateLabel() {
 			const state = (this.period && this.period.state) || STATE_OPEN
 			switch (state) {
@@ -366,42 +371,52 @@ export default {
 					return state
 			}
 		},
+
 		canStartClose() {
 			return this.period && this.period.state === STATE_OPEN
 		},
+
 		canClose() {
 			return this.period && this.period.state === STATE_CLOSING
 		},
+
 		canReopen() {
 			return this.period && this.period.state === STATE_CLOSED
 		},
+
 		canLockAudit() {
 			return this.period && this.period.state === STATE_CLOSED
 		},
+
 		checklistItems() {
 			return Array.isArray(this.period?.taskChecklistItems)
 				? this.period.taskChecklistItems
 				: []
 		},
+
 		aiFlags() {
 			return Array.isArray(this.period?.aiFlags) ? this.period.aiFlags : []
 		},
+
 		reopenedHistory() {
 			return Array.isArray(this.period?.reopenedHistory)
 				? this.period.reopenedHistory
 				: []
 		},
+
 		reopenDialogPeriodName() {
 			if (!this.period) {
 				return ''
 			}
 			return this.period.name || this.period.periodId || ''
 		},
+
 		trialBalanceLink() {
 			const periodId = encodeURIComponent(this.period?.periodId || '')
 			return generateUrl(`/apps/shillinq/trial-balance?periodId=${periodId}`)
 		},
 	},
+
 	watch: {
 		recordId(next, prev) {
 			if (next && next !== prev) {
@@ -409,9 +424,11 @@ export default {
 			}
 		},
 	},
+
 	created() {
 		this.load()
 	},
+
 	methods: {
 		async load() {
 			if (!this.recordId) {
@@ -442,6 +459,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		formatDate(value) {
 			if (!value) {
 				return '—'
@@ -456,6 +474,7 @@ export default {
 				return value
 			}
 		},
+
 		formatTimestamp(value) {
 			if (!value) {
 				return '—'
@@ -470,6 +489,7 @@ export default {
 				return value
 			}
 		},
+
 		categoryLabel(category) {
 			switch (category) {
 				case 'ap':
@@ -484,21 +504,25 @@ export default {
 					return category || t('shillinq', 'Other')
 			}
 		},
+
 		async onStartClose() {
 			await this.transition(
 				'start-close',
 				t('shillinq', 'Period close initiated.'),
 			)
 		},
+
 		async onClose() {
 			await this.transition('close', t('shillinq', 'Period closed.'))
 		},
+
 		async onLockAudit() {
 			await this.transition(
 				'lock-audit',
 				t('shillinq', 'Period locked for audit.'),
 			)
 		},
+
 		async transition(action, successMessage, body = {}) {
 			if (!this.recordId) {
 				return
@@ -527,10 +551,12 @@ export default {
 				this.transitioning = false
 			}
 		},
+
 		openReopenDialog() {
 			this.reopenError = ''
 			this.reopenDialogOpen = true
 		},
+
 		closeReopenDialog() {
 			if (this.reopenSubmitting) {
 				return
@@ -538,6 +564,7 @@ export default {
 			this.reopenDialogOpen = false
 			this.reopenError = ''
 		},
+
 		async onReopenConfirmed(closeReason) {
 			if (!this.recordId) {
 				return
@@ -571,6 +598,7 @@ export default {
 				this.reopenSubmitting = false
 			}
 		},
+
 		extractErrorMessage(err, fallback) {
 			const status = err?.response?.status
 			const message = err?.response?.data?.message

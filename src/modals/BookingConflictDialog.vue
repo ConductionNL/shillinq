@@ -92,6 +92,7 @@ export default {
 		conflicts: { type: Array, default: () => [] },
 		timeZone: { type: String, default: 'Europe/Amsterdam' },
 	},
+
 	emits: ['confirm', 'cancel'],
 	methods: {
 		label(key) {
@@ -100,6 +101,7 @@ export default {
 			}
 			return key
 		},
+
 		formatTime(iso) {
 			if (!iso) {
 				return ''

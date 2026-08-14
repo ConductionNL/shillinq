@@ -19,9 +19,9 @@
 </template>
 
 <script>
+import { CnChartWidget } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import { NcLoadingIcon } from '@nextcloud/vue'
-import { CnChartWidget } from '@conduction/nextcloud-vue'
 import chartWidgetMixin from './chartWidgetMixin.js'
 import { forecastByMonth, formatEur, monthLabel } from './financialSeries.js'
 
@@ -39,9 +39,11 @@ export default {
 			const lastRealized = this.months[this.months.length - 1]
 			return forecastByMonth(this.financialData.cashflowWeeks, lastRealized)
 		},
+
 		categories() {
 			return [...this.monthLabels, ...this.forecast.months.map(monthLabel)]
 		},
+
 		series() {
 			if (!this.glSeries) return []
 			const realizedCount = this.months.length
@@ -89,6 +91,7 @@ export default {
 			}
 			return series
 		},
+
 		options() {
 			const colors = ['#46ba61', '#e04224']
 			if (this.forecast.months.length > 0)
@@ -99,6 +102,7 @@ export default {
 				stroke: {
 					width: this.series.map((s) => (s.type === 'line' ? 3 : 0)),
 				},
+
 				plotOptions: { bar: { columnWidth: '60%', borderRadius: 2 } },
 				yaxis: { labels: { formatter: (value) => formatEur(value) } },
 				tooltip: {

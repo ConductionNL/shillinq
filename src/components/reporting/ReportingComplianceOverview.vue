@@ -74,7 +74,7 @@
 					data-testid="reporting-overview-kpi"
 					:title="t('shillinq', 'Available reports')"
 					:count="reports.length"
-					:count-label="t('shillinq', 'report types')"
+					:countLabel="t('shillinq', 'report types')"
 					variant="default"
 					:loading="loading" />
 				<router-link
@@ -220,8 +220,8 @@
 			v-if="dialogReport"
 			:report="dialogReport"
 			:format="selectedFormat[dialogReport.id]"
-			:administration-options="administrationOptions"
-			:default-administration-id="activeAdministrationId"
+			:administrationOptions="administrationOptions"
+			:defaultAdministrationId="activeAdministrationId"
 			@close="dialogReport = null"
 			@generated="onGenerated" />
 	</div>
@@ -229,13 +229,12 @@
 
 <script>
 import { CnStatsBlock } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
-import { showError, showSuccess } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
-
+import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import GenerateReportDialog from '../../modals/GenerateReportDialog.vue'
-import { reportViews, reportViewCategories } from './reportViews.js'
+import { reportViewCategories, reportViews } from './reportViews.js'
 
 export default {
 	name: 'ReportingComplianceOverview',
@@ -243,6 +242,7 @@ export default {
 		CnStatsBlock,
 		GenerateReportDialog,
 	},
+
 	data() {
 		return {
 			reports: [],
@@ -257,6 +257,7 @@ export default {
 			activeAdministrationId: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * Category select options, in catalogue order, restricted to the
@@ -268,6 +269,7 @@ export default {
 				.filter((key) => present.has(key))
 				.map((key) => ({ value: key, label: this.categories[key] }))
 		},
+
 		/**
 		 * The catalogue filtered by the category select + the free-text
 		 * search, then grouped by category in catalogue-declared order. The
@@ -309,10 +311,12 @@ export default {
 			}))
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadTypes()
 	},
+
 	methods: {
 		t,
 		/**
@@ -362,6 +366,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Best-effort administration context so the generate dialog can
 		 * pre-select the active administration and offer a switcher. A
@@ -386,9 +391,11 @@ export default {
 				this.administrationOptions = []
 			}
 		},
+
 		openGenerate(report) {
 			this.dialogReport = report
 		},
+
 		/**
 		 * The dialog POSTed /api/reporting/generate successfully; surface a
 		 * toast linking to the file and point the user at the index.
@@ -415,9 +422,11 @@ export default {
 				showSuccess(this.t('shillinq', 'Report generated.'))
 			}
 		},
+
 		onGenerateError(message) {
 			showError(message || this.t('shillinq', 'Report generation failed'))
 		},
+
 		kindLabel(kind) {
 			if (kind === 'document') {
 				return this.t('shillinq', 'Document')

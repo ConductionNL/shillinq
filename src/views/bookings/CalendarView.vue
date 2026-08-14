@@ -141,6 +141,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Initial view mode.
 		 */
@@ -149,6 +150,7 @@ export default {
 			default: 'month',
 			validator: (v) => ['month', 'week', 'day'].includes(v),
 		},
+
 		/**
 		 * Initial date (ISO-8601) to display; defaults to today.
 		 */
@@ -156,6 +158,7 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * Optional pre-loaded bookings (used by tests / parent-driven data).
 		 * When empty the component fetches from the API on mount.
@@ -250,6 +253,7 @@ export default {
 		view(v) {
 			this.currentView = v
 		},
+
 		initialBookings(v) {
 			this.bookings = [...v]
 		},

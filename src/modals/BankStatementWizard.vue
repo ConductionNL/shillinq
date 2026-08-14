@@ -39,14 +39,14 @@
 					{{ t('shillinq', 'How does your bank export statements?') }}
 				</p>
 				<NcSelect
-					:model-value="selectedFormatOption"
+					:modelValue="selectedFormatOption"
 					:options="formatSelectOptions"
-					:input-label="t('shillinq', 'Statement format')"
+					:inputLabel="t('shillinq', 'Statement format')"
 					:clearable="false"
 					label="display"
-					track-by="value"
+					trackBy="value"
 					data-testid="bsw-format"
-					@update:model-value="onFormatSelected" />
+					@update:modelValue="onFormatSelected" />
 
 				<p
 					v-if="form.format"
@@ -171,18 +171,18 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import { showError } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import {
+	buildImportPayload,
 	formatOptions,
 	loadIbanMapping,
 	saveIbanMapping,
-	buildImportPayload,
 	setReturnBreadcrumb,
 } from './bankStatementWizard.js'
 
@@ -195,6 +195,7 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close', 'imported'],
 	data() {
 		return {
@@ -212,6 +213,7 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		formatSelectOptions() {
@@ -221,6 +223,7 @@ export default {
 				{ value: 'csv', display: t('shillinq', 'CSV') },
 			]
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		selectedFormatOption() {
 			return (
@@ -228,6 +231,7 @@ export default {
 				|| null
 			)
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		formatInstructions() {
 			const map = {
@@ -235,10 +239,12 @@ export default {
 					'shillinq',
 					'Most Dutch banks (ING, Rabobank, ABN AMRO, SNS). Export from your bank: Downloads → Account overview → Format: CAMT.053 → Date range: last 30 days.',
 				),
+
 				mt940: t(
 					'shillinq',
 					'Older SWIFT format (Triodos, some ING accounts). Export the MT940 / .STA file from your bank portal.',
 				),
+
 				csv: t(
 					'shillinq',
 					'Custom export with a header row (valueDate, amount, currency, remittanceInfo, counterpartyName, counterpartyIban).',
@@ -246,19 +252,25 @@ export default {
 			}
 			return map[this.form.format] || ''
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		canLeaveStep1() {
 			return Boolean(this.form.format) && Boolean(this.form.contents)
 		},
 	},
+
 	watch: {
-		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
+		/**
+		 * @param next
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		open(next) {
 			if (next === true) {
 				this.reset()
 			}
 		},
 	},
+
 	methods: {
 		t,
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
@@ -271,16 +283,28 @@ export default {
 			this.statementName = ''
 			this.form = { format: '', contents: '', fileName: '', glAccountId: '' }
 		},
-		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/**
+		 * @param format
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		acceptFor(format) {
 			const opt = formatOptions().find((o) => o.value === format)
 			return opt ? opt.accept : ''
 		},
-		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/**
+		 * @param option
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		onFormatSelected(option) {
 			this.form.format = option ? String(option.value) : ''
 		},
-		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/**
+		 * @param event
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		onFileChosen(event) {
 			const file = event?.target?.files?.[0]
 			if (!file) {
@@ -296,6 +320,7 @@ export default {
 			}
 			reader.readAsText(file)
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		extractStatementMeta() {
 			// Lightweight pre-parse: pull the first IBAN-shaped token so the
@@ -305,6 +330,7 @@ export default {
 			)
 			this.statementIban = m ? m[1] : ''
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		advanceFromStep1() {
 			if (!this.canLeaveStep1) return
@@ -318,12 +344,14 @@ export default {
 			}
 			this.step = 2
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		advanceFromStep2() {
 			if (!this.form.glAccountId) return
 			this.step = 3
 			this.runImport()
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		async runImport() {
 			this.importing = true
@@ -349,6 +377,7 @@ export default {
 				this.importing = false
 			}
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		reviewMatches() {
 			if (!this.result) return
@@ -358,17 +387,20 @@ export default {
 			this.$emit('close')
 			this.$router.push({ name: 'BankReconciliation' })
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		refreshDashboardWidgets() {
 			// REQ-BSW-005: reload the payables + receivables widgets.
 			emit('cn:widget:refresh', { widget: 'widget-open-debtors' })
 			emit('cn:widget:refresh', { widget: 'widget-open-creditors' })
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		goToBankConnections() {
 			this.$emit('close')
 			window.location.href = generateUrl('/settings/admin/shillinq')
 		},
+
 		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		onClose() {
 			if (this.importing) return

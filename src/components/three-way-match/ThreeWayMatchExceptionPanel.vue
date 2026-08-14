@@ -216,8 +216,8 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 const EXCEPTION_STATUSES = [
 	'exception_price',
@@ -237,6 +237,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Administration scope — supplied by the parent shell.
 		 */
@@ -245,6 +246,7 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			match: null,
@@ -259,6 +261,7 @@ export default {
 			dispatch: null,
 		}
 	},
+
 	computed: {
 		isResolved() {
 			if (!this.match) {
@@ -266,9 +269,11 @@ export default {
 			}
 			return !!(this.match.resolutionAction || this.match.resolvedAt)
 		},
+
 		statusPillClass() {
 			return this.match ? `twm-exception__pill--${this.match.matchStatus}` : ''
 		},
+
 		comparisonRows() {
 			const po = this.po || {}
 			const grn = this.grn || {}
@@ -304,6 +309,7 @@ export default {
 				},
 			]
 		},
+
 		divergenceRows() {
 			if (!this.match || !Array.isArray(this.match.divergenceDetails)) {
 				return []
@@ -311,9 +317,11 @@ export default {
 			return this.match.divergenceDetails
 		},
 	},
+
 	async created() {
 		await this.loadMatch()
 	},
+
 	methods: {
 		async loadMatch() {
 			this.loading = true
@@ -335,6 +343,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async loadRelated() {
 			// best-effort related-record load — the panel still renders the
 			// comparison block with placeholders when a PO or GRN cannot be
@@ -357,6 +366,7 @@ export default {
 			}
 			await Promise.all(tasks)
 		},
+
 		async loadInvoice() {
 			try {
 				const response = await axios.get(
@@ -369,6 +379,7 @@ export default {
 				this.invoice = null
 			}
 		},
+
 		async loadPo(poId) {
 			try {
 				const response = await axios.get(
@@ -381,6 +392,7 @@ export default {
 				this.po = null
 			}
 		},
+
 		async loadGrn(grnId) {
 			try {
 				const response = await axios.get(
@@ -393,21 +405,25 @@ export default {
 				this.grn = null
 			}
 		},
+
 		async onAccept() {
 			await this.submitResolution('/api/three-way-match/exceptions/accept', {
 				resolutionNotes: this.notes.trim(),
 			})
 		},
+
 		async onDispute() {
 			await this.submitResolution('/api/three-way-match/exceptions/dispute', {
 				disputeReason: this.notes.trim(),
 			})
 		},
+
 		async onReject() {
 			await this.submitResolution('/api/three-way-match/exceptions/reject', {
 				rejectionReason: this.notes.trim(),
 			})
 		},
+
 		async submitResolution(path, extra) {
 			if (this.notes.trim() === '') {
 				this.actionError = this.t(
@@ -444,6 +460,7 @@ export default {
 				this.submitting = false
 			}
 		},
+
 		statusLabel(matchStatus) {
 			const labels = {
 				exception_price: this.t('shillinq', 'Price exception'),
@@ -456,6 +473,7 @@ export default {
 			}
 			return labels[matchStatus] || matchStatus || '—'
 		},
+
 		resolutionActionLabel(action) {
 			const labels = {
 				accepted: this.t('shillinq', 'Accepted with motivation'),
@@ -464,12 +482,14 @@ export default {
 					'shillinq',
 					'Dispute filed (UBL CreditNote)',
 				),
+
 				supplier_contacted: this.t('shillinq', 'Supplier contacted'),
 				po_adjusted: this.t('shillinq', 'PO adjusted'),
 				tolerance_override: this.t('shillinq', 'Tolerance override'),
 			}
 			return labels[action] || action || '—'
 		},
+
 		formatMoney(cents) {
 			if (cents === null || cents === undefined) {
 				return '—'
@@ -477,12 +497,14 @@ export default {
 			const currency = this.invoice?.currency || this.po?.currency || 'EUR'
 			return `${currency} ${(Number(cents) / 100).toFixed(2)}`
 		},
+
 		formatBasisPoints(bps) {
 			if (bps === null || bps === undefined) {
 				return '—'
 			}
 			return `${(Number(bps) / 100).toFixed(2)}%`
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'
@@ -493,6 +515,7 @@ export default {
 				return iso
 			}
 		},
+
 		formatTimestamp(iso) {
 			if (!iso) {
 				return '—'

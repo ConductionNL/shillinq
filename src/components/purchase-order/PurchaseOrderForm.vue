@@ -30,7 +30,7 @@
 				<NcSelect
 					v-model="administrationId"
 					:options="administrationOptions"
-					:input-label="t('shillinq', 'Administration')"
+					:inputLabel="t('shillinq', 'Administration')"
 					:reduce="(o) => o.value"
 					data-testid="po-form-administration" />
 
@@ -87,7 +87,7 @@
 								<NcTextField
 									v-model="line.productCode"
 									:label="t('shillinq', 'Product code')"
-									:show-trailing-button="false" />
+									:showTrailingButton="false" />
 							</td>
 							<td>
 								<NcInputField
@@ -114,7 +114,7 @@
 								<NcTextField
 									v-model="line.glAccount"
 									:label="t('shillinq', 'GL account')"
-									:show-trailing-button="false" />
+									:showTrailingButton="false" />
 							</td>
 							<td>{{ formatMoney(lineTotal(line)) }}</td>
 							<td>
@@ -197,6 +197,8 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcInputField,
@@ -204,8 +206,6 @@ import {
 	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
-import axios from '@nextcloud/axios'
 
 export default {
 	name: 'PurchaseOrderForm',
@@ -216,6 +216,7 @@ export default {
 		NcInputField,
 		NcSelect,
 	},
+
 	data() {
 		return {
 			administrationId: '',
@@ -231,6 +232,7 @@ export default {
 			submitting: false,
 		}
 	},
+
 	computed: {
 		/**
 		 * PO total in euro, summed from line totals using integer cents.
@@ -245,6 +247,7 @@ export default {
 			return cents / 100
 		},
 	},
+
 	watch: {
 		// Refresh the chain preview whenever the total changes, debounced by Vue's
 		// reactivity batching. Server-authoritative — never compute locally.
@@ -255,9 +258,11 @@ export default {
 			},
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 	},
+
 	methods: {
 		emptyLine() {
 			return {
@@ -268,24 +273,29 @@ export default {
 				glAccount: '',
 			}
 		},
+
 		addLine() {
 			this.lines.push(this.emptyLine())
 		},
+
 		removeLine(idx) {
 			this.lines.splice(idx, 1)
 			if (this.lines.length === 0) {
 				this.lines.push(this.emptyLine())
 			}
 		},
+
 		lineTotal(line) {
 			const qty = Number(line.quantity) || 0
 			const unit = Number(line.unitPrice) || 0
 			return Math.round(qty * unit * 100) / 100
 		},
+
 		formatMoney(amount) {
 			const symbol = this.currency || 'EUR'
 			return `${symbol} ${Number(amount || 0).toFixed(2)}`
 		},
+
 		roleLabel(role) {
 			const labels = {
 				teamleider: this.t('shillinq', 'Team lead'),
@@ -294,6 +304,7 @@ export default {
 			}
 			return labels[role] || role
 		},
+
 		async loadAdministrationContext() {
 			try {
 				const response = await axios.get(
@@ -315,6 +326,7 @@ export default {
 				)
 			}
 		},
+
 		async refreshApprovalChain(amount) {
 			if (!amount || amount <= 0) {
 				this.approvalChain = []
@@ -330,6 +342,7 @@ export default {
 				this.approvalChain = []
 			}
 		},
+
 		async onSubmit() {
 			this.error = ''
 			if (!this.administrationId) {

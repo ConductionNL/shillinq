@@ -178,14 +178,14 @@ export function refreshEventPayload() {
 // ---------------------------------------------------------------------------
 
 export {
-	REVIEW_THRESHOLD,
-	ONE_CLICK_CONFIDENCE_GATE,
-	isExtractionDraft,
 	confidenceForField,
-	isFieldCorrected,
-	requiresExplicitReview,
-	hasKnownExtractionId,
 	glAccountSuggestionSummary,
+	hasKnownExtractionId,
+	isExtractionDraft,
+	isFieldCorrected,
+	ONE_CLICK_CONFIDENCE_GATE,
+	requiresExplicitReview,
+	REVIEW_THRESHOLD,
 } from '../utils/extractionConfidence.js'
 
 /**

@@ -178,8 +178,8 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'SupplierInvoiceDetail',
@@ -192,6 +192,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			invoice: null,
@@ -200,6 +201,7 @@ export default {
 			error: '',
 		}
 	},
+
 	computed: {
 		isPdfIngestion() {
 			if (!this.invoice) {
@@ -215,6 +217,7 @@ export default {
 				&& this.invoice.ocrConfidenceScore !== undefined
 			)
 		},
+
 		isUblIngestion() {
 			if (!this.invoice) {
 				return false
@@ -224,10 +227,12 @@ export default {
 			}
 			return !!this.invoice.ublSourceUri || !!this.invoice.peppolReceivedAt
 		},
+
 		ocrPercent() {
 			const score = Number(this.invoice?.ocrConfidenceScore || 0)
 			return `${Math.round(score * 100)}%`
 		},
+
 		ocrConfidenceTier() {
 			const score = Number(this.invoice?.ocrConfidenceScore || 0)
 			if (score >= 0.9) {
@@ -238,6 +243,7 @@ export default {
 			}
 			return 'low'
 		},
+
 		ocrConfidenceTierLabel() {
 			const map = {
 				high: this.t('shillinq', 'High'),
@@ -246,13 +252,16 @@ export default {
 			}
 			return map[this.ocrConfidenceTier]
 		},
+
 		isLowConfidence() {
 			return this.ocrConfidenceTier === 'low'
 		},
 	},
+
 	async created() {
 		await this.loadInvoice()
 	},
+
 	methods: {
 		async loadInvoice() {
 			this.loading = true
@@ -274,6 +283,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async loadMatches() {
 			// ThreeWayMatch records are populated by slice 06; gracefully fall
 			// through to the empty state when the lookup isn't available yet.
@@ -289,6 +299,7 @@ export default {
 				this.matches = []
 			}
 		},
+
 		statusLabel(statusCode) {
 			const labels = {
 				received: this.t('shillinq', 'Received'),
@@ -301,6 +312,7 @@ export default {
 			}
 			return labels[statusCode] || statusCode || '—'
 		},
+
 		formatMoney(cents) {
 			if (cents === null || cents === undefined) {
 				return '—'
@@ -308,9 +320,11 @@ export default {
 			const currency = this.invoice?.currency || 'EUR'
 			return `${currency} ${(Number(cents) / 100).toFixed(2)}`
 		},
+
 		formatPct(rate) {
 			return `${(Number(rate || 0) * 100).toFixed(2)}%`
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'
@@ -321,6 +335,7 @@ export default {
 				return iso
 			}
 		},
+
 		formatTimestamp(iso) {
 			if (!iso) {
 				return '—'

@@ -138,6 +138,7 @@ export default {
 		bookingId: { type: String, required: true },
 		triggers: { type: Array, default: () => [] },
 	},
+
 	emits: ['save', 'cancel'],
 	data() {
 		return {
@@ -148,12 +149,14 @@ export default {
 			allChannels: ['email', 'sms', 'chat', 'teams', 'slack'],
 		}
 	},
+
 	watch: {
 		open(val) {
 			if (val === true) {
 				this.reset()
 			}
 		},
+
 		triggers: {
 			immediate: true,
 			handler() {
@@ -161,6 +164,7 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		/**
 		 * Translate UI strings via Nextcloud's t() helper when available.
@@ -174,6 +178,7 @@ export default {
 			}
 			return key
 		},
+
 		/**
 		 * Human-readable channel label.
 		 *
@@ -190,6 +195,7 @@ export default {
 			}
 			return map[channel] || channel
 		},
+
 		/**
 		 * Reset the editable copy from the incoming triggers prop.
 		 */
@@ -204,6 +210,7 @@ export default {
 			}))
 			this.error = ''
 		},
+
 		/**
 		 * Set the enabled/disabled status of one trigger.
 		 *
@@ -213,6 +220,7 @@ export default {
 		setEnabled(trigger, enabled) {
 			trigger.status = enabled ? 'enabled' : 'disabled'
 		},
+
 		/**
 		 * Toggle a channel on / off for one trigger.
 		 *
@@ -228,6 +236,7 @@ export default {
 				trigger.channels.splice(idx, 1)
 			}
 		},
+
 		/**
 		 * Emit the save payload — caller persists.
 		 */

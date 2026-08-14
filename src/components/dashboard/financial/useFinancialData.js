@@ -6,9 +6,9 @@
 // dashboard page load issues exactly one request per schema no
 // matter how many widgets mount.
 
-import { ref } from 'vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { ref } from 'vue'
 
 const REGISTER_SLUG = 'shillinq'
 const PAGE_LIMIT = 2000
@@ -76,6 +76,9 @@ async function fetchAll() {
  *   data: import('vue').Ref<object|null>, load: Function, reload: Function }}
  */
 export function useFinancialData() {
+	/**
+	 *
+	 */
 	function load() {
 		if (!inflight) {
 			loading.value = true
@@ -91,6 +94,9 @@ export function useFinancialData() {
 		return inflight
 	}
 
+	/**
+	 *
+	 */
 	function reload() {
 		inflight = null
 		return load()

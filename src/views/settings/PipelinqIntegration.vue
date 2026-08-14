@@ -49,7 +49,7 @@
 				</p>
 			</div>
 
-			<div v-if="feedback" :class="['feedback', feedback.kind]">
+			<div v-if="feedback" class="feedback" :class="[feedback.kind]">
 				{{ feedback.message }}
 			</div>
 
@@ -73,9 +73,9 @@
 </template>
 
 <script>
+import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
-import { CnSettingsSection } from '@conduction/nextcloud-vue'
 
 /**
  * Admin settings panel for the pipelinq integration connection
@@ -94,12 +94,14 @@ export default {
 		NcButton,
 		CnSettingsSection,
 	},
+
 	data() {
 		return {
 			form: {
 				endpoint: '',
 				token: '',
 			},
+
 			hasToken: false,
 			saving: false,
 			testing: false,
@@ -107,9 +109,11 @@ export default {
 			maskedPlaceholder: '••••••••••••',
 		}
 	},
+
 	async created() {
 		await this.fetchSettings()
 	},
+
 	methods: {
 		async fetchSettings() {
 			try {
@@ -128,6 +132,7 @@ export default {
 				console.error('Failed to fetch pipelinq settings:', error)
 			}
 		},
+
 		async save() {
 			this.saving = true
 			this.feedback = null
@@ -179,6 +184,7 @@ export default {
 				this.saving = false
 			}
 		},
+
 		async test() {
 			this.testing = true
 			this.feedback = null

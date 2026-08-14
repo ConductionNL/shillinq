@@ -1,15 +1,15 @@
+import {
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { createApp, h } from 'vue'
+import AdminRoot from './views/settings/AdminRoot.vue'
+import pinia from './pinia.js'
+
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.
 import './setPublicPath.js'
-
-import { createApp, h } from 'vue'
-import {
-	translate as t,
-	translatePlural as n,
-	loadTranslations,
-} from '@nextcloud/l10n'
-import pinia from './pinia.js'
-import AdminRoot from './views/settings/AdminRoot.vue'
 
 // Mount OUTSIDE the loadTranslations callback.
 //

@@ -27,7 +27,7 @@
 				<NcSelect
 					v-model="administrationId"
 					:options="administrationOptions"
-					:input-label="t('shillinq', 'Administration')"
+					:inputLabel="t('shillinq', 'Administration')"
 					:reduce="(o) => o.value"
 					data-testid="grn-form-administration" />
 
@@ -35,7 +35,7 @@
 					v-model="selectedPoIds"
 					multiple
 					:options="poOptions"
-					:input-label="t('shillinq', 'Purchase order(s)')"
+					:inputLabel="t('shillinq', 'Purchase order(s)')"
 					:reduce="(o) => o.value"
 					data-testid="grn-form-pos" />
 
@@ -123,7 +123,7 @@
 								<NcSelect
 									v-model="lineState[line.id].rejectionReason"
 									:options="rejectionReasonOptions"
-									:input-label="t('shillinq', 'Rejection reason')"
+									:inputLabel="t('shillinq', 'Rejection reason')"
 									:reduce="(o) => o.value" />
 							</label>
 
@@ -134,7 +134,7 @@
 									:label="
 										t('shillinq', 'Batch reference (optional)')
 									"
-									:show-trailing-button="false" />
+									:showTrailingButton="false" />
 							</label>
 						</div>
 					</li>
@@ -186,9 +186,9 @@
 </template>
 
 <script>
-import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
 
 export default {
 	name: 'GoodsReceiptNoteForm',
@@ -198,6 +198,7 @@ export default {
 		NcInputField,
 		NcSelect,
 	},
+
 	data() {
 		return {
 			administrationId: '',
@@ -214,6 +215,7 @@ export default {
 			submitting: false,
 		}
 	},
+
 	computed: {
 		canSubmit() {
 			if (!this.administrationId) {
@@ -227,6 +229,7 @@ export default {
 				(entry) => Number(entry.quantityReceived) > 0,
 			)
 		},
+
 		rejectionReasonOptions() {
 			return [
 				{ value: 'schade', label: this.t('shillinq', 'Damage') },
@@ -244,18 +247,22 @@ export default {
 			]
 		},
 	},
+
 	watch: {
 		selectedPoIds: {
 			handler() {
 				this.refreshLines()
 			},
+
 			deep: true,
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadOpenPurchaseOrders()
 	},
+
 	methods: {
 		async loadAdministrationContext() {
 			try {
@@ -277,6 +284,7 @@ export default {
 				)
 			}
 		},
+
 		async loadOpenPurchaseOrders() {
 			try {
 				const response = await axios.get(
@@ -301,6 +309,7 @@ export default {
 				this.poOptions = []
 			}
 		},
+
 		async refreshLines() {
 			if (this.selectedPoIds.length === 0) {
 				this.availableLines = []
@@ -340,6 +349,7 @@ export default {
 			}
 			this.lineState = nextState
 		},
+
 		onPhotoSelected(event) {
 			const files = Array.from(event.target.files || [])
 			// File-id resolution is delegated to docudesk on submit; here we
@@ -352,9 +362,11 @@ export default {
 				})
 			}
 		},
+
 		formatQty(qty) {
 			return Number(qty || 0).toFixed(3)
 		},
+
 		async uploadPhotosToDocudesk() {
 			if (this.photos.length === 0) {
 				return []
@@ -380,6 +392,7 @@ export default {
 			}
 			return ids
 		},
+
 		async onSubmit() {
 			this.error = ''
 			if (!this.canSubmit) {

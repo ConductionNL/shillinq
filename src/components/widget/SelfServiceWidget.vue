@@ -264,35 +264,43 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		apiBase: {
 			type: String,
 			required: true,
 		},
+
 		apiKey: {
 			type: String,
 			required: true,
 		},
+
 		resourceId: {
 			type: String,
 			default: DEFAULT_RESOURCE_ID,
 		},
+
 		lang: {
 			type: String,
 			default: 'en',
 		},
+
 		primaryColor: {
 			type: String,
 			default: '',
 		},
+
 		darkMode: {
 			type: Boolean,
 			default: false,
 		},
+
 		translations: {
 			type: Object,
 			default: () => ({}),
 		},
 	},
+
 	data() {
 		const uid = Math.random().toString(36).slice(2, 10)
 		return {
@@ -325,14 +333,17 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		rootClass() {
 			return ['wsw-widget', { 'wsw-widget--dark': this.darkMode }]
 		},
+
 		todayIso() {
 			const today = new Date()
 			return today.toISOString().substring(0, 10)
 		},
+
 		stepLabel() {
 			const steps = {
 				service: this.t('Select a service'),
@@ -343,12 +354,14 @@ export default {
 			}
 			return steps[this.step] || ''
 		},
+
 		selectedServiceName() {
 			const found = this.services.find(
 				(s) => s.serviceId === this.selectedServiceId,
 			)
 			return found ? found.name : ''
 		},
+
 		detailsValid() {
 			this.validateDetails()
 			return (
@@ -359,12 +372,14 @@ export default {
 			)
 		},
 	},
+
 	mounted() {
 		if (this.primaryColor) {
 			this.$el.style.setProperty('--wsw-primary-color', this.primaryColor)
 		}
 		this.loadServices()
 	},
+
 	methods: {
 		// i18n: prefer the supplied translation table, fall back to the source
 		// English string. The widget never reaches for a global Nextcloud
@@ -375,11 +390,13 @@ export default {
 			}
 			return key
 		},
+
 		defaultDate() {
 			const tomorrow = new Date()
 			tomorrow.setDate(tomorrow.getDate() + 1)
 			return tomorrow.toISOString().substring(0, 10)
 		},
+
 		slotClasses(slot) {
 			return [
 				'wsw-widget__slot',
@@ -390,6 +407,7 @@ export default {
 				},
 			]
 		},
+
 		formatTime(iso) {
 			try {
 				const date = new Date(iso)
@@ -401,12 +419,14 @@ export default {
 				return iso
 			}
 		},
+
 		authHeaders() {
 			return {
 				'Content-Type': 'application/json',
 				Authorization: 'Bearer ' + this.apiKey,
 			}
 		},
+
 		buildUrl(path, params) {
 			const url = new URL(
 				this.apiBase.replace(/\/$/, '') + path,
@@ -420,6 +440,7 @@ export default {
 			}
 			return url.toString()
 		},
+
 		async loadServices() {
 			this.loadingServices = true
 			this.servicesError = ''
@@ -450,6 +471,7 @@ export default {
 				this.loadingServices = false
 			}
 		},
+
 		async goToDateStep() {
 			if (!this.selectedServiceId) {
 				return
@@ -457,6 +479,7 @@ export default {
 			this.step = 'datetime'
 			await this.loadSlots()
 		},
+
 		async loadSlots() {
 			this.slotsError = ''
 			this.slots = []
@@ -499,6 +522,7 @@ export default {
 				)
 			}
 		},
+
 		validateDetails() {
 			const nameLength = (this.customerName || '').trim().length
 			this.errors.name =
@@ -525,6 +549,7 @@ export default {
 					? ''
 					: this.t('Notes must be at most 500 characters')
 		},
+
 		async submit() {
 			if (!this.selectedSlot) {
 				return

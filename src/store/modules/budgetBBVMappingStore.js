@@ -34,12 +34,12 @@
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
 
-import { generateUrl } from '@nextcloud/router'
 import {
+	auditTrailsPlugin,
 	createObjectStore,
 	relationsPlugin,
-	auditTrailsPlugin,
 } from '@conduction/nextcloud-vue'
+import { generateUrl } from '@nextcloud/router'
 
 // Slug used by the index page when calling fetchCollection / fetchObject.
 const TYPE_SLUG = 'budgetBBVMapping'
@@ -78,4 +78,4 @@ export function useBudgetBBVMappingStore() {
 	return store
 }
 
-export { TYPE_SLUG, REGISTER_SLUG, SCHEMA_SLUG }
+export { REGISTER_SLUG, SCHEMA_SLUG, TYPE_SLUG }

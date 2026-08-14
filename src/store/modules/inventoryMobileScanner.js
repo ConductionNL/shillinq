@@ -22,13 +22,13 @@
 
 import { defineStore } from 'pinia'
 import {
-	initDB,
 	applyDelta,
+	initDB,
 	insertPendingOp,
-	readUnsyncedOps,
-	readStockQuantity,
-	replaceLocations,
 	purgeOldPendingOps,
+	readStockQuantity,
+	readUnsyncedOps,
+	replaceLocations,
 } from '../../composables/useInventoryDb.js'
 import {
 	createSyncScheduler,

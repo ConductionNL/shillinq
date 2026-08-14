@@ -77,6 +77,7 @@ export default {
 			busy: false,
 		}
 	},
+
 	methods: {
 		async post(path, body) {
 			this.busy = true
@@ -101,6 +102,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		/**
 		 * Mint the FIRST key for a businessId (REQ-WSW-009 §1).
 		 *
@@ -124,6 +126,7 @@ export default {
 			}
 			this.message = result.message || ''
 		},
+
 		/**
 		 * Replace an existing key; the predecessor keeps working for 7 days.
 		 *
@@ -140,6 +143,7 @@ export default {
 			}
 			this.message = result.message || ''
 		},
+
 		async revoke() {
 			this.plaintextKey = ''
 			const result = await this.post('widget/admin/keys/revoke', {

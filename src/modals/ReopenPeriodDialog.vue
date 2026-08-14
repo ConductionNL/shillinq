@@ -107,30 +107,36 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		periodName: {
 			type: String,
 			default: '',
 		},
+
 		submitting: {
 			type: Boolean,
 			default: false,
 		},
+
 		error: {
 			type: String,
 			default: '',
 		},
 	},
+
 	emits: ['cancel', 'confirm'],
 	data() {
 		return {
 			closeReason: '',
 		}
 	},
+
 	computed: {
 		canConfirm() {
 			return !this.submitting && this.closeReason.trim().length > 0
 		},
 	},
+
 	watch: {
 		open(next) {
 			if (next === true) {
@@ -146,6 +152,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		onCancel() {
 			if (this.submitting) {
@@ -153,6 +160,7 @@ export default {
 			}
 			this.$emit('cancel')
 		},
+
 		onConfirm() {
 			if (!this.canConfirm) {
 				return

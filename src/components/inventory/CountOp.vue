@@ -93,7 +93,7 @@
 
 		<BarcodeScanner
 			v-if="scanning"
-			fallback-to-manual
+			fallbackToManual
 			@scan="handleScan"
 			@cancel="scanning = false" />
 	</section>
@@ -121,10 +121,12 @@ export default {
 			lastSubmittedAt: 0,
 		}
 	},
+
 	computed: {
 		store() {
 			return useInventoryMobileScannerStore()
 		},
+
 		variance() {
 			if (this.systemQuantity === null || this.physicalQuantity === null) {
 				return null
@@ -132,19 +134,23 @@ export default {
 			return Number(this.physicalQuantity) - Number(this.systemQuantity)
 		},
 	},
+
 	watch: {
 		async sku() {
 			await this.recomputeVariance()
 		},
+
 		async location() {
 			await this.recomputeVariance()
 		},
 	},
+
 	methods: {
 		handleScan(value) {
 			this.sku = value
 			this.scanning = false
 		},
+
 		async recomputeVariance() {
 			if (!this.store.db || !this.sku || !this.location) {
 				this.systemQuantity = null
@@ -160,6 +166,7 @@ export default {
 				this.systemQuantity = 0
 			}
 		},
+
 		async handleConfirm() {
 			this.error = null
 			this.successMessage = null

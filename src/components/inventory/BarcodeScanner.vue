@@ -17,7 +17,7 @@
   @spec openspec/changes/inventory-mobile-scanner/tasks.md#T2.6
 -->
 <template>
-	<div class="barcode-scanner" :aria-live="'polite'">
+	<div class="barcode-scanner" aria-live="polite">
 		<div v-if="cameraError" class="barcode-scanner__error" role="status">
 			{{ cameraError }}
 		</div>
@@ -63,8 +63,8 @@
 <script>
 import {
 	nativeDetectorAvailable,
-	requestCameraStream,
 	releaseStream,
+	requestCameraStream,
 	startScanLoop,
 } from '../../composables/useBarcodeScanner.js'
 
@@ -75,11 +75,13 @@ export default {
 			type: Array,
 			default: () => ['qr_code', 'ean_13', 'code_128', 'code_39', 'code_93'],
 		},
+
 		fallbackToManual: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['scan', 'cancel'],
 	data() {
 		return {
@@ -90,6 +92,7 @@ export default {
 			loop: null,
 		}
 	},
+
 	async mounted() {
 		const available = await nativeDetectorAvailable(this.formats)
 		if (!available) {
@@ -120,6 +123,7 @@ export default {
 			)
 		}
 	},
+
 	beforeUnmount() {
 		if (this.loop && typeof this.loop.stop === 'function') {
 			this.loop.stop()
@@ -127,6 +131,7 @@ export default {
 		releaseStream(this.stream)
 		this.stream = null
 	},
+
 	methods: {
 		handleManualSubmit() {
 			const value = (this.manualValue || '').trim()
