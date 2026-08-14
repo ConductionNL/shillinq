@@ -74,14 +74,14 @@ final class UrenTallyService {
 	 * Aggregate UrenDagregistratie entries for one day.
 	 *
 	 * Returns:
-	 *  - totaalUren: float — sum of counted hours after cap and category filter.
+	 *  - totalHours: float — sum of counted hours after cap and category filter.
 	 *  - perCategorie: array<string, float> — counted hours per category.
 	 *  - overages: array<int, array{categorie: string, ingevoerd: float, geteld: float, notitie: string}>
 	 *    — entries whose hours exceeded a category cap.
 	 *
 	 * @param array<int, array<string, mixed>> $entries Day entries.
 	 *
-	 * @return array{totaalUren: float, perCategorie: array<string, float>, overages: array<int, array<string, mixed>>}
+	 * @return array{totalHours: float, perCategorie: array<string, float>, overages: array<int, array<string, mixed>>}
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
 	 */

@@ -93,6 +93,8 @@ class IntegralCostPriceCalculator {
 	 * @param string $accountKind One of `loonkosten`, `materialen`, `afschrijvingen`.
 	 *
 	 * @return int Sum of matching GL lines in cents.
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-002
 	 */
 	public function sumDirectCosts(array $glLines, string $kostenplaats, string $kostendrager, string $accountKind): int {
 		$totalCents = 0;
@@ -114,7 +116,7 @@ class IntegralCostPriceCalculator {
 				continue;
 			}
 
-			$amount = (float)($line['amount'] ?? $line['amount'] ?? 0);
+			$amount = (float)($line['amount'] ?? 0);
 			if ($amount < 0) {
 				// Credit notes / reversals are subtracted (sign-preserved).
 				$totalCents += $this->toCents(amount: $amount);
