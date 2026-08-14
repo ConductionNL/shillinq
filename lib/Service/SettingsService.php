@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -538,10 +539,9 @@ class SettingsService {
 					$skippedAssets++;
 					// Cache the existing UUID for schedule linking.
 					$firstRow = $existing[0];
-					if (is_array($firstRow) === true && isset($firstRow['id']) === true) {
-						$assetUuidByNumber[$asset['assetNumber']] = (string)$firstRow['id'];
-					} elseif (is_object($firstRow) === true && method_exists($firstRow, 'getId') === true) {
-						$assetUuidByNumber[$asset['assetNumber']] = (string)$firstRow->getId();
+					$existingUuid = ObjectIdentifier::resolve(saved: $firstRow);
+					if ($existingUuid !== '') {
+						$assetUuidByNumber[$asset['assetNumber']] = $existingUuid;
 					}
 
 					continue;
@@ -554,10 +554,9 @@ class SettingsService {
 				);
 				$seededAssets++;
 
-				if (is_array($saved) === true && isset($saved['id']) === true) {
-					$assetUuidByNumber[$asset['assetNumber']] = (string)$saved['id'];
-				} elseif (is_object($saved) === true && method_exists($saved, 'getId') === true) {
-					$assetUuidByNumber[$asset['assetNumber']] = (string)$saved->getId();
+				$savedUuid = ObjectIdentifier::resolve(saved: $saved);
+				if ($savedUuid !== '') {
+					$assetUuidByNumber[$asset['assetNumber']] = $savedUuid;
 				}
 			}//end foreach
 
