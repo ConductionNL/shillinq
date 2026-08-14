@@ -62,10 +62,12 @@ export default {
 			ticker: null,
 		}
 	},
+
 	computed: {
 		store() {
 			return useInventoryMobileScannerStore()
 		},
+
 		badgeClass() {
 			if (
 				this.store.syncState === 'syncing'
@@ -80,6 +82,7 @@ export default {
 			}
 			return 'sync-status-badge__button--green'
 		},
+
 		isStale() {
 			if (!this.store.lastSyncedAt) {
 				return false
@@ -90,6 +93,7 @@ export default {
 			}
 			return this.now - ts > STALE_THRESHOLD_MS
 		},
+
 		humanLabel() {
 			if (this.store.syncState === 'failed') {
 				return this.t('shillinq', 'Sync failed; retry {sec}s', {
@@ -115,17 +119,20 @@ export default {
 			return this.t('shillinq', 'Sync now')
 		},
 	},
+
 	mounted() {
 		this.ticker = setInterval(() => {
 			this.now = Date.now()
 		}, 30_000)
 	},
+
 	beforeUnmount() {
 		if (this.ticker !== null) {
 			clearInterval(this.ticker)
 			this.ticker = null
 		}
 	},
+
 	methods: {
 		async handleClick() {
 			if (!this.store.isOnline) {
@@ -133,6 +140,7 @@ export default {
 			}
 			await this.store.triggerSyncNow()
 		},
+
 		formatTime(iso) {
 			const ts = Date.parse(iso)
 			if (Number.isNaN(ts)) {

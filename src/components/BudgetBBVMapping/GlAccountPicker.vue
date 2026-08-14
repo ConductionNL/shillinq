@@ -19,26 +19,26 @@
 -->
 <template>
 	<NcSelect
-		:model-value="selectedOption"
+		:modelValue="selectedOption"
 		:options="filteredOptions"
 		:loading="loading"
-		:input-label="t('shillinq', 'GL account')"
+		:inputLabel="t('shillinq', 'GL account')"
 		:placeholder="t('shillinq', 'Search by account number or name…')"
 		:filterable="true"
 		:clearable="false"
 		label="display"
-		track-by="value"
+		trackBy="value"
 		data-testid="bbv-gl-account-picker"
 		@search="onSearch"
 		@option:selected="onSelected"
-		@update:model-value="onUpdateModelValue" />
+		@update:modelValue="onUpdateModelValue" />
 </template>
 
 <script>
-import { NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcSelect } from '@nextcloud/vue'
 
 const REGISTER_SLUG = 'shillinq'
 const SCHEMA_SLUG = 'Account'
@@ -54,6 +54,7 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * Optional administration scope. When set, the picker filters
 		 * accounts to this administration before applying the text query.
@@ -63,6 +64,7 @@ export default {
 			default: '',
 		},
 	},
+
 	emits: ['update:modelValue', 'selected'],
 	data() {
 		return {
@@ -72,6 +74,7 @@ export default {
 			fetchError: '',
 		}
 	},
+
 	computed: {
 		options() {
 			return this.accounts.map((a) => ({
@@ -80,6 +83,7 @@ export default {
 				account: a,
 			}))
 		},
+
 		filteredOptions() {
 			const q = (this.query || '').trim().toLowerCase()
 			if (!q) {
@@ -95,6 +99,7 @@ export default {
 				return num.includes(q) || name.includes(q)
 			})
 		},
+
 		selectedOption() {
 			if (!this.modelValue) {
 				return null
@@ -114,6 +119,7 @@ export default {
 			}
 		},
 	},
+
 	watch: {
 		administrationId: {
 			immediate: false,
@@ -122,9 +128,11 @@ export default {
 			},
 		},
 	},
+
 	async created() {
 		await this.fetchAccounts()
 	},
+
 	methods: {
 		t,
 		formatDisplay(account) {
@@ -144,6 +152,7 @@ export default {
 			const parts = [number, name, type, balance].filter(Boolean)
 			return parts.join(' · ')
 		},
+
 		formatEuro(cents) {
 			const numeric = Number(cents)
 			if (!Number.isFinite(numeric)) {
@@ -155,15 +164,18 @@ export default {
 				maximumFractionDigits: 0,
 			}).format(numeric / 100)
 		},
+
 		onSearch(query) {
 			this.query = query || ''
 		},
+
 		onSelected(option) {
 			if (!option) {
 				return
 			}
 			this.$emit('selected', option.account || null)
 		},
+
 		onUpdateModelValue(option) {
 			const value = option?.value ?? ''
 			this.$emit('update:modelValue', value)
@@ -171,6 +183,7 @@ export default {
 				this.$emit('selected', option.account)
 			}
 		},
+
 		async fetchAccounts() {
 			this.loading = true
 			this.fetchError = ''

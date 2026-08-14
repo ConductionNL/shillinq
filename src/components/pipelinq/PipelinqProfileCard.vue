@@ -113,10 +113,10 @@
 
 <script>
 import {
-	classifyContact,
-	buildProfileFields,
-	selectProfileState,
 	buildPipelinqLink,
+	buildProfileFields,
+	classifyContact,
+	selectProfileState,
 } from '../../composables/usePipelinqProfile.js'
 
 export default {
@@ -130,6 +130,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Booking row (slice-05 `booking` field). Used only for the
 		 * "looked up id" hint in the not-found fallback.
@@ -138,6 +139,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Optional pipelinq base URL — when set, the card renders a
 		 * "Open in pipelinq" link (opens in a new tab). Sourced from
@@ -148,22 +150,28 @@ export default {
 			default: '',
 		},
 	},
+
 	computed: {
 		state() {
 			return selectProfileState(this.payload)
 		},
+
 		kind() {
 			return classifyContact(this.payload?.contact)
 		},
+
 		fields() {
 			return buildProfileFields(this.payload?.contact)
 		},
+
 		contactError() {
 			return this.payload?.contactError || ''
 		},
+
 		pipelinqContactId() {
 			return String(this.booking?.pipelinqContactId || '').trim()
 		},
+
 		pipelinqLink() {
 			return buildPipelinqLink(
 				this.pipelinqBaseUrl,
@@ -171,6 +179,7 @@ export default {
 			)
 		},
 	},
+
 	methods: {
 		label(key) {
 			if (typeof t === 'function') {

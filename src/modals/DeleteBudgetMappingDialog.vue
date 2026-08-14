@@ -100,6 +100,7 @@ export default {
 		mapping: { type: Object, default: null },
 		deleting: { type: Boolean, default: false },
 	},
+
 	emits: ['confirm', 'cancel'],
 	methods: {
 		label(key) {
@@ -108,6 +109,7 @@ export default {
 			}
 			return key
 		},
+
 		formatPercentage(value) {
 			const num = Number(value)
 			if (!Number.isFinite(num)) {

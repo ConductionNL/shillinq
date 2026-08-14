@@ -94,10 +94,12 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		weeks: {
 			type: Array,
 			default: () => [],
 		},
+
 		scenarios: {
 			type: Array,
 			default: () => [],

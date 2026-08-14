@@ -1,18 +1,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-// Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
-// other module evaluates — see src/setPublicPath.js.
-import './setPublicPath.js'
-
-import { createApp, h, reactive } from 'vue'
-import { createRouter, createWebHistory } from 'vue-router'
-import {
-	translate as t,
-	translatePlural as n,
-	loadTranslations,
-} from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import {
 	buildManifest,
 	CnPageRenderer,
@@ -24,27 +12,36 @@ import {
 	registerLeafIntegrations,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-import pinia from './pinia.js'
-import App from './App.vue'
-import bundledManifest from './manifest.json'
-import manifestShell from './manifest.d.shell.json'
-import menuLayout from './menu-layout.json'
-import registry from './registry.js'
-import appIcons from './icons.js'
 import {
-	mergeFullFragmentIntoManifest,
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { createApp, h, reactive } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router'
+import App from './App.vue'
+import appIcons from './icons.js'
+import manifestShell from './manifest.d.shell.json'
+import bundledManifest from './manifest.json'
+import menuLayout from './menu-layout.json'
+import pinia from './pinia.js'
+import registry from './registry.js'
+import {
 	buildPageFragmentIndex,
+	mergeFullFragmentIntoManifest,
 } from './utils/mergeFragmentIntoManifest.js'
 
+// Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
+// other module evaluates — see src/setPublicPath.js.
+import './setPublicPath.js'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-
 // gridstack v12 is a required peerDependency of @conduction/nextcloud-vue and
 // backs every `type: "dashboard"` page (12 of them here). Its CSS sizes items
 // with `width: var(--gs-column-width)`; without the stylesheet every widget
 // renders 0 px wide with NO console error.
 import 'gridstack/dist/gridstack.min.css'
-
 // Global (unscoped) app styles
 import './assets/app.css'
 
@@ -95,6 +92,9 @@ try {
 // callback meant boot silently failed when translations couldn't load.
 // Strings just fall back to their English source on miss; boot MUST NOT
 // depend on this resolving.
+/**
+ *
+ */
 function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('shillinq', () => {})

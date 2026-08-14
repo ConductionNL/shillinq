@@ -34,6 +34,7 @@ export default {
 			type: Number,
 			default: null,
 		},
+
 		/**
 		 * Below this threshold the field is flagged "needs review" (REQ-RXC-002).
 		 */
@@ -41,6 +42,7 @@ export default {
 			type: Number,
 			default: 0.8,
 		},
+
 		/**
 		 * Whether the operator has already corrected this field (REQ-RXC-004);
 		 * takes priority over the confidence-derived label.
@@ -49,12 +51,14 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/** Field name, used to build a stable data-testid. */
 		field: {
 			type: String,
 			default: '',
 		},
 	},
+
 	computed: {
 		hasConfidence() {
 			return (
@@ -62,15 +66,18 @@ export default {
 				&& Number.isFinite(this.confidence)
 			)
 		},
+
 		needsReview() {
 			return this.hasConfidence && this.confidence < this.reviewThreshold
 		},
+
 		percentLabel() {
 			if (!this.hasConfidence) {
 				return '—'
 			}
 			return `${Math.round(this.confidence * 100)}%`
 		},
+
 		label() {
 			if (this.corrected) {
 				return t('shillinq', 'Corrected')
@@ -83,6 +90,7 @@ export default {
 			}
 			return t('shillinq', 'Extracted')
 		},
+
 		badgeClass() {
 			if (this.corrected) {
 				return 'fcb--corrected'
@@ -92,6 +100,7 @@ export default {
 			}
 			return 'fcb--ok'
 		},
+
 		testId() {
 			return this.field ? `fcb-${this.field}` : 'fcb'
 		},

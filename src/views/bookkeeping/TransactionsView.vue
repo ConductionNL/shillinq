@@ -76,7 +76,7 @@
 				class="wbso-transactions__table"
 				:columns="columns"
 				:rows="transactions"
-				:empty-label="
+				:emptyLabel="
 					t(
 						'shillinq',
 						'Create the first transaction to start posting to the books.',
@@ -103,9 +103,9 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { NcAppContent, NcButton } from '@nextcloud/vue'
-import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateOcsUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'TransactionsView',

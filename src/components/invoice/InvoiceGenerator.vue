@@ -157,6 +157,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		retainers: {
 			type: Array,
 			default: () => [],
@@ -176,6 +177,7 @@ export default {
 				milestoneId: '',
 				notes: '',
 			},
+
 			fixedFeeEuros: 0,
 			timeIdsRaw: '',
 			expenseIdsRaw: '',
@@ -190,15 +192,19 @@ export default {
 		needsRateCard() {
 			return ['t_and_m', 'mixed'].includes(this.form.billingModel)
 		},
+
 		needsRetainer() {
 			return ['retainer', 'mixed'].includes(this.form.billingModel)
 		},
+
 		needsFixedFee() {
 			return ['fixed_fee', 'mixed'].includes(this.form.billingModel)
 		},
+
 		needsMilestone() {
 			return this.form.billingModel === 'milestone'
 		},
+
 		payload() {
 			return {
 				...this.form,
@@ -220,6 +226,7 @@ export default {
 				.map((s) => s.trim())
 				.filter(Boolean)
 		},
+
 		formatMoney(value) {
 			const n = Number(value || 0)
 			return n.toLocaleString('nl-NL', {
@@ -227,6 +234,7 @@ export default {
 				maximumFractionDigits: 2,
 			})
 		},
+
 		async onSaveDraft() {
 			this.busy = true
 			this.error = ''
@@ -248,6 +256,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		async onPreviewPdf() {
 			if (this.draftId === null) {
 				await this.onSaveDraft()
@@ -257,6 +266,7 @@ export default {
 				this.$emit('pdf-previewed', this.draftId)
 			}
 		},
+
 		async onPost() {
 			if (this.draftId === null) {
 				return

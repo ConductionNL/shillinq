@@ -352,25 +352,24 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
-
-import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
+import { generateUrl } from '@nextcloud/router'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
+import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
 import {
-	isExtractionDraft,
 	confidenceForField,
+	glAccountSuggestionSummary,
+	hasKnownExtractionId,
+	isExtractionDraft,
 	isFieldCorrected,
 	requiresExplicitReview,
-	hasKnownExtractionId,
-	glAccountSuggestionSummary,
 } from '../utils/extractionConfidence.js'
 import {
-	reviewFormFromReceipt,
-	canSaveReceipt,
 	buildReceiptConfirmPayload,
+	canSaveReceipt,
 	receiptErrorMessage,
+	reviewFormFromReceipt,
 } from './receiptCapture.js'
 
 const REGISTER_SLUG = 'shillinq'
@@ -386,6 +385,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			record: null,
@@ -397,31 +397,38 @@ export default {
 			glSuggestion: null,
 		}
 	},
+
 	computed: {
 		hasIndexRoute() {
 			return !!this.$router?.options?.routes?.some?.(
 				(r) => r.name === 'Receipts',
 			)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isDraftReview() {
 			return isExtractionDraft(this.record)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		requiresReview() {
 			return requiresExplicitReview(this.record)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		canRerequest() {
 			return !!this.record?.sourceDocumentUri
 		},
+
 		sourceDocumentUri() {
 			return this.record?.sourceDocumentUri || ''
 		},
+
 		canSave() {
 			return canSaveReceipt(this.form)
 		},
 	},
+
 	watch: {
 		id: {
 			immediate: true,
@@ -430,16 +437,25 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		t,
-		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+		/**
+		 * @param field
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
+		 */
 		confidenceFor(field) {
 			return confidenceForField(this.record, field)
 		},
-		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+
+		/**
+		 * @param field
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
+		 */
 		isCorrected(field) {
 			return isFieldCorrected(this.record, field)
 		},
+
 		/** @spec openspec/specs/gl-account-suggestion-consume/spec.md */
 		async reload() {
 			this.loading = true
@@ -463,6 +479,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Request a GL-account suggestion for this receipt draft
 		 * (gl-account-suggestion-consume, REQ-GAC-003) via the shillinq proxy.
@@ -488,6 +505,7 @@ export default {
 				this.glSuggestion = null
 			}
 		},
+
 		/**
 		 * Fill the GL-account picker with the suggested code — the operator
 		 * still must click Save to commit anything (REQ-GAC-004).
@@ -498,6 +516,7 @@ export default {
 			if (!this.glSuggestion) return
 			this.form.glAccount = this.glSuggestion.code
 		},
+
 		/**
 		 * REQ-RXC-004: commit an extraction-draft correction through the
 		 * confirm proxy (records humanCorrected server-side); otherwise a
@@ -539,6 +558,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		/**
 		 * REQ-RXC-005: (re-)request docudesk extraction for this receipt.
 		 *

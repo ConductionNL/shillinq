@@ -102,9 +102,9 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 
 export default {
 	name: 'FxRatesAdmin',
@@ -140,11 +140,13 @@ export default {
 			}
 			return this.t('shillinq', 'OK')
 		},
+
 		badgeClass() {
 			return {
 				'fx-rates-admin__status-badge--ok': this.status.status === 'ok',
 				'fx-rates-admin__status-badge--dormant':
 					this.status.status === 'dormant',
+
 				'fx-rates-admin__status-badge--warn':
 					this.status.status === 'never-ran',
 			}
@@ -189,6 +191,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		formatTimestamp(iso) {
 			try {
 				const d = new Date(iso)
@@ -197,6 +200,7 @@ export default {
 				return iso
 			}
 		},
+
 		navigateToIndex() {
 			// Delegate to the declarative FXRates manifest index page.
 			this.$router?.push?.('/bookkeeping/multi-currency/fx-rates')

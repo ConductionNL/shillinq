@@ -96,6 +96,8 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcAppContent,
 	NcButton,
@@ -103,11 +105,9 @@ import {
 	NcLoadingIcon,
 	NcTextField,
 } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
-import axios from '@nextcloud/axios'
 import {
-	normaliseSettings,
 	buildSavePayload,
+	normaliseSettings,
 } from './deadlineCalendarSettingsHelpers.js'
 
 export default {

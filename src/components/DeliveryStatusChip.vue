@@ -32,6 +32,7 @@ export default {
 			default: 'not-sent',
 		},
 	},
+
 	computed: {
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		label() {

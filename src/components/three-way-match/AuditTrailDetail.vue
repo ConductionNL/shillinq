@@ -236,8 +236,8 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 const EVENT_LABELS = {
 	po_created: 'Purchase order created',
@@ -261,6 +261,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Administration scope — supplied by the parent shell.
 		 */
@@ -269,6 +270,7 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			ledger: null,
@@ -279,6 +281,7 @@ export default {
 			exportEnvelope: null,
 		}
 	},
+
 	computed: {
 		events() {
 			if (!this.ledger || !Array.isArray(this.ledger.events)) {
@@ -286,6 +289,7 @@ export default {
 			}
 			return this.ledger.events
 		},
+
 		summaryInvoiceNumber() {
 			return (
 				(this.ledger
@@ -294,6 +298,7 @@ export default {
 				|| '—'
 			)
 		},
+
 		summarySupplierId() {
 			return (
 				(this.ledger
@@ -302,6 +307,7 @@ export default {
 				|| '—'
 			)
 		},
+
 		summaryTotal() {
 			return (
 				(this.ledger
@@ -310,6 +316,7 @@ export default {
 				|| 0
 			)
 		},
+
 		summaryCurrency() {
 			return (
 				(this.ledger && this.ledger.summary && this.ledger.summary.currency)
@@ -317,9 +324,11 @@ export default {
 			)
 		},
 	},
+
 	async created() {
 		await this.loadLedger()
 	},
+
 	methods: {
 		async loadLedger() {
 			this.loading = true
@@ -343,6 +352,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async exportPackage() {
 			this.exporting = true
 			this.exportError = ''
@@ -365,9 +375,11 @@ export default {
 				this.exporting = false
 			}
 		},
+
 		eventLabel(event) {
 			return this.t('shillinq', EVENT_LABELS[event] || event || 'Event')
 		},
+
 		eventClass(event) {
 			const status = (event && event.event) || ''
 			return {
@@ -378,6 +390,7 @@ export default {
 				'audit-trail__event--grn': status.startsWith('grn_'),
 			}
 		},
+
 		formatTimestamp(value) {
 			if (!value) {
 				return '—'
@@ -392,6 +405,7 @@ export default {
 				return value
 			}
 		},
+
 		formatMoney(cents) {
 			const value = Number(cents || 0) / 100
 			return value.toLocaleString('nl-NL', {
@@ -399,6 +413,7 @@ export default {
 				maximumFractionDigits: 2,
 			})
 		},
+
 		formatDetailValue(value) {
 			if (value === null || value === undefined) {
 				return '—'
@@ -411,6 +426,7 @@ export default {
 			}
 			return String(value)
 		},
+
 		hasDetails(details) {
 			if (!details || typeof details !== 'object') {
 				return false

@@ -56,8 +56,8 @@
 
 <script>
 import SyncStatusBadge from '../../components/inventory/SyncStatusBadge.vue'
-import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
 import { registerInventoryServiceWorker } from '../../composables/useServiceWorker.js'
+import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
 
 export default {
 	name: 'MobileScannerHome',

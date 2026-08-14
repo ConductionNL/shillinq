@@ -24,7 +24,7 @@
 					)
 				}}
 			</p>
-			<AdministratieSwitcher :reload-after-switch="true" @error="onError" />
+			<AdministratieSwitcher :reloadAfterSwitch="true" @error="onError" />
 			<p
 				v-if="errorMessage"
 				class="administratie-switcher-page__error"

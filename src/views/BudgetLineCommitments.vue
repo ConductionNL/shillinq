@@ -173,13 +173,13 @@
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import {
-	normaliseBudgetLineRows,
-	formatAmount,
 	drilldownFilters,
+	formatAmount,
+	normaliseBudgetLineRows,
 } from './budgetLineCommitmentsHelpers.js'
 
 export default {
@@ -242,6 +242,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Expand/collapse the drilldown for a budget-line row.
 		 *

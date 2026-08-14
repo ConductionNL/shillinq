@@ -26,6 +26,7 @@
 
 import { createApp, h } from 'vue'
 import SelfServiceWidget from './SelfServiceWidget.vue'
+
 import '../../styles/widget.css'
 
 const DEFAULTS = {
@@ -38,6 +39,10 @@ const DEFAULTS = {
 // Validate the operator-supplied config. We reject silently if the bare
 // minimum (containerId / businessId / apiBase / apiKey) is missing — the
 // loader can never substitute "sensible defaults" for credentials.
+/**
+ *
+ * @param config
+ */
 function validateConfig(config) {
 	if (!config || typeof config !== 'object') {
 		return 'BookingWidget.init requires a config object.'
@@ -57,6 +62,10 @@ function validateConfig(config) {
 	return null
 }
 
+/**
+ *
+ * @param config
+ */
 function resolveContainer(config) {
 	if (config.element) {
 		return config.element
@@ -64,8 +73,13 @@ function resolveContainer(config) {
 	return document.getElementById(config.containerId)
 }
 
+/**
+ *
+ * @param container
+ * @param config
+ */
 function mountInto(container, config) {
-	const merged = Object.assign({}, DEFAULTS, config)
+	const merged = { ...DEFAULTS, ...config }
 	// Inject a child mount-point so Vue does not replace partner-supplied
 	// container markup (some partners use the same div for analytics).
 	const mountPoint = document.createElement('div')
@@ -123,9 +137,7 @@ export const BookingWidget = {
 	 * @return {string} Iframe src URL.
 	 */
 	iframeUrl(config) {
-		const error = validateConfig(
-			Object.assign({}, config, { containerId: 'iframe' }),
-		)
+		const error = validateConfig({ ...config, containerId: 'iframe' })
 		if (error) {
 			// eslint-disable-next-line no-console
 			console.error('[BookingWidget] ' + error)

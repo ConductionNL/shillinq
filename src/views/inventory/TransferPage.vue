@@ -14,8 +14,8 @@
 </template>
 
 <script>
-import TransferOp from '../../components/inventory/TransferOp.vue'
 import SyncStatusBadge from '../../components/inventory/SyncStatusBadge.vue'
+import TransferOp from '../../components/inventory/TransferOp.vue'
 import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
 
 export default {

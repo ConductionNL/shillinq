@@ -29,11 +29,11 @@
 		role="region"
 		:aria-label="t('shillinq', 'Switch administration')">
 		<NcActions
-			:menu-name="activeLabel"
+			:menuName="activeLabel"
 			:title="t('shillinq', 'Switch administration')"
 			:disabled="loading"
-			:force-name="true"
-			:type="'tertiary'"
+			:forceName="true"
+			variant="tertiary"
 			:aria-label="t('shillinq', 'Switch administration')">
 			<template #icon>
 				<OfficeBuilding :size="20" />
@@ -43,7 +43,7 @@
 				v-for="administration in visibleAdministrations"
 				:key="administration.administrationId"
 				:disabled="loading || administration.administrationId === activeId"
-				:close-after-click="true"
+				:closeAfterClick="true"
 				@click="onSelect(administration.administrationId)">
 				<template #icon>
 					<CheckBold
@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcActionCaption } from '@nextcloud/vue'
+import { NcActionButton, NcActionCaption, NcActions } from '@nextcloud/vue'
 import CheckBold from 'vue-material-design-icons/CheckBold.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'

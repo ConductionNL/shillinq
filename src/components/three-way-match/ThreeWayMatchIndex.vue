@@ -80,7 +80,7 @@
 			data-testid="twm-index-table"
 			:columns="columns"
 			:rows="filteredMatches"
-			:empty-label="t('shillinq', 'No matches recorded yet.')">
+			:emptyLabel="t('shillinq', 'No matches recorded yet.')">
 			<template #cell-invoice="{ row }">
 				<router-link
 					:to="{
@@ -139,14 +139,15 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'ThreeWayMatchIndex',
 	components: {
 		CnDataTable,
 	},
+
 	props: {
 		/**
 		 * Administration scope (server-resolved at the call site; the
@@ -159,6 +160,7 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			matches: [],
@@ -169,6 +171,7 @@ export default {
 			reevaluating: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * CnDataTable column definitions for the three-way-match list.
@@ -211,6 +214,7 @@ export default {
 				{ key: 'actions', label: '', sortable: false },
 			]
 		},
+
 		statusOptions() {
 			return [
 				{
@@ -240,6 +244,7 @@ export default {
 				{ value: 'fraud_alert', label: this.t('shillinq', 'Fraud alert') },
 			]
 		},
+
 		filteredMatches() {
 			if (!this.statusFilter) {
 				return this.matches
@@ -249,9 +254,11 @@ export default {
 			)
 		},
 	},
+
 	async created() {
 		await this.loadMatches()
 	},
+
 	methods: {
 		async loadMatches() {
 			this.loading = true
@@ -291,6 +298,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async reevaluate(match) {
 			if (!match.invoiceId) {
 				return
@@ -328,6 +336,7 @@ export default {
 				this.reevaluating = ''
 			}
 		},
+
 		supplierInvoiceLabel(match) {
 			const invoice = this.invoices[match.invoiceId]
 			if (invoice && invoice.invoiceNumber) {
@@ -335,10 +344,12 @@ export default {
 			}
 			return match.invoiceId || '—'
 		},
+
 		supplierLabel(match) {
 			const invoice = this.invoices[match.invoiceId]
 			return invoice?.supplierId || '—'
 		},
+
 		amountLabel(match) {
 			const invoice = this.invoices[match.invoiceId]
 			if (
@@ -351,6 +362,7 @@ export default {
 			const currency = invoice.currency || 'EUR'
 			return `${currency} ${(Number(invoice.totalInclVat) / 100).toFixed(2)}`
 		},
+
 		statusLabel(statusCode) {
 			const labels = {
 				auto_approved: this.t('shillinq', 'Auto-approved'),
@@ -363,6 +375,7 @@ export default {
 			}
 			return labels[statusCode] || statusCode || '—'
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'

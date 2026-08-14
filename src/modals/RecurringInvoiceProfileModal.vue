@@ -61,14 +61,14 @@
 			<div class="rip__row">
 				<div class="rip__field">
 					<NcSelect
-						:model-value="frequencyOption"
+						:modelValue="frequencyOption"
 						:options="frequencyOptions"
-						:input-label="t('shillinq', 'Frequency')"
+						:inputLabel="t('shillinq', 'Frequency')"
 						:clearable="false"
 						label="display"
-						track-by="value"
+						trackBy="value"
 						data-testid="rip-frequency"
-						@update:model-value="(o) => onSelect('frequency', o)" />
+						@update:modelValue="(o) => onSelect('frequency', o)" />
 				</div>
 				<div class="rip__field">
 					<label class="rip__label" for="rip-interval">{{
@@ -123,14 +123,14 @@
 				</div>
 				<div class="rip__field">
 					<NcSelect
-						:model-value="issueModeOption"
+						:modelValue="issueModeOption"
 						:options="issueModeOptions"
-						:input-label="t('shillinq', 'Issue mode')"
+						:inputLabel="t('shillinq', 'Issue mode')"
 						:clearable="false"
 						label="display"
-						track-by="value"
+						trackBy="value"
 						data-testid="rip-issue-mode"
-						@update:model-value="(o) => onSelect('issueMode', o)" />
+						@update:modelValue="(o) => onSelect('issueMode', o)" />
 				</div>
 			</div>
 
@@ -181,15 +181,15 @@
 						:placeholder="t('shillinq', 'Unit price')"
 						data-testid="rip-line-unit-price" />
 					<NcSelect
-						:model-value="vatOptionFor(line)"
+						:modelValue="vatOptionFor(line)"
 						:options="vatOptions"
-						:input-label="t('shillinq', 'VAT')"
+						:inputLabel="t('shillinq', 'VAT')"
 						:clearable="false"
 						label="display"
-						track-by="value"
+						trackBy="value"
 						class="rip__input--vat"
 						data-testid="rip-line-vat"
-						@update:model-value="(o) => onVatSelected(line, o)" />
+						@update:modelValue="(o) => onVatSelected(line, o)" />
 					<button
 						type="button"
 						class="rip__line-remove"
@@ -248,16 +248,16 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import {
+	buildProfilePayload,
 	defaultRecurringLine,
 	perPeriodNet,
 	validateProfile,
-	buildProfilePayload,
 } from './recurringInvoiceProfile.js'
 
 const REGISTER_SLUG = 'shillinq'
@@ -286,11 +286,13 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		recordId: {
 			type: String,
 			default: '',
 		},
 	},
+
 	emits: ['close', 'saved'],
 	data() {
 		return {
@@ -303,6 +305,7 @@ export default {
 				{ value: 'semi-annually', display: t('shillinq', 'Semi-annually') },
 				{ value: 'annually', display: t('shillinq', 'Annually') },
 			],
+
 			issueModeOptions: [
 				{
 					value: 'draft-for-review',
@@ -310,14 +313,17 @@ export default {
 				},
 				{ value: 'auto-issue', display: t('shillinq', 'Auto-issue') },
 			],
+
 			vatOptions: [
 				{ value: 21, display: '21%' },
 				{ value: 9, display: '9%' },
 				{ value: 0, display: '0%' },
 			],
+
 			form: this.blankForm(),
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		frequencyOption() {
@@ -326,6 +332,7 @@ export default {
 				|| this.frequencyOptions[1]
 			)
 		},
+
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		issueModeOption() {
 			return (
@@ -333,10 +340,12 @@ export default {
 				|| this.issueModeOptions[0]
 			)
 		},
+
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		perPeriodNetAmount() {
 			return perPeriodNet(this.form.lines)
 		},
+
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		previewDescriptions() {
 			const month = MONTHS[new Date().getMonth()]
@@ -351,8 +360,12 @@ export default {
 				)
 		},
 	},
+
 	watch: {
-		/** @spec openspec/specs/recurring-invoicing/spec.md */
+		/**
+		 * @param next
+		 * @spec openspec/specs/recurring-invoicing/spec.md
+		 */
 		open(next) {
 			if (next === true) {
 				this.errors = []
@@ -363,6 +376,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		t,
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
@@ -382,37 +396,61 @@ export default {
 				lines: [defaultRecurringLine()],
 			}
 		},
-		/** @spec openspec/specs/recurring-invoicing/spec.md */
+
+		/**
+		 * @param amount
+		 * @spec openspec/specs/recurring-invoicing/spec.md
+		 */
 		formatEuro(amount) {
 			return new Intl.NumberFormat('nl-NL', {
 				style: 'currency',
 				currency: 'EUR',
 			}).format(Number(amount) || 0)
 		},
-		/** @spec openspec/specs/recurring-invoicing/spec.md */
+
+		/**
+		 * @param line
+		 * @spec openspec/specs/recurring-invoicing/spec.md
+		 */
 		vatOptionFor(line) {
 			return (
 				this.vatOptions.find((o) => o.value === Number(line.vatCode))
 				|| this.vatOptions[0]
 			)
 		},
-		/** @spec openspec/specs/recurring-invoicing/spec.md */
+
+		/**
+		 * @param field
+		 * @param option
+		 * @spec openspec/specs/recurring-invoicing/spec.md
+		 */
 		onSelect(field, option) {
 			this.form[field] = option ? option.value : this.form[field]
 		},
-		/** @spec openspec/specs/recurring-invoicing/spec.md */
+
+		/**
+		 * @param line
+		 * @param option
+		 * @spec openspec/specs/recurring-invoicing/spec.md
+		 */
 		onVatSelected(line, option) {
 			line.vatCode = option ? Number(option.value) : 21
 		},
+
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		addLine() {
 			this.form.lines.push(defaultRecurringLine())
 		},
-		/** @spec openspec/specs/recurring-invoicing/spec.md */
+
+		/**
+		 * @param idx
+		 * @spec openspec/specs/recurring-invoicing/spec.md
+		 */
 		removeLine(idx) {
 			if (this.form.lines.length <= 1) return
 			this.form.lines.splice(idx, 1)
 		},
+
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		async fetchProfile() {
 			try {
@@ -434,11 +472,13 @@ export default {
 				showError(t('shillinq', 'Failed to load recurring profile.'))
 			}
 		},
+
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		onClose() {
 			if (this.saving) return
 			this.$emit('close')
 		},
+
 		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		async onSave() {
 			this.errors = validateProfile(this.form)

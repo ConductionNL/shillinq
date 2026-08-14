@@ -67,7 +67,7 @@
 			data-testid="admin-invoice-table"
 			:columns="columns"
 			:rows="invoices"
-			:empty-label="t('shillinq', 'No invoices found')">
+			:emptyLabel="t('shillinq', 'No invoices found')">
 			<template #cell-grossAmount="{ row }">
 				<span class="num">€ {{ formatMoney(row.grossAmount) }}</span>
 			</template>
@@ -182,6 +182,7 @@ export default {
 				maximumFractionDigits: 2,
 			})
 		},
+
 		async reload() {
 			try {
 				this.invoices = await invoiceApi.list(this.filters)
@@ -189,10 +190,12 @@ export default {
 				this.invoices = []
 			}
 		},
+
 		async post(invoice) {
 			await invoiceApi.post(invoice.id)
 			await this.reload()
 		},
+
 		async pdf(invoice) {
 			await invoiceApi.exportPdf(invoice.id)
 		},

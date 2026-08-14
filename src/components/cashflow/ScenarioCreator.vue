@@ -161,6 +161,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		administrationId: {
 			type: String,
 			required: true,
@@ -186,9 +187,11 @@ export default {
 				type: 'AR_PROJECTION_OVERRIDE',
 			})
 		},
+
 		removeAdjustment(index) {
 			this.scenario.aanpassingen.splice(index, 1)
 		},
+
 		handleSubmit() {
 			this.$emit('create-scenario', {
 				...this.scenario,

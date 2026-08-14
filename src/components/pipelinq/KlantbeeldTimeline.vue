@@ -105,10 +105,10 @@
 
 <script>
 import {
-	selectHistoryState,
 	formatTransactionAmount,
 	formatTransactionDate,
 	nextPageParams,
+	selectHistoryState,
 } from '../../composables/usePipelinqProfile.js'
 
 export default {
@@ -123,6 +123,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Whether more pages exist after the current one. The parent
 		 * decides this — typically `true` until a fetch returns fewer
@@ -132,6 +133,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/**
 		 * Disable the Load-more button while the parent is fetching.
 		 */
@@ -140,15 +142,18 @@ export default {
 			default: false,
 		},
 	},
+
 	computed: {
 		state() {
 			return selectHistoryState(this.payload)
 		},
+
 		transactions() {
 			const rows = this.payload?.klantbeeld?.transactions
 			return Array.isArray(rows) ? rows : []
 		},
 	},
+
 	methods: {
 		label(key) {
 			if (typeof t === 'function') {
@@ -156,15 +161,19 @@ export default {
 			}
 			return key
 		},
+
 		formatDate(iso) {
 			return formatTransactionDate(iso)
 		},
+
 		formatAmount(row) {
 			return formatTransactionAmount(row)
 		},
+
 		rowKey(row, index) {
 			return `${row?.date || ''}-${row?.description || ''}-${index}`
 		},
+
 		onLoadMore() {
 			this.$emit('load-more', nextPageParams(this.payload?.klantbeeld))
 		},

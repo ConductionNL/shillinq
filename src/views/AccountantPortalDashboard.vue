@@ -140,8 +140,8 @@ import {
 	NcLoadingIcon,
 } from '@nextcloud/vue'
 import {
-	fetchAccountantDashboard,
 	downloadHandoverPack,
+	fetchAccountantDashboard,
 } from '../api/accountantApi.js'
 
 export default {

@@ -97,16 +97,19 @@ export default {
 			lastSubmittedAt: 0,
 		}
 	},
+
 	computed: {
 		store() {
 			return useInventoryMobileScannerStore()
 		},
 	},
+
 	methods: {
 		handleScan(value) {
 			this.sku = value
 			this.scanning = false
 		},
+
 		async handleConfirm() {
 			this.error = null
 			this.successMessage = null

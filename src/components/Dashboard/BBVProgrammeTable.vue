@@ -32,12 +32,12 @@
 		<CnDataTable
 			:columns="columns"
 			:rows="rows"
-			:sort-key="sortKey"
-			:sort-order="sortOrder"
+			:sortKey="sortKey"
+			:sortOrder="sortOrder"
 			:loading="loading"
-			row-key="rowKey"
-			:loading-text="t('shillinq', 'Loading programmes…')"
-			:empty-text="
+			rowKey="rowKey"
+			:loadingText="t('shillinq', 'Loading programmes…')"
+			:emptyText="
 				t('shillinq', 'No active programmes found for this fiscal year.')
 			"
 			@sort="onSort">
@@ -97,11 +97,13 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		loading: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['row-click'],
 	data() {
 		return {
@@ -109,6 +111,7 @@ export default {
 			sortOrder: 'asc',
 		}
 	},
+
 	computed: {
 		columns() {
 			return [
@@ -140,6 +143,7 @@ export default {
 				},
 			]
 		},
+
 		rows() {
 			const decorated = this.programmes.map((p) => ({
 				...p,
@@ -164,12 +168,14 @@ export default {
 			return decorated
 		},
 	},
+
 	methods: {
 		t,
 		onSort({ key, order }) {
 			this.sortKey = key
 			this.sortOrder = order
 		},
+
 		sortValue(row, key) {
 			if (key === 'budget') {
 				return Number(row.totalBudget || 0)
@@ -191,6 +197,7 @@ export default {
 			}
 			return row[key] ?? ''
 		},
+
 		openRow(row) {
 			this.$emit('row-click', row)
 			if (this.$router && row.programmeCode) {
@@ -205,6 +212,7 @@ export default {
 				}
 			}
 		},
+
 		formatEuro(cents) {
 			if (
 				cents === null
@@ -219,6 +227,7 @@ export default {
 				maximumFractionDigits: 0,
 			}).format(Number(cents) / 100)
 		},
+
 		formatPercentage(percentField, ratioField) {
 			let value = percentField
 			if (value === null || value === undefined) {
@@ -233,6 +242,7 @@ export default {
 			}
 			return `${numeric.toFixed(1)} %`
 		},
+
 		utilizationClass(status) {
 			if (status === 'non-compliant')
 				return 'bbv-programme-table__util--danger'
@@ -240,6 +250,7 @@ export default {
 			if (status === 'on-track') return 'bbv-programme-table__util--ok'
 			return 'bbv-programme-table__util--muted'
 		},
+
 		badgeClass(status) {
 			if (status === 'non-compliant')
 				return 'bbv-programme-table__badge--danger'
@@ -247,12 +258,14 @@ export default {
 			if (status === 'on-track') return 'bbv-programme-table__badge--ok'
 			return 'bbv-programme-table__badge--muted'
 		},
+
 		badgeEmoji(status) {
 			if (status === 'non-compliant') return '🔴'
 			if (status === 'at-risk') return '🟡'
 			if (status === 'on-track') return '🟢'
 			return '⚪'
 		},
+
 		badgeLabel(status) {
 			if (status === 'non-compliant')
 				return this.t('shillinq', 'Non-compliant')
@@ -260,6 +273,7 @@ export default {
 			if (status === 'on-track') return this.t('shillinq', 'On-track')
 			return this.t('shillinq', 'Unconfigured')
 		},
+
 		badgeTooltip(status) {
 			if (status === 'at-risk') {
 				return this.t(

@@ -18,7 +18,7 @@
 				{{
 					t(
 						'shillinq',
-						'Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.',
+						'Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.',
 					)
 				}}
 			</p>
@@ -36,7 +36,7 @@
 					:data-testid="`standards-policy-row-${row.key}`">
 					<span class="standards-policy__rank">{{ index + 1 }}</span>
 					<NcCheckboxRadioSwitch
-						:model-value="row.enabled"
+						:modelValue="row.enabled"
 						type="switch"
 						@update:modelValue="setEnabled(index, $event)">
 						<span class="standards-policy__label">{{ row.label }}</span>
@@ -101,13 +101,13 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcCheckboxRadioSwitch, NcLoadingIcon } from '@nextcloud/vue'
-import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
+import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 
@@ -279,7 +279,11 @@ export default {
 			}
 		},
 
-		/** Merge a persisted frameworks[] list into rows, ordered by precedence. */
+		/**
+		 * Merge a persisted frameworks[] list into rows, ordered by precedence.
+		 *
+		 * @param saved
+		 */
 		applyPolicy(saved) {
 			const byKey = new Map(saved.map((f) => [f.key, f]))
 			const precedenceOf = (key) => {

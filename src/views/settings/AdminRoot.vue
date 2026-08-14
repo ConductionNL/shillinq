@@ -1,8 +1,8 @@
 <template>
 	<CnAdminSettingsShell
-		app-id="shillinq"
-		app-name="Shillinq"
-		doc-url="https://shillinq.conduction.nl/docs/intro"
+		appId="shillinq"
+		appName="Shillinq"
+		docUrl="https://shillinq.conduction.nl/docs/intro"
 		@reimported="onReimported">
 		<Settings v-if="storesReady" />
 
@@ -12,8 +12,8 @@
 
 <script>
 import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
-import Settings from './Settings.vue'
 import PipelinqIntegration from './PipelinqIntegration.vue'
+import Settings from './Settings.vue'
 import { initializeStores } from '../../store/store.js'
 
 export default {
@@ -23,11 +23,13 @@ export default {
 		Settings,
 		PipelinqIntegration,
 	},
+
 	data() {
 		return {
 			storesReady: false,
 		}
 	},
+
 	/**
 	 * Bring up the Pinia stores (object + settings) so the embedded Settings
 	 * form can read register data, then reveal it.
@@ -38,6 +40,7 @@ export default {
 		await initializeStores()
 		this.storesReady = true
 	},
+
 	methods: {
 		/** Reload register-backed config after a successful re-import. */
 		onReimported() {

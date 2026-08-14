@@ -29,7 +29,7 @@
 			:height="320"
 			:legend="true"
 			:options="chartOptions"
-			:unavailable-label="t('shillinq', 'Chart library not available')" />
+			:unavailableLabel="t('shillinq', 'Chart library not available')" />
 	</div>
 </template>
 
@@ -60,6 +60,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		/**
 		 * Monthly cumulative timeline rows from the slice-04 dashboard
 		 * route. Each row carries:
@@ -72,16 +73,19 @@ export default {
 			default: () => [],
 		},
 	},
+
 	computed: {
 		categories() {
 			return MONTH_KEYS.map((key) => this.t('shillinq', key))
 		},
+
 		series() {
 			if (this.timeline.length > 0) {
 				return this.seriesFromTimeline()
 			}
 			return this.seriesFromCurrentYtd()
 		},
+
 		chartOptions() {
 			return {
 				stroke: { width: 2, curve: 'straight' },
@@ -91,6 +95,7 @@ export default {
 						formatter: (val) => this.formatEuro(val),
 					},
 				},
+
 				tooltip: {
 					y: {
 						formatter: (val) => this.formatEuro(val),
@@ -99,6 +104,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		t,
 		seriesFromTimeline() {
@@ -136,6 +142,7 @@ export default {
 			}
 			return out
 		},
+
 		seriesFromCurrentYtd() {
 			// Fallback used before the timeline route is wired (slice 04).
 			// Each programme contributes one flat line representing the
@@ -159,6 +166,7 @@ export default {
 			}
 			return out
 		},
+
 		formatEuro(cents) {
 			if (
 				cents === null

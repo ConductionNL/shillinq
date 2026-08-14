@@ -58,6 +58,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		depth: {
 			type: Number,
 			default: 0,
@@ -77,6 +78,7 @@ export default {
 				&& this.account.children.length > 0
 			)
 		},
+
 		indent() {
 			return `${this.depth * 1.25}rem`
 		},
@@ -99,6 +101,7 @@ export default {
 			}
 			return map[type] || type
 		},
+
 		/**
 		 * Translate a status slug.
 		 *

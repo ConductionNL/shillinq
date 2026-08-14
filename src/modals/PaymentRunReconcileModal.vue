@@ -76,12 +76,12 @@
 </template>
 
 <script>
-import { NcButton, NcDialog } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog } from '@nextcloud/vue'
 
 export default {
 	name: 'PaymentRunReconcileModal',
@@ -89,11 +89,13 @@ export default {
 		NcDialog,
 		NcButton,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
+
 		// Optional explicit run id. When launched declaratively from the
 		// PaymentRunDetail page's `config.headerActions[]` open-modal action
 		// (ADR-049 Phase-4), the modal is hosted at CnAppRoot level — outside
@@ -105,6 +107,7 @@ export default {
 			default: '',
 		},
 	},
+
 	emits: ['close', 'reconciled'],
 	data() {
 		return {
@@ -114,11 +117,13 @@ export default {
 			result: null,
 		}
 	},
+
 	computed: {
 		/** Effective run id: explicit prop wins, else the current route's :id. */
 		runId() {
 			return String(this.paymentRunId || this.$route?.params?.id || '')
 		},
+
 		resultClass() {
 			if (!this.result) {
 				return ''
@@ -128,6 +133,7 @@ export default {
 				: 'prr__result--warn'
 		},
 	},
+
 	methods: {
 		t,
 		onFileSelected(event) {
@@ -144,6 +150,7 @@ export default {
 			}
 			reader.readAsText(file)
 		},
+
 		async submit() {
 			if (!this.fileContents || this.submitting) {
 				return
@@ -179,6 +186,7 @@ export default {
 				this.submitting = false
 			}
 		},
+
 		onClose() {
 			this.fileName = ''
 			this.fileContents = ''

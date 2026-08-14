@@ -113,9 +113,9 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 
 export default {
 	name: 'ExternalAdaptersStatus',
@@ -145,6 +145,7 @@ export default {
 				? 'external-adapters__badge--dormant'
 				: 'external-adapters__badge--live'
 		},
+
 		async loadStatus() {
 			this.loading = true
 			this.errorMessage = ''
@@ -163,12 +164,14 @@ export default {
 				this.loading = false
 			}
 		},
+
 		openDetail(id) {
 			const routeId = this.routeIdForAdapter(id)
 			if (routeId !== null) {
 				this.$router.push({ name: routeId })
 			}
 		},
+
 		routeIdForAdapter(id) {
 			const map = {
 				'digipoort-sbr': 'ExternalAdapterDigipoort',
