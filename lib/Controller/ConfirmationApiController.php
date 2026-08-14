@@ -50,11 +50,14 @@ use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
+use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
+use OCP\Security\Bruteforce\IThrottler;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -67,6 +70,39 @@ use Throwable;
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
  */
 class ConfirmationApiController extends Controller {
+
+	/**
+	 * Brute-force throttler action for rejected confirmation tokens.
+	 *
+	 * Shared by `confirm` and `lookupByToken` so guesses cannot be split
+	 * across the two to stay under a per-endpoint ceiling.
+	 *
+	 * @var string
+	 */
+	private const THROTTLE_ACTION = 'shillinq_confirmation_token';
+
+	/**
+	 * Record a rejected confirmation token with the brute-force throttler.
+	 *
+	 * The half that COUNTS; `#[BruteForceProtection]` on the endpoints is the
+	 * half that ENFORCES. Registering without the attribute writes a counter
+	 * nothing ever reads -- see ADR-082.
+	 *
+	 * @return void
+	 */
+	private function registerFailedToken(): void {
+		try {
+			$this->throttler->registerAttempt(
+				action: self::THROTTLE_ACTION,
+				ip: $this->request->getRemoteAddress()
+			);
+		} catch (\Throwable $throttlerFailure) {
+			$this->logger->warning(
+				'ConfirmationApiController: registerAttempt failed: ' . $throttlerFailure->getMessage()
+			);
+		}
+	}//end registerFailedToken()
+
 	/**
 	 * Construct the controller with DI dependencies.
 	 *
@@ -91,6 +127,7 @@ class ConfirmationApiController extends Controller {
 		private readonly AdministrationContextService $context,
 		private readonly ConfirmationTokenService $tokens,
 		private readonly ITimeFactory $time,
+		private readonly IThrottler $throttler,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -113,6 +150,8 @@ class ConfirmationApiController extends Controller {
 	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
 	 */
 	#[PublicPage]
+	#[AnonRateLimit(limit: 30, period: 60)]
+	#[BruteForceProtection(action: self::THROTTLE_ACTION)]
 	public function confirm(string $appointmentId = ''): JSONResponse {
 		$appointmentId = trim($appointmentId);
 		$token = trim((string)$this->request->getParam('token', ''));
@@ -280,6 +319,8 @@ class ConfirmationApiController extends Controller {
 	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
 	 */
 	#[PublicPage]
+	#[AnonRateLimit(limit: 30, period: 60)]
+	#[BruteForceProtection(action: self::THROTTLE_ACTION)]
 	public function lookupByToken(): JSONResponse {
 		$token = trim((string)$this->request->getParam('token', ''));
 		$appointmentId = trim((string)$this->request->getParam('appointmentId', ''));
@@ -339,6 +380,17 @@ class ConfirmationApiController extends Controller {
 	 * @return JSONResponse
 	 */
 	private function mapValidationError(string $reason): JSONResponse {
+		// Only count the reasons that mean the token WAS NOT REAL.
+		//
+		// `expired`, `already_redeemed` and `revoked` all mean the caller
+		// presented a genuine token that has since gone stale -- correct use of
+		// a confirmation link that sat in an inbox too long. Counting those
+		// would throttle honest customers, and on a booking-confirmation flow
+		// that is a self-inflicted denial of service on the happy path.
+		if ($reason === 'invalid' || $reason === 'not_found') {
+			$this->registerFailedToken();
+		}
+
 		return match ($reason) {
 			'expired' => new JSONResponse(['error' => 'Token has expired'], Http::STATUS_FORBIDDEN),
 			'already_redeemed' => new JSONResponse(['error' => 'Token has already been used'], Http::STATUS_FORBIDDEN),
