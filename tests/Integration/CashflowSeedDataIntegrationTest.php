@@ -140,8 +140,8 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 		foreach ($seed['profiles'] as $profile) {
 			$policy = $profile['bufferPolicy'];
 			self::assertLessThan(
-				(float)$policy['alertVooralarm'],
-				(float)$policy['alertOndergrens']
+				(float)$policy['alertPreAlert'],
+				(float)$policy['alertLowerLimit']
 			);
 		}
 

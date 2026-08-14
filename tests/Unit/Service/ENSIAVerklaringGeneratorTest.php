@@ -114,9 +114,9 @@ class ENSIAVerklaringGeneratorTest extends TestCase {
 				'year' => 2026,
 			],
 			vragen: [
-				['domein' => 'BIO',   'maturityScore' => 4, 'normniveau' => 3],
-				['domein' => 'BIO',   'maturityScore' => 2, 'normniveau' => 3],
-				['domein' => 'DigiD', 'answer' => 'ja'],
+				['domain' => 'BIO',   'maturityScore' => 4, 'normniveau' => 3],
+				['domain' => 'BIO',   'maturityScore' => 2, 'normniveau' => 3],
+				['domain' => 'DigiD', 'answer' => 'ja'],
 			],
 			bevindingen: []
 		);

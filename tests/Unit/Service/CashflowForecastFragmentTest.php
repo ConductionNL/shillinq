@@ -278,8 +278,8 @@ final class CashflowForecastFragmentTest extends TestCase {
 		}
 
 		self::assertNotNull($policy, 'A CashflowBufferPolicy seed must exist');
-		self::assertEqualsWithDelta($policy['berekendeBuffer'] * 1.5, $policy['alertVooralarm'], 0.01);
-		self::assertEqualsWithDelta($policy['berekendeBuffer'] * 0.5, $policy['alertOndergrens'], 0.01);
+		self::assertEqualsWithDelta($policy['berekendeBuffer'] * 1.5, $policy['alertPreAlert'], 0.01);
+		self::assertEqualsWithDelta($policy['berekendeBuffer'] * 0.5, $policy['alertLowerLimit'], 0.01);
 
 	}//end testBufferPolicySeedAlertRatios()
 }//end class

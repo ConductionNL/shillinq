@@ -462,7 +462,7 @@
           "reportId",
           "date",
           "amount",
-          "kasOfTransactiebasis"
+          "kasOfTransactionBasis"
         ],
         "properties": {
           "reportId": {
@@ -503,7 +503,7 @@
             "description": "Counterparty: soort (leverancier/klant/begunstigde), naam, nummer (factuurnummer/IBAN).",
             "title": "Tegenrekening"
           },
-          "kasOfTransactiebasis": {
+          "kasOfTransactionBasis": {
             "type": "string",
             "enum": [
               "kas",
@@ -628,7 +628,7 @@
             "example": 18750000,
             "title": "Uitstaande Schuld"
           },
-          "rentevoet": {
+          "interestRate": {
             "type": "number",
             "nullable": true,
             "description": "Annual interest rate (%).",
@@ -855,7 +855,7 @@
         "name": "BAM Infra Nederland B.V.",
         "number": "F-2026-44218"
       },
-      "kasOfTransactiebasis": "kas",
+      "kasOfTransactionBasis": "kas",
       "paymentMoment": "2026-05-22T14:11:00+02:00",
       "invoiceMoment": "2026-04-30T00:00:00+02:00",
       "currency": "EUR"
@@ -876,7 +876,7 @@
       },
       "principalOriginal": 25000000,
       "outstandingDebt": 18750000,
-      "rentevoet": 2.85,
+      "interestRate": 2.85,
       "rentevorm": "vast",
       "termYears": 20,
       "endDate": "2034-12-31",

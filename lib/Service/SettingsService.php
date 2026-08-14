@@ -1092,14 +1092,14 @@ class SettingsService {
 				$skipped = 0;
 
 				foreach ($rules as $rule) {
-					$code = ($rule['selectielijstCode'] ?? '');
+					$code = ($rule['selectionListCode'] ?? '');
 					$existing = $objectService
 						->setRegister($registerSlug)
 						->setSchema('RetentionRule')
 						->findAll(
 							[
 								'filters' => [
-									'selectielijstCode' => $code,
+									'selectionListCode' => $code,
 									'administrationId' => null,
 								],
 								'limit' => 1,

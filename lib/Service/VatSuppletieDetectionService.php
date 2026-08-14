@@ -191,7 +191,7 @@ class VatSuppletieDetectionService {
 			'state' => 'draft',
 			'filedSnapshot' => $filed,
 			'currentSnapshot' => $current,
-			'rubriekDeltas' => [],
+			'categoryDeltas' => [],
 			'detectedAt' => $this->now(),
 			'preparedAt' => null,
 			'thresholdExceeded' => null,
@@ -249,7 +249,7 @@ class VatSuppletieDetectionService {
 		$originalReturnId = (string)($correction['originalVatReturnId'] ?? ($correction['originalReturnId'] ?? ''));
 		$deltasWithAccount = $this->attachAccounts(deltas: $deltas, originalReturnId: $originalReturnId);
 
-		$correction['rubriekDeltas'] = $deltasWithAccount;
+		$correction['categoryDeltas'] = $deltasWithAccount;
 		$correction['correctionAmount'] = $netCorrection;
 		$correction['adjustmentAmount'] = $netCorrection;
 		$correction['thresholdExceeded'] = $thresholdExceeded;

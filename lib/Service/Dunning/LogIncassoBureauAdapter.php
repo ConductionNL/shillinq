@@ -63,8 +63,8 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface {
 			[
 				'administrationId' => $administrationId,
 				'invoiceId' => $invoiceId,
-				'dunningRuns' => count((array)($dossier['inhoud']['dunningRuns'] ?? [])),
-				'evidenceRefs' => count((array)($dossier['inhoud']['evidenceRefs'] ?? [])),
+				'dunningRuns' => count((array)($dossier['content']['dunningRuns'] ?? [])),
+				'evidenceRefs' => count((array)($dossier['content']['evidenceRefs'] ?? [])),
 			]
 		);
 

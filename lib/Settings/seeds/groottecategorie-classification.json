@@ -44,36 +44,36 @@
   ],
   "templateMatrix": {
     "micro": {
-      "balans": "verkort",
+      "balance": "verkort",
       "winstEnVerlies": false,
       "notes": "minimaal",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
-      "accountantsverklaring": false
+      "auditorsStatement": false
     },
     "klein": {
-      "balans": "verkort",
+      "balance": "verkort",
       "winstEnVerlies": "niet-gedeponeerd",
       "notes": "beperkt",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
-      "accountantsverklaring": "optioneel"
+      "auditorsStatement": "optioneel"
     },
     "middelgroot": {
-      "balans": "volledig",
+      "balance": "volledig",
       "winstEnVerlies": true,
       "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
-      "accountantsverklaring": true
+      "auditorsStatement": true
     },
     "groot": {
-      "balans": "volledig",
+      "balance": "volledig",
       "winstEnVerlies": true,
       "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
-      "accountantsverklaring": true,
+      "auditorsStatement": true,
       "esg": "csrd-ready"
     }
   }

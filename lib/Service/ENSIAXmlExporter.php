@@ -114,18 +114,18 @@ class ENSIAXmlExporter {
 		// Group questions per domein.
 		$byDomein = [];
 		foreach ($vragen as $v) {
-			$domein = (string)($v['domein'] ?? 'BIO');
-			if (isset($byDomein[$domein]) === false) {
-				$byDomein[$domein] = [];
+			$domain = (string)($v['domain'] ?? 'BIO');
+			if (isset($byDomein[$domain]) === false) {
+				$byDomein[$domain] = [];
 			}
 
-			$byDomein[$domein][] = $v;
+			$byDomein[$domain][] = $v;
 		}
 
 		$domeinenEl = $doc->createElement('accountabilityDomains');
-		foreach ($byDomein as $domein => $domeinVragen) {
-			$domeinEl = $doc->createElement('domein');
-			$domeinEl->setAttribute('code', $domein);
+		foreach ($byDomein as $domain => $domeinVragen) {
+			$domeinEl = $doc->createElement('domain');
+			$domeinEl->setAttribute('code', $domain);
 
 			foreach ($domeinVragen as $v) {
 				$questionEl = $doc->createElement('vraag');

@@ -92,8 +92,8 @@ class PayrollService {
 			throw new RuntimeException('Loonperiode of werknemer niet gevonden in deze administratie.');
 		}
 
-		$werkgeverId = (string)($employee['werkgeverId'] ?? '');
-		$werkgever = $this->findOne(schema: 'Werkgever', administrationId: $administrationId, filters: ['id' => $werkgeverId]);
+		$employerId = (string)($employee['employerId'] ?? '');
+		$werkgever = $this->findOne(schema: 'Werkgever', administrationId: $administrationId, filters: ['id' => $employerId]);
 		if ($werkgever === null) {
 			throw new RuntimeException('Werkgever niet gevonden in deze administratie.');
 		}
@@ -172,7 +172,7 @@ class PayrollService {
 		);
 		$pensioen = $this->calculator->pensioen(
 			basis: $basissalaris,
-			pctWerkgever: (float)($employee['pensioenPremiePctWerkgever'] ?? 0),
+			pctWerkgever: (float)($employee['pensionPremiumPctEmployer'] ?? 0),
 			pctEmployee: (float)($employee['pensionPremiumPctEmployee'] ?? 0)
 		);
 
@@ -187,7 +187,7 @@ class PayrollService {
 		$grossComponents['totaal_bruto'] = $totalGross;
 		$holidayOpbouw = $this->calculator->vakantiegeldOpbouw(
 			totalGross: $basissalaris,
-			pct: (float)($employee['vakantiegeldPct'] ?? 0.08)
+			pct: (float)($employee['holidayAllowancePct'] ?? 0.08)
 		);
 		$employeeId = (string)($employee['id'] ?? ($employee['@self']['id'] ?? ''));
 		$cumulatieven = $this->stampCumulatieven(
@@ -244,10 +244,10 @@ class PayrollService {
 			$zvwC += $this->calculator->toCents(amount: ($slip['zvw']['afgedragen_wg'] ?? 0));
 		}
 
-		$werkgeverId = '';
+		$employerId = '';
 		$period = $this->findOne(schema: 'LoonPeriode', administrationId: $administrationId, filters: ['id' => $periodId]);
 		if ($period !== null) {
-			$werkgeverId = (string)($period['werkgeverId'] ?? '');
+			$employerId = (string)($period['employerId'] ?? '');
 		}
 
 		$payrollTax = $this->calculator->fromCents(cents: $lhC);
@@ -259,7 +259,7 @@ class PayrollService {
 		);
 
 		return [
-			'werkgeverId' => $werkgeverId,
+			'employerId' => $employerId,
 			'periodId' => $periodId,
 			'totalPayrollTax' => $payrollTax,
 			'totalFinalLeviesWorkRelatedCosts' => $wkr,
@@ -539,15 +539,15 @@ class PayrollService {
 			}
 		}
 
-		$kleur = 'WIT';
+		$colour = 'WIT';
 		if (str_starts_with((string)($employee['payrollTaxTable'] ?? 'WIT'), 'GROEN') === true) {
-			$kleur = 'GROEN';
+			$colour = 'GROEN';
 		}
 
 		$tabellen = $this->rawFindAll(
 			schema: 'LoonheffingTabel2026',
 			filters: [
-				'kleur' => $kleur,
+				'colour' => $colour,
 				'period' => (string)($period['periodType'] ?? 'MAAND'),
 				'withDiscount' => (bool)($employee['payrollTaxTableDiscount'] ?? true),
 			]

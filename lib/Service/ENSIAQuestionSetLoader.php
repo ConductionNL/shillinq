@@ -136,8 +136,8 @@ class ENSIAQuestionSetLoader {
 				continue;
 			}
 
-			$domein = (string)($q['domein'] ?? '');
-			if ($domein === '' || isset($domeinSet[$domein]) === false) {
+			$domain = (string)($q['domain'] ?? '');
+			if ($domain === '' || isset($domeinSet[$domain]) === false) {
 				continue;
 			}
 
@@ -150,8 +150,8 @@ class ENSIAQuestionSetLoader {
 			$vragen[] = [
 				'cyclusId' => $cyclusId,
 				'administrationId' => $administrationId,
-				'domein' => $domein,
-				'onderwerp' => (string)($q['onderwerp'] ?? ''),
+				'domain' => $domain,
+				'subject' => (string)($q['subject'] ?? ''),
 				'questionCode' => (string)($q['questionCode'] ?? ''),
 				'questionText' => (string)($q['questionText'] ?? ''),
 				'answerType' => (string)($q['answerType'] ?? 'ja-nee-nvt'),

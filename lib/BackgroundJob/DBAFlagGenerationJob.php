@@ -311,7 +311,7 @@ class DBAFlagGenerationJob extends TimedJob {
 					register: $register,
 					assignment: $assignment,
 					type: 'HERBEOORDELING_OVERDUE',
-					ernst: 'MIDDEN',
+					severity: 'MIDDEN',
 					details: ['intakeDate' => (string)($assignment['intakeDate'] ?? '')],
 					source: 'REQ-DBA-009; Wet DBA jaarlijkse herbeoordeling',
 					action: 'Vraag een herbeoordeling van de DBA-intake aan de ondernemer.'
@@ -338,7 +338,7 @@ class DBAFlagGenerationJob extends TimedJob {
 							register: $register,
 							assignment: $assignment,
 							type: 'MODELOVEREENKOMST_VERLOPEN',
-							ernst: 'MIDDEN',
+							severity: 'MIDDEN',
 							details: ['modelId' => $modelId, 'validTo' => (string)($modelArr['validTo'] ?? '')],
 							source: 'REQ-DBA-002; Belastingdienst modelovereenkomst-policy',
 							action: 'Kies een actueel modelovereenkomst en update de opdracht.'
@@ -365,7 +365,7 @@ class DBAFlagGenerationJob extends TimedJob {
 					register: $register,
 					assignment: $assignment,
 					type: 'WBA_VERLOPEN',
-					ernst: 'LAAG',
+					severity: 'LAAG',
 					details: ['wbaValidTo' => $wbaValidTo],
 					source: 'REQ-DBA-013; Belastingdienst WBA-policy (1 jaar geldigheid)',
 					action: 'Vraag een nieuwe WBA-beoordeling aan.'
@@ -418,7 +418,7 @@ class DBAFlagGenerationJob extends TimedJob {
 	 * @param string $register Register slug.
 	 * @param array<string,mixed> $assignment The owning DBAOpdracht.
 	 * @param string $type Flag type enum.
-	 * @param string $ernst LAAG/MIDDEN/HOOG.
+	 * @param string $severity LAAG/MIDDEN/HOOG.
 	 * @param array<string,mixed> $details Detail-payload.
 	 * @param string $source Fiscale grondslag.
 	 * @param string $action Aanbevolen actie.
@@ -430,7 +430,7 @@ class DBAFlagGenerationJob extends TimedJob {
 		string $register,
 		array $assignment,
 		string $type,
-		string $ernst,
+		string $severity,
 		array $details,
 		string $source,
 		string $action,
@@ -465,8 +465,8 @@ class DBAFlagGenerationJob extends TimedJob {
 					'administrationId' => (string)($assignment['administrationId'] ?? ''),
 					'assignmentId' => (string)($assignment['@self']['id'] ?? ($assignment['id'] ?? '')),
 					'type' => $type,
-					'detectieMoment' => (new DateTimeImmutable())->format('c'),
-					'ernst' => $ernst,
+					'detectionMoment' => (new DateTimeImmutable())->format('c'),
+					'severity' => $severity,
 					'details' => $details,
 					'fiscalSource' => $source,
 					'actionSuggestion' => $action,

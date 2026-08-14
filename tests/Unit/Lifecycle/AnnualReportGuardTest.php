@@ -97,7 +97,7 @@ class AnnualReportGuardTest extends TestCase {
 	 */
 	public function testCanOpmakenWhenBalansBalances(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-1', 'totalActiva' => 845000, 'totalPassiva' => 845000]])
+			$this->buildObjectServiceStub(records: [['reportId' => 'r-1', 'totalAssets' => 845000, 'totalLiabilities' => 845000]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -112,7 +112,7 @@ class AnnualReportGuardTest extends TestCase {
 	 */
 	public function testCannotOpmakenWhenBalansUnbalanced(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-2', 'totalActiva' => 845000, 'totalPassiva' => 800000]])
+			$this->buildObjectServiceStub(records: [['reportId' => 'r-2', 'totalAssets' => 845000, 'totalLiabilities' => 800000]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -163,7 +163,7 @@ class AnnualReportGuardTest extends TestCase {
 	 */
 	public function testZeroTotalBalansCannotOpmaken(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-5', 'totalActiva' => 0, 'totalPassiva' => 0]])
+			$this->buildObjectServiceStub(records: [['reportId' => 'r-5', 'totalAssets' => 0, 'totalLiabilities' => 0]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -215,7 +215,7 @@ class AnnualReportGuardTest extends TestCase {
 				annualReportId: 'r-8',
 				object: [
 					'auditorsStatementRequired' => true,
-					'accountantsverklaringStatus' => 'goedkeurend',
+					'auditorsStatementStatus' => 'goedkeurend',
 				]
 			)
 		);
@@ -234,7 +234,7 @@ class AnnualReportGuardTest extends TestCase {
 				annualReportId: 'r-9',
 				object: [
 					'auditorsStatementRequired' => true,
-					'accountantsverklaringStatus' => 'in-afwachting',
+					'auditorsStatementStatus' => 'in-afwachting',
 				]
 			)
 		);
@@ -253,7 +253,7 @@ class AnnualReportGuardTest extends TestCase {
 				annualReportId: 'r-10',
 				object: [
 					'auditorsStatementRequired' => true,
-					'accountantsverklaringStatus' => 'samenstelling',
+					'auditorsStatementStatus' => 'samenstelling',
 				]
 			)
 		);

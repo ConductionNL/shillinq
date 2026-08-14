@@ -299,15 +299,15 @@ class DBAComplianceGuard {
 	 * divided by count(REQUIRED_STUK_TYPES). The set of still-missing required
 	 * types is returned alongside the ratio so the UI can list them.
 	 *
-	 * @param array<int,mixed> $stukken The dossier stukken (each item is a JSON-decoded stuk).
+	 * @param array<int,mixed> $documents The dossier stukken (each item is a JSON-decoded stuk).
 	 *
 	 * @return array{score: float, missing: array<string>} Completeness result.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function computeCompleteness(array $stukken): array {
+	public function computeCompleteness(array $documents): array {
 		$presentTypes = [];
-		foreach ($stukken as $stuk) {
+		foreach ($documents as $stuk) {
 			if (is_array($stuk) === false) {
 				continue;
 			}

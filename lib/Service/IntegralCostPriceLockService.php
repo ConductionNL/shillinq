@@ -90,7 +90,7 @@ class IntegralCostPriceLockService {
 			$componenten = (array)($record['componenten'] ?? []);
 
 			$payrollCostSum += (float)($componenten['directPayrollCost'] ?? 0);
-			$materialenSum += (float)($componenten['directeMaterialen'] ?? 0);
+			$materialenSum += (float)($componenten['directMaterials'] ?? 0);
 			$depreciationsSum += (float)($componenten['directDepreciations'] ?? 0);
 			$vermogensSum += (float)($componenten['capitalCost'] ?? 0);
 			$winstopslagSum += (float)($componenten['winstopslag'] ?? 0);
@@ -145,7 +145,7 @@ class IntegralCostPriceLockService {
 			'status' => 'definitief',
 			'componenten' => [
 				'directPayrollCost' => round($payrollCostSum, 2),
-				'directeMaterialen' => round($materialenSum, 2),
+				'directMaterials' => round($materialenSum, 2),
 				'directDepreciations' => round($depreciationsSum, 2),
 				'indirecteOverhead' => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
 				'capitalCost' => round($vermogensSum, 2),
@@ -159,8 +159,8 @@ class IntegralCostPriceLockService {
 			'marge' => $marge,
 			'margePercentage' => $margePercentage,
 			'compliant' => $compliant,
-			'definitiefSignedBy' => $signedBy,
-			'definitiefSignedAt' => $now->format(DateTimeImmutable::ATOM),
+			'finalSignedBy' => $signedBy,
+			'finalSignedAt' => $now->format(DateTimeImmutable::ATOM),
 			'administrationId' => (string)$input['administrationId'],
 		];
 

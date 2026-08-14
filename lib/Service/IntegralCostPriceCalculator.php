@@ -348,7 +348,7 @@ class IntegralCostPriceCalculator {
 			'status' => (string)($input['status'] ?? 'voorlopig'),
 			'componenten' => [
 				'directPayrollCost' => $this->fromCents(cents: $payrollCostCents),
-				'directeMaterialen' => $this->fromCents(cents: $materialenCents),
+				'directMaterials' => $this->fromCents(cents: $materialenCents),
 				'directDepreciations' => $this->fromCents(cents: $depreciationsCents),
 				'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
 				'capitalCost' => $this->fromCents(cents: $vermogensCents),

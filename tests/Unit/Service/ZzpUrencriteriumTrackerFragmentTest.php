@@ -167,7 +167,7 @@ final class ZzpUrencriteriumTrackerFragmentTest extends TestCase {
 	 */
 	public function testUrencriteriumYearConstrainsNorm(): void {
 		$year = $this->fragment()['components']['schemas']['UrencriteriumYear'];
-		$enum = $year['properties']['doelNorm']['enum'];
+		$enum = $year['properties']['purposeNorm']['enum'];
 		self::assertSame([1225, 800, 525], $enum);
 
 	}//end testUrencriteriumYearConstrainsNorm()

@@ -262,14 +262,14 @@ class DBAComplianceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testComputeCompletenessFullDossier(): void {
-		$stukken = [
+		$documents = [
 			['type' => 'GETEKENDE_OVEREENKOMST'],
 			['type' => 'FACTUUR_EERSTE'],
 			['type' => 'URENSTAAT_KWARTAAL'],
 		];
 
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		$result = $this->guard->computeCompleteness(stukken: $stukken);
+		$result = $this->guard->computeCompleteness(documents: $documents);
 
 		self::assertSame(1.0, $result['score']);
 		self::assertSame([], $result['missing']);
@@ -284,13 +284,13 @@ class DBAComplianceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testComputeCompletenessMissingUrenstaat(): void {
-		$stukken = [
+		$documents = [
 			['type' => 'GETEKENDE_OVEREENKOMST'],
 			['type' => 'FACTUUR_EERSTE'],
 		];
 
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		$result = $this->guard->computeCompleteness(stukken: $stukken);
+		$result = $this->guard->computeCompleteness(documents: $documents);
 
 		self::assertEqualsWithDelta(0.6667, $result['score'], 0.001);
 		self::assertSame(['URENSTAAT_KWARTAAL'], $result['missing']);

@@ -104,7 +104,7 @@
 									{{ formatAmount(row.geautoriseerd) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
-									{{ formatAmount(row.verplicht) }}
+									{{ formatAmount(row.mandatory) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
 									{{ formatAmount(row.gerealiseerd) }}

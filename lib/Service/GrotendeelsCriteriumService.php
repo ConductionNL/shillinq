@@ -114,7 +114,7 @@ final class GrotendeelsCriteriumService {
 	 * @param array<int, array<string, mixed>> $dagregistraties YTD onderneming entries.
 	 * @param float $employmentHours YTD payroll hours.
 	 *
-	 * @return array{grotendeelsCriterium: string, blokkeertZelfstandigenaftrek: bool}
+	 * @return array{largelyCriterium: string, blokkeertZelfstandigenaftrek: bool}
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
 	 */
@@ -137,7 +137,7 @@ final class GrotendeelsCriteriumService {
 		}
 
 		return [
-			'grotendeelsCriterium' => $marking,
+			'largelyCriterium' => $marking,
 			'blokkeertZelfstandigenaftrek' => $blokkeert,
 		];
 

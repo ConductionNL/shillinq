@@ -72,7 +72,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 		self::assertSame(1225, $this->guard->bepaalDoelNorm(profiel: []));
 		self::assertSame(
 			'art. 3.6 lid 1 Wet IB 2001',
-			$this->guard->bepaalNormGrondslag(doelNorm: 1225)
+			$this->guard->bepaalNormGrondslag(purposeNorm: 1225)
 		);
 
 	}//end testRegularProfileYields1225()
@@ -84,7 +84,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testAoProfileYields800Lid5(): void {
 		self::assertSame(800, $this->guard->bepaalDoelNorm(profiel: ['arbeidsongeschikt' => true]));
-		self::assertStringContainsString('lid 5', $this->guard->bepaalNormGrondslag(doelNorm: 800));
+		self::assertStringContainsString('lid 5', $this->guard->bepaalNormGrondslag(purposeNorm: 800));
 
 	}//end testAoProfileYields800Lid5()
 
@@ -160,12 +160,12 @@ class UrencriteriumYearGuardTest extends TestCase {
 	public function testValidYearPassesSave(): void {
 		$year = [
 			'enterpriseId' => 'ond-1',
-			'doelNorm' => 1225,
+			'purposeNorm' => 1225,
 			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
 			'currentHours' => 916,
 			'forecastYearEnd' => 1180,
 			'thresholdStatus' => 'RISICO',
-			'grotendeelsCriterium' => 'NIET_TOEPASSELIJK',
+			'largelyCriterium' => 'NIET_TOEPASSELIJK',
 		];
 		self::assertTrue($this->guard->validateOnSave(year: $year));
 
@@ -178,7 +178,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testAoNormWithoutLid5Rejected(): void {
 		$year = [
-			'doelNorm' => 800,
+			'purposeNorm' => 800,
 			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
 			'thresholdStatus' => 'OP_KOERS',
 		];
@@ -193,7 +193,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testUnrecognisedNormRejected(): void {
 		$year = [
-			'doelNorm' => 1000,
+			'purposeNorm' => 1000,
 			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
 			'thresholdStatus' => 'OP_KOERS',
 		];
@@ -208,7 +208,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testInconsistentDrempelStatusRejected(): void {
 		$year = [
-			'doelNorm' => 1225,
+			'purposeNorm' => 1225,
 			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
 			'currentHours' => 916,
 			'forecastYearEnd' => 1180,

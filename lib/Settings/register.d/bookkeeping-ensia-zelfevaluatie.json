@@ -329,7 +329,7 @@
         "type": "object",
         "required": [
           "cyclusId",
-          "domein",
+          "domain",
           "questionCode",
           "questionText",
           "answerType",
@@ -348,7 +348,7 @@
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
-          "domein": {
+          "domain": {
             "type": "string",
             "enum": [
               "BIO",
@@ -363,7 +363,7 @@
             "example": "BIO",
             "title": "Domein"
           },
-          "onderwerp": {
+          "subject": {
             "type": "string",
             "nullable": true,
             "description": "Onderwerp / categorie van de vraag, bv. Toegangsbeveiliging, Logging, Continuïteit. Drijft worklist-groepering (REQ-ENSIA-002).",

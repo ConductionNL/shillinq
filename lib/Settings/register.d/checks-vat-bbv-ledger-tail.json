@@ -293,7 +293,7 @@
             },
             "title": "Parts"
           },
-          "programmaplan": {
+          "programmePlan": {
             "type": "object",
             "nullable": true,
             "description": "The programme plan of a begroting (art. 8 BBV): the programmes plus the algemene dekkingsmiddelen, overhead, VPB charge and the amount for unforeseen expenditure (onvoorzien).",
@@ -360,7 +360,7 @@
                 "description": "Overview of revenues and expenses present.",
                 "title": "Overzicht Baten Lasten"
               },
-              "balans": {
+              "balance": {
                 "type": "boolean",
                 "description": "Balance sheet present.",
                 "title": "Balans"
@@ -370,7 +370,7 @@
                 "description": "Lawfulness statement present.",
                 "title": "Rechtmatigheidsverantwoording"
               },
-              "accountantsverklaring": {
+              "auditorsStatement": {
                 "type": "boolean",
                 "description": "Auditor's report present.",
                 "title": "Accountantsverklaring"

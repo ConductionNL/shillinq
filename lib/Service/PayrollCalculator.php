@@ -276,7 +276,7 @@ class PayrollCalculator {
 			return 0.0;
 		}
 
-		$from = (float)($rule['vanaf'] ?? 0);
+		$from = (float)($rule['from'] ?? 0);
 		$percentage = (float)($rule['percentage'] ?? 0);
 		$vasteHeffing = (float)($rule['vasteHeffing'] ?? 0);
 		$discount = (float)($rule['korting'] ?? 0);
@@ -297,7 +297,7 @@ class PayrollCalculator {
 	 */
 	private function vindBracket(float $amount, array $tableRules): ?array {
 		foreach ($tableRules as $rule) {
-			$from = (float)($rule['vanaf'] ?? 0);
+			$from = (float)($rule['from'] ?? 0);
 			$tot = ($rule['tot'] ?? null);
 			if ($amount < $from) {
 				continue;

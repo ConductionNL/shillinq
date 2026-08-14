@@ -108,7 +108,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 			'code',
 			'name',
 			'governingBody',
-			'marktsegment',
+			'marketSegment',
 			'concurrenten',
 			'costPriceMethod',
 			'costCentreCode',
@@ -137,7 +137,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 
 		$expected = [
 			'directPayrollCost',
-			'directeMaterialen',
+			'directMaterials',
 			'directDepreciations',
 			'indirecteOverhead',
 			'capitalCost',

@@ -1127,13 +1127,13 @@
         "x-schema-org": "schema:Organization",
         "type": "object",
         "required": [
-          "deelnemerType",
+          "participantType",
           "participantName",
           "share",
           "lifecycleState"
         ],
         "properties": {
-          "deelnemerType": {
+          "participantType": {
             "type": "string",
             "enum": [
               "municipality",
@@ -1669,7 +1669,7 @@
         "x-schema-org": "schema:DefinedTerm",
         "type": "object",
         "required": [
-          "selectielijstCode",
+          "selectionListCode",
           "description",
           "recordCategory",
           "disposition",
@@ -1752,7 +1752,7 @@
           }
         },
         "properties": {
-          "selectielijstCode": {
+          "selectionListCode": {
             "type": "string",
             "description": "Selectielijst Gemeenten 2020 classifier code (e.g. 5.1.2, 3.5.1, 1.1.1).",
             "example": "5.1.2",
@@ -2962,7 +2962,7 @@
             "example": 50000,
             "title": "Resident Count"
           },
-          "oppervlak": {
+          "area": {
             "type": "number",
             "minimum": 0,
             "description": "Total surface area of the administration in km². Used for oppervlak-based denominators.",
@@ -2970,7 +2970,7 @@
             "example": 123.5,
             "title": "Area"
           },
-          "gewogenOppervlak": {
+          "weightedArea": {
             "type": "number",
             "minimum": 0,
             "description": "Weighted surface area in km² (land + water weighted factor). Used for gewogen-oppervlak denominators.",
@@ -2978,7 +2978,7 @@
             "example": 98.2,
             "title": "Weighted Area"
           },
-          "bestuursOmvang": {
+          "boardSize": {
             "type": "integer",
             "minimum": 0,
             "description": "Number of elected council seats (raadsleden / statenleden). Used for bestuursomvang-based ratios.",
@@ -10944,7 +10944,7 @@
             "default": "v4.1-klantspecifiek-betaalgedrag",
             "title": "Model Version"
           },
-          "kalibratieScore": {
+          "calibrationScore": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -11162,7 +11162,7 @@
             "example": 4200.0,
             "title": "Inflows Pipeline"
           },
-          "inflows_overig": {
+          "inflows_other": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Interest income, refunds, other miscellaneous inflows.",
@@ -11183,14 +11183,14 @@
             "example": 2100.0,
             "title": "Outflows AP Forecasted"
           },
-          "outflows_recurring_huur": {
+          "outflows_recurring_rent": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Recurring monthly rent (huur).",
             "example": 1200.0,
             "title": "Outflows Recurring Rent"
           },
-          "outflows_recurring_verzekering": {
+          "outflows_recurring_insurance": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Recurring insurance premiums.",
@@ -11211,7 +11211,7 @@
             "example": 3500.0,
             "title": "Outflows Recurring DGA Salary"
           },
-          "outflows_recurring_lijfrentepremie": {
+          "outflows_recurring_annuity_premium": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Pension (lijfrente) contributions.",
@@ -11676,7 +11676,7 @@
             "default": "AP_GENERIC",
             "title": "Category"
           },
-          "betalingsmethode": {
+          "paymentMethod": {
             "type": "string",
             "description": "Payment method.",
             "enum": [
@@ -11942,8 +11942,8 @@
           "enterpriseId",
           "policy",
           "berekendeBuffer",
-          "alertOndergrens",
-          "alertVooralarm",
+          "alertLowerLimit",
+          "alertPreAlert",
           "administrationId"
         ],
         "properties": {
@@ -12000,7 +12000,7 @@
             "example": 5200.0,
             "title": "Calculated Buffer"
           },
-          "alertOndergrens": {
+          "alertLowerLimit": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -12008,7 +12008,7 @@
             "example": 2600.0,
             "title": "Alert Lower Threshold"
           },
-          "alertVooralarm": {
+          "alertPreAlert": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -12349,7 +12349,7 @@
             "example": 3.2,
             "title": "Tax Mape"
           },
-          "betalingsgedragUpdates": {
+          "paymentBehaviourUpdates": {
             "type": "array",
             "description": "Customers whose betalingsgedrag offset was updated.",
             "items": {
@@ -16653,7 +16653,7 @@
           "valuationAmount",
           "valuationDate",
           "applicableTariff",
-          "vpbBalansLinkId",
+          "vpbBalanceLinkId",
           "administrationId"
         ],
         "properties": {
@@ -16711,7 +16711,7 @@
             "example": 0.09,
             "title": "Applicable Tariff"
           },
-          "vpbBalansLinkId": {
+          "vpbBalanceLinkId": {
             "type": "string",
             "description": "FK to VpbBalansLink (REQ-VPB-002 from bookkeeping-vpb-corporate-tax). Links the IP asset to the Vpb-balans.",
             "example": "vpb-balans-link-2026-001",
@@ -19334,7 +19334,7 @@
         "required": [
           "code",
           "name",
-          "niveau",
+          "level",
           "revenueOfExpenses"
         ],
         "properties": {
@@ -19350,7 +19350,7 @@
             "example": "Betaalde belastingen",
             "title": "Name"
           },
-          "niveau": {
+          "level": {
             "type": "integer",
             "minimum": 1,
             "maximum": 3,
@@ -19376,7 +19376,7 @@
             "example": "expenses",
             "title": "Revenue or Expense"
           },
-          "iv3Verplicht": {
+          "iv3Mandatory": {
             "type": "boolean",
             "default": false,
             "description": "Whether this categorie is mandatory in the Iv3-aanlevering per informatievoorschrift.",
@@ -19465,7 +19465,7 @@
             "example": "2026-09-15",
             "title": "Commissioning Date"
           },
-          "afschrijvingsmethode": {
+          "depreciationMethod": {
             "type": "string",
             "enum": [
               "lineair",
@@ -19490,7 +19490,7 @@
             "default": 0,
             "title": "Residual Value (Cents)"
           },
-          "renteOmslagPercentage": {
+          "interestApportionmentPercentage": {
             "type": "number",
             "description": "Rente-omslag percentage applied to this actief.",
             "nullable": true,
@@ -19509,7 +19509,7 @@
             "nullable": true,
             "title": "Credit Resolution"
           },
-          "componentenMethode": {
+          "componentsMethod": {
             "type": "boolean",
             "default": false,
             "description": "Whether the componentenmethode applies (samengesteld actief split into components with separate schedules).",
@@ -19656,7 +19656,7 @@
             "default": "primitief",
             "title": "Version"
           },
-          "begrotingswijziging": {
+          "budgetAmendment": {
             "type": "string",
             "description": "FK to Begrotingswijziging.nummer when this row results from a wijziging.",
             "nullable": true,
@@ -19750,7 +19750,7 @@
             "example": 2026,
             "title": "Fiscal Year"
           },
-          "inhoud": {
+          "content": {
             "type": "string",
             "description": "Free-text content of the paragraaf (template-driven editor output).",
             "nullable": true,
@@ -19762,7 +19762,7 @@
             "nullable": true,
             "title": "Resilience Ratio"
           },
-          "compleet": {
+          "complete": {
             "type": "boolean",
             "default": false,
             "description": "Whether the paragraaf is filled and signed-off.",
@@ -19861,7 +19861,7 @@
                   "title": "What",
                   "description": "The date and time for wat."
                 },
-                "wanneer": {
+                "when": {
                   "type": "string",
                   "title": "When",
                   "description": "The wanneer."
@@ -20016,7 +20016,7 @@
             "example": "bestemming",
             "title": "Type"
           },
-          "doel": {
+          "purpose": {
             "type": "string",
             "description": "Purpose of the reserve; required for bestemmingsreserves.",
             "nullable": true,
@@ -20040,7 +20040,7 @@
             "nullable": true,
             "title": "Cap (Cents)"
           },
-          "bodemCents": {
+          "floorCents": {
             "type": "integer",
             "description": "Lower bound (bodem) in integer eurocents.",
             "nullable": true,
@@ -20258,7 +20258,7 @@
             "example": 4,
             "title": "Update Frequency (Years)"
           },
-          "volgendeActualisatie": {
+          "nextUpdate": {
             "type": "string",
             "format": "date",
             "description": "Date of the next required actualisation.",
@@ -22799,7 +22799,7 @@
         "indicatorDescription",
         "indicatorValue",
         "levelDate",
-        "controleprotocol",
+        "auditProtocol",
         "fiscalYear",
         "administrationId"
       ],
@@ -22850,7 +22850,7 @@
           "description": "Reference date (peildatum) for the indicator measurement, typically fiscal-year-end.",
           "example": "2026-12-31"
         },
-        "controleprotocol": {
+        "auditProtocol": {
           "type": "string",
           "description": "Version of the BZK SiSa controleprotocol this indicator was filed under (e.g. 2026). Version-pins the reporting year.",
           "example": "2026"
@@ -22877,7 +22877,7 @@
           "description": "BZK submission status for this indicator's regeling in the annual bijlage.",
           "example": "submitted"
         },
-        "bijlageDocumentUri": {
+        "attachmentDocumentUri": {
           "type": "string",
           "description": "docudesk URI of the generated SiSa-bijlage document that contains this indicator. Set after bijlage generation.",
           "nullable": true,

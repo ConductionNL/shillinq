@@ -204,7 +204,7 @@ class FidoTreasuryGuardTest extends TestCase {
 			'signingMandateRole' => 'treasurer',
 			'type' => 'kasgeld',
 			'principal' => 2500000,
-			'limietBreach' => false,
+			'limitBreach' => false,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -226,7 +226,7 @@ class FidoTreasuryGuardTest extends TestCase {
 			'signingMandateRole' => 'treasurer',
 			'type' => 'kasgeld',
 			'principal' => 9000000,
-			'limietBreach' => false,
+			'limitBreach' => false,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -248,7 +248,7 @@ class FidoTreasuryGuardTest extends TestCase {
 			'signingMandateRole' => 'treasurer',
 			'type' => 'obligatie',
 			'principal' => 1000000,
-			'limietBreach' => false,
+			'limitBreach' => false,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -270,7 +270,7 @@ class FidoTreasuryGuardTest extends TestCase {
 			'signingMandateRole' => 'college',
 			'type' => 'EMTN',
 			'principal' => 500000000,
-			'limietBreach' => false,
+			'limitBreach' => false,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -292,7 +292,7 @@ class FidoTreasuryGuardTest extends TestCase {
 			'signingMandateRole' => 'treasurer',
 			'type' => 'kasgeld',
 			'principal' => 2500000,
-			'limietBreach' => true,
+			'limitBreach' => true,
 			'overrideRationale' => '   ',
 		];
 
@@ -315,7 +315,7 @@ class FidoTreasuryGuardTest extends TestCase {
 			'signingMandateRole' => 'treasurer',
 			'type' => 'kasgeld',
 			'principal' => 2500000,
-			'limietBreach' => true,
+			'limitBreach' => true,
 			'overrideRationale' => 'Emergency bridging finance for grant-receipt delay; repayment Q2.',
 		];
 
@@ -338,7 +338,7 @@ class FidoTreasuryGuardTest extends TestCase {
 			'signingMandateRole' => 'treasurer',
 			'type' => 'kasgeld',
 			'principal' => 2500000,
-			'limietBreach' => false,
+			'limitBreach' => false,
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -458,7 +458,7 @@ class FidoTreasuryGuardTest extends TestCase {
 	public function testRapportageWithBothSignOffsCanSubmit(): void {
 		$report = [
 			'signOffTreasurer' => ['person' => 'treasurer-user', 'timestamp' => '2026-01-12T10:00:00Z'],
-			'signOffConcerncontroller' => ['person' => 'controller-user', 'timestamp' => '2026-01-12T11:00:00Z'],
+			'signOffGroupController' => ['person' => 'controller-user', 'timestamp' => '2026-01-12T11:00:00Z'],
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -475,7 +475,7 @@ class FidoTreasuryGuardTest extends TestCase {
 	public function testRapportageMissingControllerSignOffDenied(): void {
 		$report = [
 			'signOffTreasurer' => ['person' => 'treasurer-user', 'timestamp' => '2026-01-12T10:00:00Z'],
-			'signOffConcerncontroller' => ['person' => '', 'timestamp' => ''],
+			'signOffGroupController' => ['person' => '', 'timestamp' => ''],
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters

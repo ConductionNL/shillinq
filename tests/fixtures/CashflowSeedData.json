@@ -98,8 +98,8 @@
 				"policy": "MIN_MONTHS_VASTE_KOSTEN",
 				"monthsFixedCost": 1,
 				"berekendeBuffer": 7500.00,
-				"alertOndergrens": 3750.00,
-				"alertVooralarm": 11250.00
+				"alertLowerLimit": 3750.00,
+				"alertPreAlert": 11250.00
 			},
 			"expectedSaldoRange": {
 				"min": 35000.00,
@@ -181,8 +181,8 @@
 				"policy": "MIN_MONTHS_VASTE_KOSTEN",
 				"monthsFixedCost": 1,
 				"berekendeBuffer": 5200.00,
-				"alertOndergrens": 2600.00,
-				"alertVooralarm": 7800.00
+				"alertLowerLimit": 2600.00,
+				"alertPreAlert": 7800.00
 			},
 			"expectedSaldoRange": {
 				"min": 9000.00,
@@ -274,8 +274,8 @@
 				"policy": "MIN_MONTHS_VASTE_KOSTEN",
 				"monthsFixedCost": 1,
 				"berekendeBuffer": 3500.00,
-				"alertOndergrens": 1750.00,
-				"alertVooralarm": 5250.00
+				"alertLowerLimit": 1750.00,
+				"alertPreAlert": 5250.00
 			},
 			"expectedSaldoRange": {
 				"min": 3000.00,

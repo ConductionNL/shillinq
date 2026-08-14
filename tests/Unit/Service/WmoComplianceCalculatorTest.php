@@ -82,7 +82,7 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	public function testIntegralCostPriceSumsComponentsAndPerUnit(): void {
 		$componenten = [
 			'directPayrollCost' => 41250,
-			'directeMaterialen' => 8730,
+			'directMaterials' => 8730,
 			'directDepreciations' => 6900,
 			'indirecteOverhead' => [
 				'huisvesting' => 12000,
@@ -109,7 +109,7 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	public function testIntegralCostPriceNullPerUnitWhenNoUnits(): void {
 		$componenten = [
 			'directPayrollCost' => 1000,
-			'directeMaterialen' => 0,
+			'directMaterials' => 0,
 			'directDepreciations' => 0,
 			'indirecteOverhead' => [],
 			'capitalCost' => 0,
@@ -212,8 +212,8 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	 */
 	public function testSplitTransactionConservesTotal(): void {
 		$targets = [
-			['costObject' => 'D-PUBL-AWZI-01', 'ratio' => 0.64, 'dimensie' => 'PUBL', 'generalLedger' => '443100'],
-			['costObject' => 'D-MO-SVS-04', 'ratio' => 0.36, 'dimensie' => 'MO', 'generalLedger' => '443900'],
+			['costObject' => 'D-PUBL-AWZI-01', 'ratio' => 0.64, 'dimension' => 'PUBL', 'generalLedger' => '443100'],
+			['costObject' => 'D-MO-SVS-04', 'ratio' => 0.36, 'dimension' => 'MO', 'generalLedger' => '443900'],
 		];
 
 		$splits = $this->calc->splitTransaction(18400.0, $targets);
@@ -221,7 +221,7 @@ final class WmoComplianceCalculatorTest extends TestCase {
 		self::assertCount(2, $splits);
 		self::assertSame(11776.0, $splits[0]['amount']);
 		self::assertSame(6624.0, $splits[1]['amount']);
-		self::assertSame('PUBL', $splits[0]['dimensie']);
+		self::assertSame('PUBL', $splits[0]['dimension']);
 		self::assertTrue($this->calc->splitsAreBalanced(18400.0, $splits));
 
 	}//end testSplitTransactionConservesTotal()
@@ -236,9 +236,9 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	public function testSplitTransactionAbsorbsRoundingRemainder(): void {
 		$third = (1.0 / 3.0);
 		$targets = [
-			['costObject' => 'A', 'ratio' => $third, 'dimensie' => 'PUBL'],
-			['costObject' => 'B', 'ratio' => $third, 'dimensie' => 'PUBL'],
-			['costObject' => 'C', 'ratio' => $third, 'dimensie' => 'MO'],
+			['costObject' => 'A', 'ratio' => $third, 'dimension' => 'PUBL'],
+			['costObject' => 'B', 'ratio' => $third, 'dimension' => 'PUBL'],
+			['costObject' => 'C', 'ratio' => $third, 'dimension' => 'MO'],
 		];
 
 		$splits = $this->calc->splitTransaction(100.0, $targets);

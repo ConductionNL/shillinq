@@ -584,13 +584,13 @@
                 "description": "WBA assessment validity date (1 year policy).",
                 "title": "Wba Geldig Tot"
               },
-              "intermediairMode": {
+              "intermediaryMode": {
                 "type": "boolean",
                 "default": false,
                 "description": "Whether the tussenkomst triangle applies (REQ-DBA-017).",
                 "title": "Intermediair Mode"
               },
-              "perspectief": {
+              "perspective": {
                 "type": "string",
                 "nullable": true,
                 "enum": [

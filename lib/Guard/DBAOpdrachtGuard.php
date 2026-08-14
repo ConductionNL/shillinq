@@ -97,9 +97,9 @@ class DBAOpdrachtGuard {
 		}
 
 		// REQ-DBA-000 — risico-niveau HOOG vereist actueleRisicoscore >= 75.
-		$niveau = (string)($assignment['riskLevel'] ?? 'LAAG');
+		$level = (string)($assignment['riskLevel'] ?? 'LAAG');
 		$score = $assignment['actueleRisicoscore'] ?? null;
-		if ($niveau === 'HOOG' && is_int($score) === true) {
+		if ($level === 'HOOG' && is_int($score) === true) {
 			if ($score < 75) {
 				$errors[] = 'REQ-DBA-000/003: risicoNiveau HOOG vereist actueleRisicoscore >= 75.';
 			}

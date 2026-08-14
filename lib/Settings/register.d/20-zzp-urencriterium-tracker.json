@@ -17,7 +17,7 @@
           "administrationId",
           "enterpriseId",
           "calendarYear",
-          "doelNorm",
+          "purposeNorm",
           "normBasis",
           "thresholdStatus"
         ],
@@ -40,7 +40,7 @@
             "example": 2026,
             "title": "Kalenderjaar"
           },
-          "doelNorm": {
+          "purposeNorm": {
             "type": "integer",
             "description": "De toe te passen urennorm: 1.225 (regulier, art. 3.6 lid 1), 800 (arbeidsongeschiktheid, art. 3.6 lid 5) of 525 (meewerkaftrek). Automatisch bepaald op init (REQ-URC-000/006).",
             "enum": [
@@ -96,7 +96,7 @@
             "example": "RISICO",
             "title": "Drempel Status"
           },
-          "grotendeelsCriterium": {
+          "largelyCriterium": {
             "type": "string",
             "nullable": true,
             "description": "Uitkomst grotendeels-criterium (>50% ondernemingstijd vs loondienst, art. 3.6 lid 2). NIET_TOEPASSELIJK als geen parallel loondienst (REQ-URC-007).",
@@ -628,7 +628,7 @@
             "example": 1180,
             "title": "Prognose Einde Jaar"
           },
-          "tekort": {
+          "deficit": {
             "type": "number",
             "nullable": true,
             "description": "Verwacht tekort t.o.v. de norm (norm - prognose), 0 of negatief als geen tekort.",

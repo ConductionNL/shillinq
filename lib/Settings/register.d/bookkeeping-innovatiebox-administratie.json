@@ -20,7 +20,7 @@
         "required": [
           "name",
           "type",
-          "type_immaterieel_activum",
+          "type_intangible_asset",
           "originator",
           "cost_object_id",
           "status",
@@ -48,7 +48,7 @@
             "example": "software",
             "title": "Type"
           },
-          "toegangsticket": {
+          "accessTicket": {
             "type": "object",
             "description": "Access-ticket evidence (REQ-IBA-001). soort drives which sub-fields are required.",
             "nullable": true,
@@ -115,7 +115,7 @@
             },
             "title": "Toegangsticket"
           },
-          "type_immaterieel_activum": {
+          "type_intangible_asset": {
             "type": "string",
             "enum": [
               "software",
@@ -146,7 +146,7 @@
             "title": "Ontwikkelingsperiode",
             "description": "A structured ontwikkelingsperiode object with nested properties."
           },
-          "in_gebruik_genomen": {
+          "in_use_taken": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -290,7 +290,7 @@
             "example": 680000.0,
             "title": "Nexus Teller Na Uplift"
           },
-          "nexus_noemer": {
+          "nexus_denominator": {
             "type": "number",
             "example": 680000.0,
             "title": "Nexus Noemer",
@@ -472,7 +472,7 @@
             "example": 72000.0,
             "title": "VpB Op Innovatiedeel"
           },
-          "vpb_zonder_innovatiebox": {
+          "vpb_without_innovation_box": {
             "type": "number",
             "description": "kwalificerende_winst_voor_nexus x 0.258 (standard rate, for comparison).",
             "example": 206400.0,
@@ -504,7 +504,7 @@
             "default": false,
             "title": "Vso Locked"
           },
-          "forfaitair_cap_applied": {
+          "flat_rate_cap_applied": {
             "type": "boolean",
             "description": "True when the forfaitair_25pct election hit the EUR 25k annual cap (art. 12bg). Drives the ForfaitairCap.applied audit event (REQ-IBA-008).",
             "default": false,
@@ -906,7 +906,7 @@
         },
         "name": "Slimme routeringsalgoritme",
         "type": "software",
-        "toegangsticket": {
+        "accessTicket": {
           "kind": "so_declaration",
           "rnd_declaration_number": "S2024/001234",
           "so_declaration_period": {
@@ -914,12 +914,12 @@
             "tot": "2024-12-31"
           }
         },
-        "type_immaterieel_activum": "software",
+        "type_intangible_asset": "software",
         "developmentPeriod": {
           "start": "2023-02-01",
           "end_expected": "2024-06-30"
         },
-        "in_gebruik_genomen": "2024-07-01",
+        "in_use_taken": "2024-07-01",
         "originator": "interne_ontwikkeling",
         "cost_object_id": "kd-platform-team",
         "affiliated_entity_involved": false,
@@ -935,7 +935,7 @@
         },
         "name": "Voorspelmodel onderhoud (related-party R&D)",
         "type": "software",
-        "toegangsticket": {
+        "accessTicket": {
           "kind": "so_declaration",
           "rnd_declaration_number": "S2024/005678",
           "so_declaration_period": {
@@ -943,7 +943,7 @@
             "tot": "2024-12-31"
           }
         },
-        "type_immaterieel_activum": "data-algoritme",
+        "type_intangible_asset": "data-algoritme",
         "developmentPeriod": {
           "start": "2023-06-01"
         },
@@ -961,17 +961,17 @@
         },
         "name": "Octrooi sensorbehuizing",
         "type": "octrooi",
-        "toegangsticket": {
+        "accessTicket": {
           "kind": "octrooi",
           "patent_number": "NL2031234",
           "patent_land": "NL",
           "patent_request_date": "2021-09-15"
         },
-        "type_immaterieel_activum": "hardware-related",
+        "type_intangible_asset": "hardware-related",
         "developmentPeriod": {
           "start": "2020-01-01"
         },
-        "in_gebruik_genomen": "2022-01-01",
+        "in_use_taken": "2022-01-01",
         "originator": "interne_ontwikkeling",
         "cost_object_id": "kd-hardware-team",
         "status": "valid",
@@ -992,7 +992,7 @@
         "uplift_factor": 1.3,
         "nexus_teller_for_uplift": 600000.0,
         "nexus_teller_after_uplift": 680000.0,
-        "nexus_noemer": 680000.0,
+        "nexus_denominator": 680000.0,
         "nexusbreuk_ongecapt": 1.0,
         "nexus_fraction_applied": 1.0,
         "calculated_on": "2024-03-15T10:00:00+00:00",
@@ -1014,7 +1014,7 @@
         "uplift_factor": 1.3,
         "nexus_teller_for_uplift": 150000.0,
         "nexus_teller_after_uplift": 195000.0,
-        "nexus_noemer": 450000.0,
+        "nexus_denominator": 450000.0,
         "nexusbreuk_ongecapt": 0.4333,
         "nexus_fraction_applied": 0.4333,
         "calculated_on": "2024-03-15T10:05:00+00:00",
@@ -1040,7 +1040,7 @@
         "qualifying_profit_after_nexus": 800000.0,
         "effective_rate": 0.09,
         "vpb_on_innovation_share": 72000.0,
-        "vpb_zonder_innovatiebox": 206400.0,
+        "vpb_without_innovation_box": 206400.0,
         "benefit_innovation_box": 134400.0,
         "vso_locked": false,
         "administrationId": "adm-mkb-1"
@@ -1061,7 +1061,7 @@
         "qualifying_profit_after_nexus": 25000.0,
         "effective_rate": 0.09,
         "vpb_on_innovation_share": 2250.0,
-        "vpb_zonder_innovatiebox": 51600.0,
+        "vpb_without_innovation_box": 51600.0,
         "benefit_innovation_box": 49350.0,
         "vso_locked": false,
         "administrationId": "adm-mkb-1"

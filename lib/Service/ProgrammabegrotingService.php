@@ -69,7 +69,7 @@ class ProgrammabegrotingService {
 	 * @param string $administrationId Administration scope (server-resolved).
 	 * @param string $budgetId The Programmabegroting.id to evaluate.
 	 *
-	 * @return array{budgetId:string,sluitendStructureel:bool,sluitendReëel:bool,toezichtRegime:string,jaren:array<int,array<string,mixed>>}
+	 * @return array{budgetId:string,sluitendStructureel:bool,sluitendReëel:bool,supervisionRegime:string,jaren:array<int,array<string,mixed>>}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
@@ -100,7 +100,7 @@ class ProgrammabegrotingService {
 			'budgetId' => $budgetId,
 			'sluitendStructureel' => $flags['sluitendStructureel'],
 			'sluitendReëel' => $flags['sluitendReëel'],
-			'toezichtRegime' => $regime,
+			'supervisionRegime' => $regime,
 			'jaren' => $evaluated,
 		];
 

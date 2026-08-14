@@ -251,7 +251,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Procest "task escalated without resolution" replay — guard rejects.
 		$escalated = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => 'Te kort.',
 				'lawfulnessFinding' => '',
 			]
@@ -264,7 +264,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Procest "task completed cleanly" replay — guard accepts.
 		$completed = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => 'Inkoopadviseur bevestigt dat de drempel niet is overschreden; clustering blijft onder EUR 221k.',
 				'lawfulnessFinding' => 'bev-77',
 			]
@@ -319,7 +319,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Inherited toets — long onderbouwing carries over verbatim.
 		$inherited = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => 'Inheriting PO RV-toets PO-2026-441 (bedrag 100k); factuur 105k binnen 10% tolerantie.',
 				'lawfulnessFinding' => 'bev-200',
 			]
@@ -332,7 +332,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Re-toetsing — caller must supply the updated reasoning (>= 50 chars).
 		$retoetsedShort = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => 'Wijkt af.',
 				'lawfulnessFinding' => 'bev-201',
 			]
@@ -344,7 +344,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 
 		$retoetsedFull = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => 'Factuur 130k wijkt 30% af van PO 100k; herziene toets vereist conform REQ-RV-008.',
 				'lawfulnessFinding' => 'bev-201',
 			]
@@ -399,7 +399,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// without further onderbouwing — the short-circuit path.
 		$shortCircuit = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet',
+				'outcome' => 'voldoet',
 				'frameworkAgreement' => 'ro-2024-12',
 			]
 		);
@@ -435,9 +435,9 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$required = [
 			'journalEntry',
 			'criterium',
-			'uitkomst',
+			'outcome',
 			'testDate',
-			'toetser',
+			'reviewer',
 			'substantiation',
 			'amount_involved',
 			'supportingDocuments',

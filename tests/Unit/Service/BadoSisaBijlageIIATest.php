@@ -263,7 +263,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 					'protocol' => $protocolId,
 					'schemeCode' => 'G2',
 					'accountableParty' => 'municipality',
-					'specifiekeUitkering' => 'Participatiewet',
+					'specificBenefit' => 'Participatiewet',
 					'assuranceLevel' => 'sisa-specific',
 					'findings' => [$g2Finding1, $g2Finding2],
 				],
@@ -271,7 +271,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 					'protocol' => $protocolId,
 					'schemeCode' => 'G3',
 					'accountableParty' => 'municipality',
-					'specifiekeUitkering' => 'Schuldhulpverlening',
+					'specificBenefit' => 'Schuldhulpverlening',
 					'assuranceLevel' => 'sisa-specific',
 					'findings' => [$g3Finding1],
 				],
@@ -320,7 +320,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 		foreach (['G2', 'G3'] as $code) {
 			self::assertSame('municipality', $bycode[$code]['accountableParty']);
 			self::assertSame('sisa-specific', $bycode[$code]['assuranceLevel']);
-			self::assertNotEmpty($bycode[$code]['specifiekeUitkering']);
+			self::assertNotEmpty($bycode[$code]['specificBenefit']);
 		}
 
 		// Step 4: HTML summary contains the IIA-style row for each regeling.

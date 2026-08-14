@@ -112,7 +112,7 @@
             "example": "v4.1-klantspecifiek-betaalgedrag",
             "title": "Model Versie"
           },
-          "kalibratieScore": {
+          "calibrationScore": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -120,7 +120,7 @@
             "example": 0.94,
             "title": "Kalibratie Score"
           },
-          "crisisModeActief": {
+          "crisisModeActive": {
             "type": "boolean",
             "default": false,
             "description": "True when a negative saldo is predicted within the next 4 weeks; triggers daily recompute (REQ-CF-010).",
@@ -323,7 +323,7 @@
             "example": 0.0,
             "title": "Inflows Pipeline"
           },
-          "inflows_overig": {
+          "inflows_other": {
             "type": "number",
             "description": "Interest, refunds, other inflows (REQ-CF-002).",
             "example": 0.0,
@@ -341,13 +341,13 @@
             "example": 2100.0,
             "title": "Outflows AP Geprognosticeerd"
           },
-          "outflows_recurring_huur": {
+          "outflows_recurring_rent": {
             "type": "number",
             "description": "Recurring rent for the week (REQ-CF-002/005).",
             "example": 0.0,
             "title": "Outflows Recurring Huur"
           },
-          "outflows_recurring_verzekering": {
+          "outflows_recurring_insurance": {
             "type": "number",
             "description": "Recurring insurance for the week (REQ-CF-002/005).",
             "example": 0.0,
@@ -365,7 +365,7 @@
             "example": 0.0,
             "title": "Outflows Recurring Dga Loon"
           },
-          "outflows_recurring_lijfrentepremie": {
+          "outflows_recurring_annuity_premium": {
             "type": "number",
             "description": "Pension/annuity contribution for the week (REQ-CF-002/005).",
             "example": 0.0,
@@ -741,7 +741,7 @@
             "description": "Outflow category for charting (REQ-CF-006).",
             "title": "Categorie"
           },
-          "betalingsmethode": {
+          "paymentMethod": {
             "type": "string",
             "enum": [
               "AUTOMATISCHE_INCASSO_SEPA",
@@ -995,8 +995,8 @@
           "enterpriseId",
           "policy",
           "berekendeBuffer",
-          "alertOndergrens",
-          "alertVooralarm",
+          "alertLowerLimit",
+          "alertPreAlert",
           "administrationId"
         ],
         "properties": {
@@ -1028,13 +1028,13 @@
             "example": 5200.0,
             "title": "Berekende Buffer"
           },
-          "alertOndergrens": {
+          "alertLowerLimit": {
             "type": "number",
             "description": "Red critical threshold (= berekendeBuffer x 0.50) (REQ-CF-009).",
             "example": 2600.0,
             "title": "Alert Ondergrens"
           },
-          "alertVooralarm": {
+          "alertPreAlert": {
             "type": "number",
             "description": "Yellow pre-alert threshold (= berekendeBuffer x 1.50) (REQ-CF-009).",
             "example": 7800.0,
@@ -1372,7 +1372,7 @@
             "example": 0.0,
             "title": "Tax Mape"
           },
-          "betalingsgedragUpdates": {
+          "paymentBehaviourUpdates": {
             "type": "array",
             "description": "Customers with re-calculated offsets (REQ-CF-013).",
             "items": {
@@ -1408,7 +1408,7 @@
                   "title": "Deal Naam",
                   "description": "The deal naam."
                 },
-                "oudeKans": {
+                "oldProbability": {
                   "type": "number",
                   "title": "Oude Kans",
                   "description": "The numeric value for oude kans."
@@ -1488,8 +1488,8 @@
         "total": 72500.0
       },
       "modelVersion": "v4.1-klantspecifiek-betaalgedrag",
-      "kalibratieScore": 0.97,
-      "crisisModeActief": false,
+      "calibrationScore": 0.97,
+      "crisisModeActive": false,
       "administrationId": "adm-consultancy-nl",
       "lifecycleState": "active"
     },
@@ -1508,14 +1508,14 @@
       "inflows_ar_geprognosticeerd": 12500.0,
       "inflows_ar_gerealiseerd": 0.0,
       "inflows_pipeline": 0.0,
-      "inflows_overig": 0.0,
+      "inflows_other": 0.0,
       "inflows_total": 12500.0,
       "outflows_ap_geprognosticeerd": 2100.0,
-      "outflows_recurring_huur": 1200.0,
-      "outflows_recurring_verzekering": 185.0,
+      "outflows_recurring_rent": 1200.0,
+      "outflows_recurring_insurance": 185.0,
       "outflows_recurring_abonnementen": 240.0,
       "outflows_recurring_dga_pay": 3500.0,
-      "outflows_recurring_lijfrentepremie": 0.0,
+      "outflows_recurring_annuity_premium": 0.0,
       "outflows_vat_remittance": 0.0,
       "outflows_ib_assessment": 0.0,
       "outflows_investeringen": 0.0,
@@ -1561,7 +1561,7 @@
       "plannedPaymentDate": "2026-05-30",
       "amount": 184.0,
       "category": "LEVERANCIER",
-      "betalingsmethode": "AUTOMATISCHE_INCASSO_SEPA",
+      "paymentMethod": "AUTOMATISCHE_INCASSO_SEPA",
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1612,8 +1612,8 @@
       "enterpriseId": "ond-zzp-c001",
       "policy": "MIN_MONTHS_VASTE_KOSTEN",
       "berekendeBuffer": 7500.0,
-      "alertOndergrens": 3750.0,
-      "alertVooralarm": 11250.0,
+      "alertLowerLimit": 3750.0,
+      "alertPreAlert": 11250.0,
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1660,7 +1660,7 @@
       "ap_mape": 1.7,
       "recurring_mape": 0.0,
       "tax_mape": 0.0,
-      "betalingsgedragUpdates": [
+      "paymentBehaviourUpdates": [
         {
           "customerId": "klant-acme-bv",
           "newAverageDeviation": "+12 days",

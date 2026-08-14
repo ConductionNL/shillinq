@@ -734,7 +734,7 @@
             "example": null,
             "title": "BBV Paspoort ID"
           },
-          "limietBreach": {
+          "limitBreach": {
             "type": "boolean",
             "description": "True when the entry breaches the kasgeldlimiet, rente-risiconorm or signing-mandate at recording time (REQ-FDO-008).",
             "default": false,
@@ -1014,7 +1014,7 @@
             "example": "org-gemeente-1",
             "title": "Organisation ID"
           },
-          "kasgeldStatus": {
+          "cashStatus": {
             "type": "object",
             "description": "Kasgeldlimiet snapshot for the quarter (ceiling, exposure, status, headroom) (REQ-FDO-006).",
             "nullable": true,
@@ -1095,21 +1095,21 @@
             "example": null,
             "title": "Sign Off Treasurer"
           },
-          "signOffConcerncontroller": {
+          "signOffGroupController": {
             "type": "object",
             "description": "Concerncontroller sign-off (person + timestamp) (REQ-FDO-006).",
             "nullable": true,
             "example": null,
             "title": "Sign Off Concerncontroller"
           },
-          "submittedToToezichthouder": {
+          "submittedToSupervisor": {
             "type": "string",
             "description": "Timestamp of transmission to the toezichthouder (REQ-FDO-006).",
             "nullable": true,
             "example": null,
             "title": "Submitted To Toezichthouder"
           },
-          "toezichthouderName": {
+          "supervisorName": {
             "type": "string",
             "description": "Name of the receiving toezichthouder (REQ-FDO-006).",
             "nullable": true,
@@ -1466,7 +1466,7 @@
         "treasuryStatuteId": "statuut-gemeente-2026",
         "purpose": "Bridging finance for grant-receipt lag Q1",
         "bbvPassportId": null,
-        "limietBreach": false,
+        "limitBreach": false,
         "overrideRationale": null,
         "enteredAt": "2026-01-15T10:00:00+01:00",
         "status": "recorded"
@@ -1492,7 +1492,7 @@
         "treasuryStatuteId": "statuut-gemeente-2026",
         "purpose": "Long-term capital-works financing",
         "bbvPassportId": null,
-        "limietBreach": false,
+        "limitBreach": false,
         "overrideRationale": null,
         "enteredAt": "2024-06-30T09:00:00+02:00",
         "status": "recorded"
@@ -1525,7 +1525,7 @@
         "auditYear": 2025,
         "quarter": "Q4",
         "organisationId": "org-gemeente-1",
-        "kasgeldStatus": {
+        "cashStatus": {
           "ceiling": 17000000,
           "exposure": 16800000,
           "headroom": 200000,
@@ -1556,9 +1556,9 @@
         "overridesApplied": [],
         "narrative": "No limiet-breaches; all transactions executed per Treasurystatuut.",
         "signOffTreasurer": null,
-        "signOffConcerncontroller": null,
-        "submittedToToezichthouder": null,
-        "toezichthouderName": "Provincie Noord-Holland",
+        "signOffGroupController": null,
+        "submittedToSupervisor": null,
+        "supervisorName": "Provincie Noord-Holland",
         "submissionReceipt": null,
         "status": "draft"
       },

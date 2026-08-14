@@ -175,7 +175,7 @@ class ActivityCostAllocationSplitter {
 				'ratio' => $ratio,
 				'amount' => $this->fromCents(cents: ($partCents * $sign)),
 				'generalLedger' => ($split['generalLedger'] ?? $split['glAccount'] ?? null),
-				'dimensie' => (string)($split['dimensie'] ?? 'MO'),
+				'dimension' => (string)($split['dimension'] ?? 'MO'),
 			];
 
 			$allocated += $partCents;
@@ -315,10 +315,10 @@ class ActivityCostAllocationSplitter {
 			}
 
 			$entries[] = [
-				'generalLedger' => (string)($split['generalLedger'] ?? ($glAccountClass . ((string)($split['dimensie'] ?? 'MO')))),
+				'generalLedger' => (string)($split['generalLedger'] ?? ($glAccountClass . ((string)($split['dimension'] ?? 'MO')))),
 				'amount' => $amount,
 				'costObject' => (string)($split['costObject'] ?? ''),
-				'dimensie' => (string)($split['dimensie'] ?? 'MO'),
+				'dimension' => (string)($split['dimension'] ?? 'MO'),
 				'side' => $side,
 			];
 		}//end foreach

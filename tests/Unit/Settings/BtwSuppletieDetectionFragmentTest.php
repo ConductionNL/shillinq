@@ -97,7 +97,7 @@ final class BtwSuppletieDetectionFragmentTest extends TestCase {
 		foreach ([
 			'filedSnapshot',
 			'currentSnapshot',
-			'rubriekDeltas',
+			'categoryDeltas',
 			'detectedAt',
 			'preparedAt',
 			'thresholdExceeded',

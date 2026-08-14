@@ -93,7 +93,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 			employmentHours: 0.0
 		);
 
-		self::assertSame('NIET_TOEPASSELIJK', $patch['grotendeelsCriterium']);
+		self::assertSame('NIET_TOEPASSELIJK', $patch['largelyCriterium']);
 		self::assertFalse($patch['blokkeertZelfstandigenaftrek']);
 
 	}//end testNoLoondienstYieldsNietToepasselijk()
@@ -109,7 +109,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 			employmentHours: 800.0
 		);
 
-		self::assertSame('GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
+		self::assertSame('GROTENDEELS_ONDERNEMING', $patch['largelyCriterium']);
 		self::assertFalse($patch['blokkeertZelfstandigenaftrek']);
 
 	}//end testGrotendeelsOndernemingDoesNotBlockAftrek()
@@ -125,7 +125,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 			employmentHours: 1200.0
 		);
 
-		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
+		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['largelyCriterium']);
 		self::assertTrue($patch['blokkeertZelfstandigenaftrek']);
 
 	}//end testLoondienstMajorityBlocksAftrek()
@@ -141,7 +141,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 			employmentHours: 800.0
 		);
 
-		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
+		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['largelyCriterium']);
 
 	}//end testFiftyFiftyIsNietGrotendeels()
 

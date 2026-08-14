@@ -15,7 +15,7 @@
 			"status": "voorlopig",
 			"componenten": {
 				"directPayrollCost": 41250.00,
-				"directeMaterialen": 8730.00,
+				"directMaterials": 8730.00,
 				"directDepreciations": 6900.00,
 				"indirecteOverhead": {
 					"huisvesting": 14820.00,

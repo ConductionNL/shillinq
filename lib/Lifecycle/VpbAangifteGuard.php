@@ -197,7 +197,7 @@ class VpbAangifteGuard {
 	public function canVoegen(string $unitId, ?array $object = null): bool {
 		try {
 			$unit = $object;
-			if ($unit === null || isset($unit['bezitPercentage']) === false) {
+			if ($unit === null || isset($unit['holdingPercentage']) === false) {
 				$unit = $this->resolveObject(schema: 'FiscaleEenheid', id: $unitId);
 			}
 
@@ -205,7 +205,7 @@ class VpbAangifteGuard {
 				return false;
 			}
 
-			$bezit = (float)($unit['bezitPercentage'] ?? 0);
+			$bezit = (float)($unit['holdingPercentage'] ?? 0);
 			$equalFinancialYear = ($unit['equalFinancialYears'] ?? false) === true;
 			$establishmentNl = ($unit['establishmentNetherlands'] ?? false) === true;
 
@@ -264,10 +264,10 @@ class VpbAangifteGuard {
 			return false;
 		}
 
-		$niveau = (string)($taxpayer['eHerkenningLevel'] ?? '');
+		$level = (string)($taxpayer['eRecognitionLevel'] ?? '');
 		$cert = (string)($taxpayer['digipoortCertificate'] ?? '');
 
-		return in_array($niveau, ['EH3', 'EH4'], true) && $cert !== '';
+		return in_array($level, ['EH3', 'EH4'], true) && $cert !== '';
 	}//end belastingplichtigeDigipoortReady()
 
 	/**

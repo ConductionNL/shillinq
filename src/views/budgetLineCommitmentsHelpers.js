@@ -8,7 +8,7 @@
  * (Verplichtingsregel buckets grouped by programme/cost_centre/financial_year/
  * general_ledger_account, joined to Budget.authorised_amount /
  * Budget.realised_amount) into display rows with the four BBV columns
- * (geautoriseerd / verplicht / gerealiseerd / vrij). `vrij` is computed
+ * (geautoriseerd / mandatory / gerealiseerd / vrij). `vrij` is computed
  * client-side from the three declared figures — display arithmetic, not a
  * parallel PHP reporting service (ADR-031 / REQ-VPL-011).
  *
@@ -32,11 +32,11 @@ export function normaliseBudgetLineRows(payload) {
 		const geautoriseerd = Number(
 			bucket?.['Budget.authorised_amount'] ?? bucket?.geautoriseerd ?? 0,
 		)
-		const verplicht = Number(bucket?.restant_verplicht ?? bucket?.verplicht ?? 0)
+		const mandatory = Number(bucket?.restant_verplicht ?? bucket?.verplicht ?? 0)
 		const gerealiseerd = Number(
 			bucket?.invoiced_amount ?? bucket?.gerealiseerd ?? 0,
 		)
-		const vrij = geautoriseerd - verplicht - gerealiseerd
+		const vrij = geautoriseerd - mandatory - gerealiseerd
 
 		return {
 			key: [
@@ -50,7 +50,7 @@ export function normaliseBudgetLineRows(payload) {
 			financial_year: bucket?.financial_year ?? null,
 			general_ledger_account: String(bucket?.general_ledger_account ?? ''),
 			geautoriseerd,
-			verplicht,
+			mandatory,
 			gerealiseerd,
 			vrij,
 		}

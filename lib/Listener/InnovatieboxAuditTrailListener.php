@@ -194,7 +194,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 							'effective_rate',
 							'vpb_on_innovation_share',
 							'benefit_innovation_box',
-							'forfaitair_cap_applied',
+							'flat_rate_cap_applied',
 						]
 					),
 				]
@@ -517,7 +517,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	 * @return bool
 	 */
 	private function isForfaitairCapHit(array $data): bool {
-		if (($data['forfaitair_cap_applied'] ?? false) === true) {
+		if (($data['flat_rate_cap_applied'] ?? false) === true) {
 			return true;
 		}
 

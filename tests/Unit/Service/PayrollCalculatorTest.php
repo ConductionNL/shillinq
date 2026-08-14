@@ -135,10 +135,10 @@ final class PayrollCalculatorTest extends TestCase {
 	 */
 	public function testLoonheffingUitTabel(): void {
 		$rules = [
-			['vanaf' => 0, 'tot' => 1200, 'percentage' => 0.0935, 'vasteHeffing' => 0, 'korting' => 295.0],
-			['vanaf' => 1200, 'tot' => 3300, 'percentage' => 0.3697, 'vasteHeffing' => 112.2, 'korting' => 295.0],
-			['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
-			['vanaf' => 6400, 'tot' => null, 'percentage' => 0.495, 'vasteHeffing' => 2034.7, 'korting' => 0],
+			['from' => 0, 'tot' => 1200, 'percentage' => 0.0935, 'vasteHeffing' => 0, 'korting' => 295.0],
+			['from' => 1200, 'tot' => 3300, 'percentage' => 0.3697, 'vasteHeffing' => 112.2, 'korting' => 295.0],
+			['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
+			['from' => 6400, 'tot' => null, 'percentage' => 0.495, 'vasteHeffing' => 2034.7, 'korting' => 0],
 		];
 
 		// €4.940 falls in the 3300..6400 bracket:
@@ -158,10 +158,10 @@ final class PayrollCalculatorTest extends TestCase {
 	 */
 	public function testKortingLowersTax(): void {
 		$withDiscount = [
-			['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
+			['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
 		];
 		$zonderDiscount = [
-			['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 0],
+			['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 0],
 		];
 
 		$with = $this->calc->loonheffingUitTabel(4940.0, $withDiscount);

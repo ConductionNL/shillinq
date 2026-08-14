@@ -400,9 +400,9 @@ class DunningRunService {
 			'stageNr' => (int)($params['stageNr'] ?? 1),
 			'executedOn' => $now->format(DATE_ATOM),
 			'channel' => (string)($params['channel'] ?? 'EMAIL'),
-			'ontvangerEmail' => ($params['ontvangerEmail'] ?? null),
+			'recipientEmail' => ($params['recipientEmail'] ?? null),
 			'recipientName' => ($params['recipientName'] ?? null),
-			'ontvangerAdres' => ($params['ontvangerAdres'] ?? null),
+			'recipientAddress' => ($params['recipientAddress'] ?? null),
 			'templateId' => (string)($params['templateId'] ?? ''),
 			'renderedSubject' => ($params['renderedSubject'] ?? null),
 			'renderedBody' => ($params['renderedBody'] ?? null),
@@ -448,8 +448,8 @@ class DunningRunService {
 		?array $evidenceRefs = null,
 	): array {
 		$hardDeadlineDays = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
-		$pauzeStart = new DateTimeImmutable();
-		$hardDeadline = $pauzeStart->modify('+' . $hardDeadlineDays . ' days');
+		$pauseStart = new DateTimeImmutable();
+		$hardDeadline = $pauseStart->modify('+' . $hardDeadlineDays . ' days');
 
 		$refs = ($evidenceRefs ?? []);
 		if ($refs !== []) {
@@ -458,7 +458,7 @@ class DunningRunService {
 
 		$record = [
 			'invoiceId' => $invoiceId,
-			'pauzeStart' => $pauzeStart->format(DATE_ATOM),
+			'pauseStart' => $pauseStart->format(DATE_ATOM),
 			'pauseEnd' => null,
 			'reason' => $reason,
 			'details' => $details,

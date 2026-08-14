@@ -154,7 +154,7 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 
 		self::assertSame('voorlopig', $ikp['status']);
 		self::assertSame(41_250.00, $ikp['componenten']['directPayrollCost']);
-		self::assertSame(8_730.00, $ikp['componenten']['directeMaterialen']);
+		self::assertSame(8_730.00, $ikp['componenten']['directMaterials']);
 		self::assertSame(6_900.00, $ikp['componenten']['directDepreciations']);
 		// Overhead: 36_580_000 × 7.2% = 2_633_760 cents = €26 337.60.
 		self::assertSame(26_337.60, $ikp['componenten']['indirecteOverhead']['directieEnStaf']);

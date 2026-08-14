@@ -122,7 +122,7 @@ class ENSIAXmlExporterTest extends TestCase {
 
 		$vragen = [
 			[
-				'domein' => 'BIO',
+				'domain' => 'BIO',
 				'questionCode' => 'BIO-9.1.1',
 				'answerType' => 'volwassenheidsniveau-1-5',
 				'answer' => '4',
@@ -162,9 +162,9 @@ class ENSIAXmlExporterTest extends TestCase {
 		];
 
 		$vragen = [
-			['domein' => 'BIO', 'questionCode' => 'BIO-9.1.1', 'answerType' => 'ja-nee-nvt', 'answer' => 'ja'],
-			['domein' => 'DigiD', 'questionCode' => 'DigiD-1.1', 'answerType' => 'ja-nee-nvt', 'answer' => 'ja'],
-			['domein' => 'BIO', 'questionCode' => 'BIO-12.1.1', 'answerType' => 'ja-nee-nvt', 'answer' => 'nee'],
+			['domain' => 'BIO', 'questionCode' => 'BIO-9.1.1', 'answerType' => 'ja-nee-nvt', 'answer' => 'ja'],
+			['domain' => 'DigiD', 'questionCode' => 'DigiD-1.1', 'answerType' => 'ja-nee-nvt', 'answer' => 'ja'],
+			['domain' => 'BIO', 'questionCode' => 'BIO-12.1.1', 'answerType' => 'ja-nee-nvt', 'answer' => 'nee'],
 		];
 
 		$xml = $this->exporter->render($cyclus, $vragen);

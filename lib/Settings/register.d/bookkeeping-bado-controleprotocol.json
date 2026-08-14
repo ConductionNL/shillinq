@@ -1026,7 +1026,7 @@
             "example": "municipality",
             "title": "Verantwoordingsplichtige"
           },
-          "specifiekeUitkering": {
+          "specificBenefit": {
             "type": "string",
             "nullable": true,
             "description": "Grant name / description.",
@@ -1212,7 +1212,7 @@
         "protocol": "bado-protocol-hoorn-2026",
         "schemeCode": "JBI",
         "accountableParty": "municipality",
-        "specifiekeUitkering": "Jeugdbescherming Integrale Aanpak",
+        "specificBenefit": "Jeugdbescherming Integrale Aanpak",
         "assuranceLevel": "financial-statement",
         "findings": [
           "bado-finding-hoorn-2026-001"

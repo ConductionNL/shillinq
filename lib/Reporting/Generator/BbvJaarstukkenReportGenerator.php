@@ -142,7 +142,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	private function buildProgrammaplan(Section $section, array $statement, string $currency): void {
 		$this->addHeading($section, 'Programmaplan (art. 8 BBV)');
 
-		$plan = $statement['programmaplan'] ?? [];
+		$plan = $statement['programmePlan'] ?? [];
 		if (is_array($plan) === false) {
 			$plan = [];
 		}
@@ -292,9 +292,9 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			$section,
 			[
 				'Overzicht van baten en lasten' => $this->yesNo($annualAccounts['overviewRevenueExpenses'] ?? null),
-				'Balans' => $this->yesNo($annualAccounts['balans'] ?? null),
+				'Balans' => $this->yesNo($annualAccounts['balance'] ?? null),
 				'Rechtmatigheidsverantwoording' => $this->yesNo($annualAccounts['lawfulnessAccountability'] ?? null),
-				'Accountantsverklaring' => $this->yesNo($annualAccounts['accountantsverklaring'] ?? null),
+				'Accountantsverklaring' => $this->yesNo($annualAccounts['auditorsStatement'] ?? null),
 			]
 		);
 

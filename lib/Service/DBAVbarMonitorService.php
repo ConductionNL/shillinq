@@ -197,8 +197,8 @@ class DBAVbarMonitorService {
 					'administrationId' => $administrationId,
 					'assignmentId' => $assignmentId,
 					'type' => 'VBAR_GRENS_ONDERSCHREDEN',
-					'detectieMoment' => (new DateTimeImmutable())->format('c'),
-					'ernst' => 'MIDDEN',
+					'detectionMoment' => (new DateTimeImmutable())->format('c'),
+					'severity' => 'MIDDEN',
 					'details' => [
 						'invoiceId' => $invoiceId,
 						'uurtariefCents' => $hourlyRateCents,

@@ -143,7 +143,7 @@ class ProgrammabegrotingExporter {
 				'determinationDate' => ($budget['determinationDate'] ?? null),
 				'sluitendStructureel' => ($budget['sluitendStructureel'] ?? null),
 				'sluitendReëel' => ($budget['sluitendReëel'] ?? null),
-				'toezichtRegime' => ($budget['toezichtRegime'] ?? null),
+				'supervisionRegime' => ($budget['supervisionRegime'] ?? null),
 			],
 			'programmas' => array_map(
 				static function (array $programma): array {

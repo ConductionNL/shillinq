@@ -602,8 +602,8 @@ class FoldIntoOrder implements IRepairStep {
 				'evidenceDossierId' => $this->stringOrNull($src['evidenceDossierId'] ?? null),
 				'wbaAssessmentResult' => $this->stringOrNull($src['wbaAssessmentResult'] ?? null),
 				'wbaValidTo' => $this->toDate($src['wbaValidTo'] ?? null),
-				'intermediairMode' => $this->boolOrNull($src['intermediairMode'] ?? null),
-				'perspectief' => $this->stringOrNull($src['perspectief'] ?? null),
+				'intermediaryMode' => $this->boolOrNull($src['intermediaryMode'] ?? null),
+				'perspective' => $this->stringOrNull($src['perspective'] ?? null),
 				'retentionDeadline' => $this->toDate($src['retentionDeadline'] ?? null),
 			],
 			'migratedFrom' => [

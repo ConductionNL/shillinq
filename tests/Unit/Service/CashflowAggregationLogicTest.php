@@ -210,7 +210,7 @@ final class CashflowAggregationLogicTest extends TestCase {
 	public function testSeedDataErikBufferBandIntact(): void {
 		$seed = $this->loadSeed();
 		$erik = $this->profileById($seed, 'erik-stable-b2b-consultant');
-		self::assertGreaterThan($erik['bufferPolicy']['alertVooralarm'], $erik['expectedSaldoRange']['min']);
+		self::assertGreaterThan($erik['bufferPolicy']['alertPreAlert'], $erik['expectedSaldoRange']['min']);
 
 	}//end testSeedDataErikBufferBandIntact()
 
@@ -224,7 +224,7 @@ final class CashflowAggregationLogicTest extends TestCase {
 		$sarah = $this->profileById($seed, 'sarah-volatile-project-based');
 		// Min saldo should stay above ondergrens (no crisis) but may fall below vooralarm.
 		self::assertGreaterThan(
-			$sarah['bufferPolicy']['alertOndergrens'],
+			$sarah['bufferPolicy']['alertLowerLimit'],
 			$sarah['expectedSaldoRange']['min']
 		);
 
@@ -241,7 +241,7 @@ final class CashflowAggregationLogicTest extends TestCase {
 		$jan = $this->profileById($seed, 'jan-government-contractor');
 		// Per design.md and expectedSaldoRange, summer crisis is acceptable.
 		self::assertLessThanOrEqual(
-			$jan['bufferPolicy']['alertVooralarm'],
+			$jan['bufferPolicy']['alertPreAlert'],
 			$jan['expectedSaldoRange']['min']
 		);
 
