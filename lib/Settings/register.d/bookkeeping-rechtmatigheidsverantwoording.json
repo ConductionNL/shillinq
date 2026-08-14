@@ -14,8 +14,8 @@
             "default": {
               "status": "niet_getoetst",
               "toetsen": [],
-              "samenvattend_opinion": null,
-              "last_testdate": null
+              "summary_opinion": null,
+              "last_test_date": null
             },
             "properties": {
               "status": {
@@ -39,7 +39,7 @@
                 },
                 "title": "Toetsen"
               },
-              "samenvattend_opinion": {
+              "summary_opinion": {
                 "type": "string",
                 "enum": [
                   "voldoet",
@@ -51,7 +51,7 @@
                 "description": "Summary verdict derived from the linked toetsen uitkomsten.",
                 "title": "Samenvattend Oordeel"
               },
-              "last_testdate": {
+              "last_test_date": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -392,7 +392,7 @@
             "description": "Finding lifecycle status (REQ-RV-005 / REQ-RV-010).",
             "title": "Status"
           },
-          "gemeld_in": {
+          "reported_in": {
             "type": "array",
             "description": "Stakeholders the finding has been reported to.",
             "items": {
@@ -411,13 +411,13 @@
             "description": "Date the finding was reported.",
             "title": "Meldingsdatum"
           },
-          "responsible_portefeuillehouder": {
+          "responsible_portfolio_holder": {
             "type": "string",
             "nullable": true,
             "description": "FK to the responsible bestuurder (portefeuillehouder).",
             "title": "Verantwoordelijke Portefeuillehouder"
           },
-          "correctionentry_id": {
+          "correction_entry_id": {
             "type": "string",
             "nullable": true,
             "description": "REQ-RV-010: FK to JournalEntry.id of the linked correctieboeking; setting it transitions the bevinding to opgelost.",
@@ -585,7 +585,7 @@
             "description": "tolerantiegrens_fout_percentage% of totaal_lasten (REQ-RV-005).",
             "title": "Tolerantiegrens Fout Bedrag"
           },
-          "tolerantiegrens_uncertainty_percentage": {
+          "tolerance_limit_uncertainty_percentage": {
             "type": "number",
             "default": 1.0,
             "description": "Snapshot of the onzekerheid-tolerance percentage at aggregation time.",
@@ -609,7 +609,7 @@
             "description": "SUM bedrag_onzekerheid of openstaande bevindingen for the boekjaar.",
             "title": "Totaal Geconstateerde Onzekerheden"
           },
-          "binnen_tolerance": {
+          "within_tolerance": {
             "type": "boolean",
             "default": true,
             "description": "True when both fouten and onzekerheden are within their thresholds (REQ-RV-005).",
@@ -636,7 +636,7 @@
             "description": "When the college vaststellingsbesluit was taken.",
             "title": "Vastgesteld Door College Op"
           },
-          "behandeld_in_council_on": {
+          "handled_in_council_on": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -804,7 +804,7 @@
             "description": "Maximum onzekerheid as a percentage of totaal lasten (default 1.0 per BADO).",
             "title": "Onzekerheid Percentage"
           },
-          "determined_at_councilresolution": {
+          "determined_at_council_resolution": {
             "type": "string",
             "nullable": true,
             "description": "Raadsbesluit reference establishing the tolerance.",
@@ -899,7 +899,7 @@
       "financialYear": 2026,
       "fout_percentage": 3.0,
       "uncertainty_percentage": 1.0,
-      "determined_at_councilresolution": null,
+      "determined_at_council_resolution": null,
       "determined_on": null,
       "valid_from": "2026-01-01",
       "valid_to": "2026-12-31",

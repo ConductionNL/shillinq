@@ -85,7 +85,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 		$requisition = $this->fragment()['components']['schemas']['Requisition'];
 		$properties = $requisition['properties'];
 
-		foreach (['programme', 'financialYear', 'totalamount_excl_vat', 'kind', 'administrationId'] as $field) {
+		foreach (['programme', 'financialYear', 'total_amount_excl_vat', 'kind', 'administrationId'] as $field) {
 			self::assertArrayHasKey($field, $properties, "Requisition must declare $field for BudgetBlocker reuse");
 		}
 
@@ -174,7 +174,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 
 			$contents = (string)file_get_contents($file->getPathname());
 			if (str_contains($contents, 'authorised_amount') === true
-				|| str_contains($contents, 'free_ruimte') === true
+				|| str_contains($contents, 'free_capacity') === true
 			) {
 				$suspects[] = $file->getPathname();
 			}
@@ -236,7 +236,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 			);
 
 			$sum = array_sum(array_map(static fn ($l) => $l['lineTotal'], $ownLines));
-			self::assertSame($requisition['totalamount_excl_vat'], $sum, "Seeded totaalbedrag_excl_btw must equal the sum of its lines' lineTotal");
+			self::assertSame($requisition['total_amount_excl_vat'], $sum, "Seeded totaalbedrag_excl_btw must equal the sum of its lines' lineTotal");
 
 			if ($requisition['statusCode'] === 'approved') {
 				self::assertNotEmpty(
@@ -249,7 +249,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 			self::assertSame(2026, $requisition['financialYear']);
 			// Free room on the seeded Budget (5.1/2026) is 500,000.00 - 25,000.00 =
 			// 475,000.00 EUR (47500000 cents); every seed Requisition must fit.
-			self::assertLessThanOrEqual(47500000, $requisition['totalamount_excl_vat']);
+			self::assertLessThanOrEqual(47500000, $requisition['total_amount_excl_vat']);
 		}//end foreach
 
 	}//end testSeedDataCoversLifecycleStates()

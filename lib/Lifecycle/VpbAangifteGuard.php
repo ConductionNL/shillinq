@@ -206,8 +206,8 @@ class VpbAangifteGuard {
 			}
 
 			$bezit = (float)($unit['bezitPercentage'] ?? 0);
-			$equalFinancialYear = ($unit['equalBoekjaren'] ?? false) === true;
-			$establishmentNl = ($unit['establishmentNederland'] ?? false) === true;
+			$equalFinancialYear = ($unit['equalFinancialYears'] ?? false) === true;
+			$establishmentNl = ($unit['establishmentNetherlands'] ?? false) === true;
 
 			return $bezit >= 95.0 && $equalFinancialYear === true && $establishmentNl === true;
 		} catch (\Throwable $e) {
@@ -230,7 +230,7 @@ class VpbAangifteGuard {
 	 * @return bool True when the jaarrekening is vastgesteld.
 	 */
 	private function annualAccountsDetermined(array $taxReturn): bool {
-		$reportId = (string)($taxReturn['commercieleProfit'] ?? '');
+		$reportId = (string)($taxReturn['commercialProfit'] ?? '');
 		if ($reportId === '') {
 			return false;
 		}
@@ -264,7 +264,7 @@ class VpbAangifteGuard {
 			return false;
 		}
 
-		$niveau = (string)($taxpayer['eRecognitionNiveau'] ?? '');
+		$niveau = (string)($taxpayer['eHerkenningLevel'] ?? '');
 		$cert = (string)($taxpayer['digipoortCertificate'] ?? '');
 
 		return in_array($niveau, ['EH3', 'EH4'], true) && $cert !== '';

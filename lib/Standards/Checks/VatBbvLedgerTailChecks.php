@@ -348,7 +348,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 				['code' => '1', 'name' => 'Bestuur en ondersteuning'],
 				['code' => '2', 'name' => 'Verkeer, vervoer en waterstaat'],
 			],
-			'algemeneFundingSources' => 38500000.00,
+			'generalFundingSources' => 38500000.00,
 			'overhead' => 6200000.00,
 			'vpbCharge' => 0.00,
 			'unforeseen' => 150000.00,
@@ -358,7 +358,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 		$jaarstukken['documentType'] = 'jaarstukken';
 		$jaarstukken['parts'] = ['jaarverslag', 'annualAccounts'];
 		$jaarstukken['annualAccounts'] = [
-			'overzichtRevenueExpenses' => true,
+			'overviewRevenueExpenses' => true,
 			'balans' => true,
 			'lawfulnessAccountability' => true,
 			'accountantsverklaring' => true,
@@ -685,7 +685,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		foreach (['algemeneFundingSources', 'overhead', 'vpbCharge', 'unforeseen'] as $key) {
+		foreach (['generalFundingSources', 'overhead', 'vpbCharge', 'unforeseen'] as $key) {
 			if (is_numeric($plan[$key] ?? null) === false) {
 				return false;
 			}
@@ -741,7 +741,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		foreach (['overzichtRevenueExpenses', 'balans', 'lawfulnessAccountability', 'accountantsverklaring'] as $key) {
+		foreach (['overviewRevenueExpenses', 'balans', 'lawfulnessAccountability', 'accountantsverklaring'] as $key) {
 			if (self::truthyValue($jr[$key] ?? null) === false) {
 				return false;
 			}

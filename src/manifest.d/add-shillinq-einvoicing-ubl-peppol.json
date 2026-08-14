@@ -175,7 +175,7 @@
                   "label": "Stage"
                 },
                 {
-                  "key": "uitgevoerdOn",
+                  "key": "executedOn",
                   "label": "Executed"
                 },
                 {

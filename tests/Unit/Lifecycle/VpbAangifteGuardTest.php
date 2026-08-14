@@ -103,7 +103,7 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-1', 'status' => 'vastgesteld']],
-					'Belastingplichtige' => [['id' => 'bp-1', 'eRecognitionNiveau' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
+					'Belastingplichtige' => [['id' => 'bp-1', 'eHerkenningLevel' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
 					'Innovatiebox' => [['taxReturn' => 'aangifte-1', 'soDeclarationReference' => 'SO-2026-1']],
 				]
 			)
@@ -112,7 +112,7 @@ class VpbAangifteGuardTest extends TestCase {
 		$taxReturn = [
 			'id' => 'aangifte-1',
 			'taxpayer' => 'bp-1',
-			'commercieleProfit' => 'jr-1',
+			'commercialProfit' => 'jr-1',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -135,7 +135,7 @@ class VpbAangifteGuardTest extends TestCase {
 		$taxReturn = [
 			'id' => 'aangifte-2',
 			'taxpayer' => 'bp-2',
-			'commercieleProfit' => 'jr-2',
+			'commercialProfit' => 'jr-2',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -154,7 +154,7 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-3', 'status' => 'vastgesteld']],
-					'Belastingplichtige' => [['id' => 'bp-3', 'eRecognitionNiveau' => 'EH2', 'digipoortCertificate' => 'vault://cert']],
+					'Belastingplichtige' => [['id' => 'bp-3', 'eHerkenningLevel' => 'EH2', 'digipoortCertificate' => 'vault://cert']],
 				]
 			)
 		);
@@ -162,7 +162,7 @@ class VpbAangifteGuardTest extends TestCase {
 		$taxReturn = [
 			'id' => 'aangifte-3',
 			'taxpayer' => 'bp-3',
-			'commercieleProfit' => 'jr-3',
+			'commercialProfit' => 'jr-3',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -180,7 +180,7 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-4', 'status' => 'gedeponeerd']],
-					'Belastingplichtige' => [['id' => 'bp-4', 'eRecognitionNiveau' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
+					'Belastingplichtige' => [['id' => 'bp-4', 'eHerkenningLevel' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
 					'Innovatiebox' => [['taxReturn' => 'aangifte-4', 'soDeclarationReference' => '']],
 				]
 			)
@@ -189,7 +189,7 @@ class VpbAangifteGuardTest extends TestCase {
 		$taxReturn = [
 			'id' => 'aangifte-4',
 			'taxpayer' => 'bp-4',
-			'commercieleProfit' => 'jr-4',
+			'commercialProfit' => 'jr-4',
 		];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -210,7 +210,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canIndienen(
 				taxReturnId: 'aangifte-x',
-				object: ['id' => 'aangifte-x', 'taxpayer' => 'bp-x', 'commercieleProfit' => 'jr-x']
+				object: ['id' => 'aangifte-x', 'taxpayer' => 'bp-x', 'commercialProfit' => 'jr-x']
 			)
 		);
 
@@ -264,7 +264,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertTrue(
 			$this->guard->canVoegen(
 				unitId: 'fe-1',
-				object: ['bezitPercentage' => 100, 'equalBoekjaren' => true, 'establishmentNederland' => true]
+				object: ['bezitPercentage' => 100, 'equalFinancialYears' => true, 'establishmentNetherlands' => true]
 			)
 		);
 
@@ -280,7 +280,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canVoegen(
 				unitId: 'fe-2',
-				object: ['bezitPercentage' => 80, 'equalBoekjaren' => true, 'establishmentNederland' => true]
+				object: ['bezitPercentage' => 80, 'equalFinancialYears' => true, 'establishmentNetherlands' => true]
 			)
 		);
 
@@ -296,7 +296,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canVoegen(
 				unitId: 'fe-3',
-				object: ['bezitPercentage' => 100, 'equalBoekjaren' => true, 'establishmentNederland' => false]
+				object: ['bezitPercentage' => 100, 'equalFinancialYears' => true, 'establishmentNetherlands' => false]
 			)
 		);
 

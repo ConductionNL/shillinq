@@ -283,7 +283,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			$this->entity('1090', [
 				'status' => 'open',
 				'contractValue' => 50000.0,
-				'gegundeLeverancier' => '30280353 Test BV',
+				'awardedSupplier' => '30280353 Test BV',
 				'tenderId' => 'TN-2026-0001',
 			])
 		);
@@ -307,7 +307,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			$this->entity('1090', [
 				'status' => 'gegund',
 				'contractValue' => 0.0,
-				'gegundeLeverancier' => '30280353 Test BV',
+				'awardedSupplier' => '30280353 Test BV',
 				'tenderId' => 'TN-2026-0001',
 			])
 		);
@@ -331,7 +331,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			$this->entity('1090', [
 				'status' => 'gegund',
 				'contractValue' => 50000.0,
-				'gegundeLeverancier' => '30280353 Test BV',
+				'awardedSupplier' => '30280353 Test BV',
 				'tenderId' => 'TN-2026-0001',
 			])
 		);
@@ -355,7 +355,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			$this->entity('1090', [
 				'status' => 'gegund',
 				'contractValue' => 50000.0,
-				'gegundeLeverancier' => '30280353 Test BV',
+				'awardedSupplier' => '30280353 Test BV',
 				'tenderId' => 'TN-2026-0001',
 			])
 		);
@@ -379,9 +379,9 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			$this->entity('1090', [
 				'status' => 'gegund',
 				'contractValue' => 50000.0,
-				'gegundeLeverancier' => '30280353 Conduction B.V.',
+				'awardedSupplier' => '30280353 Conduction B.V.',
 				'tenderId' => 'TN-2026-0001',
-				'titel' => 'Schoonmaak',
+				'title' => 'Schoonmaak',
 				'assignmentType' => 'levering-in-fases',
 				'termStart' => '2026-01-01',
 				'termEnd' => '2026-12-31',
@@ -434,7 +434,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			$this->entity('1090', [
 				'status' => 'gegund',
 				'contractValue' => 50000.0,
-				'gegundeLeverancier' => '30280353 Conduction B.V.',
+				'awardedSupplier' => '30280353 Conduction B.V.',
 				'tenderId' => 'TN-2026-0001',
 				'administrationId' => 'adm-x',
 			])

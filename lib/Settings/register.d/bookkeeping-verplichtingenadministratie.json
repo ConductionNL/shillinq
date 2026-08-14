@@ -134,13 +134,13 @@
             },
             "title": "Tegenpartij"
           },
-          "totalamount_excl_vat": {
+          "total_amount_excl_vat": {
             "type": "integer",
             "description": "Total commitment amount excluding VAT, in minor units (EUR cents).",
             "example": 5000000,
             "title": "Totaalbedrag Excl BTW"
           },
-          "totalamount_incl_vat": {
+          "total_amount_incl_vat": {
             "type": "integer",
             "nullable": true,
             "description": "Total commitment amount including VAT, in minor units (EUR cents).",
@@ -194,7 +194,7 @@
             "type": "string",
             "nullable": true,
             "description": "Audit-trail reason recorded when a budget-exceeding commitment is force-accepted under an override-mandate (REQ-VPL-001).",
-            "example": "Spoedlevering goedgekeurd door CFO",
+            "example": "Spoedlevering approved door CFO",
             "title": "Override Reden"
           },
           "interne_reference": {
@@ -336,7 +336,7 @@
           "verplichting-goedkeuring": {
             "description": "Approval chain that gates the Verplichting in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandaatEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
             "transition": "goedkeuren",
-            "amountField": "totalamount_excl_vat",
+            "amountField": "total_amount_excl_vat",
             "separationOfDuties": true,
             "approvers": [
               {
@@ -497,7 +497,7 @@
             "example": "21",
             "title": "BTW Code"
           },
-          "expected_geleverd_on": {
+          "expected_delivered_on": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -664,14 +664,14 @@
             "example": "PO getekend door inkoper",
             "title": "Toelichting"
           },
-          "gerelateerde_invoice": {
+          "related_invoice": {
             "type": "string",
             "nullable": true,
             "description": "Optional FK to the AP/AR Invoice this mutation relates to.",
             "example": "inv-2001",
             "title": "Gerelateerde Factuur"
           },
-          "gerelateerde_payment": {
+          "related_payment": {
             "type": "string",
             "nullable": true,
             "description": "Optional FK to the Payment/PaymentRun this mutation relates to.",
@@ -826,7 +826,7 @@
             "example": "Mandaatregeling 2025, art. 4",
             "title": "Vastgesteld Bij"
           },
-          "required_tweede_signature_boven": {
+          "required_second_signature_above": {
             "type": "integer",
             "nullable": true,
             "description": "Amount above which a second signature is required, in minor units (REQ-VPL-002).",
@@ -870,7 +870,7 @@
           "administrationId",
           "commitment",
           "stepNumber",
-          "rol_required",
+          "role_required",
           "status"
         ],
         "properties": {
@@ -892,7 +892,7 @@
             "example": 1,
             "title": "Stapnummer"
           },
-          "rol_required": {
+          "role_required": {
             "type": "string",
             "description": "Role required to action this step.",
             "enum": [
@@ -904,7 +904,7 @@
             "example": "directeur",
             "title": "Rol Vereist"
           },
-          "toegewezen_in": {
+          "assigned_in": {
             "type": "string",
             "nullable": true,
             "description": "FK to the Nextcloud user assigned this step.",
@@ -917,7 +917,7 @@
             "enum": [
               "wachtend",
               "in_behandeling",
-              "goedgekeurd",
+              "approved",
               "afgewezen",
               "teruggezonden"
             ],
@@ -925,7 +925,7 @@
             "example": "wachtend",
             "title": "Status"
           },
-          "behandeld_on": {
+          "handled_on": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -1029,14 +1029,14 @@
             "example": 20000000,
             "title": "Gerealiseerd Bedrag"
           },
-          "outstanding_verplichtingen": {
+          "outstanding_commitments": {
             "type": "integer",
             "description": "Outstanding commitments aggregated from Verplichtingsregels, in minor units (D9, REQ-VPL-001).",
             "default": 0,
             "example": 0,
             "title": "Openstaande Verplichtingen"
           },
-          "free_ruimte": {
+          "free_capacity": {
             "type": "integer",
             "description": "Calculated free budget = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen (D9).",
             "default": 0,
@@ -1045,7 +1045,7 @@
           }
         },
         "x-openregister-aggregations": {
-          "outstanding_verplichtingen": {
+          "outstanding_commitments": {
             "type": "sum",
             "source": "Verplichtingsregel",
             "field": "restant_verplicht",
@@ -1073,7 +1073,7 @@
             ],
             "description": "On-demand sum of outstanding committed amounts for this programma + boekjaar; not cached (D9, REQ-VPL-001)."
           },
-          "free_ruimte": {
+          "free_capacity": {
             "type": "calculation",
             "formula": "geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen",
             "description": "Free budget snapshot (D9)."
@@ -1126,7 +1126,7 @@
       "valid_from": "2026-01-01",
       "valid_to": "2026-12-31",
       "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
-      "required_tweede_signature_boven": 2500000
+      "required_second_signature_above": 2500000
     },
     {
       "@self": {
@@ -1216,7 +1216,7 @@
       "kind": "inkooporder",
       "status": "aangegaan",
       "commencementDate": "2026-04-15",
-      "totalamount_excl_vat": 7500000,
+      "total_amount_excl_vat": 7500000,
       "mandate_applied": "M-DIRECTEUR-250K",
       "counterparty": {
         "kind": "leverancier",
@@ -1254,7 +1254,7 @@
       "kind": "frameworkAgreement",
       "status": "aangegaan",
       "commencementDate": "2026-03-01",
-      "totalamount_excl_vat": 20000000,
+      "total_amount_excl_vat": 20000000,
       "mandate_applied": "M-DIRECTEUR-250K",
       "counterparty": {
         "kind": "leverancier",
@@ -1310,7 +1310,7 @@
       "kind": "subsidiebeschikking",
       "status": "aangegaan",
       "commencementDate": "2026-02-10",
-      "totalamount_excl_vat": 4000000,
+      "total_amount_excl_vat": 4000000,
       "interne_reference": "Eindafrekening 20% restant nog te ontvangen",
       "counterparty": {
         "kind": "subsidieontvanger",

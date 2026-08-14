@@ -11,10 +11,10 @@
       "name": "Tussenkomstvrij - algemeen (Belastingdienst v3 - 2024)",
       "source": "BELASTINGDIENST_GOEDGEKEURD",
       "publicationURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
-      "goedkeuringDate": "2024-04-12",
+      "approvalDate": "2024-04-12",
       "validTo": "2029-04-12",
       "version": "v3-2024",
-      "actueleVersion": true,
+      "currentVersion": true,
       "essentieleBepalingen": [
         {
           "id": "EB-01",
@@ -46,10 +46,10 @@
       "name": "Leverancier-zelfstandig (Belastingdienst v2 - 2023)",
       "source": "BELASTINGDIENST_GOEDGEKEURD",
       "publicationURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/leverancier-zelfstandig",
-      "goedkeuringDate": "2023-06-01",
+      "approvalDate": "2023-06-01",
       "validTo": "2028-06-01",
       "version": "v2-2023",
-      "actueleVersion": true,
+      "currentVersion": true,
       "essentieleBepalingen": [
         {
           "id": "EB-01",
@@ -76,10 +76,10 @@
       "name": "Tussenkomst (Belastingdienst v1 - 2024)",
       "source": "BELASTINGDIENST_GOEDGEKEURD",
       "publicationURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomst",
-      "goedkeuringDate": "2024-02-15",
+      "approvalDate": "2024-02-15",
       "validTo": "2029-02-15",
       "version": "v1-2024",
-      "actueleVersion": true,
+      "currentVersion": true,
       "essentieleBepalingen": [
         {
           "id": "EB-01",
@@ -123,7 +123,7 @@
           "assignmentName",
           "startDate",
           "intakeStatus",
-          "riskNiveau"
+          "riskLevel"
         ],
         "properties": {
           "administrationId": {
@@ -189,7 +189,7 @@
             "example": 1820000,
             "title": "Gerealiseerde Omzet"
           },
-          "oneOffLageThreshold": {
+          "oneOffLowThreshold": {
             "type": "boolean",
             "description": "Gemarkeerd als 'eenmalig, totaal < 5000 EUR': verkorte intake (3 vragen) wordt aangeboden (REQ-DBA-001).",
             "default": false,
@@ -234,7 +234,7 @@
             "example": 34,
             "title": "Actuele Risicoscore"
           },
-          "riskNiveau": {
+          "riskLevel": {
             "type": "string",
             "description": "Risico-band afgeleid van actueleRisicoscore per REQ-DBA-003.",
             "enum": [
@@ -419,10 +419,10 @@
         },
         "x-openregister-aggregations": {
           "countByRisicoNiveau": {
-            "field": "riskNiveau",
+            "field": "riskLevel",
             "operation": "count",
             "description": "Aantal opdrachten per risico-niveau (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG/VERKORT_LAGE_DREMPEL).",
-            "groupBy": "riskNiveau"
+            "groupBy": "riskLevel"
           },
           "omzetPerKlant": {
             "field": "realisedRevenue",
@@ -449,8 +449,8 @@
         "required": [
           "administrationId",
           "assignmentId",
-          "ingevuldOn",
-          "ingevuldBy"
+          "filledOn",
+          "filledBy"
         ],
         "properties": {
           "administrationId": {
@@ -465,14 +465,14 @@
             "example": "dba-opdr-2026-0042",
             "title": "Opdracht ID"
           },
-          "ingevuldOn": {
+          "filledOn": {
             "type": "string",
             "format": "date",
             "description": "Datum waarop de intake is ingevuld.",
             "example": "2026-02-22",
             "title": "Ingevuld Op"
           },
-          "ingevuldBy": {
+          "filledBy": {
             "type": "string",
             "description": "Nextcloud user-id van de invuller (audit-trail).",
             "example": "user-zzp-ond-001234",
@@ -520,7 +520,7 @@
             },
             "title": "Gezagsverhouding"
           },
-          "personalArbeid": {
+          "personalLabour": {
             "type": "object",
             "description": "Pijler 2: persoonlijke arbeid (vervangbaarheid); 0-20 punten.",
             "properties": {
@@ -548,7 +548,7 @@
             },
             "title": "Persoonlijke Arbeid"
           },
-          "financieelRisk": {
+          "financialRisk": {
             "type": "object",
             "description": "Pijler 3: financieel risico (ondernemerschap, factuurpatronen, debiteuren-risico); 0-20 punten.",
             "properties": {
@@ -566,7 +566,7 @@
                 "description": "Mate van financieel risico (0=hoog risico, 7=gegarandeerd loon).",
                 "title": "Betalings Risico Score"
               },
-              "investmentEigenMiddelenScore": {
+              "investmentOwnResourcesScore": {
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 6,
@@ -774,8 +774,8 @@
         "required": [
           "name",
           "source",
-          "goedkeuringDate",
-          "actueleVersion"
+          "approvalDate",
+          "currentVersion"
         ],
         "properties": {
           "name": {
@@ -803,10 +803,10 @@
             "example": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
             "title": "Publicatie URL"
           },
-          "goedkeuringDate": {
+          "approvalDate": {
             "type": "string",
             "format": "date",
-            "description": "Datum waarop het model is goedgekeurd/gepubliceerd.",
+            "description": "Datum waarop het model is approved/gepubliceerd.",
             "example": "2024-04-12",
             "title": "Goedkeuring Datum"
           },
@@ -849,7 +849,7 @@
             "example": "v3-2024",
             "title": "Versie"
           },
-          "actueleVersion": {
+          "currentVersion": {
             "type": "boolean",
             "description": "Indien true: dit is de actuele versie binnen de bron-familie.",
             "default": true,
@@ -999,7 +999,7 @@
             "example": "OPEN",
             "title": "Status"
           },
-          "weergegevenInUser": {
+          "displayedInUser": {
             "type": "boolean",
             "default": true,
             "description": "Indien true: flag wordt op dashboard getoond.",
@@ -1118,7 +1118,7 @@
         "required": [
           "administrationId",
           "enterpriseId",
-          "peilDate",
+          "levelDate",
           "overallRisk"
         ],
         "properties": {
@@ -1134,14 +1134,14 @@
             "example": "ond-nl-001234",
             "title": "Onderneming ID"
           },
-          "peilDate": {
+          "levelDate": {
             "type": "string",
             "format": "date",
             "description": "Datum waarop het portfolio-risico is gemeten.",
             "example": "2026-05-21",
             "title": "Peil Datum"
           },
-          "actieveAssignments": {
+          "activeAssignments": {
             "type": "integer",
             "minimum": 0,
             "description": "Aantal actieve opdrachten op peilDatum.",
@@ -1184,7 +1184,7 @@
             },
             "title": "Concentratie"
           },
-          "langjarigeRelationships": {
+          "multiYearRelationships": {
             "type": "array",
             "description": "Klanten waarmee >2 jaar relatie bestaat.",
             "items": {
@@ -1201,7 +1201,7 @@
                   "title": "Start Datum",
                   "description": "The date and time for start datum."
                 },
-                "durationJaren": {
+                "durationYears": {
                   "type": "number",
                   "minimum": 0,
                   "title": "Duur Jaren",
@@ -1218,7 +1218,7 @@
             },
             "title": "Langjarige Relaties"
           },
-          "exclusieveRelationships": {
+          "exclusiveRelationships": {
             "type": "integer",
             "minimum": 0,
             "description": "Aantal klant-relaties waar de ondernemer exclusief voor werkt (geen andere klanten in periode).",

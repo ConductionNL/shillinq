@@ -55,7 +55,7 @@
 			<ul>
 				<li>{{ t('shillinq', 'Inflows AR') }}: {{ selectedWeek.inflows_ar_geprognosticeerd }}</li>
 				<li>{{ t('shillinq', 'Outflows AP') }}: {{ selectedWeek.outflows_ap_geprognosticeerd }}</li>
-				<li>{{ t('shillinq', 'Net Mutatie') }}: {{ selectedWeek.nettoMutatie }}</li>
+				<li>{{ t('shillinq', 'Net Mutatie') }}: {{ selectedWeek.netMovement }}</li>
 				<li>{{ t('shillinq', 'Eind Saldo') }}: {{ selectedWeek.eindSaldo }}</li>
 			</ul>
 		</div>

@@ -203,7 +203,7 @@ class MandaatEnforcerTest extends TestCase {
 				'is_override' => false,
 				'valid_from' => '2020-01-01',
 				'valid_to' => '2999-12-31',
-				'required_tweede_signature_boven' => null,
+				'required_second_signature_above' => null,
 			],
 			$overrides
 		);
@@ -223,7 +223,7 @@ class MandaatEnforcerTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
 			'kind' => $kind,
-			'totalamount_excl_vat' => $amount,
+			'total_amount_excl_vat' => $amount,
 		];
 
 	}//end commitment()
@@ -313,7 +313,7 @@ class MandaatEnforcerTest extends TestCase {
 	 * @return void
 	 */
 	public function testSecondSignatureRequiredAboveThreshold(): void {
-		$mandate = $this->mandate(['required_tweede_signature_boven' => 2500000]);
+		$mandate = $this->mandate(['required_second_signature_above' => 2500000]);
 		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$mandate]]));
 
 		$this->assertTrue(

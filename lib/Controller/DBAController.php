@@ -112,10 +112,10 @@ class DBAController extends Controller {
 		return new JSONResponse(
 			[
 				'totalScore' => $total,
-				'riskNiveau' => $band,
+				'riskLevel' => $band,
 				'authorityRelationship' => $this->scoreCalc->subtotalGezag($body),
-				'personalArbeid' => $this->scoreCalc->subtotalArbeid($body),
-				'financieelRisk' => $this->scoreCalc->subtotalFinancieel($body),
+				'personalLabour' => $this->scoreCalc->subtotalArbeid($body),
+				'financialRisk' => $this->scoreCalc->subtotalFinancieel($body),
 				'deliverooCriteria' => $this->scoreCalc->subtotalDeliveroo($body),
 			]
 		);
@@ -154,8 +154,8 @@ class DBAController extends Controller {
 
 		$body['totalScore'] = $total;
 		$body['interpretatie'] = $band;
-		$body['ingevuldBy'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
-		$body['ingevuldOn'] ??= (new DateTimeImmutable())->format('Y-m-d');
+		$body['filledBy'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
+		$body['filledOn'] ??= (new DateTimeImmutable())->format('Y-m-d');
 		$body['administrationId'] = (string)($assignment['administrationId'] ?? '');
 
 		try {
@@ -166,15 +166,15 @@ class DBAController extends Controller {
 		}
 
 		if (($body['verkortType'] ?? false) === true) {
-			$riskNiveau = 'VERKORT_LAGE_DREMPEL';
+			$riskLevel = 'VERKORT_LAGE_DREMPEL';
 		} else {
-			$riskNiveau = $band;
+			$riskLevel = $band;
 		}
 
 		$assignment['intakeStatus'] = 'INTAKE_VOLTOOID';
-		$assignment['intakeDate'] = $body['ingevuldOn'];
+		$assignment['intakeDate'] = $body['filledOn'];
 		$assignment['actueleRisicoscore'] = $total;
-		$assignment['riskNiveau'] = $riskNiveau;
+		$assignment['riskLevel'] = $riskLevel;
 		try {
 			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {

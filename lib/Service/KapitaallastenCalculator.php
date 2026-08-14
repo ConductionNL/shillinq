@@ -43,7 +43,7 @@ class KapitaallastenCalculator {
 	 * arithmetic avoids IEEE-754 drift).
 	 *
 	 * @param float $gross The gross investment amount.
-	 * @param int $eersteDepreciationYear The first depreciation year.
+	 * @param int $firstDepreciationYear The first depreciation year.
 	 * @param int $depreciationTerm The depreciation period in years (> 0).
 	 *
 	 * @return array<string,float> A {year: amount} schedule keyed by year string.
@@ -52,7 +52,7 @@ class KapitaallastenCalculator {
 	 *
 	 * @SuppressWarnings(PHPMD.LongVariable) BBV domain field names (eersteAfschrijvingsjaar).
 	 */
-	public function schedule(float $gross, int $eersteDepreciationYear, int $depreciationTerm): array {
+	public function schedule(float $gross, int $firstDepreciationYear, int $depreciationTerm): array {
 		if ($depreciationTerm < 1) {
 			return [];
 		}
@@ -63,7 +63,7 @@ class KapitaallastenCalculator {
 
 		$schedule = [];
 		for ($i = 0; $i < $depreciationTerm; $i++) {
-			$year = (string)($eersteDepreciationYear + $i);
+			$year = (string)($firstDepreciationYear + $i);
 			$cents = $perYearCents;
 			if ($i === ($depreciationTerm - 1)) {
 				// Final year absorbs the rounding remainder.

@@ -58,7 +58,7 @@
             "example": "art. 3.6 lid 1 Wet IB 2001",
             "title": "Norm Grondslag"
           },
-          "lopendeHours": {
+          "currentHours": {
             "type": "number",
             "minimum": 0,
             "description": "Cumulatieve gerealiseerde uren voor dit kalenderjaar, dagelijks bijgewerkt door de tally-batch uit UrenDagregistratie (REQ-URC-001).",
@@ -245,7 +245,7 @@
             "example": 3,
             "title": "Uren"
           },
-          "getoldeHours": {
+          "countedHours": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -605,7 +605,7 @@
             "example": "2026-09-30",
             "title": "Aanleiding Datum"
           },
-          "lopendeHours": {
+          "currentHours": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -778,7 +778,7 @@
             "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "title": "Sha256"
           },
-          "gegenereerdOn": {
+          "generatedOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,

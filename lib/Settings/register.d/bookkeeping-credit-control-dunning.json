@@ -19,7 +19,7 @@
         "type": "object",
         "required": [
           "name",
-          "customerGroep",
+          "customerGroup",
           "stages",
           "actief",
           "administrationId"
@@ -38,7 +38,7 @@
             "example": "ond-zzp-001",
             "title": "Onderneming ID"
           },
-          "customerGroep": {
+          "customerGroup": {
             "type": "string",
             "enum": [
               "DEFAULT",
@@ -392,7 +392,7 @@
             "example": 3,
             "title": "Stage Nr"
           },
-          "uitgevoerdOn": {
+          "executedOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -600,7 +600,7 @@
                 "operation": "count"
               },
               "latestExecutedAt": {
-                "field": "uitgevoerdOn",
+                "field": "executedOn",
                 "operation": "max"
               }
             }
@@ -983,7 +983,7 @@
           "pauzeStart",
           "reason",
           "details",
-          "gepauzeerdBy",
+          "pausedBy",
           "administrationId"
         ],
         "properties": {
@@ -1020,7 +1020,7 @@
             "description": "Free-text details (e.g. 'Klant betwist 4 uur week-22').",
             "title": "Details"
           },
-          "gepauzeerdBy": {
+          "pausedBy": {
             "type": "string",
             "description": "User / actor id who initiated the pause.",
             "title": "Gepauzeerd Door"
@@ -1392,7 +1392,7 @@
       },
       "name": "Standaard dunning-ladder ZZP",
       "enterpriseId": "ond-zzp-001",
-      "customerGroep": "DEFAULT",
+      "customerGroup": "DEFAULT",
       "stages": [
         {
           "nr": 1,
@@ -1446,7 +1446,7 @@
       },
       "name": "Overheid dunning-ladder (30-dagen termijn)",
       "enterpriseId": "ond-zzp-001",
-      "customerGroep": "OVERHEID",
+      "customerGroup": "OVERHEID",
       "stages": [
         {
           "nr": 1,
@@ -1532,7 +1532,7 @@
       "invoiceId": "inv-2026-0247",
       "ladderId": "ladder-zzp-default-2026",
       "stageNr": 3,
-      "uitgevoerdOn": "2026-06-14T09:00:00Z",
+      "executedOn": "2026-06-14T09:00:00Z",
       "channel": "EMAIL+POSTREGISTRATIE",
       "ontvangerEmail": "finance@acme.nl",
       "recipientName": "Crediteurenadministratie Acme BV",
@@ -1603,7 +1603,7 @@
       "pauseEnd": null,
       "reason": "DISPUTED",
       "details": "Klant betwist 4 uur uit week-22; gesprek gepland 10 juni",
-      "gepauzeerdBy": "user-zzp-ond-001",
+      "pausedBy": "user-zzp-ond-001",
       "evidenceRefs": [
         "docudesk:email-2026-06-02-disputereactie.eml"
       ],

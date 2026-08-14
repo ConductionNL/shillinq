@@ -585,7 +585,7 @@ class BbvComplianceGuard {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
 	 */
 	public function depreciationStartMonth(array $mva): ?string {
-		$raw = (string)($mva['ingebruiknameDate'] ?? '');
+		$raw = (string)($mva['commissioningDate'] ?? '');
 		if ($raw === '') {
 			return null;
 		}

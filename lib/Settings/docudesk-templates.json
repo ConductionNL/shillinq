@@ -31,27 +31,27 @@
               "label": "Methode"
             },
             {
-              "key": "kwalificerende_profit_for_nexus",
+              "key": "qualifying_profit_for_nexus",
               "label": "Kwalificerende winst voor nexus (EUR)",
               "type": "currency"
             },
             {
-              "key": "nexusbreuk_applied",
+              "key": "nexus_fraction_applied",
               "label": "Nexusbreuk",
               "type": "percentage"
             },
             {
-              "key": "kwalificerende_profit_after_nexus",
+              "key": "qualifying_profit_after_nexus",
               "label": "Kwalificerende winst na nexus (EUR)",
               "type": "currency"
             },
             {
-              "key": "effectief_rate",
+              "key": "effective_rate",
               "label": "Tarief",
               "type": "percentage"
             },
             {
-              "key": "vpb_on_innovationshare",
+              "key": "vpb_on_innovation_share",
               "label": "Vpb-impact (EUR)",
               "type": "currency"
             }
@@ -59,7 +59,7 @@
           "totals": [
             {
               "label": "Totaal — bijdrage Vpb-aangifte regel 23",
-              "field": "vpb_on_innovationshare",
+              "field": "vpb_on_innovation_share",
               "operation": "sum"
             }
           ]
@@ -110,7 +110,7 @@
               "label": "Ontstaansjaar"
             },
             {
-              "key": "negatief_kwalificerend_result",
+              "key": "negative_qualifying_result",
               "label": "Verlies (EUR)",
               "type": "currency"
             },
@@ -697,7 +697,7 @@
           "groupBy": "costCenterId",
           "columns": [
             { "key": "costCenterId", "label": "Ondernemingsactiviteit" },
-            { "key": "vpbPligtigFrom", "label": "Vpb-pligtig vanaf", "type": "date" },
+            { "key": "vpbLiableFrom", "label": "Vpb-pligtig vanaf", "type": "date" },
             { "key": "activaTotal", "label": "Activa (EUR)", "type": "currency", "unit": "cents" },
             { "key": "passivaTotal", "label": "Passiva (EUR)", "type": "currency", "unit": "cents" },
             { "key": "resultaatTotal", "label": "Resultaat (EUR)", "type": "currency", "unit": "cents" },

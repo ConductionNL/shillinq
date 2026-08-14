@@ -379,7 +379,7 @@
         "required": [
           "auditYear",
           "organisationId",
-          "baseVasteDebt",
+          "baseFixedDebt",
           "percentage"
         ],
         "properties": {
@@ -395,7 +395,7 @@
             "example": "org-provincie-1",
             "title": "Organisation ID"
           },
-          "baseVasteDebt": {
+          "baseFixedDebt": {
             "type": "number",
             "description": "Uitstaande vaste schuld per 1 januari (REQ-FDO-003).",
             "example": 500000000.0,
@@ -1047,7 +1047,7 @@
             },
             "title": "Schatkist Status"
           },
-          "leningenMovements": {
+          "loansMovements": {
             "type": "object",
             "description": "Lening mutation summary for the quarter (count, total amount, by-type breakdown) (REQ-FDO-006).",
             "nullable": true,
@@ -1061,7 +1061,7 @@
             },
             "title": "Leningen Mutaties"
           },
-          "derivatenMovements": {
+          "derivativesMovements": {
             "type": "object",
             "description": "Derivaat mutation summary (count, total notional, hedging-links verified) (REQ-FDO-006).",
             "nullable": true,
@@ -1190,10 +1190,10 @@
               "auditYear": "@self.auditYear"
             },
             "operations": {
-              "leningenMovements": {
+              "loansMovements": {
                 "field": "Lening.principal",
                 "operation": "summarise",
-                "target": "leningenMovements"
+                "target": "loansMovements"
               }
             }
           }
@@ -1250,7 +1250,7 @@
             "example": null,
             "title": "Narrative Manual"
           },
-          "kasgeldProjection": {
+          "cashProjection": {
             "type": "object",
             "description": "Kasgeldlimiet projection (ceiling, current-exposure, headroom-days-until-breach) (REQ-FDO-007).",
             "nullable": true,
@@ -1277,7 +1277,7 @@
             "example": null,
             "title": "Liquiditeitsplanning"
           },
-          "treasuryVerwachting": {
+          "treasuryExpectation": {
             "type": "object",
             "description": "Expected parked-amount and sweep-forecast (REQ-FDO-007).",
             "nullable": true,
@@ -1389,7 +1389,7 @@
         },
         "auditYear": 2026,
         "organisationId": "org-provincie-1",
-        "baseVasteDebt": 500000000.0,
+        "baseFixedDebt": 500000000.0,
         "percentage": 20.0,
         "calculatedCeiling": 100000000.0,
         "forwardLooking4Year": [
@@ -1540,7 +1540,7 @@
           "sweepCount": 62,
           "failures": 0
         },
-        "leningenMovements": {
+        "loansMovements": {
           "count": 3,
           "totalAmount": 4300000,
           "byType": {
@@ -1548,7 +1548,7 @@
             "onderhandse-lening": 1
           }
         },
-        "derivatenMovements": {
+        "derivativesMovements": {
           "count": 1,
           "totalNotional": 5000000,
           "hedgingLinksVerified": true
@@ -1573,7 +1573,7 @@
         "budgetVersion": "2026-vastgesteld",
         "narrativeAuto": "Schatkistfunctie: Het kasgeldlimiet bedraagt 8,5% van de begroting (€17,0M). Het gemiddelde netto kortlopende schuld over Q4 was €16,8M; geen overschrijding. De rente-risiconorm (20% vaste schuld herfinancieringsrisico) toont geen overschrijding in de 4-jaars projectie. Dagelijks gemiddelde geparkt bij AGT: €0,3M. Treasurystatuut 2024 voorziet in risk-appetite \"midden\"; alle transacties voldoen aan de mandaatmatrix.",
         "narrativeManual": null,
-        "kasgeldProjection": {
+        "cashProjection": {
           "ceiling": 17000000,
           "exposure": 16800000,
           "headroomDays": 30
@@ -1582,7 +1582,7 @@
           "status": "binnen-norm"
         },
         "liquidityPlanning": null,
-        "treasuryVerwachting": {
+        "treasuryExpectation": {
           "averageDailyParked": 300000
         },
         "status": "draft"

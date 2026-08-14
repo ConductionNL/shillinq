@@ -87,7 +87,7 @@ final class UrenAlertServiceTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-1',
 				'doelNorm' => 1225,
-				'lopendeHours' => 700.0,
+				'currentHours' => 700.0,
 				'forecastYearEnd' => 1150.0,
 				'thresholdStatus' => 'RISICO',
 			],
@@ -113,7 +113,7 @@ final class UrenAlertServiceTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-1',
 				'doelNorm' => 1225,
-				'lopendeHours' => 600.0,
+				'currentHours' => 600.0,
 				'forecastYearEnd' => 900.0,
 				'thresholdStatus' => 'KRITIEK',
 			],
@@ -138,7 +138,7 @@ final class UrenAlertServiceTest extends TestCase {
 		$acties = $this->build()->handelingsperspectief(
 			year: [
 				'doelNorm' => 1225,
-				'lopendeHours' => 1250.0,
+				'currentHours' => 1250.0,
 				'forecastYearEnd' => 1400.0,
 				'thresholdStatus' => 'BEHAALD',
 			]
@@ -157,7 +157,7 @@ final class UrenAlertServiceTest extends TestCase {
 		$acties = $this->build()->handelingsperspectief(
 			year: [
 				'doelNorm' => 1225,
-				'lopendeHours' => 400.0,
+				'currentHours' => 400.0,
 				'forecastYearEnd' => 800.0,
 			]
 		);

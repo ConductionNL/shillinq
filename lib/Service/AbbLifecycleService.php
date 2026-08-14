@@ -152,9 +152,9 @@ class AbbLifecycleService {
 
 		// Auto-calculate volgendeEvaluatie when entering geldig.
 		if ($toStatus === 'geldig' && trim((string)($abb['determinationDate'] ?? '')) !== '') {
-			$abb['volgendeEvaluation'] = $this->calculateNextEvaluation(
+			$abb['nextEvaluation'] = $this->calculateNextEvaluation(
 				determinationDate: (string)$abb['determinationDate'],
-				ritme: (string)($abb['evaluationRitme'] ?? 'tweejaarlijks')
+				ritme: (string)($abb['evaluationCadence'] ?? 'tweejaarlijks')
 			);
 		}
 
@@ -216,7 +216,7 @@ class AbbLifecycleService {
 				$tasks[] = [
 					'type' => 'evaluate-abb',
 					'subject' => sprintf('Evaluate ABB: %s', $reference),
-					'dueDate' => (string)($abb['volgendeEvaluation'] ?? $now->format('Y-m-d')),
+					'dueDate' => (string)($abb['nextEvaluation'] ?? $now->format('Y-m-d')),
 					'assignedTo' => 'juridisch-beleidsadviseur',
 					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
 				];

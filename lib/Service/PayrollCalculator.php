@@ -260,18 +260,18 @@ class PayrollCalculator {
 	 * (already encoded in the bracket rows the caller supplies).
 	 *
 	 * @param float $fiscalPay Taxable wage for the period.
-	 * @param array<int,array<string,mixed>> $tabelRules Bracket rows from LoonheffingTabel2026.
+	 * @param array<int,array<string,mixed>> $tableRules Bracket rows from LoonheffingTabel2026.
 	 *
 	 * @return float Wage tax for the period.
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	public function loonheffingUitTabel(float $fiscalPay, array $tabelRules): float {
-		if ($fiscalPay <= 0.0 || $tabelRules === []) {
+	public function loonheffingUitTabel(float $fiscalPay, array $tableRules): float {
+		if ($fiscalPay <= 0.0 || $tableRules === []) {
 			return 0.0;
 		}
 
-		$rule = $this->vindBracket(amount: $fiscalPay, tabelRules: $tabelRules);
+		$rule = $this->vindBracket(amount: $fiscalPay, tableRules: $tableRules);
 		if ($rule === null) {
 			return 0.0;
 		}
@@ -291,12 +291,12 @@ class PayrollCalculator {
 	 * Find the bracket a wage falls in.
 	 *
 	 * @param float $amount Wage.
-	 * @param array<int,array<string,mixed>> $tabelRules Bracket rows.
+	 * @param array<int,array<string,mixed>> $tableRules Bracket rows.
 	 *
 	 * @return array<string,mixed>|null The matching bracket or null.
 	 */
-	private function vindBracket(float $amount, array $tabelRules): ?array {
-		foreach ($tabelRules as $rule) {
+	private function vindBracket(float $amount, array $tableRules): ?array {
+		foreach ($tableRules as $rule) {
 			$from = (float)($rule['vanaf'] ?? 0);
 			$tot = ($rule['tot'] ?? null);
 			if ($amount < $from) {

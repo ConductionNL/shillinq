@@ -70,7 +70,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase {
 				'generalLedgerAccount' => '4010',
 				'costCentre' => 'rd-team-1',
 				'amount' => 60000.0,
-				'exclusief_in_profitdetermination' => true,
+				'excluding_in_profitdetermination' => true,
 			],
 		];
 		$glLines = [
@@ -96,7 +96,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase {
 				'generalLedgerAccount' => '4010',
 				'costCentre' => 'rd-team-1',
 				'amount' => 60000.0,
-				'exclusief_in_profitdetermination' => true,
+				'excluding_in_profitdetermination' => true,
 			],
 		];
 		$glLines = [
@@ -118,7 +118,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase {
 				'generalLedgerAccount' => '4010',
 				'costCentre' => 'rd-team-1',
 				'amount' => 60000.0,
-				'exclusief_in_profitdetermination' => false,
+				'excluding_in_profitdetermination' => false,
 			],
 		];
 		$glLines = [['accountNumber' => '4010', 'costCentre' => 'rd-team-1']];
@@ -138,7 +138,7 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase {
 				'generalLedgerAccount' => '4010',
 				'costCentre' => 'rd-team-1',
 				'amount' => 60000.0,
-				'exclusief_in_profitdetermination' => true,
+				'excluding_in_profitdetermination' => true,
 			],
 		];
 		$glLines = [['accountNumber' => '4010', 'costCentre' => 'sales-team']];

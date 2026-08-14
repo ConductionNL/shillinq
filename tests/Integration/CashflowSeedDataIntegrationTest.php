@@ -178,7 +178,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 		$profile = $seed['profiles'][2];
 		$hasLong = false;
 		foreach ($profile['arInvoices'] as $inv) {
-			$offset = (string)($inv['payment_history_gemiddelde_deviation'] ?? '+0 days');
+			$offset = (string)($inv['payment_history_average_deviation'] ?? '+0 days');
 			// Extract leading integer from "+48 days".
 			if (preg_match('/\+?(\d+)/', $offset, $m) === 1 && (int)$m[1] >= 30) {
 				$hasLong = true;
@@ -201,9 +201,9 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 			$os = $profile['horizon']['openingBalance'];
 			$sum = (
 				(float)$os['businessAccount']
-				+ (float)$os['savingsgoal_vat']
-				+ (float)$os['savingsgoal_ib']
-				+ (float)$os['savingsgoal_buffer']
+				+ (float)$os['savings_goal_vat']
+				+ (float)$os['savings_goal_ib']
+				+ (float)$os['savings_goal_buffer']
 			);
 			self::assertEqualsWithDelta(
 				(float)$os['total'],
@@ -228,7 +228,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 				continue;
 			}
 
-			$months = (float)$policy['monthsVasteCost'];
+			$months = (float)$policy['monthsFixedCost'];
 			$monthly = $this->sumMonthlyRecurringOut($profile);
 			// berekendeBuffer SHOULD cover monthly vaste kosten x months. Allow
 			// a generous tolerance because some profiles model salary+rent only.

@@ -60,7 +60,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 
 	test('Mijn Contracten index — mounts on /inkoop/mijn-contracten (REQ-008)', async ({ page }) => {
 		// Mijn Contracten is the bron=tenderned filtered view consumed by
-		// inschrijvers (REQ-008). The manifest declares `config.filters.bron`
+		// inschrijvers (REQ-008). The manifest declares `config.filters.source`
 		// = "tenderned" so vendors only see their own contracted obligations.
 		await page.goto(APP + '/inkoop/mijn-contracten')
 		await page.waitForLoadState('domcontentloaded')

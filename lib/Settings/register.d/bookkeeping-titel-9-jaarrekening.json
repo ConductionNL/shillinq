@@ -176,7 +176,7 @@
             "description": "Cryptographic hash of the immutable snapshot taken at opmaak (REQ-T9-010, design D2). Set by the opmaak action.",
             "title": "Snapshot Hash"
           },
-          "accountantsverklaringRequired": {
+          "auditorsStatementRequired": {
             "type": "boolean",
             "default": false,
             "description": "True when an accountantsverklaring is wettelijk verplicht (middelgroot+; REQ-T9-007/REQ-T9-009).",
@@ -210,7 +210,7 @@
             "description": "True for middelgroot+ where a bestuursverslag is verplicht (REQ-T9-006/REQ-T9-009).",
             "title": "Bestuursverslag Vereist"
           },
-          "boardLeden": {
+          "boardMembers": {
             "type": "array",
             "description": "Names of the bestuursleden who sign the opmaak (REQ-T9-010).",
             "items": {
@@ -822,7 +822,7 @@
             "description": "draft while concept; final once opgemaakt.",
             "title": "Status"
           },
-          "operationeleCashFlow": {
+          "operationalCashFlow": {
             "type": "number",
             "nullable": true,
             "description": "Net cash flow from operating activities.",
@@ -840,7 +840,7 @@
             "description": "Net cash flow from financing activities.",
             "title": "Financierings Kasstroom"
           },
-          "netMovementGeldmiddelen": {
+          "netMovementCashEquivalents": {
             "type": "number",
             "nullable": true,
             "description": "Reconciling net change in cash; MUST match the balans liquide-middelen delta (REQ-T9-005).",
@@ -919,7 +919,7 @@
         "icon": "NoteTextOutline",
         "version": "0.1.0",
         "title": "Toelichting Note",
-        "description": "An individual toelichting-paragraaf (accounting note) per art. 2:381-388 BW and the RJ guidelines (REQ-T9-004). Each note carries its volgorde, code, titel, structured content, the wettelijke basis (RJ guideline / wetsartikel) and the template that generated it. Mandatory notes per groottecategorie come from lib/Settings/seeds/toelichting-templates.json (design D4).",
+        "description": "An individual toelichting-paragraaf (accounting note) per art. 2:381-388 BW and the RJ guidelines (REQ-T9-004). Each note carries its volgorde, code, title, structured content, the wettelijke basis (RJ guideline / wetsartikel) and the template that generated it. Mandatory notes per groottecategorie come from lib/Settings/seeds/toelichting-templates.json (design D4).",
         "x-schema-org": "schema:Comment",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -927,7 +927,7 @@
           "reportId",
           "volgorde",
           "code",
-          "titel",
+          "title",
           "statutoryBasis"
         ],
         "properties": {
@@ -950,7 +950,7 @@
             "example": "Note 1.2",
             "title": "Code"
           },
-          "titel": {
+          "title": {
             "type": "string",
             "description": "Note title.",
             "example": "Materiële vaste activa",
@@ -968,7 +968,7 @@
             "example": "RJ 212 Materiële vaste activa",
             "title": "Wettelijke Basis"
           },
-          "gegenereerdBy": {
+          "generatedBy": {
             "type": "string",
             "nullable": true,
             "description": "Name of the toelichting-template that generated this note (design D4).",
@@ -1348,11 +1348,11 @@
       "layoutDate": null,
       "determinationDate": null,
       "depositDate": null,
-      "accountantsverklaringRequired": false,
+      "auditorsStatementRequired": false,
       "accountantsverklaringStatus": "niet-vereist",
       "cashFlowStatementRequired": false,
       "boardReportRequired": false,
-      "boardLeden": [
+      "boardMembers": [
         "A. de Vries"
       ]
     },
@@ -1383,11 +1383,11 @@
       "layoutDate": null,
       "determinationDate": null,
       "depositDate": null,
-      "accountantsverklaringRequired": true,
+      "auditorsStatementRequired": true,
       "accountantsverklaringStatus": "in-afwachting",
       "cashFlowStatementRequired": true,
       "boardReportRequired": true,
-      "boardLeden": [
+      "boardMembers": [
         "J. Jansen",
         "P. Pietersen"
       ]
@@ -1533,13 +1533,13 @@
       "reportId": "annual-report-adm-001-2025",
       "volgorde": 0,
       "code": "Note 0",
-      "titel": "Grondslagen voor waardering en resultaatbepaling",
+      "title": "Grondslagen voor waardering en resultaatbepaling",
       "contentJSONB": {
         "valuationBasis": "Historische kostprijs",
         "resultDetermination": "Toerekening aan het boekjaar"
       },
       "statutoryBasis": "RJ 240 Grondslagen",
-      "gegenereerdBy": "rj-240-grondslagen",
+      "generatedBy": "rj-240-grondslagen",
       "verplicht": true
     },
     {
@@ -1553,10 +1553,10 @@
       "method": "indirect",
       "currency": "EUR",
       "status": "draft",
-      "operationeleCashFlow": 281000,
+      "operationalCashFlow": 281000,
       "investmentCashFlow": -120000,
       "financingCashFlow": -150000,
-      "netMovementGeldmiddelen": 11000,
+      "netMovementCashEquivalents": 11000,
       "rules": [
         {
           "category": "operationeel",

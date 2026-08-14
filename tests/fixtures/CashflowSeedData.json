@@ -17,9 +17,9 @@
 				"horizonEnd": "2026-07-26",
 				"openingBalance": {
 					"businessAccount": 45000.00,
-					"savingsgoal_vat": 8200.00,
-					"savingsgoal_ib": 12500.00,
-					"savingsgoal_buffer": 6800.00,
+					"savings_goal_vat": 8200.00,
+					"savings_goal_ib": 12500.00,
+					"savings_goal_buffer": 6800.00,
 					"total": 72500.00
 				},
 				"modelVersion": "v4.1-klantspecifiek-betaalgedrag",
@@ -78,8 +78,8 @@
 					"invoiceDate": "2026-04-15",
 					"expiryDate": "2026-05-15",
 					"outstandingAmount": 12500.00,
-					"payment_history_gemiddelde_deviation": "+3 days",
-					"payment_history_facturen12mnd": 12,
+					"payment_history_average_deviation": "+3 days",
+					"payment_history_invoices12m": 12,
 					"reliabilityScore": 1.0
 				},
 				{
@@ -88,15 +88,15 @@
 					"invoiceDate": "2026-04-20",
 					"expiryDate": "2026-05-20",
 					"outstandingAmount": 8200.00,
-					"payment_history_gemiddelde_deviation": "+2 days",
-					"payment_history_facturen12mnd": 11,
+					"payment_history_average_deviation": "+2 days",
+					"payment_history_invoices12m": 11,
 					"reliabilityScore": 0.92
 				}
 			],
 			"bufferPolicy": {
 				"policyId": "policy-erik",
 				"policy": "MIN_MONTHS_VASTE_KOSTEN",
-				"monthsVasteCost": 1,
+				"monthsFixedCost": 1,
 				"berekendeBuffer": 7500.00,
 				"alertOndergrens": 3750.00,
 				"alertVooralarm": 11250.00
@@ -122,9 +122,9 @@
 				"horizonEnd": "2026-07-26",
 				"openingBalance": {
 					"businessAccount": 22000.00,
-					"savingsgoal_vat": 4100.00,
-					"savingsgoal_ib": 3900.00,
-					"savingsgoal_buffer": 5200.00,
+					"savings_goal_vat": 4100.00,
+					"savings_goal_ib": 3900.00,
+					"savings_goal_buffer": 5200.00,
 					"total": 35200.00
 				},
 				"modelVersion": "v4.1-klantspecifiek-betaalgedrag",
@@ -161,8 +161,8 @@
 					"invoiceDate": "2026-04-10",
 					"expiryDate": "2026-05-10",
 					"outstandingAmount": 4500.00,
-					"payment_history_gemiddelde_deviation": "+7 days",
-					"payment_history_facturen12mnd": 10,
+					"payment_history_average_deviation": "+7 days",
+					"payment_history_invoices12m": 10,
 					"reliabilityScore": 0.83
 				},
 				{
@@ -171,15 +171,15 @@
 					"invoiceDate": "2026-04-12",
 					"expiryDate": "2026-05-12",
 					"outstandingAmount": 12000.00,
-					"payment_history_gemiddelde_deviation": "+35 days",
-					"payment_history_facturen12mnd": 4,
+					"payment_history_average_deviation": "+35 days",
+					"payment_history_invoices12m": 4,
 					"reliabilityScore": 0.45
 				}
 			],
 			"bufferPolicy": {
 				"policyId": "policy-sarah",
 				"policy": "MIN_MONTHS_VASTE_KOSTEN",
-				"monthsVasteCost": 1,
+				"monthsFixedCost": 1,
 				"berekendeBuffer": 5200.00,
 				"alertOndergrens": 2600.00,
 				"alertVooralarm": 7800.00
@@ -205,9 +205,9 @@
 				"horizonEnd": "2026-07-26",
 				"openingBalance": {
 					"businessAccount": 18500.00,
-					"savingsgoal_vat": 3100.00,
-					"savingsgoal_ib": 2800.00,
-					"savingsgoal_buffer": 3500.00,
+					"savings_goal_vat": 3100.00,
+					"savings_goal_ib": 2800.00,
+					"savings_goal_buffer": 3500.00,
 					"total": 27900.00
 				},
 				"modelVersion": "v4.1-klantspecifiek-betaalgedrag",
@@ -244,8 +244,8 @@
 					"invoiceDate": "2026-04-15",
 					"expiryDate": "2026-05-15",
 					"outstandingAmount": 12000.00,
-					"payment_history_gemiddelde_deviation": "+48 days",
-					"payment_history_facturen12mnd": 6,
+					"payment_history_average_deviation": "+48 days",
+					"payment_history_invoices12m": 6,
 					"reliabilityScore": 0.95
 				},
 				{
@@ -254,8 +254,8 @@
 					"invoiceDate": "2026-04-20",
 					"expiryDate": "2026-05-20",
 					"outstandingAmount": 8500.00,
-					"payment_history_gemiddelde_deviation": "+32 days",
-					"payment_history_facturen12mnd": 5,
+					"payment_history_average_deviation": "+32 days",
+					"payment_history_invoices12m": 5,
 					"reliabilityScore": 0.88
 				},
 				{
@@ -264,15 +264,15 @@
 					"invoiceDate": "2026-04-22",
 					"expiryDate": "2026-05-22",
 					"outstandingAmount": 5200.00,
-					"payment_history_gemiddelde_deviation": "+8 days",
-					"payment_history_facturen12mnd": 8,
+					"payment_history_average_deviation": "+8 days",
+					"payment_history_invoices12m": 8,
 					"reliabilityScore": 0.92
 				}
 			],
 			"bufferPolicy": {
 				"policyId": "policy-jan",
 				"policy": "MIN_MONTHS_VASTE_KOSTEN",
-				"monthsVasteCost": 1,
+				"monthsFixedCost": 1,
 				"berekendeBuffer": 3500.00,
 				"alertOndergrens": 1750.00,
 				"alertVooralarm": 5250.00

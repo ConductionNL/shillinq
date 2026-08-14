@@ -75,13 +75,13 @@ class ProgrammabegrotingService {
 	 */
 	public function sluitendStatus(string $administrationId, string $budgetId): array {
 		$budget = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $budgetId, 'administrationId' => $administrationId]);
-		$nominale = (float)($budget['nominaleDevelopment'] ?? 2.0);
+		$nominale = (float)($budget['nominalDevelopment'] ?? 2.0);
 
 		$jaren = $this->fetchMany(schema: 'Meerjarenraming', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
 
 		$evaluated = [];
 		foreach ($jaren as $year) {
-			$result = $this->sluitend->evaluateYear(year: $year, nominaleDevelopment: $nominale);
+			$result = $this->sluitend->evaluateYear(year: $year, nominalDevelopment: $nominale);
 			$evaluated[] = [
 				'year' => ($year['year'] ?? null),
 				'balanceStructural' => $result['balanceStructural'],
@@ -90,7 +90,7 @@ class ProgrammabegrotingService {
 			];
 		}
 
-		$flags = $this->sluitend->evaluateBegroting(years: $jaren, nominaleDevelopment: $nominale);
+		$flags = $this->sluitend->evaluateBegroting(years: $jaren, nominalDevelopment: $nominale);
 		$regime = $this->sluitend->determineToezichtRegime(
 			sluitendStructureel: $flags['sluitendStructureel'],
 			sluitendReeel: $flags['sluitendReëel']

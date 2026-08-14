@@ -21,12 +21,12 @@
 				"reference": "ACM/IN/621004"
 			},
 			"betreftActiviteiten": ["MO-SP-016"],
-			"publiekBelangCategories": ["arbeidsparticipatie", "sociaaleconomische-cohesie"],
+			"publicInterestCategories": ["arbeidsparticipatie", "sociaaleconomische-cohesie"],
 			"rationale": "De sportkantine-exploitatie wordt voortgezet als integratie- en arbeidsparticipatiehefboom voor mensen met een afstand tot de arbeidsmarkt (samenwerking met Wsw, banenpool). De exploitatie verstoort de concurrentie niet aantoonbaar: omzet < €60k/jaar, lokale markt, kostprijs-monitor zonder winstopslag.",
-			"evaluationRitme": "tweejaarlijks",
-			"volgendeEvaluation": "2025-03-14",
+			"evaluationCadence": "tweejaarlijks",
+			"nextEvaluation": "2025-03-14",
 			"status": "concept",
-			"objectionTermVerstreken": false
+			"objectionTermElapsed": false
 		}
 	]
 }

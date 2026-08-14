@@ -149,7 +149,7 @@ final class KorThresholdCalculatorTest extends TestCase {
 
 		$cents = $this->calc->suppletieBedragCents(
 			invoices: $invoices,
-			ingangsDate: '2026-01-01',
+			effectiveDate: '2026-01-01',
 			revocationDate: '2026-09-04'
 		);
 
@@ -190,9 +190,9 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testLockInWindowCanonical(): void {
-		$window = $this->calc->lockInWindow(ingangsDate: '2026-01-01');
+		$window = $this->calc->lockInWindow(effectiveDate: '2026-01-01');
 		self::assertSame('2028-12-31', $window['lockInEndDate']);
-		self::assertSame('2028-10-01', $window['vroegsteOpzegDate']);
+		self::assertSame('2028-10-01', $window['earliestTerminationDate']);
 
 	}//end testLockInWindowCanonical()
 
@@ -202,9 +202,9 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testLockInWindowMidYear(): void {
-		$window = $this->calc->lockInWindow(ingangsDate: '2026-07-15');
+		$window = $this->calc->lockInWindow(effectiveDate: '2026-07-15');
 		self::assertSame('2029-07-14', $window['lockInEndDate']);
-		self::assertSame('2029-05-01', $window['vroegsteOpzegDate']);
+		self::assertSame('2029-05-01', $window['earliestTerminationDate']);
 
 	}//end testLockInWindowMidYear()
 
@@ -214,8 +214,8 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testLockInWindowInvalid(): void {
-		self::assertNull($this->calc->lockInWindow(ingangsDate: 'nope'));
-		self::assertNull($this->calc->lockInWindow(ingangsDate: '2026-13-01'));
+		self::assertNull($this->calc->lockInWindow(effectiveDate: 'nope'));
+		self::assertNull($this->calc->lockInWindow(effectiveDate: '2026-13-01'));
 
 	}//end testLockInWindowInvalid()
 
@@ -226,15 +226,15 @@ final class KorThresholdCalculatorTest extends TestCase {
 	 */
 	public function testIsOptOutPermitted(): void {
 		// Before vroegsteOpzeg => blocked.
-		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-09-30', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
+		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-09-30', earliestTerminationDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// Inside the window => permitted.
-		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
+		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-15', earliestTerminationDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// On the boundary => permitted.
-		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-01', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
+		self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-01', earliestTerminationDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// After lockInEindDatum => blocked (different lifecycle path).
-		self::assertFalse($this->calc->isOptOutPermitted(today: '2029-01-01', vroegsteOpzegDate: '2028-10-01', lockInEndDate: '2028-12-31'));
+		self::assertFalse($this->calc->isOptOutPermitted(today: '2029-01-01', earliestTerminationDate: '2028-10-01', lockInEndDate: '2028-12-31'));
 		// Empty windows are unsafe => blocked.
-		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDate: '', lockInEndDate: '2028-12-31'));
+		self::assertFalse($this->calc->isOptOutPermitted(today: '2028-10-15', earliestTerminationDate: '', lockInEndDate: '2028-12-31'));
 
 	}//end testIsOptOutPermitted()
 

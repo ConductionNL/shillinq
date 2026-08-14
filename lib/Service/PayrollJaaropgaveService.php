@@ -109,7 +109,7 @@ class PayrollJaaropgaveService {
 			$zvwWgC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
 			$pensWnC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));
 			$pensWgC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));
-			$vakUitbC += $this->calculator->toCents(amount: ($s['grossComponenten']['vakantietoeslag_uitbetaling'] ?? 0));
+			$vakUitbC += $this->calculator->toCents(amount: ($s['grossComponents']['vakantietoeslag_uitbetaling'] ?? 0));
 			$netC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
 
 			$cu = ($s['cumulatieven'] ?? []);

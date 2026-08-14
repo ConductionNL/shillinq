@@ -232,14 +232,14 @@ class KorThresholdCalculator {
 	 * is the sum of those amounts. Arithmetic in cents.
 	 *
 	 * @param array<int,array<string,mixed>> $invoices KOR AR-invoice records.
-	 * @param string $ingangsDate KOR start date (YYYY-MM-DD).
+	 * @param string $effectiveDate KOR start date (YYYY-MM-DD).
 	 * @param string $revocationDate Revocation date (YYYY-MM-DD), exclusive.
 	 *
 	 * @return int Suppletie-bedrag in cents.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function suppletieBedragCents(array $invoices, string $ingangsDate, string $revocationDate): int {
+	public function suppletieBedragCents(array $invoices, string $effectiveDate, string $revocationDate): int {
 		$total = 0;
 		foreach ($invoices as $invoice) {
 			if ((string)($invoice['vrijstellingsGrondslag'] ?? '') !== 'KOR_ART25_OB') {
@@ -247,7 +247,7 @@ class KorThresholdCalculator {
 			}
 
 			$leveringsDate = (string)($invoice['leveringsDatum'] ?? '');
-			if ($leveringsDate === '' || $leveringsDate < $ingangsDate || $leveringsDate >= $revocationDate) {
+			if ($leveringsDate === '' || $leveringsDate < $effectiveDate || $leveringsDate >= $revocationDate) {
 				continue;
 			}
 
@@ -300,14 +300,14 @@ class KorThresholdCalculator {
 	 * dates are exact YYYY-MM-DD strings — the caller persists them on the
 	 * KORRegistration record so the manifest pages can render the window.
 	 *
-	 * @param string $ingangsDate KOR-NL effective date (YYYY-MM-DD).
+	 * @param string $effectiveDate KOR-NL effective date (YYYY-MM-DD).
 	 *
-	 * @return array{lockInEndDate:string,vroegsteOpzegDate:string}|null Window or null on invalid input.
+	 * @return array{lockInEndDate:string,earliestTerminationDate:string}|null Window or null on invalid input.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function lockInWindow(string $ingangsDate): ?array {
-		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $ingangsDate, $match) !== 1) {
+	public function lockInWindow(string $effectiveDate): ?array {
+		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $effectiveDate, $match) !== 1) {
 			return null;
 		}
 
@@ -360,7 +360,7 @@ class KorThresholdCalculator {
 
 		return [
 			'lockInEndDate' => $lockInEnd,
-			'vroegsteOpzegDate' => $vroegsteOpzeg,
+			'earliestTerminationDate' => $vroegsteOpzeg,
 		];
 
 	}//end lockInWindow()
@@ -373,19 +373,19 @@ class KorThresholdCalculator {
 	 * already at its natural end (different lifecycle path).
 	 *
 	 * @param string $today Today's date (YYYY-MM-DD).
-	 * @param string $vroegsteOpzegDate Earliest opt-out date (YYYY-MM-DD).
+	 * @param string $earliestTerminationDate Earliest opt-out date (YYYY-MM-DD).
 	 * @param string $lockInEndDate End of the lock-in window (YYYY-MM-DD).
 	 *
 	 * @return bool True when an operator-initiated opt-out is permitted.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function isOptOutPermitted(string $today, string $vroegsteOpzegDate, string $lockInEndDate): bool {
-		if ($vroegsteOpzegDate === '' || $lockInEndDate === '') {
+	public function isOptOutPermitted(string $today, string $earliestTerminationDate, string $lockInEndDate): bool {
+		if ($earliestTerminationDate === '' || $lockInEndDate === '') {
 			return false;
 		}
 
-		return ($today >= $vroegsteOpzegDate && $today <= $lockInEndDate);
+		return ($today >= $earliestTerminationDate && $today <= $lockInEndDate);
 	}//end isOptOutPermitted()
 
 	/**

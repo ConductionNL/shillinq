@@ -51,17 +51,17 @@ class SluitendCalculator {
 	 * per-year sluitend flag (struktureel AND reëel must both hold).
 	 *
 	 * @param array<string,mixed> $year The meerjarenraming year row.
-	 * @param float $nominaleDevelopment The loon- en prijsindexatie percentage (e.g. 2.0).
+	 * @param float $nominalDevelopment The loon- en prijsindexatie percentage (e.g. 2.0).
 	 *
 	 * @return array{balanceStructural:float,balanceIncidental:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
-	public function evaluateYear(array $year, float $nominaleDevelopment): array {
-		$revenueStrucCents = $this->toCents(amount: $year['revenueStructureel'] ?? 0);
-		$expensesStrucCents = $this->toCents(amount: $year['expensesStructureel'] ?? 0);
-		$revenueIncCents = $this->toCents(amount: $year['revenueIncidenteel'] ?? 0);
-		$expensesIncCents = $this->toCents(amount: $year['expensesIncidenteel'] ?? 0);
+	public function evaluateYear(array $year, float $nominalDevelopment): array {
+		$revenueStrucCents = $this->toCents(amount: $year['revenueStructural'] ?? 0);
+		$expensesStrucCents = $this->toCents(amount: $year['expensesStructural'] ?? 0);
+		$revenueIncCents = $this->toCents(amount: $year['revenueIncidental'] ?? 0);
+		$expensesIncCents = $this->toCents(amount: $year['expensesIncidental'] ?? 0);
 
 		$balanceStrucCents = ($revenueStrucCents - $expensesStrucCents);
 		$balanceIncCents = ($revenueIncCents - $expensesIncCents);
@@ -69,7 +69,7 @@ class SluitendCalculator {
 		// Reëel correction: structural lasten are uplifted by the nominale
 		// ontwikkeling (prices rise faster than the nominal budget), so the
 		// reëel saldo subtracts that uplift from the nominal saldo.
-		$upliftCents = (int)round($expensesStrucCents * ($nominaleDevelopment / 100.0));
+		$upliftCents = (int)round($expensesStrucCents * ($nominalDevelopment / 100.0));
 		$balanceReelCents = ($balanceStrucCents + $balanceIncCents - $upliftCents);
 
 		$sluitendStructureel = ($expensesStrucCents <= $revenueStrucCents);
@@ -94,13 +94,13 @@ class SluitendCalculator {
 	 * REQ-011). An empty year set is not sluitend (fail-closed).
 	 *
 	 * @param array<int,array<string,mixed>> $years The meerjarenraming year rows.
-	 * @param float $nominaleDevelopment The loon- en prijsindexatie percentage.
+	 * @param float $nominalDevelopment The loon- en prijsindexatie percentage.
 	 *
 	 * @return array{sluitendStructureel:bool,sluitendReëel:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
-	public function evaluateBegroting(array $years, float $nominaleDevelopment): array {
+	public function evaluateBegroting(array $years, float $nominalDevelopment): array {
 		if ($years === []) {
 			return ['sluitendStructureel' => false, 'sluitendReëel' => false];
 		}
@@ -108,7 +108,7 @@ class SluitendCalculator {
 		$allStructureel = true;
 		$allReeel = true;
 		foreach ($years as $year) {
-			$result = $this->evaluateYear(year: $year, nominaleDevelopment: $nominaleDevelopment);
+			$result = $this->evaluateYear(year: $year, nominalDevelopment: $nominalDevelopment);
 			if ($result['sluitendStructureel'] === false) {
 				$allStructureel = false;
 			}

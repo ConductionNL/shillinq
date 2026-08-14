@@ -220,31 +220,31 @@ class IntegralCostPriceCalculator {
 	 * Calculate kostprijs per eenheid (REQ-WMO-002).
 	 *
 	 * @param int $totaleCostCents Total cost in cents.
-	 * @param float $verkochteUnits Units sold (must be > 0).
+	 * @param float $soldUnits Units sold (must be > 0).
 	 *
 	 * @return float|null Cost per unit in EUR, or null if eenheden is 0.
 	 */
-	public function calculateKostprijsPerEenheid(int $totaleCostCents, float $verkochteUnits): ?float {
-		if ($verkochteUnits <= 0.0) {
+	public function calculateKostprijsPerEenheid(int $totaleCostCents, float $soldUnits): ?float {
+		if ($soldUnits <= 0.0) {
 			return null;
 		}
 
-		return round(($totaleCostCents / 100) / $verkochteUnits, 4);
+		return round(($totaleCostCents / 100) / $soldUnits, 4);
 	}//end calculateKostprijsPerEenheid()
 
 	/**
 	 * Determine compliance status: gehanteerdTarief >= kostprijsPerEenheid (REQ-WMO-004 / Art. 25i).
 	 *
-	 * @param float|null $gehanteerdRate Actual price charged per unit (EUR).
+	 * @param float|null $appliedRate Actual price charged per unit (EUR).
 	 * @param float|null $costPricePerUnit IKP per unit (EUR).
 	 * @param int $totaleCostCents Total cost in cents (fallback when no eenheden).
 	 * @param float|null $revenueEur Omzet in EUR (fallback when no eenheden).
 	 *
 	 * @return bool True when compliant (Art. 25i integrale-kostprijs rule).
 	 */
-	public function isCompliant(?float $gehanteerdRate, ?float $costPricePerUnit, int $totaleCostCents, ?float $revenueEur = null): bool {
-		if ($gehanteerdRate !== null && $costPricePerUnit !== null) {
-			return $gehanteerdRate >= $costPricePerUnit;
+	public function isCompliant(?float $appliedRate, ?float $costPricePerUnit, int $totaleCostCents, ?float $revenueEur = null): bool {
+		if ($appliedRate !== null && $costPricePerUnit !== null) {
+			return $appliedRate >= $costPricePerUnit;
 		}
 
 		if ($revenueEur !== null) {
@@ -302,18 +302,18 @@ class IntegralCostPriceCalculator {
 
 		$totaleCostCents = ($baseBeforeMarkup + $winstopslagCents);
 
-		$verkochteUnits = (float)($input['verkochteUnits'] ?? 0);
-		$costPricePerUnit = $this->calculateKostprijsPerEenheid(totaleCostCents: $totaleCostCents, verkochteUnits: $verkochteUnits);
+		$soldUnits = (float)($input['soldUnits'] ?? 0);
+		$costPricePerUnit = $this->calculateKostprijsPerEenheid(totaleCostCents: $totaleCostCents, soldUnits: $soldUnits);
 
-		$gehanteerdRate = null;
-		if (isset($input['gehanteerdRate']) === true) {
-			$gehanteerdRate = (float)$input['gehanteerdRate'];
+		$appliedRate = null;
+		if (isset($input['appliedRate']) === true) {
+			$appliedRate = (float)$input['appliedRate'];
 		}
 
 		$marge = null;
 		$margePercentage = null;
-		if ($gehanteerdRate !== null && $costPricePerUnit !== null) {
-			$marge = round(($gehanteerdRate - $costPricePerUnit), 4);
+		if ($appliedRate !== null && $costPricePerUnit !== null) {
+			$marge = round(($appliedRate - $costPricePerUnit), 4);
 			$base = 1.0;
 			if ($costPricePerUnit > 0.0) {
 				$base = $costPricePerUnit;
@@ -328,15 +328,15 @@ class IntegralCostPriceCalculator {
 		}
 
 		$compliant = $this->isCompliant(
-			gehanteerdRate: $gehanteerdRate,
+			appliedRate: $appliedRate,
 			costPricePerUnit: $costPricePerUnit,
 			totaleCostCents: $totaleCostCents,
 			revenueEur: $revenueEur
 		);
 
 		$verkochteUnitsOut = null;
-		if ($verkochteUnits > 0.0) {
-			$verkochteUnitsOut = $verkochteUnits;
+		if ($soldUnits > 0.0) {
+			$verkochteUnitsOut = $soldUnits;
 		}
 
 		return [
@@ -345,18 +345,18 @@ class IntegralCostPriceCalculator {
 			'calculatedOn' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'status' => (string)($input['status'] ?? 'voorlopig'),
 			'componenten' => [
-				'directePayrollCost' => $this->fromCents(cents: $payrollCostCents),
+				'directPayrollCost' => $this->fromCents(cents: $payrollCostCents),
 				'directeMaterialen' => $this->fromCents(cents: $materialenCents),
-				'directeDepreciations' => $this->fromCents(cents: $depreciationsCents),
+				'directDepreciations' => $this->fromCents(cents: $depreciationsCents),
 				'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
 				'capitalCost' => $this->fromCents(cents: $vermogensCents),
 				'winstopslag' => $this->fromCents(cents: $winstopslagCents),
 			],
-			'totaleCost' => $this->fromCents(cents: $totaleCostCents),
-			'verkochteUnits' => $verkochteUnitsOut,
+			'totalCost' => $this->fromCents(cents: $totaleCostCents),
+			'soldUnits' => $verkochteUnitsOut,
 			'unitLabel' => ($input['unitLabel'] ?? null),
 			'costPricePerUnit' => $costPricePerUnit,
-			'gehanteerdRate' => $gehanteerdRate,
+			'appliedRate' => $appliedRate,
 			'marge' => $marge,
 			'margePercentage' => $margePercentage,
 			'compliant' => $compliant,

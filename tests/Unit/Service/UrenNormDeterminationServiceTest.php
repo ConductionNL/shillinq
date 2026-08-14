@@ -61,7 +61,7 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 		self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normBasis']);
 		self::assertSame('NIET_TOEPASSELIJK', $seed['grotendeelsCriterium']);
 		self::assertSame('OP_KOERS', $seed['thresholdStatus']);
-		self::assertSame(0.0, $seed['lopendeHours']);
+		self::assertSame(0.0, $seed['currentHours']);
 		self::assertSame('adm-1', $seed['administrationId']);
 		self::assertSame('ond-1', $seed['enterpriseId']);
 		self::assertSame(2026, $seed['calendarYear']);

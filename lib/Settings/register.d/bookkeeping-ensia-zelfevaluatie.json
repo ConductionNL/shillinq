@@ -124,7 +124,7 @@
             ],
             "title": "Verantwoordingsdomeinen"
           },
-          "procesOwner": {
+          "processOwner": {
             "type": "string",
             "nullable": true,
             "description": "Nextcloud user-id van de proces-eigenaar (typisch CISO of functionaris-informatiebeveiliging) verantwoordelijk voor cyclusvoortgang (REQ-ENSIA-002).",
@@ -209,7 +209,7 @@
             },
             "college-akkoord": {
               "label": "College-akkoord",
-              "description": "Verklaring goedgekeurd door college van B&W; klaar voor portal-export (REQ-ENSIA-006)."
+              "description": "Verklaring approved door college van B&W; klaar voor portal-export (REQ-ENSIA-006)."
             },
             "submitted": {
               "label": "Ingediend",
@@ -719,7 +719,7 @@
             "example": "infra-teamlead",
             "title": "Verantwoordelijke"
           },
-          "streefDate": {
+          "targetDate": {
             "type": "string",
             "format": "date",
             "nullable": true,

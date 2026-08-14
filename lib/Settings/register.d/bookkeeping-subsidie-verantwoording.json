@@ -305,7 +305,7 @@
               "nc-notification"
             ],
             "subject": {
-              "nl": "Subsidieverantwoording {{verantwoordingId}} is goedgekeurd",
+              "nl": "Subsidieverantwoording {{verantwoordingId}} is approved",
               "en": "Grant accountability report {{verantwoordingId}} is approved"
             }
           },
@@ -613,7 +613,7 @@
               "email"
             ],
             "subject": {
-              "nl": "Accountantsverklaring {{statementId}} is goedgekeurd",
+              "nl": "Accountantsverklaring {{statementId}} is approved",
               "en": "Auditor statement {{statementId}} is approved"
             }
           },
@@ -655,7 +655,7 @@
               "email"
             ],
             "subject": {
-              "nl": "Accountantsverklaring {{statementId}} is met voorbehoud goedgekeurd",
+              "nl": "Accountantsverklaring {{statementId}} is met voorbehoud approved",
               "en": "Auditor statement {{statementId}} is conditionally approved, with caveats"
             }
           }

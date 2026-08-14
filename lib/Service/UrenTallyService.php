@@ -102,7 +102,7 @@ final class UrenTallyService {
 
 			$hours = (float)($entry['hours'] ?? 0);
 			$capInfo = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
-			$geteld = $capInfo['getoldeHours'];
+			$geteld = $capInfo['countedHours'];
 			$note = $capInfo['capNote'];
 
 			$total += $geteld;
@@ -136,7 +136,7 @@ final class UrenTallyService {
 	 * @param array<int, array<string, mixed>> $entries YTD entries.
 	 * @param string $now ISO-8601 berekendOp timestamp.
 	 *
-	 * @return array{lopendeHours: float, calculatedOn: string}
+	 * @return array{currentHours: float, calculatedOn: string}
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
 	 */
@@ -154,7 +154,7 @@ final class UrenTallyService {
 
 			$hours = (float)($entry['hours'] ?? 0);
 			$cap = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
-			$total += $cap['getoldeHours'];
+			$total += $cap['countedHours'];
 		}
 
 		$this->logger->info(
@@ -163,7 +163,7 @@ final class UrenTallyService {
 		);
 
 		return [
-			'lopendeHours' => $total,
+			'currentHours' => $total,
 			'calculatedOn' => $now,
 		];
 

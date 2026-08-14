@@ -66,7 +66,7 @@
 					:placeholder="t('shillinq', 'Week shift')">
 				<input
 					v-if="adjustment.type === 'AR_PROJECTION_OVERRIDE'"
-					v-model.number="adjustment.kansVanBetaling"
+					v-model.number="adjustment.kansFromPayment"
 					type="number"
 					min="0"
 					max="1"

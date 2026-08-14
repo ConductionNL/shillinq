@@ -251,7 +251,7 @@ class CommitmentMaterialisationService {
 			'sourceReference' => $sourceReference,
 			'kind' => $kind,
 			'status' => 'concept',
-			'totalamount_excl_vat' => $total,
+			'total_amount_excl_vat' => $total,
 			'counterparty' => $counterparty,
 			'rules' => $ruleInputs,
 			'commencementDate' => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
@@ -583,7 +583,7 @@ class CommitmentMaterialisationService {
 		try {
 			$first = reset($ruleInputs);
 			$financialYear = (int)($first['financialYear'] ?? (int)(new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
-			$amount = ((float)($commitment['totalamount_excl_vat'] ?? 0)) / 100;
+			$amount = ((float)($commitment['total_amount_excl_vat'] ?? 0)) / 100;
 
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$objectService

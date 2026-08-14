@@ -92,7 +92,7 @@
             "example": 220.0,
             "title": "Wkr Budget Verbruikt2026"
           },
-          "vakantiegeldDisbursementMonth": {
+          "holidayAllowanceDisbursementMonth": {
             "type": "integer",
             "minimum": 1,
             "maximum": 12,
@@ -200,7 +200,7 @@
             "example": "2024-04-01",
             "title": "In Dienst Sinds"
           },
-          "outDienstPer": {
+          "outServicePer": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -299,7 +299,7 @@
             "example": 0,
             "title": "Eindejaarsuitkering Pct"
           },
-          "dertiendeMonth": {
+          "thirteenthMonth": {
             "type": "boolean",
             "default": false,
             "description": "Whether a 13th month applies (REQ-PAY-006).",
@@ -320,7 +320,7 @@
             "example": 0.182,
             "title": "Pensioen Premie Pct Werkgever"
           },
-          "pensioenPremiePctEmployee": {
+          "pensionPremiumPctEmployee": {
             "type": "number",
             "default": 0,
             "description": "Employee pension premium share (withheld from net).",
@@ -393,7 +393,7 @@
           "period",
           "withDiscount",
           "versionNumber",
-          "tabelRules",
+          "tableRules",
           "validFrom"
         ],
         "properties": {
@@ -437,7 +437,7 @@
             "example": "2025-W47",
             "title": "Versienummer"
           },
-          "tabelRules": {
+          "tableRules": {
             "type": "array",
             "description": "Bracket rows: {vanaf, tot, percentage, vasteHeffing, korting}. Wage falls in [vanaf, tot]; LH = vasteHeffing + percentage*(wage-vanaf) - korting (floored at 0).",
             "items": {
@@ -613,9 +613,9 @@
         "required": [
           "employeeId",
           "periodId",
-          "grossComponenten",
+          "grossComponents",
           "fiscalPay",
-          "contributionpay_sv",
+          "contribution_pay_sv",
           "payrollTax",
           "netPaid",
           "administrationId"
@@ -633,7 +633,7 @@
             "example": "lp-2026-05-wg-conduction-bv",
             "title": "Periode ID"
           },
-          "grossComponenten": {
+          "grossComponents": {
             "type": "object",
             "description": "Gross line items incl. totaal_bruto, belastingvrije toelagen (kilometervergoeding, thuiswerkvergoeding) and vakantietoeslag_uitbetaling.",
             "example": {
@@ -649,7 +649,7 @@
             "example": 4959.2,
             "title": "Fiscaal Loon"
           },
-          "contributionpay_sv": {
+          "contribution_pay_sv": {
             "type": "number",
             "description": "SV premium wage, capped at the period-pro-rata maximum.",
             "example": 4940.0,
@@ -796,7 +796,7 @@
             "example": 29833.5,
             "title": "Totaal Afdracht"
           },
-          "vervaldagRemittance": {
+          "dueDateRemittance": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -900,7 +900,7 @@
         "zvwRate": "LAAG",
         "wkrBudget2026": 8742.0,
         "wkrBudgetVerbruikt2026": 220.0,
-        "vakantiegeldDisbursementMonth": 5,
+        "holidayAllowanceDisbursementMonth": 5,
         "ploegendienst": false,
         "horeca": false,
         "administrationId": "adm-smb-1"
@@ -919,7 +919,7 @@
         "dateOfBirth": "1985-03-12",
         "geslacht": "M",
         "inDienstSinds": "2024-04-01",
-        "outDienstPer": null,
+        "outServicePer": null,
         "maritalStatement": "GEHUWD",
         "payrollTaxTable": "WIT_REGULIER",
         "payrollTaxTableDiscount": true,
@@ -933,7 +933,7 @@
         "vakantiegeldPct": 0.08,
         "pensionScheme": "PME_DC",
         "pensioenPremiePctWerkgever": 0.182,
-        "pensioenPremiePctEmployee": 0.072,
+        "pensionPremiumPctEmployee": 0.072,
         "thuiswerkdagenPerWeek": 2,
         "is_dga": false,
         "expat30PctScheme": false,
@@ -953,7 +953,7 @@
         "dateOfBirth": "1992-09-04",
         "geslacht": "V",
         "inDienstSinds": "2025-01-15",
-        "outDienstPer": null,
+        "outServicePer": null,
         "maritalStatement": "ONGEHUWD",
         "payrollTaxTable": "WIT_REGULIER",
         "payrollTaxTableDiscount": true,
@@ -967,7 +967,7 @@
         "vakantiegeldPct": 0.08,
         "pensionScheme": "PME_DC",
         "pensioenPremiePctWerkgever": 0.182,
-        "pensioenPremiePctEmployee": 0.072,
+        "pensionPremiumPctEmployee": 0.072,
         "thuiswerkdagenPerWeek": 1,
         "is_dga": false,
         "expat30PctScheme": false,
@@ -987,7 +987,7 @@
         "dateOfBirth": "1979-06-21",
         "geslacht": "M",
         "inDienstSinds": "2020-01-01",
-        "outDienstPer": null,
+        "outServicePer": null,
         "maritalStatement": "GEHUWD",
         "payrollTaxTable": "WIT_REGULIER",
         "payrollTaxTableDiscount": false,
@@ -1001,7 +1001,7 @@
         "vakantiegeldPct": 0.08,
         "pensionScheme": null,
         "pensioenPremiePctWerkgever": 0,
-        "pensioenPremiePctEmployee": 0,
+        "pensionPremiumPctEmployee": 0,
         "thuiswerkdagenPerWeek": 0,
         "is_dga": true,
         "expat30PctScheme": false,
@@ -1019,7 +1019,7 @@
         "period": "MAAND",
         "withDiscount": true,
         "versionNumber": "2025-W47",
-        "tabelRules": [
+        "tableRules": [
           {
             "vanaf": 0,
             "tot": 1200,
@@ -1064,7 +1064,7 @@
         "period": "MAAND",
         "withDiscount": false,
         "versionNumber": "2025-W47",
-        "tabelRules": [
+        "tableRules": [
           {
             "vanaf": 0,
             "tot": 3300,
@@ -1122,13 +1122,13 @@
         },
         "employeeId": "wn-2024-0042",
         "periodId": "lp-2026-05-wg-conduction-bv",
-        "grossComponenten": {
+        "grossComponents": {
           "basissalaris": 4940.0,
           "thuiswerkvergoeding": 19.2,
           "totaal_bruto": 4959.2
         },
         "fiscalPay": 4940.0,
-        "contributionpay_sv": 4940.0,
+        "contribution_pay_sv": 4940.0,
         "payrollTax": 1219.78,
         "inhoudingenSV": {
           "totaal_sv_wn": 0
@@ -1165,13 +1165,13 @@
         },
         "employeeId": "wn-2024-0043",
         "periodId": "lp-2026-05-wg-conduction-bv",
-        "grossComponenten": {
+        "grossComponents": {
           "basissalaris": 2704.0,
           "thuiswerkvergoeding": 9.6,
           "totaal_bruto": 2713.6
         },
         "fiscalPay": 2704.0,
-        "contributionpay_sv": 2704.0,
+        "contribution_pay_sv": 2704.0,
         "payrollTax": 687.27,
         "inhoudingenSV": {
           "totaal_sv_wn": 0
@@ -1213,7 +1213,7 @@
         "totalSocialInsuranceContributions": 622.85,
         "totalHealthInsurance": 406.66,
         "totalRemittance": 2936.56,
-        "vervaldagRemittance": "2026-06-30",
+        "dueDateRemittance": "2026-06-30",
         "status": "VOORBEREID",
         "sbrInstanceRef": null,
         "administrationId": "adm-smb-1"

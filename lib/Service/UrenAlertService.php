@@ -264,7 +264,7 @@ final class UrenAlertService {
 			'type' => $type,
 			'urgency' => $urgency,
 			'triggerDate' => $triggerDate,
-			'lopendeHours' => (float)($year['lopendeHours'] ?? 0),
+			'currentHours' => (float)($year['currentHours'] ?? 0),
 			'norm' => $norm,
 			'forecastYearEnd' => $prognose,
 			'tekort' => $tekort,

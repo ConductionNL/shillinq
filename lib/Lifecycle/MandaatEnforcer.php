@@ -139,7 +139,7 @@ class MandaatEnforcer {
 	 */
 	public function resolveApplicableMandate(array $commitment): ?array {
 		$kind = (string)($commitment['kind'] ?? '');
-		$amount = (int)($commitment['totalamount_excl_vat'] ?? 0);
+		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);
 		$admin = (string)($commitment['administrationId'] ?? '');
 
 		$mandaten = $this->findMany(schema: 'Mandaat', filters: ['administrationId' => $admin]);
@@ -193,12 +193,12 @@ class MandaatEnforcer {
 			return false;
 		}
 
-		$threshold = ($mandate['required_tweede_signature_boven'] ?? null);
+		$threshold = ($mandate['required_second_signature_above'] ?? null);
 		if ($threshold === null) {
 			return false;
 		}
 
-		return (int)($commitment['totalamount_excl_vat'] ?? 0) >= (int)$threshold;
+		return (int)($commitment['total_amount_excl_vat'] ?? 0) >= (int)$threshold;
 	}//end requiresSecondSignature()
 
 	/**

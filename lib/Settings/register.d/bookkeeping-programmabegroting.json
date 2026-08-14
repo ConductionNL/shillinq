@@ -122,7 +122,7 @@
             "example": "repressief",
             "title": "Toezicht Regime"
           },
-          "nominaleDevelopment": {
+          "nominalDevelopment": {
             "type": "number",
             "nullable": true,
             "default": 2.0,
@@ -498,7 +498,7 @@
           "gross",
           "coverage",
           "depreciationTerm",
-          "eersteDepreciationYear",
+          "firstDepreciationYear",
           "capitalChargesSchedule",
           "administrationId"
         ],
@@ -541,7 +541,7 @@
             "example": 20,
             "title": "Afschrijvingstermijn"
           },
-          "eersteDepreciationYear": {
+          "firstDepreciationYear": {
             "type": "integer",
             "description": "First year depreciation is recognised. REQ-005.",
             "example": 2027,
@@ -807,8 +807,8 @@
         "required": [
           "budgetId",
           "year",
-          "revenueStructureel",
-          "expensesStructureel",
+          "revenueStructural",
+          "expensesStructural",
           "balanceStructural",
           "saldoReëel",
           "sluitend",
@@ -827,14 +827,14 @@
             "example": 2028,
             "title": "Jaar"
           },
-          "revenueStructureel": {
+          "revenueStructural": {
             "type": "number",
             "minimum": 0,
             "description": "Recurring revenue/income for the year. REQ-008.",
             "example": 1000000.0,
             "title": "Baten Structureel"
           },
-          "revenueIncidenteel": {
+          "revenueIncidental": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -843,14 +843,14 @@
             "example": 0.0,
             "title": "Baten Incidenteel"
           },
-          "expensesStructureel": {
+          "expensesStructural": {
             "type": "number",
             "minimum": 0,
             "description": "Recurring expenditure. REQ-008.",
             "example": 900000.0,
             "title": "Lasten Structureel"
           },
-          "expensesIncidenteel": {
+          "expensesIncidental": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -911,7 +911,7 @@
           "changeNumber",
           "description",
           "movements",
-          "effectiefFrom",
+          "effectiveFrom",
           "status",
           "administrationId"
         ],
@@ -964,7 +964,7 @@
             "example": null,
             "title": "Vaststellings Datum"
           },
-          "effectiefFrom": {
+          "effectiveFrom": {
             "type": "string",
             "format": "date",
             "description": "Effective date of the change (may be retroactive). REQ-009.",
@@ -1032,7 +1032,7 @@
         "sluitendStructureel": true,
         "sluitendReëel": true,
         "toezichtRegime": "repressief",
-        "nominaleDevelopment": 2.0,
+        "nominalDevelopment": 2.0,
         "administrationId": "adm-gov-1"
       },
       {
@@ -1144,7 +1144,7 @@
         "gross": 400000.0,
         "coverage": "lening",
         "depreciationTerm": 20,
-        "eersteDepreciationYear": 2027,
+        "firstDepreciationYear": 2027,
         "capitalChargesSchedule": {
           "2027": 20000.0,
           "2028": 20000.0,
@@ -1241,10 +1241,10 @@
         },
         "budgetId": "pb-gem-2027",
         "year": 2028,
-        "revenueStructureel": 1000000.0,
-        "revenueIncidenteel": 0.0,
-        "expensesStructureel": 900000.0,
-        "expensesIncidenteel": 0.0,
+        "revenueStructural": 1000000.0,
+        "revenueIncidental": 0.0,
+        "expensesStructural": 900000.0,
+        "expensesIncidental": 0.0,
         "balanceStructural": 100000.0,
         "balanceIncidental": 0.0,
         "saldoReëel": 80000.0,
@@ -1259,10 +1259,10 @@
         },
         "budgetId": "pb-gem-2027",
         "year": 2029,
-        "revenueStructureel": 1020000.0,
-        "revenueIncidenteel": 0.0,
-        "expensesStructureel": 950000.0,
-        "expensesIncidenteel": 0.0,
+        "revenueStructural": 1020000.0,
+        "revenueIncidental": 0.0,
+        "expensesStructural": 950000.0,
+        "expensesIncidental": 0.0,
         "balanceStructural": 70000.0,
         "balanceIncidental": 0.0,
         "saldoReëel": 49600.0,
@@ -1287,7 +1287,7 @@
         ],
         "councilResolution": "raadsbesluit-2027-031",
         "determinationDate": "2027-03-15",
-        "effectiefFrom": "2027-04-01",
+        "effectiveFrom": "2027-04-01",
         "status": "vastgesteld",
         "administrationId": "adm-gov-1"
       }

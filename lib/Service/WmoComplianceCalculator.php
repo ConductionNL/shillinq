@@ -118,32 +118,32 @@ class WmoComplianceCalculator {
 	 *
 	 * @param array<string,mixed> $componenten The six component groups. indirecteOverhead
 	 *                                         is a map summed internally.
-	 * @param float|null $verkochteUnits Units sold in the period (null when not tracked).
+	 * @param float|null $soldUnits Units sold in the period (null when not tracked).
 	 *
-	 * @return array{totaleCost: float, costPricePerUnit: float|null} The cost totals.
+	 * @return array{totalCost: float, costPricePerUnit: float|null} The cost totals.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function integralCostPrice(array $componenten, ?float $verkochteUnits = null): array {
+	public function integralCostPrice(array $componenten, ?float $soldUnits = null): array {
 		$overhead = [];
 		if (isset($componenten['indirecteOverhead']) === true && is_array($componenten['indirecteOverhead']) === true) {
 			$overhead = $componenten['indirecteOverhead'];
 		}
 
-		$totalCents = $this->toCents(amount: ($componenten['directePayrollCost'] ?? 0));
+		$totalCents = $this->toCents(amount: ($componenten['directPayrollCost'] ?? 0));
 		$totalCents += $this->toCents(amount: ($componenten['directeMaterialen'] ?? 0));
-		$totalCents += $this->toCents(amount: ($componenten['directeDepreciations'] ?? 0));
+		$totalCents += $this->toCents(amount: ($componenten['directDepreciations'] ?? 0));
 		$totalCents += $this->overheadTotalCents(overhead: $overhead);
 		$totalCents += $this->toCents(amount: ($componenten['capitalCost'] ?? 0));
 		$totalCents += $this->toCents(amount: ($componenten['winstopslag'] ?? 0));
 
 		$perUnit = null;
-		if ($verkochteUnits !== null && $verkochteUnits > 0.0) {
-			$perUnit = round(($this->fromCents(cents: $totalCents) / $verkochteUnits), 2);
+		if ($soldUnits !== null && $soldUnits > 0.0) {
+			$perUnit = round(($this->fromCents(cents: $totalCents) / $soldUnits), 2);
 		}
 
 		return [
-			'totaleCost' => $this->fromCents(cents: $totalCents),
+			'totalCost' => $this->fromCents(cents: $totalCents),
 			'costPricePerUnit' => $perUnit,
 		];
 
@@ -188,16 +188,16 @@ class WmoComplianceCalculator {
 	 * totaleKosten. When no tarief is recorded the activity cannot yet be judged
 	 * and is treated as non-compliant (a price MUST be set to prove cost coverage).
 	 *
-	 * @param float|null $gehanteerdRate The price charged (per unit or total) in EUR.
-	 * @param float $totaleCost The integral cost total in EUR.
+	 * @param float|null $appliedRate The price charged (per unit or total) in EUR.
+	 * @param float $totalCost The integral cost total in EUR.
 	 * @param float|null $costPricePerUnit The per-unit IKP in EUR (null when units not tracked).
 	 *
 	 * @return array{compliant: bool, marge: float, margePercentage: float} The compliance verdict.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function complianceVerdict(?float $gehanteerdRate, float $totaleCost, ?float $costPricePerUnit = null): array {
-		if ($gehanteerdRate === null) {
+	public function complianceVerdict(?float $appliedRate, float $totalCost, ?float $costPricePerUnit = null): array {
+		if ($appliedRate === null) {
 			return [
 				'compliant' => false,
 				'marge' => 0.0,
@@ -205,12 +205,12 @@ class WmoComplianceCalculator {
 			];
 		}
 
-		$reference = $totaleCost;
+		$reference = $totalCost;
 		if ($costPricePerUnit !== null) {
 			$reference = $costPricePerUnit;
 		}
 
-		$margeCents = ($this->toCents(amount: $gehanteerdRate) - $this->toCents(amount: $reference));
+		$margeCents = ($this->toCents(amount: $appliedRate) - $this->toCents(amount: $reference));
 		$referenceCents = $this->toCents(amount: $reference);
 
 		$margePercentage = 0.0;
@@ -306,14 +306,14 @@ class WmoComplianceCalculator {
 	 * than a division by zero.
 	 *
 	 * @param float $revenue Annual revenue from customer billings in EUR.
-	 * @param float $integraleCostPrice The definitief IKP total in EUR.
+	 * @param float $integralCostPrice The definitief IKP total in EUR.
 	 *
 	 * @return array{ratio: float, compliant: bool} The coverage ratio and compliance verdict.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function kostendekkingsratio(float $revenue, float $integraleCostPrice): array {
-		$costPriceCents = $this->toCents(amount: $integraleCostPrice);
+	public function kostendekkingsratio(float $revenue, float $integralCostPrice): array {
+		$costPriceCents = $this->toCents(amount: $integralCostPrice);
 		if ($costPriceCents <= 0) {
 			return [
 				'ratio' => 0.0,

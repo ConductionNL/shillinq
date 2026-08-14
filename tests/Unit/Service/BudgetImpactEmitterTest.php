@@ -208,7 +208,7 @@ final class BudgetImpactEmitterTest extends TestCase {
 				'milestoneId' => 'M-Q1',
 				'deliveryType' => 'eindoplevering',
 				'deliveryDate' => '2026-12-15',
-				'goedgekeurd' => true,
+				'approved' => true,
 				'supportingDocuments' => [
 					['documentId' => 'doc-1'],
 					['documentId' => 'doc-2'],
@@ -224,7 +224,7 @@ final class BudgetImpactEmitterTest extends TestCase {
 		$this->assertSame('TN-TN-2026-0001', $args['commitmentId']);
 		$this->assertSame('M-Q1', $args['milestoneId']);
 		$this->assertSame('eindoplevering', $args['deliveryType']);
-		$this->assertTrue((bool)$args['goedgekeurd']);
+		$this->assertTrue((bool)$args['approved']);
 		$this->assertSame(2, $args['bewijsstukCount']);
 
 	}//end testEmitMilestoneCompletedShapesAndDispatchesPayload()

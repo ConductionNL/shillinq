@@ -41,10 +41,10 @@
 				"schema": "TenderNedAanbesteding",
 				"columns": [
 					{ "key": "tenderId", "label": "Tender", "sortable": true },
-					{ "key": "titel", "label": "Title", "sortable": true },
+					{ "key": "title", "label": "Title", "sortable": true },
 					{ "key": "awardDate", "label": "Award date", "sortable": true },
 					{ "key": "contractValue", "label": "Contract value", "sortable": true },
-					{ "key": "gegundeLeverancier", "label": "Awarded supplier", "sortable": true },
+					{ "key": "awardedSupplier", "label": "Awarded supplier", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "awardDate",
@@ -173,8 +173,8 @@
 							"schema": "TenderNedAanbesteding",
 							"filter": { "commitmentId": "@objectId" },
 							"columns": [
-								{ "key": "titel", "label": "Tender" },
-								{ "key": "gegundeLeverancier", "label": "Supplier" },
+								{ "key": "title", "label": "Tender" },
+								{ "key": "awardedSupplier", "label": "Supplier" },
 								{ "key": "contractValue", "label": "Contract value" }
 							],
 							"limit": 20,

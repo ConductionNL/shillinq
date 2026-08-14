@@ -29,7 +29,7 @@
           "marktsegment",
           "concurrenten",
           "startDate",
-          "costPriceMethode",
+          "costPriceMethod",
           "costCentreCode",
           "costObjectCode",
           "isExempted",
@@ -107,7 +107,7 @@
             "nullable": true,
             "title": "Eind Datum"
           },
-          "costPriceMethode": {
+          "costPriceMethod": {
             "type": "string",
             "enum": [
               "integrale-kostprijs-art-25i",
@@ -434,7 +434,7 @@
           "calculatedOn",
           "status",
           "componenten",
-          "totaleCost",
+          "totalCost",
           "compliant",
           "administrationId"
         ],
@@ -472,15 +472,15 @@
             "type": "object",
             "description": "Component breakdown of integrale kostprijs in EUR (REQ-WMO-002).",
             "required": [
-              "directePayrollCost",
+              "directPayrollCost",
               "directeMaterialen",
-              "directeDepreciations",
+              "directDepreciations",
               "indirecteOverhead",
               "capitalCost",
               "winstopslag"
             ],
             "properties": {
-              "directePayrollCost": {
+              "directPayrollCost": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Direct labour costs from GL accounts tagged with the activity's kostenplaatsCode.",
@@ -492,7 +492,7 @@
                 "description": "Direct materials costs from the activity's GL lines.",
                 "title": "Directe Materialen"
               },
-              "directeDepreciations": {
+              "directDepreciations": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Direct depreciation costs (FixedAsset.monthlyDepreciation × period) for assets dedicated to the activity.",
@@ -522,13 +522,13 @@
             },
             "title": "Componenten"
           },
-          "totaleCost": {
+          "totalCost": {
             "type": "number",
             "minimum": 0,
             "description": "Sum of all components in EUR.",
             "title": "Totale Kosten"
           },
-          "verkochteUnits": {
+          "soldUnits": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -549,7 +549,7 @@
             "description": "totaleKosten / verkochteEenheden (when units are tracked).",
             "title": "Kostprijs Per Eenheid"
           },
-          "gehanteerdRate": {
+          "appliedRate": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -929,9 +929,9 @@
           "determinationDate",
           "notificationAcm",
           "betreftActiviteiten",
-          "publiekBelangCategories",
+          "publicInterestCategories",
           "rationale",
-          "volgendeEvaluation",
+          "nextEvaluation",
           "status",
           "administrationId"
         ],
@@ -1029,7 +1029,7 @@
             },
             "title": "Betreft Activiteiten"
           },
-          "publiekBelangCategories": {
+          "publicInterestCategories": {
             "type": "array",
             "description": "Public-interest categories per VNG handreiking.",
             "items": {
@@ -1054,7 +1054,7 @@
             "description": "Reasoned justification for public interest (VNG-format).",
             "title": "Motivering"
           },
-          "evaluationRitme": {
+          "evaluationCadence": {
             "type": "string",
             "enum": [
               "jaarlijks",
@@ -1065,7 +1065,7 @@
             "default": "tweejaarlijks",
             "title": "Evaluatie Ritme"
           },
-          "volgendeEvaluation": {
+          "nextEvaluation": {
             "type": "string",
             "format": "date",
             "description": "Next scheduled evaluation date (auto-calculated from vaststellingsdatum + evaluatieRitme).",
@@ -1089,7 +1089,7 @@
             "default": "concept",
             "title": "Status"
           },
-          "objectionTermVerstreken": {
+          "objectionTermElapsed": {
             "type": "boolean",
             "description": "True when the 6-week bezwaarschrift period has expired.",
             "default": false,
@@ -1352,7 +1352,7 @@
                 "commercialActivityId",
                 "code",
                 "revenue",
-                "integraleCostPrice",
+                "integralCostPrice",
                 "costRecoveryRatio",
                 "compliant"
               ],
@@ -1378,7 +1378,7 @@
                   "title": "Omzet",
                   "description": "The numeric value for omzet."
                 },
-                "integraleCostPrice": {
+                "integralCostPrice": {
                   "type": "number",
                   "minimum": 0,
                   "title": "Integrale Kostprijs",
@@ -1442,7 +1442,7 @@
             "description": "Nextcloud user-id of the concerncontroller who signed.",
             "title": "Ondertekenaar"
           },
-          "ondertekendOn": {
+          "signedOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -1516,13 +1516,13 @@
             "description": "Mirror of the decidesk decision outcome (REQ-SIGN-002).",
             "title": "Decision Outcome"
           },
-          "verzondenInAcm": {
+          "sentInAcm": {
             "type": "boolean",
             "default": false,
             "description": "True after submission to ACM (or generation of submission-ready package).",
             "title": "Verzonden Aan Acm"
           },
-          "verzondenInAcmOn": {
+          "sentInAcmOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -1720,11 +1720,11 @@
               }
             ],
             "subject": {
-              "nl": "ACM-rapport goedgekeurd door concerncontroller",
+              "nl": "ACM-rapport approved door concerncontroller",
               "en": "ACM report approved by concerncontroller"
             },
             "body": {
-              "nl": "Het ACM-rapport voor periode {{period}} is goedgekeurd via decidesk.",
+              "nl": "Het ACM-rapport voor periode {{period}} is approved via decidesk.",
               "en": "The ACM report for period {{period}} was approved via decidesk."
             },
             "metadataOnly": true
@@ -2273,7 +2273,7 @@
       ],
       "startDate": "2024-01-15",
       "endDate": "2025-12-31",
-      "costPriceMethode": "integrale-kostprijs-art-25i",
+      "costPriceMethod": "integrale-kostprijs-art-25i",
       "costCentreCode": "K-SP-014",
       "costObjectCode": "D-MO-SP-014",
       "isExempted": false,
@@ -2298,9 +2298,9 @@
       "calculatedOn": "2025-03-31T04:00:00Z",
       "status": "definitief",
       "componenten": {
-        "directePayrollCost": 42000,
+        "directPayrollCost": 42000,
         "directeMaterialen": 8500,
-        "directeDepreciations": 6200,
+        "directDepreciations": 6200,
         "indirecteOverhead": {
           "huisvesting": 9100,
           "ict": 1800,
@@ -2310,11 +2310,11 @@
         "capitalCost": 2700,
         "winstopslag": 3100
       },
-      "totaleCost": 78000,
-      "verkochteUnits": 312,
+      "totalCost": 78000,
+      "soldUnits": 312,
       "unitLabel": "dagdeel-zaalhuur",
       "costPricePerUnit": 250,
-      "gehanteerdRate": 280,
+      "appliedRate": 280,
       "marge": 30,
       "margePercentage": 12,
       "compliant": true,

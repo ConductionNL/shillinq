@@ -89,9 +89,9 @@ class IntegralCostPriceLockService {
 
 			$componenten = (array)($record['componenten'] ?? []);
 
-			$payrollCostSum += (float)($componenten['directePayrollCost'] ?? 0);
+			$payrollCostSum += (float)($componenten['directPayrollCost'] ?? 0);
 			$materialenSum += (float)($componenten['directeMaterialen'] ?? 0);
-			$depreciationsSum += (float)($componenten['directeDepreciations'] ?? 0);
+			$depreciationsSum += (float)($componenten['directDepreciations'] ?? 0);
 			$vermogensSum += (float)($componenten['capitalCost'] ?? 0);
 			$winstopslagSum += (float)($componenten['winstopslag'] ?? 0);
 
@@ -100,24 +100,24 @@ class IntegralCostPriceLockService {
 				$overheadBuckets[(string)$bucket] = ($overheadBuckets[(string)$bucket] ?? 0.0) + (float)$amount;
 			}
 
-			$totaleCostSum += (float)($record['totaleCost'] ?? 0);
+			$totaleCostSum += (float)($record['totalCost'] ?? 0);
 		}
 
-		$verkochteUnits = (float)($input['verkochteUnits'] ?? 0);
+		$soldUnits = (float)($input['soldUnits'] ?? 0);
 		$costPricePerUnit = null;
-		if ($verkochteUnits > 0.0) {
-			$costPricePerUnit = round(($totaleCostSum / $verkochteUnits), 4);
+		if ($soldUnits > 0.0) {
+			$costPricePerUnit = round(($totaleCostSum / $soldUnits), 4);
 		}
 
-		$gehanteerdRate = null;
-		if (isset($input['gehanteerdRate']) === true) {
-			$gehanteerdRate = (float)$input['gehanteerdRate'];
+		$appliedRate = null;
+		if (isset($input['appliedRate']) === true) {
+			$appliedRate = (float)$input['appliedRate'];
 		}
 
 		$marge = null;
 		$margePercentage = null;
-		if ($gehanteerdRate !== null && $costPricePerUnit !== null) {
-			$marge = round(($gehanteerdRate - $costPricePerUnit), 4);
+		if ($appliedRate !== null && $costPricePerUnit !== null) {
+			$marge = round(($appliedRate - $costPricePerUnit), 4);
 			$base = 1.0;
 			if ($costPricePerUnit > 0.0) {
 				$base = $costPricePerUnit;
@@ -127,15 +127,15 @@ class IntegralCostPriceLockService {
 		}
 
 		$compliant = false;
-		if ($gehanteerdRate !== null && $costPricePerUnit !== null) {
-			$compliant = ($gehanteerdRate >= $costPricePerUnit);
+		if ($appliedRate !== null && $costPricePerUnit !== null) {
+			$compliant = ($appliedRate >= $costPricePerUnit);
 		}
 
 		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
 		$verkochteUnitsOut = null;
-		if ($verkochteUnits > 0.0) {
-			$verkochteUnitsOut = $verkochteUnits;
+		if ($soldUnits > 0.0) {
+			$verkochteUnitsOut = $soldUnits;
 		}
 
 		return [
@@ -144,18 +144,18 @@ class IntegralCostPriceLockService {
 			'calculatedOn' => $now->format(DateTimeImmutable::ATOM),
 			'status' => 'definitief',
 			'componenten' => [
-				'directePayrollCost' => round($payrollCostSum, 2),
+				'directPayrollCost' => round($payrollCostSum, 2),
 				'directeMaterialen' => round($materialenSum, 2),
-				'directeDepreciations' => round($depreciationsSum, 2),
+				'directDepreciations' => round($depreciationsSum, 2),
 				'indirecteOverhead' => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
 				'capitalCost' => round($vermogensSum, 2),
 				'winstopslag' => round($winstopslagSum, 2),
 			],
-			'totaleCost' => round($totaleCostSum, 2),
-			'verkochteUnits' => $verkochteUnitsOut,
+			'totalCost' => round($totaleCostSum, 2),
+			'soldUnits' => $verkochteUnitsOut,
 			'unitLabel' => ($input['unitLabel'] ?? null),
 			'costPricePerUnit' => $costPricePerUnit,
-			'gehanteerdRate' => $gehanteerdRate,
+			'appliedRate' => $appliedRate,
 			'marge' => $marge,
 			'margePercentage' => $margePercentage,
 			'compliant' => $compliant,

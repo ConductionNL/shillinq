@@ -136,11 +136,11 @@ class KorMonitorService {
 
 		$today = date('Y-m-d');
 		foreach ($registrations as $registration) {
-			$vroegste = (string)($registration['vroegsteOpzegDate'] ?? '');
+			$vroegste = (string)($registration['earliestTerminationDate'] ?? '');
 			$end = (string)($registration['lockInEndDate'] ?? '');
 			if ($this->calculator->isOptOutPermitted(
 				today: $today,
-				vroegsteOpzegDate: $vroegste,
+				earliestTerminationDate: $vroegste,
 				lockInEndDate: $end
 			) === true
 			) {

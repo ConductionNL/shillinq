@@ -8,7 +8,7 @@
  *
  * canGunnen (open → gegund) enforces REQ-002: the award is only recorded when
  * the dossier carries the data needed to materialise an obligation — a
- * gegundeLeverancier and a non-zero contractWaarde.
+ * awardedSupplier and a non-zero contractWaarde.
  *
  * canAfronden (in-uitvoering → afgerond) enforces REQ-006: a tender can only be
  * completed once an eindoplevering OpdrachtUitvoering for the linked obligation
@@ -89,7 +89,7 @@ class TenderNedAanbestedingGuard {
 	 * Precondition for the gunnen (open → gegund) transition.
 	 *
 	 * REQ-002: the award is only recorded when the dossier carries the data
-	 * needed to materialise a concept obligation — a gegundeLeverancier and a
+	 * needed to materialise a concept obligation — a awardedSupplier and a
 	 * positive contractWaarde.
 	 *
 	 * Fail-closed: returns false on any exception (denies the award) per CWE-863.
@@ -102,9 +102,9 @@ class TenderNedAanbestedingGuard {
 	 */
 	public function canGunnen(array $tender): bool {
 		try {
-			if (trim((string)($tender['gegundeLeverancier'] ?? '')) === '') {
+			if (trim((string)($tender['awardedSupplier'] ?? '')) === '') {
 				$this->logger->info(
-					'TenderNedAanbestedingGuard: no gegundeLeverancier — denying award (REQ-002)',
+					'TenderNedAanbestedingGuard: no awardedSupplier — denying award (REQ-002)',
 					['tenderId' => ($tender['tenderId'] ?? 'unknown')]
 				);
 				return false;
@@ -137,7 +137,7 @@ class TenderNedAanbestedingGuard {
 	 *
 	 * REQ-006: a tender can only be completed once an eindoplevering
 	 * OpdrachtUitvoering for the linked Verplichting has been approved
-	 * (status completed, goedgekeurd true). This prevents the public dossier from
+	 * (status completed, approved true). This prevents the public dossier from
 	 * being marked afgerond before the final delivery is accepted.
 	 *
 	 * When the linked Verplichting cannot be resolved (no verplichtingId yet, or
@@ -218,7 +218,7 @@ class TenderNedAanbestedingGuard {
 			}
 
 			if (($record['status'] ?? '') === 'completed'
-				&& ((bool)($record['goedgekeurd'] ?? false)) === true
+				&& ((bool)($record['approved'] ?? false)) === true
 			) {
 				return true;
 			}

@@ -81,7 +81,7 @@
             "example": "vendor-001",
             "title": "Preferred Supplier"
           },
-          "totalamount_excl_vat": {
+          "total_amount_excl_vat": {
             "type": "integer",
             "description": "Estimated total requisition amount in euro cents, excluding VAT (sum of RequisitionLine.lineTotal). Integer cents per ADR-022. Computed server-side by RequisitionService when the requisition is created/updated; read by BudgetBlocker's budget check on approve.",
             "nullable": true,
@@ -348,7 +348,7 @@
       "neededByDate": "2026-08-15",
       "justification": "Replacement laptops for the onboarding cohort starting August.",
       "kind": "inkoop",
-      "totalamount_excl_vat": 150000,
+      "total_amount_excl_vat": 150000,
       "statusCode": "draft"
     },
     {
@@ -380,7 +380,7 @@
       "neededByDate": "2026-09-01",
       "justification": "Standing desks for the facilities refresh (ergonomics programme).",
       "kind": "inkoop",
-      "totalamount_excl_vat": 500000,
+      "total_amount_excl_vat": 500000,
       "statusCode": "submitted"
     },
     {
@@ -413,7 +413,7 @@
       "justification": "Annual software licence renewal for the design team.",
       "kind": "inkoop",
       "preferredSupplierId": "vendor-001",
-      "totalamount_excl_vat": 240000,
+      "total_amount_excl_vat": 240000,
       "statusCode": "approved",
       "approvedBy": "controller-01",
       "approvedAt": "2026-07-10T09:00:00+00:00"

@@ -109,7 +109,7 @@ class VpbBerekeningGuardTest extends TestCase {
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(99440.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, belastbareProfit: 450000.0));
+		self::assertSame(99440.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 450000.0));
 
 	}//end testBerekenVerschuldigdeVpbAppliesBrackets()
 
@@ -130,7 +130,7 @@ class VpbBerekeningGuardTest extends TestCase {
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(19000.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, belastbareProfit: 100000.0));
+		self::assertSame(19000.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 100000.0));
 
 	}//end testBerekenVerschuldigdeVpbBelowGrens()
 
@@ -141,7 +141,7 @@ class VpbBerekeningGuardTest extends TestCase {
 	 */
 	public function testBerekenVerschuldigdeVpbZeroOnNonPositive(): void {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, belastbareProfit: 0.0));
+		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 0.0));
 
 	}//end testBerekenVerschuldigdeVpbZeroOnNonPositive()
 
@@ -156,7 +156,7 @@ class VpbBerekeningGuardTest extends TestCase {
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2099, belastbareProfit: 500000.0));
+		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2099, taxableProfit: 500000.0));
 
 	}//end testBerekenVerschuldigdeVpbZeroWhenNoTarief()
 
@@ -170,7 +170,7 @@ class VpbBerekeningGuardTest extends TestCase {
 		$this->logger->expects($this->once())->method('error');
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, belastbareProfit: 450000.0));
+		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 450000.0));
 
 	}//end testBerekenVerschuldigdeVpbFailsClosed()
 

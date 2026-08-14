@@ -33,11 +33,11 @@ export function normaliseBudgetLineRows(payload) {
 		const vrij = geautoriseerd - verplicht - gerealiseerd
 
 		return {
-			key: [bucket?.programma, bucket?.kostenplaats, bucket?.boekjaar, bucket?.grootboekrekening].join('|'),
+			key: [bucket?.programma, bucket?.cost_centre, bucket?.boekjaar, bucket?.general_ledger_account].join('|'),
 			programma: String(bucket?.programma ?? ''),
-			kostenplaats: String(bucket?.kostenplaats ?? ''),
+			cost_centre: String(bucket?.cost_centre ?? ''),
 			boekjaar: bucket?.boekjaar ?? null,
-			grootboekrekening: String(bucket?.grootboekrekening ?? ''),
+			general_ledger_account: String(bucket?.general_ledger_account ?? ''),
 			geautoriseerd,
 			verplicht,
 			gerealiseerd,
@@ -78,14 +78,14 @@ export function drilldownFilters(row) {
 	if (row.programma) {
 		filters.programma = row.programma
 	}
-	if (row.kostenplaats) {
-		filters.kostenplaats = row.kostenplaats
+	if (row.cost_centre) {
+		filters.cost_centre = row.cost_centre
 	}
 	if (row.boekjaar !== null && row.boekjaar !== undefined) {
 		filters.boekjaar = row.boekjaar
 	}
-	if (row.grootboekrekening) {
-		filters.grootboekrekening = row.grootboekrekening
+	if (row.general_ledger_account) {
+		filters.general_ledger_account = row.general_ledger_account
 	}
 	return filters
 }

@@ -296,7 +296,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 		foreach ($runs as $run) {
 			$runArr = $this->rowPayload(row: $run);
 			$stage = (int)($runArr['stageNr'] ?? 0);
-			$exec = (string)($runArr['uitgevoerdOn'] ?? '');
+			$exec = (string)($runArr['executedOn'] ?? '');
 
 			$isNewer = false;
 			if ($stage > $latestStage) {

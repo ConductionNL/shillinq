@@ -144,7 +144,7 @@ class AnnualReportGuard {
 	public function canVaststellen(string $annualReportId, ?array $object = null): bool {
 		try {
 			$report = $object;
-			if ($report === null || isset($report['accountantsverklaringRequired']) === false) {
+			if ($report === null || isset($report['auditorsStatementRequired']) === false) {
 				$report = $this->resolveAnnualReport(annualReportId: $annualReportId);
 			}
 
@@ -152,7 +152,7 @@ class AnnualReportGuard {
 				return false;
 			}
 
-			$required = ($report['accountantsverklaringRequired'] ?? false) === true;
+			$required = ($report['auditorsStatementRequired'] ?? false) === true;
 			if ($required === false) {
 				return true;
 			}

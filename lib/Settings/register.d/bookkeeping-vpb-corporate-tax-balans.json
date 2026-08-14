@@ -33,7 +33,7 @@
         "required": [
           "costCenterId",
           "accountNumbers",
-          "vpbPligtigFrom",
+          "vpbLiableFrom",
           "administrationId"
         ],
         "properties": {
@@ -59,14 +59,14 @@
             ],
             "title": "Account Numbers"
           },
-          "vpbPligtigFrom": {
+          "vpbLiableFrom": {
             "type": "string",
             "format": "date",
             "description": "Start date of Vpb-pligtigheid for this cluster. Used to bound the periodId range in the Vpb-balans aggregation (REQ-VPB-003).",
             "example": "2026-01-01",
             "title": "VpB Pligtig Vanaf"
           },
-          "vpbPligtigToEnWith": {
+          "vpbLiableToAndWith": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -185,7 +185,7 @@
         "x-openregister-unique": [
           [
             "costCenterId",
-            "vpbPligtigFrom",
+            "vpbLiableFrom",
             "administrationId"
           ]
         ],

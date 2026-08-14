@@ -76,9 +76,9 @@
 								<th scope="row">
 									{{ row.programma || '—' }}
 								</th>
-								<td>{{ row.kostenplaats || '—' }}</td>
+								<td>{{ row.cost_centre || '—' }}</td>
 								<td>{{ row.boekjaar ?? '—' }}</td>
-								<td>{{ row.grootboekrekening || '—' }}</td>
+								<td>{{ row.general_ledger_account || '—' }}</td>
 								<td class="budget-line-commitments__amount-cell">
 									{{ formatAmount(row.geautoriseerd) }}
 								</td>
@@ -100,8 +100,8 @@
 										{{ t('shillinq', 'No underlying commitments found for this line.') }}
 									</p>
 									<ul v-else class="budget-line-commitments__drilldown-list" data-testid="budget-line-drilldown">
-										<li v-for="item in drilldownItems" :key="item.id || item.verplichting">
-											<span class="budget-line-commitments__drilldown-verplichting">{{ item.verplichting }}</span>
+										<li v-for="item in drilldownItems" :key="item.id || item.commitment">
+											<span class="budget-line-commitments__drilldown-verplichting">{{ item.commitment }}</span>
 											<span class="budget-line-commitments__drilldown-amount">{{ formatAmount(item.bedrag_excl_btw) }}</span>
 										</li>
 									</ul>

@@ -59,8 +59,8 @@ final class AcmReportGeneratorTest extends TestCase {
 				['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true, 'exemptionDecisionId' => 'abb-001'],
 			],
 			'ikpRecords' => [
-				'ca-001' => ['totaleCost' => 87_500.00],
-				'ca-002' => ['totaleCost' => 56_000.00],
+				'ca-001' => ['totalCost' => 87_500.00],
+				'ca-002' => ['totalCost' => 56_000.00],
 			],
 			'omzetByActivity' => [
 				'ca-001' => 92_000.00,
@@ -98,7 +98,7 @@ final class AcmReportGeneratorTest extends TestCase {
 	public function testSubmitFlipsToVerzonden(): void {
 		$report = ['status' => 'ready-for-submission'];
 		$verzond = $this->svc->submit($report, 'gmb-2026-001');
-		self::assertTrue($verzond['verzondenInAcm']);
+		self::assertTrue($verzond['sentInAcm']);
 		self::assertSame('verzonden', $verzond['status']);
 		self::assertSame('gmb-2026-001', $verzond['publicationMunicipalGazette']);
 
@@ -112,7 +112,7 @@ final class AcmReportGeneratorTest extends TestCase {
 			'period' => '2026-Q1',
 			'administrationId' => 'adm-tilburg',
 			'activities' => [['id' => 'ca-001', 'code' => 'MO-SP-014', 'name' => 'X', 'isExempted' => false]],
-			'ikpRecords' => ['ca-001' => ['totaleCost' => 1.0]],
+			'ikpRecords' => ['ca-001' => ['totalCost' => 1.0]],
 			'omzetByActivity' => ['ca-001' => 2.0],
 		]);
 

@@ -23,14 +23,14 @@ import {
 
 describe('invoiceQuickDraft — totals', () => {
 	it('defaultDraftLine seeds qty 1 and 21% VAT', () => {
-		expect(defaultDraftLine()).toEqual({ description: '', quantity: 1, unitPrice: 0, btwRate: 21 })
+		expect(defaultDraftLine()).toEqual({ description: '', quantity: 1, unitPrice: 0, vatRate: 21 })
 	})
 
 	it('computes net, VAT and gross across mixed VAT rates', () => {
 		const lines = [
-			{ quantity: 2, unitPrice: 100, btwRate: 21 }, // net 200, vat 42
-			{ quantity: 1, unitPrice: 50, btwRate: 9 }, // net 50, vat 4.5
-			{ quantity: 3, unitPrice: 10, btwRate: 0 }, // net 30, vat 0
+			{ quantity: 2, unitPrice: 100, vatRate: 21 }, // net 200, vat 42
+			{ quantity: 1, unitPrice: 50, vatRate: 9 }, // net 50, vat 4.5
+			{ quantity: 3, unitPrice: 10, vatRate: 0 }, // net 30, vat 0
 		]
 		const totals = computeTotals(lines)
 		expect(totals.net).toBe(280)
@@ -74,8 +74,8 @@ describe('invoiceQuickDraft — payload', () => {
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{ description: ' Consulting ', quantity: 2, unitPrice: 100, btwRate: 21 },
-				{ description: '', quantity: 0, unitPrice: 0, btwRate: 21 }, // dropped
+				{ description: ' Consulting ', quantity: 2, unitPrice: 100, vatRate: 21 },
+				{ description: '', quantity: 0, unitPrice: 0, vatRate: 21 }, // dropped
 			],
 		})
 		expect(payload.lifecycleState).toBe('draft')
@@ -91,7 +91,7 @@ describe('invoiceQuickDraft — payload', () => {
 			description: 'Consulting',
 			quantity: 2,
 			unitPrice: 100,
-			btwRate: 21,
+			vatRate: 21,
 			glAccount: '8000',
 		})
 	})
@@ -102,7 +102,7 @@ describe('invoiceQuickDraft — payload', () => {
 			invoiceDate: '2026-02-01',
 			dueDate: '2026-03-03',
 			administrationId: 'ADM-001',
-			lines: [{ description: 'X', quantity: 1, unitPrice: 10, btwRate: 21 }],
+			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
 		expect(payload.administrationId).toBe('ADM-001')
 		expect(payload.periodId).toBe('2026-02')
@@ -117,7 +117,7 @@ describe('invoiceQuickDraft — payload', () => {
 			administrationId: 'ADM-001',
 			invoiceNumber: 'F2026-007',
 			periodId: '2026-Q1',
-			lines: [{ description: 'X', quantity: 1, unitPrice: 10, btwRate: 21 }],
+			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
 		expect(payload.invoiceNumber).toBe('F2026-007')
 		expect(payload.periodId).toBe('2026-Q1')

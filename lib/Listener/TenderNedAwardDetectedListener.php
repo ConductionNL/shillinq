@@ -26,7 +26,7 @@
  *
  *  1. The dossier is on the `TenderNedAanbesteding` schema.
  *  2. The new status is `gegund` with `contractWaarde >= 1`.
- *  3. The `gegundeLeverancier` KvK prefix matches the configured tenant
+ *  3. The `awardedSupplier` KvK prefix matches the configured tenant
  *     KvK (`shillinq` app config key `tenant_kvk`).
  *  4. No Verplichting with the same `bronReferentie` exists yet
  *     (idempotency contract from the spec scenario).
@@ -189,7 +189,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * Decide whether the dossier is the tenant's awarded tender.
 	 *
 	 * Matches `status: gegund` + `contractWaarde >= 1` + tenant KvK on the
-	 * leading KvK prefix of `gegundeLeverancier` (the schema stores
+	 * leading KvK prefix of `awardedSupplier` (the schema stores
 	 * "KvK Naam" — design D6).
 	 *
 	 * @param array<string, mixed> $payload Aanbesteding payload.
@@ -213,7 +213,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			return false;
 		}
 
-		$supplier = trim((string)($payload['gegundeLeverancier'] ?? ''));
+		$supplier = trim((string)($payload['awardedSupplier'] ?? ''));
 		if ($supplier === '') {
 			return false;
 		}
@@ -264,7 +264,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 
 		$commitment = [
 			'commitmentNumber' => 'TN-' . $tenderId,
-			'description' => (string)($payload['titel'] ?? $tenderId),
+			'description' => (string)($payload['title'] ?? $tenderId),
 			'source' => 'tenderned',
 			'sourceReference' => $tenderId,
 			'amount' => (float)($payload['contractValue'] ?? 0),

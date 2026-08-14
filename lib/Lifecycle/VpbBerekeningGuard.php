@@ -81,15 +81,15 @@ class VpbBerekeningGuard {
 	 * caller treats a missing tarief as "no liability computable yet").
 	 *
 	 * @param int|null $taxYear The belastingjaar to look up tarieven for.
-	 * @param float|null $belastbareProfit The belastbare fiscale winst (EUR).
+	 * @param float|null $taxableProfit The belastbare fiscale winst (EUR).
 	 *
 	 * @return float The verschuldigde Vpb in EUR.
 	 *
 	 * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
 	 */
-	public function berekenVerschuldigdeVpb(?int $taxYear, ?float $belastbareProfit): float {
+	public function berekenVerschuldigdeVpb(?int $taxYear, ?float $taxableProfit): float {
 		try {
-			$taxable = (float)($belastbareProfit ?? 0);
+			$taxable = (float)($taxableProfit ?? 0);
 			if ($taxable <= 0.0 || $taxYear === null) {
 				return 0.0;
 			}

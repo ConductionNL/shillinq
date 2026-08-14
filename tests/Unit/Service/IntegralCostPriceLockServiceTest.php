@@ -55,11 +55,11 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 		for ($q = 1; $q <= 4; $q++) {
 			$provisional[] = [
 				'period' => '2025-Q' . $q,
-				'totaleCost' => 25_000.00,
+				'totalCost' => 25_000.00,
 				'componenten' => [
-					'directePayrollCost' => 12_000.00,
+					'directPayrollCost' => 12_000.00,
 					'directeMaterialen' => 3_000.00,
-					'directeDepreciations' => 2_000.00,
+					'directDepreciations' => 2_000.00,
 					'indirecteOverhead' => ['huisvesting' => 5_000.00, 'ict' => 2_000.00],
 					'capitalCost' => 500.00,
 					'winstopslag' => 500.00,
@@ -73,15 +73,15 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 			'voorlopigRecords' => $provisional,
 			'signedBy' => 'accountant-user',
 			'administrationId' => 'adm-tilburg',
-			'verkochteUnits' => 312.0,
+			'soldUnits' => 312.0,
 			'unitLabel' => 'dagdeel-zaalhuur',
-			'gehanteerdRate' => 295.0,
+			'appliedRate' => 295.0,
 		]);
 
 		self::assertSame('definitief', $definitief['status']);
 		self::assertSame('2025-YTD', $definitief['period']);
-		self::assertSame(100_000.00, $definitief['totaleCost']);
-		self::assertSame(48_000.00, $definitief['componenten']['directePayrollCost']);
+		self::assertSame(100_000.00, $definitief['totalCost']);
+		self::assertSame(48_000.00, $definitief['componenten']['directPayrollCost']);
 		self::assertSame(20_000.00, $definitief['componenten']['indirecteOverhead']['huisvesting']);
 		self::assertSame(8_000.00, $definitief['componenten']['indirecteOverhead']['ict']);
 		self::assertSame('accountant-user', $definitief['definitiefSignedBy']);
@@ -98,7 +98,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 		$this->svc->lock([
 			'commercialActivityId' => 'ca-001',
 			'fiscalYear' => '2025',
-			'voorlopigRecords' => [['totaleCost' => 1.0]],
+			'voorlopigRecords' => [['totalCost' => 1.0]],
 			'signedBy' => '',
 			'administrationId' => 'adm',
 		]);

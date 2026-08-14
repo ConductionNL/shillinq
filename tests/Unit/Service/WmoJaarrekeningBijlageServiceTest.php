@@ -58,15 +58,15 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 				['id' => 'ca-002', 'code' => 'MO-SP-016', 'name' => 'Kantine', 'isExempted' => true],
 			],
 			'definitiefIkpByActivity' => [
-				'ca-001' => ['totaleCost' => 87_500.00],
-				'ca-002' => ['totaleCost' => 56_000.00],
+				'ca-001' => ['totalCost' => 87_500.00],
+				'ca-002' => ['totalCost' => 56_000.00],
 			],
 			'omzetByActivity' => [
 				'ca-001' => 92_000.00,
 				'ca-002' => 50_000.00,
 			],
 			'priorYearIkpByActivity' => [
-				'ca-001' => ['totaleCost' => 80_000.00],
+				'ca-001' => ['totalCost' => 80_000.00],
 			],
 			'priorYearOmzetByActivity' => [
 				'ca-001' => 81_000.00,
@@ -114,7 +114,7 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 			'fiscalYear' => '2025',
 			'administrationId' => 'adm',
 			'activities' => [['id' => 'x', 'code' => 'X', 'name' => 'X', 'isExempted' => false]],
-			'definitiefIkpByActivity' => ['x' => ['totaleCost' => 10.0]],
+			'definitiefIkpByActivity' => ['x' => ['totalCost' => 10.0]],
 			'omzetByActivity' => ['x' => 20.0],
 		]);
 		$md = $this->svc->toMarkdown($bijlage);

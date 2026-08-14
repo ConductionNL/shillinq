@@ -79,7 +79,7 @@ class WmoJaarrekeningBijlageService {
 			$name = (string)($activity['name'] ?? '');
 
 			$ikp = (array)($ikpByAct[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totaleCost'] ?? 0);
+			$integraleCost = (float)($ikp['totalCost'] ?? 0);
 			$revenue = (float)($revenueByAct[$activityId] ?? 0);
 			$ratio = null;
 			if ($integraleCost > 0.0) {
@@ -93,7 +93,7 @@ class WmoJaarrekeningBijlageService {
 			}
 
 			$priorIkp = (array)($priorIkpByAct[$activityId] ?? []);
-			$priorCost = (float)($priorIkp['totaleCost'] ?? 0);
+			$priorCost = (float)($priorIkp['totalCost'] ?? 0);
 			$priorRevenue = (float)($priorRevenueByAct[$activityId] ?? 0);
 			$priorRatio = null;
 			if ($priorCost > 0.0) {
@@ -111,7 +111,7 @@ class WmoJaarrekeningBijlageService {
 				'code' => $code,
 				'name' => $name,
 				'revenue' => $revenue,
-				'integraleCostPrice' => $integraleCost,
+				'integralCostPrice' => $integraleCost,
 				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
 				'complianceColor' => $colorStatus,
@@ -217,7 +217,7 @@ class WmoJaarrekeningBijlageService {
 				(string)($row['code'] ?? ''),
 				(string)($row['name'] ?? ''),
 				(float)($row['revenue'] ?? 0),
-				(float)($row['integraleCostPrice'] ?? 0),
+				(float)($row['integralCostPrice'] ?? 0),
 				$ratioText,
 				$compliantText,
 				(string)($row['abbReference'] ?? '—')
@@ -262,7 +262,7 @@ class WmoJaarrekeningBijlageService {
 				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s" abb="%s"/>',
 				htmlspecialchars((string)($r['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
 				(float)($r['revenue'] ?? 0),
-				(float)($r['integraleCostPrice'] ?? 0),
+				(float)($r['integralCostPrice'] ?? 0),
 				$ratioAttr,
 				$compliantAttr,
 				htmlspecialchars((string)($r['abbReference'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')

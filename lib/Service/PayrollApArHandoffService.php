@@ -70,7 +70,7 @@ final class PayrollApArHandoffService {
 	public function toApTransactionPayloads(array $lhRemittance): array {
 		$werkgeverId = (string)($lhRemittance['werkgeverId'] ?? '');
 		$periodId = (string)($lhRemittance['periodId'] ?? '');
-		$dueDate = ($lhRemittance['vervaldagRemittance'] ?? null);
+		$dueDate = ($lhRemittance['dueDateRemittance'] ?? null);
 		$adminId = ($lhRemittance['administrationId'] ?? null);
 
 		$payrollTax = (float)($lhRemittance['totalPayrollTax'] ?? 0.0);

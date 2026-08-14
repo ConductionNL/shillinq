@@ -295,7 +295,7 @@ class DunningController extends Controller {
 				invoiceId: $invoiceId,
 				reason: $reason,
 				details: $details,
-				gepauzeerdBy: $byUser,
+				pausedBy: $byUser,
 				evidenceRefs: $evidenceRefsValue,
 			);
 		} catch (\Throwable $e) {

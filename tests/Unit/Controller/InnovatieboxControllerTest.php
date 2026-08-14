@@ -177,7 +177,7 @@ final class InnovatieboxControllerTest extends TestCase {
 	 */
 	public function testAggregationValidReturns200(): void {
 		$this->withParams(['administration_id' => 'adm-1', 'financialYear' => '2024']);
-		$payload = ['data' => [], 'total' => 0, 'totals' => ['vpb_regel_23' => 0.0, 'benefit_innovatiebox' => 0.0]];
+		$payload = ['data' => [], 'total' => 0, 'totals' => ['vpb_regel_23' => 0.0, 'benefit_innovation_box' => 0.0]];
 		$this->aggregation->expects($this->once())
 			->method('aggregate')
 			->with('adm-1', 2024)
@@ -213,7 +213,7 @@ final class InnovatieboxControllerTest extends TestCase {
 	public function testScenarioRejectsNonNumeric(): void {
 		$this->withParams(
 			[
-				'eigen_rd_cost' => 'abc',
+				'own_rd_cost' => 'abc',
 				'uitbesteed_derden' => '0',
 				'uitbesteed_verbonden' => '0',
 			]
@@ -230,7 +230,7 @@ final class InnovatieboxControllerTest extends TestCase {
 	public function testScenarioReturnsNexusBreak(): void {
 		$this->withParams(
 			[
-				'eigen_rd_cost' => '500000',
+				'own_rd_cost' => '500000',
 				'uitbesteed_derden' => '0',
 				'uitbesteed_verbonden' => '300000',
 			]

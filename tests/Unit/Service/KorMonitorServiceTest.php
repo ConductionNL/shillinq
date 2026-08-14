@@ -299,7 +299,7 @@ final class KorMonitorServiceTest extends TestCase {
 			[
 				'administrationId' => 'adm-1',
 				'status' => 'ACTIEF',
-				'vroegsteOpzegDate' => '1900-01-01',
+				'earliestTerminationDate' => '1900-01-01',
 				'lockInEndDate' => '9999-12-31',
 			],
 		];

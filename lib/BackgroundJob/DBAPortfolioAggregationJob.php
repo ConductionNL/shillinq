@@ -175,20 +175,20 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		}
 
 		foreach ($perCustomer as $customerId => $row) {
-			$durationJaren = (float)($row['start']->diff($now)->days / 365.0);
+			$durationYears = (float)($row['start']->diff($now)->days / 365.0);
 			if ($row['revenue'] > 0) {
 				$share = ($row['revenue'] / $total);
 			} else {
 				$share = 0.0;
 			}
 
-			if ($durationJaren >= DBAConstants::LANGJARIG_DREMPEL_JAREN
+			if ($durationYears >= DBAConstants::LANGJARIG_DREMPEL_JAREN
 				&& $share >= DBAConstants::LANGJARIG_DREMPEL_OMZET
 			) {
 				$result[] = [
 					'customerId' => (string)$customerId,
 					'startDate' => $row['start']->format('Y-m-d'),
-					'durationJaren' => round($durationJaren, 2),
+					'durationYears' => round($durationYears, 2),
 					'revenueShare' => round($share, 4),
 				];
 			}
@@ -201,19 +201,19 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 * Compute overall risico-band from concentratie + langjarige relaties.
 	 *
 	 * @param array<string,mixed> $concentratie The concentratie block.
-	 * @param array<int,array<string,mixed>> $langjarigeRelationships List of langjarige relaties.
+	 * @param array<int,array<string,mixed>> $multiYearRelationships List of langjarige relaties.
 	 *
 	 * @return string LAAG / MIDDEN / HOOG.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function computeOverallRisico(array $concentratie, array $langjarigeRelationships): string {
+	public function computeOverallRisico(array $concentratie, array $multiYearRelationships): string {
 		$status = (string)($concentratie['status'] ?? 'VEILIG');
-		if ($status === 'KRITIEK' || count($langjarigeRelationships) >= 2) {
+		if ($status === 'KRITIEK' || count($multiYearRelationships) >= 2) {
 			return 'HOOG';
 		}
 
-		if ($status === 'WAARSCHUWING' || count($langjarigeRelationships) === 1) {
+		if ($status === 'WAARSCHUWING' || count($multiYearRelationships) === 1) {
 			return 'MIDDEN';
 		}
 
@@ -277,7 +277,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		foreach ($perOnderneming as $ondernemingId => $assignments) {
 			$concentratie = $this->computeConcentratie(assignments: $assignments);
 			$langjarig = $this->computeLangjarigeRelaties(assignments: $assignments, now: $now);
-			$overall = $this->computeOverallRisico(concentratie: $concentratie, langjarigeRelationships: $langjarig);
+			$overall = $this->computeOverallRisico(concentratie: $concentratie, multiYearRelationships: $langjarig);
 			$administrationId = (string)($assignments[0]['administrationId'] ?? '');
 
 			try {
@@ -285,11 +285,11 @@ class DBAPortfolioAggregationJob extends TimedJob {
 					[
 						'administrationId' => $administrationId,
 						'enterpriseId' => (string)$ondernemingId,
-						'peilDate' => $now->format('Y-m-d'),
-						'actieveAssignments' => count($assignments),
+						'levelDate' => $now->format('Y-m-d'),
+						'activeAssignments' => count($assignments),
 						'concentratie' => $concentratie,
-						'langjarigeRelationships' => $langjarig,
-						'exclusieveRelationships' => $this->countExclusief(assignments: $assignments),
+						'multiYearRelationships' => $langjarig,
+						'exclusiveRelationships' => $this->countExclusief(assignments: $assignments),
 						'overallRisk' => $overall,
 					]
 				);

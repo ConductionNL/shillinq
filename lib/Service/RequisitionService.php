@@ -151,7 +151,7 @@ class RequisitionService {
 			'justification' => $justification,
 			'kind' => $kind,
 			'preferredSupplierId' => trim((string)($payload['preferredSupplierId'] ?? '')),
-			'totalamount_excl_vat' => $totalCent,
+			'total_amount_excl_vat' => $totalCent,
 			'statusCode' => 'draft',
 		];
 
@@ -191,7 +191,7 @@ class RequisitionService {
 			throw new RuntimeException('Requisition can only be submitted from draft');
 		}
 
-		if ((int)($requisition['totalamount_excl_vat'] ?? 0) <= 0) {
+		if ((int)($requisition['total_amount_excl_vat'] ?? 0) <= 0) {
 			throw new RuntimeException('Requisition has no positive total; add lines before submitting');
 		}
 

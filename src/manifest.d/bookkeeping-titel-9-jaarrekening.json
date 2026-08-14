@@ -127,7 +127,7 @@
 						"type": "string"
 					},
 					{
-						"key": "accountantsverklaringRequired",
+						"key": "auditorsStatementRequired",
 						"label": "Auditor's report required",
 						"type": "boolean"
 					},
@@ -150,7 +150,7 @@
 				"relatedLists": [
 					{"id": "disclosure-notes", "title": "Disclosure notes", "schema": "Note", "filter": {"reportId": "@self.id"}, "columns": [
 						{"key": "code", "label": "Code"},
-						{"key": "titel", "label": "Title"},
+						{"key": "title", "label": "Title"},
 						{"key": "statutoryBasis", "label": "Legal basis"},
 						{"key": "verplicht", "label": "Mandatory"}
 					]}

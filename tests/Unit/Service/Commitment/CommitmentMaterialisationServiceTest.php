@@ -241,7 +241,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'financialYear' => 2026,
 				'authorised_amount' => 50000000,
 				'realised_amount' => 20000000,
-				'outstanding_verplichtingen' => 0,
+				'outstanding_commitments' => 0,
 			],
 			$overrides
 		);
@@ -328,7 +328,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		self::assertNotNull($result);
 		self::assertSame('PO-2026-0207', $result['sourceReference']);
 		self::assertSame('aangegaan', $result['status']);
-		self::assertSame(7500000, $result['totalamount_excl_vat']);
+		self::assertSame(7500000, $result['total_amount_excl_vat']);
 
 		$ruleSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
 		self::assertCount(1, $ruleSaves);

@@ -168,7 +168,7 @@ class TenderNedAanbestedingGuardTest extends TestCase {
 	public function testCanGunnenDeniesWithZeroValue(): void {
 		$this->assertFalse(
 			$this->guard->canGunnen(
-				['tenderId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractValue' => 0]
+				['tenderId' => 'TN-1', 'awardedSupplier' => '76741850 Conduction B.V.', 'contractValue' => 0]
 			)
 		);
 
@@ -182,7 +182,7 @@ class TenderNedAanbestedingGuardTest extends TestCase {
 	public function testCanGunnenPermitsValidAward(): void {
 		$this->assertTrue(
 			$this->guard->canGunnen(
-				['tenderId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractValue' => 50000.0]
+				['tenderId' => 'TN-1', 'awardedSupplier' => '76741850 Conduction B.V.', 'contractValue' => 50000.0]
 			)
 		);
 
@@ -205,7 +205,7 @@ class TenderNedAanbestedingGuardTest extends TestCase {
 	 */
 	public function testCanAfrondenPermitsWithApprovedEindoplevering(): void {
 		$stub = $this->buildObjectServiceStub(
-			[['deliveryType' => 'eindoplevering', 'status' => 'completed', 'goedgekeurd' => true]]
+			[['deliveryType' => 'eindoplevering', 'status' => 'completed', 'approved' => true]]
 		);
 		$this->container->method('get')->willReturn($stub);
 
@@ -237,7 +237,7 @@ class TenderNedAanbestedingGuardTest extends TestCase {
 	 */
 	public function testCanAfrondenDeniesWhenEindopleveringNotApproved(): void {
 		$stub = $this->buildObjectServiceStub(
-			[['deliveryType' => 'eindoplevering', 'status' => 'in-progress', 'goedgekeurd' => false]]
+			[['deliveryType' => 'eindoplevering', 'status' => 'in-progress', 'approved' => false]]
 		);
 		$this->container->method('get')->willReturn($stub);
 

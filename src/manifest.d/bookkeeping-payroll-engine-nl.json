@@ -53,7 +53,7 @@
 					{"key": "awfRate", "label": "AWF rate", "type": "string"},
 					{"key": "zvwRate", "label": "ZVW rate", "type": "string"},
 					{"key": "wkrBudget2026", "label": "WKR budget 2026", "type": "number"},
-					{"key": "vakantiegeldDisbursementMonth", "label": "Holiday pay month", "type": "number"}
+					{"key": "holidayAllowanceDisbursementMonth", "label": "Holiday pay month", "type": "number"}
 				],
 				"relatedObjects": [
 					{
@@ -134,7 +134,7 @@
 					{"key": "initials", "label": "Initials", "type": "string"},
 					{"key": "lastName", "label": "Surname", "type": "string"},
 					{"key": "inDienstSinds", "label": "Employed since", "type": "string"},
-					{"key": "outDienstPer", "label": "Employment end", "type": "string"},
+					{"key": "outServicePer", "label": "Employment end", "type": "string"},
 					{"key": "payrollTaxTable", "label": "Payroll tax table", "type": "string"},
 					{"key": "payrollTaxTableDiscount", "label": "Tax credit applied", "type": "boolean"},
 					{"key": "contractType", "label": "Contract type", "type": "string"},
@@ -314,7 +314,7 @@
 					{"key": "employeeId", "label": "Employee", "type": "string"},
 					{"key": "periodId", "label": "Period", "type": "string"},
 					{"key": "fiscalPay", "label": "Taxable pay", "type": "number"},
-					{"key": "contributionpay_sv", "label": "SV contribution base", "type": "number"},
+					{"key": "contribution_pay_sv", "label": "SV contribution base", "type": "number"},
 					{"key": "payrollTax", "label": "Payroll tax", "type": "number"},
 					{"key": "netPaid", "label": "Net paid", "type": "number"}
 				],
@@ -376,7 +376,7 @@
 					{"key": "totalSocialInsuranceContributions", "label": "SV contributions", "type": "number"},
 					{"key": "totalHealthInsurance", "label": "ZVW", "type": "number"},
 					{"key": "totalRemittance", "label": "Total remittance", "type": "number"},
-					{"key": "vervaldagRemittance", "label": "Due date", "type": "string"},
+					{"key": "dueDateRemittance", "label": "Due date", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"}
 				],
 				"indexRoute": "LHAfdrachten",

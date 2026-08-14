@@ -398,7 +398,7 @@ class DunningRunService {
 			'invoiceId' => $invoiceId,
 			'ladderId' => (string)($params['ladderId'] ?? ''),
 			'stageNr' => (int)($params['stageNr'] ?? 1),
-			'uitgevoerdOn' => $now->format(DATE_ATOM),
+			'executedOn' => $now->format(DATE_ATOM),
 			'channel' => (string)($params['channel'] ?? 'EMAIL'),
 			'ontvangerEmail' => ($params['ontvangerEmail'] ?? null),
 			'recipientName' => ($params['recipientName'] ?? null),
@@ -432,7 +432,7 @@ class DunningRunService {
 	 * @param string $invoiceId Invoice FK.
 	 * @param string $reason One of DISPUTED / PAYMENT_PLAN / OTHER.
 	 * @param string $details Free-text details.
-	 * @param string $gepauzeerdBy Operator id.
+	 * @param string $pausedBy Operator id.
 	 * @param array<int,string>|null $evidenceRefs Optional evidence refs.
 	 *
 	 * @return array<string,mixed> The created pause record.
@@ -444,7 +444,7 @@ class DunningRunService {
 		string $invoiceId,
 		string $reason,
 		string $details,
-		string $gepauzeerdBy,
+		string $pausedBy,
 		?array $evidenceRefs = null,
 	): array {
 		$hardDeadlineDays = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
@@ -462,7 +462,7 @@ class DunningRunService {
 			'pauseEnd' => null,
 			'reason' => $reason,
 			'details' => $details,
-			'gepauzeerdBy' => $gepauzeerdBy,
+			'pausedBy' => $pausedBy,
 			'evidenceRefs' => $refs,
 			'hardDeadlineEindigt' => $hardDeadline->format(DATE_ATOM),
 			'administrationId' => $administrationId,
@@ -832,7 +832,7 @@ class DunningRunService {
 		foreach ($paidRuns as $run) {
 			// Heuristic: any prior DELIVERED run with the same klant whose
 			// invoice transitioned to paid counts as "good customer".
-			$uitgevoerd = (string)($run['uitgevoerdOn'] ?? '');
+			$uitgevoerd = (string)($run['executedOn'] ?? '');
 			if ($uitgevoerd === '') {
 				continue;
 			}

@@ -68,7 +68,7 @@
             "example": "2026-03-15",
             "title": "Opdrachtverlening Datum"
           },
-          "ingebruiknameDate": {
+          "commissioningDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -551,7 +551,7 @@
             "example": 5000000,
             "title": "Aanschafwaarde"
           },
-          "directeDepreciation": {
+          "directDepreciation": {
             "type": "integer",
             "description": "75% direct write-off in EUR cents.",
             "example": 3750000,
@@ -563,7 +563,7 @@
             "example": 1250000,
             "title": "Gespreid Deel"
           },
-          "regulierDepreciationSchedule": {
+          "regularDepreciationSchedule": {
             "type": "object",
             "description": "The regular schedule for the 25% gespreid deel.",
             "properties": {
@@ -573,7 +573,7 @@
                 "title": "Methode",
                 "description": "The methode."
               },
-              "termJaren": {
+              "termYears": {
                 "type": "integer",
                 "example": 5,
                 "title": "Looptijd Jaren",

@@ -29,7 +29,7 @@
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
-          "rapporterendeOrganisation": {
+          "reportingOrganisation": {
             "type": "object",
             "nullable": true,
             "description": "RSIN, gemeentecode, naam, soort (gemeente/provincie/waterschap/GR) of the reporting body.",
@@ -131,7 +131,7 @@
             "example": 156000000,
             "title": "Emu Schuld Wettelijke Norm"
           },
-          "emuDebtRuimte": {
+          "emuDebtCapacity": {
             "type": "number",
             "nullable": true,
             "description": "wettelijkeNorm − bruto (derived, REQ-EMU-008).",
@@ -219,7 +219,7 @@
             "description": "berekend − begroot (REQ-EMU-007).",
             "expr": "@self.emuSaldoBerekend - @self.emuSaldoBegroot"
           },
-          "emuDebtRuimte": {
+          "emuDebtCapacity": {
             "description": "wettelijkeNorm − bruto schuld (REQ-EMU-008).",
             "expr": "@self.emuSchuldWettelijkeNorm - @self.emuSchuldBruto"
           }
@@ -645,7 +645,7 @@
             "description": "Interest form.",
             "title": "Rentevorm"
           },
-          "termJaren": {
+          "termYears": {
             "type": "integer",
             "nullable": true,
             "description": "Original term in years.",
@@ -783,7 +783,7 @@
         "slug": "emu-2026-q2-gem-1742"
       },
       "administrationId": "adm-gemeente-1",
-      "rapporterendeOrganisation": {
+      "reportingOrganisation": {
         "rsin": "001234567",
         "gemeentecode": "1742",
         "name": "Gemeente Voorbeeldam",
@@ -802,7 +802,7 @@
       "emuBalanceDeviationPercentage": -27.8,
       "emuDebtGross": 142500000,
       "emuDebtStatutoryNorm": 156000000,
-      "emuDebtRuimte": 13500000,
+      "emuDebtCapacity": 13500000,
       "municipalAccountingBalanceRevenueExpenses": 4200000,
       "bbvTotaleAdjustments": -6500000,
       "bbvReconciliationCheck": "geslaagd",
@@ -878,7 +878,7 @@
       "outstandingDebt": 18750000,
       "rentevoet": 2.85,
       "rentevorm": "vast",
-      "termJaren": 20,
+      "termYears": 20,
       "endDate": "2034-12-31",
       "teltMeeInEmuDebt": true,
       "categoryEurostat": "AF.4-loans",

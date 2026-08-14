@@ -69,7 +69,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => '2026-06-30',
 				'calendarYear' => 2026,
-				'lopendeHours' => 700.0,
+				'currentHours' => 700.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'doelNorm' => 1225,
 			]
@@ -96,7 +96,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => '2026-06-30',
 				'calendarYear' => 2026,
-				'lopendeHours' => 0.0,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'doelNorm' => 1225,
 			]
@@ -126,7 +126,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => '2026-06-30',
 				'calendarYear' => 2026,
-				'lopendeHours' => 0.0,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'vakanties' => ['2026-08-01/2026-08-31'],
 				'doelNorm' => 1225,
@@ -147,7 +147,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => '2026-06-30',
 				'calendarYear' => 2026,
-				'lopendeHours' => 0.0,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'geplandeOpdrachten' => [
 					['maand' => '2026-09', 'hours' => 200.0],
@@ -179,7 +179,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => $end,
 				'calendarYear' => 2026,
-				'lopendeHours' => 0.0,
+				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies($end, 84),
 				'doelNorm' => 1225,
 			]
@@ -189,7 +189,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => $end,
 				'calendarYear' => 2026,
-				'lopendeHours' => 0.0,
+				'currentHours' => 0.0,
 				'dailyTallies' => $noisy,
 				'doelNorm' => 1225,
 			]
@@ -217,7 +217,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => '2026-02-28',
 				'calendarYear' => 2026,
-				'lopendeHours' => 300.0,
+				'currentHours' => 300.0,
 				'dailyTallies' => $tallies,
 				'doelNorm' => 1225,
 			]
@@ -238,7 +238,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 			input: [
 				'asOf' => '2026-06-30',
 				'calendarYear' => 2026,
-				'lopendeHours' => 0.0,
+				'currentHours' => 0.0,
 				'dailyTallies' => [],
 				'doelNorm' => 1225,
 			]

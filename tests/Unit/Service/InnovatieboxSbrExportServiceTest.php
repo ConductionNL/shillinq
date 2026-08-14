@@ -81,10 +81,10 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 				],
 			],
 			'totals' => [
-				'kwalificerende_profit_for_nexus' => 1000000.0,
-				'kwalificerende_profit_after_nexus' => 973200.0,
-				'vpb_on_innovationshare' => 87588.0,
-				'benefit_innovatiebox' => 170600.0,
+				'qualifying_profit_for_nexus' => 1000000.0,
+				'qualifying_profit_after_nexus' => 973200.0,
+				'vpb_on_innovation_share' => 87588.0,
+				'benefit_innovation_box' => 170600.0,
 			],
 		];
 
@@ -121,10 +121,10 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 		$aggregation = [
 			'data' => [],
 			'totals' => [
-				'kwalificerende_profit_for_nexus' => 125000.0,
-				'kwalificerende_profit_after_nexus' => 25000.0,
-				'vpb_on_innovationshare' => 2250.0,
-				'benefit_innovatiebox' => 4950.0,
+				'qualifying_profit_for_nexus' => 125000.0,
+				'qualifying_profit_after_nexus' => 25000.0,
+				'vpb_on_innovation_share' => 2250.0,
+				'benefit_innovation_box' => 4950.0,
 			],
 		];
 
@@ -179,10 +179,10 @@ final class InnovatieboxSbrExportServiceTest extends TestCase {
 				],
 			],
 			'totals' => [
-				'kwalificerende_profit_for_nexus' => 100.0,
-				'kwalificerende_profit_after_nexus' => 50.0,
-				'vpb_on_innovationshare' => 4.5,
-				'benefit_innovatiebox' => 21.3,
+				'qualifying_profit_for_nexus' => 100.0,
+				'qualifying_profit_after_nexus' => 50.0,
+				'vpb_on_innovation_share' => 4.5,
+				'benefit_innovation_box' => 21.3,
 			],
 		];
 

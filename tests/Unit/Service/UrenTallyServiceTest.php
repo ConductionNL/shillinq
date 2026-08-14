@@ -132,7 +132,7 @@ final class UrenTallyServiceTest extends TestCase {
 			now: '2026-09-30T23:00:00Z'
 		);
 
-		self::assertSame(904.0, $patch['lopendeHours']);
+		self::assertSame(904.0, $patch['currentHours']);
 		self::assertSame('2026-09-30T23:00:00Z', $patch['calculatedOn']);
 
 	}//end testTallyYearToDateReturnsPatch()

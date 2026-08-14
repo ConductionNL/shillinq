@@ -2355,7 +2355,7 @@
           "slug": "ccm-rule-ab-03"
         },
         "ruleCode": "AB-03",
-        "name": "Goedkeurder afwezig maar goedgekeurd",
+        "name": "Goedkeurder afwezig maar approved",
         "description": "Goedkeuring met tijdstempel tijdens een geregistreerde afwezigheid.",
         "controlFamily": "approval-bypass",
         "severity": "high",

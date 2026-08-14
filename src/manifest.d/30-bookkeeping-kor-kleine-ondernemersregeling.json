@@ -76,7 +76,7 @@
 					{ "key": "regime", "label": "Regime", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true },
 					{ "key": "registrationDate", "label": "Registration date", "sortable": true },
-					{ "key": "ingangsDate", "label": "Start date", "sortable": true },
+					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
 					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
 					{ "key": "taxAuthorityReference", "label": "BD reference" }
 				],
@@ -117,7 +117,7 @@
 					{ "key": "enterpriseId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime" },
 					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "ingangsDate", "label": "Start date", "sortable": true },
+					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
 					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
 					{ "key": "thresholdYear", "label": "Threshold (EUR)" }
 				],
@@ -218,11 +218,11 @@
 				"columns": [
 					{ "key": "enterpriseId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime" },
-					{ "key": "ingangsDate", "label": "Start date", "sortable": true },
+					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
 					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
-					{ "key": "vroegsteOpzegDate", "label": "Earliest cancellation date", "sortable": true }
+					{ "key": "earliestTerminationDate", "label": "Earliest cancellation date", "sortable": true }
 				],
-				"defaultSort": "vroegsteOpzegDate",
+				"defaultSort": "earliestTerminationDate",
 				"lifecycleActions": true,
 				"helpText": "Voluntary cancellation of an ACTIVE KOR registration. Cancellation is blocked until lockInEindDatum (REQ-KOR-007); the earliest cancellation date is three months before the end of the lock-in. The effective end date is 1 January of the next calendar year. On approval a KORRevocation with type=VRIJWILLIG_NA_LOCKOUT is created automatically."
 			}

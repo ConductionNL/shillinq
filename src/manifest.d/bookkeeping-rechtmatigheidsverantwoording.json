@@ -155,8 +155,8 @@
 					{ "key": "cause", "label": "Cause", "type": "string" },
 					{ "key": "measure", "label": "Measure", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "responsible_portefeuillehouder", "label": "Portfolio holder", "type": "string" },
-					{ "key": "correctionentry_id", "label": "Linked correction entry", "type": "string" }
+					{ "key": "responsible_portfolio_holder", "label": "Portfolio holder", "type": "string" },
+					{ "key": "correction_entry_id", "label": "Linked correction entry", "type": "string" }
 				],
 				"indexRoute": "Bevindingen",
 				"sidebarProps": {
@@ -193,7 +193,7 @@
 					{ "key": "financialYear", "label": "Financial year", "sortable": true },
 					{ "key": "fout_percentage", "label": "Error %", "sortable": true },
 					{ "key": "uncertainty_percentage", "label": "Uncertainty %", "sortable": true },
-					{ "key": "determined_at_councilresolution", "label": "Council decision", "sortable": true },
+					{ "key": "determined_at_council_resolution", "label": "Council decision", "sortable": true },
 					{ "key": "determined_on", "label": "Adopted on", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
@@ -214,7 +214,7 @@
 					{ "key": "financialYear", "label": "Financial year", "type": "string" },
 					{ "key": "fout_percentage", "label": "Error %", "type": "string" },
 					{ "key": "uncertainty_percentage", "label": "Uncertainty %", "type": "string" },
-					{ "key": "determined_at_councilresolution", "label": "Council decision", "type": "string" },
+					{ "key": "determined_at_council_resolution", "label": "Council decision", "type": "string" },
 					{ "key": "determined_on", "label": "Adopted on", "type": "string" },
 					{ "key": "valid_from", "label": "Valid from", "type": "string" },
 					{ "key": "valid_to", "label": "Valid until", "type": "string" },
@@ -256,7 +256,7 @@
 					{ "key": "financialYear", "label": "Financial year", "sortable": true },
 					{ "key": "total_identified_errors", "label": "Errors", "sortable": true },
 					{ "key": "total_identified_uncertainties", "label": "Uncertainties", "sortable": true },
-					{ "key": "binnen_tolerance", "label": "Within tolerance", "sortable": true },
+					{ "key": "within_tolerance", "label": "Within tolerance", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "financialYear",
@@ -279,10 +279,10 @@
 					{ "key": "tolerance_uncertainty_amount", "label": "Tolerance threshold uncertainty (amount)", "type": "string" },
 					{ "key": "total_identified_errors", "label": "Total identified errors", "type": "string" },
 					{ "key": "total_identified_uncertainties", "label": "Total identified uncertainties", "type": "string" },
-					{ "key": "binnen_tolerance", "label": "Within tolerance", "type": "string" },
+					{ "key": "within_tolerance", "label": "Within tolerance", "type": "string" },
 					{ "key": "declaration_college", "label": "Executive statement", "type": "string" },
 					{ "key": "determined_by_college_on", "label": "Adopted by executive on", "type": "string" },
-					{ "key": "behandeld_in_council_on", "label": "Handled by council on", "type": "string" },
+					{ "key": "handled_in_council_on", "label": "Handled by council on", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
 				"indexRoute": "Rechtmatigheidsparagraaf",

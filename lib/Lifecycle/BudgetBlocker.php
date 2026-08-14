@@ -146,7 +146,7 @@ class BudgetBlocker {
 	public function freeRoom(array $budget): int {
 		$authorised = (int)($budget['authorised_amount'] ?? 0);
 		$realised = (int)($budget['realised_amount'] ?? 0);
-		$committed = (int)($budget['outstanding_verplichtingen'] ?? 0);
+		$committed = (int)($budget['outstanding_commitments'] ?? 0);
 
 		return ($authorised - $realised - $committed);
 	}//end freeRoom()
@@ -239,7 +239,7 @@ class BudgetBlocker {
 			[
 				'programme' => (string)($commitment['programme'] ?? ''),
 				'financialYear' => (int)($commitment['financialYear'] ?? 0),
-				'amount_excl_vat' => (int)($commitment['totalamount_excl_vat'] ?? 0),
+				'amount_excl_vat' => (int)($commitment['total_amount_excl_vat'] ?? 0),
 			],
 		];
 

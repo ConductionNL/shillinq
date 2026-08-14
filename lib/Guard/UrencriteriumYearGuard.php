@@ -176,7 +176,7 @@ class UrencriteriumYearGuard {
 	 *   - prognose >= 80% of norm                   → RISICO.
 	 *   - prognose <  80% of norm                   → KRITIEK.
 	 *
-	 * @param float $lopendeHours Cumulative realised hours.
+	 * @param float $currentHours Cumulative realised hours.
 	 * @param float $prognose Forecast year-end hours.
 	 * @param int $norm Applicable doel-norm.
 	 *
@@ -184,8 +184,8 @@ class UrencriteriumYearGuard {
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
 	 */
-	public function bepaalDrempelStatus(float $lopendeHours, float $prognose, int $norm): string {
-		if ($lopendeHours >= $norm) {
+	public function bepaalDrempelStatus(float $currentHours, float $prognose, int $norm): string {
+		if ($currentHours >= $norm) {
 			return 'BEHAALD';
 		}
 
@@ -333,7 +333,7 @@ class UrencriteriumYearGuard {
 		}
 
 		$expected = $this->bepaalDrempelStatus(
-			lopendeHours: (float)($year['lopendeHours'] ?? 0),
+			currentHours: (float)($year['currentHours'] ?? 0),
 			prognose: (float)$year['forecastYearEnd'],
 			norm: (int)($year['doelNorm'] ?? self::NORM_REGULIER)
 		);

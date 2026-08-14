@@ -68,7 +68,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 			'totalHealthInsurance' => 3654.00,
 			'totalFinalLeviesWorkRelatedCosts' => 0.0,
 			'totalRemittance' => 29833.50,
-			'vervaldagRemittance' => '2026-06-30',
+			'dueDateRemittance' => '2026-06-30',
 			'status' => 'VOORBEREID',
 		];
 
@@ -83,7 +83,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 		$this->assertSame(3654.00, $payload['zvwTotaal']);
 		$this->assertSame(0.0, $payload['eindheffingenWKR']);
 		$this->assertSame(29833.50, $payload['totalRemittance']);
-		$this->assertSame('2026-06-30', $payload['vervaldagRemittance']);
+		$this->assertSame('2026-06-30', $payload['dueDateRemittance']);
 
 	}//end testToSbrInstancePayloadEchoesTotalsAndDeterministicRef()
 

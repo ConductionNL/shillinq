@@ -132,7 +132,7 @@ final class InnovatieboxFragmentTest extends TestCase {
 	 */
 	public function testTariffIsHardCoded(): void {
 		$props = $this->fragment()['components']['schemas']['IBProfitAttribution']['properties'];
-		self::assertSame(0.09, $props['effectief_rate']['default']);
+		self::assertSame(0.09, $props['effective_rate']['default']);
 
 	}//end testTariffIsHardCoded()
 
@@ -191,10 +191,10 @@ final class InnovatieboxFragmentTest extends TestCase {
 		}
 
 		self::assertNotNull($nexus);
-		$tellerFor = ($nexus['eigen_rd_cost'] + $nexus['rd_cost_uitbesteed_derden']);
-		$tellerAfter = min((1.3 * $tellerFor), $nexus['totale_rd_cost']);
-		$ratio = min(($tellerAfter / $nexus['totale_rd_cost']), 1.0);
-		self::assertSame($nexus['nexusbreuk_applied'], round($ratio, 4));
+		$tellerFor = ($nexus['own_rd_cost'] + $nexus['rd_cost_outsourced_third_parties']);
+		$tellerAfter = min((1.3 * $tellerFor), $nexus['total_rd_cost']);
+		$ratio = min(($tellerAfter / $nexus['total_rd_cost']), 1.0);
+		self::assertSame($nexus['nexus_fraction_applied'], round($ratio, 4));
 
 	}//end testSeededNexusExampleObeysFormula()
 }//end class

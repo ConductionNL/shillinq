@@ -68,7 +68,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 				'totalSocialInsuranceContributions' => 7559.40,
 				'totalHealthInsurance' => 3654.00,
 				'totalFinalLeviesWorkRelatedCosts' => 240.00,
-				'vervaldagRemittance' => '2026-06-30',
+				'dueDateRemittance' => '2026-06-30',
 				'administrationId' => 'adm-1',
 			]
 		);
@@ -110,7 +110,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 				'totalSocialInsuranceContributions' => 1234.56,
 				'totalHealthInsurance' => 0.0,
 				'totalFinalLeviesWorkRelatedCosts' => 0.0,
-				'vervaldagRemittance' => '2026-06-30',
+				'dueDateRemittance' => '2026-06-30',
 			]
 		);
 

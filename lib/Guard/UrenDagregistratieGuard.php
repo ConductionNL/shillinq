@@ -126,13 +126,13 @@ class UrenDagregistratieGuard {
 	 * @param string $category The category code.
 	 * @param float $hours The registered hours.
 	 *
-	 * @return array{getoldeHours: float, capNote: ?string} Counted hours + note.
+	 * @return array{countedHours: float, capNote: ?string} Counted hours + note.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
 	 */
 	public function pasReistijdCapToe(string $category, float $hours): array {
 		if ($category !== 'REISTIJD_ZAKELIJK' || $hours <= self::REISTIJD_CAP_PER_DAY) {
-			return ['getoldeHours' => $hours, 'capNote' => null];
+			return ['countedHours' => $hours, 'capNote' => null];
 		}
 
 		$nietGeteld = ($hours - self::REISTIJD_CAP_PER_DAY);
@@ -142,7 +142,7 @@ class UrenDagregistratieGuard {
 		);
 
 		return [
-			'getoldeHours' => self::REISTIJD_CAP_PER_DAY,
+			'countedHours' => self::REISTIJD_CAP_PER_DAY,
 			'capNote' => $note,
 		];
 

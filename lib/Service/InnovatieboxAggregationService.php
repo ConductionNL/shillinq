@@ -96,8 +96,8 @@ class InnovatieboxAggregationService {
 
 			$row = $this->buildRow(asset: $asset, attribution: $attributions[$assetId], loss: ($openLosses[$assetId] ?? null));
 			$rows[] = $row;
-			$grandVpb += (float)$row['vpb_on_innovationshare'];
-			$grandBenefit += (float)$row['benefit_innovatiebox'];
+			$grandVpb += (float)$row['vpb_on_innovation_share'];
+			$grandBenefit += (float)$row['benefit_innovation_box'];
 		}
 
 		return [
@@ -105,7 +105,7 @@ class InnovatieboxAggregationService {
 			'total' => count($rows),
 			'totals' => [
 				'vpb_regel_23' => round($grandVpb, 2),
-				'benefit_innovatiebox' => round($grandBenefit, 2),
+				'benefit_innovation_box' => round($grandBenefit, 2),
 			],
 		];
 
@@ -122,12 +122,12 @@ class InnovatieboxAggregationService {
 	 */
 	private function buildRow(array $asset, array $attribution, ?array $loss): array {
 		$name = (string)($asset['name'] ?? '');
-		$forNexus = (float)($attribution['kwalificerende_profit_for_nexus'] ?? 0);
-		$nexus = (float)($attribution['nexusbreuk_applied'] ?? 1.0);
-		$afterNexus = (float)($attribution['kwalificerende_profit_after_nexus'] ?? 0);
-		$rate = (float)($attribution['effectief_rate'] ?? CarryForwardLossService::INNOVATIEBOX_TARIFF);
-		$vpb = (float)($attribution['vpb_on_innovationshare'] ?? round(($afterNexus * $rate), 2));
-		$benefit = (float)($attribution['benefit_innovatiebox'] ?? 0);
+		$forNexus = (float)($attribution['qualifying_profit_for_nexus'] ?? 0);
+		$nexus = (float)($attribution['nexus_fraction_applied'] ?? 1.0);
+		$afterNexus = (float)($attribution['qualifying_profit_after_nexus'] ?? 0);
+		$rate = (float)($attribution['effective_rate'] ?? CarryForwardLossService::INNOVATIEBOX_TARIFF);
+		$vpb = (float)($attribution['vpb_on_innovation_share'] ?? round(($afterNexus * $rate), 2));
+		$benefit = (float)($attribution['benefit_innovation_box'] ?? 0);
 		$lossOffset = null;
 
 		// REQ-IBA-007: an open loss is recovered first at the full tariff before
@@ -154,12 +154,12 @@ class InnovatieboxAggregationService {
 			'qualifying_asset_id' => $this->assetId(asset: $asset),
 			'name' => $name,
 			'method' => (string)($attribution['method'] ?? ''),
-			'kwalificerende_profit_for_nexus' => round($forNexus, 2),
-			'nexusbreuk_applied' => round($nexus, 4),
-			'kwalificerende_profit_after_nexus' => round($afterNexus, 2),
-			'effectief_rate' => $rate,
-			'vpb_on_innovationshare' => round($vpb, 2),
-			'benefit_innovatiebox' => round($benefit, 2),
+			'qualifying_profit_for_nexus' => round($forNexus, 2),
+			'nexus_fraction_applied' => round($nexus, 4),
+			'qualifying_profit_after_nexus' => round($afterNexus, 2),
+			'effective_rate' => $rate,
+			'vpb_on_innovation_share' => round($vpb, 2),
+			'benefit_innovation_box' => round($benefit, 2),
 			'loss_carry_forward' => $lossOffset,
 		];
 

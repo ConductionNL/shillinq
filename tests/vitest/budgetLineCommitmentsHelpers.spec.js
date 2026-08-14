@@ -23,9 +23,9 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 			buckets: [
 				{
 					programma: '5.1',
-					kostenplaats: 'FAC-2026',
+					cost_centre: 'FAC-2026',
 					boekjaar: 2026,
-					grootboekrekening: '4400',
+					general_ledger_account: '4400',
 					'Budget.geautoriseerd_bedrag': 50000000,
 					restant_verplicht: 7500000,
 					gefactureerd_bedrag: 2500000,
@@ -44,7 +44,7 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 
 	it('accepts a bare array payload (no buckets wrapper)', () => {
 		const rows = normaliseBudgetLineRows([
-			{ programma: '5.1', kostenplaats: 'FAC-2026', boekjaar: 2026, grootboekrekening: '4400', restant_verplicht: 100, gefactureerd_bedrag: 0 },
+			{ programma: '5.1', cost_centre: 'FAC-2026', boekjaar: 2026, general_ledger_account: '4400', restant_verplicht: 100, gefactureerd_bedrag: 0 },
 		])
 		expect(rows).toHaveLength(1)
 	})
@@ -58,7 +58,7 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 	it('builds a stable composite key per coderingscombinatie', () => {
 		const rows = normaliseBudgetLineRows({
 			buckets: [
-				{ programma: '5.1', kostenplaats: 'FAC-2026', boekjaar: 2026, grootboekrekening: '4400' },
+				{ programma: '5.1', cost_centre: 'FAC-2026', boekjaar: 2026, general_ledger_account: '4400' },
 			],
 		})
 		expect(rows[0].key).toBe('5.1|FAC-2026|2026|4400')
@@ -69,9 +69,9 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 			buckets: [
 				{
 					programma: '5.1',
-					kostenplaats: 'FAC-2026',
+					cost_centre: 'FAC-2026',
 					boekjaar: 2026,
-					grootboekrekening: '4400',
+					general_ledger_account: '4400',
 					'Budget.geautoriseerd_bedrag': 1000,
 					restant_verplicht: 800,
 					gefactureerd_bedrag: 500,
@@ -107,28 +107,28 @@ describe('budgetLineCommitmentsHelpers — drilldownFilters', () => {
 	it('builds exact-match filters for a complete row', () => {
 		const filters = drilldownFilters({
 			programma: '5.1',
-			kostenplaats: 'FAC-2026',
+			cost_centre: 'FAC-2026',
 			boekjaar: 2026,
-			grootboekrekening: '4400',
+			general_ledger_account: '4400',
 		})
 		expect(filters).toEqual({
 			programma: '5.1',
-			kostenplaats: 'FAC-2026',
+			cost_centre: 'FAC-2026',
 			boekjaar: 2026,
-			grootboekrekening: '4400',
+			general_ledger_account: '4400',
 		})
 	})
 
 	it('omits empty/blank dimensions (e.g. a Contract-sourced regel with no grootboekrekening)', () => {
 		const filters = drilldownFilters({
 			programma: '5.1',
-			kostenplaats: 'FAC-2026',
+			cost_centre: 'FAC-2026',
 			boekjaar: 2026,
-			grootboekrekening: '',
+			general_ledger_account: '',
 		})
 		expect(filters).toEqual({
 			programma: '5.1',
-			kostenplaats: 'FAC-2026',
+			cost_centre: 'FAC-2026',
 			boekjaar: 2026,
 		})
 	})

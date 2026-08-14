@@ -110,7 +110,7 @@ final class UrenPrognoseService {
 	public function bouwPrognose(array $input): array {
 		$asOf = (string)($input['asOf'] ?? gmdate('Y-m-d'));
 		$calendarYear = (int)($input['calendarYear'] ?? (int)substr($asOf, 0, 4));
-		$lopende = (float)($input['lopendeHours'] ?? 0.0);
+		$lopende = (float)($input['currentHours'] ?? 0.0);
 		$dailyTallies = (array)($input['dailyTallies'] ?? []);
 		$vakanties = (array)($input['vakanties'] ?? []);
 		$assignments = (array)($input['geplandeOpdrachten'] ?? []);

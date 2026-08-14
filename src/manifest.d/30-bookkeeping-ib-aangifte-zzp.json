@@ -68,7 +68,7 @@
 						"sortable": true
 					},
 					{
-						"key": "belastbareProfit",
+						"key": "taxableProfit",
 						"label": "Taxable profit",
 						"sortable": true
 					},
@@ -122,7 +122,7 @@
 						"columns": [
 							{ "key": "referenceDate", "label": "Reference date" },
 							{ "key": "totalYieldBasis", "label": "Yield basis" },
-							{ "key": "belastbareBasis", "label": "Taxable basis" }
+							{ "key": "taxableBasis", "label": "Taxable basis" }
 						],
 						"detailRoute": "IbBox3VermogenDetail"
 					}
@@ -191,7 +191,7 @@
 						"type": "number"
 					},
 					{
-						"key": "belastbareProfit",
+						"key": "taxableProfit",
 						"label": "Taxable profit",
 						"type": "number"
 					},
@@ -381,7 +381,7 @@
 						"sortable": true
 					},
 					{
-						"key": "belastbareBasis",
+						"key": "taxableBasis",
 						"label": "Taxable basis",
 						"sortable": true
 					}
@@ -444,12 +444,12 @@
 						"type": "number"
 					},
 					{
-						"key": "taxExemptVermogen",
+						"key": "taxExemptEquity",
 						"label": "Tax-free allowance",
 						"type": "number"
 					},
 					{
-						"key": "belastbareBasis",
+						"key": "taxableBasis",
 						"label": "Taxable basis",
 						"type": "number"
 					}

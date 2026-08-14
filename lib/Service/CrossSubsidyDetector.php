@@ -170,8 +170,8 @@ class CrossSubsidyDetector {
 	 * @return bool True when overhead is under-allocated.
 	 */
 	public function detectOverheadUnderAllocation(array $ikp, float $floorRatio = self::OVERHEAD_UNDER_ALLOCATION_FLOOR_RATIO): bool {
-		$totaleCost = (float)($ikp['totaleCost'] ?? 0);
-		if ($totaleCost <= 0.0) {
+		$totalCost = (float)($ikp['totalCost'] ?? 0);
+		if ($totalCost <= 0.0) {
 			return false;
 		}
 
@@ -182,7 +182,7 @@ class CrossSubsidyDetector {
 			$overheadTotal += (float)$bucket;
 		}
 
-		return ($overheadTotal / $totaleCost) < $floorRatio;
+		return ($overheadTotal / $totalCost) < $floorRatio;
 	}//end detectOverheadUnderAllocation()
 
 	/**
@@ -200,13 +200,13 @@ class CrossSubsidyDetector {
 			return false;
 		}
 
-		$volgendeEvaluation = (string)($abb['volgendeEvaluation'] ?? '');
-		if ($volgendeEvaluation === '') {
+		$nextEvaluation = (string)($abb['nextEvaluation'] ?? '');
+		if ($nextEvaluation === '') {
 			return true;
 		}
 
 		try {
-			$vol = new DateTimeImmutable($volgendeEvaluation);
+			$vol = new DateTimeImmutable($nextEvaluation);
 			$now = new DateTimeImmutable($today);
 		} catch (\Throwable) {
 			return false;
@@ -279,7 +279,7 @@ class CrossSubsidyDetector {
 	/**
 	 * Detect bevoordeling-risk (Phase 3 REQ-WMO-012): gehanteerdTarief < benchmark median × discount.
 	 *
-	 * @param float $gehanteerdRate Actual price charged per unit (EUR).
+	 * @param float $appliedRate Actual price charged per unit (EUR).
 	 * @param float $costPricePerUnit IKP per unit (EUR) — must also be <= gehanteerdTarief.
 	 * @param array<int,array<string,mixed>> $benchmarks MarketBenchmark records within last 12 months.
 	 * @param float $discountThreshold Discount threshold (default 0.85 = 15% below market).
@@ -287,12 +287,12 @@ class CrossSubsidyDetector {
 	 * @return bool True when the price is suspiciously below market.
 	 */
 	public function detectBevoordelingRisk(
-		float $gehanteerdRate,
+		float $appliedRate,
 		float $costPricePerUnit,
 		array $benchmarks,
 		float $discountThreshold = self::BEVOORDELING_DISCOUNT_THRESHOLD,
 	): bool {
-		if ($gehanteerdRate < $costPricePerUnit) {
+		if ($appliedRate < $costPricePerUnit) {
 			// Caller already raises a non-compliant alert for this.
 			return false;
 		}
@@ -321,7 +321,7 @@ class CrossSubsidyDetector {
 			$median = (($values[($count / 2) - 1] + $values[$count / 2]) / 2);
 		}
 
-		return $gehanteerdRate < ($median * $discountThreshold);
+		return $appliedRate < ($median * $discountThreshold);
 	}//end detectBevoordelingRisk()
 
 	/**

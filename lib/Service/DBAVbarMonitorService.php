@@ -209,7 +209,7 @@ class DBAVbarMonitorService {
 					'actionSuggestion' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
 						. '(motivatie EUR-grens uitzondering).',
 					'status' => 'OPEN',
-					'weergegevenInUser' => true,
+					'displayedInUser' => true,
 				]
 			);
 			return true;

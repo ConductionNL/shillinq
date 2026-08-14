@@ -148,11 +148,11 @@ final class AbbLifecycleServiceTest extends TestCase {
 			'status' => 'bezwaar',
 			'publicationDate' => '2025-12-01',
 			'determinationDate' => '2025-11-15',
-			'evaluationRitme' => 'tweejaarlijks',
+			'evaluationCadence' => 'tweejaarlijks',
 			'notificationAcm' => ['submitted' => true, 'reference' => 'ACM/IN/123'],
 		];
 		$out = $this->svc->transition($abb, 'geldig');
-		self::assertSame('2027-11-15', $out['abb']['volgendeEvaluation']);
+		self::assertSame('2027-11-15', $out['abb']['nextEvaluation']);
 
 	}//end testGeldigCalculatesNextEvaluation()
 

@@ -318,7 +318,7 @@
                 },
                 "title": "Programmes"
               },
-              "algemeneFundingSources": {
+              "generalFundingSources": {
                 "type": "number",
                 "description": "Overview of general cover funds (algemene dekkingsmiddelen).",
                 "title": "Algemene Dekkingsmiddelen"
@@ -355,7 +355,7 @@
             "nullable": true,
             "description": "The financial statements of the jaarstukken (art. 24 BBV): the overview of revenues and expenses, the balance sheet, the lawfulness statement (rechtmatigheidsverantwoording) and the auditor's report (accountantsverklaring).",
             "properties": {
-              "overzichtRevenueExpenses": {
+              "overviewRevenueExpenses": {
                 "type": "boolean",
                 "description": "Overview of revenues and expenses present.",
                 "title": "Overzicht Baten Lasten"

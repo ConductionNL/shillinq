@@ -115,7 +115,7 @@
             },
             "title": "Fiscale Partner"
           },
-          "vorigeTaxReturnId": {
+          "previousTaxReturnId": {
             "type": "string",
             "nullable": true,
             "description": "FK to the superseded IBAangifte for a correctieaangifte (REQ-IB-012).",
@@ -139,7 +139,7 @@
             "example": 5618.05,
             "title": "Mkb Winstvrijstelling"
           },
-          "belastbareProfit": {
+          "taxableProfit": {
             "type": "number",
             "description": "Taxable profit after deductions and MKB exemption (MonetaryAmount EUR).",
             "example": 36585.95,
@@ -386,7 +386,7 @@
                 "title": "Totaal",
                 "description": "The numeric value for totaal."
               },
-              "benefitInKindPrive": {
+              "benefitInKindPrivate": {
                 "type": "number",
                 "title": "Bijtelling Prive",
                 "description": "The numeric value for bijtelling prive."
@@ -411,13 +411,13 @@
             "example": 1100.0,
             "title": "Kantoorkosten"
           },
-          "algemeneCost": {
+          "generalCost": {
             "type": "number",
             "description": "General costs (MonetaryAmount EUR).",
             "example": 2820.0,
             "title": "Algemene Kosten"
           },
-          "nietDeductibleBoetes": {
+          "nonDeductibleFines": {
             "type": "number",
             "description": "Non-deductible fines add-back (MonetaryAmount EUR).",
             "example": 180.0,
@@ -736,7 +736,7 @@
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "algemeneTaxCredit": {
+          "generalTaxCredit": {
             "type": "number",
             "description": "AHK with income-dependent afbouw (MonetaryAmount EUR).",
             "example": 2890.0,
@@ -792,7 +792,7 @@
                 "title": "Arbeidsinkomen",
                 "description": "The numeric value for arbeidsinkomen."
               },
-              "ahkAfbouwApplied": {
+              "ahkPhaseOutApplied": {
                 "type": "number",
                 "title": "Ahk Afbouw Toegepast",
                 "description": "The numeric value for ahk afbouw toegepast."
@@ -807,7 +807,7 @@
           }
         },
         "x-openregister-calculations": {
-          "algemeneTaxCredit": {
+          "generalTaxCredit": {
             "description": "AHK = max(ahkMax − ahkPhaseoutRate × (box1Inkomen − ahkPhaseoutThreshold), 0). All parameters from IBTaxParameterYear (REQ-IB-006).",
             "basis": "art. 8.10 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.ahkMax,ahkPhaseoutRate,ahkPhaseoutThreshold"
@@ -961,7 +961,7 @@
             "example": 38000.0,
             "title": "Cataloguswaarde Nieuw"
           },
-          "dateEersteRegistration": {
+          "dateFirstRegistration": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -992,7 +992,7 @@
             "example": 8360.0,
             "title": "Bijtelling Bedrag"
           },
-          "eigenContribution": {
+          "ownContribution": {
             "type": "number",
             "description": "Driver's own contribution (MonetaryAmount EUR).",
             "example": 0,
@@ -1108,19 +1108,19 @@
             "example": 69000.0,
             "title": "Totaal Rendementsgrondslag"
           },
-          "taxExemptVermogen": {
+          "taxExemptEquity": {
             "type": "number",
             "description": "Tax-free allowance from IBTaxParameterYear.box3HeffingvrijVermogen (MonetaryAmount EUR).",
             "example": 57684.0,
             "title": "Heffingvrij Vermogen"
           },
-          "belastbareBasis": {
+          "taxableBasis": {
             "type": "number",
             "description": "max(totaalRendementsgrondslag − heffingvrijVermogen, 0) (MonetaryAmount EUR).",
             "example": 12000.0,
             "title": "Belastbare Grondslag"
           },
-          "calculatedRendement": {
+          "calculatedReturn": {
             "type": "object",
             "description": "Chosen rendement method + amount.",
             "properties": {
@@ -1142,7 +1142,7 @@
             },
             "title": "Berekend Rendement"
           },
-          "actualRendementOpgevoerd": {
+          "actualReturnEntered": {
             "type": "boolean",
             "description": "True if the taxpayer chose to report actual rendement.",
             "default": false,
@@ -1155,7 +1155,7 @@
           }
         },
         "x-openregister-calculations": {
-          "belastbareBasis": {
+          "taxableBasis": {
             "description": "belastbareGrondslag = max(totaalRendementsgrondslag − box3HeffingvrijVermogen, 0). System computes both forfait and werkelijk rendement and selects the lower for the taxpayer (REQ-IB-015, design D8).",
             "basis": "Overbruggingswet box 3 / hoofdstuk 5 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.box3HeffingvrijVermogen"
@@ -1253,7 +1253,7 @@
             "description": "Timestamp the trail was frozen on filing.",
             "title": "Freeze Moment"
           },
-          "gefreezdBy": {
+          "frozenBy": {
             "type": "string",
             "nullable": true,
             "description": "User who froze the trail.",
@@ -1352,7 +1352,7 @@
             "description": "Lijfrente franchise (MonetaryAmount EUR).",
             "title": "Lijfrente Franchise"
           },
-          "annuityPremiegrondslagMax": {
+          "annuityContributionBasisMax": {
             "type": "number",
             "description": "Lijfrente premiegrondslag cap (MonetaryAmount EUR).",
             "title": "Lijfrente Premiegrondslag Max"
@@ -1362,22 +1362,22 @@
             "description": "Reserveringsruimte cap (MonetaryAmount EUR).",
             "title": "Lijfrente Reserveringsruimte Cap"
           },
-          "box3TaxExemptVermogen": {
+          "box3TaxExemptEquity": {
             "type": "number",
             "description": "Box-3 tax-free allowance (MonetaryAmount EUR).",
             "title": "Box3Heffingvrij Vermogen"
           },
-          "evBenefitInKindStaffel1Pct": {
+          "evBenefitInKindBracket1Pct": {
             "type": "number",
             "description": "EV bijtelling tier-1 percentage, e.g. 0.17.",
             "title": "Ev Bijtelling Staffel1Pct"
           },
-          "evBenefitInKindStaffel1Cap": {
+          "evBenefitInKindBracket1Cap": {
             "type": "number",
             "description": "EV bijtelling tier-1 cap (MonetaryAmount EUR).",
             "title": "Ev Bijtelling Staffel1Cap"
           },
-          "evBenefitInKindStaffel2Pct": {
+          "evBenefitInKindBracket2Pct": {
             "type": "number",
             "description": "EV bijtelling tier-2 / regulier percentage, e.g. 0.22.",
             "title": "Ev Bijtelling Staffel2Pct"
@@ -1415,12 +1415,12 @@
       "iackMax": 2950.0,
       "annuityRate": 0.133,
       "annuityFranchise": 17091.0,
-      "annuityPremiegrondslagMax": 107000.0,
+      "annuityContributionBasisMax": 107000.0,
       "annuityAccrualAllowanceCap": 9100.0,
-      "box3TaxExemptVermogen": 57000.0,
-      "evBenefitInKindStaffel1Pct": 0.17,
-      "evBenefitInKindStaffel1Cap": 30000.0,
-      "evBenefitInKindStaffel2Pct": 0.22,
+      "box3TaxExemptEquity": 57000.0,
+      "evBenefitInKindBracket1Pct": 0.17,
+      "evBenefitInKindBracket1Cap": 30000.0,
+      "evBenefitInKindBracket2Pct": 0.22,
       "notes": "Belastingplan 2024 — zelfstandigenaftrek afbouwpad (2027 EUR 1.200), MKB 12,7%. Verify franchise/heffingvrij indexering before filing."
     },
     {
@@ -1441,12 +1441,12 @@
       "iackMax": 2986.0,
       "annuityRate": 0.133,
       "annuityFranchise": 17546.0,
-      "annuityPremiegrondslagMax": 107000.0,
+      "annuityContributionBasisMax": 107000.0,
       "annuityAccrualAllowanceCap": 9200.0,
-      "box3TaxExemptVermogen": 57684.0,
-      "evBenefitInKindStaffel1Pct": 0.17,
-      "evBenefitInKindStaffel1Cap": 30000.0,
-      "evBenefitInKindStaffel2Pct": 0.22,
+      "box3TaxExemptEquity": 57684.0,
+      "evBenefitInKindBracket1Pct": 0.17,
+      "evBenefitInKindBracket1Cap": 30000.0,
+      "evBenefitInKindBracket2Pct": 0.22,
       "notes": "Belastingplan 2024/2025 — verifieer definitieve tarieven bij publicatie Belastingplan 2026."
     },
     {
@@ -1464,7 +1464,7 @@
       "profitFromEnterprise": 47820.0,
       "entrepreneurDeduction": 5616.0,
       "mkbProfitExemption": 5618.05,
-      "belastbareProfit": 36585.95,
+      "taxableProfit": 36585.95,
       "totalBox1Income": 36585.95,
       "totalBox3Income": 1820.0,
       "dueIB": 9420.18,
@@ -1490,13 +1490,13 @@
       "housingCost": 6200.0,
       "vehicleCost": {
         "total": 8400.0,
-        "benefitInKindPrive": 3960.0,
+        "benefitInKindPrivate": 3960.0,
         "deductible": 4440.0
       },
       "salesCost": 1820.0,
       "officeCost": 1100.0,
-      "algemeneCost": 2820.0,
-      "nietDeductibleBoetes": 180.0,
+      "generalCost": 2820.0,
+      "nonDeductibleFines": 180.0,
       "entertainmentCorrection": 320.0,
       "profitForEntrepreneurDeduction": 47820.0,
       "fiscalDeviationsLog": [
@@ -1559,7 +1559,7 @@
         "slug": "ib-heff-2025-ond-001234"
       },
       "taxReturnId": "ib-aangifte-2025-ond-001234",
-      "algemeneTaxCredit": 2890.0,
+      "generalTaxCredit": 2890.0,
       "employmentTaxCredit": 1060.4,
       "iack": 0,
       "elderlyTaxCredit": 0,
@@ -1569,7 +1569,7 @@
       "calculationBasis": {
         "inkomenBox1": 36585.95,
         "arbeidsinkomen": 36585.95,
-        "ahkAfbouwApplied": 0
+        "ahkPhaseOutApplied": 0
       },
       "administrationId": "adm-consultancy-nl"
     },
@@ -1607,11 +1607,11 @@
       "taxReturnId": "ib-aangifte-2025-ond-001234",
       "kenteken": "12-ABC-3",
       "listValueNew": 38000.0,
-      "dateEersteRegistration": "2024-04-15",
+      "dateFirstRegistration": "2024-04-15",
       "benefitInKindCategory": "REGULIER_22PCT",
       "benefitInKindPct": 0.22,
       "benefitInKindAmount": 8360.0,
-      "eigenContribution": 0,
+      "ownContribution": 0,
       "netBenefitInKind": 8360.0,
       "kilometerAdministration": {
         "present": false,
@@ -1633,13 +1633,13 @@
       "overigeBezittingen": 41000.0,
       "debts": 0,
       "totalYieldBasis": 69000.0,
-      "taxExemptVermogen": 57000.0,
-      "belastbareBasis": 12000.0,
-      "calculatedRendement": {
+      "taxExemptEquity": 57000.0,
+      "taxableBasis": 12000.0,
+      "calculatedReturn": {
         "methode": "FORFAIT_OVERBRUGGINGSWET",
         "rendement": 1820.0
       },
-      "actualRendementOpgevoerd": false,
+      "actualReturnEntered": false,
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1674,7 +1674,7 @@
       ],
       "totalRules": 2,
       "freezeMoment": null,
-      "gefreezdBy": null,
+      "frozenBy": null,
       "administrationId": "adm-consultancy-nl"
     }
   ]

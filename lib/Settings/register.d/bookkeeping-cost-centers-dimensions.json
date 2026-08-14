@@ -435,7 +435,7 @@
             "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts per REQ-CD-004. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031) per REQ-ADIM-004.",
             "source": "GLLine",
             "groupBy": [
-              "costDragerCode"
+              "costCarrierCode"
             ],
             "filter": {
               "administrationId": "@self.administrationId"

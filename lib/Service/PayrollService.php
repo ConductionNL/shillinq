@@ -101,7 +101,7 @@ class PayrollService {
 		$periodType = (string)($period['periodType'] ?? 'MAAND');
 
 		// Resolve the immutable wage-tax table for the period (REQ-PAY-002).
-		$tabelRules = $this->resolveTabelRules(administrationId: $administrationId, period: $period, employee: $employee);
+		$tableRules = $this->resolveTabelRules(administrationId: $administrationId, period: $period, employee: $employee);
 
 		return $this->assemblePaySlip(
 			administrationId: $administrationId,
@@ -109,7 +109,7 @@ class PayrollService {
 			werkgever: $werkgever,
 			period: $period,
 			periodType: $periodType,
-			tabelRules: $tabelRules
+			tableRules: $tableRules
 		);
 
 	}//end berekenLoonStrook()
@@ -122,7 +122,7 @@ class PayrollService {
 	 * @param array<string,mixed> $werkgever Employer record.
 	 * @param array<string,mixed> $period Period record.
 	 * @param string $periodType WEEK|4WEKEN|MAAND.
-	 * @param array<int,mixed> $tabelRules Wage-tax bracket rows.
+	 * @param array<int,mixed> $tableRules Wage-tax bracket rows.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -132,7 +132,7 @@ class PayrollService {
 		array $werkgever,
 		array $period,
 		string $periodType,
-		array $tabelRules,
+		array $tableRules,
 	): array {
 		// Gross components: basissalaris + tax-free home-office allowance.
 		$basissalaris = (float)($employee['periodeBruto'] ?? $this->periodGrossOutAnnualPay(employee: $employee, periodType: $periodType));
@@ -143,11 +143,11 @@ class PayrollService {
 			applies: (bool)($employee['expat30PctScheme'] ?? false)
 		);
 
-		$grossComponenten = [
+		$grossComponents = [
 			'basissalaris' => $basissalaris,
 			'thuiswerkvergoeding' => $thuiswerkverg,
 		];
-		$totalGross = $this->calculator->totaalBruto(componenten: $grossComponenten);
+		$totalGross = $this->calculator->totaalBruto(componenten: $grossComponents);
 
 		$belastingvrijTotaal = $this->calculator->fromCents(
 			cents: ($this->calculator->toCents(amount: $thuiswerkverg) + $this->calculator->toCents(amount: $expatFree))
@@ -155,7 +155,7 @@ class PayrollService {
 		$fiscalPay = $this->calculator->fiscaalLoon(totalGross: $totalGross, belastingvrijTotaal: $belastingvrijTotaal);
 		$contributionPaySV = $basissalaris;
 
-		$payrollTax = $this->calculator->loonheffingUitTabel(fiscalPay: $fiscalPay, tabelRules: $tabelRules);
+		$payrollTax = $this->calculator->loonheffingUitTabel(fiscalPay: $fiscalPay, tableRules: $tableRules);
 
 		$svWg = $this->calculator->premiesSVWerkgever(
 			contributionPaySV: $contributionPaySV,
@@ -173,7 +173,7 @@ class PayrollService {
 		$pensioen = $this->calculator->pensioen(
 			basis: $basissalaris,
 			pctWerkgever: (float)($employee['pensioenPremiePctWerkgever'] ?? 0),
-			pctEmployee: (float)($employee['pensioenPremiePctEmployee'] ?? 0)
+			pctEmployee: (float)($employee['pensionPremiumPctEmployee'] ?? 0)
 		);
 
 		$netPaid = $this->calculator->nettoBetaald(
@@ -184,7 +184,7 @@ class PayrollService {
 			belastingvrijTotaal: $belastingvrijTotaal
 		);
 
-		$grossComponenten['totaal_bruto'] = $totalGross;
+		$grossComponents['totaal_bruto'] = $totalGross;
 		$holidayOpbouw = $this->calculator->vakantiegeldOpbouw(
 			totalGross: $basissalaris,
 			pct: (float)($employee['vakantiegeldPct'] ?? 0.08)
@@ -200,9 +200,9 @@ class PayrollService {
 		return [
 			'employeeId' => $employeeId,
 			'periodId' => (string)($period['id'] ?? ($period['@self']['id'] ?? '')),
-			'grossComponenten' => $grossComponenten,
+			'grossComponents' => $grossComponents,
 			'fiscalPay' => $fiscalPay,
-			'contributionpay_sv' => $contributionPaySV,
+			'contribution_pay_sv' => $contributionPaySV,
 			'payrollTax' => $payrollTax,
 			'inhoudingenSV' => ['totaal_sv_wn' => 0],
 			'premiesSVWerkgever' => $svWg,
@@ -266,7 +266,7 @@ class PayrollService {
 			'totalSocialInsuranceContributions' => $premiesSV,
 			'totalHealthInsurance' => $zvw,
 			'totalRemittance' => $total,
-			'vervaldagRemittance' => $this->lastDagVolgendeMonth(period: $period),
+			'dueDateRemittance' => $this->lastDagVolgendeMonth(period: $period),
 			'status' => 'VOORBEREID',
 			'sbrInstanceRef' => null,
 			'administrationId' => $administrationId,
@@ -303,8 +303,8 @@ class PayrollService {
 		$lhC = 0;
 		$netC = 0;
 		foreach ($stroken as $s) {
-			$totalGross = (float)($s['grossComponenten']['totaal_bruto'] ?? 0);
-			$free = (float)($s['grossComponenten']['thuiswerkvergoeding'] ?? 0);
+			$totalGross = (float)($s['grossComponents']['totaal_bruto'] ?? 0);
+			$free = (float)($s['grossComponents']['thuiswerkvergoeding'] ?? 0);
 			$grossC += ($this->calculator->toCents(amount: $totalGross) - $this->calculator->toCents(amount: $free));
 			$freeC += $this->calculator->toCents(amount: $free);
 			$svWgC += $this->calculator->toCents(amount: ($s['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
@@ -534,8 +534,8 @@ class PayrollService {
 		$tabelId = (string)($period['payrollTaxTableId'] ?? '');
 		if ($tabelId !== '') {
 			$tabel = $this->findOneGlobal(schema: 'LoonheffingTabel2026', filters: ['id' => $tabelId]);
-			if ($tabel !== null && is_array(($tabel['tabelRules'] ?? null)) === true) {
-				return $tabel['tabelRules'];
+			if ($tabel !== null && is_array(($tabel['tableRules'] ?? null)) === true) {
+				return $tabel['tableRules'];
 			}
 		}
 
@@ -553,8 +553,8 @@ class PayrollService {
 			]
 		);
 		foreach ($tabellen as $tabel) {
-			if (is_array(($tabel['tabelRules'] ?? null)) === true) {
-				return $tabel['tabelRules'];
+			if (is_array(($tabel['tableRules'] ?? null)) === true) {
+				return $tabel['tableRules'];
 			}
 		}
 

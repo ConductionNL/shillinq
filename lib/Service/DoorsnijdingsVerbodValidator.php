@@ -155,7 +155,7 @@ class DoorsnijdingsVerbodValidator {
 
 		$findings = [];
 		foreach ($allocations as $allocation) {
-			if (($allocation['exclusief_in_profitdetermination'] ?? false) !== true) {
+			if (($allocation['excluding_in_profitdetermination'] ?? false) !== true) {
 				continue;
 			}
 
@@ -208,7 +208,7 @@ class DoorsnijdingsVerbodValidator {
 					'filters' => [
 						'administrationId' => $administrationId,
 						'financialYear' => $financialYear,
-						'exclusief_in_profitdetermination' => true,
+						'excluding_in_profitdetermination' => true,
 					],
 				]
 			);

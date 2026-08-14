@@ -175,7 +175,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			'Algemene posten',
 			'Bedrag',
 			[
-				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'algemeneFundingSources')],
+				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'generalFundingSources')],
 				['label' => 'Overhead', 'amount' => $this->num($plan, 'overhead')],
 				['label' => 'Heffing vennootschapsbelasting (VPB)', 'amount' => $this->num($plan, 'vpbCharge')],
 				['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'unforeseen')],
@@ -291,7 +291,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 		$this->addDetailsTable(
 			$section,
 			[
-				'Overzicht van baten en lasten' => $this->yesNo($annualAccounts['overzichtRevenueExpenses'] ?? null),
+				'Overzicht van baten en lasten' => $this->yesNo($annualAccounts['overviewRevenueExpenses'] ?? null),
 				'Balans' => $this->yesNo($annualAccounts['balans'] ?? null),
 				'Rechtmatigheidsverantwoording' => $this->yesNo($annualAccounts['lawfulnessAccountability'] ?? null),
 				'Accountantsverklaring' => $this->yesNo($annualAccounts['accountantsverklaring'] ?? null),

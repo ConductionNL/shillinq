@@ -87,7 +87,7 @@ class AcmReportGenerator {
 			$code = (string)($activity['code'] ?? '');
 			$name = (string)($activity['name'] ?? '');
 			$ikp = (array)($ikpRecords[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totaleCost'] ?? 0);
+			$integraleCost = (float)($ikp['totalCost'] ?? 0);
 			$revenue = (float)($revenueByActivity[$activityId] ?? 0);
 			if ($integraleCost > 0.0) {
 				$ratio = round(($revenue / $integraleCost), 4);
@@ -107,7 +107,7 @@ class AcmReportGenerator {
 				'code' => $code,
 				'name' => $name,
 				'revenue' => $revenue,
-				'integraleCostPrice' => $integraleCost,
+				'integralCostPrice' => $integraleCost,
 				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
 				'abbReference' => $abbReference,
@@ -136,10 +136,10 @@ class AcmReportGenerator {
 			'abbList' => $abbSummaries,
 			// Deprecated legacy fields — retained for array shape compatibility; see REQ-SIGN-004.
 			'signatory' => null,
-			'ondertekendOn' => null,
+			'signedOn' => null,
 			'signatureFingerprint' => null,
-			'verzondenInAcm' => false,
-			'verzondenInAcmOn' => null,
+			'sentInAcm' => false,
+			'sentInAcmOn' => null,
 			'publicationMunicipalGazette' => null,
 			'administrationId' => (string)$input['administrationId'],
 			'status' => 'draft',
@@ -162,8 +162,8 @@ class AcmReportGenerator {
 			throw new InvalidArgumentException('Only ready-for-submission reports can be submitted');
 		}
 
-		$report['verzondenInAcm'] = true;
-		$report['verzondenInAcmOn'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+		$report['sentInAcm'] = true;
+		$report['sentInAcmOn'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
 		$report['publicationMunicipalGazette'] = $publicationGmblad;
 		$report['status'] = 'verzonden';
 
@@ -225,7 +225,7 @@ class AcmReportGenerator {
 				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
 				htmlspecialchars((string)($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
 				(float)($a['revenue'] ?? 0),
-				(float)($a['integraleCostPrice'] ?? 0),
+				(float)($a['integralCostPrice'] ?? 0),
 				$ratioAttr,
 				$compliantAttr
 			);

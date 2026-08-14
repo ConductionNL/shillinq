@@ -208,7 +208,7 @@ class BudgetBlockerTest extends TestCase {
 				'financialYear' => 2026,
 				'authorised_amount' => 50000000,
 				'realised_amount' => 20000000,
-				'outstanding_verplichtingen' => 0,
+				'outstanding_commitments' => 0,
 			],
 			$overrides
 		);
@@ -227,7 +227,7 @@ class BudgetBlockerTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
 			'kind' => 'inkooporder',
-			'totalamount_excl_vat' => $amount,
+			'total_amount_excl_vat' => $amount,
 			'rules' => [
 				[
 					'programme' => '5.1',
@@ -248,7 +248,7 @@ class BudgetBlockerTest extends TestCase {
 		$this->assertSame(30000000, $this->guard->freeRoom($this->budget()));
 		$this->assertSame(
 			5000000,
-			$this->guard->freeRoom($this->budget(['outstanding_verplichtingen' => 25000000]))
+			$this->guard->freeRoom($this->budget(['outstanding_commitments' => 25000000]))
 		);
 
 	}//end testFreeRoomCalculation()
@@ -329,7 +329,7 @@ class BudgetBlockerTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'RO-1',
 			'kind' => 'frameworkAgreement',
-			'totalamount_excl_vat' => 20000000,
+			'total_amount_excl_vat' => 20000000,
 			'rules' => [
 				['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
 				['programme' => '5.1', 'financialYear' => 2027, 'amount_excl_vat' => 10000000],

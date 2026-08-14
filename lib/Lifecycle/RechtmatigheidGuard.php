@@ -153,7 +153,7 @@ class RechtmatigheidGuard {
 	 */
 	public function canResolveBevinding(array $bevinding): bool {
 		try {
-			$correction = trim((string)($bevinding['correctionentry_id'] ?? ''));
+			$correction = trim((string)($bevinding['correction_entry_id'] ?? ''));
 			if ($correction === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: bevinding without correctieboeking_id — denying oplossen',
@@ -191,7 +191,7 @@ class RechtmatigheidGuard {
 	 */
 	public function canVaststellenParagraaf(array $paragraph): bool {
 		try {
-			$binnenTolerance = (bool)($paragraph['binnen_tolerance'] ?? true);
+			$binnenTolerance = (bool)($paragraph['within_tolerance'] ?? true);
 			if ($binnenTolerance === true) {
 				return true;
 			}

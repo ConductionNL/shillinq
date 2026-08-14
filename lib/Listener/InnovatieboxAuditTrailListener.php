@@ -162,12 +162,12 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 					'details' => $this->slice(
 						data: $data,
 						keys: [
-							'eigen_rd_cost',
-							'rd_cost_uitbesteed_derden',
-							'rd_cost_uitbesteed_verbonden',
+							'own_rd_cost',
+							'rd_cost_outsourced_third_parties',
+							'rd_cost_outsourced_affiliated',
 							'uplift_factor',
 							'nexusbreuk_ongecapt',
-							'nexusbreuk_applied',
+							'nexus_fraction_applied',
 						]
 					),
 				]
@@ -188,12 +188,12 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 						data: $data,
 						keys: [
 							'method',
-							'gross_opbrengst_activum',
-							'kwalificerende_profit_for_nexus',
-							'kwalificerende_profit_after_nexus',
-							'effectief_rate',
-							'vpb_on_innovationshare',
-							'benefit_innovatiebox',
+							'gross_revenue_asset',
+							'qualifying_profit_for_nexus',
+							'qualifying_profit_after_nexus',
+							'effective_rate',
+							'vpb_on_innovation_share',
+							'benefit_innovation_box',
 							'forfaitair_cap_applied',
 						]
 					),
@@ -205,8 +205,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 			// see the binding cap and the resulting benefit reduction (task
 			// 5.4 + REQ-IBA-003).
 			if ($this->isForfaitairCapHit(data: $data) === true) {
-				$kwalifFor = (float)($data['kwalificerende_profit_for_nexus'] ?? 0);
-				$kwalifAfter = (float)($data['kwalificerende_profit_after_nexus'] ?? 0);
+				$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
+				$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
 				$this->logger->record(
 					options: [
 						'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
@@ -526,7 +526,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 			return false;
 		}
 
-		$forCap = (float)($data['kwalificerende_profit_for_nexus'] ?? 0);
+		$forCap = (float)($data['qualifying_profit_for_nexus'] ?? 0);
 		return ($forCap > 25000.0);
 	}//end isForfaitairCapHit()
 

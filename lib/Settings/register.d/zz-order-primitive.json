@@ -512,7 +512,7 @@
                 "description": "Revenue realised so far, in euro cents (REQ-DBA-004).",
                 "title": "Gerealiseerde Omzet"
               },
-              "oneOffLageThreshold": {
+              "oneOffLowThreshold": {
                 "type": "boolean",
                 "default": false,
                 "description": "Marked 'one-off, total < EUR 5000' — shortened intake offered (REQ-DBA-001).",
@@ -539,7 +539,7 @@
                 "description": "Running DBA risk score 0-100 (REQ-DBA-003).",
                 "title": "Actuele Risicoscore"
               },
-              "riskNiveau": {
+              "riskLevel": {
                 "type": "string",
                 "nullable": true,
                 "enum": [

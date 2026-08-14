@@ -50,7 +50,7 @@
 					{"key": "commitmentNumber", "label": "Number", "sortable": true},
 					{"key": "kind", "label": "Kind", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
-					{"key": "totalamount_excl_vat", "label": "Amount (excl. BTW)", "sortable": true},
+					{"key": "total_amount_excl_vat", "label": "Amount (excl. BTW)", "sortable": true},
 					{"key": "commencementDate", "label": "Start date", "sortable": true},
 					{"key": "mandate_applied", "label": "Mandate", "sortable": true}
 				],
@@ -74,8 +74,8 @@
 					{"key": "commencementDate", "label": "Start date", "type": "string"},
 					{"key": "term_from", "label": "Term from", "type": "string"},
 					{"key": "term_to", "label": "Term until", "type": "string"},
-					{"key": "totalamount_excl_vat", "label": "Total amount (excl. BTW)", "type": "number"},
-					{"key": "totalamount_incl_vat", "label": "Total amount (incl. BTW)", "type": "number"},
+					{"key": "total_amount_excl_vat", "label": "Total amount (excl. BTW)", "type": "number"},
+					{"key": "total_amount_incl_vat", "label": "Total amount (incl. BTW)", "type": "number"},
 					{"key": "valuta", "label": "Currency", "type": "string"},
 					{"key": "vat_regime", "label": "BTW regime", "type": "string"},
 					{"key": "mandate_applied", "label": "Mandate", "type": "string"},
@@ -103,7 +103,7 @@
 							"register": "shillinq",
 							"schema": "Verplichtingsmutatie",
 							"filterField": "commitment",
-							"columns": ["date", "kind", "amount", "gerelateerde_invoice", "journalEntry"]
+							"columns": ["date", "kind", "amount", "related_invoice", "journalEntry"]
 						}
 					},
 					{
@@ -114,7 +114,7 @@
 							"register": "shillinq",
 							"schema": "Goedkeuringsstap",
 							"filterField": "commitment",
-							"columns": ["stepNumber", "rol_required", "toegewezen_in", "status", "behandeld_on"]
+							"columns": ["stepNumber", "role_required", "assigned_in", "status", "handled_on"]
 						}
 					}
 				],
@@ -184,7 +184,7 @@
 					{"key": "houder_type", "label": "Holder type", "type": "string"},
 					{"key": "maximumAmount", "label": "Maximum amount", "type": "number"},
 					{"key": "is_override", "label": "Override mandate", "type": "boolean"},
-					{"key": "required_tweede_signature_boven", "label": "Second signature above", "type": "number"},
+					{"key": "required_second_signature_above", "label": "Second signature above", "type": "number"},
 					{"key": "valid_from", "label": "Valid from", "type": "string"},
 					{"key": "valid_to", "label": "Valid until", "type": "string"},
 					{"key": "determined_at", "label": "Adopted by", "type": "string"}
@@ -223,8 +223,8 @@
 				"columns": [
 					{"key": "commitment", "label": "Commitment", "sortable": true},
 					{"key": "stepNumber", "label": "Step", "sortable": true},
-					{"key": "rol_required", "label": "Role", "sortable": true},
-					{"key": "toegewezen_in", "label": "Assigned to", "sortable": true},
+					{"key": "role_required", "label": "Role", "sortable": true},
+					{"key": "assigned_in", "label": "Assigned to", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true}
 				],
 				"defaultSort": "commitment",
@@ -243,10 +243,10 @@
 				"fields": [
 					{"key": "commitment", "label": "Commitment", "type": "string"},
 					{"key": "stepNumber", "label": "Step", "type": "number"},
-					{"key": "rol_required", "label": "Role required", "type": "string"},
-					{"key": "toegewezen_in", "label": "Assigned to", "type": "string"},
+					{"key": "role_required", "label": "Role required", "type": "string"},
+					{"key": "assigned_in", "label": "Assigned to", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "behandeld_on", "label": "Handled on", "type": "string"},
+					{"key": "handled_on", "label": "Handled on", "type": "string"},
 					{"key": "remark", "label": "Remark", "type": "string"},
 					{"key": "required_signature", "label": "Signature required", "type": "boolean"}
 				],

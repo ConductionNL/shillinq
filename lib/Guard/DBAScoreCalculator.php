@@ -86,7 +86,7 @@ class DBAScoreCalculator {
 
 		$booster = 0;
 		$deliverooBlock = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
-		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['personalArbeid'] ?? []));
+		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['personalLabour'] ?? []));
 
 		$exclusief = (bool)($deliverooBlock['exclusief'] ?? false);
 		$duration = (string)($deliverooBlock['durationRelationship'] ?? '');
@@ -148,7 +148,7 @@ class DBAScoreCalculator {
 	 * @return int The subtotal in [0, 20].
 	 */
 	public function subtotalArbeid(array $intake): int {
-		$block = $this->arrayOrEmpty(value: ($intake['personalArbeid'] ?? []));
+		$block = $this->arrayOrEmpty(value: ($intake['personalLabour'] ?? []));
 		$value = (int)($block['replaceableScore'] ?? 0) + (int)($block['replacementActualScore'] ?? 0);
 		return $this->clamp(value: $value, min: 0, max: 20);
 	}//end subtotalArbeid()
@@ -161,10 +161,10 @@ class DBAScoreCalculator {
 	 * @return int The subtotal in [0, 20].
 	 */
 	public function subtotalFinancieel(array $intake): int {
-		$block = $this->arrayOrEmpty(value: ($intake['financieelRisk'] ?? []));
+		$block = $this->arrayOrEmpty(value: ($intake['financialRisk'] ?? []));
 		$frequency = (int)($block['invoiceFrequencyScore'] ?? 0);
 		$risk = (int)($block['paymentRiskScore'] ?? 0);
-		$investment = (int)($block['investmentEigenMiddelenScore'] ?? 0);
+		$investment = (int)($block['investmentOwnResourcesScore'] ?? 0);
 		$value = ($frequency + $risk + $investment);
 		return $this->clamp(value: $value, min: 0, max: 20);
 	}//end subtotalFinancieel()

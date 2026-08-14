@@ -187,7 +187,7 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 */
 	public function testCanBehandelenWhenSevenParagrafenAndNominaleSet(): void {
 		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, ''));
-		$budget = ['id' => 'pb-1', 'nominaleDevelopment' => 2.0];
+		$budget = ['id' => 'pb-1', 'nominalDevelopment' => 2.0];
 		self::assertTrue($this->guard->canBehandelen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanBehandelenWhenSevenParagrafenAndNominaleSet()
@@ -200,7 +200,7 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	public function testCanBehandelenDeniedWhenParagraafMissing(): void {
 		$missing = array_slice(self::PARAGRAAF_TYPES, 0, 6);
 		$this->stubParagrafen($this->paragrafen($missing, ''));
-		$budget = ['id' => 'pb-1', 'nominaleDevelopment' => 2.0];
+		$budget = ['id' => 'pb-1', 'nominalDevelopment' => 2.0];
 		self::assertFalse($this->guard->canBehandelen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanBehandelenDeniedWhenParagraafMissing()
@@ -212,7 +212,7 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 */
 	public function testCanBehandelenDeniedWhenNominaleUnset(): void {
 		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, ''));
-		$budget = ['id' => 'pb-1', 'nominaleDevelopment' => null];
+		$budget = ['id' => 'pb-1', 'nominalDevelopment' => null];
 		self::assertFalse($this->guard->canBehandelen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanBehandelenDeniedWhenNominaleUnset()

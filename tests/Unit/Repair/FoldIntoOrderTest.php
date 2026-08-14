@@ -383,7 +383,7 @@ class FoldIntoOrderTest extends TestCase {
 			'startDate' => '2026-03-01',
 			'expectedRevenue' => 4800000,
 			'intakeStatus' => 'ACTIEF',
-			'riskNiveau' => 'LAAG_MIDDEN',
+			'riskLevel' => 'LAAG_MIDDEN',
 			'modelOvereenkomstId' => 'modov-bd-2024-tussenkomstvrij-v3',
 		];
 
@@ -406,7 +406,7 @@ class FoldIntoOrderTest extends TestCase {
 		self::assertSame('DBA-dba-opdr-2026-0042', $order['orderNumber']);
 		self::assertSame('ACTIEF', $order['state'], 'engagement state vocabulary preserved verbatim');
 		self::assertSame(48000.0, $order['totalAmount']);
-		self::assertSame('LAAG_MIDDEN', $order['engagement']['riskNiveau']);
+		self::assertSame('LAAG_MIDDEN', $order['engagement']['riskLevel']);
 		self::assertSame('modov-bd-2024-tussenkomstvrij-v3', $order['engagement']['modelOvereenkomstId']);
 		self::assertSame('DBAOpdracht', $order['migratedFrom']['schema']);
 
@@ -628,7 +628,7 @@ class FoldIntoOrderTest extends TestCase {
 					'assignmentName' => 'Opdracht Idem',
 					'startDate' => '2026-02-01',
 					'intakeStatus' => 'ACTIEF',
-					'riskNiveau' => 'LAAG',
+					'riskLevel' => 'LAAG',
 				],
 			],
 		];

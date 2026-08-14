@@ -14,7 +14,7 @@
  *     `shillinq.milestone.completed` event so the audit-trail subscriber
  *     (REQ-005) and any budget-utilisation consumer pick up the change
  *     within seconds.
- *  2. When the completed oplevering is `eindoplevering` + `goedgekeurd`
+ *  2. When the completed oplevering is `eindoplevering` + `approved`
  *     true, {@see TenderNedStatusSync::syncCompletion()} is invoked so
  *     the public TenderNed dossier reflects completion (REQ-006). The
  *     sync itself is best-effort (live openconnector transport, Task
@@ -124,7 +124,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 				return;
 			}
 
-			if (((bool)($oplevering['goedgekeurd'] ?? false)) !== true) {
+			if (((bool)($oplevering['approved'] ?? false)) !== true) {
 				return;
 			}
 

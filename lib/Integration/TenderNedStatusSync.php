@@ -26,7 +26,7 @@
  *
  * Authorisation is checked here defensively in addition to the
  * declarative RBAC + TenderNedAanbestedingGuard upstream: the
- * `gegundeLeverancier` of the linked aanbesteding must match the tenant
+ * `awardedSupplier` of the linked aanbesteding must match the tenant
  * KvK before the call is allowed (vendors cannot sync; only the
  * aanbestedende dienst can — see design D6).
  *
@@ -206,7 +206,7 @@ class TenderNedStatusSync {
 			return false;
 		}
 
-		$dienst = trim((string)($tender['contractingDienst'] ?? ''));
+		$dienst = trim((string)($tender['contractingService'] ?? ''));
 		if ($dienst === '') {
 			return false;
 		}

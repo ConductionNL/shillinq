@@ -471,7 +471,7 @@ class DBAFlagGenerationJob extends TimedJob {
 					'fiscalSource' => $source,
 					'actionSuggestion' => $action,
 					'status' => 'OPEN',
-					'weergegevenInUser' => true,
+					'displayedInUser' => true,
 				]
 			);
 			return true;

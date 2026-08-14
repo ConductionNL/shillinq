@@ -110,7 +110,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 			'governingBody',
 			'marktsegment',
 			'concurrenten',
-			'costPriceMethode',
+			'costPriceMethod',
 			'costCentreCode',
 			'costObjectCode',
 			'isExempted',
@@ -121,7 +121,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		}
 
 		// The kostprijsMethode is the statutory enum.
-		self::assertContains('integrale-kostprijs-art-25i', $props['costPriceMethode']['enum']);
+		self::assertContains('integrale-kostprijs-art-25i', $props['costPriceMethod']['enum']);
 
 	}//end testCommercialActivityHasMandatoryFields()
 
@@ -136,9 +136,9 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		$components = $schema['properties']['componenten']['properties'];
 
 		$expected = [
-			'directePayrollCost',
+			'directPayrollCost',
 			'directeMaterialen',
-			'directeDepreciations',
+			'directDepreciations',
 			'indirecteOverhead',
 			'capitalCost',
 			'winstopslag',

@@ -52,8 +52,8 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 		$service = $this->build();
 		$total = $service->telOndernemingsUren(
 			dagregistraties: [
-				['hours' => 8, 'getoldeHours' => 8],
-				['hours' => 6, 'getoldeHours' => 4],
+				['hours' => 8, 'countedHours' => 8],
+				['hours' => 6, 'countedHours' => 4],
 				['hours' => 2],
 			]
 		);
@@ -74,7 +74,7 @@ final class GrotendeelsCriteriumServiceTest extends TestCase {
 				['hours' => 8],
 				'garbage',
 				123,
-				['hours' => 4, 'getoldeHours' => 4],
+				['hours' => 4, 'countedHours' => 4],
 			]
 		);
 

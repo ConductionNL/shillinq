@@ -70,7 +70,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 */
 	public function testReistijdWithinCapUnchanged(): void {
 		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 3.0);
-		self::assertSame(3.0, $result['getoldeHours']);
+		self::assertSame(3.0, $result['countedHours']);
 		self::assertNull($result['capNote']);
 
 	}//end testReistijdWithinCapUnchanged()
@@ -82,7 +82,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 */
 	public function testReistijdCapAppliedWithNote(): void {
 		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 6.0);
-		self::assertSame(4.0, $result['getoldeHours']);
+		self::assertSame(4.0, $result['countedHours']);
 		self::assertSame('Reistijd-cap toegepast: 2 uur niet meegeteld', $result['capNote']);
 
 	}//end testReistijdCapAppliedWithNote()
@@ -94,7 +94,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 */
 	public function testOtherCategoriesNotCapped(): void {
 		$result = $this->guard->pasReistijdCapToe(category: 'ACQUISITIE', hours: 9.0);
-		self::assertSame(9.0, $result['getoldeHours']);
+		self::assertSame(9.0, $result['countedHours']);
 		self::assertNull($result['capNote']);
 
 	}//end testOtherCategoriesNotCapped()

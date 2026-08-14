@@ -15,7 +15,7 @@
       "maximumAmount": 1000000,
       "kind_commitment": ["inkooporder"],
       "is_override": false,
-      "required_tweede_signature_boven": null,
+      "required_second_signature_above": null,
       "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "municipality"
     },
@@ -26,7 +26,7 @@
       "maximumAmount": 5000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement"],
       "is_override": false,
-      "required_tweede_signature_boven": 2500000,
+      "required_second_signature_above": 2500000,
       "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "municipality"
     },
@@ -37,7 +37,7 @@
       "maximumAmount": 10000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "huurovereenkomst", "leasing"],
       "is_override": false,
-      "required_tweede_signature_boven": 5000000,
+      "required_second_signature_above": 5000000,
       "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "municipality"
     },
@@ -48,7 +48,7 @@
       "maximumAmount": 25000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing"],
       "is_override": false,
-      "required_tweede_signature_boven": null,
+      "required_second_signature_above": null,
       "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "municipality"
     },
@@ -59,7 +59,7 @@
       "maximumAmount": 1000000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
       "is_override": true,
-      "required_tweede_signature_boven": null,
+      "required_second_signature_above": null,
       "determined_at": "Mandaatregeling 2026 (override budgetoverschrijding)",
       "doelgroep": "municipality"
     },
@@ -70,7 +70,7 @@
       "maximumAmount": 50000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "subsidiebeschikking"],
       "is_override": false,
-      "required_tweede_signature_boven": 25000000,
+      "required_second_signature_above": 25000000,
       "determined_at": "Mandaatregeling Provinciewet",
       "doelgroep": "provincie"
     },
@@ -81,7 +81,7 @@
       "maximumAmount": 20000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "leasing"],
       "is_override": false,
-      "required_tweede_signature_boven": 10000000,
+      "required_second_signature_above": 10000000,
       "determined_at": "Mandaatregeling Waterschapswet",
       "doelgroep": "waterschap"
     },
@@ -92,7 +92,7 @@
       "maximumAmount": 2500000,
       "kind_commitment": ["inkooporder"],
       "is_override": false,
-      "required_tweede_signature_boven": null,
+      "required_second_signature_above": null,
       "determined_at": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
@@ -103,7 +103,7 @@
       "maximumAmount": 10000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "huurovereenkomst", "leasing", "arbeidscontract"],
       "is_override": false,
-      "required_tweede_signature_boven": 5000000,
+      "required_second_signature_above": 5000000,
       "determined_at": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
@@ -114,7 +114,7 @@
       "maximumAmount": 25000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "arbeidscontract", "huurovereenkomst", "leasing", "overig"],
       "is_override": false,
-      "required_tweede_signature_boven": null,
+      "required_second_signature_above": null,
       "determined_at": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
@@ -125,7 +125,7 @@
       "maximumAmount": 1000000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
       "is_override": true,
-      "required_tweede_signature_boven": null,
+      "required_second_signature_above": null,
       "determined_at": "Interne procuratieregeling (override)",
       "doelgroep": "mkb"
     },
@@ -136,7 +136,7 @@
       "maximumAmount": 1000000000,
       "kind_commitment": ["inkooporder", "frameworkAgreement", "huurovereenkomst", "leasing", "overig"],
       "is_override": true,
-      "required_tweede_signature_boven": null,
+      "required_second_signature_above": null,
       "determined_at": "Eenmanszaak — volledige tekenbevoegdheid",
       "doelgroep": "zzp"
     }

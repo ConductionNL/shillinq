@@ -147,24 +147,24 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 			'waccRate' => 0.045,
 			'periodFraction' => 1.0,
 			'winstopslagRate' => 0.03,
-			'verkochteUnits' => 312.0,
+			'soldUnits' => 312.0,
 			'unitLabel' => 'dagdeel-zaalhuur',
-			'gehanteerdRate' => 295.0,
+			'appliedRate' => 295.0,
 		]);
 
 		self::assertSame('voorlopig', $ikp['status']);
-		self::assertSame(41_250.00, $ikp['componenten']['directePayrollCost']);
+		self::assertSame(41_250.00, $ikp['componenten']['directPayrollCost']);
 		self::assertSame(8_730.00, $ikp['componenten']['directeMaterialen']);
-		self::assertSame(6_900.00, $ikp['componenten']['directeDepreciations']);
+		self::assertSame(6_900.00, $ikp['componenten']['directDepreciations']);
 		// Overhead: 36_580_000 × 7.2% = 2_633_760 cents = €26 337.60.
 		self::assertSame(26_337.60, $ikp['componenten']['indirecteOverhead']['directieEnStaf']);
 		// Vermogenskosten: 4_040_000 × 4.5% = 181_800 cents = €1818.
 		self::assertSame(1_818.00, $ikp['componenten']['capitalCost']);
 		// Base = 41 250 + 8 730 + 6 900 + 26 337.60 + 1 818 = 85 035.60; winstopslag 3% = 2 551.07
 		self::assertSame(2_551.07, $ikp['componenten']['winstopslag']);
-		self::assertSame(87_586.67, $ikp['totaleCost']);
+		self::assertSame(87_586.67, $ikp['totalCost']);
 		self::assertEqualsWithDelta(280.7265, $ikp['costPricePerUnit'], 0.01);
-		self::assertSame(295.0, $ikp['gehanteerdRate']);
+		self::assertSame(295.0, $ikp['appliedRate']);
 		self::assertTrue($ikp['compliant']);
 		self::assertGreaterThan(0, $ikp['marge']);
 		self::assertSame('dagdeel-zaalhuur', $ikp['unitLabel']);

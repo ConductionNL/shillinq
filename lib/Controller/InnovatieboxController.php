@@ -148,11 +148,11 @@ class InnovatieboxController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$eigen = $this->request->getParam('eigen_rd_cost', null);
+		$eigen = $this->request->getParam('own_rd_cost', null);
 		$derden = $this->request->getParam('uitbesteed_derden', null);
 		$verbonden = $this->request->getParam('uitbesteed_verbonden', null);
 
-		foreach (['eigen_rd_cost' => $eigen, 'uitbesteed_derden' => $derden, 'uitbesteed_verbonden' => $verbonden] as $name => $value) {
+		foreach (['own_rd_cost' => $eigen, 'uitbesteed_derden' => $derden, 'uitbesteed_verbonden' => $verbonden] as $name => $value) {
 			if ($value === null || is_numeric($value) === false || (float)$value < 0.0) {
 				return new JSONResponse(
 					['error' => $name . ' must be a non-negative number'],

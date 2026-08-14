@@ -708,7 +708,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testDepreciationStartsMonthAfterIngebruikname(): void {
 		$result = $this->guard->depreciationStartMonth(
-			['ingebruiknameDate' => '2026-09-15']
+			['commissioningDate' => '2026-09-15']
 		);
 
 		self::assertSame(expected: '2026-10', actual: $result, message: 'REQ-BBV-005: first depreciation in 2026-10');
@@ -722,7 +722,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 */
 	public function testDepreciationStartsRollsOverYearBoundary(): void {
 		$result = $this->guard->depreciationStartMonth(
-			['ingebruiknameDate' => '2026-12-31']
+			['commissioningDate' => '2026-12-31']
 		);
 
 		self::assertSame(expected: '2027-01', actual: $result);
@@ -735,7 +735,7 @@ class BbvComplianceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDepreciationStartReturnsNullWithoutDate(): void {
-		self::assertNull(actual: $this->guard->depreciationStartMonth(['ingebruiknameDate' => '']));
+		self::assertNull(actual: $this->guard->depreciationStartMonth(['commissioningDate' => '']));
 
 	}//end testDepreciationStartReturnsNullWithoutDate()
 

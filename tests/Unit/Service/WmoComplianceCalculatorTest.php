@@ -81,9 +81,9 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	 */
 	public function testIntegralCostPriceSumsComponentsAndPerUnit(): void {
 		$componenten = [
-			'directePayrollCost' => 41250,
+			'directPayrollCost' => 41250,
 			'directeMaterialen' => 8730,
-			'directeDepreciations' => 6900,
+			'directDepreciations' => 6900,
 			'indirecteOverhead' => [
 				'huisvesting' => 12000,
 				'ict' => 6140,
@@ -96,7 +96,7 @@ final class WmoComplianceCalculatorTest extends TestCase {
 
 		$result = $this->calc->integralCostPrice($componenten, 312.0);
 
-		self::assertSame(87390.0, $result['totaleCost']);
+		self::assertSame(87390.0, $result['totalCost']);
 		self::assertSame(280.10, $result['costPricePerUnit']);
 
 	}//end testIntegralCostPriceSumsComponentsAndPerUnit()
@@ -108,16 +108,16 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	 */
 	public function testIntegralCostPriceNullPerUnitWhenNoUnits(): void {
 		$componenten = [
-			'directePayrollCost' => 1000,
+			'directPayrollCost' => 1000,
 			'directeMaterialen' => 0,
-			'directeDepreciations' => 0,
+			'directDepreciations' => 0,
 			'indirecteOverhead' => [],
 			'capitalCost' => 0,
 			'winstopslag' => 0,
 		];
 
 		$result = $this->calc->integralCostPrice($componenten, null);
-		self::assertSame(1000.0, $result['totaleCost']);
+		self::assertSame(1000.0, $result['totalCost']);
 		self::assertNull($result['costPricePerUnit']);
 
 		$zeroUnits = $this->calc->integralCostPrice($componenten, 0.0);

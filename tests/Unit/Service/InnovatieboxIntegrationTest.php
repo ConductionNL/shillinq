@@ -108,10 +108,10 @@ final class InnovatieboxIntegrationTest extends TestCase {
 				],
 			],
 			'totals' => [
-				'kwalificerende_profit_for_nexus' => $profitResult['qualifyingProfitForNexus'],
-				'kwalificerende_profit_after_nexus' => $profitResult['qualifyingProfitAfterNexus'],
-				'vpb_on_innovationshare' => $profitResult['vpbOnInnovationShare'],
-				'benefit_innovatiebox' => $profitResult['innovationBoxBenefit'],
+				'qualifying_profit_for_nexus' => $profitResult['qualifyingProfitForNexus'],
+				'qualifying_profit_after_nexus' => $profitResult['qualifyingProfitAfterNexus'],
+				'vpb_on_innovation_share' => $profitResult['vpbOnInnovationShare'],
+				'benefit_innovation_box' => $profitResult['innovationBoxBenefit'],
 			],
 		];
 
@@ -146,10 +146,10 @@ final class InnovatieboxIntegrationTest extends TestCase {
 		$aggregation = [
 			'data' => [],
 			'totals' => [
-				'kwalificerende_profit_for_nexus' => $profitResult['qualifyingProfitForNexus'],
-				'kwalificerende_profit_after_nexus' => $profitResult['qualifyingProfitAfterNexus'],
-				'vpb_on_innovationshare' => $profitResult['vpbOnInnovationShare'],
-				'benefit_innovatiebox' => $profitResult['innovationBoxBenefit'],
+				'qualifying_profit_for_nexus' => $profitResult['qualifyingProfitForNexus'],
+				'qualifying_profit_after_nexus' => $profitResult['qualifyingProfitAfterNexus'],
+				'vpb_on_innovation_share' => $profitResult['vpbOnInnovationShare'],
+				'benefit_innovation_box' => $profitResult['innovationBoxBenefit'],
 			],
 		];
 

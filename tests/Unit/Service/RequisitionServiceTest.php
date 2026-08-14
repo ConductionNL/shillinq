@@ -267,7 +267,7 @@ final class RequisitionServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(230000, $requisition['totalamount_excl_vat']);
+		self::assertSame(230000, $requisition['total_amount_excl_vat']);
 		self::assertSame('draft', $requisition['statusCode']);
 		self::assertSame('employee-1', $requisition['requester']);
 
@@ -319,7 +319,7 @@ final class RequisitionServiceTest extends TestCase {
 					'id' => 'req-1',
 					'administrationId' => 'adm-1',
 					'statusCode' => 'draft',
-					'totalamount_excl_vat' => 50000,
+					'total_amount_excl_vat' => 50000,
 					'programme' => '5.1',
 					'financialYear' => 2026,
 					'kind' => 'inkoop',
@@ -344,7 +344,7 @@ final class RequisitionServiceTest extends TestCase {
 		$saved = [];
 		$data = [
 			'Requisition' => [
-				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totalamount_excl_vat' => 50000],
+				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'total_amount_excl_vat' => 50000],
 			],
 		];
 		$service = $this->buildService(data: $data, saved: $saved, userId: 'employee-1', accessibleAdministrations: ['adm-1']);
@@ -374,7 +374,7 @@ final class RequisitionServiceTest extends TestCase {
 					'programme' => '5.1',
 					'financialYear' => 2026,
 					'kind' => 'inkoop',
-					'totalamount_excl_vat' => 500000,
+					'total_amount_excl_vat' => 500000,
 				],
 			],
 			'Budget' => [
@@ -384,7 +384,7 @@ final class RequisitionServiceTest extends TestCase {
 					'financialYear' => 2026,
 					'authorised_amount' => 1000000,
 					'realised_amount' => 0,
-					'outstanding_verplichtingen' => 0,
+					'outstanding_commitments' => 0,
 				],
 			],
 		];
@@ -418,7 +418,7 @@ final class RequisitionServiceTest extends TestCase {
 					'financialYear' => 2026,
 					'kind' => 'inkoop',
 					// 20,000.00 EUR requested against a 10,000.00 EUR free room.
-					'totalamount_excl_vat' => 2000000,
+					'total_amount_excl_vat' => 2000000,
 				],
 			],
 			'Budget' => [
@@ -428,7 +428,7 @@ final class RequisitionServiceTest extends TestCase {
 					'financialYear' => 2026,
 					'authorised_amount' => 1000000,
 					'realised_amount' => 0,
-					'outstanding_verplichtingen' => 0,
+					'outstanding_commitments' => 0,
 				],
 			],
 		];
@@ -464,7 +464,7 @@ final class RequisitionServiceTest extends TestCase {
 		$saved = [];
 		$data = [
 			'Requisition' => [
-				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft', 'totalamount_excl_vat' => 50000],
+				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft', 'total_amount_excl_vat' => 50000],
 			],
 		];
 		$service = $this->buildService(data: $data, saved: $saved, userId: 'controller-1', accessibleAdministrations: ['adm-1']);
@@ -485,7 +485,7 @@ final class RequisitionServiceTest extends TestCase {
 		$saved = [];
 		$data = [
 			'Requisition' => [
-				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totalamount_excl_vat' => 50000],
+				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'total_amount_excl_vat' => 50000],
 			],
 		];
 		$service = $this->buildService(data: $data, saved: $saved, userId: 'controller-1', accessibleAdministrations: ['adm-1']);
@@ -507,7 +507,7 @@ final class RequisitionServiceTest extends TestCase {
 		$saved = [];
 		$data = [
 			'Requisition' => [
-				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totalamount_excl_vat' => 50000],
+				['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'total_amount_excl_vat' => 50000],
 			],
 		];
 		$service = $this->buildService(data: $data, saved: $saved, userId: 'controller-1', accessibleAdministrations: ['adm-1']);

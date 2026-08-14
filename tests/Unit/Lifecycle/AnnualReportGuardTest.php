@@ -197,7 +197,7 @@ class AnnualReportGuardTest extends TestCase {
 		self::assertTrue(
 			$this->guard->canVaststellen(
 				annualReportId: 'r-7',
-				object: ['accountantsverklaringRequired' => false]
+				object: ['auditorsStatementRequired' => false]
 			)
 		);
 
@@ -214,7 +214,7 @@ class AnnualReportGuardTest extends TestCase {
 			$this->guard->canVaststellen(
 				annualReportId: 'r-8',
 				object: [
-					'accountantsverklaringRequired' => true,
+					'auditorsStatementRequired' => true,
 					'accountantsverklaringStatus' => 'goedkeurend',
 				]
 			)
@@ -233,7 +233,7 @@ class AnnualReportGuardTest extends TestCase {
 			$this->guard->canVaststellen(
 				annualReportId: 'r-9',
 				object: [
-					'accountantsverklaringRequired' => true,
+					'auditorsStatementRequired' => true,
 					'accountantsverklaringStatus' => 'in-afwachting',
 				]
 			)
@@ -252,7 +252,7 @@ class AnnualReportGuardTest extends TestCase {
 			$this->guard->canVaststellen(
 				annualReportId: 'r-10',
 				object: [
-					'accountantsverklaringRequired' => true,
+					'auditorsStatementRequired' => true,
 					'accountantsverklaringStatus' => 'samenstelling',
 				]
 			)

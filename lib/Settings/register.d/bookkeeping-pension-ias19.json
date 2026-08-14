@@ -573,11 +573,11 @@
               }
             ],
             "subject": {
-              "nl": "Actuariële waardering goedgekeurd",
+              "nl": "Actuariële waardering approved",
               "en": "Actuarial valuation approved"
             },
             "body": {
-              "nl": "De actuariële waardering per {{valuationDate}} is goedgekeurd via decidesk.",
+              "nl": "De actuariële waardering per {{valuationDate}} is approved via decidesk.",
               "en": "The actuarial valuation as of {{valuationDate}} was approved via decidesk."
             },
             "metadataOnly": true

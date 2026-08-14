@@ -84,13 +84,13 @@ final class CrossSubsidyDetectorTest extends TestCase {
 	 */
 	public function testDetectOverheadUnderAllocation(): void {
 		$tooLow = [
-			'totaleCost' => 100_000.0,
+			'totalCost' => 100_000.0,
 			'componenten' => ['indirecteOverhead' => ['huisvesting' => 500.0]],
 		];
 		self::assertTrue($this->svc->detectOverheadUnderAllocation($tooLow));
 
 		$ok = [
-			'totaleCost' => 100_000.0,
+			'totalCost' => 100_000.0,
 			'componenten' => ['indirecteOverhead' => ['huisvesting' => 5_000.0, 'ict' => 2_500.0]],
 		];
 		self::assertFalse($this->svc->detectOverheadUnderAllocation($ok));
@@ -102,10 +102,10 @@ final class CrossSubsidyDetectorTest extends TestCase {
 	 */
 	public function testDetectAbbStale(): void {
 		$activity = ['isExempted' => true];
-		$stale = ['volgendeEvaluation' => '2023-01-01'];
+		$stale = ['nextEvaluation' => '2023-01-01'];
 		self::assertTrue($this->svc->detectAbbStale($activity, $stale, '2026-01-15'));
 
-		$fresh = ['volgendeEvaluation' => '2027-01-01'];
+		$fresh = ['nextEvaluation' => '2027-01-01'];
 		self::assertFalse($this->svc->detectAbbStale($activity, $fresh, '2026-01-15'));
 
 		// Non-exempted activities never trigger.

@@ -145,7 +145,7 @@ class BudgetImpactEmitter {
 			'milestoneId' => (string)($oplevering['milestoneId'] ?? ''),
 			'deliveryType' => (string)($oplevering['deliveryType'] ?? ''),
 			'deliveryDate' => (string)($oplevering['deliveryDate'] ?? ''),
-			'goedgekeurd' => (bool)($oplevering['goedgekeurd'] ?? false),
+			'approved' => (bool)($oplevering['approved'] ?? false),
 			'bewijsstukCount' => count($supportingDocuments),
 			'administrationId' => (string)($oplevering['administrationId'] ?? ''),
 			'emittedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),

@@ -208,7 +208,7 @@ final class TenderNedStatusSyncTest extends TestCase {
 			$this->container(
 				[
 					'tenderId' => 'TN-2026-0001',
-					'contractingDienst' => '99999999 Gemeente Anders',
+					'contractingService' => '99999999 Gemeente Anders',
 					'commitmentId' => 'TN-X',
 				],
 				$this->spyGateway()
@@ -240,7 +240,7 @@ final class TenderNedStatusSyncTest extends TestCase {
 			$this->container(
 				[
 					'tenderId' => 'TN-2026-0001',
-					'contractingDienst' => '30280353 Gemeente Utrecht',
+					'contractingService' => '30280353 Gemeente Utrecht',
 					'commitmentId' => 'TN-X',
 				],
 				null
@@ -274,7 +274,7 @@ final class TenderNedStatusSyncTest extends TestCase {
 			$this->container(
 				[
 					'tenderId' => 'TN-2026-0001',
-					'contractingDienst' => '30280353 Gemeente Utrecht',
+					'contractingService' => '30280353 Gemeente Utrecht',
 					'commitmentId' => 'TN-X',
 				],
 				$gateway
@@ -320,7 +320,7 @@ final class TenderNedStatusSyncTest extends TestCase {
 			$this->container(
 				[
 					'tenderId' => 'TN-2026-0001',
-					'contractingDienst' => '30280353 Gemeente Utrecht',
+					'contractingService' => '30280353 Gemeente Utrecht',
 					'commitmentId' => 'TN-X',
 				],
 				$gateway

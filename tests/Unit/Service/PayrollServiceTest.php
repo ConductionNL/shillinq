@@ -227,7 +227,7 @@ final class PayrollServiceTest extends TestCase {
 					'thuiswerkdagenPerWeek' => 0,
 					'expat30PctScheme' => false,
 					'pensioenPremiePctWerkgever' => 0.182,
-					'pensioenPremiePctEmployee' => 0.072,
+					'pensionPremiumPctEmployee' => 0.072,
 					'vakantiegeldPct' => 0.08,
 					'payrollTaxTable' => 'WIT_REGULIER',
 					'payrollTaxTableDiscount' => true,
@@ -250,7 +250,7 @@ final class PayrollServiceTest extends TestCase {
 					'kleur' => 'WIT',
 					'period' => 'MAAND',
 					'withDiscount' => true,
-					'tabelRules' => [
+					'tableRules' => [
 						['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
 					],
 				],
@@ -329,7 +329,7 @@ final class PayrollServiceTest extends TestCase {
 		self::assertSame(250.0, $remittance['totalHealthInsurance']);
 		self::assertSame(2250.0, $remittance['totalRemittance']);
 		self::assertSame('VOORBEREID', $remittance['status']);
-		self::assertSame('2026-06-30', $remittance['vervaldagRemittance']);
+		self::assertSame('2026-06-30', $remittance['dueDateRemittance']);
 
 	}//end testBerekenLHAfdrachtAggregates()
 
@@ -343,7 +343,7 @@ final class PayrollServiceTest extends TestCase {
 		$data['LoonStrook'] = [
 			[
 				'periodId' => 'lp-1',
-				'grossComponenten' => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
+				'grossComponents' => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
 				'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
 				'zvw' => ['afgedragen_wg' => 262.81],
 				'pensioen' => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],

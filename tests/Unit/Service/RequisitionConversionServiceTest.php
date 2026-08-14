@@ -316,7 +316,7 @@ final class RequisitionConversionServiceTest extends TestCase {
 					'financialYear' => 2026,
 					'kind' => 'inkoop',
 					'preferredSupplierId' => 'vendor-001',
-					'totalamount_excl_vat' => 240000,
+					'total_amount_excl_vat' => 240000,
 				],
 			],
 			'RequisitionLine' => [
@@ -375,7 +375,7 @@ final class RequisitionConversionServiceTest extends TestCase {
 						'financialYear' => 2026,
 						'kind' => 'inkoop',
 						'preferredSupplierId' => 'vendor-001',
-						'totalamount_excl_vat' => 240000,
+						'total_amount_excl_vat' => 240000,
 					],
 				],
 				'RequisitionLine' => [
@@ -430,7 +430,7 @@ final class RequisitionConversionServiceTest extends TestCase {
 					'programme' => '5.1',
 					'financialYear' => 2026,
 					'kind' => 'inkoop',
-					'totalamount_excl_vat' => 240000,
+					'total_amount_excl_vat' => 240000,
 				],
 			],
 		];

@@ -174,7 +174,7 @@ class RechtmatigheidGuardTest extends TestCase {
 		$result = $this->guard->canResolveBevinding(
 			bevinding: [
 				'findingNumber' => 'RV-2026-0142',
-				'correctionentry_id' => 'je-2026-9001',
+				'correction_entry_id' => 'je-2026-9001',
 			]
 		);
 		self::assertTrue(condition: $result, message: 'Linked correctieboeking must permit resolution');
@@ -187,7 +187,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenParagraafPermitsBinnenTolerantie(): void {
-		$result = $this->guard->canVaststellenParagraaf(paragraph: ['binnen_tolerance' => true]);
+		$result = $this->guard->canVaststellenParagraaf(paragraph: ['within_tolerance' => true]);
 		self::assertTrue(condition: $result, message: 'Binnen tolerantie must permit vaststellen');
 
 	}//end testCanVaststellenParagraafPermitsBinnenTolerantie()
@@ -200,7 +200,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanVaststellenParagraafDeniesBuitenTolerantieZonderToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
 			paragraph: [
-				'binnen_tolerance' => false,
+				'within_tolerance' => false,
 				'declaration_college' => '',
 				'financialYear' => 2026,
 			]
@@ -217,7 +217,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanVaststellenParagraafPermitsBuitenTolerantieMetToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
 			paragraph: [
-				'binnen_tolerance' => false,
+				'within_tolerance' => false,
 				'declaration_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
 				'financialYear' => 2026,
 			]

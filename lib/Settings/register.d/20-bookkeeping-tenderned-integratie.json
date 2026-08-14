@@ -12,8 +12,8 @@
         "type": "object",
         "required": [
           "tenderId",
-          "titel",
-          "contractingDienst",
+          "title",
+          "contractingService",
           "status",
           "administrationId"
         ],
@@ -31,7 +31,7 @@
             "example": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001",
             "title": "Tender Ned URL"
           },
-          "titel": {
+          "title": {
             "type": "string",
             "description": "Human-readable tender title.",
             "example": "Schoonmaak Gemeentehuis Utrecht",
@@ -54,7 +54,7 @@
             ],
             "title": "Cpv Codes"
           },
-          "contractingDienst": {
+          "contractingService": {
             "type": "string",
             "description": "Contracting authority — KvK number plus name of the public buyer running the procurement.",
             "example": "30280353 Gemeente Utrecht",
@@ -88,7 +88,7 @@
             "nullable": true,
             "title": "Looptijd Eind"
           },
-          "gegundeLeverancier": {
+          "awardedSupplier": {
             "type": "string",
             "description": "Awarded supplier — KvK number plus name. Vendor visibility filtering matches this KvK against the tenant organisation (design D6 / REQ-008).",
             "nullable": true,
@@ -476,7 +476,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Opdracht Uitvoering",
-        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Verplichting it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (goedgekeurd false→true) until at least one bewijsstuk is attached (REQ-004).",
+        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Verplichting it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (approved false→true) until at least one bewijsstuk is attached (REQ-004).",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
@@ -516,7 +516,7 @@
             "default": "deeloplevering",
             "title": "Opleverings Type"
           },
-          "goedgekeurd": {
+          "approved": {
             "type": "boolean",
             "description": "Whether the delivery has been approved. Can only transition false→true once at least one bewijsstuk is attached (REQ-004).",
             "default": false,
@@ -661,17 +661,17 @@
       },
       "tenderId": "TN-2026-0001",
       "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001",
-      "titel": "Schoonmaak Gemeentehuis Utrecht",
+      "title": "Schoonmaak Gemeentehuis Utrecht",
       "description": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
       "cpvCodes": [
         "90910000-9"
       ],
-      "contractingDienst": "30280353 Gemeente Utrecht",
+      "contractingService": "30280353 Gemeente Utrecht",
       "awardDate": "2026-01-15",
       "contractValue": 50000.0,
       "termStart": "2026-02-01",
       "termEnd": "2027-01-31",
-      "gegundeLeverancier": "76741850 Conduction B.V.",
+      "awardedSupplier": "76741850 Conduction B.V.",
       "assignmentType": "dienstverlening-doorlopend",
       "administrationId": "adm-consultancy-nl",
       "status": "gegund"
@@ -684,18 +684,18 @@
       },
       "tenderId": "TN-2026-0002",
       "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0002",
-      "titel": "IT-dienstverlening Provincie Brabant",
+      "title": "IT-dienstverlening Provincie Brabant",
       "description": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
       "cpvCodes": [
         "72000000-5",
         "30200000-1"
       ],
-      "contractingDienst": "17278718 Provincie Noord-Brabant",
+      "contractingService": "17278718 Provincie Noord-Brabant",
       "awardDate": "2026-02-10",
       "contractValue": 250000.0,
       "termStart": "2026-03-01",
       "termEnd": "2028-02-29",
-      "gegundeLeverancier": "76741850 Conduction B.V.",
+      "awardedSupplier": "76741850 Conduction B.V.",
       "assignmentType": "levering-in-fases",
       "administrationId": "adm-consultancy-nl",
       "status": "gegund"

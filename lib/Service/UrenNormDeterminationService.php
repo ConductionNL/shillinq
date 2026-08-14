@@ -89,7 +89,7 @@ final class UrenNormDeterminationService {
 			'calendarYear' => (int)($profiel['calendarYear'] ?? (int)gmdate('Y')),
 			'doelNorm' => $norm,
 			'normBasis' => $basis,
-			'lopendeHours' => 0.0,
+			'currentHours' => 0.0,
 			'thresholdStatus' => 'OP_KOERS',
 			'grotendeelsCriterium' => $grotendeels,
 		];

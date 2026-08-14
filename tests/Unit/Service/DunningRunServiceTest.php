@@ -218,7 +218,7 @@ final class DunningRunServiceTest extends TestCase {
 		self::assertSame('executed', $persisted['lifecycleState']);
 		self::assertSame('EMAIL', $persisted['channel']);
 		self::assertSame(1234.56, $persisted['invoiceAmount']);
-		self::assertNotNull($persisted['uitgevoerdOn']);
+		self::assertNotNull($persisted['executedOn']);
 
 	}//end testExecuteStagePersistsExecutedRun()
 
@@ -236,7 +236,7 @@ final class DunningRunServiceTest extends TestCase {
 			invoiceId: 'inv-1',
 			reason: 'DISPUTED',
 			details: 'Klant betwist',
-			gepauzeerdBy: 'user-1',
+			pausedBy: 'user-1',
 		);
 
 		self::assertSame('active', $pause['lifecycleState']);
@@ -556,7 +556,7 @@ final class DunningRunServiceTest extends TestCase {
 				'id' => 'dr-1',
 				'administrationId' => 'adm-1',
 				'deliveryStatus' => 'DELIVERED',
-				'uitgevoerdOn' => (new \DateTimeImmutable('-30 days'))->format(DATE_ATOM),
+				'executedOn' => (new \DateTimeImmutable('-30 days'))->format(DATE_ATOM),
 			],
 		]);
 
@@ -740,7 +740,7 @@ final class DunningRunServiceTest extends TestCase {
 			invoiceId: 'inv-1',
 			reason: 'DISPUTED',
 			details: 'Klant betwist',
-			gepauzeerdBy: 'user-1',
+			pausedBy: 'user-1',
 			evidenceRefs: ['s3://my-bucket/evidence.pdf']
 		);
 
@@ -760,7 +760,7 @@ final class DunningRunServiceTest extends TestCase {
 			invoiceId: 'inv-1',
 			reason: 'DISPUTED',
 			details: 'Klant betwist',
-			gepauzeerdBy: 'user-1',
+			pausedBy: 'user-1',
 			evidenceRefs: ['docudesk:files/dispute/email-2026-06-02-disputereactie.eml']
 		);
 

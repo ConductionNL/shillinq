@@ -250,7 +250,7 @@ class VerplichtingWorkflowTest extends TestCase {
 
 		// Vrije_ruimte after the commitment is EUR 500k - EUR 75k = EUR 425k.
 		$afterCommitment = $budget;
-		$afterCommitment['outstanding_verplichtingen'] = 75 * 100000;
+		$afterCommitment['outstanding_commitments'] = 75 * 100000;
 		$this->assertSame(42500000, $this->budget->freeRoom($afterCommitment));
 
 	}//end testInkooporderWithinBudgetAndMandateSignsCleanly()
@@ -323,7 +323,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'RO-1',
 			'kind' => 'frameworkAgreement',
-			'totalamount_excl_vat' => 20000000,
+			'total_amount_excl_vat' => 20000000,
 			'rules' => [
 				['programme' => '5.1', 'financialYear' => 2026, 'amount_excl_vat' => 10000000],
 				['programme' => '5.1', 'financialYear' => 2027, 'amount_excl_vat' => 10000000],
@@ -335,7 +335,7 @@ class VerplichtingWorkflowTest extends TestCase {
 
 		$within = $overcommit;
 		$within['rules'][1]['amount_excl_vat'] = 5000000;
-		$within['totalamount_excl_vat'] = 15000000;
+		$within['total_amount_excl_vat'] = 15000000;
 
 		// 2027 right-sized to EUR 50k → both regels fit and the raamovereenkomst signs.
 		$this->assertTrue($this->budget->canCommit('RO-1', $within));
@@ -386,7 +386,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			[
 				'mandateCode' => 'M-INKOOP-50K-2SIG',
 				'maximumAmount' => 5000000,
-				'required_tweede_signature_boven' => 2500000,
+				'required_second_signature_above' => 2500000,
 			]
 		);
 		$verplicht = $this->makeCommitment(3000000);
@@ -424,7 +424,7 @@ class VerplichtingWorkflowTest extends TestCase {
 				'financialYear' => 2026,
 				'authorised_amount' => 50000000,
 				'realised_amount' => 0,
-				'outstanding_verplichtingen' => 0,
+				'outstanding_commitments' => 0,
 			],
 			$overrides
 		);
@@ -466,7 +466,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
 			'kind' => 'inkooporder',
-			'totalamount_excl_vat' => $amount,
+			'total_amount_excl_vat' => $amount,
 			'rules' => [
 				[
 					'programme' => '5.1',
