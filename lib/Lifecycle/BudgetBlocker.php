@@ -57,13 +57,13 @@ class BudgetBlocker {
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-	 * @param MandaatEnforcer $mandaat Mandate resolver for override-mandate detection.
+	 * @param MandaatEnforcer $mandate Mandate resolver for override-mandate detection.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly MandaatEnforcer $mandaat,
+		private readonly MandaatEnforcer $mandate,
 	) {
 	}//end __construct()
 
@@ -79,20 +79,20 @@ class BudgetBlocker {
 	 *
 	 * Fail-closed: returns false on any exception (CWE-863).
 	 *
-	 * @param string $commitment_number The commitment identifier (lifecycle-engine call parity).
+	 * @param string $commitmentNumber The commitment identifier (lifecycle-engine call parity).
 	 * @param array<string,mixed>|null $object The Verplichting object being transitioned.
 	 *
 	 * @return bool True when the commitment may be signed.
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
 	 */
-	public function canCommit(string $commitment_number, ?array $object = null): bool {
+	public function canCommit(string $commitmentNumber, ?array $object = null): bool {
 		try {
-			$commitment = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitment_number' => $commitment_number]));
+			$commitment = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitment_number' => $commitmentNumber]));
 			if ($commitment === null) {
 				$this->logger->info(
 					'BudgetBlocker: commitment not found — denying commitment',
-					['commitment' => $commitment_number]
+					['commitment' => $commitmentNumber]
 				);
 				return false;
 			}
@@ -111,7 +111,7 @@ class BudgetBlocker {
 					$this->logger->info(
 						'BudgetBlocker: insufficient budget — denying commitment',
 						[
-							'commitment' => $commitment_number,
+							'commitment' => $commitmentNumber,
 							'programme' => ($rule['programme'] ?? null),
 							'financialYear' => ($rule['financialYear'] ?? null),
 						]
@@ -124,7 +124,7 @@ class BudgetBlocker {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BudgetBlocker: canCommit failed — denying commitment (fail-closed)',
-				['commitment' => $commitment_number, 'exception' => $e->getMessage()]
+				['commitment' => $commitmentNumber, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -174,7 +174,7 @@ class BudgetBlocker {
 	 * @return bool True when an applicable override-mandate exists.
 	 */
 	private function hasOverrideMandate(array $commitment): bool {
-		$applicable = $this->mandaat->resolveApplicableMandate(commitment: $commitment);
+		$applicable = $this->mandate->resolveApplicableMandate(commitment: $commitment);
 
 		return $applicable !== null && (bool)($applicable['is_override'] ?? false) === true;
 	}//end hasOverrideMandate()
@@ -249,7 +249,7 @@ class BudgetBlocker {
 			return array_values($embedded);
 		}
 
-		$number = (string)($commitment['commitment_number'] ?? '');
+		$number = (string)($commitment['commitmentNumber'] ?? '');
 		$queried = [];
 		if ($number !== '') {
 			$queried = $this->findMany(schema: 'Verplichtingsregel', filters: ['commitment' => $number]);

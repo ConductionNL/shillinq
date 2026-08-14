@@ -160,7 +160,7 @@ class ServiceReceiptService {
 		$this->assertAccess(administrationId: $administrationId);
 		$approver = $this->requireSessionUser();
 
-		$poIds = $this->normalisePoIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
+		$poIds = $this->normalisePoIds(rawIds: ($payload['poIds'] ?? $payload['poIds'] ?? []));
 		if ($poIds === []) {
 			throw new RuntimeException('At least one purchase order id is required');
 		}
@@ -233,7 +233,7 @@ class ServiceReceiptService {
 			throw new RuntimeException('Service receipt not found');
 		}
 
-		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
+		$poLineId = trim((string)($payload['poLineId'] ?? $payload['poLineId'] ?? ''));
 		if ($poLineId === '') {
 			throw new RuntimeException('poLineId is required');
 		}

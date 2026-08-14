@@ -247,10 +247,10 @@ class BIKStaffelCalculator {
 	 *
 	 * @param string $partyType 'B2B' or 'B2C' (anything else treated as B2B for safety).
 	 * @param float $principal Outstanding principal in EUR.
-	 * @param DateTimeImmutable $ingangsdatum First day the rente accrues.
+	 * @param DateTimeImmutable $effectiveDate First day the rente accrues.
 	 * @param DateTimeImmutable $calculatedOn Calculation date.
-	 * @param float|null $tariefB2B Override the B2B handelsrente (flat, skips the table).
-	 * @param float|null $tariefB2C Override the B2C wettelijke rente (flat, skips the table).
+	 * @param float|null $rateB2B Override the B2B handelsrente (flat, skips the table).
+	 * @param float|null $rateB2C Override the B2C wettelijke rente (flat, skips the table).
 	 *
 	 * @return array{rate:float,type:string,ingangsdatum:string,calculatedOn:string,days:int,amount:float,periods:array<int,array{van:string,tot:string,days:int,rate:float,amount:float}>}
 	 *
@@ -259,16 +259,16 @@ class BIKStaffelCalculator {
 	public function rente(
 		string $partyType,
 		float $principal,
-		DateTimeImmutable $ingangsdatum,
+		DateTimeImmutable $effectiveDate,
 		DateTimeImmutable $calculatedOn,
-		?float $tariefB2B = null,
-		?float $tariefB2C = null,
+		?float $rateB2B = null,
+		?float $rateB2C = null,
 	): array {
 		if ($principal < 0) {
 			throw new InvalidArgumentException('Rente principal must be non-negative.');
 		}
 
-		if ($calculatedOn < $ingangsdatum) {
+		if ($calculatedOn < $effectiveDate) {
 			throw new InvalidArgumentException('calculatedOn must not be before ingangsdatum.');
 		}
 
@@ -276,11 +276,11 @@ class BIKStaffelCalculator {
 		if ($isB2C === true) {
 			$type = 'WETTELIJKE_RENTE_B2C_6_119_BW';
 			$table = self::WETTELIJKE_RENTE_B2C_TABLE;
-			$override = $tariefB2C;
+			$override = $rateB2C;
 		} else {
 			$type = 'HANDELSRENTE_B2B_6_119A_BW';
 			$table = self::HANDELSRENTE_B2B_TABLE;
-			$override = $tariefB2B;
+			$override = $rateB2B;
 		}
 
 		$hoofdsomCents = $this->toCents(amount: $principal);
@@ -289,7 +289,7 @@ class BIKStaffelCalculator {
 			// Explicit override — single flat period, table bypassed.
 			$segments = [
 				[
-					'van' => $ingangsdatum,
+					'van' => $effectiveDate,
 					'tot' => $calculatedOn,
 					'rate' => $override,
 				],
@@ -297,7 +297,7 @@ class BIKStaffelCalculator {
 		} else {
 			$segments = $this->splitByRateBoundaries(
 				table: $table,
-				from: $ingangsdatum,
+				from: $effectiveDate,
 				to: $calculatedOn
 			);
 		}
@@ -326,7 +326,7 @@ class BIKStaffelCalculator {
 		return [
 			'rate' => $headlineTarief,
 			'type' => $type,
-			'ingangsdatum' => $ingangsdatum->format('Y-m-d'),
+			'ingangsdatum' => $effectiveDate->format('Y-m-d'),
 			'calculatedOn' => $calculatedOn->format('Y-m-d'),
 			'days' => $totaalDagen,
 			'amount' => $this->fromCents(cents: $totaalCents),
@@ -412,18 +412,18 @@ class BIKStaffelCalculator {
 	 * fires on daysAfterExpiryDate = 30, so the earliest permitted day is 44.
 	 *
 	 * @param string $partyType 'B2B' / 'B2C'.
-	 * @param int $dagenVerzuim Number of days the invoice is overdue.
+	 * @param int $daysInArrears Number of days the invoice is overdue.
 	 *
 	 * @return bool True when the calculation is permitted.
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
-	public function isCalculationPermitted(string $partyType, int $dagenVerzuim): bool {
+	public function isCalculationPermitted(string $partyType, int $daysInArrears): bool {
 		if ($partyType !== 'B2C') {
 			return true;
 		}
 
-		return $dagenVerzuim >= (30 + self::B2C_GRACE_DAYS);
+		return $daysInArrears >= (30 + self::B2C_GRACE_DAYS);
 	}//end isCalculationPermitted()
 
 	/**
@@ -433,10 +433,10 @@ class BIKStaffelCalculator {
 	 * @param string $administrationId Administration scope.
 	 * @param string $partyType 'B2B' / 'B2C' / 'GOVERNMENT'.
 	 * @param float $principal Outstanding principal in EUR.
-	 * @param DateTimeImmutable $ingangsdatum First day the rente accrues.
+	 * @param DateTimeImmutable $effectiveDate First day the rente accrues.
 	 * @param DateTimeImmutable $calculatedOn Calculation date.
-	 * @param float|null $tariefB2B Override the B2B handelsrente.
-	 * @param float|null $tariefB2C Override the B2C wettelijke rente.
+	 * @param float|null $rateB2B Override the B2B handelsrente.
+	 * @param float|null $rateB2C Override the B2C wettelijke rente.
 	 * @param bool $vatOffsettable True when the creditor CAN offset VAT (no surcharge).
 	 * @param float $vatPercentage VAT rate applied when !vatOffsettable (default 21%).
 	 *
@@ -449,10 +449,10 @@ class BIKStaffelCalculator {
 		string $administrationId,
 		string $partyType,
 		float $principal,
-		DateTimeImmutable $ingangsdatum,
+		DateTimeImmutable $effectiveDate,
 		DateTimeImmutable $calculatedOn,
-		?float $tariefB2B = null,
-		?float $tariefB2C = null,
+		?float $rateB2B = null,
+		?float $rateB2C = null,
 		bool $vatOffsettable = true,
 		float $vatPercentage = self::DEFAULT_BTW_PERCENTAGE,
 	): array {
@@ -469,13 +469,16 @@ class BIKStaffelCalculator {
 			$effectiveParty = 'B2B';
 		}
 
+		// Named-argument LABELS carry no `$`, so a variable rename does not touch
+		// them — and a named argument needs the parameter to exist by that exact
+		// name. rente() already declares effectiveDate/rateB2B/rateB2C.
 		$rente = $this->rente(
 			partyType: $effectiveParty,
 			principal: $principal,
-			ingangsdatum: $ingangsdatum,
+			effectiveDate: $effectiveDate,
 			calculatedOn: $calculatedOn,
-			tariefB2B: $tariefB2B,
-			tariefB2C: $tariefB2C
+			rateB2B: $rateB2B,
+			rateB2C: $rateB2C
 		);
 
 		$hoofdsomCents = $this->toCents(amount: $principal);

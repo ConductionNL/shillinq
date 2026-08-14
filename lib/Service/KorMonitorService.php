@@ -77,32 +77,32 @@ class KorMonitorService {
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
 	public function status(string $administrationId, int $year): array {
-		$drempelCents = $this->resolveDrempelCents(administrationId: $administrationId);
+		$thresholdCents = $this->resolveDrempelCents(administrationId: $administrationId);
 		$invoices = $this->fetchKorInvoices(administrationId: $administrationId, year: $year);
 
-		$omzetCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
+		$revenueCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
 		$perMonth = $this->monthlyBreakdown(invoices: $invoices, year: $year);
 
 		$currentMonth = $this->lastMonthWithOmzet(perMonth: $perMonth);
 		$prognoseCents = $this->calculator->prognoseEndOfYearCents(
-			lopendeCents: $omzetCents,
+			lopendeCents: $revenueCents,
 			currentMonth: $currentMonth
 		);
 
-		$benutting = $this->calculator->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents);
-		$schijf = $this->calculator->crossedSchijf(previousBenutting: 0.0, newBenutting: $benutting);
+		$benutting = $this->calculator->benutting(revenueCents: $revenueCents, thresholdCents: $thresholdCents);
+		$schijf = $this->calculator->crossedSchijf(previousUtilisation: 0.0, newUtilisation: $benutting);
 
 		return [
 			'administrationId' => $administrationId,
 			'year' => $year,
-			'currentRevenue' => $this->calculator->fromCents(cents: $omzetCents),
-			'threshold' => $this->calculator->fromCents(cents: $drempelCents),
+			'currentRevenue' => $this->calculator->fromCents(cents: $revenueCents),
+			'threshold' => $this->calculator->fromCents(cents: $thresholdCents),
 			'thresholdUtilisation' => round($benutting, 4),
 			'perMonth' => $perMonth,
 			'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
 			'prognoseStatus' => $this->calculator->prognoseStatus(
 				prognoseCents: $prognoseCents,
-				drempelCents: $drempelCents
+				thresholdCents: $thresholdCents
 			),
 			'ernst' => ($schijf['ernst'] ?? null),
 			'trigger' => ($schijf['trigger'] ?? null),

@@ -205,12 +205,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testB2C_14DayGraceBlocksBeforeDay44(): void {
-		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 35));
-		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 43));
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 44));
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysVerzuim: 60));
+		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 35));
+		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 43));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 44));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 60));
 		// B2B has no grace — verzuim van rechtswege per art. 6:83 BW.
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2B', daysVerzuim: 0));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2B', daysInArrears: 0));
 
 	}//end testB2C_14DayGraceBlocksBeforeDay44()
 

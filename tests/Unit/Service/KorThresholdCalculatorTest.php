@@ -258,7 +258,7 @@ final class KorThresholdCalculatorTest extends TestCase {
 
 		$aggregate = $this->calc->perLidstaatAggregate(
 			invoices: $invoices,
-			drempelsPerMemberState: ['BE' => 25000, 'DE' => 22000],
+			thresholdsPerMemberState: ['BE' => 25000, 'DE' => 22000],
 			year: 2026
 		);
 

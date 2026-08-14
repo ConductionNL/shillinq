@@ -127,7 +127,7 @@ class DunningController extends Controller {
 
 		$principal = (float)$this->request->getParam('principal', 0.0);
 		$partyType = (string)$this->request->getParam('partyType', 'B2B');
-		$daysVerzuim = (int)$this->request->getParam('dagenVerzuim', 0);
+		$daysInArrears = (int)$this->request->getParam('dagenVerzuim', 0);
 		$invoiceId = (string)$this->request->getParam('invoiceId', '');
 		$ingangsRaw = (string)$this->request->getParam('effectiveDate', '');
 		$calculatedRaw = (string)$this->request->getParam('calculatedOn', '');
@@ -142,7 +142,7 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'partyType must be one of B2B/B2C/GOVERNMENT'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->bik->isCalculationPermitted(partyType: $partyType, daysVerzuim: $daysVerzuim) === false) {
+		if ($this->bik->isCalculationPermitted(partyType: $partyType, daysInArrears: $daysInArrears) === false) {
 			return new JSONResponse(
 				[
 					'error' => 'B2C incassokostenberekening niet toegestaan voor dag 44 (14-dagenperiode per art. 6:96 BW)',

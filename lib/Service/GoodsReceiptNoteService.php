@@ -201,7 +201,7 @@ class GoodsReceiptNoteService {
 		$this->assertAccess(administrationId: $administrationId);
 		$receivedBy = $this->requireSessionUser();
 
-		$poIds = $this->normalisePoIds(rawIds: ($payload['poIds'] ?? $payload['po_ids'] ?? []));
+		$poIds = $this->normalisePoIds(rawIds: ($payload['poIds'] ?? $payload['poIds'] ?? []));
 		if ($poIds === []) {
 			throw new RuntimeException('At least one purchase order id is required');
 		}
@@ -209,7 +209,7 @@ class GoodsReceiptNoteService {
 		$this->assertPurchaseOrdersAccessible(administrationId: $administrationId, poIds: $poIds);
 
 		$grnNumber = $this->generateGrnNumber(administrationId: $administrationId);
-		$receivedAt = trim((string)($payload['receivedAt'] ?? $payload['received_at'] ?? ''));
+		$receivedAt = trim((string)($payload['receivedAt'] ?? $payload['receivedAt'] ?? ''));
 		if ($receivedAt === '') {
 			$receivedAt = $this->nowIso();
 		}
@@ -271,7 +271,7 @@ class GoodsReceiptNoteService {
 			throw new RuntimeException('Goods receipt note not found');
 		}
 
-		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
+		$poLineId = trim((string)($payload['poLineId'] ?? $payload['poLineId'] ?? ''));
 		if ($poLineId === '') {
 			throw new RuntimeException('poLineId is required');
 		}
@@ -294,10 +294,10 @@ class GoodsReceiptNoteService {
 			throw new RuntimeException('Purchase order line does not belong to this GRN');
 		}
 
-		$quantityReceived = $this->normaliseQuantity(value: ($payload['quantityReceived'] ?? $payload['quantity_received'] ?? 0));
-		$quantityAccepted = $this->normaliseQuantity(value: ($payload['quantityAccepted'] ?? $payload['quantity_accepted'] ?? $quantityReceived));
-		$quantityRejected = $this->normaliseQuantity(value: ($payload['quantityRejected'] ?? $payload['quantity_rejected'] ?? 0));
-		$rejectionReason = trim((string)($payload['rejectionReason'] ?? $payload['rejection_reason'] ?? ''));
+		$quantityReceived = $this->normaliseQuantity(value: ($payload['quantityReceived'] ?? $payload['quantityReceived'] ?? 0));
+		$quantityAccepted = $this->normaliseQuantity(value: ($payload['quantityAccepted'] ?? $payload['quantityAccepted'] ?? $quantityReceived));
+		$quantityRejected = $this->normaliseQuantity(value: ($payload['quantityRejected'] ?? $payload['quantityRejected'] ?? 0));
+		$rejectionReason = trim((string)($payload['rejectionReason'] ?? $payload['rejectionReason'] ?? ''));
 		$batchReference = trim((string)($payload['batchReference'] ?? $payload['batch_ref'] ?? ''));
 
 		if ($quantityReceived <= 0.0) {

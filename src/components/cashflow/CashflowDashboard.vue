@@ -76,7 +76,8 @@
 					{{ selectedWeek.netMovement }}
 				</li>
 				<li>
-					{{ t('shillinq', 'Eind Saldo') }}: {{ selectedWeek.closingBalance }}
+					{{ t('shillinq', 'Eind Saldo') }}:
+					{{ selectedWeek.closingBalance }}
 				</li>
 			</ul>
 		</div>

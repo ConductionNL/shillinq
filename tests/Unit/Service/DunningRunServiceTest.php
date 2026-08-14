@@ -310,11 +310,11 @@ final class DunningRunServiceTest extends TestCase {
 			['nr' => 5, 'daysAfterExpiryDate' => 90, 'channel' => 'INCASSOBUREAU_API'],
 		];
 
-		self::assertSame(1, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 0)['nr']);
-		self::assertSame(2, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 20)['nr']);
-		self::assertSame(3, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 45)['nr']);
-		self::assertSame(5, (int)$service->stageForOverdueDays(stages: $stages, daysVerzuim: 200)['nr']);
-		self::assertNull($service->stageForOverdueDays(stages: $stages, daysVerzuim: -1));
+		self::assertSame(1, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 0)['nr']);
+		self::assertSame(2, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 20)['nr']);
+		self::assertSame(3, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 45)['nr']);
+		self::assertSame(5, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 200)['nr']);
+		self::assertNull($service->stageForOverdueDays(stages: $stages, daysInArrears: -1));
 
 	}//end testStageForOverdueDaysPicksHighestApplicable()
 

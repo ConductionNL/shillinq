@@ -6,8 +6,8 @@
  * ADR-031 exception: pure-PHP pipeline logic for the EMU-saldo & EMU-schuld
  * reporting capability that OpenRegister's declarative calculation/aggregation
  * engine cannot yet express — Wet Hof art. 3 macro-rule classification of GL
- * lines into EMUAdjustment records (REQ-EMU-002), gross EMU-schuld per ESA2010
- * (REQ-EMU-004), budget variance + top-3 contributor notes (REQ-EMU-007),
+ * lines into EMUAdjustment records (REQ-EMU-002), bruto EMU-schuld per ESA2010
+ * (REQ-EMU-004), budget variance + top-3 contributor toelichting (REQ-EMU-007),
  * referentiewaarde alert (REQ-EMU-008), and the year-end BBV reconciliation
  * control (REQ-EMU-009). All methods are read-only, array-in/array-out, with no
  * persistence — the caller (lifecycle transition / scheduler) writes the result
@@ -47,7 +47,7 @@ class EmuReportingService {
 	 * Maps a GL account-number prefix to a Wet Hof art. 3 adjustment type and
 	 * direction. First matching prefix wins (longest-prefix order preserved).
 	 *
-	 * Each entry: [prefix, type, direction]. Driven by the Besluit BBV
+	 * Each entry: [prefix, type, richting]. Driven by the Besluit BBV
 	 * grootboekindeling ranges cited in tasks.md Task 6.
 	 *
 	 * @var array<int,array{0:string,1:string,2:string}>
@@ -56,8 +56,8 @@ class EmuReportingService {
 		['48', 'eliminatie-afschrijving', 'saldo-verhogend'],
 		['460', 'eliminatie-voorzieningdotatie', 'saldo-verhogend'],
 		['49', 'eliminatie-onttrekking-reserve', 'saldo-neutraal'],
-		['010', 'toevoeging-gross-investment', 'saldo-verlagend'],
-		['020', 'toevoeging-gross-investment', 'saldo-verlagend'],
+		['010', 'toevoeging-bruto-investering', 'saldo-verlagend'],
+		['020', 'toevoeging-bruto-investering', 'saldo-verlagend'],
 		['210', 'toevoeging-aflossing', 'saldo-verlagend'],
 		['220', 'toevoeging-aflossing', 'saldo-verlagend'],
 		['230', 'toevoeging-aflossing', 'saldo-verlagend'],
@@ -66,7 +66,7 @@ class EmuReportingService {
 	];
 
 	/**
-	 * Eurostat ESA2010 instrument categories that count toward the gross
+	 * Eurostat ESA2010 instrument categories that count toward the bruto
 	 * EMU-schuld (AF.2 deposits, AF.3 securities, AF.4 loans). AF.7 derivatives
 	 * and "overig" are excluded per REQ-EMU-004.
 	 *
@@ -89,10 +89,10 @@ class EmuReportingService {
 	 *
 	 * Returns null when the line's account does not match any macro-rule prefix
 	 * (i.e. it is an ordinary cash transaction, not an accrual→kas correction).
-	 * When the line's invoice_moment differs from its payment_moment, the type is
+	 * When the line's factuurmoment differs from its betaalmoment, the type is
 	 * overridden to `correctie-transactiemoment` (Task 6, Regel 7).
 	 *
-	 * @param array<string,mixed> $glLine GL line: accountNumber, amount, (invoice_moment, payment_moment).
+	 * @param array<string,mixed> $glLine GL line: accountNumber, amount, (factuurmoment, betaalmoment).
 	 * @param string $reportId The owning EMUReport id.
 	 *
 	 * @return array<string,mixed>|null A partial EMUAdjustment object array, or null when no rule applies.
@@ -100,7 +100,7 @@ class EmuReportingService {
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function classifyAdjustment(array $glLine, string $reportId): ?array {
-		$account = (string)($glLine['accountNumber'] ?? ($glLine['general_ledger_account'] ?? ''));
+		$account = (string)($glLine['accountNumber'] ?? ($glLine['generalLedgerAccount'] ?? ''));
 		if ($account === '') {
 			return null;
 		}
@@ -121,9 +121,9 @@ class EmuReportingService {
 		$direction = $matched[2];
 
 		// Regel 7: transaction-moment correction when invoice and payment dates differ.
-		$factuur = (string)($glLine['invoice_moment'] ?? '');
-		$betaal = (string)($glLine['payment_moment'] ?? '');
-		if ($factuur !== '' && $betaal !== '' && substr($factuur, 0, 10) !== substr($betaal, 0, 10)) {
+		$invoice = (string)($glLine['invoiceMoment'] ?? '');
+		$payment = (string)($glLine['paymentMoment'] ?? '');
+		if ($invoice !== '' && $payment !== '' && substr($invoice, 0, 10) !== substr($payment, 0, 10)) {
 			$type = 'correctie-transactiemoment';
 		}
 
@@ -133,13 +133,13 @@ class EmuReportingService {
 			'direction' => $direction,
 			'amount' => abs((float)($glLine['amount'] ?? 0)),
 			'source' => [
-				'general_ledger_account' => $account,
+				'generalLedgerAccount' => $account,
 				'description' => (string)($glLine['description'] ?? ''),
-				'task_field' => (string)($glLine['task_field'] ?? ''),
+				'taskField' => (string)($glLine['taskField'] ?? ''),
 			],
 			'rule' => 'Wet Hof art. 3: ' . $type,
 			'overridden' => false,
-			'consolidatieEMU' => 'extern',
+			'consolidationEMU' => 'extern',
 			'currency' => (string)($glLine['currency'] ?? 'EUR'),
 		];
 
@@ -162,12 +162,12 @@ class EmuReportingService {
 	public function netAdjustmentEffect(array $adjustments): float {
 		$cents = 0;
 		foreach ($adjustments as $adj) {
-			$bedragCents = (int)round((float)($adj['amount'] ?? 0) * 100);
+			$amountCents = (int)round((float)($adj['amount'] ?? 0) * 100);
 			$direction = (string)($adj['direction'] ?? 'saldo-neutraal');
 			if ($direction === 'saldo-verhogend') {
-				$cents += $bedragCents;
+				$cents += $amountCents;
 			} elseif ($direction === 'saldo-verlagend') {
-				$cents -= $bedragCents;
+				$cents -= $amountCents;
 			}
 		}
 
@@ -175,11 +175,11 @@ class EmuReportingService {
 	}//end netAdjustmentEffect()
 
 	/**
-	 * Compute gross EMU-schuld per ESA2010 (REQ-EMU-004).
+	 * Compute bruto EMU-schuld per ESA2010 (REQ-EMU-004).
 	 *
-	 * Sums outstandingDebt over AF.2/AF.3/AF.4 positions flagged
-	 * teltMeeInEmuDebt; AF.7 derivatives are excluded. Returns the total and a
-	 * per-category breakdown, both in euro.
+	 * Sums uitstaandeSchuld over AF.2/AF.3/AF.4 positions flagged
+	 * teltMeeInEmuSchuld; AF.7 derivatives are excluded. Returns the total and a
+	 * per-categorie breakdown, both in euro.
 	 *
 	 * @param array<int,array<string,mixed>> $debtPositions DebtPosition object arrays.
 	 *
@@ -188,8 +188,8 @@ class EmuReportingService {
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function computeBrutoSchuld(array $debtPositions): array {
-		$perCategorieCents = [];
-		$brutoCents = 0;
+		$perCategoryCents = [];
+		$grossCents = 0;
 		foreach ($debtPositions as $pos) {
 			$category = (string)($pos['categoryEurostat'] ?? 'overig');
 			$telt = (bool)($pos['teltMeeInEmuDebt'] ?? false);
@@ -198,17 +198,17 @@ class EmuReportingService {
 			}
 
 			$cents = (int)round((float)($pos['outstandingDebt'] ?? 0) * 100);
-			$perCategorieCents[$category] = ($perCategorieCents[$category] ?? 0) + $cents;
-			$brutoCents += $cents;
+			$perCategoryCents[$category] = ($perCategoryCents[$category] ?? 0) + $cents;
+			$grossCents += $cents;
 		}//end foreach
 
 		$perCategory = [];
-		foreach ($perCategorieCents as $cat => $c) {
+		foreach ($perCategoryCents as $cat => $c) {
 			$perCategory[$cat] = (float)($c / 100);
 		}
 
 		return [
-			'gross' => (float)($brutoCents / 100),
+			'gross' => (float)($grossCents / 100),
 			'perCategory' => $perCategory,
 		];
 
@@ -217,7 +217,7 @@ class EmuReportingService {
 	/**
 	 * Compute budget variance for a report (REQ-EMU-007).
 	 *
-	 * The afwijking is calculated − begroot; the afwijkingPercentage is
+	 * The afwijking is berekend − begroot; the afwijkingPercentage is
 	 * afwijking / |begroot| × 100 (0.0 when begroot is zero to avoid division
 	 * by zero).
 	 *
@@ -229,14 +229,14 @@ class EmuReportingService {
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function computeVariance(float $calculated, float $begroot): array {
-		$afwijking = ($calculated - $begroot);
+		$deviation = ($calculated - $begroot);
 		$percentage = 0.0;
 		if (abs($begroot) >= 0.005) {
-			$percentage = round((($afwijking / abs($begroot)) * 100), 1);
+			$percentage = round((($deviation / abs($begroot)) * 100), 1);
 		}
 
 		return [
-			'afwijking' => round($afwijking, 2),
+			'afwijking' => round($deviation, 2),
 			'afwijkingPercentage' => $percentage,
 		];
 
@@ -245,8 +245,8 @@ class EmuReportingService {
 	/**
 	 * Identify the top-N adjustments contributing to a variance (REQ-EMU-007).
 	 *
-	 * Sorted by absolute amount descending; returns up to $limit entries. Used to
-	 * auto-seed the EMUReport.notes with the largest contributors.
+	 * Sorted by absolute bedrag descending; returns up to $limit entries. Used to
+	 * auto-seed the EMUReport.toelichting with the largest contributors.
 	 *
 	 * @param array<int,array<string,mixed>> $adjustments EMUAdjustment object arrays.
 	 * @param int $limit Maximum contributors to return.
@@ -274,7 +274,7 @@ class EmuReportingService {
 	 * 0.80 = 80%) of the wettelijke referentiewaarde. A non-positive norm yields
 	 * false (no norm set).
 	 *
-	 * @param float $cumulatiefSaldo Cumulative EMU-saldo to date (EUR; negative = tekort).
+	 * @param float $cumulatiefBalance Cumulative EMU-saldo to date (EUR; negative = tekort).
 	 * @param float $referentiewaarde Individual EMU referentiewaarde (EUR; magnitude of permitted tekort).
 	 * @param float $threshold Alert fraction (default 0.80).
 	 *
@@ -282,56 +282,56 @@ class EmuReportingService {
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
-	public function shouldAlertReferentiewaarde(float $cumulatiefSaldo, float $referentiewaarde, float $threshold = 0.80): bool {
+	public function shouldAlertReferentiewaarde(float $cumulatiefBalance, float $referentiewaarde, float $threshold = 0.80): bool {
 		if ($referentiewaarde <= 0.0) {
 			return false;
 		}
 
-		$utilization = (abs($cumulatiefSaldo) / abs($referentiewaarde));
+		$utilization = (abs($cumulatiefBalance) / abs($referentiewaarde));
 		return $utilization >= $threshold;
 	}//end shouldAlertReferentiewaarde()
 
 	/**
 	 * Run the year-end BBV ↔ EMU reconciliation control (REQ-EMU-009).
 	 *
-	 * The control verifies that the BBV annual_accounts saldo revenue/expenses plus the
+	 * The control verifies that the BBV jaarrekening saldo baten/lasten plus the
 	 * net of all adjustments equals the sum of the four quarterly EMU-saldo
 	 * values, within a tolerance (default EUR 1.00, i.e. cent-rounding). Returns
 	 * the outcome string and the residual difference.
 	 *
-	 * @param float $municipalAccountingBalanceRevenueExpenses BBV annual_accounts saldo (EUR).
+	 * @param float $bbvNetResult BBV jaarrekening saldo (EUR).
 	 * @param array<int,array<string,mixed>> $adjustments All EMUAdjustment object arrays for the year.
-	 * @param array<int,float> $kwartaalSaldi The four quarterly EMU-saldo values (EUR).
-	 * @param float $tolerantie Allowed residual (EUR).
+	 * @param array<int,float> $quarterSaldi The four quarterly EMU-saldo values (EUR).
+	 * @param float $tolerance Allowed residual (EUR).
 	 *
 	 * @return array{controle:string,verschil:float,totaleAdjustments:float} Reconciliation result.
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function reconcile(
-		float $municipalAccountingBalanceRevenueExpenses,
+		float $bbvNetResult,
 		array $adjustments,
-		array $kwartaalSaldi,
-		float $tolerantie = 1.00,
+		array $quarterSaldi,
+		float $tolerance = 1.00,
 	): array {
 		$totaleAdjustments = $this->netAdjustmentEffect(adjustments: $adjustments);
 		$somKwartalen = 0.0;
-		foreach ($kwartaalSaldi as $s) {
+		foreach ($quarterSaldi as $s) {
 			$somKwartalen += (float)$s;
 		}
 
-		$verwacht = ($municipalAccountingBalanceRevenueExpenses + $totaleAdjustments);
-		$verschil = round(($somKwartalen - $verwacht), 2);
+		$expected = ($bbvNetResult + $totaleAdjustments);
+		$verschil = round(($somKwartalen - $expected), 2);
 
 		$controle = 'geslaagd';
-		if (abs($verschil) > $tolerantie) {
+		if (abs($verschil) > $tolerance) {
 			$controle = 'mislukt';
 		}
 
 		if ($controle === 'mislukt') {
 			$this->logger->warning(
 				'EmuReportingService: reconciliation failed',
-				['verschil' => $verschil, 'bbv' => $municipalAccountingBalanceRevenueExpenses, 'adjustments' => $totaleAdjustments]
+				['verschil' => $verschil, 'bbv' => $bbvNetResult, 'adjustments' => $totaleAdjustments]
 			);
 		}
 
@@ -350,26 +350,26 @@ class EmuReportingService {
 	 * cumulative saldo. The first quarter has delta=0.0 (no prior). All values
 	 * are in euro, computed via integer-cent arithmetic to avoid IEEE-754 drift.
 	 *
-	 * @param array<int,float> $kwartaalSaldi Up to 4 chronological quarterly EMU-saldo values (EUR).
+	 * @param array<int,float> $quarterSaldi Up to 4 chronological quarterly EMU-saldo values (EUR).
 	 *
 	 * @return array{cumulatief:float,deltas:array<int,float>} Cumulative + per-Q delta.
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
-	public function computeTrend(array $kwartaalSaldi): array {
+	public function computeTrend(array $quarterSaldi): array {
 		$deltasCents = [];
 		$cumulatiefCents = 0;
-		$vorigCents = null;
-		foreach ($kwartaalSaldi as $saldo) {
-			$cents = (int)round((float)$saldo * 100);
+		$previousCents = null;
+		foreach ($quarterSaldi as $balance) {
+			$cents = (int)round((float)$balance * 100);
 			$cumulatiefCents += $cents;
-			if ($vorigCents === null) {
+			if ($previousCents === null) {
 				$deltasCents[] = 0;
 			} else {
-				$deltasCents[] = ($cents - $vorigCents);
+				$deltasCents[] = ($cents - $previousCents);
 			}
 
-			$vorigCents = $cents;
+			$previousCents = $cents;
 		}
 
 		$deltas = [];
@@ -413,11 +413,11 @@ class EmuReportingService {
 	 * Render the 10 verplichte CBS-tussenregels from a set of adjustments (REQ-EMU-003, Task 29).
 	 *
 	 * Maps the eight EMUAdjustment macro types and the BBV saldo + computed
-	 * EMU-saldo to the 10-row CBS quarter-EMU template. Returns a
-	 * rule_number-keyed array; each row carries label + amount (EUR, signed).
+	 * EMU-saldo to the 10-row CBS kwartaal-EMU template. Returns a
+	 * regelnummer-keyed array; each row carries label + amount (EUR, signed).
 	 * Pure function — caller is responsible for exporting (XBRL/CSV/Excel).
 	 *
-	 * @param float $municipalAccountingBalanceRevenueExpenses BBV saldo revenue/expenses (EUR).
+	 * @param float $bbvNetResult BBV saldo baten/lasten (EUR).
 	 * @param array<int,array<string,mixed>> $adjustments EMUAdjustment object arrays.
 	 * @param float $emuBalanceCalculated Computed EMU-saldo (EUR).
 	 *
@@ -425,13 +425,13 @@ class EmuReportingService {
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
-	public function renderCbsTussenregels(float $municipalAccountingBalanceRevenueExpenses, array $adjustments, float $emuBalanceCalculated): array {
+	public function renderCbsTussenregels(float $bbvNetResult, array $adjustments, float $emuBalanceCalculated): array {
 		$sumByType = $this->sumByType(adjustments: $adjustments);
 
 		return [
-			['rule' => 1, 'label' => 'Saldo van revenue en expenses BBV', 'amount' => round($municipalAccountingBalanceRevenueExpenses, 2)],
+			['rule' => 1, 'label' => 'Saldo van baten en lasten BBV', 'amount' => round($bbvNetResult, 2)],
 			['rule' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
-			['rule' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['toevoeging-gross-investment'] ?? 0.0), 2)],
+			['rule' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
 			['rule' => 4, 'label' => 'Bijdragen van derden in investeringen', 'amount' => 0.0],
 			['rule' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
 			['rule' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
@@ -452,7 +452,7 @@ class EmuReportingService {
 	}//end renderCbsTussenregels()
 
 	/**
-	 * Sum adjustment amount by type, signed by direction. Internal helper.
+	 * Sum adjustment bedrag by type, signed by richting. Internal helper.
 	 *
 	 * @param array<int,array<string,mixed>> $adjustments EMUAdjustment object arrays.
 	 *
@@ -463,14 +463,14 @@ class EmuReportingService {
 		foreach ($adjustments as $adj) {
 			$type = (string)($adj['type'] ?? '');
 			$direction = (string)($adj['direction'] ?? 'saldo-neutraal');
-			$bedragCents = (int)round((float)($adj['amount'] ?? 0) * 100);
+			$amountCents = (int)round((float)($adj['amount'] ?? 0) * 100);
 			if ($direction === 'saldo-verlagend') {
-				$bedragCents = -1 * $bedragCents;
+				$amountCents = -1 * $amountCents;
 			} elseif ($direction === 'saldo-neutraal') {
-				$bedragCents = 0;
+				$amountCents = 0;
 			}
 
-			$centsByType[$type] = ($centsByType[$type] ?? 0) + $bedragCents;
+			$centsByType[$type] = ($centsByType[$type] ?? 0) + $amountCents;
 		}
 
 		$result = [];
@@ -484,15 +484,15 @@ class EmuReportingService {
 	/**
 	 * Cascading IV3 lookup for a CashFlowItem (Task 14, REQ-EMU-010).
 	 *
-	 * Resolves the IV3 (hoofdstuk-functie-category) classification for a
+	 * Resolves the IV3 (hoofdstuk-functie-categorie) classification for a
 	 * cash-flow item. Lookup priority: (1) explicit `iv3` already on the item,
-	 * (2) `task_field` map provided by the caller (typically the IV3-reporting
+	 * (2) `taakveld` map provided by the caller (typically the IV3-reporting
 	 * cross-app), (3) `accountNumber` prefix map provided by the caller. Returns
 	 * null when no source resolves — caller decides whether to fail validation.
 	 *
 	 * @param array<string,mixed> $item CashFlowItem object array.
-	 * @param array<string,array<string,string>> $taakveldMap Map task_field → iv3
-	 *                                                        (hoofdstuk/functie/category).
+	 * @param array<string,array<string,string>> $taskFieldMap Map taakveld → iv3
+	 *                                                        (hoofdstuk/functie/categorie).
 	 * @param array<string,array<string,string>> $accountMap Map account-prefix →
 	 *                                                       iv3.
 	 *
@@ -500,15 +500,15 @@ class EmuReportingService {
 	 *
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
-	public function mapIv3Classification(array $item, array $taakveldMap = [], array $accountMap = []): ?array {
+	public function mapIv3Classification(array $item, array $taskFieldMap = [], array $accountMap = []): ?array {
 		$explicit = $item['iv3'] ?? null;
 		if (is_array($explicit) === true && empty($explicit) === false) {
 			return $explicit;
 		}
 
-		$task_field = (string)($item['task_field'] ?? '');
-		if ($task_field !== '' && isset($taakveldMap[$task_field]) === true) {
-			return $taakveldMap[$task_field];
+		$taskField = (string)($item['taskField'] ?? '');
+		if ($taskField !== '' && isset($taskFieldMap[$taskField]) === true) {
+			return $taskFieldMap[$taskField];
 		}
 
 		$account = (string)($item['accountNumber'] ?? '');
@@ -551,7 +551,7 @@ class EmuReportingService {
 	 */
 	public function resolveConsolidatieEmu(array $counterparty): string {
 		// Explicit override always wins.
-		$explicit = (string)($counterparty['consolidatieEMU'] ?? '');
+		$explicit = (string)($counterparty['consolidationEMU'] ?? '');
 		if (in_array($explicit, ['extern', 'intern-S1313', 'internal-entity'], true) === true) {
 			return $explicit;
 		}

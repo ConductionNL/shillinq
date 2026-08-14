@@ -135,19 +135,19 @@ class KorThresholdCalculator {
 	/**
 	 * Compute threshold-benutting as a fraction (REQ-KOR-002).
 	 *
-	 * @param int $omzetCents Running KOR revenue in cents.
-	 * @param int $drempelCents Threshold in cents (EUR 20.000 => 2_000_000).
+	 * @param int $revenueCents Running KOR revenue in cents.
+	 * @param int $thresholdCents Threshold in cents (EUR 20.000 => 2_000_000).
 	 *
 	 * @return float Benutting fraction (0..1+); zero when the threshold is zero.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function benutting(int $omzetCents, int $drempelCents): float {
-		if ($drempelCents <= 0) {
+	public function benutting(int $revenueCents, int $thresholdCents): float {
+		if ($thresholdCents <= 0) {
 			return 0.0;
 		}
 
-		return ($omzetCents / $drempelCents);
+		return ($revenueCents / $thresholdCents);
 	}//end benutting()
 
 	/**
@@ -174,14 +174,14 @@ class KorThresholdCalculator {
 	 * Resolve the prognose-status from the projected benutting (REQ-KOR-002).
 	 *
 	 * @param int $prognoseCents Projected end-of-year revenue in cents.
-	 * @param int $drempelCents Threshold in cents.
+	 * @param int $thresholdCents Threshold in cents.
 	 *
 	 * @return string ONDER_DREMPEL | WAARSCHUWING | OVERSCHRIJDING_VERWACHT.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function prognoseStatus(int $prognoseCents, int $drempelCents): string {
-		$b = $this->benutting(omzetCents: $prognoseCents, drempelCents: $drempelCents);
+	public function prognoseStatus(int $prognoseCents, int $thresholdCents): string {
+		$b = $this->benutting(revenueCents: $prognoseCents, thresholdCents: $thresholdCents);
 		if ($b >= 1.0) {
 			return 'OVERSCHRIJDING_VERWACHT';
 		}
@@ -200,14 +200,14 @@ class KorThresholdCalculator {
 	 * yet reached at the previous benutting, so each schijf fires exactly once as
 	 * revenue climbs. Returns null when no new schijf is crossed.
 	 *
-	 * @param float $previousBenutting Benutting before the posting.
-	 * @param float $newBenutting Benutting after the posting.
+	 * @param float $previousUtilisation Benutting before the posting.
+	 * @param float $newUtilisation Benutting after the posting.
 	 *
 	 * @return array{trigger:string,ernst:string}|null The crossed schijf or null.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function crossedSchijf(float $previousBenutting, float $newBenutting): ?array {
+	public function crossedSchijf(float $previousUtilisation, float $newUtilisation): ?array {
 		$schijven = [
 			['threshold' => 1.0, 'trigger' => 'DREMPEL_100PCT', 'ernst' => 'OVERSCHRIJDING'],
 			['threshold' => 0.9, 'trigger' => 'DREMPEL_90PCT', 'ernst' => 'KRITIEK'],
@@ -215,7 +215,7 @@ class KorThresholdCalculator {
 		];
 
 		foreach ($schijven as $schijf) {
-			if ($newBenutting >= $schijf['threshold'] && $previousBenutting < $schijf['threshold']) {
+			if ($newUtilisation >= $schijf['threshold'] && $previousUtilisation < $schijf['threshold']) {
 				return ['trigger' => $schijf['trigger'], 'ernst' => $schijf['ernst']];
 			}
 		}
@@ -393,18 +393,18 @@ class KorThresholdCalculator {
 	 *
 	 * Walks the KOR-EU AR invoices, groups them by lidstaat-ISO-code, sums revenue
 	 * per country, and resolves benutting against the per-lidstaat threshold passed
-	 * in $drempelsPerLidstaat. Countries not in the drempels map fall back to
+	 * in $thresholdsPerMemberState. Countries not in the drempels map fall back to
 	 * the EU-wide default 100000 EUR ceiling. Arithmetic in cents.
 	 *
 	 * @param array<int,array<string,mixed>> $invoices KOR-EU AR-invoice records (must carry `lidstaat`).
-	 * @param array<string,float> $drempelsPerLidstaat Per-country threshold (EUR); e.g. ['BE' => 25000, 'DE' => 22000].
+	 * @param array<string,float> $thresholdsPerMemberState Per-country threshold (EUR); e.g. ['BE' => 25000, 'DE' => 22000].
 	 * @param int $year Calendar year to bound the aggregation.
 	 *
 	 * @return array<string,array{revenue:float,threshold:float,benutting:float}> Per-lidstaat aggregate.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
-	public function perLidstaatAggregate(array $invoices, array $drempelsPerLidstaat, int $year): array {
+	public function perLidstaatAggregate(array $invoices, array $thresholdsPerMemberState, int $year): array {
 		$defaultDrempelCents = $this->toCents(amount: 100000);
 		$cents = [];
 		foreach ($invoices as $invoice) {
@@ -426,16 +426,16 @@ class KorThresholdCalculator {
 		}
 
 		$result = [];
-		foreach ($cents as $lidstaat => $omzetCents) {
-			$drempelCents = ($defaultDrempelCents);
-			if (isset($drempelsPerLidstaat[$lidstaat]) === true) {
-				$drempelCents = $this->toCents(amount: $drempelsPerLidstaat[$lidstaat]);
+		foreach ($cents as $lidstaat => $revenueCents) {
+			$thresholdCents = ($defaultDrempelCents);
+			if (isset($thresholdsPerMemberState[$lidstaat]) === true) {
+				$thresholdCents = $this->toCents(amount: $thresholdsPerMemberState[$lidstaat]);
 			}
 
 			$result[$lidstaat] = [
-				'revenue' => $this->fromCents(cents: $omzetCents),
-				'threshold' => $this->fromCents(cents: $drempelCents),
-				'benutting' => round($this->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents), 4),
+				'revenue' => $this->fromCents(cents: $revenueCents),
+				'threshold' => $this->fromCents(cents: $thresholdCents),
+				'benutting' => round($this->benutting(revenueCents: $revenueCents, thresholdCents: $thresholdCents), 4),
 			];
 		}
 

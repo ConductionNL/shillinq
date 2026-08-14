@@ -108,14 +108,14 @@ class DunningRunService {
 	 * when no stage applies yet (invoice is still within terms).
 	 *
 	 * @param array<int,array<string,mixed>> $stages Resolved stages.
-	 * @param int $daysVerzuim Days the invoice has been overdue (>= 0).
+	 * @param int $daysInArrears Days the invoice has been overdue (>= 0).
 	 *
 	 * @return array<string,mixed>|null The applicable stage definition or null.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
 	 */
-	public function stageForOverdueDays(array $stages, int $daysVerzuim): ?array {
-		if ($daysVerzuim < 0) {
+	public function stageForOverdueDays(array $stages, int $daysInArrears): ?array {
+		if ($daysInArrears < 0) {
 			return null;
 		}
 
@@ -130,7 +130,7 @@ class DunningRunService {
 		$picked = null;
 		foreach ($sorted as $stage) {
 			$threshold = (int)($stage['daysAfterExpiryDate'] ?? 0);
-			if ($daysVerzuim >= $threshold) {
+			if ($daysInArrears >= $threshold) {
 				$picked = $stage;
 				continue;
 			}
@@ -205,7 +205,7 @@ class DunningRunService {
 			return null;
 		}
 
-		$daysVerzuim = (int)$dueDate->diff($now)->days;
+		$daysInArrears = (int)$dueDate->diff($now)->days;
 		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
 
 		if ($this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true) {
@@ -217,7 +217,7 @@ class DunningRunService {
 			customerId: $customerId,
 			baseLadderId: $baseLadderId
 		);
-		$stage = $this->stageForOverdueDays(stages: $resolved['stages'], daysVerzuim: $daysVerzuim);
+		$stage = $this->stageForOverdueDays(stages: $resolved['stages'], daysInArrears: $daysInArrears);
 		if ($stage === null) {
 			return null;
 		}

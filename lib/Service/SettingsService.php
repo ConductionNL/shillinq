@@ -1758,7 +1758,7 @@ class SettingsService {
 		}
 
 		$settings = $this->getSettings();
-		$administrationId = ($settings['administration_id'] ?? '');
+		$administrationId = ($settings['administrationId'] ?? '');
 		if ($administrationId === '') {
 			return [
 				'success' => true,

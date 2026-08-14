@@ -292,7 +292,7 @@ class WidgetApiController extends Controller {
 		// + rate-limit guard, payload validation with its user-facing REQ-WSW-008
 		// messages, and the mapping from the service's result code to HTTP.
 		$result = $this->widgetService->createAppointment(
-			administrationId: (string)($this->settings->getSettings()['administration_id'] ?? 'adm-1'),
+			administrationId: (string)($this->settings->getSettings()['administrationId'] ?? 'adm-1'),
 			payload: [
 				'serviceId' => $serviceId,
 				'resourceId' => $resourceId,
