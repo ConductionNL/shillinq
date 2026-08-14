@@ -428,7 +428,7 @@ class SettingsService {
 	 *
 	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
 	 *
-	 * @spec openspec/specs/bookkeeping-vat-vat-filing/spec.md
+	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function seedBtwTariffs(): array {
 		return $this->seedGenericFile(
