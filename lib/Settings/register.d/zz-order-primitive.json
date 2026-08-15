@@ -129,7 +129,7 @@
               "request",
               "granted",
               "determined",
-              "paid",
+              "disbursed",
               "reclaimed",
               "handled",
               "draft",
@@ -654,7 +654,7 @@
               "label": "Vastgesteld",
               "description": "Subsidie vastgesteld op basis van verantwoording (Awb 4:46)."
             },
-            "paid": {
+            "disbursed": {
               "orderType": "subsidy",
               "label": "Uitbetaald",
               "description": "Subsidie uitbetaald (Awb 4:52)."
@@ -773,7 +773,7 @@
             "uitbetalen": {
               "orderType": "subsidy",
               "from": "determined",
-              "to": "paid",
+              "to": "disbursed",
               "label": "Uitbetalen",
               "requires": {
                 "fields": [
@@ -783,7 +783,7 @@
             },
             "terugvorderen": {
               "orderType": "subsidy",
-              "from": "paid",
+              "from": "disbursed",
               "to": "reclaimed",
               "label": "Terugvorderen",
               "requires": {
@@ -795,7 +795,7 @@
             },
             "afhandelenVanuitUitbetaald": {
               "orderType": "subsidy",
-              "from": "paid",
+              "from": "disbursed",
               "to": "handled",
               "label": "Dossier sluiten (na bewaartermijn)"
             },

@@ -69,6 +69,8 @@ use OCA\Shillinq\Listener\VerplichtingTransitionListener;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
+use OCA\Shillinq\Repair\DbValueMigrationPort;
+use OCA\Shillinq\Repair\ValueMigrationPort;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
@@ -310,6 +312,16 @@ class Application extends App implements IBootstrap
             TimelineRetryQueue::class,
             static function ($c): TimelineRetryQueue {
                 return $c->get(PersistentTimelineRetryQueue::class);
+            }
+        );
+
+        // Storage seam for the Dutch-to-English value migration. The repair step
+        // depends on the interface so its own logic can be exercised against a
+        // fake; only this binding knows the database.
+        $context->registerService(
+            ValueMigrationPort::class,
+            static function ($c): ValueMigrationPort {
+                return $c->get(DbValueMigrationPort::class);
             }
         );
 

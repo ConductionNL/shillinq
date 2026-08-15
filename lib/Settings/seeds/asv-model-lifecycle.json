@@ -13,7 +13,7 @@
     {"state": "ingetrokken", "label": "Ingetrokken", "citation": "Awb 4:48-4:50 — intrekking en wijziging subsidieverlening", "order": 3},
     {"state": "gewijzigd", "label": "Gewijzigd", "citation": "Awb 4:48-4:50 — intrekking en wijziging subsidieverlening", "order": 4},
     {"state": "determined", "label": "Vastgesteld", "citation": "Awb 4:42-4:47 — subsidievaststelling", "order": 5},
-    {"state": "paid", "label": "Uitbetaald", "citation": "Awb 4:52-4:57 — betaling en terugvordering", "order": 6},
+    {"state": "disbursed", "label": "Uitbetaald", "citation": "Awb 4:52-4:57 — betaling en terugvordering", "order": 6},
     {"state": "reclaimed", "label": "Teruggevorderd", "citation": "Awb 4:57 — terugvordering onverschuldigd betaalde subsidiebedragen", "order": 7},
     {"state": "afbetalingsregeling", "label": "Afbetalingsregeling", "citation": "Awb 4:57 jo. 4:94 — betaling in termijnen", "order": 8}
   ]

@@ -15009,7 +15009,7 @@
               "request",
               "granted",
               "determined",
-              "paid",
+              "disbursed",
               "reclaimed",
               "handled"
             ],
@@ -15180,7 +15180,7 @@
               "label": "Vastgesteld",
               "description": "Subsidie vastgesteld op basis van verantwoording. Awb 4:46 — vaststelling."
             },
-            "paid": {
+            "disbursed": {
               "label": "Uitbetaald",
               "description": "Subsidie uitbetaald; journal entry created in state pending. Awb 4:52 — bevoorschotting / betaling."
             },
@@ -15234,7 +15234,7 @@
             },
             "uitbetalen": {
               "from": "determined",
-              "to": "paid",
+              "to": "disbursed",
               "label": "Uitbetalen",
               "description": "Betaal de vastgestelde subsidie uit. Vereist uitbetaaldBedrag. Aanmaken van JournalEntry in state pending per REQ-SUB-005 (NOOIT auto-posted).",
               "requires": {
@@ -15282,7 +15282,7 @@
               }
             },
             "terugvorderen": {
-              "from": "paid",
+              "from": "disbursed",
               "to": "reclaimed",
               "label": "Terugvorderen",
               "description": "Vorder (een deel van) de subsidie terug. Vereist teruggevorderdBedrag en afwijzingsReden. Approval-workflow gated per REQ-SUB-004.",
@@ -15298,7 +15298,7 @@
               }
             },
             "afhandelenVanuitUitbetaald": {
-              "from": "paid",
+              "from": "disbursed",
               "to": "handled",
               "label": "Dossier sluiten (na bewaartermijn)",
               "description": "Sluit het subsidiedossier na verstrijken van de bewaarplicht. Kalender-trigger na selectielijst:3.5.1 retentieperiode.",
@@ -15447,7 +15447,7 @@
             "type": "string",
             "enum": [
               "scheduled",
-              "paid",
+              "disbursed",
               "overdue",
               "cancelled"
             ],
@@ -15487,7 +15487,7 @@
               "label": "Gepland",
               "description": "Betaling gepland voor dueDate."
             },
-            "paid": {
+            "disbursed": {
               "label": "Betaald",
               "description": "Termijn ontvangen en geboekt."
             },
@@ -15503,7 +15503,7 @@
           "transitions": {
             "markPaid": {
               "from": "scheduled",
-              "to": "paid",
+              "to": "disbursed",
               "label": "Markeer als betaald",
               "description": "Registreer ontvangst van de termijn.",
               "requires": {
@@ -15533,7 +15533,7 @@
             },
             "markPaidFromOverdue": {
               "from": "overdue",
-              "to": "paid",
+              "to": "disbursed",
               "label": "Markeer als betaald (was achterstallig)",
               "description": "Registreer alsnog ontvangst van de achterstallige termijn.",
               "requires": {
@@ -20945,7 +20945,7 @@
             "pending",
             "approved",
             "posted",
-            "paid",
+            "disbursed",
             "disputed",
             "voided"
           ],
@@ -21057,7 +21057,7 @@
             "label": "Posted",
             "description": "Immutable. GL transaction materialised. Awaiting payment matching."
           },
-          "paid": {
+          "disbursed": {
             "label": "Paid",
             "description": "Full payment matched via bank reconciliation or PaymentRun."
           },
@@ -21118,7 +21118,7 @@
           },
           "matchPaid": {
             "from": "posted",
-            "to": "paid",
+            "to": "disbursed",
             "label": "Mark as paid",
             "description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service — OR event-driven."
           },

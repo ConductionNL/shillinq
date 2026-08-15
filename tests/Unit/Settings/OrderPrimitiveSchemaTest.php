@@ -222,7 +222,7 @@ final class OrderPrimitiveSchemaTest extends TestCase
         $subsidieStates = $this->statesForType($lifecycle, 'subsidy');
 
         self::assertSame(
-            ['request', 'granted', 'determined', 'paid', 'reclaimed', 'handled'],
+            ['request', 'granted', 'determined', 'disbursed', 'reclaimed', 'handled'],
             $subsidieStates
         );
 
