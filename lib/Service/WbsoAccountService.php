@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service;
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Account-register helper service (REQ-WBSO-001 / REQ-WBSO-006).
@@ -60,7 +60,7 @@ class WbsoAccountService {
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

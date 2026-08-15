@@ -47,7 +47,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Detects incomplete pre-close tasks and formats them as close-assistant flags.
@@ -65,7 +65,7 @@ class PeriodCloseAssistantService {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly SuspenseAgeingService $suspenseAgeing,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

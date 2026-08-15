@@ -74,7 +74,7 @@ use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use ZipArchive;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Builds the BADO accountantsdossier bundle for one Controleprotocol.
@@ -179,7 +179,7 @@ class AccountantsdossierExportService {
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

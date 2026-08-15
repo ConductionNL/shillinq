@@ -45,7 +45,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * GET ICP ledger / reconciliation / periodicity endpoints.
@@ -82,7 +82,7 @@ class IcpController extends Controller {
 		private readonly ArInvoiceIcpPdfRenderer $pdfRenderer,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()

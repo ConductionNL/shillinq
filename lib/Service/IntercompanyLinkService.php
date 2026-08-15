@@ -50,7 +50,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Creates the mirrored intercompany side and reconciles the pair (REQ-GLTAX-002).
@@ -85,7 +85,7 @@ class IntercompanyLinkService {
 		private readonly IAppConfig $appConfig,
 		private readonly IntercompanyJournalService $journalService,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

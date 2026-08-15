@@ -44,7 +44,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Validates EU VAT-IDs against VIES and persists immutable evidence records.
@@ -90,7 +90,7 @@ class ViesService {
 		private readonly IAppConfig $appConfig,
 		private readonly IClientService $clientService,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

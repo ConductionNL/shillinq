@@ -40,7 +40,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Aggregates the yearly Jaaropgave per employee from the period loonstroken.
@@ -64,7 +64,7 @@ class PayrollJaaropgaveService {
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

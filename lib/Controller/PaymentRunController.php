@@ -52,7 +52,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * HTTP API for exporting + reconciling a PaymentRun.
@@ -86,7 +86,7 @@ class PaymentRunController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 

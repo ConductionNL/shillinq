@@ -53,7 +53,7 @@ use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 11 — records approver identity + decidedAt on the next pending
@@ -135,7 +135,7 @@ class PurchaseOrderApprovalService {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
 	) {
 

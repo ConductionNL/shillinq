@@ -49,7 +49,7 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 05 — Supplier invoice ingestion from UBL (Peppol) and PDF (OCR).
@@ -147,7 +147,7 @@ class SupplierInvoiceService {
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

@@ -69,7 +69,7 @@ use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 08 — resolution-side workflow for out-of-tolerance ThreeWayMatch
@@ -241,7 +241,7 @@ class ExceptionResolutionService {
 		private readonly IUserSession $userSession,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 		?CreditNoteRequestAdapterInterface $creditNoteAdapter = null,
 	) {
 		$this->creditNoteAdapter = ($creditNoteAdapter ?? new LogCreditNoteRequestAdapter(logger: $logger));

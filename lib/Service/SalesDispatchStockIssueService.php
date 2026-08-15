@@ -66,7 +66,7 @@ use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Wires Delivery confirm/cancel into the existing StockMove issue/cancel
@@ -100,7 +100,7 @@ class SalesDispatchStockIssueService {
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly LotSellabilityGuard $lotGuard,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

@@ -72,7 +72,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 06 — single-PO 3-way matching engine.
@@ -241,7 +241,7 @@ class ThreeWayMatchingEngine {
 		private readonly ToleranceProfileService $toleranceService,
 		private readonly SupplierInvoiceService $invoiceService,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly ?ExceptionResolutionService $exceptionResolution = null,
 	) {
 

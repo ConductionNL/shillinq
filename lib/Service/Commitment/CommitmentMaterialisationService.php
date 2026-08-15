@@ -70,7 +70,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Assembles a Verplichting + Verplichtingsregels from an approved
@@ -103,7 +103,7 @@ class CommitmentMaterialisationService {
 		private readonly BudgetBlocker $budget,
 		private readonly IEventDispatcher $dispatcher,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

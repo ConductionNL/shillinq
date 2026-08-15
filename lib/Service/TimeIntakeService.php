@@ -70,7 +70,7 @@ use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Validates, materialises, and delegates a pipelinq time-billing batch.
@@ -107,7 +107,7 @@ class TimeIntakeService {
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly InvoiceGenerationService $invoices,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

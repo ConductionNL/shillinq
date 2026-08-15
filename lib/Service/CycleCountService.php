@@ -55,7 +55,7 @@ use OCA\Shillinq\Lifecycle\VarianceGate;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Per REQ-ICC-006 snapshot fan-out + REQ-ICC-007 variance posting.
@@ -98,7 +98,7 @@ class CycleCountService {
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly VarianceGate $varianceGate,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

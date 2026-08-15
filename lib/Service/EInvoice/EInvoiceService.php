@@ -48,7 +48,7 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates ARInvoice e-invoice generation, validation and Peppol dispatch.
@@ -102,7 +102,7 @@ final class EInvoiceService {
 		private readonly ArInvoiceUblMapper $ublMapper,
 		private readonly InvoicePdfGenerator $pdfGenerator,
 		private readonly EInvoiceValidationService $validationService,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 		?PeppolTransmissionPortInterface $peppolPort = null,
 	) {
 		$this->peppolPort = ($peppolPort ?? new LogPeppolTransmissionAdapter(

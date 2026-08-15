@@ -56,7 +56,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that backfills forward-looking FiscalPeriod records for
@@ -84,7 +84,7 @@ class PeriodCloseBackfill implements IRepairStep {
 	public function __construct(
 		private SettingsService $settingsService,
 		private LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

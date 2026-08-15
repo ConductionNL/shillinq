@@ -49,7 +49,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lower-of-cost-or-NRV period-end write-down + balanced GL (ADR-031 exception).
@@ -92,7 +92,7 @@ class NrvWriteDownService {
 		private readonly IAppConfig $appConfig,
 		private readonly InventoryGlAdjustmentPoster $poster,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

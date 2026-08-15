@@ -49,7 +49,7 @@ use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that folds Receipt/MileageEntry/PerDiem into
@@ -70,7 +70,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 		private SettingsService $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

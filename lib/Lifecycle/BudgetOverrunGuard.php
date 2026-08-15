@@ -40,7 +40,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\BegrotingswijzigingStacker;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Precondition guard preventing GL lasten postings beyond the authorized budget.
@@ -60,7 +60,7 @@ class BudgetOverrunGuard {
 		private readonly IAppConfig $appConfig,
 		private readonly BegrotingswijzigingStacker $stacker,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

@@ -65,7 +65,7 @@ use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 07 — multi-PO consolidated invoice matching.
@@ -192,7 +192,7 @@ class MultiPoConsolidationService {
 		private readonly IUserSession $userSession,
 		private readonly SupplierInvoiceService $supplierInvoiceService,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

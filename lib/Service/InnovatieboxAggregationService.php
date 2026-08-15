@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes the per-asset innovatiebox Vpb roll-up (REQ-IBA-006).
@@ -60,7 +60,7 @@ class InnovatieboxAggregationService {
 		private readonly IAppConfig $appConfig,
 		private readonly CarryForwardLossService $lossService,
 		private readonly QualifyingAssetValidator $validator,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

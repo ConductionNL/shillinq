@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrating service for the intercompany elimination engine.
@@ -63,7 +63,7 @@ class IntercompanyMatchingService {
 		private readonly IAppConfig $appConfig,
 		private readonly IntercompanyMatchingCalculator $calculator,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

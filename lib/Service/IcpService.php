@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes the ICP ledger, periodicity decision, and reconciliation for a period.
@@ -60,7 +60,7 @@ class IcpService {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly IcpCalculator $calculator,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

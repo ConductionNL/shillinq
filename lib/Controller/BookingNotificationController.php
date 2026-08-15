@@ -37,7 +37,7 @@ use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REST endpoints for notification trigger configuration and admin monitoring.
@@ -69,7 +69,7 @@ class BookingNotificationController extends Controller {
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
 		private AdministrationContextService $administrationContext,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()

@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Generates draft OssReturn line items by aggregating OSS-eligible documents.
@@ -52,7 +52,7 @@ class OssReturnGenerator {
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

@@ -37,7 +37,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use ZipArchive;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Builds the SEPA mandate audit dossier ZIP (REQ-SDD-010).
@@ -57,7 +57,7 @@ class SepaAuditService {
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

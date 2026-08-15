@@ -43,7 +43,7 @@ use OCA\Shillinq\Lifecycle\RequisitionConversionGuard;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Materialises an approved Requisition into a PurchaseOrder (REQ-REQ-005).
@@ -70,7 +70,7 @@ class RequisitionConversionService {
 		private readonly RequisitionConversionGuard $guard,
 		private readonly PurchaseOrderService $purchaseOrderService,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

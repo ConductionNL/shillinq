@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes the KOR drempel-status for one administration + year from the AR ledger.
@@ -58,7 +58,7 @@ class KorMonitorService {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly KorThresholdCalculator $calculator,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

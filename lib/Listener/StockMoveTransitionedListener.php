@@ -52,7 +52,7 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatcher from posted StockMove -> valuation engine + COGS poster.
@@ -85,7 +85,7 @@ class StockMoveTransitionedListener implements IEventListener {
 		private readonly CogsPosterService $cogs,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

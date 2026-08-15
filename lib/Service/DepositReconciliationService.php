@@ -34,7 +34,7 @@ use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Idempotent reconciliation of DepositPayment records against gateway outcomes.
@@ -128,7 +128,7 @@ class DepositReconciliationService {
 	public function __construct(
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 		private ?DepositPaymentAdapterInterface $adapter = null,
 	) {
 	}//end __construct()

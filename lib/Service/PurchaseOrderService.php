@@ -57,7 +57,7 @@ use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 02 of bookkeeping-purchase-order-3way: PO creation + approval routing.
@@ -188,7 +188,7 @@ class PurchaseOrderService {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 		?PeppolTransmissionAdapterInterface $peppolAdapter = null,
 		?PurchaseOrderMailerInterface $purchaseOrderMailer = null,
 		?PeppolBisOrderMapper $peppolMapper = null,

@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Skeleton audit-pack builder for an IFRS 16 lease.
@@ -66,7 +66,7 @@ class LeaseAuditPackGenerator {
 		private readonly IAppConfig $appConfig,
 		private readonly LeasePaymentScheduleService $scheduleService,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

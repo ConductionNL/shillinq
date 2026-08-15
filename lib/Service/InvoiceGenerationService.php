@@ -32,7 +32,7 @@ use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Drafting, validation, and GL posting of BillableInvoice rows.
@@ -64,7 +64,7 @@ class InvoiceGenerationService {
 		private readonly InvoiceDeduplicationService $deduper,
 		private readonly VATCalculationService $vat,
 		private readonly UsageRatingCalculator $usageRating,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

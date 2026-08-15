@@ -36,7 +36,7 @@ use OCA\Shillinq\Standards\RuleCatalogue;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Read-only compliance auditor over the register's bookkeeping objects.
@@ -60,7 +60,7 @@ class RuleAuditService {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

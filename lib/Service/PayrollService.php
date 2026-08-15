@@ -38,7 +38,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Period-scoped Dutch payroll processing over OpenRegister.
@@ -64,7 +64,7 @@ class PayrollService {
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

@@ -47,7 +47,7 @@ use OCA\Shillinq\Service\BcfClaimService;
 use OCA\Shillinq\Service\BcfCompensationCalculator;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for the BcfClaim draft -> submitted transition.
@@ -73,7 +73,7 @@ class BcfClaimGuard {
 		private readonly BcfClaimService $claimService,
 		private readonly BcfCompensationCalculator $calculator,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Detects innovatiebox/GL cost duplication (doorsnijdingsverbod, REQ-IBA-004).
@@ -65,7 +65,7 @@ class DoorsnijdingsVerbodValidator {
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly ?InnovatieboxAuditEventLogger $auditLogger = null,
 	) {
 	}//end __construct()

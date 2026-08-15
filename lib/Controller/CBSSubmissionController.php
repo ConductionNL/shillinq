@@ -50,7 +50,7 @@ use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * CBS Submission CRUD + lifecycle controller.
@@ -84,7 +84,7 @@ class CBSSubmissionController extends Controller {
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 

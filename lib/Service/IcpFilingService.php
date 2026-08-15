@@ -38,7 +38,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use RuntimeException;
 use ZipArchive;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Owns the ICP filing write path: corrections, audit-export bundles, outage scan.
@@ -60,7 +60,7 @@ class IcpFilingService {
 		private readonly IcpCalculator $calculator,
 		private readonly IcpService $icp,
 		private readonly ViesService $vies,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

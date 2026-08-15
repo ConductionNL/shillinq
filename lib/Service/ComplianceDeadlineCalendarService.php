@@ -87,7 +87,7 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Publishes compliance deadlines as calendar VEVENTs + NC notifications.
@@ -242,7 +242,7 @@ class ComplianceDeadlineCalendarService {
 		private readonly INotificationManager $notificationMgr,
 		private readonly ObligationTaskBridge $obligationTaskBridge,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

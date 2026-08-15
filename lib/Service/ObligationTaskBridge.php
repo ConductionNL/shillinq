@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Service;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Creates / links the NC Tasks VTODO (or Deck card) for a ContractObligation.
@@ -65,7 +65,7 @@ class ObligationTaskBridge {
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

@@ -39,7 +39,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle guard enforcing machine-checkable rules on issue/post.
@@ -57,7 +57,7 @@ class RuleComplianceGuard {
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly BalanceGuard $balanceGuard,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()

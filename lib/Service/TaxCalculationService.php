@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates deferred-tax calculation at fiscal-period close.
@@ -66,7 +66,7 @@ class TaxCalculationService {
 		private readonly IAppConfig $appConfig,
 		private readonly TaxCalculationHelper $helper,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

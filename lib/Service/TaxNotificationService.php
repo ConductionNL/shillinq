@@ -39,7 +39,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\Notification\IManager;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatches Vpb deadline reminders (REQ-VPB-013).
@@ -71,7 +71,7 @@ class TaxNotificationService {
 		private readonly IAppConfig $appConfig,
 		private readonly IManager $notificationMgr,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

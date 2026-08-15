@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Reads programmabegroting data and produces sluitend-status and exports.
@@ -55,7 +55,7 @@ class ProgrammabegrotingService {
 		private readonly IAppConfig $appConfig,
 		private readonly SluitendCalculator $sluitend,
 		private readonly ProgrammabegrotingExporter $exporter,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

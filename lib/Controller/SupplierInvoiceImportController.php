@@ -57,7 +57,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
@@ -101,7 +101,7 @@ class SupplierInvoiceImportController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 

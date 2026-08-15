@@ -31,7 +31,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Hourly cron job that evaluates reminder triggers for upcoming bookings.
@@ -79,7 +79,7 @@ class BookingReminderJob extends TimedJob {
 		private BookingNotificationService $notificationService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(time: $time);
 		// Run every hour.

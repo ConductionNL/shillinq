@@ -52,7 +52,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Period-end FX revaluation of open FXPosition balances (ADR-031 exception).
@@ -109,7 +109,7 @@ class FxRevaluationService {
 		private readonly IAppConfig $appConfig,
 		private readonly TreasuryRateService $treasuryRateService,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

@@ -40,7 +40,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use RuntimeException;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Transaction-register helper service (REQ-WBSO-002 / REQ-WBSO-008).
@@ -73,7 +73,7 @@ class WbsoTransactionService {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 

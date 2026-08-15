@@ -37,7 +37,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Makes the local test data compliant with the enforced rules (idempotent).
@@ -65,7 +65,7 @@ class RuleTestDataSeeder {
 		private readonly IUserManager $userManager,
 		private readonly IGroupManager $groupManager,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectService $objectService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
