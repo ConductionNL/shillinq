@@ -164,7 +164,7 @@ class VatPreconditionGuard {
 		string $register,
 		string $administrationId,
 	): bool {
-		$records = $this->objectService
+		$records = $objectService
 			->setRegister($register)
 			->setSchema('VATGLAccounts')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -199,7 +199,7 @@ class VatPreconditionGuard {
 		string $register,
 		string $administrationId,
 	): array {
-		$overrideRecords = $this->objectService
+		$overrideRecords = $objectService
 			->setRegister($register)
 			->setSchema('ServiceCategoryOverride')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

@@ -277,7 +277,7 @@ class ComplianceValidator {
 		}
 
 		try {
-			$siblings = $this->objectService
+			$siblings = $objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('TreasuryAccount')
 				->findAll(

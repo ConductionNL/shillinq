@@ -257,7 +257,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 			}
 
 			try {
-				$this->objectService->saveObject(
+				$objectService->saveObject(
 					object: $arr,
 					register: $registerSlug,
 					schema: $schema,

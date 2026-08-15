@@ -220,7 +220,7 @@ class IntercompanyToleranceGuard {
 			return '';
 		}
 
-		$relations = $this->objectService
+		$relations = $objectService
 			->setRegister($this->getRegisterSlug())
 			->setSchema('IntercompanyRelation')
 			->findAll(['filters' => ['relationId' => $relationId, 'administrationId' => $administrationId]]);

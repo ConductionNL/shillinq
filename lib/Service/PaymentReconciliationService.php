@@ -357,7 +357,7 @@ class PaymentReconciliationService {
 		}
 
 		try {
-			$invoices = $this->objectService
+			$invoices = $objectService
 				->setRegister($registerSlug)
 				->setSchema('ARInvoice')
 				->findAll(
@@ -368,7 +368,7 @@ class PaymentReconciliationService {
 				);
 
 			if (empty($invoices) === true) {
-				$invoices = $this->objectService
+				$invoices = $objectService
 					->setRegister($registerSlug)
 					->setSchema('ARInvoice')
 					->findAll(
@@ -407,7 +407,7 @@ class PaymentReconciliationService {
 			$invoice['paymentEvidenceRef'] = (string)($request['paymentIntentId'] ?? '');
 			$invoice['settlementReference'] = (string)($request['settlementReference'] ?? '');
 
-			$this->objectService->saveObject(
+			$objectService->saveObject(
 				object: $invoice,
 				register: $registerSlug,
 				schema: 'ARInvoice',

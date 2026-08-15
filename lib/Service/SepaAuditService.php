@@ -332,7 +332,7 @@ class SepaAuditService {
 	 * @return array<int,mixed> The matching records.
 	 */
 	private function findMany(object $objectService, string $register, string $schema, array $filters): array {
-		$result = $this->objectService
+		$result = $objectService
 			->setRegister($register)
 			->setSchema($schema)
 			->findAll(['filters' => $filters]);

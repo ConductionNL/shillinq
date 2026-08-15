@@ -211,7 +211,7 @@ class CreditLimitGuard {
 		$batchSize = 0;
 
 		do {
-			$batch = $this->objectService
+			$batch = $objectService
 				->setRegister($registerSlug)
 				->setSchema('ARInvoice')
 				->findAll(

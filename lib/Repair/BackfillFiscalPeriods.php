@@ -203,7 +203,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 			$filters['administrationId'] = $administrationId;
 		}
 
-		$found = $this->objectService
+		$found = $objectService
 			->setRegister($registerSlug)
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => $filters, 'limit' => 1]);
