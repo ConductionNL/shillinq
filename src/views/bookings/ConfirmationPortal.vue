@@ -148,11 +148,13 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		token() {
 			const params = new URLSearchParams(window.location.search)
 			return params.get('token') || ''
 		},
+
 		appointmentIdFromUrl() {
 			// Manifest route is /confirm/:appointmentId so the segment lives in
 			// the URL path immediately after `/confirm/`. Fall back to query.
@@ -163,6 +165,7 @@ export default {
 			const params = new URLSearchParams(window.location.search)
 			return params.get('appointmentId') || ''
 		},
+
 		localTimeLabel() {
 			if (!this.appointment.startTime) {
 				return ''
@@ -182,6 +185,7 @@ export default {
 				return this.appointment.startTime
 			}
 		},
+
 		timezoneLabel() {
 			try {
 				return Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -189,6 +193,7 @@ export default {
 				return 'UTC'
 			}
 		},
+
 		errorMessage() {
 			if (!this.error) {
 				return ''
@@ -196,9 +201,11 @@ export default {
 			return this.label(REASON_MESSAGES[this.error] || REASON_MESSAGES.invalid)
 		},
 	},
+
 	mounted() {
 		this.validate()
 	},
+
 	methods: {
 		label(key) {
 			if (typeof t === 'function') {
@@ -206,6 +213,7 @@ export default {
 			}
 			return key
 		},
+
 		async validate() {
 			this.loading = true
 			this.error = null
@@ -231,6 +239,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async confirm() {
 			if (this.confirming) {
 				return
@@ -258,6 +267,7 @@ export default {
 				this.confirming = false
 			}
 		},
+
 		async resend() {
 			if (this.resending) {
 				return

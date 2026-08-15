@@ -94,7 +94,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testIsWithinBudgetWhenUnderAuthorized(): void {
-		self::assertTrue($this->guard->isWithinBudget(authorizedLasten: 500.0, alreadyPosted: 450.0, attempted: 50.0));
+		self::assertTrue($this->guard->isWithinBudget(authorizedExpenses: 500.0, alreadyPosted: 450.0, attempted: 50.0));
 
 	}//end testIsWithinBudgetWhenUnderAuthorized()
 
@@ -104,7 +104,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testNotWithinBudgetWhenOverAuthorized(): void {
-		self::assertFalse($this->guard->isWithinBudget(authorizedLasten: 500.0, alreadyPosted: 450.0, attempted: 100.0));
+		self::assertFalse($this->guard->isWithinBudget(authorizedExpenses: 500.0, alreadyPosted: 450.0, attempted: 100.0));
 
 	}//end testNotWithinBudgetWhenOverAuthorized()
 
@@ -114,7 +114,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testExactBudgetIsAllowed(): void {
-		self::assertTrue($this->guard->isWithinBudget(authorizedLasten: 500.0, alreadyPosted: 400.0, attempted: 100.0));
+		self::assertTrue($this->guard->isWithinBudget(authorizedExpenses: 500.0, alreadyPosted: 400.0, attempted: 100.0));
 
 	}//end testExactBudgetIsAllowed()
 
@@ -126,14 +126,14 @@ final class BudgetOverrunGuardTest extends TestCase {
 	public function testCanPostWithinStackedBudgetSucceeds(): void {
 		$this->container->method('get')->willReturn(
 			$this->objectServiceStub(
-				taakvelden: [['taakveldCode' => '1.2', 'baten' => 0.0, 'lasten' => 500.0]],
-				wijzigingen: [['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '1.2', 'lasten_delta' => 100.0]]]],
-				glLines: [['taakveldCode' => '1.2', 'side' => 'debit', 'amount' => 400.0]]
+				taskFields: [['taskFieldCode' => '1.2', 'revenue' => 0.0, 'expenses' => 500.0]],
+				wijzigingen: [['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '1.2', 'lasten_delta' => 100.0]]]],
+				glLines: [['taskFieldCode' => '1.2', 'side' => 'debit', 'amount' => 400.0]]
 			)
 		);
 
 		// Authorized = 500 + 100 = 600; already 400; attempt 150 → 550 ≤ 600.
-		self::assertTrue($this->guard->canPost(begrotingId: 'pb-1', taakveldCode: '1.2', attempted: 150.0));
+		self::assertTrue($this->guard->canPost(budgetId: 'pb-1', taskFieldCode: '1.2', attempted: 150.0));
 
 	}//end testCanPostWithinStackedBudgetSucceeds()
 
@@ -145,14 +145,14 @@ final class BudgetOverrunGuardTest extends TestCase {
 	public function testCanPostOverBudgetFails(): void {
 		$this->container->method('get')->willReturn(
 			$this->objectServiceStub(
-				taakvelden: [['taakveldCode' => '1.2', 'baten' => 0.0, 'lasten' => 500.0]],
+				taskFields: [['taskFieldCode' => '1.2', 'revenue' => 0.0, 'expenses' => 500.0]],
 				wijzigingen: [],
-				glLines: [['taakveldCode' => '1.2', 'side' => 'debit', 'amount' => 450.0]]
+				glLines: [['taskFieldCode' => '1.2', 'side' => 'debit', 'amount' => 450.0]]
 			)
 		);
 
 		// Authorized 500; already 450; attempt 100 → 550 > 500.
-		self::assertFalse($this->guard->canPost(begrotingId: 'pb-1', taakveldCode: '1.2', attempted: 100.0));
+		self::assertFalse($this->guard->canPost(budgetId: 'pb-1', taskFieldCode: '1.2', attempted: 100.0));
 
 	}//end testCanPostOverBudgetFails()
 
@@ -162,7 +162,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanPostFailsClosedOnEmptyIds(): void {
-		self::assertFalse($this->guard->canPost(begrotingId: '', taakveldCode: '1.2', attempted: 1.0));
+		self::assertFalse($this->guard->canPost(budgetId: '', taskFieldCode: '1.2', attempted: 1.0));
 
 	}//end testCanPostFailsClosedOnEmptyIds()
 
@@ -173,21 +173,21 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 */
 	public function testCanPostFailsClosedOnException(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('OR down'));
-		self::assertFalse($this->guard->canPost(begrotingId: 'pb-1', taakveldCode: '1.2', attempted: 1.0));
+		self::assertFalse($this->guard->canPost(budgetId: 'pb-1', taskFieldCode: '1.2', attempted: 1.0));
 
 	}//end testCanPostFailsClosedOnException()
 
 	/**
 	 * Build a schema-aware ObjectService stub returning rows per schema slug.
 	 *
-	 * @param array<int,array<string,mixed>> $taakvelden Taakveld rows.
+	 * @param array<int,array<string,mixed>> $taskFields Taakveld rows.
 	 * @param array<int,array<string,mixed>> $wijzigingen Begrotingswijziging rows.
 	 * @param array<int,array<string,mixed>> $glLines GLLine rows.
 	 *
 	 * @return object The fluent ObjectService stub.
 	 */
-	private function objectServiceStub(array $taakvelden, array $wijzigingen, array $glLines): object {
-		return new class($taakvelden, $wijzigingen, $glLines) {
+	private function objectServiceStub(array $taskFields, array $wijzigingen, array $glLines): object {
+		return new class($taskFields, $wijzigingen, $glLines) {
 			/**
 			 * Currently-selected schema slug.
 			 *
@@ -200,7 +200,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 			 *
 			 * @var array<int,array<string,mixed>>
 			 */
-			private array $taakvelden;
+			private array $taskFields;
 
 			/**
 			 * Begrotingswijziging rows.
@@ -219,12 +219,12 @@ final class BudgetOverrunGuardTest extends TestCase {
 			/**
 			 * Constructor.
 			 *
-			 * @param array<int,array<string,mixed>> $taakvelden Taakveld rows.
+			 * @param array<int,array<string,mixed>> $taskFields Taakveld rows.
 			 * @param array<int,array<string,mixed>> $wijzigingen Begrotingswijziging rows.
 			 * @param array<int,array<string,mixed>> $glLines GLLine rows.
 			 */
-			public function __construct(array $taakvelden, array $wijzigingen, array $glLines) {
-				$this->taakvelden = $taakvelden;
+			public function __construct(array $taskFields, array $wijzigingen, array $glLines) {
+				$this->taskFields = $taskFields;
 				$this->wijzigingen = $wijzigingen;
 				$this->glLines = $glLines;
 			}//end __construct()
@@ -261,7 +261,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 			 */
 			public function findAll(array $params = []): array {
 				if ($this->schema === 'Taakveld') {
-					return $this->taakvelden;
+					return $this->taskFields;
 				}
 
 				if ($this->schema === 'Begrotingswijziging') {

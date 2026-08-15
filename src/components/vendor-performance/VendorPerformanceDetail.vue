@@ -205,8 +205,8 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'VendorPerformanceDetail',
@@ -219,6 +219,7 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * Administration scope (server-resolved at the call site).
 		 */
@@ -227,6 +228,7 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			scorecard: null,
@@ -234,9 +236,11 @@ export default {
 			error: '',
 		}
 	},
+
 	async created() {
 		await this.loadScorecard()
 	},
+
 	methods: {
 		async loadScorecard() {
 			this.loading = true
@@ -262,6 +266,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		formatBp(bp) {
 			if (bp === null || bp === undefined) {
 				return '—'
@@ -272,6 +277,7 @@ export default {
 			}
 			return `${(value / 100).toFixed(2)} %`
 		},
+
 		scoreClass(bp) {
 			const value = Number(bp || 0)
 			if (value >= 9600) {
@@ -282,6 +288,7 @@ export default {
 			}
 			return 'vp-detail__score--low'
 		},
+
 		trendLabel(trend) {
 			const labels = {
 				improving: this.t('shillinq', 'Improving'),

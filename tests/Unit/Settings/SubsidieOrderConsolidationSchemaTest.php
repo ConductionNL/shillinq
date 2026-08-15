@@ -123,16 +123,16 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 	 * @return void
 	 */
 	public function testExactlyOneSubsidieDefinition(): void {
-		$subsidie = array_values(
+		$subsidy = array_values(
 			array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
 		);
 
 		$this->assertCount(
 			1,
-			$subsidie,
-			'Expected exactly one Subsidie schema; found: ' . implode(', ', array_column($subsidie, 'file'))
+			$subsidy,
+			'Expected exactly one Subsidie schema; found: ' . implode(', ', array_column($subsidy, 'file'))
 		);
-		$this->assertStringEndsWith('shillinq_register.json', $subsidie[0]['file']);
+		$this->assertStringEndsWith('shillinq_register.json', $subsidy[0]['file']);
 
 	}//end testExactlyOneSubsidieDefinition()
 
@@ -142,16 +142,16 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanonicalSubsidieIsTheFieldUnion(): void {
-		$subsidie = array_values(
+		$subsidy = array_values(
 			array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
 		);
-		$props = $subsidie[0]['props'];
+		$props = $subsidy[0]['props'];
 
 		// Regulatory fields (Dutch ASV-model) MUST all survive.
 		$regulatory = [
 			'schemeName', 'schemeArticle', 'subsidyScheme',
-			'beschikkingDate', 'beschikkingUri',
-			'vaststellingDate', 'vaststellingUri',
+			'decisionDate', 'decisionUri',
+			'determinationDate', 'determinationUri',
 			'requestedAmount', 'grantedAmount', 'determinedAmount', 'paidOutAmount', 'reclaimedAmount',
 			'prestatieverantwoording', 'repaymentPlanId',
 		];
@@ -161,7 +161,7 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 
 		// The English operations vocabulary MUST also survive (union, no data loss).
 		$englishUnion = [
-			'awardAmount', 'awardDate', 'subsidieName', 'grantProgram', 'granteeOrganization',
+			'awardAmount', 'awardDate', 'subsidyName', 'grantProgram', 'granteeOrganization',
 			'approvingAuthority', 'attachmentUri', 'budgetYear', 'currency',
 			'disbursementDate', 'hasRepaymentPlan', 'notes', 'purposeDescription', 'settlementDate',
 		];

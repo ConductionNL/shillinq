@@ -148,14 +148,14 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcAppContent,
 	NcButton,
 	NcEmptyContent,
 	NcLoadingIcon,
 } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
-import axios from '@nextcloud/axios'
 
 const SEGMENT_AGGREGATION = {
 	costCenter: 'byCostCenter',
@@ -188,6 +188,7 @@ export default {
 		hasHierarchy() {
 			return this.activeSegment === 'costCenterHierarchy'
 		},
+
 		groupLabel() {
 			const map = {
 				costCenter: this.t('shillinq', 'Cost center'),
@@ -197,9 +198,11 @@ export default {
 			}
 			return map[this.activeSegment] ?? this.t('shillinq', 'Segment')
 		},
+
 		total() {
 			return this.rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
 		},
+
 		availableSegments() {
 			return [
 				{ id: 'costCenter', label: this.t('shillinq', 'Cost center') },
@@ -228,6 +231,7 @@ export default {
 			this.activeSegment = segment
 			this.loadSegment(segment)
 		},
+
 		async loadSegment(segment) {
 			this.loading = true
 			this.errorMessage = ''
@@ -271,6 +275,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		normaliseRows(payload, segment) {
 			const buckets = Array.isArray(payload?.buckets)
 				? payload.buckets
@@ -306,6 +311,7 @@ export default {
 
 			return flat
 		},
+
 		applyHierarchy(flat) {
 			// Compute parent-child depth for hierarchical display. Iterative —
 			// no recursive call (avoids stack overflow on deep trees).
@@ -343,6 +349,7 @@ export default {
 
 			return result
 		},
+
 		formatAmount(cents) {
 			const value = (Number(cents) || 0) / 100
 			try {
@@ -356,6 +363,7 @@ export default {
 				return value.toFixed(2)
 			}
 		},
+
 		exportCsv() {
 			if (!this.rows.length) {
 				return
@@ -388,6 +396,7 @@ export default {
 			document.body.removeChild(a)
 			URL.revokeObjectURL(url)
 		},
+
 		csvEscape(value) {
 			if (value === null || value === undefined) {
 				return ''

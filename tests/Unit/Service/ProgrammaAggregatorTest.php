@@ -57,9 +57,9 @@ final class ProgrammaAggregatorTest extends TestCase {
 	 */
 	public function testAggregatesChildTaakveldenWithoutRoundingDrift(): void {
 		$result = $this->aggregator->aggregate(
-			taakvelden: [
-				['baten' => 100.0, 'lasten' => 500.0],
-				['baten' => 50.0, 'lasten' => 450.0],
+			taskFields: [
+				['revenue' => 100.0, 'expenses' => 500.0],
+				['revenue' => 50.0, 'expenses' => 450.0],
 			]
 		);
 
@@ -77,8 +77,8 @@ final class ProgrammaAggregatorTest extends TestCase {
 	 */
 	public function testSaldoNaMutatiesAppliesReserveMutation(): void {
 		$result = $this->aggregator->aggregate(
-			taakvelden: [['baten' => 0.0, 'lasten' => 500.0]],
-			mutatiesReserves: 200.0
+			taskFields: [['revenue' => 0.0, 'expenses' => 500.0]],
+			movementsReserves: 200.0
 		);
 
 		self::assertSame(-500.0, $result['balanceBeforeMovements']);
@@ -92,7 +92,7 @@ final class ProgrammaAggregatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testEmptyTaakveldenYieldsZeroTotals(): void {
-		$result = $this->aggregator->aggregate(taakvelden: []);
+		$result = $this->aggregator->aggregate(taskFields: []);
 		self::assertSame(0.0, $result['revenueTotal']);
 		self::assertSame(0.0, $result['expensesTotal']);
 		self::assertSame(0.0, $result['balanceAfterMovements']);
@@ -106,9 +106,9 @@ final class ProgrammaAggregatorTest extends TestCase {
 	 */
 	public function testCentLevelAmountsSumExactly(): void {
 		$result = $this->aggregator->aggregate(
-			taakvelden: [
-				['baten' => 0.10, 'lasten' => 0.0],
-				['baten' => 0.20, 'lasten' => 0.0],
+			taskFields: [
+				['revenue' => 0.10, 'expenses' => 0.0],
+				['revenue' => 0.20, 'expenses' => 0.0],
 			]
 		);
 		self::assertSame(0.30, $result['revenueTotal']);

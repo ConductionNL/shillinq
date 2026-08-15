@@ -84,7 +84,7 @@ final class AnnualReportSchemaTest extends TestCase {
 		$schema = $this->fragment['components']['schemas']['AnnualReport'];
 		self::assertSame(
 			['micro', 'klein', 'middelgroot', 'groot'],
-			$schema['properties']['groottecategorie']['enum']
+			$schema['properties']['sizeCategory']['enum']
 		);
 
 	}//end testGroottecategorieIsClosedEnum()
@@ -173,7 +173,7 @@ final class AnnualReportSchemaTest extends TestCase {
 		$schema = $this->fragment['components']['schemas']['ReviewWorkflow'];
 		self::assertSame(
 			['concept', 'in-review', 'vastgesteld', 'gedeponeerd'],
-			$schema['properties']['huidigStap']['enum']
+			$schema['properties']['currentStap']['enum']
 		);
 
 	}//end testReviewWorkflowStepEnum()
@@ -209,11 +209,11 @@ final class AnnualReportSchemaTest extends TestCase {
 		foreach ($sheets as $sheet) {
 			$activa = 0;
 			$passiva = 0;
-			foreach ($sheet['rubrieken'] as $rubriek) {
-				$cents = (int)round(((float)$rubriek['currentYear']) * 100);
-				if (($rubriek['zijde'] ?? '') === 'activa') {
+			foreach ($sheet['rubrieken'] as $section) {
+				$cents = (int)round(((float)$section['currentYear']) * 100);
+				if (($section['side'] ?? '') === 'activa') {
 					$activa += $cents;
-				} elseif (($rubriek['zijde'] ?? '') === 'passiva') {
+				} elseif (($section['side'] ?? '') === 'passiva') {
 					$passiva += $cents;
 				}
 			}

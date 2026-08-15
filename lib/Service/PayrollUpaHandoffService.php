@@ -69,32 +69,32 @@ class PayrollUpaHandoffService {
 	 * the masters at transport time using the werknemerId.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
-	 * @param string $periodeId Period id.
+	 * @param string $periodId Period id.
 	 *
 	 * @return array<int,array<string,mixed>> UPA submission payloads.
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	public function toUpaSubmissionPayloads(string $administrationId, string $periodeId): array {
-		$stroken = $this->findStroken(administrationId: $administrationId, periodeId: $periodeId);
+	public function toUpaSubmissionPayloads(string $administrationId, string $periodId): array {
+		$stroken = $this->findStroken(administrationId: $administrationId, periodId: $periodId);
 		if ($stroken === []) {
 			$this->logger->debug(
 				'Shillinq payroll: no loonstroken found for UPA period',
-				['periodeId' => $periodeId]
+				['periodId' => $periodId]
 			);
 			return [];
 		}
 
 		$groups = [];
-		foreach ($stroken as $strook) {
-			$werknemerId = (string)($strook['werknemerId'] ?? '');
-			$regeling = (string)($this->lookupWerknemerRegeling(administrationId: $administrationId, werknemerId: $werknemerId));
+		foreach ($stroken as $slip) {
+			$employeeId = (string)($slip['employeeId'] ?? '');
+			$regeling = (string)($this->lookupEmployeeRegeling(administrationId: $administrationId, employeeId: $employeeId));
 			if ($regeling === '') {
 				continue;
 			}
 
-			$premWn = (float)(($strook['pensioen']['premie_wn_aandeel'] ?? 0));
-			$premWg = (float)(($strook['pensioen']['premie_wg_aandeel'] ?? 0));
+			$premWn = (float)(($slip['pensioen']['premie_wn_aandeel'] ?? 0));
+			$premWg = (float)(($slip['pensioen']['premie_wg_aandeel'] ?? 0));
 			if (($premWn + $premWg) <= 0.0) {
 				continue;
 			}
@@ -102,18 +102,18 @@ class PayrollUpaHandoffService {
 			if (isset($groups[$regeling]) === false) {
 				$groups[$regeling] = [
 					'pensionScheme' => $regeling,
-					'periodeId' => $periodeId,
+					'periodId' => $periodId,
 					'administrationId' => $administrationId,
 					'totaalPremie' => 0.0,
 					'totaalWerknemers' => 0,
-					'regels' => [],
+					'rules' => [],
 				];
 			}
 
 			$groups[$regeling]['totaalPremie'] += ($premWn + $premWg);
 			$groups[$regeling]['totaalWerknemers'] = ((int)$groups[$regeling]['totaalWerknemers'] + 1);
-			$groups[$regeling]['regels'][] = [
-				'werknemerId' => $werknemerId,
+			$groups[$regeling]['rules'][] = [
+				'employeeId' => $employeeId,
 				'premieWn' => $premWn,
 				'premieWg' => $premWg,
 			];
@@ -132,12 +132,12 @@ class PayrollUpaHandoffService {
 	 * Look up the werknemer's pensioenRegeling, scoped to the administration.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $werknemerId Employee id.
+	 * @param string $employeeId Employee id.
 	 *
 	 * @return string The pensioenRegeling slug or '' when unknown.
 	 */
-	private function lookupWerknemerRegeling(string $administrationId, string $werknemerId): string {
-		if ($werknemerId === '') {
+	private function lookupEmployeeRegeling(string $administrationId, string $employeeId): string {
+		if ($employeeId === '') {
 			return '';
 		}
 
@@ -148,7 +148,7 @@ class PayrollUpaHandoffService {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'id' => $werknemerId,
+						'id' => $employeeId,
 					],
 				]
 			);
@@ -165,11 +165,11 @@ class PayrollUpaHandoffService {
 	 * Read all LoonStrook records for the period, administration-scoped.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $periodeId Period id.
+	 * @param string $periodId Period id.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function findStroken(string $administrationId, string $periodeId): array {
+	private function findStroken(string $administrationId, string $periodId): array {
 		$results = $this->objectService()
 			->setRegister($this->register())
 			->setSchema('LoonStrook')
@@ -177,7 +177,7 @@ class PayrollUpaHandoffService {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'periodeId' => $periodeId,
+						'periodId' => $periodId,
 					],
 				]
 			);

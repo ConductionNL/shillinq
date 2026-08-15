@@ -143,7 +143,7 @@ final class OverdueVerantwoordingNotificationTest extends TestCase {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function subsidieVerantwoordingSchema(array $fragment): array {
+	private function subsidyAccountabilitySchema(array $fragment): array {
 		$schema = ($fragment['components']['schemas']['SubsidieVerantwoording'] ?? null);
 		self::assertIsArray($schema);
 		return $schema;
@@ -161,7 +161,7 @@ final class OverdueVerantwoordingNotificationTest extends TestCase {
 	 * @return void
 	 */
 	public function testAwardDateFieldIsARealNullableDateProperty(): void {
-		$schema = $this->subsidieVerantwoordingSchema($this->loadFragment());
+		$schema = $this->subsidyAccountabilitySchema($this->loadFragment());
 		$awardDate = ($schema['properties']['awardDate'] ?? null);
 
 		self::assertIsArray($awardDate);
@@ -184,7 +184,7 @@ final class OverdueVerantwoordingNotificationTest extends TestCase {
 	 * @return void
 	 */
 	public function testLifecycleDeclaresFinalAsTerminal(): void {
-		$schema = $this->subsidieVerantwoordingSchema($this->loadFragment());
+		$schema = $this->subsidyAccountabilitySchema($this->loadFragment());
 		self::assertSame(['final'], $schema['x-openregister-lifecycle']['final']);
 
 	}//end testLifecycleDeclaresFinalAsTerminal()
@@ -198,7 +198,7 @@ final class OverdueVerantwoordingNotificationTest extends TestCase {
 	 * @return void
 	 */
 	public function testCalculationsAreMaterialisedAndUseOnlyValidOps(): void {
-		$schema = $this->subsidieVerantwoordingSchema($this->loadFragment());
+		$schema = $this->subsidyAccountabilitySchema($this->loadFragment());
 		$calcs = ($schema['x-openregister-calculations'] ?? null);
 		self::assertIsArray($calcs);
 		self::assertArrayHasKey('daysSinceAward', $calcs);
@@ -287,7 +287,7 @@ final class OverdueVerantwoordingNotificationTest extends TestCase {
 	 * @return void
 	 */
 	public function testOnOverdueNotificationRuleShape(): void {
-		$schema = $this->subsidieVerantwoordingSchema($this->loadFragment());
+		$schema = $this->subsidyAccountabilitySchema($this->loadFragment());
 		$rule = ($schema['x-openregister-notifications']['onOverdue'] ?? null);
 		self::assertIsArray($rule);
 
@@ -369,7 +369,7 @@ final class OverdueVerantwoordingNotificationTest extends TestCase {
 	 * @return array<string,mixed>
 	 */
 	private function loadCalcs(): array {
-		$schema = $this->subsidieVerantwoordingSchema($this->loadFragment());
+		$schema = $this->subsidyAccountabilitySchema($this->loadFragment());
 		return $schema['x-openregister-calculations'];
 	}//end loadCalcs()
 

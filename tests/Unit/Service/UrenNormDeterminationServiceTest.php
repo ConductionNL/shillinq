@@ -53,18 +53,18 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			profiel: [
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-1',
-				'kalenderjaar' => 2026,
+				'calendarYear' => 2026,
 			]
 		);
 
-		self::assertSame(1225, $seed['doelNorm']);
-		self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normGrondslag']);
-		self::assertSame('NIET_TOEPASSELIJK', $seed['grotendeelsCriterium']);
-		self::assertSame('OP_KOERS', $seed['drempelStatus']);
-		self::assertSame(0.0, $seed['lopendeUren']);
+		self::assertSame(1225, $seed['purposeNorm']);
+		self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normBasis']);
+		self::assertSame('NIET_TOEPASSELIJK', $seed['largelyCriterium']);
+		self::assertSame('OP_KOERS', $seed['thresholdStatus']);
+		self::assertSame(0.0, $seed['currentHours']);
 		self::assertSame('adm-1', $seed['administrationId']);
 		self::assertSame('ond-1', $seed['enterpriseId']);
-		self::assertSame(2026, $seed['kalenderjaar']);
+		self::assertSame(2026, $seed['calendarYear']);
 
 	}//end testRegularSeedYields1225()
 
@@ -78,13 +78,13 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			profiel: [
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-2',
-				'kalenderjaar' => 2026,
+				'calendarYear' => 2026,
 				'arbeidsongeschikt' => true,
 			]
 		);
 
-		self::assertSame(800, $seed['doelNorm']);
-		self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normGrondslag']);
+		self::assertSame(800, $seed['purposeNorm']);
+		self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normBasis']);
 
 	}//end testArbeidsongeschiktSeedYields800()
 
@@ -98,12 +98,12 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			profiel: [
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-3',
-				'kalenderjaar' => 2026,
+				'calendarYear' => 2026,
 				'meewerkendePartner' => true,
 			]
 		);
 
-		self::assertSame(525, $seed['doelNorm']);
+		self::assertSame(525, $seed['purposeNorm']);
 
 	}//end testMeewerkendePartnerSeedYields525()
 
@@ -117,13 +117,13 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			profiel: [
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-4',
-				'kalenderjaar' => 2026,
+				'calendarYear' => 2026,
 				'ondernemingsUrenJTD' => 300.0,
 				'loondienstUrenJTD' => 600.0,
 			]
 		);
 
-		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
+		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $seed['largelyCriterium']);
 
 	}//end testParallelLoondienstMajorityFlagsNietGrotendeels()
 
@@ -137,13 +137,13 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			profiel: [
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-5',
-				'kalenderjaar' => 2026,
+				'calendarYear' => 2026,
 				'ondernemingsUrenJTD' => 800.0,
 				'loondienstUrenJTD' => 200.0,
 			]
 		);
 
-		self::assertSame('GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
+		self::assertSame('GROTENDEELS_ONDERNEMING', $seed['largelyCriterium']);
 
 	}//end testParallelLoondienstMinorityFlagsGrotendeels()
 
@@ -161,7 +161,7 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			profiel: [
 				'administrationId' => 'adm-1',
 				'enterpriseId' => 'ond-9',
-				'kalenderjaar' => 2026,
+				'calendarYear' => 2026,
 				'arbeidsongeschikt' => true,
 			]
 		);

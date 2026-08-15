@@ -39,8 +39,8 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { translate as t } from '@nextcloud/l10n'
+import { NcButton } from '@nextcloud/vue'
 import BankTransferIn from 'vue-material-design-icons/BankTransferIn.vue'
 import BankStatementWizard from '../../modals/BankStatementWizard.vue'
 
@@ -51,11 +51,13 @@ export default {
 		BankTransferIn,
 		BankStatementWizard,
 	},
+
 	data() {
 		return {
 			showBankStatementWizard: false,
 		}
 	},
+
 	methods: { t },
 }
 </script>

@@ -10,7 +10,7 @@
     "schemas": {
       "Account": {
         "properties": {
-          "isSchatkistAccount": {
+          "isTreasuryAccount": {
             "type": "boolean",
             "default": false,
             "description": "REQ-SBK-002: flags this account as a Treasury (schatkist) account so SchatkistPosition aggregates its postings. Additive extension merged onto the T1 Account schema via ADR-037 deep-merge.",
@@ -663,7 +663,7 @@
         "required": [
           "administrationId",
           "accountNumber",
-          "taakveld"
+          "taskField"
         ],
         "properties": {
           "administrationId": {
@@ -678,7 +678,7 @@
             "example": "4250",
             "title": "Account Number"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "description": "BBV taakveld code per bbv-taakvelden-2024.json seed.",
             "example": "0.1",
@@ -691,7 +691,7 @@
             "example": "1000",
             "title": "Programma Code"
           },
-          "paragraafCode": {
+          "paragraphCode": {
             "type": "string",
             "nullable": true,
             "description": "Optional paragraaf code.",
@@ -744,7 +744,7 @@
             "description": "GL postings grouped by taakveld for programma roll-up reporting (REQ-BBV-007).",
             "source": "GLLine",
             "groupBy": [
-              "taakveld"
+              "taskField"
             ],
             "filter": {
               "administrationId": "@self.administrationId"
@@ -1108,19 +1108,19 @@
             "description": "True for the first 2 years (800-hour threshold).",
             "title": "Qualifies Starters"
           },
-          "zelfstandigenaftrek": {
+          "selfEmployedDeduction": {
             "type": "number",
             "default": 0,
             "description": "Self-employed deduction (MonetaryAmount, from seed).",
             "title": "Zelfstandigenaftrek"
           },
-          "startersaftrek": {
+          "starterDeduction": {
             "type": "number",
             "default": 0,
             "description": "Starters deduction (MonetaryAmount, if qualifiesStarters).",
             "title": "Startersaftrek"
           },
-          "mkbWinstvrijstelling": {
+          "mkbProfitExemption": {
             "type": "number",
             "default": 0,
             "description": "MKB profit exemption (MonetaryAmount, from seed).",
@@ -1301,13 +1301,13 @@
             "description": "ISO 4217, default EUR.",
             "title": "Currency"
           },
-          "drempelbedragApplies": {
+          "thresholdAmountApplies": {
             "type": "boolean",
             "default": false,
             "description": "Whether the drempelbedrag applies for this administration (REQ-SBK-006).",
             "title": "Drempelbedrag Applies"
           },
-          "drempelbedragAmount": {
+          "thresholdAmountAmount": {
             "type": "number",
             "nullable": true,
             "description": "Threshold amount from schatkist-thresholds seed (e.g. 0.75% of begroting).",
@@ -1327,7 +1327,7 @@
             "source": "GLLine",
             "filter": {
               "administrationId": "@self.administrationId",
-              "isSchatkistAccount": true,
+              "isTreasuryAccount": true,
               "postingDate": "@self.businessDate"
             },
             "sum": [
@@ -1383,7 +1383,7 @@
             "visibility": {
               "field": "administrationType",
               "in": [
-                "gemeente"
+                "municipality"
               ]
             }
           }
@@ -1417,13 +1417,13 @@
         "x-schema-org": "schema:PaymentChargeSpecification",
         "type": "object",
         "required": [
-          "subsidieId",
+          "subsidyId",
           "installmentNumber",
           "dueDate",
           "amount"
         ],
         "properties": {
-          "subsidieId": {
+          "subsidyId": {
             "type": "string",
             "description": "FK to the Subsidie being repaid.",
             "example": "SUB-2026-0001",

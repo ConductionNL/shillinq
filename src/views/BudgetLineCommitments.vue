@@ -95,16 +95,16 @@
 								@click="toggleDrilldown(row)"
 								@keyup.enter="toggleDrilldown(row)">
 								<th scope="row">
-									{{ row.programma || '—' }}
+									{{ row.programme || '—' }}
 								</th>
-								<td>{{ row.kostenplaats || '—' }}</td>
-								<td>{{ row.boekjaar ?? '—' }}</td>
-								<td>{{ row.grootboekrekening || '—' }}</td>
+								<td>{{ row.cost_centre || '—' }}</td>
+								<td>{{ row.financial_year ?? '—' }}</td>
+								<td>{{ row.general_ledger_account || '—' }}</td>
 								<td class="budget-line-commitments__amount-cell">
 									{{ formatAmount(row.geautoriseerd) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
-									{{ formatAmount(row.verplicht) }}
+									{{ formatAmount(row.mandatory) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
 									{{ formatAmount(row.gerealiseerd) }}
@@ -141,16 +141,16 @@
 										data-testid="budget-line-drilldown">
 										<li
 											v-for="item in drilldownItems"
-											:key="item.id || item.verplichting">
+											:key="item.id || item.commitment">
 											<span
-												class="budget-line-commitments__drilldown-verplichting"
-												>{{ item.verplichting }}</span
+												class="budget-line-commitments__drilldown-commitment"
+												>{{ item.commitment }}</span
 											>
 											<span
 												class="budget-line-commitments__drilldown-amount"
 												>{{
 													formatAmount(
-														item.bedrag_excl_btw,
+														item.amount_excl_vat,
 													)
 												}}</span
 											>
@@ -173,13 +173,13 @@
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import {
-	normaliseBudgetLineRows,
-	formatAmount,
 	drilldownFilters,
+	formatAmount,
+	normaliseBudgetLineRows,
 } from './budgetLineCommitmentsHelpers.js'
 
 export default {
@@ -242,6 +242,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Expand/collapse the drilldown for a budget-line row.
 		 *

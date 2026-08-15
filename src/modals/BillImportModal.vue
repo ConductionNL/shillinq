@@ -335,30 +335,30 @@
 </template>
 
 <script>
-import { NcButton, NcDialog } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
 import {
-	detectFormat,
-	isDeferredPdf,
 	buildImportFormData,
-	reviewFormFromRecord,
 	canSaveReview,
-	importErrorMessage,
-	refreshEventPayload,
-	PDF_DEFERRAL_MESSAGE,
-	isExtractionDraft,
 	confidenceForField,
-	isFieldCorrected,
-	requiresExplicitReview,
-	pendingDraftSummary,
-	hasKnownExtractionId,
+	detectFormat,
 	glAccountSuggestionSummary,
+	hasKnownExtractionId,
+	importErrorMessage,
+	isDeferredPdf,
+	isExtractionDraft,
+	isFieldCorrected,
+	PDF_DEFERRAL_MESSAGE,
+	pendingDraftSummary,
+	refreshEventPayload,
+	requiresExplicitReview,
+	reviewFormFromRecord,
 } from './billImportModal.js'
 
 const REGISTER_SLUG = 'shillinq'
@@ -373,6 +373,7 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close', 'imported'],
 	data() {
 		return {
@@ -386,30 +387,39 @@ export default {
 			glSuggestion: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		canSave() {
 			return canSaveReview(this.form)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isDraftReview() {
 			return isExtractionDraft(this.importedRecord)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		requiresReview() {
 			return requiresExplicitReview(this.importedRecord)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		canRerequest() {
 			return !!this.importedRecord?.sourceDocumentUri
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		pendingDrafts() {
 			return this.pendingDraftRows.map(pendingDraftSummary)
 		},
 	},
+
 	watch: {
-		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
+		/**
+		 * @param next
+		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+		 */
 		open(next) {
 			if (next === true) {
 				this.reset()
@@ -417,6 +427,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		t,
 		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
@@ -430,6 +441,7 @@ export default {
 				glAccount: '',
 			}
 		},
+
 		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		reset() {
 			this.step = 'upload'
@@ -441,14 +453,23 @@ export default {
 			this.pendingDraftRows = []
 			this.glSuggestion = null
 		},
-		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+
+		/**
+		 * @param field
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
+		 */
 		confidenceFor(field) {
 			return confidenceForField(this.importedRecord, field)
 		},
-		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+
+		/**
+		 * @param field
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
+		 */
 		isCorrected(field) {
 			return isFieldCorrected(this.importedRecord, field)
 		},
+
 		/**
 		 * Load pending SupplierInvoice extraction drafts (REQ-RXC-001/002) so
 		 * the operator can jump straight to the confidence-scored review step
@@ -475,6 +496,7 @@ export default {
 				this.pendingDraftRows = []
 			}
 		},
+
 		/**
 		 * Open an extraction draft directly into the review step, pre-filled
 		 * with per-field confidence (REQ-RXC-002), then requests a GL-account
@@ -505,6 +527,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		/**
 		 * Request a GL-account suggestion for the currently-reviewed draft
 		 * (gl-account-suggestion-consume, REQ-GAC-003) via the shillinq proxy.
@@ -531,6 +554,7 @@ export default {
 				this.glSuggestion = null
 			}
 		},
+
 		/**
 		 * Fill the GL-account picker with the suggested code — the operator
 		 * still must click Save to commit anything (REQ-GAC-004).
@@ -541,6 +565,7 @@ export default {
 			if (!this.glSuggestion) return
 			this.form.glAccount = this.glSuggestion.code
 		},
+
 		/**
 		 * (Re-)request docudesk extraction for the currently reviewed draft
 		 * (REQ-RXC-005) via the shillinq proxy endpoint.
@@ -573,17 +598,29 @@ export default {
 				this.busy = false
 			}
 		},
-		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
+
+		/**
+		 * @param event
+		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+		 */
 		onDrop(event) {
 			const file = event?.dataTransfer?.files?.[0]
 			if (file) this.handleFile(file)
 		},
-		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
+
+		/**
+		 * @param event
+		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+		 */
 		onFileSelected(event) {
 			const file = event?.target?.files?.[0]
 			if (file) this.handleFile(file)
 		},
-		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
+
+		/**
+		 * @param file
+		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+		 */
 		async handleFile(file) {
 			this.error = ''
 			this.pdfDeferred = false
@@ -633,6 +670,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		/**
 		 * REQ-BIM-003/004 (manual UBL/CSV import) OR, for an extraction draft
 		 * (REQ-RXC-004), commits any operator corrections through the
@@ -701,6 +739,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		onClose() {
 			if (this.busy) return

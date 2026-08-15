@@ -189,9 +189,9 @@ class DualGaapGuardTest extends TestCase {
 	public function testCompleteElectionCanActivate(): void {
 		$object = [
 			'complyOrExplainMotivation' => 'Kleine rechtspersoon BW2 art 2:396.',
-			'avaBesluitReference' => 'AVA-2026-03-12-4',
+			'avaDecisionReference' => 'AVA-2026-03-12-4',
 			'rjVariant' => 'RJk',
-			'sizeCriteriaBalanstotaal' => 5800000.0,
+			'sizeCriteriaBalanceSheetTotal' => 5800000.0,
 			'sizeCriteriaNetRevenue' => 11200000.0,
 		];
 
@@ -209,7 +209,7 @@ class DualGaapGuardTest extends TestCase {
 	public function testElectionWithoutAvaReferenceCannotActivate(): void {
 		$object = [
 			'complyOrExplainMotivation' => 'Kleine rechtspersoon.',
-			'avaBesluitReference' => '',
+			'avaDecisionReference' => '',
 			'rjVariant' => 'RJk',
 		];
 
@@ -227,9 +227,9 @@ class DualGaapGuardTest extends TestCase {
 	public function testRjkElectionOverSizeCeilingCannotActivate(): void {
 		$object = [
 			'complyOrExplainMotivation' => 'Claims small-entity status.',
-			'avaBesluitReference' => 'AVA-2026-03-12-4',
+			'avaDecisionReference' => 'AVA-2026-03-12-4',
 			'rjVariant' => 'RJk',
-			'sizeCriteriaBalanstotaal' => 9000000.0,
+			'sizeCriteriaBalanceSheetTotal' => 9000000.0,
 			'sizeCriteriaNetRevenue' => 18000000.0,
 		];
 
@@ -247,9 +247,9 @@ class DualGaapGuardTest extends TestCase {
 	public function testRjOnverkortElectionHasNoSizeCeiling(): void {
 		$object = [
 			'complyOrExplainMotivation' => 'Middelgrote rechtspersoon.',
-			'avaBesluitReference' => 'AVA-2026-03-12-5',
+			'avaDecisionReference' => 'AVA-2026-03-12-5',
 			'rjVariant' => 'RJ-onverkort',
-			'sizeCriteriaBalanstotaal' => 25000000.0,
+			'sizeCriteriaBalanceSheetTotal' => 25000000.0,
 			'sizeCriteriaNetRevenue' => 60000000.0,
 		];
 

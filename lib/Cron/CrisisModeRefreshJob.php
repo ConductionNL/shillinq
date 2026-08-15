@@ -121,14 +121,14 @@ class CrisisModeRefreshJob extends TimedJob {
 						[
 							'filters' => ['horizonId' => $horizonId],
 							'limit' => 4,
-							'order' => ['weeknummer' => 'ASC'],
+							'order' => ['weekNumber' => 'ASC'],
 						]
 					);
 
 				$hasCrisis = false;
 				foreach ($crisisWeeks as $week) {
-					$saldo = $this->extractField(entity: $week, field: 'closingBalance');
-					if ($saldo !== null && (float)$saldo < 0) {
+					$balance = $this->extractField(entity: $week, field: 'closingBalance');
+					if ($balance !== null && (float)$balance < 0) {
 						$hasCrisis = true;
 						break;
 					}
@@ -142,7 +142,7 @@ class CrisisModeRefreshJob extends TimedJob {
 						->saveObject(
 							object: [
 								'horizonId' => $horizonId,
-								'rolledOp' => date('c'),
+								'rolledOn' => date('c'),
 							]
 						);
 

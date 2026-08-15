@@ -80,6 +80,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		summary: {
 			type: Object,
 			default: () => ({ netAmount: 0, vatAmount: 0, grossAmount: 0 }),
@@ -98,6 +99,7 @@ export default {
 			}
 			return map[sourceType] || sourceType
 		},
+
 		formatMoney(value) {
 			const n = Number(value || 0)
 			return n.toLocaleString('nl-NL', {
@@ -105,10 +107,12 @@ export default {
 				maximumFractionDigits: 2,
 			})
 		},
+
 		formatUnits(value) {
 			if (value === null || value === undefined) return ''
 			return Number(value).toLocaleString('nl-NL')
 		},
+
 		formatRate(rateApplied) {
 			if (!rateApplied || rateApplied.rateCents === undefined) return ''
 			return `€ ${(rateApplied.rateCents / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`

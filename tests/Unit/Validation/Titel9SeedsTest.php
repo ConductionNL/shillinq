@@ -71,7 +71,7 @@ final class Titel9SeedsTest extends TestCase {
 
 		self::assertSame(450000, $byName['micro']['thresholds']['balanceSheetTotal']);
 		self::assertSame(900000, $byName['micro']['thresholds']['netRevenue']);
-		self::assertSame(10, $byName['micro']['thresholds']['gemiddeldAantalWerknemers']);
+		self::assertSame(10, $byName['micro']['thresholds']['averageCountEmployees']);
 		self::assertSame(12000000, $byName['klein']['thresholds']['balanceSheetTotal']);
 		self::assertSame(25000000, $byName['middelgroot']['thresholds']['balanceSheetTotal']);
 		// 'groot' has no upper bound (REQ-T9-001).
@@ -91,7 +91,7 @@ final class Titel9SeedsTest extends TestCase {
 		self::assertFalse($matrix['klein']['bestuursverslag']);
 		self::assertTrue($matrix['middelgroot']['kasstroomoverzicht']);
 		self::assertTrue($matrix['middelgroot']['bestuursverslag']);
-		self::assertTrue($matrix['middelgroot']['accountantsverklaring']);
+		self::assertTrue($matrix['middelgroot']['auditorsStatement']);
 
 	}//end testTemplateMatrixReliefRules()
 
@@ -105,7 +105,7 @@ final class Titel9SeedsTest extends TestCase {
 		$seed = $this->loadSeed('balans-rubriek-mapping.json');
 		$codes = array_column($seed['rubriekCatalogus'], 'rubrieckCode');
 		foreach (['B.I', 'B.II', 'B.III', 'C.I', 'C.II', 'C.IV', 'A', 'B', 'C', 'D'] as $code) {
-			self::assertContains($code, $codes, "Missing rubriek: $code");
+			self::assertContains($code, $codes, "Missing section: $code");
 		}
 
 		self::assertGreaterThanOrEqual(3, count($seed['variants']), 'At least three variant maps expected.');
@@ -125,7 +125,7 @@ final class Titel9SeedsTest extends TestCase {
 		foreach (['A-categorisch', 'E-functioneel'] as $model) {
 			$subtotals = array_filter(
 				$models[$model]['rubrieken'],
-				static fn (array $r): bool => ($r['isSubtotaal'] ?? false) === true
+				static fn (array $r): bool => ($r['isSubtotal'] ?? false) === true
 			);
 			self::assertNotEmpty($subtotals, "Model $model must declare subtotal rows.");
 		}

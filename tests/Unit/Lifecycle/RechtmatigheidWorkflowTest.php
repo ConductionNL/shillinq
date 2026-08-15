@@ -168,7 +168,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 
 		$filter = ($trigger['filter'] ?? []);
 		self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
-		self::assertSame(expected: 'fout', actual: ($filter['soort'] ?? null));
+		self::assertSame(expected: 'fout', actual: ($filter['kind'] ?? null));
 
 		$groups = [];
 		foreach (($notif['recipients'] ?? []) as $recipient) {
@@ -177,10 +177,15 @@ class RechtmatigheidWorkflowTest extends TestCase {
 			}
 		}
 
+		// The needle is a Nextcloud GROUP name, not a property name: the schema's
+		// `portefeuillehouder` property became `portfolioHolder`, but the group an
+		// administrator actually created on the instance did not. Renaming this
+		// string would address a group that does not exist, and a notification
+		// sent to nobody raises nothing.
 		self::assertContains(
 			needle: 'portefeuillehouder',
 			haystack: $groups,
-			message: 'Notification must address the portefeuillehouder.'
+			message: 'Notification must address the portefeuillehouder group.'
 		);
 
 		$subject = ($notif['subject'] ?? []);
@@ -251,9 +256,9 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Procest "task escalated without resolution" replay — guard rejects.
 		$escalated = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Te kort.',
-				'rechtmatigheidsbevinding' => '',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => 'Te kort.',
+				'lawfulnessFinding' => '',
 			]
 		);
 		self::assertFalse(
@@ -264,9 +269,9 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Procest "task completed cleanly" replay — guard accepts.
 		$completed = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Inkoopadviseur bevestigt dat de drempel niet is overschreden; clustering blijft onder EUR 221k.',
-				'rechtmatigheidsbevinding' => 'bev-77',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => 'Inkoopadviseur bevestigt dat de drempel niet is overschreden; clustering blijft onder EUR 221k.',
+				'lawfulnessFinding' => 'bev-77',
 			]
 		);
 		self::assertTrue(
@@ -299,11 +304,11 @@ class RechtmatigheidWorkflowTest extends TestCase {
 	 */
 	public function testPoToetsInheritsWhenAmountWithinTenPercent(): void {
 		$poAmount = 100000.00;
-		$factuurClose = 105000.00;
-		$factuurDeviation = 130000.00;
+		$invoiceClose = 105000.00;
+		$invoiceDeviation = 130000.00;
 
-		$deltaClose = (abs(($factuurClose - $poAmount)) / $poAmount);
-		$deltaDeviation = (abs(($factuurDeviation - $poAmount)) / $poAmount);
+		$deltaClose = (abs(($invoiceClose - $poAmount)) / $poAmount);
+		$deltaDeviation = (abs(($invoiceDeviation - $poAmount)) / $poAmount);
 
 		self::assertLessThanOrEqual(
 			expected: 0.10,
@@ -319,9 +324,9 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Inherited toets — long onderbouwing carries over verbatim.
 		$inherited = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Inheriting PO RV-toets PO-2026-441 (bedrag 100k); factuur 105k binnen 10% tolerantie.',
-				'rechtmatigheidsbevinding' => 'bev-200',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => 'Inheriting PO RV-toets PO-2026-441 (bedrag 100k); factuur 105k binnen 10% tolerantie.',
+				'lawfulnessFinding' => 'bev-200',
 			]
 		);
 		self::assertTrue(
@@ -332,9 +337,9 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// Re-toetsing — caller must supply the updated reasoning (>= 50 chars).
 		$retoetsedShort = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Wijkt af.',
-				'rechtmatigheidsbevinding' => 'bev-201',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => 'Wijkt af.',
+				'lawfulnessFinding' => 'bev-201',
 			]
 		);
 		self::assertFalse(
@@ -344,9 +349,9 @@ class RechtmatigheidWorkflowTest extends TestCase {
 
 		$retoetsedFull = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Factuur 130k wijkt 30% af van PO 100k; herziene toets vereist conform REQ-RV-008.',
-				'rechtmatigheidsbevinding' => 'bev-201',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => 'Factuur 130k wijkt 30% af van PO 100k; herziene toets vereist conform REQ-RV-008.',
+				'lawfulnessFinding' => 'bev-201',
 			]
 		);
 		self::assertTrue(
@@ -378,7 +383,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		$properties = ($toetsSchema['properties'] ?? []);
 
 		self::assertArrayHasKey(
-			key: 'raamovereenkomst',
+			key: 'frameworkAgreement',
 			array: $properties,
 			message: 'Rechtmatigheidstoets must expose the raamovereenkomst FK (Task 17).'
 		);
@@ -399,8 +404,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// without further onderbouwing — the short-circuit path.
 		$shortCircuit = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet',
-				'raamovereenkomst' => 'ro-2024-12',
+				'outcome' => 'voldoet',
+				'frameworkAgreement' => 'ro-2024-12',
 			]
 		);
 		self::assertTrue(
@@ -433,16 +438,16 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		// OpenRegister auto-supplies the `id` field; the schema must expose
 		// every other column the audit-export needs to project verbatim.
 		$required = [
-			'journaalpost',
+			'journalEntry',
 			'criterium',
-			'uitkomst',
-			'toetsdatum',
-			'toetser',
-			'onderbouwing',
+			'outcome',
+			'testDate',
+			'reviewer',
+			'substantiation',
 			'amount_involved',
-			'bewijsstukken',
-			'rechtmatigheidsbevinding',
-			'regelverwijzing',
+			'supportingDocuments',
+			'lawfulnessFinding',
+			'ruleReference',
 		];
 
 		foreach ($required as $field) {
@@ -533,7 +538,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 	public function testJaarrekeningExportGateOnlyAcceptsDefinitief(): void {
 		foreach (['concept', 'vastgesteld_college', 'behandeld_raad'] as $blockedStatus) {
 			$result = $this->guard->canExportParagraaf(
-				paragraaf: ['status' => $blockedStatus, 'financialYear' => 2026]
+				paragraph: ['status' => $blockedStatus, 'financialYear' => 2026]
 			);
 			self::assertFalse(
 				condition: $result,
@@ -542,7 +547,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 		}
 
 		$definitief = $this->guard->canExportParagraaf(
-			paragraaf: ['status' => 'definitief', 'financialYear' => 2026]
+			paragraph: ['status' => 'definitief', 'financialYear' => 2026]
 		);
 		self::assertTrue(
 			condition: $definitief,
@@ -551,8 +556,8 @@ class RechtmatigheidWorkflowTest extends TestCase {
 
 		// The paragraaf schema must also declare the four-state lifecycle so
 		// the financial-statements module can subscribe to status changes.
-		$paragraafSchema = $this->schema(name: 'Rechtmatigheidsparagraaf');
-		$statusEnum = ((($paragraafSchema['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
+		$paragraphSchema = $this->schema(name: 'Rechtmatigheidsparagraaf');
+		$statusEnum = ((($paragraphSchema['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
 		self::assertSame(
 			expected: ['concept', 'vastgesteld_college', 'behandeld_raad', 'definitief'],
 			actual: $statusEnum,

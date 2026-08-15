@@ -101,7 +101,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$object = ['grantId' => 'SUB-1', 'awardedAmount' => 10000.0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->canApprove(verantwoordingId: 'sv-1', object: $object));
+		self::assertTrue($this->guard->canApprove(accountabilityId: 'sv-1', object: $object));
 
 	}//end testSmallGrantApprovesWithoutAuditorStatement()
 
@@ -118,7 +118,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$object = ['grantId' => 'SUB-2', 'awardedAmount' => 50000.0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canApprove(verantwoordingId: 'sv-2', object: $object));
+		self::assertFalse($this->guard->canApprove(accountabilityId: 'sv-2', object: $object));
 
 	}//end testLargeGrantBlockedByPendingAuditorStatement()
 
@@ -135,7 +135,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$object = ['grantId' => 'SUB-3', 'awardedAmount' => 50000.0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->canApprove(verantwoordingId: 'sv-3', object: $object));
+		self::assertTrue($this->guard->canApprove(accountabilityId: 'sv-3', object: $object));
 
 	}//end testLargeGrantWithApprovedAuditorStatementApproves()
 
@@ -152,7 +152,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$object = ['grantId' => 'SUB-4', 'awardedAmount' => 30000.0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertTrue($this->guard->canApprove(verantwoordingId: 'sv-4', object: $object));
+		self::assertTrue($this->guard->canApprove(accountabilityId: 'sv-4', object: $object));
 
 	}//end testLargeGrantWithConditionalAuditorStatementApproves()
 
@@ -169,7 +169,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$object = ['grantId' => 'SUB-5', 'awardedAmount' => 99000.0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canApprove(verantwoordingId: 'sv-5', object: $object));
+		self::assertFalse($this->guard->canApprove(accountabilityId: 'sv-5', object: $object));
 
 	}//end testLargeGrantWithRejectedAuditorStatementBlocked()
 
@@ -182,7 +182,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$object = ['grantId' => '', 'awardedAmount' => 50000.0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canApprove(verantwoordingId: 'sv-6', object: $object));
+		self::assertFalse($this->guard->canApprove(accountabilityId: 'sv-6', object: $object));
 
 	}//end testLargeGrantWithoutGrantIdFailsClosed()
 
@@ -200,7 +200,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$object = ['grantId' => 'SUB-7', 'awardedAmount' => 50000.0];
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canApprove(verantwoordingId: 'sv-7', object: $object));
+		self::assertFalse($this->guard->canApprove(accountabilityId: 'sv-7', object: $object));
 
 	}//end testExceptionFailsClosed()
 

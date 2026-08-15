@@ -11,14 +11,14 @@
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
         "required": [
-          "aanbestedingId",
-          "titel",
-          "aanbestedendeDienst",
+          "tenderId",
+          "title",
+          "contractingService",
           "status",
           "administrationId"
         ],
         "properties": {
-          "aanbestedingId": {
+          "tenderId": {
             "type": "string",
             "description": "TenderNed identifier of the tender dossier — unique per administration (REQ-001).",
             "example": "TN-2026-0001",
@@ -31,13 +31,13 @@
             "example": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001",
             "title": "Tender Ned URL"
           },
-          "titel": {
+          "title": {
             "type": "string",
             "description": "Human-readable tender title.",
             "example": "Schoonmaak Gemeentehuis Utrecht",
             "title": "Titel"
           },
-          "beschrijving": {
+          "description": {
             "type": "string",
             "description": "Tender description.",
             "nullable": true,
@@ -54,27 +54,27 @@
             ],
             "title": "Cpv Codes"
           },
-          "aanbestedendeDienst": {
+          "contractingService": {
             "type": "string",
             "description": "Contracting authority — KvK number plus name of the public buyer running the procurement.",
             "example": "30280353 Gemeente Utrecht",
             "title": "Aanbestedende Dienst"
           },
-          "gunningsDatum": {
+          "awardDate": {
             "type": "string",
             "format": "date",
             "description": "Award date (gunningsbeslissing) — mandatory publication per Aanbestedingswet 2012 artikel 2.135.",
             "nullable": true,
             "title": "Gunnings Datum"
           },
-          "contractWaarde": {
+          "contractValue": {
             "type": "number",
             "minimum": 0,
             "description": "Contract value excluding BTW, in the administration's base currency.",
             "example": 50000.0,
             "title": "Contract Waarde"
           },
-          "looptijdStart": {
+          "termStart": {
             "type": "string",
             "format": "date",
             "description": "Contract term start date — drives milestone-plan generation (REQ-003).",
@@ -88,14 +88,14 @@
             "nullable": true,
             "title": "Looptijd Eind"
           },
-          "gegundeLeverancier": {
+          "awardedSupplier": {
             "type": "string",
             "description": "Awarded supplier — KvK number plus name. Vendor visibility filtering matches this KvK against the tenant organisation (design D6 / REQ-008).",
             "nullable": true,
             "example": "76741850 Conduction B.V.",
             "title": "Gegunde Leverancier"
           },
-          "opdrachttype": {
+          "assignmentType": {
             "type": "string",
             "enum": [
               "levering-in-fases",
@@ -106,7 +106,7 @@
             "default": "other",
             "title": "Opdrachttype"
           },
-          "verplichtingId": {
+          "commitmentId": {
             "type": "string",
             "description": "FK to the materialised Shillinq Verplichting (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
             "nullable": true,
@@ -192,8 +192,8 @@
           }
         },
         "x-openregister-relations": {
-          "verplichting": {
-            "localField": "verplichtingId",
+          "commitment": {
+            "localField": "commitmentId",
             "relatedSchema": "Verplichting",
             "relatedField": "id",
             "cardinality": "one-to-one",
@@ -244,7 +244,7 @@
         "required": [
           "commitmentNumber",
           "description",
-          "bron",
+          "source",
           "amount",
           "administrationId",
           "status"
@@ -262,7 +262,7 @@
             "example": "Schoonmaakcontract gemeentehuis 2026",
             "title": "Omschrijving"
           },
-          "bron": {
+          "source": {
             "type": "string",
             "enum": [
               "manual",
@@ -273,7 +273,7 @@
             "default": "manual",
             "title": "Bron"
           },
-          "bronReferentie": {
+          "sourceReference": {
             "type": "string",
             "description": "TenderNed aanbestedingId when bron is tenderned; null otherwise (conditional-required, design validation rules).",
             "nullable": true,
@@ -287,19 +287,19 @@
             "example": 50000.0,
             "title": "Bedrag"
           },
-          "kostenplaats": {
+          "costCentre": {
             "type": "string",
             "description": "Cost centre (FK to CostCenter.costCentreCode) — enriched by the contractmanager before activation (design D2).",
             "nullable": true,
             "title": "Kostenplaats"
           },
-          "grootboekrekening": {
+          "generalLedgerAccount": {
             "type": "string",
             "description": "GL account (FK to Account.accountNumber) — enriched by the contractmanager before activation (design D2).",
             "nullable": true,
             "title": "Grootboekrekening"
           },
-          "looptijdStart": {
+          "termStart": {
             "type": "string",
             "format": "date",
             "description": "Obligation term start date; bounds milestone dates (design validation rules).",
@@ -313,32 +313,32 @@
             "nullable": true,
             "title": "Looptijd Eind"
           },
-          "gegundeLeverancierKvk": {
+          "awardedSupplierKvk": {
             "type": "string",
             "description": "KvK number of the awarded supplier — used for vendor visibility filtering of bron=tenderned obligations (REQ-008 / design D6).",
             "nullable": true,
             "title": "Gegunde Leverancier KvK"
           },
-          "mijlpalen": {
+          "milestones": {
             "type": "array",
             "description": "Milestone plan generated on activation from the contract template (REQ-003). Value objects embedded on the obligation header; each milestone's proof and approval live on the related OpdrachtUitvoering (design D5).",
             "items": {
               "type": "object",
               "required": [
-                "mijlpaalId",
-                "datum",
+                "milestoneId",
+                "date",
                 "description",
                 "percentage",
                 "status"
               ],
               "properties": {
-                "mijlpaalId": {
+                "milestoneId": {
                   "type": "string",
                   "description": "Stable milestone identifier, referenced by OpdrachtUitvoering.mijlpaalId.",
                   "example": "MS-Q1",
                   "title": "Mijlpaal ID"
                 },
-                "datum": {
+                "date": {
                   "type": "string",
                   "format": "date",
                   "description": "Planned milestone date; must fall within looptijdStart..looptijdEind (design validation rules).",
@@ -369,7 +369,7 @@
                   "default": "planned",
                   "title": "Status"
                 },
-                "factuurnummer": {
+                "invoiceNumber": {
                   "type": "string",
                   "description": "Invoice number once the milestone is invoiced.",
                   "nullable": true,
@@ -432,9 +432,9 @@
         },
         "x-openregister-relations": {
           "aanbesteding": {
-            "localField": "bronReferentie",
+            "localField": "sourceReference",
             "relatedSchema": "TenderNedAanbesteding",
-            "relatedField": "aanbestedingId",
+            "relatedField": "tenderId",
             "cardinality": "one-to-one",
             "description": "The source TenderNed tender when bron is tenderned (REQ-005 audit-trail lineage)."
           }
@@ -476,36 +476,36 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Opdracht Uitvoering",
-        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Verplichting it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (goedgekeurd false→true) until at least one bewijsstuk is attached (REQ-004).",
+        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Verplichting it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (approved false→true) until at least one bewijsstuk is attached (REQ-004).",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
         "required": [
-          "verplichtingId",
-          "mijlpaalId",
-          "opleveringsType",
+          "commitmentId",
+          "milestoneId",
+          "deliveryType",
           "administrationId",
           "status"
         ],
         "properties": {
-          "verplichtingId": {
+          "commitmentId": {
             "type": "string",
             "description": "FK to the parent Verplichting (design D5).",
             "title": "Verplichting ID"
           },
-          "mijlpaalId": {
+          "milestoneId": {
             "type": "string",
             "description": "Identifier of the milestone within the parent Verplichting.mijlpalen array (Task 2.2).",
             "title": "Mijlpaal ID"
           },
-          "opleveringsDatum": {
+          "deliveryDate": {
             "type": "string",
             "format": "date",
             "description": "Actual delivery date.",
             "nullable": true,
             "title": "Opleverings Datum"
           },
-          "opleveringsType": {
+          "deliveryType": {
             "type": "string",
             "enum": [
               "deeloplevering",
@@ -516,7 +516,7 @@
             "default": "deeloplevering",
             "title": "Opleverings Type"
           },
-          "goedgekeurd": {
+          "approved": {
             "type": "boolean",
             "description": "Whether the delivery has been approved. Can only transition false→true once at least one bewijsstuk is attached (REQ-004).",
             "default": false,
@@ -528,7 +528,7 @@
             "nullable": true,
             "title": "Goedkeurder"
           },
-          "bewijsstukken": {
+          "supportingDocuments": {
             "type": "array",
             "description": "Proof-of-delivery file references stored via OpenRegister's file-attachment abstraction in docudesk (ADR-022 / design D4). Each entry is a docudesk document URI.",
             "items": {
@@ -610,8 +610,8 @@
           }
         },
         "x-openregister-relations": {
-          "verplichting": {
-            "localField": "verplichtingId",
+          "commitment": {
+            "localField": "commitmentId",
             "relatedSchema": "Verplichting",
             "relatedField": "id",
             "cardinality": "many-to-one",
@@ -659,20 +659,20 @@
         "schema": "TenderNedAanbesteding",
         "slug": "tn-sample-utrecht-schoonmaak"
       },
-      "aanbestedingId": "TN-2026-0001",
+      "tenderId": "TN-2026-0001",
       "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001",
-      "titel": "Schoonmaak Gemeentehuis Utrecht",
-      "beschrijving": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
+      "title": "Schoonmaak Gemeentehuis Utrecht",
+      "description": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
       "cpvCodes": [
         "90910000-9"
       ],
-      "aanbestedendeDienst": "30280353 Gemeente Utrecht",
-      "gunningsDatum": "2026-01-15",
-      "contractWaarde": 50000.0,
-      "looptijdStart": "2026-02-01",
+      "contractingService": "30280353 Gemeente Utrecht",
+      "awardDate": "2026-01-15",
+      "contractValue": 50000.0,
+      "termStart": "2026-02-01",
       "termEnd": "2027-01-31",
-      "gegundeLeverancier": "76741850 Conduction B.V.",
-      "opdrachttype": "dienstverlening-doorlopend",
+      "awardedSupplier": "76741850 Conduction B.V.",
+      "assignmentType": "dienstverlening-doorlopend",
       "administrationId": "adm-consultancy-nl",
       "status": "gegund"
     },
@@ -682,21 +682,21 @@
         "schema": "TenderNedAanbesteding",
         "slug": "tn-sample-brabant-it"
       },
-      "aanbestedingId": "TN-2026-0002",
+      "tenderId": "TN-2026-0002",
       "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0002",
-      "titel": "IT-dienstverlening Provincie Brabant",
-      "beschrijving": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
+      "title": "IT-dienstverlening Provincie Brabant",
+      "description": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
       "cpvCodes": [
         "72000000-5",
         "30200000-1"
       ],
-      "aanbestedendeDienst": "17278718 Provincie Noord-Brabant",
-      "gunningsDatum": "2026-02-10",
-      "contractWaarde": 250000.0,
-      "looptijdStart": "2026-03-01",
+      "contractingService": "17278718 Provincie Noord-Brabant",
+      "awardDate": "2026-02-10",
+      "contractValue": 250000.0,
+      "termStart": "2026-03-01",
       "termEnd": "2028-02-29",
-      "gegundeLeverancier": "76741850 Conduction B.V.",
-      "opdrachttype": "levering-in-fases",
+      "awardedSupplier": "76741850 Conduction B.V.",
+      "assignmentType": "levering-in-fases",
       "administrationId": "adm-consultancy-nl",
       "status": "gegund"
     },
@@ -708,46 +708,46 @@
       },
       "commitmentNumber": "VPL-2026-0001",
       "description": "Schoonmaakcontract gemeentehuis Utrecht 2026",
-      "bron": "tenderned",
-      "bronReferentie": "TN-2026-0001",
+      "source": "tenderned",
+      "sourceReference": "TN-2026-0001",
       "amount": 50000.0,
-      "kostenplaats": "FAC-001",
-      "grootboekrekening": "4500",
-      "looptijdStart": "2026-02-01",
+      "costCentre": "FAC-001",
+      "generalLedgerAccount": "4500",
+      "termStart": "2026-02-01",
       "termEnd": "2027-01-31",
-      "gegundeLeverancierKvk": "76741850",
-      "mijlpalen": [
+      "awardedSupplierKvk": "76741850",
+      "milestones": [
         {
-          "mijlpaalId": "MS-Q1",
-          "datum": "2026-05-01",
+          "milestoneId": "MS-Q1",
+          "date": "2026-05-01",
           "description": "Q1 deeloplevering",
           "percentage": 25,
           "status": "planned",
-          "factuurnummer": null
+          "invoiceNumber": null
         },
         {
-          "mijlpaalId": "MS-Q2",
-          "datum": "2026-08-01",
+          "milestoneId": "MS-Q2",
+          "date": "2026-08-01",
           "description": "Q2 deeloplevering",
           "percentage": 25,
           "status": "planned",
-          "factuurnummer": null
+          "invoiceNumber": null
         },
         {
-          "mijlpaalId": "MS-Q3",
-          "datum": "2026-11-01",
+          "milestoneId": "MS-Q3",
+          "date": "2026-11-01",
           "description": "Q3 deeloplevering",
           "percentage": 25,
           "status": "planned",
-          "factuurnummer": null
+          "invoiceNumber": null
         },
         {
-          "mijlpaalId": "MS-Q4",
-          "datum": "2027-01-31",
+          "milestoneId": "MS-Q4",
+          "date": "2027-01-31",
           "description": "Q4 eindoplevering",
           "percentage": 25,
           "status": "planned",
-          "factuurnummer": null
+          "invoiceNumber": null
         }
       ],
       "administrationId": "adm-consultancy-nl",

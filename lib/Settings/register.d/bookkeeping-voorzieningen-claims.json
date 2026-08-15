@@ -233,37 +233,37 @@
             "example": 70000000.0,
             "title": "Prior Year Balance Total"
           },
-          "linkedPensioenvoorzieningDetail": {
+          "linkedPensionProvisionDetail": {
             "type": "string",
             "description": "FK to the PensioenvoorzieningDetail when provisionType=pensioen (REQ-PROV-014).",
             "nullable": true,
             "title": "Linked Pensioenvoorziening Detail"
           },
-          "linkedJubileumvoorzieningDetail": {
+          "linkedAnniversaryProvisionDetail": {
             "type": "string",
             "description": "FK to the JubileumvoorzieningDetail when provisionType=jubileum (REQ-PROV-011).",
             "nullable": true,
             "title": "Linked Jubileumvoorziening Detail"
           },
-          "linkedHerstructureringsvoorzieningDetail": {
+          "linkedRestructuringProvisionDetail": {
             "type": "string",
             "description": "FK to the HerstructureringsvoorzieningDetail when provisionType=herstructurering (REQ-PROV-005).",
             "nullable": true,
             "title": "Linked Herstructureringsvoorziening Detail"
           },
-          "linkedGarantievoorzieningDetail": {
+          "linkedGuaranteeProvisionDetail": {
             "type": "string",
             "description": "FK to the GarantievoorzieningDetail when provisionType=garantie (REQ-PROV-012).",
             "nullable": true,
             "title": "Linked Garantievoorziening Detail"
           },
-          "linkedMilieuvoorzieningDetail": {
+          "linkedEnvironmentProvisionDetail": {
             "type": "string",
             "description": "FK to the MilieuvoorzieningDetail when provisionType=milieu (REQ-PROV-013).",
             "nullable": true,
             "title": "Linked Milieuvoorziening Detail"
           },
-          "linkedClaimsVoorzieningDetail": {
+          "linkedClaimsProvisionDetail": {
             "type": "string",
             "description": "FK to the ClaimsVoorzieningDetail when provisionType=claims (REQ-PROV-006).",
             "nullable": true,
@@ -891,7 +891,7 @@
             "default": 0,
             "title": "Expected Onerous Contract Costs"
           },
-          "reorganisatieplanDocument": {
+          "reorganisationPlanDocument": {
             "type": "string",
             "description": "FK into docudesk for the reorganisatieplan document (REQ-PROV-005).",
             "nullable": true,
@@ -1000,7 +1000,7 @@
           "cleanupEstimate",
           "expertConsultant",
           "legallyRequiredCompletionDate",
-          "ontmantelingsVerplichting",
+          "decommissioningCommitment",
           "administrationId"
         ],
         "properties": {
@@ -1052,7 +1052,7 @@
             "nullable": true,
             "title": "Phased Execution Plan"
           },
-          "ontmantelingsVerplichting": {
+          "decommissioningCommitment": {
             "type": "boolean",
             "description": "Whether the obligation includes an ontmantelingsverplichting, in which case the cost is capitalised as a component of MVA per IAS 16 §16(c) / IFRS 16 (REQ-PROV-013).",
             "default": false,

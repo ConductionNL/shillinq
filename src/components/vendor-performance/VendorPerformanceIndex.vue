@@ -69,7 +69,7 @@
 			data-testid="vp-index-table"
 			:columns="columns"
 			:rows="filteredRows"
-			:empty-label="t('shillinq', 'No scorecards recorded yet.')">
+			:emptyLabel="t('shillinq', 'No scorecards recorded yet.')">
 			<template #cell-supplierId="{ row }">
 				{{ row.supplierId || '—' }}
 			</template>
@@ -125,14 +125,15 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'VendorPerformanceIndex',
 	components: {
 		CnDataTable,
 	},
+
 	data() {
 		return {
 			rows: [],
@@ -141,6 +142,7 @@ export default {
 			eligibilityFilter: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * CnDataTable column definitions for the vendor-performance list.
@@ -183,6 +185,7 @@ export default {
 				{ key: 'actions', label: '', sortable: false },
 			]
 		},
+
 		latestPerSupplier() {
 			const map = new Map()
 			for (const row of this.rows) {
@@ -204,6 +207,7 @@ export default {
 			)
 			return list
 		},
+
 		filteredRows() {
 			if (this.eligibilityFilter === 'eligible') {
 				return this.latestPerSupplier.filter(
@@ -218,9 +222,11 @@ export default {
 			return this.latestPerSupplier
 		},
 	},
+
 	async created() {
 		await this.loadRows()
 	},
+
 	methods: {
 		async loadRows() {
 			this.loading = true
@@ -241,6 +247,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		formatBp(bp) {
 			if (bp === null || bp === undefined) {
 				return '—'
@@ -251,6 +258,7 @@ export default {
 			}
 			return `${(value / 100).toFixed(2)} %`
 		},
+
 		scoreClass(bp) {
 			const value = Number(bp || 0)
 			if (value >= 9600) {
@@ -261,6 +269,7 @@ export default {
 			}
 			return 'vp-index__score--low'
 		},
+
 		trendLabel(trend) {
 			const labels = {
 				improving: this.t('shillinq', 'Improving'),

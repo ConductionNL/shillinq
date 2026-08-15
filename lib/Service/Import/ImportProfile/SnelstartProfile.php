@@ -103,7 +103,7 @@ class SnelstartProfile implements ImportProfileInterface {
 				'code' => 'Relatienr',
 				'name' => 'Naam',
 				'kvk' => 'KvKnummer',
-				'btw' => 'BTWnummer',
+				'vat' => 'BTWnummer',
 				'email' => 'Email',
 				'phone' => 'Telefoon',
 			];

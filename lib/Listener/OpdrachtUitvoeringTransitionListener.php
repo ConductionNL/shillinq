@@ -14,7 +14,7 @@
  *     `shillinq.milestone.completed` event so the audit-trail subscriber
  *     (REQ-005) and any budget-utilisation consumer pick up the change
  *     within seconds.
- *  2. When the completed oplevering is `eindoplevering` + `goedgekeurd`
+ *  2. When the completed oplevering is `eindoplevering` + `approved`
  *     true, {@see TenderNedStatusSync::syncCompletion()} is invoked so
  *     the public TenderNed dossier reflects completion (REQ-006). The
  *     sync itself is best-effort (live openconnector transport, Task
@@ -105,7 +105,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 			}
 
 			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isOpdrachtUitvoeringSchema(schema: $schema) === false) {
+			if ($this->isAssignmentUitvoeringSchema(schema: $schema) === false) {
 				return;
 			}
 
@@ -120,11 +120,11 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 			// REQ-006 — outbound sync only when this is the approved
 			// eindoplevering (the buyer-side gate; vendor-completed
 			// openrules are denied earlier by RBAC).
-			if ((string)($oplevering['opleveringsType'] ?? '') !== 'eindoplevering') {
+			if ((string)($oplevering['deliveryType'] ?? '') !== 'eindoplevering') {
 				return;
 			}
 
-			if (((bool)($oplevering['goedgekeurd'] ?? false)) !== true) {
+			if (((bool)($oplevering['approved'] ?? false)) !== true) {
 				return;
 			}
 
@@ -145,7 +145,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 	 *
 	 * @return bool
 	 */
-	private function isOpdrachtUitvoeringSchema(string $schema): bool {
+	private function isAssignmentUitvoeringSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
 		return ($normalised === 'opdrachtuitvoering'
 			|| str_ends_with(haystack: $normalised, needle: 'opdrachtuitvoering'));

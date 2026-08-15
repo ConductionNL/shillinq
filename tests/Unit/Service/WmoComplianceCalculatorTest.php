@@ -81,23 +81,23 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	 */
 	public function testIntegralCostPriceSumsComponentsAndPerUnit(): void {
 		$componenten = [
-			'directeLoonkosten' => 41250,
-			'directeMaterialen' => 8730,
-			'directeAfschrijvingen' => 6900,
+			'directPayrollCost' => 41250,
+			'directMaterials' => 8730,
+			'directDepreciations' => 6900,
 			'indirecteOverhead' => [
 				'huisvesting' => 12000,
 				'ict' => 6140,
 				'directieEnStaf' => 5000,
 				'facilitair' => 3000,
 			],
-			'vermogenskosten' => 1820,
-			'winstopslag' => 2550,
+			'capitalCost' => 1820,
+			'profitMarkup' => 2550,
 		];
 
 		$result = $this->calc->integralCostPrice($componenten, 312.0);
 
-		self::assertSame(87390.0, $result['totaleKosten']);
-		self::assertSame(280.10, $result['kostprijsPerEenheid']);
+		self::assertSame(87390.0, $result['totalCost']);
+		self::assertSame(280.10, $result['costPricePerUnit']);
 
 	}//end testIntegralCostPriceSumsComponentsAndPerUnit()
 
@@ -108,20 +108,20 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	 */
 	public function testIntegralCostPriceNullPerUnitWhenNoUnits(): void {
 		$componenten = [
-			'directeLoonkosten' => 1000,
-			'directeMaterialen' => 0,
-			'directeAfschrijvingen' => 0,
+			'directPayrollCost' => 1000,
+			'directMaterials' => 0,
+			'directDepreciations' => 0,
 			'indirecteOverhead' => [],
-			'vermogenskosten' => 0,
-			'winstopslag' => 0,
+			'capitalCost' => 0,
+			'profitMarkup' => 0,
 		];
 
 		$result = $this->calc->integralCostPrice($componenten, null);
-		self::assertSame(1000.0, $result['totaleKosten']);
-		self::assertNull($result['kostprijsPerEenheid']);
+		self::assertSame(1000.0, $result['totalCost']);
+		self::assertNull($result['costPricePerUnit']);
 
 		$zeroUnits = $this->calc->integralCostPrice($componenten, 0.0);
-		self::assertNull($zeroUnits['kostprijsPerEenheid']);
+		self::assertNull($zeroUnits['costPricePerUnit']);
 
 	}//end testIntegralCostPriceNullPerUnitWhenNoUnits()
 
@@ -139,17 +139,17 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	}//end testVermogenskostenAppliesWacc()
 
 	/**
-	 * Winstopslag applies the mark-up rate to the costs-before-mark-up (REQ-WMO-002).
+	 * The profit mark-up applies its rate to the costs-before-mark-up (REQ-WMO-002).
 	 *
 	 * @return void
 	 */
-	public function testWinstopslagAppliesRate(): void {
+	public function testProfitMarkupAppliesRate(): void {
 		// 3% default on €85,000.
-		self::assertSame(2550.0, $this->calc->winstopslag(85000.0));
+		self::assertSame(2550.0, $this->calc->profitMarkup(85000.0));
 		// Configurable rate per activity.
-		self::assertSame(4250.0, $this->calc->winstopslag(85000.0, 0.05));
+		self::assertSame(4250.0, $this->calc->profitMarkup(85000.0, 0.05));
 
-	}//end testWinstopslagAppliesRate()
+	}//end testProfitMarkupAppliesRate()
 
 	/**
 	 * Compliance is per-unit when units are tracked: tarief covers per-unit IKP (REQ-WMO-002).
@@ -212,8 +212,8 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	 */
 	public function testSplitTransactionConservesTotal(): void {
 		$targets = [
-			['kostendrager' => 'D-PUBL-AWZI-01', 'ratio' => 0.64, 'dimensie' => 'PUBL', 'grootboek' => '443100'],
-			['kostendrager' => 'D-MO-SVS-04', 'ratio' => 0.36, 'dimensie' => 'MO', 'grootboek' => '443900'],
+			['costObject' => 'D-PUBL-AWZI-01', 'ratio' => 0.64, 'dimension' => 'PUBL', 'generalLedger' => '443100'],
+			['costObject' => 'D-MO-SVS-04', 'ratio' => 0.36, 'dimension' => 'MO', 'generalLedger' => '443900'],
 		];
 
 		$splits = $this->calc->splitTransaction(18400.0, $targets);
@@ -221,7 +221,7 @@ final class WmoComplianceCalculatorTest extends TestCase {
 		self::assertCount(2, $splits);
 		self::assertSame(11776.0, $splits[0]['amount']);
 		self::assertSame(6624.0, $splits[1]['amount']);
-		self::assertSame('PUBL', $splits[0]['dimensie']);
+		self::assertSame('PUBL', $splits[0]['dimension']);
 		self::assertTrue($this->calc->splitsAreBalanced(18400.0, $splits));
 
 	}//end testSplitTransactionConservesTotal()
@@ -236,9 +236,9 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	public function testSplitTransactionAbsorbsRoundingRemainder(): void {
 		$third = (1.0 / 3.0);
 		$targets = [
-			['kostendrager' => 'A', 'ratio' => $third, 'dimensie' => 'PUBL'],
-			['kostendrager' => 'B', 'ratio' => $third, 'dimensie' => 'PUBL'],
-			['kostendrager' => 'C', 'ratio' => $third, 'dimensie' => 'MO'],
+			['costObject' => 'A', 'ratio' => $third, 'dimension' => 'PUBL'],
+			['costObject' => 'B', 'ratio' => $third, 'dimension' => 'PUBL'],
+			['costObject' => 'C', 'ratio' => $third, 'dimension' => 'MO'],
 		];
 
 		$splits = $this->calc->splitTransaction(100.0, $targets);

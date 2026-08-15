@@ -33,17 +33,17 @@
 			<!-- Customer -->
 			<div class="iqd__field">
 				<NcSelect
-					:model-value="selectedCustomer"
+					:modelValue="selectedCustomer"
 					:options="customerOptions"
 					:loading="loadingCustomers"
-					:input-label="t('shillinq', 'Customer')"
+					:inputLabel="t('shillinq', 'Customer')"
 					:placeholder="t('shillinq', 'Search customer by name…')"
 					:filterable="true"
 					label="display"
-					track-by="value"
+					trackBy="value"
 					data-testid="iqd-customer"
 					@option:selected="onCustomerSelected"
-					@update:model-value="onCustomerSelected" />
+					@update:modelValue="onCustomerSelected" />
 			</div>
 
 			<!-- Dates -->
@@ -123,15 +123,15 @@
 						:placeholder="t('shillinq', 'Unit price')"
 						data-testid="iqd-line-unit-price" />
 					<NcSelect
-						:model-value="vatOptionFor(line)"
+						:modelValue="vatOptionFor(line)"
 						:options="vatOptions"
-						:input-label="t('shillinq', 'VAT')"
+						:inputLabel="t('shillinq', 'VAT')"
 						:clearable="false"
 						label="display"
-						track-by="value"
+						trackBy="value"
 						class="iqd__input--vat"
 						data-testid="iqd-line-vat"
-						@update:model-value="(o) => onVatSelected(line, o)" />
+						@update:modelValue="(o) => onVatSelected(line, o)" />
 					<button
 						type="button"
 						class="iqd__line-remove"
@@ -189,17 +189,17 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import {
-	defaultDraftLine,
 	buildInvoicePayload,
 	computeTotals,
+	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
 	saveQuickDraftPrefs,
@@ -218,6 +218,7 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close', 'created'],
 	data() {
 		return {
@@ -232,6 +233,7 @@ export default {
 				{ value: 9, display: '9%' },
 				{ value: 0, display: '0%' },
 			],
+
 			form: {
 				invoiceDate: this.today(),
 				dueDate: '',
@@ -241,6 +243,7 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		customerOptions() {
@@ -250,18 +253,22 @@ export default {
 				customer: c,
 			}))
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		netAmount() {
 			return computeTotals(this.form.lines).net
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		vatAmount() {
 			return computeTotals(this.form.lines).vat
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		grossAmount() {
 			return computeTotals(this.form.lines).gross
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		canSave() {
 			if (this.saving) return false
@@ -273,6 +280,7 @@ export default {
 			)
 		},
 	},
+
 	watch: {
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		open: {
@@ -288,26 +296,36 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		t,
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		today() {
 			return new Date().toISOString().slice(0, 10)
 		},
-		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param amount
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		formatEuro(amount) {
 			return new Intl.NumberFormat('nl-NL', {
 				style: 'currency',
 				currency: 'EUR',
 			}).format(Number(amount) || 0)
 		},
-		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param line
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		vatOptionFor(line) {
 			return (
-				this.vatOptions.find((o) => o.value === Number(line.btwRate))
+				this.vatOptions.find((o) => o.value === Number(line.vatRate))
 				|| this.vatOptions[0]
 			)
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		reset() {
 			this.error = ''
@@ -320,6 +338,7 @@ export default {
 				lines: [defaultDraftLine()],
 			}
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		async fetchCustomers() {
 			this.loadingCustomers = true
@@ -343,6 +362,7 @@ export default {
 			}
 			this.fetchAdministrationId()
 		},
+
 		/**
 		 * Load the configured administration id. The ARInvoice schema
 		 * requires administrationId, so the quick draft sources it from the
@@ -362,7 +382,11 @@ export default {
 				this.administrationId = ''
 			}
 		},
-		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param option
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		onCustomerSelected(option) {
 			this.selectedCustomer = option || null
 			const customer = option?.customer
@@ -382,12 +406,16 @@ export default {
 					if (prefs.unitPrice && !line.unitPrice)
 						line.unitPrice = prefs.unitPrice
 					if (prefs.vatCode !== undefined && prefs.vatCode !== null)
-						line.btwRate = prefs.vatCode
+						line.vatRate = prefs.vatCode
 				}
 			}
 			this.recomputeDueDate(customer)
 		},
-		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param customerOrEvent
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		recomputeDueDate(customerOrEvent) {
 			const customer =
 				customerOrEvent && customerOrEvent.customerId
@@ -396,24 +424,36 @@ export default {
 			const terms = customer?.paymentTerms || 'net30'
 			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, terms)
 		},
-		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param line
+		 * @param option
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		onVatSelected(line, option) {
-			line.btwRate = option ? Number(option.value) : 21
+			line.vatRate = option ? Number(option.value) : 21
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		addLine() {
 			this.form.lines.push(defaultDraftLine())
 		},
-		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param idx
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		removeLine(idx) {
 			if (this.form.lines.length <= 1) return
 			this.form.lines.splice(idx, 1)
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		onClose() {
 			if (this.saving) return
 			this.$emit('close')
 		},
+
 		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		async onSave() {
 			if (!this.canSave) return
@@ -444,7 +484,7 @@ export default {
 				const firstLine = this.form.lines[0] || {}
 				saveQuickDraftPrefs(this.selectedCustomer.value, {
 					glAccount: this.form.glAccount,
-					vatCode: Number(firstLine.btwRate),
+					vatCode: Number(firstLine.vatRate),
 					description: firstLine.description,
 					unitPrice: Number(firstLine.unitPrice),
 				})

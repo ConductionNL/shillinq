@@ -110,14 +110,14 @@ class DunningRunService {
 	 * when no stage applies yet (invoice is still within terms).
 	 *
 	 * @param array<int,array<string,mixed>> $stages Resolved stages.
-	 * @param int $dagenVerzuim Days the invoice has been overdue (>= 0).
+	 * @param int $daysInArrears Days the invoice has been overdue (>= 0).
 	 *
 	 * @return array<string,mixed>|null The applicable stage definition or null.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
 	 */
-	public function stageForOverdueDays(array $stages, int $dagenVerzuim): ?array {
-		if ($dagenVerzuim < 0) {
+	public function stageForOverdueDays(array $stages, int $daysInArrears): ?array {
+		if ($daysInArrears < 0) {
 			return null;
 		}
 
@@ -125,14 +125,14 @@ class DunningRunService {
 		usort(
 			$sorted,
 			static function (array $a, array $b): int {
-				return (int)($a['dagenNaVervalDatum'] ?? 0) <=> (int)($b['dagenNaVervalDatum'] ?? 0);
+				return (int)($a['daysAfterExpiryDate'] ?? 0) <=> (int)($b['daysAfterExpiryDate'] ?? 0);
 			}
 		);
 
 		$picked = null;
 		foreach ($sorted as $stage) {
-			$threshold = (int)($stage['dagenNaVervalDatum'] ?? 0);
-			if ($dagenVerzuim >= $threshold) {
+			$threshold = (int)($stage['daysAfterExpiryDate'] ?? 0);
+			if ($daysInArrears >= $threshold) {
 				$picked = $stage;
 				continue;
 			}
@@ -186,8 +186,8 @@ class DunningRunService {
 		?DateTimeImmutable $now = null,
 	): ?array {
 		$now = ($now ?? new DateTimeImmutable());
-		$factuurId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
-		if ($factuurId === '') {
+		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		if ($invoiceId === '') {
 			return null;
 		}
 
@@ -207,19 +207,19 @@ class DunningRunService {
 			return null;
 		}
 
-		$dagenVerzuim = (int)$dueDate->diff($now)->days;
-		$klantId = (string)($invoice['customerReference'] ?? ($invoice['klantId'] ?? ''));
+		$daysInArrears = (int)$dueDate->diff($now)->days;
+		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
 
-		if ($this->hasActivePause(administrationId: $administrationId, factuurId: $factuurId) === true) {
+		if ($this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true) {
 			return null;
 		}
 
 		$resolved = $this->resolveLadderForKlant(
 			administrationId: $administrationId,
-			klantId: $klantId,
+			customerId: $customerId,
 			baseLadderId: $baseLadderId
 		);
-		$stage = $this->stageForOverdueDays(stages: $resolved['stages'], dagenVerzuim: $dagenVerzuim);
+		$stage = $this->stageForOverdueDays(stages: $resolved['stages'], daysInArrears: $daysInArrears);
 		if ($stage === null) {
 			return null;
 		}
@@ -231,7 +231,7 @@ class DunningRunService {
 			schema: 'DunningRun',
 			filters: [
 				'administrationId' => $administrationId,
-				'factuurId' => $factuurId,
+				'invoiceId' => $invoiceId,
 				'stageNr' => (string)$stageNr,
 			]
 		);
@@ -239,17 +239,17 @@ class DunningRunService {
 			return null;
 		}
 
-		$kanaal = (string)($params['kanaal'] ?? ($stage['kanaal'] ?? 'EMAIL'));
+		$channel = (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL'));
 		$tplId = (string)($params['templateId'] ?? ($stage['templateId'] ?? ''));
 
 		return $this->executeStage(
 			administrationId: $administrationId,
 			params: array_merge(
 				[
-					'factuurId' => $factuurId,
+					'invoiceId' => $invoiceId,
 					'ladderId' => (string)$resolved['ladderId'],
 					'stageNr' => $stageNr,
-					'kanaal' => $kanaal,
+					'channel' => $channel,
 					'templateId' => $tplId,
 					'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
 					'deliveryStatus' => 'PENDING',
@@ -268,7 +268,7 @@ class DunningRunService {
 	 * OVERHEID ladder is picked by klantGroep as the implicit override.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $klantId Customer FK.
+	 * @param string $customerId Customer FK.
 	 * @param string $baseLadderId Base DunningLadder id.
 	 *
 	 * @return array{ladderId:string,stages:array<int,array<string,mixed>>,source:string,override:?array<string,mixed>}
@@ -282,7 +282,7 @@ class DunningRunService {
 	 *     ObjectService already scopes this by tenant by default; not
 	 *     changed in this style/quality-only pass.
 	 */
-	public function resolveLadderForKlant(string $administrationId, string $klantId, string $baseLadderId): array {
+	public function resolveLadderForKlant(string $administrationId, string $customerId, string $baseLadderId): array {
 		$baseLadder = $this->fetchOne(schema: 'DunningLadder', filters: ['id' => $baseLadderId]);
 		if ($baseLadder === null) {
 			$baseLadder = $this->fetchOne(schema: 'DunningLadder', filters: ['slug' => $baseLadderId]);
@@ -298,7 +298,7 @@ class DunningRunService {
 		$override = $this->fetchOne(
 			schema: 'KlantLadderOverride',
 			filters: [
-				'klantId' => $klantId,
+				'customerId' => $customerId,
 				'baseLadderId' => $baseLadderId,
 				'lifecycleState' => 'active',
 			]
@@ -385,26 +385,26 @@ class DunningRunService {
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
 	 */
 	public function executeStage(string $administrationId, array $params): array {
-		$factuurId = (string)($params['factuurId'] ?? '');
-		if ($factuurId === '') {
+		$invoiceId = (string)($params['invoiceId'] ?? '');
+		if ($invoiceId === '') {
 			throw new RuntimeException('executeStage requires factuurId.');
 		}
 
-		if ($this->hasActivePause(administrationId: $administrationId, factuurId: $factuurId) === true) {
-			throw new RuntimeException(sprintf('Cannot execute DunningRun: invoice %s is paused.', $factuurId));
+		if ($this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true) {
+			throw new RuntimeException(sprintf('Cannot execute DunningRun: invoice %s is paused.', $invoiceId));
 		}
 
 		$now = new DateTimeImmutable();
 
 		$record = [
-			'factuurId' => $factuurId,
+			'invoiceId' => $invoiceId,
 			'ladderId' => (string)($params['ladderId'] ?? ''),
 			'stageNr' => (int)($params['stageNr'] ?? 1),
-			'uitgevoerdOp' => $now->format(DATE_ATOM),
-			'kanaal' => (string)($params['kanaal'] ?? 'EMAIL'),
-			'ontvangerEmail' => ($params['ontvangerEmail'] ?? null),
+			'executedOn' => $now->format(DATE_ATOM),
+			'channel' => (string)($params['channel'] ?? 'EMAIL'),
+			'recipientEmail' => ($params['recipientEmail'] ?? null),
 			'recipientName' => ($params['recipientName'] ?? null),
-			'ontvangerAdres' => ($params['ontvangerAdres'] ?? null),
+			'recipientAddress' => ($params['recipientAddress'] ?? null),
 			'templateId' => (string)($params['templateId'] ?? ''),
 			'renderedSubject' => ($params['renderedSubject'] ?? null),
 			'renderedBody' => ($params['renderedBody'] ?? null),
@@ -431,10 +431,10 @@ class DunningRunService {
 	 * executeStage() calls refuse to fire while an active pause exists.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK.
-	 * @param string $reden One of DISPUTED / PAYMENT_PLAN / OTHER.
+	 * @param string $invoiceId Invoice FK.
+	 * @param string $reason One of DISPUTED / PAYMENT_PLAN / OTHER.
 	 * @param string $details Free-text details.
-	 * @param string $gepauzeerdDoor Operator id.
+	 * @param string $pausedBy Operator id.
 	 * @param array<int,string>|null $evidenceRefs Optional evidence refs.
 	 *
 	 * @return array<string,mixed> The created pause record.
@@ -443,15 +443,15 @@ class DunningRunService {
 	 */
 	public function pause(
 		string $administrationId,
-		string $factuurId,
-		string $reden,
+		string $invoiceId,
+		string $reason,
 		string $details,
-		string $gepauzeerdDoor,
+		string $pausedBy,
 		?array $evidenceRefs = null,
 	): array {
 		$hardDeadlineDays = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
-		$pauzeStart = new DateTimeImmutable();
-		$hardDeadline = $pauzeStart->modify('+' . $hardDeadlineDays . ' days');
+		$pauseStart = new DateTimeImmutable();
+		$hardDeadline = $pauseStart->modify('+' . $hardDeadlineDays . ' days');
 
 		$refs = ($evidenceRefs ?? []);
 		if ($refs !== []) {
@@ -459,12 +459,12 @@ class DunningRunService {
 		}
 
 		$record = [
-			'factuurId' => $factuurId,
-			'pauzeStart' => $pauzeStart->format(DATE_ATOM),
+			'invoiceId' => $invoiceId,
+			'pauseStart' => $pauseStart->format(DATE_ATOM),
 			'pauseEnd' => null,
-			'reden' => $reden,
+			'reason' => $reason,
 			'details' => $details,
-			'gepauzeerdDoor' => $gepauzeerdDoor,
+			'pausedBy' => $pausedBy,
 			'evidenceRefs' => $refs,
 			'hardDeadlineEindigt' => $hardDeadline->format(DATE_ATOM),
 			'administrationId' => $administrationId,
@@ -552,42 +552,42 @@ class DunningRunService {
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
 	 */
 	public function writeOff(string $administrationId, array $params): array {
-		$factuurId = (string)($params['factuurId'] ?? '');
-		$hoofdsom = (float)($params['hoofdsomAfgeschreven'] ?? 0.0);
-		$btwBedrag = ($params['vatAmount'] ?? null);
-		$periode = (string)($params['btwAangiftePeriode'] ?? $this->nextVATPeriod());
-		$callerBoekId = (string)($params['boekingId'] ?? '');
+		$invoiceId = (string)($params['invoiceId'] ?? '');
+		$principal = (float)($params['principalDepreciated'] ?? 0.0);
+		$vatAmount = ($params['vatAmount'] ?? null);
+		$period = (string)($params['vatTaxReturnPeriod'] ?? $this->nextVATPeriod());
+		$callerBoekId = (string)($params['entryId'] ?? '');
 
 		// Materialise the GL posting first so we can carry its id onto the OninbaarAfschrijving record.
-		$boekingId = $callerBoekId;
-		if ($boekingId === '' && $hoofdsom > 0.0) {
-			$btwCast = null;
-			if ($btwBedrag !== null) {
-				$btwCast = (float)$btwBedrag;
+		$entryId = $callerBoekId;
+		if ($entryId === '' && $principal > 0.0) {
+			$vatCast = null;
+			if ($vatAmount !== null) {
+				$vatCast = (float)$vatAmount;
 			}
 
-			$boekingId = $this->materialiseWriteOffGl(
+			$entryId = $this->materialiseWriteOffGl(
 				administrationId: $administrationId,
-				factuurId: $factuurId,
-				hoofdsom: $hoofdsom,
-				btwBedrag: $btwCast,
-				periode: $periode
+				invoiceId: $invoiceId,
+				principal: $principal,
+				vatAmount: $vatCast,
+				period: $period
 			);
 		}
 
-		$boekingIdValue = null;
-		if ($boekingId !== '') {
-			$boekingIdValue = $boekingId;
+		$entryIdValue = null;
+		if ($entryId !== '') {
+			$entryIdValue = $entryId;
 		}
 
 		$record = [
-			'factuurId' => $factuurId,
-			'hoofdsomAfgeschreven' => $hoofdsom,
-			'vatAmount' => $btwBedrag,
-			'art29OBVerklaring' => (string)($params['art29OBVerklaring'] ?? ''),
+			'invoiceId' => $invoiceId,
+			'principalDepreciated' => $principal,
+			'vatAmount' => $vatAmount,
+			'art29OBDeclaration' => (string)($params['art29OBDeclaration'] ?? ''),
 			'evidenceRef' => ($params['evidenceRef'] ?? null),
-			'boekingId' => $boekingIdValue,
-			'btwAangiftePeriode' => $periode,
+			'entryId' => $entryIdValue,
+			'vatTaxReturnPeriod' => $period,
 			'administrationId' => $administrationId,
 			'lifecycleState' => 'posted',
 		];
@@ -595,13 +595,13 @@ class DunningRunService {
 		$saved = $this->saveObject(schema: 'OninbaarAfschrijving', data: $record);
 
 		// Queue the BTW art. 29 OB correction for the next aangifte.
-		if ($btwBedrag !== null && (float)$btwBedrag > 0.0) {
-			$this->queueVatTeruggaaf(
+		if ($vatAmount !== null && (float)$vatAmount > 0.0) {
+			$this->queueVatRefund(
 				administrationId: $administrationId,
-				factuurId: $factuurId,
-				btwBedrag: (float)$btwBedrag,
-				periode: $periode,
-				boekingId: $boekingId,
+				invoiceId: $invoiceId,
+				vatAmount: (float)$vatAmount,
+				period: $period,
+				entryId: $entryId,
 				oninbaarId: (string)($saved['id'] ?? ($saved['@self']['id'] ?? ''))
 			);
 		}
@@ -619,10 +619,10 @@ class DunningRunService {
 	 * on the AR control account when reconciled.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK (carried as sourceReference).
-	 * @param float $hoofdsom Principal written off (EUR).
-	 * @param float|null $btwBedrag Output VAT recoverable per art. 29 OB.
-	 * @param string $periode Target VAT period (e.g. `2026-Q2`).
+	 * @param string $invoiceId Invoice FK (carried as sourceReference).
+	 * @param float $principal Principal written off (EUR).
+	 * @param float|null $vatAmount Output VAT recoverable per art. 29 OB.
+	 * @param string $period Target VAT period (e.g. `2026-Q2`).
 	 *
 	 * @return string The created GLTransaction id, or `''` when persistence failed.
 	 *
@@ -631,31 +631,31 @@ class DunningRunService {
 	 */
 	private function materialiseWriteOffGl(
 		string $administrationId,
-		string $factuurId,
-		float $hoofdsom,
-		?float $btwBedrag,
-		string $periode,
+		string $invoiceId,
+		float $principal,
+		?float $vatAmount,
+		string $period,
 	): string {
-		$hoofdsomCents = (int)round($hoofdsom * 100);
-		$btwCents = 0;
-		if ($btwBedrag !== null) {
-			$btwCents = (int)round($btwBedrag * 100);
+		$principalCents = (int)round($principal * 100);
+		$vatCents = 0;
+		if ($vatAmount !== null) {
+			$vatCents = (int)round($vatAmount * 100);
 		}
 
-		$totalCents = ($hoofdsomCents + $btwCents);
+		$totalCents = ($principalCents + $vatCents);
 
 		$postings = [
 			[
 				'accountNumber' => '7220',
-				'debitCents' => $hoofdsomCents,
+				'debitCents' => $principalCents,
 				'creditCents' => 0,
 				'description' => 'Bad debt expense (art. 6:96 BW write-off)',
 			],
 		];
-		if ($btwCents > 0) {
+		if ($vatCents > 0) {
 			$postings[] = [
 				'accountNumber' => '1500',
-				'debitCents' => $btwCents,
+				'debitCents' => $vatCents,
 				'creditCents' => 0,
 				'description' => 'Output VAT recoverable (art. 29 OB)',
 			];
@@ -670,11 +670,11 @@ class DunningRunService {
 
 		$journal = [
 			'administrationId' => $administrationId,
-			'description' => sprintf('Write-off invoice %s (oninbaar)', $factuurId),
+			'description' => sprintf('Write-off invoice %s (oninbaar)', $invoiceId),
 			'postingDate' => (new DateTimeImmutable())->format('Y-m-d'),
-			'periodId' => $periode,
+			'periodId' => $period,
 			'currency' => 'EUR',
-			'sourceReference' => $factuurId,
+			'sourceReference' => $invoiceId,
 			'state' => 'posted',
 			'isBalanced' => true,
 			'postings' => $postings,
@@ -701,27 +701,27 @@ class DunningRunService {
 	 * engine surfaces it on the next cycle.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK.
-	 * @param float $btwBedrag VAT amount to refund (EUR).
-	 * @param string $periode Target aangifte period.
-	 * @param string $boekingId Linked GLTransaction id (optional).
+	 * @param string $invoiceId Invoice FK.
+	 * @param float $vatAmount VAT amount to refund (EUR).
+	 * @param string $period Target aangifte period.
+	 * @param string $entryId Linked GLTransaction id (optional).
 	 * @param string $oninbaarId Linked OninbaarAfschrijving id.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
 	 */
-	private function queueVatTeruggaaf(
+	private function queueVatRefund(
 		string $administrationId,
-		string $factuurId,
-		float $btwBedrag,
-		string $periode,
-		string $boekingId,
+		string $invoiceId,
+		float $vatAmount,
+		string $period,
+		string $entryId,
 		string $oninbaarId,
 	): void {
 		$glTxRef = null;
-		if ($boekingId !== '') {
-			$glTxRef = $boekingId;
+		if ($entryId !== '') {
+			$glTxRef = $entryId;
 		}
 
 		$oninbaarRef = null;
@@ -731,17 +731,17 @@ class DunningRunService {
 
 		$line = [
 			'administrationId' => $administrationId,
-			'returnId' => $periode,
+			'returnId' => $period,
 			'glTransactionId' => $glTxRef,
 			'type' => 'CORRECTION_ART_29_OB',
 			'taxableAmount' => 0.0,
 			'taxRate' => 0.0,
-			'vatAmount' => (-1.0 * $btwBedrag),
+			'vatAmount' => (-1.0 * $vatAmount),
 			'glAccountNumber' => '1500',
 			'glAccountName' => 'Output VAT recoverable (art. 29 OB)',
-			'description' => sprintf('Oninbaar art. 29 OB — invoice %s', $factuurId),
+			'description' => sprintf('Oninbaar art. 29 OB — invoice %s', $invoiceId),
 			'sourceOninbaarRef' => $oninbaarRef,
-			'sourceInvoiceRef' => $factuurId,
+			'sourceInvoiceRef' => $invoiceId,
 		];
 
 		try {
@@ -790,7 +790,7 @@ class DunningRunService {
 	 * expected to soft-pause the dunning and reach out to the customer first.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $klantId Customer FK.
+	 * @param string $customerId Customer FK.
 	 * @param array<string,mixed> $triggerContext Context — keys: bounce, ibanInvalid,
 	 *                                            paymentRefMissing.
 	 *
@@ -798,7 +798,7 @@ class DunningRunService {
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-23
 	 */
-	public function detectAdminError(string $administrationId, string $klantId, array $triggerContext): bool {
+	public function detectAdminError(string $administrationId, string $customerId, array $triggerContext): bool {
 		$bounce = (bool)($triggerContext['bounce'] ?? false);
 		$ibanInvalid = (bool)($triggerContext['ibanInvalid'] ?? false);
 		$paymentRefMissing = (bool)($triggerContext['paymentRefMissing'] ?? false);
@@ -814,9 +814,9 @@ class DunningRunService {
 		// is the strongest "good customer" proxy. Falls back to the legacy
 		// DunningRun.DELIVERED heuristic only when the AR Invoice schema is
 		// absent (pre-bookkeeping-quote-order-invoice deployments).
-		if ($this->klantPaidInvoiceWithin(
+		if ($this->customerPaidInvoiceWithin(
 			administrationId: $administrationId,
-			klantId: $klantId,
+			customerId: $customerId,
 			cutoff: $cutoff
 		) === true
 		) {
@@ -834,7 +834,7 @@ class DunningRunService {
 		foreach ($paidRuns as $run) {
 			// Heuristic: any prior DELIVERED run with the same klant whose
 			// invoice transitioned to paid counts as "good customer".
-			$uitgevoerd = (string)($run['uitgevoerdOp'] ?? '');
+			$uitgevoerd = (string)($run['executedOn'] ?? '');
 			if ($uitgevoerd === '') {
 				continue;
 			}
@@ -859,23 +859,23 @@ class DunningRunService {
 	 * "good customer" signal (REQ-CCD-011 / task-23).
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $klantId Customer FK.
+	 * @param string $customerId Customer FK.
 	 * @param DateTimeImmutable $cutoff Earliest acceptable paid-on date.
 	 *
 	 * @return bool
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-23
 	 */
-	private function klantPaidInvoiceWithin(
+	private function customerPaidInvoiceWithin(
 		string $administrationId,
-		string $klantId,
+		string $customerId,
 		DateTimeImmutable $cutoff,
 	): bool {
 		$candidates = $this->findAll(
 			schema: 'Invoice',
 			filters: [
 				'administrationId' => $administrationId,
-				'customerReference' => $klantId,
+				'customerReference' => $customerId,
 				'status' => 'paid',
 			]
 		);
@@ -915,7 +915,7 @@ class DunningRunService {
 	 * the error to the operator.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK.
+	 * @param string $invoiceId Invoice FK.
 	 * @param array<string,mixed> $dossier Composed dossier bundle.
 	 * @param string $dunningRunId The DunningRun id to seal on success.
 	 *
@@ -925,14 +925,14 @@ class DunningRunService {
 	 */
 	public function transferToIncasso(
 		string $administrationId,
-		string $factuurId,
+		string $invoiceId,
 		array $dossier,
 		string $dunningRunId,
 	): DunningChannelSendResult {
 		$adapter = $this->resolveIncassoAdapter();
 		$result = $adapter->transfer(
 			administrationId: $administrationId,
-			factuurId: $factuurId,
+			invoiceId: $invoiceId,
 			dossier: $dossier
 		);
 
@@ -940,7 +940,7 @@ class DunningRunService {
 			$this->logger->warning(
 				sprintf(
 					'Shillinq: incasso transfer for invoice %s ended in %s — caller must retry / notify',
-					$factuurId,
+					$invoiceId,
 					$result->deliveryStatus
 				)
 			);
@@ -1048,18 +1048,18 @@ class DunningRunService {
 	 * Whether the invoice has an active DunningPauseDispute.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $factuurId Invoice FK.
+	 * @param string $invoiceId Invoice FK.
 	 *
 	 * @return bool True when at least one active pause exists.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
 	 */
-	public function hasActivePause(string $administrationId, string $factuurId): bool {
+	public function hasActivePause(string $administrationId, string $invoiceId): bool {
 		$pauses = $this->findAll(
 			schema: 'DunningPauseDispute',
 			filters: [
 				'administrationId' => $administrationId,
-				'factuurId' => $factuurId,
+				'invoiceId' => $invoiceId,
 				'lifecycleState' => 'active',
 			]
 		);

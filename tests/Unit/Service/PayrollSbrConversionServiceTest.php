@@ -61,18 +61,18 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	 */
 	public function testToSbrInstancePayloadEchoesTotalsAndDeterministicRef(): void {
 		$lh = [
-			'werkgeverId' => 'wg-conduction-bv',
-			'periodeId' => 'lp-2026-05',
+			'employerId' => 'wg-conduction-bv',
+			'periodId' => 'lp-2026-05',
 			'totalPayrollTax' => 18620.10,
 			'totalSocialInsuranceContributions' => 7559.40,
 			'totalHealthInsurance' => 3654.00,
 			'totalFinalLeviesWorkRelatedCosts' => 0.0,
 			'totalRemittance' => 29833.50,
-			'vervaldagAfdracht' => '2026-06-30',
+			'dueDateRemittance' => '2026-06-30',
 			'status' => 'VOORBEREID',
 		];
 
-		$payload = $this->svc->toSbrInstancePayload(lhAfdracht: $lh);
+		$payload = $this->svc->toSbrInstancePayload(lhRemittance: $lh);
 
 		$this->assertSame(PayrollSbrConversionService::SBR_TAXONOMY_VERSION, $payload['taxonomyVersion']);
 		$this->assertSame('LA-XX-2026-wg-conduction-bv-lp-2026-05', $payload['instanceRef']);
@@ -83,7 +83,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 		$this->assertSame(3654.00, $payload['zvwTotaal']);
 		$this->assertSame(0.0, $payload['eindheffingenWKR']);
 		$this->assertSame(29833.50, $payload['totalRemittance']);
-		$this->assertSame('2026-06-30', $payload['vervaldagAfdracht']);
+		$this->assertSame('2026-06-30', $payload['dueDateRemittance']);
 
 	}//end testToSbrInstancePayloadEchoesTotalsAndDeterministicRef()
 
@@ -94,12 +94,12 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	 */
 	public function testStampInstanceRefIsIdempotent(): void {
 		$lh = [
-			'werkgeverId' => 'wg-1',
-			'periodeId' => 'lp-2026-04',
+			'employerId' => 'wg-1',
+			'periodId' => 'lp-2026-04',
 		];
 
-		$first = $this->svc->stampInstanceRef(lhAfdracht: $lh);
-		$second = $this->svc->stampInstanceRef(lhAfdracht: $first);
+		$first = $this->svc->stampInstanceRef(lhRemittance: $lh);
+		$second = $this->svc->stampInstanceRef(lhRemittance: $first);
 
 		$this->assertSame('LA-XX-2026-wg-1-lp-2026-04', $first['sbrInstanceRef']);
 		$this->assertSame($first['sbrInstanceRef'], $second['sbrInstanceRef']);
@@ -113,9 +113,9 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	 */
 	public function testInstanceRefSanitisesIdentifierCharacters(): void {
 		$payload = $this->svc->toSbrInstancePayload(
-			lhAfdracht: [
-				'werkgeverId' => 'wg-/?\\!1',
-				'periodeId' => 'lp 2026/05',
+			lhRemittance: [
+				'employerId' => 'wg-/?\\!1',
+				'periodId' => 'lp 2026/05',
 			]
 		);
 

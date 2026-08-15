@@ -112,10 +112,12 @@ export default {
 				// Silent error — operator sees an empty page.
 			}
 		},
+
 		async post() {
 			await invoiceApi.post(this.invoiceId)
 			await this.reload()
 		},
+
 		async pdf() {
 			await invoiceApi.exportPdf(this.invoiceId)
 		},

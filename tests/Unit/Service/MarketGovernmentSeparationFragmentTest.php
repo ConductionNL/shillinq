@@ -107,21 +107,21 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		$mandatory = [
 			'code',
 			'name',
-			'bestuursorgaan',
-			'marktsegment',
+			'governingBody',
+			'marketSegment',
 			'concurrenten',
-			'kostprijsMethode',
-			'kostenplaatsCode',
-			'kostendragerCode',
+			'costPriceMethod',
+			'costCentreCode',
+			'costObjectCode',
 			'isExempted',
-			'acmMelding',
+			'acmReport',
 		];
 		foreach ($mandatory as $field) {
 			self::assertArrayHasKey($field, $props, "CommercialActivity must declare $field");
 		}
 
 		// The kostprijsMethode is the statutory enum.
-		self::assertContains('integrale-kostprijs-art-25i', $props['kostprijsMethode']['enum']);
+		self::assertContains('integrale-kostprijs-art-25i', $props['costPriceMethod']['enum']);
 
 	}//end testCommercialActivityHasMandatoryFields()
 
@@ -136,12 +136,12 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		$components = $schema['properties']['componenten']['properties'];
 
 		$expected = [
-			'directeLoonkosten',
-			'directeMaterialen',
-			'directeAfschrijvingen',
+			'directPayrollCost',
+			'directMaterials',
+			'directDepreciations',
 			'indirecteOverhead',
-			'vermogenskosten',
-			'winstopslag',
+			'capitalCost',
+			'profitMarkup',
 		];
 		foreach ($expected as $component) {
 			self::assertArrayHasKey($component, $components, "componenten must include $component");
@@ -161,8 +161,8 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		$props = $data['components']['schemas']['ActivityCostAllocation']['properties'];
 
 		self::assertArrayHasKey('splits', $props);
-		self::assertArrayHasKey('verdeelsleutel', $props);
-		self::assertArrayHasKey('automatischToegepast', $props);
+		self::assertArrayHasKey('allocationKey', $props);
+		self::assertArrayHasKey('automaticApplied', $props);
 		self::assertArrayHasKey('handmatigeOverride', $props);
 		// Status enum supports the override / reversal lifecycle.
 		self::assertSame(['active', 'overridden', 'reversed'], $props['status']['enum']);

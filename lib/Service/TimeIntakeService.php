@@ -188,7 +188,7 @@ class TimeIntakeService {
 		// duplicated, in the materialisation pass below.
 		$existingRowsByExternalId = [];
 		foreach ($entries as $entry) {
-			$existingRow = $this->findUrenRegistratieByExternalId(administrationId: $administrationId, externalId: $entry['externalId']);
+			$existingRow = $this->findHoursRegistrationByExternalId(administrationId: $administrationId, externalId: $entry['externalId']);
 			if ($existingRow !== null) {
 				$rowBatchId = (string)($existingRow['sourceBatchId'] ?? '');
 				if ($rowBatchId !== $batchId) {
@@ -612,7 +612,7 @@ class TimeIntakeService {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function findUrenRegistratieByExternalId(string $administrationId, string $externalId): ?array {
+	private function findHoursRegistrationByExternalId(string $administrationId, string $externalId): ?array {
 		$rows = $this->findAll(schema: 'UrenRegistratie', filters: ['administrationId' => $administrationId, 'externalId' => $externalId]);
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {

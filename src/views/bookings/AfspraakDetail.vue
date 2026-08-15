@@ -83,13 +83,13 @@
 			<PipelinqProfileCard
 				:payload="payload"
 				:booking="payload.booking || {}"
-				:pipelinq-base-url="pipelinqBaseUrl" />
+				:pipelinqBaseUrl="pipelinqBaseUrl" />
 
 			<KlantbeeldTimeline
 				:payload="paginatedPayload"
-				:has-more="hasMore"
+				:hasMore="hasMore"
 				:loading="pagingLoading"
-				@load-more="onLoadMore" />
+				@loadMore="onLoadMore" />
 
 			<p
 				v-if="pagingError"
@@ -104,9 +104,8 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-
-import PipelinqProfileCard from '../../components/pipelinq/PipelinqProfileCard.vue'
 import KlantbeeldTimeline from '../../components/pipelinq/KlantbeeldTimeline.vue'
+import PipelinqProfileCard from '../../components/pipelinq/PipelinqProfileCard.vue'
 
 const SUMMARY_FIELD_DEFS = [
 	{ key: 'appointmentId', label: 'Reference' },
@@ -127,6 +126,7 @@ export default {
 		PipelinqProfileCard,
 		KlantbeeldTimeline,
 	},
+
 	props: {
 		/**
 		 * Appointment business id, supplied by the manifest router
@@ -137,6 +137,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			payload: null,
@@ -149,10 +150,12 @@ export default {
 			emptyMarker: '—',
 		}
 	},
+
 	computed: {
 		bookingReference() {
 			return this.payload?.booking?.appointmentId || this.id || ''
 		},
+
 		hasIndexRoute() {
 			// The Afspraken index route is registered by the same slice-01
 			// manifest fragment, so this is true in practice; the guard
@@ -161,6 +164,7 @@ export default {
 				(r) => r.name === 'Afspraken',
 			)
 		},
+
 		summaryFields() {
 			const booking = this.payload?.booking || {}
 			return SUMMARY_FIELD_DEFS.map((def) => ({
@@ -169,6 +173,7 @@ export default {
 				value: booking[def.key] != null ? String(booking[def.key]) : '',
 			}))
 		},
+
 		/**
 		 * Slice-05 payload with `klantbeeld.transactions` replaced by the
 		 * accumulated list across pages. Keeps the envelope shape stable
@@ -195,6 +200,7 @@ export default {
 				},
 			}
 		},
+
 		/**
 		 * Whether the last fetched page returned a full set of rows
 		 * (i.e. there may be more). We use the >= limit heuristic so a
@@ -214,6 +220,7 @@ export default {
 			return limit > 0 && lastBatchSize >= limit
 		},
 	},
+
 	watch: {
 		id: {
 			immediate: false,
@@ -222,10 +229,12 @@ export default {
 			},
 		},
 	},
+
 	async created() {
 		await this.loadConfig()
 		await this.reload()
 	},
+
 	methods: {
 		label(key) {
 			if (typeof t === 'function') {
@@ -233,6 +242,7 @@ export default {
 			}
 			return key
 		},
+
 		async loadConfig() {
 			// Best-effort fetch of the pipelinq base url from the settings
 			// API so the profile card can render an "Open in pipelinq"
@@ -248,6 +258,7 @@ export default {
 				this.pipelinqBaseUrl = ''
 			}
 		},
+
 		async reload() {
 			this.loading = true
 			this.loadError = ''
@@ -291,6 +302,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async onLoadMore({ limit, offset }) {
 			if (this.pagingLoading) {
 				return

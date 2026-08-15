@@ -61,14 +61,14 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelOn8400EurEquals795(): void {
-		$s = $this->calc->staffel(hoofdsom: 8400.00);
-		self::assertSame(375.0, $s['schaal1_0_2500']);
-		self::assertSame(250.0, $s['schaal2_2500_5000']);
-		self::assertSame(170.0, $s['schaal3_5000_10000']);
-		self::assertSame(0.0, $s['schaal4_10000_200000']);
-		self::assertSame(0.0, $s['schaal5_200000plus']);
+		$s = $this->calc->staffel(principal: 8400.00);
+		self::assertSame(375.0, $s['scale1_0_2500']);
+		self::assertSame(250.0, $s['scale2_2500_5000']);
+		self::assertSame(170.0, $s['scale3_5000_10000']);
+		self::assertSame(0.0, $s['scale4_10000_200000']);
+		self::assertSame(0.0, $s['scale5_200000plus']);
 		self::assertSame(795.0, $s['total']);
-		self::assertSame(795.0, $s['toegepast']);
+		self::assertSame(795.0, $s['applied']);
 		self::assertSame(40.0, $s['minimum']);
 
 	}//end testStaffelOn8400EurEquals795()
@@ -81,9 +81,9 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelMinimumFloorAt40(): void {
-		$s = $this->calc->staffel(hoofdsom: 100.00);
+		$s = $this->calc->staffel(principal: 100.00);
 		self::assertSame(15.0, $s['total']);
-		self::assertSame(40.0, $s['toegepast']);
+		self::assertSame(40.0, $s['applied']);
 
 	}//end testStaffelMinimumFloorAt40()
 
@@ -93,8 +93,8 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelAt5000EurExactly(): void {
-		$s = $this->calc->staffel(hoofdsom: 5000.00);
-		self::assertSame(625.0, $s['toegepast']);
+		$s = $this->calc->staffel(principal: 5000.00);
+		self::assertSame(625.0, $s['applied']);
 
 	}//end testStaffelAt5000EurExactly()
 
@@ -107,13 +107,13 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelOn250000(): void {
-		$s = $this->calc->staffel(hoofdsom: 250000.00);
-		self::assertSame(375.0, $s['schaal1_0_2500']);
-		self::assertSame(250.0, $s['schaal2_2500_5000']);
-		self::assertSame(250.0, $s['schaal3_5000_10000']);
-		self::assertSame(1900.0, $s['schaal4_10000_200000']);
-		self::assertSame(250.0, $s['schaal5_200000plus']);
-		self::assertSame(3025.0, $s['toegepast']);
+		$s = $this->calc->staffel(principal: 250000.00);
+		self::assertSame(375.0, $s['scale1_0_2500']);
+		self::assertSame(250.0, $s['scale2_2500_5000']);
+		self::assertSame(250.0, $s['scale3_5000_10000']);
+		self::assertSame(1900.0, $s['scale4_10000_200000']);
+		self::assertSame(250.0, $s['scale5_200000plus']);
+		self::assertSame(3025.0, $s['applied']);
 
 	}//end testStaffelOn250000()
 
@@ -124,7 +124,7 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testStaffelRejectsNegativeHoofdsom(): void {
 		$this->expectException(InvalidArgumentException::class);
-		$this->calc->staffel(hoofdsom: -10.00);
+		$this->calc->staffel(principal: -10.00);
 
 	}//end testStaffelRejectsNegativeHoofdsom()
 
@@ -143,14 +143,14 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteB2BHandelsrenteOn8400Eur22Days(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2B',
-			hoofdsom: 8400.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-21')
+			principal: 8400.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-21')
 		);
 
-		self::assertSame(0.1015, $r['tarief']);
+		self::assertSame(0.1015, $r['rate']);
 		self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $r['type']);
-		self::assertSame(22, $r['dagen']);
+		self::assertSame(22, $r['days']);
 		// 840000 × 0.1015 × 22 / 365 = 5138.96 → 5139 cents.
 		self::assertEqualsWithDelta(51.39, $r['amount'], 0.01);
 
@@ -170,14 +170,14 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteB2CWettelijkeRenteOn820Eur31Days(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2C',
-			hoofdsom: 820.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-30')
+			principal: 820.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-30')
 		);
 
-		self::assertSame(0.04, $r['tarief']);
+		self::assertSame(0.04, $r['rate']);
 		self::assertSame('WETTELIJKE_RENTE_B2C_6_119_BW', $r['type']);
-		self::assertSame(31, $r['dagen']);
+		self::assertSame(31, $r['days']);
 		// 82000 × 0.04 × 31 / 365 = 278.6 → 279 cents.
 		self::assertEqualsWithDelta(2.79, $r['amount'], 0.01);
 
@@ -192,9 +192,9 @@ final class BIKStaffelCalculatorTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->calc->rente(
 			partyType: 'B2B',
-			hoofdsom: 1000,
-			ingangsdatum: new DateTimeImmutable('2026-06-01'),
-			berekendOp: new DateTimeImmutable('2026-05-01')
+			principal: 1000,
+			effectiveDate: new DateTimeImmutable('2026-06-01'),
+			calculatedOn: new DateTimeImmutable('2026-05-01')
 		);
 
 	}//end testRenteRejectsBerekendOpBeforeIngangsdatum()
@@ -205,12 +205,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testB2C_14DayGraceBlocksBeforeDay44(): void {
-		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 35));
-		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 43));
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 44));
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', dagenVerzuim: 60));
+		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 35));
+		self::assertFalse($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 43));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 44));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2C', daysInArrears: 60));
 		// B2B has no grace — verzuim van rechtswege per art. 6:83 BW.
-		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2B', dagenVerzuim: 0));
+		self::assertTrue($this->calc->isCalculationPermitted(partyType: 'B2B', daysInArrears: 0));
 
 	}//end testB2C_14DayGraceBlocksBeforeDay44()
 
@@ -221,20 +221,20 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testComposeYieldsPersistenceShape(): void {
 		$body = $this->calc->compose(
-			factuurId: 'inv-2026-0247',
+			invoiceId: 'inv-2026-0247',
 			administrationId: 'adm-1',
 			partyType: 'B2B',
-			hoofdsom: 8400.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-21')
+			principal: 8400.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-21')
 		);
 
-		self::assertSame('inv-2026-0247', $body['factuurId']);
+		self::assertSame('inv-2026-0247', $body['invoiceId']);
 		self::assertSame('adm-1', $body['administrationId']);
 		self::assertSame('B2B', $body['partyType']);
-		self::assertSame(8400.0, $body['hoofdsom']);
-		self::assertSame(795.0, $body['berekening']['toegepast']);
-		self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $body['wettelijkeRente']['type']);
+		self::assertSame(8400.0, $body['principal']);
+		self::assertSame(795.0, $body['calculation']['applied']);
+		self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $body['statutoryRente']['type']);
 		// 8400 + 795 (no BTW surcharge, creditor can offset) + 51.39 rente = 9246.39.
 		self::assertEqualsWithDelta(9246.39, $body['totalDue'], 0.01);
 
@@ -251,16 +251,16 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelMaximumCapAt6775(): void {
-		$atCap = $this->calc->staffel(hoofdsom: 1000000.00);
+		$atCap = $this->calc->staffel(principal: 1000000.00);
 		self::assertSame(6775.0, $atCap['maximum']);
-		self::assertSame(6775.0, $atCap['toegepast']);
+		self::assertSame(6775.0, $atCap['applied']);
 		// Raw staffel at exactly €1M lands on the cap: 375+250+250+1900+4000.
 		self::assertSame(6775.0, $atCap['total']);
 
-		$overCap = $this->calc->staffel(hoofdsom: 2000000.00);
+		$overCap = $this->calc->staffel(principal: 2000000.00);
 		// Uncapped totaal is €11.775, but toegepast is clamped to €6.775.
 		self::assertSame(11775.0, $overCap['total']);
-		self::assertSame(6775.0, $overCap['toegepast']);
+		self::assertSame(6775.0, $overCap['applied']);
 
 	}//end testStaffelMaximumCapAt6775()
 
@@ -274,17 +274,17 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testStaffelBtwSurchargeWhenNotDeductible(): void {
-		$withBtw = $this->calc->staffel(hoofdsom: 8400.00, btwVerrekenbaar: false);
-		self::assertSame(795.0, $withBtw['toegepast']);
-		self::assertSame(0.21, $withBtw['btwPercentage']);
+		$withVat = $this->calc->staffel(principal: 8400.00, vatOffsettable: false);
+		self::assertSame(795.0, $withVat['applied']);
+		self::assertSame(0.21, $withVat['vatPercentage']);
 		// 79500 × 0.21 = 16695 cents.
-		self::assertSame(166.95, $withBtw['vatAmount']);
-		self::assertSame(961.95, $withBtw['toegepastInclBtw']);
+		self::assertSame(166.95, $withVat['vatAmount']);
+		self::assertSame(961.95, $withVat['appliedInclVat']);
 
-		$noBtw = $this->calc->staffel(hoofdsom: 8400.00);
-		self::assertTrue($noBtw['btwVerrekenbaar']);
-		self::assertSame(0.0, $noBtw['vatAmount']);
-		self::assertSame(795.0, $noBtw['toegepastInclBtw']);
+		$noVat = $this->calc->staffel(principal: 8400.00);
+		self::assertTrue($noVat['vatOffsettable']);
+		self::assertSame(0.0, $noVat['vatAmount']);
+		self::assertSame(795.0, $noVat['appliedInclVat']);
 
 	}//end testStaffelBtwSurchargeWhenNotDeductible()
 
@@ -302,20 +302,20 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteSplitsAcrossRateBoundary(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2C',
-			hoofdsom: 10000.00,
-			ingangsdatum: new DateTimeImmutable('2025-12-17'),
-			berekendOp: new DateTimeImmutable('2026-01-16')
+			principal: 10000.00,
+			effectiveDate: new DateTimeImmutable('2025-12-17'),
+			calculatedOn: new DateTimeImmutable('2026-01-16')
 		);
 
-		self::assertSame(30, $r['dagen']);
-		self::assertCount(2, $r['perioden']);
-		self::assertSame(0.06, $r['perioden'][0]['tarief']);
-		self::assertSame(0.04, $r['perioden'][1]['tarief']);
-		self::assertEqualsWithDelta(24.66, $r['perioden'][0]['amount'], 0.01);
-		self::assertEqualsWithDelta(16.44, $r['perioden'][1]['amount'], 0.01);
+		self::assertSame(30, $r['days']);
+		self::assertCount(2, $r['periods']);
+		self::assertSame(0.06, $r['periods'][0]['rate']);
+		self::assertSame(0.04, $r['periods'][1]['rate']);
+		self::assertEqualsWithDelta(24.66, $r['periods'][0]['amount'], 0.01);
+		self::assertEqualsWithDelta(16.44, $r['periods'][1]['amount'], 0.01);
 		self::assertEqualsWithDelta(41.10, $r['amount'], 0.01);
 		// Headline tarief is the rate in force on berekendOp (4% in 2026).
-		self::assertSame(0.04, $r['tarief']);
+		self::assertSame(0.04, $r['rate']);
 
 	}//end testRenteSplitsAcrossRateBoundary()
 
@@ -327,14 +327,14 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteHonoursExplicitOverride(): void {
 		$r = $this->calc->rente(
 			partyType: 'B2B',
-			hoofdsom: 8400.00,
-			ingangsdatum: new DateTimeImmutable('2026-05-30'),
-			berekendOp: new DateTimeImmutable('2026-06-21'),
-			tariefB2B: 0.12
+			principal: 8400.00,
+			effectiveDate: new DateTimeImmutable('2026-05-30'),
+			calculatedOn: new DateTimeImmutable('2026-06-21'),
+			rateB2B: 0.12
 		);
 
-		self::assertSame(0.12, $r['tarief']);
-		self::assertCount(1, $r['perioden']);
+		self::assertSame(0.12, $r['rate']);
+		self::assertCount(1, $r['periods']);
 		// 840000 × 0.12 × 22 / 365 = 6075.6 → 6076 cents.
 		self::assertEqualsWithDelta(60.76, $r['amount'], 0.01);
 

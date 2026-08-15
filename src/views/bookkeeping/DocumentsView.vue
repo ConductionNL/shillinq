@@ -72,7 +72,7 @@
 				class="wbso-documents__table"
 				:columns="columns"
 				:rows="documents"
-				:empty-label="
+				:emptyLabel="
 					t(
 						'shillinq',
 						'Upload the first document to track an invoice, receipt, or contract.',
@@ -107,9 +107,9 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { NcAppContent, NcButton } from '@nextcloud/vue'
-import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateOcsUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'DocumentsView',

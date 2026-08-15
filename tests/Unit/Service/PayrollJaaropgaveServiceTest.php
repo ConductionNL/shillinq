@@ -207,39 +207,39 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 	 * @return array<string,array<int,array<string,mixed>>>
 	 */
 	private function dataset(): array {
-		$strook = static function (string $id, string $periodeId, float $ytdFiscaal, float $ytdVak): array {
+		$slip = static function (string $id, string $periodId, float $ytdFiscal, float $ytdVak): array {
 			return [
 				'id' => $id,
-				'periodeId' => $periodeId,
-				'werknemerId' => 'wn-1',
+				'periodId' => $periodId,
+				'employeeId' => 'wn-1',
 				'administrationId' => 'adm-1',
-				'fiscaalLoon' => 4959.20,
-				'loonheffing' => 1083.40,
-				'premiesSVWerkgever' => ['totaal_werkgever' => 500.86],
+				'fiscalPay' => 4959.20,
+				'payrollTax' => 1083.40,
+				'employerSocialInsurancePremiums' => ['totaal_werkgever' => 500.86],
 				'zvw' => ['afgedragen_wg' => 262.80],
 				'pensioen' => ['premie_wn_aandeel' => 355.68, 'premie_wg_aandeel' => 898.88],
-				'brutoComponenten' => ['totaal_bruto' => 4959.20, 'vakantietoeslag_uitbetaling' => 0.0],
-				'nettoBetaald' => 3520.12,
-				'cumulatieven' => ['fiscaalloon_ytd' => $ytdFiscaal, 'vakantiegeld_reservering_ytd' => $ytdVak],
-				'vakantieDagenReservering' => ['opgebouwdEuro' => 395.20],
+				'grossComponents' => ['totaal_bruto' => 4959.20, 'vakantietoeslag_uitbetaling' => 0.0],
+				'netPaid' => 3520.12,
+				'cumulatieven' => ['fiscaalloon_ytd' => $ytdFiscal, 'vakantiegeld_reservering_ytd' => $ytdVak],
+				'holidayDaysAccrual' => ['opgebouwdEuro' => 395.20],
 			];
 		};
 
 		return [
 			'LoonStrook' => [
-				$strook('ls-1', 'lp-2026-01', 4959.20, 395.20),
-				$strook('ls-2', 'lp-2026-02', 9918.40, 790.40),
-				$strook('ls-3', 'lp-2026-03', 14877.60, 1185.60),
+				$slip('ls-1', 'lp-2026-01', 4959.20, 395.20),
+				$slip('ls-2', 'lp-2026-02', 9918.40, 790.40),
+				$slip('ls-3', 'lp-2026-03', 14877.60, 1185.60),
 				// Different werknemer in same admin (must be filtered out).
 				[
 					'id' => 'ls-x',
-					'periodeId' => 'lp-2026-01',
-					'werknemerId' => 'wn-9',
+					'periodId' => 'lp-2026-01',
+					'employeeId' => 'wn-9',
 					'administrationId' => 'adm-1',
-					'fiscaalLoon' => 99999.00,
+					'fiscalPay' => 99999.00,
 				],
 				// Different year (must be filtered out).
-				$strook('ls-y', 'lp-2025-12', 60000.00, 4800.00) + ['werknemerId' => 'wn-1', 'administrationId' => 'adm-1'],
+				$slip('ls-y', 'lp-2025-12', 60000.00, 4800.00) + ['employeeId' => 'wn-1', 'administrationId' => 'adm-1'],
 			],
 		];
 
@@ -256,8 +256,8 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 
 		$statement = $service->bouwJaaropgave(
 			administrationId: 'adm-1',
-			werknemerId: 'wn-1',
-			jaar: 2026
+			employeeId: 'wn-1',
+			year: 2026
 		);
 
 		$this->assertSame(2026, $statement['year']);
@@ -290,8 +290,8 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 
 		$statement = $service->bouwJaaropgave(
 			administrationId: 'adm-1',
-			werknemerId: 'wn-1',
-			jaar: 2026
+			employeeId: 'wn-1',
+			year: 2026
 		);
 
 		$this->assertFalse($statement['cumulatievenConsistent']);
@@ -310,7 +310,7 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$service->persistJaaropgave(
 			jaaropgave: [
-				'werknemerId' => 'wn-1',
+				'employeeId' => 'wn-1',
 				'year' => 2026,
 				'cumulatievenConsistent' => false,
 			]
@@ -329,8 +329,8 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 
 		$statement = $service->bouwJaaropgave(
 			administrationId: 'adm-1',
-			werknemerId: 'wn-1',
-			jaar: 2026
+			employeeId: 'wn-1',
+			year: 2026
 		);
 
 		$service->persistJaaropgave(jaaropgave: $statement);

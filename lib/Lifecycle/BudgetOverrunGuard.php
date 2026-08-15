@@ -69,7 +69,7 @@ class BudgetOverrunGuard {
 	 * Performed in integer euro-cents to avoid IEEE-754 drift. Returns true when
 	 * the booking stays within (or exactly at) the authorized lasten.
 	 *
-	 * @param float $authorizedLasten The stacked authorized lasten (basis + wijzigingen).
+	 * @param float $authorizedExpenses The stacked authorized lasten (basis + wijzigingen).
 	 * @param float $alreadyPosted The cumulative lasten already posted to the taakveld.
 	 * @param float $attempted The new posting amount.
 	 *
@@ -77,8 +77,8 @@ class BudgetOverrunGuard {
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
 	 */
-	public function isWithinBudget(float $authorizedLasten, float $alreadyPosted, float $attempted): bool {
-		$authorizedCents = (int)round($authorizedLasten * 100);
+	public function isWithinBudget(float $authorizedExpenses, float $alreadyPosted, float $attempted): bool {
+		$authorizedCents = (int)round($authorizedExpenses * 100);
 		$postedCents = (int)round($alreadyPosted * 100);
 		$attemptedCents = (int)round($attempted * 100);
 
@@ -94,40 +94,40 @@ class BudgetOverrunGuard {
 	 * Fail-closed: returns false on any exception (CWE-863) so a lookup failure
 	 * never silently authorises an over-budget booking.
 	 *
-	 * @param string $begrotingId The Programmabegroting.id authorising the budget.
-	 * @param string $taakveldCode The taakveld being posted to.
+	 * @param string $budgetId The Programmabegroting.id authorising the budget.
+	 * @param string $taskFieldCode The taakveld being posted to.
 	 * @param float $attempted The new lasten posting amount.
 	 *
 	 * @return bool True when the posting is within the stacked authorized lasten.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
 	 */
-	public function canPost(string $begrotingId, string $taakveldCode, float $attempted): bool {
+	public function canPost(string $budgetId, string $taskFieldCode, float $attempted): bool {
 		try {
-			if ($begrotingId === '' || $taakveldCode === '') {
+			if ($budgetId === '' || $taskFieldCode === '') {
 				return false;
 			}
 
 			$register = $this->resolveRegister();
 
 			$basis = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('Taakveld')
-					->findAll(['filters' => ['begrotingId' => $begrotingId]])
+				rows: $objectService->setRegister($register)->setSchema('Taakveld')
+					->findAll(['filters' => ['budgetId' => $budgetId]])
 			);
 			$wijzigingen = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('Begrotingswijziging')
-					->findAll(['filters' => ['begrotingId' => $begrotingId]])
+				rows: $objectService->setRegister($register)->setSchema('Begrotingswijziging')
+					->findAll(['filters' => ['budgetId' => $budgetId]])
 			);
 
 			$authorized = $this->stacker->authorizedLasten(
-				taakveldCode: $taakveldCode,
-				basisTaakvelden: $basis,
+				taskFieldCode: $taskFieldCode,
+				basisTaskFields: $basis,
 				wijzigingen: $wijzigingen
 			);
 
 			$glLines = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('GLLine')
-					->findAll(['filters' => ['taakveldCode' => $taakveldCode, 'side' => 'debit']])
+				rows: $objectService->setRegister($register)->setSchema('GLLine')
+					->findAll(['filters' => ['taskFieldCode' => $taskFieldCode, 'side' => 'debit']])
 			);
 			$alreadyPostedCents = 0;
 			foreach ($glLines as $line) {
@@ -135,14 +135,14 @@ class BudgetOverrunGuard {
 			}
 
 			return $this->isWithinBudget(
-				authorizedLasten: $authorized,
+				authorizedExpenses: $authorized,
 				alreadyPosted: ($alreadyPostedCents / 100),
 				attempted: $attempted
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BudgetOverrunGuard: budget check failed — denying GL post (fail-closed)',
-				['begrotingId' => $begrotingId, 'taakveldCode' => $taakveldCode, 'exception' => $e->getMessage()]
+				['budgetId' => $budgetId, 'taskFieldCode' => $taskFieldCode, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try

@@ -103,14 +103,14 @@ class VpbBerekeningGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'VpbTariefcatalogus' => [
-						['belastingjaar' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
+						['taxYear' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
 					],
 				]
 			)
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(99440.0, $this->guard->berekenVerschuldigdeVpb(belastingjaar: 2026, belastbareWinst: 450000.0));
+		self::assertSame(99440.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 450000.0));
 
 	}//end testBerekenVerschuldigdeVpbAppliesBrackets()
 
@@ -124,14 +124,14 @@ class VpbBerekeningGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'VpbTariefcatalogus' => [
-						['belastingjaar' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
+						['taxYear' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
 					],
 				]
 			)
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(19000.0, $this->guard->berekenVerschuldigdeVpb(belastingjaar: 2026, belastbareWinst: 100000.0));
+		self::assertSame(19000.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 100000.0));
 
 	}//end testBerekenVerschuldigdeVpbBelowGrens()
 
@@ -142,7 +142,7 @@ class VpbBerekeningGuardTest extends TestCase {
 	 */
 	public function testBerekenVerschuldigdeVpbZeroOnNonPositive(): void {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(belastingjaar: 2026, belastbareWinst: 0.0));
+		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 0.0));
 
 	}//end testBerekenVerschuldigdeVpbZeroOnNonPositive()
 
@@ -157,7 +157,7 @@ class VpbBerekeningGuardTest extends TestCase {
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(belastingjaar: 2099, belastbareWinst: 500000.0));
+		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2099, taxableProfit: 500000.0));
 
 	}//end testBerekenVerschuldigdeVpbZeroWhenNoTarief()
 
@@ -171,7 +171,7 @@ class VpbBerekeningGuardTest extends TestCase {
 		$this->logger->expects($this->once())->method('error');
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(belastingjaar: 2026, belastbareWinst: 450000.0));
+		self::assertSame(0.0, $this->guard->berekenVerschuldigdeVpb(taxYear: 2026, taxableProfit: 450000.0));
 
 	}//end testBerekenVerschuldigdeVpbFailsClosed()
 
@@ -182,12 +182,12 @@ class VpbBerekeningGuardTest extends TestCase {
 	 */
 	public function testBepaalVerliesRegime(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		self::assertSame('9jr', $this->guard->bepaalVerliesRegime(verliesjaar: 2018));
-		self::assertSame('6jr', $this->guard->bepaalVerliesRegime(verliesjaar: 2019));
-		self::assertSame('6jr', $this->guard->bepaalVerliesRegime(verliesjaar: 2021));
-		self::assertSame('onbeperkt-50pct', $this->guard->bepaalVerliesRegime(verliesjaar: 2022));
-		self::assertSame('onbeperkt-50pct', $this->guard->bepaalVerliesRegime(verliesjaar: 2026));
-		self::assertSame('', $this->guard->bepaalVerliesRegime(verliesjaar: null));
+		self::assertSame('9jr', $this->guard->bepaalVerliesRegime(lossYear: 2018));
+		self::assertSame('6jr', $this->guard->bepaalVerliesRegime(lossYear: 2019));
+		self::assertSame('6jr', $this->guard->bepaalVerliesRegime(lossYear: 2021));
+		self::assertSame('onbeperkt-50pct', $this->guard->bepaalVerliesRegime(lossYear: 2022));
+		self::assertSame('onbeperkt-50pct', $this->guard->bepaalVerliesRegime(lossYear: 2026));
+		self::assertSame('', $this->guard->bepaalVerliesRegime(lossYear: null));
 		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
 	}//end testBepaalVerliesRegime()
@@ -200,13 +200,13 @@ class VpbBerekeningGuardTest extends TestCase {
 	public function testBepaalVerjaardatum(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
 		// 9jr regime (<= 2018): verjaart 31-12 of verliesjaar + 9.
-		self::assertSame('2027-12-31', $this->guard->bepaalVerjaardatum(verliesjaar: 2018));
+		self::assertSame('2027-12-31', $this->guard->bepaalVerjaardatum(lossYear: 2018));
 		// 6jr regime (2019-2021): verjaart 31-12 of verliesjaar + 6.
-		self::assertSame('2025-12-31', $this->guard->bepaalVerjaardatum(verliesjaar: 2019));
-		self::assertSame('2027-12-31', $this->guard->bepaalVerjaardatum(verliesjaar: 2021));
+		self::assertSame('2025-12-31', $this->guard->bepaalVerjaardatum(lossYear: 2019));
+		self::assertSame('2027-12-31', $this->guard->bepaalVerjaardatum(lossYear: 2021));
 		// Onbeperkt-50pct regime (>= 2022): no verjaring (null).
-		self::assertNull($this->guard->bepaalVerjaardatum(verliesjaar: 2023));
-		self::assertNull($this->guard->bepaalVerjaardatum(verliesjaar: 2024));
+		self::assertNull($this->guard->bepaalVerjaardatum(lossYear: 2023));
+		self::assertNull($this->guard->bepaalVerjaardatum(lossYear: 2024));
 		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
 	}//end testBepaalVerjaardatum()

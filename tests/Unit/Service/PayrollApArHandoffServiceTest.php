@@ -61,14 +61,14 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	 */
 	public function testSplitsIntoBelastingdienstAndUwv(): void {
 		$payloads = $this->svc->toApTransactionPayloads(
-			lhAfdracht: [
-				'werkgeverId' => 'wg-1',
-				'periodeId' => 'lp-2026-05',
+			lhRemittance: [
+				'employerId' => 'wg-1',
+				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 18620.10,
 				'totalSocialInsuranceContributions' => 7559.40,
 				'totalHealthInsurance' => 3654.00,
 				'totalFinalLeviesWorkRelatedCosts' => 240.00,
-				'vervaldagAfdracht' => '2026-06-30',
+				'dueDateRemittance' => '2026-06-30',
 				'administrationId' => 'adm-1',
 			]
 		);
@@ -80,11 +80,11 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 		$this->assertEqualsWithDelta(22514.10, $bld['amount'], 0.005);
 		$this->assertSame('EUR', $bld['currency']);
 		$this->assertSame('2026-06-30', $bld['dueDate']);
-		$this->assertSame('wg-1', $bld['werkgeverId']);
-		$this->assertSame('lp-2026-05', $bld['periodeId']);
+		$this->assertSame('wg-1', $bld['employerId']);
+		$this->assertSame('lp-2026-05', $bld['periodId']);
 		$this->assertSame('LHAfdracht', $bld['source']);
 		$this->assertSame('wg-1/lp-2026-05', $bld['sourceRef']);
-		$this->assertSame(18620.10, $bld['breakdown']['loonheffing']);
+		$this->assertSame(18620.10, $bld['breakdown']['payrollTax']);
 		$this->assertSame(3654.00, $bld['breakdown']['zvw']);
 		$this->assertSame(240.00, $bld['breakdown']['eindheffingenWKR']);
 
@@ -103,14 +103,14 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	 */
 	public function testOmitsZeroAmountPayloads(): void {
 		$payloads = $this->svc->toApTransactionPayloads(
-			lhAfdracht: [
-				'werkgeverId' => 'wg-1',
-				'periodeId' => 'lp-2026-05',
+			lhRemittance: [
+				'employerId' => 'wg-1',
+				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 0.0,
 				'totalSocialInsuranceContributions' => 1234.56,
 				'totalHealthInsurance' => 0.0,
 				'totalFinalLeviesWorkRelatedCosts' => 0.0,
-				'vervaldagAfdracht' => '2026-06-30',
+				'dueDateRemittance' => '2026-06-30',
 			]
 		);
 
@@ -125,7 +125,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReturnsEmptyWhenLhAfdrachtEmpty(): void {
-		$payloads = $this->svc->toApTransactionPayloads(lhAfdracht: []);
+		$payloads = $this->svc->toApTransactionPayloads(lhRemittance: []);
 		$this->assertSame([], $payloads);
 
 	}//end testReturnsEmptyWhenLhAfdrachtEmpty()

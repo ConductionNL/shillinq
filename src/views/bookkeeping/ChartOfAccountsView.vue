@@ -53,9 +53,9 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
-import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateOcsUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
 import AccountNode from '../../components/wbso/AccountNode.vue'
 
 export default {

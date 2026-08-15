@@ -153,15 +153,15 @@ class ENSIAVerklaringGenerator {
 	 * @return string XML.
 	 */
 	private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string {
-		$org = $cyclus['organisatie'] ?? [];
-		$orgNaam = (string)($org['name'] ?? '');
+		$org = $cyclus['organisation'] ?? [];
+		$orgName = (string)($org['name'] ?? '');
 		$orgKvk = (string)($org['kvk'] ?? '');
-		$jaar = (string)($cyclus['year'] ?? '');
+		$year = (string)($cyclus['year'] ?? '');
 
 		$paras = [];
-		$paras[] = $this->para(text: 'College-verklaring ENSIA ' . $jaar, bold: true);
-		$paras[] = $this->para(text: 'Organisatie: ' . $orgNaam . ' (KvK ' . $orgKvk . ')');
-		$paras[] = $this->para(text: 'Verslagjaar: ' . $jaar);
+		$paras[] = $this->para(text: 'College-verklaring ENSIA ' . $year, bold: true);
+		$paras[] = $this->para(text: 'Organisatie: ' . $orgName . ' (KvK ' . $orgKvk . ')');
+		$paras[] = $this->para(text: 'Verslagjaar: ' . $year);
 		$paras[] = $this->para(text: 'Datum opmaak: ' . (new DateTimeImmutable('now'))->format('Y-m-d'));
 		$paras[] = $this->para(text: '');
 
@@ -182,10 +182,10 @@ class ENSIAVerklaringGenerator {
 			$i = 1;
 			foreach ($top as $b) {
 				$type = (string)($b['type'] ?? 'tekortkoming');
-				$beschrijving = (string)($b['beschrijving'] ?? '');
-				$mitigatieActie = (string)($b['mitigatieActie'] ?? 'nader te bepalen');
+				$description = (string)($b['description'] ?? '');
+				$mitigationAction = (string)($b['mitigationAction'] ?? 'nader te bepalen');
 				$paras[] = $this->para(
-					text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie)
+					text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $description, $mitigationAction)
 				);
 				$i++;
 			}
@@ -236,28 +236,28 @@ class ENSIAVerklaringGenerator {
 	private function summariseByDomein(array $vragen): array {
 		$counts = [];
 		foreach ($vragen as $v) {
-			$domein = (string)($v['domein'] ?? 'BIO');
-			if (isset($counts[$domein]) === false) {
-				$counts[$domein] = ['total' => 0, 'metNorm' => 0];
+			$domain = (string)($v['domain'] ?? 'BIO');
+			if (isset($counts[$domain]) === false) {
+				$counts[$domain] = ['total' => 0, 'metNorm' => 0];
 			}
 
-			$counts[$domein]['total']++;
+			$counts[$domain]['total']++;
 
-			$score = $v['volwassenheidsScore'] ?? null;
+			$score = $v['maturityScore'] ?? null;
 			$norm = $v['normniveau'] ?? null;
 			if (is_int($score) === true && is_int($norm) === true && $score >= $norm) {
-				$counts[$domein]['metNorm']++;
-			} elseif ($score === null && (string)($v['antwoord'] ?? '') === 'ja') {
+				$counts[$domain]['metNorm']++;
+			} elseif ($score === null && (string)($v['answer'] ?? '') === 'ja') {
 				// Ja-nee-nvt: count 'ja' as norm-met.
-				$counts[$domein]['metNorm']++;
+				$counts[$domain]['metNorm']++;
 			}
 		}
 
 		$lines = [];
-		foreach ($counts as $domein => $c) {
+		foreach ($counts as $domain => $c) {
 			$lines[] = sprintf(
 				'- %s: %d van %d vragen voldoen aan VNG-norm.',
-				$domein,
+				$domain,
 				$c['metNorm'],
 				$c['total']
 			);

@@ -239,10 +239,10 @@ class BadoControleprotocolService {
 				return false;
 			}
 
-			$besluitnummer = trim((string)($decision['besluitnummer'] ?? ''));
-			$datum = trim((string)($decision['datum'] ?? ''));
+			$decisionNumber = trim((string)($decision['decisionNumber'] ?? ''));
+			$date = trim((string)($decision['date'] ?? ''));
 
-			return $besluitnummer !== '' && $datum !== '';
+			return $decisionNumber !== '' && $date !== '';
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BadoControleprotocolService: adopt precondition failed — denying transition (fail-closed)',
@@ -326,21 +326,21 @@ class BadoControleprotocolService {
 	 * Fail-closed: any open finding, any uncovered regeling, a missing object or
 	 * an exception denies the signature.
 	 *
-	 * @param string $verklaringId The VerklaringDraft.id being signed.
+	 * @param string $declarationId The VerklaringDraft.id being signed.
 	 * @param array<string,mixed>|null $object The VerklaringDraft object being signed.
 	 *
 	 * @return bool True when the verklaring may be signed.
 	 *
 	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-17
 	 */
-	public function canSignVerklaring(string $verklaringId, ?array $object = null): bool {
+	public function canSignVerklaring(string $declarationId, ?array $object = null): bool {
 		try {
-			$verklaring = $this->resolveObject(schema: 'VerklaringDraft', id: $verklaringId, object: $object);
-			if ($verklaring === null) {
+			$declaration = $this->resolveObject(schema: 'VerklaringDraft', id: $declarationId, object: $object);
+			if ($declaration === null) {
 				return false;
 			}
 
-			$protocolId = (string)($verklaring['protocol'] ?? '');
+			$protocolId = (string)($declaration['protocol'] ?? '');
 			if ($protocolId === '') {
 				return false;
 			}
@@ -353,7 +353,7 @@ class BadoControleprotocolService {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BadoControleprotocolService: sign-verklaring precondition failed — denying signature (fail-closed)',
-				['verklaringId' => $verklaringId, 'exception' => $e->getMessage()]
+				['verklaringId' => $declarationId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try

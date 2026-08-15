@@ -71,7 +71,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanFinaliseToetsPermitsVoldoet(): void {
-		$result = $this->guard->canFinaliseToets(toets: ['uitkomst' => 'voldoet']);
+		$result = $this->guard->canFinaliseToets(toets: ['outcome' => 'voldoet']);
 		self::assertTrue(condition: $result, message: 'voldoet uitkomst must be permitted');
 
 	}//end testCanFinaliseToetsPermitsVoldoet()
@@ -82,7 +82,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanFinaliseToetsPermitsNietVanToepassing(): void {
-		$result = $this->guard->canFinaliseToets(toets: ['uitkomst' => 'niet_van_toepassing']);
+		$result = $this->guard->canFinaliseToets(toets: ['outcome' => 'niet_van_toepassing']);
 		self::assertTrue(condition: $result, message: 'niet_van_toepassing must be permitted');
 
 	}//end testCanFinaliseToetsPermitsNietVanToepassing()
@@ -95,9 +95,9 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsDeniesShortOnderbouwing(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Te kort.',
-				'rechtmatigheidsbevinding' => 'bev-1',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => 'Te kort.',
+				'lawfulnessFinding' => 'bev-1',
 			]
 		);
 		self::assertFalse(condition: $result, message: 'Short onderbouwing must deny finalisation');
@@ -112,9 +112,9 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsDeniesMissingBevinding(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => str_repeat('a', 60),
-				'rechtmatigheidsbevinding' => '',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => str_repeat('a', 60),
+				'lawfulnessFinding' => '',
 			]
 		);
 		self::assertFalse(condition: $result, message: 'Missing bevinding must deny finalisation');
@@ -129,9 +129,9 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsPermitsWhenComplete(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
-				'onderbouwing' => 'Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (eerder Europees aanbesteed).',
-				'rechtmatigheidsbevinding' => 'bev-142',
+				'outcome' => 'voldoet_niet',
+				'substantiation' => 'Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (eerder Europees aanbesteed).',
+				'lawfulnessFinding' => 'bev-142',
 			]
 		);
 		self::assertTrue(condition: $result, message: 'Complete negative toets must be permitted');
@@ -146,8 +146,8 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsDeniesOnzekerWithoutBevinding(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'onzeker',
-				'onderbouwing' => str_repeat('b', 55),
+				'outcome' => 'onzeker',
+				'substantiation' => str_repeat('b', 55),
 			]
 		);
 		self::assertFalse(condition: $result, message: 'onzeker without bevinding must be denied');
@@ -160,7 +160,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanResolveBevindingDeniesWithoutCorrectie(): void {
-		$result = $this->guard->canResolveBevinding(bevinding: ['bevindingsnummer' => 'RV-2026-0142']);
+		$result = $this->guard->canResolveBevinding(bevinding: ['findingNumber' => 'RV-2026-0142']);
 		self::assertFalse(condition: $result, message: 'No correctieboeking must deny resolution');
 
 	}//end testCanResolveBevindingDeniesWithoutCorrectie()
@@ -173,8 +173,8 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanResolveBevindingPermitsWithCorrectie(): void {
 		$result = $this->guard->canResolveBevinding(
 			bevinding: [
-				'bevindingsnummer' => 'RV-2026-0142',
-				'correctieboeking_id' => 'je-2026-9001',
+				'findingNumber' => 'RV-2026-0142',
+				'correction_entry_id' => 'je-2026-9001',
 			]
 		);
 		self::assertTrue(condition: $result, message: 'Linked correctieboeking must permit resolution');
@@ -187,7 +187,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenParagraafPermitsBinnenTolerantie(): void {
-		$result = $this->guard->canVaststellenParagraaf(paragraaf: ['binnen_tolerantie' => true]);
+		$result = $this->guard->canVaststellenParagraaf(paragraph: ['within_tolerance' => true]);
 		self::assertTrue(condition: $result, message: 'Binnen tolerantie must permit vaststellen');
 
 	}//end testCanVaststellenParagraafPermitsBinnenTolerantie()
@@ -199,9 +199,9 @@ class RechtmatigheidGuardTest extends TestCase {
 	 */
 	public function testCanVaststellenParagraafDeniesBuitenTolerantieZonderToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
-			paragraaf: [
-				'binnen_tolerantie' => false,
-				'verklaring_college' => '',
+			paragraph: [
+				'within_tolerance' => false,
+				'declaration_college' => '',
 				'financialYear' => 2026,
 			]
 		);
@@ -216,9 +216,9 @@ class RechtmatigheidGuardTest extends TestCase {
 	 */
 	public function testCanVaststellenParagraafPermitsBuitenTolerantieMetToelichting(): void {
 		$result = $this->guard->canVaststellenParagraaf(
-			paragraaf: [
-				'binnen_tolerantie' => false,
-				'verklaring_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
+			paragraph: [
+				'within_tolerance' => false,
+				'declaration_college' => 'Het college licht de overschrijding nader toe en treft maatregelen.',
 				'financialYear' => 2026,
 			]
 		);
@@ -232,7 +232,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanExportParagraafPermitsDefinitief(): void {
-		$result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'definitief', 'financialYear' => 2026]);
+		$result = $this->guard->canExportParagraaf(paragraph: ['status' => 'definitief', 'financialYear' => 2026]);
 		self::assertTrue(condition: $result, message: 'Definitief paragraaf must permit export');
 
 	}//end testCanExportParagraafPermitsDefinitief()
@@ -243,7 +243,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanExportParagraafDeniesConcept(): void {
-		$result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'concept', 'financialYear' => 2026]);
+		$result = $this->guard->canExportParagraaf(paragraph: ['status' => 'concept', 'financialYear' => 2026]);
 		self::assertFalse(condition: $result, message: 'Concept paragraaf must block export');
 
 	}//end testCanExportParagraafDeniesConcept()
@@ -254,7 +254,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanExportParagraafDeniesVastgesteldCollege(): void {
-		$result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'vastgesteld_college', 'financialYear' => 2026]);
+		$result = $this->guard->canExportParagraaf(paragraph: ['status' => 'vastgesteld_college', 'financialYear' => 2026]);
 		self::assertFalse(condition: $result, message: 'Non-definitief paragraaf must block export');
 
 	}//end testCanExportParagraafDeniesVastgesteldCollege()

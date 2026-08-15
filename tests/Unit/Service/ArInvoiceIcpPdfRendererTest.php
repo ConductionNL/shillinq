@@ -83,7 +83,7 @@ final class ArInvoiceIcpPdfRendererTest extends TestCase {
 
 		$payload = $this->renderer->render(
 			invoice: $invoice,
-			customer: ['name' => 'Klant BV', 'btwNumber' => 'NL123456789B01'],
+			customer: ['name' => 'Klant BV', 'vatNumber' => 'NL123456789B01'],
 			seller: ['legalName' => 'Shillinq BV', 'vatId' => 'NL0987654321']
 		);
 
@@ -227,7 +227,7 @@ final class ArInvoiceIcpPdfRendererTest extends TestCase {
 
 		$payload = $this->renderer->render(
 			invoice: $invoice,
-			customer: ['name' => 'Legacy GmbH', 'btwNumber' => 'DE0987654321'],
+			customer: ['name' => 'Legacy GmbH', 'vatNumber' => 'DE0987654321'],
 			seller: ['legalName' => 'Shillinq BV', 'vatId' => 'NL0987654321']
 		);
 

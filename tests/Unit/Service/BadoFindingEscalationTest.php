@@ -122,8 +122,8 @@ final class BadoFindingEscalationTest extends TestCase {
 					'version' => '2026.1',
 					'auditYear' => 2026,
 					'organisationId' => 'gemeente-rotterdam',
-					'organisationType' => 'gemeente',
-					'materialityBase' => 'lasten',
+					'organisationType' => 'municipality',
+					'materialityBase' => 'expenses',
 					'materialityAmount' => 2000000.0,
 					'effectiveFrom' => '2026-01-01',
 					'effectiveTo' => '2026-12-31',
@@ -150,10 +150,10 @@ final class BadoFindingEscalationTest extends TestCase {
 				[
 					'protocol' => $protocolId,
 					'topic' => 'Subsidies & Bijdragen',
-					'getrouwheidApprovalCeiling' => 1.0,
-					'getrouwheidQualificationCeiling' => 3.0,
-					'rechtmatigheidApprovalCeiling' => 1.0,
-					'rechtmatigheidQualificationCeiling' => 3.0,
+					'faithfulnessApprovalCeiling' => 1.0,
+					'faithfulnessQualificationCeiling' => 3.0,
+					'lawfulnessApprovalCeiling' => 1.0,
+					'lawfulnessQualificationCeiling' => 3.0,
 					'uncertaintyCeiling' => 3.0,
 				],
 			]
@@ -182,7 +182,7 @@ final class BadoFindingEscalationTest extends TestCase {
 					'id' => $findingId,
 					'sample' => $sampleId,
 					'transaction' => 'sub-tx-001',
-					'findingType' => 'rechtmatigheid',
+					'findingType' => 'lawfulness',
 					'topic' => 'Subsidies & Bijdragen',
 					'amount' => 25000.0,
 					'narrative' => 'Mogelijk onbevoegd toegekend',
@@ -217,7 +217,7 @@ final class BadoFindingEscalationTest extends TestCase {
 		$this->updateFinding(
 			findingId: $findingId,
 			patch: [
-				'rechtmatigheid' => 'exception',
+				'lawfulness' => 'exception',
 				'rechtmatigheidSeverity' => 'te-corrigeren',
 			]
 		);
@@ -230,9 +230,9 @@ final class BadoFindingEscalationTest extends TestCase {
 		$this->updateFinding(
 			findingId: $findingId,
 			patch: [
-				'rechtmatigheid' => 'exception',
+				'lawfulness' => 'exception',
 				'rechtmatigheidSeverity' => 'te-corrigeren',
-				'getrouwheid' => 'compliant',
+				'faithfulness' => 'compliant',
 				'getrouwheidSeverity' => 'acceptabel',
 				'controllerResponse' => 'Niet eens; audit manager bevestigt rechtmatigheid-uitzondering.',
 				'auditorConclusion' => 'accepted; escalation resolved; rechtmatigheid-uitzondering te-corrigeren, geen getrouwheid-impact',

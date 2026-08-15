@@ -57,20 +57,20 @@ final class BegrotingswijzigingStackerTest extends TestCase {
 	 */
 	public function testVastgesteldeWijzigingStacksOntoBasis(): void {
 		$basis = [
-			['taakveldCode' => '1.1', 'baten' => 100.0, 'lasten' => 500.0],
+			['taskFieldCode' => '1.1', 'revenue' => 100.0, 'expenses' => 500.0],
 		];
 		$wijzigingen = [
 			[
 				'status' => 'vastgesteld',
-				'mutaties' => [
-					['taakveldCode' => '1.1', 'baten_delta' => 50.0, 'lasten_delta' => -100.0],
+				'movements' => [
+					['taskFieldCode' => '1.1', 'baten_delta' => 50.0, 'lasten_delta' => -100.0],
 				],
 			],
 		];
 
-		$stand = $this->stacker->currentStand(basisTaakvelden: $basis, wijzigingen: $wijzigingen);
-		self::assertSame(150.0, $stand['1.1']['baten']);
-		self::assertSame(400.0, $stand['1.1']['lasten']);
+		$position = $this->stacker->currentStand(basisTaskFields: $basis, wijzigingen: $wijzigingen);
+		self::assertSame(150.0, $position['1.1']['revenue']);
+		self::assertSame(400.0, $position['1.1']['expenses']);
 
 	}//end testVastgesteldeWijzigingStacksOntoBasis()
 
@@ -80,17 +80,17 @@ final class BegrotingswijzigingStackerTest extends TestCase {
 	 * @return void
 	 */
 	public function testDraftWijzigingDoesNotStack(): void {
-		$basis = [['taakveldCode' => '1.1', 'baten' => 100.0, 'lasten' => 500.0]];
+		$basis = [['taskFieldCode' => '1.1', 'revenue' => 100.0, 'expenses' => 500.0]];
 		$wijzigingen = [
 			[
 				'status' => 'draft',
-				'mutaties' => [['taakveldCode' => '1.1', 'baten_delta' => 999.0, 'lasten_delta' => 999.0]],
+				'movements' => [['taskFieldCode' => '1.1', 'baten_delta' => 999.0, 'lasten_delta' => 999.0]],
 			],
 		];
 
-		$stand = $this->stacker->currentStand(basisTaakvelden: $basis, wijzigingen: $wijzigingen);
-		self::assertSame(100.0, $stand['1.1']['baten']);
-		self::assertSame(500.0, $stand['1.1']['lasten']);
+		$position = $this->stacker->currentStand(basisTaskFields: $basis, wijzigingen: $wijzigingen);
+		self::assertSame(100.0, $position['1.1']['revenue']);
+		self::assertSame(500.0, $position['1.1']['expenses']);
 
 	}//end testDraftWijzigingDoesNotStack()
 
@@ -100,14 +100,14 @@ final class BegrotingswijzigingStackerTest extends TestCase {
 	 * @return void
 	 */
 	public function testReversalNetsBackExactly(): void {
-		$basis = [['taakveldCode' => '1.1', 'baten' => 0.0, 'lasten' => 500.0]];
+		$basis = [['taskFieldCode' => '1.1', 'revenue' => 0.0, 'expenses' => 500.0]];
 		$wijzigingen = [
-			['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '1.1', 'lasten_delta' => 100.0]]],
-			['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '1.1', 'lasten_delta' => -100.0]]],
+			['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => 100.0]]],
+			['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => -100.0]]],
 		];
 
-		$stand = $this->stacker->currentStand(basisTaakvelden: $basis, wijzigingen: $wijzigingen);
-		self::assertSame(500.0, $stand['1.1']['lasten']);
+		$position = $this->stacker->currentStand(basisTaskFields: $basis, wijzigingen: $wijzigingen);
+		self::assertSame(500.0, $position['1.1']['expenses']);
 
 	}//end testReversalNetsBackExactly()
 
@@ -117,18 +117,18 @@ final class BegrotingswijzigingStackerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAuthorizedLastenStacked(): void {
-		$basis = [['taakveldCode' => '6.1', 'baten' => 0.0, 'lasten' => 1000.0]];
+		$basis = [['taskFieldCode' => '6.1', 'revenue' => 0.0, 'expenses' => 1000.0]];
 		$wijzigingen = [
-			['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '6.1', 'lasten_delta' => 250.0]]],
+			['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '6.1', 'lasten_delta' => 250.0]]],
 		];
 
 		self::assertSame(
 			1250.0,
-			$this->stacker->authorizedLasten(taakveldCode: '6.1', basisTaakvelden: $basis, wijzigingen: $wijzigingen)
+			$this->stacker->authorizedLasten(taskFieldCode: '6.1', basisTaskFields: $basis, wijzigingen: $wijzigingen)
 		);
 		self::assertSame(
 			0.0,
-			$this->stacker->authorizedLasten(taakveldCode: 'unknown', basisTaakvelden: $basis, wijzigingen: $wijzigingen)
+			$this->stacker->authorizedLasten(taskFieldCode: 'unknown', basisTaskFields: $basis, wijzigingen: $wijzigingen)
 		);
 
 	}//end testAuthorizedLastenStacked()

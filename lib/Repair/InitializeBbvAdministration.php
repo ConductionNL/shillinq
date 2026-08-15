@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class InitializeBbvAdministration implements IRepairStep {
-	private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
+	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'provincie', 'waterschap'];
 
 	private const RESERVE_TAAKVELD = '0.10';
 
@@ -132,7 +132,7 @@ class InitializeBbvAdministration implements IRepairStep {
 
 		$totalSeededReserves = 0;
 		$totalSkippedReserves = 0;
-		$totalSeededTaakvelden = 0;
+		$totalSeededTaskFields = 0;
 
 		foreach ($administrations as $administration) {
 			$row = $this->toArray(object: $administration);
@@ -155,12 +155,12 @@ class InitializeBbvAdministration implements IRepairStep {
 			$totalSeededReserves += $reserveResult['seeded'];
 			$totalSkippedReserves += $reserveResult['skipped'];
 
-			$taakveldResult = $this->ensureReserveTaakveld(
+			$taskFieldResult = $this->ensureReserveTaskField(
 				objectService: $objectService,
 				registerSlug: $registerSlug,
 				overheidslaag: (string)$type
 			);
-			$totalSeededTaakvelden += $taakveldResult['seeded'];
+			$totalSeededTaskFields += $taskFieldResult['seeded'];
 		}//end foreach
 
 		$output->info(
@@ -168,7 +168,7 @@ class InitializeBbvAdministration implements IRepairStep {
 				'BBV-administration bootstrap: %d algemene reserve(s) created, %d skipped; %d reserve-taakveld(en) created.',
 				$totalSeededReserves,
 				$totalSkippedReserves,
-				$totalSeededTaakvelden
+				$totalSeededTaskFields
 			)
 		);
 
@@ -213,7 +213,7 @@ class InitializeBbvAdministration implements IRepairStep {
 		$payload = [
 			'administrationId' => $administrationId,
 			'name' => self::ALGEMENE_RESERVE_NAAM,
-			'soort' => 'algemeen',
+			'kind' => 'algemeen',
 			'saldoBeginJaar' => 0,
 			'rentetoerekening' => false,
 			'_meta' => [
@@ -244,7 +244,7 @@ class InitializeBbvAdministration implements IRepairStep {
 	 *
 	 * @return array{seeded:int,skipped:int}
 	 */
-	private function ensureReserveTaakveld(object $objectService, string $registerSlug, string $overheidslaag): array {
+	private function ensureReserveTaskField(object $objectService, string $registerSlug, string $overheidslaag): array {
 		try {
 			$existing = $objectService
 				->setRegister($registerSlug)
@@ -274,11 +274,11 @@ class InitializeBbvAdministration implements IRepairStep {
 		$payload = [
 			'code' => self::RESERVE_TAAKVELD,
 			'name' => self::RESERVE_TAAKVELD_NAAM,
-			'hoofdfunctie' => 0,
+			'mainFunction' => 0,
 			'mainFunctionName' => 'Bestuur en ondersteuning',
 			'descriptionIv3' => 'Resultaatbestemming: dotaties en onttrekkingen aan reserves (bootstrap).',
 			'overheidslaag' => $overheidslaag,
-			'geldigVanaf' => '2025-01-01',
+			'validFrom' => '2025-01-01',
 			'_meta' => [
 				'source' => 'bootstrap',
 				'createdBy' => 'InitializeBbvAdministration',

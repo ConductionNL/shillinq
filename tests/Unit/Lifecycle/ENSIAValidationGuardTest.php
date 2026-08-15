@@ -92,10 +92,10 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testMaturityScoreBelowThreeNeedsNoEvidence(): void {
 		$this->assertTrue(
 			$this->guard->maturityEvidenceSatisfied([
-				'vraagCode' => 'BIO-9.1.1',
-				'volwassenheidsScore' => 2,
-				'bewijsstukken' => [],
-				'toelichting' => 'short',
+				'questionCode' => 'BIO-9.1.1',
+				'maturityScore' => 2,
+				'supportingDocuments' => [],
+				'notes' => 'short',
 			])
 		);
 
@@ -109,10 +109,10 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testNullMaturityScoreNeedsNoEvidence(): void {
 		$this->assertTrue(
 			$this->guard->maturityEvidenceSatisfied([
-				'vraagCode' => 'BIO-9.1.1',
-				'volwassenheidsScore' => null,
-				'bewijsstukken' => [],
-				'toelichting' => '',
+				'questionCode' => 'BIO-9.1.1',
+				'maturityScore' => null,
+				'supportingDocuments' => [],
+				'notes' => '',
 			])
 		);
 
@@ -126,10 +126,10 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testMaturityScoreThreeWithoutEvidenceBlocks(): void {
 		$this->assertFalse(
 			$this->guard->maturityEvidenceSatisfied([
-				'vraagCode' => 'BIO-9.1.1',
-				'volwassenheidsScore' => 3,
-				'bewijsstukken' => [],
-				'toelichting' => str_repeat('a', 100),
+				'questionCode' => 'BIO-9.1.1',
+				'maturityScore' => 3,
+				'supportingDocuments' => [],
+				'notes' => str_repeat('a', 100),
 			])
 		);
 
@@ -143,10 +143,10 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testMaturityScoreThreeWithShortToelichtingBlocks(): void {
 		$this->assertFalse(
 			$this->guard->maturityEvidenceSatisfied([
-				'vraagCode' => 'BIO-9.1.1',
-				'volwassenheidsScore' => 3,
-				'bewijsstukken' => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
-				'toelichting' => 'too short',
+				'questionCode' => 'BIO-9.1.1',
+				'maturityScore' => 3,
+				'supportingDocuments' => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
+				'notes' => 'too short',
 			])
 		);
 
@@ -160,10 +160,10 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testMaturityScoreThreeWithEvidenceAndLongToelichtingAllowed(): void {
 		$this->assertTrue(
 			$this->guard->maturityEvidenceSatisfied([
-				'vraagCode' => 'BIO-9.1.1',
-				'volwassenheidsScore' => 4,
-				'bewijsstukken' => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
-				'toelichting' => str_repeat('a', 50),
+				'questionCode' => 'BIO-9.1.1',
+				'maturityScore' => 4,
+				'supportingDocuments' => [['fileRef' => 'docudesk://x', 'description' => 'doc']],
+				'notes' => str_repeat('a', 50),
 			])
 		);
 
@@ -177,11 +177,11 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testPrePeerReviewEditNeedsNoReden(): void {
 		$this->assertTrue(
 			$this->guard->postPeerReviewReasonRequired([
-				'vraagCode' => 'BIO-9.1.1',
-				'antwoord' => '3',
+				'questionCode' => 'BIO-9.1.1',
+				'answer' => '3',
 				'peerReviewStatus' => 'nog-niet-beoordeeld',
 				'peerReviewedAt' => null,
-				'reden' => null,
+				'reason' => null,
 			])
 		);
 
@@ -195,11 +195,11 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testPostPeerReviewEditWithoutRedenBlocks(): void {
 		$this->assertFalse(
 			$this->guard->postPeerReviewReasonRequired([
-				'vraagCode' => 'BIO-9.1.1',
-				'antwoord' => '4',
+				'questionCode' => 'BIO-9.1.1',
+				'answer' => '4',
 				'peerReviewStatus' => 'akkoord',
 				'peerReviewedAt' => '2026-03-15T12:00:00+00:00',
-				'reden' => '',
+				'reason' => '',
 			])
 		);
 
@@ -213,11 +213,11 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testPostPeerReviewEditWithRedenAllowed(): void {
 		$this->assertTrue(
 			$this->guard->postPeerReviewReasonRequired([
-				'vraagCode' => 'BIO-9.1.1',
-				'antwoord' => '4',
+				'questionCode' => 'BIO-9.1.1',
+				'answer' => '4',
 				'peerReviewStatus' => 'akkoord',
 				'peerReviewedAt' => '2026-03-15T12:00:00+00:00',
-				'reden' => 'Aanvullend bewijs ontvangen na peer-review; antwoord verhoogd van 3 naar 4.',
+				'reason' => 'Aanvullend bewijs ontvangen na peer-review; antwoord verhoogd van 3 naar 4.',
 			])
 		);
 
@@ -231,10 +231,10 @@ class ENSIAValidationGuardTest extends TestCase {
 	public function testWhitespaceOnlyRedenIsRejected(): void {
 		$this->assertFalse(
 			$this->guard->postPeerReviewReasonRequired([
-				'vraagCode' => 'BIO-9.1.1',
+				'questionCode' => 'BIO-9.1.1',
 				'peerReviewStatus' => 'wijziging-gevraagd',
 				'peerReviewedAt' => '2026-03-15T12:00:00+00:00',
-				'reden' => "   \t\n  ",
+				'reason' => "   \t\n  ",
 			])
 		);
 

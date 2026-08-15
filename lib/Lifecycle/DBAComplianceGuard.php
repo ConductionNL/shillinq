@@ -131,27 +131,27 @@ class DBAComplianceGuard {
 	 * permitted — once its intake is VOLTOOID. A VERKORT_LAGE_DREMPEL intake on
 	 * an eenmalige opdracht under the drempel also satisfies the requirement.
 	 *
-	 * @param string $opdrachtId The DBAOpdracht id (call-signature parity).
+	 * @param string $assignmentId The DBAOpdracht id (call-signature parity).
 	 * @param array<string,mixed>|null $object The opdracht being transitioned.
 	 *
 	 * @return bool True when the opdracht may be activated.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function canActivateOpdracht(string $opdrachtId, ?array $object = null): bool {
+	public function canActivateOpdracht(string $assignmentId, ?array $object = null): bool {
 		try {
-			$opdracht = $this->resolveObject(schema: 'DBAOpdracht', id: $opdrachtId, object: $object);
-			if ($opdracht === null) {
+			$assignment = $this->resolveObject(schema: 'DBAOpdracht', id: $assignmentId, object: $object);
+			if ($assignment === null) {
 				return false;
 			}
 
-			$intakeStatus = (string)($opdracht['intakeStatus'] ?? 'GEEN');
+			$intakeStatus = (string)($assignment['intakeStatus'] ?? 'GEEN');
 
 			return $intakeStatus === 'VOLTOOID';
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'DBAComplianceGuard: activate-opdracht check failed — denying transition (fail-closed)',
-				['opdrachtId' => $opdrachtId, 'exception' => $e->getMessage()]
+				['assignmentId' => $assignmentId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -165,27 +165,27 @@ class DBAComplianceGuard {
 	 * AWR (art. 52) retention clock. The transition requires a feitelijkeEindDatum
 	 * so the retention-period end can be computed (eindDatum + 7 years).
 	 *
-	 * @param string $opdrachtId The DBAOpdracht id (call-signature parity).
+	 * @param string $assignmentId The DBAOpdracht id (call-signature parity).
 	 * @param array<string,mixed>|null $object The opdracht being transitioned.
 	 *
 	 * @return bool True when the opdracht may be beeindigd.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function canBeeindigOpdracht(string $opdrachtId, ?array $object = null): bool {
+	public function canBeeindigOpdracht(string $assignmentId, ?array $object = null): bool {
 		try {
-			$opdracht = $this->resolveObject(schema: 'DBAOpdracht', id: $opdrachtId, object: $object);
-			if ($opdracht === null) {
+			$assignment = $this->resolveObject(schema: 'DBAOpdracht', id: $assignmentId, object: $object);
+			if ($assignment === null) {
 				return false;
 			}
 
-			$eindDatum = trim((string)($opdracht['actualEndDate'] ?? ''));
+			$endDate = trim((string)($assignment['actualEndDate'] ?? ''));
 
-			return $eindDatum !== '';
+			return $endDate !== '';
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'DBAComplianceGuard: beeindig-opdracht check failed — denying transition (fail-closed)',
-				['opdrachtId' => $opdrachtId, 'exception' => $e->getMessage()]
+				['assignmentId' => $assignmentId, 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -298,15 +298,15 @@ class DBAComplianceGuard {
 	 * divided by count(REQUIRED_STUK_TYPES). The set of still-missing required
 	 * types is returned alongside the ratio so the UI can list them.
 	 *
-	 * @param array<int,mixed> $stukken The dossier stukken (each item is a JSON-decoded stuk).
+	 * @param array<int,mixed> $documents The dossier stukken (each item is a JSON-decoded stuk).
 	 *
 	 * @return array{score: float, missing: array<string>} Completeness result.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function computeCompleteness(array $stukken): array {
+	public function computeCompleteness(array $documents): array {
 		$presentTypes = [];
-		foreach ($stukken as $stuk) {
+		foreach ($documents as $stuk) {
 			if (is_array($stuk) === false) {
 				continue;
 			}
@@ -349,17 +349,17 @@ class DBAComplianceGuard {
 	 * or bedrag yields no breach (cannot compute a rate). The grens is the
 	 * administration override when configured, else VBAR_GRENS_EUR.
 	 *
-	 * @param float $bedrag The invoice amount (EUR).
-	 * @param float $uren The hours billed.
+	 * @param float $amount The invoice amount (EUR).
+	 * @param float $hours The hours billed.
 	 *
 	 * @return array{breach: bool, rate: float, grens: float} VBAR check result.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function effectiveHourlyRateBreach(float $bedrag, float $uren): array {
+	public function effectiveHourlyRateBreach(float $amount, float $hours): array {
 		$grens = $this->resolveVbarGrens();
 
-		if ($uren <= 0.0 || $bedrag <= 0.0) {
+		if ($hours <= 0.0 || $amount <= 0.0) {
 			return [
 				'breach' => false,
 				'rate' => 0.0,
@@ -367,7 +367,7 @@ class DBAComplianceGuard {
 			];
 		}
 
-		$rate = ($bedrag / $uren);
+		$rate = ($amount / $hours);
 
 		return [
 			'breach' => ($rate < $grens),
@@ -393,8 +393,8 @@ class DBAComplianceGuard {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function isModelExpired(array $model, string $referenceYmd = ''): bool {
-		$geldigTot = trim((string)($model['geldigTot'] ?? ''));
-		if ($geldigTot === '') {
+		$validTo = trim((string)($model['validTo'] ?? ''));
+		if ($validTo === '') {
 			return false;
 		}
 
@@ -402,7 +402,7 @@ class DBAComplianceGuard {
 			$referenceYmd = date('Y-m-d');
 		}
 
-		return strcmp($geldigTot, $referenceYmd) < 0;
+		return strcmp($validTo, $referenceYmd) < 0;
 	}//end isModelExpired()
 
 	/**

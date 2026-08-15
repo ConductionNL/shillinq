@@ -71,13 +71,13 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testTotaalBrutoSumsComponents(): void {
-		$bruto = [
+		$gross = [
 			'basissalaris' => 4940.00,
 			'thuiswerkvergoeding' => 19.20,
 			'totaal_bruto' => 99999.0,
 			'nested' => ['ignored' => true],
 		];
-		self::assertSame(4959.20, $this->calc->totaalBruto($bruto));
+		self::assertSame(4959.20, $this->calc->totaalBruto($gross));
 
 	}//end testTotaalBrutoSumsComponents()
 
@@ -134,19 +134,19 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testLoonheffingUitTabel(): void {
-		$regels = [
-			['vanaf' => 0, 'tot' => 1200, 'percentage' => 0.0935, 'vasteHeffing' => 0, 'korting' => 295.0],
-			['vanaf' => 1200, 'tot' => 3300, 'percentage' => 0.3697, 'vasteHeffing' => 112.2, 'korting' => 295.0],
-			['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
-			['vanaf' => 6400, 'tot' => null, 'percentage' => 0.495, 'vasteHeffing' => 2034.7, 'korting' => 0],
+		$rules = [
+			['from' => 0, 'tot' => 1200, 'percentage' => 0.0935, 'vasteHeffing' => 0, 'korting' => 295.0],
+			['from' => 1200, 'tot' => 3300, 'percentage' => 0.3697, 'vasteHeffing' => 112.2, 'korting' => 295.0],
+			['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
+			['from' => 6400, 'tot' => null, 'percentage' => 0.495, 'vasteHeffing' => 2034.7, 'korting' => 0],
 		];
 
 		// €4.940 falls in the 3300..6400 bracket:
 		// 888.60 + 0.3697*(4940-3300) - 295 = 888.60 + 606.31 - 295 = 1199.91.
-		self::assertSame(1199.91, $this->calc->loonheffingUitTabel(4940.0, $regels));
+		self::assertSame(1199.91, $this->calc->loonheffingUitTabel(4940.0, $rules));
 
 		// Below the table / empty table yields zero, never an exception.
-		self::assertSame(0.0, $this->calc->loonheffingUitTabel(0.0, $regels));
+		self::assertSame(0.0, $this->calc->loonheffingUitTabel(0.0, $rules));
 		self::assertSame(0.0, $this->calc->loonheffingUitTabel(4940.0, []));
 
 	}//end testLoonheffingUitTabel()
@@ -157,17 +157,17 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testKortingLowersTax(): void {
-		$metKorting = [
-			['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
+		$withDiscount = [
+			['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
 		];
-		$zonderKorting = [
-			['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 0],
+		$zonderDiscount = [
+			['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 0],
 		];
 
-		$met = $this->calc->loonheffingUitTabel(4940.0, $metKorting);
-		$zonder = $this->calc->loonheffingUitTabel(4940.0, $zonderKorting);
-		self::assertGreaterThan($met, $zonder);
-		self::assertSame(295.0, round(($zonder - $met), 2));
+		$with = $this->calc->loonheffingUitTabel(4940.0, $withDiscount);
+		$zonder = $this->calc->loonheffingUitTabel(4940.0, $zonderDiscount);
+		self::assertGreaterThan($with, $zonder);
+		self::assertSame(295.0, round(($zonder - $with), 2));
 
 	}//end testKortingLowersTax()
 
@@ -188,7 +188,7 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPremiesSVWerkgeverAwfLaag(): void {
-		$premies = $this->calc->premiesSVWerkgever(4940.0, 'MAAND', 'LAAG', true, 0.0013, 0.0);
+		$premies = $this->calc->employerSocialInsurancePremiums(4940.0, 'MAAND', 'LAAG', true, 0.0013, 0.0);
 		// AWF 2,64% x 4940 = 130,42.
 		self::assertSame(130.42, $premies['awf']);
 		// AOF-klein 5,38% x 4940 = 265,77.
@@ -209,7 +209,7 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPremiesSVCappedAtMaximum(): void {
-		$premies = $this->calc->premiesSVWerkgever(7000.0, 'MAAND', 'LAAG', true, 0.0, 0.0);
+		$premies = $this->calc->employerSocialInsurancePremiums(7000.0, 'MAAND', 'LAAG', true, 0.0, 0.0);
 		// Capped at €6.206,67 -> AWF 2,64% x 6206,67 = 163,86.
 		self::assertSame(6206.67, $premies['premieloon_gemaximeerd']);
 		self::assertSame(163.86, $premies['awf']);
@@ -222,15 +222,15 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testZvwWerkgever(): void {
-		$laag = $this->calc->zvwWerkgever(4940.0, 'MAAND', 'LAAG');
-		self::assertSame(262.81, $laag['afgedragen_wg']);
+		$low = $this->calc->zvwWerkgever(4940.0, 'MAAND', 'LAAG');
+		self::assertSame(262.81, $low['afgedragen_wg']);
 
-		$hoog = $this->calc->zvwWerkgever(4940.0, 'MAAND', 'HOOG');
-		self::assertSame(324.56, $hoog['afgedragen_wg']);
+		$high = $this->calc->zvwWerkgever(4940.0, 'MAAND', 'HOOG');
+		self::assertSame(324.56, $high['afgedragen_wg']);
 
 		// €6.500/month exceeds the €5.969 cap -> 5,32% x 5969 = 317,55.
 		$capped = $this->calc->zvwWerkgever(6500.0, 'MAAND', 'LAAG');
-		self::assertSame(5969.00, $capped['grondslag']);
+		self::assertSame(5969.00, $capped['basis']);
 		self::assertSame(317.55, $capped['afgedragen_wg']);
 
 	}//end testZvwWerkgever()
@@ -266,8 +266,8 @@ final class PayrollCalculatorTest extends TestCase {
 	 */
 	public function testNettoBetaald(): void {
 		// Fiscaal 4940 - LH 1083,40 - SV 0 - pensioen-wn 355,68 + vrij 19,20 = 3520,12.
-		$netto = $this->calc->nettoBetaald(4940.0, 1083.40, 0.0, 355.68, 19.20);
-		self::assertSame(3520.12, $netto);
+		$net = $this->calc->nettoBetaald(4940.0, 1083.40, 0.0, 355.68, 19.20);
+		self::assertSame(3520.12, $net);
 
 	}//end testNettoBetaald()
 

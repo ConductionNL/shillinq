@@ -61,9 +61,9 @@ final class DunningTemplateRegistry {
 	private const MERGE_FIELDS = [
 		'klantNaam',
 		'factuurNummer',
-		'factuurDatum',
+		'invoiceDate',
 		'outstandingAmount',
-		'vervalDatum',
+		'expiryDate',
 		'iban',
 		'betalingstermijn',
 		'incassokosten',

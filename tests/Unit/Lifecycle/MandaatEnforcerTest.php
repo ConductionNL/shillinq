@@ -197,13 +197,13 @@ class MandaatEnforcerTest extends TestCase {
 		return array_merge(
 			[
 				'administrationId' => 'adm-1',
-				'mandaatcode' => 'M-INKOOP-50K',
-				'maximumbedrag' => 5000000,
-				'soort_verplichting' => ['inkooporder', 'raamovereenkomst'],
+				'mandateCode' => 'M-INKOOP-50K',
+				'maximumAmount' => 5000000,
+				'kind_commitment' => ['inkooporder', 'frameworkAgreement'],
 				'is_override' => false,
-				'geldig_van' => '2020-01-01',
-				'geldig_tot' => '2999-12-31',
-				'vereist_tweede_handtekening_boven' => null,
+				'valid_from' => '2020-01-01',
+				'valid_to' => '2999-12-31',
+				'required_second_signature_above' => null,
 			],
 			$overrides
 		);
@@ -213,17 +213,17 @@ class MandaatEnforcerTest extends TestCase {
 	/**
 	 * A commitment of the given soort and amount for the demo administration.
 	 *
-	 * @param string $soort Commitment soort.
-	 * @param int $bedrag Amount in minor units.
+	 * @param string $kind Commitment soort.
+	 * @param int $amount Amount in minor units.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function commitment(string $soort, int $bedrag): array {
+	private function commitment(string $kind, int $amount): array {
 		return [
 			'administrationId' => 'adm-1',
-			'verplichtingsnummer' => 'PO-1',
-			'soort' => $soort,
-			'totaalbedrag_excl_btw' => $bedrag,
+			'commitmentNumber' => 'PO-1',
+			'kind' => $kind,
+			'total_amount_excl_vat' => $amount,
 		];
 
 	}//end commitment()
@@ -283,7 +283,7 @@ class MandaatEnforcerTest extends TestCase {
 	 * @return void
 	 */
 	public function testExpiredMandateIsIgnored(): void {
-		$expired = $this->mandate(['geldig_tot' => '2000-01-01']);
+		$expired = $this->mandate(['valid_to' => '2000-01-01']);
 		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$expired]]));
 
 		$this->assertFalse(
@@ -298,7 +298,7 @@ class MandaatEnforcerTest extends TestCase {
 	 * @return void
 	 */
 	public function testFutureMandateIsIgnored(): void {
-		$future = $this->mandate(['geldig_van' => '2999-01-01']);
+		$future = $this->mandate(['valid_from' => '2999-01-01']);
 		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$future]]));
 
 		$this->assertFalse(
@@ -313,7 +313,7 @@ class MandaatEnforcerTest extends TestCase {
 	 * @return void
 	 */
 	public function testSecondSignatureRequiredAboveThreshold(): void {
-		$mandate = $this->mandate(['vereist_tweede_handtekening_boven' => 2500000]);
+		$mandate = $this->mandate(['required_second_signature_above' => 2500000]);
 		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$mandate]]));
 
 		$this->assertTrue(
@@ -332,15 +332,15 @@ class MandaatEnforcerTest extends TestCase {
 	 * @return void
 	 */
 	public function testResolvesLeastPrivilegeNonOverrideMandate(): void {
-		$small = $this->mandate(['mandaatcode' => 'SMALL', 'maximumbedrag' => 5000000]);
-		$big = $this->mandate(['mandaatcode' => 'BIG', 'maximumbedrag' => 25000000]);
-		$override = $this->mandate(['mandaatcode' => 'OVR', 'maximumbedrag' => 1000000000, 'is_override' => true]);
+		$small = $this->mandate(['mandateCode' => 'SMALL', 'maximumAmount' => 5000000]);
+		$big = $this->mandate(['mandateCode' => 'BIG', 'maximumAmount' => 25000000]);
+		$override = $this->mandate(['mandateCode' => 'OVR', 'maximumAmount' => 1000000000, 'is_override' => true]);
 
 		$this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$big, $override, $small]]));
 
 		$resolved = $this->guard->resolveApplicableMandate($this->commitment('inkooporder', 3000000));
 		$this->assertNotNull($resolved);
-		$this->assertSame('SMALL', $resolved['mandaatcode']);
+		$this->assertSame('SMALL', $resolved['mandateCode']);
 
 	}//end testResolvesLeastPrivilegeNonOverrideMandate()
 

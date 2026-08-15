@@ -62,8 +62,8 @@ class MilestoneTemplateServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testGetTemplateSelectsByTypeWithFallback(): void {
-		$this->assertSame('levering-in-fases', $this->service->getTemplate('levering-in-fases')['opdrachttype']);
-		$this->assertSame('other', $this->service->getTemplate('does-not-exist')['opdrachttype']);
+		$this->assertSame('levering-in-fases', $this->service->getTemplate('levering-in-fases')['assignmentType']);
+		$this->assertSame('other', $this->service->getTemplate('does-not-exist')['assignmentType']);
 
 	}//end testGetTemplateSelectsByTypeWithFallback()
 
@@ -76,13 +76,13 @@ class MilestoneTemplateServiceTest extends TestCase {
 		$plan = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
 
 		$this->assertCount(4, $plan);
-		$this->assertSame('eindoplevering', $plan[3]['opleveringsType']);
+		$this->assertSame('eindoplevering', $plan[3]['deliveryType']);
 		$this->assertSame('planned', $plan[0]['status']);
 
-		foreach ($plan as $mijlpaal) {
-			$this->assertGreaterThanOrEqual('2026-02-01', $mijlpaal['datum']);
-			$this->assertLessThanOrEqual('2027-01-31', $mijlpaal['datum']);
-			$this->assertNotEmpty($mijlpaal['mijlpaalId']);
+		foreach ($plan as $milestone) {
+			$this->assertGreaterThanOrEqual('2026-02-01', $milestone['date']);
+			$this->assertLessThanOrEqual('2027-01-31', $milestone['date']);
+			$this->assertNotEmpty($milestone['milestoneId']);
 		}
 
 		$this->assertSame(100.0, $this->service->sumPercentage($plan));

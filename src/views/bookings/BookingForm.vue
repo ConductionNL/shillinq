@@ -78,8 +78,8 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 import BookingConflictDialog from '../../modals/BookingConflictDialog.vue'
 
 const MIN_DURATION_MS = 15 * 60 * 1000
@@ -113,6 +113,7 @@ export default {
 				attendee: '',
 				status: 'pending',
 			},
+
 			validationError: '',
 			submitting: false,
 			showConflictDialog: false,

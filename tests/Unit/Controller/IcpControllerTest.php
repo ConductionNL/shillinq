@@ -410,7 +410,7 @@ final class IcpControllerTest extends TestCase {
 	public function testAuditExportReturns200WithoutPath(): void {
 		$this->withParams(['period_id' => '2026-Q2', 'administration_id' => 'adm-1']);
 		$this->filing->method('exportForInspection')->willReturn(
-			['period' => '2026-Q2', 'zipPath' => '/tmp/secret_path.zip', 'supplyCount' => 3, 'manifest' => ['supplies.csv'], 'kenmerk' => 'BD-1']
+			['period' => '2026-Q2', 'zipPath' => '/tmp/secret_path.zip', 'supplyCount' => 3, 'manifest' => ['supplies.csv'], 'reference' => 'BD-1']
 		);
 
 		$response = $this->controller->auditExport();

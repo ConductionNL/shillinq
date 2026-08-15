@@ -7,7 +7,7 @@
     "description": "Tier 3 — Wet Fido & Treasurystatuut compliance for Dutch decentralised governments (gemeenten/provincies/waterschappen/GR). Declares eight schemas: Treasurystatuut (REQ-FDO-001), KasgeldLimiet (REQ-FDO-002), RenteRisicoNorm (REQ-FDO-003), SchatkistbankierenSaldo (REQ-FDO-005), Lening (REQ-FDO-001/002/008), Derivaat (REQ-FDO-004), QuartaalrapportageFido (REQ-FDO-006) and TreasuryParagraaf (REQ-FDO-007). All limiet-math (kasgeldlimiet rolling-3-month average, rente-risiconorm 4-year forward projection, schatkistbankieren drempelbedrag, quarterly-rapportage roll-up) is declarative metadata: x-openregister-aggregations + x-openregister-lifecycle. The single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard) enforces the three cross-field preconditions the declarative DSL cannot yet express: a Lening may only be recorded once any kasgeldlimiet / rente-risiconorm / signing-mandate breach carries an override-rationale (REQ-FDO-008), a Derivaat may only be recorded with a RUDDO hedging-link whose notional does not exceed the hedged exposure and whose counterparty rating is single-A or better (REQ-FDO-004), and a QuartaalrapportageFido may only be submitted once both the treasurer and concerncontroller sign-offs are present (REQ-FDO-006). Seed objects ship one Treasurystatuut, one Lening, one KasgeldLimiet template, one Derivaat, one RenteRisicoNorm and one SchatkistbankierenSaldo worked example per design.md.",
     "fido-normcatalogus": {
       "description": "FidoNormcatalogus statutory kasgeldlimiet percentages per organisatie-type (REQ-FDO-009, Wet Fido Annex II). Maintained as fragment metadata so a wets-wijziging is a data-edit, not a code-deploy; the kasgeld-limiet percentage default is auto-selected from the organisation's organisationType on first KasgeldLimiet record.",
-      "gemeente": 8.5,
+      "municipality": 8.5,
       "provincie": 7.0,
       "waterschap": 23.0,
       "GR-waterkwaliteit": 15.0,
@@ -48,13 +48,13 @@
             "type": "string",
             "description": "Organisation type, drives the kasgeldlimiet percentage via FidoNormcatalogus (REQ-FDO-009).",
             "enum": [
-              "gemeente",
+              "municipality",
               "provincie",
               "waterschap",
               "GR-waterkwaliteit",
               "GR-overig"
             ],
-            "example": "gemeente",
+            "example": "municipality",
             "title": "Organisation Type"
           },
           "adoptionDecision": {
@@ -261,7 +261,7 @@
         "required": [
           "auditYear",
           "organisationId",
-          "baseBegroting",
+          "baseBudget",
           "percentage"
         ],
         "properties": {
@@ -277,7 +277,7 @@
             "example": "org-gemeente-1",
             "title": "Organisation ID"
           },
-          "baseBegroting": {
+          "baseBudget": {
             "type": "number",
             "description": "Vastgestelde begroting per 1 januari (REQ-FDO-002).",
             "example": 200000000.0,
@@ -379,7 +379,7 @@
         "required": [
           "auditYear",
           "organisationId",
-          "baseVasteSchuld",
+          "baseFixedDebt",
           "percentage"
         ],
         "properties": {
@@ -395,7 +395,7 @@
             "example": "org-provincie-1",
             "title": "Organisation ID"
           },
-          "baseVasteSchuld": {
+          "baseFixedDebt": {
             "type": "number",
             "description": "Uitstaande vaste schuld per 1 januari (REQ-FDO-003).",
             "example": 500000000.0,
@@ -515,7 +515,7 @@
         "type": "object",
         "required": [
           "organisationId",
-          "baseBegroting"
+          "baseBudget"
         ],
         "properties": {
           "organisationId": {
@@ -524,32 +524,32 @@
             "example": "org-waterschap-1",
             "title": "Organisation ID"
           },
-          "baseBegroting": {
+          "baseBudget": {
             "type": "number",
             "description": "Begrotingstotaal driving the drempelbedrag (REQ-FDO-005).",
             "example": 150000000.0,
             "title": "Base Begroting"
           },
-          "drempelbedrag": {
+          "thresholdAmount": {
             "type": "number",
             "description": "Computed drempelbedrag = max(0.75% × baseBegroting, 1000000) capped at 1000000000 (REQ-FDO-005).",
             "example": 1125000.0,
             "title": "Drempelbedrag"
           },
-          "currentRekeningCourant": {
+          "currentAccountCourant": {
             "type": "number",
             "description": "Current rekening-courant saldo after any sweep.",
             "example": 1125000.0,
             "title": "Current Rekening Courant"
           },
-          "daysAboveDrempel": {
+          "daysAboveThreshold": {
             "type": "integer",
             "description": "Consecutive banking days the saldo has been above the drempelbedrag; a sweep triggers on the third consecutive day (REQ-FDO-005).",
             "default": 0,
             "example": 3,
             "title": "Days Above Drempel"
           },
-          "parkedAtSchatkist": {
+          "parkedAtTreasury": {
             "type": "number",
             "description": "Amount parked at AGT in the latest sweep (REQ-FDO-005).",
             "nullable": true,
@@ -699,7 +699,7 @@
             "example": "bullet",
             "title": "Repayment Schedule"
           },
-          "renteherzieningsmoment": {
+          "interestResetMoment": {
             "type": "string",
             "description": "Floating-rate reset date feeding the rente-risiconorm projection (REQ-FDO-003).",
             "nullable": true,
@@ -713,7 +713,7 @@
             "example": "treasurer",
             "title": "Signing Mandate Role"
           },
-          "treasurystatuutId": {
+          "treasuryStatuteId": {
             "type": "string",
             "description": "FK to the adopted Treasurystatuut the lening is validated against (REQ-FDO-001).",
             "nullable": true,
@@ -727,14 +727,14 @@
             "example": "Bridging finance for grant-receipt lag Q1",
             "title": "Purpose"
           },
-          "bbvPaspoortId": {
+          "bbvPassportId": {
             "type": "string",
             "description": "FK to the BBV-paspoort metadata for treasury GL posting; classifies uitzetting > 1 jaar vs ≤ 1 jaar (REQ-FDO-002, bookkeeping-bbv-compliance).",
             "nullable": true,
             "example": null,
             "title": "BBV Paspoort ID"
           },
-          "limietBreach": {
+          "limitBreach": {
             "type": "boolean",
             "description": "True when the entry breaches the kasgeldlimiet, rente-risiconorm or signing-mandate at recording time (REQ-FDO-008).",
             "default": false,
@@ -986,7 +986,7 @@
         "type": "object",
         "required": [
           "auditYear",
-          "kwartaal",
+          "quarter",
           "organisationId"
         ],
         "properties": {
@@ -996,7 +996,7 @@
             "example": 2025,
             "title": "Audit Year"
           },
-          "kwartaal": {
+          "quarter": {
             "type": "string",
             "description": "Quarter identifier (REQ-FDO-006).",
             "enum": [
@@ -1014,7 +1014,7 @@
             "example": "org-gemeente-1",
             "title": "Organisation ID"
           },
-          "kasgeldStatus": {
+          "cashStatus": {
             "type": "object",
             "description": "Kasgeldlimiet snapshot for the quarter (ceiling, exposure, status, headroom) (REQ-FDO-006).",
             "nullable": true,
@@ -1026,7 +1026,7 @@
             },
             "title": "Kasgeld Status"
           },
-          "renteRisicoStatus": {
+          "renteRiskStatus": {
             "type": "object",
             "description": "Rente-risiconorm snapshot (per-year exposures, headroom per year, status) (REQ-FDO-006).",
             "nullable": true,
@@ -1036,7 +1036,7 @@
             },
             "title": "Rente Risico Status"
           },
-          "schatkistStatus": {
+          "treasuryStatus": {
             "type": "object",
             "description": "Schatkistbankieren snapshot (average daily parked, sweep count, failures) (REQ-FDO-006).",
             "nullable": true,
@@ -1047,7 +1047,7 @@
             },
             "title": "Schatkist Status"
           },
-          "leningenMutaties": {
+          "loansMovements": {
             "type": "object",
             "description": "Lening mutation summary for the quarter (count, total amount, by-type breakdown) (REQ-FDO-006).",
             "nullable": true,
@@ -1061,7 +1061,7 @@
             },
             "title": "Leningen Mutaties"
           },
-          "derivatenMutaties": {
+          "derivativesMovements": {
             "type": "object",
             "description": "Derivaat mutation summary (count, total notional, hedging-links verified) (REQ-FDO-006).",
             "nullable": true,
@@ -1095,21 +1095,21 @@
             "example": null,
             "title": "Sign Off Treasurer"
           },
-          "signOffConcerncontroller": {
+          "signOffGroupController": {
             "type": "object",
             "description": "Concerncontroller sign-off (person + timestamp) (REQ-FDO-006).",
             "nullable": true,
             "example": null,
             "title": "Sign Off Concerncontroller"
           },
-          "submittedToToezichthouder": {
+          "submittedToSupervisor": {
             "type": "string",
             "description": "Timestamp of transmission to the toezichthouder (REQ-FDO-006).",
             "nullable": true,
             "example": null,
             "title": "Submitted To Toezichthouder"
           },
-          "toezichthouderName": {
+          "supervisorName": {
             "type": "string",
             "description": "Name of the receiving toezichthouder (REQ-FDO-006).",
             "nullable": true,
@@ -1190,10 +1190,10 @@
               "auditYear": "@self.auditYear"
             },
             "operations": {
-              "leningenMutaties": {
+              "loansMovements": {
                 "field": "Lening.principal",
                 "operation": "summarise",
-                "target": "leningenMutaties"
+                "target": "loansMovements"
               }
             }
           }
@@ -1229,7 +1229,7 @@
             "example": "org-gemeente-1",
             "title": "Organisation ID"
           },
-          "begrotingVersion": {
+          "budgetVersion": {
             "type": "string",
             "description": "Begroting version the projection is based on (REQ-FDO-007).",
             "nullable": true,
@@ -1250,7 +1250,7 @@
             "example": null,
             "title": "Narrative Manual"
           },
-          "kasgeldProjectie": {
+          "cashProjection": {
             "type": "object",
             "description": "Kasgeldlimiet projection (ceiling, current-exposure, headroom-days-until-breach) (REQ-FDO-007).",
             "nullable": true,
@@ -1261,7 +1261,7 @@
             },
             "title": "Kasgeld Projectie"
           },
-          "renteRisicoProjectie": {
+          "renteRiskProjection": {
             "type": "object",
             "description": "Rente-risiconorm 4-year per-year exposure summary (REQ-FDO-007).",
             "nullable": true,
@@ -1270,14 +1270,14 @@
             },
             "title": "Rente Risico Projectie"
           },
-          "liquiditeitsplanning": {
+          "liquidityPlanning": {
             "type": "object",
             "description": "Next-12-months cash-flow projection from the begroting (REQ-FDO-007).",
             "nullable": true,
             "example": null,
             "title": "Liquiditeitsplanning"
           },
-          "schatkistVerwachting": {
+          "treasuryExpectation": {
             "type": "object",
             "description": "Expected parked-amount and sweep-forecast (REQ-FDO-007).",
             "nullable": true,
@@ -1313,7 +1313,7 @@
         },
         "version": "1.0",
         "organisationId": "org-gemeente-1",
-        "organisationType": "gemeente",
+        "organisationType": "municipality",
         "adoptionDecision": "Raadsbesluit 2025-11-30/14",
         "adoptionDate": "2025-11-30",
         "effectiveFrom": "2026-01-01",
@@ -1372,7 +1372,7 @@
         },
         "auditYear": 2026,
         "organisationId": "org-gemeente-1",
-        "baseBegroting": 200000000.0,
+        "baseBudget": 200000000.0,
         "percentage": 8.5,
         "calculatedCeiling": 17000000.0,
         "currentExposure": 16800000.0,
@@ -1389,7 +1389,7 @@
         },
         "auditYear": 2026,
         "organisationId": "org-provincie-1",
-        "baseVasteSchuld": 500000000.0,
+        "baseFixedDebt": 500000000.0,
         "percentage": 20.0,
         "calculatedCeiling": 100000000.0,
         "forwardLooking4Year": [
@@ -1434,11 +1434,11 @@
           "slug": "schatkist-saldo-waterschap-2026q1"
         },
         "organisationId": "org-waterschap-1",
-        "baseBegroting": 150000000.0,
-        "drempelbedrag": 1125000.0,
-        "currentRekeningCourant": 1125000.0,
-        "daysAboveDrempel": 3,
-        "parkedAtSchatkist": 375000.0,
+        "baseBudget": 150000000.0,
+        "thresholdAmount": 1125000.0,
+        "currentAccountCourant": 1125000.0,
+        "daysAboveThreshold": 3,
+        "parkedAtTreasury": 375000.0,
         "lastSweepAt": "2026-03-31T16:00:00+02:00",
         "lastSweepStatus": "success",
         "lastSweepErrorMessage": null,
@@ -1461,12 +1461,12 @@
         "issueDate": "2026-01-15",
         "maturityDate": "2027-01-15",
         "repaymentSchedule": "bullet",
-        "renteherzieningsmoment": null,
+        "interestResetMoment": null,
         "signingMandateRole": "treasurer",
-        "treasurystatuutId": "statuut-gemeente-2026",
+        "treasuryStatuteId": "statuut-gemeente-2026",
         "purpose": "Bridging finance for grant-receipt lag Q1",
-        "bbvPaspoortId": null,
-        "limietBreach": false,
+        "bbvPassportId": null,
+        "limitBreach": false,
         "overrideRationale": null,
         "enteredAt": "2026-01-15T10:00:00+01:00",
         "status": "recorded"
@@ -1487,12 +1487,12 @@
         "issueDate": "2024-06-30",
         "maturityDate": "2028-06-30",
         "repaymentSchedule": "bullet",
-        "renteherzieningsmoment": "2026-06-30",
+        "interestResetMoment": "2026-06-30",
         "signingMandateRole": "directeur",
-        "treasurystatuutId": "statuut-gemeente-2026",
+        "treasuryStatuteId": "statuut-gemeente-2026",
         "purpose": "Long-term capital-works financing",
-        "bbvPaspoortId": null,
-        "limietBreach": false,
+        "bbvPassportId": null,
+        "limitBreach": false,
         "overrideRationale": null,
         "enteredAt": "2024-06-30T09:00:00+02:00",
         "status": "recorded"
@@ -1523,24 +1523,24 @@
           "slug": "rapportage-gemeente-2025-q4"
         },
         "auditYear": 2025,
-        "kwartaal": "Q4",
+        "quarter": "Q4",
         "organisationId": "org-gemeente-1",
-        "kasgeldStatus": {
+        "cashStatus": {
           "ceiling": 17000000,
           "exposure": 16800000,
           "headroom": 200000,
           "status": "binnen-norm"
         },
-        "renteRisicoStatus": {
+        "renteRiskStatus": {
           "ceiling": 100000000,
           "status": "binnen-norm"
         },
-        "schatkistStatus": {
+        "treasuryStatus": {
           "averageDailyParked": 300000,
           "sweepCount": 62,
           "failures": 0
         },
-        "leningenMutaties": {
+        "loansMovements": {
           "count": 3,
           "totalAmount": 4300000,
           "byType": {
@@ -1548,7 +1548,7 @@
             "onderhandse-lening": 1
           }
         },
-        "derivatenMutaties": {
+        "derivativesMovements": {
           "count": 1,
           "totalNotional": 5000000,
           "hedgingLinksVerified": true
@@ -1556,9 +1556,9 @@
         "overridesApplied": [],
         "narrative": "No limiet-breaches; all transactions executed per Treasurystatuut.",
         "signOffTreasurer": null,
-        "signOffConcerncontroller": null,
-        "submittedToToezichthouder": null,
-        "toezichthouderName": "Provincie Noord-Holland",
+        "signOffGroupController": null,
+        "submittedToSupervisor": null,
+        "supervisorName": "Provincie Noord-Holland",
         "submissionReceipt": null,
         "status": "draft"
       },
@@ -1570,19 +1570,19 @@
         },
         "auditYear": 2025,
         "organisationId": "org-gemeente-1",
-        "begrotingVersion": "2026-vastgesteld",
+        "budgetVersion": "2026-vastgesteld",
         "narrativeAuto": "Schatkistfunctie: Het kasgeldlimiet bedraagt 8,5% van de begroting (€17,0M). Het gemiddelde netto kortlopende schuld over Q4 was €16,8M; geen overschrijding. De rente-risiconorm (20% vaste schuld herfinancieringsrisico) toont geen overschrijding in de 4-jaars projectie. Dagelijks gemiddelde geparkt bij AGT: €0,3M. Treasurystatuut 2024 voorziet in risk-appetite \"midden\"; alle transacties voldoen aan de mandaatmatrix.",
         "narrativeManual": null,
-        "kasgeldProjectie": {
+        "cashProjection": {
           "ceiling": 17000000,
           "exposure": 16800000,
           "headroomDays": 30
         },
-        "renteRisicoProjectie": {
+        "renteRiskProjection": {
           "status": "binnen-norm"
         },
-        "liquiditeitsplanning": null,
-        "schatkistVerwachting": {
+        "liquidityPlanning": null,
+        "treasuryExpectation": {
           "averageDailyParked": 300000
         },
         "status": "draft"

@@ -25,7 +25,7 @@
             "example": "Cultural presentation, production and participation",
             "title": "Description (English)"
           },
-          "programmaFocusEn": {
+          "programmeFocusAnd": {
             "type": "string",
             "description": "English display name for the BBV programme grouping this taakveld rolls up to. Display-only; falls back to `programmaFocus` when absent.",
             "nullable": true,
@@ -36,21 +36,21 @@
       },
       "Taakveld": {
         "properties": {
-          "naamEn": {
+          "nameEn": {
             "type": "string",
             "description": "English display name for the taakveld. Display-only: never sent to CBS and never used for matching. Absent means no translation has been supplied yet, in which case a UI falls back to `naam`.",
             "nullable": true,
             "example": "Cemeteries and crematoria",
             "title": "Name (English)"
           },
-          "hoofdfunctieNaamEn": {
+          "mainFunctionNameEn": {
             "type": "string",
             "description": "English display name for the hoofdfunctie. Display-only; falls back to `hoofdfunctieNaam` when absent.",
             "nullable": true,
             "example": "Public health and environment",
             "title": "Main Function Name (English)"
           },
-          "omschrijvingIv3En": {
+          "descriptionIv3And": {
             "type": "string",
             "description": "English rendering of the Iv3 scope description. Display-only. Present only where the source regulation supplies a Dutch description — an absent description is not translated into an invented one.",
             "nullable": true,

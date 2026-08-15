@@ -117,7 +117,7 @@ class BbvSeedServiceTest extends TestCase {
 		// Pre-existing gemeente row should not skip the provincie + waterschap rows
 		// for the same numeric code (0.10).
 		$existingRows = [
-			['code' => '0.10', 'overheidslaag' => 'gemeente'],
+			['code' => '0.10', 'overheidslaag' => 'municipality'],
 		];
 
 		$objectService = $this->buildObjectServiceStub(existingRows: $existingRows);
@@ -132,10 +132,10 @@ class BbvSeedServiceTest extends TestCase {
 		$result = $service->seedAll();
 
 		self::assertTrue(condition: $result['success']);
-		$taakveldCounts = $result['counts']['Taakveld'];
+		$taskFieldCounts = $result['counts']['Taakveld'];
 		// Gemeente 0.10 must be skipped; provincie + waterschap 0.10 must be seeded.
-		self::assertGreaterThan(0, $taakveldCounts['seeded']);
-		self::assertGreaterThan(0, $taakveldCounts['skipped']);
+		self::assertGreaterThan(0, $taskFieldCounts['seeded']);
+		self::assertGreaterThan(0, $taskFieldCounts['skipped']);
 
 	}//end testTaakveldCompositeDedupAcrossOverheidslagen()
 

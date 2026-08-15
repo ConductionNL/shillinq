@@ -127,7 +127,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 
 			}//end __construct()
 
-			public function isYearLocked(string $administrationId, int $boekjaar): bool {
+			public function isYearLocked(string $administrationId, int $financialYear): bool {
 				return $this->constantLock;
 			}//end isYearLocked()
 		};
@@ -188,12 +188,12 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
 			'financialYear' => 2026,
-			'eigen_rd_kosten' => 480000,
-			'rd_kosten_uitbesteed_derden' => 120000,
-			'rd_kosten_uitbesteed_verbonden' => 80000,
+			'own_rd_cost' => 480000,
+			'rd_cost_outsourced_third_parties' => 120000,
+			'rd_cost_outsourced_affiliated' => 80000,
 			'uplift_factor' => 1.3,
 			'nexusbreuk_ongecapt' => 1.10,
-			'nexusbreuk_toegepast' => 1.0,
+			'nexus_fraction_applied' => 1.0,
 		]);
 		$event = new ObjectCreatedEvent($entity);
 
@@ -206,7 +206,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		);
 		$this->assertSame('asset-1', $logger->calls[0]['qualifying_asset_id']);
 		$this->assertSame(2026, $logger->calls[0]['financialYear']);
-		$this->assertSame(1.0, $logger->calls[0]['details']['nexusbreuk_toegepast']);
+		$this->assertSame(1.0, $logger->calls[0]['details']['nexus_fraction_applied']);
 
 	}//end testNexusCreateEmitsCalculatedEvent()
 
@@ -230,9 +230,9 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
 			'financialYear' => 2026,
-			'methode' => 'forfaitair_25pct',
-			'kwalificerende_winst_voor_nexus' => 125000,
-			'kwalificerende_winst_na_nexus' => 25000,
+			'method' => 'forfaitair_25pct',
+			'qualifying_profit_for_nexus' => 125000,
+			'qualifying_profit_after_nexus' => 25000,
 			'vso_locked' => false,
 		]);
 		$event = new ObjectCreatedEvent($entity);
@@ -305,14 +305,14 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			'administrationId' => 'adm-x',
 			'financialYear' => 2026,
 			'vso_locked' => true,
-			'voordeel_innovatiebox' => 72000,
+			'benefit_innovation_box' => 72000,
 		]);
 		$next = $this->entity('4102', [
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
 			'financialYear' => 2026,
 			'vso_locked' => true,
-			'voordeel_innovatiebox' => 80000,
+			'benefit_innovation_box' => 80000,
 		]);
 		$event = new ObjectUpdatedEvent($next, $prior);
 
@@ -324,7 +324,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			$logger->calls[0]['event_type']
 		);
 		$this->assertSame('vso_locked', $logger->calls[0]['reason']);
-		$this->assertContains('voordeel_innovatiebox', $logger->calls[0]['details']['changed_keys']);
+		$this->assertContains('benefit_innovation_box', $logger->calls[0]['details']['changed_keys']);
 
 	}//end testProfitAmendmentBlockedWhenPriorWasLocked()
 

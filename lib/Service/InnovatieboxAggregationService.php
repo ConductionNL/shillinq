@@ -67,16 +67,16 @@ class InnovatieboxAggregationService {
 	 * Build the innovatiebox-administratie aggregation for one administration + year.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved, REQ-IBA-008).
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 *
 	 * @return array{data: array<int,array<string,mixed>>, total: int, totals: array<string,float>}
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
 	 */
-	public function aggregate(string $administrationId, int $boekjaar): array {
+	public function aggregate(string $administrationId, int $financialYear): array {
 		$assets = $this->fetchValidAssets(administrationId: $administrationId);
 		$attributions = $this->indexBy(
-			rows: $this->fetchAttributions(administrationId: $administrationId, boekjaar: $boekjaar),
+			rows: $this->fetchAttributions(administrationId: $administrationId, financialYear: $financialYear),
 			key: 'qualifying_asset_id'
 		);
 		$openLosses = $this->indexBy(
@@ -86,7 +86,7 @@ class InnovatieboxAggregationService {
 
 		$rows = [];
 		$grandVpb = 0.0;
-		$grandVoordeel = 0.0;
+		$grandBenefit = 0.0;
 		foreach ($assets as $asset) {
 			$assetId = $this->assetId(asset: $asset);
 			if ($assetId === '' || isset($attributions[$assetId]) === false) {
@@ -95,8 +95,8 @@ class InnovatieboxAggregationService {
 
 			$row = $this->buildRow(asset: $asset, attribution: $attributions[$assetId], loss: ($openLosses[$assetId] ?? null));
 			$rows[] = $row;
-			$grandVpb += (float)$row['vpb_op_innovatiedeel'];
-			$grandVoordeel += (float)$row['voordeel_innovatiebox'];
+			$grandVpb += (float)$row['vpb_on_innovation_share'];
+			$grandBenefit += (float)$row['benefit_innovation_box'];
 		}
 
 		return [
@@ -104,7 +104,7 @@ class InnovatieboxAggregationService {
 			'total' => count($rows),
 			'totals' => [
 				'vpb_regel_23' => round($grandVpb, 2),
-				'voordeel_innovatiebox' => round($grandVoordeel, 2),
+				'benefit_innovation_box' => round($grandBenefit, 2),
 			],
 		];
 
@@ -120,13 +120,13 @@ class InnovatieboxAggregationService {
 	 * @return array<string,mixed> The aggregation row.
 	 */
 	private function buildRow(array $asset, array $attribution, ?array $loss): array {
-		$naam = (string)($asset['name'] ?? '');
-		$voorNexus = (float)($attribution['kwalificerende_winst_voor_nexus'] ?? 0);
-		$nexus = (float)($attribution['nexusbreuk_toegepast'] ?? 1.0);
-		$naNexus = (float)($attribution['kwalificerende_winst_na_nexus'] ?? 0);
-		$tarief = (float)($attribution['effectief_tarief'] ?? CarryForwardLossService::INNOVATIEBOX_TARIFF);
-		$vpb = (float)($attribution['vpb_op_innovatiedeel'] ?? round(($naNexus * $tarief), 2));
-		$voordeel = (float)($attribution['voordeel_innovatiebox'] ?? 0);
+		$name = (string)($asset['name'] ?? '');
+		$forNexus = (float)($attribution['qualifying_profit_for_nexus'] ?? 0);
+		$nexus = (float)($attribution['nexus_fraction_applied'] ?? 1.0);
+		$afterNexus = (float)($attribution['qualifying_profit_after_nexus'] ?? 0);
+		$rate = (float)($attribution['effective_rate'] ?? CarryForwardLossService::INNOVATIEBOX_TARIFF);
+		$vpb = (float)($attribution['vpb_on_innovation_share'] ?? round(($afterNexus * $rate), 2));
+		$benefit = (float)($attribution['benefit_innovation_box'] ?? 0);
 		$lossOffset = null;
 
 		// REQ-IBA-007: an open loss is recovered first at the full tariff before
@@ -134,31 +134,31 @@ class InnovatieboxAggregationService {
 		if ($loss !== null && (float)($loss['balance_open'] ?? 0) > 0.0) {
 			$offset = $this->lossService->offsetLossAgainstProfit(
 				openLoss: (float)$loss['balance_open'],
-				currentYearProfit: $naNexus,
+				currentYearProfit: $afterNexus,
 				nexusBreak: $nexus
 			);
 
 			$vpb = $offset['residualProfitAt9Pct'];
-			$voordeel = round(($offset['totalBenefit']), 2);
+			$benefit = round(($offset['totalBenefit']), 2);
 			$lossOffset = [
 				'loss_offset' => $offset['lossOffset'],
 				'benefit_full' => $offset['lossOffsetAtFullRate'],
 				'residual' => $offset['residualProfit'],
 				'benefit_9pct' => $offset['residualProfitAt9Pct'],
-				'balance_after' => $offset['saldoNa'],
+				'balance_after' => $offset['balanceAfter'],
 			];
 		}
 
 		return [
 			'qualifying_asset_id' => $this->assetId(asset: $asset),
-			'name' => $naam,
-			'methode' => (string)($attribution['methode'] ?? ''),
-			'kwalificerende_winst_voor_nexus' => round($voorNexus, 2),
-			'nexusbreuk_toegepast' => round($nexus, 4),
-			'kwalificerende_winst_na_nexus' => round($naNexus, 2),
-			'effectief_tarief' => $tarief,
-			'vpb_op_innovatiedeel' => round($vpb, 2),
-			'voordeel_innovatiebox' => round($voordeel, 2),
+			'name' => $name,
+			'method' => (string)($attribution['method'] ?? ''),
+			'qualifying_profit_for_nexus' => round($forNexus, 2),
+			'nexus_fraction_applied' => round($nexus, 4),
+			'qualifying_profit_after_nexus' => round($afterNexus, 2),
+			'effective_rate' => $rate,
+			'vpb_on_innovation_share' => round($vpb, 2),
+			'benefit_innovation_box' => round($benefit, 2),
 			'loss_carry_forward' => $lossOffset,
 		];
 
@@ -239,15 +239,15 @@ class InnovatieboxAggregationService {
 	 * Fetch IBProfitAttribution rows for an administration + year.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 *
 	 * @return array<int,array<string,mixed>> Attribution rows.
 	 */
-	private function fetchAttributions(string $administrationId, int $boekjaar): array {
+	private function fetchAttributions(string $administrationId, int $financialYear): array {
 		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IBProfitAttribution')
-			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $boekjaar]]);
+			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $financialYear]]);
 
 		if (is_array($rows) === false) {
 			return [];

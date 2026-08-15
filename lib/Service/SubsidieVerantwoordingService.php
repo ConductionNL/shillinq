@@ -99,13 +99,13 @@ class SubsidieVerantwoordingService {
 			$report = (new DateTimeImmutable())->format('Y-m-d');
 		}
 
-		$grantId = (string)($grant['subsidieNumber'] ?? $grant['grantId'] ?? '');
+		$grantId = (string)($grant['subsidyNumber'] ?? $grant['grantId'] ?? '');
 		$awardDate = (string)($grant['awardDate'] ?? '');
 		$administrationId = (string)($grant['administrationId'] ?? '');
 		$awardedAmount = (float)($grant['awardAmount'] ?? $grant['awardedAmount'] ?? 0.0);
 
 		return [
-			'verantwoordingId' => 'SV-' . $grantId,
+			'accountabilityId' => 'SV-' . $grantId,
 			'grantId' => $grantId,
 			'reportDate' => $report,
 			'reportingPeriod' => $this->calculateReportingPeriod(awardDate: $awardDate, reportDate: $report),
@@ -124,7 +124,7 @@ class SubsidieVerantwoordingService {
 	 *
 	 * Pure: no I/O. Returns the payload or null; the caller persists it via persistChange().
 	 *
-	 * @param array<string,mixed> $verantwoording The SubsidieVerantwoording object.
+	 * @param array<string,mixed> $accountability The SubsidieVerantwoording object.
 	 * @param string $auditorUserId The auditor user assigned (may be a placeholder).
 	 * @param string|null $auditDate The audit reference date (Y-m-d); today when null.
 	 *
@@ -133,11 +133,11 @@ class SubsidieVerantwoordingService {
 	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
 	 */
 	public function buildAuditorStatementForVerantwoording(
-		array $verantwoording,
+		array $accountability,
 		string $auditorUserId,
 		?string $auditDate = null,
 	): ?array {
-		$awardedAmount = (float)($verantwoording['awardedAmount'] ?? 0.0);
+		$awardedAmount = (float)($accountability['awardedAmount'] ?? 0.0);
 		if ($this->requiresAuditorStatement(awardedAmount: $awardedAmount) === false) {
 			return null;
 		}
@@ -147,7 +147,7 @@ class SubsidieVerantwoordingService {
 			$audit = (new DateTimeImmutable())->format('Y-m-d');
 		}
 
-		$grantId = (string)($verantwoording['grantId'] ?? '');
+		$grantId = (string)($accountability['grantId'] ?? '');
 
 		return [
 			'statementId' => 'AS-' . $grantId,
@@ -157,7 +157,7 @@ class SubsidieVerantwoordingService {
 			'auditorUserId' => $auditorUserId,
 			'status' => 'pending',
 			'findings' => [],
-			'administrationId' => (string)($verantwoording['administrationId'] ?? ''),
+			'administrationId' => (string)($accountability['administrationId'] ?? ''),
 		];
 	}//end buildAuditorStatementForVerantwoording()
 

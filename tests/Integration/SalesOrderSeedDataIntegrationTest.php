@@ -106,7 +106,7 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 		}
 
 		$amount = (float)$line['amount'];
-		switch ($line['frequentie']) {
+		switch ($line['frequency']) {
 			case 'MAANDELIJKS':
 				return $amount;
 			case 'KWARTAALS':
@@ -118,7 +118,7 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 			case 'TWEEWEKELIJKS':
 				return (($amount * 26) / 12);
 			default:
-				self::fail('Unknown frequentie: ' . (string)$line['frequentie']);
+				self::fail('Unknown frequentie: ' . (string)$line['frequency']);
 		}
 
 	}//end monthlyNormalizedAmount()
@@ -237,7 +237,7 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 		foreach ($lines as $line) {
 			if ($line['nature'] === 'RECURRING') {
 				self::assertNotNull(
-					$line['frequentie'],
+					$line['frequency'],
 					'RECURRING line ' . $line['lineId'] . ' must carry a non-null frequentie.'
 				);
 			}

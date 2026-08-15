@@ -74,7 +74,7 @@
             },
             "title": "Current Snapshot"
           },
-          "rubriekDeltas": {
+          "categoryDeltas": {
             "type": "array",
             "nullable": true,
             "description": "Per-rubriek delta (currentSnapshot minus filedSnapshot) for every bucket with a non-zero difference. Populated by VatSuppletieDetectionService::prepare() (REQ-VBTW-014).",
@@ -183,7 +183,7 @@
           "totalTaxableAmount": 20000.0
         }
       ],
-      "rubriekDeltas": [
+      "categoryDeltas": [
         {
           "type": "collected",
           "taxRate": 21.0,
@@ -232,7 +232,7 @@
           "totalTaxableAmount": -1555.56
         }
       ],
-      "rubriekDeltas": [
+      "categoryDeltas": [
         {
           "type": "collected",
           "taxRate": 9.0,

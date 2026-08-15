@@ -47,7 +47,7 @@ final class DBAConstants {
 	public const VBAR_GRENS_PEILJAAR = 2024;
 
 	/**
-	 * Threshold (12-mnd) waarboven een klant als "concentratie" geldt (REQ-DBA-005).
+	 * Threshold (12-mnd) waarboven een klant als "concentration" geldt (REQ-DBA-005).
 	 */
 	public const CONCENTRATIE_DREMPEL_HOOG = 0.70;
 

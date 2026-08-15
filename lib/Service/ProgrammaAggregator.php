@@ -5,9 +5,9 @@
  *
  * ADR-031 exception-path calculator for the Programma roll-up (REQ-002,
  * design D1). The Taakveld is the canonical brondata; the Programma's
- * batenTotaal / lastenTotaal / saldoVoorMutaties / saldoNaMutaties are sums of
- * its child Taakvelden. Computed in integer euro-cents so the programma-view
- * exactly equals the taakveld-view (no rounding drift between the political and
+ * revenueTotal / expensesTotal / balanceBeforeMovements / balanceAfterMovements are sums of
+ * its child Taakvelden. Computed in integer euro-cents so the programme-view
+ * exactly equals the task_field-view (no rounding drift between the political and
  * the BBV-mandated technical indeling). Documented as the `programmaRollup`
  * aggregation on the Programma schema. No persistence, no I/O.
  *
@@ -39,35 +39,35 @@ class ProgrammaAggregator {
 	/**
 	 * Aggregate the child Taakvelden into a Programma's totals.
 	 *
-	 * Computes revenueTotal = Σ(Taakveld.baten); expensesTotal = Σ(Taakveld.lasten);
+	 * Computes revenueTotal = Σ(Taakveld.revenue); expensesTotal = Σ(Taakveld.expenses);
 	 * balanceBeforeMovements = revenueTotal - expensesTotal; balanceAfterMovements =
-	 * balanceBeforeMovements + mutatiesReserves. All sums are accumulated in integer
-	 * cents to guarantee the programma-view equals the taakveld-view exactly.
+	 * balanceBeforeMovements + movementsReserves. All sums are accumulated in integer
+	 * cents to guarantee the programme-view equals the task_field-view exactly.
 	 *
-	 * @param array<int,array<string,mixed>> $taakvelden The child Taakveld rows.
-	 * @param float $mutatiesReserves The reserve mutation (positive = toevoeging).
+	 * @param array<int,array<string,mixed>> $taskFields The child Taakveld rows.
+	 * @param float $movementsReserves The reserve mutation (positive = toevoeging).
 	 *
 	 * @return array{revenueTotal:float,expensesTotal:float,balanceBeforeMovements:float,balanceAfterMovements:float}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
 	 */
-	public function aggregate(array $taakvelden, float $mutatiesReserves = 0.0): array {
-		$batenCents = 0;
-		$lastenCents = 0;
-		foreach ($taakvelden as $taakveld) {
-			$batenCents += (int)round(((float)($taakveld['baten'] ?? 0)) * 100);
-			$lastenCents += (int)round(((float)($taakveld['lasten'] ?? 0)) * 100);
+	public function aggregate(array $taskFields, float $movementsReserves = 0.0): array {
+		$revenueCents = 0;
+		$expensesCents = 0;
+		foreach ($taskFields as $taskField) {
+			$revenueCents += (int)round(((float)($taskField['revenue'] ?? 0)) * 100);
+			$expensesCents += (int)round(((float)($taskField['expenses'] ?? 0)) * 100);
 		}
 
-		$saldoVoorCents = ($batenCents - $lastenCents);
-		$mutatiesCents = (int)round($mutatiesReserves * 100);
-		$saldoNaCents = ($saldoVoorCents + $mutatiesCents);
+		$balanceForCents = ($revenueCents - $expensesCents);
+		$movementsCents = (int)round($movementsReserves * 100);
+		$balanceAfterCents = ($balanceForCents + $movementsCents);
 
 		return [
-			'revenueTotal' => (float)($batenCents / 100),
-			'expensesTotal' => (float)($lastenCents / 100),
-			'balanceBeforeMovements' => (float)($saldoVoorCents / 100),
-			'balanceAfterMovements' => (float)($saldoNaCents / 100),
+			'revenueTotal' => (float)($revenueCents / 100),
+			'expensesTotal' => (float)($expensesCents / 100),
+			'balanceBeforeMovements' => (float)($balanceForCents / 100),
+			'balanceAfterMovements' => (float)($balanceAfterCents / 100),
 		];
 
 	}//end aggregate()

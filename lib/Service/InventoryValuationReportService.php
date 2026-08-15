@@ -226,12 +226,12 @@ class InventoryValuationReportService {
 		$toCut = $this->normaliseCutoff(asOfDate: $to);
 		$method = $this->methodFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse);
 
-		$beginMoves = $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $fromCut);
+		$startMoves = $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $fromCut);
 		$endMoves = $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $toCut);
 
-		$beginCents = $this->replay(moves: $beginMoves, method: $method)['totalValueCents'];
+		$startCents = $this->replay(moves: $startMoves, method: $method)['totalValueCents'];
 		$endCents = $this->replay(moves: $endMoves, method: $method)['totalValueCents'];
-		$avgCents = (int)round((($beginCents + $endCents) / 2));
+		$avgCents = (int)round((($startCents + $endCents) / 2));
 
 		// COGS in window = value consumed by issues whose postedAt in (from, to].
 		$cogsCents = $this->cogsInWindow(
@@ -412,7 +412,7 @@ class InventoryValuationReportService {
 		string $fromCut,
 		string $toCut,
 	): int {
-		$beginCents = $this->replay(
+		$startCents = $this->replay(
 			moves: $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $fromCut),
 			method: $method
 		)['totalValueCents'];
@@ -431,7 +431,7 @@ class InventoryValuationReportService {
 			toCut: $toCut
 		);
 
-		$cogsCents = (($beginCents + $receiptsCents) - $endCents);
+		$cogsCents = (($startCents + $receiptsCents) - $endCents);
 		if ($cogsCents < 0) {
 			return 0;
 		}

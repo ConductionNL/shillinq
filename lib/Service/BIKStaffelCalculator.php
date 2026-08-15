@@ -42,7 +42,7 @@ use InvalidArgumentException;
  * Pure BIK staffel + wettelijke rente calculator — no DI, fully unit-testable.
  *
  * Five staffel slabs per Besluit BIK, bounded by a statutory €40 minimum and
- * a €6.775 maximum (the cap is reached at a €1.000.000 hoofdsom):
+ * a €6.775 maximum (the cap is reached at a €1.000.000 principal):
  *   - €0      – €2.500   : 15%  (with statutory floor €40)
  *   - €2.500  – €5.000   : 10%  on the slice above €2.500
  *   - €5.000  – €10.000  :  5%  on the slice above €5.000
@@ -78,7 +78,7 @@ class BIKStaffelCalculator {
 	/**
 	 * Statutory maximum incasso costs per Besluit BIK (cents, €6.775).
 	 *
-	 * Reached at a €1.000.000 hoofdsom; the 0,5% top slab never lifts the
+	 * Reached at a €1.000.000 principal; the 0,5% top slab never lifts the
 	 * fee above this ceiling.
 	 */
 	private const MAXIMUM_CENTS = 677500;
@@ -161,34 +161,34 @@ class BIKStaffelCalculator {
 	/**
 	 * Calculate the BIK staffel breakdown for an outstanding principal.
 	 *
-	 * Returns the shape expected on IncassoKostenBerekening.berekening per
+	 * Returns the shape expected on IncassoKostenBerekening.calculation per
 	 * REQ-CCD-003: five slab amounts, the gross total, the statutory minimum
-	 * and maximum, toegepast = min(max(total, minimum), maximum), and the
+	 * and maximum, applied = min(max(total, minimum), maximum), and the
 	 * BTW-over-incassokosten surcharge (art. 2 lid 2 Besluit BIK) when the
 	 * creditor cannot offset VAT.
 	 *
-	 * @param float $hoofdsom Principal in EUR.
-	 * @param bool $btwVerrekenbaar True when the creditor CAN offset VAT (no surcharge). Default true.
-	 * @param float $btwPercentage VAT rate applied when !btwVerrekenbaar (default 21%).
+	 * @param float $principal Principal in EUR.
+	 * @param bool $vatOffsettable True when the creditor CAN offset VAT (no surcharge). Default true.
+	 * @param float $vatPercentage VAT rate applied when !vatOffsettable (default 21%).
 	 *
-	 * @return array{schaal1_0_2500:float,schaal2_2500_5000:float,schaal3_5000_10000:float,schaal4_10000_200000:float,schaal5_200000plus:float,total:float,minimum:float,maximum:float,toegepast:float,btwVerrekenbaar:bool,btwPercentage:float,vatAmount:float,toegepastInclBtw:float}
+	 * @return array{scale1_0_2500:float,scale2_2500_5000:float,scale3_5000_10000:float,scale4_10000_200000:float,scale5_200000plus:float,total:float,minimum:float,maximum:float,applied:float,vatOffsettable:bool,vatPercentage:float,vatAmount:float,appliedInclVat:float}
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
 	public function staffel(
-		float $hoofdsom,
-		bool $btwVerrekenbaar = true,
-		float $btwPercentage = self::DEFAULT_BTW_PERCENTAGE,
+		float $principal,
+		bool $vatOffsettable = true,
+		float $vatPercentage = self::DEFAULT_BTW_PERCENTAGE,
 	): array {
-		if ($hoofdsom < 0) {
-			throw new InvalidArgumentException('BIK staffel hoofdsom must be non-negative.');
+		if ($principal < 0) {
+			throw new InvalidArgumentException('BIK staffel principal must be non-negative.');
 		}
 
-		if ($btwPercentage < 0) {
+		if ($vatPercentage < 0) {
 			throw new InvalidArgumentException('BTW percentage must be non-negative.');
 		}
 
-		$hoofdsomCents = $this->toCents(amount: $hoofdsom);
+		$hoofdsomCents = $this->toCents(amount: $principal);
 
 		$slabAmountsCents = [0, 0, 0, 0, 0];
 		$previousBound = 0;
@@ -213,25 +213,25 @@ class BIKStaffelCalculator {
 		// BTW-over-incassokosten (art. 2 lid 2 Besluit BIK) on the normed fee.
 		$btwCents = 0;
 		$appliedBtwPercentage = 0.0;
-		if ($btwVerrekenbaar === false) {
-			$btwCents = (int)round($toegepastCents * $btwPercentage);
-			$appliedBtwPercentage = $btwPercentage;
+		if ($vatOffsettable === false) {
+			$btwCents = (int)round($toegepastCents * $vatPercentage);
+			$appliedBtwPercentage = $vatPercentage;
 		}
 
 		return [
-			'schaal1_0_2500' => $this->fromCents(cents: $slabAmountsCents[0]),
-			'schaal2_2500_5000' => $this->fromCents(cents: $slabAmountsCents[1]),
-			'schaal3_5000_10000' => $this->fromCents(cents: $slabAmountsCents[2]),
-			'schaal4_10000_200000' => $this->fromCents(cents: $slabAmountsCents[3]),
-			'schaal5_200000plus' => $this->fromCents(cents: $slabAmountsCents[4]),
+			'scale1_0_2500' => $this->fromCents(cents: $slabAmountsCents[0]),
+			'scale2_2500_5000' => $this->fromCents(cents: $slabAmountsCents[1]),
+			'scale3_5000_10000' => $this->fromCents(cents: $slabAmountsCents[2]),
+			'scale4_10000_200000' => $this->fromCents(cents: $slabAmountsCents[3]),
+			'scale5_200000plus' => $this->fromCents(cents: $slabAmountsCents[4]),
 			'total' => $this->fromCents(cents: $totaalCents),
 			'minimum' => $this->fromCents(cents: self::MINIMUM_CENTS),
 			'maximum' => $this->fromCents(cents: self::MAXIMUM_CENTS),
-			'toegepast' => $this->fromCents(cents: $toegepastCents),
-			'btwVerrekenbaar' => $btwVerrekenbaar,
-			'btwPercentage' => $appliedBtwPercentage,
+			'applied' => $this->fromCents(cents: $toegepastCents),
+			'vatOffsettable' => $vatOffsettable,
+			'vatPercentage' => $appliedBtwPercentage,
 			'vatAmount' => $this->fromCents(cents: $btwCents),
-			'toegepastInclBtw' => $this->fromCents(cents: ($toegepastCents + $btwCents)),
+			'appliedInclVat' => $this->fromCents(cents: ($toegepastCents + $btwCents)),
 		];
 
 	}//end staffel()
@@ -242,95 +242,95 @@ class BIKStaffelCalculator {
 	 * The rate is resolved from the maintained date-keyed table, so an accrual
 	 * window that crosses a statutory rate boundary is split into sub-periods
 	 * that each accrue at their own rate. A caller MAY pass an explicit
-	 * override tarief (e.g. a contractually agreed B2B rate per art. 6:119a
+	 * override rate (e.g. a contractually agreed B2B rate per art. 6:119a
 	 * lid 3 BW); an override forces a single flat period.
 	 *
 	 * @param string $partyType 'B2B' or 'B2C' (anything else treated as B2B for safety).
-	 * @param float $hoofdsom Outstanding principal in EUR.
-	 * @param DateTimeImmutable $ingangsdatum First day the rente accrues.
-	 * @param DateTimeImmutable $berekendOp Calculation date.
-	 * @param float|null $tariefB2B Override the B2B handelsrente (flat, skips the table).
-	 * @param float|null $tariefB2C Override the B2C wettelijke rente (flat, skips the table).
+	 * @param float $principal Outstanding principal in EUR.
+	 * @param DateTimeImmutable $effectiveDate First day the rente accrues.
+	 * @param DateTimeImmutable $calculatedOn Calculation date.
+	 * @param float|null $rateB2B Override the B2B handelsrente (flat, skips the table).
+	 * @param float|null $rateB2C Override the B2C wettelijke rente (flat, skips the table).
 	 *
-	 * @return array{tarief:float,type:string,ingangsdatum:string,berekendOp:string,dagen:int,amount:float,perioden:array<int,array{van:string,tot:string,dagen:int,tarief:float,amount:float}>}
+	 * @return array{rate:float,type:string,ingangsdatum:string,calculatedOn:string,days:int,amount:float,periods:array<int,array{van:string,tot:string,days:int,rate:float,amount:float}>}
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
 	public function rente(
 		string $partyType,
-		float $hoofdsom,
-		DateTimeImmutable $ingangsdatum,
-		DateTimeImmutable $berekendOp,
-		?float $tariefB2B = null,
-		?float $tariefB2C = null,
+		float $principal,
+		DateTimeImmutable $effectiveDate,
+		DateTimeImmutable $calculatedOn,
+		?float $rateB2B = null,
+		?float $rateB2C = null,
 	): array {
-		if ($hoofdsom < 0) {
-			throw new InvalidArgumentException('Rente hoofdsom must be non-negative.');
+		if ($principal < 0) {
+			throw new InvalidArgumentException('Rente principal must be non-negative.');
 		}
 
-		if ($berekendOp < $ingangsdatum) {
-			throw new InvalidArgumentException('berekendOp must not be before ingangsdatum.');
+		if ($calculatedOn < $effectiveDate) {
+			throw new InvalidArgumentException('calculatedOn must not be before ingangsdatum.');
 		}
 
 		$isB2C = ($partyType === 'B2C');
 		if ($isB2C === true) {
 			$type = 'WETTELIJKE_RENTE_B2C_6_119_BW';
 			$table = self::WETTELIJKE_RENTE_B2C_TABLE;
-			$override = $tariefB2C;
+			$override = $rateB2C;
 		} else {
 			$type = 'HANDELSRENTE_B2B_6_119A_BW';
 			$table = self::HANDELSRENTE_B2B_TABLE;
-			$override = $tariefB2B;
+			$override = $rateB2B;
 		}
 
-		$hoofdsomCents = $this->toCents(amount: $hoofdsom);
+		$hoofdsomCents = $this->toCents(amount: $principal);
 
 		if ($override !== null) {
 			// Explicit override — single flat period, table bypassed.
 			$segments = [
 				[
-					'van' => $ingangsdatum,
-					'tot' => $berekendOp,
-					'tarief' => $override,
+					'van' => $effectiveDate,
+					'tot' => $calculatedOn,
+					'rate' => $override,
 				],
 			];
 		} else {
 			$segments = $this->splitByRateBoundaries(
 				table: $table,
-				from: $ingangsdatum,
-				to: $berekendOp
+				from: $effectiveDate,
+				to: $calculatedOn
 			);
 		}
 
-		$perioden = [];
+		$periods = [];
 		$totaalCents = 0;
 		$totaalDagen = 0;
 		foreach ($segments as $segment) {
-			$dagen = (int)$segment['van']->diff($segment['tot'])->days;
-			$segmentCents = (int)round((($hoofdsomCents * $segment['tarief'] * $dagen) / 365.0));
+			$days = (int)$segment['van']->diff($segment['tot'])->days;
+			$segmentCents = (int)round((($hoofdsomCents * $segment['rate'] * $days) / 365.0));
 			$totaalCents += $segmentCents;
-			$totaalDagen += $dagen;
-			$perioden[] = [
+			$totaalDagen += $days;
+			$periods[] = [
 				'van' => $segment['van']->format('Y-m-d'),
 				'tot' => $segment['tot']->format('Y-m-d'),
-				'dagen' => $dagen,
-				'tarief' => $segment['tarief'],
+				'days' => $days,
+				'rate' => $segment['rate'],
 				'amount' => $this->fromCents(cents: $segmentCents),
 			];
 		}
 
-		// Headline tarief = the rate in force on berekendOp (the current rate).
+		// Headline rate = the rate in force on calculatedOn (the current rate).
 		$lastSegment = end($segments);
-		$headlineTarief = (float)$lastSegment['tarief'];
+		$headlineTarief = (float)$lastSegment['rate'];
 
 		return [
-			'tarief' => $headlineTarief,
+			'rate' => $headlineTarief,
 			'type' => $type,
-			'ingangsdatum' => $ingangsdatum->format('Y-m-d'),
-			'berekendOp' => $berekendOp->format('Y-m-d'),
-			'dagen' => $totaalDagen,
+			'ingangsdatum' => $effectiveDate->format('Y-m-d'),
+			'calculatedOn' => $calculatedOn->format('Y-m-d'),
+			'days' => $totaalDagen,
 			'amount' => $this->fromCents(cents: $totaalCents),
-			'perioden' => $perioden,
+			'periods' => $periods,
 		];
 
 	}//end rente()
@@ -370,7 +370,7 @@ class BIKStaffelCalculator {
 	 * @param DateTimeImmutable $from Start of accrual (inclusive).
 	 * @param DateTimeImmutable $to End of accrual (exclusive of the day).
 	 *
-	 * @return array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,tarief:float}>
+	 * @return array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,rate:float}>
 	 */
 	private function splitByRateBoundaries(array $table, DateTimeImmutable $from, DateTimeImmutable $to): array {
 		$fromStr = $from->format('Y-m-d');
@@ -390,7 +390,7 @@ class BIKStaffelCalculator {
 			$segments[] = [
 				'van' => $cursor,
 				'tot' => $cut,
-				'tarief' => $this->resolveRateOn(table: $table, on: $cursor),
+				'rate' => $this->resolveRateOn(table: $table, on: $cursor),
 			];
 			$cursor = $cut;
 		}
@@ -398,7 +398,7 @@ class BIKStaffelCalculator {
 		$segments[] = [
 			'van' => $cursor,
 			'tot' => $to,
-			'tarief' => $this->resolveRateOn(table: $table, on: $cursor),
+			'rate' => $this->resolveRateOn(table: $table, on: $cursor),
 		];
 
 		return $segments;
@@ -409,57 +409,57 @@ class BIKStaffelCalculator {
 	 *
 	 * Per art. 6:96 lid 6 BW, B2C debiteuren receive a mandatory 14-day grace
 	 * after the stage-3 aanmaning before incassokosten may be levied. Stage 3
-	 * fires on dagenNaVervalDatum = 30, so the earliest permitted day is 44.
+	 * fires on daysAfterExpiryDate = 30, so the earliest permitted day is 44.
 	 *
 	 * @param string $partyType 'B2B' / 'B2C'.
-	 * @param int $dagenVerzuim Number of days the invoice is overdue.
+	 * @param int $daysInArrears Number of days the invoice is overdue.
 	 *
 	 * @return bool True when the calculation is permitted.
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
-	public function isCalculationPermitted(string $partyType, int $dagenVerzuim): bool {
+	public function isCalculationPermitted(string $partyType, int $daysInArrears): bool {
 		if ($partyType !== 'B2C') {
 			return true;
 		}
 
-		return $dagenVerzuim >= (30 + self::B2C_GRACE_DAYS);
+		return $daysInArrears >= (30 + self::B2C_GRACE_DAYS);
 	}//end isCalculationPermitted()
 
 	/**
 	 * Assemble the full IncassoKostenBerekening record body per REQ-CCD-003.
 	 *
-	 * @param string $factuurId Invoice FK.
+	 * @param string $invoiceId Invoice FK.
 	 * @param string $administrationId Administration scope.
 	 * @param string $partyType 'B2B' / 'B2C' / 'GOVERNMENT'.
-	 * @param float $hoofdsom Outstanding principal in EUR.
-	 * @param DateTimeImmutable $ingangsdatum First day the rente accrues.
-	 * @param DateTimeImmutable $berekendOp Calculation date.
-	 * @param float|null $tariefB2B Override the B2B handelsrente.
-	 * @param float|null $tariefB2C Override the B2C wettelijke rente.
-	 * @param bool $btwVerrekenbaar True when the creditor CAN offset VAT (no surcharge).
-	 * @param float $btwPercentage VAT rate applied when !btwVerrekenbaar (default 21%).
+	 * @param float $principal Outstanding principal in EUR.
+	 * @param DateTimeImmutable $effectiveDate First day the rente accrues.
+	 * @param DateTimeImmutable $calculatedOn Calculation date.
+	 * @param float|null $rateB2B Override the B2B handelsrente.
+	 * @param float|null $rateB2C Override the B2C wettelijke rente.
+	 * @param bool $vatOffsettable True when the creditor CAN offset VAT (no surcharge).
+	 * @param float $vatPercentage VAT rate applied when !vatOffsettable (default 21%).
 	 *
 	 * @return array<string,mixed> Body ready to persist via ObjectService::saveObject.
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
 	public function compose(
-		string $factuurId,
+		string $invoiceId,
 		string $administrationId,
 		string $partyType,
-		float $hoofdsom,
-		DateTimeImmutable $ingangsdatum,
-		DateTimeImmutable $berekendOp,
-		?float $tariefB2B = null,
-		?float $tariefB2C = null,
-		bool $btwVerrekenbaar = true,
-		float $btwPercentage = self::DEFAULT_BTW_PERCENTAGE,
+		float $principal,
+		DateTimeImmutable $effectiveDate,
+		DateTimeImmutable $calculatedOn,
+		?float $rateB2B = null,
+		?float $rateB2C = null,
+		bool $vatOffsettable = true,
+		float $vatPercentage = self::DEFAULT_BTW_PERCENTAGE,
 	): array {
-		$berekening = $this->staffel(
-			hoofdsom: $hoofdsom,
-			btwVerrekenbaar: $btwVerrekenbaar,
-			btwPercentage: $btwPercentage
+		$calculation = $this->staffel(
+			principal: $principal,
+			vatOffsettable: $vatOffsettable,
+			vatPercentage: $vatPercentage
 		);
 
 		// For GOVERNMENT we still need a rente choice — treat as B2B handelsrente.
@@ -469,26 +469,29 @@ class BIKStaffelCalculator {
 			$effectiveParty = 'B2B';
 		}
 
+		// Named-argument LABELS carry no `$`, so a variable rename does not touch
+		// them — and a named argument needs the parameter to exist by that exact
+		// name. rente() already declares effectiveDate/rateB2B/rateB2C.
 		$rente = $this->rente(
 			partyType: $effectiveParty,
-			hoofdsom: $hoofdsom,
-			ingangsdatum: $ingangsdatum,
-			berekendOp: $berekendOp,
-			tariefB2B: $tariefB2B,
-			tariefB2C: $tariefB2C
+			principal: $principal,
+			effectiveDate: $effectiveDate,
+			calculatedOn: $calculatedOn,
+			rateB2B: $rateB2B,
+			rateB2C: $rateB2C
 		);
 
-		$hoofdsomCents = $this->toCents(amount: $hoofdsom);
+		$hoofdsomCents = $this->toCents(amount: $principal);
 		// Incassokosten owed = the normed fee INCLUDING any BTW surcharge.
-		$incassoCents = $this->toCents(amount: $berekening['toegepastInclBtw']);
+		$incassoCents = $this->toCents(amount: $calculation['appliedInclVat']);
 		$renteCents = $this->toCents(amount: $rente['amount']);
 		$totaalCents = ($hoofdsomCents + $incassoCents + $renteCents);
 
 		return [
-			'factuurId' => $factuurId,
-			'hoofdsom' => round($hoofdsom, 2),
-			'berekening' => $berekening,
-			'wettelijkeRente' => $rente,
+			'invoiceId' => $invoiceId,
+			'principal' => round($principal, 2),
+			'calculation' => $calculation,
+			'statutoryRente' => $rente,
 			'partyType' => $partyType,
 			'totalDue' => $this->fromCents(cents: $totaalCents),
 			'administrationId' => $administrationId,

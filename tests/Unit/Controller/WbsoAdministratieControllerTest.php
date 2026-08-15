@@ -114,7 +114,7 @@ final class WbsoAdministratieControllerTest extends TestCase {
 	 */
 	public function testReturnsOkWithRealisatieSummary(): void {
 		$this->withAdmin('adm-a');
-		$payload = ['data' => [['beschikkingNumber' => 'WBSO-1', 'exceeded' => false]], 'total' => 1];
+		$payload = ['data' => [['decisionNumber' => 'WBSO-1', 'exceeded' => false]], 'total' => 1];
 		$this->service->expects(self::once())
 			->method('realisatieSummary')
 			->with('adm-a')

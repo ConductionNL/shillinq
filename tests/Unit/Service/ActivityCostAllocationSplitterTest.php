@@ -54,8 +54,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 		$rule = [
 			'id' => 'odr-2026',
 			'splits' => [
-				['kostendrager' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimensie' => 'PUBL', 'grootboek' => '4431'],
-				['kostendrager' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimensie' => 'MO',   'grootboek' => '4432'],
+				['costObject' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimension' => 'PUBL', 'generalLedger' => '4431'],
+				['costObject' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimension' => 'MO',   'generalLedger' => '4432'],
 			],
 		];
 
@@ -73,9 +73,9 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 	public function testCalculateSplitsReconcilesDrift(): void {
 		$rule = [
 			'splits' => [
-				['kostendrager' => 'D-A', 'ratio' => 0.333, 'dimensie' => 'PUBL'],
-				['kostendrager' => 'D-B', 'ratio' => 0.333, 'dimensie' => 'PUBL'],
-				['kostendrager' => 'D-C', 'ratio' => 0.334, 'dimensie' => 'MO'],
+				['costObject' => 'D-A', 'ratio' => 0.333, 'dimension' => 'PUBL'],
+				['costObject' => 'D-B', 'ratio' => 0.333, 'dimension' => 'PUBL'],
+				['costObject' => 'D-C', 'ratio' => 0.334, 'dimension' => 'MO'],
 			],
 		];
 
@@ -95,8 +95,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 	public function testCalculateSplitsPreservesSignForCreditMemos(): void {
 		$rule = [
 			'splits' => [
-				['kostendrager' => 'D-A', 'ratio' => 0.7, 'dimensie' => 'PUBL'],
-				['kostendrager' => 'D-B', 'ratio' => 0.3, 'dimensie' => 'MO'],
+				['costObject' => 'D-A', 'ratio' => 0.7, 'dimension' => 'PUBL'],
+				['costObject' => 'D-B', 'ratio' => 0.3, 'dimension' => 'MO'],
 			],
 		];
 
@@ -129,8 +129,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 		$rule = [
 			'id' => 'odr-2026',
 			'splits' => [
-				['kostendrager' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimensie' => 'PUBL'],
-				['kostendrager' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimensie' => 'MO'],
+				['costObject' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimension' => 'PUBL'],
+				['costObject' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimension' => 'MO'],
 			],
 		];
 
@@ -145,8 +145,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 
 		self::assertSame('je-001', $allocation['journalEntryId']);
 		self::assertSame('ca-001', $allocation['commercialActivityId']);
-		self::assertSame('odr-2026', $allocation['verdeelsleutel']);
-		self::assertTrue($allocation['automatischToegepast']);
+		self::assertSame('odr-2026', $allocation['allocationKey']);
+		self::assertTrue($allocation['automaticApplied']);
 		self::assertNull($allocation['handmatigeOverride']);
 		self::assertSame('active', $allocation['status']);
 		self::assertCount(2, $allocation['splits']);
@@ -162,7 +162,7 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 			'journalEntryId' => 'je-001',
 			'commercialActivityId' => 'ca-001',
 			'originalAmount' => 184.00,
-			'verdeelsleutel' => 'odr-2026',
+			'allocationKey' => 'odr-2026',
 			'postingDate' => '2026-03-15',
 			'administrationId' => 'adm-tilburg',
 		];
@@ -186,7 +186,7 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 			'journalEntryId' => 'je-001',
 			'commercialActivityId' => 'ca-001',
 			'originalAmount' => 184.00,
-			'verdeelsleutel' => 'odr-2026',
+			'allocationKey' => 'odr-2026',
 			'postingDate' => '2026-03-15',
 			'administrationId' => 'adm-tilburg',
 		];
@@ -195,10 +195,10 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 			'originalAllocation' => $original,
 			'approvedBy' => ['concerncontroller', 'griffier'],
 			'reason' => 'Wrong rule applied; switching to D-PUBL only',
-			'newSplits' => [['kostendrager' => 'D-PUBL', 'ratio' => 1.0, 'amount' => 184.00, 'dimensie' => 'PUBL']],
+			'newSplits' => [['costObject' => 'D-PUBL', 'ratio' => 1.0, 'amount' => 184.00, 'dimension' => 'PUBL']],
 		]);
 
-		self::assertFalse($override['automatischToegepast']);
+		self::assertFalse($override['automaticApplied']);
 		self::assertSame(['concerncontroller', 'griffier'], $override['handmatigeOverride']['approvedBy']);
 		self::assertSame('aca-orig', $override['handmatigeOverride']['replacesId']);
 		self::assertSame('active', $override['status']);
@@ -210,13 +210,13 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 	 */
 	public function testMaterialiseSplitsToGlLines(): void {
 		$splits = [
-			['kostendrager' => 'D-PUBL', 'ratio' => 0.64, 'amount' => 117.76, 'dimensie' => 'PUBL', 'grootboek' => '4431'],
-			['kostendrager' => 'D-MO',   'ratio' => 0.36, 'amount' => 66.24,  'dimensie' => 'MO',   'grootboek' => '4432'],
+			['costObject' => 'D-PUBL', 'ratio' => 0.64, 'amount' => 117.76, 'dimension' => 'PUBL', 'generalLedger' => '4431'],
+			['costObject' => 'D-MO',   'ratio' => 0.36, 'amount' => 66.24,  'dimension' => 'MO',   'generalLedger' => '4432'],
 		];
 
 		$entries = $this->svc->materialiseSplits($splits);
 		self::assertCount(2, $entries);
-		self::assertSame('4431', $entries[0]['grootboek']);
+		self::assertSame('4431', $entries[0]['generalLedger']);
 		self::assertSame(117.76, $entries[0]['amount']);
 		self::assertSame('debit', $entries[0]['side']);
 

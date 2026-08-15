@@ -67,20 +67,20 @@ class OpdrachtUitvoeringGuard {
 	 *
 	 * Fail-closed: returns false on any exception (denies completion) per CWE-863.
 	 *
-	 * @param array<string, mixed> $opdracht OpdrachtUitvoering object array supplied by OR.
+	 * @param array<string, mixed> $assignment OpdrachtUitvoering object array supplied by OR.
 	 *
 	 * @return bool True when the delivery may be marked completed.
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
 	 */
-	public function canVoltooien(array $opdracht): bool {
+	public function canVoltooien(array $assignment): bool {
 		try {
-			if ($this->hasValidBewijsstuk(opdracht: $opdracht) === false) {
+			if ($this->hasValidBewijsstuk(assignment: $assignment) === false) {
 				$this->logger->info(
 					'OpdrachtUitvoeringGuard: no bewijsstuk attached — denying completion (REQ-004)',
 					[
-						'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
-						'mijlpaalId' => ($opdracht['mijlpaalId'] ?? 'unknown'),
+						'commitmentId' => ($assignment['commitmentId'] ?? 'unknown'),
+						'milestoneId' => ($assignment['milestoneId'] ?? 'unknown'),
 					]
 				);
 				return false;
@@ -91,7 +91,7 @@ class OpdrachtUitvoeringGuard {
 			$this->logger->error(
 				'OpdrachtUitvoeringGuard: canVoltooien failed — denying completion (fail-closed)',
 				[
-					'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
+					'commitmentId' => ($assignment['commitmentId'] ?? 'unknown'),
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -106,17 +106,17 @@ class OpdrachtUitvoeringGuard {
 	 * A bewijsstuk is valid when it is an array carrying a non-empty documentId.
 	 * Scalar entries or entries without a documentId do not satisfy REQ-004.
 	 *
-	 * @param array<string, mixed> $opdracht OpdrachtUitvoering object array.
+	 * @param array<string, mixed> $assignment OpdrachtUitvoering object array.
 	 *
 	 * @return bool True when at least one valid bewijsstuk exists.
 	 */
-	private function hasValidBewijsstuk(array $opdracht): bool {
-		$bewijsstukken = ($opdracht['bewijsstukken'] ?? []);
-		if (is_array($bewijsstukken) === false) {
+	private function hasValidBewijsstuk(array $assignment): bool {
+		$supportingDocuments = ($assignment['supportingDocuments'] ?? []);
+		if (is_array($supportingDocuments) === false) {
 			return false;
 		}
 
-		foreach ($bewijsstukken as $bewijsstuk) {
+		foreach ($supportingDocuments as $bewijsstuk) {
 			if (is_array($bewijsstuk) === false) {
 				continue;
 			}

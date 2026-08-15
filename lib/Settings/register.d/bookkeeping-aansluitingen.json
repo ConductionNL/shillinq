@@ -24,7 +24,7 @@
         },
         "required": [
           "name",
-          "aansluitingType",
+          "reconciliationType",
           "toleranceCents",
           "expectedRelationship",
           "administrationId"
@@ -36,7 +36,7 @@
             "example": "BTW-grootboek naar aangifte",
             "title": "Name"
           },
-          "aansluitingType": {
+          "reconciliationType": {
             "type": "string",
             "description": "The resolver AansluitingService dispatches to for source A / source B totals (REQ-AANS-002). Only two are implemented in this change; additional types are a named follow-up (see proposal.md).",
             "enum": [
@@ -149,13 +149,13 @@
           "description": "REQ-AANS-006: every lifecycle transition (explain/resolve/reopen) and the explainedBy/explainedReasonText fields are audit-trailed."
         },
         "required": [
-          "aansluitingId",
+          "reconciliationId",
           "periodId",
           "administrationId",
           "status"
         ],
         "properties": {
-          "aansluitingId": {
+          "reconciliationId": {
             "type": "string",
             "format": "uuid",
             "$ref": "Aansluiting",
@@ -374,7 +374,7 @@
             "field": "id",
             "operation": "count",
             "description": "Count of open results per Aansluiting definition, across all computed periods.",
-            "groupBy": "aansluitingId",
+            "groupBy": "reconciliationId",
             "filter": {
               "status": "open"
             }
@@ -412,7 +412,7 @@
           "slug": "aansl-btw-ledger-aangifte-smb"
         },
         "name": "BTW-grootboek naar aangifte",
-        "aansluitingType": "btw-ledger-aangifte",
+        "reconciliationType": "btw-ledger-aangifte",
         "sourceALabel": "BTW-grootboek (huidig)",
         "sourceBLabel": "Ingediende BTW-aangifte",
         "toleranceCents": 100,
@@ -429,7 +429,7 @@
           "slug": "aansl-ar-subledger-1300-smb"
         },
         "name": "Debiteuren subgrootboek naar 1300",
-        "aansluitingType": "subledger-gl-control",
+        "reconciliationType": "subledger-gl-control",
         "sourceALabel": "Grootboekrekening 1300 Debiteuren",
         "sourceBLabel": "Openstaande debiteuren (subgrootboek)",
         "toleranceCents": 100,
@@ -446,7 +446,7 @@
           "slug": "aansl-ap-subledger-1600-smb"
         },
         "name": "Crediteuren subgrootboek naar 1600",
-        "aansluitingType": "subledger-gl-control",
+        "reconciliationType": "subledger-gl-control",
         "sourceALabel": "Grootboekrekening 1600 Crediteuren",
         "sourceBLabel": "Openstaande crediteuren (subgrootboek)",
         "toleranceCents": 100,
@@ -462,7 +462,7 @@
           "schema": "AansluitingResult",
           "slug": "aanslres-btw-2026q2-smb"
         },
-        "aansluitingId": "aansl-btw-ledger-aangifte-smb",
+        "reconciliationId": "aansl-btw-ledger-aangifte-smb",
         "periodId": "2026-Q2",
         "computedAt": "2026-07-13T09:00:00+00:00",
         "sourceATotal": 4600.0,
@@ -499,7 +499,7 @@
           "schema": "AansluitingResult",
           "slug": "aanslres-ar-2026q2-smb"
         },
-        "aansluitingId": "aansl-ar-subledger-1300-smb",
+        "reconciliationId": "aansl-ar-subledger-1300-smb",
         "periodId": "2026-Q2",
         "computedAt": "2026-07-13T09:05:00+00:00",
         "sourceATotal": 18500.0,
@@ -530,7 +530,7 @@
           "schema": "AansluitingResult",
           "slug": "aanslres-ap-2026q2-smb"
         },
-        "aansluitingId": "aansl-ap-subledger-1600-smb",
+        "reconciliationId": "aansl-ap-subledger-1600-smb",
         "periodId": "2026-Q2",
         "computedAt": "2026-07-13T09:10:00+00:00",
         "sourceATotal": -9200.0,

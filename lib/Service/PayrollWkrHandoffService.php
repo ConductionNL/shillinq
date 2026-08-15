@@ -64,27 +64,27 @@ class PayrollWkrHandoffService {
 	 * tranches at its own boundary so this service does not pre-tranche.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
-	 * @param string $periodeId Period id.
+	 * @param string $periodId Period id.
 	 *
 	 * @return array<string,mixed> Loonsom payload for the WKR app.
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	public function toWkrLoonsomPayload(string $administrationId, string $periodeId): array {
-		$stroken = $this->findStroken(administrationId: $administrationId, periodeId: $periodeId);
+	public function toWkrLoonsomPayload(string $administrationId, string $periodId): array {
+		$stroken = $this->findStroken(administrationId: $administrationId, periodId: $periodId);
 
-		$loonsomC = 0;
-		$aantal = 0;
-		foreach ($stroken as $strook) {
-			$loonsomC += $this->calculator->toCents(amount: (float)($strook['fiscaalLoon'] ?? 0));
-			$aantal++;
+		$payrollTotalC = 0;
+		$count = 0;
+		foreach ($stroken as $slip) {
+			$payrollTotalC += $this->calculator->toCents(amount: (float)($slip['fiscalPay'] ?? 0));
+			$count++;
 		}
 
 		return [
-			'periodeId' => $periodeId,
+			'periodId' => $periodId,
 			'administrationId' => $administrationId,
-			'loonsom' => $this->calculator->fromCents(cents: $loonsomC),
-			'aantalStroken' => $aantal,
+			'loonsom' => $this->calculator->fromCents(cents: $payrollTotalC),
+			'aantalStroken' => $count,
 			'currency' => 'EUR',
 			'source' => 'LoonStrook',
 		];
@@ -95,11 +95,11 @@ class PayrollWkrHandoffService {
 	 * Read all LoonStrook records for the period, administration-scoped.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param string $periodeId Period id.
+	 * @param string $periodId Period id.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function findStroken(string $administrationId, string $periodeId): array {
+	private function findStroken(string $administrationId, string $periodId): array {
 		$results = $this->objectService()
 			->setRegister($this->register())
 			->setSchema('LoonStrook')
@@ -107,7 +107,7 @@ class PayrollWkrHandoffService {
 				[
 					'filters' => [
 						'administrationId' => $administrationId,
-						'periodeId' => $periodeId,
+						'periodId' => $periodId,
 					],
 				]
 			);

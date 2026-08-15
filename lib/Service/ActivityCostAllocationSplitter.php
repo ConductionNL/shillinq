@@ -94,8 +94,8 @@ class ActivityCostAllocationSplitter {
 				continue;
 			}
 
-			$from = (string)($rule['effectiveFrom'] ?? $rule['geldigVanaf'] ?? '');
-			$to = (string)($rule['effectiveTo'] ?? $rule['geldigTot'] ?? '');
+			$from = (string)($rule['effectiveFrom'] ?? $rule['validFrom'] ?? '');
+			$to = (string)($rule['effectiveTo'] ?? $rule['validTo'] ?? '');
 
 			try {
 				if ($from !== '' && new DateTimeImmutable($from) > $posting) {
@@ -171,11 +171,11 @@ class ActivityCostAllocationSplitter {
 			$partCents = (int)round($absCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
 
 			$records[] = [
-				'kostendrager' => (string)($split['kostendrager'] ?? $split['kostendragerCode'] ?? ''),
+				'costObject' => (string)($split['costObject'] ?? $split['costObjectCode'] ?? ''),
 				'ratio' => $ratio,
 				'amount' => $this->fromCents(cents: ($partCents * $sign)),
-				'grootboek' => ($split['grootboek'] ?? $split['glAccount'] ?? null),
-				'dimensie' => (string)($split['dimensie'] ?? 'MO'),
+				'generalLedger' => ($split['generalLedger'] ?? $split['glAccount'] ?? null),
+				'dimension' => (string)($split['dimension'] ?? 'MO'),
 			];
 
 			$allocated += $partCents;
@@ -220,8 +220,8 @@ class ActivityCostAllocationSplitter {
 			'glLineId' => ($input['glLineId'] ?? null),
 			'originalAmount' => (float)$input['originalAmount'],
 			'splits' => $splits,
-			'verdeelsleutel' => (string)($input['rule']['id'] ?? ''),
-			'automatischToegepast' => true,
+			'allocationKey' => (string)($input['rule']['id'] ?? ''),
+			'automaticApplied' => true,
 			'handmatigeOverride' => null,
 			'postingDate' => (string)$input['postingDate'],
 			'materialised' => (bool)($input['materialised'] ?? false),
@@ -268,8 +268,8 @@ class ActivityCostAllocationSplitter {
 			'glLineId' => ($original['glLineId'] ?? null),
 			'originalAmount' => (float)($original['originalAmount'] ?? 0),
 			'splits' => (array)($input['newSplits'] ?? []),
-			'verdeelsleutel' => (string)($original['verdeelsleutel'] ?? ''),
-			'automatischToegepast' => false,
+			'allocationKey' => (string)($original['allocationKey'] ?? ''),
+			'automaticApplied' => false,
 			'handmatigeOverride' => [
 				'approvedBy' => $unique,
 				'reason' => $reason,
@@ -315,10 +315,10 @@ class ActivityCostAllocationSplitter {
 			}
 
 			$entries[] = [
-				'grootboek' => (string)($split['grootboek'] ?? ($glAccountClass . ((string)($split['dimensie'] ?? 'MO')))),
+				'generalLedger' => (string)($split['generalLedger'] ?? ($glAccountClass . ((string)($split['dimension'] ?? 'MO')))),
 				'amount' => $amount,
-				'kostendrager' => (string)($split['kostendrager'] ?? ''),
-				'dimensie' => (string)($split['dimensie'] ?? 'MO'),
+				'costObject' => (string)($split['costObject'] ?? ''),
+				'dimension' => (string)($split['dimension'] ?? 'MO'),
 				'side' => $side,
 			];
 		}//end foreach

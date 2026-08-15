@@ -174,9 +174,9 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 
 export default {
 	name: 'ExternalAdapterDetail',
@@ -213,6 +213,7 @@ export default {
 			const parts = path.split('/').filter(Boolean)
 			return parts.length > 0 ? parts[parts.length - 1] : ''
 		},
+
 		badgeClass() {
 			if (!this.adapter) {
 				return ''
@@ -266,6 +267,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		backToIndex() {
 			this.$router.push({ name: 'ExternalAdaptersStatus' })
 		},

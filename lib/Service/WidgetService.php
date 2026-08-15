@@ -424,6 +424,46 @@ class WidgetService {
 	}//end createAppointment()
 
 	/**
+	 * Whether a serviceId names a service the business actually published.
+	 *
+	 * The same #491 gate as findPublicService(), exposed for callers that need
+	 * to ASK the question rather than resolve the row — currently
+	 * WidgetApiController::slots().
+	 *
+	 * Why slots() needs it: `guard()` proves the caller holds a widget API key,
+	 * and that key is by definition shipped in a PUBLIC booking widget, so
+	 * anyone who can view the widget holds it. listPublicServices() filters the
+	 * catalogue down to `isPublic` entries precisely so a business can keep
+	 * internal services out of it — but availability was readable for ANY
+	 * serviceId of that tenant, published or not. Booking was gated (#491) and
+	 * listing was gated; reading availability was the third door.
+	 *
+	 * Fail-closed: an unresolvable catalogue denies rather than permits.
+	 *
+	 * @param string $serviceId The service to check.
+	 *
+	 * @return bool True when the service is public and active.
+	 *
+	 * @psalm-return   bool
+	 * @phpstan-return bool
+	 *
+	 * @spec openspec/specs/bookings-self-service-widget/spec.md
+	 */
+	public function isPubliclyBookable(string $serviceId): bool {
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			return false;
+		}
+
+		return $this->findPublicService(
+			objectService: $objectService,
+			serviceId: $serviceId
+		) !== null;
+
+	}//end isPubliclyBookable()
+
+
+	/**
 	 * Resolve a bookable public Service by its serviceId, or null.
 	 *
 	 * Fail-closed in every direction: an unresolvable catalogue, a missing

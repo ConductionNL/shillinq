@@ -143,7 +143,7 @@ class AnnualReportGuard {
 	public function canVaststellen(string $annualReportId, ?array $object = null): bool {
 		try {
 			$report = $object;
-			if ($report === null || isset($report['accountantsverklaringVereist']) === false) {
+			if ($report === null || isset($report['auditorsStatementRequired']) === false) {
 				$report = $this->resolveAnnualReport(annualReportId: $annualReportId);
 			}
 
@@ -151,12 +151,12 @@ class AnnualReportGuard {
 				return false;
 			}
 
-			$vereist = ($report['accountantsverklaringVereist'] ?? false) === true;
-			if ($vereist === false) {
+			$required = ($report['auditorsStatementRequired'] ?? false) === true;
+			if ($required === false) {
 				return true;
 			}
 
-			$status = (string)($report['accountantsverklaringStatus'] ?? 'niet-vereist');
+			$status = (string)($report['auditorsStatementStatus'] ?? 'niet-vereist');
 			$valid = ['goedkeurend', 'met-beperking', 'samenstelling', 'beoordeling'];
 
 			return in_array($status, $valid, true);
@@ -183,12 +183,12 @@ class AnnualReportGuard {
 	 *                                 are available (fail-closed).
 	 */
 	private function balanceTotalsInCents(array $balanceSheet): ?array {
-		$totalActiva = ($balanceSheet['totalActiva'] ?? null);
-		$totalPassiva = ($balanceSheet['totalPassiva'] ?? null);
-		if ($totalActiva !== null && $totalPassiva !== null) {
+		$totalAssets = ($balanceSheet['totalAssets'] ?? null);
+		$totalLiabilities = ($balanceSheet['totalLiabilities'] ?? null);
+		if ($totalAssets !== null && $totalLiabilities !== null) {
 			return [
-				(int)round((float)$totalActiva * 100),
-				(int)round((float)$totalPassiva * 100),
+				(int)round((float)$totalAssets * 100),
+				(int)round((float)$totalLiabilities * 100),
 			];
 		}
 
@@ -198,8 +198,8 @@ class AnnualReportGuard {
 		}
 
 		return [
-			$this->sumRubriekCents(rubrieken: $rubrieken, zijde: 'activa'),
-			$this->sumRubriekCents(rubrieken: $rubrieken, zijde: 'passiva'),
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'activa'),
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'passiva'),
 		];
 	}//end balanceTotalsInCents()
 
@@ -207,15 +207,15 @@ class AnnualReportGuard {
 	 * Sum the huidigJaar amounts (in integer cents) of the rubrieken on one zijde.
 	 *
 	 * @param array<int,mixed> $rubrieken The balans rubriek rows.
-	 * @param string $zijde The side to total ('activa' or 'passiva').
+	 * @param string $side The side to total ('activa' or 'passiva').
 	 *
 	 * @return int The summed amount in integer cents.
 	 */
-	private function sumRubriekCents(array $rubrieken, string $zijde): int {
+	private function sumRubriekCents(array $rubrieken, string $side): int {
 		$cents = 0;
-		foreach ($rubrieken as $rubriek) {
-			if (is_array($rubriek) === true && ($rubriek['zijde'] ?? '') === $zijde) {
-				$cents += (int)round((float)($rubriek['currentYear'] ?? 0) * 100);
+		foreach ($rubrieken as $section) {
+			if (is_array($section) === true && ($section['side'] ?? '') === $side) {
+				$cents += (int)round((float)($section['currentYear'] ?? 0) * 100);
 			}
 		}
 

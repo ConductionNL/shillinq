@@ -97,31 +97,31 @@ class RechtmatigheidGuard {
 	 */
 	public function canFinaliseToets(array $toets): bool {
 		try {
-			$uitkomst = (string)($toets['uitkomst'] ?? '');
+			$outcome = (string)($toets['outcome'] ?? '');
 
-			if (in_array($uitkomst, self::NEGATIVE_UITKOMSTEN, true) === false) {
+			if (in_array($outcome, self::NEGATIVE_UITKOMSTEN, true) === false) {
 				// Voldoet / niet_van_toepassing: no substantiation gate.
 				return true;
 			}
 
-			$onderbouwing = trim((string)($toets['onderbouwing'] ?? ''));
-			if (mb_strlen($onderbouwing) < self::MIN_ONDERBOUWING_LENGTH) {
+			$substantiation = trim((string)($toets['substantiation'] ?? ''));
+			if (mb_strlen($substantiation) < self::MIN_ONDERBOUWING_LENGTH) {
 				$this->logger->info(
 					'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
 					[
 						'toetsId' => ($toets['id'] ?? 'unknown'),
-						'uitkomst' => $uitkomst,
-						'length' => mb_strlen($onderbouwing),
+						'outcome' => $outcome,
+						'length' => mb_strlen($substantiation),
 					]
 				);
 				return false;
 			}
 
-			$bevinding = trim((string)($toets['rechtmatigheidsbevinding'] ?? ''));
+			$bevinding = trim((string)($toets['lawfulnessFinding'] ?? ''));
 			if ($bevinding === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden',
-					['toetsId' => ($toets['id'] ?? 'unknown'), 'uitkomst' => $uitkomst]
+					['toetsId' => ($toets['id'] ?? 'unknown'), 'outcome' => $outcome]
 				);
 				return false;
 			}
@@ -153,11 +153,11 @@ class RechtmatigheidGuard {
 	 */
 	public function canResolveBevinding(array $bevinding): bool {
 		try {
-			$correctie = trim((string)($bevinding['correctieboeking_id'] ?? ''));
-			if ($correctie === '') {
+			$correction = trim((string)($bevinding['correction_entry_id'] ?? ''));
+			if ($correction === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: bevinding without correctieboeking_id — denying oplossen',
-					['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown')]
+					['findingNumber' => ($bevinding['findingNumber'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -166,7 +166,7 @@ class RechtmatigheidGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RechtmatigheidGuard: canResolveBevinding failed — denying oplossen (fail-closed)',
-				['bevindingsnummer' => ($bevinding['bevindingsnummer'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['findingNumber' => ($bevinding['findingNumber'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -183,24 +183,24 @@ class RechtmatigheidGuard {
 	 *
 	 * Fail-closed: returns false on any exception.
 	 *
-	 * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
+	 * @param array<string, mixed> $paragraph Rechtmatigheidsparagraaf object array.
 	 *
 	 * @return bool True when the paragraaf may be vastgesteld by college.
 	 *
 	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
-	public function canVaststellenParagraaf(array $paragraaf): bool {
+	public function canVaststellenParagraaf(array $paragraph): bool {
 		try {
-			$binnenTolerantie = (bool)($paragraaf['binnen_tolerantie'] ?? true);
-			if ($binnenTolerantie === true) {
+			$binnenTolerance = (bool)($paragraph['within_tolerance'] ?? true);
+			if ($binnenTolerance === true) {
 				return true;
 			}
 
-			$verklaring = trim((string)($paragraaf['verklaring_college'] ?? ''));
-			if ($verklaring === '') {
+			$declaration = trim((string)($paragraph['declaration_college'] ?? ''));
+			if ($declaration === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: paragraaf buiten tolerantie zonder toelichting — denying vaststellen',
-					['financialYear' => ($paragraaf['financialYear'] ?? 'unknown')]
+					['financialYear' => ($paragraph['financialYear'] ?? 'unknown')]
 				);
 				return false;
 			}
@@ -209,7 +209,7 @@ class RechtmatigheidGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RechtmatigheidGuard: canVaststellenParagraaf failed — denying vaststellen (fail-closed)',
-				['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['financialYear' => ($paragraph['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try
@@ -225,19 +225,19 @@ class RechtmatigheidGuard {
 	 *
 	 * Fail-closed: returns false on any exception.
 	 *
-	 * @param array<string, mixed> $paragraaf Rechtmatigheidsparagraaf object array.
+	 * @param array<string, mixed> $paragraph Rechtmatigheidsparagraaf object array.
 	 *
 	 * @return bool True when the paragraaf may be exported.
 	 *
 	 * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
 	 */
-	public function canExportParagraaf(array $paragraaf): bool {
+	public function canExportParagraaf(array $paragraph): bool {
 		try {
-			$status = (string)($paragraaf['status'] ?? '');
+			$status = (string)($paragraph['status'] ?? '');
 			if ($status !== 'definitief') {
 				$this->logger->info(
 					'RechtmatigheidGuard: paragraaf not definitief — denying jaarrekening-export',
-					['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'status' => $status]
+					['financialYear' => ($paragraph['financialYear'] ?? 'unknown'), 'status' => $status]
 				);
 				return false;
 			}
@@ -246,7 +246,7 @@ class RechtmatigheidGuard {
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RechtmatigheidGuard: canExportParagraaf failed — denying export (fail-closed)',
-				['financialYear' => ($paragraaf['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
+				['financialYear' => ($paragraph['financialYear'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
 		}//end try

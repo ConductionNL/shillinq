@@ -147,7 +147,7 @@ class FoldIntoOrder implements IRepairStep {
 		$seen = $this->loadFoldedMarkers($objectService, $registerSlug, $output);
 
 		$summary = [];
-		$summary['Subsidie'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'Subsidie', $this->buildSubsidieOrder(...), $seen);
+		$summary['Subsidie'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'Subsidie', $this->buildSubsidyOrder(...), $seen);
 		$summary['PurchaseOrder'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'PurchaseOrder', $this->buildPurchaseOrder(...), $seen);
 		$summary['DBAOpdracht'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'DBAOpdracht', $this->buildEngagementOrder(...), $seen);
 
@@ -381,7 +381,7 @@ class FoldIntoOrder implements IRepairStep {
 	 */
 	private function migrationKey(array $src, string $schema): string {
 		$preferred = match ($schema) {
-			'Subsidie' => (string)($src['subsidieNumber'] ?? ''),
+			'Subsidie' => (string)($src['subsidyNumber'] ?? ''),
 			'PurchaseOrder' => (string)($src['poNumber'] ?? ''),
 			default => '',
 		};
@@ -457,29 +457,29 @@ class FoldIntoOrder implements IRepairStep {
 	 *
 	 * @return array<string,mixed> The Order record.
 	 */
-	private function buildSubsidieOrder(array $src, string $migrationKey): array {
+	private function buildSubsidyOrder(array $src, string $migrationKey): array {
 		$grantedAmount = $src['grantedAmount'] ?? ($src['awardAmount'] ?? null);
 
 		return [
 			'administrationId' => (string)($src['administrationId'] ?? 'unknown'),
-			'orderType' => 'subsidie',
+			'orderType' => 'subsidy',
 			'direction' => (string)($src['direction'] ?? 'outgoing'),
 			'orderNumber' => $migrationKey,
 			'counterpartyId' => $this->stringOrNull($src['counterpartyId'] ?? null),
 			'counterpartyName' => $this->firstNonEmpty([($src['counterpartyName'] ?? null), ($src['granteeOrganization'] ?? null)]),
 			'currency' => (string)($src['currency'] ?? 'EUR'),
-			'orderDate' => $this->toDateTime($src['aanvraagDate'] ?? ($src['awardDate'] ?? null)),
+			'orderDate' => $this->toDateTime($src['requestDate'] ?? ($src['awardDate'] ?? null)),
 			'totalAmount' => ($grantedAmount === null ? null : (float)$grantedAmount),
 			'description' => $this->stringOrNull($src['purposeDescription'] ?? ($src['notes'] ?? null)),
 			'state' => (string)($src['state'] ?? 'aanvraag'),
-			'subsidie' => [
-				'subsidieNumber' => $this->stringOrNull($src['subsidieNumber'] ?? null),
-				'schemeName' => $this->firstNonEmpty([($src['schemeName'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidieName'] ?? null)]),
+			'subsidy' => [
+				'subsidyNumber' => $this->stringOrNull($src['subsidyNumber'] ?? null),
+				'schemeName' => $this->firstNonEmpty([($src['schemeName'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidyName'] ?? null)]),
 				'schemeArticle' => $this->firstNonEmpty([($src['schemeArticle'] ?? null), ($src['grantProgram'] ?? null)]),
 				'subsidyScheme' => $this->stringOrNull($src['subsidyScheme'] ?? null),
-				'aanvraagDate' => $this->toDate($src['aanvraagDate'] ?? null),
-				'beschikkingDate' => $this->toDate($src['beschikkingDate'] ?? ($src['awardDate'] ?? null)),
-				'vaststellingDate' => $this->toDate($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
+				'requestDate' => $this->toDate($src['requestDate'] ?? null),
+				'decisionDate' => $this->toDate($src['decisionDate'] ?? ($src['awardDate'] ?? null)),
+				'determinationDate' => $this->toDate($src['determinationDate'] ?? ($src['settlementDate'] ?? null)),
 				'settlementDate' => $this->toDate($src['settlementDate'] ?? null),
 				'disbursementDate' => $this->toDate($src['disbursementDate'] ?? null),
 				'requestedAmount' => $this->floatOrNull($src['requestedAmount'] ?? null),
@@ -487,11 +487,11 @@ class FoldIntoOrder implements IRepairStep {
 				'determinedAmount' => $this->floatOrNull($src['determinedAmount'] ?? null),
 				'paidOutAmount' => $this->floatOrNull($src['paidOutAmount'] ?? null),
 				'reclaimedAmount' => $this->floatOrNull($src['reclaimedAmount'] ?? null),
-				'beschikkingUri' => $this->stringOrNull($src['beschikkingUri'] ?? null),
-				'vaststellingUri' => $this->stringOrNull($src['vaststellingUri'] ?? null),
+				'decisionUri' => $this->stringOrNull($src['decisionUri'] ?? null),
+				'determinationUri' => $this->stringOrNull($src['determinationUri'] ?? null),
 				'attachmentUri' => $this->stringOrNull($src['attachmentUri'] ?? null),
 				'prestatieverantwoording' => $this->stringOrNull($src['prestatieverantwoording'] ?? null),
-				'afwijzingsReden' => $this->stringOrNull($src['afwijzingsReden'] ?? null),
+				'rejectionReason' => $this->stringOrNull($src['rejectionReason'] ?? null),
 				'repaymentPlanId' => $this->stringOrNull($src['repaymentPlanId'] ?? null),
 				'hasRepaymentPlan' => $this->boolOrNull($src['hasRepaymentPlan'] ?? null),
 				'approvingAuthority' => $this->stringOrNull($src['approvingAuthority'] ?? null),
@@ -570,41 +570,41 @@ class FoldIntoOrder implements IRepairStep {
 	 * @return array<string,mixed> The Order record.
 	 */
 	private function buildEngagementOrder(array $src, string $migrationKey): array {
-		$verwachteOmzet = $this->intOrNull($src['expectedRevenue'] ?? null);
+		$expectedRevenue = $this->intOrNull($src['expectedRevenue'] ?? null);
 
 		return [
 			'administrationId' => (string)($src['administrationId'] ?? 'unknown'),
 			'orderType' => 'engagement',
 			'direction' => 'outgoing',
 			'orderNumber' => 'DBA-' . $migrationKey,
-			'counterpartyId' => $this->stringOrNull($src['klantId'] ?? null),
-			'counterpartyName' => $this->stringOrNull($src['klantId'] ?? null),
+			'counterpartyId' => $this->stringOrNull($src['customerId'] ?? null),
+			'counterpartyName' => $this->stringOrNull($src['customerId'] ?? null),
 			'currency' => 'EUR',
-			'orderDate' => $this->toDateTime($src['startDatum'] ?? null),
+			'orderDate' => $this->toDateTime($src['startDate'] ?? null),
 			'endDate' => $this->toDateTime($src['expectedEndDate'] ?? null),
-			'totalAmount' => ($verwachteOmzet === null ? null : ($verwachteOmzet / 100.0)),
+			'totalAmount' => ($expectedRevenue === null ? null : ($expectedRevenue / 100.0)),
 			'description' => $this->stringOrNull($src['assignmentName'] ?? null),
 			'state' => (string)($src['intakeStatus'] ?? 'DRAFT'),
 			'engagement' => [
 				'enterpriseId' => $this->stringOrNull($src['enterpriseId'] ?? null),
-				'klantId' => $this->stringOrNull($src['klantId'] ?? null),
+				'customerId' => $this->stringOrNull($src['customerId'] ?? null),
 				'assignmentName' => $this->stringOrNull($src['assignmentName'] ?? null),
 				'expectedEndDate' => $this->toDate($src['expectedEndDate'] ?? null),
 				'actualEndDate' => $this->toDate($src['actualEndDate'] ?? null),
-				'expectedRevenue' => $verwachteOmzet,
+				'expectedRevenue' => $expectedRevenue,
 				'realisedRevenue' => $this->intOrNull($src['realisedRevenue'] ?? null),
-				'eenmaligLageDrempel' => $this->boolOrNull($src['eenmaligLageDrempel'] ?? null),
-				'modelOvereenkomstId' => $this->stringOrNull($src['modelOvereenkomstId'] ?? null),
-				'intakeDatum' => $this->toDate($src['intakeDatum'] ?? null),
+				'oneOffLowThreshold' => $this->boolOrNull($src['oneOffLowThreshold'] ?? null),
+				'modelAgreementId' => $this->stringOrNull($src['modelAgreementId'] ?? null),
+				'intakeDate' => $this->toDate($src['intakeDate'] ?? null),
 				'actueleRisicoscore' => $this->intOrNull($src['actueleRisicoscore'] ?? null),
-				'risicoNiveau' => $this->stringOrNull($src['risicoNiveau'] ?? null),
+				'riskLevel' => $this->stringOrNull($src['riskLevel'] ?? null),
 				'openFlags' => $this->intOrNull($src['openFlags'] ?? null),
 				'evidenceDossierId' => $this->stringOrNull($src['evidenceDossierId'] ?? null),
-				'wbaBeoordelingResultaat' => $this->stringOrNull($src['wbaBeoordelingResultaat'] ?? null),
-				'wbaGeldigTot' => $this->toDate($src['wbaGeldigTot'] ?? null),
-				'intermediairMode' => $this->boolOrNull($src['intermediairMode'] ?? null),
-				'perspectief' => $this->stringOrNull($src['perspectief'] ?? null),
-				'retentieDeadline' => $this->toDate($src['retentieDeadline'] ?? null),
+				'wbaAssessmentResult' => $this->stringOrNull($src['wbaAssessmentResult'] ?? null),
+				'wbaValidTo' => $this->toDate($src['wbaValidTo'] ?? null),
+				'intermediaryMode' => $this->boolOrNull($src['intermediaryMode'] ?? null),
+				'perspective' => $this->stringOrNull($src['perspective'] ?? null),
+				'retentionDeadline' => $this->toDate($src['retentionDeadline'] ?? null),
 			],
 			'migratedFrom' => [
 				'schema' => 'DBAOpdracht',

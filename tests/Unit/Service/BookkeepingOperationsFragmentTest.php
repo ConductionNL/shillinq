@@ -125,9 +125,9 @@ final class BookkeepingOperationsFragmentTest extends TestCase {
 		// Subsidie's lifecycle moved with it to the canonical monolith
 		// definition (commit 07709a0f) — keep the state-bearing guarantee.
 		$monolith = json_decode((string)file_get_contents($this->registerPath), true);
-		$subsidie = $monolith['components']['schemas']['Subsidie'];
-		self::assertArrayHasKey('x-openregister-lifecycle', $subsidie, 'Subsidie must declare a lifecycle');
-		self::assertSame('state', $subsidie['x-openregister-lifecycle']['field']);
+		$subsidy = $monolith['components']['schemas']['Subsidie'];
+		self::assertArrayHasKey('x-openregister-lifecycle', $subsidy, 'Subsidie must declare a lifecycle');
+		self::assertSame('state', $subsidy['x-openregister-lifecycle']['field']);
 	}//end testStateBearingSchemasDeclareLifecycle()
 
 	/**
@@ -150,7 +150,7 @@ final class BookkeepingOperationsFragmentTest extends TestCase {
 		self::assertArrayHasKey('Subsidie', $schemas);
 
 		// Account extended additively (REQ-SBK-002).
-		self::assertArrayHasKey('isSchatkistAccount', $schemas['Account']['properties']);
+		self::assertArrayHasKey('isTreasuryAccount', $schemas['Account']['properties']);
 		self::assertGreaterThan(
 			$accountFieldCountBefore,
 			count($schemas['Account']['properties']),

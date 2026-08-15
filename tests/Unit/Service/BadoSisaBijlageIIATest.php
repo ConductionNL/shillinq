@@ -143,17 +143,17 @@ final class BadoSisaBijlageIIATest extends TestCase {
 					'version' => '2026.1',
 					'auditYear' => 2026,
 					'organisationId' => 'gemeente-utrecht',
-					'organisationType' => 'gemeente',
-					'materialityBase' => 'lasten',
+					'organisationType' => 'municipality',
+					'materialityBase' => 'expenses',
 					'materialityAmount' => 5000000.0,
 					'effectiveFrom' => '2026-01-01',
 					'effectiveTo' => '2026-12-31',
 					'status' => 'adopted',
 					'adoptionDate' => '2026-12-10',
 					'adoptionDecision' => [
-						'besluitnummer' => '2026/12',
-						'datum' => '2026-12-10',
-						'decisionType' => 'raadsbesluit',
+						'decisionNumber' => '2026/12',
+						'date' => '2026-12-10',
+						'decisionType' => 'councilResolution',
 					],
 				],
 			]
@@ -218,8 +218,8 @@ final class BadoSisaBijlageIIATest extends TestCase {
 					'id' => $g2Finding1,
 					'sample' => $g2Sample,
 					'transaction' => 'pw-tx-001',
-					'findingType' => 'rechtmatigheid',
-					'rechtmatigheid' => 'exception',
+					'findingType' => 'lawfulness',
+					'lawfulness' => 'exception',
 					'amount' => 8000.0,
 					'topic' => 'SiSa-G2 Participatiewet',
 					'narrative' => 'Onterechte uitkering',
@@ -231,8 +231,8 @@ final class BadoSisaBijlageIIATest extends TestCase {
 					'id' => $g2Finding2,
 					'sample' => $g2Sample,
 					'transaction' => 'pw-tx-002',
-					'findingType' => 'rechtmatigheid',
-					'rechtmatigheid' => 'compliant',
+					'findingType' => 'lawfulness',
+					'lawfulness' => 'compliant',
 					'amount' => 0.0,
 					'topic' => 'SiSa-G2 Participatiewet',
 					'narrative' => 'Compliant',
@@ -244,8 +244,8 @@ final class BadoSisaBijlageIIATest extends TestCase {
 					'id' => $g3Finding1,
 					'sample' => $g3Sample,
 					'transaction' => 'sh-tx-001',
-					'findingType' => 'getrouwheid',
-					'getrouwheid' => 'misstated',
+					'findingType' => 'faithfulness',
+					'faithfulness' => 'misstated',
 					'amount' => 2500.0,
 					'topic' => 'SiSa-G3 Schulden',
 					'narrative' => 'Boekingsfout opname schuldhulp',
@@ -263,16 +263,16 @@ final class BadoSisaBijlageIIATest extends TestCase {
 				[
 					'protocol' => $protocolId,
 					'schemeCode' => 'G2',
-					'verantwoordingsplichtige' => 'gemeente',
-					'specifiekeUitkering' => 'Participatiewet',
+					'accountableParty' => 'municipality',
+					'specificBenefit' => 'Participatiewet',
 					'assuranceLevel' => 'sisa-specific',
 					'findings' => [$g2Finding1, $g2Finding2],
 				],
 				[
 					'protocol' => $protocolId,
 					'schemeCode' => 'G3',
-					'verantwoordingsplichtige' => 'gemeente',
-					'specifiekeUitkering' => 'Schuldhulpverlening',
+					'accountableParty' => 'municipality',
+					'specificBenefit' => 'Schuldhulpverlening',
 					'assuranceLevel' => 'sisa-specific',
 					'findings' => [$g3Finding1],
 				],
@@ -291,9 +291,9 @@ final class BadoSisaBijlageIIATest extends TestCase {
 					'status' => 'draft',
 					'signOff' => [
 						'auditor' => 'J. Bakker',
-						'afmVergunningsnummer' => 'AFM-1235',
-						'datum' => '2026-12-22',
-						'plaats' => 'Utrecht',
+						'afmPermitNumber' => 'AFM-1235',
+						'date' => '2026-12-22',
+						'place' => 'Utrecht',
 					],
 				],
 			]
@@ -319,9 +319,9 @@ final class BadoSisaBijlageIIATest extends TestCase {
 		// Step 4: each row carries verantwoordingsplichtige, assurance level,
 		// specifiekeUitkering — the IIA-table column set.
 		foreach (['G2', 'G3'] as $code) {
-			self::assertSame('gemeente', $bycode[$code]['verantwoordingsplichtige']);
+			self::assertSame('municipality', $bycode[$code]['accountableParty']);
 			self::assertSame('sisa-specific', $bycode[$code]['assuranceLevel']);
-			self::assertNotEmpty($bycode[$code]['specifiekeUitkering']);
+			self::assertNotEmpty($bycode[$code]['specificBenefit']);
 		}
 
 		// Step 4: HTML summary contains the IIA-style row for each regeling.
@@ -355,7 +355,7 @@ final class BadoSisaBijlageIIATest extends TestCase {
 		unlink($written['zipPath']);
 
 		// Sanity: signature delegation still pending (no signer configured).
-		self::assertTrue($this->service->canSignVerklaring(verklaringId: 'verklaring-sisa'));
+		self::assertTrue($this->service->canSignVerklaring(declarationId: 'verklaring-sisa'));
 
 	}//end testSisaBijlageRollupAndDossierInclusion()
 
@@ -371,10 +371,10 @@ final class BadoSisaBijlageIIATest extends TestCase {
 		return [
 			'protocol' => $protocolId,
 			'topic' => $topic,
-			'getrouwheidApprovalCeiling' => 1.0,
-			'getrouwheidQualificationCeiling' => 3.0,
-			'rechtmatigheidApprovalCeiling' => 1.0,
-			'rechtmatigheidQualificationCeiling' => 3.0,
+			'faithfulnessApprovalCeiling' => 1.0,
+			'faithfulnessQualificationCeiling' => 3.0,
+			'lawfulnessApprovalCeiling' => 1.0,
+			'lawfulnessQualificationCeiling' => 3.0,
 			'uncertaintyCeiling' => 3.0,
 		];
 	}//end statutoryRow()

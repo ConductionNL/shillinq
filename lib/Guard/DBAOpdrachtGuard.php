@@ -57,16 +57,16 @@ class DBAOpdrachtGuard {
 	 * Returns a list of validation errors; an empty list means the save MAY proceed.
 	 * OR's lifecycle engine treats a non-empty return as a save-block.
 	 *
-	 * @param array<string,mixed> $opdracht The incoming object.
+	 * @param array<string,mixed> $assignment The incoming object.
 	 * @param array<string,mixed> $previous The persisted previous version (empty on create).
 	 *
 	 * @return array<int,string> Validation error messages; empty when valid.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function validateOnSave(array $opdracht, array $previous = []): array {
+	public function validateOnSave(array $assignment, array $previous = []): array {
 		$errors = [];
-		$status = (string)($opdracht['intakeStatus'] ?? 'DRAFT');
+		$status = (string)($assignment['intakeStatus'] ?? 'DRAFT');
 		$previousStatus = (string)($previous['intakeStatus'] ?? 'DRAFT');
 
 		// REQ-DBA-001 — transition to ACTIEF requires INTAKE_VOLTOOID first.
@@ -76,19 +76,19 @@ class DBAOpdrachtGuard {
 
 		// REQ-DBA-018 — BEEINDIGD requires feitelijkeEindDatum + retentieDeadline.
 		if ($status === 'BEEINDIGD') {
-			$eind = (string)($opdracht['actualEndDate'] ?? '');
-			if ($eind === '') {
+			$end = (string)($assignment['actualEndDate'] ?? '');
+			if ($end === '') {
 				$errors[] = 'REQ-DBA-018: BEEINDIGD vereist feitelijkeEindDatum.';
 			} else {
-				$retentie = (string)($opdracht['retentieDeadline'] ?? '');
-				if ($retentie === '') {
+				$retention = (string)($assignment['retentionDeadline'] ?? '');
+				if ($retention === '') {
 					$errors[] = 'REQ-DBA-018: BEEINDIGD vereist retentieDeadline (7 jaar na einddatum).';
 				} else {
-					$expected = $this->computeRetentieDeadline(feitelijkeEindDatum: $eind);
-					if ($expected !== null && $retentie !== $expected) {
+					$expected = $this->computeRetentieDeadline(feitelijkeEindDatum: $end);
+					if ($expected !== null && $retention !== $expected) {
 						$errors[] = sprintf(
 							'REQ-DBA-018: retentieDeadline %s wijkt af van verwachte %s (einddatum + 7 jaar).',
-							$retentie,
+							$retention,
 							$expected
 						);
 					}
@@ -97,9 +97,9 @@ class DBAOpdrachtGuard {
 		}
 
 		// REQ-DBA-000 — risico-niveau HOOG vereist actueleRisicoscore >= 75.
-		$niveau = (string)($opdracht['risicoNiveau'] ?? 'LAAG');
-		$score = $opdracht['actueleRisicoscore'] ?? null;
-		if ($niveau === 'HOOG' && is_int($score) === true) {
+		$level = (string)($assignment['riskLevel'] ?? 'LAAG');
+		$score = $assignment['actueleRisicoscore'] ?? null;
+		if ($level === 'HOOG' && is_int($score) === true) {
 			if ($score < 75) {
 				$errors[] = 'REQ-DBA-000/003: risicoNiveau HOOG vereist actueleRisicoscore >= 75.';
 			}

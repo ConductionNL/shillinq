@@ -26,7 +26,7 @@
  *
  *  1. The dossier is on the `TenderNedAanbesteding` schema.
  *  2. The new status is `gegund` with `contractWaarde >= 1`.
- *  3. The `gegundeLeverancier` KvK prefix matches the configured tenant
+ *  3. The `awardedSupplier` KvK prefix matches the configured tenant
  *     KvK (`shillinq` app config key `tenant_kvk`).
  *  4. No Verplichting with the same `bronReferentie` exists yet
  *     (idempotency contract from the spec scenario).
@@ -173,7 +173,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		}
 
 		$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-		if ($this->isAanbestedingSchema(schema: $schema) === false) {
+		if ($this->isTenderSchema(schema: $schema) === false) {
 			return null;
 		}
 
@@ -189,7 +189,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * Decide whether the dossier is the tenant's awarded tender.
 	 *
 	 * Matches `status: gegund` + `contractWaarde >= 1` + tenant KvK on the
-	 * leading KvK prefix of `gegundeLeverancier` (the schema stores
+	 * leading KvK prefix of `awardedSupplier` (the schema stores
 	 * "KvK Naam" — design D6).
 	 *
 	 * @param array<string, mixed> $payload Aanbesteding payload.
@@ -201,7 +201,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			return false;
 		}
 
-		if ((float)($payload['contractWaarde'] ?? 0) < 1.0) {
+		if ((float)($payload['contractValue'] ?? 0) < 1.0) {
 			return false;
 		}
 
@@ -213,7 +213,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			return false;
 		}
 
-		$supplier = trim((string)($payload['gegundeLeverancier'] ?? ''));
+		$supplier = trim((string)($payload['awardedSupplier'] ?? ''));
 		if ($supplier === '') {
 			return false;
 		}
@@ -229,8 +229,8 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * @return void
 	 */
 	private function promote(array $payload): void {
-		$aanbestedingId = (string)($payload['aanbestedingId'] ?? '');
-		if ($aanbestedingId === '') {
+		$tenderId = (string)($payload['tenderId'] ?? '');
+		if ($tenderId === '') {
 			return;
 		}
 
@@ -238,39 +238,39 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		if ($objectService === null) {
 			$this->logger->info(
 				'TenderNedAwardDetectedListener: OR ObjectService unavailable — skipping promotion',
-				['aanbestedingId' => $aanbestedingId]
+				['tenderId' => $tenderId]
 			);
 			return;
 		}
 
-		$existing = $this->findExistingByBronReferentie(
+		$existing = $this->findExistingBySourceReference(
 			objectService: $objectService,
-			bronReferentie: $aanbestedingId
+			sourceReference: $tenderId
 		);
 
 		if ($existing !== null) {
 			// REQ-002 idempotency: an obligation already exists for this
 			// aanbestedingId. Nothing to do beyond re-emitting the budget
 			// impact CloudEvent (in case launchpad missed the original).
-			$this->budget->emitActivated(verplichting: $existing, source: $payload);
+			$this->budget->emitActivated(commitment: $existing, source: $payload);
 			return;
 		}
 
 		$plan = $this->safeGeneratePlan(
-			opdrachttype: (string)($payload['opdrachttype'] ?? 'other'),
-			looptijdStart: (string)($payload['looptijdStart'] ?? ''),
-			looptijdEind: (string)($payload['termEnd'] ?? '')
+			assignmentType: (string)($payload['assignmentType'] ?? 'other'),
+			termStart: (string)($payload['termStart'] ?? ''),
+			termEnd: (string)($payload['termEnd'] ?? '')
 		);
 
-		$verplichting = [
-			'commitmentNumber' => 'TN-' . $aanbestedingId,
-			'description' => (string)($payload['titel'] ?? $aanbestedingId),
-			'bron' => 'tenderned',
-			'bronReferentie' => $aanbestedingId,
-			'amount' => (float)($payload['contractWaarde'] ?? 0),
-			'looptijdStart' => (string)($payload['looptijdStart'] ?? ''),
+		$commitment = [
+			'commitmentNumber' => 'TN-' . $tenderId,
+			'description' => (string)($payload['title'] ?? $tenderId),
+			'source' => 'tenderned',
+			'sourceReference' => $tenderId,
+			'amount' => (float)($payload['contractValue'] ?? 0),
+			'termStart' => (string)($payload['termStart'] ?? ''),
 			'termEnd' => (string)($payload['termEnd'] ?? ''),
-			'mijlpalen' => $plan,
+			'milestones' => $plan,
 			'status' => 'active',
 			'administrationId' => (string)($payload['administrationId'] ?? ''),
 		];
@@ -279,11 +279,11 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'Verplichting')
-				->saveObject(object: $verplichting);
+				->saveObject(object: $commitment);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'TenderNedAwardDetectedListener: saveObject failed — fail-soft',
-				['aanbestedingId' => $aanbestedingId, 'exception' => $e->getMessage()]
+				['tenderId' => $tenderId, 'exception' => $e->getMessage()]
 			);
 			return;
 		}
@@ -293,7 +293,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		// has been created and the next polling tick will re-attempt.
 		try {
 			$payload['status'] = 'in-uitvoering';
-			$payload['verplichtingId'] = 'TN-' . $aanbestedingId;
+			$payload['commitmentId'] = 'TN-' . $tenderId;
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'TenderNedAanbesteding')
@@ -301,11 +301,11 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		} catch (Throwable $e) {
 			$this->logger->info(
 				'TenderNedAwardDetectedListener: failed to bump aanbesteding to in-uitvoering',
-				['aanbestedingId' => $aanbestedingId, 'exception' => $e->getMessage()]
+				['tenderId' => $tenderId, 'exception' => $e->getMessage()]
 			);
 		}//end try
 
-		$this->budget->emitActivated(verplichting: $verplichting, source: $payload);
+		$this->budget->emitActivated(commitment: $commitment, source: $payload);
 
 	}//end promote()
 
@@ -314,22 +314,22 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * missing looptijd does not block the promotion (the operator can
 	 * enrich the term in the Verplichting detail view later).
 	 *
-	 * @param string $opdrachttype Contract type.
-	 * @param string $looptijdStart Term start.
-	 * @param string $looptijdEind Term end.
+	 * @param string $assignmentType Contract type.
+	 * @param string $termStart Term start.
+	 * @param string $termEnd Term end.
 	 *
 	 * @return array<int, array<string, mixed>> Milestone plan, possibly empty.
 	 */
-	private function safeGeneratePlan(string $opdrachttype, string $looptijdStart, string $looptijdEind): array {
-		if ($looptijdStart === '' || $looptijdEind === '') {
+	private function safeGeneratePlan(string $assignmentType, string $termStart, string $termEnd): array {
+		if ($termStart === '' || $termEnd === '') {
 			return [];
 		}
 
 		try {
 			return $this->templates->generatePlan(
-				opdrachttype: $opdrachttype,
-				looptijdStart: $looptijdStart,
-				looptijdEind: $looptijdEind
+				assignmentType: $assignmentType,
+				termStart: $termStart,
+				termEnd: $termEnd
 			);
 		} catch (Throwable $e) {
 			$this->logger->info(
@@ -345,11 +345,11 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * Look up an existing Verplichting by bronReferentie.
 	 *
 	 * @param object $objectService OR ObjectService.
-	 * @param string $bronReferentie TenderNed aanbestedingId.
+	 * @param string $sourceReference TenderNed aanbestedingId.
 	 *
 	 * @return array<string, mixed>|null
 	 */
-	private function findExistingByBronReferentie(object $objectService, string $bronReferentie): ?array {
+	private function findExistingBySourceReference(object $objectService, string $sourceReference): ?array {
 		try {
 			$rows = $objectService
 				->setRegister(register: $this->getRegisterSlug())
@@ -357,8 +357,8 @@ class TenderNedAwardDetectedListener implements IEventListener {
 				->findAll(
 					[
 						'filters' => [
-							'bron' => 'tenderned',
-							'bronReferentie' => $bronReferentie,
+							'source' => 'tenderned',
+							'sourceReference' => $sourceReference,
 						],
 					]
 				);
@@ -414,7 +414,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 *
 	 * @return bool
 	 */
-	private function isAanbestedingSchema(string $schema): bool {
+	private function isTenderSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
 		return ($normalised === 'tenderedaanbesteding'
 			|| $normalised === 'tendernedaanbesteding'

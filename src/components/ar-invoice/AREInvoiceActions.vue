@@ -48,17 +48,17 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 import { showSuccess } from '@nextcloud/dialogs'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 import DeliveryStatusChip from '../DeliveryStatusChip.vue'
 import {
 	canSendEInvoice,
+	extractSendErrorMessage,
+	mapSendResult,
 	resolveDeliveryStatus,
 	sendEInvoiceEndpoint,
-	mapSendResult,
-	extractSendErrorMessage,
 } from './arEInvoiceActions.js'
 
 export default {
@@ -67,6 +67,7 @@ export default {
 		NcButton,
 		DeliveryStatusChip,
 	},
+
 	props: {
 		/**
 		 * The resolved ARInvoice record (bound by CnDetailPage's actions slot).
@@ -76,6 +77,7 @@ export default {
 			default: () => ({}),
 		},
 	},
+
 	data() {
 		return {
 			sending: false,
@@ -86,24 +88,29 @@ export default {
 			localDeliveryStatus: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		deliveryStatus() {
 			return resolveDeliveryStatus(this.object, this.localDeliveryStatus)
 		},
+
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		canSend() {
 			return canSendEInvoice(this.object)
 		},
+
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		administrationId() {
 			return this.object?.administrationId || ''
 		},
+
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		invoiceNumber() {
 			return this.object?.invoiceNumber || ''
 		},
 	},
+
 	methods: {
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		async onSend() {

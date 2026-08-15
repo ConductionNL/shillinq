@@ -587,7 +587,7 @@ class GRIRClearingService {
 		// balance accumulated at GRN time;
 		// DR VAT Input       (VAT)      - the input VAT the supplier charged
 		// us, which we'll reclaim on our VAT
-		// return (RGS 3.5 "voorbelasting").
+		// return (RGS 3.5 "inputVat").
 		// The spec calls this account "VAT
 		// Payable" by its credit-side label;
 		// on a purchase invoice the entry is
@@ -717,15 +717,15 @@ class GRIRClearingService {
 			}
 		}
 
-		$saldoCents = $debitCents - $creditCents;
+		$balanceCents = $debitCents - $creditCents;
 
 		return [
 			'periodId' => $periodId,
 			'clearingAccount' => $clearingAccount,
 			'debitCents' => $debitCents,
 			'creditCents' => $creditCents,
-			'saldoCents' => $saldoCents,
-			'balanced' => ($saldoCents === 0),
+			'saldoCents' => $balanceCents,
+			'balanced' => ($balanceCents === 0),
 		];
 
 	}//end reconcileGRIRSaldoForPeriod()

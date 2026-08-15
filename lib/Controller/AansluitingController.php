@@ -57,7 +57,7 @@ class AansluitingController extends Controller {
 	 * Construct the controller with its service dependency.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param AansluitingService $aansluitingService The tie-out compute/explain/resolve/reopen service.
+	 * @param AansluitingService $reconciliationService The tie-out compute/explain/resolve/reopen service.
 	 * @param IUserSession $userSession The session for the acting user id (auth + audit actor).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
@@ -65,7 +65,7 @@ class AansluitingController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AansluitingService $aansluitingService,
+		private readonly AansluitingService $reconciliationService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -95,20 +95,20 @@ class AansluitingController extends Controller {
 	 * Body/query parameters:
 	 *  - period_id (required) the fiscal period to compute (e.g. '2026-Q2').
 	 *
-	 * @param string $aansluitingId The Aansluiting definition id (path parameter).
+	 * @param string $reconciliationId The Aansluiting definition id (path parameter).
 	 *
 	 * @return JSONResponse 200 with the AansluitingResult; 400 / 500 as below.
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
 	#[NoAdminRequired]
-	public function compute(string $aansluitingId): JSONResponse {
+	public function compute(string $reconciliationId): JSONResponse {
 		$authError = $this->requireUser();
 		if ($authError !== null) {
 			return $authError;
 		}
 
-		$error = $this->validateId(value: $aansluitingId, label: 'aansluitingId');
+		$error = $this->validateId(value: $reconciliationId, label: 'reconciliationId');
 		if ($error !== null) {
 			return $error;
 		}
@@ -121,8 +121,8 @@ class AansluitingController extends Controller {
 
 		return $this->run(
 			action: 'compute aansluiting',
-			compute: fn (): array => $this->aansluitingService->compute(aansluitingId: $aansluitingId, periodId: $periodId),
-			context: ['aansluitingId' => $aansluitingId, 'periodId' => $periodId]
+			compute: fn (): array => $this->reconciliationService->compute(reconciliationId: $reconciliationId, periodId: $periodId),
+			context: ['reconciliationId' => $reconciliationId, 'periodId' => $periodId]
 		);
 
 	}//end compute()
@@ -162,7 +162,7 @@ class AansluitingController extends Controller {
 
 		return $this->run(
 			action: 'explain aansluiting result',
-			compute: fn (): array => $this->aansluitingService->explain(
+			compute: fn (): array => $this->reconciliationService->explain(
 				resultId: $resultId,
 				reasonCode: $reasonCode,
 				reasonText: $reasonText,
@@ -198,7 +198,7 @@ class AansluitingController extends Controller {
 
 		return $this->run(
 			action: 'resolve aansluiting result',
-			compute: fn (): array => $this->aansluitingService->resolve(resultId: $resultId, actor: $actor),
+			compute: fn (): array => $this->reconciliationService->resolve(resultId: $resultId, actor: $actor),
 			context: ['resultId' => $resultId]
 		);
 
@@ -233,7 +233,7 @@ class AansluitingController extends Controller {
 
 		return $this->run(
 			action: 'reopen aansluiting result',
-			compute: fn (): array => $this->aansluitingService->reopen(resultId: $resultId, actor: $actor, reason: $reason),
+			compute: fn (): array => $this->reconciliationService->reopen(resultId: $resultId, actor: $actor, reason: $reason),
 			context: ['resultId' => $resultId]
 		);
 

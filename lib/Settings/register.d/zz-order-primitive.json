@@ -35,14 +35,14 @@
             "enum": [
               "purchase",
               "sales",
-              "subsidie",
+              "subsidy",
               "engagement",
               "booking",
               "quote",
               "blanket"
             ],
             "description": "Discriminator. Only `purchase`, `subsidie` and `engagement` are populated by this change's migration; the others are reserved for future folds (REQ-ORD-001).",
-            "example": "subsidie",
+            "example": "subsidy",
             "title": "Order Type"
           },
           "direction": {
@@ -150,13 +150,13 @@
             "example": "aanvraag",
             "title": "State"
           },
-          "subsidie": {
+          "subsidy": {
             "type": "object",
             "nullable": true,
             "title": "Subsidie Details",
             "description": "Populated only when orderType=subsidie. The full field set of the retired Subsidie schema (per Awb afdeling 4.2 + VNG ASV-model 2022) — no regulatory field dropped (REQ-ORD-002/003).",
             "properties": {
-              "subsidieNumber": {
+              "subsidyNumber": {
                 "type": "string",
                 "nullable": true,
                 "description": "Source Subsidie's own number (also mirrored to the base orderNumber).",
@@ -188,21 +188,21 @@
                 "description": "R&D subsidie regeling variant (REQ-RDS-001).",
                 "title": "Subsidie Regeling"
               },
-              "aanvraagDate": {
+              "requestDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Date of the subsidie aanvraag (Awb 4:5).",
                 "title": "Aanvraag Date"
               },
-              "beschikkingDate": {
+              "decisionDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Date of the verleningsbeschikking (Awb 4:43/4:48).",
                 "title": "Beschikking Date"
               },
-              "vaststellingDate": {
+              "determinationDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -258,13 +258,13 @@
                 "description": "Reclaimed amount in EUR. Required on terugvorderen transition.",
                 "title": "Teruggevorderd Bedrag"
               },
-              "beschikkingUri": {
+              "decisionUri": {
                 "type": "string",
                 "nullable": true,
                 "description": "docudesk URI of the verleningsbeschikking PDF.",
                 "title": "Beschikking URI"
               },
-              "vaststellingUri": {
+              "determinationUri": {
                 "type": "string",
                 "nullable": true,
                 "description": "docudesk URI of the vaststellingsbeschikking PDF.",
@@ -282,7 +282,7 @@
                 "description": "Free-text or structured prestatieverantwoording. Required on vaststellen transition.",
                 "title": "Prestatieverantwoording"
               },
-              "afwijzingsReden": {
+              "rejectionReason": {
                 "type": "string",
                 "nullable": true,
                 "description": "Reason for rejection. Required on afwijzen transition.",
@@ -472,7 +472,7 @@
                 "description": "FK to the onderneming (ZZP/eenmanszaak/MKB) executing or hiring for this engagement.",
                 "title": "Onderneming ID"
               },
-              "klantId": {
+              "customerId": {
                 "type": "string",
                 "nullable": true,
                 "description": "FK to the client (also mirrored to the base counterpartyId).",
@@ -512,19 +512,19 @@
                 "description": "Revenue realised so far, in euro cents (REQ-DBA-004).",
                 "title": "Gerealiseerde Omzet"
               },
-              "eenmaligLageDrempel": {
+              "oneOffLowThreshold": {
                 "type": "boolean",
                 "default": false,
                 "description": "Marked 'one-off, total < EUR 5000' — shortened intake offered (REQ-DBA-001).",
                 "title": "Eenmalig Lage Drempel"
               },
-              "modelOvereenkomstId": {
+              "modelAgreementId": {
                 "type": "string",
                 "nullable": true,
                 "description": "FK to the applicable DBAModelovereenkomst (REQ-DBA-002).",
                 "title": "Model Overeenkomst ID"
               },
-              "intakeDatum": {
+              "intakeDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -539,7 +539,7 @@
                 "description": "Running DBA risk score 0-100 (REQ-DBA-003).",
                 "title": "Actuele Risicoscore"
               },
-              "risicoNiveau": {
+              "riskLevel": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
@@ -565,7 +565,7 @@
                 "description": "FK to the DBAEvidenceDossier for this engagement (REQ-DBA-007).",
                 "title": "Evidence Dossier ID"
               },
-              "wbaBeoordelingResultaat": {
+              "wbaAssessmentResult": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
@@ -577,20 +577,20 @@
                 "description": "Belastingdienst WBA assessment outcome (REQ-DBA-013).",
                 "title": "Wba Beoordeling Resultaat"
               },
-              "wbaGeldigTot": {
+              "wbaValidTo": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "WBA assessment validity date (1 year policy).",
                 "title": "Wba Geldig Tot"
               },
-              "intermediairMode": {
+              "intermediaryMode": {
                 "type": "boolean",
                 "default": false,
                 "description": "Whether the tussenkomst triangle applies (REQ-DBA-017).",
                 "title": "Intermediair Mode"
               },
-              "perspectief": {
+              "perspective": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
@@ -600,7 +600,7 @@
                 "description": "ZZP perspective vs opdrachtgever/hire-in flow (REQ-DBA-010).",
                 "title": "Perspectief"
               },
-              "retentieDeadline": {
+              "retentionDeadline": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -634,38 +634,38 @@
           "field": "state",
           "initialState": "aanvraag",
           "initialStateByType": {
-            "subsidie": "aanvraag",
+            "subsidy": "aanvraag",
             "purchase": "draft",
             "engagement": "DRAFT"
           },
           "states": {
             "aanvraag": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "label": "Aanvraag",
               "description": "Subsidie aanvraag ingediend (Awb 4:5)."
             },
             "verleend": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "label": "Verleend",
               "description": "Subsidie verleend per beschikking (Awb 4:43/4:48)."
             },
             "vastgesteld": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "label": "Vastgesteld",
               "description": "Subsidie vastgesteld op basis van verantwoording (Awb 4:46)."
             },
             "uitbetaald": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "label": "Uitbetaald",
               "description": "Subsidie uitbetaald (Awb 4:52)."
             },
             "teruggevorderd": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "label": "Teruggevorderd",
               "description": "Subsidie (gedeeltelijk) teruggevorderd (Awb 4:57)."
             },
             "afgehandeld": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "label": "Afgehandeld",
               "description": "Subsidie-dossier gesloten."
             },
@@ -737,7 +737,7 @@
           },
           "transitions": {
             "verleen": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "from": "aanvraag",
               "to": "verleend",
               "label": "Verlenen",
@@ -748,7 +748,7 @@
               }
             },
             "afwijzen": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "from": "aanvraag",
               "to": "afgehandeld",
               "label": "Afwijzen",
@@ -759,7 +759,7 @@
               }
             },
             "vaststellen": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "from": "verleend",
               "to": "vastgesteld",
               "label": "Vaststellen",
@@ -771,7 +771,7 @@
               }
             },
             "uitbetalen": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "from": "vastgesteld",
               "to": "uitbetaald",
               "label": "Uitbetalen",
@@ -782,7 +782,7 @@
               }
             },
             "terugvorderen": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "from": "uitbetaald",
               "to": "teruggevorderd",
               "label": "Terugvorderen",
@@ -794,13 +794,13 @@
               }
             },
             "afhandelenVanuitUitbetaald": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "from": "uitbetaald",
               "to": "afgehandeld",
               "label": "Dossier sluiten (na bewaartermijn)"
             },
             "afhandelenVanuitTeruggevorderd": {
-              "orderType": "subsidie",
+              "orderType": "subsidy",
               "from": "teruggevorderd",
               "to": "afgehandeld",
               "label": "Dossier sluiten (terugbetaling voltooid)",

@@ -24,9 +24,9 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import {
-	mergeServerDelta,
-	markOpSynced,
 	deletePendingOp,
+	markOpSynced,
+	mergeServerDelta,
 	readUnsyncedOps,
 } from './useInventoryDb.js'
 
@@ -199,6 +199,9 @@ export function createSyncScheduler(db, opts = {}) {
 	const isOnline = () =>
 		typeof navigator === 'undefined' || navigator.onLine !== false
 
+	/**
+	 *
+	 */
 	async function runOnce() {
 		if (inFlight) {
 			return
@@ -245,6 +248,9 @@ export function createSyncScheduler(db, opts = {}) {
 		}
 	}
 
+	/**
+	 *
+	 */
 	function schedule() {
 		if (stopped) {
 			return

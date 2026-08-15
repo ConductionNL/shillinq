@@ -135,16 +135,16 @@ class AansluitingService {
 	 * caller must `reopen()` it first (REQ-AANS-006, avoids silently
 	 * clobbering an operator's explanation).
 	 *
-	 * @param string $aansluitingId The Aansluiting definition id.
+	 * @param string $reconciliationId The Aansluiting definition id.
 	 * @param string $periodId The fiscal period to compute (e.g. '2026-Q2').
 	 *
 	 * @return array<string,mixed> The (created or updated) AansluitingResult record.
 	 *
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
-	public function compute(string $aansluitingId, string $periodId): array {
-		$definition = $this->fetchAansluiting(aansluitingId: $aansluitingId);
-		$existing = $this->fetchExistingResult(aansluitingId: $aansluitingId, periodId: $periodId);
+	public function compute(string $reconciliationId, string $periodId): array {
+		$definition = $this->fetchReconciliation(reconciliationId: $reconciliationId);
+		$existing = $this->fetchExistingResult(reconciliationId: $reconciliationId, periodId: $periodId);
 
 		$existingStatus = 'open';
 		if ($existing !== null) {
@@ -154,7 +154,7 @@ class AansluitingService {
 		if ($existing !== null && $existingStatus !== 'open') {
 			$this->logger->info(
 				'AansluitingService: skipping recompute of a non-open result; reopen() first',
-				['aansluitingId' => $aansluitingId, 'periodId' => $periodId, 'status' => $existingStatus]
+				['reconciliationId' => $reconciliationId, 'periodId' => $periodId, 'status' => $existingStatus]
 			);
 
 			return $existing;
@@ -163,12 +163,12 @@ class AansluitingService {
 		$administrationId = (string)($definition['administrationId'] ?? '');
 		$relationship = (string)($definition['expectedRelationship'] ?? 'equal');
 		$toleranceCents = (int)($definition['toleranceCents'] ?? 100);
-		$aansluitingType = (string)($definition['aansluitingType'] ?? '');
+		$reconciliationType = (string)($definition['reconciliationType'] ?? '');
 
-		$resolved = match ($aansluitingType) {
-			'btw-ledger-aangifte' => $this->resolveBtwLedgerAangifte(administrationId: $administrationId, periodId: $periodId),
+		$resolved = match ($reconciliationType) {
+			'btw-ledger-aangifte' => $this->resolveVatLedgerTaxReturn(administrationId: $administrationId, periodId: $periodId),
 			'subledger-gl-control' => $this->resolveSubledgerGlControl(definition: $definition, administrationId: $administrationId),
-			default => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $aansluitingType)),
+			default => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $reconciliationType)),
 		};
 
 		$differenceCents = $this->calculator->differenceCents(
@@ -186,7 +186,7 @@ class AansluitingService {
 		];
 
 		$result = [
-			'aansluitingId' => $aansluitingId,
+			'reconciliationId' => $reconciliationId,
 			'periodId' => $periodId,
 			'computedAt' => $this->now(),
 			'sourceATotal' => $resolved['sourceATotal'],
@@ -325,7 +325,7 @@ class AansluitingService {
 	 *
 	 * @return array{sourceATotal:float,sourceBTotal:float,lineDeltas:array<int,array<string,mixed>>,relatedVatCorrectionId:?string}
 	 */
-	private function resolveBtwLedgerAangifte(string $administrationId, string $periodId): array {
+	private function resolveVatLedgerTaxReturn(string $administrationId, string $periodId): array {
 		$vatReturn = $this->findFiledVatReturn(administrationId: $administrationId, periodId: $periodId);
 		if ($vatReturn === null) {
 			throw new RuntimeException(
@@ -632,18 +632,18 @@ class AansluitingService {
 	/**
 	 * Fetch an Aansluiting definition by id.
 	 *
-	 * @param string $aansluitingId Aansluiting id.
+	 * @param string $reconciliationId Aansluiting id.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function fetchAansluiting(string $aansluitingId): array {
+	private function fetchReconciliation(string $reconciliationId): array {
 		$definition = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Aansluiting')
-			->find($aansluitingId);
+			->find($reconciliationId);
 
 		if (is_array($definition) === false) {
-			throw new RuntimeException(sprintf('Aansluiting %s not found', $aansluitingId));
+			throw new RuntimeException(sprintf('Aansluiting %s not found', $reconciliationId));
 		}
 
 		return $definition;
@@ -672,16 +672,17 @@ class AansluitingService {
 	/**
 	 * Find an already-computed AansluitingResult for (aansluitingId, periodId), if any.
 	 *
-	 * @param string $aansluitingId Aansluiting id.
+	 * @param string $reconciliationId Aansluiting id.
 	 * @param string $periodId Fiscal period.
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function fetchExistingResult(string $aansluitingId, string $periodId): ?array {
-		$results = $this->objectService
+	private function fetchExistingResult(string $reconciliationId, string $periodId): ?array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$results = $objectService
 			->setRegister($this->register())
 			->setSchema('AansluitingResult')
-			->findAll(['filters' => ['aansluitingId' => $aansluitingId, 'periodId' => $periodId]]);
+			->findAll(['filters' => ['reconciliationId' => $reconciliationId, 'periodId' => $periodId]]);
 
 		foreach ($results as $result) {
 			return $result;

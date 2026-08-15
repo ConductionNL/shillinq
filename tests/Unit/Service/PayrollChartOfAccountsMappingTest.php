@@ -65,10 +65,10 @@ final class PayrollChartOfAccountsMappingTest extends TestCase {
 	public function testAccountNumbersStayInRgsRanges(): void {
 		foreach (PayrollChartOfAccountsMapping::all() as $key => $accountNumber) {
 			$num = (int)$accountNumber;
-			$inKosten = ($num >= 4001 && $num <= 4099);
-			$inSchulden = ($num >= 1610 && $num <= 1799);
+			$inCost = ($num >= 4001 && $num <= 4099);
+			$inDebts = ($num >= 1610 && $num <= 1799);
 			$this->assertTrue(
-				($inKosten || $inSchulden),
+				($inCost || $inDebts),
 				sprintf('Account %s for %s falls outside RGS 3.5 loonkosten/schulden ranges', $accountNumber, $key)
 			);
 		}

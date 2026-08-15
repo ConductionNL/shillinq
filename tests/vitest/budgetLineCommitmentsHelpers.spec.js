@@ -22,13 +22,13 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 		const payload = {
 			buckets: [
 				{
-					programma: '5.1',
-					kostenplaats: 'FAC-2026',
-					boekjaar: 2026,
-					grootboekrekening: '4400',
-					'Budget.geautoriseerd_bedrag': 50000000,
-					restant_verplicht: 7500000,
-					gefactureerd_bedrag: 2500000,
+					programme: '5.1',
+					cost_centre: 'FAC-2026',
+					financial_year: 2026,
+					general_ledger_account: '4400',
+					'Budget.authorised_amount': 50000000,
+					remaining_committed: 7500000,
+					invoiced_amount: 2500000,
 				},
 			],
 		}
@@ -37,7 +37,7 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 
 		expect(rows).toHaveLength(1)
 		expect(rows[0].geautoriseerd).toBe(50000000)
-		expect(rows[0].verplicht).toBe(7500000)
+		expect(rows[0].mandatory).toBe(7500000)
 		expect(rows[0].gerealiseerd).toBe(2500000)
 		expect(rows[0].vrij).toBe(40000000)
 	})
@@ -45,12 +45,12 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 	it('accepts a bare array payload (no buckets wrapper)', () => {
 		const rows = normaliseBudgetLineRows([
 			{
-				programma: '5.1',
-				kostenplaats: 'FAC-2026',
-				boekjaar: 2026,
-				grootboekrekening: '4400',
-				restant_verplicht: 100,
-				gefactureerd_bedrag: 0,
+				programme: '5.1',
+				cost_centre: 'FAC-2026',
+				financial_year: 2026,
+				general_ledger_account: '4400',
+				remaining_committed: 100,
+				invoiced_amount: 0,
 			},
 		])
 		expect(rows).toHaveLength(1)
@@ -66,10 +66,10 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 		const rows = normaliseBudgetLineRows({
 			buckets: [
 				{
-					programma: '5.1',
-					kostenplaats: 'FAC-2026',
-					boekjaar: 2026,
-					grootboekrekening: '4400',
+					programme: '5.1',
+					cost_centre: 'FAC-2026',
+					financial_year: 2026,
+					general_ledger_account: '4400',
 				},
 			],
 		})
@@ -80,13 +80,13 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 		const rows = normaliseBudgetLineRows({
 			buckets: [
 				{
-					programma: '5.1',
-					kostenplaats: 'FAC-2026',
-					boekjaar: 2026,
-					grootboekrekening: '4400',
-					'Budget.geautoriseerd_bedrag': 1000,
-					restant_verplicht: 800,
-					gefactureerd_bedrag: 500,
+					programme: '5.1',
+					cost_centre: 'FAC-2026',
+					financial_year: 2026,
+					general_ledger_account: '4400',
+					'Budget.authorised_amount': 1000,
+					remaining_committed: 800,
+					invoiced_amount: 500,
 				},
 			],
 		})
@@ -118,30 +118,30 @@ describe('budgetLineCommitmentsHelpers — formatAmount', () => {
 describe('budgetLineCommitmentsHelpers — drilldownFilters', () => {
 	it('builds exact-match filters for a complete row', () => {
 		const filters = drilldownFilters({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
-			grootboekrekening: '4400',
+			programme: '5.1',
+			cost_centre: 'FAC-2026',
+			financial_year: 2026,
+			general_ledger_account: '4400',
 		})
 		expect(filters).toEqual({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
-			grootboekrekening: '4400',
+			programme: '5.1',
+			cost_centre: 'FAC-2026',
+			financial_year: 2026,
+			general_ledger_account: '4400',
 		})
 	})
 
-	it('omits empty/blank dimensions (e.g. a Contract-sourced regel with no grootboekrekening)', () => {
+	it('omits empty/blank dimensions (e.g. a Contract-sourced rule with no general_ledger_account)', () => {
 		const filters = drilldownFilters({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
-			grootboekrekening: '',
+			programme: '5.1',
+			cost_centre: 'FAC-2026',
+			financial_year: 2026,
+			general_ledger_account: '',
 		})
 		expect(filters).toEqual({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
+			programme: '5.1',
+			cost_centre: 'FAC-2026',
+			financial_year: 2026,
 		})
 	})
 })

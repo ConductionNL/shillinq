@@ -40,7 +40,7 @@ final class DigipoortSubmissionResult {
 	 * Construct the result value-object.
 	 *
 	 * @param string $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
-	 * @param string $kenmerk Digipoort-side submission id.
+	 * @param string $reference Digipoort-side submission id.
 	 * @param bool $dormant TRUE when the adapter was dormant.
 	 * @param array<string,mixed> $extras Provider-specific extras
 	 *                                    (e.g. statusInformation URL,
@@ -48,7 +48,7 @@ final class DigipoortSubmissionResult {
 	 */
 	public function __construct(
 		public readonly string $deliveryStatus,
-		public readonly string $kenmerk,
+		public readonly string $reference,
 		public readonly bool $dormant,
 		public readonly array $extras = [],
 	) {

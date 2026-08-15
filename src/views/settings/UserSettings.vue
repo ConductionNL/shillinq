@@ -1,7 +1,7 @@
 <template>
 	<NcAppSettingsDialog
 		:open="open"
-		:show-navigation="false"
+		:showNavigation="false"
 		:name="t('shillinq', 'Shillinq settings')"
 		@update:open="$emit('update:open', $event)">
 		<NcAppSettingsSection id="general" :name="t('shillinq', 'General')">
@@ -40,6 +40,7 @@ export default {
 		NcEmptyContent,
 		CogIcon,
 	},
+
 	props: {
 		open: {
 			type: Boolean,

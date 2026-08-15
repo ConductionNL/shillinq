@@ -172,14 +172,14 @@ function collectSchemas() {
 // which of the two answers is whatever the database happens to return first.
 //
 // Measured on `development` (run 31110513361): this register shipped both
-// `VatReturn` (Dutch BTW model — rubrieken / verschuldigdeOmzetbelasting /
+// `VatReturn` (Dutch BTW model — rubrieken / dueSalesTax /
 // teBetalenOfTeruggave) and `VATReturn` (English filing model — returnNumber
 // / periodYear / regime / statusCode). `VATReturnService::createReturn()`
 // asked for `VATReturn`, OpenRegister handed back `VatReturn`, and the write
 // was validated against the OTHER model's required list:
 //
 //   "The required properties (periodType, periodStart, periodEnd, rubrieken,
-//    verschuldigdeOmzetbelasting, voorbelasting, teBetalenOfTeruggave) are
+//    dueSalesTax, voorbelasting, teBetalenOfTeruggave) are
 //    missing."
 //
 // POST /api/vat-returns answered 500, and because the Newman collection

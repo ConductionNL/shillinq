@@ -17,7 +17,7 @@
 		<label class="scenario-creator__field">
 			<span>{{ t('shillinq', 'Scenario name') }}</span>
 			<input
-				v-model="scenario.naam"
+				v-model="scenario.name"
 				type="text"
 				required
 				:placeholder="t('shillinq', 'e.g. Acme pays late by 4 weeks')" />
@@ -66,7 +66,7 @@
 					:placeholder="t('shillinq', 'Week shift')" />
 				<input
 					v-if="adjustment.type === 'AR_PROJECTION_OVERRIDE'"
-					v-model.number="adjustment.kansVanBetaling"
+					v-model.number="adjustment.kansFromPayment"
 					type="number"
 					min="0"
 					max="1"
@@ -161,6 +161,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		administrationId: {
 			type: String,
 			required: true,
@@ -171,7 +172,7 @@ export default {
 		return {
 			scenario: {
 				horizonId: this.horizonId,
-				naam: '',
+				name: '',
 				description: '',
 				aanpassingen: [],
 				administrationId: this.administrationId,
@@ -186,9 +187,11 @@ export default {
 				type: 'AR_PROJECTION_OVERRIDE',
 			})
 		},
+
 		removeAdjustment(index) {
 			this.scenario.aanpassingen.splice(index, 1)
 		},
+
 		handleSubmit() {
 			this.$emit('create-scenario', {
 				...this.scenario,

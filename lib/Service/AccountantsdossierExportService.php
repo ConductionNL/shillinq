@@ -215,7 +215,7 @@ class AccountantsdossierExportService {
 		}
 
 		$bundle = $this->collectBundle(protocolId: $protocolId);
-		if ($bundle['controleprotocol'] === null) {
+		if ($bundle['auditProtocol'] === null) {
 			throw new RuntimeException('Controleprotocol not found');
 		}
 
@@ -230,9 +230,9 @@ class AccountantsdossierExportService {
 		$manifest = [
 			'packageId' => $packageId,
 			'protocolId' => $protocolId,
-			'auditYear' => (int)($bundle['controleprotocol']['auditYear'] ?? 0),
-			'organisationId' => (string)($bundle['controleprotocol']['organisationId'] ?? ''),
-			'organisationType' => (string)($bundle['controleprotocol']['organisationType'] ?? ''),
+			'auditYear' => (int)($bundle['auditProtocol']['auditYear'] ?? 0),
+			'organisationId' => (string)($bundle['auditProtocol']['organisationId'] ?? ''),
+			'organisationType' => (string)($bundle['auditProtocol']['organisationType'] ?? ''),
 			'generatedAt' => $generatedAt,
 			'generatedBy' => $generatedBy,
 			'sha256' => $sha256,
@@ -244,7 +244,7 @@ class AccountantsdossierExportService {
 			'iso8601Timestamp' => $generatedAt,
 			'attachments' => $this->attachmentInventory(bundle: $bundle),
 			'objectCounts' => [
-				'controleprotocol' => 1,
+				'auditProtocol' => 1,
 				'toleranceMatrix' => count($bundle['toleranceMatrix']),
 				'materialiteit' => count($bundle['materialiteit']),
 				'auditSamples' => count($bundle['auditSamples']),
@@ -348,7 +348,7 @@ class AccountantsdossierExportService {
 	 * @param string $protocolId The Controleprotocol.id.
 	 *
 	 * @return array{
-	 *     controleprotocol: array<string,mixed>|null,
+	 *     auditProtocol: array<string,mixed>|null,
 	 *     toleranceMatrix: array<int,array<string,mixed>>,
 	 *     materialiteit: array<int,array<string,mixed>>,
 	 *     auditSamples: array<int,array<string,mixed>>,
@@ -358,7 +358,7 @@ class AccountantsdossierExportService {
 	 * }
 	 */
 	private function collectBundle(string $protocolId): array {
-		$controleprotocol = $this->loadOne(schema: self::SCHEMA_CONTROLEPROTOCOL, id: $protocolId);
+		$auditProtocol = $this->loadOne(schema: self::SCHEMA_CONTROLEPROTOCOL, id: $protocolId);
 		$toleranceMatrix = $this->loadAllByProtocol(schema: self::SCHEMA_TOLERANCE_MATRIX, protocolId: $protocolId);
 		$materialiteit = $this->loadAllByProtocol(schema: self::SCHEMA_MATERIALITEIT, protocolId: $protocolId);
 		$auditSamples = $this->loadAllByProtocol(schema: self::SCHEMA_AUDIT_SAMPLE, protocolId: $protocolId);
@@ -372,7 +372,7 @@ class AccountantsdossierExportService {
 		}
 
 		$auditFindings = $this->loadFindings(sampleIds: $sampleIds);
-		$verklaringDraft = $this->loadVerklaringForProtocol(protocolId: $protocolId);
+		$declarationDraft = $this->loadDeclarationForProtocol(protocolId: $protocolId);
 		$sisaAssurance = $this->loadAllByProtocol(schema: self::SCHEMA_SISA_ASSURANCE, protocolId: $protocolId);
 
 		usort(
@@ -412,12 +412,12 @@ class AccountantsdossierExportService {
 		);
 
 		return [
-			'controleprotocol' => $controleprotocol,
+			'auditProtocol' => $auditProtocol,
 			'toleranceMatrix' => $toleranceMatrix,
 			'materialiteit' => $materialiteit,
 			'auditSamples' => $auditSamples,
 			'auditFindings' => $auditFindings,
-			'verklaringDraft' => $verklaringDraft,
+			'verklaringDraft' => $declarationDraft,
 			'sisaAssurance' => $sisaAssurance,
 		];
 	}//end collectBundle()
@@ -431,7 +431,7 @@ class AccountantsdossierExportService {
 	 */
 	private function buildLedger(array $bundle): array {
 		return [
-			'controleprotocol' => $bundle['controleprotocol'],
+			'auditProtocol' => $bundle['auditProtocol'],
 			'toleranceMatrix' => array_values($bundle['toleranceMatrix']),
 			'materialiteit' => array_values($bundle['materialiteit']),
 			'auditSamples' => array_values($bundle['auditSamples']),
@@ -493,8 +493,8 @@ class AccountantsdossierExportService {
 	 * @return string
 	 */
 	private function renderSummaryHtml(array $manifest, array $bundle): string {
-		$protocol = $bundle['controleprotocol'] ?? [];
-		$verklaring = $bundle['verklaringDraft'];
+		$protocol = $bundle['auditProtocol'] ?? [];
+		$declaration = $bundle['verklaringDraft'];
 		$findingRows = $this->renderFindingRows(findings: $bundle['auditFindings']);
 		$toleranceRows = $this->renderToleranceRows(rows: $bundle['toleranceMatrix']);
 		$sisaRows = $this->renderSisaRows(rows: $bundle['sisaAssurance']);
@@ -504,10 +504,10 @@ class AccountantsdossierExportService {
 		$opinion = '—';
 		$opinionRationale = '';
 		$signOff = [];
-		if ($verklaring !== null) {
-			$opinion = (string)($verklaring['proposedOpinion'] ?? '—');
-			$opinionRationale = (string)($verklaring['opinionRationale'] ?? '');
-			$signOff = (array)($verklaring['signOff'] ?? []);
+		if ($declaration !== null) {
+			$opinion = (string)($declaration['proposedOpinion'] ?? '—');
+			$opinionRationale = (string)($declaration['opinionRationale'] ?? '');
+			$signOff = (array)($declaration['signOff'] ?? []);
 		}
 
 		$auditYearLabel = (int)($protocol['auditYear'] ?? 0);
@@ -585,8 +585,8 @@ class AccountantsdossierExportService {
 			htmlspecialchars($effectiveFrom, ENT_QUOTES),
 			htmlspecialchars($effectiveTo, ENT_QUOTES),
 			htmlspecialchars((string)($adoptionDecision['decisionType'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['besluitnummer'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['datum'] ?? '—'), ENT_QUOTES),
+			htmlspecialchars((string)($adoptionDecision['decisionNumber'] ?? '—'), ENT_QUOTES),
+			htmlspecialchars((string)($adoptionDecision['date'] ?? '—'), ENT_QUOTES),
 			$toleranceRows,
 			$materialityRows,
 			$sampleRows,
@@ -594,9 +594,9 @@ class AccountantsdossierExportService {
 			htmlspecialchars($opinion, ENT_QUOTES),
 			htmlspecialchars($opinionRationale, ENT_QUOTES),
 			htmlspecialchars((string)($signOff['auditor'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['afmVergunningsnummer'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['datum'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['plaats'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['afmPermitNumber'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['date'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($signOff['place'] ?? ''), ENT_QUOTES),
 			$sisaRows,
 			self::RETENTION_YEARS
 		);
@@ -616,10 +616,10 @@ class AccountantsdossierExportService {
 				'<tr><td>%s</td><td class="num">%s</td><td class="num">%s</td>'
 				. '<td class="num">%s</td><td class="num">%s</td><td class="num">%s</td></tr>',
 				htmlspecialchars((string)($row['topic'] ?? ''), ENT_QUOTES),
-				$this->fmtNumber(value: $row['rechtmatigheidApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['rechtmatigheidQualificationCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['getrouwheidApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['getrouwheidQualificationCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['lawfulnessApprovalCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['lawfulnessQualificationCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['faithfulnessApprovalCeiling'] ?? 0),
+				$this->fmtNumber(value: $row['faithfulnessQualificationCeiling'] ?? 0),
 				$this->fmtNumber(value: $row['uncertaintyCeiling'] ?? 0)
 			);
 		}
@@ -716,8 +716,8 @@ class AccountantsdossierExportService {
 			$html .= sprintf(
 				'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class="num">%d</td></tr>',
 				htmlspecialchars((string)($row['schemeCode'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['verantwoordingsplichtige'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['specifiekeUitkering'] ?? ''), ENT_QUOTES),
+				htmlspecialchars((string)($row['accountableParty'] ?? ''), ENT_QUOTES),
+				htmlspecialchars((string)($row['specificBenefit'] ?? ''), ENT_QUOTES),
 				htmlspecialchars((string)($row['assuranceLevel'] ?? ''), ENT_QUOTES),
 				$count
 			);
@@ -758,10 +758,10 @@ class AccountantsdossierExportService {
 		$zip->addFromString($root . 'ledger.json', $this->canonicalJson(payload: $ledger));
 		$zip->addFromString($root . 'summary.pdf.html', $summaryHtml);
 
-		if ($bundle['controleprotocol'] !== null) {
+		if ($bundle['auditProtocol'] !== null) {
 			$zip->addFromString(
 				$root . 'attachments/controleprotocol/controleprotocol.json',
-				$this->canonicalJson(payload: $bundle['controleprotocol'])
+				$this->canonicalJson(payload: $bundle['auditProtocol'])
 			);
 		}
 
@@ -949,7 +949,7 @@ class AccountantsdossierExportService {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function loadVerklaringForProtocol(string $protocolId): ?array {
+	private function loadDeclarationForProtocol(string $protocolId): ?array {
 		$found = $this->objects()
 			->setRegister($this->register())
 			->setSchema(self::SCHEMA_VERKLARING_DRAFT)

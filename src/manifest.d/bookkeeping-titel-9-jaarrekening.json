@@ -37,7 +37,7 @@
 						"sortable": true
 					},
 					{
-						"key": "groottecategorie",
+						"key": "sizeCategory",
 						"label": "Size category",
 						"sortable": true
 					},
@@ -47,17 +47,17 @@
 						"sortable": true
 					},
 					{
-						"key": "opmaakDatum",
+						"key": "layoutDate",
 						"label": "Prepared",
 						"sortable": true
 					},
 					{
-						"key": "vaststellingDatum",
+						"key": "determinationDate",
 						"label": "Adopted",
 						"sortable": true
 					},
 					{
-						"key": "depositeringDatum",
+						"key": "depositDate",
 						"label": "Filed",
 						"sortable": true
 					}
@@ -92,12 +92,12 @@
 						"type": "string"
 					},
 					{
-						"key": "groottecategorie",
+						"key": "sizeCategory",
 						"label": "Size category",
 						"type": "string"
 					},
 					{
-						"key": "rapportageGrondslag",
+						"key": "rapportageBasis",
 						"label": "Reporting basis",
 						"type": "string"
 					},
@@ -112,22 +112,22 @@
 						"type": "string"
 					},
 					{
-						"key": "opmaakDatum",
+						"key": "layoutDate",
 						"label": "Preparation date",
 						"type": "string"
 					},
 					{
-						"key": "vaststellingDatum",
+						"key": "determinationDate",
 						"label": "Adoption date",
 						"type": "string"
 					},
 					{
-						"key": "depositeringDatum",
+						"key": "depositDate",
 						"label": "Filing date",
 						"type": "string"
 					},
 					{
-						"key": "accountantsverklaringVereist",
+						"key": "auditorsStatementRequired",
 						"label": "Auditor's report required",
 						"type": "boolean"
 					},
@@ -137,12 +137,12 @@
 						"type": "string"
 					},
 					{
-						"key": "kasstroomoverzichtVereist",
+						"key": "cashFlowStatementRequired",
 						"label": "Cash flow statement required",
 						"type": "boolean"
 					},
 					{
-						"key": "bestuursverslagVereist",
+						"key": "boardReportRequired",
 						"label": "Management report required",
 						"type": "boolean"
 					}
@@ -150,8 +150,8 @@
 				"relatedLists": [
 					{"id": "disclosure-notes", "title": "Disclosure notes", "schema": "Note", "filter": {"reportId": "@self.id"}, "columns": [
 						{"key": "code", "label": "Code"},
-						{"key": "titel", "label": "Title"},
-						{"key": "wettelijkeBasis", "label": "Legal basis"},
+						{"key": "title", "label": "Title"},
+						{"key": "statutoryBasis", "label": "Legal basis"},
 						{"key": "verplicht", "label": "Mandatory"}
 					]}
 				],
@@ -185,7 +185,7 @@
 						"type": "string"
 					},
 					{
-						"key": "huidigStap",
+						"key": "currentStap",
 						"label": "Current step",
 						"type": "string"
 					}

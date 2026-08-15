@@ -91,7 +91,7 @@ final class AuditfileParserTest extends TestCase {
 		}
 
 		self::assertNotNull($acme);
-		self::assertSame('NL876543210B01', $acme['btw']);
+		self::assertSame('NL876543210B01', $acme['vat']);
 		self::assertSame('87654321', $acme['kvk']);
 		self::assertSame('facturen@acme.nl', $acme['email']);
 	}//end testExtractsRelationsWithBtw()

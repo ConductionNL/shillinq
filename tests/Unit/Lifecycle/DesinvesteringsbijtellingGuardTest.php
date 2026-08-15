@@ -151,13 +151,13 @@ class DesinvesteringsbijtellingGuardTest extends TestCase {
 	 */
 	public function testComputeBijtellingUsesLowerOfProceedsOrCost(): void {
 		// EIA 40% on min(EUR 30.000 proceeds, EUR 50.000 cost) = 40% of EUR 30.000 = EUR 12.000.
-		$bijtelling = $this->guard->computeBijtelling(
-			aftrekPercentage: 40.0,
-			opbrengst: 3000000,
-			aanschafwaarde: 5000000,
-			origineleAftrek: 2000000
+		$benefitInKind = $this->guard->computeBijtelling(
+			deductionPercentage: 40.0,
+			revenue: 3000000,
+			acquisitionValue: 5000000,
+			origineleDeduction: 2000000
 		);
-		self::assertSame(1200000, $bijtelling);
+		self::assertSame(1200000, $benefitInKind);
 
 	}//end testComputeBijtellingUsesLowerOfProceedsOrCost()
 
@@ -168,13 +168,13 @@ class DesinvesteringsbijtellingGuardTest extends TestCase {
 	 */
 	public function testComputeBijtellingCappedAtOriginalAftrek(): void {
 		// 40% of EUR 50.000 = EUR 20.000 but original aftrek was only EUR 15.000 -> capped.
-		$bijtelling = $this->guard->computeBijtelling(
-			aftrekPercentage: 40.0,
-			opbrengst: 5000000,
-			aanschafwaarde: 5000000,
-			origineleAftrek: 1500000
+		$benefitInKind = $this->guard->computeBijtelling(
+			deductionPercentage: 40.0,
+			revenue: 5000000,
+			acquisitionValue: 5000000,
+			origineleDeduction: 1500000
 		);
-		self::assertSame(1500000, $bijtelling);
+		self::assertSame(1500000, $benefitInKind);
 
 	}//end testComputeBijtellingCappedAtOriginalAftrek()
 
@@ -184,13 +184,13 @@ class DesinvesteringsbijtellingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testComputeBijtellingNeverNegative(): void {
-		$bijtelling = $this->guard->computeBijtelling(
-			aftrekPercentage: 40.0,
-			opbrengst: -100,
-			aanschafwaarde: 5000000,
-			origineleAftrek: 2000000
+		$benefitInKind = $this->guard->computeBijtelling(
+			deductionPercentage: 40.0,
+			revenue: -100,
+			acquisitionValue: 5000000,
+			origineleDeduction: 2000000
 		);
-		self::assertSame(0, $bijtelling);
+		self::assertSame(0, $benefitInKind);
 
 	}//end testComputeBijtellingNeverNegative()
 }//end class

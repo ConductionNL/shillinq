@@ -92,12 +92,12 @@ class VerplichtingTransitionListener implements IEventListener {
 	 */
 	public function handle(Event $event): void {
 		try {
-			$payload = $this->extractActivatedVerplichting(event: $event);
+			$payload = $this->extractActivatedCommitment(event: $event);
 			if ($payload === null) {
 				return;
 			}
 
-			$this->emitIfTenderNed(verplichting: $payload);
+			$this->emitIfTenderNed(commitment: $payload);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'VerplichtingTransitionListener: emission failed — fail-soft',
@@ -115,14 +115,14 @@ class VerplichtingTransitionListener implements IEventListener {
 	 *
 	 * @return array<string, mixed>|null
 	 */
-	private function extractActivatedVerplichting(Event $event): ?array {
+	private function extractActivatedCommitment(Event $event): ?array {
 		$entity = $this->resolveTargetEntity(event: $event);
 		if ($entity === null) {
 			return null;
 		}
 
 		$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-		if ($this->isVerplichtingSchema(schema: $schema) === false) {
+		if ($this->isCommitmentSchema(schema: $schema) === false) {
 			return null;
 		}
 
@@ -169,16 +169,16 @@ class VerplichtingTransitionListener implements IEventListener {
 	/**
 	 * Emit the budget-impact event only for TenderNed-sourced obligations.
 	 *
-	 * @param array<string, mixed> $verplichting Verplichting payload.
+	 * @param array<string, mixed> $commitment Verplichting payload.
 	 *
 	 * @return void
 	 */
-	private function emitIfTenderNed(array $verplichting): void {
-		if ((string)($verplichting['bron'] ?? '') !== 'tenderned') {
+	private function emitIfTenderNed(array $commitment): void {
+		if ((string)($commitment['source'] ?? '') !== 'tenderned') {
 			return;
 		}
 
-		$this->emitter->emitActivated(verplichting: $verplichting);
+		$this->emitter->emitActivated(commitment: $commitment);
 
 	}//end emitIfTenderNed()
 
@@ -189,7 +189,7 @@ class VerplichtingTransitionListener implements IEventListener {
 	 *
 	 * @return bool
 	 */
-	private function isVerplichtingSchema(string $schema): bool {
+	private function isCommitmentSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
 		return ($normalised === 'verplichting'
 			|| str_ends_with(haystack: $normalised, needle: 'verplichting'));

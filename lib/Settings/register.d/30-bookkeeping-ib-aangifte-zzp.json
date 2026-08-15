@@ -19,9 +19,9 @@
         "type": "object",
         "required": [
           "enterpriseId",
-          "belastingjaar",
+          "taxYear",
           "status",
-          "aangifteType",
+          "taxReturnType",
           "administrationId"
         ],
         "properties": {
@@ -38,7 +38,7 @@
             "example": "******789",
             "title": "BSN"
           },
-          "belastingjaar": {
+          "taxYear": {
             "type": "integer",
             "description": "Tax year of the return.",
             "example": 2025,
@@ -60,7 +60,7 @@
             "description": "Lifecycle state per REQ-IB-001/007/008/009.",
             "title": "Status"
           },
-          "indieningKanaal": {
+          "submissionChannel": {
             "type": "string",
             "enum": [
               "DIGID_ZELFSERVICE",
@@ -71,7 +71,7 @@
             "description": "Submission channel (REQ-IB-008).",
             "title": "Indiening Kanaal"
           },
-          "aangifteType": {
+          "taxReturnType": {
             "type": "string",
             "enum": [
               "P_FORMULIER",
@@ -91,7 +91,7 @@
             "example": "B12345",
             "title": "Fiscalist Becon Nummer"
           },
-          "fiscalePartner": {
+          "fiscalPartner": {
             "type": "object",
             "nullable": true,
             "description": "Fiscal partner reference + allocation key for partner-verdeling optimisation (REQ-IB-010).",
@@ -101,7 +101,7 @@
                 "description": "Masked partner BSN.",
                 "title": "BSN"
               },
-              "verdeelsleutel": {
+              "allocationKey": {
                 "type": "string",
                 "enum": [
                   "OPTIMAAL_BEREKEND",
@@ -115,7 +115,7 @@
             },
             "title": "Fiscale Partner"
           },
-          "vorigeAangifteId": {
+          "previousTaxReturnId": {
             "type": "string",
             "nullable": true,
             "description": "FK to the superseded IBAangifte for a correctieaangifte (REQ-IB-012).",
@@ -127,19 +127,19 @@
             "example": 47820.0,
             "title": "Winst Uit Onderneming"
           },
-          "ondernemersaftrek": {
+          "entrepreneurDeduction": {
             "type": "number",
             "description": "Total ondernemersaftrek applied (MonetaryAmount EUR).",
             "example": 5616.0,
             "title": "Ondernemersaftrek"
           },
-          "mkbWinstvrijstelling": {
+          "mkbProfitExemption": {
             "type": "number",
             "description": "MKB-winstvrijstelling amount (MonetaryAmount EUR).",
             "example": 5618.05,
             "title": "Mkb Winstvrijstelling"
           },
-          "belastbareWinst": {
+          "taxableProfit": {
             "type": "number",
             "description": "Taxable profit after deductions and MKB exemption (MonetaryAmount EUR).",
             "example": 36585.95,
@@ -157,32 +157,32 @@
             "example": 1820.0,
             "title": "Totaal Box3Inkomen"
           },
-          "verschuldigdeIB": {
+          "dueIB": {
             "type": "number",
             "description": "Tax due before heffingskortingen (MonetaryAmount EUR).",
             "example": 9420.18,
             "title": "Verschuldigde Ib"
           },
-          "heffingskortingen": {
+          "taxCredits": {
             "type": "number",
             "description": "Total tax credits applied (MonetaryAmount EUR).",
             "example": 3950.4,
             "title": "Heffingskortingen"
           },
-          "teBetalenOfTeOntvangen": {
+          "tePayOfTeReceived": {
             "type": "number",
             "description": "Final payment (positive) or refund (negative) delta (MonetaryAmount EUR).",
             "example": 5469.78,
             "title": "Te Betalen Of Te Ontvangen"
           },
-          "ingediendOp": {
+          "submittedOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
             "description": "Digipoort submission timestamp.",
             "title": "Ingediend Op"
           },
-          "digipoortOntvangstBevestigingId": {
+          "digipoortReceiptConfirmationId": {
             "type": "string",
             "nullable": true,
             "description": "Acknowledgement ID returned by Digipoort on successful submission.",
@@ -331,11 +331,11 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "aangifteId",
+          "taxReturnId",
           "administrationId"
         ],
         "properties": {
-          "aangifteId": {
+          "taxReturnId": {
             "type": "string",
             "description": "FK to the owning IBAangifte.",
             "example": "ib-aangifte-2025-ond-001234",
@@ -353,31 +353,31 @@
             "example": 12300.0,
             "title": "Kostprijs Omzet"
           },
-          "brutoWinst": {
+          "grossProfit": {
             "type": "number",
             "description": "Gross profit = omzet − kostprijs (MonetaryAmount EUR).",
             "example": 70100.0,
             "title": "Bruto Winst"
           },
-          "afschrijvingen": {
+          "depreciations": {
             "type": "number",
             "description": "Depreciation from bookkeeping-fixed-assets schedules (MonetaryAmount EUR).",
             "example": 4800.0,
             "title": "Afschrijvingen"
           },
-          "personeelskosten": {
+          "staffCost": {
             "type": "number",
             "description": "Personnel costs (typically 0 for ZZP) (MonetaryAmount EUR).",
             "example": 0,
             "title": "Personeelskosten"
           },
-          "huisvestingskosten": {
+          "housingCost": {
             "type": "number",
             "description": "Housing costs (MonetaryAmount EUR).",
             "example": 6200.0,
             "title": "Huisvestingskosten"
           },
-          "autokosten": {
+          "vehicleCost": {
             "type": "object",
             "description": "Car costs with bijtelling/aftrek split.",
             "properties": {
@@ -386,12 +386,12 @@
                 "title": "Totaal",
                 "description": "The numeric value for totaal."
               },
-              "bijtellingPrive": {
+              "benefitInKindPrivate": {
                 "type": "number",
                 "title": "Bijtelling Prive",
                 "description": "The numeric value for bijtelling prive."
               },
-              "aftrekbaar": {
+              "deductible": {
                 "type": "number",
                 "title": "Aftrekbaar",
                 "description": "The numeric value for aftrekbaar."
@@ -399,43 +399,43 @@
             },
             "title": "Autokosten"
           },
-          "verkoopkosten": {
+          "salesCost": {
             "type": "number",
             "description": "Selling costs (MonetaryAmount EUR).",
             "example": 1820.0,
             "title": "Verkoopkosten"
           },
-          "kantoorkosten": {
+          "officeCost": {
             "type": "number",
             "description": "Office costs (MonetaryAmount EUR).",
             "example": 1100.0,
             "title": "Kantoorkosten"
           },
-          "algemeneKosten": {
+          "generalCost": {
             "type": "number",
             "description": "General costs (MonetaryAmount EUR).",
             "example": 2820.0,
             "title": "Algemene Kosten"
           },
-          "nietAftrekbaarBoetes": {
+          "nonDeductibleFines": {
             "type": "number",
             "description": "Non-deductible fines add-back (MonetaryAmount EUR).",
             "example": 180.0,
             "title": "Niet Aftrekbaar Boetes"
           },
-          "representatieCorrectie": {
+          "entertainmentCorrection": {
             "type": "number",
             "description": "Representation-cost cap correction per art. 3.15 (MonetaryAmount EUR).",
             "example": 320.0,
             "title": "Representatie Correctie"
           },
-          "winstVoorOndernemersaftrek": {
+          "profitForEntrepreneurDeduction": {
             "type": "number",
             "description": "Fiscal profit before ondernemersaftrek (MonetaryAmount EUR).",
             "example": 47820.0,
             "title": "Winst Voor Ondernemersaftrek"
           },
-          "fiscaleAfwijkingenLog": {
+          "fiscalDeviationsLog": {
             "type": "array",
             "description": "Discrete fiscal adjustment records with grondslag (REQ-IB-001, design D3). GL is never altered — adjustments are logged here.",
             "items": {
@@ -443,7 +443,7 @@
               "required": [
                 "post",
                 "amount",
-                "grondslag"
+                "basis"
               ],
               "properties": {
                 "post": {
@@ -456,12 +456,12 @@
                   "description": "EUR adjustment (MonetaryAmount).",
                   "title": "Bedrag"
                 },
-                "grondslag": {
+                "basis": {
                   "type": "string",
                   "description": "Law-article reference, e.g. 'art. 3.15 Wet IB 2001'.",
                   "title": "Grondslag"
                 },
-                "gebruiker": {
+                "user": {
                   "type": "string",
                   "nullable": true,
                   "description": "'system' for auto-detect or a user id for manual override.",
@@ -502,9 +502,9 @@
           }
         },
         "x-openregister-calculations": {
-          "representatieCorrectie": {
+          "entertainmentCorrection": {
             "description": "Representatiebeperking per art. 3.15 Wet IB: cap representation costs at 5% of profit; the excess is logged as a fiscaleAfwijking. Expressed declaratively; the cross-record cap is computed by the IbFiscalAdjustmentGuard seam (ADR-031 exception).",
-            "grondslag": "art. 3.15 Wet IB 2001",
+            "basis": "art. 3.15 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\IbFiscalAdjustmentGuard::representatieDrempel"
           }
         },
@@ -523,30 +523,30 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "aangifteId",
+          "taxReturnId",
           "administrationId"
         ],
         "properties": {
-          "aangifteId": {
+          "taxReturnId": {
             "type": "string",
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "urencriterium": {
+          "hoursCriterion": {
             "type": "object",
             "description": "Urencriterium evidence (REQ-IB-002). Qualifying hours computed by UrencriteriumGuard.",
             "properties": {
-              "behaald": {
+              "achieved": {
                 "type": "boolean",
                 "title": "Behaald",
                 "description": "Indicates whether behaald applies."
               },
-              "uren": {
+              "hours": {
                 "type": "integer",
                 "title": "Uren",
                 "description": "The numeric value for uren."
               },
-              "drempel": {
+              "threshold": {
                 "type": "integer",
                 "default": 1225,
                 "title": "Drempel",
@@ -561,11 +561,11 @@
             },
             "title": "Urencriterium"
           },
-          "zelfstandigenaftrek": {
+          "selfEmployedDeduction": {
             "type": "object",
             "description": "Self-employed deduction; toegestaan only if urencriterium.behaald (REQ-IB-002).",
             "properties": {
-              "toegestaan": {
+              "permitted": {
                 "type": "boolean",
                 "title": "Toegestaan",
                 "description": "Indicates whether toegestaan applies."
@@ -575,7 +575,7 @@
                 "title": "Bedrag",
                 "description": "The numeric value for bedrag."
               },
-              "grondslag": {
+              "basis": {
                 "type": "string",
                 "nullable": true,
                 "title": "Grondslag",
@@ -584,11 +584,11 @@
             },
             "title": "Zelfstandigenaftrek"
           },
-          "startersaftrek": {
+          "starterDeduction": {
             "type": "object",
             "description": "Starter's deduction, max 3× in first 5 years (art. 3.78).",
             "properties": {
-              "toegestaan": {
+              "permitted": {
                 "type": "boolean",
                 "title": "Toegestaan",
                 "description": "Indicates whether toegestaan applies."
@@ -599,7 +599,7 @@
                 "title": "Jaar Van Gebruik",
                 "description": "The numeric value for jaar van gebruik."
               },
-              "maxKeer": {
+              "maxTimes": {
                 "type": "integer",
                 "default": 3,
                 "title": "Max Keer",
@@ -613,16 +613,16 @@
             },
             "title": "Startersaftrek"
           },
-          "soAftrek": {
+          "soDeduction": {
             "type": "object",
             "description": "S&O (WBSO) aftrek.",
             "properties": {
-              "toegestaan": {
+              "permitted": {
                 "type": "boolean",
                 "title": "Toegestaan",
                 "description": "Indicates whether toegestaan applies."
               },
-              "wbsoBeschikking": {
+              "wbsoDecision": {
                 "type": "string",
                 "nullable": true,
                 "title": "WBSO Beschikking",
@@ -631,11 +631,11 @@
             },
             "title": "So Aftrek"
           },
-          "meewerkaftrek": {
+          "coWorkingDeduction": {
             "type": "object",
             "description": "Partner co-working deduction.",
             "properties": {
-              "toegestaan": {
+              "permitted": {
                 "type": "boolean",
                 "title": "Toegestaan",
                 "description": "Indicates whether toegestaan applies."
@@ -649,7 +649,7 @@
             },
             "title": "Meewerkaftrek"
           },
-          "investeringsaftrek": {
+          "investmentDeduction": {
             "type": "object",
             "description": "KIA/EIA/MIA/VAMIL pulled from bookkeeping-investeringsaftrek with evidence refs (REQ-IB-004).",
             "properties": {
@@ -682,7 +682,7 @@
             },
             "title": "Investeringsaftrek"
           },
-          "mkbWinstvrijstelling": {
+          "mkbProfitExemption": {
             "type": "number",
             "description": "MKB-winstvrijstelling = winst na ondernemersaftrek × rate (REQ-IB-003) (MonetaryAmount EUR).",
             "example": 5618.05,
@@ -701,14 +701,14 @@
           }
         },
         "x-openregister-calculations": {
-          "urencriterium": {
+          "hoursCriterion": {
             "description": "Qualifying YTD hours for the 1225-urencriterium; excluded categories (sick/leave/vacation/non-billable-admin) do not count per Wet IB art. 3.6 (REQ-IB-002). Reuses the existing ADR-031 guard seam.",
-            "grondslag": "art. 3.6 Wet IB 2001",
+            "basis": "art. 3.6 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"
           },
-          "mkbWinstvrijstelling": {
+          "mkbProfitExemption": {
             "description": "MKB-winstvrijstelling rate is read from IBTaxParameterYear.mkbExemptionRate for the belastingjaar; no rate is hard-coded (REQ-IB-003, design D5). Not applied when winst < 0.",
-            "grondslag": "art. 3.79a Wet IB 2001",
+            "basis": "art. 3.79a Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.mkbExemptionRate"
           }
         },
@@ -727,22 +727,22 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "aangifteId",
+          "taxReturnId",
           "administrationId"
         ],
         "properties": {
-          "aangifteId": {
+          "taxReturnId": {
             "type": "string",
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "algemeneHeffingskorting": {
+          "generalTaxCredit": {
             "type": "number",
             "description": "AHK with income-dependent afbouw (MonetaryAmount EUR).",
             "example": 2890.0,
             "title": "Algemene Heffingskorting"
           },
-          "arbeidskorting": {
+          "employmentTaxCredit": {
             "type": "number",
             "description": "Arbeidskorting (MonetaryAmount EUR).",
             "example": 1060.4,
@@ -754,19 +754,19 @@
             "example": 0,
             "title": "Iack"
           },
-          "ouderenkorting": {
+          "elderlyTaxCredit": {
             "type": "number",
             "description": "Ouderenkorting (MonetaryAmount EUR).",
             "example": 0,
             "title": "Ouderenkorting"
           },
-          "alleenstaandeOuderenkorting": {
+          "singleElderlyTaxCredit": {
             "type": "number",
             "description": "Single-elderly korting (MonetaryAmount EUR).",
             "example": 0,
             "title": "Alleenstaande Ouderenkorting"
           },
-          "jonggehandicaptenkorting": {
+          "youngDisabledTaxCredit": {
             "type": "number",
             "description": "Young-disabled korting (MonetaryAmount EUR).",
             "example": 0,
@@ -778,21 +778,21 @@
             "example": 3950.4,
             "title": "Totaal Heffingskortingen"
           },
-          "berekeningsbasis": {
+          "calculationBasis": {
             "type": "object",
             "description": "Calculation basis for transparency.",
             "properties": {
-              "inkomenBox1": {
+              "incomeBox1": {
                 "type": "number",
                 "title": "Inkomen Box1",
                 "description": "The numeric value for inkomen box1."
               },
-              "arbeidsinkomen": {
+              "labourIncome": {
                 "type": "number",
                 "title": "Arbeidsinkomen",
                 "description": "The numeric value for arbeidsinkomen."
               },
-              "ahkAfbouwToegepast": {
+              "ahkPhaseOutApplied": {
                 "type": "number",
                 "title": "Ahk Afbouw Toegepast",
                 "description": "The numeric value for ahk afbouw toegepast."
@@ -807,9 +807,9 @@
           }
         },
         "x-openregister-calculations": {
-          "algemeneHeffingskorting": {
+          "generalTaxCredit": {
             "description": "AHK = max(ahkMax − ahkPhaseoutRate × (box1Inkomen − ahkPhaseoutThreshold), 0). All parameters from IBTaxParameterYear (REQ-IB-006).",
-            "grondslag": "art. 8.10 Wet IB 2001",
+            "basis": "art. 8.10 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.ahkMax,ahkPhaseoutRate,ahkPhaseoutThreshold"
           }
         },
@@ -828,20 +828,20 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "aangifteId",
+          "taxReturnId",
           "administrationId"
         ],
         "properties": {
-          "aangifteId": {
+          "taxReturnId": {
             "type": "string",
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "jaarruimte": {
+          "annualAllowance": {
             "type": "object",
             "description": "Annual lijfrente room for the belastingjaar (REQ-IB-005).",
             "properties": {
-              "berekend": {
+              "calculated": {
                 "type": "number",
                 "title": "Berekend",
                 "description": "The numeric value for berekend."
@@ -859,11 +859,11 @@
             },
             "title": "Jaarruimte"
           },
-          "reserveringsruimte": {
+          "accrualAllowance": {
             "type": "object",
             "description": "Cumulative unclaimed room from the prior 10 years, capped per IBTaxParameterYear (REQ-IB-005).",
             "properties": {
-              "berekend": {
+              "calculated": {
                 "type": "number",
                 "title": "Berekend",
                 "description": "The numeric value for berekend."
@@ -890,13 +890,13 @@
                 "title": "Bedrag",
                 "description": "The numeric value for bedrag."
               },
-              "polisnummer": {
+              "policyNumber": {
                 "type": "string",
                 "nullable": true,
                 "title": "Polisnummer",
                 "description": "The polisnummer."
               },
-              "verzekeraar": {
+              "insurer": {
                 "type": "string",
                 "nullable": true,
                 "title": "Verzekeraar",
@@ -918,9 +918,9 @@
           }
         },
         "x-openregister-calculations": {
-          "jaarruimte": {
+          "annualAllowance": {
             "description": "jaarruimte = lijfrenteRate × (min(winst_na_MKB, premiegrondslagMax) − lijfrenteFranchise); all parameters from IBTaxParameterYear (REQ-IB-005, design D6). System computes the default; the accountant may override with grondslag.",
-            "grondslag": "art. 3.127 Wet IB 2001",
+            "basis": "art. 3.127 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.lijfrenteRate,lijfrenteFranchise,lijfrenteReserveringsruimteCap"
           }
         },
@@ -939,36 +939,36 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "aangifteId",
-          "kenteken",
+          "taxReturnId",
+          "licencePlate",
           "administrationId"
         ],
         "properties": {
-          "aangifteId": {
+          "taxReturnId": {
             "type": "string",
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "kenteken": {
+          "licencePlate": {
             "type": "string",
             "description": "Dutch license plate.",
             "example": "12-ABC-3",
             "title": "Kenteken"
           },
-          "cataloguswaardeNieuw": {
+          "listValueNew": {
             "type": "number",
             "description": "Catalogue value when new (MonetaryAmount EUR).",
             "example": 38000.0,
             "title": "Cataloguswaarde Nieuw"
           },
-          "datumEersteRegistratie": {
+          "dateFirstRegistration": {
             "type": "string",
             "format": "date",
             "nullable": true,
             "description": "Date of first registration (drives staffel eligibility).",
             "title": "Datum Eerste Registratie"
           },
-          "bijtellingsCategorie": {
+          "benefitInKindCategory": {
             "type": "string",
             "enum": [
               "REGULIER_22PCT",
@@ -980,7 +980,7 @@
             "title": "Bijtellings Categorie",
             "description": "The date and time for bijtellings categorie."
           },
-          "bijtellingsPct": {
+          "benefitInKindPct": {
             "type": "number",
             "description": "Applied bijtelling percentage, e.g. 0.22.",
             "example": 0.22,
@@ -992,23 +992,23 @@
             "example": 8360.0,
             "title": "Bijtelling Bedrag"
           },
-          "eigenBijdrage": {
+          "ownContribution": {
             "type": "number",
             "description": "Driver's own contribution (MonetaryAmount EUR).",
             "example": 0,
             "title": "Eigen Bijdrage"
           },
-          "nettoBijtelling": {
+          "netBenefitInKind": {
             "type": "number",
             "description": "bijtellingBedrag − eigenBijdrage (MonetaryAmount EUR).",
             "example": 8360.0,
             "title": "Netto Bijtelling"
           },
-          "kilometerAdministratie": {
+          "kilometerAdministration": {
             "type": "object",
             "description": "Kilometre administration evidence.",
             "properties": {
-              "aanwezig": {
+              "present": {
                 "type": "boolean",
                 "title": "Aanwezig",
                 "description": "Indicates whether aanwezig applies."
@@ -1032,7 +1032,7 @@
             },
             "title": "Kilometer Administratie"
           },
-          "grondslag": {
+          "basis": {
             "type": "string",
             "default": "art. 3.20 Wet IB 2001",
             "title": "Grondslag",
@@ -1047,7 +1047,7 @@
         "x-openregister-calculations": {
           "benefitInKindAmount": {
             "description": "Regulier: cataloguswaarde × evBijtellingStaffel2Pct. EV: evBijtellingStaffel1Pct on first evBijtellingStaffel1Cap, evBijtellingStaffel2Pct on the excess. Staffel parameters from IBTaxParameterYear (REQ-IB-013).",
-            "grondslag": "art. 3.20 Wet IB 2001",
+            "basis": "art. 3.20 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\IbBijtellingGuard::computeBijtelling",
             "parameterSource": "IBTaxParameterYear.evBijtellingStaffel1Pct,evBijtellingStaffel1Cap,evBijtellingStaffel2Pct"
           }
@@ -1067,36 +1067,36 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "aangifteId",
-          "peildatum",
+          "taxReturnId",
+          "referenceDate",
           "administrationId"
         ],
         "properties": {
-          "aangifteId": {
+          "taxReturnId": {
             "type": "string",
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "peildatum": {
+          "referenceDate": {
             "type": "string",
             "format": "date",
             "description": "Reference date (typically 1 January of the fiscal year).",
             "example": "2025-01-01",
             "title": "Peildatum"
           },
-          "bankEnSpaartegoeden": {
+          "bankEnSavingsBalances": {
             "type": "number",
             "description": "Bank & savings balances (MonetaryAmount EUR).",
             "example": 28000.0,
             "title": "Bank En Spaartegoeden"
           },
-          "overigeBezittingen": {
+          "otherAssets": {
             "type": "number",
             "description": "Other assets (MonetaryAmount EUR).",
             "example": 41000.0,
             "title": "Overige Bezittingen"
           },
-          "schulden": {
+          "debts": {
             "type": "number",
             "description": "Debts (MonetaryAmount EUR).",
             "example": 0,
@@ -1108,23 +1108,23 @@
             "example": 69000.0,
             "title": "Totaal Rendementsgrondslag"
           },
-          "heffingvrijVermogen": {
+          "taxExemptEquity": {
             "type": "number",
             "description": "Tax-free allowance from IBTaxParameterYear.box3HeffingvrijVermogen (MonetaryAmount EUR).",
             "example": 57684.0,
             "title": "Heffingvrij Vermogen"
           },
-          "belastbareGrondslag": {
+          "taxableBasis": {
             "type": "number",
             "description": "max(totaalRendementsgrondslag − heffingvrijVermogen, 0) (MonetaryAmount EUR).",
             "example": 12000.0,
             "title": "Belastbare Grondslag"
           },
-          "berekendRendement": {
+          "calculatedReturn": {
             "type": "object",
             "description": "Chosen rendement method + amount.",
             "properties": {
-              "methode": {
+              "method": {
                 "type": "string",
                 "enum": [
                   "WERKELIJK",
@@ -1134,7 +1134,7 @@
                 "title": "Methode",
                 "description": "The methode."
               },
-              "rendement": {
+              "return": {
                 "type": "number",
                 "title": "Rendement",
                 "description": "The numeric value for rendement."
@@ -1142,7 +1142,7 @@
             },
             "title": "Berekend Rendement"
           },
-          "werkelijkRendementOpgevoerd": {
+          "actualReturnEntered": {
             "type": "boolean",
             "description": "True if the taxpayer chose to report actual rendement.",
             "default": false,
@@ -1155,9 +1155,9 @@
           }
         },
         "x-openregister-calculations": {
-          "belastbareGrondslag": {
+          "taxableBasis": {
             "description": "belastbareGrondslag = max(totaalRendementsgrondslag − box3HeffingvrijVermogen, 0). System computes both forfait and werkelijk rendement and selects the lower for the taxpayer (REQ-IB-015, design D8).",
-            "grondslag": "Overbruggingswet box 3 / hoofdstuk 5 Wet IB 2001",
+            "basis": "Overbruggingswet box 3 / hoofdstuk 5 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.box3HeffingvrijVermogen"
           }
         },
@@ -1176,42 +1176,42 @@
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
         "required": [
-          "aangifteId",
+          "taxReturnId",
           "administrationId"
         ],
         "properties": {
-          "aangifteId": {
+          "taxReturnId": {
             "type": "string",
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "regels": {
+          "rules": {
             "type": "array",
             "description": "Audit-trail rows linking each rubriek to its source (REQ-IB-009).",
             "items": {
               "type": "object",
               "required": [
-                "rubriek",
-                "waarde",
-                "bron"
+                "section",
+                "value",
+                "source"
               ],
               "properties": {
-                "rubriek": {
+                "section": {
                   "type": "string",
                   "description": "P-formulier field identifier, e.g. omzet_excl_btw.",
                   "title": "Rubriek"
                 },
-                "waarde": {
+                "value": {
                   "type": "number",
                   "title": "Waarde",
                   "description": "The numeric value for waarde."
                 },
-                "bron": {
+                "source": {
                   "type": "string",
                   "description": "GL account range, external API id, or brontabel.",
                   "title": "Bron"
                 },
-                "journaalposten": {
+                "journalEntries": {
                   "type": "array",
                   "description": "Underlying GL entry ids that sum to the value.",
                   "items": {
@@ -1219,18 +1219,18 @@
                   },
                   "title": "Journaalposten"
                 },
-                "berekendOp": {
+                "calculatedOn": {
                   "type": "string",
                   "format": "date-time",
                   "title": "Berekend Op",
                   "description": "The berekend op."
                 },
-                "berekendDoor": {
+                "calculatedBy": {
                   "type": "string",
                   "description": "'system' or user identifier.",
                   "title": "Berekend Door"
                 },
-                "grondslag": {
+                "basis": {
                   "type": "string",
                   "nullable": true,
                   "title": "Grondslag",
@@ -1240,7 +1240,7 @@
             },
             "title": "Regels"
           },
-          "totalRegels": {
+          "totalRules": {
             "type": "integer",
             "description": "Count of regels for the audit summary.",
             "example": 247,
@@ -1253,7 +1253,7 @@
             "description": "Timestamp the trail was frozen on filing.",
             "title": "Freeze Moment"
           },
-          "gefreezdDoor": {
+          "frozenBy": {
             "type": "string",
             "nullable": true,
             "description": "User who froze the trail.",
@@ -1327,12 +1327,12 @@
             "description": "AHK phase-out income threshold (MonetaryAmount EUR).",
             "title": "Ahk Phaseout Threshold"
           },
-          "arbeidskortingMax": {
+          "employmentTaxCreditMax": {
             "type": "number",
             "description": "Arbeidskorting maximum (MonetaryAmount EUR).",
             "title": "Arbeidskorting Max"
           },
-          "arbeidskortingPhaseoutThreshold": {
+          "employmentTaxCreditPhaseoutThreshold": {
             "type": "number",
             "description": "Arbeidskorting phase-out income threshold (MonetaryAmount EUR).",
             "title": "Arbeidskorting Phaseout Threshold"
@@ -1342,42 +1342,42 @@
             "description": "IACK maximum (MonetaryAmount EUR).",
             "title": "Iack Max"
           },
-          "lijfrenteRate": {
+          "annuityRate": {
             "type": "number",
             "description": "Lijfrente jaarruimte rate, e.g. 0.133.",
             "title": "Lijfrente Rate"
           },
-          "lijfrenteFranchise": {
+          "annuityFranchise": {
             "type": "number",
             "description": "Lijfrente franchise (MonetaryAmount EUR).",
             "title": "Lijfrente Franchise"
           },
-          "lijfrentePremiegrondslagMax": {
+          "annuityContributionBasisMax": {
             "type": "number",
             "description": "Lijfrente premiegrondslag cap (MonetaryAmount EUR).",
             "title": "Lijfrente Premiegrondslag Max"
           },
-          "lijfrenteReserveringsruimteCap": {
+          "annuityAccrualAllowanceCap": {
             "type": "number",
             "description": "Reserveringsruimte cap (MonetaryAmount EUR).",
             "title": "Lijfrente Reserveringsruimte Cap"
           },
-          "box3HeffingvrijVermogen": {
+          "box3TaxExemptEquity": {
             "type": "number",
             "description": "Box-3 tax-free allowance (MonetaryAmount EUR).",
             "title": "Box3Heffingvrij Vermogen"
           },
-          "evBijtellingStaffel1Pct": {
+          "evBenefitInKindBracket1Pct": {
             "type": "number",
             "description": "EV bijtelling tier-1 percentage, e.g. 0.17.",
             "title": "Ev Bijtelling Staffel1Pct"
           },
-          "evBijtellingStaffel1Cap": {
+          "evBenefitInKindBracket1Cap": {
             "type": "number",
             "description": "EV bijtelling tier-1 cap (MonetaryAmount EUR).",
             "title": "Ev Bijtelling Staffel1Cap"
           },
-          "evBijtellingStaffel2Pct": {
+          "evBenefitInKindBracket2Pct": {
             "type": "number",
             "description": "EV bijtelling tier-2 / regulier percentage, e.g. 0.22.",
             "title": "Ev Bijtelling Staffel2Pct"
@@ -1410,17 +1410,17 @@
       "ahkMax": 3362.0,
       "ahkPhaseoutRate": 0.06337,
       "ahkPhaseoutThreshold": 28406.0,
-      "arbeidskortingMax": 5599.0,
-      "arbeidskortingPhaseoutThreshold": 43071.0,
+      "employmentTaxCreditMax": 5599.0,
+      "employmentTaxCreditPhaseoutThreshold": 43071.0,
       "iackMax": 2950.0,
-      "lijfrenteRate": 0.133,
-      "lijfrenteFranchise": 17091.0,
-      "lijfrentePremiegrondslagMax": 107000.0,
-      "lijfrenteReserveringsruimteCap": 9100.0,
-      "box3HeffingvrijVermogen": 57000.0,
-      "evBijtellingStaffel1Pct": 0.17,
-      "evBijtellingStaffel1Cap": 30000.0,
-      "evBijtellingStaffel2Pct": 0.22,
+      "annuityRate": 0.133,
+      "annuityFranchise": 17091.0,
+      "annuityContributionBasisMax": 107000.0,
+      "annuityAccrualAllowanceCap": 9100.0,
+      "box3TaxExemptEquity": 57000.0,
+      "evBenefitInKindBracket1Pct": 0.17,
+      "evBenefitInKindBracket1Cap": 30000.0,
+      "evBenefitInKindBracket2Pct": 0.22,
       "notes": "Belastingplan 2024 — zelfstandigenaftrek afbouwpad (2027 EUR 1.200), MKB 12,7%. Verify franchise/heffingvrij indexering before filing."
     },
     {
@@ -1436,17 +1436,17 @@
       "ahkMax": 3362.0,
       "ahkPhaseoutRate": 0.06337,
       "ahkPhaseoutThreshold": 28406.0,
-      "arbeidskortingMax": 5599.0,
-      "arbeidskortingPhaseoutThreshold": 43071.0,
+      "employmentTaxCreditMax": 5599.0,
+      "employmentTaxCreditPhaseoutThreshold": 43071.0,
       "iackMax": 2986.0,
-      "lijfrenteRate": 0.133,
-      "lijfrenteFranchise": 17546.0,
-      "lijfrentePremiegrondslagMax": 107000.0,
-      "lijfrenteReserveringsruimteCap": 9200.0,
-      "box3HeffingvrijVermogen": 57684.0,
-      "evBijtellingStaffel1Pct": 0.17,
-      "evBijtellingStaffel1Cap": 30000.0,
-      "evBijtellingStaffel2Pct": 0.22,
+      "annuityRate": 0.133,
+      "annuityFranchise": 17546.0,
+      "annuityContributionBasisMax": 107000.0,
+      "annuityAccrualAllowanceCap": 9200.0,
+      "box3TaxExemptEquity": 57684.0,
+      "evBenefitInKindBracket1Pct": 0.17,
+      "evBenefitInKindBracket1Cap": 30000.0,
+      "evBenefitInKindBracket2Pct": 0.22,
       "notes": "Belastingplan 2024/2025 — verifieer definitieve tarieven bij publicatie Belastingplan 2026."
     },
     {
@@ -1457,20 +1457,20 @@
       },
       "enterpriseId": "ond-nl-001234",
       "bsn": "******789",
-      "belastingjaar": 2025,
+      "taxYear": 2025,
       "status": "GEVALIDEERD",
-      "indieningKanaal": "DIGID_ZELFSERVICE",
-      "aangifteType": "P_FORMULIER",
+      "submissionChannel": "DIGID_ZELFSERVICE",
+      "taxReturnType": "P_FORMULIER",
       "profitFromEnterprise": 47820.0,
-      "ondernemersaftrek": 5616.0,
-      "mkbWinstvrijstelling": 5618.05,
-      "belastbareWinst": 36585.95,
+      "entrepreneurDeduction": 5616.0,
+      "mkbProfitExemption": 5618.05,
+      "taxableProfit": 36585.95,
       "totalBox1Income": 36585.95,
       "totalBox3Income": 1820.0,
-      "verschuldigdeIB": 9420.18,
-      "heffingskortingen": 3950.4,
-      "teBetalenOfTeOntvangen": 5469.78,
-      "ingediendOp": null,
+      "dueIB": 9420.18,
+      "taxCredits": 3950.4,
+      "tePayOfTeReceived": 5469.78,
+      "submittedOn": null,
       "xbrlInstanceId": null,
       "auditTrailId": "audit-ib-2025-ond-001234",
       "administrationId": "adm-consultancy-nl"
@@ -1481,30 +1481,30 @@
         "schema": "IBWinstOpgave",
         "slug": "ib-winst-2025-ond-001234"
       },
-      "aangifteId": "ib-aangifte-2025-ond-001234",
+      "taxReturnId": "ib-aangifte-2025-ond-001234",
       "revenueExcludingVat": 82400.0,
       "costOfRevenue": 12300.0,
-      "brutoWinst": 70100.0,
-      "afschrijvingen": 4800.0,
-      "personeelskosten": 0,
-      "huisvestingskosten": 6200.0,
-      "autokosten": {
+      "grossProfit": 70100.0,
+      "depreciations": 4800.0,
+      "staffCost": 0,
+      "housingCost": 6200.0,
+      "vehicleCost": {
         "total": 8400.0,
-        "bijtellingPrive": 3960.0,
-        "aftrekbaar": 4440.0
+        "benefitInKindPrivate": 3960.0,
+        "deductible": 4440.0
       },
-      "verkoopkosten": 1820.0,
-      "kantoorkosten": 1100.0,
-      "algemeneKosten": 2820.0,
-      "nietAftrekbaarBoetes": 180.0,
-      "representatieCorrectie": 320.0,
-      "winstVoorOndernemersaftrek": 47820.0,
-      "fiscaleAfwijkingenLog": [
+      "salesCost": 1820.0,
+      "officeCost": 1100.0,
+      "generalCost": 2820.0,
+      "nonDeductibleFines": 180.0,
+      "entertainmentCorrection": 320.0,
+      "profitForEntrepreneurDeduction": 47820.0,
+      "fiscalDeviationsLog": [
         {
           "post": "REPRESENTATIE_DREMPEL",
           "amount": -320.0,
-          "grondslag": "art. 3.15 Wet IB 2001, max 5% winst",
-          "gebruiker": "system"
+          "basis": "art. 3.15 Wet IB 2001, max 5% winst",
+          "user": "system"
         }
       ],
       "administrationId": "adm-consultancy-nl"
@@ -1515,40 +1515,40 @@
         "schema": "IBOndernemersaftrek",
         "slug": "ib-onda-2025-ond-001234"
       },
-      "aangifteId": "ib-aangifte-2025-ond-001234",
-      "urencriterium": {
-        "behaald": true,
-        "uren": 1462,
-        "drempel": 1225,
+      "taxReturnId": "ib-aangifte-2025-ond-001234",
+      "hoursCriterion": {
+        "achieved": true,
+        "hours": 1462,
+        "threshold": 1225,
         "evidenceRef": "uren-tracker-2025-ond-001234"
       },
-      "zelfstandigenaftrek": {
-        "toegestaan": true,
+      "selfEmployedDeduction": {
+        "permitted": true,
         "amount": 2470.0,
-        "grondslag": "art. 3.76 Wet IB 2001, tarief 2025"
+        "basis": "art. 3.76 Wet IB 2001, tarief 2025"
       },
-      "startersaftrek": {
-        "toegestaan": false,
+      "starterDeduction": {
+        "permitted": false,
         "yearOfUse": null,
-        "maxKeer": 3,
+        "maxTimes": 3,
         "amount": 0
       },
-      "soAftrek": {
-        "toegestaan": false,
-        "wbsoBeschikking": null
+      "soDeduction": {
+        "permitted": false,
+        "wbsoDecision": null
       },
-      "meewerkaftrek": {
-        "toegestaan": false,
+      "coWorkingDeduction": {
+        "permitted": false,
         "amount": null
       },
-      "investeringsaftrek": {
+      "investmentDeduction": {
         "kia": 0,
         "eia": 0,
         "mia": 0,
         "vamil": 0,
         "evidenceRef": null
       },
-      "mkbWinstvrijstelling": 5618.05,
+      "mkbProfitExemption": 5618.05,
       "totalDeduction": 8088.05,
       "administrationId": "adm-consultancy-nl"
     },
@@ -1558,18 +1558,18 @@
         "schema": "IBHeffingskortingenAlgemeen",
         "slug": "ib-heff-2025-ond-001234"
       },
-      "aangifteId": "ib-aangifte-2025-ond-001234",
-      "algemeneHeffingskorting": 2890.0,
-      "arbeidskorting": 1060.4,
+      "taxReturnId": "ib-aangifte-2025-ond-001234",
+      "generalTaxCredit": 2890.0,
+      "employmentTaxCredit": 1060.4,
       "iack": 0,
-      "ouderenkorting": 0,
-      "alleenstaandeOuderenkorting": 0,
-      "jonggehandicaptenkorting": 0,
+      "elderlyTaxCredit": 0,
+      "singleElderlyTaxCredit": 0,
+      "youngDisabledTaxCredit": 0,
       "totalTaxCredits": 3950.4,
-      "berekeningsbasis": {
-        "inkomenBox1": 36585.95,
-        "arbeidsinkomen": 36585.95,
-        "ahkAfbouwToegepast": 0
+      "calculationBasis": {
+        "incomeBox1": 36585.95,
+        "labourIncome": 36585.95,
+        "ahkPhaseOutApplied": 0
       },
       "administrationId": "adm-consultancy-nl"
     },
@@ -1579,21 +1579,21 @@
         "schema": "IBLijfrenteAOV",
         "slug": "ib-lijfrente-2025-ond-001234"
       },
-      "aangifteId": "ib-aangifte-2025-ond-001234",
-      "jaarruimte": {
-        "berekend": 6280.0,
+      "taxReturnId": "ib-aangifte-2025-ond-001234",
+      "annualAllowance": {
+        "calculated": 6280.0,
         "benut": 4800.0,
         "resterend": 1480.0
       },
-      "reserveringsruimte": {
-        "berekend": 9100.0,
+      "accrualAllowance": {
+        "calculated": 9100.0,
         "benut": 0,
         "resterend": 9100.0
       },
       "aovPremies": {
         "amount": 2400.0,
-        "polisnummer": "AOV-MOVIR-789123",
-        "verzekeraar": "Movir N.V."
+        "policyNumber": "AOV-MOVIR-789123",
+        "insurer": "Movir N.V."
       },
       "totalDeductible": 7200.0,
       "administrationId": "adm-consultancy-nl"
@@ -1604,21 +1604,21 @@
         "schema": "IBBijtellingAuto",
         "slug": "ib-bijtelling-auto-2025-ond-001234"
       },
-      "aangifteId": "ib-aangifte-2025-ond-001234",
-      "kenteken": "12-ABC-3",
-      "cataloguswaardeNieuw": 38000.0,
-      "datumEersteRegistratie": "2024-04-15",
-      "bijtellingsCategorie": "REGULIER_22PCT",
-      "bijtellingsPct": 0.22,
+      "taxReturnId": "ib-aangifte-2025-ond-001234",
+      "licencePlate": "12-ABC-3",
+      "listValueNew": 38000.0,
+      "dateFirstRegistration": "2024-04-15",
+      "benefitInKindCategory": "REGULIER_22PCT",
+      "benefitInKindPct": 0.22,
       "benefitInKindAmount": 8360.0,
-      "eigenBijdrage": 0,
-      "nettoBijtelling": 8360.0,
-      "kilometerAdministratie": {
-        "aanwezig": false,
+      "ownContribution": 0,
+      "netBenefitInKind": 8360.0,
+      "kilometerAdministration": {
+        "present": false,
         "priveKilometers": null,
         "schemeUntilBusiness": "FORFAIT_BIJTELLING"
       },
-      "grondslag": "art. 3.20 Wet IB 2001",
+      "basis": "art. 3.20 Wet IB 2001",
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1627,19 +1627,19 @@
         "schema": "IBBox3Vermogen",
         "slug": "ib-box3-2025-ond-001234"
       },
-      "aangifteId": "ib-aangifte-2025-ond-001234",
-      "peildatum": "2025-01-01",
-      "bankEnSpaartegoeden": 28000.0,
-      "overigeBezittingen": 41000.0,
-      "schulden": 0,
+      "taxReturnId": "ib-aangifte-2025-ond-001234",
+      "referenceDate": "2025-01-01",
+      "bankEnSavingsBalances": 28000.0,
+      "otherAssets": 41000.0,
+      "debts": 0,
       "totalYieldBasis": 69000.0,
-      "heffingvrijVermogen": 57000.0,
-      "belastbareGrondslag": 12000.0,
-      "berekendRendement": {
-        "methode": "FORFAIT_OVERBRUGGINGSWET",
-        "rendement": 1820.0
+      "taxExemptEquity": 57000.0,
+      "taxableBasis": 12000.0,
+      "calculatedReturn": {
+        "method": "FORFAIT_OVERBRUGGINGSWET",
+        "return": 1820.0
       },
-      "werkelijkRendementOpgevoerd": false,
+      "actualReturnEntered": false,
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1648,33 +1648,33 @@
         "schema": "IBAuditTrail",
         "slug": "audit-ib-2025-ond-001234"
       },
-      "aangifteId": "ib-aangifte-2025-ond-001234",
-      "regels": [
+      "taxReturnId": "ib-aangifte-2025-ond-001234",
+      "rules": [
         {
-          "rubriek": "omzet_excl_btw",
-          "waarde": 82400.0,
-          "bron": "GL_ACCOUNT_revenue",
-          "journaalposten": [
+          "section": "omzet_excl_btw",
+          "value": 82400.0,
+          "source": "GL_ACCOUNT_revenue",
+          "journalEntries": [
             "jp-2025-01-001",
             "jp-2025-01-002",
             "jp-2025-02-001"
           ],
-          "berekendOp": "2026-03-15T10:24:18Z",
-          "berekendDoor": "system"
+          "calculatedOn": "2026-03-15T10:24:18Z",
+          "calculatedBy": "system"
         },
         {
-          "rubriek": "zelfstandigenaftrek",
-          "waarde": 2470.0,
-          "bron": "uren-tracker-2025-ond-001234",
-          "journaalposten": [],
-          "berekendOp": "2026-03-15T10:24:18Z",
-          "berekendDoor": "system",
-          "grondslag": "art. 3.76 Wet IB 2001"
+          "section": "selfEmployedDeduction",
+          "value": 2470.0,
+          "source": "uren-tracker-2025-ond-001234",
+          "journalEntries": [],
+          "calculatedOn": "2026-03-15T10:24:18Z",
+          "calculatedBy": "system",
+          "basis": "art. 3.76 Wet IB 2001"
         }
       ],
-      "totalRegels": 2,
+      "totalRules": 2,
       "freezeMoment": null,
-      "gefreezdDoor": null,
+      "frozenBy": null,
       "administrationId": "adm-consultancy-nl"
     }
   ]

@@ -112,7 +112,7 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	private function paragrafen(array $types, string $narrative): array {
 		$rows = [];
 		foreach ($types as $type) {
-			$rows[] = ['type' => $type, 'narrative' => $narrative, 'begrotingId' => 'pb-1'];
+			$rows[] = ['type' => $type, 'narrative' => $narrative, 'budgetId' => 'pb-1'];
 		}
 
 		return $rows;
@@ -188,8 +188,8 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 */
 	public function testCanBehandelenWhenSevenParagrafenAndNominaleSet(): void {
 		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, ''));
-		$begroting = ['id' => 'pb-1', 'nominaleOntwikkeling' => 2.0];
-		self::assertTrue($this->guard->canBehandelen(begrotingId: 'pb-1', object: $begroting));
+		$budget = ['id' => 'pb-1', 'nominalDevelopment' => 2.0];
+		self::assertTrue($this->guard->canBehandelen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanBehandelenWhenSevenParagrafenAndNominaleSet()
 
@@ -201,8 +201,8 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	public function testCanBehandelenDeniedWhenParagraafMissing(): void {
 		$missing = array_slice(self::PARAGRAAF_TYPES, 0, 6);
 		$this->stubParagrafen($this->paragrafen($missing, ''));
-		$begroting = ['id' => 'pb-1', 'nominaleOntwikkeling' => 2.0];
-		self::assertFalse($this->guard->canBehandelen(begrotingId: 'pb-1', object: $begroting));
+		$budget = ['id' => 'pb-1', 'nominalDevelopment' => 2.0];
+		self::assertFalse($this->guard->canBehandelen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanBehandelenDeniedWhenParagraafMissing()
 
@@ -213,8 +213,8 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 */
 	public function testCanBehandelenDeniedWhenNominaleUnset(): void {
 		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, ''));
-		$begroting = ['id' => 'pb-1', 'nominaleOntwikkeling' => null];
-		self::assertFalse($this->guard->canBehandelen(begrotingId: 'pb-1', object: $begroting));
+		$budget = ['id' => 'pb-1', 'nominalDevelopment' => null];
+		self::assertFalse($this->guard->canBehandelen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanBehandelenDeniedWhenNominaleUnset()
 
@@ -224,9 +224,9 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenWhenNarrativesAndBesluitSet(): void {
-		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, 'tekst'));
-		$begroting = ['id' => 'pb-1', 'vaststellingsBesluit' => 'raadsbesluit-1'];
-		self::assertTrue($this->guard->canVaststellen(begrotingId: 'pb-1', object: $begroting));
+		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, 'text'));
+		$budget = ['id' => 'pb-1', 'determinationDecision' => 'raadsbesluit-1'];
+		self::assertTrue($this->guard->canVaststellen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanVaststellenWhenNarrativesAndBesluitSet()
 
@@ -236,11 +236,11 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenDeniedWhenNarrativeEmpty(): void {
-		$rows = $this->paragrafen(self::PARAGRAAF_TYPES, 'tekst');
+		$rows = $this->paragrafen(self::PARAGRAAF_TYPES, 'text');
 		$rows[2]['narrative'] = '';
 		$this->stubParagrafen($rows);
-		$begroting = ['id' => 'pb-1', 'vaststellingsBesluit' => 'raadsbesluit-1'];
-		self::assertFalse($this->guard->canVaststellen(begrotingId: 'pb-1', object: $begroting));
+		$budget = ['id' => 'pb-1', 'determinationDecision' => 'raadsbesluit-1'];
+		self::assertFalse($this->guard->canVaststellen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanVaststellenDeniedWhenNarrativeEmpty()
 
@@ -250,9 +250,9 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenDeniedWithoutRaadsbesluit(): void {
-		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, 'tekst'));
-		$begroting = ['id' => 'pb-1', 'vaststellingsBesluit' => ''];
-		self::assertFalse($this->guard->canVaststellen(begrotingId: 'pb-1', object: $begroting));
+		$this->stubParagrafen($this->paragrafen(self::PARAGRAAF_TYPES, 'text'));
+		$budget = ['id' => 'pb-1', 'determinationDecision' => ''];
+		self::assertFalse($this->guard->canVaststellen(budgetId: 'pb-1', object: $budget));
 
 	}//end testCanVaststellenDeniedWithoutRaadsbesluit()
 
@@ -263,8 +263,8 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 */
 	public function testFailsClosedOnException(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('OR down'));
-		$begroting = ['id' => 'pb-1', 'vaststellingsBesluit' => 'raadsbesluit-1'];
-		self::assertFalse($this->guard->canVaststellen(begrotingId: 'pb-1', object: $begroting));
+		$budget = ['id' => 'pb-1', 'determinationDecision' => 'raadsbesluit-1'];
+		self::assertFalse($this->guard->canVaststellen(budgetId: 'pb-1', object: $budget));
 
 	}//end testFailsClosedOnException()
 

@@ -180,21 +180,23 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'GoodsReceiptNoteDetail',
 	components: {
 		NcButton,
 	},
+
 	props: {
 		id: {
 			type: String,
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			grn: null,
@@ -207,10 +209,12 @@ export default {
 			transitionError: '',
 		}
 	},
+
 	computed: {
 		canQualityCheck() {
 			return this.grn && this.grn.statusCode === 'received'
 		},
+
 		canAccept() {
 			if (!this.grn) {
 				return false
@@ -218,9 +222,11 @@ export default {
 			return ['received', 'quality_checked'].includes(this.grn.statusCode)
 		},
 	},
+
 	async created() {
 		await this.load()
 	},
+
 	methods: {
 		async load() {
 			this.loading = true
@@ -244,6 +250,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async loadLines() {
 			try {
 				const response = await axios.get(
@@ -257,6 +264,7 @@ export default {
 				this.lines = []
 			}
 		},
+
 		async loadPurchaseOrders() {
 			const map = {}
 			for (const poId of this.grn.poIds || []) {
@@ -273,6 +281,7 @@ export default {
 			}
 			this.purchaseOrders = map
 		},
+
 		async loadMatches() {
 			try {
 				const response = await axios.get(
@@ -286,6 +295,7 @@ export default {
 				this.matches = []
 			}
 		},
+
 		poNumberOf(poId) {
 			const po = this.purchaseOrders[poId]
 			if (!po) {
@@ -293,6 +303,7 @@ export default {
 			}
 			return po.poNumber || poId
 		},
+
 		async onQualityCheck() {
 			this.transitionError = ''
 			this.transitioning = true
@@ -312,6 +323,7 @@ export default {
 				this.transitioning = false
 			}
 		},
+
 		async onAccept() {
 			this.transitionError = ''
 			this.transitioning = true
@@ -331,9 +343,11 @@ export default {
 				this.transitioning = false
 			}
 		},
+
 		formatQty(qty) {
 			return Number(qty || 0).toFixed(3)
 		},
+
 		formatTimestamp(iso) {
 			if (!iso) {
 				return '—'
@@ -344,6 +358,7 @@ export default {
 				return iso
 			}
 		},
+
 		statusLabel(code) {
 			const labels = {
 				draft: this.t('shillinq', 'Draft'),
@@ -354,6 +369,7 @@ export default {
 			}
 			return labels[code] || code
 		},
+
 		photoUrl(photoId) {
 			// docudesk file urls go through the same NC files routing; preserved
 			// as a relative anchor so the platform's auth context applies.

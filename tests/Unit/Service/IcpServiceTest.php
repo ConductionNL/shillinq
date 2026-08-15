@@ -225,17 +225,17 @@ final class IcpServiceTest extends TestCase {
 	 * @param string $adm Administration id.
 	 * @param string $year Period year.
 	 * @param string $quarter Period quarter (1-4).
-	 * @param float $rubriek The rubriek 3b value.
+	 * @param float $section The rubriek 3b value.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function vatReturn(string $adm, string $year, string $quarter, float $rubriek): array {
+	private function vatReturn(string $adm, string $year, string $quarter, float $section): array {
 		return [
 			'administrationId' => $adm,
 			'periodType' => 'quarter',
 			'periodYear' => $year,
 			'periodQuarter' => $quarter,
-			'rubriek3b' => $rubriek,
+			'rubriek3b' => $section,
 		];
 
 	}//end vatReturn()

@@ -51,37 +51,37 @@ class SluitendCalculator {
 	 * per-year sluitend flag (struktureel AND reëel must both hold).
 	 *
 	 * @param array<string,mixed> $year The meerjarenraming year row.
-	 * @param float $nominaleOntwikkeling The loon- en prijsindexatie percentage (e.g. 2.0).
+	 * @param float $nominalDevelopment The loon- en prijsindexatie percentage (e.g. 2.0).
 	 *
-	 * @return array{balanceStructural:float,balanceIncidental:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
+	 * @return array{balanceStructural:float,balanceIncidental:float,saldoReëel:float,structurallyBalanced:bool,sluitendReëel:bool,sluitend:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
-	public function evaluateYear(array $year, float $nominaleOntwikkeling): array {
-		$batenStrucCents = $this->toCents(amount: $year['batenStructureel'] ?? 0);
-		$lastenStrucCents = $this->toCents(amount: $year['lastenStructureel'] ?? 0);
-		$batenIncCents = $this->toCents(amount: $year['batenIncidenteel'] ?? 0);
-		$lastenIncCents = $this->toCents(amount: $year['lastenIncidenteel'] ?? 0);
+	public function evaluateYear(array $year, float $nominalDevelopment): array {
+		$revenueStrucCents = $this->toCents(amount: $year['revenueStructural'] ?? 0);
+		$expensesStrucCents = $this->toCents(amount: $year['expensesStructural'] ?? 0);
+		$revenueIncCents = $this->toCents(amount: $year['revenueIncidental'] ?? 0);
+		$expensesIncCents = $this->toCents(amount: $year['expensesIncidental'] ?? 0);
 
-		$saldoStrucCents = ($batenStrucCents - $lastenStrucCents);
-		$saldoIncCents = ($batenIncCents - $lastenIncCents);
+		$balanceStrucCents = ($revenueStrucCents - $expensesStrucCents);
+		$balanceIncCents = ($revenueIncCents - $expensesIncCents);
 
 		// Reëel correction: structural lasten are uplifted by the nominale
 		// ontwikkeling (prices rise faster than the nominal budget), so the
 		// reëel saldo subtracts that uplift from the nominal saldo.
-		$upliftCents = (int)round($lastenStrucCents * ($nominaleOntwikkeling / 100.0));
-		$saldoReelCents = ($saldoStrucCents + $saldoIncCents - $upliftCents);
+		$upliftCents = (int)round($expensesStrucCents * ($nominalDevelopment / 100.0));
+		$balanceReelCents = ($balanceStrucCents + $balanceIncCents - $upliftCents);
 
-		$sluitendStructureel = ($lastenStrucCents <= $batenStrucCents);
-		$sluitendReeel = ($saldoReelCents >= 0);
+		$structurallyBalanced = ($expensesStrucCents <= $revenueStrucCents);
+		$sluitendReeel = ($balanceReelCents >= 0);
 
 		return [
-			'balanceStructural' => $this->toEuro(cents: $saldoStrucCents),
-			'balanceIncidental' => $this->toEuro(cents: $saldoIncCents),
-			'saldoReëel' => $this->toEuro(cents: $saldoReelCents),
-			'sluitendStructureel' => $sluitendStructureel,
+			'balanceStructural' => $this->toEuro(cents: $balanceStrucCents),
+			'balanceIncidental' => $this->toEuro(cents: $balanceIncCents),
+			'saldoReëel' => $this->toEuro(cents: $balanceReelCents),
+			'structurallyBalanced' => $structurallyBalanced,
 			'sluitendReëel' => $sluitendReeel,
-			'sluitend' => ($sluitendStructureel === true && $sluitendReeel === true),
+			'sluitend' => ($structurallyBalanced === true && $sluitendReeel === true),
 		];
 
 	}//end evaluateYear()
@@ -94,22 +94,22 @@ class SluitendCalculator {
 	 * REQ-011). An empty year set is not sluitend (fail-closed).
 	 *
 	 * @param array<int,array<string,mixed>> $years The meerjarenraming year rows.
-	 * @param float $nominaleOntwikkeling The loon- en prijsindexatie percentage.
+	 * @param float $nominalDevelopment The loon- en prijsindexatie percentage.
 	 *
-	 * @return array{sluitendStructureel:bool,sluitendReëel:bool}
+	 * @return array{structurallyBalanced:bool,sluitendReëel:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */
-	public function evaluateBegroting(array $years, float $nominaleOntwikkeling): array {
+	public function evaluateBegroting(array $years, float $nominalDevelopment): array {
 		if ($years === []) {
-			return ['sluitendStructureel' => false, 'sluitendReëel' => false];
+			return ['structurallyBalanced' => false, 'sluitendReëel' => false];
 		}
 
 		$allStructureel = true;
 		$allReeel = true;
 		foreach ($years as $year) {
-			$result = $this->evaluateYear(year: $year, nominaleOntwikkeling: $nominaleOntwikkeling);
-			if ($result['sluitendStructureel'] === false) {
+			$result = $this->evaluateYear(year: $year, nominalDevelopment: $nominalDevelopment);
+			if ($result['structurallyBalanced'] === false) {
 				$allStructureel = false;
 			}
 
@@ -118,7 +118,7 @@ class SluitendCalculator {
 			}
 		}
 
-		return ['sluitendStructureel' => $allStructureel, 'sluitendReëel' => $allReeel];
+		return ['structurallyBalanced' => $allStructureel, 'sluitendReëel' => $allReeel];
 	}//end evaluateBegroting()
 
 	/**
@@ -131,7 +131,7 @@ class SluitendCalculator {
 	 *    yields preventief;
 	 *  - a negative algemene reserve (vermogenstekort) yields artikel-12.
 	 *
-	 * @param bool $sluitendStructureel The overall structural flag.
+	 * @param bool $structurallyBalanced The overall structural flag.
 	 * @param bool $sluitendReeel The overall reëel
 	 *                            flag.
 	 * @param array<int,float> $historyResultaten Resultaat of the preceding years (negative = tekort).
@@ -142,7 +142,7 @@ class SluitendCalculator {
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-20
 	 */
 	public function determineToezichtRegime(
-		bool $sluitendStructureel,
+		bool $structurallyBalanced,
 		bool $sluitendReeel,
 		array $historyResultaten = [],
 		float $weerstandsverhouding = 1.0,
@@ -157,15 +157,15 @@ class SluitendCalculator {
 		$sustainedTekort = false;
 		if (count($historyResultaten) >= 4) {
 			$sustainedTekort = true;
-			foreach ($historyResultaten as $resultaat) {
-				if ($resultaat >= 0.0) {
+			foreach ($historyResultaten as $result) {
+				if ($result >= 0.0) {
 					$sustainedTekort = false;
 					break;
 				}
 			}
 		}
 
-		if ($sluitendStructureel === true
+		if ($structurallyBalanced === true
 			&& $sluitendReeel === true
 			&& $weerstandsverhouding >= 1.0
 			&& $sustainedTekort === false

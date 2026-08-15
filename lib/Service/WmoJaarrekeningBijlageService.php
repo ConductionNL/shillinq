@@ -60,8 +60,8 @@ class WmoJaarrekeningBijlageService {
 		$activities = (array)$input['activities'];
 		$ikpByAct = (array)$input['definitiefIkpByActivity'];
 		$priorIkpByAct = (array)($input['priorYearIkpByActivity'] ?? []);
-		$omzetByAct = (array)$input['omzetByActivity'];
-		$priorOmzetByAct = (array)($input['priorYearOmzetByActivity'] ?? []);
+		$revenueByAct = (array)$input['omzetByActivity'];
+		$priorRevenueByAct = (array)($input['priorYearOmzetByActivity'] ?? []);
 		$abbByAct = (array)($input['abbByActivity'] ?? []);
 		$overridesByAct = (array)($input['manualOverridesByActivity'] ?? []);
 
@@ -76,49 +76,49 @@ class WmoJaarrekeningBijlageService {
 
 			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
 			$code = (string)($activity['code'] ?? '');
-			$naam = (string)($activity['name'] ?? '');
+			$name = (string)($activity['name'] ?? '');
 
 			$ikp = (array)($ikpByAct[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totaleKosten'] ?? 0);
-			$omzet = (float)($omzetByAct[$activityId] ?? 0);
+			$integraleCost = (float)($ikp['totalCost'] ?? 0);
+			$revenue = (float)($revenueByAct[$activityId] ?? 0);
 			$ratio = null;
 			if ($integraleCost > 0.0) {
-				$ratio = round(($omzet / $integraleCost), 4);
+				$ratio = round(($revenue / $integraleCost), 4);
 			}
 
-			$compliant = ($omzet >= $integraleCost);
+			$compliant = ($revenue >= $integraleCost);
 			$colorStatus = 'rood';
 			if ($compliant === true) {
 				$colorStatus = 'groen';
 			}
 
 			$priorIkp = (array)($priorIkpByAct[$activityId] ?? []);
-			$priorCost = (float)($priorIkp['totaleKosten'] ?? 0);
-			$priorOmzet = (float)($priorOmzetByAct[$activityId] ?? 0);
+			$priorCost = (float)($priorIkp['totalCost'] ?? 0);
+			$priorRevenue = (float)($priorRevenueByAct[$activityId] ?? 0);
 			$priorRatio = null;
 			if ($priorCost > 0.0) {
-				$priorRatio = round(($priorOmzet / $priorCost), 4);
+				$priorRatio = round(($priorRevenue / $priorCost), 4);
 			}
 
 			$abb = (array)($abbByAct[$activityId] ?? []);
-			$abbReferentie = null;
+			$abbReference = null;
 			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReferentie = (string)($abb['kenmerk'] ?? $activity['exemptionBesluitId'] ?? '');
+				$abbReference = (string)($abb['reference'] ?? $activity['exemptionDecisionId'] ?? '');
 			}
 
 			$rows[] = [
 				'commercialActivityId' => $activityId,
 				'code' => $code,
-				'name' => $naam,
-				'revenue' => $omzet,
-				'integraleKostprijs' => $integraleCost,
-				'kostendekkingsratio' => $ratio,
+				'name' => $name,
+				'revenue' => $revenue,
+				'integralCostPrice' => $integraleCost,
+				'costRecoveryRatio' => $ratio,
 				'compliant' => $compliant,
 				'complianceColor' => $colorStatus,
-				'priorYearOmzet' => $priorOmzet,
+				'priorYearOmzet' => $priorRevenue,
 				'priorYearIntegraleKostprijs' => $priorCost,
 				'priorYearRatio' => $priorRatio,
-				'abbReferentie' => $abbReferentie,
+				'abbReference' => $abbReference,
 				'manualOverrides' => (int)($overridesByAct[$activityId] ?? 0),
 			];
 
@@ -134,8 +134,8 @@ class WmoJaarrekeningBijlageService {
 			'fiscalYear' => (string)$input['fiscalYear'],
 			'administrationId' => (string)$input['administrationId'],
 			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
-			'activiteiten' => $rows,
-			'samenvatting' => [
+			'activities' => $rows,
+			'summary' => [
 				'total' => $totalCount,
 				'compliant' => $compliantCount,
 				'nonCompliant' => ($totalCount - $compliantCount),
@@ -155,7 +155,7 @@ class WmoJaarrekeningBijlageService {
 		$compliant = 0;
 		$nonCompliant = 0;
 
-		foreach ((array)($bijlage['activiteiten'] ?? []) as $row) {
+		foreach ((array)($bijlage['activities'] ?? []) as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
@@ -197,14 +197,14 @@ class WmoJaarrekeningBijlageService {
 		$lines[] = '| Code | Naam | Omzet | Integrale Kostprijs | Ratio | Compliant | ABB |';
 		$lines[] = '|------|------|-------|---------------------|-------|-----------|-----|';
 
-		foreach ((array)($bijlage['activiteiten'] ?? []) as $row) {
+		foreach ((array)($bijlage['activities'] ?? []) as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
 
 			$ratioText = '—';
-			if ($row['kostendekkingsratio'] !== null) {
-				$ratioText = (string)$row['kostendekkingsratio'];
+			if ($row['costRecoveryRatio'] !== null) {
+				$ratioText = (string)$row['costRecoveryRatio'];
 			}
 
 			$compliantText = 'rood';
@@ -217,14 +217,14 @@ class WmoJaarrekeningBijlageService {
 				(string)($row['code'] ?? ''),
 				(string)($row['name'] ?? ''),
 				(float)($row['revenue'] ?? 0),
-				(float)($row['integraleKostprijs'] ?? 0),
+				(float)($row['integralCostPrice'] ?? 0),
 				$ratioText,
 				$compliantText,
-				(string)($row['abbReferentie'] ?? '—')
+				(string)($row['abbReference'] ?? '—')
 			);
 		}//end foreach
 
-		$sam = (array)($bijlage['samenvatting'] ?? []);
+		$sam = (array)($bijlage['summary'] ?? []);
 		$lines[] = '';
 		$lines[] = sprintf('**Samenvatting**: %d compliant / %d totaal', (int)($sam['compliant'] ?? 0), (int)($sam['total'] ?? 0));
 
@@ -243,14 +243,14 @@ class WmoJaarrekeningBijlageService {
 		$administrationId = htmlspecialchars((string)($bijlage['administrationId'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
 		$rows = [];
-		foreach ((array)($bijlage['activiteiten'] ?? []) as $r) {
+		foreach ((array)($bijlage['activities'] ?? []) as $r) {
 			if (is_array($r) === false) {
 				continue;
 			}
 
 			$ratioAttr = '';
-			if ($r['kostendekkingsratio'] !== null) {
-				$ratioAttr = (string)$r['kostendekkingsratio'];
+			if ($r['costRecoveryRatio'] !== null) {
+				$ratioAttr = (string)$r['costRecoveryRatio'];
 			}
 
 			$compliantAttr = 'false';
@@ -262,10 +262,10 @@ class WmoJaarrekeningBijlageService {
 				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s" abb="%s"/>',
 				htmlspecialchars((string)($r['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
 				(float)($r['revenue'] ?? 0),
-				(float)($r['integraleKostprijs'] ?? 0),
+				(float)($r['integralCostPrice'] ?? 0),
 				$ratioAttr,
 				$compliantAttr,
-				htmlspecialchars((string)($r['abbReferentie'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
+				htmlspecialchars((string)($r['abbReference'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
 			);
 		}//end foreach
 

@@ -324,7 +324,7 @@ class RecurringInvoiceGenerator {
 				'description' => $description,
 				'quantity' => $quantity,
 				'unitPrice' => $unitPrice,
-				'btwRate' => $vatRate,
+				'vatRate' => $vatRate,
 				'glAccount' => (string)($raw['revenueAccount'] ?? ''),
 			];
 

@@ -48,21 +48,21 @@ class BbvSeedService {
 	private const CATALOGUES = [
 		[
 			'file' => 'bbv-taakvelden-gemeente-2025.json',
-			'key' => 'taakvelden',
+			'key' => 'taskFields',
 			'schema' => 'Taakveld',
 			'dedup' => 'code',
 			'secondaryDedup' => 'overheidslaag',
 		],
 		[
 			'file' => 'bbv-taakvelden-provincia-2025.json',
-			'key' => 'taakvelden',
+			'key' => 'taskFields',
 			'schema' => 'Taakveld',
 			'dedup' => 'code',
 			'secondaryDedup' => 'overheidslaag',
 		],
 		[
 			'file' => 'bbv-taakvelden-waterschap-2025.json',
-			'key' => 'taakvelden',
+			'key' => 'taskFields',
 			'schema' => 'Taakveld',
 			'dedup' => 'code',
 			'secondaryDedup' => 'overheidslaag',

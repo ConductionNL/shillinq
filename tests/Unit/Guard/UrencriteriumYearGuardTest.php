@@ -72,7 +72,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 		self::assertSame(1225, $this->guard->bepaalDoelNorm(profiel: []));
 		self::assertSame(
 			'art. 3.6 lid 1 Wet IB 2001',
-			$this->guard->bepaalNormGrondslag(doelNorm: 1225)
+			$this->guard->bepaalNormGrondslag(purposeNorm: 1225)
 		);
 
 	}//end testRegularProfileYields1225()
@@ -84,7 +84,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testAoProfileYields800Lid5(): void {
 		self::assertSame(800, $this->guard->bepaalDoelNorm(profiel: ['arbeidsongeschikt' => true]));
-		self::assertStringContainsString('lid 5', $this->guard->bepaalNormGrondslag(doelNorm: 800));
+		self::assertStringContainsString('lid 5', $this->guard->bepaalNormGrondslag(purposeNorm: 800));
 
 	}//end testAoProfileYields800Lid5()
 
@@ -104,7 +104,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDrempelStatusBehaald(): void {
-		self::assertSame('BEHAALD', $this->guard->bepaalDrempelStatus(lopendeUren: 1300, prognose: 1300, norm: 1225));
+		self::assertSame('BEHAALD', $this->guard->bepaalDrempelStatus(currentHours: 1300, prognose: 1300, norm: 1225));
 
 	}//end testDrempelStatusBehaald()
 
@@ -114,10 +114,10 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDrempelStatusFromPrognose(): void {
-		self::assertSame('OP_KOERS', $this->guard->bepaalDrempelStatus(lopendeUren: 600, prognose: 1300, norm: 1225));
+		self::assertSame('OP_KOERS', $this->guard->bepaalDrempelStatus(currentHours: 600, prognose: 1300, norm: 1225));
 		// 1180 is >= 80% of 1225 (980) but < 1225 → RISICO (the Q3 scenario).
-		self::assertSame('RISICO', $this->guard->bepaalDrempelStatus(lopendeUren: 916, prognose: 1180, norm: 1225));
-		self::assertSame('KRITIEK', $this->guard->bepaalDrempelStatus(lopendeUren: 400, prognose: 700, norm: 1225));
+		self::assertSame('RISICO', $this->guard->bepaalDrempelStatus(currentHours: 916, prognose: 1180, norm: 1225));
+		self::assertSame('KRITIEK', $this->guard->bepaalDrempelStatus(currentHours: 400, prognose: 700, norm: 1225));
 
 	}//end testDrempelStatusFromPrognose()
 
@@ -129,7 +129,7 @@ class UrencriteriumYearGuardTest extends TestCase {
 	public function testGrotendeelsNotApplicableWithoutLoondienst(): void {
 		self::assertSame(
 			'NIET_TOEPASSELIJK',
-			$this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1240, loondienstUren: 0)
+			$this->guard->bepaalGrotendeelsCriterium(enterpriseHours: 1240, employmentHours: 0)
 		);
 
 	}//end testGrotendeelsNotApplicableWithoutLoondienst()
@@ -143,11 +143,11 @@ class UrencriteriumYearGuardTest extends TestCase {
 	public function testGrotendeelsFailsWhenLoondienstDominates(): void {
 		self::assertSame(
 			'NIET_GROTENDEELS_ONDERNEMING',
-			$this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1240, loondienstUren: 1670)
+			$this->guard->bepaalGrotendeelsCriterium(enterpriseHours: 1240, employmentHours: 1670)
 		);
 		self::assertSame(
 			'GROTENDEELS_ONDERNEMING',
-			$this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1800, loondienstUren: 600)
+			$this->guard->bepaalGrotendeelsCriterium(enterpriseHours: 1800, employmentHours: 600)
 		);
 
 	}//end testGrotendeelsFailsWhenLoondienstDominates()
@@ -160,12 +160,12 @@ class UrencriteriumYearGuardTest extends TestCase {
 	public function testValidYearPassesSave(): void {
 		$year = [
 			'enterpriseId' => 'ond-1',
-			'doelNorm' => 1225,
-			'normGrondslag' => 'art. 3.6 lid 1 Wet IB 2001',
-			'lopendeUren' => 916,
+			'purposeNorm' => 1225,
+			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+			'currentHours' => 916,
 			'forecastYearEnd' => 1180,
-			'drempelStatus' => 'RISICO',
-			'grotendeelsCriterium' => 'NIET_TOEPASSELIJK',
+			'thresholdStatus' => 'RISICO',
+			'largelyCriterium' => 'NIET_TOEPASSELIJK',
 		];
 		self::assertTrue($this->guard->validateOnSave(year: $year));
 
@@ -178,9 +178,9 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testAoNormWithoutLid5Rejected(): void {
 		$year = [
-			'doelNorm' => 800,
-			'normGrondslag' => 'art. 3.6 lid 1 Wet IB 2001',
-			'drempelStatus' => 'OP_KOERS',
+			'purposeNorm' => 800,
+			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+			'thresholdStatus' => 'OP_KOERS',
 		];
 		self::assertFalse($this->guard->validateOnSave(year: $year));
 
@@ -193,9 +193,9 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testUnrecognisedNormRejected(): void {
 		$year = [
-			'doelNorm' => 1000,
-			'normGrondslag' => 'art. 3.6 lid 1 Wet IB 2001',
-			'drempelStatus' => 'OP_KOERS',
+			'purposeNorm' => 1000,
+			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+			'thresholdStatus' => 'OP_KOERS',
 		];
 		self::assertFalse($this->guard->validateOnSave(year: $year));
 
@@ -208,12 +208,12 @@ class UrencriteriumYearGuardTest extends TestCase {
 	 */
 	public function testInconsistentDrempelStatusRejected(): void {
 		$year = [
-			'doelNorm' => 1225,
-			'normGrondslag' => 'art. 3.6 lid 1 Wet IB 2001',
-			'lopendeUren' => 916,
+			'purposeNorm' => 1225,
+			'normBasis' => 'art. 3.6 lid 1 Wet IB 2001',
+			'currentHours' => 916,
 			'forecastYearEnd' => 1180,
 			// Should be RISICO, not OP_KOERS.
-			'drempelStatus' => 'OP_KOERS',
+			'thresholdStatus' => 'OP_KOERS',
 		];
 		self::assertFalse($this->guard->validateOnSave(year: $year));
 

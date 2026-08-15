@@ -244,15 +244,16 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'PurchaseOrderDetail',
 	components: {
 		NcButton,
 	},
+
 	props: {
 		/**
 		 * PO id from the route (props: true on the manifest route).
@@ -262,6 +263,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			purchaseOrder: null,
@@ -274,6 +276,7 @@ export default {
 			sendError: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * Whether the "Send" action is allowed from the client. The server
@@ -298,9 +301,11 @@ export default {
 			)
 		},
 	},
+
 	async created() {
 		await this.loadPurchaseOrder()
 	},
+
 	methods: {
 		async loadPurchaseOrder() {
 			this.loading = true
@@ -322,6 +327,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async loadRelated() {
 			// The related-records lookups go through the OR REST surface; if the
 			// schemas are not yet registered (e.g. before slice 04/06 ship) we
@@ -350,12 +356,14 @@ export default {
 				this.matches = []
 			}
 		},
+
 		async onSendPeppol() {
 			await this.transmit(
 				'peppol',
 				`/apps/shillinq/api/purchase-orders/${this.id}/transmit/peppol`,
 			)
 		},
+
 		async onSendEmail() {
 			await this.transmit(
 				'email',
@@ -365,6 +373,7 @@ export default {
 				},
 			)
 		},
+
 		async transmit(channel, path, extraBody = {}) {
 			this.sendError = ''
 			this.sending = true
@@ -384,13 +393,16 @@ export default {
 				this.sendingChannel = ''
 			}
 		},
+
 		formatMoney(amount) {
 			const currency = this.purchaseOrder?.currency || 'EUR'
 			return `${currency} ${Number(amount || 0).toFixed(2)}`
 		},
+
 		formatPct(rate) {
 			return `${(Number(rate || 0) * 100).toFixed(2)}%`
 		},
+
 		formatTimestamp(iso) {
 			try {
 				return new Date(iso).toLocaleString()
@@ -398,6 +410,7 @@ export default {
 				return iso
 			}
 		},
+
 		roleLabel(role) {
 			const labels = {
 				teamleider: this.t('shillinq', 'Team lead'),

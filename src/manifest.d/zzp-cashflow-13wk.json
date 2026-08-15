@@ -57,7 +57,7 @@
 				"aggregations": [
 					{"id": "totalInflows", "title": "Total inflows", "field": "inflows_total", "metric": "value", "format": "currency"},
 					{"id": "totalOutflows", "title": "Total outflows", "field": "outflows_total", "metric": "value", "format": "currency"},
-					{"id": "netChange", "title": "Net change", "field": "nettoMutatie", "metric": "value", "format": "currency"},
+					{"id": "netChange", "title": "Net change", "field": "netMovement", "metric": "value", "format": "currency"},
 					{"id": "closingBalance", "title": "Closing balance", "field": "closingBalance", "metric": "value", "format": "currency"}
 				],
 				"fields": [
@@ -70,11 +70,11 @@
 					{ "key": "inflows_total", "label": "Total inflows", "type": "number" },
 					{ "key": "outflows_ap_geprognosticeerd", "label": "AP outflows", "type": "number" },
 					{ "key": "outflows_recurring_huur", "label": "Rent", "type": "number" },
-					{ "key": "outflows_recurring_dga_loon", "label": "DGA salary", "type": "number" },
-					{ "key": "outflows_btw_afdracht", "label": "BTW settlement", "type": "number" },
-					{ "key": "outflows_ib_aanslag", "label": "IB assessment", "type": "number" },
+					{ "key": "outflows_recurring_dga_pay", "label": "DGA salary", "type": "number" },
+					{ "key": "outflows_vat_remittance", "label": "BTW settlement", "type": "number" },
+					{ "key": "outflows_ib_assessment", "label": "IB assessment", "type": "number" },
 					{ "key": "outflows_total", "label": "Total outflows", "type": "number" },
-					{ "key": "nettoMutatie", "label": "Net change", "type": "number" },
+					{ "key": "netMovement", "label": "Net change", "type": "number" },
 					{ "key": "closingBalance", "label": "Closing balance", "type": "number" },
 					{ "key": "bufferStatus", "label": "Buffer status", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
@@ -110,15 +110,15 @@
 				"schema": "CashflowRecurring",
 				"fields": [
 					{ "key": "label", "label": "Label", "type": "string" },
-					{ "key": "categorie", "label": "Category", "type": "string" },
-					{ "key": "richting", "label": "Direction", "type": "string" },
-					{ "key": "frequentie", "label": "Frequency", "type": "string" },
-					{ "key": "dagVanMaand", "label": "Day of month", "type": "number" },
+					{ "key": "category", "label": "Category", "type": "string" },
+					{ "key": "direction", "label": "Direction", "type": "string" },
+					{ "key": "frequency", "label": "Frequency", "type": "string" },
+					{ "key": "dagFromMonth", "label": "Day of month", "type": "number" },
 					{ "key": "monthOfYear", "label": "Month of year", "type": "number" },
 					{ "key": "standardAmount", "label": "Amount", "type": "number" },
-					{ "key": "indexatieRegel", "label": "Indexation rule", "type": "string" },
-					{ "key": "geldigVan", "label": "Valid from", "type": "string" },
-					{ "key": "geldigTot", "label": "Valid until", "type": "string" },
+					{ "key": "indexationRule", "label": "Indexation rule", "type": "string" },
+					{ "key": "validFrom", "label": "Valid from", "type": "string" },
+					{ "key": "validTo", "label": "Valid until", "type": "string" },
 					{ "key": "accountNumberExpense", "label": "GL account", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
@@ -144,8 +144,8 @@
 				"schema": "CashflowBufferPolicy",
 				"aggregations": [
 					{"id": "calculatedBuffer", "title": "Calculated buffer", "field": "berekendeBuffer", "metric": "value", "format": "currency"},
-					{"id": "preAlert", "title": "Pre-alert threshold", "field": "alertVooralarm", "metric": "value", "format": "currency"},
-					{"id": "critical", "title": "Critical threshold", "field": "alertOndergrens", "metric": "value", "format": "currency"}
+					{"id": "preAlert", "title": "Pre-alert threshold", "field": "alertPreAlert", "metric": "value", "format": "currency"},
+					{"id": "critical", "title": "Critical threshold", "field": "alertLowerLimit", "metric": "value", "format": "currency"}
 				],
 				"fields": [
 					{ "key": "policy", "label": "Policy", "type": "string" },
@@ -178,7 +178,7 @@
 					{ "key": "name", "label": "Name", "type": "string" },
 					{ "key": "description", "label": "Description", "type": "string" },
 					{ "key": "aanpassingen", "label": "Adjustments", "type": "array" },
-					{ "key": "resultaat", "label": "Result", "type": "object" },
+					{ "key": "result", "label": "Result", "type": "object" },
 					{ "key": "createdAt", "label": "Created", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],

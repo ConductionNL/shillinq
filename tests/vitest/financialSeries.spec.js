@@ -165,9 +165,9 @@ describe('financialSeries', () => {
 
 	it('forecastByMonth rolls weeks up to months strictly after the realized window', () => {
 		const weeks = [
-			{ weekStart: '2026-06-15', inflows_totaal: 100, outflows_totaal: 60 },
-			{ weekStart: '2026-07-06', inflows_totaal: 200, outflows_totaal: 80 },
-			{ weekStart: '2026-07-13', inflows_totaal: 50, outflows_totaal: 20 },
+			{ weekStart: '2026-06-15', inflows_total: 100, outflows_total: 60 },
+			{ weekStart: '2026-07-06', inflows_total: 200, outflows_total: 80 },
+			{ weekStart: '2026-07-13', inflows_total: 50, outflows_total: 20 },
 		]
 		const forecast = forecastByMonth(weeks, '2026-06')
 		expect(forecast.months).toEqual(['2026-07'])

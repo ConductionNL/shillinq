@@ -117,7 +117,7 @@ class FidoTreasuryGuard {
 			}
 
 			// REQ-FDO-008 / D10: a flagged limiet-breach demands an override-rationale.
-			if ((bool)($lening['limietBreach'] ?? false) === true
+			if ((bool)($lening['limitBreach'] ?? false) === true
 				&& trim((string)($lening['overrideRationale'] ?? '')) === ''
 			) {
 				return false;
@@ -242,7 +242,7 @@ class FidoTreasuryGuard {
 			}
 
 			return $this->isSignOffComplete(signOff: ($report['signOffTreasurer'] ?? null))
-				&& $this->isSignOffComplete(signOff: ($report['signOffConcerncontroller'] ?? null));
+				&& $this->isSignOffComplete(signOff: ($report['signOffGroupController'] ?? null));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'FidoTreasuryGuard: rapportage submit check failed — denying transition (fail-closed)',
@@ -274,7 +274,7 @@ class FidoTreasuryGuard {
 
 		$statuut = $this->resolveAdoptedStatuut(
 			organisationId: (string)($lening['organisationId'] ?? ''),
-			statuutId: (string)($lening['treasurystatuutId'] ?? '')
+			statuutId: (string)($lening['treasuryStatuteId'] ?? '')
 		);
 		if ($statuut === null) {
 			return false;

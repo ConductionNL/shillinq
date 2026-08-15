@@ -147,7 +147,7 @@ final class ZzpUrencriteriumTrackerFragmentTest extends TestCase {
 
 		self::assertArrayHasKey('x-openregister-lifecycle', $year);
 		$lifecycle = $year['x-openregister-lifecycle'];
-		self::assertSame('drempelStatus', $lifecycle['field']);
+		self::assertSame('thresholdStatus', $lifecycle['field']);
 		self::assertSame(
 			'OCA\\Shillinq\\Guard\\UrencriteriumYearGuard::validateOnSave',
 			$lifecycle['preconditions']['save'],
@@ -167,7 +167,7 @@ final class ZzpUrencriteriumTrackerFragmentTest extends TestCase {
 	 */
 	public function testUrencriteriumYearConstrainsNorm(): void {
 		$year = $this->fragment()['components']['schemas']['UrencriteriumYear'];
-		$enum = $year['properties']['doelNorm']['enum'];
+		$enum = $year['properties']['purposeNorm']['enum'];
 		self::assertSame([1225, 800, 525], $enum);
 
 	}//end testUrencriteriumYearConstrainsNorm()
@@ -219,7 +219,7 @@ final class ZzpUrencriteriumTrackerFragmentTest extends TestCase {
 
 		foreach ($objects as $object) {
 			self::assertNotEmpty(
-				($object['fiscaleBron'] ?? ''),
+				($object['fiscalSource'] ?? ''),
 				'Each seeded category must cite a fiscal grondslag'
 			);
 		}

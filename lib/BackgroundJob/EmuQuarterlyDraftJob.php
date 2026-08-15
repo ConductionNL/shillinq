@@ -153,10 +153,10 @@ class EmuQuarterlyDraftJob extends TimedJob {
 				return;
 			}
 
-			[$jaar, $kwartaal] = $due;
+			[$year, $quarter] = $due;
 			$this->logger->info(
 				'EmuQuarterlyDraftJob: due window reached',
-				['year' => $jaar, 'kwartaal' => $kwartaal]
+				['year' => $year, 'quarter' => $quarter]
 			);
 
 			// Pipeline orchestration is intentionally not wired here yet — the

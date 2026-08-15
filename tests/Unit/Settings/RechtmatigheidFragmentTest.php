@@ -126,7 +126,7 @@ class RechtmatigheidFragmentTest extends TestCase {
 			'volledigheid',
 			'europees_aanbesteden',
 			'staatssteun',
-			'voorwaarden',
+			'terms',
 			'misbruik_oneigenlijk_gebruik',
 			'aanvaardbaarheid',
 		];
@@ -164,11 +164,11 @@ class RechtmatigheidFragmentTest extends TestCase {
 
 		self::assertArrayHasKey(key: 'journalNumber', array: $je['properties'], message: 'Existing prop preserved.');
 		self::assertArrayHasKey(key: 'state', array: $je['properties'], message: 'Existing prop preserved.');
-		self::assertArrayHasKey(key: 'rechtmatigheid', array: $je['properties'], message: 'rechtmatigheid sub-object added.');
-		self::assertArrayHasKey(key: 'status', array: $je['properties']['rechtmatigheid']['properties']);
+		self::assertArrayHasKey(key: 'lawfulness', array: $je['properties'], message: 'rechtmatigheid sub-object added.');
+		self::assertArrayHasKey(key: 'status', array: $je['properties']['lawfulness']['properties']);
 		self::assertSame(
 			expected: 'niet_getoetst',
-			actual: $je['properties']['rechtmatigheid']['default']['status'],
+			actual: $je['properties']['lawfulness']['default']['status'],
 			message: 'Backward-compatible default must be niet_getoetst.'
 		);
 		self::assertArrayHasKey(key: 'Rechtmatigheidstoets', array: $merged['components']['schemas']);
@@ -187,8 +187,8 @@ class RechtmatigheidFragmentTest extends TestCase {
 		$seed = $this->fragment['objects'][0];
 		self::assertSame(expected: 'Tolerantiegrens', actual: $seed['@self']['schema']);
 		self::assertSame(expected: 'shillinq', actual: $seed['@self']['register']);
-		self::assertSame(expected: 3.0, actual: $seed['fout_percentage']);
-		self::assertSame(expected: 1.0, actual: $seed['onzekerheid_percentage']);
+		self::assertSame(expected: 3.0, actual: $seed['error_percentage']);
+		self::assertSame(expected: 1.0, actual: $seed['uncertainty_percentage']);
 		self::assertSame(expected: 'concept', actual: $seed['status']);
 
 	}//end testSeedsDefaultTolerantiegrens()

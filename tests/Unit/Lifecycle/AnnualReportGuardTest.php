@@ -98,7 +98,7 @@ class AnnualReportGuardTest extends TestCase {
 	 */
 	public function testCanOpmakenWhenBalansBalances(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-1', 'totalActiva' => 845000, 'totalPassiva' => 845000]])
+			$this->buildObjectServiceStub(records: [['reportId' => 'r-1', 'totalAssets' => 845000, 'totalLiabilities' => 845000]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -113,7 +113,7 @@ class AnnualReportGuardTest extends TestCase {
 	 */
 	public function testCannotOpmakenWhenBalansUnbalanced(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-2', 'totalActiva' => 845000, 'totalPassiva' => 800000]])
+			$this->buildObjectServiceStub(records: [['reportId' => 'r-2', 'totalAssets' => 845000, 'totalLiabilities' => 800000]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -130,10 +130,10 @@ class AnnualReportGuardTest extends TestCase {
 		$balanceSheet = [
 			'reportId' => 'r-3',
 			'rubrieken' => [
-				['rubrieckCode' => 'B.II', 'zijde' => 'activa', 'currentYear' => 450000],
-				['rubrieckCode' => 'C.IV', 'zijde' => 'activa', 'currentYear' => 95000],
-				['rubrieckCode' => 'A', 'zijde' => 'passiva', 'currentYear' => 400000],
-				['rubrieckCode' => 'D', 'zijde' => 'passiva', 'currentYear' => 145000],
+				['rubrieckCode' => 'B.II', 'side' => 'activa', 'currentYear' => 450000],
+				['rubrieckCode' => 'C.IV', 'side' => 'activa', 'currentYear' => 95000],
+				['rubrieckCode' => 'A', 'side' => 'passiva', 'currentYear' => 400000],
+				['rubrieckCode' => 'D', 'side' => 'passiva', 'currentYear' => 145000],
 			],
 		];
 
@@ -164,7 +164,7 @@ class AnnualReportGuardTest extends TestCase {
 	 */
 	public function testZeroTotalBalansCannotOpmaken(): void {
 		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-5', 'totalActiva' => 0, 'totalPassiva' => 0]])
+			$this->buildObjectServiceStub(records: [['reportId' => 'r-5', 'totalAssets' => 0, 'totalLiabilities' => 0]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -198,7 +198,7 @@ class AnnualReportGuardTest extends TestCase {
 		self::assertTrue(
 			$this->guard->canVaststellen(
 				annualReportId: 'r-7',
-				object: ['accountantsverklaringVereist' => false]
+				object: ['auditorsStatementRequired' => false]
 			)
 		);
 
@@ -215,8 +215,8 @@ class AnnualReportGuardTest extends TestCase {
 			$this->guard->canVaststellen(
 				annualReportId: 'r-8',
 				object: [
-					'accountantsverklaringVereist' => true,
-					'accountantsverklaringStatus' => 'goedkeurend',
+					'auditorsStatementRequired' => true,
+					'auditorsStatementStatus' => 'goedkeurend',
 				]
 			)
 		);
@@ -234,8 +234,8 @@ class AnnualReportGuardTest extends TestCase {
 			$this->guard->canVaststellen(
 				annualReportId: 'r-9',
 				object: [
-					'accountantsverklaringVereist' => true,
-					'accountantsverklaringStatus' => 'in-afwachting',
+					'auditorsStatementRequired' => true,
+					'auditorsStatementStatus' => 'in-afwachting',
 				]
 			)
 		);
@@ -253,8 +253,8 @@ class AnnualReportGuardTest extends TestCase {
 			$this->guard->canVaststellen(
 				annualReportId: 'r-10',
 				object: [
-					'accountantsverklaringVereist' => true,
-					'accountantsverklaringStatus' => 'samenstelling',
+					'auditorsStatementRequired' => true,
+					'auditorsStatementStatus' => 'samenstelling',
 				]
 			)
 		);

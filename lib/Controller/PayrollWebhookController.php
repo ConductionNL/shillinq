@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -85,6 +86,8 @@ class PayrollWebhookController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// Payroll provider integration surface — machine caller, own credential.
+	#[AnonRateLimit(limit: 300, period: 60)]
 	public function info(): JSONResponse {
 		return new JSONResponse(
 			data: ['message' => 'Payroll webhook accepts POST with a signed CloudEvent only.'],
@@ -108,6 +111,7 @@ class PayrollWebhookController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 300, period: 60)]
 	public function receive(): JSONResponse {
 		$rawBody = (string)file_get_contents('php://input');
 

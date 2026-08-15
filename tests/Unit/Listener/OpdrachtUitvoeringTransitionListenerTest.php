@@ -195,11 +195,11 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 
 		$event = new ObjectTransitionedEvent(
 			$this->entity('1201', [
-				'verplichtingId' => 'TN-2026-0001',
-				'mijlpaalId' => 'M-Q1',
-				'opleveringsType' => 'tussenoplevering',
-				'goedgekeurd' => true,
-				'bewijsstukken' => [['documentId' => 'doc-1']],
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-Q1',
+				'deliveryType' => 'tussenoplevering',
+				'approved' => true,
+				'supportingDocuments' => [['documentId' => 'doc-1']],
 			]),
 			'voltooien',
 			'in-progress',
@@ -235,11 +235,11 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 
 		$event = new ObjectTransitionedEvent(
 			$this->entity('1201', [
-				'verplichtingId' => 'TN-2026-0001',
-				'mijlpaalId' => 'M-EIND',
-				'opleveringsType' => 'eindoplevering',
-				'goedgekeurd' => true,
-				'bewijsstukken' => [['documentId' => 'doc-1']],
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-EIND',
+				'deliveryType' => 'eindoplevering',
+				'approved' => true,
+				'supportingDocuments' => [['documentId' => 'doc-1']],
 			]),
 			'voltooien',
 			'in-progress',
@@ -252,7 +252,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 		$listener->handle($event);
 
 		$this->assertCount(1, $sync->syncCalls);
-		$this->assertSame('M-EIND', $sync->syncCalls[0]['mijlpaalId']);
+		$this->assertSame('M-EIND', $sync->syncCalls[0]['milestoneId']);
 
 	}//end testApprovedEindopleveringTriggersSync()
 
@@ -274,11 +274,11 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 
 		$event = new ObjectTransitionedEvent(
 			$this->entity('1201', [
-				'verplichtingId' => 'TN-2026-0001',
-				'mijlpaalId' => 'M-EIND',
-				'opleveringsType' => 'eindoplevering',
-				'goedgekeurd' => false,
-				'bewijsstukken' => [['documentId' => 'doc-1']],
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-EIND',
+				'deliveryType' => 'eindoplevering',
+				'approved' => false,
+				'supportingDocuments' => [['documentId' => 'doc-1']],
 			]),
 			'voltooien',
 			'in-progress',
@@ -312,10 +312,10 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 
 		$event = new ObjectTransitionedEvent(
 			$this->entity('1201', [
-				'verplichtingId' => 'TN-2026-0001',
-				'mijlpaalId' => 'M-EIND',
-				'opleveringsType' => 'eindoplevering',
-				'goedgekeurd' => true,
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-EIND',
+				'deliveryType' => 'eindoplevering',
+				'approved' => true,
 			]),
 			'starten',
 			'planned',

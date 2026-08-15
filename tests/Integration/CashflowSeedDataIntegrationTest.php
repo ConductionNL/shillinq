@@ -67,12 +67,12 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 	private function sumMonthlyRecurringOut(array $profile): float {
 		$total = 0.0;
 		foreach ($profile['recurring'] as $rec) {
-			if (($rec['richting'] ?? 'OUT') !== 'OUT') {
+			if (($rec['direction'] ?? 'OUT') !== 'OUT') {
 				continue;
 			}
 
 			$amount = (float)($rec['standardAmount'] ?? 0.0);
-			switch ($rec['frequentie'] ?? 'MAANDELIJKS') {
+			switch ($rec['frequency'] ?? 'MAANDELIJKS') {
 				case 'WEKELIJKS':
 					$total += ($amount * (52 / 12));
 					break;
@@ -140,8 +140,8 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 		foreach ($seed['profiles'] as $profile) {
 			$policy = $profile['bufferPolicy'];
 			self::assertLessThan(
-				(float)$policy['alertVooralarm'],
-				(float)$policy['alertOndergrens']
+				(float)$policy['alertPreAlert'],
+				(float)$policy['alertLowerLimit']
 			);
 		}
 
@@ -158,7 +158,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 		$profile = $seed['profiles'][1];
 		$hasLow = false;
 		foreach ($profile['arInvoices'] as $inv) {
-			if ((float)($inv['betrouwbaarheidScore'] ?? 1.0) < 0.6) {
+			if ((float)($inv['reliabilityScore'] ?? 1.0) < 0.6) {
 				$hasLow = true;
 				break;
 			}
@@ -178,7 +178,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 		$profile = $seed['profiles'][2];
 		$hasLong = false;
 		foreach ($profile['arInvoices'] as $inv) {
-			$offset = (string)($inv['betalingsHistorie_gemiddeldeAfwijking'] ?? '+0 days');
+			$offset = (string)($inv['payment_history_average_deviation'] ?? '+0 days');
 			// Extract leading integer from "+48 days".
 			if (preg_match('/\+?(\d+)/', $offset, $m) === 1 && (int)$m[1] >= 30) {
 				$hasLong = true;
@@ -200,10 +200,10 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 		foreach ($seed['profiles'] as $profile) {
 			$os = $profile['horizon']['openingBalance'];
 			$sum = (
-				(float)$os['zakelijkeRekening']
-				+ (float)$os['spaardoel_btw']
-				+ (float)$os['spaardoel_ib']
-				+ (float)$os['spaardoel_buffer']
+				(float)$os['businessAccount']
+				+ (float)$os['savings_goal_vat']
+				+ (float)$os['savings_goal_ib']
+				+ (float)$os['savings_goal_buffer']
 			);
 			self::assertEqualsWithDelta(
 				(float)$os['total'],
@@ -228,7 +228,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 				continue;
 			}
 
-			$months = (float)$policy['monthsVasteKosten'];
+			$months = (float)$policy['monthsFixedCost'];
 			$monthly = $this->sumMonthlyRecurringOut($profile);
 			// berekendeBuffer SHOULD cover monthly vaste kosten x months. Allow
 			// a generous tolerance because some profiles model salary+rent only.

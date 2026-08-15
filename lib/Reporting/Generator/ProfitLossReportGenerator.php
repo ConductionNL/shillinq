@@ -20,7 +20,12 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
  *
  * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  * The change directory it names was never committed, and the `reporting`
@@ -50,6 +55,40 @@ use PhpOffice\PhpWord\PhpWord;
  *     verification of each branch.
  */
 final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
+	/**
+	 * Dutch `accountType` tokens accepted on READ, normalised to the English
+	 * bucket names this app uses internally.
+	 *
+	 * These are NOT app vocabulary and are deliberately not renamed. They are
+	 * INPUT tokens: values that already sit in customer data or arrive from a
+	 * bookkeeping import, where `baten` / `lasten` are the statutory terms an
+	 * accountant's export actually writes. The adapter boundary is the one place
+	 * the English-only rule exempts, and this is that boundary.
+	 *
+	 * The distinction matters because it was got wrong here twice: the vocabulary
+	 * rename translated `'baten'` to `'revenue'` inside the match, producing a
+	 * duplicate arm, so accounts typed `baten` matched nothing, fell through to
+	 * `continue`, and VANISHED from the profit-and-loss report. Renaming a stored
+	 * VALUE is a data migration, not an edit — which is why they live in a table
+	 * the rename pass cannot silently collapse.
+	 *
+	 * Everything downstream is English: the buckets are `revenue` and `expense`,
+	 * and no Dutch token escapes this class.
+	 *
+	 * @var array<string, string>
+	 */
+	private const ACCOUNT_TYPE_ALIASES = [
+		'revenue' => 'revenue',
+		'income' => 'revenue',
+		'expenses' => 'expense',
+		'expense' => 'expense',
+		// Dutch, accepted on read only.
+		'opbrengsten' => 'revenue',
+		'baten' => 'revenue',
+		'kosten' => 'expense',
+		'lasten' => 'expense',
+	];
+
 	/**
 	 * The catalogue report-type id this generator produces.
 	 *
@@ -213,11 +252,7 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
 
 		foreach ($accounts as $account) {
 			$type = strtolower($this->str($account, 'accountType', 'type', 'category'));
-			$bucket = match ($type) {
-				'revenue', 'income', 'opbrengsten', 'baten' => 'revenue',
-				'expenses', 'expense', 'kosten', 'lasten' => 'expense',
-				default => null,
-			};
+			$bucket = (self::ACCOUNT_TYPE_ALIASES[$type] ?? null);
 
 			if ($bucket === null) {
 				continue;

@@ -146,7 +146,7 @@
 			data-testid="generated-reports-table"
 			:columns="columns"
 			:rows="filteredRows"
-			:empty-label="
+			:emptyLabel="
 				t('shillinq', 'No generated reports match the current filters.')
 			">
 			<template #cell-reportType="{ row }">
@@ -182,15 +182,16 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'GeneratedReportsIndex',
 	components: {
 		CnDataTable,
 	},
+
 	data() {
 		return {
 			rows: [],
@@ -203,6 +204,7 @@ export default {
 			administrationFilter: '',
 		}
 	},
+
 	computed: {
 		columns() {
 			return [
@@ -243,6 +245,7 @@ export default {
 				},
 			]
 		},
+
 		categoryOptions() {
 			const present = [
 				...new Set(this.rows.map((r) => r.category).filter(Boolean)),
@@ -252,16 +255,19 @@ export default {
 				label: this.categories[key] || key,
 			}))
 		},
+
 		periodOptions() {
 			return [...new Set(this.rows.map((r) => r.period).filter(Boolean))]
 				.sort()
 				.reverse()
 		},
+
 		administrationOptions() {
 			return [
 				...new Set(this.rows.map((r) => r.administrationId).filter(Boolean)),
 			]
 		},
+
 		filteredRows() {
 			return this.rows.filter((row) => {
 				if (this.categoryFilter && row.category !== this.categoryFilter) {
@@ -280,10 +286,12 @@ export default {
 			})
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadGenerated()
 	},
+
 	methods: {
 		t,
 		async loadGenerated() {
@@ -311,6 +319,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Best-effort administration names so the administration column +
 		 * filter read names instead of raw ids. A failure is non-fatal: the
@@ -332,21 +341,26 @@ export default {
 				this.administrationNames = {}
 			}
 		},
+
 		downloadUrl(row) {
 			return generateUrl(`/apps/shillinq/api/reporting/download/${row.id}`)
 		},
+
 		reportLabel(row) {
 			return row.reportLabel || row.reportType || '—'
 		},
+
 		categoryLabel(category) {
 			return this.categories[category] || category || '—'
 		},
+
 		administrationLabel(administrationId) {
 			if (!administrationId) {
 				return '—'
 			}
 			return this.administrationNames[administrationId] || administrationId
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'

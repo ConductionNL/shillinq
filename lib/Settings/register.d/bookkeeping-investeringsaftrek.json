@@ -17,7 +17,7 @@
           "administrationId",
           "fixedAssetId",
           "description",
-          "aanschafwaarde"
+          "acquisitionValue"
         ],
         "properties": {
           "administrationId": {
@@ -45,14 +45,14 @@
             "example": "SolarNL B.V.",
             "title": "Leverancier"
           },
-          "factuurnummer": {
+          "invoiceNumber": {
             "type": "string",
             "nullable": true,
             "description": "Supplier invoice number for audit linkage.",
             "example": "INV-2026-0420",
             "title": "Factuurnummer"
           },
-          "aanschafdatum": {
+          "acquisitionDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -60,7 +60,7 @@
             "example": "2026-04-01",
             "title": "Aanschafdatum"
           },
-          "opdrachtverleningDatum": {
+          "assignmentAwardDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -68,7 +68,7 @@
             "example": "2026-03-15",
             "title": "Opdrachtverlening Datum"
           },
-          "ingebruiknameDatum": {
+          "commissioningDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -76,7 +76,7 @@
             "example": "2026-05-01",
             "title": "Ingebruikname Datum"
           },
-          "aanschafwaarde": {
+          "acquisitionValue": {
             "type": "integer",
             "description": "Acquisition value in minor currency units (EUR cents), excluding recoverable BTW.",
             "example": 5000000,
@@ -89,28 +89,28 @@
             "example": "EUR",
             "title": "Valuta"
           },
-          "btwRegime": {
+          "vatRegime": {
             "type": "string",
             "nullable": true,
             "description": "BTW handling for the asset (aftrekbaar/niet-aftrekbaar/gemengd); affects the aftrek grondslag.",
-            "example": "aftrekbaar",
+            "example": "deductible",
             "title": "BTW Regime"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "nullable": true,
             "description": "Free-text or taxonomy category used for code lookup hints.",
             "example": "Duurzame energie",
             "title": "Categorie"
           },
-          "energielijstCode": {
+          "energyListCode": {
             "type": "string",
             "nullable": true,
             "description": "Matched EnergielijstCode.code (EIA). Resolved against the opdrachtverleningDatum year list (REQ-INV-002).",
             "example": "251701",
             "title": "Energielijst Code"
           },
-          "milieulijstCode": {
+          "environmentListCode": {
             "type": "string",
             "nullable": true,
             "description": "Matched MilieulijstCode.code (MIA/Vamil). Resolved against the opdrachtverleningDatum year list (REQ-INV-002).",
@@ -171,20 +171,20 @@
             },
             "title": "Eligibility Override"
           },
-          "rvoMeldingStatus": {
+          "rvoReportStatus": {
             "type": "string",
             "description": "RvO melding lifecycle state.",
             "enum": [
               "geen",
-              "ingediend",
+              "submitted",
               "definitief",
               "verlopen"
             ],
             "default": "geen",
-            "example": "ingediend",
+            "example": "submitted",
             "title": "Rvo Melding Status"
           },
-          "rvoMeldingDatum": {
+          "rvoReportDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -192,7 +192,7 @@
             "example": "2026-04-10",
             "title": "Rvo Melding Datum"
           },
-          "rvoMeldingDeadline": {
+          "rvoReportDeadline": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -200,7 +200,7 @@
             "example": "2026-06-15",
             "title": "Rvo Melding Deadline"
           },
-          "rvoReferentie": {
+          "rvoReference": {
             "type": "string",
             "nullable": true,
             "description": "RvO eLoket reference once a melding is submitted.",
@@ -224,7 +224,7 @@
         "type": "object",
         "required": [
           "code",
-          "jaartal",
+          "yearNumber",
           "description"
         ],
         "properties": {
@@ -234,13 +234,13 @@
             "example": "251701",
             "title": "Code"
           },
-          "jaartal": {
+          "yearNumber": {
             "type": "integer",
             "description": "List year this code belongs to.",
             "example": 2026,
             "title": "Jaartal"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "nullable": true,
             "example": "Duurzame energie",
@@ -267,21 +267,21 @@
             "example": null,
             "title": "Max Bedrag Per Eenheid"
           },
-          "eenheid": {
+          "unit": {
             "type": "string",
             "nullable": true,
             "example": "kWp",
             "title": "Eenheid",
             "description": "The eenheid."
           },
-          "ingangsdatum": {
+          "effectiveDate": {
             "type": "string",
             "format": "date",
             "example": "2026-01-01",
             "title": "Ingangsdatum",
             "description": "The date and time for ingangsdatum."
           },
-          "vervaldatum": {
+          "expiryDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -306,7 +306,7 @@
         "type": "object",
         "required": [
           "code",
-          "jaartal",
+          "yearNumber",
           "description",
           "miaPercentage"
         ],
@@ -317,13 +317,13 @@
             "example": "G3110",
             "title": "Code"
           },
-          "jaartal": {
+          "yearNumber": {
             "type": "integer",
             "example": 2026,
             "title": "Jaartal",
             "description": "The numeric value for jaartal."
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "nullable": true,
             "example": "Circulaire economie",
@@ -347,7 +347,7 @@
             "example": 45,
             "title": "Mia Percentage"
           },
-          "vamilToegestaan": {
+          "vamilPermitted": {
             "type": "boolean",
             "description": "Whether Vamil willekeurige afschrijving is permitted for this code.",
             "default": false,
@@ -368,7 +368,7 @@
             "example": null,
             "title": "Max Bedrag"
           },
-          "ingangsdatum": {
+          "effectiveDate": {
             "type": "string",
             "format": "date",
             "example": "2026-01-01",
@@ -427,7 +427,7 @@
             "title": "Scheme",
             "description": "The scheme."
           },
-          "grondslag": {
+          "basis": {
             "type": "integer",
             "description": "Base amount the percentage applies to, in EUR cents.",
             "example": 5000000,
@@ -440,7 +440,7 @@
             "example": 40,
             "title": "Percentage"
           },
-          "aftrekbedrag": {
+          "deductionAmount": {
             "type": "integer",
             "description": "Computed deduction in EUR cents (after any vrijwillige verlaging).",
             "example": 2000000,
@@ -449,27 +449,27 @@
           "status": {
             "type": "string",
             "enum": [
-              "ingediend",
+              "submitted",
               "definitief"
             ],
-            "default": "ingediend",
-            "example": "ingediend",
+            "default": "submitted",
+            "example": "submitted",
             "title": "Status",
             "description": "The current status of this record."
           },
-          "ingediendInAangifte": {
+          "submittedInTaxReturn": {
             "type": "boolean",
             "default": false,
             "example": false,
             "title": "Ingediend In Aangifte",
             "description": "Indicates whether ngediend in aangifte applies."
           },
-          "rvoBeschikking": {
+          "rvoDecision": {
             "type": "object",
             "nullable": true,
             "description": "RvO award, populated async via the openconnector mededeling feed or overridden by the boekhouder (REQ-INV-007 / D8).",
             "properties": {
-              "beschikkingsdatum": {
+              "decisionDate": {
                 "type": "string",
                 "format": "date",
                 "example": "2026-07-01",
@@ -482,7 +482,7 @@
                 "title": "Toegekend Bedrag",
                 "description": "The numeric value for toegekend bedrag."
               },
-              "referentie": {
+              "reference": {
                 "type": "string",
                 "example": "RVO-2026-EIA-00123",
                 "title": "Referentie",
@@ -491,7 +491,7 @@
             },
             "title": "Rvo Beschikking"
           },
-          "vrijwilligeVerlaging": {
+          "voluntaryReduction": {
             "type": "integer",
             "nullable": true,
             "description": "Voluntary reduction applied to the legal entitlement, in EUR cents (REQ-INV-009). Not carry-forwardable.",
@@ -524,7 +524,7 @@
           "administrationId",
           "investmentAssetId",
           "financialYear",
-          "aanschafwaarde"
+          "acquisitionValue"
         ],
         "properties": {
           "administrationId": {
@@ -545,47 +545,47 @@
             "title": "Boekjaar",
             "description": "The numeric value for boekjaar."
           },
-          "aanschafwaarde": {
+          "acquisitionValue": {
             "type": "integer",
             "description": "Base value in EUR cents.",
             "example": 5000000,
             "title": "Aanschafwaarde"
           },
-          "directeAfschrijving": {
+          "directDepreciation": {
             "type": "integer",
             "description": "75% direct write-off in EUR cents.",
             "example": 3750000,
             "title": "Directe Afschrijving"
           },
-          "gespreidDeel": {
+          "spreadPart": {
             "type": "integer",
             "description": "Remaining 25% spread over the regular schedule, in EUR cents.",
             "example": 1250000,
             "title": "Gespreid Deel"
           },
-          "regulierAfschrijfschema": {
+          "regularDepreciationSchedule": {
             "type": "object",
             "description": "The regular schedule for the 25% gespreid deel.",
             "properties": {
-              "methode": {
+              "method": {
                 "type": "string",
                 "example": "lineair",
                 "title": "Methode",
                 "description": "The methode."
               },
-              "looptijdJaren": {
+              "termYears": {
                 "type": "integer",
                 "example": 5,
                 "title": "Looptijd Jaren",
                 "description": "The numeric value for looptijd jaren."
               },
-              "restwaarde": {
+              "residualValue": {
                 "type": "integer",
                 "example": 0,
                 "title": "Restwaarde",
                 "description": "The numeric value for restwaarde."
               },
-              "jaarlijkseAfschrijving": {
+              "annualDepreciation": {
                 "type": "integer",
                 "example": 250000,
                 "title": "Jaarlijkse Afschrijving",
@@ -611,8 +611,8 @@
         "type": "object",
         "required": [
           "tier",
-          "jaartal",
-          "vanaf"
+          "yearNumber",
+          "from"
         ],
         "properties": {
           "tier": {
@@ -621,13 +621,13 @@
             "example": 2,
             "title": "Tier"
           },
-          "jaartal": {
+          "yearNumber": {
             "type": "integer",
             "example": 2026,
             "title": "Jaartal",
             "description": "The numeric value for jaartal."
           },
-          "vanaf": {
+          "from": {
             "type": "integer",
             "description": "Lower bound of the tier (inclusive), EUR cents.",
             "example": 280000,
@@ -654,7 +654,7 @@
             "example": null,
             "title": "Vast Bedrag"
           },
-          "regel": {
+          "rule": {
             "type": "string",
             "description": "Human-readable description of the tier rule.",
             "example": "28% over investering",

@@ -19,7 +19,7 @@
 			"presentationCurrency": "EUR",
 			"functionalCurrency": "EUR",
 			"vatRegime": "standaard",
-			"vatFilingFrequency": "kwartaal",
+			"vatFilingFrequency": "quarter",
 			"consolidationMethod": "niet_consolideren",
 			"status": "actief",
 			"backupSchedule": "dagelijks",

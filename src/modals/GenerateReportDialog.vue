@@ -206,9 +206,9 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'GenerateReportDialog',
@@ -221,6 +221,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * The format pre-selected on the card's format picker; the dialog
 		 * seeds its own picker from this so the choice carries over.
@@ -229,15 +230,18 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		administrationOptions: {
 			type: Array,
 			default: () => [],
 		},
+
 		defaultAdministrationId: {
 			type: String,
 			default: '',
 		},
 	},
+
 	emits: ['close', 'generated'],
 	data() {
 		return {
@@ -255,16 +259,19 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		periodNumberLabel() {
 			return this.form.periodType === 'month'
 				? this.t('shillinq', 'Month')
 				: this.t('shillinq', 'Quarter')
 		},
+
 		periodNumberOptions() {
 			const max = this.form.periodType === 'month' ? 12 : 4
 			return Array.from({ length: max }, (_, i) => i + 1)
 		},
+
 		canSubmit() {
 			if (this.submitting) {
 				return false
@@ -284,6 +291,7 @@ export default {
 			return true
 		},
 	},
+
 	methods: {
 		t,
 		onCancel() {
@@ -292,6 +300,7 @@ export default {
 			}
 			this.$emit('close')
 		},
+
 		/**
 		 * Assemble the generation context and POST it. The period is sent
 		 * both as its structured parts (periodType/periodYear/periodNumber)
@@ -330,6 +339,7 @@ export default {
 				this.submitting = false
 			}
 		},
+
 		/**
 		 * Human-readable period label matching the structured parts.
 		 *

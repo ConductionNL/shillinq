@@ -74,14 +74,14 @@ class VsoLockingValidator {
 	 * filter-scoped to an O(1)-indexed lookup.
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param int $boekjaar Fiscal year.
+	 * @param int $financialYear Fiscal year.
 	 *
 	 * @return bool TRUE when the year is VSO-locked.
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
 	 */
-	public function isYearLocked(string $administrationId, int $boekjaar): bool {
-		if ($administrationId === '' || $boekjaar <= 0) {
+	public function isYearLocked(string $administrationId, int $financialYear): bool {
+		if ($administrationId === '' || $financialYear <= 0) {
 			return false;
 		}
 
@@ -94,7 +94,7 @@ class VsoLockingValidator {
 					[
 						'filters' => [
 							'administrationId' => $administrationId,
-							'financialYear' => $boekjaar,
+							'financialYear' => $financialYear,
 							'vso_locked' => true,
 						],
 					]
@@ -107,7 +107,7 @@ class VsoLockingValidator {
 				'VsoLockingValidator: lock-status fetch failed; assuming unlocked',
 				[
 					'administrationId' => $administrationId,
-					'financialYear' => $boekjaar,
+					'financialYear' => $financialYear,
 					'exception' => $e->getMessage(),
 				]
 			);

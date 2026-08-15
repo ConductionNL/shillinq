@@ -70,18 +70,18 @@ class LogDigipoortSbrAdapter implements DigipoortSbrAdapterInterface {
 		// Strip the raw XBRL bytes from the log entry — checksum is enough.
 		unset($sanitised['xbrlInstanceBytes']);
 
-		$kenmerk = 'digipoort-log-' . bin2hex(random_bytes(8));
+		$reference = 'digipoort-log-' . bin2hex(random_bytes(8));
 		$this->logger->info(
 			'Shillinq Digipoort/SBR submission deferred (no outbound connector bound)',
 			[
-				'kenmerk' => $kenmerk,
+				'reference' => $reference,
 				'payload' => $sanitised,
 			]
 		);
 
 		return new DigipoortSubmissionResult(
 			deliveryStatus: 'DEFERRED',
-			kenmerk: $kenmerk,
+			reference: $reference,
 			dormant: true,
 			extras: [
 				'reason' => 'no-outbound-connector-bound',

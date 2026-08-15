@@ -92,7 +92,7 @@ final class BegrotingswijzigingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenWhenRaadsbesluitSet(): void {
-		$wijziging = ['id' => 'bw-1', 'raadsbesluit' => 'raadsbesluit-031'];
+		$wijziging = ['id' => 'bw-1', 'councilResolution' => 'raadsbesluit-031'];
 		self::assertTrue($this->guard->canVaststellen(wijzigingId: 'bw-1', object: $wijziging));
 
 	}//end testCanVaststellenWhenRaadsbesluitSet()
@@ -103,7 +103,7 @@ final class BegrotingswijzigingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenDeniedWithoutRaadsbesluit(): void {
-		$wijziging = ['id' => 'bw-1', 'raadsbesluit' => null];
+		$wijziging = ['id' => 'bw-1', 'councilResolution' => null];
 		self::assertFalse($this->guard->canVaststellen(wijzigingId: 'bw-1', object: $wijziging));
 
 	}//end testCanVaststellenDeniedWithoutRaadsbesluit()
@@ -114,7 +114,7 @@ final class BegrotingswijzigingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVaststellenDeniedOnBlankRaadsbesluit(): void {
-		$wijziging = ['id' => 'bw-1', 'raadsbesluit' => '   '];
+		$wijziging = ['id' => 'bw-1', 'councilResolution' => '   '];
 		self::assertFalse($this->guard->canVaststellen(wijzigingId: 'bw-1', object: $wijziging));
 
 	}//end testCanVaststellenDeniedOnBlankRaadsbesluit()

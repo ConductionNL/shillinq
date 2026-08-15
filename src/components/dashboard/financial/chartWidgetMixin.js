@@ -5,15 +5,15 @@
 // props from CnDashboardPage, the fetch-once data layer, the
 // trailing-12-months window and the per-widget Refresh-bus hookup.
 
-import { ref } from 'vue'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
-import { useFinancialData } from './useFinancialData.js'
+import { ref } from 'vue'
 import {
 	lastMonths,
 	monthLabel,
 	monthlyFinancialSeries,
 	monthsInRange,
 } from './financialSeries.js'
+import { useFinancialData } from './useFinancialData.js'
 
 export const TRAILING_MONTHS = 12
 

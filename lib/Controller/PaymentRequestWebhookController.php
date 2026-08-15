@@ -47,6 +47,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\PaymentReconciliationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -100,6 +101,7 @@ class PaymentRequestWebhookController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 300, period: 60)]
 	public function handle(string $gateway): JSONResponse {
 		$gateway = strtolower($gateway);
 		if (in_array($gateway, ['mollie', 'stripe'], true) === false) {
