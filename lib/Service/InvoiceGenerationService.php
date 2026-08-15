@@ -783,11 +783,7 @@ class InvoiceGenerationService {
 			->setSchema($schema)
 			->saveObject($data);
 
-		if (is_array($saved) === false) {
-			throw new RuntimeException(sprintf('ObjectService::saveObject(%s) did not return an array', $schema));
-		}
-
-		return $saved;
+		return $saved->jsonSerialize();
 	}//end saveObject()
 
 	/**

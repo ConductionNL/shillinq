@@ -173,14 +173,18 @@ class InvoiceApiController extends Controller {
 		try {
 			$admin = $this->resolveAdministrationId();
 
-			$invoice = $this->objectService
+			$found = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoice')
 				->find($invoiceId);
 
-			if (is_array($invoice) === false) {
+			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
+
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
@@ -226,11 +230,15 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$invoice = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
-			if (is_array($invoice) === false) {
+			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
+
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
@@ -269,11 +277,15 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$invoice = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
-			if (is_array($invoice) === false) {
+			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
+
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);

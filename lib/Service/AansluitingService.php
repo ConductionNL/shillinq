@@ -642,11 +642,11 @@ class AansluitingService {
 			->setSchema('Aansluiting')
 			->find($reconciliationId);
 
-		if (is_array($definition) === false) {
+		if ($definition === null) {
 			throw new RuntimeException(sprintf('Aansluiting %s not found', $reconciliationId));
 		}
 
-		return $definition;
+		return $definition->jsonSerialize();
 	}//end fetchAansluiting()
 
 	/**
@@ -662,11 +662,11 @@ class AansluitingService {
 			->setSchema('AansluitingResult')
 			->find($resultId);
 
-		if (is_array($result) === false) {
+		if ($result === null) {
 			throw new RuntimeException(sprintf('AansluitingResult %s not found', $resultId));
 		}
 
-		return $result;
+		return $result->jsonSerialize();
 	}//end fetchResult()
 
 	/**
@@ -705,11 +705,7 @@ class AansluitingService {
 			->setSchema($schema)
 			->saveObject($data);
 
-		if (is_array($saved) === false) {
-			throw new RuntimeException(sprintf('ObjectService::saveObject(%s) did not return an array', $schema));
-		}
-
-		return $saved;
+		return $saved->jsonSerialize();
 	}//end saveObject()
 
 	/**

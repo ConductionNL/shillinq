@@ -564,11 +564,11 @@ class VatSuppletieDetectionService {
 			->setSchema('VatCorrection')
 			->find($vatCorrectionId);
 
-		if (is_array($correction) === false) {
+		if ($correction === null) {
 			throw new RuntimeException(sprintf('VatCorrection %s not found', $vatCorrectionId));
 		}
 
-		return $correction;
+		return $correction->jsonSerialize();
 	}//end fetchCorrection()
 
 	/**
@@ -585,11 +585,7 @@ class VatSuppletieDetectionService {
 			->setSchema($schema)
 			->saveObject($data);
 
-		if (is_array($saved) === false) {
-			throw new RuntimeException(sprintf('ObjectService::saveObject(%s) did not return an array', $schema));
-		}
-
-		return $saved;
+		return $saved->jsonSerialize();
 	}//end saveObject()
 
 	/**
