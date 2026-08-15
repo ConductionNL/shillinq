@@ -103,7 +103,8 @@ class CycleCountServiceExtractIdTest extends TestCase {
 			varianceGate: new VarianceGate(
 				appConfig: $appConfig,
 				logger: $logger,
-			),
+			container: $this->createMock(ContainerInterface::class),
+		),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
