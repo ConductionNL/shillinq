@@ -347,4 +347,23 @@ final class RenameDutchValuesTest extends TestCase
         );
 
     }//end testMapContainsNoCaseOnlyEntries()
+    /**
+     * The shard-table LIKE pattern keeps its underscores escaped.
+     *
+     * Unescaped, `_` is LIKE's single-character wildcard, so the migration
+     * would match tables it has no business rewriting — silently, because a
+     * wider match yields more UPDATEs rather than an error.
+     *
+     * @return void
+     *
+     * @spec exclude Predicate of the Dutch-to-English vocabulary migration.
+     */
+    public function testShardTablePatternEscapesItsUnderscores(): void
+    {
+        $pattern = $this->decisions->shardTablePattern();
+
+        self::assertStringContainsString("openregister\\_table\\_", $pattern);
+        self::assertStringNotContainsString('openregister_table_', $pattern);
+
+    }//end testShardTablePatternEscapesItsUnderscores()
 }//end class

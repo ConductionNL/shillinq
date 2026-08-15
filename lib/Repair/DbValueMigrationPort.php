@@ -65,7 +65,7 @@ class DbValueMigrationPort implements ValueMigrationPort
             $stmt = $this->db->prepare(
                 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern'
             );
-            $stmt->bindValue('pattern', '%openregister\_table\_%');
+            $stmt->bindValue('pattern', $this->decisions->shardTablePattern());
             $stmt->execute();
             $rows = $stmt->fetchAll();
         } catch (\Throwable $e) {

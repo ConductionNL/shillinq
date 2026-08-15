@@ -707,4 +707,21 @@ class RenameDutchValueDecisions
         return $offenders;
 
     }//end caseOnlyEntries()
+    /**
+     * The SQL LIKE pattern that matches an OpenRegister shard table.
+     *
+     * The underscores are ESCAPED. Unescaped, `_` is LIKE's single-character
+     * wildcard, so `%openregister_table_%` also matches names this migration
+     * has no business rewriting — and it would do so silently, since a wider
+     * match produces more UPDATEs rather than an error.
+     *
+     * @return string
+     *
+     * @spec exclude Predicate of the Dutch-to-English vocabulary migration.
+     */
+    public function shardTablePattern(): string
+    {
+        return '%openregister\_table\_%';
+
+    }//end shardTablePattern()
 }//end class
