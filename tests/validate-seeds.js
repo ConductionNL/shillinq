@@ -63,7 +63,11 @@ const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 // Number of shipped seed objects that fail their own schema's `required`
 // list. Measured on the commit that added this gate. NEVER raise this to make
 // a build pass — that is the whole point of the ratchet.
-const BASELINE = 74
+// Lowered 74 -> 71 on 2026-08-16: the three `Service` seeds in
+// 10-bookings-create-appointment.json and 30-bookings-self-service-widget.json
+// now carry the full merged-schema `required` set (code, prepareTime,
+// bufferBefore, bufferAfter, basePrice, dynamicPricing, serviceCategory).
+const BASELINE = 71
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
 
