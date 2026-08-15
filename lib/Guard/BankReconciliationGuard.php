@@ -50,7 +50,6 @@ class BankReconciliationGuard {
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily so this class stays usable without a
 	 *                                      hard compile-time dependency on OpenRegister.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.

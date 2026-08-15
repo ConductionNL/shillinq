@@ -55,7 +55,6 @@ class ComplianceValidator {
 	/**
 	 * Construct ComplianceValidator with lazy-loaded ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService fetched lazily.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.
 	 * @param LoggerInterface $logger Nextcloud logger for compliance audit logging.
 	 */

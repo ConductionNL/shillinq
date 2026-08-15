@@ -86,7 +86,6 @@ class QuoteOrderInvoiceGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug + thresholds.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */

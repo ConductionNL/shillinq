@@ -54,7 +54,6 @@ class RuleTestDataSeeder {
 	/**
 	 * Construct the rule test-data seeder.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IUserManager $userManager To resolve an admin user for updates.
 	 * @param IGroupManager $groupManager To find an admin user.

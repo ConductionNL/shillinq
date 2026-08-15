@@ -198,7 +198,6 @@ class VendorPerformanceAggregation {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 *

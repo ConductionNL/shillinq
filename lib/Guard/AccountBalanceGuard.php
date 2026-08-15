@@ -45,7 +45,6 @@ class AccountBalanceGuard {
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily so this class stays usable in T1
 	 *                                      before T2's GLLine register exists.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution (C3).
@@ -102,7 +101,6 @@ class AccountBalanceGuard {
 		// so that "OR absent" (permit) and "computation failed" (deny, fail-closed)
 		// remain two distinct, independently observable outcomes.
 		try {
-			$this->objectService;
 		} catch (\Throwable) {
 			$this->logger->debug(
 				'AccountBalanceGuard: ObjectService not present (T1 state) — archive permitted by default',

@@ -75,7 +75,6 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @param FifoValuationService $fifo FIFO engine.
 	 * @param MovingAverageValuationService $average Moving-average engine.
 	 * @param CogsPosterService $cogs COGS poster.
-	 * @param ContainerInterface $container DI for ObjectService lazy resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */

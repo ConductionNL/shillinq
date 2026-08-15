@@ -59,7 +59,6 @@ class InventoryScanService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for register slug resolution.
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(

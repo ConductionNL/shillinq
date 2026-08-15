@@ -68,7 +68,6 @@ class IcpController extends Controller {
 	 * @param IcpFilingService $filingService The ICP filing write service (correction + export).
 	 * @param ViesService $viesService The VIES validation service.
 	 * @param ArInvoiceIcpPdfRenderer $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *

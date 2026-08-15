@@ -170,7 +170,6 @@ class AccountantsdossierExportService {
 	/**
 	 * Construct the exporter with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug + signer hand-off.
 	 * @param IUserSession $userSession Session for generatedBy attribution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.

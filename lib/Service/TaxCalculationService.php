@@ -56,7 +56,6 @@ class TaxCalculationService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is
 	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param TaxCalculationHelper $helper Pure-logic helper (loss compensation, rate calc).

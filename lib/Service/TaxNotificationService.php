@@ -62,7 +62,6 @@ class TaxNotificationService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IManager $notificationMgr Nextcloud notification manager.
 	 * @param LoggerInterface $logger Logger for diagnostics.

@@ -100,7 +100,6 @@ class FxRevaluationService {
 	/**
 	 * Construct the FX period-end revaluation service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug + GL account overrides.
 	 * @param TreasuryRateService $treasuryRateService Rate-lookup facade (REQ-MC-007).
 	 * @param LoggerInterface $logger Structured logger.

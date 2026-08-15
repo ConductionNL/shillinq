@@ -66,7 +66,6 @@ class OssRecordResolver {
 	/**
 	 * Construct the resolver.
 	 *
-	 * @param ContainerInterface $container DI container for the lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config (register slug).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 */

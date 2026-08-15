@@ -172,7 +172,6 @@ class MultiPoConsolidationService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService
 	 *                                      is fetched lazily so unit tests
 	 *                                      can swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR register slug.

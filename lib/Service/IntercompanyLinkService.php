@@ -76,7 +76,6 @@ class IntercompanyLinkService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for the lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config (register slug).
 	 * @param IntercompanyJournalService $journalService The pure-logic REQ-MA-004 kernel.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).

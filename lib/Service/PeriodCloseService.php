@@ -82,7 +82,6 @@ class PeriodCloseService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IGroupManager $groupManager Group manager for role resolution.
 	 * @param SuspenseAgeingService $suspenseAgeing Suspense worklist ageing (close blocker, REQ-PCG-003).

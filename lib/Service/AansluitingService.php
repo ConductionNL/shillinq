@@ -107,7 +107,6 @@ class AansluitingService {
 	 * direct dependencies on the two services whose computation this class
 	 * reuses rather than duplicating (REQ-AANS-002).
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.

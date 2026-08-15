@@ -77,7 +77,6 @@ class InventoryPostingGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for structured-warning + fail-closed diagnostics.
 	 */

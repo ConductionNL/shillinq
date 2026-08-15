@@ -73,7 +73,6 @@ class WbsoDocumentService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container; OR ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config (register slug).
 	 * @param IUserSession $userSession Authenticated session (createdBy).
 	 */

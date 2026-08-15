@@ -61,7 +61,6 @@ class InvoiceApiController extends Controller {
 	 * @param IRequest $request Request.
 	 * @param InvoiceGenerationService $service Drafting/posting service.
 	 * @param InvoicePdfGenerator $pdfGenerator PDF/HTML renderer.
-	 * @param ContainerInterface $container DI container.
 	 * @param IUserSession $session User session.
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
 	 * @param LoggerInterface $logger Logger.

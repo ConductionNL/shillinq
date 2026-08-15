@@ -84,7 +84,6 @@ class LeaseReassessmentService {
 	 * soft — the persisted LeaseReassessmentEvent remains the source of
 	 * truth for the audit trail.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LeaseAmortizationCalculator $calculator Pure-logic IFRS 16 arithmetic helper.

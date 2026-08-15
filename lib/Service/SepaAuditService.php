@@ -48,7 +48,6 @@ class SepaAuditService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $context RBAC guard — the caller's administration memberships.
 	 * @param LoggerInterface $logger Logger.

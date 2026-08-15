@@ -49,7 +49,6 @@ class KlantLadderOverrideApprovalGuard {
 	/**
 	 * Construct the guard with DI for OR ObjectService.
 	 *
-	 * @param ContainerInterface $container Lazy DI container.
 	 * @param IAppConfig $appConfig App config.
 	 * @param LoggerInterface $logger Logger.
 	 */

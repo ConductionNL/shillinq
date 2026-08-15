@@ -98,7 +98,6 @@ class TimeIntakeService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger.
 	 * @param InvoiceGenerationService $invoices Existing, unmodified draftInvoice() machinery.

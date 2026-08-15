@@ -47,7 +47,6 @@ class InnovatieboxAggregationService {
 	/**
 	 * Construct the aggregation service.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is
 	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param CarryForwardLossService $lossService Loss-offset arithmetic helper.

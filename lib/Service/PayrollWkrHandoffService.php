@@ -46,7 +46,6 @@ class PayrollWkrHandoffService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container (OR's ObjectService is lazy).
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Cents arithmetic helper.
 	 */

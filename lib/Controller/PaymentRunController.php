@@ -75,7 +75,6 @@ class PaymentRunController extends Controller {
 	 * @param PaymentRunExportService $exportService SEPA export orchestration.
 	 * @param PaymentRunReconciliationService $reconciliationService CAMT.053 reconciliation.
 	 * @param AdministrationContextService $administrationContext Tenant scope (ADR-005 guard).
-	 * @param ContainerInterface $container DI container (lazy ObjectService).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 */

@@ -111,7 +111,6 @@ class PosStockDecrementListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI for the OR ObjectService (InventoryStock existence probe).
 	 * @param SalesDispatchStockIssueService $dispatchService The reused issue/reversal service.
 	 * @param IAppConfig $appConfig App config for the register slug (same key SalesDispatchStockIssueService reads).
 	 * @param IGroupManager $groupManager Resolves the `admin` group for the audit surface.

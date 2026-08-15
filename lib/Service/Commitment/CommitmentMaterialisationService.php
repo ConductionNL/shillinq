@@ -90,7 +90,6 @@ class CommitmentMaterialisationService {
 	/**
 	 * Construct the service with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param MandaatEnforcer $mandaat Reused mandate-sufficiency guard (REQ-VPL-002).
 	 * @param BudgetBlocker $budget Reused budget-room guard (REQ-VPL-001).

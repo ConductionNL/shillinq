@@ -62,7 +62,6 @@ class BcfClaimGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param BcfClaimService $claimService Server-authoritative claim computation.
 	 * @param BcfCompensationCalculator $calculator Pure-logic submit-precondition helper.

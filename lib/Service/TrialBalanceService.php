@@ -74,7 +74,6 @@ class TrialBalanceService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param TrialBalanceCalculator $calculator Pure-logic arithmetic helper.
 	 */

@@ -46,7 +46,6 @@ class SupplierQualificationService {
 	/**
 	 * Construct the service with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param AdministrationContextService $administrationContext Tenant access/identity resolver.
 	 * @param LoggerInterface $logger Logger for diagnostics.

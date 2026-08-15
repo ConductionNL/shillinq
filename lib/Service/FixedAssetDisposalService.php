@@ -120,7 +120,6 @@ class FixedAssetDisposalService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for the lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config (account codes + register slug).
 	 * @param DisposalJournalEmitter $emitter The pure-logic disposal journal kernel.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).

@@ -65,7 +65,6 @@ class PayrollWebhookController extends Controller {
 	 *
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $appConfig App config (shared secret + register slug).
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for audit and fail-closed diagnostics.
 	 */
 	public function __construct(

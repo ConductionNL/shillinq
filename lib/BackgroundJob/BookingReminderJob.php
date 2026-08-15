@@ -68,7 +68,6 @@ class BookingReminderJob extends TimedJob {
 	 *
 	 * @param ITimeFactory $time The time factory.
 	 * @param BookingNotificationService $notificationService The notification service.
-	 * @param ContainerInterface $container The DI container.
 	 * @param IAppConfig $appConfig The app config.
 	 * @param LoggerInterface $logger The logger.
 	 *

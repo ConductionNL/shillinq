@@ -64,7 +64,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 * @param SettingsService $settingsService The settings service (register slug).
 	 * @param IGroupManager $groupManager The group manager (resolve an admin IUser).
 	 * @param LoggerInterface $logger The logger interface.
-	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
 		private SettingsService $settingsService,

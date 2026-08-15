@@ -56,7 +56,6 @@ class DunningRunExecuteGuard {
 	/**
 	 * Construct the guard.
 	 *
-	 * @param ContainerInterface $container Lazy DI container.
 	 * @param IAppConfig $appConfig App config.
 	 * @param LoggerInterface $logger Logger.
 	 */

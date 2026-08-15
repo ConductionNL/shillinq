@@ -275,7 +275,6 @@ class GRIRClearingService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container for the lazy
 	 *                                      ObjectService resolution.
 	 * @param IAppConfig $appConfig App config (account codes +
 	 *                              register slug).

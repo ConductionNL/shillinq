@@ -113,7 +113,6 @@ class PurchaseOrderApprovalService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's
 	 *                                      ObjectService is fetched
 	 *                                      lazily so unit tests
 	 *                                      swap an in-memory stub.

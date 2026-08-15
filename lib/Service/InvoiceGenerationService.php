@@ -45,7 +45,6 @@ class InvoiceGenerationService {
 	/**
 	 * Wire collaborators for invoice drafting and posting.
 	 *
-	 * @param ContainerInterface $container DI container.
 	 * @param IAppConfig $appConfig App config.
 	 * @param LoggerInterface $logger Logger.
 	 * @param RateCardResolver $rateCards Rate snapshot lookup.

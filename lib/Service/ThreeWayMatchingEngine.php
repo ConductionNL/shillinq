@@ -211,7 +211,6 @@ class ThreeWayMatchingEngine {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container
 	 *                                      — OR's
 	 *                                      ObjectService
 	 *                                      is fetched

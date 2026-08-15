@@ -69,7 +69,6 @@ class CBSSubmissionController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param CBSExportService $exportService The CBS export pipeline.
 	 * @param IAppConfig $appConfig App config for the register slug.

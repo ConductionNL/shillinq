@@ -48,7 +48,6 @@ class RuleComplianceGuard {
 	/**
 	 * Construct the rule compliance lifecycle guard.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for violations + fail-closed diagnostics.
 	 * @param BalanceGuard $balanceGuard Existing double-entry balance guard (reused).

@@ -46,7 +46,6 @@ class PayrollUpaHandoffService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container (OR's ObjectService is lazy).
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
 	 */

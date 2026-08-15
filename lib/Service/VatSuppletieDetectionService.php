@@ -117,7 +117,6 @@ class VatSuppletieDetectionService {
 	 * a direct dependency on VATReturnService, whose GL-derivation engine
 	 * this service re-uses rather than duplicating (REQ-VBTW-013).
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug + clearing account.
 	 * @param LoggerInterface $logger Logger for diagnostics.

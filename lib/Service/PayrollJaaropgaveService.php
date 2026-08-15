@@ -55,7 +55,6 @@ class PayrollJaaropgaveService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is lazy-fetched.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Cents arithmetic helper (no IO).
 	 * @param LoggerInterface $logger Logger (no BSN / special-category data).

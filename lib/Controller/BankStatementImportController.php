@@ -82,7 +82,6 @@ class BankStatementImportController extends Controller {
 	 * @param IRequest $request Request.
 	 * @param StatementParser $parser Deterministic CAMT.053/MT940/CSV parser.
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
-	 * @param ContainerInterface $container DI container (lazy ObjectService).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 */

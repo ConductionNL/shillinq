@@ -90,7 +90,6 @@ class SupplierInvoiceImportController extends Controller {
 	 * @param SupplierInvoiceService $supplierInvoiceService Deterministic UBL ingestion + parser.
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
-	 * @param ContainerInterface $container DI container (OR ObjectService).
 	 * @param LoggerInterface $logger Logger.
 	 *
 	 * @return void

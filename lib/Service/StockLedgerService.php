@@ -62,7 +62,6 @@ class StockLedgerService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
 	 */

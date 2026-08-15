@@ -55,7 +55,6 @@ class PayrollService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Pure-logic payroll arithmetic helper.
 	 * @param LoggerInterface $logger Logger (no BSN / special-category data).

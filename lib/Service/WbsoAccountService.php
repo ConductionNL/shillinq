@@ -55,7 +55,6 @@ class WbsoAccountService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container; OR ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config (register slug).
 	 */
 	public function __construct(

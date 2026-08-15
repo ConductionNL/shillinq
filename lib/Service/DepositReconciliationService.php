@@ -110,7 +110,6 @@ class DepositReconciliationService {
 	/**
 	 * Constructor for DepositReconciliationService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ?DepositPaymentAdapterInterface $adapter Optional DepositPayment lifecycle
