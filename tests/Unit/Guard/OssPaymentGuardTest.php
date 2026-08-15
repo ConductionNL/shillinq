@@ -80,9 +80,6 @@ class OssPaymentGuardTest extends TestCase {
 
 		$this->guard = new OssPaymentGuard(
 			resolver: new OssRecordResolver(
-				appConfig: $appConfig,
-				logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
 		),
 			reconciliation: new OssPaymentReconciliation(),
 		);

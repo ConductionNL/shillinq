@@ -189,7 +189,6 @@ final class LeaseAuditPackGeneratorTest extends TestCase {
 			appConfig: $this->appConfig,
 			scheduleService: new LeasePaymentScheduleService(
 				appConfig: $this->appConfig,
-				calculator: $calculator,
 				logger: $logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		),

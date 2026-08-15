@@ -123,7 +123,6 @@ final class BookingDepthControllerTest extends TestCase {
 			settings: $this->settings,
 			context: $this->context,
 			noShowFee: new NoShowFeeCaptureService(
-				adapter: new LogDepositPaymentAdapter($logger),
 				logger: $logger,
 			),
 			series: new RecurringSeriesService(slotService: $slotService, logger: $logger),
