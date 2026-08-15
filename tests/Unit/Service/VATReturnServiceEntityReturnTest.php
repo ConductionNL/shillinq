@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -63,7 +64,8 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 		$objectService = $this->entityReturningObjectService();
 		$service = new VATReturnService(
 			appConfig: $this->createMock(IAppConfig::class),
-			logger: new NullLogger()
+			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$created = $service->createReturn(
@@ -98,7 +100,8 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 		$objectService = $this->entityReturningObjectService();
 		$service = new VATReturnService(
 			appConfig: $this->createMock(IAppConfig::class),
-			logger: new NullLogger()
+			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$created = $service->createReturn(
@@ -135,7 +138,8 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 		$objectService = $this->entityReturningObjectService(serialisable: false);
 		$service = new VATReturnService(
 			appConfig: $this->createMock(IAppConfig::class),
-			logger: new NullLogger()
+			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$this->expectException(\RuntimeException::class);
