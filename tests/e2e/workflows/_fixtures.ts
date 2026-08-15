@@ -35,6 +35,7 @@
  * specs run for real the moment the register imports.
  */
 
+import { randomUUID } from 'node:crypto'
 import { APIRequestContext, expect } from '@playwright/test'
 
 /** OpenRegister generic object API base. */
@@ -43,8 +44,17 @@ const OR = '/index.php/apps/openregister/api'
 /** The shillinq register slug (per lib/Settings/register.d/*.json `@self`). */
 export const REGISTER_SLUG = 'shillinq'
 
-/** A unique, filesystem/slug-safe prefix for every object this run seeds. */
-export const UNIQUE_PREFIX = `e2efin-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e4)}`
+/**
+ * A unique, filesystem/slug-safe prefix for every object this run seeds.
+ *
+ * `randomUUID()` rather than `Math.random()`: CodeQL reads this value flowing
+ * into object identifiers as a security context and reports it high severity.
+ * The stronger source is also simply better here — `Math.random() * 1e4` gave
+ * four digits, so two runs starting in the same millisecond collided one time
+ * in ten thousand, and a collision means one run deleting the other's objects
+ * during afterAll cleanup.
+ */
+export const UNIQUE_PREFIX = `e2efin-${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`
 
 /**
  * One created object, tracked for afterAll cleanup.
