@@ -51,7 +51,7 @@ class OssReturnGeneratorTest extends TestCase {
 		parent::setUp();
 		$container = $this->createMock(ContainerInterface::class);
 		$appConfig = $this->createMock(IAppConfig::class);
-		$this->generator = new OssReturnGenerator($container, $appConfig,
+		$this->generator = new OssReturnGenerator( $appConfig,
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 

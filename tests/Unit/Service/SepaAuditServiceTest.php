@@ -152,7 +152,7 @@ final class SepaAuditServiceTest extends TestCase {
 		$fake = new FakeSepaObjectService($rows);
 		$this->container->method('get')->willReturn($fake);
 
-		return new SepaAuditService($this->container, $this->appConfig, $context, $this->logger,
+		return new SepaAuditService( $this->appConfig, $context, $this->logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end svc()
@@ -167,7 +167,6 @@ final class SepaAuditServiceTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
 		$svc = new SepaAuditService(
-			$this->container,
 			$this->appConfig,
 			$this->createMock(AdministrationContextService::class),
 			$this->logger,

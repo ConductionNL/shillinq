@@ -53,7 +53,7 @@ class OssInvoiceRouterTest extends TestCase {
 		parent::setUp();
 		$container = $this->createMock(ContainerInterface::class);
 		$appConfig = $this->createMock(IAppConfig::class);
-		$resolver = new OssRateResolver($container, $appConfig,
+		$resolver = new OssRateResolver( $appConfig,
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$this->router = new OssInvoiceRouter($resolver);

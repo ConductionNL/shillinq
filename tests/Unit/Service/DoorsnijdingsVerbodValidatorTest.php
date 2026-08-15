@@ -53,7 +53,6 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->val = new DoorsnijdingsVerbodValidator(
-			$this->createMock(ContainerInterface::class),
 			$this->createMock(IAppConfig::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);

@@ -231,7 +231,6 @@ final class MeteredInvoiceGenerationTest extends TestCase {
 		$logger = new NullLogger();
 
 		$this->service = new InvoiceGenerationService(
-			$container,
 			$appConfig,
 			$logger,
 			new RateCardResolver($container, $appConfig, $logger),

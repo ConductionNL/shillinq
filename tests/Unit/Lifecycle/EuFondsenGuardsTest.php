@@ -68,7 +68,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testIrregularityAtThresholdWithImsReferenceCanEscalate(): void {
-		$guard = new IrregularityReportGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new IrregularityReportGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
@@ -84,7 +84,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testIrregularityAtThresholdWithoutImsReferenceCannotEscalate(): void {
-		$guard = new IrregularityReportGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new IrregularityReportGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
@@ -100,7 +100,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testIrregularityBelowThresholdEscalatesUnconditionally(): void {
-		$guard = new IrregularityReportGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new IrregularityReportGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
@@ -116,7 +116,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testReconciledLedgerCanClose(): void {
-		$guard = new SegregatedLedgerGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new SegregatedLedgerGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
@@ -130,7 +130,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testUnreconciledLedgerCannotClose(): void {
-		$guard = new SegregatedLedgerGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new SegregatedLedgerGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
@@ -144,7 +144,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testLedgerWithEqualBalancesCanClose(): void {
-		$guard = new SegregatedLedgerGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new SegregatedLedgerGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
@@ -160,7 +160,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testDocumentWithValidHashCanCertify(): void {
-		$guard = new SupportingDocumentGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new SupportingDocumentGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$hash = str_repeat('a', 64);
@@ -175,7 +175,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testDocumentWithMalformedHashCannotCertify(): void {
-		$guard = new SupportingDocumentGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new SupportingDocumentGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
@@ -189,7 +189,7 @@ class EuFondsenGuardsTest extends TestCase {
 	 * @return void
 	 */
 	public function testDocumentWithoutHashCannotCertify(): void {
-		$guard = new SupportingDocumentGuard($this->container(), $this->appConfig(), $this->createMock(LoggerInterface::class),
+		$guard = new SupportingDocumentGuard( $this->appConfig(), $this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 

@@ -195,7 +195,6 @@ final class TimeIntakeServiceTest extends TestCase {
 	 */
 	private function svc(): TimeIntakeService {
 		return new TimeIntakeService(
-			$this->container,
 			$this->appConfig,
 			$this->logger,
 			$this->invoiceGenerationService,

@@ -48,7 +48,7 @@ final class FluxServiceTest extends TestCase {
 		$container = $this->createStub(ContainerInterface::class);
 		$config = $this->createStub(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
-		return new FluxService($container, $config, new NullLogger(),
+		return new FluxService( $config, new NullLogger(),
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end service()

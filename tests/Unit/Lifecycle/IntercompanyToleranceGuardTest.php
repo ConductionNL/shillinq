@@ -87,7 +87,6 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
 		$this->guard = new IntercompanyToleranceGuard(
-			$this->container,
 			$this->appConfig,
 			$this->logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),

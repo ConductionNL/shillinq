@@ -51,7 +51,7 @@ class OssRateResolverTest extends TestCase {
 		parent::setUp();
 		$container = $this->createMock(ContainerInterface::class);
 		$appConfig = $this->createMock(IAppConfig::class);
-		$this->resolver = new OssRateResolver($container, $appConfig,
+		$this->resolver = new OssRateResolver( $appConfig,
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
