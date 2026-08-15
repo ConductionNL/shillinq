@@ -92,8 +92,8 @@ class PayrollService {
 			throw new RuntimeException('Loonperiode of werknemer niet gevonden in deze administratie.');
 		}
 
-		$werkgeverId = (string)($employee['werkgeverId'] ?? '');
-		$werkgever = $this->findOne(schema: 'Werkgever', administrationId: $administrationId, filters: ['id' => $werkgeverId]);
+		$employerId = (string)($employee['employerId'] ?? '');
+		$werkgever = $this->findOne(schema: 'Werkgever', administrationId: $administrationId, filters: ['id' => $employerId]);
 		if ($werkgever === null) {
 			throw new RuntimeException('Werkgever niet gevonden in deze administratie.');
 		}
@@ -157,7 +157,7 @@ class PayrollService {
 
 		$payrollTax = $this->calculator->loonheffingUitTabel(fiscalPay: $fiscalPay, tableRules: $tableRules);
 
-		$svWg = $this->calculator->premiesSVWerkgever(
+		$svWg = $this->calculator->employerSocialInsurancePremiums(
 			contributionPaySV: $contributionPaySV,
 			periodType: $periodType,
 			awfRate: (string)($werkgever['awfRate'] ?? 'LAAG'),
@@ -205,7 +205,7 @@ class PayrollService {
 			'contribution_pay_sv' => $contributionPaySV,
 			'payrollTax' => $payrollTax,
 			'inhoudingenSV' => ['totaal_sv_wn' => 0],
-			'premiesSVWerkgever' => $svWg,
+			'employerSocialInsurancePremiums' => $svWg,
 			'zvw' => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
 			'pensioen' => $pensioen,
 			'netPaid' => $netPaid,
@@ -240,14 +240,14 @@ class PayrollService {
 		$zvwC = 0;
 		foreach ($stroken as $slip) {
 			$lhC += $this->calculator->toCents(amount: ($slip['payrollTax'] ?? 0));
-			$svC += $this->calculator->toCents(amount: ($slip['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
+			$svC += $this->calculator->toCents(amount: ($slip['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
 			$zvwC += $this->calculator->toCents(amount: ($slip['zvw']['afgedragen_wg'] ?? 0));
 		}
 
-		$werkgeverId = '';
+		$employerId = '';
 		$period = $this->findOne(schema: 'LoonPeriode', administrationId: $administrationId, filters: ['id' => $periodId]);
 		if ($period !== null) {
-			$werkgeverId = (string)($period['werkgeverId'] ?? '');
+			$employerId = (string)($period['employerId'] ?? '');
 		}
 
 		$payrollTax = $this->calculator->fromCents(cents: $lhC);
@@ -259,7 +259,7 @@ class PayrollService {
 		);
 
 		return [
-			'werkgeverId' => $werkgeverId,
+			'employerId' => $employerId,
 			'periodId' => $periodId,
 			'totalPayrollTax' => $payrollTax,
 			'totalFinalLeviesWorkRelatedCosts' => $wkr,
@@ -307,7 +307,7 @@ class PayrollService {
 			$free = (float)($s['grossComponents']['thuiswerkvergoeding'] ?? 0);
 			$grossC += ($this->calculator->toCents(amount: $totalGross) - $this->calculator->toCents(amount: $free));
 			$freeC += $this->calculator->toCents(amount: $free);
-			$svWgC += $this->calculator->toCents(amount: ($s['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
+			$svWgC += $this->calculator->toCents(amount: ($s['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
 			$zvwC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
 			$pensWgC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));
 			$pensWnC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));

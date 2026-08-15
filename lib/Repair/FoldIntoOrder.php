@@ -594,7 +594,7 @@ class FoldIntoOrder implements IRepairStep {
 				'expectedRevenue' => $expectedRevenue,
 				'realisedRevenue' => $this->intOrNull($src['realisedRevenue'] ?? null),
 				'oneOffLowThreshold' => $this->boolOrNull($src['oneOffLowThreshold'] ?? null),
-				'modelOvereenkomstId' => $this->stringOrNull($src['modelOvereenkomstId'] ?? null),
+				'modelAgreementId' => $this->stringOrNull($src['modelAgreementId'] ?? null),
 				'intakeDate' => $this->toDate($src['intakeDate'] ?? null),
 				'actueleRisicoscore' => $this->intOrNull($src['actueleRisicoscore'] ?? null),
 				'riskLevel' => $this->stringOrNull($src['riskLevel'] ?? null),

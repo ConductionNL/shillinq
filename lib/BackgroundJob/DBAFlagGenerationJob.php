@@ -322,7 +322,7 @@ class DBAFlagGenerationJob extends TimedJob {
 			}
 
 			// Modelovereenkomst verlopen?
-			$modelId = (string)($assignment['modelOvereenkomstId'] ?? '');
+			$modelId = (string)($assignment['modelAgreementId'] ?? '');
 			if ($modelId !== '') {
 				try {
 					$model = $objectService->setRegister($register)->setSchema('DBAModelovereenkomst')->find($modelId);

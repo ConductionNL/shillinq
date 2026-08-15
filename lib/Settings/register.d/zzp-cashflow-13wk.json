@@ -252,7 +252,7 @@
         "required": [
           "weekId",
           "horizonId",
-          "weeknummer",
+          "weekNumber",
           "weekStart",
           "weekEnd",
           "openingBalance",
@@ -277,7 +277,7 @@
             "example": "hor-2026-w22-adm1",
             "title": "Horizon ID"
           },
-          "weeknummer": {
+          "weekNumber": {
             "type": "integer",
             "minimum": 1,
             "maximum": 53,
@@ -495,13 +495,13 @@
           "inflowsArByWeek": {
             "field": "inflows_ar_geprognosticeerd",
             "operation": "sum",
-            "groupBy": "weeknummer",
+            "groupBy": "weekNumber",
             "description": "Projected AR inflows summed per week (REQ-CF-002 weekly aggregation). Feeds the bar chart inflows series."
           },
           "outflowsByWeek": {
             "field": "outflows_total",
             "operation": "sum",
-            "groupBy": "weeknummer",
+            "groupBy": "weekNumber",
             "description": "Total outflows summed per week (REQ-CF-006/007). Feeds the bar chart outflows series."
           },
           "countByBufferStatus": {
@@ -1501,7 +1501,7 @@
       },
       "weekId": "wk-2026-w22-erik",
       "horizonId": "hor-2026-w22-erik",
-      "weeknummer": 22,
+      "weekNumber": 22,
       "weekStart": "2026-05-25",
       "weekEnd": "2026-05-31",
       "openingBalance": 72500.0,

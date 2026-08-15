@@ -61,7 +61,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	 */
 	public function testToSbrInstancePayloadEchoesTotalsAndDeterministicRef(): void {
 		$lh = [
-			'werkgeverId' => 'wg-conduction-bv',
+			'employerId' => 'wg-conduction-bv',
 			'periodId' => 'lp-2026-05',
 			'totalPayrollTax' => 18620.10,
 			'totalSocialInsuranceContributions' => 7559.40,
@@ -94,7 +94,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	 */
 	public function testStampInstanceRefIsIdempotent(): void {
 		$lh = [
-			'werkgeverId' => 'wg-1',
+			'employerId' => 'wg-1',
 			'periodId' => 'lp-2026-04',
 		];
 
@@ -114,7 +114,7 @@ final class PayrollSbrConversionServiceTest extends TestCase {
 	public function testInstanceRefSanitisesIdentifierCharacters(): void {
 		$payload = $this->svc->toSbrInstancePayload(
 			lhRemittance: [
-				'werkgeverId' => 'wg-/?\\!1',
+				'employerId' => 'wg-/?\\!1',
 				'periodId' => 'lp 2026/05',
 			]
 		);

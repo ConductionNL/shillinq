@@ -91,7 +91,7 @@ final class WmoComplianceCalculatorTest extends TestCase {
 				'facilitair' => 3000,
 			],
 			'capitalCost' => 1820,
-			'winstopslag' => 2550,
+			'profitMarkup' => 2550,
 		];
 
 		$result = $this->calc->integralCostPrice($componenten, 312.0);
@@ -113,7 +113,7 @@ final class WmoComplianceCalculatorTest extends TestCase {
 			'directDepreciations' => 0,
 			'indirecteOverhead' => [],
 			'capitalCost' => 0,
-			'winstopslag' => 0,
+			'profitMarkup' => 0,
 		];
 
 		$result = $this->calc->integralCostPrice($componenten, null);
@@ -139,17 +139,17 @@ final class WmoComplianceCalculatorTest extends TestCase {
 	}//end testVermogenskostenAppliesWacc()
 
 	/**
-	 * Winstopslag applies the mark-up rate to the costs-before-mark-up (REQ-WMO-002).
+	 * The profit mark-up applies its rate to the costs-before-mark-up (REQ-WMO-002).
 	 *
 	 * @return void
 	 */
-	public function testWinstopslagAppliesRate(): void {
+	public function testProfitMarkupAppliesRate(): void {
 		// 3% default on €85,000.
-		self::assertSame(2550.0, $this->calc->winstopslag(85000.0));
+		self::assertSame(2550.0, $this->calc->profitMarkup(85000.0));
 		// Configurable rate per activity.
-		self::assertSame(4250.0, $this->calc->winstopslag(85000.0, 0.05));
+		self::assertSame(4250.0, $this->calc->profitMarkup(85000.0, 0.05));
 
-	}//end testWinstopslagAppliesRate()
+	}//end testProfitMarkupAppliesRate()
 
 	/**
 	 * Compliance is per-unit when units are tracked: tarief covers per-unit IKP (REQ-WMO-002).

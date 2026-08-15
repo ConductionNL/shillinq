@@ -32,7 +32,9 @@ export function normaliseBudgetLineRows(payload) {
 		const geautoriseerd = Number(
 			bucket?.['Budget.authorised_amount'] ?? bucket?.geautoriseerd ?? 0,
 		)
-		const mandatory = Number(bucket?.restant_verplicht ?? bucket?.verplicht ?? 0)
+		const mandatory = Number(
+			bucket?.remaining_committed ?? bucket?.verplicht ?? 0,
+		)
 		const gerealiseerd = Number(
 			bucket?.invoiced_amount ?? bucket?.gerealiseerd ?? 0,
 		)

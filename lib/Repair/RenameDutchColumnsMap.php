@@ -1099,6 +1099,39 @@ final class RenameDutchColumnsMap {
 		'vpb_balans_link_id' => 'vpb_balance_link_id',
 		'vpb_zonder_innovatiebox' => 'vpb_without_innovation_box',
 		'wanneer' => 'when',
+
+		// Tranche 3 — the names that survived tranche 2 because no dictionary
+		// carried their words. Kept as a labelled block rather than merged into
+		// the sorted list above so the migration each tranche adds stays legible.
+		// Snake spelling follows MagicMapper::sanitizeColumnName(), which applies
+		// only the ([a-z0-9])([A-Z]) boundary — hence `premies_svwerkgever` and
+		// not `premies_sv_werkgever`. A key that spells the column differently
+		// finds no column and no-ops SILENTLY.
+		'activiteiten' => 'activities',
+		'betreft_activiteiten' => 'concerns_activities',
+		'forfaitair_percentage' => 'flat_rate_percentage',
+		'heffing_type' => 'levy_type',
+		'is_starters_opvolger' => 'is_starter_successor',
+		'kostencategorie' => 'expense_category',
+		'methode' => 'method',
+		'model_overeenkomst_id' => 'model_agreement_id',
+		'portefeuillehouder' => 'portfolio_holder',
+		'premies_svwerkgever' => 'employer_social_insurance_premiums',
+		'qualifies_for_urencriterium' => 'qualifies_for_hours_criterion',
+		'restant_verplicht' => 'remaining_committed',
+		'rubriek' => 'section',
+		'sluitend_structureel' => 'structurally_balanced',
+		'startersaftrek' => 'starter_deduction',
+		'startersaftrek_amount' => 'starter_deduction_amount',
+		'te_betalen_of_teruggave' => 'payable_or_refund',
+		'verdeelsleutel' => 'allocation_key',
+		'verdeelsleutel_ratio' => 'allocation_key_ratio',
+		'voorbelasting' => 'input_vat',
+		'weeknummer' => 'week_number',
+		'werkgever_id' => 'employer_id',
+		'winstopslag' => 'profit_markup',
+		'zelfstandigenaftrek' => 'self_employed_deduction',
+		'zelfstandigenaftrek_amount' => 'self_employed_deduction_amount',
 	];
 
 }//end class

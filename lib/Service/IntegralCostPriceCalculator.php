@@ -52,11 +52,11 @@ class IntegralCostPriceCalculator {
 	public const DEFAULT_WACC = 0.045;
 
 	/**
-	 * Default winstopslag rate (3%, configurable per activity per period).
+	 * Default profit mark-up rate (3%, configurable per activity per period).
 	 *
 	 * @var float
 	 */
-	public const DEFAULT_WINSTOPSLAG = 0.03;
+	public const DEFAULT_PROFIT_MARKUP = 0.03;
 
 	/**
 	 * Convert a money amount to integer cents (REQ-WMO-002 precision).
@@ -203,20 +203,20 @@ class IntegralCostPriceCalculator {
 	}//end calculateVermogenskosten()
 
 	/**
-	 * Calculate winstopslag as a markup on the sum of all other components (REQ-WMO-002).
+	 * Calculate the profit mark-up on the sum of all other components (REQ-WMO-002).
 	 *
 	 * @param int $baseCents Sum of direct + indirect + capital_cost in cents.
-	 * @param float $rate Winstopslag rate (default 0.03 = 3%).
+	 * @param float $rate Profit mark-up rate (default 0.03 = 3%).
 	 *
-	 * @return int Winstopslag in cents.
+	 * @return int Profit mark-up in cents.
 	 */
-	public function calculateWinstopslag(int $baseCents, float $rate = self::DEFAULT_WINSTOPSLAG): int {
+	public function calculateProfitMarkup(int $baseCents, float $rate = self::DEFAULT_PROFIT_MARKUP): int {
 		if ($rate < 0.0) {
 			$rate = 0.0;
 		}
 
 		return (int)round($baseCents * $rate, 0, PHP_ROUND_HALF_EVEN);
-	}//end calculateWinstopslag()
+	}//end calculateProfitMarkup()
 
 	/**
 	 * Calculate kostprijs per unit (REQ-WMO-002).
@@ -265,7 +265,7 @@ class IntegralCostPriceCalculator {
 	 *                                   period, administrationId, cost_centre,
 	 *                                   cost_object, glLines, corporateOverheadCents,
 	 *                                   overheadRule, investedBookValueCents, waccRate,
-	 *                                   winstopslagRate, periodFraction, soldUnits,
+	 *                                   profitMarkupRate, periodFraction, soldUnits,
 	 *                                   unitLabel, appliedRate, omzetEur, status).
 	 *
 	 * @return array<string,mixed> IKP record matching the schema.
@@ -297,12 +297,15 @@ class IntegralCostPriceCalculator {
 		);
 
 		$baseBeforeMarkup = ($payrollCostCents + $materialenCents + $depreciationsCents + $overheadTotalCents + $vermogensCents);
-		$winstopslagCents = $this->calculateWinstopslag(
+		// The old spelling is still read: a caller that has not been updated would
+		// otherwise fall through to the DEFAULT rate, which is not an error but a
+		// silently different price.
+		$profitMarkupCents = $this->calculateProfitMarkup(
 			baseCents: $baseBeforeMarkup,
-			rate: (float)($input['winstopslagRate'] ?? self::DEFAULT_WINSTOPSLAG)
+			rate: (float)($input['profitMarkupRate'] ?? $input['winstopslagRate'] ?? self::DEFAULT_PROFIT_MARKUP)
 		);
 
-		$totaleCostCents = ($baseBeforeMarkup + $winstopslagCents);
+		$totaleCostCents = ($baseBeforeMarkup + $profitMarkupCents);
 
 		$soldUnits = (float)($input['soldUnits'] ?? 0);
 		$costPricePerUnit = $this->calculateKostprijsPerEenheid(totaleCostCents: $totaleCostCents, soldUnits: $soldUnits);
@@ -352,7 +355,7 @@ class IntegralCostPriceCalculator {
 				'directDepreciations' => $this->fromCents(cents: $depreciationsCents),
 				'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
 				'capitalCost' => $this->fromCents(cents: $vermogensCents),
-				'winstopslag' => $this->fromCents(cents: $winstopslagCents),
+				'profitMarkup' => $this->fromCents(cents: $profitMarkupCents),
 			],
 			'totalCost' => $this->fromCents(cents: $totaleCostCents),
 			'soldUnits' => $verkochteUnitsOut,

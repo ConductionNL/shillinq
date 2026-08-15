@@ -63,15 +63,15 @@ class PayrollSbrConversionService {
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
 	public function toSbrInstancePayload(array $lhRemittance): array {
-		$werkgeverId = (string)($lhRemittance['werkgeverId'] ?? '');
+		$employerId = (string)($lhRemittance['employerId'] ?? '');
 		$periodId = (string)($lhRemittance['periodId'] ?? '');
 
 		return [
 			'taxonomyVersion' => self::SBR_TAXONOMY_VERSION,
-			'instanceRef' => $this->deriveInstanceRef(werkgeverId: $werkgeverId, periodId: $periodId),
+			'instanceRef' => $this->deriveInstanceRef(employerId: $employerId, periodId: $periodId),
 			'collectie' => 'Loonaangifte',
 			'identificerendePeriode' => $periodId,
-			'werkgever' => $werkgeverId,
+			'werkgever' => $employerId,
 			'loonheffingTotaal' => (float)($lhRemittance['totalPayrollTax'] ?? 0.0),
 			'premiesSVTotaal' => (float)($lhRemittance['totalSocialInsuranceContributions'] ?? 0.0),
 			'zvwTotaal' => (float)($lhRemittance['totalHealthInsurance'] ?? 0.0),
@@ -97,11 +97,11 @@ class PayrollSbrConversionService {
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
 	public function stampInstanceRef(array $lhRemittance): array {
-		$werkgeverId = (string)($lhRemittance['werkgeverId'] ?? '');
+		$employerId = (string)($lhRemittance['employerId'] ?? '');
 		$periodId = (string)($lhRemittance['periodId'] ?? '');
 
 		$stamped = $lhRemittance;
-		$stamped['sbrInstanceRef'] = $this->deriveInstanceRef(werkgeverId: $werkgeverId, periodId: $periodId);
+		$stamped['sbrInstanceRef'] = $this->deriveInstanceRef(employerId: $employerId, periodId: $periodId);
 
 		return $stamped;
 	}//end stampInstanceRef()
@@ -109,13 +109,13 @@ class PayrollSbrConversionService {
 	/**
 	 * Derive the deterministic SBR instance reference (idempotent).
 	 *
-	 * @param string $werkgeverId Employer id.
+	 * @param string $employerId Employer id.
 	 * @param string $periodId Period id.
 	 *
 	 * @return string Instance reference (taxonomy-werkgever-periode).
 	 */
-	private function deriveInstanceRef(string $werkgeverId, string $periodId): string {
-		$safeWg = preg_replace('/[^A-Za-z0-9_.\-]/', '', $werkgeverId) ?? '';
+	private function deriveInstanceRef(string $employerId, string $periodId): string {
+		$safeWg = preg_replace('/[^A-Za-z0-9_.\-]/', '', $employerId) ?? '';
 		$safePe = preg_replace('/[^A-Za-z0-9_.\-]/', '', $periodId) ?? '';
 
 		return sprintf('%s-%s-%s', self::SBR_TAXONOMY_VERSION, $safeWg, $safePe);

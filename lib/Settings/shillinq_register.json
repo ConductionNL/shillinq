@@ -3317,7 +3317,7 @@
         "x-schema-org": "schema:Invoice",
         "type": "object",
         "required": [
-          "heffingType",
+          "levyType",
           "assessmentYear",
           "rateBasis",
           "rate",
@@ -3326,7 +3326,7 @@
           "state"
         ],
         "properties": {
-          "heffingType": {
+          "levyType": {
             "type": "string",
             "enum": [
               "watersysteemheffing",
@@ -3474,7 +3474,7 @@
           "totalByHeffingType": {
             "description": "Total aanslag bedrag per heffingType for the administration, excluding reversed postings. Used by the waterschapsbelastingen index page.",
             "filter": "state != 'reversed'",
-            "groupBy": "heffingType",
+            "groupBy": "levyType",
             "operations": {
               "totalAanslag": {
                 "field": "assessmentAmount",
@@ -10282,8 +10282,8 @@
         "type": "object",
         "required": [
           "taxYear",
-          "zelfstandigenaftrek",
-          "startersaftrek",
+          "selfEmployedDeduction",
+          "starterDeduction",
           "mkbProfitExemptionPercentage"
         ],
         "properties": {
@@ -10293,14 +10293,14 @@
             "example": 2026,
             "title": "Tax Year"
           },
-          "zelfstandigenaftrek": {
+          "selfEmployedDeduction": {
             "type": "number",
             "minimum": 0,
             "description": "Zelfstandigenaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.76).",
             "example": 3750,
             "title": "Self-Employed Deduction"
           },
-          "startersaftrek": {
+          "starterDeduction": {
             "type": "number",
             "minimum": 0,
             "description": "Startersaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.77).",
@@ -11031,7 +11031,7 @@
             "filter": "CashflowWeek.horizonId = {horizonId}",
             "groupBy": "CashflowWeek.weeknummer",
             "select": {
-              "weeknummer": "CashflowWeek.weeknummer",
+              "weekNumber": "CashflowWeek.weeknummer",
               "closingBalance": "CashflowWeek.eindSaldo",
               "bufferStatus": "CASE WHEN CashflowWeek.eindSaldo < CashflowBufferPolicy.alertOndergrens THEN 'CRISIS' WHEN CashflowWeek.eindSaldo < CashflowBufferPolicy.alertVooralarm THEN 'VOORALARM' ELSE 'BOVEN_BUFFER' END"
             }
@@ -11087,7 +11087,7 @@
         "required": [
           "weekId",
           "horizonId",
-          "weeknummer",
+          "weekNumber",
           "weekStart",
           "weekEnd",
           "openingBalance",
@@ -11112,7 +11112,7 @@
             "example": "horizon-ond-zzp-c001-2026-w22",
             "title": "Horizon ID"
           },
-          "weeknummer": {
+          "weekNumber": {
             "type": "integer",
             "minimum": 1,
             "maximum": 53,
@@ -11323,7 +11323,7 @@
             "filter": "CashflowARProjection.horizonId = {horizonId} AND CashflowARProjection.verwachtOntvangstWeek = {weeknummer}",
             "groupBy": "CashflowARProjection.verwachtOntvangstWeek",
             "select": {
-              "weeknummer": "CashflowARProjection.verwachtOntvangstWeek",
+              "weekNumber": "CashflowARProjection.verwachtOntvangstWeek",
               "inflows_ar_geprognosticeerd": "SUM(CashflowARProjection.openstaandBedrag)"
             }
           },
@@ -11334,7 +11334,7 @@
             "filter": "CashflowAPSchedule.horizonId = {horizonId}",
             "groupBy": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
             "select": {
-              "weeknummer": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
+              "weekNumber": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
               "outflows_ap_geprognosticeerd": "SUM(CashflowAPSchedule.bedrag)"
             }
           },
@@ -11359,7 +11359,7 @@
               "CPI_AFGELOPEN_JAAR": "CashflowRecurring.standaardBedrag * (1 + CBS.cpi_prior_year(YEAR(CashflowWeek.weekStart)))"
             },
             "select": {
-              "weeknummer": "CashflowWeek.weeknummer",
+              "weekNumber": "CashflowWeek.weeknummer",
               "category": "CashflowRecurring.categorie",
               "amount": "applyIndexation(CashflowRecurring.indexatieRegel)"
             }
@@ -16819,7 +16819,7 @@
             "example": 25000.0,
             "title": "Flat-Rate Cap Amount"
           },
-          "forfaitairPercentage": {
+          "flatRatePercentage": {
             "type": "number",
             "description": "Percentage of operating profit attributed to innovation under the forfaitair route (Wet Vpb art. 12bg). Required when route is forfaitair. Default 0.25.",
             "default": 0.25,
@@ -16862,7 +16862,7 @@
                       {
                         "operation": "multiply",
                         "fields": [
-                          "forfaitairPercentage",
+                          "flatRatePercentage",
                           "operatingProfit"
                         ]
                       },
@@ -16951,7 +16951,7 @@
                     {
                       "*": [
                         {
-                          "prop": "forfaitairPercentage"
+                          "prop": "flatRatePercentage"
                         },
                         {
                           "prop": "operatingProfit"
@@ -17059,7 +17059,7 @@
             "example": 0.09,
             "title": "Applicable Tariff"
           },
-          "forfaitairPercentage": {
+          "flatRatePercentage": {
             "type": "number",
             "description": "Forfaitair percentage of operating profit attributed to innovation (Wet Vpb art. 12bg). Default 0.25.",
             "nullable": true,
@@ -17128,7 +17128,7 @@
           "ipAssetId",
           "periodId",
           "allocatedProfit",
-          "verdeelsleutel",
+          "allocationKey",
           "administrationId"
         ],
         "properties": {
@@ -17153,7 +17153,7 @@
             "example": 60000.0,
             "title": "Allocated Profit"
           },
-          "verdeelsleutel": {
+          "allocationKey": {
             "type": "string",
             "description": "Method used to attribute profit to the IP asset.",
             "enum": [
@@ -17180,7 +17180,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "verdeelsleutelRatio": {
+          "allocationKeyRatio": {
             "type": "number",
             "description": "Derived (do not set directly): computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods; null for custom-formula. Materialised via x-openregister-calculations.",
             "nullable": true,
@@ -17189,9 +17189,9 @@
           }
         },
         "x-openregister-calculations": {
-          "verdeelsleutelRatio": {
+          "allocationKeyRatio": {
             "materialise": true,
-            "targetField": "verdeelsleutelRatio",
+            "targetField": "allocationKeyRatio",
             "expression": {
               "if": [
                 {
@@ -17199,7 +17199,7 @@
                     {
                       "eq": [
                         {
-                          "prop": "verdeelsleutel"
+                          "prop": "allocationKey"
                         },
                         {
                           "lit": "omzet-aandeel"
@@ -17235,7 +17235,7 @@
                         {
                           "eq": [
                             {
-                              "prop": "verdeelsleutel"
+                              "prop": "allocationKey"
                             },
                             {
                               "lit": "r-en-d-uren"
@@ -17700,8 +17700,8 @@
           "periodEnd",
           "rubrieken",
           "dueSalesTax",
-          "voorbelasting",
-          "teBetalenOfTeruggave",
+          "inputVat",
+          "payableOrRefund",
           "state"
         ],
         "properties": {
@@ -17767,13 +17767,13 @@
             "example": 10500.0,
             "title": "VAT Payable"
           },
-          "voorbelasting": {
+          "inputVat": {
             "type": "number",
             "description": "Input VAT deductible; derived from GL postings tagged as voorbelasting.",
             "example": 2500.0,
             "title": "Input VAT"
           },
-          "teBetalenOfTeruggave": {
+          "payableOrRefund": {
             "type": "number",
             "description": "Net payable (positive = afdragen) or refund (negative = teruggave). Equals verschuldigdeOmzetbelasting minus voorbelasting.",
             "example": 8000.0,
@@ -17936,7 +17936,7 @@
               "rubriekCategory": "verschuldigd"
             }
           },
-          "voorbelasting": {
+          "inputVat": {
             "description": "Sum of input VAT from rubrieken (5a through 5g btw fields).",
             "operation": "sum",
             "sourceField": "rubrieken.*.btw",
@@ -17946,9 +17946,9 @@
           }
         },
         "x-openregister-calculations": {
-          "teBetalenOfTeruggave": {
+          "payableOrRefund": {
             "materialise": true,
-            "targetField": "teBetalenOfTeruggave",
+            "targetField": "payableOrRefund",
             "type": "number",
             "description": "Net payable = verschuldigdeOmzetbelasting minus voorbelasting. JSON-AST: verschuldigdeOmzetbelasting - voorbelasting.",
             "expression": {
@@ -17957,7 +17957,7 @@
                   "prop": "dueSalesTax"
                 },
                 {
-                  "prop": "voorbelasting"
+                  "prop": "inputVat"
                 }
               ]
             }
@@ -18060,7 +18060,7 @@
             "example": "standaard",
             "title": "Category"
           },
-          "rubriek": {
+          "section": {
             "type": "string",
             "description": "The BTW rubriek code on the aangifteformulier this tariff maps to (e.g. 1a, 2a, 4b).",
             "example": "1a",
@@ -18430,13 +18430,13 @@
             "nullable": true,
             "description": "Snapshot of ZzpDeduction values at generation time: zelfstandigenaftrek, startersaftrek, mkbWinstvrijstelling, totalDeduction (REQ-ZZP-006).",
             "properties": {
-              "zelfstandigenaftrekAmount": {
+              "selfEmployedDeductionAmount": {
                 "type": "number",
                 "example": 3750.0,
                 "title": "Self-Employed Deduction Amount",
                 "description": "The zelfstandigenaftrek amount as a numeric value."
               },
-              "startersaftrekAmount": {
+              "starterDeductionAmount": {
                 "type": "number",
                 "example": 0.0,
                 "title": "Starter Deduction Amount",
@@ -18621,7 +18621,7 @@
             "example": 1100.0,
             "title": "Ytd Qualifying Hours"
           },
-          "qualifiesForUrencriterium": {
+          "qualifiesForHoursCriterion": {
             "type": "boolean",
             "nullable": true,
             "readOnly": true,
@@ -18629,7 +18629,7 @@
             "example": false,
             "title": "Qualifies for Hours Criterion"
           },
-          "isStartersOpvolger": {
+          "isStarterSuccessor": {
             "type": "boolean",
             "description": "True when the ZZP-er qualifies as a starters-opvolger (lower 800-hour threshold). Operator-set flag; default false.",
             "default": false,
@@ -18660,7 +18660,7 @@
             "example": 60000.0,
             "title": "Taxable Profit"
           },
-          "zelfstandigenaftrekAmount": {
+          "selfEmployedDeductionAmount": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -18669,7 +18669,7 @@
             "example": 3750.0,
             "title": "Self-Employed Deduction Amount"
           },
-          "startersaftrekAmount": {
+          "starterDeductionAmount": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -18719,15 +18719,15 @@
           }
         },
         "x-openregister-calculations": {
-          "qualifiesForUrencriterium": {
+          "qualifiesForHoursCriterion": {
             "materialise": true,
-            "targetField": "qualifiesForUrencriterium",
+            "targetField": "qualifiesForHoursCriterion",
             "description": "True when ytdQualifyingHours >= threshold (1225 regular, 800 starters-opvolgers). REQ-ZZP-007. JSON-AST: if(isStartersOpvolger, ytdQualifyingHours>=800, ytdQualifyingHours>=1225).",
             "type": "boolean",
             "expression": {
               "if": [
                 {
-                  "prop": "isStartersOpvolger"
+                  "prop": "isStarterSuccessor"
                 },
                 {
                   "gte": [
@@ -18752,15 +18752,15 @@
               ]
             }
           },
-          "zelfstandigenaftrekAmount": {
+          "selfEmployedDeductionAmount": {
             "materialise": true,
             "type": "number",
-            "targetField": "zelfstandigenaftrekAmount",
+            "targetField": "selfEmployedDeductionAmount",
             "description": "Declarative (ADR-031): zelfstandigenaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.76. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard. JSON-AST: if(qualifiesForUrencriterium, @ref.deduction.zelfstandigenaftrek, 0).",
             "expression": {
               "if": [
                 {
-                  "prop": "qualifiesForUrencriterium"
+                  "prop": "qualifiesForHoursCriterion"
                 },
                 {
                   "prop": "@ref.deduction.zelfstandigenaftrek"
@@ -18771,10 +18771,10 @@
               ]
             }
           },
-          "startersaftrekAmount": {
+          "starterDeductionAmount": {
             "materialise": true,
             "type": "number",
-            "targetField": "startersaftrekAmount",
+            "targetField": "starterDeductionAmount",
             "description": "Declarative (ADR-031): startersaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when isStarter AND startersClaimsThisRegime < 3 AND qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.77. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard.",
             "expression": {
               "if": [
@@ -18794,7 +18794,7 @@
                       ]
                     },
                     {
-                      "prop": "qualifiesForUrencriterium"
+                      "prop": "qualifiesForHoursCriterion"
                     }
                   ]
                 },
@@ -18829,10 +18829,10 @@
                       "prop": "taxableProfit"
                     },
                     {
-                      "prop": "zelfstandigenaftrekAmount"
+                      "prop": "selfEmployedDeductionAmount"
                     },
                     {
-                      "prop": "startersaftrekAmount"
+                      "prop": "starterDeductionAmount"
                     }
                   ]
                 },
@@ -18850,10 +18850,10 @@
             "expression": {
               "+": [
                 {
-                  "prop": "zelfstandigenaftrekAmount"
+                  "prop": "selfEmployedDeductionAmount"
                 },
                 {
-                  "prop": "startersaftrekAmount"
+                  "prop": "starterDeductionAmount"
                 },
                 {
                   "prop": "mkbProfitExemptionAmount"
@@ -18953,7 +18953,7 @@
                 "label": "Uren YTD (kwalificerend)",
                 "type": "number"
               },
-              "qualifiesForUrencriterium": {
+              "qualifiesForHoursCriterion": {
                 "label": "Urencriterium gehaald",
                 "type": "boolean-badge"
               },
@@ -19826,7 +19826,7 @@
             "nullable": true,
             "title": "Description"
           },
-          "portefeuillehouder": {
+          "portfolioHolder": {
             "type": "string",
             "description": "Responsible bestuurder (portefeuillehouder).",
             "nullable": true,
@@ -21611,7 +21611,7 @@
       "required": [
         "subsidyId",
         "subsidyScheme",
-        "kostencategorie",
+        "expenseCategory",
         "amount",
         "periodId",
         "administrationId"
@@ -21635,7 +21635,7 @@
           "description": "Denormalized regeling from parent Subsidie. Drives if/then kostencategorie constraint enforcement at save time (REQ-RDS-002).",
           "example": "eu-horizon"
         },
-        "kostencategorie": {
+        "expenseCategory": {
           "type": "string",
           "enum": [
             "personnel",

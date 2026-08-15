@@ -477,7 +477,7 @@
               "directDepreciations",
               "indirecteOverhead",
               "capitalCost",
-              "winstopslag"
+              "profitMarkup"
             ],
             "properties": {
               "directPayrollCost": {
@@ -513,7 +513,7 @@
                 "description": "Capital cost via WACC (default 4.5%, configurable per administration) on the activity's invested book value.",
                 "title": "Vermogenskosten"
               },
-              "winstopslag": {
+              "profitMarkup": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Profit mark-up (default 2-5%, configurable per activity and per period).",
@@ -668,7 +668,7 @@
           "commercialActivityId",
           "originalAmount",
           "splits",
-          "verdeelsleutel",
+          "allocationKey",
           "automaticApplied",
           "postingDate",
           "administrationId",
@@ -744,7 +744,7 @@
             },
             "title": "Splits"
           },
-          "verdeelsleutel": {
+          "allocationKey": {
             "type": "string",
             "description": "FK to OverheadDistributionRule.id used for this split.",
             "title": "Verdeelsleutel"
@@ -872,7 +872,7 @@
             "cardinality": "many-to-one"
           },
           "overheadRule": {
-            "localField": "verdeelsleutel",
+            "localField": "allocationKey",
             "relatedSchema": "OverheadDistributionRule",
             "relatedField": "id",
             "cardinality": "many-to-one",
@@ -928,7 +928,7 @@
           "governingBody",
           "determinationDate",
           "notificationAcm",
-          "betreftActiviteiten",
+          "concernsActivities",
           "publicInterestCategories",
           "rationale",
           "nextEvaluation",
@@ -1021,7 +1021,7 @@
             },
             "title": "Kennisgeving Acm"
           },
-          "betreftActiviteiten": {
+          "concernsActivities": {
             "type": "array",
             "description": "FK array of CommercialActivity.id records exempted by this ABB.",
             "items": {
@@ -1234,7 +1234,7 @@
         },
         "x-openregister-relations": {
           "activities": {
-            "localField": "betreftActiviteiten",
+            "localField": "concernsActivities",
             "relatedSchema": "CommercialActivity",
             "relatedField": "id",
             "cardinality": "many-to-many",
@@ -1316,7 +1316,7 @@
           "period",
           "format",
           "generatedAt",
-          "activiteiten",
+          "activities",
           "administrationId",
           "status"
         ],
@@ -1343,7 +1343,7 @@
             "title": "Generated At",
             "description": "The date and time for generated at."
           },
-          "activiteiten": {
+          "activities": {
             "type": "array",
             "description": "Per-activity reporting line.",
             "items": {
@@ -2308,7 +2308,7 @@
           "facilitair": 1200
         },
         "capitalCost": 2700,
-        "winstopslag": 3100
+        "profitMarkup": 3100
       },
       "totalCost": 78000,
       "soldUnits": 312,
@@ -2347,7 +2347,7 @@
           "dimension": "MO"
         }
       ],
-      "verdeelsleutel": "odr-bbv-taakveld-0-4-2024",
+      "allocationKey": "odr-bbv-taakveld-0-4-2024",
       "automaticApplied": true,
       "postingDate": "2024-09-30",
       "materialised": false,

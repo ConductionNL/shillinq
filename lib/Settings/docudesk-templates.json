@@ -27,8 +27,8 @@
               "label": "Kwalificerend activum"
             },
             {
-              "key": "methode",
-              "label": "Methode"
+              "key": "method",
+              "label": "Method"
             },
             {
               "key": "qualifying_profit_for_nexus",
@@ -163,7 +163,7 @@
           "title": "Eligible costs per category and period",
           "columns": [
             {
-              "key": "kostencategorie",
+              "key": "expenseCategory",
               "label": "Cost category"
             },
             {
@@ -260,8 +260,8 @@
           "title": "Kostenoverzicht per categorie en periode",
           "columns": [
             {
-              "key": "kostencategorie",
-              "label": "Kostencategorie"
+              "key": "expenseCategory",
+              "label": "Cost category"
             },
             {
               "key": "periodId",
@@ -323,8 +323,8 @@
           "title": "Kosten per categorie en periode",
           "columns": [
             {
-              "key": "kostencategorie",
-              "label": "Kostencategorie"
+              "key": "expenseCategory",
+              "label": "Cost category"
             },
             {
               "key": "periodId",
@@ -387,7 +387,7 @@
           "sectionId": "horizon-audit-personnel-timesheets",
           "title": "Personnel costs — timesheet evidence",
           "filter": {
-            "kostencategorie": "personnel"
+            "expenseCategory": "personnel"
           },
           "columns": [
             {
@@ -423,8 +423,8 @@
           },
           "columns": [
             {
-              "key": "kostencategorie",
-              "label": "Kostencategorie"
+              "key": "expenseCategory",
+              "label": "Cost category"
             },
             {
               "key": "periodId",
@@ -487,7 +487,7 @@
           "sectionId": "mit-wbso-reference",
           "title": "WBSO/S&O-administratie referentie",
           "filter": {
-            "kostencategorie": "personnel"
+            "expenseCategory": "personnel"
           },
           "columns": [
             {
@@ -543,7 +543,7 @@
           "sectionId": "efro-external-services-procurement",
           "title": "Inkoop derden — aanbestedingsdocumentatie",
           "filter": {
-            "kostencategorie": "external-services"
+            "expenseCategory": "external-services"
           },
           "columns": [
             {

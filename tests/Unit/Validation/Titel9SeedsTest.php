@@ -105,7 +105,7 @@ final class Titel9SeedsTest extends TestCase {
 		$seed = $this->loadSeed('balans-rubriek-mapping.json');
 		$codes = array_column($seed['rubriekCatalogus'], 'rubrieckCode');
 		foreach (['B.I', 'B.II', 'B.III', 'C.I', 'C.II', 'C.IV', 'A', 'B', 'C', 'D'] as $code) {
-			self::assertContains($code, $codes, "Missing rubriek: $code");
+			self::assertContains($code, $codes, "Missing section: $code");
 		}
 
 		self::assertGreaterThanOrEqual(3, count($seed['variants']), 'At least three variant maps expected.');

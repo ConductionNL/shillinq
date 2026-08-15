@@ -518,7 +518,7 @@
                 "description": "Marked 'one-off, total < EUR 5000' — shortened intake offered (REQ-DBA-001).",
                 "title": "Eenmalig Lage Drempel"
               },
-              "modelOvereenkomstId": {
+              "modelAgreementId": {
                 "type": "string",
                 "nullable": true,
                 "description": "FK to the applicable DBAModelovereenkomst (REQ-DBA-002).",

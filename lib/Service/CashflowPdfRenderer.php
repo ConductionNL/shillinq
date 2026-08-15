@@ -104,7 +104,7 @@ class CashflowPdfRenderer {
 		foreach ($weeks as $week) {
 			$lines[] = sprintf(
 				'%-6s %-12.2f %-12.2f %-12.2f %-12.2f %s',
-				(string)($week['weeknummer'] ?? '?'),
+				(string)($week['weekNumber'] ?? '?'),
 				(float)($week['inflows_total'] ?? 0),
 				(float)($week['outflows_total'] ?? 0),
 				(float)($week['netMovement'] ?? 0),

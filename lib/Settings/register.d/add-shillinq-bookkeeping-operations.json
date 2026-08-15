@@ -1108,13 +1108,13 @@
             "description": "True for the first 2 years (800-hour threshold).",
             "title": "Qualifies Starters"
           },
-          "zelfstandigenaftrek": {
+          "selfEmployedDeduction": {
             "type": "number",
             "default": 0,
             "description": "Self-employed deduction (MonetaryAmount, from seed).",
             "title": "Zelfstandigenaftrek"
           },
-          "startersaftrek": {
+          "starterDeduction": {
             "type": "number",
             "default": 0,
             "description": "Starters deduction (MonetaryAmount, if qualifiesStarters).",

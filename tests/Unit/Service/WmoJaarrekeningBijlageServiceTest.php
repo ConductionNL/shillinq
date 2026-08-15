@@ -80,12 +80,12 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 			],
 		]);
 
-		self::assertCount(2, $bijlage['activiteiten']);
-		self::assertSame('groen', $bijlage['activiteiten'][0]['complianceColor']);
-		self::assertSame('rood', $bijlage['activiteiten'][1]['complianceColor']);
-		self::assertSame('R-2023-184', $bijlage['activiteiten'][1]['abbReference']);
-		self::assertNull($bijlage['activiteiten'][0]['abbReference']);
-		self::assertSame(2, $bijlage['activiteiten'][0]['manualOverrides']);
+		self::assertCount(2, $bijlage['activities']);
+		self::assertSame('groen', $bijlage['activities'][0]['complianceColor']);
+		self::assertSame('rood', $bijlage['activities'][1]['complianceColor']);
+		self::assertSame('R-2023-184', $bijlage['activities'][1]['abbReference']);
+		self::assertNull($bijlage['activities'][0]['abbReference']);
+		self::assertSame(2, $bijlage['activities'][0]['manualOverrides']);
 
 		$summary = $bijlage['summary'];
 		self::assertSame(2, $summary['total']);
@@ -98,7 +98,7 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 	 * validateCompliance reports overall + per-bucket counts.
 	 */
 	public function testValidateCompliance(): void {
-		$bijlage = ['activiteiten' => [['compliant' => true], ['compliant' => false], ['compliant' => true]]];
+		$bijlage = ['activities' => [['compliant' => true], ['compliant' => false], ['compliant' => true]]];
 		$result = $this->svc->summariseCompliance($bijlage);
 		self::assertSame(2, $result['compliant']);
 		self::assertSame(1, $result['nonCompliant']);

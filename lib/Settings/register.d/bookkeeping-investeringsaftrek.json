@@ -567,7 +567,7 @@
             "type": "object",
             "description": "The regular schedule for the 25% gespreid deel.",
             "properties": {
-              "methode": {
+              "method": {
                 "type": "string",
                 "example": "lineair",
                 "title": "Methode",

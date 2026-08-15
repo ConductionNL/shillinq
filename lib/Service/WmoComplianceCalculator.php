@@ -50,11 +50,11 @@ class WmoComplianceCalculator {
 	public const DEFAULT_WACC = 0.045;
 
 	/**
-	 * Default winstopslag (profit mark-up) percentage on total direct + overhead cost.
+	 * Default profit mark-up percentage on total direct + overhead cost.
 	 *
 	 * @var float
 	 */
-	public const DEFAULT_WINSTOPSLAG = 0.03;
+	public const DEFAULT_PROFIT_MARKUP = 0.03;
 
 	/**
 	 * Number of days after which a commercial activity is due for annual review.
@@ -135,7 +135,7 @@ class WmoComplianceCalculator {
 		$totalCents += $this->toCents(amount: ($componenten['directDepreciations'] ?? 0));
 		$totalCents += $this->overheadTotalCents(overhead: $overhead);
 		$totalCents += $this->toCents(amount: ($componenten['capitalCost'] ?? 0));
-		$totalCents += $this->toCents(amount: ($componenten['winstopslag'] ?? 0));
+		$totalCents += $this->toCents(amount: ($componenten['profitMarkup'] ?? 0));
 
 		$perUnit = null;
 		if ($soldUnits !== null && $soldUnits > 0.0) {
@@ -165,19 +165,19 @@ class WmoComplianceCalculator {
 	}//end vermogenskosten()
 
 	/**
-	 * Compute winstopslag as a percentage of the costs-before-mark-up (REQ-WMO-002).
+	 * Compute the profit mark-up as a percentage of the costs-before-mark-up (REQ-WMO-002).
 	 *
 	 * @param float $costsBeforeMarkup Sum of direct + overhead + vermogenskosten in EUR.
-	 * @param float|null $rate The winstopslag rate (defaults to DEFAULT_WINSTOPSLAG when null).
+	 * @param float|null $rate The profit mark-up rate (defaults to DEFAULT_PROFIT_MARKUP when null).
 	 *
-	 * @return float Winstopslag in EUR rounded to whole cents.
+	 * @return float Profit mark-up in EUR rounded to whole cents.
 	 *
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
 	 */
-	public function winstopslag(float $costsBeforeMarkup, ?float $rate = null): float {
-		$pct = ($rate ?? self::DEFAULT_WINSTOPSLAG);
+	public function profitMarkup(float $costsBeforeMarkup, ?float $rate = null): float {
+		$pct = ($rate ?? self::DEFAULT_PROFIT_MARKUP);
 		return $this->fromCents(cents: $this->toCents(amount: ($costsBeforeMarkup * $pct)));
-	}//end winstopslag()
+	}//end profitMarkup()
 
 	/**
 	 * Derive the Art. 25i compliance flag, marge and margePercentage (REQ-WMO-002).

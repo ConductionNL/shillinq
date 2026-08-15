@@ -220,7 +220,7 @@ final class PayrollServiceTest extends TestCase {
 			'Werknemer' => [
 				[
 					'id' => 'wn-1',
-					'werkgeverId' => 'wg-1',
+					'employerId' => 'wg-1',
 					'personId' => 'person-1',
 					'bsn' => '123456789',
 					'periodeBruto' => 4940.0,
@@ -237,7 +237,7 @@ final class PayrollServiceTest extends TestCase {
 			'LoonPeriode' => [
 				[
 					'id' => 'lp-1',
-					'werkgeverId' => 'wg-1',
+					'employerId' => 'wg-1',
 					'periodType' => 'MAAND',
 					'periodEnd' => '2026-05-31',
 					'payrollTaxTableId' => 'lht-1',
@@ -306,14 +306,14 @@ final class PayrollServiceTest extends TestCase {
 			[
 				'periodId' => 'lp-1',
 				'payrollTax' => 1000.0,
-				'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
+				'employerSocialInsurancePremiums' => ['totaal_werkgever' => 400.0],
 				'zvw' => ['afgedragen_wg' => 200.0],
 				'administrationId' => 'adm-1',
 			],
 			[
 				'periodId' => 'lp-1',
 				'payrollTax' => 500.0,
-				'premiesSVWerkgever' => ['totaal_werkgever' => 100.0],
+				'employerSocialInsurancePremiums' => ['totaal_werkgever' => 100.0],
 				'zvw' => ['afgedragen_wg' => 50.0],
 				'administrationId' => 'adm-1',
 			],
@@ -344,7 +344,7 @@ final class PayrollServiceTest extends TestCase {
 			[
 				'periodId' => 'lp-1',
 				'grossComponents' => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
-				'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
+				'employerSocialInsurancePremiums' => ['totaal_werkgever' => 400.0],
 				'zvw' => ['afgedragen_wg' => 262.81],
 				'pensioen' => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],
 				'payrollTax' => 1199.91,

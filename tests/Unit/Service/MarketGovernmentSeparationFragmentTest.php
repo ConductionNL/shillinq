@@ -141,7 +141,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 			'directDepreciations',
 			'indirecteOverhead',
 			'capitalCost',
-			'winstopslag',
+			'profitMarkup',
 		];
 		foreach ($expected as $component) {
 			self::assertArrayHasKey($component, $components, "componenten must include $component");
@@ -161,7 +161,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		$props = $data['components']['schemas']['ActivityCostAllocation']['properties'];
 
 		self::assertArrayHasKey('splits', $props);
-		self::assertArrayHasKey('verdeelsleutel', $props);
+		self::assertArrayHasKey('allocationKey', $props);
 		self::assertArrayHasKey('automaticApplied', $props);
 		self::assertArrayHasKey('handmatigeOverride', $props);
 		// Status enum supports the override / reversal lifecycle.

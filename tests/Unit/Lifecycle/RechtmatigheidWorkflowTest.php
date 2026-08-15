@@ -177,10 +177,15 @@ class RechtmatigheidWorkflowTest extends TestCase {
 			}
 		}
 
+		// The needle is a Nextcloud GROUP name, not a property name: the schema's
+		// `portefeuillehouder` property became `portfolioHolder`, but the group an
+		// administrator actually created on the instance did not. Renaming this
+		// string would address a group that does not exist, and a notification
+		// sent to nobody raises nothing.
 		self::assertContains(
 			needle: 'portefeuillehouder',
 			haystack: $groups,
-			message: 'Notification must address the portefeuillehouder.'
+			message: 'Notification must address the portefeuillehouder group.'
 		);
 
 		$subject = ($notif['subject'] ?? []);

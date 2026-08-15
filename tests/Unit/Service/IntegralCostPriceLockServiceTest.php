@@ -62,7 +62,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 					'directDepreciations' => 2_000.00,
 					'indirecteOverhead' => ['huisvesting' => 5_000.00, 'ict' => 2_000.00],
 					'capitalCost' => 500.00,
-					'winstopslag' => 500.00,
+					'profitMarkup' => 500.00,
 				],
 			];
 		}

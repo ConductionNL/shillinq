@@ -67,7 +67,7 @@ final class CashflowPdfRendererTest extends TestCase {
 		];
 		$weeks = [
 			[
-				'weeknummer' => 22,
+				'weekNumber' => 22,
 				'inflows_total' => 12500.0,
 				'outflows_total' => 7200.0,
 				'netMovement' => 5300.0,
@@ -97,8 +97,8 @@ final class CashflowPdfRendererTest extends TestCase {
 	public function testRenderIncludesPerWeekRows(): void {
 		$horizon = ['horizonId' => 'h1', 'administrationId' => 'a1'];
 		$weeks = [
-			['weeknummer' => 22, 'inflows_total' => 100.0, 'outflows_total' => 50.0, 'netMovement' => 50.0, 'closingBalance' => 1050.0, 'bufferStatus' => 'BOVEN_BUFFER'],
-			['weeknummer' => 23, 'inflows_total' => 0.0, 'outflows_total' => 200.0, 'netMovement' => -200.0, 'closingBalance' => 850.0, 'bufferStatus' => 'VOORALARM'],
+			['weekNumber' => 22, 'inflows_total' => 100.0, 'outflows_total' => 50.0, 'netMovement' => 50.0, 'closingBalance' => 1050.0, 'bufferStatus' => 'BOVEN_BUFFER'],
+			['weekNumber' => 23, 'inflows_total' => 0.0, 'outflows_total' => 200.0, 'netMovement' => -200.0, 'closingBalance' => 850.0, 'bufferStatus' => 'VOORALARM'],
 		];
 
 		$result = $this->renderer->render($horizon, $weeks);

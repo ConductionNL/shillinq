@@ -345,7 +345,7 @@ class PayrollCalculator {
 	 *
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
-	public function premiesSVWerkgever(
+	public function employerSocialInsurancePremiums(
 		float $contributionPaySV,
 		string $periodType,
 		string $awfRate,
@@ -385,7 +385,7 @@ class PayrollCalculator {
 			'totaal_werkgever' => $this->fromCents(cents: $totalCents),
 		];
 
-	}//end premiesSVWerkgever()
+	}//end employerSocialInsurancePremiums()
 
 	/**
 	 * Compute the employer ZVW contribution (REQ-PAY-004).
