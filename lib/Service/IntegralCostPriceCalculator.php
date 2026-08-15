@@ -141,6 +141,8 @@ class IntegralCostPriceCalculator {
 	 * @param string $costObject Kostendrager code (filter ratios to this drager).
 	 *
 	 * @return array<string,int> Per-bucket overhead in cents (huisvesting, ict, directieEnStaf, facilitair, custom).
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-003
 	 */
 	public function distributeOverhead(int $corporateOverheadCents, array $rule, string $costObject): array {
 		$buckets = [];

@@ -324,4 +324,27 @@ final class RenameDutchValuesTest extends TestCase
         }
 
     }//end testDutchTermsSurviveInL10n()
+    /**
+     * The map holds no case-only entry, and the detector can say so.
+     *
+     * @return void
+     *
+     * @spec exclude Self-check on the vocabulary migration's own map.
+     */
+    public function testMapContainsNoCaseOnlyEntries(): void
+    {
+        self::assertSame([], $this->decisions->caseOnlyEntries(RenameDutchValueDecisions::VALUE_MAP));
+
+        // Fed a known offender it must speak up, or the empty result above
+        // proves nothing about the map.
+        self::assertSame(
+            ['entityType: ACMReport -> aCMReport'],
+            $this->decisions->caseOnlyEntries(['entityType' => ['ACMReport' => 'aCMReport']])
+        );
+        self::assertSame(
+            [],
+            $this->decisions->caseOnlyEntries(['state' => ['vastgesteld' => 'determined']])
+        );
+
+    }//end testMapContainsNoCaseOnlyEntries()
 }//end class

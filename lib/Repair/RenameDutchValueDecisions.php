@@ -672,4 +672,39 @@ class RenameDutchValueDecisions
         return sprintf('RenameDutchValues: %d row value(s) translated.', $updated);
 
     }//end summaryMessage()
+    /**
+     * Map entries whose replacement differs from the source by CASE alone.
+     *
+     * Such an entry translates nothing while still producing a diff, so it reads
+     * as a translation that was made. Where the source is an identifier it
+     * renames the identifier instead: 56 entries in this map's own draft did
+     * exactly that, turning `ACMReport` into `aCMReport` and renaming an entity
+     * type. Returned rather than thrown so the caller decides; the test asserts
+     * empty.
+     *
+     * @param array<string, array<string, string>> $valueMap Property => old => new.
+     *
+     * @return array<int, string> One "property: old -> new" line per offender.
+     *
+     * @spec exclude Self-check on the vocabulary migration's own map.
+     */
+    public function caseOnlyEntries(array $valueMap): array
+    {
+        $offenders = [];
+
+        foreach ($valueMap as $property => $values) {
+            foreach ($values as $old => $new) {
+                $normalise = static fn (string $value): string
+                    => strtolower((string) preg_replace('/[^a-z0-9]/i', '', $value));
+                if ($normalise((string) $old) !== $normalise($new)) {
+                    continue;
+                }
+
+                $offenders[] = sprintf('%s: %s -> %s', (string) $property, (string) $old, $new);
+            }
+        }
+
+        return $offenders;
+
+    }//end caseOnlyEntries()
 }//end class

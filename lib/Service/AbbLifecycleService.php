@@ -140,6 +140,8 @@ class AbbLifecycleService {
 	 * @return array{abb:array<string,mixed>, tasks:array<int,array<string,mixed>>} Updated ABB and any auto-generated tasks.
 	 *
 	 * @throws InvalidArgumentException When the transition is not allowed.
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-005
 	 */
 	public function transition(array $abb, string $toStatus): array {
 		$fromStatus = (string)($abb['status'] ?? 'draft');
