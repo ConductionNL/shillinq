@@ -176,7 +176,7 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase
         string $to='opgemaakt',
         string $schema='AnnualReport',
         string $id='ar-42',
-        string $from='concept'
+        string $from='draft'
     ): ObjectTransitionedEvent {
         $entity = (new ObjectEntity())
             ->setSchema($schema)
@@ -231,7 +231,7 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase
     {
         $listener = $this->makeListener(['id' => 'ar-42', 'decisionOutcome' => 'pending']);
 
-        $listener->handle($this->makeEvent(['id' => 'ar-42'], to: 'vastgesteld', from: 'in-review'));
+        $listener->handle($this->makeEvent(['id' => 'ar-42'], to: 'determined', from: 'in-review'));
 
         self::assertCount(0, $this->signoffCalls);
         self::assertCount(0, $this->objectService->updates);

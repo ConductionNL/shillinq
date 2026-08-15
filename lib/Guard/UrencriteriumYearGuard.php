@@ -192,18 +192,18 @@ class UrencriteriumYearGuard
     public function bepaalDrempelStatus(float $lopendeUren, float $prognose, int $norm): string
     {
         if ($lopendeUren >= $norm) {
-            return 'BEHAALD';
+            return 'ACHIEVED';
         }
 
         if ($prognose >= $norm) {
-            return 'OP_KOERS';
+            return 'ON_RATE';
         }
 
         if ($prognose >= ($norm * 0.8)) {
-            return 'RISICO';
+            return 'RISK';
         }
 
-        return 'KRITIEK';
+        return 'CRITICAL';
 
     }//end bepaalDrempelStatus()
 
@@ -225,19 +225,19 @@ class UrencriteriumYearGuard
     public function bepaalGrotendeelsCriterium(float $ondernemingsUren, float $loondienstUren): string
     {
         if ($loondienstUren <= 0.0) {
-            return 'NIET_TOEPASSELIJK';
+            return 'NON_APPLICABLE';
         }
 
         $totaal = ($ondernemingsUren + $loondienstUren);
         if ($totaal <= 0.0) {
-            return 'NIET_TOEPASSELIJK';
+            return 'NON_APPLICABLE';
         }
 
         if (($ondernemingsUren / $totaal) > 0.5) {
-            return 'GROTENDEELS_ONDERNEMING';
+            return 'LARGELY_ENTERPRISE';
         }
 
-        return 'NIET_GROTENDEELS_ONDERNEMING';
+        return 'NON_LARGELY_ENTERPRISE';
 
     }//end bepaalGrotendeelsCriterium()
 
@@ -311,11 +311,11 @@ class UrencriteriumYearGuard
      */
     private function grotendeelsIsConsistent(array $year): bool
     {
-        $value   = (string) ($year['grotendeelsCriterium'] ?? 'NIET_TOEPASSELIJK');
+        $value   = (string) ($year['grotendeelsCriterium'] ?? 'NON_APPLICABLE');
         $allowed = [
-            'NIET_TOEPASSELIJK',
-            'GROTENDEELS_ONDERNEMING',
-            'NIET_GROTENDEELS_ONDERNEMING',
+            'NON_APPLICABLE',
+            'LARGELY_ENTERPRISE',
+            'NON_LARGELY_ENTERPRISE',
         ];
 
         if (in_array($value, $allowed, true) === false) {

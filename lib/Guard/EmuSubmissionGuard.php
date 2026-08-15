@@ -69,11 +69,11 @@ class EmuSubmissionGuard
         $status        = (string) ($emuReport['status'] ?? '');
         $saldoComputed = array_key_exists('emuBalanceCalculated', $emuReport)
             && $emuReport['emuBalanceCalculated'] !== null;
-        $aansluiting   = (string) ($emuReport['bbvAansluitingscontrole'] ?? 'niet-uitgevoerd');
+        $aansluiting   = (string) ($emuReport['bbvAansluitingscontrole'] ?? 'non-executed');
 
-        $permitted = $status === 'concept'
+        $permitted = $status === 'draft'
             && $saldoComputed === true
-            && $aansluiting !== 'mislukt';
+            && $aansluiting !== 'failed';
 
         if ($permitted === false) {
             $this->logger->info(

@@ -169,7 +169,7 @@ class AansluitingService
         $aansluitingType  = (string) ($definition['aansluitingType'] ?? '');
 
         $resolved = match ($aansluitingType) {
-            'btw-ledger-aangifte'  => $this->resolveBtwLedgerAangifte(administrationId: $administrationId, periodId: $periodId),
+            'vat-ledger-return'  => $this->resolveBtwLedgerAangifte(administrationId: $administrationId, periodId: $periodId),
             'subledger-gl-control' => $this->resolveSubledgerGlControl(definition: $definition, administrationId: $administrationId),
             default                => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $aansluitingType)),
         };

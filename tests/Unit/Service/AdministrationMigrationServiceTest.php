@@ -160,7 +160,7 @@ final class AdministrationMigrationServiceTest extends TestCase
             'sourceAdministrationId'  => 'adm-werk-001',
             'bookValueTransferred'    => 100.0,
             'marketValueTransferred'  => 150.0,
-            'fiscalTreatment'         => 'met_realisatie',
+            'fiscalTreatment'         => 'with_actuals',
             'legalBasis'              => 'Akte X',
         ];
 
@@ -170,7 +170,7 @@ final class AdministrationMigrationServiceTest extends TestCase
         self::assertSame(10000, $draft['bookValueCents']);
         self::assertSame(15000, $draft['marketValueCents']);
         self::assertSame(5000, $draft['resultCents']);
-        self::assertSame('met_realisatie', $draft['fiscalTreatment']);
+        self::assertSame('with_actuals', $draft['fiscalTreatment']);
 
     }//end testBuildSourceJournalDraft()
 
@@ -191,7 +191,7 @@ final class AdministrationMigrationServiceTest extends TestCase
         ];
 
         $marktwaarde = $this->service->buildDestinationJournalDraft(
-            migration: $migration + ['fiscalTreatment' => 'met_realisatie']
+            migration: $migration + ['fiscalTreatment' => 'with_actuals']
         );
         self::assertSame(15000, $marktwaarde['activationCents']);
 

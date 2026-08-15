@@ -124,8 +124,8 @@ class PayrollCalculator
      */
     private const PERIODES_PER_JAAR = [
         'WEEK'   => 52,
-        '4WEKEN' => 13,
-        'MAAND'  => 12,
+        '4_WEEKS' => 13,
+        'MONTH'  => 12,
     ];
 
     /**
@@ -381,7 +381,7 @@ class PayrollCalculator
         }
 
         $awfPct = self::AWF_LAAG_2026;
-        if ($awfTarief === 'HOOG') {
+        if ($awfTarief === 'HIGH') {
             $awfPct = self::AWF_HOOG_2026;
         }
 
@@ -427,7 +427,7 @@ class PayrollCalculator
         $maxPeriode = $this->periodeMaximum(jaarBedrag: self::MAX_ZVW_PREMIELOON_JAAR_2026, periodeType: $periodeType);
         $grondslag  = min(max(0.0, $premieloonSV), $maxPeriode);
         $tarief     = self::ZVW_TARIEF_LAAG_2026;
-        if ($zvwTarief === 'HOOG') {
+        if ($zvwTarief === 'HIGH') {
             $tarief = self::ZVW_TARIEF_HOOG_2026;
         }
 

@@ -110,7 +110,7 @@ class UrencriteriumYearGuardTest extends TestCase
      */
     public function testDrempelStatusBehaald(): void
     {
-        self::assertSame('BEHAALD', $this->guard->bepaalDrempelStatus(lopendeUren: 1300, prognose: 1300, norm: 1225));
+        self::assertSame('ACHIEVED', $this->guard->bepaalDrempelStatus(lopendeUren: 1300, prognose: 1300, norm: 1225));
 
     }//end testDrempelStatusBehaald()
 
@@ -121,10 +121,10 @@ class UrencriteriumYearGuardTest extends TestCase
      */
     public function testDrempelStatusFromPrognose(): void
     {
-        self::assertSame('OP_KOERS', $this->guard->bepaalDrempelStatus(lopendeUren: 600, prognose: 1300, norm: 1225));
+        self::assertSame('ON_RATE', $this->guard->bepaalDrempelStatus(lopendeUren: 600, prognose: 1300, norm: 1225));
         // 1180 is >= 80% of 1225 (980) but < 1225 → RISICO (the Q3 scenario).
-        self::assertSame('RISICO', $this->guard->bepaalDrempelStatus(lopendeUren: 916, prognose: 1180, norm: 1225));
-        self::assertSame('KRITIEK', $this->guard->bepaalDrempelStatus(lopendeUren: 400, prognose: 700, norm: 1225));
+        self::assertSame('RISK', $this->guard->bepaalDrempelStatus(lopendeUren: 916, prognose: 1180, norm: 1225));
+        self::assertSame('CRITICAL', $this->guard->bepaalDrempelStatus(lopendeUren: 400, prognose: 700, norm: 1225));
 
     }//end testDrempelStatusFromPrognose()
 
@@ -136,7 +136,7 @@ class UrencriteriumYearGuardTest extends TestCase
     public function testGrotendeelsNotApplicableWithoutLoondienst(): void
     {
         self::assertSame(
-            'NIET_TOEPASSELIJK',
+            'NON_APPLICABLE',
             $this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1240, loondienstUren: 0)
         );
 
@@ -151,11 +151,11 @@ class UrencriteriumYearGuardTest extends TestCase
     public function testGrotendeelsFailsWhenLoondienstDominates(): void
     {
         self::assertSame(
-            'NIET_GROTENDEELS_ONDERNEMING',
+            'NON_LARGELY_ENTERPRISE',
             $this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1240, loondienstUren: 1670)
         );
         self::assertSame(
-            'GROTENDEELS_ONDERNEMING',
+            'LARGELY_ENTERPRISE',
             $this->guard->bepaalGrotendeelsCriterium(ondernemingsUren: 1800, loondienstUren: 600)
         );
 
@@ -174,8 +174,8 @@ class UrencriteriumYearGuardTest extends TestCase
             'normBasis'            => 'art. 3.6 lid 1 Wet IB 2001',
             'lopendeUren'          => 916,
             'forecastYearEnd'      => 1180,
-            'thresholdStatus'      => 'RISICO',
-            'grotendeelsCriterium' => 'NIET_TOEPASSELIJK',
+            'thresholdStatus'      => 'RISK',
+            'grotendeelsCriterium' => 'NON_APPLICABLE',
         ];
         self::assertTrue($this->guard->validateOnSave(year: $year));
 
@@ -191,7 +191,7 @@ class UrencriteriumYearGuardTest extends TestCase
         $year = [
             'doelNorm'        => 800,
             'normBasis'       => 'art. 3.6 lid 1 Wet IB 2001',
-            'thresholdStatus' => 'OP_KOERS',
+            'thresholdStatus' => 'ON_RATE',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
 
@@ -207,7 +207,7 @@ class UrencriteriumYearGuardTest extends TestCase
         $year = [
             'doelNorm'        => 1000,
             'normBasis'       => 'art. 3.6 lid 1 Wet IB 2001',
-            'thresholdStatus' => 'OP_KOERS',
+            'thresholdStatus' => 'ON_RATE',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
 
@@ -226,7 +226,7 @@ class UrencriteriumYearGuardTest extends TestCase
             'lopendeUren'     => 916,
             'forecastYearEnd' => 1180,
             // Should be RISICO, not OP_KOERS.
-            'thresholdStatus' => 'OP_KOERS',
+            'thresholdStatus' => 'ON_RATE',
         ];
         self::assertFalse($this->guard->validateOnSave(year: $year));
 

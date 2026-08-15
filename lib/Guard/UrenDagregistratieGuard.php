@@ -72,7 +72,7 @@ class UrenDagregistratieGuard
      *
      * @var array<int, string>
      */
-    private const EVIDENCE_REQUIRED_CATEGORIES = ['SCHOLING', 'FICTIE_ZEZ'];
+    private const EVIDENCE_REQUIRED_CATEGORIES = ['TRAINING', 'FICTION_ZEZ'];
 
     /**
      * Construct the guard.
@@ -134,7 +134,7 @@ class UrenDagregistratieGuard
      */
     public function pasReistijdCapToe(string $categorie, float $uren): array
     {
-        if ($categorie !== 'REISTIJD_ZAKELIJK' || $uren <= self::REISTIJD_CAP_PER_DAY) {
+        if ($categorie !== 'TRAVEL_TIME_BUSINESS' || $uren <= self::REISTIJD_CAP_PER_DAY) {
             return ['getoldeUren' => $uren, 'capNotitie' => null];
         }
 

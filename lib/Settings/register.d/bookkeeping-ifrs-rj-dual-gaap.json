@@ -715,9 +715,9 @@
             "type": "string",
             "description": "RJ variant elected (REQ-DGAAP-010).",
             "enum": [
-              "RJ-onverkort",
+              "rj-in_full",
               "RJk",
-              "IFRS-volledig"
+              "ifrs-complete"
             ],
             "example": "RJk",
             "title": "Rj Variant"

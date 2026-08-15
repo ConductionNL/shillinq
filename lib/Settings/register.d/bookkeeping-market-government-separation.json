@@ -110,11 +110,11 @@
           "kostprijsMethode": {
             "type": "string",
             "enum": [
-              "integrale-kostprijs-art-25i",
-              "kostprijs-monitor-zonder-winstopslag"
+              "integral-costprice-art-25i",
+              "costprice-monitor-without-profit-markup"
             ],
             "description": "Cost-price method. integrale-kostprijs-art-25i is the default; the monitor variant is only valid for ABB-exempted activities.",
-            "default": "integrale-kostprijs-art-25i",
+            "default": "integral-costprice-art-25i",
             "title": "Kostprijs Methode"
           },
           "costCentreCode": {
@@ -427,7 +427,7 @@
             "type": "string",
             "enum": [
               "voorlopig",
-              "definitief"
+              "final"
             ],
             "description": "voorlopig = monthly provisional; definitief = year-end accountant-signed lock.",
             "default": "voorlopig",
@@ -1011,7 +1011,7 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "raadsvoorstel",
               "raadsbesluit",
               "publicatie",
@@ -1023,7 +1023,7 @@
               "intrekking"
             ],
             "description": "Workflow state. Geldig requires publicatieDatum + kennisgevingAcm.ingediend.",
-            "default": "concept",
+            "default": "draft",
             "title": "Status"
           },
           "bezwaarTermijnVerstreken": {
@@ -1073,14 +1073,14 @@
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "retention": {
             "rule": "selectielijst:5.1.2",
             "period": "P7Y",
             "description": "ABB retained 7 years per Mededingingswet bewaartermijn."
           },
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Draft ABB."
             },
@@ -1123,7 +1123,7 @@
           },
           "transitions": {
             "submit": {
-              "from": "concept",
+              "from": "draft",
               "to": "raadsvoorstel",
               "label": "Submit raadsvoorstel"
             },
@@ -1259,10 +1259,10 @@
           "format": {
             "type": "string",
             "enum": [
-              "ACM-standaardformulier-mo-2024"
+              "acm-standard_form-mo-2024"
             ],
             "description": "Report format version (REQ-WMO-006).",
-            "default": "ACM-standaardformulier-mo-2024",
+            "default": "acm-standard_form-mo-2024",
             "title": "Format"
           },
           "generatedAt": {
@@ -1907,7 +1907,7 @@
               "activity-created",
               "activity-updated",
               "ikp-calculated",
-              "ikp-definitief-signed",
+              "ikp-final-signed",
               "split-applied",
               "split-overridden",
               "abb-status-change",
@@ -1932,7 +1932,7 @@
               "CommercialActivity",
               "IntegralCostPrice",
               "ActivityCostAllocation",
-              "AlgemeenBelangBesluit",
+              "GeneralInterestDecision",
               "ACMReport",
               "AlertLog",
               "MarketBenchmark"
@@ -2180,7 +2180,7 @@
       ],
       "startDatum": "2024-01-15",
       "endDate": "2025-12-31",
-      "kostprijsMethode": "integrale-kostprijs-art-25i",
+      "kostprijsMethode": "integral-costprice-art-25i",
       "costCentreCode": "K-SP-014",
       "kostendragerCode": "D-MO-SP-014",
       "isExempted": false,
@@ -2203,7 +2203,7 @@
       "commercialActivityId": "ca-mo-sp-014",
       "period": "2024-YTD",
       "calculatedOn": "2025-03-31T04:00:00Z",
-      "status": "definitief",
+      "status": "final",
       "componenten": {
         "directeLoonkosten": 42000,
         "directeMaterialen": 8500,

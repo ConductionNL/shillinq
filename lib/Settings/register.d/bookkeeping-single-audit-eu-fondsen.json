@@ -734,8 +734,8 @@
           "vatTreatment": {
             "type": "string",
             "enum": [
-              "terugvorderbaar",
-              "niet_terugvorderbaar"
+              "recoverable",
+              "non_recoverable"
             ],
             "description": "BTW-behandeling. Terugvorderbaar → BTW niet subsidiabel; declared_amount excl. BTW (REQ-EUF-002).",
             "title": "VAT Treatment"
@@ -811,29 +811,29 @@
           "state": {
             "type": "string",
             "enum": [
-              "geboekt",
+              "posted",
               "gedeclareerd",
-              "ingediend_bij_MA",
+              "submitted_at_ma",
               "gecertificeerd",
-              "betaald_door_EC",
+              "paid_by_ec",
               "in_audit",
               "gecorrigeerd"
             ],
             "description": "Lifecycle state (REQ-EUF-002 t/m REQ-EUF-008).",
-            "default": "geboekt",
+            "default": "posted",
             "title": "State"
           }
         },
         "x-openregister-lifecycle": {
           "field": "state",
-          "initialState": "geboekt",
+          "initialState": "posted",
           "retention": {
             "rule": "cpr:art82",
             "period": "P15Y",
             "description": "Uitgave-records bewaard tot 5 jaar na programma-sluiting (art 82 CPR), effectief 12–15 jaar."
           },
           "states": {
-            "geboekt": {
+            "posted": {
               "label": "Geboekt",
               "description": "Uitgave geboekt in reguliere GL + EU-administratie; cost-eligibility en VAT gevalideerd."
             },
@@ -841,7 +841,7 @@
               "label": "Gedeclareerd",
               "description": "Opgenomen in een kwartaal-realisatie-declaratie."
             },
-            "ingediend_bij_MA": {
+            "submitted_at_ma": {
               "label": "Ingediend bij MA",
               "description": "Declaratie ingediend bij managementautoriteit. Vereist complete bewijsstukken + aanbestedingsdossier (REQ-EUF-004, REQ-EUF-005)."
             },
@@ -849,7 +849,7 @@
               "label": "Gecertificeerd",
               "description": "Door certificeringsautoriteit gecertificeerd."
             },
-            "betaald_door_EC": {
+            "paid_by_ec": {
               "label": "Betaald door EC",
               "description": "Uitbetaald door de Europese Commissie; opgenomen in accounts-package (REQ-EUF-006)."
             },
@@ -864,7 +864,7 @@
           },
           "transitions": {
             "declare": {
-              "from": "geboekt",
+              "from": "posted",
               "to": "gedeclareerd",
               "label": "Declareren",
               "description": "Uitgave opgenomen in kwartaal-declaratie; vereist bevestigde eligibility.",
@@ -872,25 +872,25 @@
             },
             "submit": {
               "from": "gedeclareerd",
-              "to": "ingediend_bij_MA",
+              "to": "submitted_at_ma",
               "label": "Indienen bij MA",
               "description": "Indienen vereist complete verplichte bewijsstukken + aanbestedingsdossier indien aanbestedingsplichtig (REQ-EUF-004, REQ-EUF-005).",
               "requires": "OCA\\Shillinq\\Lifecycle\\EuExpenditureGuard::canSubmit"
             },
             "certify": {
-              "from": "ingediend_bij_MA",
+              "from": "submitted_at_ma",
               "to": "gecertificeerd",
               "label": "Certificeren",
               "description": "Gecertificeerd door certificeringsautoriteit."
             },
             "markPaid": {
               "from": "gecertificeerd",
-              "to": "betaald_door_EC",
+              "to": "paid_by_ec",
               "label": "Betaald door EC",
               "description": "Uitbetaald door de Europese Commissie."
             },
             "audit": {
-              "from": "betaald_door_EC",
+              "from": "paid_by_ec",
               "to": "in_audit",
               "label": "In audit nemen",
               "description": "Geselecteerd voor audit-sample."
@@ -1216,11 +1216,11 @@
           "detectionSource": {
             "type": "string",
             "enum": [
-              "interne_audit",
-              "externe_audit",
-              "klacht",
+              "internal_audit",
+              "external_audit",
+              "complaint",
               "OLAF",
-              "DG_REGIO",
+              "DG_REGION",
               "ARC"
             ],
             "description": "Bron van detectie (REQ-EUF-007).",
@@ -1290,7 +1290,7 @@
             "enum": [
               "initieel",
               "vervolgcontrole",
-              "definitief",
+              "final",
               "ingetrokken"
             ],
             "description": "Lifecycle state (REQ-EUF-007).",
@@ -1315,7 +1315,7 @@
               "label": "Vervolgcontrole",
               "description": "Onder vervolgonderzoek; terugvordering in gang."
             },
-            "definitief": {
+            "final": {
               "label": "Definitief",
               "description": "Definitief vastgesteld; correctie verwerkt."
             },
@@ -1334,7 +1334,7 @@
             },
             "finalise": {
               "from": "vervolgcontrole",
-              "to": "definitief",
+              "to": "final",
               "label": "Definitief maken",
               "description": "Correctie verwerkt; onregelmatigheid definitief vastgesteld."
             },

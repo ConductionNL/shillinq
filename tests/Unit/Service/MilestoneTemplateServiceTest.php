@@ -65,7 +65,7 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testGetTemplateSelectsByTypeWithFallback(): void
     {
-        $this->assertSame('levering-in-fases', $this->service->getTemplate('levering-in-fases')['opdrachttype']);
+        $this->assertSame('delivery-in-phases', $this->service->getTemplate('delivery-in-phases')['opdrachttype']);
         $this->assertSame('other', $this->service->getTemplate('does-not-exist')['opdrachttype']);
 
     }//end testGetTemplateSelectsByTypeWithFallback()
@@ -77,7 +77,7 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testGeneratePhasedPlan(): void
     {
-        $plan = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
+        $plan = $this->service->generatePlan('delivery-in-phases', '2026-02-01', '2027-01-31');
 
         $this->assertCount(4, $plan);
         $this->assertSame('eindoplevering', $plan[3]['opleveringsType']);
@@ -100,7 +100,7 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testGenerateRecurringPlan(): void
     {
-        $plan = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
+        $plan = $this->service->generatePlan('service-provision-continuous', '2026-01-01', '2026-12-31');
 
         $this->assertCount(12, $plan);
         $this->assertSame(100.0, $this->service->sumPercentage($plan));
@@ -152,7 +152,7 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testCashflowForecastTotalsExactly(): void
     {
-        $plan     = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
+        $plan     = $this->service->generatePlan('service-provision-continuous', '2026-01-01', '2026-12-31');
         $forecast = $this->service->buildCashflowForecast(10000.0, $plan);
 
         $this->assertCount(12, $forecast);
@@ -173,7 +173,7 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testCashflowForecastPhasedSplit(): void
     {
-        $plan     = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
+        $plan     = $this->service->generatePlan('delivery-in-phases', '2026-02-01', '2027-01-31');
         $forecast = $this->service->buildCashflowForecast(50000.0, $plan);
 
         $this->assertCount(4, $forecast);

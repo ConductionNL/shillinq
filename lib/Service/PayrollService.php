@@ -100,7 +100,7 @@ class PayrollService
             throw new RuntimeException('Werkgever niet gevonden in deze administratie.');
         }
 
-        $periodeType = (string) ($periode['periodType'] ?? 'MAAND');
+        $periodeType = (string) ($periode['periodType'] ?? 'MONTH');
 
         // Resolve the immutable wage-tax table for the period (REQ-PAY-002).
         $tabelRegels = $this->resolveTabelRegels(administrationId: $administrationId, periode: $periode, werknemer: $werknemer);
@@ -162,7 +162,7 @@ class PayrollService
         $svWg     = $this->calculator->premiesSVWerkgever(
             premieloonSV: $premieloonSV,
             periodeType: $periodeType,
-            awfTarief: (string) ($werkgever['awfRate'] ?? 'LAAG'),
+            awfTarief: (string) ($werkgever['awfRate'] ?? 'LOW'),
             kleineWerkgever: true,
             whkTarief: (float) ($werknemer['whkTarief2026'] ?? 0.0),
             wkoTarief: (float) ($werknemer['wkoTarief2026'] ?? 0.0)
@@ -170,7 +170,7 @@ class PayrollService
         $zvw      = $this->calculator->zvwWerkgever(
             premieloonSV: $premieloonSV,
             periodeType: $periodeType,
-            zvwTarief: (string) ($werkgever['zvwRate'] ?? 'LAAG')
+            zvwTarief: (string) ($werkgever['zvwRate'] ?? 'LOW')
         );
         $pensioen = $this->calculator->pensioen(
             grondslag: $basissalaris,
@@ -209,7 +209,7 @@ class PayrollService
             'inhoudingenSV'            => ['totaal_sv_wn' => 0],
             'premiesSVWerkgever'       => $svWg,
             'zvw'                      => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
-            'pensioen'                 => $pensioen,
+            'pension'                 => $pensioen,
             'netPaid'                  => $nettoBetaald,
             'cumulatieven'             => $cumulatieven,
             'vakantieDagenReservering' => ['opgebouwdEuro' => $vakantieOpbouw],
@@ -313,8 +313,8 @@ class PayrollService
             $vrijC      += $this->calculator->toCents(amount: $vrij);
             $svWgC      += $this->calculator->toCents(amount: ($s['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
             $zvwC       += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
-            $pensWgC    += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));
-            $pensWnC    += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));
+            $pensWgC    += $this->calculator->toCents(amount: ($s['pension']['premie_wg_aandeel'] ?? 0));
+            $pensWnC    += $this->calculator->toCents(amount: ($s['pension']['premie_wn_aandeel'] ?? 0));
             $lhC        += $this->calculator->toCents(amount: ($s['loonheffing'] ?? 0));
             $nettoC     += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
         }//end foreach
@@ -520,7 +520,7 @@ class PayrollService
     {
         return match ($periodeType) {
             'WEEK'   => 1.0,
-            '4WEKEN' => 4.0,
+            '4_WEEKS' => 4.0,
             default  => (52.0 / 12.0),
         };
 
@@ -552,16 +552,16 @@ class PayrollService
             }
         }
 
-        $kleur = 'WIT';
-        if (str_starts_with((string) ($werknemer['loonheffingstabel'] ?? 'WIT'), 'GROEN') === true) {
-            $kleur = 'GROEN';
+        $kleur = 'WHITE';
+        if (str_starts_with((string) ($werknemer['loonheffingstabel'] ?? 'WHITE'), 'GREEN') === true) {
+            $kleur = 'GREEN';
         }
 
         $tabellen = $this->rawFindAll(
                 schema: 'LoonheffingTabel2026',
                 filters: [
                     'kleur'      => $kleur,
-                    'period'     => (string) ($periode['periodType'] ?? 'MAAND'),
+                    'period'     => (string) ($periode['periodType'] ?? 'MONTH'),
                     'metKorting' => (bool) ($werknemer['loonheffingstabelKorting'] ?? true),
                 ]
                 );

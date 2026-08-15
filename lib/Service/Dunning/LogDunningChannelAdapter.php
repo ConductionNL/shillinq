@@ -77,13 +77,13 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
 
         $messageId = 'dunning-log-'.bin2hex(random_bytes(8));
         $extras    = [];
-        if ($kanaal === 'AANGETEKENDE_POST') {
+        if ($kanaal === 'REGISTERED_POST') {
             // Synthetic PostNL Track & Trace barcode (3S + 13 digits) for evidence-trail.
             $extras['barcode']     = '3S'.str_pad((string) random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
             $extras['trackingUrl'] = 'https://postnl.nl/tracktrace/'.$extras['barcode'];
         }
 
-        if ($kanaal === 'INCASSOBUREAU_API') {
+        if ($kanaal === 'COLLECTION_AGENCY_API') {
             $extras['dossierId'] = 'dossier-stub-'.bin2hex(random_bytes(6));
         }
 

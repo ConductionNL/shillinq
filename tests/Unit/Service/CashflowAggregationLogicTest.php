@@ -51,7 +51,7 @@ final class CashflowAggregationLogicTest extends TestCase
         self::assertSame(1.0, $this->confidence(12));
         self::assertSame(1.0, $this->confidence(20));
         // Below 5 samples => fallback marker; still compute a confidence value
-        // so calibrate-and-warn UI has the number, but caller marks "LAAG".
+        // so calibrate-and-warn UI has the number, but caller marks "LOW".
         self::assertSame((1.0 / 3.0), $this->confidence(4));
 
     }//end testBetalingsgedragConfidenceFormula()
@@ -169,8 +169,8 @@ final class CashflowAggregationLogicTest extends TestCase
     public function testBufferStatusClassifier(): void
     {
         self::assertSame('CRISIS', $this->bufferStatus(saldo: 2000.0, ondergrens: 2600.0, vooralarm: 7800.0));
-        self::assertSame('VOORALARM', $this->bufferStatus(saldo: 7500.0, ondergrens: 2600.0, vooralarm: 7800.0));
-        self::assertSame('BOVEN_BUFFER', $this->bufferStatus(saldo: 12000.0, ondergrens: 2600.0, vooralarm: 7800.0));
+        self::assertSame('PRE_ALERT', $this->bufferStatus(saldo: 7500.0, ondergrens: 2600.0, vooralarm: 7800.0));
+        self::assertSame('ABOVE_BUFFER', $this->bufferStatus(saldo: 12000.0, ondergrens: 2600.0, vooralarm: 7800.0));
 
     }//end testBufferStatusClassifier()
 
@@ -377,10 +377,10 @@ final class CashflowAggregationLogicTest extends TestCase
         }
 
         if ($saldo < $vooralarm) {
-            return 'VOORALARM';
+            return 'PRE_ALERT';
         }
 
-        return 'BOVEN_BUFFER';
+        return 'ABOVE_BUFFER';
 
     }//end bufferStatus()
 

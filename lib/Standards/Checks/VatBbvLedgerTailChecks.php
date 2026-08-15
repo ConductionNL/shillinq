@@ -363,7 +363,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects
         $jaarstukken['parts']        = ['jaarverslag', 'jaarrekening'];
         $jaarstukken['jaarrekening'] = [
             'overzichtBatenLasten'          => true,
-            'balans'                        => true,
+            'balance'                        => true,
             'rechtmatigheidsverantwoording' => true,
             'accountantsverklaring'         => true,
         ];
@@ -775,7 +775,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects
             return false;
         }
 
-        foreach (['overzichtBatenLasten', 'balans', 'rechtmatigheidsverantwoording', 'accountantsverklaring'] as $key) {
+        foreach (['overzichtBatenLasten', 'balance', 'rechtmatigheidsverantwoording', 'accountantsverklaring'] as $key) {
             if (self::truthyValue($jr[$key] ?? null) === false) {
                 return false;
             }

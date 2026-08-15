@@ -50,7 +50,7 @@
               "subsidiebeschikking",
               "huurovereenkomst",
               "leasing",
-              "overig"
+              "other"
             ],
             "example": "inkooporder",
             "title": "Soort"
@@ -88,13 +88,13 @@
                 "type": "string",
                 "description": "Counterparty kind.",
                 "enum": [
-                  "leverancier",
-                  "werknemer",
-                  "subsidieontvanger",
-                  "verhuurder",
-                  "overig"
+                  "supplier",
+                  "employee",
+                  "grantRecipient",
+                  "landlord",
+                  "other"
                 ],
-                "example": "leverancier",
+                "example": "supplier",
                 "title": "Soort"
               },
               "kvk": {
@@ -159,19 +159,19 @@
             "type": "string",
             "description": "VAT regime applied to the commitment.",
             "enum": [
-              "standaard",
+              "standard",
               "verlegd",
-              "vrijgesteld"
+              "exempt"
             ],
-            "default": "standaard",
-            "example": "standaard",
+            "default": "standard",
+            "example": "standard",
             "title": "BTW Regime"
           },
           "status": {
             "type": "string",
             "description": "Commitment lifecycle state. Derived from the latest Verplichtingsmutatie (D1).",
             "enum": [
-              "concept",
+              "draft",
               "in_goedkeuring",
               "aangegaan",
               "deels_geleverd",
@@ -180,8 +180,8 @@
               "afgesloten",
               "geannuleerd"
             ],
-            "default": "concept",
-            "example": "concept",
+            "default": "draft",
+            "example": "draft",
             "title": "Status"
           },
           "mandaat_toegepast": {
@@ -233,9 +233,9 @@
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Commitment drafted, not yet signed. No budget impact."
             },
@@ -270,14 +270,14 @@
           },
           "transitions": {
             "indienen": {
-              "from": "concept",
+              "from": "draft",
               "to": "in_goedkeuring",
               "label": "Ter goedkeuring aanbieden",
               "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandaatEnforcer (REQ-VPL-002).",
               "requires": "OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval"
             },
             "aangaan": {
-              "from": "concept",
+              "from": "draft",
               "to": "aangegaan",
               "label": "Verplichting aangaan",
               "description": "Sign the commitment within mandaat and budget. Gated by MandaatEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). An aangegaan Verplichtingsmutatie is recorded (REQ-VPL-001/002).",
@@ -290,7 +290,7 @@
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "Verplichtingsmutatie",
-                    "kind": "aangegaan"
+                    "kind": "committed"
                   }
                 }
               ]
@@ -603,17 +603,17 @@
             "type": "string",
             "description": "Kind of mutation.",
             "enum": [
-              "aangegaan",
-              "verhoogd",
-              "verlaagd",
-              "prestatie_ontvangen",
-              "gefactureerd",
-              "betaald",
-              "afgesloten",
-              "geannuleerd",
-              "teruggevorderd"
+              "committed",
+              "increased",
+              "decreased",
+              "performance_received",
+              "invoiced",
+              "paid",
+              "closed",
+              "cancelled",
+              "reclaimed"
             ],
-            "example": "aangegaan",
+            "example": "committed",
             "title": "Soort"
           },
           "amount": {
@@ -740,7 +740,7 @@
                 "subsidiebeschikking",
                 "huurovereenkomst",
                 "leasing",
-                "overig"
+                "other"
               ]
             },
             "example": [
@@ -1174,7 +1174,7 @@
       "totaalbedrag_excl_btw": 7500000,
       "mandaat_toegepast": "M-DIRECTEUR-250K",
       "tegenpartij": {
-        "kind": "leverancier",
+        "kind": "supplier",
         "name": "ICT Leverancier B.V.",
         "kvk": "12345678"
       }
@@ -1212,7 +1212,7 @@
       "totaalbedrag_excl_btw": 20000000,
       "mandaat_toegepast": "M-DIRECTEUR-250K",
       "tegenpartij": {
-        "kind": "leverancier",
+        "kind": "supplier",
         "name": "Facilitair Diensten Groep B.V.",
         "kvk": "87654321"
       }
@@ -1268,7 +1268,7 @@
       "totaalbedrag_excl_btw": 4000000,
       "interne_reference": "Eindafrekening 20% restant nog te ontvangen",
       "tegenpartij": {
-        "kind": "subsidieontvanger",
+        "kind": "grantRecipient",
         "name": "Stichting Cultuurhuis Zuidoost"
       }
     },

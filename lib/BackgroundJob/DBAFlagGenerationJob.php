@@ -297,7 +297,7 @@ class DBAFlagGenerationJob extends TimedJob
             $opdrachten = $objectService
                 ->setRegister($register)
                 ->setSchema('DBAOpdracht')
-                ->findAll(['filters' => ['intakeStatus' => 'ACTIEF'], 'limit' => 1000]);
+                ->findAll(['filters' => ['intakeStatus' => 'ACTIVE'], 'limit' => 1000]);
         } catch (Throwable $e) {
             $this->logger->error(
                 'Shillinq DBAFlagGenerationJob: failed to fetch opdrachten',
@@ -318,8 +318,8 @@ class DBAFlagGenerationJob extends TimedJob
                     objectService: $objectService,
                     register: $register,
                     opdracht: $opdracht,
-                    type: 'HERBEOORDELING_OVERDUE',
-                    ernst: 'MIDDEN',
+                    type: 'REASSESSMENT_OVERDUE',
+                    ernst: 'MEDIUM',
                     details: ['intakeDatum' => (string) ($opdracht['intakeDatum'] ?? '')],
                     bron: 'REQ-DBA-009; Wet DBA jaarlijkse herbeoordeling',
                     actie: 'Vraag een herbeoordeling van de DBA-intake aan de ondernemer.'
@@ -345,8 +345,8 @@ class DBAFlagGenerationJob extends TimedJob
                             objectService: $objectService,
                             register: $register,
                             opdracht: $opdracht,
-                            type: 'MODELOVEREENKOMST_VERLOPEN',
-                            ernst: 'MIDDEN',
+                            type: 'MODELAGREEMENT_EXPIRED',
+                            ernst: 'MEDIUM',
                             details: ['modelId' => $modelId, 'validTo' => (string) ($modelArr['validTo'] ?? '')],
                             bron: 'REQ-DBA-002; Belastingdienst modelovereenkomst-policy',
                             actie: 'Kies een actueel modelovereenkomst en update de opdracht.'
@@ -372,8 +372,8 @@ class DBAFlagGenerationJob extends TimedJob
                     objectService: $objectService,
                     register: $register,
                     opdracht: $opdracht,
-                    type: 'WBA_VERLOPEN',
-                    ernst: 'LAAG',
+                    type: 'WBA_EXPIRED',
+                    ernst: 'LOW',
                     details: ['wbaValidTo' => $wbaGeldigTot],
                     bron: 'REQ-DBA-013; Belastingdienst WBA-policy (1 jaar geldigheid)',
                     actie: 'Vraag een nieuwe WBA-beoordeling aan.'

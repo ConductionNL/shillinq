@@ -173,7 +173,7 @@ class RechtmatigheidWorkflowTest extends TestCase
 
         $filter = ($trigger['filter'] ?? []);
         self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
-        self::assertSame(expected: 'fout', actual: ($filter['kind'] ?? null));
+        self::assertSame(expected: 'error', actual: ($filter['kind'] ?? null));
 
         $groups = [];
         foreach (($notif['recipients'] ?? []) as $recipient) {
@@ -542,7 +542,7 @@ class RechtmatigheidWorkflowTest extends TestCase
      */
     public function testJaarrekeningExportGateOnlyAcceptsDefinitief(): void
     {
-        foreach (['concept', 'vastgesteld_college', 'behandeld_raad'] as $blockedStatus) {
+        foreach (['draft', 'vastgesteld_college', 'behandeld_raad'] as $blockedStatus) {
             $result = $this->guard->canExportParagraaf(
                 paragraaf: ['status' => $blockedStatus, 'financialYear' => 2026]
             );
@@ -553,7 +553,7 @@ class RechtmatigheidWorkflowTest extends TestCase
         }
 
         $definitief = $this->guard->canExportParagraaf(
-            paragraaf: ['status' => 'definitief', 'financialYear' => 2026]
+            paragraaf: ['status' => 'final', 'financialYear' => 2026]
         );
         self::assertTrue(
             condition: $definitief,
@@ -565,7 +565,7 @@ class RechtmatigheidWorkflowTest extends TestCase
         $paragraafSchema = $this->schema(name: 'Rechtmatigheidsparagraaf');
         $statusEnum      = ((($paragraafSchema['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
         self::assertSame(
-            expected: ['concept', 'vastgesteld_college', 'behandeld_raad', 'definitief'],
+            expected: ['draft', 'vastgesteld_college', 'behandeld_raad', 'final'],
             actual: $statusEnum,
             message: 'Paragraaf must declare the four-state lifecycle for cross-app subscription.'
         );

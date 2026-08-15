@@ -18,7 +18,7 @@
 			"concurrenten": ["Indaver Nederland", "AVR Afvalverwerking", "Renewi Nederland"],
 			"afnemers": ["Cosun Beet Company", "Voorbeeld Industries BV"],
 			"startDatum": "2021-04-01",
-			"kostprijsMethode": "integrale-kostprijs-art-25i",
+			"kostprijsMethode": "integral-costprice-art-25i",
 			"costCentreCode": "K-SBV-001",
 			"kostendragerCode": "D-MO-SBV-001",
 			"isExempted": false,

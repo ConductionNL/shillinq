@@ -104,7 +104,7 @@ final class ProgrammabegrotingExporterTest extends TestCase
             begroting: [
                 'begrotingsjaar'      => 2027,
                 'organisationType'    => 'gemeente',
-                'status'              => 'vastgesteld',
+                'status'              => 'determined',
                 'vaststellingsDatum'  => '2026-11-09',
                 'sluitendStructureel' => true,
                 'sluitendReëel'       => true,

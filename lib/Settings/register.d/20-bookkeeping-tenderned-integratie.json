@@ -98,8 +98,8 @@
           "opdrachttype": {
             "type": "string",
             "enum": [
-              "levering-in-fases",
-              "dienstverlening-doorlopend",
+              "delivery-in-phases",
+              "service-provision-continuous",
               "other"
             ],
             "description": "Contract type used to select the milestone-plan template on activation (REQ-003).",
@@ -380,21 +380,21 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "active",
               "archived"
             ],
             "description": "Obligation lifecycle (design D2). concept: imported, awaiting contractmanager enrichment + activation; active: budget locked; archived: closed/rolled back.",
-            "default": "concept",
-            "example": "concept",
+            "default": "draft",
+            "example": "draft",
             "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Imported obligation awaiting contractmanager enrichment (kostenplaats, grootboekrekening). Does not lock budget (design D2)."
             },
@@ -409,7 +409,7 @@
           },
           "transitions": {
             "activeren": {
-              "from": "concept",
+              "from": "draft",
               "to": "active",
               "label": "Activeren",
               "description": "Activate the obligation after enrichment. Requires kostenplaats and grootboekrekening to be set (design D2); generates the milestone plan when an opdrachttype is supplied (REQ-003).",
@@ -648,7 +648,7 @@
       "termStart": "2026-02-01",
       "termEnd": "2027-01-31",
       "gegundeLeverancier": "76741850 Conduction B.V.",
-      "opdrachttype": "dienstverlening-doorlopend",
+      "opdrachttype": "service-provision-continuous",
       "administrationId": "adm-consultancy-nl",
       "status": "gegund"
     },
@@ -672,7 +672,7 @@
       "termStart": "2026-03-01",
       "termEnd": "2028-02-29",
       "gegundeLeverancier": "76741850 Conduction B.V.",
-      "opdrachttype": "levering-in-fases",
+      "opdrachttype": "delivery-in-phases",
       "administrationId": "adm-consultancy-nl",
       "status": "gegund"
     },

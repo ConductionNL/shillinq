@@ -362,7 +362,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
             return '1jaar-onbetaald';
         }
 
-        return 'overig';
+        return 'other';
 
     }//end deriveWriteOffReason()
 

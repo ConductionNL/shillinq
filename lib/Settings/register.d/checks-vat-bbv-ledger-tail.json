@@ -266,8 +266,8 @@
             "description": "Type of NL public body the BBV governs: gemeente (municipality), provincie (province) or waterschap (water authority).",
             "enum": [
               "gemeente",
-              "provincie",
-              "waterschap"
+              "province",
+              "waterAuthority"
             ],
             "example": "gemeente",
             "title": "Entity Type"

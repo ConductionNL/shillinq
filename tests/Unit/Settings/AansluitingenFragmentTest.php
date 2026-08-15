@@ -112,7 +112,7 @@ final class AansluitingenFragmentTest extends TestCase
             self::assertArrayHasKey($field, $schema['properties'], "Missing field $field");
         }
 
-        self::assertContains('btw-ledger-aangifte', $schema['properties']['aansluitingType']['enum']);
+        self::assertContains('vat-ledger-return', $schema['properties']['aansluitingType']['enum']);
         self::assertContains('subledger-gl-control', $schema['properties']['aansluitingType']['enum']);
         self::assertArrayHasKey('x-openregister-rbac', $schema);
     }//end testAansluitingSchemaShape()
@@ -187,7 +187,7 @@ final class AansluitingenFragmentTest extends TestCase
         }
 
         self::assertSame(count($slugs), count(array_unique($slugs)), 'Seed slugs must be unique');
-        self::assertContains('btw-ledger-aangifte', $aansluitingTypes);
+        self::assertContains('vat-ledger-return', $aansluitingTypes);
         self::assertContains('subledger-gl-control', $aansluitingTypes);
         self::assertContains('equal', $relationships);
         self::assertContains('equal-with-sign-flip', $relationships);

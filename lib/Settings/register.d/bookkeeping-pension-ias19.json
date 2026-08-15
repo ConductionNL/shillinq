@@ -63,12 +63,12 @@
             "type": "string",
             "description": "Governing pension regulatory framework.",
             "enum": [
-              "Pensioenwet",
+              "PensionsAct",
               "BPW",
-              "vrijgesteld",
-              "IORP-II-buitenland"
+              "exempt",
+              "iorp-ii-abroad"
             ],
-            "example": "Pensioenwet",
+            "example": "PensionsAct",
             "title": "Regulatory Framework"
           },
           "funded": {
@@ -1193,7 +1193,7 @@
         "planName": "NL Standard DB Regeling",
         "planType": "DB",
         "country": "NL",
-        "regulatoryFramework": "Pensioenwet",
+        "regulatoryFramework": "PensionsAct",
         "funded": true,
         "provider": "Pensioenfonds Industrie",
         "inceptionDate": "2010-01-01",
@@ -1217,7 +1217,7 @@
         "planName": "NL Standard DC Regeling",
         "planType": "DC",
         "country": "NL",
-        "regulatoryFramework": "Pensioenwet",
+        "regulatoryFramework": "PensionsAct",
         "funded": true,
         "provider": "ABP",
         "inceptionDate": "2018-01-01",

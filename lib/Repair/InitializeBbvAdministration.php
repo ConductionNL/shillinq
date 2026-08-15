@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  */
 class InitializeBbvAdministration implements IRepairStep
 {
-    private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
+    private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'province', 'waterAuthority'];
 
     private const RESERVE_TAAKVELD = '0.10';
 

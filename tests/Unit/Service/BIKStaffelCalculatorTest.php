@@ -158,7 +158,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         );
 
         self::assertSame(0.1015, $r['rate']);
-        self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $r['type']);
+        self::assertSame('COMMERCIAL_INTEREST_B2_B_6_119_A_BW', $r['type']);
         self::assertSame(22, $r['days']);
         // 840000 × 0.1015 × 22 / 365 = 5138.96 → 5139 cents.
         self::assertEqualsWithDelta(51.39, $r['amount'], 0.01);
@@ -186,7 +186,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         );
 
         self::assertSame(0.04, $r['rate']);
-        self::assertSame('WETTELIJKE_RENTE_B2C_6_119_BW', $r['type']);
+        self::assertSame('STATUTORY_INTEREST_B2_C_6_119_BW', $r['type']);
         self::assertSame(31, $r['days']);
         // 82000 × 0.04 × 31 / 365 = 278.6 → 279 cents.
         self::assertEqualsWithDelta(2.79, $r['amount'], 0.01);
@@ -247,7 +247,7 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame('B2B', $body['partyType']);
         self::assertSame(8400.0, $body['hoofdsom']);
         self::assertSame(795.0, $body['berekening']['applied']);
-        self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $body['wettelijkeRente']['type']);
+        self::assertSame('COMMERCIAL_INTEREST_B2_B_6_119_A_BW', $body['wettelijkeRente']['type']);
         // 8400 + 795 (no BTW surcharge, creditor can offset) + 51.39 rente = 9246.39.
         self::assertEqualsWithDelta(9246.39, $body['totalDue'], 0.01);
 

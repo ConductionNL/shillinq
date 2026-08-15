@@ -72,7 +72,7 @@ class VpbAangifteGuard
      *
      * @var array<string>
      */
-    private const VASTGESTELDE_STATES = ['vastgesteld', 'gedeponeerd'];
+    private const VASTGESTELDE_STATES = ['determined', 'gedeponeerd'];
 
     /**
      * Aangifte states from which a DefinitieveAanslag may be marked ontvangen.

@@ -204,7 +204,7 @@
       "name": "Ruimte",
       "description": "Ruimtelijke ordening, gebiedsontwikkeling en wonen conform de BBV-provincies programma-indeling.",
       "programmeStructure": "taskField",
-      "bbvVariant": "provincie",
+      "bbvVariant": "province",
       "administrationId": "template"
     },
     {
@@ -217,7 +217,7 @@
       "name": "Mobiliteit",
       "description": "Provinciale wegen, openbaar vervoer en bereikbaarheid conform de BBV-provincies programma-indeling.",
       "programmeStructure": "taskField",
-      "bbvVariant": "provincie",
+      "bbvVariant": "province",
       "administrationId": "template"
     },
     {
@@ -230,7 +230,7 @@
       "name": "Water",
       "description": "Waterbeheer, waterveiligheid en grondwater conform de BBV-provincies programma-indeling.",
       "programmeStructure": "taskField",
-      "bbvVariant": "provincie",
+      "bbvVariant": "province",
       "administrationId": "template"
     },
     {
@@ -243,7 +243,7 @@
       "name": "Milieu",
       "description": "Milieubeleid, vergunningverlening en handhaving conform de BBV-provincies programma-indeling.",
       "programmeStructure": "taskField",
-      "bbvVariant": "provincie",
+      "bbvVariant": "province",
       "administrationId": "template"
     },
     {
@@ -256,7 +256,7 @@
       "name": "Cultuur",
       "description": "Cultuur, erfgoed en monumenten conform de BBV-provincies programma-indeling.",
       "programmeStructure": "taskField",
-      "bbvVariant": "provincie",
+      "bbvVariant": "province",
       "administrationId": "template"
     },
     {
@@ -269,7 +269,7 @@
       "name": "Economie",
       "description": "Economische ontwikkeling, arbeidsmarkt en innovatie conform de BBV-provincies programma-indeling.",
       "programmeStructure": "taskField",
-      "bbvVariant": "provincie",
+      "bbvVariant": "province",
       "administrationId": "template"
     },
     {
@@ -282,7 +282,7 @@
       "name": "Bestuur",
       "description": "Bestuur, organisatie en algemene dekkingsmiddelen conform de BBV-provincies programma-indeling.",
       "programmeStructure": "taskField",
-      "bbvVariant": "provincie",
+      "bbvVariant": "province",
       "administrationId": "template"
     },
     {

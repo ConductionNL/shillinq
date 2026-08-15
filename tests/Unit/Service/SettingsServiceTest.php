@@ -823,7 +823,7 @@ class SettingsServiceTest extends TestCase
         self::assertSame(JSON_ERROR_NONE, json_last_error());
         self::assertNotEmpty($data['tariffs']);
 
-        $validCategories = ['standaard', 'verlaagd', 'nul', 'vrijgesteld', 'verleggingsregeling'];
+        $validCategories = ['standard', 'verlaagd', 'nul', 'exempt', 'verleggingsregeling'];
         foreach ($data['tariffs'] as $tariff) {
             foreach (['code', 'rate', 'description', 'category', 'effectiveFrom'] as $requiredField) {
                 self::assertArrayHasKey(

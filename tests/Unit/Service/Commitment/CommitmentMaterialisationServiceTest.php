@@ -475,7 +475,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         $bevindingSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Rechtmatigheidsbevinding'));
         self::assertCount(1, $bevindingSaves);
-        self::assertSame('fout', $bevindingSaves[0][1]['kind']);
+        self::assertSame('error', $bevindingSaves[0][1]['kind']);
         self::assertSame('begroting', $bevindingSaves[0][1]['criterium']);
 
     }//end testOverrideMandateMaterialisesAndRecordsAfwijking()
@@ -572,7 +572,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                         'administrationId' => 'adm-1',
                         'mandaatcode'      => 'M-DIRECTEUR-250K',
                         'maximumbedrag'    => 25000000,
-                        'kind_commitment'  => ['leasing', 'overig', 'huurovereenkomst'],
+                        'kind_commitment'  => ['leasing', 'other', 'huurovereenkomst'],
                         'is_override'      => false,
                         'valid_from'       => '2020-01-01',
                         'valid_to'         => '2999-12-31',
@@ -616,7 +616,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
             'administrationId' => 'adm-1',
             'mandaatcode'      => 'M-DIRECTEUR-250K',
             'maximumbedrag'    => 25000000,
-            'kind_commitment'  => ['overig'],
+            'kind_commitment'  => ['other'],
             'is_override'      => false,
             'valid_from'       => '2020-01-01',
             'valid_to'         => '2999-12-31',
@@ -646,7 +646,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $result = $service->materialiseFromContract(contract: $contract);
 
         self::assertNotNull($result);
-        self::assertSame('overig', $result['kind']);
+        self::assertSame('other', $result['kind']);
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
         self::assertCount(2, $regelSaves);
         // EUR 20.000,00 = 2.000.000 cents, split evenly across 2026 + 2027.

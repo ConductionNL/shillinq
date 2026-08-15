@@ -419,7 +419,7 @@ final class VoorzieningenClaimsFragmentTest extends TestCase
             }
         }
 
-        foreach (['garantie', 'milieu', 'claims'] as $type) {
+        foreach (['guarantee', 'environment', 'claims'] as $type) {
             self::assertArrayHasKey($type, $provisionTypes, "Seed must include provisionType=$type");
         }
 

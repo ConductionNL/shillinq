@@ -92,7 +92,7 @@ final class UrenNormDeterminationService
             'doelNorm'             => $norm,
             'normBasis'            => $grondslag,
             'lopendeUren'          => 0.0,
-            'thresholdStatus'      => 'OP_KOERS',
+            'thresholdStatus'      => 'ON_RATE',
             'grotendeelsCriterium' => $grotendeels,
         ];
 

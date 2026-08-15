@@ -63,9 +63,9 @@
           "indieningKanaal": {
             "type": "string",
             "enum": [
-              "DIGID_ZELFSERVICE",
+              "DIGID_SELF_SERVICE",
               "SBR_DIGIPOORT_BECON",
-              "PAPIER"
+              "PAPER"
             ],
             "nullable": true,
             "description": "Submission channel (REQ-IB-008).",
@@ -74,13 +74,13 @@
           "taxReturnType": {
             "type": "string",
             "enum": [
-              "P_FORMULIER",
-              "W_FORMULIER",
-              "M_FORMULIER",
-              "C_FORMULIER",
-              "CORRECTIE_SUPPLETIE"
+              "P_FORM",
+              "W_FORM",
+              "M_FORM",
+              "C_FORM",
+              "CORRECTION_SUPPLEMENT"
             ],
-            "default": "P_FORMULIER",
+            "default": "P_FORM",
             "description": "Form type; auto-detected from profiel attributes (REQ-IB-012 routing).",
             "title": "Aangifte Type"
           },
@@ -104,11 +104,11 @@
               "verdeelsleutel": {
                 "type": "string",
                 "enum": [
-                  "OPTIMAAL_BEREKEND",
-                  "HANDMATIG",
-                  "GEEN"
+                  "OPTIMAL_CALCULATED",
+                  "MANUAL",
+                  "NONE"
                 ],
-                "default": "GEEN",
+                "default": "NONE",
                 "title": "Verdeelsleutel",
                 "description": "The verdeelsleutel."
               }
@@ -971,12 +971,12 @@
           "bijtellingsCategorie": {
             "type": "string",
             "enum": [
-              "REGULIER_22PCT",
+              "REGULAR_22_PCT",
               "EV_TIERED_17_22PCT",
               "ZERO_EMISSION",
               "OTHER"
             ],
-            "default": "REGULIER_22PCT",
+            "default": "REGULAR_22_PCT",
             "title": "Bijtellings Categorie",
             "description": "The date and time for bijtellings categorie."
           },
@@ -1022,10 +1022,10 @@
               "schemeUntilBusiness": {
                 "type": "string",
                 "enum": [
-                  "FORFAIT_BIJTELLING",
+                  "FLAT_RATE_BENEFITINKIND",
                   "ACTUAL_DEDUCTION"
                 ],
-                "default": "FORFAIT_BIJTELLING",
+                "default": "FLAT_RATE_BENEFITINKIND",
                 "title": "Regeling Tot Zakelijk",
                 "description": "The regeling tot zakelijk."
               }
@@ -1459,8 +1459,8 @@
       "bsn": "******789",
       "taxYear": 2025,
       "status": "GEVALIDEERD",
-      "indieningKanaal": "DIGID_ZELFSERVICE",
-      "taxReturnType": "P_FORMULIER",
+      "indieningKanaal": "DIGID_SELF_SERVICE",
+      "taxReturnType": "P_FORM",
       "profitFromEnterprise": 47820.0,
       "ondernemersaftrek": 5616.0,
       "mkbProfitExemption": 5618.05,
@@ -1608,7 +1608,7 @@
       "kenteken": "12-ABC-3",
       "cataloguswaardeNieuw": 38000.0,
       "datumEersteRegistratie": "2024-04-15",
-      "bijtellingsCategorie": "REGULIER_22PCT",
+      "bijtellingsCategorie": "REGULAR_22_PCT",
       "bijtellingsPct": 0.22,
       "benefitInKindAmount": 8360.0,
       "eigenBijdrage": 0,
@@ -1616,7 +1616,7 @@
       "kilometerAdministratie": {
         "aanwezig": false,
         "priveKilometers": null,
-        "schemeUntilBusiness": "FORFAIT_BIJTELLING"
+        "schemeUntilBusiness": "FLAT_RATE_BENEFITINKIND"
       },
       "basis": "art. 3.20 Wet IB 2001",
       "administrationId": "adm-consultancy-nl"

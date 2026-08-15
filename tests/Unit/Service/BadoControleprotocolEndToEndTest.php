@@ -174,7 +174,7 @@ final class BadoControleprotocolEndToEndTest extends TestCase
                 schema: 'ToleranceMatrix',
                 rows: [
                     $this->toleranceRow(protocolId: $protocolId, topic: 'Sociaal Domein'),
-                    $this->toleranceRow(protocolId: $protocolId, topic: 'Bedrijfsvoering'),
+                    $this->toleranceRow(protocolId: $protocolId, topic: 'Operations'),
                 ]
                 );
 
@@ -282,7 +282,7 @@ final class BadoControleprotocolEndToEndTest extends TestCase
                         'findingType'        => 'getrouwheid',
                         'getrouwheid'        => 'misstated',
                         'amount'             => 35000.0,
-                        'topic'              => 'Bedrijfsvoering',
+                        'topic'              => 'Operations',
                         'narrative'          => 'Materiële afwijking jaarafsluiting',
                         'controllerResponse' => 'Akkoord — opgenomen in jaarrekening-aanpassing.',
                         'auditorConclusion'  => 'accepted',
@@ -307,8 +307,8 @@ final class BadoControleprotocolEndToEndTest extends TestCase
         self::assertContains($bytopic['Sociaal Domein']['verdict'], ['acceptable', 'qualified']);
 
         // Bedrijfsvoering: 35k >= 30k qualification ceiling → adverse.
-        self::assertArrayHasKey('Bedrijfsvoering', $bytopic);
-        self::assertSame('adverse', $bytopic['Bedrijfsvoering']['verdict']);
+        self::assertArrayHasKey('Operations', $bytopic);
+        self::assertSame('adverse', $bytopic['Operations']['verdict']);
 
         // 11. Mechanically derived opinion is one of the four BADO outcomes.
         self::assertContains(

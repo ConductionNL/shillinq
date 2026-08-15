@@ -9,7 +9,7 @@
         "slug": "modov-bd-2024-tussenkomstvrij-v3"
       },
       "name": "Tussenkomstvrij - algemeen (Belastingdienst v3 - 2024)",
-      "source": "BELASTINGDIENST_GOEDGEKEURD",
+      "source": "TAXAUTHORITY_APPROVED",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
       "goedkeuringDatum": "2024-04-12",
       "validTo": "2029-04-12",
@@ -44,7 +44,7 @@
         "slug": "modov-bd-2023-leverancier-zelfstandig-v2"
       },
       "name": "Leverancier-zelfstandig (Belastingdienst v2 - 2023)",
-      "source": "BELASTINGDIENST_GOEDGEKEURD",
+      "source": "TAXAUTHORITY_APPROVED",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/leverancier-zelfstandig",
       "goedkeuringDatum": "2023-06-01",
       "validTo": "2028-06-01",
@@ -74,7 +74,7 @@
         "slug": "modov-bd-2024-tussenkomst-v1"
       },
       "name": "Tussenkomst (Belastingdienst v1 - 2024)",
-      "source": "BELASTINGDIENST_GOEDGEKEURD",
+      "source": "TAXAUTHORITY_APPROVED",
       "publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomst",
       "goedkeuringDatum": "2024-02-15",
       "validTo": "2029-02-15",
@@ -209,13 +209,13 @@
             "description": "Status van de DBA-intake voor deze opdracht.",
             "enum": [
               "DRAFT",
-              "INTAKE_VEREIST",
-              "INTAKE_VOLTOOID",
-              "ACTIEF",
-              "BEEINDIGD"
+              "INTAKE_REQUIRED",
+              "INTAKE_COMPLETED",
+              "ACTIVE",
+              "ENDED"
             ],
             "default": "DRAFT",
-            "example": "INTAKE_VOLTOOID",
+            "example": "INTAKE_COMPLETED",
             "title": "Intake Status"
           },
           "intakeDatum": {
@@ -239,14 +239,14 @@
             "type": "string",
             "description": "Risico-band afgeleid van actueleRisicoscore per REQ-DBA-003.",
             "enum": [
-              "LAAG",
-              "LAAG_MIDDEN",
-              "MIDDEN_HOOG",
-              "HOOG",
-              "VERKORT_LAGE_DREMPEL"
+              "LOW",
+              "LOW_MIDDEN",
+              "MIDDEN_HIGH",
+              "HIGH",
+              "ABBREVIATED_LOW_THRESHOLD"
             ],
-            "default": "LAAG",
-            "example": "LAAG_MIDDEN",
+            "default": "LOW",
+            "example": "LOW_MIDDEN",
             "title": "Risico Niveau"
           },
           "openFlags": {
@@ -270,12 +270,12 @@
             "nullable": true,
             "description": "Geuploade Belastingdienst-WBA-beoordeling (indicatie binnen/buiten dienstbetrekking) per REQ-DBA-013.",
             "enum": [
-              "BUITEN_DIENSTBETREKKING",
-              "BINNEN_DIENSTBETREKKING",
-              "GEEN_OORDEEL",
-              "NIET_VAN_TOEPASSING"
+              "OUTSIDE_EMPLOYMENT",
+              "WITHIN_EMPLOYMENT",
+              "NONE_OPINION",
+              "NON_FROM_APPLICATION"
             ],
-            "example": "BUITEN_DIENSTBETREKKING",
+            "example": "OUTSIDE_EMPLOYMENT",
             "title": "Wba Beoordeling Resultaat"
           },
           "wbaValidTo": {
@@ -297,11 +297,11 @@
             "type": "string",
             "description": "ZZP-perspectief (opdrachtnemer) of opdrachtgever-perspectief (inhuur-flow), REQ-DBA-010.",
             "enum": [
-              "OPDRACHTNEMER",
-              "OPDRACHTGEVER"
+              "CONTRACTOR",
+              "CLIENT"
             ],
-            "default": "OPDRACHTNEMER",
-            "example": "OPDRACHTNEMER",
+            "default": "CONTRACTOR",
+            "example": "CONTRACTOR",
             "title": "Perspectief"
           },
           "retentieDeadline": {
@@ -321,41 +321,41 @@
               "label": "Concept",
               "description": "Opdracht aangemaakt, intake nog niet vereist (geen factuur opgesteld)."
             },
-            "INTAKE_VEREIST": {
+            "INTAKE_REQUIRED": {
               "label": "Intake vereist",
               "description": "Eerste factuur staat op stapel; DBA-intake moet eerst worden voltooid (REQ-DBA-001)."
             },
-            "INTAKE_VOLTOOID": {
+            "INTAKE_COMPLETED": {
               "label": "Intake voltooid",
               "description": "DBA-intake is afgerond; opdracht is gereed om actief te starten."
             },
-            "ACTIEF": {
+            "ACTIVE": {
               "label": "Actief",
               "description": "Opdracht loopt; periodieke monitoring (REQ-DBA-004/005/006) is actief."
             },
-            "BEEINDIGD": {
+            "ENDED": {
               "label": "Beeindigd",
               "description": "Opdracht is afgesloten; evidence-trail gesloten en retentie-klok loopt (REQ-DBA-018)."
             }
           },
           "transitions": {
             "DRAFT": [
-              "INTAKE_VEREIST",
-              "BEEINDIGD"
+              "INTAKE_REQUIRED",
+              "ENDED"
             ],
-            "INTAKE_VEREIST": [
-              "INTAKE_VOLTOOID",
+            "INTAKE_REQUIRED": [
+              "INTAKE_COMPLETED",
               "DRAFT",
-              "BEEINDIGD"
+              "ENDED"
             ],
-            "INTAKE_VOLTOOID": [
-              "ACTIEF",
-              "BEEINDIGD"
+            "INTAKE_COMPLETED": [
+              "ACTIVE",
+              "ENDED"
             ],
-            "ACTIEF": [
-              "BEEINDIGD"
+            "ACTIVE": [
+              "ENDED"
             ],
-            "BEEINDIGD": []
+            "ENDED": []
           },
           "preconditions": {
             "save": "OCA\\Shillinq\\Guard\\DBAOpdrachtGuard::validateOnSave"
@@ -568,11 +568,11 @@
               "duurRelatie": {
                 "type": "string",
                 "enum": [
-                  "MINDER_DAN_3_MAANDEN",
-                  "3_TOT_6_MAANDEN",
-                  "6_TOT_12_MAANDEN",
-                  "1_TOT_2_JAAR",
-                  "MEER_DAN_2_JAAR"
+                  "MINDER_DAN_3_MONTHS",
+                  "3_TO_6_MONTHS",
+                  "6_TO_12_MONTHS",
+                  "1_TO_2_YEAR",
+                  "MEER_DAN_2_YEAR"
                 ],
                 "description": "Duur van de opdracht-relatie.",
                 "title": "Duur Relatie"
@@ -617,13 +617,13 @@
             "nullable": true,
             "description": "Toegepast branchekader voor extra interpretatie (REQ-DBA-015).",
             "enum": [
-              "GEEN",
+              "NONE",
               "ICT",
-              "ZORG",
-              "BOUW",
-              "ONDERWIJS"
+              "CARE",
+              "CONSTRUCTION",
+              "EDUCATION"
             ],
-            "default": "GEEN",
+            "default": "NONE",
             "title": "Branchekader"
           },
           "totalScore": {
@@ -760,12 +760,12 @@
           "source": {
             "type": "string",
             "enum": [
-              "BELASTINGDIENST_GOEDGEKEURD",
-              "EIGEN_VARIANT",
-              "BRANCHE_VERENIGING"
+              "TAXAUTHORITY_APPROVED",
+              "OWN_VARIANT",
+              "SECTOR_ASSOCIATION"
             ],
             "description": "Herkomst van het model.",
-            "example": "BELASTINGDIENST_GOEDGEKEURD",
+            "example": "TAXAUTHORITY_APPROVED",
             "title": "Bron"
           },
           "publicatieURL": {
@@ -906,19 +906,19 @@
           "type": {
             "type": "string",
             "enum": [
-              "FACTUURFREQUENTIE_LIJKT_OP_LOON",
-              "CONCENTRATIE_WAARSCHUWING",
-              "LANGJARIGE_HOOFDRELATIE",
-              "VBAR_GRENS_ONDERSCHREDEN",
-              "VERVANGBAARHEID_THEORETISCH",
-              "MULTIPLE_ENGAGEMENT_ZELFDE_CONCERN",
-              "ICT_INTEGRATIE_IN_TEAM",
-              "MODELOVEREENKOMST_VERLOPEN",
-              "HERBEOORDELING_OVERDUE",
-              "WBA_VERLOPEN"
+              "INVOICE_FREQUENCY_APPEARS_ON_PAY",
+              "CONCENTRATION_WARNING",
+              "MULTI_YEAR_MAIN_RELATION",
+              "VBAR_GRENS_BELOW_THRESHOLD",
+              "REPLACEABILITY_THEORETICAL",
+              "MULTIPLE_ENGAGEMENT_SAME_CONCERN",
+              "ICT_INTEGRATION_IN_TEAM",
+              "MODELAGREEMENT_EXPIRED",
+              "REASSESSMENT_OVERDUE",
+              "WBA_EXPIRED"
             ],
             "description": "Type van de flag.",
-            "example": "FACTUURFREQUENTIE_LIJKT_OP_LOON",
+            "example": "INVOICE_FREQUENCY_APPEARS_ON_PAY",
             "title": "Type"
           },
           "detectieMoment": {
@@ -931,12 +931,12 @@
           "ernst": {
             "type": "string",
             "enum": [
-              "LAAG",
-              "MIDDEN",
-              "HOOG"
+              "LOW",
+              "MEDIUM",
+              "HIGH"
             ],
             "description": "Ernst van de bevinding.",
-            "example": "MIDDEN",
+            "example": "MEDIUM",
             "title": "Ernst"
           },
           "details": {
@@ -1149,8 +1149,8 @@
                 "type": "string",
                 "enum": [
                   "VEILIG",
-                  "WAARSCHUWING",
-                  "KRITIEK"
+                  "WARNING",
+                  "CRITICAL"
                 ],
                 "description": "Status van de concentratie.",
                 "title": "Status"
@@ -1226,12 +1226,12 @@
           "overallRisk": {
             "type": "string",
             "enum": [
-              "LAAG",
-              "MIDDEN",
-              "HOOG"
+              "LOW",
+              "MEDIUM",
+              "HIGH"
             ],
             "description": "Geaggregeerd portfolio-risico-niveau.",
-            "example": "MIDDEN",
+            "example": "MEDIUM",
             "title": "Overall Risico"
           }
         },
@@ -1310,16 +1310,16 @@
                 "type": {
                   "type": "string",
                   "enum": [
-                    "GETEKENDE_OVEREENKOMST",
-                    "FACTUUR_EERSTE",
-                    "FACTUUR_LAATSTE",
-                    "FACTUUR_TUSSENTIJDS",
-                    "URENSTAAT_KWARTAAL",
+                    "SIGNED_AGREEMENT",
+                    "INVOICE_FIRST",
+                    "INVOICE_LAST",
+                    "INVOICE_INTERIM",
+                    "TIMESHEET_QUARTER",
                     "EMAIL_ARCHIVE",
-                    "WBA_UITKOMST",
-                    "CORRECTIE_BRIEF",
-                    "INTERN_MEMO",
-                    "OVERIG"
+                    "WBA_OUTCOME",
+                    "CORRECTION_BRIEF",
+                    "INTERNAL_MEMO",
+                    "OTHER"
                   ],
                   "description": "Type van het stuk.",
                   "title": "Type"

@@ -491,7 +491,7 @@ class FoldIntoOrder implements IRepairStep
             'orderDate'        => $this->toDateTime($src['requestDate'] ?? ($src['awardDate'] ?? null)),
             'totalAmount'      => ($grantedAmount === null ? null : (float) $grantedAmount),
             'description'      => $this->stringOrNull($src['purposeDescription'] ?? ($src['notes'] ?? null)),
-            'state'            => (string) ($src['state'] ?? 'aanvraag'),
+            'state'            => (string) ($src['state'] ?? 'request'),
             'subsidy'          => [
                 'subsidyNumber'           => $this->stringOrNull($src['subsidyNumber'] ?? null),
                 'schemeName'              => $this->firstNonEmpty([($src['schemeName'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidyName'] ?? null)]),

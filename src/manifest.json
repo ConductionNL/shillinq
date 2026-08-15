@@ -11762,7 +11762,7 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"filter": {
-					"state": "verleend"
+					"state": "granted"
 				},
 				"columns": [
 					{
@@ -11795,7 +11795,7 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"filter": {
-					"state": "teruggevorderd"
+					"state": "reclaimed"
 				},
 				"columns": [
 					{
@@ -18759,7 +18759,7 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"defaultFilter": {
-					"state": "teruggevorderd"
+					"state": "reclaimed"
 				},
 				"visibility": {
 					"field": "administrationType",

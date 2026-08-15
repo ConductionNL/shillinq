@@ -102,7 +102,7 @@ final class AnnualReportSchemaTest extends TestCase
     {
         $schema = $this->fragment['components']['schemas']['AnnualReport'];
         self::assertSame(
-            ['concept', 'opgemaakt', 'in-review', 'vastgesteld', 'gedeponeerd'],
+            ['draft', 'opgemaakt', 'in-review', 'determined', 'gedeponeerd'],
             $schema['properties']['status']['enum']
         );
 
@@ -119,9 +119,9 @@ final class AnnualReportSchemaTest extends TestCase
         $schema    = $this->fragment['components']['schemas']['AnnualReport'];
         $lifecycle = $schema['x-openregister-lifecycle'];
         self::assertSame('status', $lifecycle['field']);
-        self::assertSame('concept', $lifecycle['initialState']);
+        self::assertSame('draft', $lifecycle['initialState']);
 
-        foreach (['concept', 'opgemaakt', 'in-review', 'vastgesteld', 'gedeponeerd'] as $state) {
+        foreach (['draft', 'opgemaakt', 'in-review', 'determined', 'gedeponeerd'] as $state) {
             self::assertArrayHasKey($state, $lifecycle['states'], "Missing state: $state");
         }
 
@@ -153,7 +153,7 @@ final class AnnualReportSchemaTest extends TestCase
     {
         $schema = $this->fragment['components']['schemas']['IncomeStatement'];
         self::assertSame(
-            ['A-categorisch', 'E-functioneel'],
+            ['a-categorical', 'e-functional'],
             $schema['properties']['model']['enum']
         );
 
@@ -181,7 +181,7 @@ final class AnnualReportSchemaTest extends TestCase
     {
         $schema = $this->fragment['components']['schemas']['ReviewWorkflow'];
         self::assertSame(
-            ['concept', 'in-review', 'vastgesteld', 'gedeponeerd'],
+            ['draft', 'in-review', 'determined', 'gedeponeerd'],
             $schema['properties']['huidigStap']['enum']
         );
 

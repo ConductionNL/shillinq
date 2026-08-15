@@ -186,7 +186,7 @@ class ProvisionGuard
 
             // REQ-PROV-005 herstructurering plan timeliness + communication.
             $provisionType = (string) ($provision['provisionType'] ?? '');
-            if ($provisionType === 'herstructurering') {
+            if ($provisionType === 'restructuring') {
                 if ($this->canActivateHerstructurering(provision: $provision) === false) {
                     return false;
                 }

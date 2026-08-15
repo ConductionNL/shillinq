@@ -83,7 +83,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase
                 ]
                 );
 
-        self::assertSame('definitief', $definitief['status']);
+        self::assertSame('final', $definitief['status']);
         self::assertSame('2025-YTD', $definitief['period']);
         self::assertSame(100_000.00, $definitief['totaleKosten']);
         self::assertSame(48_000.00, $definitief['componenten']['directeLoonkosten']);

@@ -105,7 +105,7 @@ class VpbAangifteGuardTest extends TestCase
         $this->container->method('get')->willReturn(
             $this->buildSchemaStub(
                 recordsBySchema: [
-                    'AnnualReport'       => [['id' => 'jr-1', 'status' => 'vastgesteld']],
+                    'AnnualReport'       => [['id' => 'jr-1', 'status' => 'determined']],
                     'Belastingplichtige' => [['id' => 'bp-1', 'eHerkenningsNiveau' => 'EH3', 'digipoortCertificaat' => 'vault://cert']],
                     'Innovatiebox'       => [['taxReturn' => 'aangifte-1', 'soDeclarationReference' => 'SO-2026-1']],
                 ]
@@ -132,7 +132,7 @@ class VpbAangifteGuardTest extends TestCase
     {
         $this->container->method('get')->willReturn(
             $this->buildSchemaStub(
-                recordsBySchema: ['AnnualReport' => [['id' => 'jr-2', 'status' => 'concept']]]
+                recordsBySchema: ['AnnualReport' => [['id' => 'jr-2', 'status' => 'draft']]]
             )
         );
 
@@ -158,7 +158,7 @@ class VpbAangifteGuardTest extends TestCase
         $this->container->method('get')->willReturn(
             $this->buildSchemaStub(
                 recordsBySchema: [
-                    'AnnualReport'       => [['id' => 'jr-3', 'status' => 'vastgesteld']],
+                    'AnnualReport'       => [['id' => 'jr-3', 'status' => 'determined']],
                     'Belastingplichtige' => [['id' => 'bp-3', 'eHerkenningsNiveau' => 'EH2', 'digipoortCertificaat' => 'vault://cert']],
                 ]
             )
@@ -252,7 +252,7 @@ class VpbAangifteGuardTest extends TestCase
     {
         $this->container->method('get')->willReturn(
             $this->buildSchemaStub(
-                recordsBySchema: ['VpbAangifte' => [['id' => 'aangifte-6', 'status' => 'concept']]]
+                recordsBySchema: ['VpbAangifte' => [['id' => 'aangifte-6', 'status' => 'draft']]]
             )
         );
 

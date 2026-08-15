@@ -75,7 +75,7 @@ final class CashflowPdfRendererTest extends TestCase
                 'outflows_total' => 7200.0,
                 'netMovement'    => 5300.0,
                 'closingBalance' => 20120.0,
-                'bufferStatus'   => 'BOVEN_BUFFER',
+                'bufferStatus'   => 'ABOVE_BUFFER',
             ],
         ];
 
@@ -101,15 +101,15 @@ final class CashflowPdfRendererTest extends TestCase
     {
         $horizon = ['horizonId' => 'h1', 'administrationId' => 'a1'];
         $weeks   = [
-            ['weeknummer' => 22, 'inflows_total' => 100.0, 'outflows_total' => 50.0, 'netMovement' => 50.0, 'closingBalance' => 1050.0, 'bufferStatus' => 'BOVEN_BUFFER'],
-            ['weeknummer' => 23, 'inflows_total' => 0.0, 'outflows_total' => 200.0, 'netMovement' => -200.0, 'closingBalance' => 850.0, 'bufferStatus' => 'VOORALARM'],
+            ['weeknummer' => 22, 'inflows_total' => 100.0, 'outflows_total' => 50.0, 'netMovement' => 50.0, 'closingBalance' => 1050.0, 'bufferStatus' => 'ABOVE_BUFFER'],
+            ['weeknummer' => 23, 'inflows_total' => 0.0, 'outflows_total' => 200.0, 'netMovement' => -200.0, 'closingBalance' => 850.0, 'bufferStatus' => 'PRE_ALERT'],
         ];
 
         $result = $this->renderer->render($horizon, $weeks);
 
         self::assertStringContainsString('22', $result['payload']);
         self::assertStringContainsString('23', $result['payload']);
-        self::assertStringContainsString('VOORALARM', $result['payload']);
+        self::assertStringContainsString('PRE_ALERT', $result['payload']);
 
     }//end testRenderIncludesPerWeekRows()
 

@@ -64,7 +64,7 @@ final class BegrotingswijzigingStackerTest extends TestCase
         ];
         $wijzigingen = [
             [
-                'status'    => 'vastgesteld',
+                'status'    => 'determined',
                 'movements' => [
                     ['taskFieldCode' => '1.1', 'baten_delta' => 50.0, 'lasten_delta' => -100.0],
                 ],
@@ -107,8 +107,8 @@ final class BegrotingswijzigingStackerTest extends TestCase
     {
         $basis       = [['taskFieldCode' => '1.1', 'revenue' => 0.0, 'expenses' => 500.0]];
         $wijzigingen = [
-            ['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => 100.0]]],
-            ['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => -100.0]]],
+            ['status' => 'determined', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => 100.0]]],
+            ['status' => 'determined', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => -100.0]]],
         ];
 
         $stand = $this->stacker->currentStand(basisTaakvelden: $basis, wijzigingen: $wijzigingen);
@@ -125,7 +125,7 @@ final class BegrotingswijzigingStackerTest extends TestCase
     {
         $basis       = [['taskFieldCode' => '6.1', 'revenue' => 0.0, 'expenses' => 1000.0]];
         $wijzigingen = [
-            ['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '6.1', 'lasten_delta' => 250.0]]],
+            ['status' => 'determined', 'movements' => [['taskFieldCode' => '6.1', 'lasten_delta' => 250.0]]],
         ];
 
         self::assertSame(

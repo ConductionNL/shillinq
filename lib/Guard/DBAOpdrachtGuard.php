@@ -72,12 +72,12 @@ class DBAOpdrachtGuard
         $previousStatus = (string) ($previous['intakeStatus'] ?? 'DRAFT');
 
         // REQ-DBA-001 — transition to ACTIEF requires INTAKE_VOLTOOID first.
-        if ($status === 'ACTIEF' && $previousStatus !== 'INTAKE_VOLTOOID' && $previousStatus !== 'ACTIEF') {
+        if ($status === 'ACTIEF' && $previousStatus !== 'INTAKE_COMPLETED' && $previousStatus !== 'ACTIEF') {
             $errors[] = 'REQ-DBA-001: opdracht mag pas ACTIEF worden na voltooide DBA-intake.';
         }
 
         // REQ-DBA-018 — BEEINDIGD requires feitelijkeEindDatum + retentieDeadline.
-        if ($status === 'BEEINDIGD') {
+        if ($status === 'ENDED') {
             $eind = (string) ($opdracht['actualEndDate'] ?? '');
             if ($eind === '') {
                 $errors[] = 'REQ-DBA-018: BEEINDIGD vereist feitelijkeEindDatum.';
@@ -99,9 +99,9 @@ class DBAOpdrachtGuard
         }
 
         // REQ-DBA-000 — risico-niveau HOOG vereist actueleRisicoscore >= 75.
-        $niveau = (string) ($opdracht['risicoNiveau'] ?? 'LAAG');
+        $niveau = (string) ($opdracht['risicoNiveau'] ?? 'LOW');
         $score  = $opdracht['actueleRisicoscore'] ?? null;
-        if ($niveau === 'HOOG' && is_int($score) === true) {
+        if ($niveau === 'HIGH' && is_int($score) === true) {
             if ($score < 75) {
                 $errors[] = 'REQ-DBA-000/003: risicoNiveau HOOG vereist actueleRisicoscore >= 75.';
             }

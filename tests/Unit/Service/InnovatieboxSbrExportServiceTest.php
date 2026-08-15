@@ -100,7 +100,7 @@ final class InnovatieboxSbrExportServiceTest extends TestCase
         $this->assertSame('VPB-XX-2026', $payload['taxonomyVersion']);
         $this->assertSame('Vpb-Innovatiebox', $payload['collectie']);
         $this->assertSame('2026', $payload['identificerendePeriode']);
-        $this->assertSame('adm-mkb-1', $payload['administratie']);
+        $this->assertSame('adm-mkb-1', $payload['administration']);
         $this->assertSame('per_asset_afpelmethode', $payload['gekozenMethode']);
         $this->assertNull($payload['forfaitairLine']);
         $this->assertCount(2, $payload['perAssetRows']);
@@ -201,7 +201,7 @@ final class InnovatieboxSbrExportServiceTest extends TestCase
         $this->assertSame('IP A', $ctx['perAsset'][0]['name']);
         $this->assertSame(50.0, $ctx['totals']['winst_na_nexus']);
         $this->assertSame(21.3, $ctx['totals']['voordeel']);
-        $this->assertNull($ctx['forfaitair']);
+        $this->assertNull($ctx['flatRate']);
 
     }//end testPdfRenderContextMirrorsSbrNumerics()
 }//end class

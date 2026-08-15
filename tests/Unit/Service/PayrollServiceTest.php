@@ -221,8 +221,8 @@ final class PayrollServiceTest extends TestCase
             'Werkgever'            => [
                 [
                     'id'               => 'wg-1',
-                    'awfRate'          => 'LAAG',
-                    'zvwRate'          => 'LAAG',
+                    'awfRate'          => 'LOW',
+                    'zvwRate'          => 'LOW',
                     'administrationId' => 'adm-1',
                 ],
             ],
@@ -238,7 +238,7 @@ final class PayrollServiceTest extends TestCase
                     'pensioenPremiePctWerkgever' => 0.182,
                     'pensioenPremiePctWerknemer' => 0.072,
                     'vakantiegeldPct'            => 0.08,
-                    'loonheffingstabel'          => 'WIT_REGULIER',
+                    'loonheffingstabel'          => 'WIT_REGULAR',
                     'loonheffingstabelKorting'   => true,
                     'administrationId'           => 'adm-1',
                 ],
@@ -247,7 +247,7 @@ final class PayrollServiceTest extends TestCase
                 [
                     'id'                  => 'lp-1',
                     'werkgeverId'         => 'wg-1',
-                    'periodType'          => 'MAAND',
+                    'periodType'          => 'MONTH',
                     'periodEnd'           => '2026-05-31',
                     'loonheffingstabelId' => 'lht-1',
                     'administrationId'    => 'adm-1',
@@ -256,8 +256,8 @@ final class PayrollServiceTest extends TestCase
             'LoonheffingTabel2026' => [
                 [
                     'id'          => 'lht-1',
-                    'kleur'       => 'WIT',
-                    'period'      => 'MAAND',
+                    'kleur'       => 'WHITE',
+                    'period'      => 'MONTH',
                     'metKorting'  => true,
                     'tabelRegels' => [
                         ['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
@@ -286,7 +286,7 @@ final class PayrollServiceTest extends TestCase
         // Net = 4940 - 1199.91 - 0 - pensioen-wn 355.68 + 0 = 3384.41.
         self::assertSame(3384.41, $strook['netPaid']);
         self::assertSame('adm-1', $strook['administrationId']);
-        self::assertSame(899.08, $strook['pensioen']['premie_wg_aandeel']);
+        self::assertSame(899.08, $strook['pension']['premie_wg_aandeel']);
 
     }//end testBerekenLoonStrookComputesNetto()
 
@@ -359,7 +359,7 @@ final class PayrollServiceTest extends TestCase
                 'brutoComponenten'   => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
                 'premiesSVWerkgever' => ['totaal_werkgever' => 400.0],
                 'zvw'                => ['afgedragen_wg' => 262.81],
-                'pensioen'           => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],
+                'pension'           => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],
                 'loonheffing'        => 1199.91,
                 'netPaid'            => 3384.41,
                 'administrationId'   => 'adm-1',

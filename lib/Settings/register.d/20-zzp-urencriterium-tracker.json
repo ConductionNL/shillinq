@@ -88,13 +88,13 @@
             "type": "string",
             "description": "Risico-status t.o.v. de norm, afgeleid van prognose vs doelNorm (REQ-URC-003).",
             "enum": [
-              "OP_KOERS",
-              "RISICO",
-              "KRITIEK",
-              "BEHAALD"
+              "ON_RATE",
+              "RISK",
+              "CRITICAL",
+              "ACHIEVED"
             ],
-            "default": "OP_KOERS",
-            "example": "RISICO",
+            "default": "ON_RATE",
+            "example": "RISK",
             "title": "Drempel Status"
           },
           "grotendeelsCriterium": {
@@ -102,12 +102,12 @@
             "nullable": true,
             "description": "Uitkomst grotendeels-criterium (>50% ondernemingstijd vs loondienst, art. 3.6 lid 2). NIET_TOEPASSELIJK als geen parallel loondienst (REQ-URC-007).",
             "enum": [
-              "NIET_TOEPASSELIJK",
-              "GROTENDEELS_ONDERNEMING",
-              "NIET_GROTENDEELS_ONDERNEMING"
+              "NON_APPLICABLE",
+              "LARGELY_ENTERPRISE",
+              "NON_LARGELY_ENTERPRISE"
             ],
-            "default": "NIET_TOEPASSELIJK",
-            "example": "GROTENDEELS_ONDERNEMING",
+            "default": "NON_APPLICABLE",
+            "example": "LARGELY_ENTERPRISE",
             "title": "Grotendeels Criterium"
           },
           "calculatedOn": {
@@ -121,21 +121,21 @@
         },
         "x-openregister-lifecycle": {
           "field": "thresholdStatus",
-          "initialState": "OP_KOERS",
+          "initialState": "ON_RATE",
           "states": {
-            "OP_KOERS": {
+            "ON_RATE": {
               "label": "Op koers",
               "description": "Prognose ligt op of boven de norm."
             },
-            "RISICO": {
+            "RISK": {
               "label": "Risico",
               "description": "Prognose ligt onder de norm; bijsturen aanbevolen."
             },
-            "KRITIEK": {
+            "CRITICAL": {
               "label": "Kritiek",
               "description": "Norm is praktisch onhaalbaar zonder forse bijsturing."
             },
-            "BEHAALD": {
+            "ACHIEVED": {
               "label": "Behaald",
               "description": "Lopende uren hebben de norm bereikt; zelfstandigenaftrek geborgd."
             }
@@ -219,15 +219,15 @@
             "type": "string",
             "description": "Belastingdienst-erkende uren-categorie (FK naar UrenCategorie.code).",
             "enum": [
-              "BILLABLE_KLANTWERK",
-              "ACQUISITIE",
-              "ADMINISTRATIE",
-              "REISTIJD_ZAKELIJK",
-              "SCHOLING",
-              "FICTIE_ZEZ",
+              "BILLABLE_CLIENT_WORK",
+              "ACQUISITION",
+              "ADMINISTRATION",
+              "TRAVEL_TIME_BUSINESS",
+              "TRAINING",
+              "FICTION_ZEZ",
               "R_AND_D_WBSO"
             ],
-            "example": "ACQUISITIE",
+            "example": "ACQUISITION",
             "title": "Categorie"
           },
           "hours": {
@@ -341,15 +341,15 @@
             "type": "string",
             "description": "Unieke categorie-code, gebruikt als FK vanuit UrenDagregistratie.categorie.",
             "enum": [
-              "BILLABLE_KLANTWERK",
-              "ACQUISITIE",
-              "ADMINISTRATIE",
-              "REISTIJD_ZAKELIJK",
-              "SCHOLING",
-              "FICTIE_ZEZ",
+              "BILLABLE_CLIENT_WORK",
+              "ACQUISITION",
+              "ADMINISTRATION",
+              "TRAVEL_TIME_BUSINESS",
+              "TRAINING",
+              "FICTION_ZEZ",
               "R_AND_D_WBSO"
             ],
-            "example": "ACQUISITIE",
+            "example": "ACQUISITION",
             "title": "Code"
           },
           "label": {
@@ -581,12 +581,12 @@
             "type": "string",
             "description": "Soort alert.",
             "enum": [
-              "KWARTAAL_EINDE",
-              "PROGNOSE_RISICO_DROP",
-              "OMSLAG_RISICO",
-              "OMSLAG_KRITIEK"
+              "QUARTER_END",
+              "FORECAST_RISK_DROP",
+              "APPORTIONMENT_RISK",
+              "APPORTIONMENT_CRITICAL"
             ],
-            "example": "PROGNOSE_RISICO_DROP",
+            "example": "FORECAST_RISK_DROP",
             "title": "Type"
           },
           "aanleidingDatum": {
@@ -632,11 +632,11 @@
             "description": "Urgentie-niveau van de alert.",
             "enum": [
               "INFO",
-              "WAARSCHUWING",
-              "KRITIEK"
+              "WARNING",
+              "CRITICAL"
             ],
-            "default": "WAARSCHUWING",
-            "example": "WAARSCHUWING",
+            "default": "WARNING",
+            "example": "WARNING",
             "title": "Urgentie"
           },
           "oorzaak": {
@@ -820,7 +820,7 @@
         "schema": "UrenCategorie",
         "slug": "uren-categorie-billable-klantwerk"
       },
-      "code": "BILLABLE_KLANTWERK",
+      "code": "BILLABLE_CLIENT_WORK",
       "label": "Billable klantwerk",
       "telTMee": true,
       "fiscalSource": "art. 3.6 lid 1 Wet IB 2001",
@@ -839,7 +839,7 @@
         "schema": "UrenCategorie",
         "slug": "uren-categorie-acquisitie"
       },
-      "code": "ACQUISITIE",
+      "code": "ACQUISITION",
       "label": "Acquisitie",
       "telTMee": true,
       "fiscalSource": "HR 22 mei 1996, BNB 1996/302",
@@ -859,7 +859,7 @@
         "schema": "UrenCategorie",
         "slug": "uren-categorie-administratie"
       },
-      "code": "ADMINISTRATIE",
+      "code": "ADMINISTRATION",
       "label": "Administratie",
       "telTMee": true,
       "fiscalSource": "HR 22 mei 1996, BNB 1996/388",
@@ -879,7 +879,7 @@
         "schema": "UrenCategorie",
         "slug": "uren-categorie-reistijd-zakelijk"
       },
-      "code": "REISTIJD_ZAKELIJK",
+      "code": "TRAVEL_TIME_BUSINESS",
       "label": "Reistijd zakelijk",
       "telTMee": true,
       "fiscalSource": "HR 2003, BNB 2003/258",
@@ -899,7 +899,7 @@
         "schema": "UrenCategorie",
         "slug": "uren-categorie-scholing"
       },
-      "code": "SCHOLING",
+      "code": "TRAINING",
       "label": "Scholing",
       "telTMee": true,
       "fiscalSource": "art. 3.6 lid 1 Wet IB 2001",
@@ -918,7 +918,7 @@
         "schema": "UrenCategorie",
         "slug": "uren-categorie-fictie-zez"
       },
-      "code": "FICTIE_ZEZ",
+      "code": "FICTION_ZEZ",
       "label": "Fictie zwangerschap (ZEZ)",
       "telTMee": true,
       "fiscalSource": "Wet ZEZ (Zelfstandig en Zwanger)",

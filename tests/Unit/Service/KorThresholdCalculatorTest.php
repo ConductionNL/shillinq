@@ -95,12 +95,12 @@ final class KorThresholdCalculatorTest extends TestCase
     public function testCrossedSchijf(): void
     {
         // Crossing 80% from below.
-        self::assertSame('DREMPEL_80PCT', $this->calc->crossedSchijf(previousBenutting: 0.79, newBenutting: 0.83)['trigger']);
+        self::assertSame('THRESHOLD_80_PCT', $this->calc->crossedSchijf(previousBenutting: 0.79, newBenutting: 0.83)['trigger']);
         // Crossing 90% from below.
-        self::assertSame('DREMPEL_90PCT', $this->calc->crossedSchijf(previousBenutting: 0.85, newBenutting: 0.906)['trigger']);
+        self::assertSame('THRESHOLD_90_PCT', $this->calc->crossedSchijf(previousBenutting: 0.85, newBenutting: 0.906)['trigger']);
         // Crossing 100% from below => OVERSCHRIJDING.
         $hit = $this->calc->crossedSchijf(previousBenutting: 0.95, newBenutting: 1.018);
-        self::assertSame('DREMPEL_100PCT', $hit['trigger']);
+        self::assertSame('THRESHOLD_100_PCT', $hit['trigger']);
         self::assertSame('OVERSCHRIJDING', $hit['ernst']);
         // No new schijf when staying within the same band.
         self::assertNull($this->calc->crossedSchijf(previousBenutting: 0.82, newBenutting: 0.84));
@@ -127,9 +127,9 @@ final class KorThresholdCalculatorTest extends TestCase
      */
     public function testPrognoseStatus(): void
     {
-        self::assertSame('ONDER_DREMPEL', $this->calc->prognoseStatus(prognoseCents: 1500000, drempelCents: 2000000));
-        self::assertSame('WAARSCHUWING', $this->calc->prognoseStatus(prognoseCents: 1700000, drempelCents: 2000000));
-        self::assertSame('OVERSCHRIJDING_VERWACHT', $this->calc->prognoseStatus(prognoseCents: 2463000, drempelCents: 2000000));
+        self::assertSame('UNDER_THRESHOLD', $this->calc->prognoseStatus(prognoseCents: 1500000, drempelCents: 2000000));
+        self::assertSame('WARNING', $this->calc->prognoseStatus(prognoseCents: 1700000, drempelCents: 2000000));
+        self::assertSame('OVERRUN_EXPECTED', $this->calc->prognoseStatus(prognoseCents: 2463000, drempelCents: 2000000));
 
     }//end testPrognoseStatus()
 

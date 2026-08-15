@@ -170,12 +170,12 @@ class DBAController extends Controller
         }
 
         if (($body['verkortType'] ?? false) === true) {
-            $risicoNiveau = 'VERKORT_LAGE_DREMPEL';
+            $risicoNiveau = 'ABBREVIATED_LOW_THRESHOLD';
         } else {
             $risicoNiveau = $band;
         }
 
-        $opdracht['intakeStatus']       = 'INTAKE_VOLTOOID';
+        $opdracht['intakeStatus']       = 'INTAKE_COMPLETED';
         $opdracht['intakeDatum']        = $body['ingevuldOp'];
         $opdracht['actueleRisicoscore'] = $total;
         $opdracht['risicoNiveau']       = $risicoNiveau;
@@ -299,7 +299,7 @@ class DBAController extends Controller
 
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
-        $opdracht['intakeStatus']  = 'BEEINDIGD';
+        $opdracht['intakeStatus']  = 'ENDED';
         $opdracht['actualEndDate'] = $einddatum;
         $retentie = $this->opdrachtGuard->computeRetentieDeadline($einddatum);
         if ($retentie !== null) {
@@ -440,7 +440,7 @@ class DBAController extends Controller
     /**
      * Save an opdrachtgever-side inhuur-intake (REQ-DBA-010, T25).
      *
-     * Sets DBAOpdracht.perspectief = 'OPDRACHTGEVER' before delegating to saveIntake.
+     * Sets DBAOpdracht.perspectief = 'CLIENT' before delegating to saveIntake.
      *
      * @return JSONResponse The result.
      *
@@ -467,7 +467,7 @@ class DBAController extends Controller
         }
 
         $this->ensureAdministrationAccess(opdracht: $opdracht);
-        $opdracht['perspectief'] = 'OPDRACHTGEVER';
+        $opdracht['perspectief'] = 'CLIENT';
         try {
             $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
         } catch (Throwable $e) {

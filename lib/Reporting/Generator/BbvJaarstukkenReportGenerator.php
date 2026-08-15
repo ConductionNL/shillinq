@@ -209,10 +209,10 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
             'lokaleHeffingen'           => 'Lokale heffingen',
             'weerstandsvermogen'        => 'Weerstandsvermogen en risicobeheersing',
             'onderhoudKapitaalgoederen' => 'Onderhoud kapitaalgoederen',
-            'financiering'              => 'Financiering',
-            'bedrijfsvoering'           => 'Bedrijfsvoering',
+            'financiering'              => 'Financing',
+            'bedrijfsvoering'           => 'Operations',
             'verbondenPartijen'         => 'Verbonden partijen',
-            'grondbeleid'               => 'Grondbeleid',
+            'grondbeleid'               => 'LandPolicy',
         ];
 
         $present = [];
@@ -303,7 +303,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
             $section,
             [
                 'Overzicht van baten en lasten' => $this->yesNo($jaarrekening['overzichtBatenLasten'] ?? null),
-                'Balans'                        => $this->yesNo($jaarrekening['balans'] ?? null),
+                'Balans'                        => $this->yesNo($jaarrekening['balance'] ?? null),
                 'Rechtmatigheidsverantwoording' => $this->yesNo($jaarrekening['rechtmatigheidsverantwoording'] ?? null),
                 'Accountantsverklaring'         => $this->yesNo($jaarrekening['accountantsverklaring'] ?? null),
             ]
@@ -443,8 +443,8 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
     {
         return match ($type) {
             'gemeente'  => 'Gemeente',
-            'provincie' => 'Provincie',
-            'waterschap' => 'Waterschap',
+            'province' => 'Provincie',
+            'waterAuthority' => 'Waterschap',
             default     => $type,
         };
 

@@ -165,7 +165,7 @@ final class VpbMkbFragmentTest extends TestCase
         );
 
         $indienen = $aangifte['x-openregister-lifecycle']['transitions']['indienen'];
-        self::assertSame('concept', $indienen['from']);
+        self::assertSame('draft', $indienen['from']);
         self::assertSame('submitted', $indienen['to']);
         self::assertSame('OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canIndienen', $indienen['requires']);
 

@@ -70,7 +70,7 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
         );
 
         return new DunningChannelSendResult(
-            kanaal: 'INCASSOBUREAU_API',
+            kanaal: 'COLLECTION_AGENCY_API',
             deliveryStatus: 'DELIVERED',
             providerMessageId: 'incasso-log-'.bin2hex(random_bytes(8)),
             extras: ['dossierId' => 'dossier-stub-'.bin2hex(random_bytes(6))],

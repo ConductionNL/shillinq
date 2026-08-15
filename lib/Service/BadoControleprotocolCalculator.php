@@ -240,7 +240,7 @@ class BadoControleprotocolCalculator
                 return 'rechtmatigheid';
             }
 
-            if ($findingType === 'getrouwheid' || $findingType === 'onzekerheid') {
+            if ($findingType === 'getrouwheid' || $findingType === 'uncertainty') {
                 return 'getrouwheid';
             }
         }
@@ -274,7 +274,7 @@ class BadoControleprotocolCalculator
                 continue;
             }
 
-            $topic = (string) ($finding['topic'] ?? 'overig');
+            $topic = (string) ($finding['topic'] ?? 'other');
             if (isset($byTopic[$topic]) === false) {
                 $byTopic[$topic] = $this->emptyTopicRow(topic: $topic);
             }

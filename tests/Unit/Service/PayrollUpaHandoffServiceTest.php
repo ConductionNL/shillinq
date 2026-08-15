@@ -196,15 +196,15 @@ final class PayrollUpaHandoffServiceTest extends TestCase
                 ['id' => 'wn-5', 'administrationId' => 'adm-2', 'pensionScheme' => 'PME_DC'],
             ],
             'LoonStrook' => [
-                ['employeeId' => 'wn-1', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
-                ['employeeId' => 'wn-2', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
-                ['employeeId' => 'wn-3', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
+                ['employeeId' => 'wn-1', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pension' => ['premie_wn_aandeel' => 100.0, 'premie_wg_aandeel' => 200.0]],
+                ['employeeId' => 'wn-2', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pension' => ['premie_wn_aandeel' => 50.0, 'premie_wg_aandeel' => 150.0]],
+                ['employeeId' => 'wn-3', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pension' => ['premie_wn_aandeel' => 80.0, 'premie_wg_aandeel' => 220.0]],
                 // No regeling -> excluded.
-                ['employeeId' => 'wn-4', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
+                ['employeeId' => 'wn-4', 'periodId' => 'lp-1', 'administrationId' => 'adm-1', 'pension' => ['premie_wn_aandeel' => 10.0, 'premie_wg_aandeel' => 20.0]],
                 // Different admin -> excluded by scope.
-                ['employeeId' => 'wn-5', 'periodId' => 'lp-1', 'administrationId' => 'adm-2', 'pensioen' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
+                ['employeeId' => 'wn-5', 'periodId' => 'lp-1', 'administrationId' => 'adm-2', 'pension' => ['premie_wn_aandeel' => 999.0, 'premie_wg_aandeel' => 999.0]],
                 // Zero pensioen -> excluded.
-                ['employeeId' => 'wn-1', 'periodId' => 'lp-2', 'administrationId' => 'adm-1', 'pensioen' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
+                ['employeeId' => 'wn-1', 'periodId' => 'lp-2', 'administrationId' => 'adm-1', 'pension' => ['premie_wn_aandeel' => 0.0, 'premie_wg_aandeel' => 0.0]],
             ],
         ];
 

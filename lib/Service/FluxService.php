@@ -273,7 +273,7 @@ class FluxService
     {
         $administrationId = (string) ($inputs['administrationId'] ?? '');
         $periodId         = (string) ($inputs['periodId'] ?? '');
-        $scope            = (string) ($inputs['scope'] ?? 'administratie');
+        $scope            = (string) ($inputs['scope'] ?? 'administration');
         $comparisonBasis  = (string) ($inputs['comparisonBasis'] ?? 'budget');
         $accounts         = (array) ($inputs['accounts'] ?? []);
         $policy           = (array) ($inputs['materialityPolicy'] ?? []);

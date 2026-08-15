@@ -103,8 +103,8 @@ final class EmuReportingFragmentTest extends TestCase
         $lifecycle = $data['components']['schemas']['EMUReport']['x-openregister-lifecycle'];
 
         self::assertSame('status', $lifecycle['field']);
-        self::assertSame('concept', $lifecycle['initialState']);
-        foreach (['concept', 'submitted', 'herzien'] as $state) {
+        self::assertSame('draft', $lifecycle['initialState']);
+        foreach (['draft', 'submitted', 'herzien'] as $state) {
             self::assertArrayHasKey($state, $lifecycle['states'], "EMUReport must declare state $state");
         }
 
@@ -129,14 +129,14 @@ final class EmuReportingFragmentTest extends TestCase
         $enum = $data['components']['schemas']['EMUAdjustment']['properties']['type']['enum'];
 
         $expected = [
-            'eliminatie-afschrijving',
-            'eliminatie-voorzieningdotatie',
-            'eliminatie-onttrekking-reserve',
-            'toevoeging-bruto-investering',
-            'toevoeging-aflossing',
-            'eliminatie-boekwinst-desinvestering',
-            'correctie-transactiemoment',
-            'intercompany-eliminatie',
+            'elimination-depreciation',
+            'elimination-provision-contribution',
+            'elimination-withdrawal-reserve',
+            'addition-gross-investment',
+            'addition-repayment',
+            'elimination-book-profit-divestment',
+            'correction-transaction-moment',
+            'intercompany-elimination',
         ];
         self::assertCount(8, $enum);
         foreach ($expected as $type) {
@@ -156,7 +156,7 @@ final class EmuReportingFragmentTest extends TestCase
         $schema = $data['components']['schemas']['DebtPosition'];
 
         $enum = $schema['properties']['categorieEurostat']['enum'];
-        foreach (['AF.2-deposits', 'AF.3-securities', 'AF.4-loans', 'AF.7-derivatives'] as $cat) {
+        foreach (['off_2-deposits', 'off_3-securities', 'off_4-loans', 'off_7-derivatives'] as $cat) {
             self::assertContains($cat, $enum, "categorieEurostat must include $cat");
         }
 

@@ -50,10 +50,10 @@
               "vereniging",
               "cooperatie",
               "gemeente",
-              "provincie",
-              "waterschap",
+              "province",
+              "waterAuthority",
               "gr",
-              "overig"
+              "other"
             ],
             "example": "bv",
             "title": "Legal Form"
@@ -167,22 +167,22 @@
             "type": "string",
             "description": "BTW regime of the administration (REQ-MA-002).",
             "enum": [
-              "standaard",
+              "standard",
               "kleine_ondernemers_regeling",
               "landbouw",
               "reisbureau",
-              "vrijgesteld",
+              "exempt",
               "overheid"
             ],
-            "default": "standaard",
-            "example": "standaard",
+            "default": "standard",
+            "example": "standard",
             "title": "VAT Regime"
           },
           "vatFilingFrequency": {
             "type": "string",
             "description": "BTW-aangifte frequentie.",
             "enum": [
-              "maand",
+              "month",
               "kwartaal",
               "year"
             ],
@@ -469,7 +469,7 @@
               "rente",
               "huur",
               "management_fee",
-              "overig"
+              "other"
             ],
             "example": "management_fee",
             "title": "Kind"
@@ -534,10 +534,10 @@
             "description": "BTW treatment of the intercompany flow.",
             "enum": [
               "verlegd",
-              "standaard",
-              "fiscale_eenheid_geen_btw"
+              "standard",
+              "fiscal_unit_none_vat"
             ],
-            "default": "standaard",
+            "default": "standard",
             "example": "verlegd",
             "title": "VAT Treatment"
           },
@@ -559,12 +559,12 @@
             "type": "string",
             "description": "Mirroring status. concept = one side drafted; gekoppeld = both sides exist; bevestigd_beide = both confirmed; eliminatie_geboekt = consolidation elimination processed (REQ-MA-004).",
             "enum": [
-              "concept",
+              "draft",
               "gekoppeld",
               "bevestigd_beide",
               "eliminatie_geboekt"
             ],
-            "default": "concept",
+            "default": "draft",
             "example": "bevestigd_beide",
             "title": "Status"
           },
@@ -578,9 +578,9 @@
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "One side drafted; the mirror has not yet been created."
             },
@@ -599,7 +599,7 @@
           },
           "transitions": {
             "link": {
-              "from": "concept",
+              "from": "draft",
               "to": "gekoppeld",
               "label": "Koppelen",
               "description": "The mirrored journal entry is created in the destination administration."
@@ -612,7 +612,7 @@
             },
             "reopen": {
               "from": "bevestigd_beide",
-              "to": "concept",
+              "to": "draft",
               "label": "Heropenen",
               "description": "An edit on one unconfirmed-mirror side returns the pair to concept; the counterparty must re-confirm (REQ-MA-004)."
             },
@@ -770,9 +770,9 @@
               "vaste_activa",
               "debiteur",
               "crediteur",
-              "werknemer",
+              "employee",
               "contract",
-              "overig"
+              "other"
             ],
             "example": "vaste_activa",
             "title": "Kind"
@@ -812,11 +812,11 @@
             "description": "Fiscale behandeling of the transfer.",
             "enum": [
               "geruisloze_doorschuiving",
-              "met_realisatie",
-              "fiscale_eenheid"
+              "with_actuals",
+              "fiscal_unit"
             ],
-            "default": "met_realisatie",
-            "example": "met_realisatie",
+            "default": "with_actuals",
+            "example": "with_actuals",
             "title": "Fiscal Treatment"
           },
           "legalBasis": {
@@ -1024,7 +1024,7 @@
         "nonCalendarFiscalYear": false,
         "presentationCurrency": "EUR",
         "functionalCurrency": "EUR",
-        "vatRegime": "standaard",
+        "vatRegime": "standard",
         "vatFilingFrequency": "kwartaal",
         "consolidationMethod": "integraal",
         "activeFrom": "2020-01-01",
@@ -1053,8 +1053,8 @@
         "nonCalendarFiscalYear": false,
         "presentationCurrency": "EUR",
         "functionalCurrency": "EUR",
-        "vatRegime": "standaard",
-        "vatFilingFrequency": "maand",
+        "vatRegime": "standard",
+        "vatFilingFrequency": "month",
         "consolidationMethod": "integraal",
         "activeFrom": "2020-01-01",
         "status": "actief",
@@ -1080,7 +1080,7 @@
         "nonCalendarFiscalYear": true,
         "presentationCurrency": "EUR",
         "functionalCurrency": "EUR",
-        "vatRegime": "standaard",
+        "vatRegime": "standard",
         "vatFilingFrequency": "kwartaal",
         "consolidationMethod": "niet_consolideren",
         "activeFrom": "2023-07-01",
@@ -1192,7 +1192,7 @@
         "bookValueTransferred": 87000.0,
         "marketValueTransferred": 92000.0,
         "resultImpact": 5000.0,
-        "fiscalTreatment": "met_realisatie",
+        "fiscalTreatment": "with_actuals",
         "legalBasis": "Akte van inbreng dd 2026-08-15 notaris X",
         "documentIds": [],
         "status": "voorbereid"

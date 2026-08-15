@@ -163,7 +163,7 @@ final class ZzpUrencriteriumTrackerFragmentTest extends TestCase
             'UrencriteriumYear save must be guarded by UrencriteriumYearGuard'
         );
 
-        foreach (['OP_KOERS', 'RISICO', 'KRITIEK', 'BEHAALD'] as $state) {
+        foreach (['ON_RATE', 'RISK', 'CRITICAL', 'ACHIEVED'] as $state) {
             self::assertArrayHasKey($state, $lifecycle['states'], "Lifecycle must declare $state");
         }
 
@@ -192,7 +192,7 @@ final class ZzpUrencriteriumTrackerFragmentTest extends TestCase
         $objects  = $this->fragment()['objects'];
         $reistijd = null;
         foreach ($objects as $object) {
-            if (($object['code'] ?? '') === 'REISTIJD_ZAKELIJK') {
+            if (($object['code'] ?? '') === 'TRAVEL_TIME_BUSINESS') {
                 $reistijd = $object;
                 break;
             }
@@ -216,12 +216,12 @@ final class ZzpUrencriteriumTrackerFragmentTest extends TestCase
         );
         $codes    = array_map(static fn(array $o): string => $o['code'], $objects);
         $expected = [
-            'BILLABLE_KLANTWERK',
-            'ACQUISITIE',
-            'ADMINISTRATIE',
-            'REISTIJD_ZAKELIJK',
-            'SCHOLING',
-            'FICTIE_ZEZ',
+            'BILLABLE_CLIENT_WORK',
+            'ACQUISITION',
+            'ADMINISTRATION',
+            'TRAVEL_TIME_BUSINESS',
+            'TRAINING',
+            'FICTION_ZEZ',
             'R_AND_D_WBSO',
         ];
 

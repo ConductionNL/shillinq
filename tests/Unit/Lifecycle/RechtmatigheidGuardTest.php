@@ -246,7 +246,7 @@ class RechtmatigheidGuardTest extends TestCase
      */
     public function testCanExportParagraafPermitsDefinitief(): void
     {
-        $result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'definitief', 'financialYear' => 2026]);
+        $result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'final', 'financialYear' => 2026]);
         self::assertTrue(condition: $result, message: 'Definitief paragraaf must permit export');
 
     }//end testCanExportParagraafPermitsDefinitief()
@@ -258,7 +258,7 @@ class RechtmatigheidGuardTest extends TestCase
      */
     public function testCanExportParagraafDeniesConcept(): void
     {
-        $result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'concept', 'financialYear' => 2026]);
+        $result = $this->guard->canExportParagraaf(paragraaf: ['status' => 'draft', 'financialYear' => 2026]);
         self::assertFalse(condition: $result, message: 'Concept paragraaf must block export');
 
     }//end testCanExportParagraafDeniesConcept()

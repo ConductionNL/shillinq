@@ -102,7 +102,7 @@ class PensionIas19GuardTest extends TestCase
     {
         $object = [
             'planType'                    => 'DB',
-            'regulatoryFramework'         => 'Pensioenwet',
+            'regulatoryFramework'         => 'PensionsAct',
             'pensionableSalaryDefinition' => 'Bruto jaarsalaris minus AOW-franchise',
             'accrualRate'                 => 0.01875,
         ];
@@ -121,7 +121,7 @@ class PensionIas19GuardTest extends TestCase
     {
         $object = [
             'planType'                    => 'DB',
-            'regulatoryFramework'         => 'Pensioenwet',
+            'regulatoryFramework'         => 'PensionsAct',
             'pensionableSalaryDefinition' => 'Bruto jaarsalaris',
             'accrualRate'                 => 0,
         ];
@@ -141,7 +141,7 @@ class PensionIas19GuardTest extends TestCase
     {
         $object = [
             'planType'                    => 'DC',
-            'regulatoryFramework'         => 'Pensioenwet',
+            'regulatoryFramework'         => 'PensionsAct',
             'pensionableSalaryDefinition' => 'Bruto jaarsalaris',
         ];
 
@@ -160,7 +160,7 @@ class PensionIas19GuardTest extends TestCase
     {
         $object = [
             'planType'                    => 'DC',
-            'regulatoryFramework'         => 'Pensioenwet',
+            'regulatoryFramework'         => 'PensionsAct',
             'pensionableSalaryDefinition' => '   ',
         ];
 

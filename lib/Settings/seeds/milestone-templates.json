@@ -8,7 +8,7 @@
 	},
 	"templates": [
 		{
-			"opdrachttype": "levering-in-fases",
+			"opdrachttype": "delivery-in-phases",
 			"name": "Gefaseerde levering — per kwartaal",
 			"description": "4 kwartaal-deelopleveringen over een contract van 1 jaar.",
 			"mijlpalen": [
@@ -19,7 +19,7 @@
 			]
 		},
 		{
-			"opdrachttype": "dienstverlening-doorlopend",
+			"opdrachttype": "service-provision-continuous",
 			"name": "Doorlopende dienstverlening — per maand",
 			"description": "12 maandelijkse deelfacturen over een contract van 1 jaar.",
 			"mijlpalen": [

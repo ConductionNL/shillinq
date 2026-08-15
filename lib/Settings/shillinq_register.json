@@ -1137,8 +1137,8 @@
             "type": "string",
             "enum": [
               "gemeente",
-              "provincie",
-              "waterschap"
+              "province",
+              "waterAuthority"
             ],
             "description": "Juridical type of the deelnemer.",
             "example": "gemeente",
@@ -1273,8 +1273,8 @@
             "type": "string",
             "enum": [
               "vast-percentage",
-              "inwoner-aantal",
-              "gewogen-oppervlak",
+              "resident-count",
+              "weighted-area",
               "custom-formula"
             ],
             "description": "Apportionment method. vast-percentage uses fixed per-deelnemer percentages in parameters; inwoner-aantal weights by population count; gewogen-oppervlak by weighted surface area; custom-formula accepts free-form parameters JSON.",
@@ -1435,13 +1435,13 @@
             "type": "string",
             "enum": [
               "gemeente",
-              "waterschap",
-              "provincie"
+              "waterAuthority",
+              "province"
             ],
             "default": "gemeente",
             "description": "BBV regulatory variant under which this account is interpreted. 'waterschap' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
             "nullable": true,
-            "example": "waterschap",
+            "example": "waterAuthority",
             "title": "BBV Variant"
           },
           "vpbPligtig": {
@@ -3265,13 +3265,13 @@
             "type": "string",
             "enum": [
               "gemeente",
-              "waterschap",
-              "provincie"
+              "waterAuthority",
+              "province"
             ],
             "default": "gemeente",
             "description": "BBV regulatory variant under which this programma is interpreted per REQ-WSB-001.",
             "nullable": true,
-            "example": "waterschap",
+            "example": "waterAuthority",
             "title": "BBV Variant"
           },
           "parentCode": {
@@ -5285,14 +5285,14 @@
             "type": "string",
             "description": "Current lifecycle state of the project.",
             "enum": [
-              "offerte",
+              "quote",
               "active",
               "on-hold",
               "closed",
               "archived"
             ],
             "example": "active",
-            "default": "offerte",
+            "default": "quote",
             "title": "State"
           },
           "startDate": {
@@ -5420,7 +5420,7 @@
         },
         "x-openregister-lifecycle": {
           "field": "state",
-          "initialState": "offerte",
+          "initialState": "quote",
           "states": {
             "active": {
               "label": "Actief",
@@ -5434,7 +5434,7 @@
               "label": "Gearchiveerd",
               "description": "Historical only; remains queryable per 7-year retention rule."
             },
-            "offerte": {
+            "quote": {
               "label": "Offerte",
               "description": "Project is at quotation stage; no GL postings yet."
             },
@@ -5467,7 +5467,7 @@
               "description": "Move closed project to archive (typically 12 months post-close)."
             },
             "activate": {
-              "from": "offerte",
+              "from": "quote",
               "to": "active",
               "label": "Activeer project",
               "description": "Move project from quotation to active execution. startDate must be set.",
@@ -5978,7 +5978,7 @@
             "description": "Which dimension the targets[].code values refer to per REQ-CC-004.",
             "enum": [
               "cost-center",
-              "kosten-drager",
+              "cost-carrier",
               "project"
             ],
             "example": "cost-center",
@@ -11264,11 +11264,11 @@
             "type": "string",
             "description": "Buffer-policy status derived from eindSaldo vs CashflowBufferPolicy thresholds. REQ-CF-009.",
             "enum": [
-              "BOVEN_BUFFER",
-              "VOORALARM",
+              "ABOVE_BUFFER",
+              "PRE_ALERT",
               "CRISIS"
             ],
-            "default": "BOVEN_BUFFER",
+            "default": "ABOVE_BUFFER",
             "title": "Buffer Status"
           },
           "alerts": {
@@ -11280,9 +11280,9 @@
                 "type": {
                   "type": "string",
                   "enum": [
-                    "BUFFER_ONDERSCHRIJDING",
-                    "NEGATIEF_SALDO",
-                    "VOORALARM"
+                    "BUFFER_SHORTFALL",
+                    "NEGATIVE_BALANCE",
+                    "PRE_ALERT"
                   ],
                   "title": "Type",
                   "description": "The type or category classification."
@@ -11416,7 +11416,7 @@
                 "when": "{eindSaldo} < CashflowBufferPolicy.alertOndergrens",
                 "set": "CRISIS",
                 "alert": {
-                  "type": "BUFFER_ONDERSCHRIJDING",
+                  "type": "BUFFER_SHORTFALL",
                   "severity": "RED"
                 }
               },
@@ -11424,7 +11424,7 @@
                 "when": "{eindSaldo} < CashflowBufferPolicy.alertVooralarm",
                 "set": "VOORALARM",
                 "alert": {
-                  "type": "VOORALARM",
+                  "type": "PRE_ALERT",
                   "severity": "YELLOW"
                 }
               },
@@ -11765,14 +11765,14 @@
             "type": "string",
             "description": "Recurring category. Determines which outflows_recurring_* column in CashflowWeek receives the amount.",
             "enum": [
-              "RECURRING_HUUR",
-              "RECURRING_VERZEKERING",
-              "RECURRING_ABONNEMENTEN",
+              "RECURRING_RENT",
+              "RECURRING_INSURANCE",
+              "RECURRING_SUBSCRIPTIONS",
               "RECURRING_SOFTWARE",
-              "RECURRING_DGA_LOON",
-              "RECURRING_LIJFRENTEPREMIE",
+              "RECURRING_DGA_PAY",
+              "RECURRING_ANNUITY_PREMIUM",
               "RECURRING_LEASING",
-              "RECURRING_OVERIG"
+              "RECURRING_OTHER"
             ],
             "title": "Category"
           },
@@ -11790,11 +11790,11 @@
             "type": "string",
             "description": "Recurrence frequency.",
             "enum": [
-              "MAANDELIJKS",
-              "KWARTAALS",
-              "JAARLIJKS",
-              "WEKELIJKS",
-              "TWEEWEKELIJKS"
+              "MONTHLY",
+              "QUARTERLY",
+              "ANNUALLY",
+              "WEEKLY",
+              "FORTNIGHTLY"
             ],
             "title": "Frequency"
           },
@@ -11829,7 +11829,7 @@
             "description": "Annual indexation rule.",
             "enum": [
               "FIXED",
-              "CPI_AFGELOPEN_JAAR"
+              "CPI_PAST_YEAR"
             ],
             "default": "FIXED",
             "title": "Indexation Rule"
@@ -11964,7 +11964,7 @@
             "description": "Buffer-policy formula.",
             "enum": [
               "MIN_FIXED_AMOUNT",
-              "MIN_MONTHS_VASTE_KOSTEN",
+              "MIN_MONTHS_FIXED_COST",
               "CUSTOM_FORMULA"
             ],
             "title": "Policy"
@@ -15006,16 +15006,16 @@
           "state": {
             "type": "string",
             "enum": [
-              "aanvraag",
-              "verleend",
-              "vastgesteld",
-              "uitbetaald",
-              "teruggevorderd",
-              "afgehandeld"
+              "request",
+              "granted",
+              "determined",
+              "paid",
+              "reclaimed",
+              "handled"
             ],
             "description": "Current lifecycle state per Awb afdeling 4.2 + VNG ASV-model.",
-            "default": "aanvraag",
-            "example": "aanvraag",
+            "default": "request",
+            "example": "request",
             "title": "State"
           },
           "decisionUri": {
@@ -15160,7 +15160,7 @@
         },
         "x-openregister-lifecycle": {
           "field": "state",
-          "initialState": "aanvraag",
+          "initialState": "request",
           "retention": {
             "rule": "selectielijst:3.5.1",
             "triggerField": "vaststellingDate",
@@ -15168,35 +15168,35 @@
             "description": "Subsidie-records retained 10 years after vaststellingDate per Selectielijst Gemeenten 2020 + Awb 4:52 (REQ-SUB-009). Trigger: vaststellingDate or paidDate of last RepaymentInstallment."
           },
           "states": {
-            "aanvraag": {
+            "request": {
               "label": "Aanvraag",
               "description": "Subsidie aanvraag ingediend. Awb 4:5 — aanvraag indiening."
             },
-            "verleend": {
+            "granted": {
               "label": "Verleend",
               "description": "Subsidie verleend per beschikking. Awb 4:43/4:48 — verlening of weigering."
             },
-            "vastgesteld": {
+            "determined": {
               "label": "Vastgesteld",
               "description": "Subsidie vastgesteld op basis van verantwoording. Awb 4:46 — vaststelling."
             },
-            "uitbetaald": {
+            "paid": {
               "label": "Uitbetaald",
               "description": "Subsidie uitbetaald; journal entry created in state pending. Awb 4:52 — bevoorschotting / betaling."
             },
-            "teruggevorderd": {
+            "reclaimed": {
               "label": "Teruggevorderd",
               "description": "Subsidie (gedeeltelijk) teruggevorderd. Awb 4:57 — terugvordering."
             },
-            "afgehandeld": {
+            "handled": {
               "label": "Afgehandeld",
               "description": "Dossier gesloten (afwijzing, einde verplichtingen, of volledige terugbetaling)."
             }
           },
           "transitions": {
             "verleen": {
-              "from": "aanvraag",
-              "to": "verleend",
+              "from": "request",
+              "to": "granted",
               "label": "Verlenen",
               "description": "Verleen de subsidie na goedkeuring. Vereist verleendBedrag en (SHOULD) beschikkingUri. Approval-workflow gated per REQ-SUB-004.",
               "requires": {
@@ -15210,8 +15210,8 @@
               }
             },
             "afwijzen": {
-              "from": "aanvraag",
-              "to": "afgehandeld",
+              "from": "request",
+              "to": "handled",
               "label": "Afwijzen",
               "description": "Wijs de subsidie-aanvraag af. Vereist afwijzingsReden.",
               "requires": {
@@ -15221,8 +15221,8 @@
               }
             },
             "vaststellen": {
-              "from": "verleend",
-              "to": "vastgesteld",
+              "from": "granted",
+              "to": "determined",
               "label": "Vaststellen",
               "description": "Stel de subsidie vast na ontvangen verantwoording. Vereist prestatieverantwoording en vastgesteldBedrag.",
               "requires": {
@@ -15233,8 +15233,8 @@
               }
             },
             "uitbetalen": {
-              "from": "vastgesteld",
-              "to": "uitbetaald",
+              "from": "determined",
+              "to": "paid",
               "label": "Uitbetalen",
               "description": "Betaal de vastgestelde subsidie uit. Vereist uitbetaaldBedrag. Aanmaken van JournalEntry in state pending per REQ-SUB-005 (NOOIT auto-posted).",
               "requires": {
@@ -15282,8 +15282,8 @@
               }
             },
             "terugvorderen": {
-              "from": "uitbetaald",
-              "to": "teruggevorderd",
+              "from": "paid",
+              "to": "reclaimed",
               "label": "Terugvorderen",
               "description": "Vorder (een deel van) de subsidie terug. Vereist teruggevorderdBedrag en afwijzingsReden. Approval-workflow gated per REQ-SUB-004.",
               "requires": {
@@ -15298,8 +15298,8 @@
               }
             },
             "afhandelenVanuitUitbetaald": {
-              "from": "uitbetaald",
-              "to": "afgehandeld",
+              "from": "paid",
+              "to": "handled",
               "label": "Dossier sluiten (na bewaartermijn)",
               "description": "Sluit het subsidiedossier na verstrijken van de bewaarplicht. Kalender-trigger na selectielijst:3.5.1 retentieperiode.",
               "timeBased": {
@@ -15308,8 +15308,8 @@
               }
             },
             "afhandelenVanuitTeruggevorderd": {
-              "from": "teruggevorderd",
-              "to": "afgehandeld",
+              "from": "reclaimed",
+              "to": "handled",
               "label": "Dossier sluiten (terugbetaling voltooid)",
               "description": "Sluit het subsidiedossier na volledige terugbetaling (repaymentBalance = 0).",
               "requires": "OCA\\Shillinq\\Guard\\SubsidieRepaymentGuard::requireZeroRepaymentBalance"
@@ -15696,8 +15696,8 @@
               "expenses",
               "revenue",
               "investeringen",
-              "reserves-toevoeging",
-              "reserves-onttrekking",
+              "reserves-addition",
+              "reserves-withdrawal",
               "result"
             ],
             "description": "IV3 reporting bucket for this account mapping. See bookkeeping-iv3-reporting.",
@@ -16798,10 +16798,10 @@
             "type": "string",
             "description": "Elected innovatiebox route for this fiscal year. Mutually exclusive per (administrationId, fiscalYear).",
             "enum": [
-              "forfaitair",
+              "flatRate",
               "afpelmethode"
             ],
-            "example": "forfaitair",
+            "example": "flatRate",
             "title": "Route"
           },
           "applicableTariff": {
@@ -16969,7 +16969,7 @@
               ]
             },
             "type": "number",
-            "description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value). JSON-AST: if(route=='forfaitair', min(forfaitairPercentage*operatingProfit, forfaitairCapBedrag), null).",
+            "description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value). JSON-AST: if(route=='flatRate', min(forfaitairPercentage*operatingProfit, forfaitairCapBedrag), null).",
             "example": 25000.0
           }
         },
@@ -17157,11 +17157,11 @@
             "type": "string",
             "description": "Method used to attribute profit to the IP asset.",
             "enum": [
-              "omzet-aandeel",
-              "r-en-d-uren",
+              "revenue-share",
+              "r-and-d-hours",
               "custom-formula"
             ],
-            "example": "omzet-aandeel",
+            "example": "revenue-share",
             "title": "Allocation Key"
           },
           "parameters": {
@@ -18050,14 +18050,14 @@
           "category": {
             "type": "string",
             "enum": [
-              "standaard",
+              "standard",
               "verlaagd",
               "nul",
-              "vrijgesteld",
+              "exempt",
               "verleggingsregeling"
             ],
             "description": "Tariff category per Wet OB 1968.",
-            "example": "standaard",
+            "example": "standard",
             "title": "Category"
           },
           "rubriek": {
@@ -19208,11 +19208,11 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
-              "vastgesteld",
+              "draft",
+              "determined",
               "verwerkt"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Processing status of the wijziging.",
             "title": "Status"
           },
@@ -19370,7 +19370,7 @@
             "enum": [
               "revenue",
               "expenses",
-              "balans"
+              "balance"
             ],
             "description": "Whether postings on this categorie are baten, lasten, or balans-mutaties.",
             "example": "expenses",
@@ -19726,16 +19726,16 @@
           "type": {
             "type": "string",
             "enum": [
-              "Lokale_heffingen",
-              "Weerstandsvermogen",
-              "Onderhoud_kapitaalgoederen",
-              "Financiering",
-              "Bedrijfsvoering",
-              "Verbonden_partijen",
-              "Grondbeleid"
+              "local_levies",
+              "Resilience",
+              "maintenance_capital_goods",
+              "Financing",
+              "Operations",
+              "affiliated_parties",
+              "LandPolicy"
             ],
             "description": "Paragraaf type per BBV art. 9.",
-            "example": "Weerstandsvermogen",
+            "example": "Resilience",
             "title": "Type"
           },
           "administrationId": {
@@ -19895,15 +19895,15 @@
           "version": {
             "type": "string",
             "enum": [
-              "begroting",
+              "budget",
               "jaarrekening",
               "burap-1",
               "burap-2",
               "marap",
-              "tussenrapportage"
+              "interimReport"
             ],
             "description": "Document version this programma belongs to.",
-            "default": "begroting",
+            "default": "budget",
             "title": "Version"
           },
           "stelselwijziging": {
@@ -20151,8 +20151,8 @@
             "type": "string",
             "enum": [
               "gemeente",
-              "provincie",
-              "waterschap"
+              "province",
+              "waterAuthority"
             ],
             "description": "Which overheidslaag this taakveld catalogue applies to.",
             "example": "gemeente",
@@ -20537,13 +20537,13 @@
             "nullable": true,
             "description": "Recurrence frequency. Required for RECURRING lines; null for ONE_OFF. Normalized to a monthly rate by the engine (MAANDELIJKS=1, KWARTAALS=1/3, JAARLIJKS=1/12, WEKELIJKS=52/12, TWEEWEKELIJKS=26/12).",
             "enum": [
-              "MAANDELIJKS",
-              "KWARTAALS",
-              "JAARLIJKS",
-              "WEKELIJKS",
-              "TWEEWEKELIJKS"
+              "MONTHLY",
+              "QUARTERLY",
+              "ANNUALLY",
+              "WEEKLY",
+              "FORTNIGHTLY"
             ],
-            "example": "JAARLIJKS",
+            "example": "ANNUALLY",
             "title": "Frequency"
           },
           "recognitionMethod": {
@@ -23114,7 +23114,7 @@
           "enum": [
             "draft",
             "goedgekeurd",
-            "afgesloten"
+            "closed"
           ],
           "description": "Status van de urenstaat in de goedkeurings-workflow.",
           "example": "draft"
@@ -23138,7 +23138,7 @@
         "states": {
           "draft": "Urenstaat in concept — nog niet goedgekeurd.",
           "goedgekeurd": "Urenstaat goedgekeurd door projectleider — telt mee in mededeling-aggregaties.",
-          "afgesloten": "Urenstaat definitief afgesloten na kwartaalrapportage."
+          "closed": "Urenstaat definitief afgesloten na kwartaalrapportage."
         },
         "transitions": {
           "goedkeuren": {
@@ -23153,7 +23153,7 @@
           },
           "afsluiten": {
             "from": "goedgekeurd",
-            "to": "afgesloten",
+            "to": "closed",
             "label": "Afsluiten",
             "description": "Urenstaat definitief afsluiten na kwartaalrapportage."
           }
@@ -23421,7 +23421,7 @@
       "nature": "RECURRING",
       "label": "SaaS subscription",
       "amount": 12000.0,
-      "frequentie": "JAARLIJKS",
+      "frequentie": "ANNUALLY",
       "recognitionMethod": "OVER_TIME",
       "recognitionDate": null,
       "termStart": null,
@@ -23459,7 +23459,7 @@
       "nature": "RECURRING",
       "label": "Monthly retainer",
       "amount": 1500.0,
-      "frequentie": "MAANDELIJKS",
+      "frequentie": "MONTHLY",
       "recognitionMethod": "OVER_TIME",
       "recognitionDate": null,
       "termStart": null,

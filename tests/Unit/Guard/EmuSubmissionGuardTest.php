@@ -66,9 +66,9 @@ class EmuSubmissionGuardTest extends TestCase
         self::assertTrue(
             $this->guard->requireApproval(
                 [
-                    'status'                  => 'concept',
+                    'status'                  => 'draft',
                     'emuBalanceCalculated'    => -2300000.0,
-                    'bbvAansluitingscontrole' => 'geslaagd',
+                    'bbvAansluitingscontrole' => 'succeeded',
                 ]
             )
         );
@@ -84,7 +84,7 @@ class EmuSubmissionGuardTest extends TestCase
         $this->logger->expects(self::once())->method('info');
         self::assertFalse(
             $this->guard->requireApproval(
-                ['status' => 'submitted', 'emuBalanceCalculated' => -2300000.0, 'bbvAansluitingscontrole' => 'geslaagd']
+                ['status' => 'submitted', 'emuBalanceCalculated' => -2300000.0, 'bbvAansluitingscontrole' => 'succeeded']
             )
         );
     }//end testAlreadySubmittedIsBlocked()
@@ -98,7 +98,7 @@ class EmuSubmissionGuardTest extends TestCase
     {
         $this->logger->expects(self::once())->method('info');
         self::assertFalse(
-            $this->guard->requireApproval(['status' => 'concept', 'bbvAansluitingscontrole' => 'geslaagd'])
+            $this->guard->requireApproval(['status' => 'draft', 'bbvAansluitingscontrole' => 'succeeded'])
         );
     }//end testConceptWithoutSaldoIsBlocked()
 
@@ -112,7 +112,7 @@ class EmuSubmissionGuardTest extends TestCase
         $this->logger->expects(self::once())->method('info');
         self::assertFalse(
             $this->guard->requireApproval(
-                ['status' => 'concept', 'emuBalanceCalculated' => 1.0, 'bbvAansluitingscontrole' => 'mislukt']
+                ['status' => 'draft', 'emuBalanceCalculated' => 1.0, 'bbvAansluitingscontrole' => 'failed']
             )
         );
     }//end testFailedReconciliationBlocks()
@@ -127,7 +127,7 @@ class EmuSubmissionGuardTest extends TestCase
         $this->logger->expects(self::once())->method('info');
         self::assertFalse(
             $this->guard->requireApproval(
-                ['status' => 'concept', 'emuBalanceCalculated' => null, 'bbvAansluitingscontrole' => 'geslaagd']
+                ['status' => 'draft', 'emuBalanceCalculated' => null, 'bbvAansluitingscontrole' => 'succeeded']
             )
         );
     }//end testNullSaldoIsBlocked()

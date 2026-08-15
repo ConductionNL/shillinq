@@ -258,7 +258,7 @@ class DualGaapGuardTest extends TestCase
         $object = [
             'complyOrExplainMotivation' => 'Middelgrote rechtspersoon.',
             'avaBesluitReference'       => 'AVA-2026-03-12-5',
-            'rjVariant'                 => 'RJ-onverkort',
+            'rjVariant'                 => 'rj-in_full',
             'sizeCriteriaBalanstotaal'  => 25000000.0,
             'sizeCriteriaNetRevenue'    => 60000000.0,
         ];

@@ -37,7 +37,7 @@
  *    present and saveable (REQ-BBC-004).
  *
  *  - Visibility predicate: both pages are guarded by
- *    `administrationType: ['provincie']` — the navigation entry is
+ *    `administrationType: ['province']` — the navigation entry is
  *    hidden when the active administration is not a provincie
  *    (manifest `visibilityPredicate`).
  *

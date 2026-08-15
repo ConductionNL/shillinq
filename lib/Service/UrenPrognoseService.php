@@ -280,7 +280,7 @@ final class UrenPrognoseService
                 continue;
             }
 
-            $maand = (string) ($opdracht['maand'] ?? '');
+            $maand = (string) ($opdracht['month'] ?? '');
             $uren  = (float) ($opdracht['hours'] ?? 0);
             if ($maand !== '') {
                 $overridesByMaand[$maand] = $uren;

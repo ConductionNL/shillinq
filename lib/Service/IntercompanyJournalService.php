@@ -55,9 +55,9 @@ class IntercompanyJournalService
      * @var array<string,array<int,string>>
      */
     private const TRANSITIONS = [
-        'concept'            => ['gekoppeld'],
-        'gekoppeld'          => ['bevestigd_beide', 'concept'],
-        'bevestigd_beide'    => ['eliminatie_geboekt', 'concept'],
+        'draft'            => ['gekoppeld'],
+        'gekoppeld'          => ['bevestigd_beide', 'draft'],
+        'bevestigd_beide'    => ['eliminatie_geboekt', 'draft'],
         'eliminatie_geboekt' => [],
     ];
 
@@ -99,14 +99,14 @@ class IntercompanyJournalService
         return [
             'intercompanyNumber'          => (string) ($source['intercompanyNumber'] ?? ''),
             'date'                        => (string) ($source['date'] ?? ''),
-            'kind'                        => (string) ($source['kind'] ?? 'overig'),
+            'kind'                        => (string) ($source['kind'] ?? 'other'),
             // Swap perspective: the mirror's source is the original destination.
             'sourceAdministrationId'      => (string) ($source['destinationAdministrationId'] ?? ''),
             'destinationAdministrationId' => (string) ($source['sourceAdministrationId'] ?? ''),
             'amount'                      => ($amountCents / 100),
             'currency'                    => (string) ($source['currency'] ?? 'EUR'),
             'exchangeRate'                => (float) ($source['exchangeRate'] ?? 1.0),
-            'vatTreatment'                => (string) ($source['vatTreatment'] ?? 'standaard'),
+            'vatTreatment'                => (string) ($source['vatTreatment'] ?? 'standard'),
             'eliminateOnConsolidation'    => (bool) ($source['eliminateOnConsolidation'] ?? false),
             'eliminationAccount'          => ($source['eliminationAccount'] ?? null),
             'status'                      => 'gekoppeld',
@@ -192,7 +192,7 @@ class IntercompanyJournalService
         }
 
         if ($currentStatus === 'bevestigd_beide' || $currentStatus === 'gekoppeld') {
-            $next = 'concept';
+            $next = 'draft';
         } else {
             $next = $currentStatus;
         }

@@ -80,7 +80,7 @@
                   "Faillissement",
                   "Schuldsanering",
                   "1jaar-onbetaald",
-                  "overig"
+                  "other"
                 ],
                 "description": "Categorised write-off ground, derived from the OninbaarAfschrijving.art29OBVerklaring declaration: bankruptcy (Faillissement), debt restructuring (Schuldsanering), one year unpaid (1jaar-onbetaald) or other (overig).",
                 "title": "Written Off Reason"

@@ -301,7 +301,7 @@ final class AansluitingServiceTest extends TestCase
                 'Aansluiting'    => [
                     [
                         'id'                   => 'aansl-btw-1',
-                        'aansluitingType'      => 'btw-ledger-aangifte',
+                        'aansluitingType'      => 'vat-ledger-return',
                         'toleranceCents'       => 100,
                         'expectedRelationship' => 'equal',
                         'administrationId'     => 'adm-1',
@@ -382,7 +382,7 @@ final class AansluitingServiceTest extends TestCase
                 'Aansluiting'    => [
                     [
                         'id'                   => 'aansl-btw-1',
-                        'aansluitingType'      => 'btw-ledger-aangifte',
+                        'aansluitingType'      => 'vat-ledger-return',
                         'toleranceCents'       => 100,
                         'expectedRelationship' => 'equal',
                         'administrationId'     => 'adm-1',

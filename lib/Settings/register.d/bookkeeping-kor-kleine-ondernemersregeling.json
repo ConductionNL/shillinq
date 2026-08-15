@@ -101,11 +101,11 @@
             "type": "string",
             "description": "Kanaal van aanmelding. Aanmelding blijft web-formulier-only via mijnbelastingdienst.nl (out of scope: SBR/webservice).",
             "enum": [
-              "MIJN_BELASTINGDIENST_ZAKELIJK",
-              "MIJN_BELASTINGDIENST_KORUS"
+              "MY_TAXAUTHORITY_BUSINESS",
+              "MY_TAXAUTHORITY_KORUS"
             ],
-            "default": "MIJN_BELASTINGDIENST_ZAKELIJK",
-            "example": "MIJN_BELASTINGDIENST_ZAKELIJK",
+            "default": "MY_TAXAUTHORITY_BUSINESS",
+            "example": "MY_TAXAUTHORITY_BUSINESS",
             "title": "Aanmeld Kanaal"
           },
           "thresholdYear": {
@@ -298,12 +298,12 @@
             "type": "string",
             "description": "Status van de prognose t.o.v. de drempel (REQ-KOR-002).",
             "enum": [
-              "ONDER_DREMPEL",
-              "WAARSCHUWING",
-              "OVERSCHRIJDING_VERWACHT"
+              "UNDER_THRESHOLD",
+              "WARNING",
+              "OVERRUN_EXPECTED"
             ],
-            "default": "ONDER_DREMPEL",
-            "example": "OVERSCHRIJDING_VERWACHT",
+            "default": "UNDER_THRESHOLD",
+            "example": "OVERRUN_EXPECTED",
             "title": "Prognose Status"
           },
           "administrationId": {
@@ -373,11 +373,11 @@
             "type": "string",
             "description": "Drempelschijf die werd gepasseerd (REQ-KOR-003).",
             "enum": [
-              "DREMPEL_80PCT",
-              "DREMPEL_90PCT",
-              "DREMPEL_100PCT"
+              "THRESHOLD_80_PCT",
+              "THRESHOLD_90_PCT",
+              "THRESHOLD_100_PCT"
             ],
-            "example": "DREMPEL_90PCT",
+            "example": "THRESHOLD_90_PCT",
             "title": "Trigger"
           },
           "uitgeloostOp": {
@@ -412,10 +412,10 @@
             "description": "Ernstniveau gekoppeld aan de schijf (REQ-KOR-003).",
             "enum": [
               "VROEG",
-              "KRITIEK",
+              "CRITICAL",
               "OVERSCHRIJDING"
             ],
-            "example": "KRITIEK",
+            "example": "CRITICAL",
             "title": "Ernst"
           },
           "aanbeveling": {
@@ -495,10 +495,10 @@
             "type": "string",
             "description": "Soort beëindiging (REQ-KOR-004/007).",
             "enum": [
-              "OVERSCHRIJDING",
-              "VRIJWILLIG_NA_LOCKOUT"
+              "OVERRUN",
+              "VOLUNTARY_AFTER_LOCKOUT"
             ],
-            "example": "OVERSCHRIJDING",
+            "example": "OVERRUN",
             "title": "Type"
           },
           "revocatieDatum": {
@@ -564,10 +564,10 @@
             "type": "string",
             "description": "Regime na revocatie.",
             "enum": [
-              "REGULIER_BTW"
+              "REGULAR_VAT"
             ],
-            "default": "REGULIER_BTW",
-            "example": "REGULIER_BTW",
+            "default": "REGULAR_VAT",
+            "example": "REGULAR_VAT",
             "title": "Nieuw Regime"
           },
           "blokkadeHeraanmelding": {
@@ -769,7 +769,7 @@
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "taxAuthorityReference": "KOR-2025-NL-89231",
-        "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
+        "aanmeldKanaal": "MY_TAXAUTHORITY_BUSINESS",
         "thresholdYear": 20000,
         "previousRevenue": {
           "2024": 19200.0,
@@ -793,7 +793,7 @@
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "taxAuthorityReference": "KOR-2025-NL-77410",
-        "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
+        "aanmeldKanaal": "MY_TAXAUTHORITY_BUSINESS",
         "thresholdYear": 20000,
         "previousRevenue": {
           "2024": 18400.0,
@@ -817,7 +817,7 @@
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "taxAuthorityReference": "KOR-EU-2026-NL-0019",
-        "aanmeldKanaal": "MIJN_BELASTINGDIENST_KORUS",
+        "aanmeldKanaal": "MY_TAXAUTHORITY_KORUS",
         "thresholdYear": 20000,
         "previousRevenue": {
           "2024": 21000.0,
@@ -841,7 +841,7 @@
         "lockInEndDate": "2028-12-31",
         "vroegsteOpzegDatum": "2028-10-01",
         "taxAuthorityReference": "KOR-2025-NL-55120",
-        "aanmeldKanaal": "MIJN_BELASTINGDIENST_ZAKELIJK",
+        "aanmeldKanaal": "MY_TAXAUTHORITY_BUSINESS",
         "thresholdYear": 20000,
         "previousRevenue": {
           "2024": 14900.0,
@@ -872,7 +872,7 @@
         },
         "uitgeslotenPosten": [],
         "forecastYearEnd": 18600.0,
-        "prognoseStatus": "WAARSCHUWING",
+        "prognoseStatus": "WARNING",
         "administrationId": "adm-zzp-fotograaf"
       },
       {
@@ -899,7 +899,7 @@
         },
         "uitgeslotenPosten": [],
         "forecastYearEnd": 27100.0,
-        "prognoseStatus": "OVERSCHRIJDING_VERWACHT",
+        "prognoseStatus": "OVERRUN_EXPECTED",
         "administrationId": "adm-kapper-maria"
       },
       {
@@ -935,7 +935,7 @@
           }
         ],
         "forecastYearEnd": 19850.0,
-        "prognoseStatus": "WAARSCHUWING",
+        "prognoseStatus": "WARNING",
         "administrationId": "adm-zzp-coach"
       },
       {
@@ -945,12 +945,12 @@
           "slug": "kor-alert-maria-90pct"
         },
         "registrationId": "kor-reg-kapper-maria-2026",
-        "trigger": "DREMPEL_90PCT",
+        "trigger": "THRESHOLD_90_PCT",
         "uitgeloostOp": "2026-08-12T14:23:00Z",
         "revenueAtMoment": 18120.0,
         "drempelBenutting": 0.906,
         "forecastYearEnd": 24630.0,
-        "ernst": "KRITIEK",
+        "ernst": "CRITICAL",
         "aanbeveling": "Overweeg opt-out of factureer strategisch (vooruitfactureren naar januari).",
         "channel": [
           "EMAIL",
@@ -968,7 +968,7 @@
           "slug": "kor-alert-maria-100pct"
         },
         "registrationId": "kor-reg-kapper-maria-2026",
-        "trigger": "DREMPEL_100PCT",
+        "trigger": "THRESHOLD_100_PCT",
         "uitgeloostOp": "2026-09-04T10:05:00Z",
         "revenueAtMoment": 20360.0,
         "drempelBenutting": 1.018,
@@ -991,7 +991,7 @@
           "slug": "kor-alert-fotograaf-80pct"
         },
         "registrationId": "kor-reg-zzp-fotograaf-2026",
-        "trigger": "DREMPEL_80PCT",
+        "trigger": "THRESHOLD_80_PCT",
         "uitgeloostOp": "2026-10-02T09:00:00Z",
         "revenueAtMoment": 16100.0,
         "drempelBenutting": 0.805,
@@ -1012,7 +1012,7 @@
           "slug": "kor-rev-maria-overschrijding-2026"
         },
         "registrationId": "kor-reg-kapper-maria-2026",
-        "type": "OVERSCHRIJDING",
+        "type": "OVERRUN",
         "revocatieDatum": "2026-09-04",
         "triggerInvoiceId": "fact-2026-0240",
         "revenueAtMoment": 20360.0,
@@ -1022,7 +1022,7 @@
           "van": "2026-09-04",
           "tot": "2026-12-31"
         },
-        "newRegime": "REGULIER_BTW",
+        "newRegime": "REGULAR_VAT",
         "blokkadeHeraanmelding": "2029-09-04",
         "belastingdienstNotificatie": {
           "verzonden": true,

@@ -68,11 +68,11 @@ class RevenueRecognitionService
      * @var array<string,float>
      */
     private const FREQUENCY_FACTORS = [
-        'MAANDELIJKS'   => 1.0,
-        'KWARTAALS'     => (1.0 / 3.0),
-        'JAARLIJKS'     => (1.0 / 12.0),
-        'WEKELIJKS'     => (52.0 / 12.0),
-        'TWEEWEKELIJKS' => (26.0 / 12.0),
+        'MONTHLY'   => 1.0,
+        'QUARTERLY'     => (1.0 / 3.0),
+        'ANNUALLY'     => (1.0 / 12.0),
+        'WEEKLY'     => (52.0 / 12.0),
+        'FORTNIGHTLY' => (26.0 / 12.0),
     ];
 
     /**

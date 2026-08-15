@@ -83,7 +83,7 @@ final class DBAConstants
     public const VASTE_MAANDFACTUUR_VARIATIE_MAX = 0.04;
 
     /**
-     * Maximum aantal dagen verschil tussen factuurdata om als "maandelijks" te tellen.
+     * Maximum aantal dagen verschil tussen factuurdata om als "monthly" te tellen.
      */
     public const VASTE_MAANDFACTUUR_DAG_TOLERANTIE = 2;
 
@@ -143,18 +143,18 @@ final class DBAConstants
     public static function bandFromScore(int $score): string
     {
         if ($score <= self::RISICO_BAND_LAAG_MAX) {
-            return 'LAAG';
+            return 'LOW';
         }
 
         if ($score <= self::RISICO_BAND_LAAG_MIDDEN_MAX) {
-            return 'LAAG_MIDDEN';
+            return 'LOW_MIDDEN';
         }
 
         if ($score <= self::RISICO_BAND_MIDDEN_HOOG_MAX) {
-            return 'MIDDEN_HOOG';
+            return 'MIDDEN_HIGH';
         }
 
-        return 'HOOG';
+        return 'HIGH';
     }//end bandFromScore()
 
     /**

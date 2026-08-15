@@ -674,7 +674,7 @@ class SettingsService
      */
     public function seedBbvAccountMappings(string $administrationId, string $administrationType): array
     {
-        $municipalTypes = ['gemeente', 'provincie', 'waterschap'];
+        $municipalTypes = ['gemeente', 'province', 'waterAuthority'];
         if (in_array($administrationType, $municipalTypes, true) === false) {
             return [
                 'success' => true,
@@ -2909,7 +2909,7 @@ class SettingsService
             $files = [
                 'sportaccommodaties-gemeente.json'         => ['CommercialActivity', 'activities', 'code'],
                 'waterschap-slibruimte.json'               => ['CommercialActivity', 'activities', 'code'],
-                'abb-example-gemeente.json'                => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
+                'abb-example-gemeente.json'                => ['GeneralInterestDecision', 'besluiten', 'reference'],
                 'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
             ];
 

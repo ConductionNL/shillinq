@@ -209,7 +209,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
                     '1089',
                     [
                         'source' => 'tenderned',
-                        'status' => 'concept',
+                        'status' => 'draft',
                         'amount' => 5000.0,
                     ]
                     )
@@ -242,7 +242,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
                     ]
                     ),
             'activeren',
-            'concept',
+            'draft',
             'active',
             'admin',
             'shillinq',
@@ -271,13 +271,13 @@ final class VerplichtingTransitionListenerTest extends TestCase
                     '1089',
                     [
                         'source' => 'tenderned',
-                        'status' => 'concept',
+                        'status' => 'draft',
                         'amount' => 5000.0,
                     ]
                     ),
             'reactiveren',
             'active',
-            'concept',
+            'draft',
             'admin',
             'shillinq',
             'Verplichting'

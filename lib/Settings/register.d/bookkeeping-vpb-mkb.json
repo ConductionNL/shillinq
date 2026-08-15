@@ -323,16 +323,16 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "submitted",
               "aanslag-ontvangen",
               "bezwaar",
               "beroep",
               "onherroepelijk"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Levenscyclusstatus van de aangifte (REQ-VPB-001, REQ-VPB-010).",
-            "example": "concept",
+            "example": "draft",
             "title": "Status"
           },
           "commercieleWinst": {
@@ -438,9 +438,9 @@
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Aangifte in opbouw; correcties en faciliteiten worden ingevoerd; bedragen herrekenen mee (REQ-VPB-001)."
             },
@@ -467,7 +467,7 @@
           },
           "transitions": {
             "indienen": {
-              "from": "concept",
+              "from": "draft",
               "to": "submitted",
               "label": "Aangifte indienen via Digipoort",
               "description": "Indienen mag alleen wanneer de gekoppelde jaarrekening vastgesteld is, de S&O-verklaring bij een innovatiebox-claim aanwezig is, de Belastingplichtige eHerkenning EH3+ en een geldig Digipoort-certificaat heeft, en de faciliteit-eligibility slaagt (REQ-VPB-002, REQ-VPB-004, REQ-VPB-009). Cross-schema check: VpbAangifteGuard::canIndienen.",
@@ -674,11 +674,11 @@
           "methodType": {
             "type": "string",
             "enum": [
-              "forfaitair",
-              "werkelijke-winst"
+              "flatRate",
+              "actual-profit"
             ],
             "description": "Berekeningsmethode van de innovatiebox.",
-            "example": "werkelijke-winst",
+            "example": "actual-profit",
             "title": "Method Type"
           },
           "kwalificerendeActiva": {
@@ -744,13 +744,13 @@
         },
         "x-openregister-lifecycle": {
           "field": "methodType",
-          "initialState": "werkelijke-winst",
+          "initialState": "actual-profit",
           "states": {
-            "forfaitair": {
+            "flatRate": {
               "label": "Forfaitair",
               "description": "Forfaitaire benadering; gemaximeerd op de catalogusdrempel en beperkt tot de eerste 3 jaar na S&O-afgifte (REQ-VPB-004)."
             },
-            "werkelijke-winst": {
+            "actual-profit": {
               "label": "Werkelijke winst",
               "description": "Werkelijke-winst-methode met nexus-factor; ongemaximeerd (REQ-VPB-004)."
             }
@@ -1369,12 +1369,12 @@
           "betalingsregeling": {
             "type": "string",
             "enum": [
-              "maandelijks",
-              "eenmalig"
+              "monthly",
+              "oneOff"
             ],
-            "default": "maandelijks",
+            "default": "monthly",
             "description": "Betaalwijze van de voorlopige aanslag.",
-            "example": "maandelijks",
+            "example": "monthly",
             "title": "Betalingsregeling"
           },
           "herzieningsverzoekIngesteld": {
@@ -1520,10 +1520,10 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "ontvangen"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Levenscyclus van de aanslagregistratie.",
             "example": "ontvangen",
             "title": "Status"
@@ -1545,9 +1545,9 @@
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Aanslag geregistreerd maar nog niet bevestigd ontvangen."
             },
@@ -1558,7 +1558,7 @@
           },
           "transitions": {
             "ontvangen": {
-              "from": "concept",
+              "from": "draft",
               "to": "ontvangen",
               "label": "Aanslag ontvangen bevestigen",
               "description": "Bevestig de ontvangst; de gekoppelde VpbAangifte moet in de status ingediend staan (REQ-VPB-010). Cross-schema check: VpbAangifteGuard::canAanslagOntvangen.",
@@ -1626,13 +1626,13 @@
           "type": {
             "type": "string",
             "enum": [
-              "bezwaar",
-              "beroep",
-              "hoger-beroep",
-              "cassatie"
+              "objection",
+              "appeal",
+              "higher-appeal",
+              "cassation"
             ],
             "description": "Type rechtsmiddel.",
-            "example": "bezwaar",
+            "example": "objection",
             "title": "Type"
           },
           "submittedOn": {
@@ -1674,9 +1674,9 @@
           "vervolgInstantie": {
             "type": "string",
             "enum": [
-              "Rechtbank",
-              "Hof",
-              "HogeRaad"
+              "DistrictCourt",
+              "Court",
+              "HighCouncil"
             ],
             "nullable": true,
             "description": "Vervolginstantie bij doorzetting.",

@@ -73,7 +73,7 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB`,
-			state: 'aanvraag',
+			state: 'request',
 		})
 		const obj = await fx.get(SCHEMA, id)
 		expect(obj.orderType).toBe('subsidy')
@@ -109,7 +109,7 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB-LIFECYCLE`,
-			state: 'aanvraag',
+			state: 'request',
 		})
 
 		const res = await fx.transition(id, 'verleen')
@@ -117,7 +117,7 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 
 		const after = await fx.get(SCHEMA, id)
 		const state = (after['@self'] as Record<string, unknown> | undefined)?.state ?? after.state
-		expect(state).toBe('verleend')
+		expect(state).toBe('granted')
 	})
 
 	test('a transition never crosses orderType boundaries (approve refused on a subsidie) @spec REQ-ORD-002', async () => {
@@ -126,7 +126,7 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB-CROSS`,
-			state: 'aanvraag',
+			state: 'request',
 		})
 
 		// `approve` is a PURCHASE-only transition (from=draft). It must be refused

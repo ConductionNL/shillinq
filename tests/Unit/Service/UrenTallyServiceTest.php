@@ -54,16 +54,16 @@ final class UrenTallyServiceTest extends TestCase
     {
         $result = $this->build()->tallyDag(
             entries: [
-                ['category' => 'BILLABLE_KLANTWERK', 'hours' => 6],
-                ['category' => 'REISTIJD_ZAKELIJK', 'hours' => 8],
-                ['category' => 'ADMINISTRATIE', 'hours' => 1.5],
+                ['category' => 'BILLABLE_CLIENT_WORK', 'hours' => 6],
+                ['category' => 'TRAVEL_TIME_BUSINESS', 'hours' => 8],
+                ['category' => 'ADMINISTRATION', 'hours' => 1.5],
             ]
         );
 
         self::assertSame(11.5, $result['totalHours']);
-        self::assertSame(4.0, $result['perCategory']['REISTIJD_ZAKELIJK']);
+        self::assertSame(4.0, $result['perCategory']['TRAVEL_TIME_BUSINESS']);
         self::assertCount(1, $result['overages']);
-        self::assertSame('REISTIJD_ZAKELIJK', $result['overages'][0]['category']);
+        self::assertSame('TRAVEL_TIME_BUSINESS', $result['overages'][0]['category']);
 
     }//end testTallyDagAppliesReistijdCap()
 
@@ -76,8 +76,8 @@ final class UrenTallyServiceTest extends TestCase
     {
         $service = $this->build();
         $entries = [
-            ['category' => 'BILLABLE_KLANTWERK', 'hours' => 6],
-            ['category' => 'REISTIJD_ZAKELIJK', 'hours' => 5],
+            ['category' => 'BILLABLE_CLIENT_WORK', 'hours' => 6],
+            ['category' => 'TRAVEL_TIME_BUSINESS', 'hours' => 5],
         ];
 
         $first  = $service->tallyDag(entries: $entries);
@@ -111,11 +111,11 @@ final class UrenTallyServiceTest extends TestCase
     {
         $result = $this->build()->tallyDag(
             entries: [
-                ['category' => 'BILLABLE_KLANTWERK', 'hours' => 4],
+                ['category' => 'BILLABLE_CLIENT_WORK', 'hours' => 4],
                 'garbage',
                 ['hours' => 2],
                 ['category' => '', 'hours' => 99],
-                ['category' => 'ACQUISITIE', 'hours' => 2],
+                ['category' => 'ACQUISITION', 'hours' => 2],
             ]
         );
 
@@ -132,9 +132,9 @@ final class UrenTallyServiceTest extends TestCase
     {
         $patch = $this->build()->tallyYearToDate(
             entries: [
-                ['category' => 'BILLABLE_KLANTWERK', 'hours' => 800],
-                ['category' => 'ACQUISITIE', 'hours' => 100],
-                ['category' => 'REISTIJD_ZAKELIJK', 'hours' => 6],
+                ['category' => 'BILLABLE_CLIENT_WORK', 'hours' => 800],
+                ['category' => 'ACQUISITION', 'hours' => 100],
+                ['category' => 'TRAVEL_TIME_BUSINESS', 'hours' => 6],
             ],
             now: '2026-09-30T23:00:00Z'
         );

@@ -391,7 +391,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $event = new ObjectTransitionedEvent(
             $this->entity('1089', ['status' => 'active']),
             'activeren',
-            'concept',
+            'draft',
             'completed',
             'admin',
             'shillinq',

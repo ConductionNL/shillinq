@@ -105,7 +105,7 @@ class InnovatieboxSbrExportService
             'instanceRef'            => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
             'collectie'              => self::SBR_COLLECTION,
             'identificerendePeriode' => sprintf('%04d', $boekjaar),
-            'administratie'          => $administrationId,
+            'administration'          => $administrationId,
             'gekozenMethode'         => $methode,
             'regel23_kwalifWinst'    => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
             'regel23_vpbInnovatie'   => round((float) ($totals['vpb_op_innovatiedeel'] ?? 0.0), 2),
@@ -183,7 +183,7 @@ class InnovatieboxSbrExportService
             'methode'          => $methode,
             'instanceRef'      => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
             'perAsset'         => $perAsset,
-            'forfaitair'       => $forfaitair,
+            'flatRate'       => $forfaitair,
             'totals'           => [
                 'winst_voor_nexus' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
                 'winst_na_nexus'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),

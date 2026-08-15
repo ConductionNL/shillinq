@@ -120,7 +120,7 @@
             "enum": [
               "software",
               "hardware-related",
-              "data-algoritme",
+              "data-algorithm",
               "other"
             ],
             "example": "software",
@@ -828,8 +828,8 @@
               "IBProfitAttribution.amendment_attempt_blocked",
               "CarryForwardLoss.created",
               "CarryForwardLoss.offset_applied",
-              "DoorsnijdingsVerbod.check_run",
-              "ForfaitairCap.applied"
+              "cross_cutting_prohibition_check_run",
+              "flatRateCapApplied"
             ],
             "example": "IBProfitAttribution.created",
             "title": "Event Type"
@@ -943,7 +943,7 @@
             "tot": "2024-12-31"
           }
         },
-        "type_immaterieel_activum": "data-algoritme",
+        "type_immaterieel_activum": "data-algorithm",
         "ontwikkelingsperiode": {
           "start": "2023-06-01"
         },

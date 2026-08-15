@@ -184,7 +184,7 @@ final class KorFragmentTest extends TestCase
             self::assertSame('shillinq', $object['@self']['register']);
             self::assertArrayHasKey($object['@self']['schema'], $schemas);
 
-            if ($object['@self']['schema'] === 'KORRevocation' && $object['type'] === 'OVERSCHRIJDING') {
+            if ($object['@self']['schema'] === 'KORRevocation' && $object['type'] === 'OVERRUN') {
                 $revocation = $object;
             }
         }

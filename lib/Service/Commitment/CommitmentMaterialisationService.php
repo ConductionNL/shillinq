@@ -137,7 +137,7 @@ class CommitmentMaterialisationService
         $regelInputs = $this->buildRegelsFromPurchaseOrderLines(purchaseOrder: $purchaseOrder, lines: $lines);
 
         $tegenpartij = [
-            'kind'      => 'leverancier',
+            'kind'      => 'supplier',
             'contactId' => (string) ($purchaseOrder['supplierId'] ?? ''),
         ];
 
@@ -174,9 +174,9 @@ class CommitmentMaterialisationService
         $administrationId = (string) ($contract['administrationId'] ?? '');
         $regelInputs      = $this->buildRegelsFromContract(contract: $contract);
 
-        $tegenpartijSoort = 'overig';
+        $tegenpartijSoort = 'other';
         if ((string) ($contract['direction'] ?? '') === 'inbound') {
-            $tegenpartijSoort = 'leverancier';
+            $tegenpartijSoort = 'supplier';
         }
 
         $tegenpartij = [
@@ -253,7 +253,7 @@ class CommitmentMaterialisationService
             'verplichtingsnummer'   => $bronReferentie,
             'sourceReference'       => $bronReferentie,
             'kind'                  => $soort,
-            'status'                => 'concept',
+            'status'                => 'draft',
             'totaalbedrag_excl_btw' => $totaal,
             'tegenpartij'           => $tegenpartij,
             'regels'                => $regelInputs,
@@ -438,7 +438,7 @@ class CommitmentMaterialisationService
         return match ($contractType) {
             'lease' => 'leasing',
             'employment' => 'arbeidscontract',
-            default => 'overig',
+            default => 'other',
         };
 
     }//end mapContractSoort()
@@ -611,7 +611,7 @@ class CommitmentMaterialisationService
                     object: [
                         'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
                         'bevindingsnummer' => 'RV-'.($verplichting['verplichtingsnummer'] ?? '').'-OVERRIDE',
-                        'kind'             => 'fout',
+                        'kind'             => 'error',
                         'criterium'        => 'begroting',
                         'financialYear'    => $boekjaar,
                         'programme'        => (string) ($first['programme'] ?? ''),

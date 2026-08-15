@@ -46,8 +46,8 @@
             "type": "string",
             "enum": [
               "gemeente",
-              "provincie",
-              "waterschap"
+              "province",
+              "waterAuthority"
             ],
             "description": "Organisation type determining the financieel toezichthouder. REQ-001.",
             "example": "gemeente",
@@ -73,7 +73,7 @@
             "enum": [
               "draft",
               "in-behandeling",
-              "vastgesteld",
+              "determined",
               "superseded"
             ],
             "default": "draft",
@@ -154,7 +154,7 @@
               "label": "In behandeling",
               "description": "Begroting submitted to the raad for behandeling; sluitend-criterium is being evaluated."
             },
-            "vastgesteld": {
+            "determined": {
               "label": "Vastgesteld",
               "description": "Adopted by raadsbesluit. Immutable — mutaties only via vastgestelde Begrotingswijzigingen."
             },
@@ -173,13 +173,13 @@
             },
             "vaststellen": {
               "from": "in-behandeling",
-              "to": "vastgesteld",
+              "to": "determined",
               "label": "Vaststellen",
               "description": "Raad adopts the begroting; requires every paragraaf narrative non-empty and the raadsbesluit FK set. On success SluitendCalculator computes the sluitend-flags and toezichtRegime (REQ-008 / REQ-011).",
               "requires": "OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard::canVaststellen"
             },
             "vervangen": {
-              "from": "vastgesteld",
+              "from": "determined",
               "to": "superseded",
               "label": "Vervangen",
               "description": "A newer begroting for the same begrotingsjaar is adopted; the prior begroting is marked superseded (REQ-011)."
@@ -975,7 +975,7 @@
             "type": "string",
             "enum": [
               "draft",
-              "vastgesteld"
+              "determined"
             ],
             "default": "draft",
             "description": "Lifecycle status. REQ-009.",
@@ -997,7 +997,7 @@
               "label": "Concept",
               "description": "Wijziging is being prepared; mutaties have no effect on the begroting stand yet."
             },
-            "vastgesteld": {
+            "determined": {
               "label": "Vastgesteld",
               "description": "Adopted by raadsbesluit; the mutaties now stack onto the begroting stand."
             }
@@ -1005,7 +1005,7 @@
           "transitions": {
             "vaststellen": {
               "from": "draft",
-              "to": "vastgesteld",
+              "to": "determined",
               "label": "Vaststellen",
               "description": "Raad approves the wijziging; requires the raadsbesluit FK set (REQ-009).",
               "requires": "OCA\\Shillinq\\Lifecycle\\BegrotingswijzigingGuard::canVaststellen"
@@ -1026,7 +1026,7 @@
         "organisationType": "gemeente",
         "begrotingsjaar": 2027,
         "meerjarenHorizon": 4,
-        "status": "vastgesteld",
+        "status": "determined",
         "vaststellingsBesluit": "raadsbesluit-2026-114",
         "vaststellingsDatum": "2026-11-09",
         "sluitendStructureel": true,
@@ -1288,7 +1288,7 @@
         "raadsbesluit": "raadsbesluit-2027-031",
         "vaststellingsDatum": "2027-03-15",
         "effectiefVanaf": "2027-04-01",
-        "status": "vastgesteld",
+        "status": "determined",
         "administrationId": "adm-gov-1"
       }
     ]

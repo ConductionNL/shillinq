@@ -75,20 +75,20 @@ final class CashflowSeedDataIntegrationTest extends TestCase
             }
 
             $amount = (float) ($rec['standardAmount'] ?? 0.0);
-            switch ($rec['frequentie'] ?? 'MAANDELIJKS') {
-                case 'WEKELIJKS':
+            switch ($rec['frequentie'] ?? 'MONTHLY') {
+                case 'WEEKLY':
                     $total += ($amount * (52 / 12));
                     break;
-                case 'TWEEWEKELIJKS':
+                case 'FORTNIGHTLY':
                     $total += ($amount * (26 / 12));
                     break;
-                case 'KWARTAALS':
+                case 'QUARTERLY':
                     $total += ($amount / 3);
                     break;
-                case 'JAARLIJKS':
+                case 'ANNUALLY':
                     $total += ($amount / 12);
                     break;
-                case 'MAANDELIJKS':
+                case 'MONTHLY':
                 default:
                     $total += $amount;
                     break;
@@ -232,7 +232,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase
         $seed = $this->seed();
         foreach ($seed['profiles'] as $profile) {
             $policy = $profile['bufferPolicy'];
-            if (($policy['policy'] ?? '') !== 'MIN_MONTHS_VASTE_KOSTEN') {
+            if (($policy['policy'] ?? '') !== 'MIN_MONTHS_FIXED_COST') {
                 continue;
             }
 

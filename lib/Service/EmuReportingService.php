@@ -54,26 +54,26 @@ class EmuReportingService
      * @var array<int,array{0:string,1:string,2:string}>
      */
     private const MACRO_RULES = [
-        ['48', 'eliminatie-afschrijving', 'saldo-verhogend'],
-        ['460', 'eliminatie-voorzieningdotatie', 'saldo-verhogend'],
-        ['49', 'eliminatie-onttrekking-reserve', 'saldo-neutraal'],
-        ['010', 'toevoeging-bruto-investering', 'saldo-verlagend'],
-        ['020', 'toevoeging-bruto-investering', 'saldo-verlagend'],
-        ['210', 'toevoeging-aflossing', 'saldo-verlagend'],
-        ['220', 'toevoeging-aflossing', 'saldo-verlagend'],
-        ['230', 'toevoeging-aflossing', 'saldo-verlagend'],
-        ['931', 'eliminatie-boekwinst-desinvestering', 'saldo-verlagend'],
-        ['939', 'eliminatie-boekwinst-desinvestering', 'saldo-verhogend'],
+        ['48', 'elimination-depreciation', 'saldo-verhogend'],
+        ['460', 'elimination-provision-contribution', 'saldo-verhogend'],
+        ['49', 'elimination-withdrawal-reserve', 'saldo-neutraal'],
+        ['010', 'addition-gross-investment', 'saldo-verlagend'],
+        ['020', 'addition-gross-investment', 'saldo-verlagend'],
+        ['210', 'addition-repayment', 'saldo-verlagend'],
+        ['220', 'addition-repayment', 'saldo-verlagend'],
+        ['230', 'addition-repayment', 'saldo-verlagend'],
+        ['931', 'elimination-book-profit-divestment', 'saldo-verlagend'],
+        ['939', 'elimination-book-profit-divestment', 'saldo-verhogend'],
     ];
 
     /**
      * Eurostat ESA2010 instrument categories that count toward the bruto
      * EMU-schuld (AF.2 deposits, AF.3 securities, AF.4 loans). AF.7 derivatives
-     * and "overig" are excluded per REQ-EMU-004.
+     * and "other" are excluded per REQ-EMU-004.
      *
      * @var array<int,string>
      */
-    private const EMU_SCHULD_CATEGORIES = ['AF.2-deposits', 'AF.3-securities', 'AF.4-loans'];
+    private const EMU_SCHULD_CATEGORIES = ['off_2-deposits', 'off_3-securities', 'off_4-loans'];
 
     /**
      * Constructor.
@@ -126,7 +126,7 @@ class EmuReportingService
         $factuur = (string) ($glLine['factuurmoment'] ?? '');
         $betaal  = (string) ($glLine['betaalmoment'] ?? '');
         if ($factuur !== '' && $betaal !== '' && substr($factuur, 0, 10) !== substr($betaal, 0, 10)) {
-            $type = 'correctie-transactiemoment';
+            $type = 'correction-transaction-moment';
         }
 
         return [
@@ -196,7 +196,7 @@ class EmuReportingService
         $perCategorieCents = [];
         $brutoCents        = 0;
         foreach ($debtPositions as $pos) {
-            $categorie = (string) ($pos['categorieEurostat'] ?? 'overig');
+            $categorie = (string) ($pos['categorieEurostat'] ?? 'other');
             $telt      = (bool) ($pos['teltMeeInEmuDebt'] ?? false);
             if ($telt === false || in_array($categorie, self::EMU_SCHULD_CATEGORIES, true) === false) {
                 continue;
@@ -333,12 +333,12 @@ class EmuReportingService
         $verwacht = ($bbvSaldoBatenLasten + $totaleAdjustments);
         $verschil = round(($somKwartalen - $verwacht), 2);
 
-        $controle = 'geslaagd';
+        $controle = 'succeeded';
         if (abs($verschil) > $tolerantie) {
-            $controle = 'mislukt';
+            $controle = 'failed';
         }
 
-        if ($controle === 'mislukt') {
+        if ($controle === 'failed') {
             $this->logger->warning(
                 'EmuReportingService: reconciliation failed',
                 ['verschil' => $verschil, 'bbv' => $bbvSaldoBatenLasten, 'adjustments' => $totaleAdjustments]
@@ -444,21 +444,21 @@ class EmuReportingService
 
         return [
             ['regel' => 1, 'label' => 'Saldo van baten en lasten BBV', 'amount' => round($bbvSaldoBatenLasten, 2)],
-            ['regel' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
-            ['regel' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
+            ['regel' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['elimination-withdrawal-reserve'] ?? 0.0), 2)],
+            ['regel' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['addition-gross-investment'] ?? 0.0), 2)],
             ['regel' => 4, 'label' => 'Bijdragen van derden in investeringen', 'amount' => 0.0],
-            ['regel' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
-            ['regel' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
+            ['regel' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['elimination-book-profit-divestment'] ?? 0.0), 2)],
+            ['regel' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['elimination-depreciation'] ?? 0.0), 2)],
             [
                 'regel'  => 7,
                 'label'  => 'Dotaties voorzieningen ten laste exploitatie',
-                'amount' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2),
+                'amount' => round(($sumByType['elimination-provision-contribution'] ?? 0.0), 2),
             ],
             ['regel' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'amount' => 0.0],
             [
                 'regel'  => 9,
                 'label'  => 'Boekwinst / verlies desinvesteringen',
-                'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2),
+                'amount' => round(($sumByType['elimination-book-profit-divestment'] ?? 0.0), 2),
             ],
             ['regel' => 10, 'label' => 'EMU-saldo', 'amount' => round($emuSaldoBerekend, 2)],
         ];
