@@ -103,11 +103,11 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 				'determinationDate' => '2026-11-09',
 				'sluitendStructureel' => true,
 				'sluitendReëel' => true,
-				'toezichtRegime' => 'repressief',
+				'supervisionRegime' => 'repressief',
 			],
 			programmas: [['number' => '1', 'name' => 'Veiligheid', 'doelstellingen' => 'x', 'revenueTotal' => 80.0, 'expensesTotal' => 650.0]],
 			taskFields: [['taskFieldCode' => '1.1', 'revenue' => 50.0, 'expenses' => 450.0]],
-			paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'tekst', 'keyFigures' => []]]
+			paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'text', 'keyFigures' => []]]
 		);
 
 		self::assertSame(2027, $export['metadata']['budgetYear']);

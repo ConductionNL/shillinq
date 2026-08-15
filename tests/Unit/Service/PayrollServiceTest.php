@@ -226,9 +226,9 @@ final class PayrollServiceTest extends TestCase {
 					'periodeBruto' => 4940.0,
 					'thuiswerkdagenPerWeek' => 0,
 					'expat30PctScheme' => false,
-					'pensioenPremiePctWerkgever' => 0.182,
+					'pensionPremiumPctEmployer' => 0.182,
 					'pensionPremiumPctEmployee' => 0.072,
-					'vakantiegeldPct' => 0.08,
+					'holidayAllowancePct' => 0.08,
 					'payrollTaxTable' => 'WIT_REGULIER',
 					'payrollTaxTableDiscount' => true,
 					'administrationId' => 'adm-1',
@@ -247,11 +247,11 @@ final class PayrollServiceTest extends TestCase {
 			'LoonheffingTabel2026' => [
 				[
 					'id' => 'lht-1',
-					'kleur' => 'WIT',
+					'colour' => 'WIT',
 					'period' => 'MAAND',
 					'withDiscount' => true,
 					'tableRules' => [
-						['vanaf' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
+						['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
 					],
 				],
 			],

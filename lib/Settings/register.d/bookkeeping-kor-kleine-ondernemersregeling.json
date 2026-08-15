@@ -254,7 +254,7 @@
             },
             "title": "Per Maand"
           },
-          "uitgeslotenPosten": {
+          "excludedItems": {
             "type": "array",
             "description": "Posten die NIET meetellen voor de KOR-drempel (REQ-KOR-002): vrijgestelde prestaties, intracommunautaire leveringen, onroerend goed.",
             "nullable": true,
@@ -359,7 +359,7 @@
           "trigger",
           "dischargedOn",
           "revenueAtMoment",
-          "ernst",
+          "severity",
           "administrationId"
         ],
         "properties": {
@@ -407,7 +407,7 @@
             "example": 24630.0,
             "title": "Prognose Einde Jaar"
           },
-          "ernst": {
+          "severity": {
             "type": "string",
             "description": "Ernstniveau gekoppeld aan de schijf (REQ-KOR-003).",
             "enum": [
@@ -870,7 +870,7 @@
           "2026-05": 1500.0,
           "2026-06": 1470.0
         },
-        "uitgeslotenPosten": [],
+        "excludedItems": [],
         "forecastYearEnd": 18600.0,
         "prognoseStatus": "WAARSCHUWING",
         "administrationId": "adm-zzp-fotograaf"
@@ -897,7 +897,7 @@
           "2026-08": 2760.0,
           "2026-09": 2240.0
         },
-        "uitgeslotenPosten": [],
+        "excludedItems": [],
         "forecastYearEnd": 27100.0,
         "prognoseStatus": "OVERSCHRIJDING_VERWACHT",
         "administrationId": "adm-kapper-maria"
@@ -927,7 +927,7 @@
           "2026-11": 1670.0,
           "2026-12": 1670.0
         },
-        "uitgeslotenPosten": [
+        "excludedItems": [
           {
             "type": "VRIJGESTELDE_PRESTATIE",
             "amount": 4200.0,
@@ -950,7 +950,7 @@
         "revenueAtMoment": 18120.0,
         "thresholdUtilisation": 0.906,
         "forecastYearEnd": 24630.0,
-        "ernst": "KRITIEK",
+        "severity": "KRITIEK",
         "recommendation": "Overweeg opt-out of factureer strategisch (vooruitfactureren naar januari).",
         "channel": [
           "EMAIL",
@@ -973,7 +973,7 @@
         "revenueAtMoment": 20360.0,
         "thresholdUtilisation": 1.018,
         "forecastYearEnd": 27100.0,
-        "ernst": "OVERSCHRIJDING",
+        "severity": "OVERSCHRIJDING",
         "recommendation": "Je KOR is per 4 september 2026 beëindigd wegens drempel-overschrijding. Vanaf deze datum factureer je met 21% btw.",
         "channel": [
           "EMAIL",
@@ -996,7 +996,7 @@
         "revenueAtMoment": 16100.0,
         "thresholdUtilisation": 0.805,
         "forecastYearEnd": 18600.0,
-        "ernst": "VROEG",
+        "severity": "VROEG",
         "recommendation": "Monitor je omzet; je nadert de KOR-drempel.",
         "channel": [
           "EMAIL"

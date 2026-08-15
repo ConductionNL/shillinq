@@ -71,7 +71,7 @@ class KorMonitorService {
 	 * @return array{
 	 *   administrationId:string, year:int, currentRevenue:float, threshold:float,
 	 *   thresholdUtilisation:float, perMonth:array<string,float>, forecastYearEnd:float,
-	 *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
+	 *   prognoseStatus:string, severity:?string, trigger:?string, optOutPermitted:bool
 	 * }
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
@@ -104,7 +104,7 @@ class KorMonitorService {
 				prognoseCents: $prognoseCents,
 				thresholdCents: $thresholdCents
 			),
-			'ernst' => ($schijf['ernst'] ?? null),
+			'severity' => ($schijf['severity'] ?? null),
 			'trigger' => ($schijf['trigger'] ?? null),
 			'optOutPermitted' => $this->resolveOptOutPermitted(administrationId: $administrationId),
 		];

@@ -343,7 +343,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 		$budget = $base;
 		$budget['documentType'] = 'begroting';
 		$budget['parts'] = ['beleidsbegroting', 'financielebegroting'];
-		$budget['programmaplan'] = [
+		$budget['programmePlan'] = [
 			'programmes' => [
 				['code' => '1', 'name' => 'Bestuur en ondersteuning'],
 				['code' => '2', 'name' => 'Verkeer, vervoer en waterstaat'],
@@ -359,9 +359,9 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 		$jaarstukken['parts'] = ['jaarverslag', 'annualAccounts'];
 		$jaarstukken['annualAccounts'] = [
 			'overviewRevenueExpenses' => true,
-			'balans' => true,
+			'balance' => true,
 			'lawfulnessAccountability' => true,
-			'accountantsverklaring' => true,
+			'auditorsStatement' => true,
 		];
 
 		return [
@@ -675,7 +675,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function programmaplanComplete(array $o): bool {
-		$plan = ($o['programmaplan'] ?? null);
+		$plan = ($o['programmePlan'] ?? null);
 		if (is_array($plan) === false) {
 			return false;
 		}
@@ -741,7 +741,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		foreach (['overviewRevenueExpenses', 'balans', 'lawfulnessAccountability', 'accountantsverklaring'] as $key) {
+		foreach (['overviewRevenueExpenses', 'balance', 'lawfulnessAccountability', 'auditorsStatement'] as $key) {
 			if (self::truthyValue($jr[$key] ?? null) === false) {
 				return false;
 			}

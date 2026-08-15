@@ -157,7 +157,7 @@ class AnnualReportGuard {
 				return true;
 			}
 
-			$status = (string)($report['accountantsverklaringStatus'] ?? 'niet-vereist');
+			$status = (string)($report['auditorsStatementStatus'] ?? 'niet-vereist');
 			$valid = ['goedkeurend', 'met-beperking', 'samenstelling', 'beoordeling'];
 
 			return in_array($status, $valid, true);
@@ -184,12 +184,12 @@ class AnnualReportGuard {
 	 *                                 are available (fail-closed).
 	 */
 	private function balanceTotalsInCents(array $balanceSheet): ?array {
-		$totalActiva = ($balanceSheet['totalActiva'] ?? null);
-		$totalPassiva = ($balanceSheet['totalPassiva'] ?? null);
-		if ($totalActiva !== null && $totalPassiva !== null) {
+		$totalAssets = ($balanceSheet['totalAssets'] ?? null);
+		$totalLiabilities = ($balanceSheet['totalLiabilities'] ?? null);
+		if ($totalAssets !== null && $totalLiabilities !== null) {
 			return [
-				(int)round((float)$totalActiva * 100),
-				(int)round((float)$totalPassiva * 100),
+				(int)round((float)$totalAssets * 100),
+				(int)round((float)$totalLiabilities * 100),
 			];
 		}
 

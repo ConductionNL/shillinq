@@ -169,7 +169,7 @@
             "example": 3950.4,
             "title": "Heffingskortingen"
           },
-          "teBetalenOfTeOntvangen": {
+          "tePayOfTeReceived": {
             "type": "number",
             "description": "Final payment (positive) or refund (negative) delta (MonetaryAmount EUR).",
             "example": 5469.78,
@@ -532,7 +532,7 @@
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "urencriterium": {
+          "hoursCriterion": {
             "type": "object",
             "description": "Urencriterium evidence (REQ-IB-002). Qualifying hours computed by UrencriteriumGuard.",
             "properties": {
@@ -599,7 +599,7 @@
                 "title": "Jaar Van Gebruik",
                 "description": "The numeric value for jaar van gebruik."
               },
-              "maxKeer": {
+              "maxTimes": {
                 "type": "integer",
                 "default": 3,
                 "title": "Max Keer",
@@ -631,7 +631,7 @@
             },
             "title": "So Aftrek"
           },
-          "meewerkaftrek": {
+          "coWorkingDeduction": {
             "type": "object",
             "description": "Partner co-working deduction.",
             "properties": {
@@ -701,7 +701,7 @@
           }
         },
         "x-openregister-calculations": {
-          "urencriterium": {
+          "hoursCriterion": {
             "description": "Qualifying YTD hours for the 1225-urencriterium; excluded categories (sick/leave/vacation/non-billable-admin) do not count per Wet IB art. 3.6 (REQ-IB-002). Reuses the existing ADR-031 guard seam.",
             "basis": "art. 3.6 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"
@@ -782,12 +782,12 @@
             "type": "object",
             "description": "Calculation basis for transparency.",
             "properties": {
-              "inkomenBox1": {
+              "incomeBox1": {
                 "type": "number",
                 "title": "Inkomen Box1",
                 "description": "The numeric value for inkomen box1."
               },
-              "arbeidsinkomen": {
+              "labourIncome": {
                 "type": "number",
                 "title": "Arbeidsinkomen",
                 "description": "The numeric value for arbeidsinkomen."
@@ -940,7 +940,7 @@
         "type": "object",
         "required": [
           "taxReturnId",
-          "kenteken",
+          "licencePlate",
           "administrationId"
         ],
         "properties": {
@@ -949,7 +949,7 @@
             "description": "FK to the owning IBAangifte.",
             "title": "Aangifte ID"
           },
-          "kenteken": {
+          "licencePlate": {
             "type": "string",
             "description": "Dutch license plate.",
             "example": "12-ABC-3",
@@ -1090,7 +1090,7 @@
             "example": 28000.0,
             "title": "Bank En Spaartegoeden"
           },
-          "overigeBezittingen": {
+          "otherAssets": {
             "type": "number",
             "description": "Other assets (MonetaryAmount EUR).",
             "example": 41000.0,
@@ -1134,7 +1134,7 @@
                 "title": "Methode",
                 "description": "The methode."
               },
-              "rendement": {
+              "return": {
                 "type": "number",
                 "title": "Rendement",
                 "description": "The numeric value for rendement."
@@ -1469,7 +1469,7 @@
       "totalBox3Income": 1820.0,
       "dueIB": 9420.18,
       "taxCredits": 3950.4,
-      "teBetalenOfTeOntvangen": 5469.78,
+      "tePayOfTeReceived": 5469.78,
       "submittedOn": null,
       "xbrlInstanceId": null,
       "auditTrailId": "audit-ib-2025-ond-001234",
@@ -1516,7 +1516,7 @@
         "slug": "ib-onda-2025-ond-001234"
       },
       "taxReturnId": "ib-aangifte-2025-ond-001234",
-      "urencriterium": {
+      "hoursCriterion": {
         "achieved": true,
         "hours": 1462,
         "threshold": 1225,
@@ -1530,14 +1530,14 @@
       "startersaftrek": {
         "permitted": false,
         "yearOfUse": null,
-        "maxKeer": 3,
+        "maxTimes": 3,
         "amount": 0
       },
       "soDeduction": {
         "permitted": false,
         "wbsoDecision": null
       },
-      "meewerkaftrek": {
+      "coWorkingDeduction": {
         "permitted": false,
         "amount": null
       },
@@ -1567,8 +1567,8 @@
       "youngDisabledTaxCredit": 0,
       "totalTaxCredits": 3950.4,
       "calculationBasis": {
-        "inkomenBox1": 36585.95,
-        "arbeidsinkomen": 36585.95,
+        "incomeBox1": 36585.95,
+        "labourIncome": 36585.95,
         "ahkPhaseOutApplied": 0
       },
       "administrationId": "adm-consultancy-nl"
@@ -1605,7 +1605,7 @@
         "slug": "ib-bijtelling-auto-2025-ond-001234"
       },
       "taxReturnId": "ib-aangifte-2025-ond-001234",
-      "kenteken": "12-ABC-3",
+      "licencePlate": "12-ABC-3",
       "listValueNew": 38000.0,
       "dateFirstRegistration": "2024-04-15",
       "benefitInKindCategory": "REGULIER_22PCT",
@@ -1630,14 +1630,14 @@
       "taxReturnId": "ib-aangifte-2025-ond-001234",
       "referenceDate": "2025-01-01",
       "bankEnSavingsBalances": 28000.0,
-      "overigeBezittingen": 41000.0,
+      "otherAssets": 41000.0,
       "debts": 0,
       "totalYieldBasis": 69000.0,
       "taxExemptEquity": 57000.0,
       "taxableBasis": 12000.0,
       "calculatedReturn": {
         "methode": "FORFAIT_OVERBRUGGINGSWET",
-        "rendement": 1820.0
+        "return": 1820.0
       },
       "actualReturnEntered": false,
       "administrationId": "adm-consultancy-nl"

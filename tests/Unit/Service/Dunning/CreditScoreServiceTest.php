@@ -225,14 +225,14 @@ final class CreditScoreServiceTest extends TestCase {
 			'customerId' => 'klant-1',
 			'score' => 2.4,
 			'scoreScale' => '1-10',
-			'creditLimietAdvies' => 5000.0,
+			'creditLimitAdvice' => 5000.0,
 		];
 
 		$result = $service->evaluateForInvoice(score: $score, invoiceAmount: 12000.0);
 
 		self::assertTrue($result['warning']);
 		self::assertTrue($result['deelfacturatieAdvies']);
-		self::assertSame(5000.0, $result['creditLimietAdvies']);
+		self::assertSame(5000.0, $result['creditLimitAdvice']);
 		self::assertStringContainsString('klant-1', $result['message']);
 
 	}//end testEvaluateForInvoiceFlagsLowScore()
@@ -249,7 +249,7 @@ final class CreditScoreServiceTest extends TestCase {
 			'customerId' => 'klant-1',
 			'score' => 8.0,
 			'scoreScale' => '1-10',
-			'creditLimietAdvies' => 50000.0,
+			'creditLimitAdvice' => 50000.0,
 		];
 
 		$result = $service->evaluateForInvoice(score: $score, invoiceAmount: 1500.0);

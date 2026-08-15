@@ -152,14 +152,14 @@ class UrencriteriumYearGuard {
 	/**
 	 * Determine the fiscal grondslag citation for a doel-norm.
 	 *
-	 * @param int $doelNorm One of the recognised norm values.
+	 * @param int $purposeNorm One of the recognised norm values.
 	 *
 	 * @return string The legal grondslag citation.
 	 *
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
 	 */
-	public function bepaalNormGrondslag(int $doelNorm): string {
-		return match ($doelNorm) {
+	public function bepaalNormGrondslag(int $purposeNorm): string {
+		return match ($purposeNorm) {
 			self::NORM_AO => 'art. 3.6 lid 5 Wet IB 2001',
 			self::NORM_MEEWERK => 'art. 3.6 lid 1 Wet IB 2001 (meewerkaftrek)',
 			default => 'art. 3.6 lid 1 Wet IB 2001',
@@ -240,11 +240,11 @@ class UrencriteriumYearGuard {
 	 * @return bool True when doelNorm is 1225, 800 or 525.
 	 */
 	private function hasValidNorm(array $year): bool {
-		$norm = (int)($year['doelNorm'] ?? 0);
+		$norm = (int)($year['purposeNorm'] ?? 0);
 		if (in_array($norm, [self::NORM_REGULIER, self::NORM_AO, self::NORM_MEEWERK], true) === false) {
 			$this->logger->info(
 				'UrencriteriumYearGuard: doelNorm not a recognised value — denying save',
-				['doelNorm' => $norm]
+				['purposeNorm' => $norm]
 			);
 			return false;
 		}
@@ -262,7 +262,7 @@ class UrencriteriumYearGuard {
 	 * @return bool True when the citation is consistent with the norm.
 	 */
 	private function normMatchesBasis(array $year): bool {
-		$norm = (int)($year['doelNorm'] ?? 0);
+		$norm = (int)($year['purposeNorm'] ?? 0);
 		$basis = (string)($year['normBasis'] ?? '');
 		$citeertLid5 = (str_contains($basis, 'lid 5') === true);
 
@@ -277,7 +277,7 @@ class UrencriteriumYearGuard {
 		if ($norm !== self::NORM_AO && $citeertLid5 === true) {
 			$this->logger->info(
 				'UrencriteriumYearGuard: only the 800-uren norm may cite art. 3.6 lid 5 — denying save',
-				['doelNorm' => $norm, 'normBasis' => $basis]
+				['purposeNorm' => $norm, 'normBasis' => $basis]
 			);
 			return false;
 		}
@@ -297,7 +297,7 @@ class UrencriteriumYearGuard {
 	 * @return bool True when the value is recognised.
 	 */
 	private function grotendeelsIsConsistent(array $year): bool {
-		$value = (string)($year['grotendeelsCriterium'] ?? 'NIET_TOEPASSELIJK');
+		$value = (string)($year['largelyCriterium'] ?? 'NIET_TOEPASSELIJK');
 		$allowed = [
 			'NIET_TOEPASSELIJK',
 			'GROTENDEELS_ONDERNEMING',
@@ -307,7 +307,7 @@ class UrencriteriumYearGuard {
 		if (in_array($value, $allowed, true) === false) {
 			$this->logger->info(
 				'UrencriteriumYearGuard: grotendeelsCriterium has an unrecognised value — denying save',
-				['grotendeelsCriterium' => $value]
+				['largelyCriterium' => $value]
 			);
 			return false;
 		}
@@ -335,7 +335,7 @@ class UrencriteriumYearGuard {
 		$expected = $this->bepaalDrempelStatus(
 			currentHours: (float)($year['currentHours'] ?? 0),
 			prognose: (float)$year['forecastYearEnd'],
-			norm: (int)($year['doelNorm'] ?? self::NORM_REGULIER)
+			norm: (int)($year['purposeNorm'] ?? self::NORM_REGULIER)
 		);
 
 		$actual = (string)($year['thresholdStatus'] ?? '');

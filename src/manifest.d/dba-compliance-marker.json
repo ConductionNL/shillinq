@@ -338,7 +338,7 @@
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
 				"aggregations": [
-					{"id": "completeness", "title": "Completeness score", "field": "compleetheidScore", "metric": "value", "format": "percent"}
+					{"id": "completeness", "title": "Completeness score", "field": "completenessScore", "metric": "value", "format": "percent"}
 				],
 				"fields": [
 					{"key": "assignmentId", "label": "Assignment", "type": "string"},

@@ -110,7 +110,7 @@
             "example": true,
             "title": "Sluitend Reëel"
           },
-          "toezichtRegime": {
+          "supervisionRegime": {
             "type": "string",
             "enum": [
               "repressief",
@@ -581,8 +581,8 @@
           "budgetId",
           "type",
           "name",
-          "beginsaldo",
-          "eindsaldo",
+          "openingBalance",
+          "closingBalance",
           "administrationId"
         ],
         "properties": {
@@ -608,7 +608,7 @@
             "example": "Algemene reserve",
             "title": "Naam"
           },
-          "beginsaldo": {
+          "openingBalance": {
             "type": "number",
             "description": "Opening balance from prior year. REQ-006.",
             "example": 50000.0,
@@ -630,7 +630,7 @@
             "example": 5000.0,
             "title": "Onttrekkingen"
           },
-          "eindsaldo": {
+          "closingBalance": {
             "type": "number",
             "description": "Closing balance = beginsaldo + toevoegingen - onttrekkingen. REQ-006.",
             "example": 55000.0,
@@ -664,8 +664,8 @@
           "budgetId",
           "name",
           "basis",
-          "beginsaldo",
-          "eindsaldo",
+          "openingBalance",
+          "closingBalance",
           "administrationId"
         ],
         "properties": {
@@ -693,7 +693,7 @@
             "example": "c",
             "title": "Grondslag"
           },
-          "beginsaldo": {
+          "openingBalance": {
             "type": "number",
             "description": "Opening balance. REQ-006.",
             "example": 80000.0,
@@ -723,7 +723,7 @@
             "example": 15000.0,
             "title": "Aanwendingen"
           },
-          "eindsaldo": {
+          "closingBalance": {
             "type": "number",
             "description": "Closing balance = beginsaldo + dotaties - vrijval - aanwendingen. REQ-006.",
             "example": 85000.0,
@@ -1031,7 +1031,7 @@
         "determinationDate": "2026-11-09",
         "sluitendStructureel": true,
         "sluitendReëel": true,
-        "toezichtRegime": "repressief",
+        "supervisionRegime": "repressief",
         "nominalDevelopment": 2.0,
         "administrationId": "adm-gov-1"
       },
@@ -1178,10 +1178,10 @@
         "budgetId": "pb-gem-2027",
         "type": "algemene-reserve",
         "name": "Algemene reserve",
-        "beginsaldo": 50000.0,
+        "openingBalance": 50000.0,
         "toevoegingen": 10000.0,
         "onttrekkingen": 5000.0,
-        "eindsaldo": 55000.0,
+        "closingBalance": 55000.0,
         "designatedPurpose": null,
         "administrationId": "adm-gov-1"
       },
@@ -1194,11 +1194,11 @@
         "budgetId": "pb-gem-2027",
         "name": "Voorziening onderhoud gebouwen",
         "basis": "c",
-        "beginsaldo": 80000.0,
+        "openingBalance": 80000.0,
         "additions": 20000.0,
         "release": 0.0,
         "utilisations": 15000.0,
-        "eindsaldo": 85000.0,
+        "closingBalance": 85000.0,
         "administrationId": "adm-gov-1"
       },
       {

@@ -77,7 +77,7 @@ class BbvTaakveldTranslationTest extends TestCase {
 		$iv3Pairs = [
 			'name' => 'nameEn',
 			'mainFunctionName' => 'mainFunctionNameEn',
-			'descriptionIv3' => 'omschrijvingIv3En',
+			'descriptionIv3' => 'descriptionIv3And',
 		];
 
 		return [
@@ -89,7 +89,7 @@ class BbvTaakveldTranslationTest extends TestCase {
 				[
 					'name' => 'nameEn',
 					'description' => 'descriptionEn',
-					'programmeFocus' => 'programmaFocusEn',
+					'programmeFocus' => 'programmeFocusAnd',
 				],
 			],
 		];
@@ -218,8 +218,8 @@ class BbvTaakveldTranslationTest extends TestCase {
 		}
 
 		$expected = [
-			'Taakveld' => ['nameEn', 'mainFunctionNameEn', 'omschrijvingIv3En'],
-			'BbvTaakveld' => ['nameEn', 'descriptionEn', 'programmaFocusEn'],
+			'Taakveld' => ['nameEn', 'mainFunctionNameEn', 'descriptionIv3And'],
+			'BbvTaakveld' => ['nameEn', 'descriptionEn', 'programmeFocusAnd'],
 		];
 
 		foreach ($expected as $schema => $fields) {

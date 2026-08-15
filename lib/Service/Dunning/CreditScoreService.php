@@ -165,7 +165,7 @@ class CreditScoreService {
 	 * @param array<string,mixed>|null $score The CreditScore record.
 	 * @param float $invoiceAmount Invoice principal (EUR).
 	 *
-	 * @return array{warning:bool,message:string,creditLimietAdvies:?float,deelfacturatieAdvies:bool}
+	 * @return array{warning:bool,message:string,creditLimitAdvice:?float,deelfacturatieAdvies:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
 	 */
@@ -174,7 +174,7 @@ class CreditScoreService {
 			return [
 				'warning' => false,
 				'message' => '',
-				'creditLimietAdvies' => null,
+				'creditLimitAdvice' => null,
 				'deelfacturatieAdvies' => false,
 			];
 		}
@@ -182,8 +182,8 @@ class CreditScoreService {
 		$threshold = (float)$this->appConfig->getValueString(Application::APP_ID, self::CFG_WARNING_THRESHOLD, '3.0');
 		$value = (float)($score['score'] ?? 0.0);
 		$limit = null;
-		if (isset($score['creditLimietAdvies']) === true) {
-			$limit = (float)$score['creditLimietAdvies'];
+		if (isset($score['creditLimitAdvice']) === true) {
+			$limit = (float)$score['creditLimitAdvice'];
 		}
 
 		$belowThreshold = ($value < $threshold);
@@ -193,7 +193,7 @@ class CreditScoreService {
 			return [
 				'warning' => false,
 				'message' => '',
-				'creditLimietAdvies' => $limit,
+				'creditLimitAdvice' => $limit,
 				'deelfacturatieAdvies' => false,
 			];
 		}
@@ -209,7 +209,7 @@ class CreditScoreService {
 		return [
 			'warning' => true,
 			'message' => $message,
-			'creditLimietAdvies' => $limit,
+			'creditLimitAdvice' => $limit,
 			'deelfacturatieAdvies' => ($overLimit === true),
 		];
 

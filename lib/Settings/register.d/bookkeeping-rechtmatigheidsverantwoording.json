@@ -13,7 +13,7 @@
             "description": "REQ-RV-001: mandatory rechtmatigheid sub-object tracking the legitimacy-assessment status of this journaalpost. Backward-compatible: existing journaalposten default to status niet_getoetst on first access. Embedded (not a separate register) to preserve the transaction-level audit-trail.",
             "default": {
               "status": "niet_getoetst",
-              "toetsen": [],
+              "tests": [],
               "summary_opinion": null,
               "last_test_date": null
             },
@@ -30,7 +30,7 @@
                 "description": "Aggregate toets status across all linked rechtmatigheidstoets records (REQ-RV-001).",
                 "title": "Status"
               },
-              "toetsen": {
+              "tests": {
                 "type": "array",
                 "description": "FK references to rechtmatigheidstoets.id records for this journaalpost.",
                 "items": {
@@ -76,7 +76,7 @@
           "administrationId",
           "journalEntry",
           "criterium",
-          "uitkomst",
+          "outcome",
           "toetstype",
           "status"
         ],
@@ -110,7 +110,7 @@
             "description": "The wettelijk criterium being assessed (negen BBV-criteria).",
             "title": "Criterium"
           },
-          "uitkomst": {
+          "outcome": {
             "type": "string",
             "enum": [
               "voldoet",
@@ -129,7 +129,7 @@
             "example": "2026-03-15",
             "title": "Toetsdatum"
           },
-          "toetser": {
+          "reviewer": {
             "type": "string",
             "nullable": true,
             "description": "FK to the Nextcloud user (gebruiker) who performed the toets. For automatische toetsen this is the system user.",
@@ -573,7 +573,7 @@
             "description": "Basis for tolerance computation (REQ-RV-005).",
             "title": "Totaal Lasten Inclusief Mutaties Reserves"
           },
-          "tolerantiegrens_fout_percentage": {
+          "tolerance_limit_error_percentage": {
             "type": "number",
             "default": 3.0,
             "description": "Snapshot of the fout-tolerance percentage at aggregation time.",
@@ -775,7 +775,7 @@
         "required": [
           "administrationId",
           "financialYear",
-          "fout_percentage",
+          "error_percentage",
           "uncertainty_percentage",
           "calculationBasis"
         ],
@@ -792,7 +792,7 @@
             "example": 2026,
             "title": "Boekjaar"
           },
-          "fout_percentage": {
+          "error_percentage": {
             "type": "number",
             "default": 3.0,
             "description": "Maximum fout as a percentage of totaal lasten (default 3.0 per BADO).",
@@ -897,7 +897,7 @@
       },
       "administrationId": "adm-1",
       "financialYear": 2026,
-      "fout_percentage": 3.0,
+      "error_percentage": 3.0,
       "uncertainty_percentage": 1.0,
       "determined_at_council_resolution": null,
       "determined_on": null,

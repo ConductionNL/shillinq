@@ -96,7 +96,7 @@ final class KorThresholdCalculatorTest extends TestCase {
 		// Crossing 100% from below => OVERSCHRIJDING.
 		$hit = $this->calc->crossedSchijf(previousUtilisation: 0.95, newUtilisation: 1.018);
 		self::assertSame('DREMPEL_100PCT', $hit['trigger']);
-		self::assertSame('OVERSCHRIJDING', $hit['ernst']);
+		self::assertSame('OVERSCHRIJDING', $hit['severity']);
 		// No new schijf when staying within the same band.
 		self::assertNull($this->calc->crossedSchijf(previousUtilisation: 0.82, newUtilisation: 0.84));
 

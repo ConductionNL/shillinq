@@ -144,8 +144,8 @@
 				"schema": "CashflowBufferPolicy",
 				"aggregations": [
 					{"id": "calculatedBuffer", "title": "Calculated buffer", "field": "berekendeBuffer", "metric": "value", "format": "currency"},
-					{"id": "preAlert", "title": "Pre-alert threshold", "field": "alertVooralarm", "metric": "value", "format": "currency"},
-					{"id": "critical", "title": "Critical threshold", "field": "alertOndergrens", "metric": "value", "format": "currency"}
+					{"id": "preAlert", "title": "Pre-alert threshold", "field": "alertPreAlert", "metric": "value", "format": "currency"},
+					{"id": "critical", "title": "Critical threshold", "field": "alertLowerLimit", "metric": "value", "format": "currency"}
 				],
 				"fields": [
 					{ "key": "policy", "label": "Policy", "type": "string" },

@@ -28,10 +28,10 @@
           "administrationId",
           "rsin",
           "chamberOfCommerceNumber",
-          "rechtsvorm",
+          "legalForm",
           "financialYearStart",
           "financialYearEnd",
-          "eHerkenningLevel",
+          "eRecognitionLevel",
           "status"
         ],
         "properties": {
@@ -59,7 +59,7 @@
             "example": "12345678",
             "title": "KvK Nummer"
           },
-          "rechtsvorm": {
+          "legalForm": {
             "type": "string",
             "enum": [
               "BV",
@@ -99,7 +99,7 @@
             "example": "vault://digipoort/acme-bv",
             "title": "Digipoort Certificaat"
           },
-          "eHerkenningLevel": {
+          "eRecognitionLevel": {
             "type": "string",
             "enum": [
               "EH3",
@@ -384,7 +384,7 @@
             "example": 0,
             "title": "Voorheffingen"
           },
-          "teBetalen": {
+          "tePay": {
             "type": "number",
             "nullable": true,
             "description": "Te betalen Vpb = verschuldigdeVpb − voorheffingen. Declaratief berekend.",
@@ -431,7 +431,7 @@
             "expr": "lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).tarief1 * min(@self.fiscaleWinstBelastbaar, lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).belastbaarBedragGrens) + lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).tarief2 * max(0, @self.fiscaleWinstBelastbaar - lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).belastbaarBedragGrens)",
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::berekenVerschuldigdeVpb"
           },
-          "teBetalen": {
+          "tePay": {
             "description": "Verschuldigde Vpb minus verrekenbare voorheffingen (REQ-VPB-003).",
             "expr": "(@self.verschuldigdeVpb ?? 0) - (@self.voorheffingen ?? 0)"
           }
@@ -681,7 +681,7 @@
             "example": "werkelijke-winst",
             "title": "Method Type"
           },
-          "kwalificerendeActiva": {
+          "qualifyingAssets": {
             "type": "array",
             "description": "Kwalificerende immateriële activa (S&O/octrooi).",
             "items": {
@@ -870,7 +870,7 @@
             "example": true,
             "title": "Deelnemingsvrijstelling Van Toepassing"
           },
-          "lowTaxedPortfolioVlag": {
+          "lowTaxedPortfolioFlag": {
             "type": "boolean",
             "default": false,
             "description": "Systeemvlag voor mogelijke laagbelaste beleggingsdeelneming; fiscalist beslist met motivatie.",
@@ -978,7 +978,7 @@
             "example": null,
             "title": "Ontvoegingsdatum"
           },
-          "bezitPercentage": {
+          "holdingPercentage": {
             "type": "number",
             "minimum": 0,
             "maximum": 100,
@@ -1088,7 +1088,7 @@
             "example": 10000,
             "title": "Reeds Verrekend"
           },
-          "restant": {
+          "remainder": {
             "type": "number",
             "nullable": true,
             "description": "Onverrekend restant = oorspronkelijkBedrag − reedsVerrekend (declaratief berekend).",
@@ -1124,7 +1124,7 @@
           }
         },
         "x-openregister-calculations": {
-          "restant": {
+          "remainder": {
             "description": "Oorspronkelijk bedrag minus reeds verrekend (REQ-VPB-006).",
             "expr": "(@self.oorspronkelijkBedrag ?? 0) - (@self.reedsVerrekend ?? 0)"
           },
@@ -1495,7 +1495,7 @@
             "example": 95000,
             "title": "Verrekende Voorlopige Aanslagen"
           },
-          "tePunten": {
+          "tePoints": {
             "type": "number",
             "nullable": true,
             "description": "Te betalen/ontvangen = vastgesteldVerschuldigd − voorheffingen − voorlopige aanslagen (declaratief berekend).",
@@ -1530,7 +1530,7 @@
           }
         },
         "x-openregister-calculations": {
-          "tePunten": {
+          "tePoints": {
             "description": "Vastgesteld verschuldigd minus verrekende voorheffingen en voorlopige aanslagen (REQ-VPB-010).",
             "expr": "(@self.vastgesteldVerschuldigd ?? 0) - (@self.verrekendeVoorheffingen ?? 0) - (@self.verrekendeVoorlopigeAanslagen ?? 0)"
           },
@@ -1912,12 +1912,12 @@
         "name": "ACME BV",
         "rsin": "001234567",
         "chamberOfCommerceNumber": "12345678",
-        "rechtsvorm": "BV",
+        "legalForm": "BV",
         "financialYearStart": "2026-01-01",
         "financialYearEnd": "2026-12-31",
         "fiscalAdvisor": null,
         "digipoortCertificate": null,
-        "eHerkenningLevel": "EH3",
+        "eRecognitionLevel": "EH3",
         "status": "actief"
       },
       {
@@ -1931,7 +1931,7 @@
         "lossYear": 2023,
         "originalAmount": 50000,
         "reedsVerrekend": 10000,
-        "restant": 40000,
+        "remainder": 40000,
         "regime": "6jr",
         "expiresIn": "2029-12-31",
         "decision": null

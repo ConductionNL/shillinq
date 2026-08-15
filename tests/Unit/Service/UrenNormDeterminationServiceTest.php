@@ -57,9 +57,9 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(1225, $seed['doelNorm']);
+		self::assertSame(1225, $seed['purposeNorm']);
 		self::assertSame('art. 3.6 lid 1 Wet IB 2001', $seed['normBasis']);
-		self::assertSame('NIET_TOEPASSELIJK', $seed['grotendeelsCriterium']);
+		self::assertSame('NIET_TOEPASSELIJK', $seed['largelyCriterium']);
 		self::assertSame('OP_KOERS', $seed['thresholdStatus']);
 		self::assertSame(0.0, $seed['currentHours']);
 		self::assertSame('adm-1', $seed['administrationId']);
@@ -83,7 +83,7 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(800, $seed['doelNorm']);
+		self::assertSame(800, $seed['purposeNorm']);
 		self::assertSame('art. 3.6 lid 5 Wet IB 2001', $seed['normBasis']);
 
 	}//end testArbeidsongeschiktSeedYields800()
@@ -103,7 +103,7 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame(525, $seed['doelNorm']);
+		self::assertSame(525, $seed['purposeNorm']);
 
 	}//end testMeewerkendePartnerSeedYields525()
 
@@ -123,7 +123,7 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
+		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $seed['largelyCriterium']);
 
 	}//end testParallelLoondienstMajorityFlagsNietGrotendeels()
 
@@ -143,7 +143,7 @@ final class UrenNormDeterminationServiceTest extends TestCase {
 			]
 		);
 
-		self::assertSame('GROTENDEELS_ONDERNEMING', $seed['grotendeelsCriterium']);
+		self::assertSame('GROTENDEELS_ONDERNEMING', $seed['largelyCriterium']);
 
 	}//end testParallelLoondienstMinorityFlagsGrotendeels()
 

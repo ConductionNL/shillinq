@@ -208,7 +208,7 @@ final class DunningRunServiceTest extends TestCase {
 			'stageNr' => 1,
 			'templateId' => 'tpl-stage1',
 			'channel' => 'EMAIL',
-			'ontvangerEmail' => 'klant@example.nl',
+			'recipientEmail' => 'klant@example.nl',
 			'renderedSubject' => 'Reminder factuur',
 			'renderedBody' => 'Vriendelijk verzoek',
 			'deliveryStatus' => 'DELIVERED',
@@ -240,7 +240,7 @@ final class DunningRunServiceTest extends TestCase {
 		);
 
 		self::assertSame('active', $pause['lifecycleState']);
-		$start = new \DateTimeImmutable((string)$pause['pauzeStart']);
+		$start = new \DateTimeImmutable((string)$pause['pauseStart']);
 		$deadline = new \DateTimeImmutable((string)$pause['hardDeadlineEindigt']);
 		self::assertSame(60, (int)$start->diff($deadline)->days);
 
@@ -636,7 +636,7 @@ final class DunningRunServiceTest extends TestCase {
 		$result = $service->transferToIncasso(
 			administrationId: 'adm-1',
 			invoiceId: 'inv-1',
-			dossier: ['invoiceId' => 'inv-1', 'inhoud' => []],
+			dossier: ['invoiceId' => 'inv-1', 'content' => []],
 			dunningRunId: 'dr-1'
 		);
 
@@ -679,7 +679,7 @@ final class DunningRunServiceTest extends TestCase {
 		$result = $service->transferToIncasso(
 			administrationId: 'adm-1',
 			invoiceId: 'inv-1',
-			dossier: ['invoiceId' => 'inv-1', 'inhoud' => []],
+			dossier: ['invoiceId' => 'inv-1', 'content' => []],
 			dunningRunId: 'dr-1'
 		);
 

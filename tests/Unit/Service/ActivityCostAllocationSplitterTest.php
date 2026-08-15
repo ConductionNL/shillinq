@@ -54,8 +54,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 		$rule = [
 			'id' => 'odr-2026',
 			'splits' => [
-				['costObject' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimensie' => 'PUBL', 'generalLedger' => '4431'],
-				['costObject' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimensie' => 'MO',   'generalLedger' => '4432'],
+				['costObject' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimension' => 'PUBL', 'generalLedger' => '4431'],
+				['costObject' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimension' => 'MO',   'generalLedger' => '4432'],
 			],
 		];
 
@@ -73,9 +73,9 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 	public function testCalculateSplitsReconcilesDrift(): void {
 		$rule = [
 			'splits' => [
-				['costObject' => 'D-A', 'ratio' => 0.333, 'dimensie' => 'PUBL'],
-				['costObject' => 'D-B', 'ratio' => 0.333, 'dimensie' => 'PUBL'],
-				['costObject' => 'D-C', 'ratio' => 0.334, 'dimensie' => 'MO'],
+				['costObject' => 'D-A', 'ratio' => 0.333, 'dimension' => 'PUBL'],
+				['costObject' => 'D-B', 'ratio' => 0.333, 'dimension' => 'PUBL'],
+				['costObject' => 'D-C', 'ratio' => 0.334, 'dimension' => 'MO'],
 			],
 		];
 
@@ -95,8 +95,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 	public function testCalculateSplitsPreservesSignForCreditMemos(): void {
 		$rule = [
 			'splits' => [
-				['costObject' => 'D-A', 'ratio' => 0.7, 'dimensie' => 'PUBL'],
-				['costObject' => 'D-B', 'ratio' => 0.3, 'dimensie' => 'MO'],
+				['costObject' => 'D-A', 'ratio' => 0.7, 'dimension' => 'PUBL'],
+				['costObject' => 'D-B', 'ratio' => 0.3, 'dimension' => 'MO'],
 			],
 		];
 
@@ -129,8 +129,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 		$rule = [
 			'id' => 'odr-2026',
 			'splits' => [
-				['costObject' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimensie' => 'PUBL'],
-				['costObject' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimensie' => 'MO'],
+				['costObject' => 'D-PUBL-NM-100', 'ratio' => 0.64, 'dimension' => 'PUBL'],
+				['costObject' => 'D-MO-NM-001',   'ratio' => 0.36, 'dimension' => 'MO'],
 			],
 		];
 
@@ -195,7 +195,7 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 			'originalAllocation' => $original,
 			'approvedBy' => ['concerncontroller', 'griffier'],
 			'reason' => 'Wrong rule applied; switching to D-PUBL only',
-			'newSplits' => [['costObject' => 'D-PUBL', 'ratio' => 1.0, 'amount' => 184.00, 'dimensie' => 'PUBL']],
+			'newSplits' => [['costObject' => 'D-PUBL', 'ratio' => 1.0, 'amount' => 184.00, 'dimension' => 'PUBL']],
 		]);
 
 		self::assertFalse($override['automaticApplied']);
@@ -210,8 +210,8 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 	 */
 	public function testMaterialiseSplitsToGlLines(): void {
 		$splits = [
-			['costObject' => 'D-PUBL', 'ratio' => 0.64, 'amount' => 117.76, 'dimensie' => 'PUBL', 'generalLedger' => '4431'],
-			['costObject' => 'D-MO',   'ratio' => 0.36, 'amount' => 66.24,  'dimensie' => 'MO',   'generalLedger' => '4432'],
+			['costObject' => 'D-PUBL', 'ratio' => 0.64, 'amount' => 117.76, 'dimension' => 'PUBL', 'generalLedger' => '4431'],
+			['costObject' => 'D-MO',   'ratio' => 0.36, 'amount' => 66.24,  'dimension' => 'MO',   'generalLedger' => '4432'],
 		];
 
 		$entries = $this->svc->materialiseSplits($splits);

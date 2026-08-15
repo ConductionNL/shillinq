@@ -233,7 +233,7 @@
             "example": 70000000.0,
             "title": "Prior Year Balance Total"
           },
-          "linkedPensioenvoorzieningDetail": {
+          "linkedPensionProvisionDetail": {
             "type": "string",
             "description": "FK to the PensioenvoorzieningDetail when provisionType=pensioen (REQ-PROV-014).",
             "nullable": true,
@@ -891,7 +891,7 @@
             "default": 0,
             "title": "Expected Onerous Contract Costs"
           },
-          "reorganisatieplanDocument": {
+          "reorganisationPlanDocument": {
             "type": "string",
             "description": "FK into docudesk for the reorganisatieplan document (REQ-PROV-005).",
             "nullable": true,

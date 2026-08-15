@@ -63,7 +63,7 @@ class IncassoDossierComposer {
 	 * @param string $invoiceId Invoice FK.
 	 * @param string $customerId Klant FK.
 	 *
-	 * @return array{invoiceId:string,inhoud:array<string,mixed>}
+	 * @return array{invoiceId:string,content:array<string,mixed>}
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
@@ -125,7 +125,7 @@ class IncassoDossierComposer {
 
 		return [
 			'invoiceId' => $invoiceId,
-			'inhoud' => [
+			'content' => [
 				'invoice' => [
 					'invoiceId' => $invoiceId,
 					'customerId' => $customerId,

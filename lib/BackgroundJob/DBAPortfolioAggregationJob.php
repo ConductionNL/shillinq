@@ -200,15 +200,15 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	/**
 	 * Compute overall risico-band from concentratie + langjarige relaties.
 	 *
-	 * @param array<string,mixed> $concentratie The concentratie block.
+	 * @param array<string,mixed> $concentration The concentratie block.
 	 * @param array<int,array<string,mixed>> $multiYearRelationships List of langjarige relaties.
 	 *
 	 * @return string LAAG / MIDDEN / HOOG.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
-	public function computeOverallRisico(array $concentratie, array $multiYearRelationships): string {
-		$status = (string)($concentratie['status'] ?? 'VEILIG');
+	public function computeOverallRisico(array $concentration, array $multiYearRelationships): string {
+		$status = (string)($concentration['status'] ?? 'VEILIG');
 		if ($status === 'KRITIEK' || count($multiYearRelationships) >= 2) {
 			return 'HOOG';
 		}
@@ -275,9 +275,9 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		}
 
 		foreach ($perOnderneming as $ondernemingId => $assignments) {
-			$concentratie = $this->computeConcentratie(assignments: $assignments);
+			$concentration = $this->computeConcentratie(assignments: $assignments);
 			$langjarig = $this->computeLangjarigeRelaties(assignments: $assignments, now: $now);
-			$overall = $this->computeOverallRisico(concentratie: $concentratie, multiYearRelationships: $langjarig);
+			$overall = $this->computeOverallRisico(concentration: $concentration, multiYearRelationships: $langjarig);
 			$administrationId = (string)($assignments[0]['administrationId'] ?? '');
 
 			try {
@@ -287,7 +287,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 						'enterpriseId' => (string)$ondernemingId,
 						'levelDate' => $now->format('Y-m-d'),
 						'activeAssignments' => count($assignments),
-						'concentratie' => $concentratie,
+						'concentration' => $concentration,
 						'multiYearRelationships' => $langjarig,
 						'exclusiveRelationships' => $this->countExclusief(assignments: $assignments),
 						'overallRisk' => $overall,

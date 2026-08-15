@@ -130,7 +130,7 @@ final class UrenPrognoseService {
 		$resterend = array_sum($perMonth);
 		$totalPrognose = ($lopende + $resterend);
 
-		$norm = (int)($input['doelNorm'] ?? 1225);
+		$norm = (int)($input['purposeNorm'] ?? 1225);
 		$kansAchievedNorm = $this->kansAchievedNorm(
 			totalPrognose: $totalPrognose,
 			norm: $norm,

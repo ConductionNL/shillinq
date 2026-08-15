@@ -58,7 +58,7 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 				'totalCost' => 25_000.00,
 				'componenten' => [
 					'directPayrollCost' => 12_000.00,
-					'directeMaterialen' => 3_000.00,
+					'directMaterials' => 3_000.00,
 					'directDepreciations' => 2_000.00,
 					'indirecteOverhead' => ['huisvesting' => 5_000.00, 'ict' => 2_000.00],
 					'capitalCost' => 500.00,
@@ -84,8 +84,8 @@ final class IntegralCostPriceLockServiceTest extends TestCase {
 		self::assertSame(48_000.00, $definitief['componenten']['directPayrollCost']);
 		self::assertSame(20_000.00, $definitief['componenten']['indirecteOverhead']['huisvesting']);
 		self::assertSame(8_000.00, $definitief['componenten']['indirecteOverhead']['ict']);
-		self::assertSame('accountant-user', $definitief['definitiefSignedBy']);
-		self::assertNotNull($definitief['definitiefSignedAt']);
+		self::assertSame('accountant-user', $definitief['finalSignedBy']);
+		self::assertNotNull($definitief['finalSignedAt']);
 		self::assertEqualsWithDelta(320.51, $definitief['costPricePerUnit'], 0.05);
 
 	}//end testLockAggregatesQuarterlyVoorlopig()

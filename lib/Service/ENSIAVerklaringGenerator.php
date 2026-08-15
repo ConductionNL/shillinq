@@ -236,28 +236,28 @@ class ENSIAVerklaringGenerator {
 	private function summariseByDomein(array $vragen): array {
 		$counts = [];
 		foreach ($vragen as $v) {
-			$domein = (string)($v['domein'] ?? 'BIO');
-			if (isset($counts[$domein]) === false) {
-				$counts[$domein] = ['total' => 0, 'metNorm' => 0];
+			$domain = (string)($v['domain'] ?? 'BIO');
+			if (isset($counts[$domain]) === false) {
+				$counts[$domain] = ['total' => 0, 'metNorm' => 0];
 			}
 
-			$counts[$domein]['total']++;
+			$counts[$domain]['total']++;
 
 			$score = $v['maturityScore'] ?? null;
 			$norm = $v['normniveau'] ?? null;
 			if (is_int($score) === true && is_int($norm) === true && $score >= $norm) {
-				$counts[$domein]['metNorm']++;
+				$counts[$domain]['metNorm']++;
 			} elseif ($score === null && (string)($v['answer'] ?? '') === 'ja') {
 				// Ja-nee-nvt: count 'ja' as norm-met.
-				$counts[$domein]['metNorm']++;
+				$counts[$domain]['metNorm']++;
 			}
 		}
 
 		$lines = [];
-		foreach ($counts as $domein => $c) {
+		foreach ($counts as $domain => $c) {
 			$lines[] = sprintf(
 				'- %s: %d van %d vragen voldoen aan VNG-norm.',
-				$domein,
+				$domain,
 				$c['metNorm'],
 				$c['total']
 			);

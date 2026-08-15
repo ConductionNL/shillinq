@@ -153,7 +153,7 @@ class DBAController extends Controller {
 		$band = DBAConstants::bandFromScore($total);
 
 		$body['totalScore'] = $total;
-		$body['interpretatie'] = $band;
+		$body['interpretation'] = $band;
 		$body['filledBy'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
 		$body['filledOn'] ??= (new DateTimeImmutable())->format('Y-m-d');
 		$body['administrationId'] = (string)($assignment['administrationId'] ?? '');
@@ -165,7 +165,7 @@ class DBAController extends Controller {
 			return $this->error(message: 'Opslaan intake mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		if (($body['verkortType'] ?? false) === true) {
+		if (($body['abbreviatedType'] ?? false) === true) {
 			$riskLevel = 'VERKORT_LAGE_DREMPEL';
 		} else {
 			$riskLevel = $band;
@@ -357,7 +357,7 @@ class DBAController extends Controller {
 	public function setTussenkomstMode(): JSONResponse {
 		$body = $this->jsonBody();
 		$assignmentId = (string)($body['assignmentId'] ?? '');
-		$enabled = (bool)($body['intermediairMode'] ?? false);
+		$enabled = (bool)($body['intermediaryMode'] ?? false);
 		if ($assignmentId === '') {
 			return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
 		}
@@ -374,7 +374,7 @@ class DBAController extends Controller {
 		}
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
-		$assignment['intermediairMode'] = $enabled;
+		$assignment['intermediaryMode'] = $enabled;
 		try {
 			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
@@ -430,7 +430,7 @@ class DBAController extends Controller {
 	/**
 	 * Save an opdrachtgever-side inhuur-intake (REQ-DBA-010, T25).
 	 *
-	 * Sets DBAOpdracht.perspectief = 'OPDRACHTGEVER' before delegating to saveIntake.
+	 * Sets DBAOpdracht.perspective = 'OPDRACHTGEVER' before delegating to saveIntake.
 	 *
 	 * @return JSONResponse The result.
 	 *
@@ -456,7 +456,7 @@ class DBAController extends Controller {
 		}
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
-		$assignment['perspectief'] = 'OPDRACHTGEVER';
+		$assignment['perspective'] = 'OPDRACHTGEVER';
 		try {
 			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {

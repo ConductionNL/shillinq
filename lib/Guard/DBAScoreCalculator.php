@@ -88,9 +88,9 @@ class DBAScoreCalculator {
 		$deliverooBlock = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
 		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['personalLabour'] ?? []));
 
-		$exclusief = (bool)($deliverooBlock['exclusief'] ?? false);
+		$excluding = (bool)($deliverooBlock['excluding'] ?? false);
 		$duration = (string)($deliverooBlock['durationRelationship'] ?? '');
-		if ($exclusief === true && in_array($duration, ['1_TOT_2_JAAR', 'MEER_DAN_2_JAAR'], true) === true) {
+		if ($excluding === true && in_array($duration, ['1_TOT_2_JAAR', 'MEER_DAN_2_JAAR'], true) === true) {
 			$booster += 5;
 		}
 
@@ -188,7 +188,7 @@ class DBAScoreCalculator {
 		$duration = (string)($block['durationRelationship'] ?? '');
 		$score += self::DUUR_POINTS[$duration] ?? 0;
 
-		if ((bool)($block['exclusief'] ?? false) === true) {
+		if ((bool)($block['excluding'] ?? false) === true) {
 			$score += 8;
 		}
 
@@ -196,11 +196,11 @@ class DBAScoreCalculator {
 			$score += 6;
 		}
 
-		if ((bool)($block['eigenKlanten'] ?? false) === false) {
+		if ((bool)($block['ownCustomers'] ?? false) === false) {
 			$score += 6;
 		}
 
-		if ((bool)($block['eigenReclame'] ?? false) === false) {
+		if ((bool)($block['ownReclame'] ?? false) === false) {
 			$score += 4;
 		}
 
@@ -208,7 +208,7 @@ class DBAScoreCalculator {
 			$score += 4;
 		}
 
-		if ((bool)($block['feitelijkeUitvoeringVolgtContract'] ?? true) === false) {
+		if ((bool)($block['actualExecutionFollowsContract'] ?? true) === false) {
 			$score += 2;
 		}
 

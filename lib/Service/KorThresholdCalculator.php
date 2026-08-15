@@ -203,20 +203,20 @@ class KorThresholdCalculator {
 	 * @param float $previousUtilisation Benutting before the posting.
 	 * @param float $newUtilisation Benutting after the posting.
 	 *
-	 * @return array{trigger:string,ernst:string}|null The crossed schijf or null.
+	 * @return array{trigger:string,severity:string}|null The crossed schijf or null.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
 	public function crossedSchijf(float $previousUtilisation, float $newUtilisation): ?array {
 		$schijven = [
-			['threshold' => 1.0, 'trigger' => 'DREMPEL_100PCT', 'ernst' => 'OVERSCHRIJDING'],
-			['threshold' => 0.9, 'trigger' => 'DREMPEL_90PCT', 'ernst' => 'KRITIEK'],
-			['threshold' => 0.8, 'trigger' => 'DREMPEL_80PCT', 'ernst' => 'VROEG'],
+			['threshold' => 1.0, 'trigger' => 'DREMPEL_100PCT', 'severity' => 'OVERSCHRIJDING'],
+			['threshold' => 0.9, 'trigger' => 'DREMPEL_90PCT', 'severity' => 'KRITIEK'],
+			['threshold' => 0.8, 'trigger' => 'DREMPEL_80PCT', 'severity' => 'VROEG'],
 		];
 
 		foreach ($schijven as $schijf) {
 			if ($newUtilisation >= $schijf['threshold'] && $previousUtilisation < $schijf['threshold']) {
-				return ['trigger' => $schijf['trigger'], 'ernst' => $schijf['ernst']];
+				return ['trigger' => $schijf['trigger'], 'severity' => $schijf['severity']];
 			}
 		}
 

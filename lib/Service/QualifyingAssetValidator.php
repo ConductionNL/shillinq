@@ -67,7 +67,7 @@ class QualifyingAssetValidator {
 		}
 
 		$type = (string)($asset['type'] ?? '');
-		$ticket = (array)($asset['toegangsticket'] ?? []);
+		$ticket = (array)($asset['accessTicket'] ?? []);
 
 		$errors = $this->validateSingleRoute(ticket: $ticket, referenceDate: $referenceDate);
 		if ($type === 'combinatie') {

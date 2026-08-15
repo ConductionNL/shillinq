@@ -166,7 +166,7 @@ final class IbAangifteZzpFragmentTest extends TestCase {
 		self::assertStringContainsString('IBTaxParameterYear.mkbExemptionRate', $mkb['parameterSource']);
 
 		// Urencriterium guard points at the real existing method.
-		$hours = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['urencriterium'];
+		$hours = $schemas['IBOndernemersaftrek']['x-openregister-calculations']['hoursCriterion'];
 		self::assertSame(
 			'OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours',
 			$hours['guard']

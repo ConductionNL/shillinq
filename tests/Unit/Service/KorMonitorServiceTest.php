@@ -227,7 +227,7 @@ final class KorMonitorServiceTest extends TestCase {
 		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
 		self::assertSame('DREMPEL_80PCT', $result['trigger']);
-		self::assertSame('VROEG', $result['ernst']);
+		self::assertSame('VROEG', $result['severity']);
 
 	}//end testStatusReportsAlertSchijf()
 

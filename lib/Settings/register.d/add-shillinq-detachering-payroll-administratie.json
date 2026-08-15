@@ -315,7 +315,7 @@
             "example": "concept",
             "title": "Verklaring Status"
           },
-          "modelOvereenkomst": {
+          "modelAgreement": {
             "type": "string",
             "description": "URI to the Belastingdienst model overeenkomst used as the basis for this verklaring. Optional when a non-model-contract variant applies.",
             "nullable": true,
@@ -430,8 +430,8 @@
           "taxYear",
           "clientId",
           "recipientName",
-          "ontvangerBSN",
-          "ontvangerAdres",
+          "recipientBSN",
+          "recipientAddress",
           "paymentsTotal",
           "paymentTypeCode",
           "administrationId"
@@ -456,7 +456,7 @@
             "example": "Maria de Vries",
             "title": "Ontvanger Naam"
           },
-          "ontvangerBSN": {
+          "recipientBSN": {
             "type": "string",
             "description": "Burger Service Nummer of the recipient. Stored encrypted at-rest per x-openregister-encryption. Read restricted to payroll-officer role per RBAC and ADR-022. Every read access is logged to audit-trail-immutable.",
             "x-openregister-encryption": {
@@ -476,7 +476,7 @@
             "example": "[ENCRYPTED]",
             "title": "Ontvanger BSN"
           },
-          "ontvangerAdres": {
+          "recipientAddress": {
             "type": "string",
             "description": "Full postal address of the recipient as required by the IB47 form.",
             "example": "Voorbeeldstraat 1, 1234 AB Amsterdam",
@@ -607,7 +607,7 @@
                 "delete"
               ],
               "fieldOverrides": {
-                "ontvangerBSN": {
+                "recipientBSN": {
                   "permissions": [
                     "read",
                     "write"
@@ -620,7 +620,7 @@
                 "read"
               ],
               "fieldOverrides": {
-                "ontvangerBSN": {
+                "recipientBSN": {
                   "permissions": []
                 }
               }
@@ -630,7 +630,7 @@
                 "read"
               ],
               "fieldOverrides": {
-                "ontvangerBSN": {
+                "recipientBSN": {
                   "permissions": []
                 }
               }

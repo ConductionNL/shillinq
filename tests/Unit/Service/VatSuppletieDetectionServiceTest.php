@@ -603,7 +603,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		self::assertFalse($prepared['thresholdExceeded']);
 		self::assertNull($prepared['filingDeadline']);
 		// Still fully compiled — deltas + posting exist despite being below grens.
-		self::assertNotEmpty($prepared['rubriekDeltas']);
+		self::assertNotEmpty($prepared['categoryDeltas']);
 		self::assertNotNull($prepared['glCorrectionTransactionId']);
 
 	}//end testPrepareFlagsBelowGrensWithoutDeadline()

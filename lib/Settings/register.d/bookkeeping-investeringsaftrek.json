@@ -557,7 +557,7 @@
             "example": 3750000,
             "title": "Directe Afschrijving"
           },
-          "gespreidDeel": {
+          "spreadPart": {
             "type": "integer",
             "description": "Remaining 25% spread over the regular schedule, in EUR cents.",
             "example": 1250000,
@@ -612,7 +612,7 @@
         "required": [
           "tier",
           "yearNumber",
-          "vanaf"
+          "from"
         ],
         "properties": {
           "tier": {
@@ -627,7 +627,7 @@
             "title": "Jaartal",
             "description": "The numeric value for jaartal."
           },
-          "vanaf": {
+          "from": {
             "type": "integer",
             "description": "Lower bound of the tier (inclusive), EUR cents.",
             "example": 280000,

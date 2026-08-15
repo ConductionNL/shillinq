@@ -170,7 +170,7 @@ final class VpbMkbFragmentTest extends TestCase {
 	public function testAangifteCalculations(): void {
 		$calc = $this->fragment()['components']['schemas']['VpbAangifte']['x-openregister-calculations'];
 		self::assertArrayHasKey('dueVpb', $calc);
-		self::assertArrayHasKey('teBetalen', $calc);
+		self::assertArrayHasKey('tePay', $calc);
 		self::assertArrayHasKey('fiscalProfitForLosses', $calc);
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::berekenVerschuldigdeVpb',
@@ -188,7 +188,7 @@ final class VpbMkbFragmentTest extends TestCase {
 		$calc = $this->fragment()['components']['schemas']['Voorvoegingsverlies']['x-openregister-calculations'];
 		self::assertArrayHasKey('regime', $calc);
 		self::assertArrayHasKey('expiresIn', $calc);
-		self::assertArrayHasKey('restant', $calc);
+		self::assertArrayHasKey('remainder', $calc);
 		self::assertSame(
 			'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerliesRegime',
 			$calc['regime']['guard']
@@ -291,7 +291,7 @@ final class VpbMkbFragmentTest extends TestCase {
 		self::assertSame(245000, $bySchema['VpbTariefcatalogus']['taxableAmountThreshold']);
 
 		self::assertArrayHasKey('Belastingplichtige', $bySchema);
-		self::assertSame('EH3', $bySchema['Belastingplichtige']['eHerkenningLevel']);
+		self::assertSame('EH3', $bySchema['Belastingplichtige']['eRecognitionLevel']);
 
 	}//end testSeedObjects()
 }//end class

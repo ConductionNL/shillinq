@@ -97,9 +97,9 @@ class RechtmatigheidGuard {
 	 */
 	public function canFinaliseToets(array $toets): bool {
 		try {
-			$uitkomst = (string)($toets['uitkomst'] ?? '');
+			$outcome = (string)($toets['outcome'] ?? '');
 
-			if (in_array($uitkomst, self::NEGATIVE_UITKOMSTEN, true) === false) {
+			if (in_array($outcome, self::NEGATIVE_UITKOMSTEN, true) === false) {
 				// Voldoet / niet_van_toepassing: no substantiation gate.
 				return true;
 			}
@@ -110,7 +110,7 @@ class RechtmatigheidGuard {
 					'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
 					[
 						'toetsId' => ($toets['id'] ?? 'unknown'),
-						'uitkomst' => $uitkomst,
+						'outcome' => $outcome,
 						'length' => mb_strlen($substantiation),
 					]
 				);
@@ -121,7 +121,7 @@ class RechtmatigheidGuard {
 			if ($bevinding === '') {
 				$this->logger->info(
 					'RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden',
-					['toetsId' => ($toets['id'] ?? 'unknown'), 'uitkomst' => $uitkomst]
+					['toetsId' => ($toets['id'] ?? 'unknown'), 'outcome' => $outcome]
 				);
 				return false;
 			}

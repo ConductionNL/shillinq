@@ -131,7 +131,7 @@ class WmoComplianceCalculator {
 		}
 
 		$totalCents = $this->toCents(amount: ($componenten['directPayrollCost'] ?? 0));
-		$totalCents += $this->toCents(amount: ($componenten['directeMaterialen'] ?? 0));
+		$totalCents += $this->toCents(amount: ($componenten['directMaterials'] ?? 0));
 		$totalCents += $this->toCents(amount: ($componenten['directDepreciations'] ?? 0));
 		$totalCents += $this->overheadTotalCents(overhead: $overhead);
 		$totalCents += $this->toCents(amount: ($componenten['capitalCost'] ?? 0));
@@ -264,7 +264,7 @@ class WmoComplianceCalculator {
 				'ratio' => $ratio,
 				'amount' => $this->fromCents(cents: $cents),
 				'generalLedger' => ($target['generalLedger'] ?? null),
-				'dimensie' => (string)($target['dimensie'] ?? ''),
+				'dimension' => (string)($target['dimension'] ?? ''),
 			];
 		}
 

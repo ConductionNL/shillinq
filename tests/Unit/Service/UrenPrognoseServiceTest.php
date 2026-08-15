@@ -71,7 +71,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'calendarYear' => 2026,
 				'currentHours' => 700.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 
@@ -98,7 +98,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'calendarYear' => 2026,
 				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 
@@ -129,7 +129,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'vakanties' => ['2026-08-01/2026-08-31'],
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 
@@ -152,7 +152,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'geplandeOpdrachten' => [
 					['maand' => '2026-09', 'hours' => 200.0],
 				],
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 
@@ -181,7 +181,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'calendarYear' => 2026,
 				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies($end, 84),
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 
@@ -191,7 +191,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'calendarYear' => 2026,
 				'currentHours' => 0.0,
 				'dailyTallies' => $noisy,
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 
@@ -219,7 +219,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'calendarYear' => 2026,
 				'currentHours' => 300.0,
 				'dailyTallies' => $tallies,
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 
@@ -240,7 +240,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'calendarYear' => 2026,
 				'currentHours' => 0.0,
 				'dailyTallies' => [],
-				'doelNorm' => 1225,
+				'purposeNorm' => 1225,
 			]
 		);
 

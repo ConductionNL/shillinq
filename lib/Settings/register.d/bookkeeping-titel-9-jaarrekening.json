@@ -182,7 +182,7 @@
             "description": "True when an accountantsverklaring is wettelijk verplicht (middelgroot+; REQ-T9-007/REQ-T9-009).",
             "title": "Accountantsverklaring Vereist"
           },
-          "accountantsverklaringStatus": {
+          "auditorsStatementStatus": {
             "type": "string",
             "enum": [
               "niet-vereist",
@@ -462,7 +462,7 @@
         "type": "object",
         "required": [
           "reportId",
-          "balansDate",
+          "balanceDate",
           "currency",
           "status",
           "rubrieken"
@@ -474,20 +474,20 @@
             "example": "annual-report-adm-001-2025",
             "title": "Report ID"
           },
-          "balansDate": {
+          "balanceDate": {
             "type": "string",
             "format": "date",
             "description": "Balansdatum (= boekjaarEind).",
             "example": "2025-12-31",
             "title": "Balans Date"
           },
-          "totalActiva": {
+          "totalAssets": {
             "type": "number",
             "nullable": true,
             "description": "Computed total assets. MUST equal totalPassiva (balans balances).",
             "title": "Total Activa"
           },
-          "totalPassiva": {
+          "totalLiabilities": {
             "type": "number",
             "nullable": true,
             "description": "Computed total liabilities + equity. MUST equal totalActiva.",
@@ -775,7 +775,7 @@
         "type": "object",
         "required": [
           "reportId",
-          "cashflowDate",
+          "cashFlowDate",
           "method",
           "currency",
           "status"
@@ -787,7 +787,7 @@
             "example": "annual-report-adm-003-2025",
             "title": "Report ID"
           },
-          "cashflowDate": {
+          "cashFlowDate": {
             "type": "string",
             "format": "date",
             "description": "Reporting date (= boekjaarEind).",
@@ -925,7 +925,7 @@
         "type": "object",
         "required": [
           "reportId",
-          "volgorde",
+          "sortOrder",
           "code",
           "title",
           "statutoryBasis"
@@ -937,7 +937,7 @@
             "example": "annual-report-adm-001-2025",
             "title": "Report ID"
           },
-          "volgorde": {
+          "sortOrder": {
             "type": "integer",
             "minimum": 0,
             "description": "Sequence/ordering within the toelichting.",
@@ -975,7 +975,7 @@
             "example": "rj-212-mva-verloop",
             "title": "Gegenereerd Door"
           },
-          "verplicht": {
+          "mandatory": {
             "type": "boolean",
             "default": false,
             "description": "True when this note is wettelijk verplicht for the report's groottecategorie (REQ-T9-004/REQ-T9-009).",
@@ -1167,7 +1167,7 @@
             "example": "in-review",
             "title": "Huidig Stap"
           },
-          "stappenArray": {
+          "stepsArray": {
             "type": "array",
             "description": "Per-step record with assignee, status and review comments.",
             "items": {
@@ -1265,7 +1265,7 @@
                   "description": "From step.",
                   "title": "Van"
                 },
-                "naar": {
+                "to": {
                   "type": "string",
                   "description": "To step.",
                   "title": "Naar"
@@ -1349,7 +1349,7 @@
       "determinationDate": null,
       "depositDate": null,
       "auditorsStatementRequired": false,
-      "accountantsverklaringStatus": "niet-vereist",
+      "auditorsStatementStatus": "niet-vereist",
       "cashFlowStatementRequired": false,
       "boardReportRequired": false,
       "boardMembers": [
@@ -1384,7 +1384,7 @@
       "determinationDate": null,
       "depositDate": null,
       "auditorsStatementRequired": true,
-      "accountantsverklaringStatus": "in-afwachting",
+      "auditorsStatementStatus": "in-afwachting",
       "cashFlowStatementRequired": true,
       "boardReportRequired": true,
       "boardMembers": [
@@ -1399,9 +1399,9 @@
         "slug": "balance-sheet-adm-001-2025"
       },
       "reportId": "annual-report-adm-001-2025",
-      "balansDate": "2025-12-31",
-      "totalActiva": 845000,
-      "totalPassiva": 845000,
+      "balanceDate": "2025-12-31",
+      "totalAssets": 845000,
+      "totalLiabilities": 845000,
       "currency": "EUR",
       "status": "draft",
       "rubrieken": [
@@ -1531,7 +1531,7 @@
         "slug": "note-adm-001-2025-grondslagen"
       },
       "reportId": "annual-report-adm-001-2025",
-      "volgorde": 0,
+      "sortOrder": 0,
       "code": "Note 0",
       "title": "Grondslagen voor waardering en resultaatbepaling",
       "contentJSONB": {
@@ -1540,7 +1540,7 @@
       },
       "statutoryBasis": "RJ 240 Grondslagen",
       "generatedBy": "rj-240-grondslagen",
-      "verplicht": true
+      "mandatory": true
     },
     {
       "@self": {
@@ -1549,7 +1549,7 @@
         "slug": "cash-flow-adm-003-2025"
       },
       "reportId": "annual-report-adm-003-2025",
-      "cashflowDate": "2025-12-31",
+      "cashFlowDate": "2025-12-31",
       "method": "indirect",
       "currency": "EUR",
       "status": "draft",
@@ -1636,7 +1636,7 @@
       },
       "reportId": "annual-report-adm-003-2025",
       "currentStap": "concept",
-      "stappenArray": [
+      "stepsArray": [
         {
           "stap": "in-review",
           "assignee": null,

@@ -313,7 +313,7 @@
             "nullable": true,
             "title": "Looptijd Eind"
           },
-          "gegundeLeverancierKvk": {
+          "awardedSupplierKvk": {
             "type": "string",
             "description": "KvK number of the awarded supplier — used for vendor visibility filtering of bron=tenderned obligations (REQ-008 / design D6).",
             "nullable": true,
@@ -715,7 +715,7 @@
       "generalLedgerAccount": "4500",
       "termStart": "2026-02-01",
       "termEnd": "2027-01-31",
-      "gegundeLeverancierKvk": "76741850",
+      "awardedSupplierKvk": "76741850",
       "milestones": [
         {
           "milestoneId": "MS-Q1",

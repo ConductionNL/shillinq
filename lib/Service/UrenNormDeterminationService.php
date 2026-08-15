@@ -77,7 +77,7 @@ final class UrenNormDeterminationService {
 	 */
 	public function bouwSeedRecord(array $profiel): array {
 		$norm = $this->guard->bepaalDoelNorm(profiel: $profiel);
-		$basis = $this->guard->bepaalNormGrondslag(doelNorm: $norm);
+		$basis = $this->guard->bepaalNormGrondslag(purposeNorm: $norm);
 		$grotendeels = $this->guard->bepaalGrotendeelsCriterium(
 			enterpriseHours: (float)($profiel['ondernemingsUrenJTD'] ?? 0.0),
 			employmentHours: (float)($profiel['loondienstUrenJTD'] ?? 0.0)
@@ -87,11 +87,11 @@ final class UrenNormDeterminationService {
 			'administrationId' => (string)($profiel['administrationId'] ?? ''),
 			'enterpriseId' => (string)($profiel['enterpriseId'] ?? ''),
 			'calendarYear' => (int)($profiel['calendarYear'] ?? (int)gmdate('Y')),
-			'doelNorm' => $norm,
+			'purposeNorm' => $norm,
 			'normBasis' => $basis,
 			'currentHours' => 0.0,
 			'thresholdStatus' => 'OP_KOERS',
-			'grotendeelsCriterium' => $grotendeels,
+			'largelyCriterium' => $grotendeels,
 		];
 
 		$this->logger->info(
@@ -99,7 +99,7 @@ final class UrenNormDeterminationService {
 			[
 				'enterpriseId' => $seed['enterpriseId'],
 				'calendarYear' => $seed['calendarYear'],
-				'doelNorm' => $norm,
+				'purposeNorm' => $norm,
 				'grotendeels' => $grotendeels,
 			]
 		);

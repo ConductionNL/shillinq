@@ -91,7 +91,7 @@ final class Titel9SeedsTest extends TestCase {
 		self::assertFalse($matrix['klein']['bestuursverslag']);
 		self::assertTrue($matrix['middelgroot']['kasstroomoverzicht']);
 		self::assertTrue($matrix['middelgroot']['bestuursverslag']);
-		self::assertTrue($matrix['middelgroot']['accountantsverklaring']);
+		self::assertTrue($matrix['middelgroot']['auditorsStatement']);
 
 	}//end testTemplateMatrixReliefRules()
 

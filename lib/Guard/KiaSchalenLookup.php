@@ -67,7 +67,7 @@ class KiaSchalenLookup {
 	 */
 	public function resolveTier(array $tiers, int $jaartotaal): ?array {
 		foreach ($tiers as $tier) {
-			$from = (int)($tier['vanaf'] ?? 0);
+			$from = (int)($tier['from'] ?? 0);
 			$tot = $tier['tot'];
 			if ($jaartotaal < $from) {
 				continue;
@@ -122,7 +122,7 @@ class KiaSchalenLookup {
 	private function deductionForTier(array $tier, int $jaartotaal): int {
 		$percentage = $tier['percentage'];
 		$vastAmount = $tier['fixedAmount'];
-		$from = (int)($tier['vanaf'] ?? 0);
+		$from = (int)($tier['from'] ?? 0);
 
 		// Tier-4 taper: flat anchor minus a percentage of the excess over `vanaf`.
 		if ($percentage !== null && (float)$percentage < 0.0 && $vastAmount !== null) {

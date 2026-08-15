@@ -25,7 +25,7 @@
             "example": "Cultural presentation, production and participation",
             "title": "Description (English)"
           },
-          "programmaFocusEn": {
+          "programmeFocusAnd": {
             "type": "string",
             "description": "English display name for the BBV programme grouping this taakveld rolls up to. Display-only; falls back to `programmaFocus` when absent.",
             "nullable": true,
@@ -50,7 +50,7 @@
             "example": "Public health and environment",
             "title": "Main Function Name (English)"
           },
-          "omschrijvingIv3En": {
+          "descriptionIv3And": {
             "type": "string",
             "description": "English rendering of the Iv3 scope description. Display-only. Present only where the source regulation supplies a Dutch description — an absent description is not translated into an invented one.",
             "nullable": true,

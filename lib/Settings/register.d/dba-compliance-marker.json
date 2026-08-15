@@ -18,23 +18,23 @@
       "essentieleBepalingen": [
         {
           "id": "EB-01",
-          "tekst": "Opdrachtnemer is vrij in tijd, plaats en wijze van uitvoering.",
-          "verplicht": true
+          "text": "Opdrachtnemer is vrij in tijd, plaats en wijze van uitvoering.",
+          "mandatory": true
         },
         {
           "id": "EB-02",
-          "tekst": "Opdrachtnemer mag zich laten vervangen zonder toestemming opdrachtgever.",
-          "verplicht": true
+          "text": "Opdrachtnemer mag zich laten vervangen zonder toestemming opdrachtgever.",
+          "mandatory": true
         },
         {
           "id": "EB-03",
-          "tekst": "Opdrachtnemer factureert per opdracht, geen vaste maandelijkse vergoeding.",
-          "verplicht": true
+          "text": "Opdrachtnemer factureert per opdracht, geen vaste maandelijkse vergoeding.",
+          "mandatory": true
         },
         {
           "id": "EB-04",
-          "tekst": "Opdrachtnemer draagt eigen ondernemersrisico (geen doorbetaling bij ziekte/vakantie).",
-          "verplicht": true
+          "text": "Opdrachtnemer draagt eigen ondernemersrisico (geen doorbetaling bij ziekte/vakantie).",
+          "mandatory": true
         }
       ]
     },
@@ -53,18 +53,18 @@
       "essentieleBepalingen": [
         {
           "id": "EB-01",
-          "tekst": "Opdrachtnemer levert een specifiek werk of dienst tegen overeengekomen prijs.",
-          "verplicht": true
+          "text": "Opdrachtnemer levert een specifiek werk of dienst tegen overeengekomen prijs.",
+          "mandatory": true
         },
         {
           "id": "EB-02",
-          "tekst": "Opdrachtnemer factureert per geleverd werk of mijlpaal.",
-          "verplicht": true
+          "text": "Opdrachtnemer factureert per geleverd werk of mijlpaal.",
+          "mandatory": true
         },
         {
           "id": "EB-03",
-          "tekst": "Geen verplichting tot persoonlijke uitvoering door specifieke persoon.",
-          "verplicht": true
+          "text": "Geen verplichting tot persoonlijke uitvoering door specifieke persoon.",
+          "mandatory": true
         }
       ]
     },
@@ -83,23 +83,23 @@
       "essentieleBepalingen": [
         {
           "id": "EB-01",
-          "tekst": "Drie-partijen-constructie: ZZP - intermediair - eindklant.",
-          "verplicht": true
+          "text": "Drie-partijen-constructie: ZZP - intermediair - eindklant.",
+          "mandatory": true
         },
         {
           "id": "EB-02",
-          "tekst": "Intermediair heeft alleen administratieve rol; geen werkgeversgezag.",
-          "verplicht": true
+          "text": "Intermediair heeft alleen administratieve rol; geen werkgeversgezag.",
+          "mandatory": true
         },
         {
           "id": "EB-03",
-          "tekst": "Opdrachtnemer factureert intermediair per opdracht; intermediair factureert eindklant.",
-          "verplicht": true
+          "text": "Opdrachtnemer factureert intermediair per opdracht; intermediair factureert eindklant.",
+          "mandatory": true
         },
         {
           "id": "EB-04",
-          "tekst": "Waadi- en Wka-bepalingen zijn opgenomen.",
-          "verplicht": true
+          "text": "Waadi- en Wka-bepalingen zijn opgenomen.",
+          "mandatory": true
         }
       ]
     }
@@ -284,14 +284,14 @@
             "example": "2027-02-22",
             "title": "Wba Geldig Tot"
           },
-          "intermediairMode": {
+          "intermediaryMode": {
             "type": "boolean",
             "description": "Indien true: tussenkomst-driehoek modelleren (ZZP-intermediair + intermediair-eindklant), REQ-DBA-017.",
             "default": false,
             "example": false,
             "title": "Intermediair Mode"
           },
-          "perspectief": {
+          "perspective": {
             "type": "string",
             "description": "ZZP-perspectief (opdrachtnemer) of opdrachtgever-perspectief (inhuur-flow), REQ-DBA-010.",
             "enum": [
@@ -381,7 +381,7 @@
             "cardinality": "many-to-one",
             "description": "Evidence-dossier voor deze opdracht (REQ-DBA-007)."
           },
-          "modelOvereenkomst": {
+          "modelAgreement": {
             "localField": "modelOvereenkomstId",
             "relatedSchema": "DBAModelovereenkomst",
             "relatedField": "@self.id",
@@ -478,7 +478,7 @@
             "example": "user-zzp-ond-001234",
             "title": "Ingevuld Door"
           },
-          "verkortType": {
+          "abbreviatedType": {
             "type": "boolean",
             "description": "Verkorte intake (3 vragen) i.p.v. volledige (20 vragen); voor eenmalig < 5000 EUR (REQ-DBA-001).",
             "default": false,
@@ -604,17 +604,17 @@
                 "description": "Duur van de opdracht-relatie.",
                 "title": "Duur Relatie"
               },
-              "exclusief": {
+              "excluding": {
                 "type": "boolean",
                 "description": "Werkt exclusief voor deze opdrachtgever (verhoogt risico).",
                 "title": "Exclusief"
               },
-              "eigenKlanten": {
+              "ownCustomers": {
                 "type": "boolean",
                 "description": "Heeft naast deze opdracht meerdere eigen klanten.",
                 "title": "Eigen Klanten"
               },
-              "eigenReclame": {
+              "ownReclame": {
                 "type": "boolean",
                 "description": "Voert eigen reclame / acquisitie.",
                 "title": "Eigen Reclame"
@@ -624,7 +624,7 @@
                 "description": "Een modelovereenkomst is gekozen en gekoppeld.",
                 "title": "Modelovereenkomst Aanwezig"
               },
-              "feitelijkeUitvoeringVolgtContract": {
+              "actualExecutionFollowsContract": {
                 "type": "boolean",
                 "description": "Feitelijke uitvoering komt overeen met contractueel intent.",
                 "title": "Feitelijke Uitvoering Volgt Contract"
@@ -669,7 +669,7 @@
             "example": 100,
             "title": "Max Score"
           },
-          "interpretatie": {
+          "interpretation": {
             "type": "string",
             "description": "Tekstuele interpretatie van de totaalscore (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG).",
             "readOnly": true,
@@ -724,7 +724,7 @@
             "guard": "OCA\\Shillinq\\Guard\\DBAScoreCalculator::computeTotal",
             "description": "Som van alle pijlers + Deliveroo-criteria; guard valt terug op DBAScoreCalculator wanneer de declaratieve som niet volstaat (ADR-031 exception)."
           },
-          "interpretatie": {
+          "interpretation": {
             "formula": "case when totaalScore < 25 then 'LAAG' when totaalScore < 50 then 'LAAG_MIDDEN' when totaalScore < 75 then 'MIDDEN_HOOG' else 'HOOG' end",
             "description": "Risico-band afgeleid van totaalScore per REQ-DBA-003."
           }
@@ -829,12 +829,12 @@
                   "description": "Bepalings-identifier (bijv. EB-01).",
                   "title": "ID"
                 },
-                "tekst": {
+                "text": {
                   "type": "string",
                   "description": "Tekst van de bepaling.",
                   "title": "Tekst"
                 },
-                "verplicht": {
+                "mandatory": {
                   "type": "boolean",
                   "description": "Indien true: de bepaling MOET worden overgenomen.",
                   "title": "Verplicht"
@@ -912,8 +912,8 @@
           "administrationId",
           "assignmentId",
           "type",
-          "detectieMoment",
-          "ernst",
+          "detectionMoment",
+          "severity",
           "status"
         ],
         "properties": {
@@ -947,14 +947,14 @@
             "example": "FACTUURFREQUENTIE_LIJKT_OP_LOON",
             "title": "Type"
           },
-          "detectieMoment": {
+          "detectionMoment": {
             "type": "string",
             "format": "date-time",
             "description": "Tijdstip van detectie door de monitoring-engine.",
             "example": "2026-05-15T09:00:00Z",
             "title": "Detectie Moment"
           },
-          "ernst": {
+          "severity": {
             "type": "string",
             "enum": [
               "LAAG",
@@ -1006,7 +1006,7 @@
             "example": true,
             "title": "Weergegeven Aan Gebruiker"
           },
-          "resolutieMemo": {
+          "resolutionMemo": {
             "type": "string",
             "nullable": true,
             "description": "Memo bij afhandeling (waarom de flag is afgesloten).",
@@ -1148,7 +1148,7 @@
             "example": 7,
             "title": "Actieve Opdrachten"
           },
-          "concentratie": {
+          "concentration": {
             "type": "object",
             "description": "Omzetconcentratie op een klant (12-maand rolling).",
             "properties": {
@@ -1327,7 +1327,7 @@
             "example": "dba-opdr-2026-0042",
             "title": "Opdracht ID"
           },
-          "stukken": {
+          "documents": {
             "type": "array",
             "description": "Inventaris van evidence-stukken.",
             "items": {
@@ -1377,7 +1377,7 @@
             },
             "title": "Stukken"
           },
-          "compleetheidScore": {
+          "completenessScore": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -1386,7 +1386,7 @@
             "example": 0.85,
             "title": "Compleetheid Score"
           },
-          "ontbrekendeStukken": {
+          "missingDocuments": {
             "type": "array",
             "items": {
               "type": "string"
@@ -1424,7 +1424,7 @@
           }
         },
         "x-openregister-calculations": {
-          "compleetheidScore": {
+          "completenessScore": {
             "formula": "case when array_length(stukken) = 0 then 0 else (count_distinct_types(stukken) * 1.0) / 4 end",
             "description": "Score gebaseerd op aanwezigheid van vier verplichte stuk-types: GETEKENDE_OVEREENKOMST, FACTUUR_EERSTE, FACTUUR_LAATSTE, URENSTAAT_KWARTAAL."
           }

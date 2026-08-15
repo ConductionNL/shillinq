@@ -103,7 +103,7 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-1', 'status' => 'vastgesteld']],
-					'Belastingplichtige' => [['id' => 'bp-1', 'eHerkenningLevel' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
+					'Belastingplichtige' => [['id' => 'bp-1', 'eRecognitionLevel' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
 					'Innovatiebox' => [['taxReturn' => 'aangifte-1', 'soDeclarationReference' => 'SO-2026-1']],
 				]
 			)
@@ -154,7 +154,7 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-3', 'status' => 'vastgesteld']],
-					'Belastingplichtige' => [['id' => 'bp-3', 'eHerkenningLevel' => 'EH2', 'digipoortCertificate' => 'vault://cert']],
+					'Belastingplichtige' => [['id' => 'bp-3', 'eRecognitionLevel' => 'EH2', 'digipoortCertificate' => 'vault://cert']],
 				]
 			)
 		);
@@ -180,7 +180,7 @@ class VpbAangifteGuardTest extends TestCase {
 			$this->buildSchemaStub(
 				recordsBySchema: [
 					'AnnualReport' => [['id' => 'jr-4', 'status' => 'gedeponeerd']],
-					'Belastingplichtige' => [['id' => 'bp-4', 'eHerkenningLevel' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
+					'Belastingplichtige' => [['id' => 'bp-4', 'eRecognitionLevel' => 'EH3', 'digipoortCertificate' => 'vault://cert']],
 					'Innovatiebox' => [['taxReturn' => 'aangifte-4', 'soDeclarationReference' => '']],
 				]
 			)
@@ -264,7 +264,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertTrue(
 			$this->guard->canVoegen(
 				unitId: 'fe-1',
-				object: ['bezitPercentage' => 100, 'equalFinancialYears' => true, 'establishmentNetherlands' => true]
+				object: ['holdingPercentage' => 100, 'equalFinancialYears' => true, 'establishmentNetherlands' => true]
 			)
 		);
 
@@ -280,7 +280,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canVoegen(
 				unitId: 'fe-2',
-				object: ['bezitPercentage' => 80, 'equalFinancialYears' => true, 'establishmentNetherlands' => true]
+				object: ['holdingPercentage' => 80, 'equalFinancialYears' => true, 'establishmentNetherlands' => true]
 			)
 		);
 
@@ -296,7 +296,7 @@ class VpbAangifteGuardTest extends TestCase {
 		self::assertFalse(
 			$this->guard->canVoegen(
 				unitId: 'fe-3',
-				object: ['bezitPercentage' => 100, 'equalFinancialYears' => true, 'establishmentNetherlands' => false]
+				object: ['holdingPercentage' => 100, 'equalFinancialYears' => true, 'establishmentNetherlands' => false]
 			)
 		);
 

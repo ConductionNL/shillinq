@@ -232,7 +232,7 @@ class DestructionScheduleGuard {
 			'actor' => (string)($options['actorUid'] ?? 'system'),
 			'objectType' => (string)($record['_objectType'] ?? ($record['schema'] ?? '')),
 			'objectId' => (string)($record['id'] ?? ($record['uuid'] ?? '')),
-			'selectielijstCode' => (string)($options['selectielijstCode'] ?? '5.1.2'),
+			'selectionListCode' => (string)($options['selectionListCode'] ?? '5.1.2'),
 			'legalBasis' => (string)($options['legalBasis'] ?? 'Archiefwet Article 7'),
 			'timestamp' => (string)($options['now'] ?? date('c')),
 			'requirementId' => 'REQ-RAP-008',

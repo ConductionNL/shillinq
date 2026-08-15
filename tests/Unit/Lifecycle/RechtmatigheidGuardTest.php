@@ -71,7 +71,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanFinaliseToetsPermitsVoldoet(): void {
-		$result = $this->guard->canFinaliseToets(toets: ['uitkomst' => 'voldoet']);
+		$result = $this->guard->canFinaliseToets(toets: ['outcome' => 'voldoet']);
 		self::assertTrue(condition: $result, message: 'voldoet uitkomst must be permitted');
 
 	}//end testCanFinaliseToetsPermitsVoldoet()
@@ -82,7 +82,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanFinaliseToetsPermitsNietVanToepassing(): void {
-		$result = $this->guard->canFinaliseToets(toets: ['uitkomst' => 'niet_van_toepassing']);
+		$result = $this->guard->canFinaliseToets(toets: ['outcome' => 'niet_van_toepassing']);
 		self::assertTrue(condition: $result, message: 'niet_van_toepassing must be permitted');
 
 	}//end testCanFinaliseToetsPermitsNietVanToepassing()
@@ -95,7 +95,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsDeniesShortOnderbouwing(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => 'Te kort.',
 				'lawfulnessFinding' => 'bev-1',
 			]
@@ -112,7 +112,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsDeniesMissingBevinding(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => str_repeat('a', 60),
 				'lawfulnessFinding' => '',
 			]
@@ -129,7 +129,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsPermitsWhenComplete(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'voldoet_niet',
+				'outcome' => 'voldoet_niet',
 				'substantiation' => 'Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (eerder Europees aanbesteed).',
 				'lawfulnessFinding' => 'bev-142',
 			]
@@ -146,7 +146,7 @@ class RechtmatigheidGuardTest extends TestCase {
 	public function testCanFinaliseToetsDeniesOnzekerWithoutBevinding(): void {
 		$result = $this->guard->canFinaliseToets(
 			toets: [
-				'uitkomst' => 'onzeker',
+				'outcome' => 'onzeker',
 				'substantiation' => str_repeat('b', 55),
 			]
 		);

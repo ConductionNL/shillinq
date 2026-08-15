@@ -37,7 +37,7 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 
 		expect(rows).toHaveLength(1)
 		expect(rows[0].geautoriseerd).toBe(50000000)
-		expect(rows[0].verplicht).toBe(7500000)
+		expect(rows[0].mandatory).toBe(7500000)
 		expect(rows[0].gerealiseerd).toBe(2500000)
 		expect(rows[0].vrij).toBe(40000000)
 	})

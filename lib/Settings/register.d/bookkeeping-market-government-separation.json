@@ -24,9 +24,9 @@
           "code",
           "name",
           "governingBody",
-          "organisatieonderdeel",
+          "organisationalUnit",
           "description",
-          "marktsegment",
+          "marketSegment",
           "concurrenten",
           "startDate",
           "costPriceMethod",
@@ -55,7 +55,7 @@
             "example": "Gemeente Apeldoorn",
             "title": "Bestuursorgaan"
           },
-          "organisatieonderdeel": {
+          "organisationalUnit": {
             "type": "string",
             "description": "Department / section responsible.",
             "example": "Afdeling Cultuur & Erfgoed",
@@ -67,7 +67,7 @@
             "example": "Verhuur zaalruimte voor commerciële danslessen",
             "title": "Beschrijving"
           },
-          "marktsegment": {
+          "marketSegment": {
             "type": "string",
             "description": "Relevant market segment.",
             "example": "privédansscholen Apeldoorn",
@@ -473,7 +473,7 @@
             "description": "Component breakdown of integrale kostprijs in EUR (REQ-WMO-002).",
             "required": [
               "directPayrollCost",
-              "directeMaterialen",
+              "directMaterials",
               "directDepreciations",
               "indirecteOverhead",
               "capitalCost",
@@ -486,7 +486,7 @@
                 "description": "Direct labour costs from GL accounts tagged with the activity's kostenplaatsCode.",
                 "title": "Directe Loonkosten"
               },
-              "directeMaterialen": {
+              "directMaterials": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Direct materials costs from the activity's GL lines.",
@@ -573,13 +573,13 @@
             "description": "True when gehanteerdTarief >= kostprijsPerEenheid (or totaleKosten if no units).",
             "title": "Compliant"
           },
-          "definitiefSignedBy": {
+          "finalSignedBy": {
             "type": "string",
             "nullable": true,
             "description": "Nextcloud user-id of accountant who signed off on a definitief record (REQ-WMO-002 §year-end lock).",
             "title": "Definitief Signed By"
           },
-          "definitiefSignedAt": {
+          "finalSignedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
@@ -705,7 +705,7 @@
                 "costObject",
                 "ratio",
                 "amount",
-                "dimensie"
+                "dimension"
               ],
               "properties": {
                 "costObject": {
@@ -731,7 +731,7 @@
                   "description": "Optional materialised GL account number when the operator runs 'post splits to ledger' mode.",
                   "title": "Grootboek"
                 },
-                "dimensie": {
+                "dimension": {
                   "type": "string",
                   "enum": [
                     "PUBL",
@@ -2265,9 +2265,9 @@
       "code": "MO-SP-014",
       "name": "Dansschool de Maten",
       "governingBody": "Gemeente Apeldoorn",
-      "organisatieonderdeel": "Afdeling Cultuur & Erfgoed",
+      "organisationalUnit": "Afdeling Cultuur & Erfgoed",
       "description": "Verhuur zaalruimte voor commerciële danslessen",
-      "marktsegment": "privédansscholen Apeldoorn",
+      "marketSegment": "privédansscholen Apeldoorn",
       "concurrenten": [
         "Dansacademie Sint-Hubert"
       ],
@@ -2299,7 +2299,7 @@
       "status": "definitief",
       "componenten": {
         "directPayrollCost": 42000,
-        "directeMaterialen": 8500,
+        "directMaterials": 8500,
         "directDepreciations": 6200,
         "indirecteOverhead": {
           "huisvesting": 9100,
@@ -2318,8 +2318,8 @@
       "marge": 30,
       "margePercentage": 12,
       "compliant": true,
-      "definitiefSignedBy": "concerncontroller",
-      "definitiefSignedAt": "2025-03-31T04:00:00Z",
+      "finalSignedBy": "concerncontroller",
+      "finalSignedAt": "2025-03-31T04:00:00Z",
       "administrationId": "adm-gemeente-apeldoorn"
     },
     {
@@ -2338,13 +2338,13 @@
           "costObject": "D-PUBL-NM-100",
           "ratio": 0.6,
           "amount": 7200,
-          "dimensie": "PUBL"
+          "dimension": "PUBL"
         },
         {
           "costObject": "D-MO-SP-014",
           "ratio": 0.4,
           "amount": 4800,
-          "dimensie": "MO"
+          "dimension": "MO"
         }
       ],
       "verdeelsleutel": "odr-bbv-taakveld-0-4-2024",

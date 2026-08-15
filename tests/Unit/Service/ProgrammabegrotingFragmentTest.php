@@ -119,7 +119,7 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 	 */
 	public function testProgrammabegrotingHasFlagsAndLifecycle(): void {
 		$schema = $this->fragment()['components']['schemas']['Programmabegroting'];
-		foreach (['sluitendStructureel', 'sluitendReëel', 'toezichtRegime', 'organisationType', 'status'] as $field) {
+		foreach (['sluitendStructureel', 'sluitendReëel', 'supervisionRegime', 'organisationType', 'status'] as $field) {
 			self::assertArrayHasKey($field, $schema['properties'], "Programmabegroting must declare $field");
 		}
 
@@ -216,14 +216,14 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 		foreach ($objects as $object) {
 			$schema = $object['@self']['schema'];
 			if ($schema === 'Reserve') {
-				$expected = (int)round((($object['beginsaldo'] + ($object['toevoegingen'] ?? 0)) - ($object['onttrekkingen'] ?? 0)) * 100);
-				self::assertSame($expected, (int)round($object['eindsaldo'] * 100), 'Reserve eindsaldo must balance');
+				$expected = (int)round((($object['openingBalance'] + ($object['toevoegingen'] ?? 0)) - ($object['onttrekkingen'] ?? 0)) * 100);
+				self::assertSame($expected, (int)round($object['closingBalance'] * 100), 'Reserve eindsaldo must balance');
 			}
 
 			if ($schema === 'Voorziening') {
 				$movements = (($object['additions'] ?? 0) - ($object['release'] ?? 0) - ($object['utilisations'] ?? 0));
-				$expected = (int)round(($object['beginsaldo'] + $movements) * 100);
-				self::assertSame($expected, (int)round($object['eindsaldo'] * 100), 'Voorziening eindsaldo must balance');
+				$expected = (int)round(($object['openingBalance'] + $movements) * 100);
+				self::assertSame($expected, (int)round($object['closingBalance'] * 100), 'Voorziening eindsaldo must balance');
 			}
 
 			if ($schema === 'Taakveld') {
