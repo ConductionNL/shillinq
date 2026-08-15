@@ -640,7 +640,7 @@ class DBAController extends Controller {
 	/**
 	 * Helper: fetch an object by id with array coercion.
 	 *
-	 * @param object $this->objectService The OR ObjectService.
+	 * @param object $objectService The OR ObjectService.
 	 * @param string $register Register slug.
 	 * @param string $schema Schema slug.
 	 * @param string $id Object id.

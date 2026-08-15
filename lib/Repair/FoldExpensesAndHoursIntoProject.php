@@ -279,7 +279,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 * Build a claimId → projectId index from ExpenseClaimEntry rows, so a
 	 * claim-routed expense can inherit the project from its claim.
 	 *
-	 * @param object $this->objectService The OR ObjectService.
+	 * @param object $objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 *
 	 * @return array<string,string> Map of claim id/number → projectId.

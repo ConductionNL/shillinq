@@ -341,7 +341,7 @@ class PaymentReconciliationService {
 	 * just-settled invoice so the caller can compose the portal-payment-initiation
 	 * REQ-SPPI-005 confirmation summary (invoiceNumber) without a second read.
 	 *
-	 * @param object $this->objectService The OR ObjectService.
+	 * @param object $objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param array<string, mixed> $request The captured PaymentRequest record.
 	 *

@@ -191,7 +191,7 @@ class CreditLimitGuard {
 	 * OUTSTANDING_STATUSES) for the customer in the administration, excluding
 	 * the invoice currently being issued. Uses integer cents throughout.
 	 *
-	 * @param object $this->objectService OR ObjectService (already DI-resolved).
+	 * @param object $objectService OR ObjectService (already DI-resolved).
 	 * @param string $registerSlug Configured register slug.
 	 * @param string $customerNumber Customer FK.
 	 * @param string $administrationId Administration scope (multi-tenant).

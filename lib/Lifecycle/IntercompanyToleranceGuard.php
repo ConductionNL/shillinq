@@ -210,7 +210,7 @@ class IntercompanyToleranceGuard {
 	/**
 	 * Look up the relation type for a relation within an administration.
 	 *
-	 * @param object $this->objectService OpenRegister ObjectService.
+	 * @param object $objectService OpenRegister ObjectService.
 	 * @param string $relationId The IntercompanyRelation id.
 	 * @param string $administrationId The administration (tenant) id.
 	 *

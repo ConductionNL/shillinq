@@ -217,7 +217,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 * a single object failing to save is logged and skipped, not fatal to
 	 * the rest of the backfill.
 	 *
-	 * @param object $this->objectService The OR ObjectService.
+	 * @param object $objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param string $schema The schema slug being backfilled.
 	 * @param IOutput $output The repair-step output.

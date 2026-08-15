@@ -154,7 +154,7 @@ class VatPreconditionGuard {
 	/**
 	 * Check whether VAT GL accounts are missing for the given administration.
 	 *
-	 * @param object $this->objectService ObjectService instance.
+	 * @param object $objectService ObjectService instance.
 	 * @param string $register Register slug.
 	 * @param string $administrationId Administration FK.
 	 *

@@ -298,7 +298,7 @@ class SepaAuditService {
 	/**
 	 * Find a single record matching filters, or null.
 	 *
-	 * @param object $this->objectService The OpenRegister ObjectService.
+	 * @param object $objectService The OpenRegister ObjectService.
 	 * @param string $register The register slug.
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters The query filters.

@@ -193,7 +193,7 @@ class PeriodCloseBackfill implements IRepairStep {
 	 * Whether a FiscalPeriod record already exists for the given
 	 * (periodId, administrationId) tuple.
 	 *
-	 * @param object $this->objectService The OR ObjectService.
+	 * @param object $objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param string $periodId The business periodId.
 	 * @param string $administrationId The administration scope.

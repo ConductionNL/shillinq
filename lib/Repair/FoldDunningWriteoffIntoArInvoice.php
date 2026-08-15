@@ -263,7 +263,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 * (ties broken by the most recent uitgevoerdOp). Returns null when no
 	 * DunningRun targets this factuurId.
 	 *
-	 * @param object $this->objectService The OR ObjectService.
+	 * @param object $objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param string $factuurId The ARInvoice UUID the runs target.
 	 *

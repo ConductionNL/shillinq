@@ -186,7 +186,7 @@ class ComplianceValidator {
 	 *
 	 * @param array<string, mixed> $rule BankingRule object.
 	 * @param array<string, mixed> $account TreasuryAccount object.
-	 * @param object $this->objectService OR ObjectService, already resolved by the caller
+	 * @param object $objectService OR ObjectService, already resolved by the caller
 	 *                              (reused here so a duplicate-IBAN lookup does not
 	 *                              re-fetch the service from the container).
 	 *
@@ -248,7 +248,7 @@ class ComplianceValidator {
 	 *
 	 * @param array<string, mixed> $criteria Rule's evaluationCriteria (checkDuplicates).
 	 * @param array<string, mixed> $account TreasuryAccount object under evaluation.
-	 * @param object $this->objectService OR ObjectService (already resolved by the caller).
+	 * @param object $objectService OR ObjectService (already resolved by the caller).
 	 *
 	 * @return bool True when no duplicate IBAN exists in the administration (or the
 	 *              duplicate check is explicitly disabled via checkDuplicates=false);
