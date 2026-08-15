@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\GRIRClearingService;
 use OCP\IAppConfig;
@@ -93,10 +94,10 @@ final class GRIRClearingServiceTest extends TestCase {
 		);
 
 		return new GRIRClearingService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeService()

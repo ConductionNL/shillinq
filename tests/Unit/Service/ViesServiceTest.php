@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\ViesService;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
@@ -194,10 +195,10 @@ final class ViesServiceTest extends TestCase {
 		$this->lastStub = $stub;
 
 		return new ViesService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			clientService: $this->clientService,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

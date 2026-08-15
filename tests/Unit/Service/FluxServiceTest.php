@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\FluxService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +48,9 @@ final class FluxServiceTest extends TestCase {
 		$container = $this->createStub(ContainerInterface::class);
 		$config = $this->createStub(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
-		return new FluxService($container, $config, new NullLogger());
+		return new FluxService($container, $config, new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 	}//end service()
 
 	/**

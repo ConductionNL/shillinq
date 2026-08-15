@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SepaAuditService;
 use OCP\IAppConfig;
@@ -151,7 +152,9 @@ final class SepaAuditServiceTest extends TestCase {
 		$fake = new FakeSepaObjectService($rows);
 		$this->container->method('get')->willReturn($fake);
 
-		return new SepaAuditService($this->container, $this->appConfig, $context, $this->logger);
+		return new SepaAuditService($this->container, $this->appConfig, $context, $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 	}//end svc()
 
 	/**
@@ -167,7 +170,8 @@ final class SepaAuditServiceTest extends TestCase {
 			$this->container,
 			$this->appConfig,
 			$this->createMock(AdministrationContextService::class),
-			$this->logger
+			$this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		self::assertNull($svc->buildMandateDossier(''));

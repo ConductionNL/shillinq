@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeaseAuditPackGenerator;
 use OCA\Shillinq\Service\LeasePaymentScheduleService;
@@ -185,14 +186,13 @@ final class LeaseAuditPackGeneratorTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 
 		return new LeaseAuditPackGenerator(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			scheduleService: new LeasePaymentScheduleService(
-				container: $this->container,
 				appConfig: $this->appConfig,
 				calculator: $calculator,
 				logger: $logger,
-			),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		),
 			logger: $logger,
 		);
 

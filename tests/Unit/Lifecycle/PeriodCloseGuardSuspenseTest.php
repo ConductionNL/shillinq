@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCP\IAppConfig;
@@ -57,6 +58,7 @@ final class PeriodCloseGuardSuspenseTest extends TestCase {
 			container: $container,
 			appConfig: $this->createMock(IAppConfig::class),
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end guardWith()

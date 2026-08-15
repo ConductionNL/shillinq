@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\TaxReportCalculator;
 use OCA\Shillinq\Service\TaxReportService;
 use OCP\IAppConfig;
@@ -71,9 +72,9 @@ final class TaxReportServiceTest extends TestCase {
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 		$this->service = new TaxReportService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new TaxReportCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

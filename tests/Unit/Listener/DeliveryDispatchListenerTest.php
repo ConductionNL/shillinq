@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
@@ -476,16 +477,22 @@ class DeliveryDispatchListenerTest extends TestCase {
 
 		// Real business-logic classes — nothing about the existing valuation
 		// + COGS pipeline is mocked or reimplemented.
-		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger);
-		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger);
-		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger);
+		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
+		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
+		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 		$stockMoveListener = new StockMoveTransitionedListener(
 			fifo: $fifo,
 			average: $average,
 			cogs: $cogs,
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(
@@ -493,6 +500,7 @@ class DeliveryDispatchListenerTest extends TestCase {
 			appConfig: $appConfig,
 			logger: $logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$deliveryListener = new DeliveryDispatchListener(dispatchService: $dispatchService, logger: $logger);
 

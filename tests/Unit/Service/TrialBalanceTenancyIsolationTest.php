@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\TrialBalanceController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TrialBalanceCalculator;
@@ -120,9 +121,9 @@ final class TrialBalanceTenancyIsolationTest extends TestCase {
 	 */
 	public function testServiceFiltersOutForeignAdministrationGlLines(): void {
 		$service = new TrialBalanceService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new TrialBalanceCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		// Compute for adm-A; adm-B GLLines must never appear in the totals.
@@ -194,9 +195,9 @@ final class TrialBalanceTenancyIsolationTest extends TestCase {
 	 */
 	public function testEachTenantOnlySeesItsOwnTrialBalance(): void {
 		$service = new TrialBalanceService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new TrialBalanceCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		// user-A asks for adm-A → 200 + adm-A totals.

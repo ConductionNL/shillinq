@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCP\IAppConfig;
@@ -301,11 +302,11 @@ final class PurchaseOrderServiceTest extends TestCase {
 		$notificationManager = $this->notificationManagerCapturing($notifications);
 
 		return new PurchaseOrderService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			notificationManager: $notificationManager,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

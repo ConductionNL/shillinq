@@ -42,6 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\VarianceGate;
 use OCA\Shillinq\Service\CycleCountService;
 use OCP\IAppConfig;
@@ -97,14 +98,13 @@ class CycleCountServiceExtractIdTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 
 		$this->service = new CycleCountService(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
 			varianceGate: new VarianceGate(
-				container: $container,
 				appConfig: $appConfig,
 				logger: $logger,
 			),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$this->extractId = new ReflectionMethod(CycleCountService::class, 'extractId');

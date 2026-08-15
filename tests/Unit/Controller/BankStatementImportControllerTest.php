@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\BankStatementImportController;
 use OCA\Shillinq\Lifecycle\StatementParser;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -192,9 +193,9 @@ class BankStatementImportControllerTest extends TestCase {
 			request: $this->request,
 			parser: $this->parser,
 			administrationContext: $this->adminContext,
-			container: $this->container,
 			session: $this->session,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end controller()
 

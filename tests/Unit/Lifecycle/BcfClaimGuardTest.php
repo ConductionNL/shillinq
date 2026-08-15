@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\BcfClaimGuard;
 use OCA\Shillinq\Service\BcfClaimService;
 use OCA\Shillinq\Service\BcfCompensationCalculator;
@@ -89,17 +90,17 @@ class BcfClaimGuardTest extends TestCase {
 
 		$calculator = new BcfCompensationCalculator();
 		$service = new BcfClaimService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: $calculator,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		return new BcfClaimGuard(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			claimService: $service,
 			calculator: $calculator,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end guardWith()
@@ -240,16 +241,16 @@ class BcfClaimGuardTest extends TestCase {
 
 		$calculator = new BcfCompensationCalculator();
 		$service = new BcfClaimService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: $calculator,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$guard = new BcfClaimGuard(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			claimService: $service,
 			calculator: $calculator,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		self::assertFalse(

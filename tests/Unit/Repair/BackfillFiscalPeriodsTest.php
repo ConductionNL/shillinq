@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\BackfillFiscalPeriods;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
@@ -388,7 +389,7 @@ class BackfillFiscalPeriodsTest extends TestCase {
 		return new BackfillFiscalPeriods(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeStep()

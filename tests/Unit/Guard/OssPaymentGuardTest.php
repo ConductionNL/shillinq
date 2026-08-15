@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\OssPaymentGuard;
 use OCA\Shillinq\Service\OssPaymentReconciliation;
 use OCA\Shillinq\Service\OssRecordResolver;
@@ -79,10 +80,10 @@ class OssPaymentGuardTest extends TestCase {
 
 		$this->guard = new OssPaymentGuard(
 			resolver: new OssRecordResolver(
-				container: $container,
 				appConfig: $appConfig,
 				logger: $this->createMock(LoggerInterface::class),
-			),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		),
 			reconciliation: new OssPaymentReconciliation(),
 		);
 

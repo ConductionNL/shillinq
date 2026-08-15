@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\OssRateResolver;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +51,9 @@ class OssRateResolverTest extends TestCase {
 		parent::setUp();
 		$container = $this->createMock(ContainerInterface::class);
 		$appConfig = $this->createMock(IAppConfig::class);
-		$this->resolver = new OssRateResolver($container, $appConfig);
+		$this->resolver = new OssRateResolver($container, $appConfig,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
 	}//end setUp()
 

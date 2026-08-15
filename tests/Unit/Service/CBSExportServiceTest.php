@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\CBSExportService;
 use OCP\IAppConfig;
@@ -76,9 +77,9 @@ final class CBSExportServiceTest extends TestCase {
 	 */
 	private function svc(): CBSExportService {
 		return new CBSExportService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end svc()

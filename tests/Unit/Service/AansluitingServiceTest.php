@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
 use OCA\Shillinq\Service\AansluitingCalculator;
 use OCA\Shillinq\Service\AansluitingService;
@@ -94,20 +95,20 @@ final class AansluitingServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		$vatReturnService = new VATReturnService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$guard = new AansluitingResolutionGuard(logger: $this->logger);
 
 		return new AansluitingService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			calculator: new AansluitingCalculator(),
 			vatReturnService: $vatReturnService,
 			resolutionGuard: $guard,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

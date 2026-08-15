@@ -62,7 +62,6 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 	public function testCreateReturnAcceptsObjectEntityReturns(): void {
 		$objectService = $this->entityReturningObjectService();
 		$service = new VATReturnService(
-			container: $this->containerFor(objectService: $objectService),
 			appConfig: $this->createMock(IAppConfig::class),
 			logger: new NullLogger()
 		);
@@ -98,7 +97,6 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 	public function testFindReturnResolvesAnEntityAndNullsOnlyWhenAbsent(): void {
 		$objectService = $this->entityReturningObjectService();
 		$service = new VATReturnService(
-			container: $this->containerFor(objectService: $objectService),
 			appConfig: $this->createMock(IAppConfig::class),
 			logger: new NullLogger()
 		);
@@ -136,7 +134,6 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 	public function testUnconvertibleRowRaisesRatherThanReturningEmpty(): void {
 		$objectService = $this->entityReturningObjectService(serialisable: false);
 		$service = new VATReturnService(
-			container: $this->containerFor(objectService: $objectService),
 			appConfig: $this->createMock(IAppConfig::class),
 			logger: new NullLogger()
 		);

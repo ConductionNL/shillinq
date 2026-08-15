@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\VendorPerformanceAggregation;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -75,9 +76,9 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase {
 		$logger = $this->createStub(LoggerInterface::class);
 
 		return new VendorPerformanceAggregation(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeService()

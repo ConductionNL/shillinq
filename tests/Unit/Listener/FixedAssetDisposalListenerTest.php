@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
@@ -98,11 +99,11 @@ class FixedAssetDisposalListenerTest extends TestCase {
 		$administrationContext->method('canAccess')->willReturn(true);
 
 		$service = new FixedAssetDisposalService(
-			container: $container,
 			appConfig: $appConfig,
 			emitter: new DisposalJournalEmitter(new DepreciationCalculator()),
 			administrationContext: $administrationContext,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$this->listener = new FixedAssetDisposalListener(

@@ -39,6 +39,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCP\IAppConfig;
@@ -241,10 +242,10 @@ final class SupplierInvoiceServiceTest extends TestCase {
 		);
 
 		return new SupplierInvoiceService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

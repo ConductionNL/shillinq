@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\TaxNotificationService;
 use OCP\IAppConfig;
 use OCP\Notification\IManager;
@@ -87,10 +88,10 @@ final class TaxNotificationServiceTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
 		$this->service = new TaxNotificationService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			notificationMgr: $this->notificationMgr,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

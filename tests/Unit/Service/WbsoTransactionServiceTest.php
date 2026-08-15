@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\WbsoTransactionService;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -188,9 +189,9 @@ final class WbsoTransactionServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new WbsoTransactionService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			userSession: $this->userSession,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

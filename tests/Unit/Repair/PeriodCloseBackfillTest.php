@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\PeriodCloseBackfill;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
@@ -97,7 +98,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$name = $step->getName();
@@ -132,7 +133,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$step->run($this->output);
 
@@ -164,7 +165,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$step->run($this->output);
 
@@ -223,7 +224,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$step->run($this->output);
 
@@ -255,7 +256,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		// Must NOT throw — the repair step swallows the failure.
@@ -292,7 +293,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$step->run($this->output);
 

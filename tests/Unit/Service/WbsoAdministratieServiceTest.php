@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\WbsoAdministratieService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -160,8 +161,8 @@ final class WbsoAdministratieServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new WbsoAdministratieService(
-			container: $this->container,
 			appConfig: $this->appConfig,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

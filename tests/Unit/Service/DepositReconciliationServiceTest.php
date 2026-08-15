@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\DepositReconciliationService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
@@ -103,9 +104,9 @@ final class DepositReconciliationServiceTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		return new DepositReconciliationService(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end makeService()
 
@@ -127,10 +128,10 @@ final class DepositReconciliationServiceTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		return new DepositReconciliationService(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
 			adapter: $adapter,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end makeServiceWithAdapter()
 

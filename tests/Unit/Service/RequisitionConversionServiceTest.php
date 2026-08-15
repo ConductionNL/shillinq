@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\RequisitionConversionGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
@@ -277,20 +278,20 @@ final class RequisitionConversionServiceTest extends TestCase {
 		$guard = new RequisitionConversionGuard(container: $container, appConfig: $this->appConfig, logger: $this->logger);
 
 		$purchaseOrderService = new PurchaseOrderService(
-			container: $container,
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			notificationManager: $this->lenientNotificationManager(),
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		return new RequisitionConversionService(
-			container: $container,
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			guard: $guard,
 			purchaseOrderService: $purchaseOrderService,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

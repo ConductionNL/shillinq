@@ -47,6 +47,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Integration;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
@@ -341,13 +342,13 @@ final class ExceptionResolutionIntegrationTest extends TestCase {
 		};
 
 		return new ExceptionResolutionService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			userSession: $userSession,
 			notificationManager: $notificationManager,
 			logger: $logger,
 			creditNoteAdapter: $adapter,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

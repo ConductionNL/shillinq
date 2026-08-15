@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\SoftCloseExecutor;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +51,9 @@ final class SoftCloseExecutorTest extends TestCase {
 		$container = $this->createStub(ContainerInterface::class);
 		$config = $this->createStub(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
-		return new SoftCloseExecutor($container, $config, new NullLogger());
+		return new SoftCloseExecutor($container, $config, new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 	}//end executor()
 
 	/**
@@ -262,7 +265,9 @@ final class SoftCloseExecutorTest extends TestCase {
 		$config = $this->createStub(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
 
-		$executor = new SoftCloseExecutor($container, $config, new NullLogger());
+		$executor = new SoftCloseExecutor($container, $config, new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 		$report = $executor->execute(
 			administrationId: 'adm-holding-nl',
 			periodId: '2026-03',
@@ -298,7 +303,9 @@ final class SoftCloseExecutorTest extends TestCase {
 		$config = $this->createStub(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
 
-		$executor = new SoftCloseExecutor($container, $config, new NullLogger());
+		$executor = new SoftCloseExecutor($container, $config, new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 		$report = $executor->execute(
 			administrationId: 'adm-holding-nl',
 			periodId: '2026-03',

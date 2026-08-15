@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -238,7 +239,8 @@ final class MeteredInvoiceGenerationTest extends TestCase {
 			new BillingModelEngine(),
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
 			new VATCalculationService(),
-			new UsageRatingCalculator()
+			new UsageRatingCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end setUp()
 

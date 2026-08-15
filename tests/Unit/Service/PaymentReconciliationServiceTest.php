@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PaymentReconciliationService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -116,6 +117,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			container: $container,
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end makeService()
 

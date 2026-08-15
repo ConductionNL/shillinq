@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\VarianceGate;
 use OCA\Shillinq\Service\CycleCountService;
 use OCP\IAppConfig;
@@ -180,10 +181,10 @@ class CycleCountServiceTest extends TestCase {
 		);
 
 		$this->service = new CycleCountService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			varianceGate: $this->varianceGate,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

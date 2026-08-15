@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\IcpCalculator;
 use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
@@ -197,23 +198,23 @@ final class IcpFilingServiceTest extends TestCase {
 
 		$calculator = new IcpCalculator();
 		$vies = new ViesService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			clientService: $this->createMock(IClientService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$icp = new IcpService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: $calculator,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		return new IcpFilingService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: $calculator,
 			icp: $icp,
 			vies: $vies,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

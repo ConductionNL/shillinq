@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\TimeIntakeService;
 use OCP\IAppConfig;
@@ -197,7 +198,8 @@ final class TimeIntakeServiceTest extends TestCase {
 			$this->container,
 			$this->appConfig,
 			$this->logger,
-			$this->invoiceGenerationService
+			$this->invoiceGenerationService,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end svc()

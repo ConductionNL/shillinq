@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\InventoryValuationMethodGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -81,9 +82,9 @@ class InventoryValuationMethodGuardTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		$this->guard = new InventoryValuationMethodGuard(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

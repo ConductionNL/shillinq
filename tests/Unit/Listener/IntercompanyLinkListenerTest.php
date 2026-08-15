@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
@@ -82,10 +83,10 @@ class IntercompanyLinkListenerTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		$linkService = new IntercompanyLinkService(
-			container: $container,
 			appConfig: $appConfig,
 			journalService: new IntercompanyJournalService(),
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$this->listener = new IntercompanyLinkListener(

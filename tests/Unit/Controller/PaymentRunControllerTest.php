@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\PaymentRunController;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
 use OCA\Shillinq\PaymentRun\PaymentRunReconciliationService;
@@ -109,6 +110,7 @@ class PaymentRunControllerTest extends TestCase {
 			$container,
 			$session,
 			$this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end controller()
 

@@ -49,6 +49,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AccountantsdossierExportService;
 use OCA\Shillinq\Service\BadoControleprotocolCalculator;
 use OCA\Shillinq\Service\BadoControleprotocolService;
@@ -124,17 +125,17 @@ final class BadoControleprotocolEndToEndTest extends TestCase {
 		$userSession->method('getUser')->willReturn(null);
 
 		$this->service = new BadoControleprotocolService(
-			container: $container,
 			appConfig: $appConfig,
 			calculator: new BadoControleprotocolCalculator(),
 			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$this->exporter = new AccountantsdossierExportService(
-			container: $container,
 			appConfig: $appConfig,
 			userSession: $userSession,
 			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

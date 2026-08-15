@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodCloseService;
 use OCA\Shillinq\Service\SuspenseAgeingService;
@@ -202,11 +203,11 @@ final class PeriodCloseServiceTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		return new PeriodCloseService(
-			container: $container,
 			appConfig: $appConfig,
 			groupManager: $this->groupManager,
 			suspenseAgeing: ($suspenseAgeing ?? $this->ageingReturning(0)),
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

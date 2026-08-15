@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\InventoryGlAdjustmentPoster;
 use OCA\Shillinq\Service\LandedCostAllocationService;
 use OCP\IAppConfig;
@@ -66,16 +67,16 @@ final class LandedCostAllocationServiceTest extends TestCase {
 		$logger = $this->createStub(LoggerInterface::class);
 
 		$poster = new InventoryGlAdjustmentPoster(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		return new LandedCostAllocationService(
-			container: $container,
 			appConfig: $appConfig,
 			poster: $poster,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeService()

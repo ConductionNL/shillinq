@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
 use OCA\Shillinq\Sort\FefoSort;
@@ -310,6 +311,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUpService()

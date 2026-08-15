@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Treasury;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Treasury\FxRevaluationService;
 use OCA\Shillinq\Service\Treasury\TreasuryRateService;
 use OCA\Shillinq\Service\Treasury\TreasuryRateSnapshot;
@@ -189,7 +190,8 @@ final class FxRevaluationServiceTest extends TestCase {
 			$container,
 			$appConfig,
 			$this->treasuryRateService,
-			new NullLogger()
+			new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end setUp()
 

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\PayrollWebhookController;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -100,8 +101,8 @@ class PayrollWebhookControllerTest extends TestCase {
 		return new PayrollWebhookController(
 			request: $this->request,
 			appConfig: $this->appConfig,
-			container: $this->container,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end controller()
 

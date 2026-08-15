@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\RematerialiseConvertedCalculations;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
@@ -433,6 +434,7 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 			settingsService: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeStep()

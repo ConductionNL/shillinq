@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\IntercompanyEliminationGuard;
 use OCA\Shillinq\Service\IntercompanyJournalService;
 use OCA\Shillinq\Service\IntercompanyLinkService;
@@ -76,10 +77,10 @@ class IntercompanyEliminationGuardTest extends TestCase {
 
 		$journalService = new IntercompanyJournalService();
 		$linkService = new IntercompanyLinkService(
-			container: $container,
 			appConfig: $appConfig,
 			journalService: $journalService,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$this->guard = new IntercompanyEliminationGuard(

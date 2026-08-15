@@ -34,6 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\GRIRClearingListener;
@@ -399,17 +400,17 @@ class GRIRClearingListenerTest extends TestCase {
 		// Real business-logic classes — nothing about receipt acceptance,
 		// matching, or GR/IR posting is mocked or reimplemented.
 		$grnService = new GoodsReceiptNoteService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$grirService = new GRIRClearingService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$grirListener = new GRIRClearingListener(grirClearingService: $grirService, logger: $logger);
@@ -455,17 +456,17 @@ class GRIRClearingListenerTest extends TestCase {
 		// auto_approved, invoice transitions received -> matching -> matched.
 		$tolerance = new ToleranceProfileService(container: $container, appConfig: $appConfig, logger: $logger);
 		$invoiceService = new SupplierInvoiceService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 		$matchingEngine = new ThreeWayMatchingEngine(
-			container: $container,
 			appConfig: $appConfig,
 			toleranceService: $tolerance,
 			invoiceService: $invoiceService,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$matchResult = $matchingEngine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-1');

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PeriodCloseService;
 use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCP\IAppConfig;
@@ -274,11 +275,11 @@ final class PeriodCloseServiceEntityRowTest extends TestCase {
 		);
 
 		return new PeriodCloseService(
-			container: $container,
 			appConfig: $appConfig,
 			groupManager: $groupManager,
 			suspenseAgeing: $ageing,
 			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

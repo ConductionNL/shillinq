@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\InventoryScanService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -96,8 +97,8 @@ class InventoryScanServiceTest extends TestCase {
 
 		$this->service = new InventoryScanService(
 			appConfig: $this->appConfig,
-			container: $this->container,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

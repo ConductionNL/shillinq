@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -164,10 +165,10 @@ final class LeaseActivationListenerTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		$scheduleService = new LeasePaymentScheduleService(
-			container: $container,
 			appConfig: $appConfig,
 			calculator: new LeaseAmortizationCalculator(),
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$schemaResolver = $this->createMock(ListenerSchemaResolver::class);

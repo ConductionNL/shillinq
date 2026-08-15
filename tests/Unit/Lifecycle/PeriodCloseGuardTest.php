@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -121,6 +122,7 @@ final class PeriodCloseGuardTest extends TestCase {
 			container: $container,
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildGuard()

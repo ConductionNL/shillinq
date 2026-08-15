@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\OssReturnGenerator;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +51,9 @@ class OssReturnGeneratorTest extends TestCase {
 		parent::setUp();
 		$container = $this->createMock(ContainerInterface::class);
 		$appConfig = $this->createMock(IAppConfig::class);
-		$this->generator = new OssReturnGenerator($container, $appConfig);
+		$this->generator = new OssReturnGenerator($container, $appConfig,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
 	}//end setUp()
 
