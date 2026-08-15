@@ -89,7 +89,7 @@ class SepaAuditService {
 		$register = $this->resolveRegister();
 
 		$mandate = $this->findOne(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'SepaMandate',
 			filters: ['id' => $mandateId]
@@ -107,7 +107,7 @@ class SepaAuditService {
 		}
 
 		$collections = $this->findMany(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'DirectDebitCollection',
 			filters: ['mandateId' => $mandateId]
@@ -121,7 +121,7 @@ class SepaAuditService {
 		}
 
 		$rTransactions = $this->findRelated(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'RTransaction',
 			field: 'collectionId',
@@ -129,7 +129,7 @@ class SepaAuditService {
 		);
 
 		$preNotifications = $this->findRelated(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'PreNotification',
 			field: 'collectionId',
@@ -298,7 +298,7 @@ class SepaAuditService {
 	/**
 	 * Find a single record matching filters, or null.
 	 *
-	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param object $this->objectService The OpenRegister ObjectService.
 	 * @param string $register The register slug.
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters The query filters.

@@ -107,7 +107,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 			// Stream every GLLine carrying a non-empty periodId; collect
 			// the (administrationId, periodId) tuples we have not yet
 			// materialised as FiscalPeriod records.
-			$lines = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'GLLine');
+			$lines = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'GLLine');
 
 			if ($lines === []) {
 				$output->info('Shillinq: no GLLine records — FiscalPeriod backfill skipped.');
@@ -138,7 +138,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 			$skipped = 0;
 			foreach ($tuples as $tuple) {
 				if ($this->fiscalPeriodExists(
-					objectService: $objectService,
+					objectService: $this->objectService,
 					registerSlug: $registerSlug,
 					periodId: $tuple['periodId'],
 					administrationId: $tuple['administrationId']
@@ -186,7 +186,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 * Whether a FiscalPeriod record already exists for the given
 	 * (periodId, administrationId) tuple.
 	 *
-	 * @param object $objectService The OR ObjectService.
+	 * @param object $this->objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param string $periodId The business periodId.
 	 * @param string $administrationId The administration scope ('' for none).

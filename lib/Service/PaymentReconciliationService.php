@@ -299,7 +299,7 @@ class PaymentReconciliationService {
 		// deposits path (its own lifecycle owns AR materialisation).
 		if ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
 			$settledInvoice = $this->settleLinkedInvoice(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				request: $record,
 			);
@@ -341,7 +341,7 @@ class PaymentReconciliationService {
 	 * just-settled invoice so the caller can compose the portal-payment-initiation
 	 * REQ-SPPI-005 confirmation summary (invoiceNumber) without a second read.
 	 *
-	 * @param object $objectService The OR ObjectService.
+	 * @param object $this->objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param array<string, mixed> $request The captured PaymentRequest record.
 	 *

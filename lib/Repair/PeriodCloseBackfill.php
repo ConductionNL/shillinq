@@ -116,7 +116,7 @@ class PeriodCloseBackfill implements IRepairStep {
 			// List every Administration record. The repair step is
 			// best-effort: when no Administration records exist yet,
 			// the forward backfill is a no-op.
-			$administrations = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Administration');
+			$administrations = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'Administration');
 
 			if ($administrations === []) {
 				$output->info('Shillinq: no Administration records — forward FiscalPeriod backfill skipped.');
@@ -136,7 +136,7 @@ class PeriodCloseBackfill implements IRepairStep {
 
 				foreach ($horizon as $period) {
 					if ($this->fiscalPeriodExists(
-						objectService: $objectService,
+						objectService: $this->objectService,
 						registerSlug: $registerSlug,
 						periodId: $period['periodId'],
 						administrationId: $administrationId
@@ -193,7 +193,7 @@ class PeriodCloseBackfill implements IRepairStep {
 	 * Whether a FiscalPeriod record already exists for the given
 	 * (periodId, administrationId) tuple.
 	 *
-	 * @param object $objectService The OR ObjectService.
+	 * @param object $this->objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param string $periodId The business periodId.
 	 * @param string $administrationId The administration scope.

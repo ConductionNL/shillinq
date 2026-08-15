@@ -194,7 +194,7 @@ class IntercompanyToleranceGuard {
 
 
 		$relationType = $this->lookupRelationType(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			relationId: $relationId,
 			administrationId: $administrationId
 		);
@@ -210,7 +210,7 @@ class IntercompanyToleranceGuard {
 	/**
 	 * Look up the relation type for a relation within an administration.
 	 *
-	 * @param object $objectService OpenRegister ObjectService.
+	 * @param object $this->objectService OpenRegister ObjectService.
 	 * @param string $relationId The IntercompanyRelation id.
 	 * @param string $administrationId The administration (tenant) id.
 	 *

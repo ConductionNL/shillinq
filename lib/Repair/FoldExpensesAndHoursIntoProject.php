@@ -99,7 +99,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			// Index every Project by every identifier a source object might
 			// reference (id / uuid / projectNumber / code). Values are kept
 			// as live mutable arrays so multiple lines fold into one save.
-			$projects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Project');
+			$projects = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'Project');
 
 			if ($projects === []) {
 				$output->info('Shillinq: no Project records — expense/hours fold skipped.');
@@ -110,13 +110,13 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 			// Pre-load ExpenseClaimEntry rows so claim-routed expenses can
 			// resolve a projectId via the claim (keyed by claim id/number).
-			$claimIndex = $this->indexClaims(objectService: $objectService, registerSlug: $registerSlug);
+			$claimIndex = $this->indexClaims(objectService: $this->objectService, registerSlug: $registerSlug);
 
 			$touched = [];
 
 			// Fold expense families → costLines.
 			$touched = ($this->foldCostFamily(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				schema: 'Receipt',
 				type: 'receipt',
@@ -128,7 +128,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			) + $touched);
 
 			$touched = ($this->foldCostFamily(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				schema: 'MileageEntry',
 				type: 'mileage',
@@ -140,7 +140,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			) + $touched);
 
 			$touched = ($this->foldCostFamily(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				schema: 'PerDiem',
 				type: 'perdiem',
@@ -153,7 +153,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 			// Fold UrenRegistratie → hoursLines.
 			$touched = ($this->foldHours(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				byKey: $byKey,
 				projectArrays: $projectArrays,
@@ -279,7 +279,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 * Build a claimId → projectId index from ExpenseClaimEntry rows, so a
 	 * claim-routed expense can inherit the project from its claim.
 	 *
-	 * @param object $objectService The OR ObjectService.
+	 * @param object $this->objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 *
 	 * @return array<string,string> Map of claim id/number → projectId.

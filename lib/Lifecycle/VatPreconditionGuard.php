@@ -99,7 +99,7 @@ class VatPreconditionGuard {
 			}
 
 			if ($this->vatGlAccountsMissing(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				register: $register,
 				administrationId: $administrationId
 			) === true
@@ -117,7 +117,7 @@ class VatPreconditionGuard {
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
 
 			$overrides = $this->loadOverrides(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				register: $register,
 				administrationId: $administrationId
 			);
@@ -154,7 +154,7 @@ class VatPreconditionGuard {
 	/**
 	 * Check whether VAT GL accounts are missing for the given administration.
 	 *
-	 * @param object $objectService ObjectService instance.
+	 * @param object $this->objectService ObjectService instance.
 	 * @param string $register Register slug.
 	 * @param string $administrationId Administration FK.
 	 *

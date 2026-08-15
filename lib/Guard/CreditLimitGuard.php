@@ -164,7 +164,7 @@ class CreditLimitGuard {
 			// Sum the customer's outstanding receivable, excluding this invoice
 			// (so a re-issue or idempotent retry doesn't double-count itself).
 			$outstandingCents = $this->sumOutstandingCents(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				customerNumber: $customerNumber,
 				administrationId: $administrationId,
@@ -191,7 +191,7 @@ class CreditLimitGuard {
 	 * OUTSTANDING_STATUSES) for the customer in the administration, excluding
 	 * the invoice currently being issued. Uses integer cents throughout.
 	 *
-	 * @param object $objectService OR ObjectService (already DI-resolved).
+	 * @param object $this->objectService OR ObjectService (already DI-resolved).
 	 * @param string $registerSlug Configured register slug.
 	 * @param string $customerNumber Customer FK.
 	 * @param string $administrationId Administration scope (multi-tenant).

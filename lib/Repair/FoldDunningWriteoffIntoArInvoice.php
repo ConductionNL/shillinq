@@ -110,7 +110,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 			// Stream every OninbaarAfschrijving write-off row. RBAC +
 			// multi-tenancy are bypassed: the repair runs in the
 			// installer/upgrade context with no authenticated session.
-			$writeOffs = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'OninbaarAfschrijving');
+			$writeOffs = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'OninbaarAfschrijving');
 
 			if ($writeOffs === []) {
 				$output->info('Shillinq: no OninbaarAfschrijving rows — ARInvoice writeOff/dunning fold skipped.');
@@ -192,7 +192,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 				// Derive the dunning summary from the latest DunningRun for
 				// this factuurId. Absent any run, dunning is left null.
 				$dunning = $this->deriveDunningSummary(
-					objectService: $objectService,
+					objectService: $this->objectService,
 					registerSlug: $registerSlug,
 					factuurId: $factuurId
 				);
@@ -263,7 +263,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 * (ties broken by the most recent uitgevoerdOp). Returns null when no
 	 * DunningRun targets this factuurId.
 	 *
-	 * @param object $objectService The OR ObjectService.
+	 * @param object $this->objectService The OR ObjectService.
 	 * @param string $registerSlug The register slug.
 	 * @param string $factuurId The ARInvoice UUID the runs target.
 	 *
