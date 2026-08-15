@@ -119,10 +119,10 @@ final class Titel9SeedsTest extends TestCase {
 	 */
 	public function testVwModelRubrieken(): void {
 		$models = $this->loadSeed('vw-model-rubrieken.json')['models'];
-		self::assertArrayHasKey('A-categorisch', $models);
-		self::assertArrayHasKey('E-functioneel', $models);
+		self::assertArrayHasKey('a-categorical', $models);
+		self::assertArrayHasKey('e-functional', $models);
 
-		foreach (['A-categorisch', 'E-functioneel'] as $model) {
+		foreach (['a-categorical', 'e-functional'] as $model) {
 			$subtotals = array_filter(
 				$models[$model]['rubrieken'],
 				static fn (array $r): bool => ($r['isSubtotal'] ?? false) === true

@@ -99,7 +99,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 			budget: [
 				'budgetYear' => 2027,
 				'organisationType' => 'municipality',
-				'status' => 'vastgesteld',
+				'status' => 'determined',
 				'determinationDate' => '2026-11-09',
 				'structurallyBalanced' => true,
 				'sluitendReëel' => true,

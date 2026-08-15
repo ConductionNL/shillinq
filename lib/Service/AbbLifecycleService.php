@@ -51,8 +51,8 @@ class AbbLifecycleService {
 	 * @var array<string,array<int,string>>
 	 */
 	private const TRANSITIONS = [
-		'concept' => ['raadsvoorstel'],
-		'raadsvoorstel' => ['councilResolution', 'concept'],
+		'draft' => ['raadsvoorstel'],
+		'raadsvoorstel' => ['councilResolution', 'draft'],
 		'councilResolution' => ['publicatie'],
 		'publicatie' => ['acm-notified'],
 		'acm-notified' => ['bezwaar'],
@@ -142,7 +142,7 @@ class AbbLifecycleService {
 	 * @throws InvalidArgumentException When the transition is not allowed.
 	 */
 	public function transition(array $abb, string $toStatus): array {
-		$fromStatus = (string)($abb['status'] ?? 'concept');
+		$fromStatus = (string)($abb['status'] ?? 'draft');
 		$check = $this->canTransition(fromStatus: $fromStatus, toStatus: $toStatus, abb: $abb);
 		if ($check['ok'] === false) {
 			throw new InvalidArgumentException($check['error']);

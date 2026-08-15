@@ -131,7 +131,7 @@ final class CreditScoreServiceTest extends TestCase {
 				return [
 					'score' => 7.1,
 					'scoreScale' => '1-10',
-					'paymentRiskIndication' => 'LAAG',
+					'paymentRiskIndication' => 'LOW',
 				];
 			}
 		};

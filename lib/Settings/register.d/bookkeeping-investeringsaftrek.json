@@ -175,12 +175,12 @@
             "type": "string",
             "description": "RvO melding lifecycle state.",
             "enum": [
-              "geen",
+              "none",
               "submitted",
-              "definitief",
-              "verlopen"
+              "final",
+              "expired"
             ],
-            "default": "geen",
+            "default": "none",
             "example": "submitted",
             "title": "Rvo Melding Status"
           },
@@ -450,7 +450,7 @@
             "type": "string",
             "enum": [
               "submitted",
-              "definitief"
+              "final"
             ],
             "default": "submitted",
             "example": "submitted",

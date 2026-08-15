@@ -61,21 +61,21 @@
           "awfRate": {
             "type": "string",
             "enum": [
-              "LAAG",
-              "HOOG"
+              "LOW",
+              "HIGH"
             ],
-            "description": "AWF tariff bucket (LAAG for predominantly permanent written contracts).",
-            "example": "LAAG",
+            "description": "AWF tariff bucket (LOW for predominantly permanent written contracts).",
+            "example": "LOW",
             "title": "Awf Tarief"
           },
           "zvwRate": {
             "type": "string",
             "enum": [
-              "LAAG",
-              "HOOG"
+              "LOW",
+              "HIGH"
             ],
             "description": "ZVW employer-contribution tariff bucket.",
-            "example": "LAAG",
+            "example": "LOW",
             "title": "Zvw Tarief"
           },
           "wkrBudget2026": {
@@ -218,13 +218,13 @@
           "payrollTaxTable": {
             "type": "string",
             "enum": [
-              "WIT_REGULIER",
-              "GROEN_REGULIER",
-              "WIT_BIJZONDER",
-              "GROEN_BIJZONDER"
+              "WIT_REGULAR",
+              "GREEN_REGULAR",
+              "WIT_SPECIAL",
+              "GREEN_SPECIAL"
             ],
             "description": "Applicable wage-tax table colour/kind (REQ-PAY-002).",
-            "example": "WIT_REGULIER",
+            "example": "WIT_REGULAR",
             "title": "Loonheffingstabel"
           },
           "payrollTaxTableDiscount": {
@@ -243,12 +243,12 @@
           "premieGroupWGF": {
             "type": "string",
             "enum": [
-              "AWF_LAAG",
-              "AWF_HOOG"
+              "AWF_LOW",
+              "AWF_HIGH"
             ],
             "nullable": true,
             "description": "AWF premium group for this contract.",
-            "example": "AWF_LAAG",
+            "example": "AWF_LOW",
             "title": "Premie Group Wgf"
           },
           "contractType": {
@@ -406,23 +406,23 @@
           "colour": {
             "type": "string",
             "enum": [
-              "WIT",
-              "GROEN"
+              "WHITE",
+              "GREEN"
             ],
             "description": "Table colour (white = employment income, green = benefits).",
-            "example": "WIT",
+            "example": "WHITE",
             "title": "Kleur"
           },
           "period": {
             "type": "string",
             "enum": [
               "WEEK",
-              "4WEKEN",
-              "MAAND",
-              "JAAR"
+              "4_WEEKS",
+              "MONTH",
+              "YEAR"
             ],
             "description": "Pay-period granularity the table is calibrated for.",
-            "example": "MAAND",
+            "example": "MONTH",
             "title": "Periode"
           },
           "withDiscount": {
@@ -498,11 +498,11 @@
             "type": "string",
             "enum": [
               "WEEK",
-              "4WEKEN",
-              "MAAND"
+              "4_WEEKS",
+              "MONTH"
             ],
             "description": "Pay-period type.",
-            "example": "MAAND",
+            "example": "MONTH",
             "title": "Periode Type"
           },
           "year": {
@@ -896,8 +896,8 @@
         "payrollTaxNumber": "851234567L01",
         "sectorcode": 32,
         "sectorDescription": "Overige zakelijke dienstverlening II",
-        "awfRate": "LAAG",
-        "zvwRate": "LAAG",
+        "awfRate": "LOW",
+        "zvwRate": "LOW",
         "wkrBudget2026": 8742.0,
         "wkrBudgetVerbruikt2026": 220.0,
         "holidayAllowanceDisbursementMonth": 5,
@@ -921,10 +921,10 @@
         "inServiceSinds": "2024-04-01",
         "outServicePer": null,
         "maritalStatement": "GEHUWD",
-        "payrollTaxTable": "WIT_REGULIER",
+        "payrollTaxTable": "WIT_REGULAR",
         "payrollTaxTableDiscount": true,
         "sectorcode": 32,
-        "premieGroupWGF": "AWF_LAAG",
+        "premieGroupWGF": "AWF_LOW",
         "contractType": "ONBEPAALDE_TIJD_SCHRIFTELIJK_GEEN_OPROEP",
         "hourlyPay": 28.5,
         "contracturenPerWeek": 40,
@@ -955,10 +955,10 @@
         "inServiceSinds": "2025-01-15",
         "outServicePer": null,
         "maritalStatement": "ONGEHUWD",
-        "payrollTaxTable": "WIT_REGULIER",
+        "payrollTaxTable": "WIT_REGULAR",
         "payrollTaxTableDiscount": true,
         "sectorcode": 32,
-        "premieGroupWGF": "AWF_LAAG",
+        "premieGroupWGF": "AWF_LOW",
         "contractType": "ONBEPAALDE_TIJD_SCHRIFTELIJK_GEEN_OPROEP",
         "hourlyPay": 26.0,
         "contracturenPerWeek": 24,
@@ -989,10 +989,10 @@
         "inServiceSinds": "2020-01-01",
         "outServicePer": null,
         "maritalStatement": "GEHUWD",
-        "payrollTaxTable": "WIT_REGULIER",
+        "payrollTaxTable": "WIT_REGULAR",
         "payrollTaxTableDiscount": false,
         "sectorcode": 32,
-        "premieGroupWGF": "AWF_LAAG",
+        "premieGroupWGF": "AWF_LOW",
         "contractType": "DGA",
         "hourlyPay": 0,
         "contracturenPerWeek": 40,
@@ -1015,8 +1015,8 @@
           "slug": "lht-2026-wit-maand-met-korting"
         },
         "year": 2026,
-        "colour": "WIT",
-        "period": "MAAND",
+        "colour": "WHITE",
+        "period": "MONTH",
         "withDiscount": true,
         "versionNumber": "2025-W47",
         "tableRules": [
@@ -1060,8 +1060,8 @@
           "slug": "lht-2026-wit-maand-zonder-korting"
         },
         "year": 2026,
-        "colour": "WIT",
-        "period": "MAAND",
+        "colour": "WHITE",
+        "period": "MONTH",
         "withDiscount": false,
         "versionNumber": "2025-W47",
         "tableRules": [
@@ -1098,7 +1098,7 @@
           "slug": "lp-2026-05-wg-conduction-bv"
         },
         "employerId": "wg-conduction-bv",
-        "periodType": "MAAND",
+        "periodType": "MONTH",
         "year": 2026,
         "periodNr": 5,
         "periodStart": "2026-05-01",

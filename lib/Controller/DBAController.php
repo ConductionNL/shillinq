@@ -166,12 +166,12 @@ class DBAController extends Controller {
 		}
 
 		if (($body['abbreviatedType'] ?? false) === true) {
-			$riskLevel = 'VERKORT_LAGE_DREMPEL';
+			$riskLevel = 'ABBREVIATED_LOW_THRESHOLD';
 		} else {
 			$riskLevel = $band;
 		}
 
-		$assignment['intakeStatus'] = 'INTAKE_VOLTOOID';
+		$assignment['intakeStatus'] = 'INTAKE_COMPLETED';
 		$assignment['intakeDate'] = $body['filledOn'];
 		$assignment['actueleRisicoscore'] = $total;
 		$assignment['riskLevel'] = $riskLevel;
@@ -292,7 +292,7 @@ class DBAController extends Controller {
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
-		$assignment['intakeStatus'] = 'BEEINDIGD';
+		$assignment['intakeStatus'] = 'ENDED';
 		$assignment['actualEndDate'] = $endDate;
 		$retention = $this->assignmentGuard->computeRetentieDeadline($endDate);
 		if ($retention !== null) {
@@ -430,7 +430,7 @@ class DBAController extends Controller {
 	/**
 	 * Save an opdrachtgever-side inhuur-intake (REQ-DBA-010, T25).
 	 *
-	 * Sets DBAOpdracht.perspective = 'OPDRACHTGEVER' before delegating to saveIntake.
+	 * Sets DBAOpdracht.perspective = 'CLIENT' before delegating to saveIntake.
 	 *
 	 * @return JSONResponse The result.
 	 *
@@ -456,7 +456,7 @@ class DBAController extends Controller {
 		}
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
-		$assignment['perspective'] = 'OPDRACHTGEVER';
+		$assignment['perspective'] = 'CLIENT';
 		try {
 			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {

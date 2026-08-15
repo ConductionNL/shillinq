@@ -76,9 +76,9 @@ final class CashflowRecurringGuardTest extends TestCase {
 		$recurring = [
 			'recurId' => 'rec-huur',
 			'label' => 'Huur kantoor',
-			'category' => 'RECURRING_HUUR',
+			'category' => 'RECURRING_RENT',
 			'direction' => 'OUT',
-			'frequency' => 'MAANDELIJKS',
+			'frequency' => 'MONTHLY',
 			'dagFromMonth' => 1,
 			'standardAmount' => 850.0,
 			'indexationRule' => 'FIXED',
@@ -98,13 +98,13 @@ final class CashflowRecurringGuardTest extends TestCase {
 		$recurring = [
 			'recurId' => 'rec-bav',
 			'label' => 'BAV-verzekering',
-			'category' => 'RECURRING_VERZEKERING',
+			'category' => 'RECURRING_INSURANCE',
 			'direction' => 'OUT',
-			'frequency' => 'JAARLIJKS',
+			'frequency' => 'ANNUALLY',
 			'monthOfYear' => 7,
 			'dagFromMonth' => 1,
 			'standardAmount' => 620.0,
-			'indexationRule' => 'CPI_AFGELOPEN_JAAR',
+			'indexationRule' => 'CPI_PAST_YEAR',
 			'validFrom' => '2024-07-01',
 		];
 
@@ -120,7 +120,7 @@ final class CashflowRecurringGuardTest extends TestCase {
 	public function testNegativeAmountIsDenied(): void {
 		$recurring = [
 			'recurId' => 'rec-neg',
-			'frequency' => 'MAANDELIJKS',
+			'frequency' => 'MONTHLY',
 			'dagFromMonth' => 1,
 			'standardAmount' => -100.0,
 			'validFrom' => '2024-09-01',
@@ -138,7 +138,7 @@ final class CashflowRecurringGuardTest extends TestCase {
 	public function testMonthlyWithoutDayIsDenied(): void {
 		$recurring = [
 			'recurId' => 'rec-noday',
-			'frequency' => 'MAANDELIJKS',
+			'frequency' => 'MONTHLY',
 			'standardAmount' => 850.0,
 			'validFrom' => '2024-09-01',
 		];
@@ -155,7 +155,7 @@ final class CashflowRecurringGuardTest extends TestCase {
 	public function testAnnualWithoutMonthIsDenied(): void {
 		$recurring = [
 			'recurId' => 'rec-nomonth',
-			'frequency' => 'JAARLIJKS',
+			'frequency' => 'ANNUALLY',
 			'dagFromMonth' => 1,
 			'standardAmount' => 620.0,
 			'validFrom' => '2024-07-01',
@@ -173,7 +173,7 @@ final class CashflowRecurringGuardTest extends TestCase {
 	public function testValidityWindowReversedIsDenied(): void {
 		$recurring = [
 			'recurId' => 'rec-rev',
-			'frequency' => 'MAANDELIJKS',
+			'frequency' => 'MONTHLY',
 			'dagFromMonth' => 1,
 			'standardAmount' => 850.0,
 			'validFrom' => '2026-09-01',
@@ -192,7 +192,7 @@ final class CashflowRecurringGuardTest extends TestCase {
 	public function testUnparseableGeldigVanIsDenied(): void {
 		$recurring = [
 			'recurId' => 'rec-bad',
-			'frequency' => 'MAANDELIJKS',
+			'frequency' => 'MONTHLY',
 			'dagFromMonth' => 1,
 			'standardAmount' => 850.0,
 			'validFrom' => 'not-a-date',
@@ -210,10 +210,10 @@ final class CashflowRecurringGuardTest extends TestCase {
 	public function testCpiOnMonthlyIsDenied(): void {
 		$recurring = [
 			'recurId' => 'rec-cpi-monthly',
-			'frequency' => 'MAANDELIJKS',
+			'frequency' => 'MONTHLY',
 			'dagFromMonth' => 1,
 			'standardAmount' => 850.0,
-			'indexationRule' => 'CPI_AFGELOPEN_JAAR',
+			'indexationRule' => 'CPI_PAST_YEAR',
 			'validFrom' => '2024-09-01',
 		];
 
@@ -229,7 +229,7 @@ final class CashflowRecurringGuardTest extends TestCase {
 	public function testIndefiniteWindowIsAccepted(): void {
 		$recurring = [
 			'recurId' => 'rec-indef',
-			'frequency' => 'WEKELIJKS',
+			'frequency' => 'WEEKLY',
 			'standardAmount' => 200.0,
 			'validFrom' => '2024-09-01',
 		];

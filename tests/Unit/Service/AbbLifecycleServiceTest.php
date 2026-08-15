@@ -51,8 +51,8 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 * Invalid transition is rejected.
 	 */
 	public function testCanTransitionRejectsInvalidPath(): void {
-		$abb = ['status' => 'concept', 'reference' => 'R-2025-184'];
-		$r = $this->svc->canTransition('concept', 'publicatie', $abb);
+		$abb = ['status' => 'draft', 'reference' => 'R-2025-184'];
+		$r = $this->svc->canTransition('draft', 'publicatie', $abb);
 		self::assertFalse($r['ok']);
 
 	}//end testCanTransitionRejectsInvalidPath()
@@ -105,7 +105,7 @@ final class AbbLifecycleServiceTest extends TestCase {
 	 * transition raises InvalidArgumentException on disallowed transition.
 	 */
 	public function testTransitionThrowsOnInvalidPath(): void {
-		$abb = ['status' => 'concept'];
+		$abb = ['status' => 'draft'];
 		$this->expectException(InvalidArgumentException::class);
 		$this->svc->transition($abb, 'geldig');
 

@@ -462,7 +462,7 @@ class BadoControleprotocolService {
 				continue;
 			}
 
-			$topic = (string)($finding['topic'] ?? 'overig');
+			$topic = (string)($finding['topic'] ?? 'other');
 			$toleranceRow = ($toleranceByTopic[$topic] ?? []);
 			$finding['severity'] = $this->calculator->classifySeverity(
 				finding: $finding,

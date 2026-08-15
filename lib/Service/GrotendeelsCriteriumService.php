@@ -125,7 +125,7 @@ final class GrotendeelsCriteriumService {
 			employmentHours: $employmentHours
 		);
 
-		$blokkeert = ($marking === 'NIET_GROTENDEELS_ONDERNEMING');
+		$blokkeert = ($marking === 'NON_LARGELY_ENTERPRISE');
 		if ($blokkeert === true) {
 			$this->logger->warning(
 				'GrotendeelsCriteriumService: grotendeels-criterium niet behaald — zelfstandigenaftrek geblokkeerd',

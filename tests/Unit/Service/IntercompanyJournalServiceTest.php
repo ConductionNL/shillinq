@@ -120,11 +120,11 @@ final class IntercompanyJournalServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAllowedTransitions(): void {
-		self::assertTrue($this->service->isTransitionAllowed('concept', 'gekoppeld'));
+		self::assertTrue($this->service->isTransitionAllowed('draft', 'gekoppeld'));
 		self::assertTrue($this->service->isTransitionAllowed('gekoppeld', 'bevestigd_beide'));
 		self::assertTrue($this->service->isTransitionAllowed('bevestigd_beide', 'eliminatie_geboekt'));
 		// Re-opening after an edit is allowed.
-		self::assertTrue($this->service->isTransitionAllowed('bevestigd_beide', 'concept'));
+		self::assertTrue($this->service->isTransitionAllowed('bevestigd_beide', 'draft'));
 
 	}//end testAllowedTransitions()
 
@@ -134,10 +134,10 @@ final class IntercompanyJournalServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testIllegalTransitionsRejected(): void {
-		self::assertFalse($this->service->isTransitionAllowed('concept', 'eliminatie_geboekt'));
-		self::assertFalse($this->service->isTransitionAllowed('concept', 'bevestigd_beide'));
+		self::assertFalse($this->service->isTransitionAllowed('draft', 'eliminatie_geboekt'));
+		self::assertFalse($this->service->isTransitionAllowed('draft', 'bevestigd_beide'));
 		// Eliminated pairs are locked.
-		self::assertFalse($this->service->isTransitionAllowed('eliminatie_geboekt', 'concept'));
+		self::assertFalse($this->service->isTransitionAllowed('eliminatie_geboekt', 'draft'));
 
 	}//end testIllegalTransitionsRejected()
 
@@ -147,9 +147,9 @@ final class IntercompanyJournalServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testStatusAfterEdit(): void {
-		self::assertSame('concept', $this->service->statusAfterEdit('bevestigd_beide'));
-		self::assertSame('concept', $this->service->statusAfterEdit('gekoppeld'));
-		self::assertSame('concept', $this->service->statusAfterEdit('concept'));
+		self::assertSame('draft', $this->service->statusAfterEdit('bevestigd_beide'));
+		self::assertSame('draft', $this->service->statusAfterEdit('gekoppeld'));
+		self::assertSame('draft', $this->service->statusAfterEdit('draft'));
 		self::assertSame('eliminatie_geboekt', $this->service->statusAfterEdit('eliminatie_geboekt'));
 
 	}//end testStatusAfterEdit()

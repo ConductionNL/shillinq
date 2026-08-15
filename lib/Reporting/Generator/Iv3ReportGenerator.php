@@ -209,7 +209,7 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface {
 
 		$writer->startElement('Iv3Rapportage');
 		$writer->writeAttribute('period', $this->contextString($context, 'period'));
-		$writer->writeAttribute('administratie', $this->contextString($context, 'administrationId'));
+		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
 		$writer->writeAttribute('valuta', 'EUR');
 		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
 

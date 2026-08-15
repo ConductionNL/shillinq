@@ -207,7 +207,7 @@ class AdministrationMigrationService {
 			'bookValueCents' => $amounts['bookCents'],
 			'marketValueCents' => $amounts['marketCents'],
 			'resultCents' => $amounts['resultCents'],
-			'fiscalTreatment' => (string)($migration['fiscalTreatment'] ?? 'met_realisatie'),
+			'fiscalTreatment' => (string)($migration['fiscalTreatment'] ?? 'with_actuals'),
 			'legalBasis' => (string)($migration['legalBasis'] ?? ''),
 		];
 
@@ -231,7 +231,7 @@ class AdministrationMigrationService {
 	 */
 	public function buildDestinationJournalDraft(array $migration): array {
 		$amounts = $this->computeTransferAmounts(migration: $migration);
-		$fiscalTreatment = (string)($migration['fiscalTreatment'] ?? 'met_realisatie');
+		$fiscalTreatment = (string)($migration['fiscalTreatment'] ?? 'with_actuals');
 
 		// Geruisloze doorschuiving: destination inherits the source's book value.
 		if ($fiscalTreatment === 'geruisloze_doorschuiving') {

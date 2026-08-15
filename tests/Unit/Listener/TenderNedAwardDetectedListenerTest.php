@@ -382,7 +382,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 				'awardedSupplier' => '30280353 Conduction B.V.',
 				'tenderId' => 'TN-2026-0001',
 				'title' => 'Schoonmaak',
-				'assignmentType' => 'levering-in-fases',
+				'assignmentType' => 'delivery-in-phases',
 				'termStart' => '2026-01-01',
 				'termEnd' => '2026-12-31',
 				'administrationId' => 'adm-x',

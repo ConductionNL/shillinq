@@ -94,8 +94,8 @@ class PayrollUpaHandoffService {
 				continue;
 			}
 
-			$premWn = (float)(($slip['pensioen']['premie_wn_aandeel'] ?? 0));
-			$premWg = (float)(($slip['pensioen']['premie_wg_aandeel'] ?? 0));
+			$premWn = (float)(($slip['pension']['premie_wn_aandeel'] ?? 0));
+			$premWg = (float)(($slip['pension']['premie_wg_aandeel'] ?? 0));
 			if (($premWn + $premWg) <= 0.0) {
 				continue;
 			}

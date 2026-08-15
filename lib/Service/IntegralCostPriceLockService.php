@@ -142,7 +142,7 @@ class IntegralCostPriceLockService {
 			'commercialActivityId' => (string)$input['commercialActivityId'],
 			'period' => $fiscalYear . '-YTD',
 			'calculatedOn' => $now->format(DateTimeImmutable::ATOM),
-			'status' => 'definitief',
+			'status' => 'final',
 			'componenten' => [
 				'directPayrollCost' => round($payrollCostSum, 2),
 				'directMaterials' => round($materialenSum, 2),

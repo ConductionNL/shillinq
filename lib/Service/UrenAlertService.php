@@ -63,10 +63,10 @@ final class UrenAlertService {
 	 * @var array<string, int>
 	 */
 	private const SEVERITY_RANK = [
-		'BEHAALD' => 0,
-		'OP_KOERS' => 1,
-		'RISICO' => 2,
-		'KRITIEK' => 3,
+		'ACHIEVED' => 0,
+		'ON_RATE' => 1,
+		'RISK' => 2,
+		'CRITICAL' => 3,
 	];
 
 	/**
@@ -111,7 +111,7 @@ final class UrenAlertService {
 			return false;
 		}
 
-		return ($newRank > $oldRank && $newRank >= self::SEVERITY_RANK['RISICO']);
+		return ($newRank > $oldRank && $newRank >= self::SEVERITY_RANK['RISK']);
 	}//end isOmslag()
 
 	/**
@@ -134,7 +134,7 @@ final class UrenAlertService {
 
 		$alert = $this->seedAlert(
 			year: $year,
-			type: 'KWARTAAL_EINDE',
+			type: 'QUARTER_END',
 			urgency: 'INFO',
 			triggerDate: $date
 		);
@@ -171,12 +171,12 @@ final class UrenAlertService {
 			);
 		}
 
-		if ($newStatus === 'KRITIEK') {
-			$type = 'OMSLAG_KRITIEK';
-			$urgency = 'KRITIEK';
+		if ($newStatus === 'CRITICAL') {
+			$type = 'APPORTIONMENT_CRITICAL';
+			$urgency = 'CRITICAL';
 		} else {
-			$type = 'OMSLAG_RISICO';
-			$urgency = 'WAARSCHUWING';
+			$type = 'APPORTIONMENT_RISK';
+			$urgency = 'WARNING';
 		}
 
 		$alert = $this->seedAlert(

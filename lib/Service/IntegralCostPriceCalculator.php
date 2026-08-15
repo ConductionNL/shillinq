@@ -160,7 +160,7 @@ class IntegralCostPriceCalculator {
 				continue;
 			}
 
-			$bucket = (string)($entry['bucket'] ?? $entry['category'] ?? 'overig');
+			$bucket = (string)($entry['bucket'] ?? $entry['category'] ?? 'other');
 			$ratio = (float)($entry['ratio'] ?? 0);
 
 			if ($ratio < 0.0) {

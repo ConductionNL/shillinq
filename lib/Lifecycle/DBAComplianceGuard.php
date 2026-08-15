@@ -105,9 +105,9 @@ class DBAComplianceGuard {
 	 * @var array<string>
 	 */
 	public const REQUIRED_STUK_TYPES = [
-		'GETEKENDE_OVEREENKOMST',
-		'FACTUUR_EERSTE',
-		'URENSTAAT_KWARTAAL',
+		'SIGNED_AGREEMENT',
+		'INVOICE_FIRST',
+		'TIMESHEET_QUARTER',
 	];
 
 	/**
@@ -146,7 +146,7 @@ class DBAComplianceGuard {
 				return false;
 			}
 
-			$intakeStatus = (string)($assignment['intakeStatus'] ?? 'GEEN');
+			$intakeStatus = (string)($assignment['intakeStatus'] ?? 'NONE');
 
 			return $intakeStatus === 'VOLTOOID';
 		} catch (\Throwable $e) {
@@ -278,18 +278,18 @@ class DBAComplianceGuard {
 		$clamped = max(0, min(100, $score));
 
 		if ($clamped >= 75) {
-			return 'HOOG';
+			return 'HIGH';
 		}
 
 		if ($clamped >= 50) {
-			return 'MIDDEN_HOOG';
+			return 'MIDDEN_HIGH';
 		}
 
 		if ($clamped >= 25) {
-			return 'LAAG_MIDDEN';
+			return 'LOW_MIDDEN';
 		}
 
-		return 'LAAG';
+		return 'LOW';
 	}//end deriveRiskBand()
 
 	/**

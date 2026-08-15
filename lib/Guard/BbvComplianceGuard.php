@@ -54,7 +54,7 @@ class BbvComplianceGuard {
 	 *
 	 * @var array<int, string>
 	 */
-	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'provincie', 'waterschap'];
+	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'province', 'waterAuthority'];
 
 	/**
 	 * Reserve mutations must always book on this taakveld (resultaatbestemming).
@@ -529,7 +529,7 @@ class BbvComplianceGuard {
 						'filters' => [
 							'administrationId' => $administrationId,
 							'financialYear' => $financialYear,
-							'status' => 'vastgesteld',
+							'status' => 'determined',
 						],
 					]
 				);

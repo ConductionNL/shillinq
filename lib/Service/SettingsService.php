@@ -653,7 +653,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
 	public function seedBbvAccountMappings(string $administrationId, string $administrationType): array {
-		$municipalTypes = ['municipality', 'provincie', 'waterschap'];
+		$municipalTypes = ['municipality', 'province', 'waterAuthority'];
 		if (in_array($administrationType, $municipalTypes, true) === false) {
 			return [
 				'success' => true,
@@ -2866,7 +2866,7 @@ class SettingsService {
 			$files = [
 				'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
 				'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
-				'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
+				'abb-example-municipality.json' => ['GeneralInterestDecision', 'besluiten', 'reference'],
 				'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
 			];
 

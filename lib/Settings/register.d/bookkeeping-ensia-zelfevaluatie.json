@@ -387,7 +387,7 @@
             "enum": [
               "ja-nee-nvt",
               "volwassenheidsniveau-1-5",
-              "vrije-tekst"
+              "free-text"
             ],
             "description": "Type antwoord verwacht voor deze vraag (REQ-ENSIA-001 + REQ-ENSIA-003).",
             "example": "volwassenheidsniveau-1-5",

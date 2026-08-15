@@ -183,14 +183,14 @@ class KorThresholdCalculator {
 	public function prognoseStatus(int $prognoseCents, int $thresholdCents): string {
 		$b = $this->benutting(revenueCents: $prognoseCents, thresholdCents: $thresholdCents);
 		if ($b >= 1.0) {
-			return 'OVERSCHRIJDING_VERWACHT';
+			return 'OVERRUN_EXPECTED';
 		}
 
 		if ($b >= 0.8) {
-			return 'WAARSCHUWING';
+			return 'WARNING';
 		}
 
-		return 'ONDER_DREMPEL';
+		return 'UNDER_THRESHOLD';
 	}//end prognoseStatus()
 
 	/**
@@ -209,9 +209,9 @@ class KorThresholdCalculator {
 	 */
 	public function crossedSchijf(float $previousUtilisation, float $newUtilisation): ?array {
 		$schijven = [
-			['threshold' => 1.0, 'trigger' => 'DREMPEL_100PCT', 'severity' => 'OVERSCHRIJDING'],
-			['threshold' => 0.9, 'trigger' => 'DREMPEL_90PCT', 'severity' => 'KRITIEK'],
-			['threshold' => 0.8, 'trigger' => 'DREMPEL_80PCT', 'severity' => 'VROEG'],
+			['threshold' => 1.0, 'trigger' => 'THRESHOLD_100_PCT', 'severity' => 'OVERRUN'],
+			['threshold' => 0.9, 'trigger' => 'THRESHOLD_90_PCT', 'severity' => 'CRITICAL'],
+			['threshold' => 0.8, 'trigger' => 'THRESHOLD_80_PCT', 'severity' => 'EARLY'],
 		];
 
 		foreach ($schijven as $schijf) {

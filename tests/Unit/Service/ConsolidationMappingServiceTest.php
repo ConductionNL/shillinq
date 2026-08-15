@@ -136,7 +136,7 @@ final class ConsolidationMappingServiceTest extends TestCase {
 		];
 		$concept = [
 			'eliminateOnConsolidation' => true,
-			'status' => 'concept',
+			'status' => 'draft',
 		];
 		$notFlagged = [
 			'eliminateOnConsolidation' => false,

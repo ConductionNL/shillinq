@@ -307,12 +307,12 @@
             "type": "string",
             "description": "Current lifecycle status of the opdrachtgeversverklaring per REQ-DPA-003.",
             "enum": [
-              "concept",
+              "draft",
               "overeengekomen",
               "beëindigd"
             ],
-            "default": "concept",
-            "example": "concept",
+            "default": "draft",
+            "example": "draft",
             "title": "Verklaring Status"
           },
           "modelAgreement": {
@@ -333,12 +333,12 @@
             "type": "string",
             "description": "Wet DBA risk classification. Operator-classified per REQ-DPA-003. The docudesk template renders the chosen risico.",
             "enum": [
-              "geen",
-              "laag",
+              "none",
+              "low",
               "midden",
-              "hoog"
+              "high"
             ],
-            "example": "laag",
+            "example": "low",
             "title": "Risico Beoordeling"
           },
           "administrationId": {
@@ -350,9 +350,9 @@
         },
         "x-openregister-lifecycle": {
           "field": "declarationStatus",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Verklaring is being drafted; not yet agreed upon by both parties."
             },
@@ -367,7 +367,7 @@
           },
           "transitions": {
             "overeenkomen": {
-              "from": "concept",
+              "from": "draft",
               "to": "overeengekomen",
               "label": "Overeenkomst bevestigen",
               "description": "Both parties confirm agreement. Triggers document generation via docudesk template per REQ-DPA-004."

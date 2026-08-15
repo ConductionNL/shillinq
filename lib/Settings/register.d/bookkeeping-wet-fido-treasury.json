@@ -49,10 +49,10 @@
             "description": "Organisation type, drives the kasgeldlimiet percentage via FidoNormcatalogus (REQ-FDO-009).",
             "enum": [
               "municipality",
-              "provincie",
-              "waterschap",
-              "GR-waterkwaliteit",
-              "GR-overig"
+              "province",
+              "waterAuthority",
+              "gr-water_quality",
+              "gr-other"
             ],
             "example": "municipality",
             "title": "Organisation Type"
@@ -101,9 +101,9 @@
             "type": "string",
             "description": "Local risk appetite within the Wet Fido envelope.",
             "enum": [
-              "laag",
+              "low",
               "midden",
-              "hoog"
+              "high"
             ],
             "example": "midden",
             "title": "Risk Appetite"

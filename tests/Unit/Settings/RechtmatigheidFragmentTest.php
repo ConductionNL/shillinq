@@ -189,7 +189,7 @@ class RechtmatigheidFragmentTest extends TestCase {
 		self::assertSame(expected: 'shillinq', actual: $seed['@self']['register']);
 		self::assertSame(expected: 3.0, actual: $seed['error_percentage']);
 		self::assertSame(expected: 1.0, actual: $seed['uncertainty_percentage']);
-		self::assertSame(expected: 'concept', actual: $seed['status']);
+		self::assertSame(expected: 'draft', actual: $seed['status']);
 
 	}//end testSeedsDefaultTolerantiegrens()
 

@@ -226,8 +226,8 @@ final class KorMonitorServiceTest extends TestCase {
 		$service = $this->buildService($invoices, []);
 		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-		self::assertSame('DREMPEL_80PCT', $result['trigger']);
-		self::assertSame('VROEG', $result['severity']);
+		self::assertSame('THRESHOLD_80_PCT', $result['trigger']);
+		self::assertSame('EARLY', $result['severity']);
 
 	}//end testStatusReportsAlertSchijf()
 
@@ -251,7 +251,7 @@ final class KorMonitorServiceTest extends TestCase {
 		self::assertSame(6000.00, $result['currentRevenue']);
 		// Month 8, avg 750/mo, +4 months => 6000 + 3000 = 9000 prognose, well under drempel.
 		self::assertSame(9000.00, $result['forecastYearEnd']);
-		self::assertSame('ONDER_DREMPEL', $result['prognoseStatus']);
+		self::assertSame('UNDER_THRESHOLD', $result['prognoseStatus']);
 
 	}//end testStatusBuildsMonthlyPrognose()
 

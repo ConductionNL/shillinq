@@ -237,7 +237,7 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 		foreach ($accounts as $account) {
 			$type = strtolower($this->str($account, 'accountType', 'type', 'category'));
 			$bucket = match ($type) {
-				'assets', 'asset', 'activa' => 'assets',
+				'assets', 'asset', 'assets' => 'assets',
 				'liabilities', 'liability', 'debts', 'vreemd-vermogen' => 'liabilities',
 				'equity', 'eigen-vermogen' => 'equity',
 				default => null,

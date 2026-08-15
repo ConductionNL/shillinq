@@ -123,8 +123,8 @@ class PayrollCalculator {
 	 */
 	private const PERIODES_PER_JAAR = [
 		'WEEK' => 52,
-		'4WEKEN' => 13,
-		'MAAND' => 12,
+		'4_WEEKS' => 13,
+		'MONTH' => 12,
 	];
 
 	/**
@@ -360,7 +360,7 @@ class PayrollCalculator {
 		}
 
 		$awfPct = self::AWF_LAAG_2026;
-		if ($awfRate === 'HOOG') {
+		if ($awfRate === 'HIGH') {
 			$awfPct = self::AWF_HOOG_2026;
 		}
 
@@ -405,7 +405,7 @@ class PayrollCalculator {
 		$maxPeriod = $this->periodeMaximum(yearAmount: self::MAX_ZVW_PREMIELOON_JAAR_2026, periodType: $periodType);
 		$basis = min(max(0.0, $contributionPaySV), $maxPeriod);
 		$rate = self::ZVW_TARIEF_LAAG_2026;
-		if ($zvwRate === 'HOOG') {
+		if ($zvwRate === 'HIGH') {
 			$rate = self::ZVW_TARIEF_HOOG_2026;
 		}
 
