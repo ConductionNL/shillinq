@@ -201,6 +201,21 @@ class WidgetApiController extends Controller {
 			return $this->badRequest(message: 'date must be ISO YYYY-MM-DD.');
 		}
 
+		// The #491 gate, third door. services() filters the catalogue to
+		// `isPublic` and appointments() refuses to book a service that is not,
+		// but availability was readable for ANY serviceId of this tenant.
+		// guard() only proves the caller holds the widget API key — which is
+		// shipped in a PUBLIC widget, so everyone who can see the page has it.
+		//
+		// 404 rather than 403, matching WidgetService: a 403 would confirm the
+		// service exists, which is the fact being withheld.
+		if ($this->widgetService->isPubliclyBookable(serviceId: $serviceId) === false) {
+			return new JSONResponse(
+				data: ['error' => 'service_not_found'],
+				statusCode: Http::STATUS_NOT_FOUND
+			);
+		}
+
 		$result = $this->slots->getAvailableSlots(
 			serviceId: $serviceId,
 			resourceId: $resourceId,

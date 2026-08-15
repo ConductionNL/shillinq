@@ -225,6 +225,89 @@ class WidgetApiControllerTest extends TestCase {
 	}//end testSlotsRejectsInvalidDateFormat()
 
 	/**
+	 * THE #491 GATE, THIRD DOOR — availability is refused for a service the
+	 * business never published, and the slot engine is never reached.
+	 *
+	 * guard() only proves the caller holds the widget API key, and that key
+	 * ships inside a PUBLIC booking widget — so every visitor has it.
+	 * services() hides non-public services and appointments() refuses to book
+	 * them; before this, availability answered for any serviceId of the tenant.
+	 *
+	 * Deleting the gate makes this test red.
+	 *
+	 * @return void
+	 */
+	public function testSlotsRefusesAServiceTheBusinessNeverPublished(): void {
+		$this->request->method('getParam')->willReturnMap([['businessId', '', 'salon-001']]);
+		$this->request->method('getHeader')->willReturnMap(
+			[
+				['Authorization', 'Bearer bk_live_valid'],
+				['If-None-Match', ''],
+			]
+		);
+
+		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100]]);
+		$this->auth->method('consumeRateLimit')->willReturn(
+			['allowed' => true, 'remaining' => 99, 'retryAfter' => 60]
+		);
+
+		$this->widgetService->method('isPubliclyBookable')->willReturn(false);
+
+		// The engine must not run at all: computing availability and then
+		// discarding it would still leak through timing and cache population.
+		$this->slots->expects(self::never())->method('getAvailableSlots');
+
+		$response = $this->makeController()->slots(
+			serviceId: 'svc-internal-001',
+			resourceId: 'res-001',
+			date: '2026-05-22'
+		);
+
+		// 404, not 403 — a 403 confirms the service exists, which is the very
+		// fact being withheld.
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'service_not_found'], $response->getData());
+
+	}//end testSlotsRefusesAServiceTheBusinessNeverPublished()
+
+	/**
+	 * THE POSITIVE CONTROL — a published service still returns its slots.
+	 *
+	 * Without this, a gate that refused everything would satisfy the test
+	 * above while taking the whole booking widget offline.
+	 *
+	 * @return void
+	 */
+	public function testSlotsStillServesAPublishedService(): void {
+		$this->request->method('getParam')->willReturnMap([['businessId', '', 'salon-001']]);
+		$this->request->method('getHeader')->willReturnMap(
+			[
+				['Authorization', 'Bearer bk_live_valid'],
+				['If-None-Match', ''],
+			]
+		);
+
+		$this->auth->method('validateApiKey')->willReturn(['valid' => true, 'key' => ['rateLimit' => 100]]);
+		$this->auth->method('consumeRateLimit')->willReturn(
+			['allowed' => true, 'remaining' => 99, 'retryAfter' => 60]
+		);
+
+		$this->widgetService->method('isPubliclyBookable')->willReturn(true);
+		$this->slots->expects(self::once())
+			->method('getAvailableSlots')
+			->willReturn(['slots' => [], 'etag' => 'W/"abc"', 'cached' => false]);
+
+		$response = $this->makeController()->slots(
+			serviceId: 'svc-001',
+			resourceId: 'res-001',
+			date: '2026-05-22'
+		);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+
+	}//end testSlotsStillServesAPublishedService()
+
+	/**
 	 * POST /appointments rejects malformed ISO timestamps with 400.
 	 *
 	 * @return void
