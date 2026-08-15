@@ -121,7 +121,7 @@ class CrisisModeRefreshJob extends TimedJob {
 						[
 							'filters' => ['horizonId' => $horizonId],
 							'limit' => 4,
-							'order' => ['weeknummer' => 'ASC'],
+							'order' => ['weekNumber' => 'ASC'],
 						]
 					);
 

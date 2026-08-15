@@ -145,7 +145,7 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 
 		self::assertSame('je-001', $allocation['journalEntryId']);
 		self::assertSame('ca-001', $allocation['commercialActivityId']);
-		self::assertSame('odr-2026', $allocation['verdeelsleutel']);
+		self::assertSame('odr-2026', $allocation['allocationKey']);
 		self::assertTrue($allocation['automaticApplied']);
 		self::assertNull($allocation['handmatigeOverride']);
 		self::assertSame('active', $allocation['status']);
@@ -162,7 +162,7 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 			'journalEntryId' => 'je-001',
 			'commercialActivityId' => 'ca-001',
 			'originalAmount' => 184.00,
-			'verdeelsleutel' => 'odr-2026',
+			'allocationKey' => 'odr-2026',
 			'postingDate' => '2026-03-15',
 			'administrationId' => 'adm-tilburg',
 		];
@@ -186,7 +186,7 @@ final class ActivityCostAllocationSplitterTest extends TestCase {
 			'journalEntryId' => 'je-001',
 			'commercialActivityId' => 'ca-001',
 			'originalAmount' => 184.00,
-			'verdeelsleutel' => 'odr-2026',
+			'allocationKey' => 'odr-2026',
 			'postingDate' => '2026-03-15',
 			'administrationId' => 'adm-tilburg',
 		];

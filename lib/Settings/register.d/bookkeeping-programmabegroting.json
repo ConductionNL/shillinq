@@ -24,7 +24,7 @@
           "budgetYear",
           "meerjarenHorizon",
           "status",
-          "sluitendStructureel",
+          "structurallyBalanced",
           "sluitendReëel",
           "administrationId"
         ],
@@ -96,7 +96,7 @@
             "example": "2026-11-09",
             "title": "Vaststellings Datum"
           },
-          "sluitendStructureel": {
+          "structurallyBalanced": {
             "type": "boolean",
             "default": false,
             "description": "Computed flag: recurring lasten ≤ recurring baten for all jaren T+1..T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
@@ -195,7 +195,7 @@
               "administrationId": "@self.administrationId"
             },
             "operations": {
-              "sluitendStructureel": {
+              "structurallyBalanced": {
                 "operation": "all",
                 "condition": "Meerjarenraming.lastenStructureel <= Meerjarenraming.batenStructureel",
                 "target": "sluitendStructureel"
@@ -251,7 +251,7 @@
             "example": "Veiligheid & Handhaving",
             "title": "Naam"
           },
-          "portefeuillehouder": {
+          "portfolioHolder": {
             "type": "string",
             "nullable": true,
             "description": "Assigned wethouder / gedeputeerde responsible. REQ-002.",
@@ -1029,7 +1029,7 @@
         "status": "vastgesteld",
         "determinationDecision": "raadsbesluit-2026-114",
         "determinationDate": "2026-11-09",
-        "sluitendStructureel": true,
+        "structurallyBalanced": true,
         "sluitendReëel": true,
         "supervisionRegime": "repressief",
         "nominalDevelopment": 2.0,
@@ -1045,7 +1045,7 @@
         "financialYear": 2027,
         "number": "1",
         "name": "Veiligheid & Handhaving",
-        "portefeuillehouder": "Wethouder Veiligheid",
+        "portfolioHolder": "Wethouder Veiligheid",
         "doelstellingen": "Handhaving van openbare orde en veiligheid in de gemeente.",
         "revenueTotal": 80000.0,
         "expensesTotal": 650000.0,
@@ -1065,7 +1065,7 @@
         "financialYear": 2027,
         "number": "2",
         "name": "Sociaal Domein",
-        "portefeuillehouder": "Wethouder Zorg",
+        "portfolioHolder": "Wethouder Zorg",
         "doelstellingen": "Toegankelijke zorg en ondersteuning voor inwoners.",
         "revenueTotal": 120000.0,
         "expensesTotal": 1300000.0,

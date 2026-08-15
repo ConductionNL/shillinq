@@ -69,10 +69,10 @@ final class AcmReportGeneratorTest extends TestCase {
 		]);
 
 		self::assertSame(AcmReportGenerator::FORMAT, $report['format']);
-		self::assertCount(2, $report['activiteiten']);
-		self::assertTrue($report['activiteiten'][0]['compliant']);
-		self::assertFalse($report['activiteiten'][1]['compliant']);
-		self::assertSame('abb-001', $report['activiteiten'][1]['abbReference']);
+		self::assertCount(2, $report['activities']);
+		self::assertTrue($report['activities'][0]['compliant']);
+		self::assertFalse($report['activities'][1]['compliant']);
+		self::assertSame('abb-001', $report['activities'][1]['abbReference']);
 		self::assertSame('draft', $report['status']);
 
 	}//end testComposeAggregatesActivities()

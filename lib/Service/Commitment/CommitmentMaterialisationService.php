@@ -554,7 +554,7 @@ class CommitmentMaterialisationService {
 						'generalLedgerAccount' => (string)($rule['generalLedgerAccount'] ?? ''),
 						'costCentre' => (string)($rule['costCentre'] ?? ''),
 						'programme' => (string)($rule['programme'] ?? ''),
-						'restant_verplicht' => (int)($rule['amount_excl_vat'] ?? 0),
+						'remaining_committed' => (int)($rule['amount_excl_vat'] ?? 0),
 					]
 				);
 			$ruleNumber++;

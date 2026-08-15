@@ -62,7 +62,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	public function testSplitsIntoBelastingdienstAndUwv(): void {
 		$payloads = $this->svc->toApTransactionPayloads(
 			lhRemittance: [
-				'werkgeverId' => 'wg-1',
+				'employerId' => 'wg-1',
 				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 18620.10,
 				'totalSocialInsuranceContributions' => 7559.40,
@@ -80,7 +80,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 		$this->assertEqualsWithDelta(22514.10, $bld['amount'], 0.005);
 		$this->assertSame('EUR', $bld['currency']);
 		$this->assertSame('2026-06-30', $bld['dueDate']);
-		$this->assertSame('wg-1', $bld['werkgeverId']);
+		$this->assertSame('wg-1', $bld['employerId']);
 		$this->assertSame('lp-2026-05', $bld['periodId']);
 		$this->assertSame('LHAfdracht', $bld['source']);
 		$this->assertSame('wg-1/lp-2026-05', $bld['sourceRef']);
@@ -104,7 +104,7 @@ final class PayrollApArHandoffServiceTest extends TestCase {
 	public function testOmitsZeroAmountPayloads(): void {
 		$payloads = $this->svc->toApTransactionPayloads(
 			lhRemittance: [
-				'werkgeverId' => 'wg-1',
+				'employerId' => 'wg-1',
 				'periodId' => 'lp-2026-05',
 				'totalPayrollTax' => 0.0,
 				'totalSocialInsuranceContributions' => 1234.56,

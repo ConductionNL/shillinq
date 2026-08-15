@@ -105,7 +105,7 @@ class PayrollJaaropgaveService {
 		foreach ($stroken as $s) {
 			$fiscalC += $this->calculator->toCents(amount: ($s['fiscalPay'] ?? 0));
 			$payrollTaxC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
-			$svWgC += $this->calculator->toCents(amount: ($s['premiesSVWerkgever']['totaal_werkgever'] ?? 0));
+			$svWgC += $this->calculator->toCents(amount: ($s['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
 			$zvwWgC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
 			$pensWnC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));
 			$pensWgC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));

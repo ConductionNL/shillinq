@@ -214,9 +214,9 @@ class AnnualReportGuard {
 	 */
 	private function sumRubriekCents(array $rubrieken, string $side): int {
 		$cents = 0;
-		foreach ($rubrieken as $rubriek) {
-			if (is_array($rubriek) === true && ($rubriek['side'] ?? '') === $side) {
-				$cents += (int)round((float)($rubriek['currentYear'] ?? 0) * 100);
+		foreach ($rubrieken as $section) {
+			if (is_array($section) === true && ($section['side'] ?? '') === $side) {
+				$cents += (int)round((float)($section['currentYear'] ?? 0) * 100);
 			}
 		}
 

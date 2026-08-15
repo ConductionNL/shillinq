@@ -526,7 +526,7 @@
             "example": 0,
             "title": "Betaald Bedrag"
           },
-          "restant_verplicht": {
+          "remaining_committed": {
             "type": "integer",
             "description": "Outstanding committed amount = bedrag_excl_btw - gefactureerd_bedrag (REQ-VPL-003).",
             "default": 0,
@@ -574,7 +574,7 @@
               ]
             },
             "sum": [
-              "restant_verplicht",
+              "remaining_committed",
               "invoiced_amount"
             ]
           }
@@ -1048,7 +1048,7 @@
           "outstanding_commitments": {
             "type": "sum",
             "source": "Verplichtingsregel",
-            "field": "restant_verplicht",
+            "field": "remaining_committed",
             "where": [
               {
                 "field": "financialYear",
@@ -1240,7 +1240,7 @@
       "costCentre": "FAC-2026",
       "programme": "5.1",
       "invoiced_amount": 2500000,
-      "restant_verplicht": 5000000
+      "remaining_committed": 5000000
     },
     {
       "@self": {
@@ -1278,7 +1278,7 @@
       "costCentre": "FAC-2026",
       "programme": "5.1",
       "invoiced_amount": 0,
-      "restant_verplicht": 10000000
+      "remaining_committed": 10000000
     },
     {
       "@self": {
@@ -1296,7 +1296,7 @@
       "costCentre": "FAC-2027",
       "programme": "5.1",
       "invoiced_amount": 0,
-      "restant_verplicht": 10000000
+      "remaining_committed": 10000000
     },
     {
       "@self": {
@@ -1333,7 +1333,7 @@
       "costCentre": "FAC-2026",
       "programme": "5.1",
       "invoiced_amount": 0,
-      "restant_verplicht": 4000000
+      "remaining_committed": 4000000
     }
   ]
 }

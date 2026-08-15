@@ -101,7 +101,7 @@
                 "description": "Masked partner BSN.",
                 "title": "BSN"
               },
-              "verdeelsleutel": {
+              "allocationKey": {
                 "type": "string",
                 "enum": [
                   "OPTIMAAL_BEREKEND",
@@ -561,7 +561,7 @@
             },
             "title": "Urencriterium"
           },
-          "zelfstandigenaftrek": {
+          "selfEmployedDeduction": {
             "type": "object",
             "description": "Self-employed deduction; toegestaan only if urencriterium.behaald (REQ-IB-002).",
             "properties": {
@@ -584,7 +584,7 @@
             },
             "title": "Zelfstandigenaftrek"
           },
-          "startersaftrek": {
+          "starterDeduction": {
             "type": "object",
             "description": "Starter's deduction, max 3× in first 5 years (art. 3.78).",
             "properties": {
@@ -1124,7 +1124,7 @@
             "type": "object",
             "description": "Chosen rendement method + amount.",
             "properties": {
-              "methode": {
+              "method": {
                 "type": "string",
                 "enum": [
                   "WERKELIJK",
@@ -1191,12 +1191,12 @@
             "items": {
               "type": "object",
               "required": [
-                "rubriek",
+                "section",
                 "value",
                 "source"
               ],
               "properties": {
-                "rubriek": {
+                "section": {
                   "type": "string",
                   "description": "P-formulier field identifier, e.g. omzet_excl_btw.",
                   "title": "Rubriek"
@@ -1522,12 +1522,12 @@
         "threshold": 1225,
         "evidenceRef": "uren-tracker-2025-ond-001234"
       },
-      "zelfstandigenaftrek": {
+      "selfEmployedDeduction": {
         "permitted": true,
         "amount": 2470.0,
         "basis": "art. 3.76 Wet IB 2001, tarief 2025"
       },
-      "startersaftrek": {
+      "starterDeduction": {
         "permitted": false,
         "yearOfUse": null,
         "maxTimes": 3,
@@ -1636,7 +1636,7 @@
       "taxExemptEquity": 57000.0,
       "taxableBasis": 12000.0,
       "calculatedReturn": {
-        "methode": "FORFAIT_OVERBRUGGINGSWET",
+        "method": "FORFAIT_OVERBRUGGINGSWET",
         "return": 1820.0
       },
       "actualReturnEntered": false,
@@ -1651,7 +1651,7 @@
       "taxReturnId": "ib-aangifte-2025-ond-001234",
       "rules": [
         {
-          "rubriek": "omzet_excl_btw",
+          "section": "omzet_excl_btw",
           "value": 82400.0,
           "source": "GL_ACCOUNT_revenue",
           "journalEntries": [
@@ -1663,7 +1663,7 @@
           "calculatedBy": "system"
         },
         {
-          "rubriek": "zelfstandigenaftrek",
+          "section": "selfEmployedDeduction",
           "value": 2470.0,
           "source": "uren-tracker-2025-ond-001234",
           "journalEntries": [],

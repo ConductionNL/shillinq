@@ -162,16 +162,16 @@ final class CashflowAggregationLogicTest extends TestCase {
 	 */
 	public function testCrisisModeTriggerWithinFourWeeks(): void {
 		$allPositive = [
-			['weeknummer' => 22, 'closingBalance' => 100.0],
-			['weeknummer' => 23, 'closingBalance' => 50.0],
-			['weeknummer' => 24, 'closingBalance' => 200.0],
-			['weeknummer' => 25, 'closingBalance' => 300.0],
+			['weekNumber' => 22, 'closingBalance' => 100.0],
+			['weekNumber' => 23, 'closingBalance' => 50.0],
+			['weekNumber' => 24, 'closingBalance' => 200.0],
+			['weekNumber' => 25, 'closingBalance' => 300.0],
 		];
 		$hasNegative = [
-			['weeknummer' => 22, 'closingBalance' => 100.0],
-			['weeknummer' => 23, 'closingBalance' => -50.0],
-			['weeknummer' => 24, 'closingBalance' => 200.0],
-			['weeknummer' => 25, 'closingBalance' => 300.0],
+			['weekNumber' => 22, 'closingBalance' => 100.0],
+			['weekNumber' => 23, 'closingBalance' => -50.0],
+			['weekNumber' => 24, 'closingBalance' => 200.0],
+			['weekNumber' => 25, 'closingBalance' => 300.0],
 		];
 		self::assertFalse($this->crisisActive($allPositive));
 		self::assertTrue($this->crisisActive($hasNegative));
@@ -343,7 +343,7 @@ final class CashflowAggregationLogicTest extends TestCase {
 	/**
 	 * Crisis-mode trigger per REQ-CF-010.
 	 *
-	 * @param list<array{weeknummer:int,eindSaldo:float}> $weeks Leading-4 weeks.
+	 * @param list<array{weekNumber:int,eindSaldo:float}> $weeks Leading-4 weeks.
 	 *
 	 * @return bool
 	 */

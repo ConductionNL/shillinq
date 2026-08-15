@@ -95,15 +95,15 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 	}//end testCalculateVermogenskosten()
 
 	/**
-	 * Winstopslag is a markup on the pre-markup base (REQ-WMO-002).
+	 * The profit mark-up is a markup on the pre-markup base (REQ-WMO-002).
 	 */
-	public function testCalculateWinstopslag(): void {
+	public function testCalculateProfitMarkup(): void {
 		// 85_000 × 3% = 2_550 EUR.
-		self::assertSame(255_000, $this->svc->calculateWinstopslag(8_500_000));
+		self::assertSame(255_000, $this->svc->calculateProfitMarkup(8_500_000));
 		// 100_000 × 5% custom rate = 5_000.
-		self::assertSame(500_000, $this->svc->calculateWinstopslag(10_000_000, 0.05));
+		self::assertSame(500_000, $this->svc->calculateProfitMarkup(10_000_000, 0.05));
 
-	}//end testCalculateWinstopslag()
+	}//end testCalculateProfitMarkup()
 
 	/**
 	 * Compliance: compares per-unit when available, falls back to per-period total.
@@ -146,7 +146,7 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 			'investedBookValueCents' => 4_040_000, // €40.4k
 			'waccRate' => 0.045,
 			'periodFraction' => 1.0,
-			'winstopslagRate' => 0.03,
+			'profitMarkupRate' => 0.03,
 			'soldUnits' => 312.0,
 			'unitLabel' => 'dagdeel-zaalhuur',
 			'appliedRate' => 295.0,
@@ -161,7 +161,7 @@ final class IntegralCostPriceCalculatorTest extends TestCase {
 		// Vermogenskosten: 4_040_000 × 4.5% = 181_800 cents = €1818.
 		self::assertSame(1_818.00, $ikp['componenten']['capitalCost']);
 		// Base = 41 250 + 8 730 + 6 900 + 26 337.60 + 1 818 = 85 035.60; winstopslag 3% = 2 551.07
-		self::assertSame(2_551.07, $ikp['componenten']['winstopslag']);
+		self::assertSame(2_551.07, $ikp['componenten']['profitMarkup']);
 		self::assertSame(87_586.67, $ikp['totalCost']);
 		self::assertEqualsWithDelta(280.7265, $ikp['costPricePerUnit'], 0.01);
 		self::assertSame(295.0, $ikp['appliedRate']);

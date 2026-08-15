@@ -209,11 +209,11 @@ final class AnnualReportSchemaTest extends TestCase {
 		foreach ($sheets as $sheet) {
 			$activa = 0;
 			$passiva = 0;
-			foreach ($sheet['rubrieken'] as $rubriek) {
-				$cents = (int)round(((float)$rubriek['currentYear']) * 100);
-				if (($rubriek['side'] ?? '') === 'activa') {
+			foreach ($sheet['rubrieken'] as $section) {
+				$cents = (int)round(((float)$section['currentYear']) * 100);
+				if (($section['side'] ?? '') === 'activa') {
 					$activa += $cents;
-				} elseif (($rubriek['side'] ?? '') === 'passiva') {
+				} elseif (($section['side'] ?? '') === 'passiva') {
 					$passiva += $cents;
 				}
 			}

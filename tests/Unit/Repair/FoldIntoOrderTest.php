@@ -384,7 +384,7 @@ class FoldIntoOrderTest extends TestCase {
 			'expectedRevenue' => 4800000,
 			'intakeStatus' => 'ACTIEF',
 			'riskLevel' => 'LAAG_MIDDEN',
-			'modelOvereenkomstId' => 'modov-bd-2024-tussenkomstvrij-v3',
+			'modelAgreementId' => 'modov-bd-2024-tussenkomstvrij-v3',
 		];
 
 		$fakeOs = $this->fakeObjectService(['DBAOpdracht' => [$assignment]]);
@@ -407,7 +407,7 @@ class FoldIntoOrderTest extends TestCase {
 		self::assertSame('ACTIEF', $order['state'], 'engagement state vocabulary preserved verbatim');
 		self::assertSame(48000.0, $order['totalAmount']);
 		self::assertSame('LAAG_MIDDEN', $order['engagement']['riskLevel']);
-		self::assertSame('modov-bd-2024-tussenkomstvrij-v3', $order['engagement']['modelOvereenkomstId']);
+		self::assertSame('modov-bd-2024-tussenkomstvrij-v3', $order['engagement']['modelAgreementId']);
 		self::assertSame('DBAOpdracht', $order['migratedFrom']['schema']);
 
 	}//end testFoldsDbaOpdrachtIntoEngagementOrder()

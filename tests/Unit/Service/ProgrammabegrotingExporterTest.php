@@ -101,7 +101,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 				'organisationType' => 'municipality',
 				'status' => 'vastgesteld',
 				'determinationDate' => '2026-11-09',
-				'sluitendStructureel' => true,
+				'structurallyBalanced' => true,
 				'sluitendReëel' => true,
 				'supervisionRegime' => 'repressief',
 			],
@@ -111,7 +111,7 @@ final class ProgrammabegrotingExporterTest extends TestCase {
 		);
 
 		self::assertSame(2027, $export['metadata']['budgetYear']);
-		self::assertTrue($export['metadata']['sluitendStructureel']);
+		self::assertTrue($export['metadata']['structurallyBalanced']);
 		self::assertCount(1, $export['programmas']);
 		self::assertSame('Veiligheid', $export['programmas'][0]['name']);
 		self::assertCount(1, $export['taskFields']);

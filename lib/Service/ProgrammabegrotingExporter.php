@@ -141,7 +141,7 @@ class ProgrammabegrotingExporter {
 				'organisationType' => ($budget['organisationType'] ?? null),
 				'status' => ($budget['status'] ?? null),
 				'determinationDate' => ($budget['determinationDate'] ?? null),
-				'sluitendStructureel' => ($budget['sluitendStructureel'] ?? null),
+				'structurallyBalanced' => ($budget['structurallyBalanced'] ?? null),
 				'sluitendReëel' => ($budget['sluitendReëel'] ?? null),
 				'supervisionRegime' => ($budget['supervisionRegime'] ?? null),
 			],

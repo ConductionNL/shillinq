@@ -64,7 +64,7 @@ final class SluitendCalculatorTest extends TestCase {
 		// Saldo structureel = 100; reëel uplift = 2% of 900 = 18; saldo reëel = 82.
 		self::assertSame(100.0, $result['balanceStructural']);
 		self::assertSame(82.0, $result['saldoReëel']);
-		self::assertTrue($result['sluitendStructureel']);
+		self::assertTrue($result['structurallyBalanced']);
 		self::assertTrue($result['sluitendReëel']);
 		self::assertTrue($result['sluitend']);
 
@@ -82,7 +82,7 @@ final class SluitendCalculatorTest extends TestCase {
 		);
 
 		self::assertSame(-100.0, $result['balanceStructural']);
-		self::assertFalse($result['sluitendStructureel']);
+		self::assertFalse($result['structurallyBalanced']);
 		self::assertFalse($result['sluitend']);
 
 	}//end testYearNotSluitendWhenLastenExceedBaten()
@@ -99,7 +99,7 @@ final class SluitendCalculatorTest extends TestCase {
 			nominalDevelopment: 5.0
 		);
 
-		self::assertTrue($result['sluitendStructureel']);
+		self::assertTrue($result['structurallyBalanced']);
 		self::assertFalse($result['sluitendReëel']);
 		self::assertFalse($result['sluitend']);
 
@@ -117,7 +117,7 @@ final class SluitendCalculatorTest extends TestCase {
 		];
 
 		$flags = $this->calculator->evaluateBegroting(years: $years, nominalDevelopment: 2.0);
-		self::assertTrue($flags['sluitendStructureel']);
+		self::assertTrue($flags['structurallyBalanced']);
 		self::assertTrue($flags['sluitendReëel']);
 
 	}//end testBegrotingSluitendOnlyWhenAllYearsHold()
@@ -134,7 +134,7 @@ final class SluitendCalculatorTest extends TestCase {
 		];
 
 		$flags = $this->calculator->evaluateBegroting(years: $years, nominalDevelopment: 2.0);
-		self::assertFalse($flags['sluitendStructureel']);
+		self::assertFalse($flags['structurallyBalanced']);
 
 	}//end testBegrotingNotSluitendWhenOneYearFails()
 
@@ -145,7 +145,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testEmptyBegrotingIsNotSluitend(): void {
 		$flags = $this->calculator->evaluateBegroting(years: [], nominalDevelopment: 2.0);
-		self::assertFalse($flags['sluitendStructureel']);
+		self::assertFalse($flags['structurallyBalanced']);
 		self::assertFalse($flags['sluitendReëel']);
 
 	}//end testEmptyBegrotingIsNotSluitend()
@@ -157,7 +157,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testRepressiefWhenFullyConform(): void {
 		$regime = $this->calculator->determineToezichtRegime(
-			sluitendStructureel: true,
+			structurallyBalanced: true,
 			sluitendReeel: true,
 			historyResultaten: [100.0, 50.0, 80.0, 20.0],
 			weerstandsverhouding: 1.4
@@ -173,7 +173,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testPreventiefWhenNotSluitend(): void {
 		$regime = $this->calculator->determineToezichtRegime(
-			sluitendStructureel: false,
+			structurallyBalanced: false,
 			sluitendReeel: true,
 			weerstandsverhouding: 1.4
 		);
@@ -188,7 +188,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testPreventiefOnSustainedTekort(): void {
 		$regime = $this->calculator->determineToezichtRegime(
-			sluitendStructureel: true,
+			structurallyBalanced: true,
 			sluitendReeel: true,
 			historyResultaten: [-10.0, -20.0, -30.0, -5.0],
 			weerstandsverhouding: 1.2
@@ -204,7 +204,7 @@ final class SluitendCalculatorTest extends TestCase {
 	 */
 	public function testArtikel12OnNegativeWeerstandsverhouding(): void {
 		$regime = $this->calculator->determineToezichtRegime(
-			sluitendStructureel: true,
+			structurallyBalanced: true,
 			sluitendReeel: true,
 			weerstandsverhouding: -0.2
 		);
@@ -224,7 +224,7 @@ final class SluitendCalculatorTest extends TestCase {
 			nominalDevelopment: 0.0
 		);
 		self::assertSame(0.0, $result['balanceStructural']);
-		self::assertTrue($result['sluitendStructureel']);
+		self::assertTrue($result['structurallyBalanced']);
 
 	}//end testIntegerCentsAvoidDrift()
 

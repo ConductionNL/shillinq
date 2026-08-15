@@ -220,7 +220,7 @@ class ActivityCostAllocationSplitter {
 			'glLineId' => ($input['glLineId'] ?? null),
 			'originalAmount' => (float)$input['originalAmount'],
 			'splits' => $splits,
-			'verdeelsleutel' => (string)($input['rule']['id'] ?? ''),
+			'allocationKey' => (string)($input['rule']['id'] ?? ''),
 			'automaticApplied' => true,
 			'handmatigeOverride' => null,
 			'postingDate' => (string)$input['postingDate'],
@@ -268,7 +268,7 @@ class ActivityCostAllocationSplitter {
 			'glLineId' => ($original['glLineId'] ?? null),
 			'originalAmount' => (float)($original['originalAmount'] ?? 0),
 			'splits' => (array)($input['newSplits'] ?? []),
-			'verdeelsleutel' => (string)($original['verdeelsleutel'] ?? ''),
+			'allocationKey' => (string)($original['allocationKey'] ?? ''),
 			'automaticApplied' => false,
 			'handmatigeOverride' => [
 				'approvedBy' => $unique,

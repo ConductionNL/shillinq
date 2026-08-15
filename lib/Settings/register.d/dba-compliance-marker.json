@@ -196,7 +196,7 @@
             "example": false,
             "title": "Eenmalig Lage Drempel"
           },
-          "modelOvereenkomstId": {
+          "modelAgreementId": {
             "type": "string",
             "nullable": true,
             "description": "FK naar DBAModelovereenkomst die op deze opdracht van toepassing is (REQ-DBA-002).",
@@ -382,7 +382,7 @@
             "description": "Evidence-dossier voor deze opdracht (REQ-DBA-007)."
           },
           "modelAgreement": {
-            "localField": "modelOvereenkomstId",
+            "localField": "modelAgreementId",
             "relatedSchema": "DBAModelovereenkomst",
             "relatedField": "@self.id",
             "cardinality": "many-to-one",

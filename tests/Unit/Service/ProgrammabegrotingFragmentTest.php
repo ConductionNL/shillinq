@@ -119,7 +119,7 @@ final class ProgrammabegrotingFragmentTest extends TestCase {
 	 */
 	public function testProgrammabegrotingHasFlagsAndLifecycle(): void {
 		$schema = $this->fragment()['components']['schemas']['Programmabegroting'];
-		foreach (['sluitendStructureel', 'sluitendReëel', 'supervisionRegime', 'organisationType', 'status'] as $field) {
+		foreach (['structurallyBalanced', 'sluitendReëel', 'supervisionRegime', 'organisationType', 'status'] as $field) {
 			self::assertArrayHasKey($field, $schema['properties'], "Programmabegroting must declare $field");
 		}
 

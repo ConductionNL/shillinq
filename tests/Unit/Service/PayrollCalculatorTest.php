@@ -188,7 +188,7 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPremiesSVWerkgeverAwfLaag(): void {
-		$premies = $this->calc->premiesSVWerkgever(4940.0, 'MAAND', 'LAAG', true, 0.0013, 0.0);
+		$premies = $this->calc->employerSocialInsurancePremiums(4940.0, 'MAAND', 'LAAG', true, 0.0013, 0.0);
 		// AWF 2,64% x 4940 = 130,42.
 		self::assertSame(130.42, $premies['awf']);
 		// AOF-klein 5,38% x 4940 = 265,77.
@@ -209,7 +209,7 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPremiesSVCappedAtMaximum(): void {
-		$premies = $this->calc->premiesSVWerkgever(7000.0, 'MAAND', 'LAAG', true, 0.0, 0.0);
+		$premies = $this->calc->employerSocialInsurancePremiums(7000.0, 'MAAND', 'LAAG', true, 0.0, 0.0);
 		// Capped at €6.206,67 -> AWF 2,64% x 6206,67 = 163,86.
 		self::assertSame(6206.67, $premies['premieloon_gemaximeerd']);
 		self::assertSame(163.86, $premies['awf']);

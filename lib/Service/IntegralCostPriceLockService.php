@@ -78,7 +78,7 @@ class IntegralCostPriceLockService {
 		$materialenSum = 0.0;
 		$depreciationsSum = 0.0;
 		$vermogensSum = 0.0;
-		$winstopslagSum = 0.0;
+		$profitMarkupSum = 0.0;
 		$overheadBuckets = [];
 		$totaleCostSum = 0.0;
 
@@ -93,7 +93,7 @@ class IntegralCostPriceLockService {
 			$materialenSum += (float)($componenten['directMaterials'] ?? 0);
 			$depreciationsSum += (float)($componenten['directDepreciations'] ?? 0);
 			$vermogensSum += (float)($componenten['capitalCost'] ?? 0);
-			$winstopslagSum += (float)($componenten['winstopslag'] ?? 0);
+			$profitMarkupSum += (float)($componenten['profitMarkup'] ?? 0);
 
 			$overheadInRecord = (array)($componenten['indirecteOverhead'] ?? []);
 			foreach ($overheadInRecord as $bucket => $amount) {
@@ -149,7 +149,7 @@ class IntegralCostPriceLockService {
 				'directDepreciations' => round($depreciationsSum, 2),
 				'indirecteOverhead' => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
 				'capitalCost' => round($vermogensSum, 2),
-				'winstopslag' => round($winstopslagSum, 2),
+				'profitMarkup' => round($profitMarkupSum, 2),
 			],
 			'totalCost' => round($totaleCostSum, 2),
 			'soldUnits' => $verkochteUnitsOut,

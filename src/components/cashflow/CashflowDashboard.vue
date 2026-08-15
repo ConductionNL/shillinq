@@ -61,7 +61,7 @@
 		</div>
 
 		<div v-if="selectedWeek" class="cashflow-dashboard__week-detail">
-			<h3>{{ t('shillinq', 'Week') }} {{ selectedWeek.weeknummer }}</h3>
+			<h3>{{ t('shillinq', 'Week') }} {{ selectedWeek.weekNumber }}</h3>
 			<ul>
 				<li>
 					{{ t('shillinq', 'Inflows AR') }}:

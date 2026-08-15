@@ -361,7 +361,7 @@
         "required": [
           "qualifying_asset_id",
           "financialYear",
-          "methode",
+          "method",
           "gross_revenue_asset",
           "qualifying_profit_for_nexus",
           "nexus_calculation_id",
@@ -385,7 +385,7 @@
             "title": "Boekjaar",
             "description": "The numeric value for boekjaar."
           },
-          "methode": {
+          "method": {
             "type": "string",
             "enum": [
               "per_asset_afpelmethode",
@@ -1028,7 +1028,7 @@
         },
         "qualifying_asset_id": "qa-2024-001",
         "financialYear": 2024,
-        "methode": "per_asset_afpelmethode",
+        "method": "per_asset_afpelmethode",
         "gross_revenue_asset": 2400000.0,
         "direct_cost_asset": 850000.0,
         "routine_marketing_profit": 180000.0,
@@ -1053,7 +1053,7 @@
         },
         "qualifying_asset_id": "qa-2024-001",
         "financialYear": 2026,
-        "methode": "forfaitair_25pct",
+        "method": "forfaitair_25pct",
         "gross_revenue_asset": 200000.0,
         "qualifying_profit_for_nexus": 200000.0,
         "nexus_calculation_id": "nx-2024-001",

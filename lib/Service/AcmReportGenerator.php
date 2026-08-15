@@ -72,13 +72,16 @@ class AcmReportGenerator {
 			throw new InvalidArgumentException('Invalid period format: ' . $period);
 		}
 
-		$activities = (array)$input['activities'];
+		$inputActivities = (array)$input['activities'];
 		$ikpRecords = (array)($input['ikpRecords'] ?? []);
 		$revenueByActivity = (array)($input['omzetByActivity'] ?? []);
 		$abbList = (array)($input['abbList'] ?? []);
 
-		$activiteiten = [];
-		foreach ($activities as $activity) {
+		// The source list and the accumulator were `$activiteiten` and
+		// `$activities`; translating the first collapsed them onto one name, and
+		// the accumulator's `= []` then emptied the input before the loop read it.
+		$activities = [];
+		foreach ($inputActivities as $activity) {
 			if (is_array($activity) === false) {
 				continue;
 			}
@@ -102,7 +105,7 @@ class AcmReportGenerator {
 				$abbReference = null;
 			}
 
-			$activiteiten[] = [
+			$activities[] = [
 				'commercialActivityId' => $activityId,
 				'code' => $code,
 				'name' => $name,
@@ -130,7 +133,7 @@ class AcmReportGenerator {
 			'period' => $period,
 			'format' => self::FORMAT,
 			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
-			'activiteiten' => $activiteiten,
+			'activities' => $activities,
 			'summary' => ($input['summary'] ?? null),
 			'manualOverrides' => (int)($input['manualOverrides'] ?? 0),
 			'abbList' => $abbSummaries,
@@ -204,7 +207,7 @@ class AcmReportGenerator {
 		$format = htmlspecialchars((string)($report['format'] ?? self::FORMAT), ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
 		$lines = [];
-		foreach ((array)($report['activiteiten'] ?? []) as $a) {
+		foreach ((array)($report['activities'] ?? []) as $a) {
 			if (is_array($a) === false) {
 				continue;
 			}
