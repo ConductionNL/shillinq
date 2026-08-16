@@ -388,10 +388,134 @@ class SettingsService {
 
 		if (($result['success'] ?? false) === true) {
 			$result['administrationCode'] = $this->readDefaultAdministrationCode();
+			$result['membership'] = $this->grantDefaultAdministrationMembership(
+				administrationCode: $result['administrationCode']
+			);
 		}
 
 		return $result;
 	}//end seedDefaultAdministration()
+
+	/**
+	 * Grant the operator running first-time setup a membership on an administration.
+	 *
+	 * WHY THIS EXISTS (shillinq#569). Seeding an Administration record is not
+	 * enough to make it usable: access is granted by an AdministrationMembership
+	 * (REQ-MA-003), and NOTHING in the codebase created one. So every fresh
+	 * install finished setup with `completed: true` and
+	 * `GET /api/administrations/context` returning `administrations: []` — for
+	 * every user, on every install — leaving every administration-scoped surface
+	 * unreachable with no error anywhere.
+	 *
+	 * Role `eigenaar` with posting and closing rights: the caller has already
+	 * passed `AuthorizedAdminSetting`, and an operator who provisions the default
+	 * administration is its owner. Only the CALLING user is granted — this is not
+	 * a broadcast to every account.
+	 *
+	 * The membership is written against the administration's OpenRegister **uuid**,
+	 * not its administrationCode, because that is the identifier the record is
+	 * addressed by. `findAdministration()` resolves either, so both id spaces work,
+	 * but the uuid is the stable one.
+	 *
+	 * Idempotent: a membership for the same (userId, administrationId) is left
+	 * alone, so re-running setup never duplicates or downgrades an existing grant.
+	 * Never throws — a failure here is reported in the result and logged, and must
+	 * not turn a successful seed into a failed setup action.
+	 *
+	 * @param string $administrationCode The administrationCode of the seeded administration.
+	 *
+	 * @return array<string,mixed> `{ granted: bool, reason?: string, administrationId?: string }`.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+	 */
+	private function grantDefaultAdministrationMembership(string $administrationCode): array {
+		if ($administrationCode === '') {
+			return ['granted' => false, 'reason' => 'no administrationCode'];
+		}
+
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return ['granted' => false, 'reason' => 'no authenticated user'];
+		}
+
+		$userId = $user->getUID();
+
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registerSlug = $this->getRegisterSlug();
+
+			// Resolve the uuid via administrationCode — a real JSON property, and
+			// therefore filterable. Filtering on `id` here would match nothing.
+			$administrations = $objectService
+				->setRegister($registerSlug)
+				->setSchema('Administration')
+				->findAll(
+					[
+						'filters' => ['administrationCode' => $administrationCode],
+						'limit' => 1,
+					]
+				);
+
+			$administrationId = '';
+			foreach ($administrations as $administration) {
+				$row = ($administration instanceof \JsonSerializable) ? $administration->jsonSerialize() : $administration;
+				if (is_array($row) === true) {
+					$administrationId = (string)($row['id'] ?? '');
+				}
+
+				break;
+			}
+
+			if ($administrationId === '') {
+				return ['granted' => false, 'reason' => 'administration not found: ' . $administrationCode];
+			}
+
+			$existing = $objectService
+				->setRegister($registerSlug)
+				->setSchema('AdministrationMembership')
+				->findAll(
+					[
+						'filters' => [
+							'userId' => $userId,
+							'administrationId' => $administrationId,
+						],
+						'limit' => 1,
+					]
+				);
+
+			if (empty($existing) === false) {
+				return ['granted' => false, 'reason' => 'already a member', 'administrationId' => $administrationId];
+			}
+
+			$objectService->saveObject(
+				object: [
+					'userId' => $userId,
+					'administrationId' => $administrationId,
+					'role' => 'eigenaar',
+					'mayPostJournalEntries' => true,
+					'mayCloseFiscalYear' => true,
+					'validFrom' => date('Y-m-d'),
+					'validUntil' => null,
+					'grantedBy' => $userId,
+				],
+				register: $registerSlug,
+				schema: 'AdministrationMembership',
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'SettingsService: failed to grant default administration membership',
+				['userId' => $userId, 'administrationCode' => $administrationCode, 'exception' => $e->getMessage()]
+			);
+			return ['granted' => false, 'reason' => 'exception: ' . $e->getMessage()];
+		}//end try
+
+		$this->logger->info(
+			'SettingsService: granted default administration membership',
+			['userId' => $userId, 'administrationId' => $administrationId]
+		);
+
+		return ['granted' => true, 'administrationId' => $administrationId];
+	}//end grantDefaultAdministrationMembership()
 
 	/**
 	 * Read the `administrationCode` of the bundled default-administration seed.
@@ -653,7 +777,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
 	public function seedBbvAccountMappings(string $administrationId, string $administrationType): array {
-		$municipalTypes = ['municipality', 'province', 'waterAuthority'];
+		$municipalTypes = ['municipality', 'provincie', 'waterschap'];
 		if (in_array($administrationType, $municipalTypes, true) === false) {
 			return [
 				'success' => true,
@@ -2866,7 +2990,7 @@ class SettingsService {
 			$files = [
 				'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
 				'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
-				'abb-example-municipality.json' => ['GeneralInterestDecision', 'besluiten', 'reference'],
+				'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
 				'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
 			];
 
