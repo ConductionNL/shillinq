@@ -113,6 +113,26 @@ jobs:
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
+
+      # ── E2E browser tests ────────────────────────────────────────────────
+      # `enable-playwright` defaults to FALSE and was never set here, so the
+      # "E2E Tests (Playwright)" job has reported `skipped` on every run this
+      # repo has ever produced — while the tree ships a root
+      # `playwright.config.ts` and 53 spec files under `tests/e2e/`. A skipped
+      # job is not a pass: it is the absence of a measurement, and the Quality
+      # Report renders it identically to a green one.
+      #
+      # `playwright-test-path` does double duty in the shared workflow: it is
+      # both the test directory AND the first place it looks for a config
+      # (`${playwright-test-path}/playwright.config.ts`, falling back to the
+      # repo root). We ship tests/e2e/playwright.config.ts precisely so that
+      # lookup hits it — the workflow passes no `--project`, so if the ROOT
+      # config were picked it would also run `docs-capture` (re-shooting every
+      # journeydoc screenshot, which has its own job) and `visual` (pixel
+      # baselines that cannot byte-match a CI runner). See that file's header.
+      enable-playwright: true
+      playwright-test-path: tests/e2e
+
       enable-newman: true
       # Shillinq delegates ALL object CRUD to OpenRegister (@conduction/nextcloud-vue
       # store factories hit /apps/openregister/api/objects), so a Nextcloud without
