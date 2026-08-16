@@ -69,7 +69,6 @@ class StatementManifestService {
 	 * Import the RJ 270 statement-presentation manifests idempotently.
 	 *
 	 * Operator-edited manifests already present in app config are preserved.
-	 * Use {@see self::importForced()} to bypass that guard.
 	 *
 	 * @return array{success: bool, imported: int, skipped: int, message?: string}
 	 *
@@ -79,19 +78,17 @@ class StatementManifestService {
 		return $this->run(force: false);
 	}//end import()
 
-	/**
-	 * Force re-import of the statement-presentation manifests.
+	/*
+	 * NO importForced() HERE.
 	 *
-	 * Overwrites any operator-edited manifest. Used by forced register upgrades
-	 * that bump the shillinq_register.json version.
-	 *
-	 * @return array{success: bool, imported: int, skipped: int, message?: string}
-	 *
-	 * @spec openspec/specs/bookkeeping-financial-statements/spec.md
+	 * It was `run(force: true)` — a one-statement variant of `import()` above
+	 * that overwrites operator-edited manifests. Its docblock claimed it was
+	 * "used by forced register upgrades", but no such caller exists: the only
+	 * consumer, `Repair\InitializeSettings`, calls `import()`. A method whose
+	 * whole purpose is to overwrite operator edits, reachable by nobody, is
+	 * a destructive capability waiting for a first caller rather than one
+	 * that lost its last.
 	 */
-	public function importForced(): array {
-		return $this->run(force: true);
-	}//end importForced()
 
 	/**
 	 * Internal implementation for the statement-manifest import.

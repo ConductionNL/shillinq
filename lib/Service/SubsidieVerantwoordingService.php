@@ -174,55 +174,20 @@ class SubsidieVerantwoordingService {
 		return $awardedAmount >= $this->resolveThreshold();
 	}//end requiresAuditorStatement()
 
-	/**
-	 * Persist a generated record idempotently via the real ObjectService API (ADR-022).
+	/*
+	 * NO persistChange() HERE.
 	 *
-	 * Deduplication is by the supplied unique business key (verantwoordingId or
-	 * statementId): if a record already exists it is skipped so re-running the
-	 * lifecycle action is safe and never produces duplicates.
-	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param string $register The register slug.
-	 * @param string $schema The schema slug.
-	 * @param string $dedupeField The unique business-key field name.
-	 * @param array<string,mixed> $payload The record payload to persist.
-	 *
-	 * @return bool True when a new record was created, false when skipped as duplicate.
-	 *
-	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 * It took an ObjectService, a register, a schema, a dedupe field and a
+	 * payload, and saved the payload unless a record with the same business
+	 * key already existed. It had no caller: the two builders above are pure
+	 * and return their payloads, and nothing in this app took a payload back
+	 * for a save. The generic "save anything into any register/schema"
+	 * signature is also the widest possible write surface for the narrowest
+	 * possible need, so it is removed rather than wired — a caller that
+	 * genuinely needs to persist a verantwoording should call OpenRegister's
+	 * ObjectService for its own schema (ADR-022), not through a pass-through
+	 * that accepts an arbitrary target.
 	 */
-	public function persistChange(
-		object $objectService,
-		string $register,
-		string $schema,
-		string $dedupeField,
-		array $payload,
-	): bool {
-		$dedupeValue = (string)($payload[$dedupeField] ?? '');
-		if ($dedupeValue !== '') {
-			$existing = $objectService
-				->setRegister($register)
-				->setSchema($schema)
-				->findAll(
-					[
-						'filters' => [$dedupeField => $dedupeValue],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($existing) === false) {
-				return false;
-			}
-		}
-
-		$objectService->saveObject(
-			object: $payload,
-			register: $register,
-			schema: $schema,
-		);
-
-		return true;
-	}//end persistChange()
 
 	/**
 	 * Compute the reporting period string from a grant award date to the report date.
