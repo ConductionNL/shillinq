@@ -68,6 +68,7 @@ class WbsoTransactionService {
 	 *
 	 * @param IAppConfig $appConfig App config (register slug).
 	 * @param IUserSession $userSession Authenticated session (used to record createdBy).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

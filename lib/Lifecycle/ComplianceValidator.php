@@ -57,6 +57,7 @@ class ComplianceValidator {
 	 *
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.
 	 * @param LoggerInterface $logger Nextcloud logger for compliance audit logging.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

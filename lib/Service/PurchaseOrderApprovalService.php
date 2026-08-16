@@ -124,6 +124,7 @@ class PurchaseOrderApprovalService {
 	 *                                  (server-authoritative).
 	 * @param LoggerInterface $logger Logger (no sensitive
 	 *                                payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ApprovalActivityEmitter|null $activityEmitter Optional emitter for
 	 *                                                      approval activity events.
 	 *

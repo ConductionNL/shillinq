@@ -134,11 +134,10 @@ class SupplierInvoiceService {
 	/**
 	 * Constructor.
 	 *
-	 *                                      is fetched lazily so unit tests
-	 *                                      can swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

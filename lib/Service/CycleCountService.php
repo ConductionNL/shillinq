@@ -92,6 +92,7 @@ class CycleCountService {
 	 *                              slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs payloads.
 	 * @param VarianceGate $varianceGate Pure helper for threshold + recalculation.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

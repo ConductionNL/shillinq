@@ -84,6 +84,7 @@ class ViesService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IClientService $clientService Nextcloud HTTP client factory.
 	 * @param LoggerInterface $logger Logger (no special-category data logged).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
