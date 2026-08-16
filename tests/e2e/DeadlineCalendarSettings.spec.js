@@ -31,6 +31,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
 const ROUTE = '/settings/deadline-calendar'
@@ -56,7 +57,7 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		await dismissWizard(page)
 
 		const filing = page.getByTestId('deadline-category-filing')
-		const deployed = await filing.isVisible().catch(() => false)
+		const deployed = await becomesVisible(filing)
 		test.skip(
 			!deployed,
 			'deadline-calendar settings page not deployed on this build',
@@ -80,7 +81,7 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		await dismissWizard(page)
 
 		const toggle = page.getByTestId('deadline-toggle-payment-run')
-		const deployed = await toggle.isVisible().catch(() => false)
+		const deployed = await becomesVisible(toggle)
 		test.skip(
 			!deployed,
 			'deadline-calendar settings page not deployed on this build',
