@@ -42,9 +42,9 @@
 			:widgets="widgets"
 			:layout="layout"
 			:loading="loading"
-			:cell-height="80"
-			:grid-margin="16"
-			:empty-label="t('shillinq', 'No widgets configured.')">
+			:cellHeight="80"
+			:gridMargin="16"
+			:emptyLabel="t('shillinq', 'No widgets configured.')">
 			<template #header-actions>
 				<span
 					v-if="scope.fiscalYear"
@@ -91,7 +91,7 @@
 				<BBVProgrammeTable
 					:programmes="programmes"
 					:loading="loading"
-					@row-click="onProgrammeClick" />
+					@rowClick="onProgrammeClick" />
 			</template>
 		</CnDashboardPage>
 
@@ -103,14 +103,13 @@
 
 <script>
 import { CnDashboardPage } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
-
-import BBVKPICards from './BBVKPICards.vue'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import BBVComplianceChart from './BBVComplianceChart.vue'
-import BBVTrendChart from './BBVTrendChart.vue'
+import BBVKPICards from './BBVKPICards.vue'
 import BBVProgrammeTable from './BBVProgrammeTable.vue'
+import BBVTrendChart from './BBVTrendChart.vue'
 
 export default {
 	name: 'BBVComplianceDashboard',
@@ -121,6 +120,7 @@ export default {
 		BBVTrendChart,
 		BBVProgrammeTable,
 	},
+
 	data() {
 		return {
 			programmes: [],
@@ -138,6 +138,7 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		widgets() {
 			return [
@@ -147,6 +148,7 @@ export default {
 				{ id: 'bbv-table', title: this.t('shillinq', 'Programme utilization'), type: 'custom' },
 			]
 		},
+
 		layout() {
 			return [
 				{ id: 'layout-kpis', widgetId: 'bbv-kpis', gridX: 0, gridY: 0, gridWidth: 12, gridHeight: 2, showTitle: false },
@@ -155,12 +157,14 @@ export default {
 				{ id: 'layout-table', widgetId: 'bbv-table', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
 			]
 		},
+
 		fyLabel() {
 			if (!this.scope.fiscalYear) {
 				return ''
 			}
 			return this.t('shillinq', 'FY {year}', { year: this.scope.fiscalYear })
 		},
+
 		scopeDescription() {
 			if (!this.scope.fiscalYear) {
 				return this.t('shillinq', 'Fiscal-year overview of programme utilization and compliance status.')
@@ -172,10 +176,12 @@ export default {
 			)
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadProgrammes()
 	},
+
 	methods: {
 		t,
 		async loadAdministrationContext() {
@@ -194,12 +200,14 @@ export default {
 				this.error = this.t('shillinq', 'Failed to load administration context')
 			}
 		},
+
 		async onAdministrationChange() {
 			// Server-side scope is derived from the session, but explicitly
 			// passing administrationId lets a multi-admin user pivot the
 			// view without a session-switch round-trip (REQ-BBVW-006).
 			await this.loadProgrammes()
 		},
+
 		/**
 		 * Load the BBV compliance envelope (widgets, programmes, mappings,
 		 * counts, summary) for the active administration and render the
@@ -249,6 +257,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		onProgrammeClick(row) {
 			// The table component handles router.push itself; this hook is
 			// kept so embedders (e.g. tests, parent shells) can intercept

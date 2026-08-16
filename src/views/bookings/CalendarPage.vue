@@ -32,7 +32,7 @@
 		<CalendarView
 			ref="grid"
 			:key="gridKey"
-			:calendar-id="calendarId"
+			:calendarId="calendarId"
 			@booking:selected="onBookingSelected"
 			@slot:clicked="onSlotClicked" />
 
@@ -41,9 +41,9 @@
 			class="bookings-calendar-page__form"
 			data-testid="booking-form-panel">
 			<BookingForm
-				:calendar-id="calendarId"
-				:initial-start="formStart"
-				:initial-end="formEnd"
+				:calendarId="calendarId"
+				:initialStart="formStart"
+				:initialEnd="formEnd"
 				@booking:created="onBookingCreated"
 				@cancel="formOpen = false" />
 		</aside>
@@ -51,8 +51,8 @@
 </template>
 
 <script>
-import CalendarView from './CalendarView.vue'
 import BookingForm from './BookingForm.vue'
+import CalendarView from './CalendarView.vue'
 
 export default {
 	name: 'CalendarPage',

@@ -105,8 +105,8 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 import BookingConflictDialog from '../../modals/BookingConflictDialog.vue'
 
 const MIN_DURATION_MS = 15 * 60 * 1000
@@ -127,6 +127,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * `datetime-local` value to pre-fill the start field with — the host
 		 * passes the clicked slot's window so the operator does not retype it.
@@ -135,6 +136,7 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * `datetime-local` value to pre-fill the end field with.
 		 */
@@ -155,6 +157,7 @@ export default {
 				attendee: '',
 				status: 'pending',
 			},
+
 			validationError: '',
 			submitting: false,
 			showConflictDialog: false,
