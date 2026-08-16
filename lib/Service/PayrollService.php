@@ -58,6 +58,7 @@ class PayrollService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Pure-logic payroll arithmetic helper.
 	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
+	 * @param ObjectServiceInterface $objectService OpenRegister object service.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
