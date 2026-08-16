@@ -47,9 +47,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lower-of-cost-or-NRV period-end write-down + balanced GL (ADR-031 exception).
@@ -58,370 +58,353 @@ use RuntimeException;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class NrvWriteDownService
-{
+class NrvWriteDownService {
 
-    /**
-     * App-config key for the inventory asset account (RGS 3.5 default '1300').
-     */
-    public const CFG_INVENTORY_ACCOUNT = 'inventory_account';
+	/**
+	 * App-config key for the inventory asset account (RGS 3.5 default '1300').
+	 */
+	public const CFG_INVENTORY_ACCOUNT = 'inventory_account';
 
-    /**
-     * App-config key for the inventory write-down expense account (RGS default '7050').
-     */
-    public const CFG_WRITEDOWN_ACCOUNT = 'inventory_writedown_account';
+	/**
+	 * App-config key for the inventory write-down expense account (RGS default '7050').
+	 */
+	public const CFG_WRITEDOWN_ACCOUNT = 'inventory_writedown_account';
 
-    /**
-     * Documented default inventory asset account.
-     */
-    private const DEFAULT_INVENTORY_ACCOUNT = '1300';
+	/**
+	 * Documented default inventory asset account.
+	 */
+	private const DEFAULT_INVENTORY_ACCOUNT = '1300';
 
-    /**
-     * Documented default write-down expense account (afwaardering voorraden).
-     */
-    private const DEFAULT_WRITEDOWN_ACCOUNT = '7050';
+	/**
+	 * Documented default write-down expense account (afwaardering voorraden).
+	 */
+	private const DEFAULT_WRITEDOWN_ACCOUNT = '7050';
 
-    /**
-     * Construct the service.
-     *
-     * @param ContainerInterface          $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig                  $appConfig App config for account numbers + register slug.
-     * @param InventoryGlAdjustmentPoster $poster    Shared balanced-posting adapter.
-     * @param LoggerInterface             $logger    Logger for diagnostics; never logs full payloads.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly InventoryGlAdjustmentPoster $poster,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the service.
+	 *
+	 * @param IAppConfig $appConfig App config for account numbers + register slug.
+	 * @param InventoryGlAdjustmentPoster $poster Shared balanced-posting adapter.
+	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly InventoryGlAdjustmentPoster $poster,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Apply lower-of-cost-or-NRV to one InventoryValuation snapshot.
-     *
-     * @param array<string,mixed> $valuation   The active InventoryValuation snapshot (cost basis).
-     * @param float               $nrvPerUnit  Net realisable value per unit (operator input).
-     * @param string              $periodId    Period identifier (e.g. 2026-Q4).
-     * @param string              $postingDate ISO yyyy-mm-dd; empty defaults to today.
-     *
-     * @return array<string,mixed> Result envelope: 'posted' bool, 'writeDownCents', 'posting', 'valuation'.
-     *
-     * @spec openspec/specs/inventory-accounting-correctness/spec.md
-     */
-    public function writeDown(
-        array $valuation,
-        float $nrvPerUnit,
-        string $periodId,
-        string $postingDate=''
-    ): array {
-        $unitCost = (float) ($valuation['unitCost'] ?? 0);
-        $quantity = (float) ($valuation['quantity'] ?? 0);
+	/**
+	 * Apply lower-of-cost-or-NRV to one InventoryValuation snapshot.
+	 *
+	 * @param array<string,mixed> $valuation The active InventoryValuation snapshot (cost basis).
+	 * @param float $nrvPerUnit Net realisable value per unit (operator input).
+	 * @param string $periodId Period identifier (e.g. 2026-Q4).
+	 * @param string $postingDate ISO yyyy-mm-dd; empty defaults to today.
+	 *
+	 * @return array<string,mixed> Result envelope: 'posted' bool, 'writeDownCents', 'posting', 'valuation'.
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	public function writeDown(
+		array $valuation,
+		float $nrvPerUnit,
+		string $periodId,
+		string $postingDate = '',
+	): array {
+		$unitCost = (float)($valuation['unitCost'] ?? 0);
+		$quantity = (float)($valuation['quantity'] ?? 0);
 
-        // Lower-of-cost-or-NRV: NEVER write up. NRV at or above cost is a no-op.
-        if ($nrvPerUnit >= $unitCost) {
-            return [
-                'posted'         => false,
-                'writeDownCents' => 0,
-                'valuation'      => $valuation,
-                'message'        => 'NRV >= cost — no write-down (lower-of-cost-or-NRV never writes up)',
-            ];
-        }
+		// Lower-of-cost-or-NRV: NEVER write up. NRV at or above cost is a no-op.
+		if ($nrvPerUnit >= $unitCost) {
+			return [
+				'posted' => false,
+				'writeDownCents' => 0,
+				'valuation' => $valuation,
+				'message' => 'NRV >= cost — no write-down (lower-of-cost-or-NRV never writes up)',
+			];
+		}
 
-        $writeDownCents = (int) round((($unitCost - $nrvPerUnit) * $quantity) * 100);
-        if ($writeDownCents <= 0) {
-            return [
-                'posted'         => false,
-                'writeDownCents' => 0,
-                'valuation'      => $valuation,
-                'message'        => 'write-down rounds to zero — nothing to post',
-            ];
-        }
+		$writeDownCents = (int)round((($unitCost - $nrvPerUnit) * $quantity) * 100);
+		if ($writeDownCents <= 0) {
+			return [
+				'posted' => false,
+				'writeDownCents' => 0,
+				'valuation' => $valuation,
+				'message' => 'write-down rounds to zero — nothing to post',
+			];
+		}
 
-        $administrationId = (string) ($valuation['administrationId'] ?? '');
-        $itemId           = (string) ($valuation['productId'] ?? '');
-        $effectiveDate    = date('Y-m-d');
-        if ($postingDate !== '') {
-            $effectiveDate = substr($postingDate, 0, 10);
-        }
+		$administrationId = (string)($valuation['administrationId'] ?? '');
+		$itemId = (string)($valuation['productId'] ?? '');
+		$effectiveDate = date('Y-m-d');
+		if ($postingDate !== '') {
+			$effectiveDate = substr($postingDate, 0, 10);
+		}
 
-        $sourceReference = 'inventory';
-        if ($itemId !== '') {
-            $sourceReference = $itemId;
-        }
+		$sourceReference = 'inventory';
+		if ($itemId !== '') {
+			$sourceReference = $itemId;
+		}
 
-        $posting = $this->poster->post(
-            administrationId: $administrationId,
-            debitAccount: $this->writeDownAccount(),
-            creditAccount: $this->inventoryAccount(),
-            amountCents: $writeDownCents,
-            journalCode: 'NRV',
-            description: $this->describe(itemId: $itemId, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit),
-            sourceReference: $sourceReference,
-            postingDate: $effectiveDate,
-            periodId: $periodId
-        );
+		$posting = $this->poster->post(
+			administrationId: $administrationId,
+			debitAccount: $this->writeDownAccount(),
+			creditAccount: $this->inventoryAccount(),
+			amountCents: $writeDownCents,
+			journalCode: 'NRV',
+			description: $this->describe(itemId: $itemId, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit),
+			sourceReference: $sourceReference,
+			postingDate: $effectiveDate,
+			periodId: $periodId
+		);
 
-        if (((bool) ($posting['posted'] ?? false)) !== true) {
-            $this->logger->warning(
-                'NrvWriteDownService: write-down computed but GL post did not succeed',
-                [
-                    'productId'      => $itemId,
-                    'writeDownCents' => $writeDownCents,
-                    'reason'         => (string) ($posting['message'] ?? ''),
-                ]
-            );
+		if (((bool)($posting['posted'] ?? false)) !== true) {
+			$this->logger->warning(
+				'NrvWriteDownService: write-down computed but GL post did not succeed',
+				[
+					'productId' => $itemId,
+					'writeDownCents' => $writeDownCents,
+					'reason' => (string)($posting['message'] ?? ''),
+				]
+			);
 
-            return [
-                'posted'         => false,
-                'writeDownCents' => $writeDownCents,
-                'posting'        => $posting,
-                'valuation'      => $valuation,
-                'message'        => 'write-down computed but GL post failed: '.((string) ($posting['message'] ?? '')),
-            ];
-        }
+			return [
+				'posted' => false,
+				'writeDownCents' => $writeDownCents,
+				'posting' => $posting,
+				'valuation' => $valuation,
+				'message' => 'write-down computed but GL post failed: ' . ((string)($posting['message'] ?? '')),
+			];
+		}
 
-        // Re-mark the snapshot to NRV.
-        $newTotalCents           = (int) round(($nrvPerUnit * $quantity) * 100);
-        $valuation['unitCost']   = round($nrvPerUnit, 4);
-        $valuation['totalValue'] = round(($newTotalCents / 100), 2);
-        $valuation['status']     = 'adjusted';
-        $savedValuation          = $this->saveValuation(data: $valuation);
+		// Re-mark the snapshot to NRV.
+		$newTotalCents = (int)round(($nrvPerUnit * $quantity) * 100);
+		$valuation['unitCost'] = round($nrvPerUnit, 4);
+		$valuation['totalValue'] = round(($newTotalCents / 100), 2);
+		$valuation['status'] = 'adjusted';
+		$savedValuation = $this->saveValuation(data: $valuation);
 
-        return [
-            'posted'         => true,
-            'writeDownCents' => $writeDownCents,
-            'posting'        => $posting,
-            'valuation'      => $savedValuation,
-            'message'        => 'inventory written down to NRV',
-        ];
+		return [
+			'posted' => true,
+			'writeDownCents' => $writeDownCents,
+			'posting' => $posting,
+			'valuation' => $savedValuation,
+			'message' => 'inventory written down to NRV',
+		];
 
-    }//end writeDown()
+	}//end writeDown()
 
-    /**
-     * Run lower-of-cost-or-NRV across every active snapshot for an
-     * administration, driven by an operator-supplied NRV map keyed by
-     * productId.
-     *
-     * @param string              $administrationId Tenant scope.
-     * @param string              $periodId         Period identifier.
-     * @param array<string,float> $nrvBySku         Map productId => NRV per unit.
-     * @param string              $postingDate      ISO yyyy-mm-dd; empty defaults to today.
-     *
-     * @return array<string,mixed> Batch envelope: 'writeDownCount', 'totalWriteDownCents', 'results'.
-     *
-     * @spec openspec/specs/inventory-accounting-correctness/spec.md
-     */
-    public function runForAdministration(
-        string $administrationId,
-        string $periodId,
-        array $nrvBySku,
-        string $postingDate=''
-    ): array {
-        $results        = [];
-        $writeDownCount = 0;
-        $totalCents     = 0;
+	/**
+	 * Run lower-of-cost-or-NRV across every active snapshot for an
+	 * administration, driven by an operator-supplied NRV map keyed by
+	 * productId.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $periodId Period identifier.
+	 * @param array<string,float> $nrvBySku Map productId => NRV per unit.
+	 * @param string $postingDate ISO yyyy-mm-dd; empty defaults to today.
+	 *
+	 * @return array<string,mixed> Batch envelope: 'writeDownCount', 'totalWriteDownCents', 'results'.
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	public function runForAdministration(
+		string $administrationId,
+		string $periodId,
+		array $nrvBySku,
+		string $postingDate = '',
+	): array {
+		$results = [];
+		$writeDownCount = 0;
+		$totalCents = 0;
 
-        foreach ($this->activeValuations(administrationId: $administrationId) as $valuation) {
-            $itemId = (string) ($valuation['productId'] ?? '');
-            if ($itemId === '' || array_key_exists($itemId, $nrvBySku) === false) {
-                continue;
-            }
+		foreach ($this->activeValuations(administrationId: $administrationId) as $valuation) {
+			$itemId = (string)($valuation['productId'] ?? '');
+			if ($itemId === '' || array_key_exists($itemId, $nrvBySku) === false) {
+				continue;
+			}
 
-            $result    = $this->writeDown(
-                valuation: $valuation,
-                nrvPerUnit: (float) $nrvBySku[$itemId],
-                periodId: $periodId,
-                postingDate: $postingDate
-            );
-            $results[] = $result;
-            if (((bool) ($result['posted'] ?? false)) === true) {
-                $writeDownCount++;
-                $totalCents += (int) ($result['writeDownCents'] ?? 0);
-            }
-        }
+			$result = $this->writeDown(
+				valuation: $valuation,
+				nrvPerUnit: (float)$nrvBySku[$itemId],
+				periodId: $periodId,
+				postingDate: $postingDate
+			);
+			$results[] = $result;
+			if (((bool)($result['posted'] ?? false)) === true) {
+				$writeDownCount++;
+				$totalCents += (int)($result['writeDownCents'] ?? 0);
+			}
+		}
 
-        return [
-            'administrationId'    => $administrationId,
-            'periodId'            => $periodId,
-            'writeDownCount'      => $writeDownCount,
-            'totalWriteDownCents' => $totalCents,
-            'results'             => $results,
-        ];
+		return [
+			'administrationId' => $administrationId,
+			'periodId' => $periodId,
+			'writeDownCount' => $writeDownCount,
+			'totalWriteDownCents' => $totalCents,
+			'results' => $results,
+		];
 
-    }//end runForAdministration()
+	}//end runForAdministration()
 
-    /**
-     * Load every active InventoryValuation snapshot for an administration.
-     *
-     * @param string $administrationId Tenant scope.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function activeValuations(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $rows          = $objectService
-            ->setRegister($this->register())
-            ->setSchema('InventoryValuation')
-            ->findAll(
-                [
-                    'filters' => [
-                        'status'           => 'active',
-                        'administrationId' => $administrationId,
-                    ],
-                ]
-            );
+	/**
+	 * Load every active InventoryValuation snapshot for an administration.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function activeValuations(string $administrationId): array {
+		$rows = $this->objectService
+			->setRegister($this->register())
+			->setSchema('InventoryValuation')
+			->findAll(
+				[
+					'filters' => [
+						'status' => 'active',
+						'administrationId' => $administrationId,
+					],
+				]
+			);
 
-        if (is_array($rows) === false) {
-            return [];
-        }
+		if (is_array($rows) === false) {
+			return [];
+		}
 
-        $out = [];
-        foreach ($rows as $row) {
-            $out[] = $this->asArray(row: $row);
-        }
+		$out = [];
+		foreach ($rows as $row) {
+			$out[] = $this->asArray(row: $row);
+		}
 
-        return $out;
+		return $out;
+	}//end activeValuations()
 
-    }//end activeValuations()
+	/**
+	 * Persist an InventoryValuation snapshot.
+	 *
+	 * @param array<string,mixed> $data Snapshot data.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function saveValuation(array $data): array {
+		$saved = $this->objectService
+			->setRegister($this->register())
+			->setSchema('InventoryValuation')
+			->saveObject($data);
 
-    /**
-     * Persist an InventoryValuation snapshot.
-     *
-     * @param array<string,mixed> $data Snapshot data.
-     *
-     * @return array<string,mixed>
-     */
-    private function saveValuation(array $data): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $saved         = $objectService
-            ->setRegister($this->register())
-            ->setSchema('InventoryValuation')
-            ->saveObject($data);
+		if (is_array($saved) === false) {
+			return $this->asArray(row: $saved);
+		}
 
-        if (is_array($saved) === false) {
-            return $this->asArray(row: $saved);
-        }
+		return $saved;
+	}//end saveValuation()
 
-        return $saved;
+	/**
+	 * Compose the human-readable GL description.
+	 *
+	 * @param string $itemId Product id.
+	 * @param int $writeDownCents Write-down in cents.
+	 * @param float $nrvPerUnit NRV per unit.
+	 *
+	 * @return string
+	 */
+	private function describe(string $itemId, int $writeDownCents, float $nrvPerUnit): string {
+		return sprintf(
+			'NRV write-down — %s — EUR %s (to NRV %s/unit)',
+			$itemId,
+			number_format(($writeDownCents / 100), 2, ',', ''),
+			number_format($nrvPerUnit, 4, ',', '')
+		);
 
-    }//end saveValuation()
+	}//end describe()
 
-    /**
-     * Compose the human-readable GL description.
-     *
-     * @param string $itemId         Product id.
-     * @param int    $writeDownCents Write-down in cents.
-     * @param float  $nrvPerUnit     NRV per unit.
-     *
-     * @return string
-     */
-    private function describe(string $itemId, int $writeDownCents, float $nrvPerUnit): string
-    {
-        return sprintf(
-            'NRV write-down — %s — EUR %s (to NRV %s/unit)',
-            $itemId,
-            number_format(($writeDownCents / 100), 2, ',', ''),
-            number_format($nrvPerUnit, 4, ',', '')
-        );
+	/**
+	 * Resolve the inventory asset account.
+	 *
+	 * @return string
+	 */
+	private function inventoryAccount(): string {
+		$configured = trim(
+			$this->appConfig->getValueString(
+				Application::APP_ID,
+				self::CFG_INVENTORY_ACCOUNT,
+				self::DEFAULT_INVENTORY_ACCOUNT
+			)
+		);
+		if ($configured === '') {
+			return self::DEFAULT_INVENTORY_ACCOUNT;
+		}
 
-    }//end describe()
+		return $configured;
+	}//end inventoryAccount()
 
-    /**
-     * Resolve the inventory asset account.
-     *
-     * @return string
-     */
-    private function inventoryAccount(): string
-    {
-        $configured = trim(
-            $this->appConfig->getValueString(
-                Application::APP_ID,
-                self::CFG_INVENTORY_ACCOUNT,
-                self::DEFAULT_INVENTORY_ACCOUNT
-            )
-        );
-        if ($configured === '') {
-            return self::DEFAULT_INVENTORY_ACCOUNT;
-        }
+	/**
+	 * Resolve the inventory write-down expense account.
+	 *
+	 * @return string
+	 */
+	private function writeDownAccount(): string {
+		$configured = trim(
+			$this->appConfig->getValueString(
+				Application::APP_ID,
+				self::CFG_WRITEDOWN_ACCOUNT,
+				self::DEFAULT_WRITEDOWN_ACCOUNT
+			)
+		);
+		if ($configured === '') {
+			return self::DEFAULT_WRITEDOWN_ACCOUNT;
+		}
 
-        return $configured;
+		return $configured;
+	}//end writeDownAccount()
 
-    }//end inventoryAccount()
+	/**
+	 * Normalise an OR Object / array to a plain array<string,mixed>.
+	 *
+	 * @param mixed $row Raw row from ObjectService.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
 
-    /**
-     * Resolve the inventory write-down expense account.
-     *
-     * @return string
-     */
-    private function writeDownAccount(): string
-    {
-        $configured = trim(
-            $this->appConfig->getValueString(
-                Application::APP_ID,
-                self::CFG_WRITEDOWN_ACCOUNT,
-                self::DEFAULT_WRITEDOWN_ACCOUNT
-            )
-        );
-        if ($configured === '') {
-            return self::DEFAULT_WRITEDOWN_ACCOUNT;
-        }
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-        return $configured;
+			return [];
+		}
 
-    }//end writeDownAccount()
+		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+			$out = $row->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-    /**
-     * Normalise an OR Object / array to a plain array<string,mixed>.
-     *
-     * @param mixed $row Raw row from ObjectService.
-     *
-     * @return array<string,mixed>
-     */
-    private function asArray(mixed $row): array
-    {
-        if (is_array($row) === true) {
-            return $row;
-        }
+			return [];
+		}
 
-        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-            $out = $row->jsonSerialize();
-            if (is_array($out) === true) {
-                return $out;
-            }
+		throw new RuntimeException('NrvWriteDownService: unsupported row type from ObjectService');
+	}//end asArray()
 
-            return [];
-        }
+	/**
+	 * Resolve the OR register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-            $out = $row->getObject();
-            if (is_array($out) === true) {
-                return $out;
-            }
-
-            return [];
-        }
-
-        throw new RuntimeException('NrvWriteDownService: unsupported row type from ObjectService');
-
-    }//end asArray()
-
-    /**
-     * Resolve the OR register slug, defaulting to 'shillinq'.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

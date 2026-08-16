@@ -59,104 +59,100 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
-final class GLTransactionComplianceCacheListener implements IEventListener
-{
-    /**
-     * Schema slugs whose create/update should invalidate the cache.
-     *
-     * `GLTransaction` is the bookkeeping-foundation transaction header;
-     * `GLLine` is its line child; `GLTransactionLine` is the slice-02
-     * aggregation join target (some seeds use the long-form slug). All
-     * three are checked case-insensitively in {@see self::isWatched()}.
-     *
-     * @var array<int,string>
-     */
-    private const WATCHED_SCHEMAS = [
-        'gltransaction',
-        'glline',
-        'gltransactionline',
-    ];
+final class GLTransactionComplianceCacheListener implements IEventListener {
+	/**
+	 * Schema slugs whose create/update should invalidate the cache.
+	 *
+	 * `GLTransaction` is the bookkeeping-foundation transaction header;
+	 * `GLLine` is its line child; `GLTransactionLine` is the slice-02
+	 * aggregation join target (some seeds use the long-form slug). All
+	 * three are checked case-insensitively in {@see self::isWatched()}.
+	 *
+	 * @var array<int,string>
+	 */
+	private const WATCHED_SCHEMAS = [
+		'gltransaction',
+		'glline',
+		'gltransactionline',
+	];
 
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param ComplianceService      $compliance     Compliance cache owner.
-     * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
-     * @param LoggerInterface        $logger         Logger for fail-soft.
-     */
-    public function __construct(
-        private readonly ComplianceService $compliance,
-        private readonly ListenerSchemaResolver $schemaResolver,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param ComplianceService $compliance Compliance cache owner.
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LoggerInterface $logger Logger for fail-soft.
+	 */
+	public function __construct(
+		private readonly ComplianceService $compliance,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle a GL transaction create or update event by invalidating
-     * the per-programme compliance cache.
-     *
-     * @param Event $event OR ObjectCreatedEvent / ObjectUpdatedEvent.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if (($event instanceof ObjectCreatedEvent) === false
-            && ($event instanceof ObjectUpdatedEvent) === false
-        ) {
-            return;
-        }
+	/**
+	 * Handle a GL transaction create or update event by invalidating
+	 * the per-programme compliance cache.
+	 *
+	 * @param Event $event OR ObjectCreatedEvent / ObjectUpdatedEvent.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+	 */
+	public function handle(Event $event): void {
+		if (($event instanceof ObjectCreatedEvent) === false
+			&& ($event instanceof ObjectUpdatedEvent) === false
+		) {
+			return;
+		}
 
-        try {
-            $entity = $event->getObject();
-            if ($entity === null || $entity->getSchema() === null) {
-                return;
-            }
+		try {
+			$entity = $event->getObject();
+			if ($entity === null || $entity->getSchema() === null) {
+				return;
+			}
 
-            $schema = $this->schemaResolver->schemaSlug(entity: $entity);
-            if ($this->isWatched(schema: $schema) === false) {
-                return;
-            }
+			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
+			if ($this->isWatched(schema: $schema) === false) {
+				return;
+			}
 
-            $this->compliance->invalidateAll();
-        } catch (Throwable $e) {
-            // Never let a cache-invalidation hiccup bubble into the GL
-            // write path — log + continue. A stale envelope expires on
-            // the 1h TTL in the worst case.
-            $this->logger->warning(
-                'Shillinq compliance cache listener: invalidation failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->compliance->invalidateAll();
+		} catch (Throwable $e) {
+			// Never let a cache-invalidation hiccup bubble into the GL
+			// write path — log + continue. A stale envelope expires on
+			// the 1h TTL in the worst case.
+			$this->logger->warning(
+				'Shillinq compliance cache listener: invalidation failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Whether the supplied schema string identifies a watched GL schema.
-     *
-     * Schema strings may be plain slugs or `register/schema` paths
-     * depending on OR config — both are accepted.
-     *
-     * @param string $schema Schema identifier from the entity.
-     *
-     * @return bool TRUE when the schema is GLTransaction / GLLine / GLTransactionLine.
-     */
-    private function isWatched(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        foreach (self::WATCHED_SCHEMAS as $watched) {
-            if ($normalised === $watched) {
-                return true;
-            }
+	/**
+	 * Whether the supplied schema string identifies a watched GL schema.
+	 *
+	 * Schema strings may be plain slugs or `register/schema` paths
+	 * depending on OR config — both are accepted.
+	 *
+	 * @param string $schema Schema identifier from the entity.
+	 *
+	 * @return bool TRUE when the schema is GLTransaction / GLLine / GLTransactionLine.
+	 */
+	private function isWatched(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		foreach (self::WATCHED_SCHEMAS as $watched) {
+			if ($normalised === $watched) {
+				return true;
+			}
 
-            if (str_ends_with($normalised, ('/'.$watched)) === true) {
-                return true;
-            }
-        }
+			if (str_ends_with($normalised, ('/' . $watched)) === true) {
+				return true;
+			}
+		}
 
-        return false;
-
-    }//end isWatched()
+		return false;
+	}//end isWatched()
 }//end class

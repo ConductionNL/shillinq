@@ -23,31 +23,39 @@
 				<label>
 					{{ t('shillinq', 'Billing model') }}
 					<select v-model="form.billingModel" required>
-						<option value="t_and_m">{{ t('shillinq', 'Time & Materials') }}</option>
-						<option value="fixed_fee">{{ t('shillinq', 'Fixed fee') }}</option>
-						<option value="milestone">{{ t('shillinq', 'Milestone') }}</option>
-						<option value="retainer">{{ t('shillinq', 'Retainer') }}</option>
+						<option value="t_and_m">
+							{{ t('shillinq', 'Time & Materials') }}
+						</option>
+						<option value="fixed_fee">
+							{{ t('shillinq', 'Fixed fee') }}
+						</option>
+						<option value="milestone">
+							{{ t('shillinq', 'Milestone') }}
+						</option>
+						<option value="retainer">
+							{{ t('shillinq', 'Retainer') }}
+						</option>
 						<option value="mixed">{{ t('shillinq', 'Mixed') }}</option>
 					</select>
 				</label>
 				<label>
 					{{ t('shillinq', 'Customer') }}
-					<input v-model="form.customerId" type="text" required>
+					<input v-model="form.customerId" type="text" required />
 				</label>
 				<label>
 					{{ t('shillinq', 'Project (optional)') }}
-					<input v-model="form.projectId" type="text">
+					<input v-model="form.projectId" type="text" />
 				</label>
 			</div>
 
 			<div class="invoice-generator__row">
 				<label>
 					{{ t('shillinq', 'From') }}
-					<input v-model="form.fromDate" type="date" required>
+					<input v-model="form.fromDate" type="date" required />
 				</label>
 				<label>
 					{{ t('shillinq', 'To') }}
-					<input v-model="form.toDate" type="date" required>
+					<input v-model="form.toDate" type="date" required />
 				</label>
 			</div>
 
@@ -55,7 +63,10 @@
 				<label v-if="needsRateCard">
 					{{ t('shillinq', 'Rate card') }}
 					<select v-model="form.rateCardId">
-						<option v-for="card in rateCards" :key="card.id" :value="card.id">
+						<option
+							v-for="card in rateCards"
+							:key="card.id"
+							:value="card.id">
 							{{ card.label }}
 						</option>
 					</select>
@@ -70,14 +81,15 @@
 				</label>
 				<label v-if="needsFixedFee">
 					{{ t('shillinq', 'Fixed fee (€)') }}
-					<input v-model.number="fixedFeeEuros"
+					<input
+						v-model.number="fixedFeeEuros"
 						type="number"
 						min="0"
-						step="0.01">
+						step="0.01" />
 				</label>
 				<label v-if="needsMilestone">
 					{{ t('shillinq', 'Milestone ID') }}
-					<input v-model="form.milestoneId" type="text">
+					<input v-model="form.milestoneId" type="text" />
 				</label>
 			</div>
 
@@ -100,9 +112,18 @@
 			</div>
 
 			<div v-if="totals" class="invoice-generator__totals">
-				<p><strong>{{ t('shillinq', 'Net amount') }}:</strong> € {{ formatMoney(totals.netAmount) }}</p>
-				<p><strong>{{ t('shillinq', 'VAT/BTW') }}:</strong> € {{ formatMoney(totals.vatAmount) }}</p>
-				<p><strong>{{ t('shillinq', 'Gross amount') }}:</strong> € {{ formatMoney(totals.grossAmount) }}</p>
+				<p>
+					<strong>{{ t('shillinq', 'Net amount') }}:</strong> €
+					{{ formatMoney(totals.netAmount) }}
+				</p>
+				<p>
+					<strong>{{ t('shillinq', 'VAT/BTW') }}:</strong> €
+					{{ formatMoney(totals.vatAmount) }}
+				</p>
+				<p>
+					<strong>{{ t('shillinq', 'Gross amount') }}:</strong> €
+					{{ formatMoney(totals.grossAmount) }}
+				</p>
 			</div>
 
 			<div class="invoice-generator__actions">
@@ -136,6 +157,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		retainers: {
 			type: Array,
 			default: () => [],
@@ -155,6 +177,7 @@ export default {
 				milestoneId: '',
 				notes: '',
 			},
+
 			fixedFeeEuros: 0,
 			timeIdsRaw: '',
 			expenseIdsRaw: '',
@@ -169,15 +192,19 @@ export default {
 		needsRateCard() {
 			return ['t_and_m', 'mixed'].includes(this.form.billingModel)
 		},
+
 		needsRetainer() {
 			return ['retainer', 'mixed'].includes(this.form.billingModel)
 		},
+
 		needsFixedFee() {
 			return ['fixed_fee', 'mixed'].includes(this.form.billingModel)
 		},
+
 		needsMilestone() {
 			return this.form.billingModel === 'milestone'
 		},
+
 		payload() {
 			return {
 				...this.form,
@@ -194,12 +221,20 @@ export default {
 			if (typeof raw !== 'string' || raw.trim() === '') {
 				return []
 			}
-			return raw.split(',').map(s => s.trim()).filter(Boolean)
+			return raw
+				.split(',')
+				.map((s) => s.trim())
+				.filter(Boolean)
 		},
+
 		formatMoney(value) {
 			const n = Number(value || 0)
-			return n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+			return n.toLocaleString('nl-NL', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			})
 		},
+
 		async onSaveDraft() {
 			this.busy = true
 			this.error = ''
@@ -213,11 +248,15 @@ export default {
 				}
 				this.$emit('draft-created', result)
 			} catch (e) {
-				this.error = (e && e.message) ? e.message : t('shillinq', 'Failed to draft invoice')
+				this.error =
+					e && e.message
+						? e.message
+						: t('shillinq', 'Failed to draft invoice')
 			} finally {
 				this.busy = false
 			}
 		},
+
 		async onPreviewPdf() {
 			if (this.draftId === null) {
 				await this.onSaveDraft()
@@ -227,6 +266,7 @@ export default {
 				this.$emit('pdf-previewed', this.draftId)
 			}
 		},
+
 		async onPost() {
 			if (this.draftId === null) {
 				return
@@ -237,7 +277,10 @@ export default {
 				const result = await invoiceApi.post(this.draftId)
 				this.$emit('posted', result)
 			} catch (e) {
-				this.error = (e && e.message) ? e.message : t('shillinq', 'Failed to post invoice')
+				this.error =
+					e && e.message
+						? e.message
+						: t('shillinq', 'Failed to post invoice')
 			} finally {
 				this.busy = false
 			}

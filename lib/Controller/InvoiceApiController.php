@@ -48,317 +48,314 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * HTTP API for BillableInvoice drafting + posting.
  */
-class InvoiceApiController extends Controller
-{
-    /**
-     * Constructor.
-     *
-     * @param IRequest                     $request               Request.
-     * @param InvoiceGenerationService     $service               Drafting/posting service.
-     * @param InvoicePdfGenerator          $pdfGenerator          PDF/HTML renderer.
-     * @param ContainerInterface           $container             DI container.
-     * @param IUserSession                 $session               User session.
-     * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
-     * @param LoggerInterface              $logger                Logger.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly InvoiceGenerationService $service,
-        private readonly InvoicePdfGenerator $pdfGenerator,
-        private readonly ContainerInterface $container,
-        private readonly IUserSession $session,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+class InvoiceApiController extends Controller {
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request Request.
+	 * @param InvoiceGenerationService $service Drafting/posting service.
+	 * @param InvoicePdfGenerator $pdfGenerator PDF/HTML renderer.
+	 * @param IUserSession $session User session.
+	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly InvoiceGenerationService $service,
+		private readonly InvoicePdfGenerator $pdfGenerator,
+		private readonly IUserSession $session,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Draft a BillableInvoice (POST /api/v1/invoices/generate).
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function generate(): JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Draft a BillableInvoice (POST /api/v1/invoices/generate).
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function generate(): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        try {
-            $admin = $this->resolveAdministrationId();
-            $body  = $this->decodeBody();
+		try {
+			$admin = $this->resolveAdministrationId();
+			$body = $this->decodeBody();
 
-            $req     = InvoiceGenerationRequest::fromArray($admin, $body);
-            $invoice = $this->service->draftInvoice($req);
+			$req = InvoiceGenerationRequest::fromArray($admin, $body);
+			$invoice = $this->service->draftInvoice($req);
 
-            return new JSONResponse($invoice, Http::STATUS_OK);
-        } catch (\InvalidArgumentException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
-        } catch (\RuntimeException $e) {
-            $message = $e->getMessage();
-            $status  = Http::STATUS_BAD_REQUEST;
-            if (str_contains($message, 'Conflict') === true) {
-                $status = Http::STATUS_CONFLICT;
-            }
+			return new JSONResponse($invoice, Http::STATUS_OK);
+		} catch (\InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
+		} catch (\RuntimeException $e) {
+			$message = $e->getMessage();
+			$status = Http::STATUS_BAD_REQUEST;
+			if (str_contains($message, 'Conflict') === true) {
+				$status = Http::STATUS_CONFLICT;
+			}
 
-            return new JSONResponse(['error' => $message], $status);
-        } catch (\Throwable $e) {
-            $this->logger->error('InvoiceApiController.generate failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+			return new JSONResponse(['error' => $message], $status);
+		} catch (\Throwable $e) {
+			$this->logger->error('InvoiceApiController.generate failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-    }//end generate()
+	}//end generate()
 
-    /**
-     * List invoices for the current administration (GET /api/v1/invoices).
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function index(): JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * List invoices for the current administration (GET /api/v1/invoices).
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function index(): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        try {
-            $admin   = $this->resolveAdministrationId();
-            $filters = ['administrationId' => $admin];
+		try {
+			$admin = $this->resolveAdministrationId();
+			$filters = ['administrationId' => $admin];
 
-            $billingModel = (string) $this->request->getParam('billingModel', '');
-            if ($billingModel !== '') {
-                $filters['billingModel'] = $billingModel;
-            }
+			$billingModel = (string)$this->request->getParam('billingModel', '');
+			if ($billingModel !== '') {
+				$filters['billingModel'] = $billingModel;
+			}
 
-            $status = (string) $this->request->getParam('status', '');
-            if ($status !== '') {
-                $filters['status'] = $status;
-            }
+			$status = (string)$this->request->getParam('status', '');
+			if ($status !== '') {
+				$filters['status'] = $status;
+			}
 
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $all           = $objectService
-                ->setRegister('shillinq')
-                ->setSchema('BillableInvoice')
-                ->findAll(['filters' => $filters]);
+			$all = $this->objectService
+				->setRegister('shillinq')
+				->setSchema('BillableInvoice')
+				->findAll(['filters' => $filters]);
 
-            $items = [];
-            if (is_array($all) === true) {
-                $items = $all;
-            }
+			$items = [];
+			if (is_array($all) === true) {
+				$items = $all;
+			}
 
-            return new JSONResponse($items, Http::STATUS_OK);
-        } catch (\Throwable $e) {
-            $this->logger->error('InvoiceApiController.index failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+			return new JSONResponse($items, Http::STATUS_OK);
+		} catch (\Throwable $e) {
+			$this->logger->error('InvoiceApiController.index failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-    }//end index()
+	}//end index()
 
-    /**
-     * Show one invoice + its lines (GET /api/v1/invoices/{invoiceId}).
-     *
-     * @param string $invoiceId BillableInvoice id.
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function show(string $invoiceId): JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Show one invoice + its lines (GET /api/v1/invoices/{invoiceId}).
+	 *
+	 * @param string $invoiceId BillableInvoice id.
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function show(string $invoiceId): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        try {
-            $admin         = $this->resolveAdministrationId();
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		try {
+			$admin = $this->resolveAdministrationId();
 
-            $invoice = $objectService
-                ->setRegister('shillinq')
-                ->setSchema('BillableInvoice')
-                ->find($invoiceId);
+			$found = $this->objectService
+				->setRegister('shillinq')
+				->setSchema('BillableInvoice')
+				->find($invoiceId);
 
-            if (is_array($invoice) === false) {
-                return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-            }
+			if ($found === null) {
+				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            if (((string) ($invoice['administrationId'] ?? '')) !== $admin) {
-                return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
-            }
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
-            $lines = $objectService
-                ->setRegister('shillinq')
-                ->setSchema('BillableInvoiceLine')
-                ->findAll(['filters' => ['invoiceId' => $invoiceId]]);
+			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
+				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
+			}
 
-            $lineItems = [];
-            if (is_array($lines) === true) {
-                $lineItems = $lines;
-            }
+			$lines = $this->objectService
+				->setRegister('shillinq')
+				->setSchema('BillableInvoiceLine')
+				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
 
-            return new JSONResponse(
-                [
-                    'invoice'    => $invoice,
-                    'lines'      => $lineItems,
-                    'auditTrail' => [],
-                ],
-                Http::STATUS_OK
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error('InvoiceApiController.show failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+			$lineItems = [];
+			if (is_array($lines) === true) {
+				$lineItems = $lines;
+			}
 
-    }//end show()
+			return new JSONResponse(
+				[
+					'invoice' => $invoice,
+					'lines' => $lineItems,
+					'auditTrail' => [],
+				],
+				Http::STATUS_OK
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error('InvoiceApiController.show failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-    /**
-     * Post an invoice (POST /api/v1/invoices/{invoiceId}/post).
-     *
-     * @param string $invoiceId Id.
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function post(string $invoiceId): JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	}//end show()
 
-        try {
-            $admin         = $this->resolveAdministrationId();
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $invoice       = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+	/**
+	 * Post an invoice (POST /api/v1/invoices/{invoiceId}/post).
+	 *
+	 * @param string $invoiceId Id.
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function post(string $invoiceId): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-            if (is_array($invoice) === false) {
-                return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-            }
+		try {
+			$admin = $this->resolveAdministrationId();
+			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
-            if (((string) ($invoice['administrationId'] ?? '')) !== $admin) {
-                return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
-            }
+			if ($found === null) {
+				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            $updated = $this->service->postInvoice($invoice);
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
-            return new JSONResponse($updated, Http::STATUS_OK);
-        } catch (\RuntimeException $e) {
-            $message = $e->getMessage();
-            $status  = Http::STATUS_BAD_REQUEST;
-            if (str_contains($message, 'already posted') === true) {
-                $status = Http::STATUS_CONFLICT;
-            }
+			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
+				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
+			}
 
-            return new JSONResponse(['error' => $message], $status);
-        } catch (\Throwable $e) {
-            $this->logger->error('InvoiceApiController.post failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+			$updated = $this->service->postInvoice($invoice);
 
-    }//end post()
+			return new JSONResponse($updated, Http::STATUS_OK);
+		} catch (\RuntimeException $e) {
+			$message = $e->getMessage();
+			$status = Http::STATUS_BAD_REQUEST;
+			if (str_contains($message, 'already posted') === true) {
+				$status = Http::STATUS_CONFLICT;
+			}
 
-    /**
-     * Export invoice PDF (GET /api/v1/invoices/{invoiceId}/pdf).
-     *
-     * @param string $invoiceId Id.
-     *
-     * @return DataDisplayResponse|JSONResponse
-     */
-    #[NoAdminRequired]
-    public function pdf(string $invoiceId): DataDisplayResponse|JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+			return new JSONResponse(['error' => $message], $status);
+		} catch (\Throwable $e) {
+			$this->logger->error('InvoiceApiController.post failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-        try {
-            $admin         = $this->resolveAdministrationId();
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $invoice       = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+	}//end post()
 
-            if (is_array($invoice) === false) {
-                return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-            }
+	/**
+	 * Export invoice PDF (GET /api/v1/invoices/{invoiceId}/pdf).
+	 *
+	 * @param string $invoiceId Id.
+	 *
+	 * @return DataDisplayResponse|JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function pdf(string $invoiceId): DataDisplayResponse|JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-            if (((string) ($invoice['administrationId'] ?? '')) !== $admin) {
-                return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
-            }
+		try {
+			$admin = $this->resolveAdministrationId();
+			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
-            $lines     = $objectService
-                ->setRegister('shillinq')
-                ->setSchema('BillableInvoiceLine')
-                ->findAll(['filters' => ['invoiceId' => $invoiceId]]);
-            $lineItems = [];
-            if (is_array($lines) === true) {
-                $lineItems = $lines;
-            }
+			if ($found === null) {
+				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            $pdf = $this->pdfGenerator->generatePdf(invoice: $invoice, lines: $lineItems);
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
-            return new DataDisplayResponse(
-                $pdf['html'],
-                Http::STATUS_OK,
-                [
-                    'Content-Type'        => 'text/html; charset=utf-8',
-                    'Content-Disposition' => sprintf('inline; filename="%s.html"', preg_replace('/[^A-Za-z0-9._-]/', '_', $pdf['filename'])),
-                ]
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error('InvoiceApiController.pdf failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
+				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
+			}
 
-    }//end pdf()
+			$lines = $this->objectService
+				->setRegister('shillinq')
+				->setSchema('BillableInvoiceLine')
+				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
+			$lineItems = [];
+			if (is_array($lines) === true) {
+				$lineItems = $lines;
+			}
 
-    /**
-     * Decode the JSON request body, falling back to POST/GET params.
-     *
-     * @return array<string,mixed>
-     */
-    private function decodeBody(): array
-    {
-        $raw = file_get_contents('php://input');
-        if ($raw !== false && $raw !== '') {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded) === true) {
-                return $decoded;
-            }
-        }
+			$pdf = $this->pdfGenerator->generatePdf(invoice: $invoice, lines: $lineItems);
 
-        // Fall back to request params.
-        $params = $this->request->getParams();
-        if (is_array($params) === true) {
-            return $params;
-        }
+			return new DataDisplayResponse(
+				$pdf['html'],
+				Http::STATUS_OK,
+				[
+					'Content-Type' => 'text/html; charset=utf-8',
+					'Content-Disposition' => sprintf('inline; filename="%s.html"', preg_replace('/[^A-Za-z0-9._-]/', '_', $pdf['filename'])),
+				]
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error('InvoiceApiController.pdf failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-        return [];
+	}//end pdf()
 
-    }//end decodeBody()
+	/**
+	 * Decode the JSON request body, falling back to POST/GET params.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function decodeBody(): array {
+		$raw = file_get_contents('php://input');
+		if ($raw !== false && $raw !== '') {
+			$decoded = json_decode($raw, true);
+			if (is_array($decoded) === true) {
+				return $decoded;
+			}
+		}
 
-    /**
-     * Resolve the administration id server-side.
-     *
-     * @return string
-     */
-    private function resolveAdministrationId(): string
-    {
-        try {
-            $context   = $this->administrationContext->buildContext();
-            $candidate = (string) ($context['activeAdministrationId'] ?? '');
-            if ($candidate !== '') {
-                return $candidate;
-            }
-        } catch (\Throwable $e) {
-            // Fall through to default.
-        }
+		// Fall back to request params.
+		$params = $this->request->getParams();
+		if (is_array($params) === true) {
+			return $params;
+		}
 
-        return 'default';
+		return [];
+	}//end decodeBody()
 
-    }//end resolveAdministrationId()
+	/**
+	 * Resolve the administration id server-side.
+	 *
+	 * @return string
+	 */
+	private function resolveAdministrationId(): string {
+		try {
+			$context = $this->administrationContext->buildContext();
+			$candidate = (string)($context['activeAdministrationId'] ?? '');
+			if ($candidate !== '') {
+				return $candidate;
+			}
+		} catch (\Throwable $e) {
+			// Fall through to default.
+		}
+
+		return 'default';
+	}//end resolveAdministrationId()
 }//end class

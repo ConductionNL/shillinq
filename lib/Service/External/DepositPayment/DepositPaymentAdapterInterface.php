@@ -80,100 +80,99 @@ namespace OCA\Shillinq\Service\External\DepositPayment;
  *
  * @spec openspec/specs/bookings-deposits/spec.md
  */
-interface DepositPaymentAdapterInterface
-{
-    /**
-     * Request a payment for a DepositPayment record.
-     *
-     * @param array<string,mixed> $payload Request envelope —
-     *                                     depositPaymentId, amount
-     *                                     {value,currency},
-     *                                     description, redirectUrl,
-     *                                     webhookUrl, methodHint
-     *                                     (optional — `ideal` |
-     *                                     `creditcard` | `bancontact` |
-     *                                     `sepadirectdebit`),
-     *                                     metadata{orderId,
-     *                                     administrationId,
-     *                                     correlationId}.
-     *
-     * @return DepositPaymentResult The dispatch outcome (lifecycle
-     *                              state + gateway-side intent id +
-     *                              paymentLink).
-     *
-     * @spec openspec/specs/bookings-cancellation-rules/spec.md
-     */
-    public function requestPayment(array $payload): DepositPaymentResult;
+interface DepositPaymentAdapterInterface {
+	/**
+	 * Request a payment for a DepositPayment record.
+	 *
+	 * @param array<string,mixed> $payload Request envelope —
+	 *                                     depositPaymentId, amount
+	 *                                     {value,currency},
+	 *                                     description, redirectUrl,
+	 *                                     webhookUrl, methodHint
+	 *                                     (optional — `ideal` |
+	 *                                     `creditcard` | `bancontact` |
+	 *                                     `sepadirectdebit`),
+	 *                                     metadata{orderId,
+	 *                                     administrationId,
+	 *                                     correlationId}.
+	 *
+	 * @return DepositPaymentResult The dispatch outcome (lifecycle
+	 *                              state + gateway-side intent id +
+	 *                              paymentLink).
+	 *
+	 * @spec openspec/specs/bookings-cancellation-rules/spec.md
+	 */
+	public function requestPayment(array $payload): DepositPaymentResult;
 
-    /**
-     * Capture a previously-authorized charge (authorise-now /
-     * capture-later rail).
-     *
-     * Used by the no-show-fee-capture flow (bookings-depth): when a
-     * card hold / deposit authorization already exists, the defined
-     * no-show fee is captured against that authorization instead of
-     * opening a fresh payment. Implementations MUST clamp the captured
-     * amount to the authorized amount and MUST be side-effect-free when
-     * dormant (returning a synthetic `captured` / `PAYMENT_DEFERRED`
-     * outcome so the surrounding lifecycle stays observable).
-     *
-     * @param string              $paymentIntentId Gateway-side
-     *                                             authorization intent
-     *                                             id to capture against.
-     * @param array<string,mixed> $payload         Capture envelope —
-     *                                             amount {value,currency},
-     *                                             reason (`noShowFee` |
-     *                                             `operatorCapture`),
-     *                                             metadata{
-     *                                             appointmentId,
-     *                                             administrationId,
-     *                                             correlationId}.
-     *
-     * @return DepositPaymentResult The capture outcome (lifecycle state
-     *                              `captured` on success).
-     *
-     * @spec openspec/specs/bookings-cancellation-rules/spec.md
-     */
-    public function capturePayment(string $paymentIntentId, array $payload): DepositPaymentResult;
+	/**
+	 * Capture a previously-authorized charge (authorise-now /
+	 * capture-later rail).
+	 *
+	 * Used by the no-show-fee-capture flow (bookings-depth): when a
+	 * card hold / deposit authorization already exists, the defined
+	 * no-show fee is captured against that authorization instead of
+	 * opening a fresh payment. Implementations MUST clamp the captured
+	 * amount to the authorized amount and MUST be side-effect-free when
+	 * dormant (returning a synthetic `captured` / `PAYMENT_DEFERRED`
+	 * outcome so the surrounding lifecycle stays observable).
+	 *
+	 * @param string $paymentIntentId Gateway-side
+	 *                                authorization intent
+	 *                                id to capture against.
+	 * @param array<string,mixed> $payload Capture envelope —
+	 *                                     amount {value,currency},
+	 *                                     reason (`noShowFee` |
+	 *                                     `operatorCapture`),
+	 *                                     metadata{
+	 *                                     appointmentId,
+	 *                                     administrationId,
+	 *                                     correlationId}.
+	 *
+	 * @return DepositPaymentResult The capture outcome (lifecycle state
+	 *                              `captured` on success).
+	 *
+	 * @spec openspec/specs/bookings-cancellation-rules/spec.md
+	 */
+	public function capturePayment(string $paymentIntentId, array $payload): DepositPaymentResult;
 
-    /**
-     * Fetch the current gateway status for an open
-     * DepositPayment intent.
-     *
-     * @param string $paymentIntentId  Gateway-side intent id.
-     * @param string $depositPaymentId DepositPayment record id (audit
-     *                                 correlation key).
-     *
-     * @return DepositPaymentResult The status outcome (lifecycle state
-     *                              + raw gateway status).
-     */
-    public function fetchStatus(string $paymentIntentId, string $depositPaymentId): DepositPaymentResult;
+	/**
+	 * Fetch the current gateway status for an open
+	 * DepositPayment intent.
+	 *
+	 * @param string $paymentIntentId Gateway-side intent id.
+	 * @param string $depositPaymentId DepositPayment record id (audit
+	 *                                 correlation key).
+	 *
+	 * @return DepositPaymentResult The status outcome (lifecycle state
+	 *                              + raw gateway status).
+	 */
+	public function fetchStatus(string $paymentIntentId, string $depositPaymentId): DepositPaymentResult;
 
-    /**
-     * Initiate a refund for an authorized / captured DepositPayment.
-     *
-     * @param string              $paymentIntentId Gateway-side intent id.
-     * @param array<string,mixed> $payload         Refund envelope —
-     *                                             amount {value,currency},
-     *                                             reason
-     *                                             (`bookingCancelled` |
-     *                                             `operatorRefund` |
-     *                                             `chargeback`),
-     *                                             metadata{
-     *                                             depositPaymentId,
-     *                                             creditNoteId,
-     *                                             correlationId}.
-     *
-     * @return DepositPaymentResult The refund outcome (lifecycle state
-     *                              `voided` on success).
-     */
-    public function initiateRefund(string $paymentIntentId, array $payload): DepositPaymentResult;
+	/**
+	 * Initiate a refund for an authorized / captured DepositPayment.
+	 *
+	 * @param string $paymentIntentId Gateway-side intent id.
+	 * @param array<string,mixed> $payload Refund envelope —
+	 *                                     amount {value,currency},
+	 *                                     reason
+	 *                                     (`bookingCancelled` |
+	 *                                     `operatorRefund` |
+	 *                                     `chargeback`),
+	 *                                     metadata{
+	 *                                     depositPaymentId,
+	 *                                     creditNoteId,
+	 *                                     correlationId}.
+	 *
+	 * @return DepositPaymentResult The refund outcome (lifecycle state
+	 *                              `voided` on success).
+	 */
+	public function initiateRefund(string $paymentIntentId, array $payload): DepositPaymentResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * a payment gateway.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * a payment gateway.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

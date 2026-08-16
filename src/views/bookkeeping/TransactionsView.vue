@@ -31,27 +31,39 @@
 						<option value="">{{ t('shillinq', 'All') }}</option>
 						<option value="draft">{{ t('shillinq', 'Draft') }}</option>
 						<option value="posted">{{ t('shillinq', 'Posted') }}</option>
-						<option value="reversed">{{ t('shillinq', 'Reversed') }}</option>
+						<option value="reversed">
+							{{ t('shillinq', 'Reversed') }}
+						</option>
 					</select>
 				</label>
 				<label>
 					<span>{{ t('shillinq', 'Type') }}</span>
 					<select v-model="filters.type" @change="load">
 						<option value="">{{ t('shillinq', 'All') }}</option>
-						<option value="invoice">{{ t('shillinq', 'Invoice') }}</option>
-						<option value="receipt">{{ t('shillinq', 'Receipt') }}</option>
-						<option value="journal-entry">{{ t('shillinq', 'Journal Entry') }}</option>
-						<option value="credit-note">{{ t('shillinq', 'Credit Note') }}</option>
-						<option value="debit-note">{{ t('shillinq', 'Debit Note') }}</option>
+						<option value="invoice">
+							{{ t('shillinq', 'Invoice') }}
+						</option>
+						<option value="receipt">
+							{{ t('shillinq', 'Receipt') }}
+						</option>
+						<option value="journal-entry">
+							{{ t('shillinq', 'Journal Entry') }}
+						</option>
+						<option value="credit-note">
+							{{ t('shillinq', 'Credit Note') }}
+						</option>
+						<option value="debit-note">
+							{{ t('shillinq', 'Debit Note') }}
+						</option>
 					</select>
 				</label>
 				<label>
 					<span>{{ t('shillinq', 'From') }}</span>
-					<input v-model="filters.dateFrom" type="date" @change="load">
+					<input v-model="filters.dateFrom" type="date" @change="load" />
 				</label>
 				<label>
 					<span>{{ t('shillinq', 'To') }}</span>
-					<input v-model="filters.dateTo" type="date" @change="load">
+					<input v-model="filters.dateTo" type="date" @change="load" />
 				</label>
 			</div>
 
@@ -64,12 +76,21 @@
 				class="wbso-transactions__table"
 				:columns="columns"
 				:rows="transactions"
-				:empty-label="t('shillinq', 'Create the first transaction to start posting to the books.')">
+				:emptyLabel="
+					t(
+						'shillinq',
+						'Create the first transaction to start posting to the books.',
+					)
+				">
 				<template #cell-amount="{ row }">
-					<span class="wbso-transactions__cell--amount">{{ formatAmount(row.amount) }}</span>
+					<span class="wbso-transactions__cell--amount">{{
+						formatAmount(row.amount)
+					}}</span>
 				</template>
 				<template #cell-status="{ row }">
-					<span :data-status="row.status">{{ translateStatus(row.status) }}</span>
+					<span :data-status="row.status">{{
+						translateStatus(row.status)
+					}}</span>
 				</template>
 			</CnDataTable>
 
@@ -82,9 +103,9 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { NcAppContent, NcButton } from '@nextcloud/vue'
-import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateOcsUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'TransactionsView',
@@ -119,11 +140,32 @@ export default {
 		 */
 		columns() {
 			return [
-				{ key: 'transactionDate', label: t('shillinq', 'Transaction Date'), sortable: true },
-				{ key: 'transactionNumber', label: t('shillinq', 'Number'), sortable: true },
-				{ key: 'transactionType', label: t('shillinq', 'Type'), sortable: true },
-				{ key: 'description', label: t('shillinq', 'Description'), sortable: true },
-				{ key: 'amount', label: t('shillinq', 'Amount'), sortable: true, align: 'right' },
+				{
+					key: 'transactionDate',
+					label: t('shillinq', 'Transaction Date'),
+					sortable: true,
+				},
+				{
+					key: 'transactionNumber',
+					label: t('shillinq', 'Number'),
+					sortable: true,
+				},
+				{
+					key: 'transactionType',
+					label: t('shillinq', 'Type'),
+					sortable: true,
+				},
+				{
+					key: 'description',
+					label: t('shillinq', 'Description'),
+					sortable: true,
+				},
+				{
+					key: 'amount',
+					label: t('shillinq', 'Amount'),
+					sortable: true,
+					align: 'right',
+				},
 				{ key: 'status', label: t('shillinq', 'Status'), sortable: true },
 			]
 		},
@@ -145,8 +187,10 @@ export default {
 				if (this.filters.dateFrom) params.dateFrom = this.filters.dateFrom
 				if (this.filters.dateTo) params.dateTo = this.filters.dateTo
 				const { data } = await axios.get(url, { params })
-				this.transactions = data?.ocs?.data?.transactions ?? data?.transactions ?? []
-				this.canCreate = data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
+				this.transactions =
+					data?.ocs?.data?.transactions ?? data?.transactions ?? []
+				this.canCreate =
+					data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
 			} catch (error) {
 				this.errorMessage = t('shillinq', 'Failed to load transactions.')
 			} finally {

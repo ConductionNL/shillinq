@@ -52,369 +52,354 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
  */
-class GoodsReceiptNoteController extends Controller
-{
-    /**
-     * Short-slug identifier pattern shared by every scope/path parameter.
-     *
-     * @var string
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+class GoodsReceiptNoteController extends Controller {
+	/**
+	 * Short-slug identifier pattern shared by every scope/path parameter.
+	 *
+	 * @var string
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                     $request               The request object.
-     * @param GoodsReceiptNoteService      $grnService            The GRN service (server-authoritative).
-     * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param IUserSession                 $userSession           User session guard.
-     * @param LoggerInterface              $logger                Logger (no stack traces to client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly GoodsReceiptNoteService $grnService,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param GoodsReceiptNoteService $grnService The GRN service (server-authoritative).
+	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param IUserSession $userSession User session guard.
+	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly GoodsReceiptNoteService $grnService,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Create a GoodsReceiptNote against one or more purchase orders.
-     *
-     * POST /api/goods-receipt-notes
-     * Body: administrationId, poIds[], receivedAt (optional), carrier,
-     *       deliveryNoteReference, costCenter, projectCode,
-     *       lotNumbers[], serialNumbers[], temperatureLog[], photos[].
-     *
-     * @return JSONResponse 201 with the persisted GRN; 400 on validation;
-     *                      401 anonymous; 404 on cross-tenant; 500 without
-     *                      stack trace.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
-     */
-    #[NoAdminRequired]
-    public function create(): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Create a GoodsReceiptNote against one or more purchase orders.
+	 *
+	 * POST /api/goods-receipt-notes
+	 * Body: administrationId, poIds[], receivedAt (optional), carrier,
+	 *       deliveryNoteReference, costCenter, projectCode,
+	 *       lotNumbers[], serialNumbers[], temperatureLog[], photos[].
+	 *
+	 * @return JSONResponse 201 with the persisted GRN; 400 on validation;
+	 *                      401 anonymous; 404 on cross-tenant; 500 without
+	 *                      stack trace.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function create(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $payload = [
-            'poIds'                 => (array) $this->request->getParam('poIds', []),
-            'receivedAt'            => trim((string) $this->request->getParam('receivedAt', '')),
-            'carrier'               => trim((string) $this->request->getParam('carrier', '')),
-            'deliveryNoteReference' => trim((string) $this->request->getParam('deliveryNoteReference', '')),
-            'costCenter'            => trim((string) $this->request->getParam('costCenter', '')),
-            'projectCode'           => trim((string) $this->request->getParam('projectCode', '')),
-            'lotNumbers'            => (array) $this->request->getParam('lotNumbers', []),
-            'serialNumbers'         => (array) $this->request->getParam('serialNumbers', []),
-            'temperatureLog'        => (array) $this->request->getParam('temperatureLog', []),
-            'photos'                => (array) $this->request->getParam('photos', []),
-        ];
+		$payload = [
+			'poIds' => (array)$this->request->getParam('poIds', []),
+			'receivedAt' => trim((string)$this->request->getParam('receivedAt', '')),
+			'carrier' => trim((string)$this->request->getParam('carrier', '')),
+			'deliveryNoteReference' => trim((string)$this->request->getParam('deliveryNoteReference', '')),
+			'costCenter' => trim((string)$this->request->getParam('costCenter', '')),
+			'projectCode' => trim((string)$this->request->getParam('projectCode', '')),
+			'lotNumbers' => (array)$this->request->getParam('lotNumbers', []),
+			'serialNumbers' => (array)$this->request->getParam('serialNumbers', []),
+			'temperatureLog' => (array)$this->request->getParam('temperatureLog', []),
+			'photos' => (array)$this->request->getParam('photos', []),
+		];
 
-        try {
-            $grn = $this->grnService->createGRN(
-                administrationId: $administrationId,
-                payload: $payload
-            );
-        } catch (\RuntimeException $e) {
-            return $this->mapRuntimeException(exception: $e);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'GoodsReceiptNoteController: failed to create GRN',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Could not create goods receipt note'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		try {
+			$grn = $this->grnService->createGRN(
+				administrationId: $administrationId,
+				payload: $payload
+			);
+		} catch (\RuntimeException $e) {
+			return $this->mapRuntimeException(exception: $e);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GoodsReceiptNoteController: failed to create GRN',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Could not create goods receipt note'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        return new JSONResponse($grn, Http::STATUS_CREATED);
+		return new JSONResponse($grn, Http::STATUS_CREATED);
+	}//end create()
 
-    }//end create()
+	/**
+	 * Append a GoodsReceiptLine to an existing GRN.
+	 *
+	 * POST /api/goods-receipt-notes/{id}/lines
+	 * Body: administrationId, poLineId, quantityReceived, quantityAccepted,
+	 *       quantityRejected, rejectionReason, batchReference.
+	 *
+	 * @param string $id The GRN id (path parameter).
+	 *
+	 * @return JSONResponse 201 with the persisted line; 400 on validation;
+	 *                      401 anonymous; 404 cross-tenant or missing GRN/PO
+	 *                      line.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function addLine(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-    /**
-     * Append a GoodsReceiptLine to an existing GRN.
-     *
-     * POST /api/goods-receipt-notes/{id}/lines
-     * Body: administrationId, poLineId, quantityReceived, quantityAccepted,
-     *       quantityRejected, rejectionReason, batchReference.
-     *
-     * @param string $id The GRN id (path parameter).
-     *
-     * @return JSONResponse 201 with the persisted line; 400 on validation;
-     *                      401 anonymous; 404 cross-tenant or missing GRN/PO
-     *                      line.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
-     */
-    #[NoAdminRequired]
-    public function addLine(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if (preg_match(self::ID_PATTERN, $id) !== 1) {
-            return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
-        }
+		$payload = [
+			'poLineId' => trim((string)$this->request->getParam('poLineId', '')),
+			'quantityReceived' => $this->request->getParam('quantityReceived', 0),
+			'quantityAccepted' => $this->request->getParam('quantityAccepted', null),
+			'quantityRejected' => $this->request->getParam('quantityRejected', 0),
+			'rejectionReason' => trim((string)$this->request->getParam('rejectionReason', '')),
+			'batchReference' => trim((string)$this->request->getParam('batchReference', '')),
+		];
 
-        $payload = [
-            'poLineId'         => trim((string) $this->request->getParam('poLineId', '')),
-            'quantityReceived' => $this->request->getParam('quantityReceived', 0),
-            'quantityAccepted' => $this->request->getParam('quantityAccepted', null),
-            'quantityRejected' => $this->request->getParam('quantityRejected', 0),
-            'rejectionReason'  => trim((string) $this->request->getParam('rejectionReason', '')),
-            'batchReference'   => trim((string) $this->request->getParam('batchReference', '')),
-        ];
+		try {
+			$line = $this->grnService->addGRNLine(
+				administrationId: $administrationId,
+				grnId: $id,
+				payload: $payload
+			);
+		} catch (\RuntimeException $e) {
+			return $this->mapRuntimeException(exception: $e);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GoodsReceiptNoteController: failed to add GRN line',
+				['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Could not add goods receipt line'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        try {
-            $line = $this->grnService->addGRNLine(
-                administrationId: $administrationId,
-                grnId: $id,
-                payload: $payload
-            );
-        } catch (\RuntimeException $e) {
-            return $this->mapRuntimeException(exception: $e);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'GoodsReceiptNoteController: failed to add GRN line',
-                ['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Could not add goods receipt line'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		return new JSONResponse($line, Http::STATUS_CREATED);
+	}//end addLine()
 
-        return new JSONResponse($line, Http::STATUS_CREATED);
+	/**
+	 * Pass the quality check (received → quality_checked).
+	 *
+	 * POST /api/goods-receipt-notes/{id}/quality-check
+	 * Body: administrationId.
+	 *
+	 * @param string $id The GRN id (path parameter).
+	 *
+	 * @return JSONResponse 200 with the updated GRN; 400 on validation; 401
+	 *                      anonymous; 404 cross-tenant or missing GRN; 409 on
+	 *                      lifecycle conflict.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function qualityCheck(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-    }//end addLine()
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
+		}
 
-    /**
-     * Pass the quality check (received → quality_checked).
-     *
-     * POST /api/goods-receipt-notes/{id}/quality-check
-     * Body: administrationId.
-     *
-     * @param string $id The GRN id (path parameter).
-     *
-     * @return JSONResponse 200 with the updated GRN; 400 on validation; 401
-     *                      anonymous; 404 cross-tenant or missing GRN; 409 on
-     *                      lifecycle conflict.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
-     */
-    #[NoAdminRequired]
-    public function qualityCheck(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if (preg_match(self::ID_PATTERN, $id) !== 1) {
-            return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$grn = $this->grnService->qualityCheckPass(
+				administrationId: $administrationId,
+				grnId: $id
+			);
+		} catch (\RuntimeException $e) {
+			return $this->mapRuntimeException(exception: $e);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GoodsReceiptNoteController: failed quality-check transition',
+				['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Could not transition GRN'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
-        }
+		return new JSONResponse($grn, Http::STATUS_OK);
+	}//end qualityCheck()
 
-        try {
-            $grn = $this->grnService->qualityCheckPass(
-                administrationId: $administrationId,
-                grnId: $id
-            );
-        } catch (\RuntimeException $e) {
-            return $this->mapRuntimeException(exception: $e);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'GoodsReceiptNoteController: failed quality-check transition',
-                ['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Could not transition GRN'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+	/**
+	 * Accept the GRN — posts StockMove credits and updates PO lifecycle.
+	 *
+	 * POST /api/goods-receipt-notes/{id}/accept
+	 * Body: administrationId.
+	 *
+	 * @param string $id The GRN id (path parameter).
+	 *
+	 * @return JSONResponse 200 with the updated GRN; 400 on validation; 401
+	 *                      anonymous; 404 cross-tenant or missing GRN; 409 on
+	 *                      terminal-state conflict.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function accept(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        return new JSONResponse($grn, Http::STATUS_OK);
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
+		}
 
-    }//end qualityCheck()
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-    /**
-     * Accept the GRN — posts StockMove credits and updates PO lifecycle.
-     *
-     * POST /api/goods-receipt-notes/{id}/accept
-     * Body: administrationId.
-     *
-     * @param string $id The GRN id (path parameter).
-     *
-     * @return JSONResponse 200 with the updated GRN; 400 on validation; 401
-     *                      anonymous; 404 cross-tenant or missing GRN; 409 on
-     *                      terminal-state conflict.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
-     */
-    #[NoAdminRequired]
-    public function accept(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        if (preg_match(self::ID_PATTERN, $id) !== 1) {
-            return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$grn = $this->grnService->acceptGRN(
+				administrationId: $administrationId,
+				grnId: $id
+			);
+		} catch (\RuntimeException $e) {
+			return $this->mapRuntimeException(exception: $e);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GoodsReceiptNoteController: failed to accept GRN',
+				['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Could not accept GRN'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		return new JSONResponse($grn, Http::STATUS_OK);
+	}//end accept()
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
-        }
+	/**
+	 * Attach photos to the GRN (docudesk file ids).
+	 *
+	 * POST /api/goods-receipt-notes/{id}/photos
+	 * Body: administrationId, photos[] (file ids).
+	 *
+	 * @param string $id The GRN id (path parameter).
+	 *
+	 * @return JSONResponse 200 with the updated GRN; 400 on validation; 401
+	 *                      anonymous; 404 cross-tenant or missing GRN.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function uploadPhotos(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        try {
-            $grn = $this->grnService->acceptGRN(
-                administrationId: $administrationId,
-                grnId: $id
-            );
-        } catch (\RuntimeException $e) {
-            return $this->mapRuntimeException(exception: $e);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'GoodsReceiptNoteController: failed to accept GRN',
-                ['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Could not accept GRN'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
+		}
 
-        return new JSONResponse($grn, Http::STATUS_OK);
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-    }//end accept()
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
+		}
 
-    /**
-     * Attach photos to the GRN (docudesk file ids).
-     *
-     * POST /api/goods-receipt-notes/{id}/photos
-     * Body: administrationId, photos[] (file ids).
-     *
-     * @param string $id The GRN id (path parameter).
-     *
-     * @return JSONResponse 200 with the updated GRN; 400 on validation; 401
-     *                      anonymous; 404 cross-tenant or missing GRN.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
-     */
-    #[NoAdminRequired]
-    public function uploadPhotos(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		$photos = (array)$this->request->getParam('photos', []);
 
-        if (preg_match(self::ID_PATTERN, $id) !== 1) {
-            return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$grn = $this->grnService->uploadPhotos(
+				administrationId: $administrationId,
+				grnId: $id,
+				photoFileIds: $photos
+			);
+		} catch (\RuntimeException $e) {
+			return $this->mapRuntimeException(exception: $e);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GoodsReceiptNoteController: failed to attach GRN photos',
+				['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Could not attach photos'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		return new JSONResponse($grn, Http::STATUS_OK);
+	}//end uploadPhotos()
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Goods receipt note not found'], Http::STATUS_NOT_FOUND);
-        }
+	/**
+	 * Read and validate a scope parameter, returning '' when blank/malformed.
+	 *
+	 * @param string $name Parameter name (body for POST / query for GET).
+	 *
+	 * @return string The validated value or '' (blank/malformed).
+	 */
+	private function scopeParam(string $name): string {
+		$value = trim((string)$this->request->getParam($name, ''));
+		if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
+			return '';
+		}
 
-        $photos = (array) $this->request->getParam('photos', []);
+		return $value;
+	}//end scopeParam()
 
-        try {
-            $grn = $this->grnService->uploadPhotos(
-                administrationId: $administrationId,
-                grnId: $id,
-                photoFileIds: $photos
-            );
-        } catch (\RuntimeException $e) {
-            return $this->mapRuntimeException(exception: $e);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'GoodsReceiptNoteController: failed to attach GRN photos',
-                ['grnId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Could not attach photos'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+	/**
+	 * Map a service-level RuntimeException to a JSONResponse.
+	 *
+	 * Conventions:
+	 *  - "not found"            → 404
+	 *  - "terminal state" / "requires statusCode" / "may not exceed" → 409
+	 *  - anything else          → 400 (validation)
+	 *
+	 * @param \RuntimeException $exception The exception to map.
+	 *
+	 * @return JSONResponse
+	 */
+	private function mapRuntimeException(\RuntimeException $exception): JSONResponse {
+		$message = $exception->getMessage();
+		if (str_contains($message, 'not found') === true) {
+			return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+		}
 
-        return new JSONResponse($grn, Http::STATUS_OK);
+		if (str_contains($message, 'terminal state') === true
+			|| str_contains($message, 'requires statusCode') === true
+			|| str_contains($message, 'may not exceed') === true
+		) {
+			return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+		}
 
-    }//end uploadPhotos()
-
-    /**
-     * Read and validate a scope parameter, returning '' when blank/malformed.
-     *
-     * @param string $name Parameter name (body for POST / query for GET).
-     *
-     * @return string The validated value or '' (blank/malformed).
-     */
-    private function scopeParam(string $name): string
-    {
-        $value = trim((string) $this->request->getParam($name, ''));
-        if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
-            return '';
-        }
-
-        return $value;
-
-    }//end scopeParam()
-
-    /**
-     * Map a service-level RuntimeException to a JSONResponse.
-     *
-     * Conventions:
-     *  - "not found"            → 404
-     *  - "terminal state" / "requires statusCode" / "may not exceed" → 409
-     *  - anything else          → 400 (validation)
-     *
-     * @param \RuntimeException $exception The exception to map.
-     *
-     * @return JSONResponse
-     */
-    private function mapRuntimeException(\RuntimeException $exception): JSONResponse
-    {
-        $message = $exception->getMessage();
-        if (str_contains($message, 'not found') === true) {
-            return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-        }
-
-        if (str_contains($message, 'terminal state') === true
-            || str_contains($message, 'requires statusCode') === true
-            || str_contains($message, 'may not exceed') === true
-        ) {
-            return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
-        }
-
-        return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
-
-    }//end mapRuntimeException()
+		return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
+	}//end mapRuntimeException()
 }//end class

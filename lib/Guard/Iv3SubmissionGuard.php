@@ -43,35 +43,32 @@ namespace OCA\Shillinq\Guard;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class Iv3SubmissionGuard
-{
-    /**
-     * Precondition for `submit`.
-     *
-     * @param array<string, mixed> $export The Iv3Export object being transitioned.
-     *
-     * @return bool True when the export may be submitted to CBS.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireApproval(array $export): bool
-    {
-        if (($export['submittedAt'] ?? null) !== null) {
-            // Already submitted once — never resubmit the same export record.
-            return false;
-        }
+class Iv3SubmissionGuard {
+	/**
+	 * Precondition for `submit`.
+	 *
+	 * @param array<string, mixed> $export The Iv3Export object being transitioned.
+	 *
+	 * @return bool True when the export may be submitted to CBS.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireApproval(array $export): bool {
+		if (($export['submittedAt'] ?? null) !== null) {
+			// Already submitted once — never resubmit the same export record.
+			return false;
+		}
 
-        $xmlUri = trim((string) ($export['xmlAttachmentUri'] ?? ''));
-        if ($xmlUri === '') {
-            return false;
-        }
+		$xmlUri = trim((string)($export['xmlAttachmentUri'] ?? ''));
+		if ($xmlUri === '') {
+			return false;
+		}
 
-        $buckets = ($export['buckets'] ?? null);
-        if (is_array($buckets) === false || $buckets === []) {
-            return false;
-        }
+		$buckets = ($export['buckets'] ?? null);
+		if (is_array($buckets) === false || $buckets === []) {
+			return false;
+		}
 
-        return true;
-
-    }//end requireApproval()
+		return true;
+	}//end requireApproval()
 }//end class

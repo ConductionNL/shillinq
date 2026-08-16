@@ -55,7 +55,7 @@
           "price": {
             "type": "number",
             "nullable": true,
-            "description": "Service price in the administration's currency. Informational in phase 1; payment is out of scope.",
+            "description": "DEPRECATED - superseded by `basePrice` from the canonical bookings-service-catalog fragment. Retained only so pre-existing rows keep resolving; read sites fall back `basePrice ?? price`. Do not use in new seeds. Service price in the administration's currency. Informational in phase 1; payment is out of scope.",
             "example": 75.0,
             "title": "Price"
           },
@@ -195,15 +195,13 @@
           },
           "serviceId": {
             "type": "string",
-            "$ref": "Service",
-            "description": "FK to Service.serviceId (bookings-service-catalog) — the Service this appointment books.",
+            "description": "FK to Service.serviceId (bookings-service-catalog).",
             "example": "svc-001",
             "title": "Service ID"
           },
           "resourceId": {
             "type": "string",
-            "$ref": "Resource",
-            "description": "FK to Resource.resourceId (bookings-resource-calendar) — the Resource this appointment reserves.",
+            "description": "FK to Resource.resourceId (bookings-resource-calendar).",
             "example": "res-001",
             "title": "Resource ID"
           },
@@ -298,6 +296,22 @@
             }
           }
         },
+        "x-openregister-relations": {
+          "service": {
+            "localField": "serviceId",
+            "relatedSchema": "Service",
+            "relatedField": "serviceId",
+            "cardinality": "many-to-one",
+            "description": "The Service this appointment books."
+          },
+          "resource": {
+            "localField": "resourceId",
+            "relatedSchema": "Resource",
+            "relatedField": "resourceId",
+            "cardinality": "many-to-one",
+            "description": "The Resource this appointment reserves."
+          }
+        },
         "x-openregister-rbac": {
           "roles": {
             "scheduler": {
@@ -344,13 +358,13 @@
       "name": "Intake consultation",
       "description": "30-minute introductory consultation.",
       "duration": 30,
-      "prepareTime": 5,
+      "prepareTime": 0,
       "bufferBefore": 0,
-      "bufferAfter": 10,
+      "bufferAfter": 0,
       "basePrice": 75.0,
       "currency": "EUR",
       "dynamicPricing": false,
-      "serviceCategory": "Consulting",
+      "serviceCategory": "Consultation",
       "status": "active"
     },
     {
@@ -361,7 +375,6 @@
       },
       "administrationId": "adm-1",
       "resourceId": "res-001",
-      "type": "room",
       "name": "Consultation room A",
       "openingTime": "09:00",
       "closingTime": "17:00",

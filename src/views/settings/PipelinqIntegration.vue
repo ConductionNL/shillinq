@@ -1,16 +1,25 @@
 <template>
 	<CnSettingsSection
 		:name="t('shillinq', 'Pipelinq integration')"
-		:description="t('shillinq', 'Configure the pipelinq customer-management connection used to enrich bookings with customer context.')">
+		:description="
+			t(
+				'shillinq',
+				'Configure the pipelinq customer-management connection used to enrich bookings with customer context.',
+			)
+		">
 		<form @submit.prevent="save">
 			<div class="form-group">
-				<label for="pipelinq-endpoint">{{ t('shillinq', 'API endpoint') }}</label>
+				<label for="pipelinq-endpoint">{{
+					t('shillinq', 'API endpoint')
+				}}</label>
 				<input
 					id="pipelinq-endpoint"
 					v-model="form.endpoint"
 					type="url"
 					autocomplete="off"
-					:placeholder="t('shillinq', 'https://pipelinq.example.com/api')">
+					:placeholder="
+						t('shillinq', 'https://pipelinq.example.com/api')
+					" />
 			</div>
 
 			<div class="form-group">
@@ -20,30 +29,43 @@
 					v-model="form.token"
 					type="password"
 					autocomplete="off"
-					:placeholder="hasToken ? maskedPlaceholder : t('shillinq', 'Paste your pipelinq API token')">
+					:placeholder="
+						hasToken
+							? maskedPlaceholder
+							: t('shillinq', 'Paste your pipelinq API token')
+					" />
 				<p class="form-hint">
-					{{ hasToken
-						? t('shillinq', 'A token is stored. Leave empty to keep the current token, or paste a new one to rotate it.')
-						: t('shillinq', 'The token is stored in the Nextcloud secrets store and never returned to the browser.') }}
+					{{
+						hasToken
+							? t(
+									'shillinq',
+									'A token is stored. Leave empty to keep the current token, or paste a new one to rotate it.',
+								)
+							: t(
+									'shillinq',
+									'The token is stored in the Nextcloud secrets store and never returned to the browser.',
+								)
+					}}
 				</p>
 			</div>
 
-			<div v-if="feedback" :class="['feedback', feedback.kind]">
+			<div v-if="feedback" class="feedback" :class="[feedback.kind]">
 				{{ feedback.message }}
 			</div>
 
 			<div class="actions">
-				<NcButton
-					variant="primary"
-					type="submit"
-					:disabled="saving">
+				<NcButton variant="primary" type="submit" :disabled="saving">
 					{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}
 				</NcButton>
 				<NcButton
 					variant="secondary"
 					:disabled="testing || !form.endpoint"
 					@click="test">
-					{{ testing ? t('shillinq', 'Testing…') : t('shillinq', 'Test connection') }}
+					{{
+						testing
+							? t('shillinq', 'Testing…')
+							: t('shillinq', 'Test connection')
+					}}
 				</NcButton>
 			</div>
 		</form>
@@ -51,9 +73,9 @@
 </template>
 
 <script>
+import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
-import { CnSettingsSection } from '@conduction/nextcloud-vue'
 
 /**
  * Admin settings panel for the pipelinq integration connection
@@ -72,12 +94,14 @@ export default {
 		NcButton,
 		CnSettingsSection,
 	},
+
 	data() {
 		return {
 			form: {
 				endpoint: '',
 				token: '',
 			},
+
 			hasToken: false,
 			saving: false,
 			testing: false,
@@ -85,15 +109,20 @@ export default {
 			maskedPlaceholder: '••••••••••••',
 		}
 	},
+
 	async created() {
 		await this.fetchSettings()
 	},
+
 	methods: {
 		async fetchSettings() {
 			try {
-				const response = await fetch(generateUrl('/apps/shillinq/api/pipelinq/settings'), {
-					headers: { requesttoken: OC.requestToken },
-				})
+				const response = await fetch(
+					generateUrl('/apps/shillinq/api/pipelinq/settings'),
+					{
+						headers: { requesttoken: OC.requestToken },
+					},
+				)
 				if (response.ok) {
 					const data = await response.json()
 					this.form.endpoint = data.endpoint || ''
@@ -103,6 +132,7 @@ export default {
 				console.error('Failed to fetch pipelinq settings:', error)
 			}
 		},
+
 		async save() {
 			this.saving = true
 			this.feedback = null
@@ -112,14 +142,17 @@ export default {
 				body.token = this.form.token
 			}
 			try {
-				const response = await fetch(generateUrl('/apps/shillinq/api/pipelinq/settings'), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						requesttoken: OC.requestToken,
+				const response = await fetch(
+					generateUrl('/apps/shillinq/api/pipelinq/settings'),
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							requesttoken: OC.requestToken,
+						},
+						body: JSON.stringify(body),
 					},
-					body: JSON.stringify(body),
-				})
+				)
 				if (response.ok) {
 					const data = await response.json()
 					this.hasToken = !!data.hasToken
@@ -131,29 +164,41 @@ export default {
 				} else {
 					this.feedback = {
 						kind: 'error',
-						message: t('shillinq', 'Failed to save pipelinq settings (HTTP {status}).', { status: response.status }),
+						message: t(
+							'shillinq',
+							'Failed to save pipelinq settings (HTTP {status}).',
+							{ status: response.status },
+						),
 					}
 				}
 			} catch (error) {
 				this.feedback = {
 					kind: 'error',
-					message: t('shillinq', 'Failed to save pipelinq settings: {message}.', { message: error.message }),
+					message: t(
+						'shillinq',
+						'Failed to save pipelinq settings: {message}.',
+						{ message: error.message },
+					),
 				}
 			} finally {
 				this.saving = false
 			}
 		},
+
 		async test() {
 			this.testing = true
 			this.feedback = null
 			try {
-				const response = await fetch(generateUrl('/apps/shillinq/api/pipelinq/settings/test'), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						requesttoken: OC.requestToken,
+				const response = await fetch(
+					generateUrl('/apps/shillinq/api/pipelinq/settings/test'),
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							requesttoken: OC.requestToken,
+						},
 					},
-				})
+				)
 				if (response.ok) {
 					const data = await response.json()
 					this.feedback = {
@@ -163,13 +208,19 @@ export default {
 				} else {
 					this.feedback = {
 						kind: 'error',
-						message: t('shillinq', 'Test connection failed (HTTP {status}).', { status: response.status }),
+						message: t(
+							'shillinq',
+							'Test connection failed (HTTP {status}).',
+							{ status: response.status },
+						),
 					}
 				}
 			} catch (error) {
 				this.feedback = {
 					kind: 'error',
-					message: t('shillinq', 'Test connection failed: {message}.', { message: error.message }),
+					message: t('shillinq', 'Test connection failed: {message}.', {
+						message: error.message,
+					}),
 				}
 			} finally {
 				this.testing = false

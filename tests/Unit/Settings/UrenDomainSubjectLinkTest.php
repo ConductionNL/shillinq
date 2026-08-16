@@ -52,118 +52,113 @@ use PHPUnit\Framework\TestCase;
  *
  * @coversNothing
  */
-class UrenDomainSubjectLinkTest extends TestCase
-{
+class UrenDomainSubjectLinkTest extends TestCase {
 
-    /**
-     * The merged UrenRegistratie properties, assembled the way the loader does.
-     *
-     * @return array<string, array<string, mixed>> Property name => definition.
-     */
-    private function mergedProperties(): array
-    {
-        $settings = __DIR__.'/../../../lib/Settings';
+	/**
+	 * The merged UrenRegistratie properties, assembled the way the loader does.
+	 *
+	 * @return array<string, array<string, mixed>> Property name => definition.
+	 */
+	private function mergedProperties(): array {
+		$settings = __DIR__ . '/../../../lib/Settings';
 
-        $sources = [$settings.'/shillinq_register.json'];
-        foreach ((array) glob($settings.'/register.d/*.json') as $fragment) {
-            $sources[] = $fragment;
-        }
+		$sources = [$settings . '/shillinq_register.json'];
+		foreach ((array)glob($settings . '/register.d/*.json') as $fragment) {
+			$sources[] = $fragment;
+		}
 
-        $props = [];
-        foreach ($sources as $source) {
-            $doc = json_decode((string) file_get_contents($source), associative: true);
-            if (is_array($doc) === false) {
-                continue;
-            }
+		$props = [];
+		foreach ($sources as $source) {
+			$doc = json_decode((string)file_get_contents($source), associative: true);
+			if (is_array($doc) === false) {
+				continue;
+			}
 
-            $schema = ($doc['components']['schemas']['UrenRegistratie'] ?? null);
-            if (is_array($schema) === true && is_array(($schema['properties'] ?? null)) === true) {
-                $props = array_merge($props, $schema['properties']);
-            }
-        }
+			$schema = ($doc['components']['schemas']['UrenRegistratie'] ?? null);
+			if (is_array($schema) === true && is_array(($schema['properties'] ?? null)) === true) {
+				$props = array_merge($props, $schema['properties']);
+			}
+		}
 
-        return $props;
-    }
+		return $props;
+	}
 
-    /**
-     * Both subject fields are declared, so MagicMapper will not discard them.
-     *
-     * @return void
-     */
-    public function testTheSubjectFieldsAreDeclared(): void
-    {
-        $props = $this->mergedProperties();
+	/**
+	 * Both subject fields are declared, so MagicMapper will not discard them.
+	 *
+	 * @return void
+	 */
+	public function testTheSubjectFieldsAreDeclared(): void {
+		$props = $this->mergedProperties();
 
-        foreach (['subjectApp', 'subjectId'] as $field) {
-            self::assertArrayHasKey(
-                $field,
-                $props,
-                sprintf(
-                    'UrenRegistratie does not declare "%s". OpenRegister\'s MagicMapper DISCARDS '
-                    .'undeclared properties — an hour entry POSTed with a subject would be accepted, '
-                    .'stored without it, and silently unattributable to any case.',
-                    $field
-                )
-            );
-        }
-    }
+		foreach (['subjectApp', 'subjectId'] as $field) {
+			self::assertArrayHasKey(
+				$field,
+				$props,
+				sprintf(
+					'UrenRegistratie does not declare "%s". OpenRegister\'s MagicMapper DISCARDS '
+					. 'undeclared properties — an hour entry POSTed with a subject would be accepted, '
+					. 'stored without it, and silently unattributable to any case.',
+					$field
+				)
+			);
+		}
+	}
 
-    /**
-     * Both are optional, so the existing ledger stays valid.
-     *
-     * @return void
-     */
-    public function testTheSubjectFieldsAreOptionalAndNullable(): void
-    {
-        $settings = __DIR__.'/../../../lib/Settings';
+	/**
+	 * Both are optional, so the existing ledger stays valid.
+	 *
+	 * @return void
+	 */
+	public function testTheSubjectFieldsAreOptionalAndNullable(): void {
+		$settings = __DIR__ . '/../../../lib/Settings';
 
-        $required = [];
-        $sources  = [$settings.'/shillinq_register.json'];
-        foreach ((array) glob($settings.'/register.d/*.json') as $fragment) {
-            $sources[] = $fragment;
-        }
+		$required = [];
+		$sources = [$settings . '/shillinq_register.json'];
+		foreach ((array)glob($settings . '/register.d/*.json') as $fragment) {
+			$sources[] = $fragment;
+		}
 
-        foreach ($sources as $source) {
-            $doc    = json_decode((string) file_get_contents($source), associative: true);
-            $schema = ($doc['components']['schemas']['UrenRegistratie'] ?? null);
-            if (is_array($schema) === true) {
-                $required = array_merge($required, (array) ($schema['required'] ?? []));
-            }
-        }
+		foreach ($sources as $source) {
+			$doc = json_decode((string)file_get_contents($source), associative: true);
+			$schema = ($doc['components']['schemas']['UrenRegistratie'] ?? null);
+			if (is_array($schema) === true) {
+				$required = array_merge($required, (array)($schema['required'] ?? []));
+			}
+		}
 
-        $props = $this->mergedProperties();
+		$props = $this->mergedProperties();
 
-        foreach (['subjectApp', 'subjectId'] as $field) {
-            self::assertNotContains(
-                $field,
-                $required,
-                $field.' must not be required — every hour entry recorded before this change has no '
-                .'subject, and requiring it would invalidate the whole historical ledger.'
-            );
-            self::assertTrue(
-                ($props[$field]['nullable'] ?? false),
-                $field.' must be nullable for the same reason.'
-            );
-        }
-    }
+		foreach (['subjectApp', 'subjectId'] as $field) {
+			self::assertNotContains(
+				$field,
+				$required,
+				$field . ' must not be required — every hour entry recorded before this change has no '
+				. 'subject, and requiring it would invalidate the whole historical ledger.'
+			);
+			self::assertTrue(
+				($props[$field]['nullable'] ?? false),
+				$field . ' must be nullable for the same reason.'
+			);
+		}
+	}
 
-    /**
-     * The link is weak: not a relatedSchema, because the target is another app's.
-     *
-     * @return void
-     */
-    public function testTheSubjectLinkIsWeakRatherThanARelation(): void
-    {
-        $props = $this->mergedProperties();
+	/**
+	 * The link is weak: not a relatedSchema, because the target is another app's.
+	 *
+	 * @return void
+	 */
+	public function testTheSubjectLinkIsWeakRatherThanARelation(): void {
+		$props = $this->mergedProperties();
 
-        foreach (['subjectApp', 'subjectId'] as $field) {
-            self::assertArrayNotHasKey(
-                'relatedSchema',
-                $props[$field],
-                $field.' must not declare relatedSchema: the target lives in another app\'s register, '
-                .'so Shillinq cannot resolve or cascade it, and an hour entry must survive the domain '
-                .'object being archived.'
-            );
-        }
-    }
+		foreach (['subjectApp', 'subjectId'] as $field) {
+			self::assertArrayNotHasKey(
+				'relatedSchema',
+				$props[$field],
+				$field . ' must not declare relatedSchema: the target lives in another app\'s register, '
+				. 'so Shillinq cannot resolve or cascade it, and an hour entry must survive the domain '
+				. 'object being archived.'
+			);
+		}
+	}
 }

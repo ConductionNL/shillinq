@@ -48,13 +48,21 @@ async function reachIndex(page: Page): Promise<void> {
 		await dismissSupportDialog(page)
 		// Let the SPA finish booting + the manifest router settle the route.
 		await page.waitForTimeout(2_000)
-		if (await page.locator('.external-adapters__list').first().isVisible({ timeout: 4_000 }).catch(() => false)) {
+		if (
+			await page
+				.locator('.external-adapters__list')
+				.first()
+				.isVisible({ timeout: 4_000 })
+				.catch(() => false)
+		) {
 			await waitForContentReady(page)
 			return
 		}
 	}
 	// Final assertion fails the test with a clear message if never reached.
-	await expect(page.locator('.external-adapters__list').first()).toBeVisible({ timeout: 10_000 })
+	await expect(page.locator('.external-adapters__list').first()).toBeVisible({
+		timeout: 10_000,
+	})
 }
 
 test.describe('Shillinq W8 — External Adapters visual baselines', () => {
@@ -70,10 +78,13 @@ test.describe('Shillinq W8 — External Adapters visual baselines', () => {
 	test('adapter detail / activation panel (mollie)', async ({ page }) => {
 		await reachIndex(page)
 		// In-router push via the index's primary per-row action — reliable.
-		await page.locator('[data-adapter-id="mollie"]')
+		await page
+			.locator('[data-adapter-id="mollie"]')
 			.getByRole('button', { name: 'View activation' })
 			.click()
-		await expect(page.locator('.adapter-detail[data-adapter-id]').first()).toBeVisible({ timeout: 15_000 })
+		await expect(
+			page.locator('.adapter-detail[data-adapter-id]').first(),
+		).toBeVisible({ timeout: 15_000 })
 		await dismissSupportDialog(page)
 		await waitForContentReady(page)
 		await freezePage(page)

@@ -25,28 +25,23 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
 use PHPUnit\Framework\TestCase;
 
-final class VatSubmissionGuardTest extends TestCase
-{
-    private VatSubmissionGuard $guard;
+final class VatSubmissionGuardTest extends TestCase {
+	private VatSubmissionGuard $guard;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new VatSubmissionGuard();
-    }//end setUp()
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new VatSubmissionGuard();
+	}//end setUp()
 
-    public function testSubmitAllowedBelowThreshold(): void
-    {
-        self::assertTrue($this->guard->requireApproval(['amount' => 1000, 'approvalThreshold' => 5000]));
-    }//end testSubmitAllowedBelowThreshold()
+	public function testSubmitAllowedBelowThreshold(): void {
+		self::assertTrue($this->guard->requireApproval(['amount' => 1000, 'approvalThreshold' => 5000]));
+	}//end testSubmitAllowedBelowThreshold()
 
-    public function testSubmitAllowedWhenNoThresholdConfigured(): void
-    {
-        self::assertTrue($this->guard->requireApproval(['amount' => 999999, 'approvalThreshold' => null]));
-    }//end testSubmitAllowedWhenNoThresholdConfigured()
+	public function testSubmitAllowedWhenNoThresholdConfigured(): void {
+		self::assertTrue($this->guard->requireApproval(['amount' => 999999, 'approvalThreshold' => null]));
+	}//end testSubmitAllowedWhenNoThresholdConfigured()
 
-    public function testSubmitDeniedAboveThreshold(): void
-    {
-        self::assertFalse($this->guard->requireApproval(['amount' => 8000, 'approvalThreshold' => 5000]));
-    }//end testSubmitDeniedAboveThreshold()
+	public function testSubmitDeniedAboveThreshold(): void {
+		self::assertFalse($this->guard->requireApproval(['amount' => 8000, 'approvalThreshold' => 5000]));
+	}//end testSubmitDeniedAboveThreshold()
 }//end class

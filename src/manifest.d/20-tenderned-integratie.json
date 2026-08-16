@@ -40,14 +40,14 @@
 				"register": "shillinq",
 				"schema": "TenderNedAanbesteding",
 				"columns": [
-					{ "key": "aanbestedingId", "label": "Tender", "sortable": true },
-					{ "key": "titel", "label": "Title", "sortable": true },
-					{ "key": "gunningsDatum", "label": "Award date", "sortable": true },
-					{ "key": "contractWaarde", "label": "Contract value", "sortable": true },
-					{ "key": "gegundeLeverancier", "label": "Awarded supplier", "sortable": true },
+					{ "key": "tenderId", "label": "Tender", "sortable": true },
+					{ "key": "title", "label": "Title", "sortable": true },
+					{ "key": "awardDate", "label": "Award date", "sortable": true },
+					{ "key": "contractValue", "label": "Contract value", "sortable": true },
+					{ "key": "awardedSupplier", "label": "Awarded supplier", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "gunningsDatum",
+				"defaultSort": "awardDate",
 				"detailRoute": "TenderNedAanbestedingDetail"
 			}
 		},
@@ -75,7 +75,7 @@
 						"icon": "CurrencyEur",
 						"content": {
 							"entries": [
-								{ "title": "Contract value", "register": "shillinq", "schema": "TenderNedAanbesteding", "metric": "sum", "field": "contractWaarde", "filter": { "id": "@objectId" }, "format": "currency" }
+								{ "title": "Contract value", "register": "shillinq", "schema": "TenderNedAanbesteding", "metric": "sum", "field": "contractValue", "filter": { "id": "@objectId" }, "format": "currency" }
 							]
 						}
 					},
@@ -118,14 +118,14 @@
 				"register": "shillinq",
 				"schema": "Verplichting",
 				"columns": [
-					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
-					{ "key": "omschrijving", "label": "Description", "sortable": true },
-					{ "key": "bron", "label": "Source", "sortable": true },
-					{ "key": "bedrag", "label": "Amount", "sortable": true },
-					{ "key": "kostenplaats", "label": "Cost center", "sortable": true },
+					{ "key": "commitmentNumber", "label": "Number", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": true },
+					{ "key": "source", "label": "Source", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "costCentre", "label": "Cost center", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "verplichtingNummer",
+				"defaultSort": "commitmentNumber",
 				"detailRoute": "VerplichtingDetail"
 			}
 		},
@@ -153,7 +153,7 @@
 						"icon": "CurrencyEur",
 						"content": {
 							"entries": [
-								{ "title": "Committed amount", "register": "shillinq", "schema": "Verplichting", "metric": "sum", "field": "bedrag", "filter": { "id": "@objectId" }, "format": "currency" }
+								{ "title": "Committed amount", "register": "shillinq", "schema": "Verplichting", "metric": "sum", "field": "amount", "filter": { "id": "@objectId" }, "format": "currency" }
 							]
 						}
 					},
@@ -171,16 +171,16 @@
 						"content": {
 							"register": "shillinq",
 							"schema": "TenderNedAanbesteding",
-							"filter": { "verplichtingId": "@objectId" },
+							"filter": { "commitmentId": "@objectId" },
 							"columns": [
-								{ "key": "titel", "label": "Tender" },
-								{ "key": "gegundeLeverancier", "label": "Supplier" },
-								{ "key": "contractWaarde", "label": "Contract value" }
+								{ "key": "title", "label": "Tender" },
+								{ "key": "awardedSupplier", "label": "Supplier" },
+								{ "key": "contractValue", "label": "Contract value" }
 							],
 							"limit": 20,
 							"rowRoute": "TenderNedAanbestedingDetail",
 							"viewAllRoute": "TenderNedAanbestedingen",
-							"viewAllQuery": { "verplichtingId": "@objectId" },
+							"viewAllQuery": { "commitmentId": "@objectId" },
 							"emptyText": "No tenders have generated this commitment yet.",
 							"allowCreate": false
 						}
@@ -219,17 +219,17 @@
 				"register": "shillinq",
 				"schema": "Verplichting",
 				"filters": {
-					"bron": "tenderned"
+					"source": "tenderned"
 				},
 				"columns": [
-					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
-					{ "key": "omschrijving", "label": "Description", "sortable": true },
-					{ "key": "bedrag", "label": "Contract value", "sortable": true },
-					{ "key": "looptijdStart", "label": "Term start", "sortable": true },
-					{ "key": "looptijdEind", "label": "Term end", "sortable": true },
+					{ "key": "commitmentNumber", "label": "Number", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": true },
+					{ "key": "amount", "label": "Contract value", "sortable": true },
+					{ "key": "termStart", "label": "Term start", "sortable": true },
+					{ "key": "termEnd", "label": "Term end", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "looptijdStart",
+				"defaultSort": "termStart",
 				"detailRoute": "VerplichtingDetail"
 			}
 		}

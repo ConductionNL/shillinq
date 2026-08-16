@@ -15,9 +15,15 @@
 		<form class="transfer-op__form" @submit.prevent="handleConfirm">
 			<label>
 				<span>{{ t('shillinq', 'From location') }}</span>
-				<select v-model="fromLocation" required :aria-label="t('shillinq', 'Source location')">
+				<select
+					v-model="fromLocation"
+					required
+					:aria-label="t('shillinq', 'Source location')">
 					<option value="">{{ t('shillinq', 'Select source') }}</option>
-					<option v-for="loc in store.locations" :key="loc.code" :value="loc.code">
+					<option
+						v-for="loc in store.locations"
+						:key="loc.code"
+						:value="loc.code">
 						{{ loc.name }} ({{ loc.code }})
 					</option>
 				</select>
@@ -31,7 +37,7 @@
 						type="text"
 						required
 						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')">
+						:aria-label="t('shillinq', 'Stock keeping unit')" />
 					<button type="button" @click="scanning = true">
 						{{ t('shillinq', 'Scan') }}
 					</button>
@@ -40,9 +46,17 @@
 
 			<label>
 				<span>{{ t('shillinq', 'To location') }}</span>
-				<select v-model="toLocation" required :aria-label="t('shillinq', 'Destination location')">
-					<option value="">{{ t('shillinq', 'Select destination') }}</option>
-					<option v-for="loc in availableDestinations" :key="loc.code" :value="loc.code">
+				<select
+					v-model="toLocation"
+					required
+					:aria-label="t('shillinq', 'Destination location')">
+					<option value="">
+						{{ t('shillinq', 'Select destination') }}
+					</option>
+					<option
+						v-for="loc in availableDestinations"
+						:key="loc.code"
+						:value="loc.code">
 						{{ loc.name }} ({{ loc.code }})
 					</option>
 				</select>
@@ -56,7 +70,7 @@
 					min="0.01"
 					step="0.01"
 					required
-					:aria-label="t('shillinq', 'Quantity to transfer')">
+					:aria-label="t('shillinq', 'Quantity to transfer')" />
 			</label>
 
 			<div v-if="error" class="transfer-op__error" role="alert">
@@ -101,36 +115,58 @@ export default {
 			lastSubmittedAt: 0,
 		}
 	},
+
 	computed: {
 		store() {
 			return useInventoryMobileScannerStore()
 		},
+
 		availableDestinations() {
-			return this.store.locations.filter((loc) => loc.code !== this.fromLocation)
+			return this.store.locations.filter(
+				(loc) => loc.code !== this.fromLocation,
+			)
 		},
 	},
+
 	methods: {
 		handleScan(value) {
 			this.sku = value
 			this.scanning = false
 		},
+
 		async handleConfirm() {
 			this.error = null
 			this.successMessage = null
 
-			if (!this.fromLocation || !this.toLocation || !this.sku || !this.quantity || this.quantity <= 0) {
-				this.error = this.t('shillinq', 'Source, destination, SKU and a positive quantity are required.')
+			if (
+				!this.fromLocation
+				|| !this.toLocation
+				|| !this.sku
+				|| !this.quantity
+				|| this.quantity <= 0
+			) {
+				this.error = this.t(
+					'shillinq',
+					'Source, destination, SKU and a positive quantity are required.',
+				)
 				return
 			}
 			if (this.fromLocation === this.toLocation) {
-				this.error = this.t('shillinq', 'Source and destination must differ.')
+				this.error = this.t(
+					'shillinq',
+					'Source and destination must differ.',
+				)
 				return
 			}
 
 			// Validate source has enough stock — REQ-INVENTORY-002 acceptance.
 			try {
 				if (this.store.db) {
-					const onHand = await readStockQuantity(this.store.db, this.sku, this.fromLocation)
+					const onHand = await readStockQuantity(
+						this.store.db,
+						this.sku,
+						this.fromLocation,
+					)
 					if (onHand < this.quantity) {
 						this.error = this.t(
 							'shillinq',
@@ -146,7 +182,10 @@ export default {
 
 			const now = Date.now()
 			if (now - this.lastSubmittedAt < 5000) {
-				this.error = this.t('shillinq', 'Already submitted; waiting for server ACK.')
+				this.error = this.t(
+					'shillinq',
+					'Already submitted; waiting for server ACK.',
+				)
 				return
 			}
 			this.lastSubmittedAt = now
@@ -163,12 +202,19 @@ export default {
 				this.successMessage = this.t(
 					'shillinq',
 					'Transferred {qty} units {from} → {to} (pending sync)',
-					{ qty: this.quantity, from: this.fromLocation, to: this.toLocation },
+					{
+						qty: this.quantity,
+						from: this.fromLocation,
+						to: this.toLocation,
+					},
 				)
 				this.sku = ''
 				this.quantity = null
 			} catch (e) {
-				this.error = e && e.message ? e.message : this.t('shillinq', 'Could not record transfer.')
+				this.error =
+					e && e.message
+						? e.message
+						: this.t('shillinq', 'Could not record transfer.')
 			} finally {
 				this.submitting = false
 			}
@@ -178,17 +224,38 @@ export default {
 </script>
 
 <style scoped>
-.transfer-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+.transfer-op {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
 
-.transfer-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
+.transfer-op__form label {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: var(--default-grid-baseline, 4px);
+}
 
-.transfer-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
+.transfer-op__sku-row {
+	display: flex;
+	gap: var(--default-grid-baseline, 4px);
+}
 
-.transfer-op__sku-row input { flex: 1; }
+.transfer-op__sku-row input {
+	flex: 1;
+}
 
-.transfer-op__error { color: var(--color-error); }
+.transfer-op__error {
+	color: var(--color-error);
+}
 
-.transfer-op__success { color: var(--color-success); }
+.transfer-op__success {
+	color: var(--color-success);
+}
 
-.transfer-op__actions { display: flex; justify-content: flex-end; }
+.transfer-op__actions {
+	display: flex;
+	justify-content: flex-end;
+}
 </style>

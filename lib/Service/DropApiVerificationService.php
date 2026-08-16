@@ -40,96 +40,90 @@ use DateTimeZone;
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-4
  */
-class DropApiVerificationService
-{
-    /**
-     * DROP-API base URL (configurable via app config in production).
-     *
-     * @var string
-     */
-    public const DEFAULT_BASE_URL = 'https://repository.officiele-overheidspublicaties.nl/cgi-bin/search-api/sparql';
+class DropApiVerificationService {
+	/**
+	 * DROP-API base URL (configurable via app config in production).
+	 *
+	 * @var string
+	 */
+	public const DEFAULT_BASE_URL = 'https://repository.officiele-overheidspublicaties.nl/cgi-bin/search-api/sparql';
 
-    /**
-     * Compose the DROP lookup request payload for an ABB (REQ-WMO-005).
-     *
-     * @param array<string,mixed> $abb The ABB record.
-     *
-     * @return array{ok:bool, error?:string, gemeentebladId?:string, request?:array<string,mixed>}
-     */
-    public function composeLookupRequest(array $abb): array
-    {
-        $gmblad = trim((string) ($abb['publicatieGemeenteblad'] ?? ''));
-        if ($gmblad === '') {
-            return ['ok' => false, 'error' => 'ABB has no publicatieGemeenteblad reference'];
-        }
+	/**
+	 * Compose the DROP lookup request payload for an ABB (REQ-WMO-005).
+	 *
+	 * @param array<string,mixed> $abb The ABB record.
+	 *
+	 * @return array{ok:bool, error?:string, gemeentebladId?:string, request?:array<string,mixed>}
+	 */
+	public function composeLookupRequest(array $abb): array {
+		$gmblad = trim((string)($abb['publicationMunicipalGazette'] ?? ''));
+		if ($gmblad === '') {
+			return ['ok' => false, 'error' => 'ABB has no publicatieGemeenteblad reference'];
+		}
 
-        return [
-            'ok'             => true,
-            'gemeentebladId' => $gmblad,
-            'request'        => [
-                'method' => 'GET',
-                'path'   => '/officielepublicaties/zoek',
-                'query'  => ['identifier' => $gmblad],
-                'accept' => 'application/sparql-results+json',
-            ],
-        ];
+		return [
+			'ok' => true,
+			'gemeentebladId' => $gmblad,
+			'request' => [
+				'method' => 'GET',
+				'path' => '/officielepublicaties/zoek',
+				'query' => ['identifier' => $gmblad],
+				'accept' => 'application/sparql-results+json',
+			],
+		];
 
-    }//end composeLookupRequest()
+	}//end composeLookupRequest()
 
-    /**
-     * Parse a DROP-API response into a verification envelope.
-     *
-     * @param string|null $rawResponse Raw HTTP response body (JSON) or null on connection failure.
-     * @param int|null    $statusCode  HTTP status (null on connection failure).
-     *
-     * @return array{verifiedAt:string, success:bool, message:string}
-     */
-    public function parseResponse(?string $rawResponse, ?int $statusCode): array
-    {
-        $now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+	/**
+	 * Parse a DROP-API response into a verification envelope.
+	 *
+	 * @param string|null $rawResponse Raw HTTP response body (JSON) or null on connection failure.
+	 * @param int|null $statusCode HTTP status (null on connection failure).
+	 *
+	 * @return array{verifiedAt:string, success:bool, message:string}
+	 */
+	public function parseResponse(?string $rawResponse, ?int $statusCode): array {
+		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
 
-        if ($rawResponse === null || $statusCode === null) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API unavailable (no response)'];
-        }
+		if ($rawResponse === null || $statusCode === null) {
+			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API unavailable (no response)'];
+		}
 
-        if ($statusCode >= 500) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API error '.(string) $statusCode];
-        }
+		if ($statusCode >= 500) {
+			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API error ' . (string)$statusCode];
+		}
 
-        if ($statusCode === 404) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'Gemeenteblad reference not found in DROP'];
-        }
+		if ($statusCode === 404) {
+			return ['verifiedAt' => $now, 'success' => false, 'message' => 'Gemeenteblad reference not found in DROP'];
+		}
 
-        if ($statusCode !== 200) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API HTTP '.(string) $statusCode];
-        }
+		if ($statusCode !== 200) {
+			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API HTTP ' . (string)$statusCode];
+		}
 
-        $decoded = json_decode($rawResponse, true);
-        if (is_array($decoded) === false) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API returned invalid JSON'];
-        }
+		$decoded = json_decode($rawResponse, true);
+		if (is_array($decoded) === false) {
+			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API returned invalid JSON'];
+		}
 
-        $bindings = (array) ($decoded['results']['bindings'] ?? []);
-        if ($bindings === []) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'No matching publication in DROP'];
-        }
+		$bindings = (array)($decoded['results']['bindings'] ?? []);
+		if ($bindings === []) {
+			return ['verifiedAt' => $now, 'success' => false, 'message' => 'No matching publication in DROP'];
+		}
 
-        return ['verifiedAt' => $now, 'success' => true, 'message' => 'Verified'];
+		return ['verifiedAt' => $now, 'success' => true, 'message' => 'Verified'];
+	}//end parseResponse()
 
-    }//end parseResponse()
-
-    /**
-     * Apply a verification envelope to the ABB (REQ-WMO-005 §verification).
-     *
-     * @param array<string,mixed>                                  $abb          The ABB.
-     * @param array{verifiedAt:string,success:bool,message:string} $verification Verification result.
-     *
-     * @return array<string,mixed> Updated ABB.
-     */
-    public function applyVerification(array $abb, array $verification): array
-    {
-        $abb['dropVerification'] = $verification;
-        return $abb;
-
-    }//end applyVerification()
+	/**
+	 * Apply a verification envelope to the ABB (REQ-WMO-005 §verification).
+	 *
+	 * @param array<string,mixed> $abb The ABB.
+	 * @param array{verifiedAt:string,success:bool,message:string} $verification Verification result.
+	 *
+	 * @return array<string,mixed> Updated ABB.
+	 */
+	public function applyVerification(array $abb, array $verification): array {
+		$abb['dropVerification'] = $verification;
+		return $abb;
+	}//end applyVerification()
 }//end class

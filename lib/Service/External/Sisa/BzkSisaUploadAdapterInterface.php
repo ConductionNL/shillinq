@@ -40,26 +40,25 @@ namespace OCA\Shillinq\Service\External\Sisa;
  *
  * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
-interface BzkSisaUploadAdapterInterface
-{
-    /**
-     * Upload a SiSa annual report envelope to BZK.
-     *
-     * @param array<string,mixed> $payload The SiSa envelope — reportNumber,
-     *                                     fiscalYear, administrationId,
-     *                                     onTimeSettlementPercent, findings[],
-     *                                     auditOpinion, managementLetterId,
-     *                                     reportXmlBytes, signedPdfBytes,
-     *                                     checksum.
-     *
-     * @return BzkSisaUploadResult The dispatch outcome.
-     */
-    public function upload(array $payload): BzkSisaUploadResult;
+interface BzkSisaUploadAdapterInterface {
+	/**
+	 * Upload a SiSa annual report envelope to BZK.
+	 *
+	 * @param array<string,mixed> $payload The SiSa envelope — reportNumber,
+	 *                                     fiscalYear, administrationId,
+	 *                                     onTimeSettlementPercent, findings[],
+	 *                                     auditOpinion, managementLetterId,
+	 *                                     reportXmlBytes, signedPdfBytes,
+	 *                                     checksum.
+	 *
+	 * @return BzkSisaUploadResult The dispatch outcome.
+	 */
+	public function upload(array $payload): BzkSisaUploadResult;
 
-    /**
-     * Whether the adapter is dormant.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

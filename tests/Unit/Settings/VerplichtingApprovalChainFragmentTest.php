@@ -37,181 +37,167 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class VerplichtingApprovalChainFragmentTest extends TestCase
-{
+final class VerplichtingApprovalChainFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the Verplichting register fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json';
+	/**
+	 * Absolute path to the Verplichting register fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json';
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    }//end fragment()
+	/**
+	 * Load the Verplichting schema definition from the fragment.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function commitment(): array {
+		$schemas = ($this->fragment()['components']['schemas'] ?? []);
+		self::assertArrayHasKey('Verplichting', $schemas, 'Fragment must declare the Verplichting schema');
+		return $schemas['Verplichting'];
+	}//end verplichting()
 
-    /**
-     * Load the Verplichting schema definition from the fragment.
-     *
-     * @return array<string, mixed>
-     */
-    private function verplichting(): array
-    {
-        $schemas = ($this->fragment()['components']['schemas'] ?? []);
-        self::assertArrayHasKey('Verplichting', $schemas, 'Fragment must declare the Verplichting schema');
-        return $schemas['Verplichting'];
+	/**
+	 * Load the declared approval chain.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function chain(): array {
+		$schema = $this->commitment();
+		self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Verplichting must declare x-openregister-approval-chains');
+		$chains = $schema['x-openregister-approval-chains'];
+		self::assertArrayHasKey('verplichting-goedkeuring', $chains);
+		return $chains['verplichting-goedkeuring'];
+	}//end chain()
 
-    }//end verplichting()
+	/**
+	 * The fragment is present and valid JSON.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$this->fragment();
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
 
-    /**
-     * Load the declared approval chain.
-     *
-     * @return array<string, mixed>
-     */
-    private function chain(): array
-    {
-        $schema = $this->verplichting();
-        self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Verplichting must declare x-openregister-approval-chains');
-        $chains = $schema['x-openregister-approval-chains'];
-        self::assertArrayHasKey('verplichting-goedkeuring', $chains);
-        return $chains['verplichting-goedkeuring'];
+	}//end testFragmentIsValidJson()
 
-    }//end chain()
+	/**
+	 * The declared chain names the real `goedkeuren` lifecycle transition
+	 * (REQ-VPL-013). ApprovalChainGateListener matches on this exact key.
+	 *
+	 * @return void
+	 */
+	public function testChainTargetsGoedkeurenTransition(): void {
+		$chain = $this->chain();
+		self::assertSame('goedkeuren', $chain['transition']);
 
-    /**
-     * The fragment is present and valid JSON.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $this->fragment();
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		$lifecycle = $this->commitment()['x-openregister-lifecycle'];
+		$transitions = ($lifecycle['transitions'] ?? []);
+		self::assertArrayHasKey('goedkeuren', $transitions, 'goedkeuren transition must exist for the gate to bind to');
+		self::assertSame('in_goedkeuring', $transitions['goedkeuren']['from']);
+		self::assertSame('aangegaan', $transitions['goedkeuren']['to']);
 
-    }//end testFragmentIsValidJson()
+	}//end testChainTargetsGoedkeurenTransition()
 
-    /**
-     * The declared chain names the real `goedkeuren` lifecycle transition
-     * (REQ-VPL-013). ApprovalChainGateListener matches on this exact key.
-     *
-     * @return void
-     */
-    public function testChainTargetsGoedkeurenTransition(): void
-    {
-        $chain = $this->chain();
-        self::assertSame('goedkeuren', $chain['transition']);
+	/**
+	 * The chain routes by a real integer amount field (REQ-VPL-013 / OR REQ-008).
+	 *
+	 * @return void
+	 */
+	public function testChainRoutesByRealAmountField(): void {
+		$chain = $this->chain();
+		self::assertSame('total_amount_excl_vat', $chain['amountField']);
 
-        $lifecycle   = $this->verplichting()['x-openregister-lifecycle'];
-        $transitions = ($lifecycle['transitions'] ?? []);
-        self::assertArrayHasKey('goedkeuren', $transitions, 'goedkeuren transition must exist for the gate to bind to');
-        self::assertSame('in_goedkeuring', $transitions['goedkeuren']['from']);
-        self::assertSame('aangegaan', $transitions['goedkeuren']['to']);
+		$properties = ($this->commitment()['properties'] ?? []);
+		self::assertArrayHasKey('total_amount_excl_vat', $properties, 'amountField must name a real property');
+		self::assertSame('integer', $properties['total_amount_excl_vat']['type']);
 
-    }//end testChainTargetsGoedkeurenTransition()
+	}//end testChainRoutesByRealAmountField()
 
-    /**
-     * The chain routes by a real integer amount field (REQ-VPL-013 / OR REQ-008).
-     *
-     * @return void
-     */
-    public function testChainRoutesByRealAmountField(): void
-    {
-        $chain = $this->chain();
-        self::assertSame('totaalbedrag_excl_btw', $chain['amountField']);
+	/**
+	 * Two ordered approver tiers, each carrying role + min + minAmount, routing
+	 * from EUR 0 (commitment-administrator) to EUR 250.000 (finance-director).
+	 *
+	 * @return void
+	 */
+	public function testChainDeclaresOrderedApproverTiers(): void {
+		$approvers = ($this->chain()['approvers'] ?? []);
+		self::assertIsArray($approvers);
+		self::assertNotEmpty($approvers, 'approvers must be non-empty (OR REQ-006)');
 
-        $properties = ($this->verplichting()['properties'] ?? []);
-        self::assertArrayHasKey('totaalbedrag_excl_btw', $properties, 'amountField must name a real property');
-        self::assertSame('integer', $properties['totaalbedrag_excl_btw']['type']);
+		$previousMin = -1;
+		foreach ($approvers as $tier) {
+			self::assertArrayHasKey('role', $tier);
+			self::assertNotSame('', (string)$tier['role']);
+			self::assertArrayHasKey('min', $tier);
+			self::assertGreaterThanOrEqual(1, $tier['min']);
+			self::assertArrayHasKey('minAmount', $tier);
+			self::assertGreaterThan($previousMin, $tier['minAmount'], 'approver tiers must be ordered by ascending minAmount');
+			$previousMin = $tier['minAmount'];
+		}
 
-    }//end testChainRoutesByRealAmountField()
+		$byAmount = [];
+		foreach ($approvers as $tier) {
+			$byAmount[(int)$tier['minAmount']] = $tier['role'];
+		}
 
-    /**
-     * Two ordered approver tiers, each carrying role + min + minAmount, routing
-     * from EUR 0 (commitment-administrator) to EUR 250.000 (finance-director).
-     *
-     * @return void
-     */
-    public function testChainDeclaresOrderedApproverTiers(): void
-    {
-        $approvers = ($this->chain()['approvers'] ?? []);
-        self::assertIsArray($approvers);
-        self::assertNotEmpty($approvers, 'approvers must be non-empty (OR REQ-006)');
+		self::assertSame('commitment-administrator', $byAmount[0] ?? null);
+		self::assertSame('finance-director', $byAmount[25000000] ?? null);
 
-        $previousMin = -1;
-        foreach ($approvers as $tier) {
-            self::assertArrayHasKey('role', $tier);
-            self::assertNotSame('', (string) $tier['role']);
-            self::assertArrayHasKey('min', $tier);
-            self::assertGreaterThanOrEqual(1, $tier['min']);
-            self::assertArrayHasKey('minAmount', $tier);
-            self::assertGreaterThan($previousMin, $tier['minAmount'], 'approver tiers must be ordered by ascending minAmount');
-            $previousMin = $tier['minAmount'];
-        }
+	}//end testChainDeclaresOrderedApproverTiers()
 
-        $byAmount = [];
-        foreach ($approvers as $tier) {
-            $byAmount[(int) $tier['minAmount']] = $tier['role'];
-        }
+	/**
+	 * Approver roles are declared in the schema's own RBAC block, so the gate
+	 * resolves them against real groups.
+	 *
+	 * @return void
+	 */
+	public function testApproverRolesAreDeclaredRbacRoles(): void {
+		$roles = ($this->commitment()['x-openregister-rbac']['roles'] ?? []);
+		foreach ($this->chain()['approvers'] as $tier) {
+			self::assertArrayHasKey($tier['role'], $roles, $tier['role'] . ' must be a declared RBAC role');
+		}
 
-        self::assertSame('commitment-administrator', $byAmount[0] ?? null);
-        self::assertSame('finance-director', $byAmount[25000000] ?? null);
+	}//end testApproverRolesAreDeclaredRbacRoles()
 
-    }//end testChainDeclaresOrderedApproverTiers()
+	/**
+	 * Separation of duties and auto-advance are declared (OR REQ-009 / REQ-010).
+	 *
+	 * @return void
+	 */
+	public function testChainEnforcesSodAndAutoAdvances(): void {
+		$chain = $this->chain();
+		self::assertTrue($chain['separationOfDuties'], 'separationOfDuties must be true (approver != requester)');
+		self::assertSame('advanceTransition', $chain['onApprove']);
 
-    /**
-     * Approver roles are declared in the schema's own RBAC block, so the gate
-     * resolves them against real groups.
-     *
-     * @return void
-     */
-    public function testApproverRolesAreDeclaredRbacRoles(): void
-    {
-        $roles = ($this->verplichting()['x-openregister-rbac']['roles'] ?? []);
-        foreach ($this->chain()['approvers'] as $tier) {
-            self::assertArrayHasKey($tier['role'], $roles, $tier['role'].' must be a declared RBAC role');
-        }
+	}//end testChainEnforcesSodAndAutoAdvances()
 
-    }//end testApproverRolesAreDeclaredRbacRoles()
+	/**
+	 * No dead control: the imperative mandate-record routing (MandaatEnforcer)
+	 * is retained and still wired to the indienen transition. This change is
+	 * strictly additive; it removes no imperative enforcement.
+	 *
+	 * @return void
+	 */
+	public function testMandateEnforcerIsRetained(): void {
+		self::assertFileExists(__DIR__ . '/../../../lib/Lifecycle/MandaatEnforcer.php');
 
-    /**
-     * Separation of duties and auto-advance are declared (OR REQ-009 / REQ-010).
-     *
-     * @return void
-     */
-    public function testChainEnforcesSodAndAutoAdvances(): void
-    {
-        $chain = $this->chain();
-        self::assertTrue($chain['separationOfDuties'], 'separationOfDuties must be true (approver != requester)');
-        self::assertSame('advanceTransition', $chain['onApprove']);
+		$transitions = ($this->commitment()['x-openregister-lifecycle']['transitions'] ?? []);
+		self::assertArrayHasKey('indienen', $transitions);
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval',
+			$transitions['indienen']['requires']
+		);
 
-    }//end testChainEnforcesSodAndAutoAdvances()
-
-    /**
-     * No dead control: the imperative mandate-record routing (MandaatEnforcer)
-     * is retained and still wired to the indienen transition. This change is
-     * strictly additive; it removes no imperative enforcement.
-     *
-     * @return void
-     */
-    public function testMandateEnforcerIsRetained(): void
-    {
-        self::assertFileExists(__DIR__.'/../../../lib/Lifecycle/MandaatEnforcer.php');
-
-        $transitions = ($this->verplichting()['x-openregister-lifecycle']['transitions'] ?? []);
-        self::assertArrayHasKey('indienen', $transitions);
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval',
-            $transitions['indienen']['requires']
-        );
-
-    }//end testMandateEnforcerIsRetained()
+	}//end testMandateEnforcerIsRetained()
 }//end class

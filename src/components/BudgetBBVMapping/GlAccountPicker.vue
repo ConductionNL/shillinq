@@ -19,26 +19,26 @@
 -->
 <template>
 	<NcSelect
-		:model-value="selectedOption"
+		:modelValue="selectedOption"
 		:options="filteredOptions"
 		:loading="loading"
-		:input-label="t('shillinq', 'GL account')"
+		:inputLabel="t('shillinq', 'GL account')"
 		:placeholder="t('shillinq', 'Search by account number or name…')"
 		:filterable="true"
 		:clearable="false"
 		label="display"
-		track-by="value"
+		trackBy="value"
 		data-testid="bbv-gl-account-picker"
 		@search="onSearch"
 		@option:selected="onSelected"
-		@update:model-value="onUpdateModelValue" />
+		@update:modelValue="onUpdateModelValue" />
 </template>
 
 <script>
-import { NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcSelect } from '@nextcloud/vue'
 
 const REGISTER_SLUG = 'shillinq'
 const SCHEMA_SLUG = 'Account'
@@ -54,6 +54,7 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * Optional administration scope. When set, the picker filters
 		 * accounts to this administration before applying the text query.
@@ -63,6 +64,7 @@ export default {
 			default: '',
 		},
 	},
+
 	emits: ['update:modelValue', 'selected'],
 	data() {
 		return {
@@ -72,6 +74,7 @@ export default {
 			fetchError: '',
 		}
 	},
+
 	computed: {
 		options() {
 			return this.accounts.map((a) => ({
@@ -80,6 +83,7 @@ export default {
 				account: a,
 			}))
 		},
+
 		filteredOptions() {
 			const q = (this.query || '').trim().toLowerCase()
 			if (!q) {
@@ -87,23 +91,35 @@ export default {
 			}
 			return this.options.filter((o) => {
 				const num = String(o.value || '').toLowerCase()
-				const name = (o.account?.accountName || o.account?.name || '').toLowerCase()
+				const name = (
+					o.account?.accountName
+					|| o.account?.name
+					|| ''
+				).toLowerCase()
 				return num.includes(q) || name.includes(q)
 			})
 		},
+
 		selectedOption() {
 			if (!this.modelValue) {
 				return null
 			}
-			const match = this.options.find((o) => o.value === String(this.modelValue))
+			const match = this.options.find(
+				(o) => o.value === String(this.modelValue),
+			)
 			if (match) {
 				return match
 			}
 			// Account list may not have arrived yet — surface the raw value
 			// so the form still shows the number while the fetch completes.
-			return { value: String(this.modelValue), display: String(this.modelValue), account: null }
+			return {
+				value: String(this.modelValue),
+				display: String(this.modelValue),
+				account: null,
+			}
 		},
 	},
+
 	watch: {
 		administrationId: {
 			immediate: false,
@@ -112,9 +128,11 @@ export default {
 			},
 		},
 	},
+
 	async created() {
 		await this.fetchAccounts()
 	},
+
 	methods: {
 		t,
 		formatDisplay(account) {
@@ -125,12 +143,16 @@ export default {
 			const name = account.accountName || account.name || account.title || ''
 			const type = account.accountType || account.type || ''
 			const balanceCents = account.balance ?? account.balanceCents
-			const balance = balanceCents !== null && balanceCents !== undefined && Number.isFinite(Number(balanceCents))
-				? this.formatEuro(balanceCents)
-				: ''
+			const balance =
+				balanceCents !== null
+				&& balanceCents !== undefined
+				&& Number.isFinite(Number(balanceCents))
+					? this.formatEuro(balanceCents)
+					: ''
 			const parts = [number, name, type, balance].filter(Boolean)
 			return parts.join(' · ')
 		},
+
 		formatEuro(cents) {
 			const numeric = Number(cents)
 			if (!Number.isFinite(numeric)) {
@@ -142,15 +164,18 @@ export default {
 				maximumFractionDigits: 0,
 			}).format(numeric / 100)
 		},
+
 		onSearch(query) {
 			this.query = query || ''
 		},
+
 		onSelected(option) {
 			if (!option) {
 				return
 			}
 			this.$emit('selected', option.account || null)
 		},
+
 		onUpdateModelValue(option) {
 			const value = option?.value ?? ''
 			this.$emit('update:modelValue', value)
@@ -158,6 +183,7 @@ export default {
 				this.$emit('selected', option.account)
 			}
 		},
+
 		async fetchAccounts() {
 			this.loading = true
 			this.fetchError = ''
@@ -167,22 +193,32 @@ export default {
 					params.administrationId = this.administrationId
 				}
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+					),
 					{ params },
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				this.accounts = Array.isArray(rows) ? rows : []
 				// Surface the selected account once data lands.
 				if (this.modelValue) {
-					const match = this.accounts.find((a) =>
-						String(a.accountNumber || a.id) === String(this.modelValue))
+					const match = this.accounts.find(
+						(a) =>
+							String(a.accountNumber || a.id)
+							=== String(this.modelValue),
+					)
 					if (match) {
 						this.$emit('selected', match)
 					}
 				}
 			} catch (e) {
 				this.accounts = []
-				this.fetchError = e?.response?.data?.error
+				this.fetchError =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load chart of accounts.')
 			} finally {
 				this.loading = false

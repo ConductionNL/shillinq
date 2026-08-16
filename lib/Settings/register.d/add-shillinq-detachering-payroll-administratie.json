@@ -11,7 +11,7 @@
         "x-schema-org": "schema:DataFeed",
         "required": [
           "salarisbureauSlug",
-          "loontijdvak",
+          "payrollPeriod",
           "employeeId",
           "rawPayload",
           "administrationId",
@@ -30,7 +30,7 @@
             "example": "adp-salaris-nl",
             "title": "Salarisbureau Slug"
           },
-          "loontijdvak": {
+          "payrollPeriod": {
             "type": "string",
             "description": "Payroll period identifier (YYYY-MM format). Each batch covers one loontijdvak per employee.",
             "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
@@ -50,14 +50,14 @@
             "example": "Jan Jansen",
             "title": "Employee Name"
           },
-          "loonkosten": {
+          "payrollCost": {
             "type": "number",
             "minimum": 0,
             "description": "Total loonkosten (gross wage cost) for this employee in this loontijdvak in EUR. This is the DR side of the journal entry.",
             "example": 4000.0,
             "title": "Loonkosten"
           },
-          "nettoloon": {
+          "netPay": {
             "type": "number",
             "minimum": 0,
             "description": "Net salary to be paid to the employee (CR side).",
@@ -71,7 +71,7 @@
             "example": 600.0,
             "title": "Sociale Premies"
           },
-          "loonheffing": {
+          "payrollTax": {
             "type": "number",
             "minimum": 0,
             "description": "Wage tax withheld (loonbelasting + premie volksverzekeringen) — CR side.",
@@ -164,7 +164,7 @@
             },
             "fields": {
               "subtype": {
-                "value": "loonkosten"
+                "value": "payrollCost"
               },
               "description": {
                 "expression": "'Loonkosten ' + @source.employeeName + ' ' + @source.loontijdvak"
@@ -262,12 +262,12 @@
         "x-schema-org": "schema:DigitalDocument",
         "required": [
           "zzpId",
-          "zzpNaam",
-          "opdrachtBeschrijving",
-          "looptijdStart",
-          "looptijdEind",
-          "verklaringStatus",
-          "risicoBeoordeling",
+          "freelancerName",
+          "assignmentDescription",
+          "termStart",
+          "termEnd",
+          "declarationStatus",
+          "riskAssessment",
           "administrationId"
         ],
         "properties": {
@@ -277,68 +277,68 @@
             "example": "zzp-001",
             "title": "ZZP ID"
           },
-          "zzpNaam": {
+          "freelancerName": {
             "type": "string",
             "description": "Full name of the ZZP-er.",
             "example": "Maria de Vries",
             "title": "ZZP Naam"
           },
-          "opdrachtBeschrijving": {
+          "assignmentDescription": {
             "type": "string",
             "description": "Description of the assignment (opdracht) that this verklaring covers.",
             "example": "IT-consultancy voor ERP-migratie project Q3-2026",
             "title": "Opdracht Beschrijving"
           },
-          "looptijdStart": {
+          "termStart": {
             "type": "string",
             "format": "date",
             "description": "Assignment start date.",
             "example": "2026-07-01",
             "title": "Looptijd Start"
           },
-          "looptijdEind": {
+          "termEnd": {
             "type": "string",
             "format": "date",
             "description": "Assignment end date.",
             "example": "2026-09-30",
             "title": "Looptijd Eind"
           },
-          "verklaringStatus": {
+          "declarationStatus": {
             "type": "string",
             "description": "Current lifecycle status of the opdrachtgeversverklaring per REQ-DPA-003.",
             "enum": [
-              "concept",
+              "draft",
               "overeengekomen",
               "beëindigd"
             ],
-            "default": "concept",
-            "example": "concept",
+            "default": "draft",
+            "example": "draft",
             "title": "Verklaring Status"
           },
-          "modelOvereenkomst": {
+          "modelAgreement": {
             "type": "string",
             "description": "URI to the Belastingdienst model overeenkomst used as the basis for this verklaring. Optional when a non-model-contract variant applies.",
             "nullable": true,
             "example": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/bijzondere_situaties/freelance/modelovereenkomsten/overeenkomst-van-opdracht-001",
             "title": "Model Overeenkomst"
           },
-          "verklaringDocumentUri": {
+          "declarationDocumentUri": {
             "type": "string",
             "description": "docudesk attachment URI of the generated opdrachtgeversverklaring document. Populated after the 'generate document' action triggers the docudesk template render.",
             "nullable": true,
             "example": "docudesk://attachments/shillinq/opdrachtgeversverklaring-2026-001.pdf",
             "title": "Verklaring Document URI"
           },
-          "risicoBeoordeling": {
+          "riskAssessment": {
             "type": "string",
             "description": "Wet DBA risk classification. Operator-classified per REQ-DPA-003. The docudesk template renders the chosen risico.",
             "enum": [
-              "geen",
-              "laag",
+              "none",
+              "low",
               "midden",
-              "hoog"
+              "high"
             ],
-            "example": "laag",
+            "example": "low",
             "title": "Risico Beoordeling"
           },
           "administrationId": {
@@ -349,10 +349,10 @@
           }
         },
         "x-openregister-lifecycle": {
-          "field": "verklaringStatus",
-          "initialState": "concept",
+          "field": "declarationStatus",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Verklaring is being drafted; not yet agreed upon by both parties."
             },
@@ -367,7 +367,7 @@
           },
           "transitions": {
             "overeenkomen": {
-              "from": "concept",
+              "from": "draft",
               "to": "overeengekomen",
               "label": "Overeenkomst bevestigen",
               "description": "Both parties confirm agreement. Triggers document generation via docudesk template per REQ-DPA-004."
@@ -386,7 +386,7 @@
               "action": "x-openregister-docudesk-render",
               "actionParameters": {
                 "templateSlug": "shillinq-opdrachtgeversverklaring",
-                "outputField": "verklaringDocumentUri"
+                "outputField": "declarationDocumentUri"
               }
             }
           }
@@ -427,36 +427,36 @@
         "type": "object",
         "x-schema-org": "schema:TaxForm",
         "required": [
-          "belastingjaar",
-          "opdrachtgeverId",
-          "ontvangerNaam",
-          "ontvangerBSN",
-          "ontvangerAdres",
-          "betalingenTotaal",
-          "betalingTypeCode",
+          "taxYear",
+          "clientId",
+          "recipientName",
+          "recipientBSN",
+          "recipientAddress",
+          "paymentsTotal",
+          "paymentTypeCode",
           "administrationId"
         ],
         "properties": {
-          "belastingjaar": {
+          "taxYear": {
             "type": "integer",
             "description": "Tax year this IB47 record covers.",
             "minimum": 2000,
             "example": 2026,
             "title": "Belastingjaar"
           },
-          "opdrachtgeverId": {
+          "clientId": {
             "type": "string",
             "description": "FK to the Administration (opdrachtgever) that made the betalingen.",
             "example": "adm-1",
             "title": "Opdrachtgever ID"
           },
-          "ontvangerNaam": {
+          "recipientName": {
             "type": "string",
             "description": "Full name of the payment recipient (ontvanger).",
             "example": "Maria de Vries",
             "title": "Ontvanger Naam"
           },
-          "ontvangerBSN": {
+          "recipientBSN": {
             "type": "string",
             "description": "Burger Service Nummer of the recipient. Stored encrypted at-rest per x-openregister-encryption. Read restricted to payroll-officer role per RBAC and ADR-022. Every read access is logged to audit-trail-immutable.",
             "x-openregister-encryption": {
@@ -476,20 +476,20 @@
             "example": "[ENCRYPTED]",
             "title": "Ontvanger BSN"
           },
-          "ontvangerAdres": {
+          "recipientAddress": {
             "type": "string",
             "description": "Full postal address of the recipient as required by the IB47 form.",
             "example": "Voorbeeldstraat 1, 1234 AB Amsterdam",
             "title": "Ontvanger Adres"
           },
-          "betalingenTotaal": {
+          "paymentsTotal": {
             "type": "number",
             "minimum": 0,
             "description": "Total payments made to this recipient in the belastingjaar (EUR ≥ 0).",
             "example": 15000.0,
             "title": "Betalingen Totaal"
           },
-          "betalingTypeCode": {
+          "paymentTypeCode": {
             "type": "string",
             "description": "Belastingdienst IB47 payment type code per the IB47 schema 2026.",
             "enum": [
@@ -536,14 +536,14 @@
               "isDryRun": false
             },
             "groupBy": [
-              "belastingjaar",
-              "opdrachtgeverId",
-              "ontvangerNaam",
-              "betalingTypeCode"
+              "taxYear",
+              "clientId",
+              "recipientName",
+              "paymentTypeCode"
             ],
             "operations": {
               "totalBetalingen": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum"
               },
               "recordCount": {
@@ -558,15 +558,15 @@
               "isDryRun": true
             },
             "groupBy": [
-              "belastingjaar",
-              "opdrachtgeverId",
-              "ontvangerNaam",
+              "taxYear",
+              "clientId",
+              "recipientName",
               "dryRunMonth",
-              "betalingTypeCode"
+              "paymentTypeCode"
             ],
             "operations": {
               "maandTotaalBetalingen": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum"
               }
             }
@@ -574,18 +574,18 @@
           "ib47ReconciliationCheck": {
             "description": "Invariant check: final yearly batch totals per recipient MUST equal the sum of 12 monthly dry-run totals (€0 tolerance) per REQ-DPA-005. Surfaced as a non-blocking warning when the invariant is violated before submission.",
             "groupBy": [
-              "belastingjaar",
-              "opdrachtgeverId",
-              "ontvangerNaam"
+              "taxYear",
+              "clientId",
+              "recipientName"
             ],
             "operations": {
               "finalTotal": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum",
                 "condition": "isDryRun = false"
               },
               "dryRunSumTotal": {
-                "field": "betalingenTotaal",
+                "field": "paymentsTotal",
                 "operation": "sum",
                 "condition": "isDryRun = true"
               },
@@ -607,7 +607,7 @@
                 "delete"
               ],
               "fieldOverrides": {
-                "ontvangerBSN": {
+                "recipientBSN": {
                   "permissions": [
                     "read",
                     "write"
@@ -620,7 +620,7 @@
                 "read"
               ],
               "fieldOverrides": {
-                "ontvangerBSN": {
+                "recipientBSN": {
                   "permissions": []
                 }
               }
@@ -630,7 +630,7 @@
                 "read"
               ],
               "fieldOverrides": {
-                "ontvangerBSN": {
+                "recipientBSN": {
                   "permissions": []
                 }
               }

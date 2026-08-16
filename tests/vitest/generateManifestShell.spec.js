@@ -15,18 +15,34 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 // eslint-disable-next-line n/no-unpublished-require
-const { generateShellDocument, buildShellFragment, slimPages } = require('../../scripts/generate-manifest-shell.js')
+const {
+	generateShellDocument,
+	buildShellFragment,
+	slimPages,
+} = require('../../scripts/generate-manifest-shell.js')
 
 describe('slimPages', () => {
 	it('keeps only id/route/type/title and stamps _fragment', () => {
 		const pages = [
-			{ id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources', config: { columns: [{ key: 'name' }] } },
+			{
+				id: 'Resources',
+				route: '/bookings/resources',
+				type: 'index',
+				title: 'Resources',
+				config: { columns: [{ key: 'name' }] },
+			},
 		]
 
 		const slim = slimPages(pages, '10-bookings-resource-calendar')
 
 		expect(slim).toEqual([
-			{ _fragment: '10-bookings-resource-calendar', id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources' },
+			{
+				_fragment: '10-bookings-resource-calendar',
+				id: 'Resources',
+				route: '/bookings/resources',
+				type: 'index',
+				title: 'Resources',
+			},
 		])
 		expect(slim[0].config).toBeUndefined()
 	})
@@ -46,7 +62,15 @@ describe('buildShellFragment', () => {
 	it('copies menu through unchanged and slims pages', () => {
 		const fragment = {
 			menu: [{ id: 'Bookings', label: 'Bookings', children: [] }],
-			pages: [{ id: 'A', route: '/a', type: 'index', title: 'A', config: { big: 'payload' } }],
+			pages: [
+				{
+					id: 'A',
+					route: '/a',
+					type: 'index',
+					title: 'A',
+					config: { big: 'payload' },
+				},
+			],
 		}
 
 		const shell = buildShellFragment(fragment, 'frag')
@@ -87,10 +111,18 @@ describe('buildShellFragment', () => {
 
 describe('generateShellDocument', () => {
 	it('reads every *.json fragment in sorted order and produces one shell entry each', () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'shillinq-manifest-shell-'))
+		const dir = fs.mkdtempSync(
+			path.join(os.tmpdir(), 'shillinq-manifest-shell-'),
+		)
 		try {
-			fs.writeFileSync(path.join(dir, 'b-frag.json'), JSON.stringify({ menu: [], pages: [{ id: 'B', route: '/b' }] }))
-			fs.writeFileSync(path.join(dir, 'a-frag.json'), JSON.stringify({ menu: [], pages: [{ id: 'A', route: '/a' }] }))
+			fs.writeFileSync(
+				path.join(dir, 'b-frag.json'),
+				JSON.stringify({ menu: [], pages: [{ id: 'B', route: '/b' }] }),
+			)
+			fs.writeFileSync(
+				path.join(dir, 'a-frag.json'),
+				JSON.stringify({ menu: [], pages: [{ id: 'A', route: '/a' }] }),
+			)
 			fs.writeFileSync(path.join(dir, 'notes.txt'), 'ignored — not .json')
 
 			const shell = generateShellDocument(dir)

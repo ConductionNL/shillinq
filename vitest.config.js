@@ -34,7 +34,13 @@ module.exports = {
 		environment: 'node',
 		globals: false,
 		include: ['tests/vitest/**/*.spec.{js,ts}'],
-		exclude: ['tests/e2e/**', 'tests/integration/**', 'tests/Unit/**', 'src/**', 'node_modules/**'],
+		exclude: [
+			'tests/e2e/**',
+			'tests/integration/**',
+			'tests/Unit/**',
+			'src/**',
+			'node_modules/**',
+		],
 		// pinia 3 is Vue-3 native and no longer routes through `vue-demi`, so
 		// the Vue-2.7 shim pin that used to live here (and its `inline` entry)
 		// is gone with it — vue-demi is no longer in the dependency graph at all.
@@ -44,19 +50,31 @@ module.exports = {
 			{ find: '@', replacement: path.resolve(__dirname, 'src') },
 			{
 				find: /^@nextcloud\/router$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-router.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/nextcloud-router.js',
+				),
 			},
 			{
 				find: /^@nextcloud\/vue$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-vue.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/nextcloud-vue.js',
+				),
 			},
 			{
 				find: /^@nextcloud\/axios$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-axios.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/nextcloud-axios.js',
+				),
 			},
 			{
 				find: /^@conduction\/nextcloud-vue$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/conduction-nextcloud-vue.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/conduction-nextcloud-vue.js',
+				),
 			},
 		],
 	},

@@ -6,100 +6,100 @@
 			"id": "erik-stable-b2b-consultant",
 			"description": "Stable B2B consultant — predictable monthly inflows, three regular clients with 3-day avg payment offset.",
 			"corporation": {
-				"ondernemingId": "ond-zzp-c001",
-				"naam": "Erik van den Berg - IT Consultancy",
+				"enterpriseId": "ond-zzp-c001",
+				"name": "Erik van den Berg - IT Consultancy",
 				"administrationType": "zzp"
 			},
 			"administrationId": "adm-erik-c001",
 			"horizon": {
 				"horizonId": "horizon-erik-2026-w18",
 				"horizonStart": "2026-04-27",
-				"horizonEind": "2026-07-26",
-				"openingSaldo": {
-					"zakelijkeRekening": 45000.00,
-					"spaardoel_btw": 8200.00,
-					"spaardoel_ib": 12500.00,
-					"spaardoel_buffer": 6800.00,
-					"totaal": 72500.00
+				"horizonEnd": "2026-07-26",
+				"openingBalance": {
+					"businessAccount": 45000.00,
+					"savings_goal_vat": 8200.00,
+					"savings_goal_ib": 12500.00,
+					"savings_goal_buffer": 6800.00,
+					"total": 72500.00
 				},
-				"modelVersie": "v4.1-klantspecifiek-betaalgedrag",
+				"modelVersion": "v4.1-klantspecifiek-betaalgedrag",
 				"lifecycleState": "active"
 			},
 			"recurring": [
 				{
 					"recurId": "rec-erik-huur",
 					"label": "Huur kantoor",
-					"categorie": "RECURRING_HUUR",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 1,
-					"standaardBedrag": 1200.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-09-01"
+					"category": "RECURRING_RENT",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 1,
+					"standardAmount": 1200.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-09-01"
 				},
 				{
 					"recurId": "rec-erik-verzekering",
 					"label": "BAV-verzekering",
-					"categorie": "RECURRING_VERZEKERING",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 15,
-					"standaardBedrag": 185.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-01-01"
+					"category": "RECURRING_INSURANCE",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 15,
+					"standardAmount": 185.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-01-01"
 				},
 				{
 					"recurId": "rec-erik-software",
 					"label": "Software abos",
-					"categorie": "RECURRING_ABONNEMENTEN",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 10,
-					"standaardBedrag": 240.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-01-01"
+					"category": "RECURRING_SUBSCRIPTIONS",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 10,
+					"standardAmount": 240.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-01-01"
 				},
 				{
 					"recurId": "rec-erik-dga",
 					"label": "DGA salary",
-					"categorie": "RECURRING_DGA_LOON",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 25,
-					"standaardBedrag": 3500.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-01-01"
+					"category": "RECURRING_DGA_PAY",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 25,
+					"standardAmount": 3500.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-01-01"
 				}
 			],
 			"arInvoices": [
 				{
 					"arInvoiceId": "fact-erik-2026-018",
-					"klantId": "klant-techcorp",
-					"factuurDatum": "2026-04-15",
-					"vervalDatum": "2026-05-15",
-					"openstaandBedrag": 12500.00,
-					"betalingsHistorie_gemiddeldeAfwijking": "+3 days",
-					"betalingsHistorie_facturen12mnd": 12,
-					"betrouwbaarheidScore": 1.0
+					"customerId": "klant-techcorp",
+					"invoiceDate": "2026-04-15",
+					"expiryDate": "2026-05-15",
+					"outstandingAmount": 12500.00,
+					"payment_history_average_deviation": "+3 days",
+					"payment_history_invoices12m": 12,
+					"reliabilityScore": 1.0
 				},
 				{
 					"arInvoiceId": "fact-erik-2026-019",
-					"klantId": "klant-stable-bv",
-					"factuurDatum": "2026-04-20",
-					"vervalDatum": "2026-05-20",
-					"openstaandBedrag": 8200.00,
-					"betalingsHistorie_gemiddeldeAfwijking": "+2 days",
-					"betalingsHistorie_facturen12mnd": 11,
-					"betrouwbaarheidScore": 0.92
+					"customerId": "klant-stable-bv",
+					"invoiceDate": "2026-04-20",
+					"expiryDate": "2026-05-20",
+					"outstandingAmount": 8200.00,
+					"payment_history_average_deviation": "+2 days",
+					"payment_history_invoices12m": 11,
+					"reliabilityScore": 0.92
 				}
 			],
 			"bufferPolicy": {
 				"policyId": "policy-erik",
-				"policy": "MIN_MONTHS_VASTE_KOSTEN",
-				"monthsVasteKosten": 1,
+				"policy": "MIN_MONTHS_FIXED_COST",
+				"monthsFixedCost": 1,
 				"berekendeBuffer": 7500.00,
-				"alertOndergrens": 3750.00,
-				"alertVooralarm": 11250.00
+				"alertLowerLimit": 3750.00,
+				"alertPreAlert": 11250.00
 			},
 			"expectedSaldoRange": {
 				"min": 35000.00,
@@ -111,78 +111,78 @@
 			"id": "sarah-volatile-project-based",
 			"description": "Volatile project-based with summer dip — event production, variable freelancer payroll, multiple project clients with mid-confidence payment history.",
 			"corporation": {
-				"ondernemingId": "ond-zzp-vol-001",
-				"naam": "Sarah Chen - Event Production",
+				"enterpriseId": "ond-zzp-vol-001",
+				"name": "Sarah Chen - Event Production",
 				"administrationType": "zzp"
 			},
 			"administrationId": "adm-sarah-vol001",
 			"horizon": {
 				"horizonId": "horizon-sarah-2026-w18",
 				"horizonStart": "2026-04-27",
-				"horizonEind": "2026-07-26",
-				"openingSaldo": {
-					"zakelijkeRekening": 22000.00,
-					"spaardoel_btw": 4100.00,
-					"spaardoel_ib": 3900.00,
-					"spaardoel_buffer": 5200.00,
-					"totaal": 35200.00
+				"horizonEnd": "2026-07-26",
+				"openingBalance": {
+					"businessAccount": 22000.00,
+					"savings_goal_vat": 4100.00,
+					"savings_goal_ib": 3900.00,
+					"savings_goal_buffer": 5200.00,
+					"total": 35200.00
 				},
-				"modelVersie": "v4.1-klantspecifiek-betaalgedrag",
+				"modelVersion": "v4.1-klantspecifiek-betaalgedrag",
 				"lifecycleState": "active"
 			},
 			"recurring": [
 				{
 					"recurId": "rec-sarah-huur",
 					"label": "Huur studio",
-					"categorie": "RECURRING_HUUR",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 1,
-					"standaardBedrag": 2800.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-01-01"
+					"category": "RECURRING_RENT",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 1,
+					"standardAmount": 2800.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-01-01"
 				},
 				{
 					"recurId": "rec-sarah-dga",
 					"label": "DGA salary",
-					"categorie": "RECURRING_DGA_LOON",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 20,
-					"standaardBedrag": 2200.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-01-01"
+					"category": "RECURRING_DGA_PAY",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 20,
+					"standardAmount": 2200.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-01-01"
 				}
 			],
 			"arInvoices": [
 				{
 					"arInvoiceId": "fact-sarah-2026-031",
-					"klantId": "klant-regular-a",
-					"factuurDatum": "2026-04-10",
-					"vervalDatum": "2026-05-10",
-					"openstaandBedrag": 4500.00,
-					"betalingsHistorie_gemiddeldeAfwijking": "+7 days",
-					"betalingsHistorie_facturen12mnd": 10,
-					"betrouwbaarheidScore": 0.83
+					"customerId": "klant-regular-a",
+					"invoiceDate": "2026-04-10",
+					"expiryDate": "2026-05-10",
+					"outstandingAmount": 4500.00,
+					"payment_history_average_deviation": "+7 days",
+					"payment_history_invoices12m": 10,
+					"reliabilityScore": 0.83
 				},
 				{
 					"arInvoiceId": "fact-sarah-2026-032",
-					"klantId": "klant-project-x",
-					"factuurDatum": "2026-04-12",
-					"vervalDatum": "2026-05-12",
-					"openstaandBedrag": 12000.00,
-					"betalingsHistorie_gemiddeldeAfwijking": "+35 days",
-					"betalingsHistorie_facturen12mnd": 4,
-					"betrouwbaarheidScore": 0.45
+					"customerId": "klant-project-x",
+					"invoiceDate": "2026-04-12",
+					"expiryDate": "2026-05-12",
+					"outstandingAmount": 12000.00,
+					"payment_history_average_deviation": "+35 days",
+					"payment_history_invoices12m": 4,
+					"reliabilityScore": 0.45
 				}
 			],
 			"bufferPolicy": {
 				"policyId": "policy-sarah",
-				"policy": "MIN_MONTHS_VASTE_KOSTEN",
-				"monthsVasteKosten": 1,
+				"policy": "MIN_MONTHS_FIXED_COST",
+				"monthsFixedCost": 1,
 				"berekendeBuffer": 5200.00,
-				"alertOndergrens": 2600.00,
-				"alertVooralarm": 7800.00
+				"alertLowerLimit": 2600.00,
+				"alertPreAlert": 7800.00
 			},
 			"expectedSaldoRange": {
 				"min": 9000.00,
@@ -194,88 +194,88 @@
 			"id": "jan-government-contractor",
 			"description": "Government / semi-public contractor — Municipality of Amsterdam 78-day avg, Province of Utrecht 62-day avg, private Acme BV 38-day avg. Extended payment terms drive multi-week receivable gaps.",
 			"corporation": {
-				"ondernemingId": "ond-zzp-gov-001",
-				"naam": "Jan Pieterse - Public Sector Consultancy",
+				"enterpriseId": "ond-zzp-gov-001",
+				"name": "Jan Pieterse - Public Sector Consultancy",
 				"administrationType": "zzp"
 			},
 			"administrationId": "adm-jan-gov001",
 			"horizon": {
 				"horizonId": "horizon-jan-2026-w18",
 				"horizonStart": "2026-04-27",
-				"horizonEind": "2026-07-26",
-				"openingSaldo": {
-					"zakelijkeRekening": 18500.00,
-					"spaardoel_btw": 3100.00,
-					"spaardoel_ib": 2800.00,
-					"spaardoel_buffer": 3500.00,
-					"totaal": 27900.00
+				"horizonEnd": "2026-07-26",
+				"openingBalance": {
+					"businessAccount": 18500.00,
+					"savings_goal_vat": 3100.00,
+					"savings_goal_ib": 2800.00,
+					"savings_goal_buffer": 3500.00,
+					"total": 27900.00
 				},
-				"modelVersie": "v4.1-klantspecifiek-betaalgedrag",
+				"modelVersion": "v4.1-klantspecifiek-betaalgedrag",
 				"lifecycleState": "active"
 			},
 			"recurring": [
 				{
 					"recurId": "rec-jan-home-office",
 					"label": "Home office rental",
-					"categorie": "RECURRING_HUUR",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 1,
-					"standaardBedrag": 400.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-01-01"
+					"category": "RECURRING_RENT",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 1,
+					"standardAmount": 400.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-01-01"
 				},
 				{
 					"recurId": "rec-jan-dga",
 					"label": "DGA salary",
-					"categorie": "RECURRING_DGA_LOON",
-					"richting": "OUT",
-					"frequentie": "MAANDELIJKS",
-					"dagVanMaand": 25,
-					"standaardBedrag": 1800.00,
-					"indexatieRegel": "FIXED",
-					"geldigVan": "2024-01-01"
+					"category": "RECURRING_DGA_PAY",
+					"direction": "OUT",
+					"frequency": "MONTHLY",
+					"dagFromMonth": 25,
+					"standardAmount": 1800.00,
+					"indexationRule": "FIXED",
+					"validFrom": "2024-01-01"
 				}
 			],
 			"arInvoices": [
 				{
 					"arInvoiceId": "fact-jan-2026-021",
-					"klantId": "klant-municipality-amsterdam",
-					"factuurDatum": "2026-04-15",
-					"vervalDatum": "2026-05-15",
-					"openstaandBedrag": 12000.00,
-					"betalingsHistorie_gemiddeldeAfwijking": "+48 days",
-					"betalingsHistorie_facturen12mnd": 6,
-					"betrouwbaarheidScore": 0.95
+					"customerId": "klant-municipality-amsterdam",
+					"invoiceDate": "2026-04-15",
+					"expiryDate": "2026-05-15",
+					"outstandingAmount": 12000.00,
+					"payment_history_average_deviation": "+48 days",
+					"payment_history_invoices12m": 6,
+					"reliabilityScore": 0.95
 				},
 				{
 					"arInvoiceId": "fact-jan-2026-022",
-					"klantId": "klant-province-utrecht",
-					"factuurDatum": "2026-04-20",
-					"vervalDatum": "2026-05-20",
-					"openstaandBedrag": 8500.00,
-					"betalingsHistorie_gemiddeldeAfwijking": "+32 days",
-					"betalingsHistorie_facturen12mnd": 5,
-					"betrouwbaarheidScore": 0.88
+					"customerId": "klant-province-utrecht",
+					"invoiceDate": "2026-04-20",
+					"expiryDate": "2026-05-20",
+					"outstandingAmount": 8500.00,
+					"payment_history_average_deviation": "+32 days",
+					"payment_history_invoices12m": 5,
+					"reliabilityScore": 0.88
 				},
 				{
 					"arInvoiceId": "fact-jan-2026-023",
-					"klantId": "klant-acme-bv",
-					"factuurDatum": "2026-04-22",
-					"vervalDatum": "2026-05-22",
-					"openstaandBedrag": 5200.00,
-					"betalingsHistorie_gemiddeldeAfwijking": "+8 days",
-					"betalingsHistorie_facturen12mnd": 8,
-					"betrouwbaarheidScore": 0.92
+					"customerId": "klant-acme-bv",
+					"invoiceDate": "2026-04-22",
+					"expiryDate": "2026-05-22",
+					"outstandingAmount": 5200.00,
+					"payment_history_average_deviation": "+8 days",
+					"payment_history_invoices12m": 8,
+					"reliabilityScore": 0.92
 				}
 			],
 			"bufferPolicy": {
 				"policyId": "policy-jan",
-				"policy": "MIN_MONTHS_VASTE_KOSTEN",
-				"monthsVasteKosten": 1,
+				"policy": "MIN_MONTHS_FIXED_COST",
+				"monthsFixedCost": 1,
 				"berekendeBuffer": 3500.00,
-				"alertOndergrens": 1750.00,
-				"alertVooralarm": 5250.00
+				"alertLowerLimit": 1750.00,
+				"alertPreAlert": 5250.00
 			},
 			"expectedSaldoRange": {
 				"min": 3000.00,

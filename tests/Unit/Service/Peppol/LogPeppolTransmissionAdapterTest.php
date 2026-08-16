@@ -23,8 +23,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Peppol;
 
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
-use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
+use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -36,235 +36,221 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class LogPeppolTransmissionAdapterTest extends TestCase
-{
-    /**
-     * The class implements BOTH the shared port and the PO alias interface.
-     *
-     * @return void
-     */
-    public function testImplementsBothInterfaces(): void
-    {
-        $adapter = $this->buildAdapter(rows: []);
+final class LogPeppolTransmissionAdapterTest extends TestCase {
+	/**
+	 * The class implements BOTH the shared port and the PO alias interface.
+	 *
+	 * @return void
+	 */
+	public function testImplementsBothInterfaces(): void {
+		$adapter = $this->buildAdapter(rows: []);
 
-        self::assertInstanceOf(PeppolTransmissionPortInterface::class, $adapter);
-        self::assertInstanceOf(PeppolTransmissionAdapterInterface::class, $adapter);
+		self::assertInstanceOf(PeppolTransmissionPortInterface::class, $adapter);
+		self::assertInstanceOf(PeppolTransmissionAdapterInterface::class, $adapter);
 
-    }//end testImplementsBothInterfaces()
+	}//end testImplementsBothInterfaces()
 
-    /**
-     * REQ-EINV-004 scenario 1: submit() returns a urn:uuid: id.
-     *
-     * @return void
-     */
-    public function testSubmitFabricatesUrn(): void
-    {
-        $adapter = $this->buildAdapter(rows: []);
+	/**
+	 * REQ-EINV-004 scenario 1: submit() returns a urn:uuid: id.
+	 *
+	 * @return void
+	 */
+	public function testSubmitFabricatesUrn(): void {
+		$adapter = $this->buildAdapter(rows: []);
 
-        $urn = $adapter->submit(
-            participantId: '0106:00000000',
-            documentType: 'ubl-invoice-2.1',
-            payloadFileUri: 'docudesk://file/abc123'
-        );
+		$urn = $adapter->submit(
+			participantId: '0106:00000000',
+			documentType: 'ubl-invoice-2.1',
+			payloadFileUri: 'docudesk://file/abc123'
+		);
 
-        self::assertMatchesRegularExpression('/^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $urn);
+		self::assertMatchesRegularExpression('/^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $urn);
 
-    }//end testSubmitFabricatesUrn()
+	}//end testSubmitFabricatesUrn()
 
-    /**
-     * submit() is deterministic for the same inputs (reproducible dev/CI runs).
-     *
-     * @return void
-     */
-    public function testSubmitIsDeterministic(): void
-    {
-        $adapter = $this->buildAdapter(rows: []);
+	/**
+	 * submit() is deterministic for the same inputs (reproducible dev/CI runs).
+	 *
+	 * @return void
+	 */
+	public function testSubmitIsDeterministic(): void {
+		$adapter = $this->buildAdapter(rows: []);
 
-        $first  = $adapter->submit(participantId: 'X', documentType: 'ubl-invoice-2.1', payloadFileUri: 'docudesk://file/1');
-        $second = $adapter->submit(participantId: 'X', documentType: 'ubl-invoice-2.1', payloadFileUri: 'docudesk://file/1');
+		$first = $adapter->submit(participantId: 'X', documentType: 'ubl-invoice-2.1', payloadFileUri: 'docudesk://file/1');
+		$second = $adapter->submit(participantId: 'X', documentType: 'ubl-invoice-2.1', payloadFileUri: 'docudesk://file/1');
 
-        self::assertSame($first, $second);
+		self::assertSame($first, $second);
 
-    }//end testSubmitIsDeterministic()
+	}//end testSubmitIsDeterministic()
 
-    /**
-     * submitOrder() (PO alias surface) still returns a urn:uuid: id, preserving
-     * the pre-generalisation call-site contract.
-     *
-     * @return void
-     */
-    public function testSubmitOrderStillWorks(): void
-    {
-        $adapter = $this->buildAdapter(rows: []);
+	/**
+	 * submitOrder() (PO alias surface) still returns a urn:uuid: id, preserving
+	 * the pre-generalisation call-site contract.
+	 *
+	 * @return void
+	 */
+	public function testSubmitOrderStillWorks(): void {
+		$adapter = $this->buildAdapter(rows: []);
 
-        $urn = $adapter->submitOrder(participantId: '0192:1234567890', ublOrderXml: '<Order/>');
+		$urn = $adapter->submitOrder(participantId: '0192:1234567890', ublOrderXml: '<Order/>');
 
-        self::assertStringStartsWith('urn:uuid:', $urn);
+		self::assertStringStartsWith('urn:uuid:', $urn);
 
-    }//end testSubmitOrderStillWorks()
+	}//end testSubmitOrderStillWorks()
 
-    /**
-     * lookupParticipant() finds a CustomerMaster row's peppolParticipantId
-     * (AR debtor side) when Vendor has no matching row.
-     *
-     * @return void
-     */
-    public function testLookupParticipantFindsCustomerMaster(): void
-    {
-        $adapter = $this->buildAdapter(
-            rows: [
-                'Vendor'         => [],
-                'CustomerMaster' => [
-                    ['administrationId' => 'adm-1', 'customerId' => 'DEB-0001', 'peppolParticipantId' => '0106:00000000'],
-                ],
-            ]
-        );
+	/**
+	 * lookupParticipant() finds a CustomerMaster row's peppolParticipantId
+	 * (AR debtor side) when Vendor has no matching row.
+	 *
+	 * @return void
+	 */
+	public function testLookupParticipantFindsCustomerMaster(): void {
+		$adapter = $this->buildAdapter(
+			rows: [
+				'Vendor' => [],
+				'CustomerMaster' => [
+					['administrationId' => 'adm-1', 'customerId' => 'DEB-0001', 'peppolParticipantId' => '0106:00000000'],
+				],
+			]
+		);
 
-        $result = $adapter->lookupParticipant(administrationId: 'adm-1', partyId: 'DEB-0001');
+		$result = $adapter->lookupParticipant(administrationId: 'adm-1', partyId: 'DEB-0001');
 
-        self::assertSame('0106:00000000', $result);
+		self::assertSame('0106:00000000', $result);
 
-    }//end testLookupParticipantFindsCustomerMaster()
+	}//end testLookupParticipantFindsCustomerMaster()
 
-    /**
-     * lookupParticipant() finds a Vendor row's peppolParticipantId (PO
-     * supplier side) — unchanged behaviour after generalisation.
-     *
-     * @return void
-     */
-    public function testLookupParticipantFindsVendor(): void
-    {
-        $adapter = $this->buildAdapter(
-            rows: [
-                'Vendor' => [
-                    ['administrationId' => 'adm-1', 'id' => 'sup-1', 'peppolParticipantId' => '0192:1234567890'],
-                ],
-            ]
-        );
+	/**
+	 * lookupParticipant() finds a Vendor row's peppolParticipantId (PO
+	 * supplier side) — unchanged behaviour after generalisation.
+	 *
+	 * @return void
+	 */
+	public function testLookupParticipantFindsVendor(): void {
+		$adapter = $this->buildAdapter(
+			rows: [
+				'Vendor' => [
+					['administrationId' => 'adm-1', 'id' => 'sup-1', 'peppolParticipantId' => '0192:1234567890'],
+				],
+			]
+		);
 
-        $result = $adapter->lookupParticipant(administrationId: 'adm-1', partyId: 'sup-1');
+		$result = $adapter->lookupParticipant(administrationId: 'adm-1', partyId: 'sup-1');
 
-        self::assertSame('0192:1234567890', $result);
+		self::assertSame('0192:1234567890', $result);
 
-    }//end testLookupParticipantFindsVendor()
+	}//end testLookupParticipantFindsVendor()
 
-    /**
-     * lookupParticipant() returns null when no schema has a matching row
-     * (graceful fallback signal).
-     *
-     * @return void
-     */
-    public function testLookupParticipantReturnsNullWhenNotFound(): void
-    {
-        $adapter = $this->buildAdapter(rows: ['Vendor' => [], 'CustomerMaster' => []]);
+	/**
+	 * lookupParticipant() returns null when no schema has a matching row
+	 * (graceful fallback signal).
+	 *
+	 * @return void
+	 */
+	public function testLookupParticipantReturnsNullWhenNotFound(): void {
+		$adapter = $this->buildAdapter(rows: ['Vendor' => [], 'CustomerMaster' => []]);
 
-        self::assertNull($adapter->lookupParticipant(administrationId: 'adm-1', partyId: 'unknown'));
+		self::assertNull($adapter->lookupParticipant(administrationId: 'adm-1', partyId: 'unknown'));
 
-    }//end testLookupParticipantReturnsNullWhenNotFound()
+	}//end testLookupParticipantReturnsNullWhenNotFound()
 
-    /**
-     * Empty administrationId/partyId short-circuits to null without querying.
-     *
-     * @return void
-     */
-    public function testEmptyInputsShortCircuit(): void
-    {
-        $adapter = $this->buildAdapter(rows: []);
+	/**
+	 * Empty administrationId/partyId short-circuits to null without querying.
+	 *
+	 * @return void
+	 */
+	public function testEmptyInputsShortCircuit(): void {
+		$adapter = $this->buildAdapter(rows: []);
 
-        self::assertNull($adapter->lookupParticipant(administrationId: '', partyId: 'DEB-0001'));
-        self::assertNull($adapter->lookupParticipant(administrationId: 'adm-1', partyId: ''));
+		self::assertNull($adapter->lookupParticipant(administrationId: '', partyId: 'DEB-0001'));
+		self::assertNull($adapter->lookupParticipant(administrationId: 'adm-1', partyId: ''));
 
-    }//end testEmptyInputsShortCircuit()
+	}//end testEmptyInputsShortCircuit()
 
-    /**
-     * Build an adapter over a stub ObjectService that serves the given
-     * schema => rows map and applies equality filters.
-     *
-     * @param array<string,array<int,array<string,mixed>>> $rows Schema => rows.
-     *
-     * @return LogPeppolTransmissionAdapter
-     */
-    private function buildAdapter(array $rows): LogPeppolTransmissionAdapter
-    {
-        $stub = new class($rows) {
-            /**
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $rows;
+	/**
+	 * Build an adapter over a stub ObjectService that serves the given
+	 * schema => rows map and applies equality filters.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $rows Schema => rows.
+	 *
+	 * @return LogPeppolTransmissionAdapter
+	 */
+	private function buildAdapter(array $rows): LogPeppolTransmissionAdapter {
+		$stub = new class($rows) {
+			/**
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $rows;
 
-            /**
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * @param array<string,array<int,array<string,mixed>>> $rows Schema rows.
-             */
-            public function __construct(array $rows)
-            {
-                $this->rows = $rows;
-            }
+			/**
+			 * @param array<string,array<int,array<string,mixed>>> $rows Schema rows.
+			 */
+			public function __construct(array $rows) {
+				$this->rows = $rows;
+			}
 
-            /**
-             * @param string $register Register slug (ignored).
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                unset($register);
-                return $this;
-            }
+			/**
+			 * @param string $register Register slug (ignored).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				unset($register);
+				return $this;
+			}
 
-            /**
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}
 
-            /**
-             * @param array<string,mixed> $params Query params.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->rows[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
+			/**
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->rows[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }
-        };
+							return true;
+						}
+					)
+				);
+			}
+		};
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        return new LogPeppolTransmissionAdapter(
-            container: $container,
-            appConfig: $appConfig,
-            logger: new NullLogger()
-        );
+		return new LogPeppolTransmissionAdapter(
+			container: $container,
+			appConfig: $appConfig,
+			logger: new NullLogger()
+		);
 
-    }//end buildAdapter()
+	}//end buildAdapter()
 }//end class

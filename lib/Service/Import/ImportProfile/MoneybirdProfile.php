@@ -37,90 +37,81 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-7
  */
-class MoneybirdProfile implements ImportProfileInterface
-{
-    /**
-     * {@inheritDoc}
-     *
-     * @return string
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function sourceSystem(): string
-    {
-        return 'moneybird';
+class MoneybirdProfile implements ImportProfileInterface {
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function sourceSystem(): string {
+		return 'moneybird';
+	}//end sourceSystem()
 
-    }//end sourceSystem()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function normalizeLedgerAccounts(array $parsed): array {
+		return ($parsed['ledgerAccounts'] ?? []);
+	}//end normalizeLedgerAccounts()
 
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<int,array<string,mixed>>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function normalizeLedgerAccounts(array $parsed): array
-    {
-        return ($parsed['ledgerAccounts'] ?? []);
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Moneybird "Openstaande facturen" CSV header (comma-delimited):
+	 *   Contact,ContactID,InvoiceID,InvoiceDate,DueDate,TotalPriceIncl,OutstandingAmount,Type
+	 *
+	 * @param string $artifact Artifact kind.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function mapCsvColumns(string $artifact): array {
+		if ($artifact === 'open-items') {
+			return [
+				'relationName' => 'Contact',
+				'relationCode' => 'ContactID',
+				'invoiceNumber' => 'InvoiceID',
+				'invoiceDate' => 'InvoiceDate',
+				'dueDate' => 'DueDate',
+				'totalAmount' => 'TotalPriceIncl',
+				'outstandingAmount' => 'OutstandingAmount',
+				'type' => 'Type',
+			];
+		}
 
-    }//end normalizeLedgerAccounts()
+		if ($artifact === 'relations') {
+			return [
+				'code' => 'ContactID',
+				'name' => 'CompanyName',
+				'kvk' => 'ChamberOfCommerceID',
+				'vat' => 'TaxNumber',
+				'email' => 'SendInvoicesToEmail',
+				'phone' => 'PhoneNumber',
+			];
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Moneybird "Openstaande facturen" CSV header (comma-delimited):
-     *   Contact,ContactID,InvoiceID,InvoiceDate,DueDate,TotalPriceIncl,OutstandingAmount,Type
-     *
-     * @param string $artifact Artifact kind.
-     *
-     * @return array<string,string>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function mapCsvColumns(string $artifact): array
-    {
-        if ($artifact === 'open-items') {
-            return [
-                'relationName'      => 'Contact',
-                'relationCode'      => 'ContactID',
-                'invoiceNumber'     => 'InvoiceID',
-                'invoiceDate'       => 'InvoiceDate',
-                'dueDate'           => 'DueDate',
-                'totalAmount'       => 'TotalPriceIncl',
-                'outstandingAmount' => 'OutstandingAmount',
-                'type'              => 'Type',
-            ];
-        }
+		return [];
+	}//end mapCsvColumns()
 
-        if ($artifact === 'relations') {
-            return [
-                'code'  => 'ContactID',
-                'name'  => 'CompanyName',
-                'kvk'   => 'ChamberOfCommerceID',
-                'btw'   => 'TaxNumber',
-                'email' => 'SendInvoicesToEmail',
-                'phone' => 'PhoneNumber',
-            ];
-        }
-
-        return [];
-
-    }//end mapCsvColumns()
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<string,mixed>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function applyDialectQuirks(array $parsed): array
-    {
-        return $parsed;
-
-    }//end applyDialectQuirks()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function applyDialectQuirks(array $parsed): array {
+		return $parsed;
+	}//end applyDialectQuirks()
 }//end class

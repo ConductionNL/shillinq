@@ -30,7 +30,12 @@
 		@closing="onClose">
 		<div class="prr">
 			<p class="prr__intro">
-				{{ t('shillinq', 'Import a CAMT.053 bank statement for this payment run. Its booked entries are matched to the run\'s payment lines; on a full match the run is reconciled.') }}
+				{{
+					t(
+						'shillinq',
+						"Import a CAMT.053 bank statement for this payment run. Its booked entries are matched to the run's payment lines; on a full match the run is reconciled.",
+					)
+				}}
 			</p>
 
 			<input
@@ -39,7 +44,7 @@
 				accept=".xml,application/xml,text/xml"
 				:aria-label="t('shillinq', 'Choose a CAMT.053 bank statement file')"
 				data-testid="payment-run-reconcile-file"
-				@change="onFileSelected">
+				@change="onFileSelected" />
 
 			<p v-if="fileName" class="prr__filename">
 				{{ t('shillinq', 'Selected') }}: {{ fileName }}
@@ -71,12 +76,12 @@
 </template>
 
 <script>
-import { NcButton, NcDialog } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog } from '@nextcloud/vue'
 
 export default {
 	name: 'PaymentRunReconcileModal',
@@ -84,11 +89,13 @@ export default {
 		NcDialog,
 		NcButton,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
+
 		// Optional explicit run id. When launched declaratively from the
 		// PaymentRunDetail page's `config.headerActions[]` open-modal action
 		// (ADR-049 Phase-4), the modal is hosted at CnAppRoot level — outside
@@ -100,6 +107,7 @@ export default {
 			default: '',
 		},
 	},
+
 	emits: ['close', 'reconciled'],
 	data() {
 		return {
@@ -109,18 +117,23 @@ export default {
 			result: null,
 		}
 	},
+
 	computed: {
 		/** Effective run id: explicit prop wins, else the current route's :id. */
 		runId() {
 			return String(this.paymentRunId || this.$route?.params?.id || '')
 		},
+
 		resultClass() {
 			if (!this.result) {
 				return ''
 			}
-			return this.result.result === 'full' ? 'prr__result--ok' : 'prr__result--warn'
+			return this.result.result === 'full'
+				? 'prr__result--ok'
+				: 'prr__result--warn'
 		},
 	},
+
 	methods: {
 		t,
 		onFileSelected(event) {
@@ -137,6 +150,7 @@ export default {
 			}
 			reader.readAsText(file)
 		},
+
 		async submit() {
 			if (!this.fileContents || this.submitting) {
 				return
@@ -145,7 +159,9 @@ export default {
 			this.result = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/shillinq/api/v1/payment-runs/${this.runId}/reconcile`),
+					generateUrl(
+						`/apps/shillinq/api/v1/payment-runs/${this.runId}/reconcile`,
+					),
 					{ contents: this.fileContents },
 				)
 				this.result = response.data
@@ -154,17 +170,23 @@ export default {
 					emit('cn:widget:refresh', { widget: 'PaymentRunDetail' })
 					this.$emit('reconciled', this.result)
 				} else {
-					showError(t('shillinq', 'Partial match — the run stays exported.'))
+					showError(
+						t('shillinq', 'Partial match — the run stays exported.'),
+					)
 				}
 			} catch (error) {
-				const message = error.response && error.response.data && error.response.data.error
-					? error.response.data.error
-					: t('shillinq', 'Could not reconcile the payment run.')
+				const message =
+					error.response
+					&& error.response.data
+					&& error.response.data.error
+						? error.response.data.error
+						: t('shillinq', 'Could not reconcile the payment run.')
 				showError(message)
 			} finally {
 				this.submitting = false
 			}
 		},
+
 		onClose() {
 			this.fileName = ''
 			this.fileContents = ''

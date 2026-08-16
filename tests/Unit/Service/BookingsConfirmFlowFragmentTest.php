@@ -40,170 +40,153 @@ use ReflectionMethod;
  * Behavioural tests for the bookings-confirm-flow modular fragment
  * (REQ-BCF-001/002/004/006).
  */
-final class BookingsConfirmFlowFragmentTest extends TestCase
-{
+final class BookingsConfirmFlowFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the confirm-flow fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookings-confirm-flow.json';
+	/**
+	 * Absolute path to the confirm-flow fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookings-confirm-flow.json';
 
-    /**
-     * Absolute path to the create-appointment fragment (Appointment owner).
-     *
-     * @var string
-     */
-    private string $appointmentPath = __DIR__.'/../../../lib/Settings/register.d/10-bookings-create-appointment.json';
+	/**
+	 * Absolute path to the create-appointment fragment (Appointment owner).
+	 *
+	 * @var string
+	 */
+	private string $appointmentPath = __DIR__ . '/../../../lib/Settings/register.d/10-bookings-create-appointment.json';
 
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * The fragment file is present and parses as JSON.
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		self::assertArrayHasKey('schemas', $data['components']);
 
-    }//end merge()
+	}//end testFragmentIsValidJson()
 
+	/**
+	 * The fragment declares the ConfirmationToken schema.
+	 */
+	public function testFragmentDeclaresConfirmationTokenSchema(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		$schemas = $data['components']['schemas'];
+		self::assertArrayHasKey('ConfirmationToken', $schemas);
 
-    /**
-     * The fragment file is present and parses as JSON.
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        self::assertArrayHasKey('schemas', $data['components']);
+		$schema = $schemas['ConfirmationToken'];
+		foreach (
+			[
+				'tokenId',
+				'appointmentId',
+				'tokenString',
+				'expiresAt',
+				'status',
+				'redeemedAt',
+				'createdAt',
+				'createdBy',
+			] as $field
+		) {
+			self::assertArrayHasKey($field, $schema['properties'], "Field $field missing");
+		}
 
-    }//end testFragmentIsValidJson()
+	}//end testFragmentDeclaresConfirmationTokenSchema()
 
+	/**
+	 * The ConfirmationToken status field declares the four required states.
+	 */
+	public function testConfirmationTokenStatusEnum(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		$status = $data['components']['schemas']['ConfirmationToken']['properties']['status'];
+		self::assertSame(
+			['active', 'redeemed', 'expired', 'revoked'],
+			$status['enum']
+		);
+		self::assertSame('active', $status['default']);
 
-    /**
-     * The fragment declares the ConfirmationToken schema.
-     */
-    public function testFragmentDeclaresConfirmationTokenSchema(): void
-    {
-        $data    = json_decode((string) file_get_contents($this->fragmentPath), true);
-        $schemas = $data['components']['schemas'];
-        self::assertArrayHasKey('ConfirmationToken', $schemas);
+	}//end testConfirmationTokenStatusEnum()
 
-        $schema = $schemas['ConfirmationToken'];
-        foreach (
-            [
-                'tokenId',
-                'appointmentId',
-                'tokenString',
-                'expiresAt',
-                'status',
-                'redeemedAt',
-                'createdAt',
-                'createdBy',
-            ] as $field
-        ) {
-            self::assertArrayHasKey($field, $schema['properties'], "Field $field missing");
-        }
+	/**
+	 * The ConfirmationToken lifecycle declares redeem / revoke / expire
+	 * transitions per REQ-BCF-004/006.
+	 */
+	public function testConfirmationTokenLifecycleTransitions(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		$lifecycle = $data['components']['schemas']['ConfirmationToken']['x-openregister-lifecycle'];
+		self::assertSame('status', $lifecycle['field']);
+		self::assertSame('active', $lifecycle['initialState']);
+		foreach (['redeem', 'revoke', 'expire'] as $transition) {
+			self::assertArrayHasKey($transition, $lifecycle['transitions']);
+		}
+		self::assertSame('active', $lifecycle['transitions']['redeem']['from']);
+		self::assertSame('redeemed', $lifecycle['transitions']['redeem']['to']);
 
-    }//end testFragmentDeclaresConfirmationTokenSchema()
+	}//end testConfirmationTokenLifecycleTransitions()
 
+	/**
+	 * The fragment adds confirmationDeadline / confirmedAt /
+	 * confirmationTokenId to Appointment without dropping existing fields.
+	 */
+	public function testAppointmentIsExtendedAdditively(): void {
+		$base = json_decode((string)file_get_contents($this->appointmentPath), true);
+		$overlay = json_decode((string)file_get_contents($this->fragmentPath), true);
 
-    /**
-     * The ConfirmationToken status field declares the four required states.
-     */
-    public function testConfirmationTokenStatusEnum(): void
-    {
-        $data   = json_decode((string) file_get_contents($this->fragmentPath), true);
-        $status = $data['components']['schemas']['ConfirmationToken']['properties']['status'];
-        self::assertSame(
-            ['active', 'redeemed', 'expired', 'revoked'],
-            $status['enum']
-        );
-        self::assertSame('active', $status['default']);
+		$merged = $this->merge($base, $overlay);
+		$appt = $merged['components']['schemas']['Appointment'];
 
-    }//end testConfirmationTokenStatusEnum()
+		// New confirmation fields are present.
+		self::assertArrayHasKey('confirmationDeadline', $appt['properties']);
+		self::assertArrayHasKey('confirmedAt', $appt['properties']);
+		self::assertArrayHasKey('confirmationTokenId', $appt['properties']);
 
+		// Existing fields survive.
+		foreach (['appointmentId', 'startTime', 'endTime', 'status'] as $field) {
+			self::assertArrayHasKey($field, $appt['properties'], "Pre-existing field $field was dropped");
+		}
 
-    /**
-     * The ConfirmationToken lifecycle declares redeem / revoke / expire
-     * transitions per REQ-BCF-004/006.
-     */
-    public function testConfirmationTokenLifecycleTransitions(): void
-    {
-        $data       = json_decode((string) file_get_contents($this->fragmentPath), true);
-        $lifecycle  = $data['components']['schemas']['ConfirmationToken']['x-openregister-lifecycle'];
-        self::assertSame('status', $lifecycle['field']);
-        self::assertSame('active', $lifecycle['initialState']);
-        foreach (['redeem', 'revoke', 'expire'] as $transition) {
-            self::assertArrayHasKey($transition, $lifecycle['transitions']);
-        }
-        self::assertSame('active', $lifecycle['transitions']['redeem']['from']);
-        self::assertSame('redeemed', $lifecycle['transitions']['redeem']['to']);
+		// New lifecycle transitions are added without dropping the base set.
+		$transitions = $appt['x-openregister-lifecycle']['transitions'];
+		self::assertArrayHasKey('confirmViaToken', $transitions);
+		self::assertArrayHasKey('autoCancelExpired', $transitions);
+		foreach (['confirm', 'complete', 'cancel', 'cancelPending'] as $base) {
+			self::assertArrayHasKey($base, $transitions, "Base transition $base was dropped");
+		}
 
-    }//end testConfirmationTokenLifecycleTransitions()
+	}//end testAppointmentIsExtendedAdditively()
 
+	/**
+	 * The fragment ships at least one seed ConfirmationToken so OR's
+	 * register-import sweep has something to materialise.
+	 */
+	public function testFragmentSeedsAtLeastOneToken(): void {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertNotEmpty($data['objects'] ?? []);
+		$seeded = false;
+		foreach (($data['objects'] ?? []) as $object) {
+			if (($object['@self']['schema'] ?? '') === 'ConfirmationToken') {
+				$seeded = true;
+				break;
+			}
+		}
 
-    /**
-     * The fragment adds confirmationDeadline / confirmedAt /
-     * confirmationTokenId to Appointment without dropping existing fields.
-     */
-    public function testAppointmentIsExtendedAdditively(): void
-    {
-        $base    = json_decode((string) file_get_contents($this->appointmentPath), true);
-        $overlay = json_decode((string) file_get_contents($this->fragmentPath), true);
+		self::assertTrue($seeded, 'No ConfirmationToken seed in fragment');
 
-        $merged = $this->merge($base, $overlay);
-        $appt   = $merged['components']['schemas']['Appointment'];
-
-        // New confirmation fields are present.
-        self::assertArrayHasKey('confirmationDeadline', $appt['properties']);
-        self::assertArrayHasKey('confirmedAt', $appt['properties']);
-        self::assertArrayHasKey('confirmationTokenId', $appt['properties']);
-
-        // Existing fields survive.
-        foreach (['appointmentId', 'startTime', 'endTime', 'status'] as $field) {
-            self::assertArrayHasKey($field, $appt['properties'], "Pre-existing field $field was dropped");
-        }
-
-        // New lifecycle transitions are added without dropping the base set.
-        $transitions = $appt['x-openregister-lifecycle']['transitions'];
-        self::assertArrayHasKey('confirmViaToken', $transitions);
-        self::assertArrayHasKey('autoCancelExpired', $transitions);
-        foreach (['confirm', 'complete', 'cancel', 'cancelPending'] as $base) {
-            self::assertArrayHasKey($base, $transitions, "Base transition $base was dropped");
-        }
-
-    }//end testAppointmentIsExtendedAdditively()
-
-
-    /**
-     * The fragment ships at least one seed ConfirmationToken so OR's
-     * register-import sweep has something to materialise.
-     */
-    public function testFragmentSeedsAtLeastOneToken(): void
-    {
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertNotEmpty($data['objects'] ?? []);
-        $seeded = false;
-        foreach (($data['objects'] ?? []) as $object) {
-            if (($object['@self']['schema'] ?? '') === 'ConfirmationToken') {
-                $seeded = true;
-                break;
-            }
-        }
-
-        self::assertTrue($seeded, 'No ConfirmationToken seed in fragment');
-
-    }//end testFragmentSeedsAtLeastOneToken()
-
+	}//end testFragmentSeedsAtLeastOneToken()
 
 }//end class

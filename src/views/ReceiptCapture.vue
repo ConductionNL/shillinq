@@ -49,11 +49,17 @@
 			</h1>
 		</header>
 
-		<div v-if="loading" class="receipt-capture__loading" data-testid="receipt-capture-loading">
+		<div
+			v-if="loading"
+			class="receipt-capture__loading"
+			data-testid="receipt-capture-loading">
 			{{ t('shillinq', 'Loading receipt...') }}
 		</div>
 
-		<div v-else-if="loadError" class="receipt-capture__error" data-testid="receipt-capture-error">
+		<div
+			v-else-if="loadError"
+			class="receipt-capture__error"
+			data-testid="receipt-capture-error">
 			<p>{{ loadError }}</p>
 			<button
 				type="button"
@@ -65,35 +71,52 @@
 		</div>
 
 		<div v-else class="receipt-capture__body">
-			<p v-if="isDraftReview" class="receipt-capture__hint" data-testid="receipt-capture-review-hint">
-				{{ requiresReview
-					? t('shillinq', 'Some fields have low confidence — please review before confirming.')
-					: t('shillinq', 'Extraction confidence is high. Review and confirm.') }}
+			<p
+				v-if="isDraftReview"
+				class="receipt-capture__hint"
+				data-testid="receipt-capture-review-hint">
+				{{
+					requiresReview
+						? t(
+								'shillinq',
+								'Some fields have low confidence — please review before confirming.',
+							)
+						: t(
+								'shillinq',
+								'Extraction confidence is high. Review and confirm.',
+							)
+				}}
 			</p>
 
 			<div class="receipt-capture__row">
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-receipt-number">{{ t('shillinq', 'Receipt #') }}</label>
+					<label class="receipt-capture__label" for="rc-receipt-number">{{
+						t('shillinq', 'Receipt #')
+					}}</label>
 					<input
 						id="rc-receipt-number"
 						v-model="form.receiptNumber"
 						type="text"
 						class="receipt-capture__input"
-						data-testid="rc-receipt-number">
+						data-testid="rc-receipt-number" />
 				</div>
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-photo-uri">{{ t('shillinq', 'Photo') }}</label>
+					<label class="receipt-capture__label" for="rc-photo-uri">{{
+						t('shillinq', 'Photo')
+					}}</label>
 					<input
 						id="rc-photo-uri"
 						v-model="form.photoUri"
 						type="text"
 						class="receipt-capture__input"
-						data-testid="rc-photo-uri">
+						data-testid="rc-photo-uri" />
 				</div>
 			</div>
 
 			<div class="receipt-capture__field">
-				<label class="receipt-capture__label" for="rc-amount">{{ t('shillinq', 'Amount') }}</label>
+				<label class="receipt-capture__label" for="rc-amount">{{
+					t('shillinq', 'Amount')
+				}}</label>
 				<div class="receipt-capture__field-row">
 					<input
 						id="rc-amount"
@@ -101,7 +124,7 @@
 						type="number"
 						step="0.01"
 						class="receipt-capture__input"
-						data-testid="rc-amount">
+						data-testid="rc-amount" />
 					<FieldConfidenceBadge
 						v-if="isDraftReview"
 						field="amount"
@@ -112,23 +135,27 @@
 
 			<div class="receipt-capture__row">
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-currency">{{ t('shillinq', 'Currency') }}</label>
+					<label class="receipt-capture__label" for="rc-currency">{{
+						t('shillinq', 'Currency')
+					}}</label>
 					<input
 						id="rc-currency"
 						v-model="form.currency"
 						type="text"
 						class="receipt-capture__input"
-						data-testid="rc-currency">
+						data-testid="rc-currency" />
 				</div>
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-receipt-date">{{ t('shillinq', 'Receipt date') }}</label>
+					<label class="receipt-capture__label" for="rc-receipt-date">{{
+						t('shillinq', 'Receipt date')
+					}}</label>
 					<div class="receipt-capture__field-row">
 						<input
 							id="rc-receipt-date"
 							v-model="form.receiptDate"
 							type="date"
 							class="receipt-capture__input"
-							data-testid="rc-receipt-date">
+							data-testid="rc-receipt-date" />
 						<FieldConfidenceBadge
 							v-if="isDraftReview"
 							field="receiptDate"
@@ -139,13 +166,15 @@
 			</div>
 
 			<div class="receipt-capture__field">
-				<label class="receipt-capture__label" for="rc-category">{{ t('shillinq', 'Category') }}</label>
+				<label class="receipt-capture__label" for="rc-category">{{
+					t('shillinq', 'Category')
+				}}</label>
 				<input
 					id="rc-category"
 					v-model="form.category"
 					type="text"
 					class="receipt-capture__input"
-					data-testid="rc-category">
+					data-testid="rc-category" />
 			</div>
 
 			<div class="receipt-capture__field">
@@ -164,13 +193,21 @@
 			<!-- gl-account-suggestion-consume (REQ-GAC-003/004) — same pattern as
 			     BillImportModal: the operator must click "Use suggestion" AND
 			     Save — never auto-filled/auto-booked. -->
-			<div v-if="glSuggestion" class="receipt-capture__suggestion" data-testid="rc-gl-suggestion">
+			<div
+				v-if="glSuggestion"
+				class="receipt-capture__suggestion"
+				data-testid="rc-gl-suggestion">
 				<div class="receipt-capture__field-row">
 					<FieldConfidenceBadge
 						field="suggestedGlAccount"
 						:confidence="glSuggestion.confidence" />
 					<span class="receipt-capture__suggestion-text">
-						{{ t('shillinq', 'Suggested: {code} {label}', { code: glSuggestion.code, label: glSuggestion.label }) }}
+						{{
+							t('shillinq', 'Suggested: {code} {label}', {
+								code: glSuggestion.code,
+								label: glSuggestion.label,
+							})
+						}}
 					</span>
 					<button
 						type="button"
@@ -181,23 +218,29 @@
 						{{ t('shillinq', 'Use suggestion') }}
 					</button>
 				</div>
-				<p class="receipt-capture__suggestion-rationale" data-testid="rc-gl-suggestion-rationale">
+				<p
+					class="receipt-capture__suggestion-rationale"
+					data-testid="rc-gl-suggestion-rationale">
 					{{ glSuggestion.rationale }}
 				</p>
 			</div>
 
 			<div class="receipt-capture__field">
-				<label class="receipt-capture__label" for="rc-vendor">{{ t('shillinq', 'Vendor') }}</label>
+				<label class="receipt-capture__label" for="rc-vendor">{{
+					t('shillinq', 'Vendor')
+				}}</label>
 				<input
 					id="rc-vendor"
 					v-model="form.vendorName"
 					type="text"
 					class="receipt-capture__input"
-					data-testid="rc-vendor">
+					data-testid="rc-vendor" />
 			</div>
 
 			<div class="receipt-capture__field">
-				<label class="receipt-capture__label" for="rc-extracted-text">{{ t('shillinq', 'Extracted text') }}</label>
+				<label class="receipt-capture__label" for="rc-extracted-text">{{
+					t('shillinq', 'Extracted text')
+				}}</label>
 				<textarea
 					id="rc-extracted-text"
 					v-model="form.extractedText"
@@ -208,59 +251,72 @@
 
 			<div class="receipt-capture__row">
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-amount-base">{{ t('shillinq', 'Amount (EUR)') }}</label>
+					<label class="receipt-capture__label" for="rc-amount-base">{{
+						t('shillinq', 'Amount (EUR)')
+					}}</label>
 					<input
 						id="rc-amount-base"
 						v-model.number="form.amountInBaseCurrency"
 						type="number"
 						step="0.01"
 						class="receipt-capture__input"
-						data-testid="rc-amount-base">
+						data-testid="rc-amount-base" />
 				</div>
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-exchange-rate">{{ t('shillinq', 'Exchange Rate') }}</label>
+					<label class="receipt-capture__label" for="rc-exchange-rate">{{
+						t('shillinq', 'Exchange Rate')
+					}}</label>
 					<input
 						id="rc-exchange-rate"
 						v-model.number="form.exchangeRate"
 						type="number"
 						step="0.0001"
 						class="receipt-capture__input"
-						data-testid="rc-exchange-rate">
+						data-testid="rc-exchange-rate" />
 				</div>
 			</div>
 
 			<div class="receipt-capture__row">
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-cost-centre">{{ t('shillinq', 'Cost Centre') }}</label>
+					<label class="receipt-capture__label" for="rc-cost-centre">{{
+						t('shillinq', 'Cost Centre')
+					}}</label>
 					<input
 						id="rc-cost-centre"
 						v-model="form.costCentreCode"
 						type="text"
 						class="receipt-capture__input"
-						data-testid="rc-cost-centre">
+						data-testid="rc-cost-centre" />
 				</div>
 				<div class="receipt-capture__field">
-					<label class="receipt-capture__label" for="rc-claim">{{ t('shillinq', 'Claim') }}</label>
+					<label class="receipt-capture__label" for="rc-claim">{{
+						t('shillinq', 'Claim')
+					}}</label>
 					<input
 						id="rc-claim"
 						v-model="form.claimId"
 						type="text"
 						class="receipt-capture__input"
-						data-testid="rc-claim">
+						data-testid="rc-claim" />
 				</div>
 			</div>
 
 			<div class="receipt-capture__field">
-				<label class="receipt-capture__label" for="rc-description">{{ t('shillinq', 'Description') }}</label>
+				<label class="receipt-capture__label" for="rc-description">{{
+					t('shillinq', 'Description')
+				}}</label>
 				<input
 					id="rc-description"
 					v-model="form.description"
 					type="text"
 					class="receipt-capture__input"
-					data-testid="rc-description">
+					data-testid="rc-description" />
 			</div>
 
-			<p v-if="sourceDocumentUri" class="receipt-capture__source" data-testid="rc-source-document">
+			<p
+				v-if="sourceDocumentUri"
+				class="receipt-capture__source"
+				data-testid="rc-source-document">
 				{{ t('shillinq', 'Source document') }}: {{ sourceDocumentUri }}
 			</p>
 
@@ -284,7 +340,10 @@
 				</button>
 			</div>
 
-			<p v-if="saveError" class="receipt-capture__error" data-testid="rc-save-error">
+			<p
+				v-if="saveError"
+				class="receipt-capture__error"
+				data-testid="rc-save-error">
 				{{ saveError }}
 			</p>
 		</div>
@@ -293,21 +352,25 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
-
-import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
+import { generateUrl } from '@nextcloud/router'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
+import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
 import {
-	isExtractionDraft,
 	confidenceForField,
+	glAccountSuggestionSummary,
+	hasKnownExtractionId,
+	isExtractionDraft,
 	isFieldCorrected,
 	requiresExplicitReview,
-	hasKnownExtractionId,
-	glAccountSuggestionSummary,
 } from '../utils/extractionConfidence.js'
-import { reviewFormFromReceipt, canSaveReceipt, buildReceiptConfirmPayload, receiptErrorMessage } from './receiptCapture.js'
+import {
+	buildReceiptConfirmPayload,
+	canSaveReceipt,
+	receiptErrorMessage,
+	reviewFormFromReceipt,
+} from './receiptCapture.js'
 
 const REGISTER_SLUG = 'shillinq'
 const RECEIPT_SCHEMA = 'Receipt'
@@ -322,6 +385,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			record: null,
@@ -333,29 +397,38 @@ export default {
 			glSuggestion: null,
 		}
 	},
+
 	computed: {
 		hasIndexRoute() {
-			return !!this.$router?.options?.routes?.some?.((r) => r.name === 'Receipts')
+			return !!this.$router?.options?.routes?.some?.(
+				(r) => r.name === 'Receipts',
+			)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isDraftReview() {
 			return isExtractionDraft(this.record)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		requiresReview() {
 			return requiresExplicitReview(this.record)
 		},
+
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		canRerequest() {
 			return !!this.record?.sourceDocumentUri
 		},
+
 		sourceDocumentUri() {
 			return this.record?.sourceDocumentUri || ''
 		},
+
 		canSave() {
 			return canSaveReceipt(this.form)
 		},
 	},
+
 	watch: {
 		id: {
 			immediate: true,
@@ -364,23 +437,34 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		t,
-		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+		/**
+		 * @param field
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
+		 */
 		confidenceFor(field) {
 			return confidenceForField(this.record, field)
 		},
-		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+
+		/**
+		 * @param field
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
+		 */
 		isCorrected(field) {
 			return isFieldCorrected(this.record, field)
 		},
+
 		/** @spec openspec/specs/gl-account-suggestion-consume/spec.md */
 		async reload() {
 			this.loading = true
 			this.loadError = ''
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${RECEIPT_SCHEMA}/${this.id}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${RECEIPT_SCHEMA}/${this.id}`,
+					),
 				)
 				const body = response.data?.object ?? response.data ?? null
 				if (!body || typeof body !== 'object') {
@@ -395,6 +479,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Request a GL-account suggestion for this receipt draft
 		 * (gl-account-suggestion-consume, REQ-GAC-003) via the shillinq proxy.
@@ -411,13 +496,16 @@ export default {
 
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/shillinq/api/v1/extraction/drafts/${this.id}/suggest-account?schema=${RECEIPT_SCHEMA}`),
+					generateUrl(
+						`/apps/shillinq/api/v1/extraction/drafts/${this.id}/suggest-account?schema=${RECEIPT_SCHEMA}`,
+					),
 				)
 				this.glSuggestion = glAccountSuggestionSummary(response.data)
 			} catch (e) {
 				this.glSuggestion = null
 			}
 		},
+
 		/**
 		 * Fill the GL-account picker with the suggested code — the operator
 		 * still must click Save to commit anything (REQ-GAC-004).
@@ -428,6 +516,7 @@ export default {
 			if (!this.glSuggestion) return
 			this.form.glAccount = this.glSuggestion.code
 		},
+
 		/**
 		 * REQ-RXC-004: commit an extraction-draft correction through the
 		 * confirm proxy (records humanCorrected server-side); otherwise a
@@ -443,16 +532,22 @@ export default {
 				const payload = buildReceiptConfirmPayload(this.form)
 				if (this.isDraftReview) {
 					const response = await axios.put(
-						generateUrl(`/apps/shillinq/api/v1/extraction/drafts/${this.id}?schema=${RECEIPT_SCHEMA}`),
+						generateUrl(
+							`/apps/shillinq/api/v1/extraction/drafts/${this.id}?schema=${RECEIPT_SCHEMA}`,
+						),
 						payload,
 					)
-					this.record = response.data?.record ?? response.data ?? this.record
+					this.record =
+						response.data?.record ?? response.data ?? this.record
 				} else {
 					const response = await axios.put(
-						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${RECEIPT_SCHEMA}/${this.id}`),
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/${RECEIPT_SCHEMA}/${this.id}`,
+						),
 						{ ...this.record, ...payload },
 					)
-					this.record = response.data?.object ?? response.data ?? this.record
+					this.record =
+						response.data?.object ?? response.data ?? this.record
 				}
 				this.form = reviewFormFromReceipt(this.record)
 				showSuccess(t('shillinq', 'Receipt saved.'))
@@ -463,6 +558,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		/**
 		 * REQ-RXC-005: (re-)request docudesk extraction for this receipt.
 		 *
@@ -481,7 +577,12 @@ export default {
 						id: this.id,
 					},
 				)
-				showSuccess(t('shillinq', 'Extraction requested. The draft will update once docudesk responds.'))
+				showSuccess(
+					t(
+						'shillinq',
+						'Extraction requested. The draft will update once docudesk responds.',
+					),
+				)
 			} catch (e) {
 				this.saveError = receiptErrorMessage(e)
 				showError(this.saveError)

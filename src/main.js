@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-// Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
-// other module evaluates — see src/setPublicPath.js.
-import './setPublicPath.js'
-
-import { createApp, h, reactive } from 'vue'
-import { createRouter, createWebHistory } from 'vue-router'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import {
 	buildManifest,
 	CnPageRenderer,
@@ -20,24 +12,36 @@ import {
 	registerLeafIntegrations,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-import pinia from './pinia.js'
+import {
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { createApp, h, reactive } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
-import bundledManifest from './manifest.json'
-import manifestShell from './manifest.d.shell.json'
-import menuLayout from './menu-layout.json'
-import registry from './registry.js'
 import appIcons from './icons.js'
-import { mergeFullFragmentIntoManifest, buildPageFragmentIndex } from './utils/mergeFragmentIntoManifest.js'
+import manifestShell from './manifest.d.shell.json'
+import bundledManifest from './manifest.json'
+import menuLayout from './menu-layout.json'
+import pinia from './pinia.js'
+import registry from './registry.js'
+import {
+	buildPageFragmentIndex,
+	mergeFullFragmentIntoManifest,
+} from './utils/mergeFragmentIntoManifest.js'
 
+// Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
+// other module evaluates — see src/setPublicPath.js.
+import './setPublicPath.js'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-
 // gridstack v12 is a required peerDependency of @conduction/nextcloud-vue and
 // backs every `type: "dashboard"` page (12 of them here). Its CSS sizes items
 // with `width: var(--gs-column-width)`; without the stylesheet every widget
 // renders 0 px wide with NO console error.
 import 'gridstack/dist/gridstack.min.css'
-
 // Global (unscoped) app styles
 import './assets/app.css'
 
@@ -74,7 +78,10 @@ try {
 } catch (e) {
 	// Non-fatal — lib translations fall back to English source.
 	// eslint-disable-next-line no-console
-	console.warn('[shillinq] registerTranslations failed; falling back to English', e)
+	console.warn(
+		'[shillinq] registerTranslations failed; falling back to English',
+		e,
+	)
 }
 
 // Fire-and-forget translation load. Some Nextcloud installs (including
@@ -85,11 +92,17 @@ try {
 // callback meant boot silently failed when translations couldn't load.
 // Strings just fall back to their English source on miss; boot MUST NOT
 // depend on this resolving.
+/**
+ *
+ */
 function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('shillinq', () => {})
 		if (result && typeof result.then === 'function') {
-			result.then(() => {}, () => {})
+			result.then(
+				() => {},
+				() => {},
+			)
 		}
 	} catch {
 		// no-op
@@ -117,7 +130,9 @@ const RoutePageRenderer = { ...CnPageRenderer }
 // CnPageRenderer's reactive `resolvedProps` computed (it reads
 // `currentPage.config`; Vue 3's Proxy tracks the brand-new key too — see
 // src/utils/mergeFragmentIntoManifest.js for the full contract).
-const mergedManifest = reactive(buildManifest(bundledManifest, manifestShell.fragments, menuLayout))
+const mergedManifest = reactive(
+	buildManifest(bundledManifest, manifestShell.fragments, menuLayout),
+)
 
 // pageId → fragment filename stem, built once from the shell-derived slim
 // pages (each carries `_fragment`; base-manifest pages carry none and are
@@ -128,6 +143,12 @@ const pageFragmentIndex = buildPageFragmentIndex(mergedManifest.pages)
 // `fragmentCtx(key)` returns a Promise instead of eagerly bundling every
 // fragment's full content into `main` (contrast the shell generator above,
 // which reads the SAME directory at build time via plain `fs`, not webpack).
+// `require.context` is a WEBPACK build-time API, not CommonJS `require`: the
+// bundler rewrites this call at compile time and no `require` exists at
+// runtime. eslint's browser globals therefore report `no-undef` correctly —
+// the code is right and the linter is right. Scoped to this one identifier so
+// a genuinely undefined name elsewhere in the file still fails.
+/* global require */
 const lazyFragmentCtx = require.context('./manifest.d/', false, /\.json$/, 'lazy')
 const loadedFragments = new Set()
 
@@ -154,12 +175,18 @@ async function loadFragment(fragmentStem) {
 		// resolve to either the plain object or an ES module namespace
 		// wrapping it in `.default`, depending on loader/mode configuration.
 		// Unwrap defensively rather than assume one shape.
-		const fullFragment = (imported && typeof imported === 'object' && Array.isArray(imported.pages)) ? imported : imported?.default
+		const fullFragment =
+			imported && typeof imported === 'object' && Array.isArray(imported.pages)
+				? imported
+				: imported?.default
 		mergeFullFragmentIntoManifest(mergedManifest, fullFragment)
 		loadedFragments.add(fragmentStem)
 	} catch (e) {
 		// eslint-disable-next-line no-console
-		console.warn(`[shillinq] failed to lazy-load manifest fragment "${fragmentStem}"; navigating with slim page data.`, e)
+		console.warn(
+			`[shillinq] failed to lazy-load manifest fragment "${fragmentStem}"; navigating with slim page data.`,
+			e,
+		)
 	}
 }
 
@@ -246,12 +273,13 @@ const customComponentsProp = Object.fromEntries(
 // renamed to `#shillinq-app` (templates/index.php) rather than reasoning
 // about which of the two divs wins.
 const app = createApp({
-	render: () => h(App, {
-		manifest: mergedManifest,
-		pageTypes: pageTypesProp,
-		registry: registryProp,
-		customComponents: customComponentsProp,
-	}),
+	render: () =>
+		h(App, {
+			manifest: mergedManifest,
+			pageTypes: pageTypesProp,
+			registry: registryProp,
+			customComponents: customComponentsProp,
+		}),
 })
 
 // Vue 3 has no global `Vue.mixin` / `Vue.use` — everything is per-app.

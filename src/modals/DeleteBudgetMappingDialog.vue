@@ -32,9 +32,16 @@
 			</header>
 			<section class="bbv-delete-dialog__body">
 				<p>
-					{{ label('This permanently removes the GL → programme allocation. Deletion is logged in the audit trail.') }}
+					{{
+						label(
+							'This permanently removes the GL → programme allocation. Deletion is logged in the audit trail.',
+						)
+					}}
 				</p>
-				<dl v-if="mapping" class="bbv-delete-dialog__summary" data-testid="bbv-delete-dialog-summary">
+				<dl
+					v-if="mapping"
+					class="bbv-delete-dialog__summary"
+					data-testid="bbv-delete-dialog-summary">
 					<dt>{{ label('GL account') }}</dt>
 					<dd>{{ mapping.glAccountNumber || '—' }}</dd>
 					<dt>{{ label('Programme') }}</dt>
@@ -93,6 +100,7 @@ export default {
 		mapping: { type: Object, default: null },
 		deleting: { type: Boolean, default: false },
 	},
+
 	emits: ['confirm', 'cancel'],
 	methods: {
 		label(key) {
@@ -101,6 +109,7 @@ export default {
 			}
 			return key
 		},
+
 		formatPercentage(value) {
 			const num = Number(value)
 			if (!Number.isFinite(num)) {

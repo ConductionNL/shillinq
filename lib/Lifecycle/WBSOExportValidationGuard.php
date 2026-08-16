@@ -62,152 +62,147 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class WBSOExportValidationGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class WBSOExportValidationGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for `validate`: every included UrenRegistratie entry must
-     * carry `wbsoTagId` + `activityCodeId`.
-     *
-     * @param array<string, mixed> $export The WBSOExportLog object being transitioned.
-     *
-     * @return bool True when every included entry is fully tagged.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireEligibleEntries(array $export): bool
-    {
-        $administrationId = (string) ($export['administrationId'] ?? '');
-        $periodStart      = (string) ($export['periodStart'] ?? '');
-        $periodEnd        = (string) ($export['periodEnd'] ?? '');
+	/**
+	 * Precondition for `validate`: every included UrenRegistratie entry must
+	 * carry `wbsoTagId` + `activityCodeId`.
+	 *
+	 * @param array<string, mixed> $export The WBSOExportLog object being transitioned.
+	 *
+	 * @return bool True when every included entry is fully tagged.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireEligibleEntries(array $export): bool {
+		$administrationId = (string)($export['administrationId'] ?? '');
+		$periodStart = (string)($export['periodStart'] ?? '');
+		$periodEnd = (string)($export['periodEnd'] ?? '');
 
-        $administrationFilter = null;
-        if ($administrationId !== '') {
-            $administrationFilter = $administrationId;
-        }
+		$administrationFilter = null;
+		if ($administrationId !== '') {
+			$administrationFilter = $administrationId;
+		}
 
-        $dateFilter = null;
-        if ($periodStart !== '' && $periodEnd !== '') {
-            $dateFilter = ['gte' => $periodStart, 'lte' => $periodEnd];
-        }
+		$dateFilter = null;
+		if ($periodStart !== '' && $periodEnd !== '') {
+			$dateFilter = ['gte' => $periodStart, 'lte' => $periodEnd];
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $entries       = $objectService
-                ->setRegister($this->register())
-                ->setSchema('UrenRegistratie')
-                ->findAll(
-                    [
-                        'filters' => array_filter(
-                            [
-                                'administrationId' => $administrationFilter,
-                                'date'             => $dateFilter,
-                            ],
-                            static fn($v) => $v !== null
-                        ),
-                    ]
-                );
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$entries = $objectService
+				->setRegister($this->register())
+				->setSchema('UrenRegistratie')
+				->findAll(
+					[
+						'filters' => array_filter(
+							[
+								'administrationId' => $administrationFilter,
+								'date' => $dateFilter,
+							],
+							static fn ($v) => $v !== null
+						),
+					]
+				);
 
-            if (is_array($entries) === false) {
-                $entries = [];
-            }
+			if (is_array($entries) === false) {
+				$entries = [];
+			}
 
-            foreach ($entries as $entry) {
-                if (empty($entry['wbsoTagId']) === true || empty($entry['activityCodeId']) === true) {
-                    $this->logger->info(
-                        'WBSOExportValidationGuard: entry missing wbsoTagId/activityCodeId — denying validate',
-                        ['entryId' => ($entry['id'] ?? null)]
-                    );
-                    return false;
-                }
-            }
+			foreach ($entries as $entry) {
+				if (empty($entry['wbsoTagId']) === true || empty($entry['activityCodeId']) === true) {
+					$this->logger->info(
+						'WBSOExportValidationGuard: entry missing wbsoTagId/activityCodeId — denying validate',
+						['entryId' => ($entry['id'] ?? null)]
+					);
+					return false;
+				}
+			}
 
-            $this->checkActivityCodeEligibility(entries: $entries);
+			$this->checkActivityCodeEligibility(entries: $entries);
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'WBSOExportValidationGuard: requireEligibleEntries check failed — denying validate (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'WBSOExportValidationGuard: requireEligibleEntries check failed — denying validate (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end requireEligibleEntries()
+	}//end requireEligibleEntries()
 
-    /**
-     * Best-effort eligibility cross-check against WBSOActivityCode.isAllowed.
-     *
-     * Logs (does not deny) when the lookup itself is unavailable, so this
-     * guard's core tag-completeness enforcement is not held hostage by the
-     * separate WBSOActivityCode schema-registration defect (shillinq#434).
-     *
-     * @param array<int,array<string,mixed>> $entries UrenRegistratie entries already
-     *                                                confirmed to carry activityCodeId.
-     *
-     * @return void
-     */
-    private function checkActivityCodeEligibility(array $entries): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable) {
-            return;
-        }
+	/**
+	 * Best-effort eligibility cross-check against WBSOActivityCode.isAllowed.
+	 *
+	 * Logs (does not deny) when the lookup itself is unavailable, so this
+	 * guard's core tag-completeness enforcement is not held hostage by the
+	 * separate WBSOActivityCode schema-registration defect (shillinq#434).
+	 *
+	 * @param array<int,array<string,mixed>> $entries UrenRegistratie entries already
+	 *                                                confirmed to carry activityCodeId.
+	 *
+	 * @return void
+	 */
+	private function checkActivityCodeEligibility(array $entries): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable) {
+			return;
+		}
 
-        foreach ($entries as $entry) {
-            $activityCodeId = ($entry['activityCodeId'] ?? null);
-            if ($activityCodeId === null) {
-                continue;
-            }
+		foreach ($entries as $entry) {
+			$activityCodeId = ($entry['activityCodeId'] ?? null);
+			if ($activityCodeId === null) {
+				continue;
+			}
 
-            try {
-                $codes = $objectService
-                    ->setRegister($this->register())
-                    ->setSchema('WBSOActivityCode')
-                    ->findAll(['filters' => ['activityCode' => $activityCodeId], 'limit' => 1]);
-            } catch (\Throwable) {
-                // WBSOActivityCode not reachable (shillinq#434) — skip this
-                // sub-check rather than deny the whole export on its account.
-                return;
-            }
+			try {
+				$codes = $objectService
+					->setRegister($this->register())
+					->setSchema('WBSOActivityCode')
+					->findAll(['filters' => ['activityCode' => $activityCodeId], 'limit' => 1]);
+			} catch (\Throwable) {
+				// WBSOActivityCode not reachable (shillinq#434) — skip this
+				// sub-check rather than deny the whole export on its account.
+				return;
+			}
 
-            if (is_array($codes) === true && $codes !== [] && ($codes[0]['isAllowed'] ?? true) !== true) {
-                $this->logger->warning(
-                    'WBSOExportValidationGuard: entry references a non-allowed WBSOActivityCode',
-                    ['entryId' => ($entry['id'] ?? null), 'activityCode' => $activityCodeId]
-                );
-            }
-        }//end foreach
+			if (is_array($codes) === true && $codes !== [] && ($codes[0]['isAllowed'] ?? true) !== true) {
+				$this->logger->warning(
+					'WBSOExportValidationGuard: entry references a non-allowed WBSOActivityCode',
+					['entryId' => ($entry['id'] ?? null), 'activityCode' => $activityCodeId]
+				);
+			}
+		}//end foreach
 
-    }//end checkActivityCodeEligibility()
+	}//end checkActivityCodeEligibility()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

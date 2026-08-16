@@ -1154,7 +1154,7 @@
           "initialState": "auto_approved",
           "states": {
             "auto_approved": {
-              "label": "Auto-goedgekeurd",
+              "label": "Auto-approved",
               "description": "Exact 3-way match; no operator action needed."
             },
             "within_tolerance": {

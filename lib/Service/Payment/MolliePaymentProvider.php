@@ -38,69 +38,66 @@ use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
  */
-class MolliePaymentProvider implements PaymentProviderInterface
-{
-    /**
-     * The only method this port ever requests (REQ-SPPI-001 — iDEAL is the
-     * required Dutch MKB rail for the portal pay-now flow).
-     *
-     * @var string
-     */
-    private const METHOD_IDEAL = 'ideal';
+class MolliePaymentProvider implements PaymentProviderInterface {
+	/**
+	 * The only method this port ever requests (REQ-SPPI-001 — iDEAL is the
+	 * required Dutch MKB rail for the portal pay-now flow).
+	 *
+	 * @var string
+	 */
+	private const METHOD_IDEAL = 'ideal';
 
-    /**
-     * Construct the provider.
-     *
-     * @param MolliePaymentAdapterInterface $mollie The existing, verified Mollie adapter port.
-     */
-    public function __construct(private readonly MolliePaymentAdapterInterface $mollie)
-    {
-    }//end __construct()
+	/**
+	 * Construct the provider.
+	 *
+	 * @param MolliePaymentAdapterInterface $mollie The existing, verified Mollie adapter port.
+	 */
+	public function __construct(
+		private readonly MolliePaymentAdapterInterface $mollie,
+	) {
+	}//end __construct()
 
-    /**
-     * Request an iDEAL payment session through the bound Mollie adapter.
-     *
-     * @param PaymentSessionRequest $request The session request.
-     *
-     * @return PaymentSessionResult The session outcome.
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
-     */
-    public function createSession(PaymentSessionRequest $request): PaymentSessionResult
-    {
-        $result = $this->mollie->createPayment(
-            [
-                'amount'      => [
-                    'value'    => number_format($request->amount, 2, '.', ''),
-                    'currency' => $request->currency,
-                ],
-                'description' => $request->description,
-                'redirectUrl' => $request->redirectUrl,
-                'webhookUrl'  => $request->webhookUrl,
-                'method'      => self::METHOD_IDEAL,
-                'metadata'    => $request->metadata,
-            ]
-        );
+	/**
+	 * Request an iDEAL payment session through the bound Mollie adapter.
+	 *
+	 * @param PaymentSessionRequest $request The session request.
+	 *
+	 * @return PaymentSessionResult The session outcome.
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
+	 */
+	public function createSession(PaymentSessionRequest $request): PaymentSessionResult {
+		$result = $this->mollie->createPayment(
+			[
+				'amount' => [
+					'value' => number_format($request->amount, 2, '.', ''),
+					'currency' => $request->currency,
+				],
+				'description' => $request->description,
+				'redirectUrl' => $request->redirectUrl,
+				'webhookUrl' => $request->webhookUrl,
+				'method' => self::METHOD_IDEAL,
+				'metadata' => $request->metadata,
+			]
+		);
 
-        return new PaymentSessionResult(
-            dormant: $result->dormant,
-            checkoutUrl: $result->checkoutUrl,
-            paymentIntentId: $result->molliePaymentId,
-            extras: $result->extras,
-        );
+		return new PaymentSessionResult(
+			dormant: $result->dormant,
+			checkoutUrl: $result->checkoutUrl,
+			paymentIntentId: $result->molliePaymentId,
+			extras: $result->extras,
+		);
 
-    }//end createSession()
+	}//end createSession()
 
-    /**
-     * Whether the bound Mollie adapter is dormant.
-     *
-     * @return bool True when the bound adapter is a log-only stub.
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
-     */
-    public function isDormant(): bool
-    {
-        return $this->mollie->isDormant();
-
-    }//end isDormant()
+	/**
+	 * Whether the bound Mollie adapter is dormant.
+	 *
+	 * @return bool True when the bound adapter is a log-only stub.
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
+	 */
+	public function isDormant(): bool {
+		return $this->mollie->isDormant();
+	}//end isDormant()
 }//end class

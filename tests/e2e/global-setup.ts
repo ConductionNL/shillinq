@@ -53,18 +53,22 @@ function ensureBundleBuilt(): void {
 		return
 	}
 	// eslint-disable-next-line no-console
-	console.log(`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`)
+	console.log(
+		`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`,
+	)
 	execSync('npm run build', { cwd: APP_ROOT, stdio: 'inherit' })
 }
 
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 	const ctx = await request.newContext()
 	try {
-		const res = await ctx.get(`${baseURL}/status.php`, { failOnStatusCode: false })
+		const res = await ctx.get(`${baseURL}/status.php`, {
+			failOnStatusCode: false,
+		})
 		if (!res.ok()) {
 			throw new Error(
-				`Nextcloud status.php returned ${res.status()} at ${baseURL}. ` +
-				`Make sure the docker container is running and reachable.`,
+				`Nextcloud status.php returned ${res.status()} at ${baseURL}. `
+					+ `Make sure the docker container is running and reachable.`,
 			)
 		}
 		const body = await res.json().catch(() => ({}))
@@ -82,8 +86,8 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	// Never fall back to a literal — the old chain ended at the SHARED dev
 	// container on :8080, so an unset environment fired repeated logins at
 	// somebody else's instance. See tests/e2e/base-url.ts.
-	const baseURL = (config.projects[0]?.use?.baseURL as string | undefined)
-		?? resolveBaseURL()
+	const baseURL =
+		(config.projects[0]?.use?.baseURL as string | undefined) ?? resolveBaseURL()
 	const username = process.env.NC_ADMIN_USER ?? 'admin'
 	const password = process.env.NC_ADMIN_PASS ?? 'admin'
 
@@ -108,17 +112,21 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	// then settle on the authenticated header. Both waits are forgiving so
 	// a slow-but-successful login is not reported as a credential failure.
 	try {
-		await page.waitForURL((url) => !/\/login(\?|$|\/)/.test(url.toString()), { timeout: 30_000 })
+		await page.waitForURL((url) => !/\/login(\?|$|\/)/.test(url.toString()), {
+			timeout: 30_000,
+		})
 	} catch {
 		// fall through to the header wait + explicit error below.
 	}
-	await page.waitForSelector('#header, header.header', { timeout: 30_000 }).catch(() => {})
+	await page
+		.waitForSelector('#header, header.header', { timeout: 30_000 })
+		.catch(() => {})
 	// Catch wrong-credentials early so the failure message is clear.
 	const currentUrl = page.url()
 	if (/\/login(\?|$|\/)/.test(currentUrl)) {
 		throw new Error(
-			`Login appears to have failed — still on ${currentUrl}. ` +
-			`Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).`,
+			`Login appears to have failed — still on ${currentUrl}. `
+				+ `Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).`,
 		)
 	}
 

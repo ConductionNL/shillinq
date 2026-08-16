@@ -8,16 +8,37 @@
  */
 
 import { test } from '@playwright/test'
-import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+import {
+	gotoPage,
+	assertIndexSurface,
+	assertNoShillinqFailures,
+	recordShillinqErrors,
+} from './_helpers'
 
-const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
-	{ route: '/cashflow/dashboard', title: 'Cashflow Dashboard', titleRe: /Cashflow/i },
+const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
+	{
+		route: '/cashflow/dashboard',
+		title: 'Cashflow Dashboard',
+		titleRe: /Cashflow/i,
+	},
 	{ route: '/cashflow/scenarios', title: 'Scenarios' },
 	{ route: '/cashflow/buffer-policy', title: 'Buffer Policy' },
-	{ route: '/cashflow/recurring', title: 'Recurring Costs', titleRe: /Recurring/i },
-	{ route: '/cashflow/calibration', title: 'Calibration Report', titleRe: /Calibration/i },
+	{
+		route: '/cashflow/recurring',
+		title: 'Recurring Costs',
+		titleRe: /Recurring/i,
+	},
+	{
+		route: '/cashflow/calibration',
+		title: 'Calibration Report',
+		titleRe: /Calibration/i,
+	},
 	{ route: '/pension/plans', title: 'Pension Plans' },
-	{ route: '/pension/valuations', title: 'Actuarial Valuations', titleRe: /Valuation/i },
+	{
+		route: '/pension/valuations',
+		title: 'Actuarial Valuations',
+		titleRe: /Valuation/i,
+	},
 	{ route: '/pension/disclosure-tables', title: 'Disclosure Tables' },
 ]
 

@@ -8,11 +8,11 @@
  * through the OpenRegister object + lifecycle-transition API on a live
  * instance:
  *
- *   1. a subsidie is an Order of type subsidie          (create orderType=subsidie)
+ *   1. a subsidy is an Order of type subsidy          (create orderType=subsidy)
  *   2. a purchase order is an Order of type purchase     (create orderType=purchase)
  *   3. a DBA engagement is an Order of type engagement   (create orderType=engagement)
- *   4. subsidie keeps its statutory lifecycle            (verleen: aanvraag -> verleend)
- *   5. a transition never crosses orderType boundaries   (approve on a subsidie -> refused)
+ *   4. subsidy keeps its statutory lifecycle            (verleen: aanvraag -> verleend)
+ *   5. a transition never crosses orderType boundaries   (approve on a subsidy -> refused)
  *
  * The remaining three scenarios are backend fold / occ-command behaviour that
  * a browser cannot drive, and are covered by their own live/occ + unit e2e:
@@ -26,10 +26,10 @@
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
  *
  * Gate-19 scenario traceability (order-primitive spec):
- * @e2e order-primitive::a-subsidie-is-an-order-of-type-subsidie
+ * @e2e order-primitive::a-subsidy-is-an-order-of-type-subsidy
  * @e2e order-primitive::a-purchase-order-is-an-order-of-type-purchase
  * @e2e order-primitive::a-dba-engagement-is-an-order-of-type-engagement
- * @e2e order-primitive::subsidie-keeps-its-statutory-lifecycle
+ * @e2e order-primitive::subsidy-keeps-its-statutory-lifecycle
  * @e2e order-primitive::a-transition-never-crosses-ordertype-boundaries
  */
 
@@ -54,7 +54,10 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 	let api: import('@playwright/test').APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
-		api = await pwRequest.newContext({ baseURL, storageState: 'tests/e2e/.auth/admin.json' })
+		api = await pwRequest.newContext({
+			baseURL,
+			storageState: 'tests/e2e/.auth/admin.json',
+		})
 		fx = new OrFixtures(api)
 	})
 
@@ -65,18 +68,18 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 
 	// A successful create is itself the proof that OrderPrimitive is imported as
 	// its own schema (create 404s when the schema is absent) — and that it is NOT
-	// decidesk's `order`, since these subsidie/engagement shapes would fail
+	// decidesk's `order`, since these subsidy/engagement shapes would fail
 	// decidesk's required fields (orderNumber/orderDate/orderStatus/totalPrice).
-	test('a subsidie is an Order of type subsidie @spec REQ-ORD-001', async () => {
+	test('a subsidy is an Order of type subsidy @spec REQ-ORD-001', async () => {
 		const { id } = await fx.create(SCHEMA, {
 			administrationId: ADMIN_ID,
-			orderType: 'subsidie',
+			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB`,
-			state: 'aanvraag',
+			state: 'request',
 		})
 		const obj = await fx.get(SCHEMA, id)
-		expect(obj.orderType).toBe('subsidie')
+		expect(obj.orderType).toBe('subsidy')
 	})
 
 	test('a purchase order is an Order of type purchase @spec REQ-ORD-001', async () => {
@@ -103,36 +106,44 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 		expect(obj.orderType).toBe('engagement')
 	})
 
-	test('subsidie keeps its statutory lifecycle (verleen: aanvraag → verleend) @spec REQ-ORD-002', async () => {
+	test('subsidy keeps its statutory lifecycle (verleen: aanvraag → verleend) @spec REQ-ORD-002', async () => {
 		const { id } = await fx.create(SCHEMA, {
 			administrationId: ADMIN_ID,
-			orderType: 'subsidie',
+			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB-LIFECYCLE`,
-			state: 'aanvraag',
+			state: 'request',
 		})
 
 		const res = await fx.transition(id, 'verleen')
-		expect(res.ok(), `verleen should be allowed on a subsidie in aanvraag: HTTP ${res.status()} ${await res.text()}`).toBeTruthy()
+		expect(
+			res.ok(),
+			`verleen should be allowed on a subsidy in aanvraag: HTTP ${res.status()} ${await res.text()}`,
+		).toBeTruthy()
 
 		const after = await fx.get(SCHEMA, id)
-		const state = (after['@self'] as Record<string, unknown> | undefined)?.state ?? after.state
-		expect(state).toBe('verleend')
+		const state =
+			(after['@self'] as Record<string, unknown> | undefined)?.state
+			?? after.state
+		expect(state).toBe('granted')
 	})
 
-	test('a transition never crosses orderType boundaries (approve refused on a subsidie) @spec REQ-ORD-002', async () => {
+	test('a transition never crosses orderType boundaries (approve refused on a subsidy) @spec REQ-ORD-002', async () => {
 		const { id } = await fx.create(SCHEMA, {
 			administrationId: ADMIN_ID,
-			orderType: 'subsidie',
+			orderType: 'subsidy',
 			direction: 'outgoing',
 			orderNumber: `${UNIQUE_PREFIX}-SUB-CROSS`,
-			state: 'aanvraag',
+			state: 'request',
 		})
 
 		// `approve` is a PURCHASE-only transition (from=draft). It must be refused
-		// on a subsidie in aanvraag — the orderType gate (REQ-ORD-002). The refusal
+		// on a subsidy in aanvraag — the orderType gate (REQ-ORD-002). The refusal
 		// itself is the contract under test.
 		const res = await fx.transition(id, 'approve')
-		expect(res.ok(), 'a purchase transition must NOT succeed on a subsidie').toBeFalsy()
+		expect(
+			res.ok(),
+			'a purchase transition must NOT succeed on a subsidy',
+		).toBeFalsy()
 	})
 })

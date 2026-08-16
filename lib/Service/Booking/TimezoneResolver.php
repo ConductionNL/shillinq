@@ -45,80 +45,76 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-18
  */
-final class TimezoneResolver
-{
-    /**
-     * Construct the resolver with DI dependencies.
-     *
-     * @param IConfig         $config Nextcloud config service for per-user
-     *                                "core/timezone" lookup.
-     * @param LoggerInterface $logger Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly IConfig $config,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+final class TimezoneResolver {
+	/**
+	 * Construct the resolver with DI dependencies.
+	 *
+	 * @param IConfig $config Nextcloud config service for per-user
+	 *                        "core/timezone" lookup.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly IConfig $config,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Resolve the IANA timezone identifier to use for an appointment.
-     *
-     * @param string|null $customerUserId   Nextcloud user ID of the customer,
-     *                                      or NULL if the customer is not a
-     *                                      Nextcloud user (e.g. anonymous
-     *                                      self-service booking).
-     * @param string|null $explicitOverride Optional override timezone
-     *                                      (preferred when present and
-     *                                      valid). Allows future Appointment
-     *                                      schema fields to take precedence.
-     *
-     * @return string The chosen IANA timezone identifier — always one that
-     *                PHP's DateTimeZone accepts. Defaults to UTC.
-     */
-    public function resolve(?string $customerUserId, ?string $explicitOverride=null): string
-    {
-        if ($explicitOverride !== null && $this->isValidTimezone(tz: $explicitOverride) === true) {
-            return $explicitOverride;
-        }
+	/**
+	 * Resolve the IANA timezone identifier to use for an appointment.
+	 *
+	 * @param string|null $customerUserId Nextcloud user ID of the customer,
+	 *                                    or NULL if the customer is not a
+	 *                                    Nextcloud user (e.g. anonymous
+	 *                                    self-service booking).
+	 * @param string|null $explicitOverride Optional override timezone
+	 *                                      (preferred when present and
+	 *                                      valid). Allows future Appointment
+	 *                                      schema fields to take precedence.
+	 *
+	 * @return string The chosen IANA timezone identifier — always one that
+	 *                PHP's DateTimeZone accepts. Defaults to UTC.
+	 */
+	public function resolve(?string $customerUserId, ?string $explicitOverride = null): string {
+		if ($explicitOverride !== null && $this->isValidTimezone(tz: $explicitOverride) === true) {
+			return $explicitOverride;
+		}
 
-        if ($customerUserId !== null && $customerUserId !== '') {
-            try {
-                $tz = $this->config->getUserValue($customerUserId, 'core', 'timezone', '');
-                if ($tz !== '' && $this->isValidTimezone(tz: $tz) === true) {
-                    return $tz;
-                }
-            } catch (Throwable $e) {
-                $this->logger->debug(
-                    'TimezoneResolver: unable to read core/timezone for user '
-                    .$customerUserId.': '.$e->getMessage()
-                );
-            }
-        }
+		if ($customerUserId !== null && $customerUserId !== '') {
+			try {
+				$tz = $this->config->getUserValue($customerUserId, 'core', 'timezone', '');
+				if ($tz !== '' && $this->isValidTimezone(tz: $tz) === true) {
+					return $tz;
+				}
+			} catch (Throwable $e) {
+				$this->logger->debug(
+					'TimezoneResolver: unable to read core/timezone for user '
+					. $customerUserId . ': ' . $e->getMessage()
+				);
+			}
+		}
 
-        $serverDefault = date_default_timezone_get();
-        if ($serverDefault !== '' && $this->isValidTimezone(tz: $serverDefault) === true) {
-            return $serverDefault;
-        }
+		$serverDefault = date_default_timezone_get();
+		if ($serverDefault !== '' && $this->isValidTimezone(tz: $serverDefault) === true) {
+			return $serverDefault;
+		}
 
-        return 'UTC';
+		return 'UTC';
+	}//end resolve()
 
-    }//end resolve()
+	/**
+	 * Whether a string is a valid IANA timezone identifier.
+	 *
+	 * @param string $tz Candidate timezone identifier.
+	 *
+	 * @return bool TRUE iff PHP's DateTimeZone accepts the value.
+	 */
+	private function isValidTimezone(string $tz): bool {
+		try {
+			new DateTimeZone($tz);
+			return true;
+		} catch (Throwable $e) {
+			return false;
+		}
 
-    /**
-     * Whether a string is a valid IANA timezone identifier.
-     *
-     * @param string $tz Candidate timezone identifier.
-     *
-     * @return bool TRUE iff PHP's DateTimeZone accepts the value.
-     */
-    private function isValidTimezone(string $tz): bool
-    {
-        try {
-            new DateTimeZone($tz);
-            return true;
-        } catch (Throwable $e) {
-            return false;
-        }
-
-    }//end isValidTimezone()
+	}//end isValidTimezone()
 }//end class

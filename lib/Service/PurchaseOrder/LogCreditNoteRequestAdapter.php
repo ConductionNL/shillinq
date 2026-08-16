@@ -47,70 +47,67 @@ use Psr\Log\NullLogger;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
  */
-final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInterface
-{
+final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInterface {
 
-    /**
-     * Logger sink.
-     *
-     * @var LoggerInterface
-     */
-    private LoggerInterface $logger;
+	/**
+	 * Logger sink.
+	 *
+	 * @var LoggerInterface
+	 */
+	private LoggerInterface $logger;
 
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface|null $logger Optional logger (defaults to NullLogger).
-     *
-     * @return void
-     */
-    public function __construct(?LoggerInterface $logger=null)
-    {
-        $this->logger = ($logger ?? new NullLogger());
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface|null $logger Optional logger (defaults to NullLogger).
+	 *
+	 * @return void
+	 */
+	public function __construct(?LoggerInterface $logger = null) {
+		$this->logger = ($logger ?? new NullLogger());
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Submit one UBL CreditNote dispute request — logs the envelope and
-     * fabricates a deterministic dispatch id.
-     *
-     * @param array<string,mixed> $payload Dispute envelope (see interface).
-     *
-     * @return array{accepted:bool,dispatchId:?string,error:?string}
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
-     */
-    public function submitDisputeCreditNote(array $payload): array
-    {
-        $matchId          = (string) ($payload['matchId'] ?? '');
-        $invoiceId        = (string) ($payload['invoiceId'] ?? '');
-        $invoiceNumber    = (string) ($payload['invoiceNumber'] ?? '');
-        $supplierId       = (string) ($payload['supplierId'] ?? '');
-        $administrationId = (string) ($payload['administrationId'] ?? '');
-        $currency         = (string) ($payload['currency'] ?? 'EUR');
-        $totalInclVat     = (int) ($payload['totalInclVat'] ?? 0);
+	/**
+	 * Submit one UBL CreditNote dispute request — logs the envelope and
+	 * fabricates a deterministic dispatch id.
+	 *
+	 * @param array<string,mixed> $payload Dispute envelope (see interface).
+	 *
+	 * @return array{accepted:bool,dispatchId:?string,error:?string}
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 */
+	public function submitDisputeCreditNote(array $payload): array {
+		$matchId = (string)($payload['matchId'] ?? '');
+		$invoiceId = (string)($payload['invoiceId'] ?? '');
+		$invoiceNumber = (string)($payload['invoiceNumber'] ?? '');
+		$supplierId = (string)($payload['supplierId'] ?? '');
+		$administrationId = (string)($payload['administrationId'] ?? '');
+		$currency = (string)($payload['currency'] ?? 'EUR');
+		$totalInclVat = (int)($payload['totalInclVat'] ?? 0);
 
-        $dispatchId = 'urn:uuid:cn-'.bin2hex(random_bytes(8));
+		$dispatchId = 'urn:uuid:cn-' . bin2hex(random_bytes(8));
 
-        $this->logger->info(
-            'LogCreditNoteRequestAdapter: dispute UBL CreditNote queued',
-            [
-                'matchId'          => $matchId,
-                'invoiceId'        => $invoiceId,
-                'invoiceNumber'    => $invoiceNumber,
-                'supplierId'       => $supplierId,
-                'administrationId' => $administrationId,
-                'currency'         => $currency,
-                'totalInclVat'     => $totalInclVat,
-                'dispatchId'       => $dispatchId,
-            ]
-        );
+		$this->logger->info(
+			'LogCreditNoteRequestAdapter: dispute UBL CreditNote queued',
+			[
+				'matchId' => $matchId,
+				'invoiceId' => $invoiceId,
+				'invoiceNumber' => $invoiceNumber,
+				'supplierId' => $supplierId,
+				'administrationId' => $administrationId,
+				'currency' => $currency,
+				'totalInclVat' => $totalInclVat,
+				'dispatchId' => $dispatchId,
+			]
+		);
 
-        return [
-            'accepted'   => true,
-            'dispatchId' => $dispatchId,
-            'error'      => null,
-        ];
+		return [
+			'accepted' => true,
+			'dispatchId' => $dispatchId,
+			'error' => null,
+		];
 
-    }//end submitDisputeCreditNote()
+	}//end submitDisputeCreditNote()
 }//end class

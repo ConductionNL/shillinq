@@ -522,7 +522,7 @@
             "example": 4732.18,
             "title": "Total VAT Amount"
           },
-          "belastingdienstKenmerk": {
+          "taxAuthorityReference": {
             "type": "string",
             "nullable": true,
             "description": "Confirmation reference after submission (REQ-OSS-013).",
@@ -1153,7 +1153,7 @@
         ],
         "totalTaxableBase": 23457.76,
         "totalVatAmount": 4732.18,
-        "belastingdienstKenmerk": "OSS-2026Q2-NL123456789B01",
+        "taxAuthorityReference": "OSS-2026Q2-NL123456789B01",
         "perCountryDistribution": {
           "DE": 1802.0,
           "FR": 1440.0,

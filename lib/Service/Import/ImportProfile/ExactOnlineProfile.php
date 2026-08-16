@@ -40,107 +40,98 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class ExactOnlineProfile implements ImportProfileInterface
-{
-    /**
-     * {@inheritDoc}
-     *
-     * @return string
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function sourceSystem(): string
-    {
-        return 'exact-online';
+class ExactOnlineProfile implements ImportProfileInterface {
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function sourceSystem(): string {
+		return 'exact-online';
+	}//end sourceSystem()
 
-    }//end sourceSystem()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Exact zero-pads ledger codes to a fixed width; left-trim the zeros so
+	 * RGS / code matching aligns with Shillinq's chart.
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function normalizeLedgerAccounts(array $parsed): array {
+		$accounts = ($parsed['ledgerAccounts'] ?? []);
+		foreach ($accounts as &$account) {
+			if (isset($account['code']) === true && $account['code'] !== '') {
+				$trimmed = ltrim((string)$account['code'], '0');
+				if ($trimmed === '') {
+					$account['code'] = '0';
+				} else {
+					$account['code'] = $trimmed;
+				}
+			}
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Exact zero-pads ledger codes to a fixed width; left-trim the zeros so
-     * RGS / code matching aligns with Shillinq's chart.
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<int,array<string,mixed>>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function normalizeLedgerAccounts(array $parsed): array
-    {
-        $accounts = ($parsed['ledgerAccounts'] ?? []);
-        foreach ($accounts as &$account) {
-            if (isset($account['code']) === true && $account['code'] !== '') {
-                $trimmed = ltrim((string) $account['code'], '0');
-                if ($trimmed === '') {
-                    $account['code'] = '0';
-                } else {
-                    $account['code'] = $trimmed;
-                }
-            }
-        }
+		unset($account);
+		return $accounts;
+	}//end normalizeLedgerAccounts()
 
-        unset($account);
-        return $accounts;
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Exact Online "Openstaande posten" CSV header (comma-delimited):
+	 *   AccountCode,AccountName,InvoiceNumber,InvoiceDate,DueDate,AmountDC,OutstandingDC,Type
+	 *
+	 * @param string $artifact Artifact kind.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function mapCsvColumns(string $artifact): array {
+		if ($artifact === 'open-items') {
+			return [
+				'relationCode' => 'AccountCode',
+				'relationName' => 'AccountName',
+				'invoiceNumber' => 'InvoiceNumber',
+				'invoiceDate' => 'InvoiceDate',
+				'dueDate' => 'DueDate',
+				'totalAmount' => 'AmountDC',
+				'outstandingAmount' => 'OutstandingDC',
+				'type' => 'Type',
+			];
+		}
 
-    }//end normalizeLedgerAccounts()
+		if ($artifact === 'relations') {
+			return [
+				'code' => 'Code',
+				'name' => 'Name',
+				'kvk' => 'ChamberOfCommerce',
+				'vat' => 'VATNumber',
+				'email' => 'Email',
+				'phone' => 'Phone',
+			];
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Exact Online "Openstaande posten" CSV header (comma-delimited):
-     *   AccountCode,AccountName,InvoiceNumber,InvoiceDate,DueDate,AmountDC,OutstandingDC,Type
-     *
-     * @param string $artifact Artifact kind.
-     *
-     * @return array<string,string>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function mapCsvColumns(string $artifact): array
-    {
-        if ($artifact === 'open-items') {
-            return [
-                'relationCode'      => 'AccountCode',
-                'relationName'      => 'AccountName',
-                'invoiceNumber'     => 'InvoiceNumber',
-                'invoiceDate'       => 'InvoiceDate',
-                'dueDate'           => 'DueDate',
-                'totalAmount'       => 'AmountDC',
-                'outstandingAmount' => 'OutstandingDC',
-                'type'              => 'Type',
-            ];
-        }
+		return [];
+	}//end mapCsvColumns()
 
-        if ($artifact === 'relations') {
-            return [
-                'code'  => 'Code',
-                'name'  => 'Name',
-                'kvk'   => 'ChamberOfCommerce',
-                'btw'   => 'VATNumber',
-                'email' => 'Email',
-                'phone' => 'Phone',
-            ];
-        }
-
-        return [];
-
-    }//end mapCsvColumns()
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<string,mixed>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function applyDialectQuirks(array $parsed): array
-    {
-        $parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts(parsed: $parsed);
-        return $parsed;
-
-    }//end applyDialectQuirks()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function applyDialectQuirks(array $parsed): array {
+		$parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts(parsed: $parsed);
+		return $parsed;
+	}//end applyDialectQuirks()
 }//end class

@@ -53,324 +53,307 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
  */
-class WbsoAccountApiController extends Controller
-{
+class WbsoAccountApiController extends Controller {
 
-    /**
-     * Identifier-safe slug pattern (REQ-WBSO-005 / ADR-005).
-     *
-     * @var string
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+	/**
+	 * Identifier-safe slug pattern (REQ-WBSO-005 / ADR-005).
+	 *
+	 * @var string
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
-    /**
-     * Construct the controller.
-     *
-     * @param IRequest           $request     Request.
-     * @param WbsoAccountService $accounts    Account service.
-     * @param WbsoRbacResolver   $rbac        Role resolver.
-     * @param IUserSession       $userSession Session.
-     * @param LoggerInterface    $logger      Logger (no stack traces to client).
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly WbsoAccountService $accounts,
-        private readonly WbsoRbacResolver $rbac,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+	/**
+	 * Construct the controller.
+	 *
+	 * @param IRequest $request Request.
+	 * @param WbsoAccountService $accounts Account service.
+	 * @param WbsoRbacResolver $rbac Role resolver.
+	 * @param IUserSession $userSession Session.
+	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly WbsoAccountService $accounts,
+		private readonly WbsoRbacResolver $rbac,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * GET /api/v1/accounts (bookkeeper / auditor / administrator).
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function index(): JSONResponse
-    {
-        $authError = $this->requireAuthenticatedReader();
-        if ($authError !== null) {
-            return $authError;
-        }
+	/**
+	 * GET /api/v1/accounts (bookkeeper / auditor / administrator).
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function index(): JSONResponse {
+		$authError = $this->requireAuthenticatedReader();
+		if ($authError !== null) {
+			return $authError;
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            $rows = $this->accounts->getAccountsByAdministration(administrationId: $administrationId);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to load accounts', context: ['exception' => $e->getMessage()]);
-        }
+		try {
+			$rows = $this->accounts->getAccountsByAdministration(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to load accounts', context: ['exception' => $e->getMessage()]);
+		}
 
-        return new JSONResponse(
-            [
-                'accounts'  => $rows,
-                'canCreate' => $this->rbac->hasAny(['administrator']),
-            ],
-            Http::STATUS_OK
-        );
+		return new JSONResponse(
+			[
+				'accounts' => $rows,
+				'canCreate' => $this->rbac->hasAny(['administrator']),
+			],
+			Http::STATUS_OK
+		);
 
-    }//end index()
+	}//end index()
 
-    /**
-     * GET /api/v1/accounts/hierarchy (bookkeeper / auditor / administrator).
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function hierarchy(): JSONResponse
-    {
-        $authError = $this->requireAuthenticatedReader();
-        if ($authError !== null) {
-            return $authError;
-        }
+	/**
+	 * GET /api/v1/accounts/hierarchy (bookkeeper / auditor / administrator).
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function hierarchy(): JSONResponse {
+		$authError = $this->requireAuthenticatedReader();
+		if ($authError !== null) {
+			return $authError;
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            $tree = $this->accounts->getAccountHierarchy(administrationId: $administrationId);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to load chart-of-accounts', context: ['exception' => $e->getMessage()]);
-        }
+		try {
+			$tree = $this->accounts->getAccountHierarchy(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to load chart-of-accounts', context: ['exception' => $e->getMessage()]);
+		}
 
-        return new JSONResponse(
-            [
-                'tree'      => $tree,
-                'canCreate' => $this->rbac->hasAny(['administrator']),
-            ],
-            Http::STATUS_OK
-        );
+		return new JSONResponse(
+			[
+				'tree' => $tree,
+				'canCreate' => $this->rbac->hasAny(['administrator']),
+			],
+			Http::STATUS_OK
+		);
 
-    }//end hierarchy()
+	}//end hierarchy()
 
-    /**
-     * GET /api/v1/accounts/{accountNumber}.
-     *
-     * @param string $accountNumber Account number to fetch.
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function show(string $accountNumber): JSONResponse
-    {
-        $authError = $this->requireAuthenticatedReader();
-        if ($authError !== null) {
-            return $authError;
-        }
+	/**
+	 * GET /api/v1/accounts/{accountNumber}.
+	 *
+	 * @param string $accountNumber Account number to fetch.
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function show(string $accountNumber): JSONResponse {
+		$authError = $this->requireAuthenticatedReader();
+		if ($authError !== null) {
+			return $authError;
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
-            return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
-        }
+		if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
+			return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            $row = $this->accounts->getAccountByNumber(
-                administrationId: $administrationId,
-                accountNumber: $accountNumber,
-            );
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to load account', context: ['exception' => $e->getMessage()]);
-        }
+		try {
+			$row = $this->accounts->getAccountByNumber(
+				administrationId: $administrationId,
+				accountNumber: $accountNumber,
+			);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to load account', context: ['exception' => $e->getMessage()]);
+		}
 
-        if ($row === null) {
-            return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
-        }
+		if ($row === null) {
+			return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        return new JSONResponse($row, Http::STATUS_OK);
+		return new JSONResponse($row, Http::STATUS_OK);
+	}//end show()
 
-    }//end show()
+	/**
+	 * POST /api/v1/accounts (administrator only).
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function create(): JSONResponse {
+		$authError = $this->requireAuthenticatedReader();
+		if ($authError !== null) {
+			return $authError;
+		}
 
-    /**
-     * POST /api/v1/accounts (administrator only).
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function create(): JSONResponse
-    {
-        $authError = $this->requireAuthenticatedReader();
-        if ($authError !== null) {
-            return $authError;
-        }
+		if ($this->rbac->hasAny(['administrator']) === false) {
+			return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
+		}
 
-        if ($this->rbac->hasAny(['administrator']) === false) {
-            return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$payload = $this->collectPayload(
+			fields: [
+				'accountNumber',
+				'name',
+				'accountType',
+				'parentAccountNumber',
+				'status',
+				'currency',
+				'description',
+				'vatApplicable',
+			]
+		);
 
-        $payload = $this->collectPayload(
-            fields: [
-                'accountNumber',
-                'name',
-                'accountType',
-                'parentAccountNumber',
-                'status',
-                'currency',
-                'description',
-                'vatApplicable',
-            ]
-        );
+		try {
+			$row = $this->accounts->createAccount(administrationId: $administrationId, payload: $payload);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to create account', context: ['exception' => $e->getMessage()]);
+		}
 
-        try {
-            $row = $this->accounts->createAccount(administrationId: $administrationId, payload: $payload);
-        } catch (InvalidArgumentException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to create account', context: ['exception' => $e->getMessage()]);
-        }
+		return new JSONResponse($row, Http::STATUS_CREATED);
+	}//end create()
 
-        return new JSONResponse($row, Http::STATUS_CREATED);
+	/**
+	 * PUT /api/v1/accounts/{accountNumber} (administrator only).
+	 *
+	 * @param string $accountNumber Account to update.
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function update(string $accountNumber): JSONResponse {
+		$authError = $this->requireAuthenticatedReader();
+		if ($authError !== null) {
+			return $authError;
+		}
 
-    }//end create()
+		if ($this->rbac->hasAny(['administrator']) === false) {
+			return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
+		}
 
-    /**
-     * PUT /api/v1/accounts/{accountNumber} (administrator only).
-     *
-     * @param string $accountNumber Account to update.
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function update(string $accountNumber): JSONResponse
-    {
-        $authError = $this->requireAuthenticatedReader();
-        if ($authError !== null) {
-            return $authError;
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->rbac->hasAny(['administrator']) === false) {
-            return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
-        }
+		if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
+			return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$payload = $this->collectPayload(
+			fields: [
+				'name',
+				'parentAccountNumber',
+				'status',
+				'currency',
+				'description',
+				'vatApplicable',
+			]
+		);
 
-        if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
-            return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$row = $this->accounts->updateAccount(
+				administrationId: $administrationId,
+				accountNumber: $accountNumber,
+				payload: $payload,
+			);
+		} catch (InvalidArgumentException $e) {
+			// Match "not found" vs validation distinct status codes.
+			if ($e->getMessage() === 'Account not found') {
+				return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
+			}
 
-        $payload = $this->collectPayload(
-            fields: [
-                'name',
-                'parentAccountNumber',
-                'status',
-                'currency',
-                'description',
-                'vatApplicable',
-            ]
-        );
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to update account', context: ['exception' => $e->getMessage()]);
+		}
 
-        try {
-            $row = $this->accounts->updateAccount(
-                administrationId: $administrationId,
-                accountNumber: $accountNumber,
-                payload: $payload,
-            );
-        } catch (InvalidArgumentException $e) {
-            // Match "not found" vs validation distinct status codes.
-            if ($e->getMessage() === 'Account not found') {
-                return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
-            }
+		return new JSONResponse($row, Http::STATUS_OK);
+	}//end update()
 
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to update account', context: ['exception' => $e->getMessage()]);
-        }
+	/**
+	 * Common precondition: a user must be authenticated to read any data.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function requireAuthenticatedReader(): ?JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        return new JSONResponse($row, Http::STATUS_OK);
+		return null;
+	}//end requireAuthenticatedReader()
 
-    }//end update()
+	/**
+	 * Resolve the administration scope from the request, falling back to the
+	 * canonical demo administration when the parameter is omitted (single-
+	 * administration installs).
+	 *
+	 * @return string|null Resolved id, or null when malformed.
+	 */
+	private function resolveAdministration(): ?string {
+		$value = trim((string)$this->request->getParam('administration_id', 'adm-consultancy-nl'));
+		if ($value === '') {
+			return null;
+		}
 
-    /**
-     * Common precondition: a user must be authenticated to read any data.
-     *
-     * @return JSONResponse|null
-     */
-    private function requireAuthenticatedReader(): ?JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-        }
+		if (preg_match(self::ID_PATTERN, $value) !== 1) {
+			return null;
+		}
 
-        return null;
+		return $value;
+	}//end resolveAdministration()
 
-    }//end requireAuthenticatedReader()
+	/**
+	 * Collect a request payload from query params or JSON body.
+	 *
+	 * @param array<int,string> $fields Whitelisted fields.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function collectPayload(array $fields): array {
+		$payload = [];
+		foreach ($fields as $field) {
+			$value = $this->request->getParam($field, null);
+			if ($value === null) {
+				continue;
+			}
 
-    /**
-     * Resolve the administration scope from the request, falling back to the
-     * canonical demo administration when the parameter is omitted (single-
-     * administration installs).
-     *
-     * @return string|null Resolved id, or null when malformed.
-     */
-    private function resolveAdministration(): ?string
-    {
-        $value = trim((string) $this->request->getParam('administration_id', 'adm-consultancy-nl'));
-        if ($value === '') {
-            return null;
-        }
+			$payload[$field] = $value;
+		}
 
-        if (preg_match(self::ID_PATTERN, $value) !== 1) {
-            return null;
-        }
+		return $payload;
+	}//end collectPayload()
 
-        return $value;
+	/**
+	 * Log a failure and return a 500 without leaking a stack trace.
+	 *
+	 * @param string $message Client-facing error.
+	 * @param array<string,mixed> $context Structured log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function fail(string $message, array $context): JSONResponse {
+		$this->logger->error('WbsoAccountApiController: ' . $message, $context);
 
-    }//end resolveAdministration()
-
-    /**
-     * Collect a request payload from query params or JSON body.
-     *
-     * @param array<int,string> $fields Whitelisted fields.
-     *
-     * @return array<string,mixed>
-     */
-    private function collectPayload(array $fields): array
-    {
-        $payload = [];
-        foreach ($fields as $field) {
-            $value = $this->request->getParam($field, null);
-            if ($value === null) {
-                continue;
-            }
-
-            $payload[$field] = $value;
-        }
-
-        return $payload;
-
-    }//end collectPayload()
-
-    /**
-     * Log a failure and return a 500 without leaking a stack trace.
-     *
-     * @param string              $message Client-facing error.
-     * @param array<string,mixed> $context Structured log context.
-     *
-     * @return JSONResponse
-     */
-    private function fail(string $message, array $context): JSONResponse
-    {
-        $this->logger->error('WbsoAccountApiController: '.$message, $context);
-
-        return new JSONResponse(['error' => $message], Http::STATUS_INTERNAL_SERVER_ERROR);
-
-    }//end fail()
+		return new JSONResponse(['error' => $message], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end fail()
 }//end class

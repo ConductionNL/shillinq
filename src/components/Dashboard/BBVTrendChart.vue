@@ -29,7 +29,7 @@
 			:height="320"
 			:legend="true"
 			:options="chartOptions"
-			:unavailable-label="t('shillinq', 'Chart library not available')" />
+			:unavailableLabel="t('shillinq', 'Chart library not available')" />
 	</div>
 </template>
 
@@ -37,8 +37,20 @@
 import { CnChartWidget } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 
-const MONTH_KEYS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-	'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_KEYS = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec',
+]
 
 export default {
 	name: 'BBVTrendChart',
@@ -48,6 +60,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		/**
 		 * Monthly cumulative timeline rows from the slice-04 dashboard
 		 * route. Each row carries:
@@ -60,16 +73,19 @@ export default {
 			default: () => [],
 		},
 	},
+
 	computed: {
 		categories() {
-			return MONTH_KEYS.map(key => this.t('shillinq', key))
+			return MONTH_KEYS.map((key) => this.t('shillinq', key))
 		},
+
 		series() {
 			if (this.timeline.length > 0) {
 				return this.seriesFromTimeline()
 			}
 			return this.seriesFromCurrentYtd()
 		},
+
 		chartOptions() {
 			return {
 				stroke: { width: 2, curve: 'straight' },
@@ -79,6 +95,7 @@ export default {
 						formatter: (val) => this.formatEuro(val),
 					},
 				},
+
 				tooltip: {
 					y: {
 						formatter: (val) => this.formatEuro(val),
@@ -87,6 +104,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		t,
 		seriesFromTimeline() {
@@ -99,9 +117,14 @@ export default {
 				if (!grouped.has(code)) {
 					grouped.set(code, new Array(12).fill(0))
 				}
-				const monthIndex = Math.max(0, Math.min(11, Number(row.month || 1) - 1))
+				const monthIndex = Math.max(
+					0,
+					Math.min(11, Number(row.month || 1) - 1),
+				)
 				const cents = Number(row.cumulativeSpendCents || 0)
-				grouped.get(code)[monthIndex] = Number.isFinite(cents) ? cents / 100 : 0
+				grouped.get(code)[monthIndex] = Number.isFinite(cents)
+					? cents / 100
+					: 0
 			}
 			const out = []
 			for (const programme of this.programmes) {
@@ -119,6 +142,7 @@ export default {
 			}
 			return out
 		},
+
 		seriesFromCurrentYtd() {
 			// Fallback used before the timeline route is wired (slice 04).
 			// Each programme contributes one flat line representing the
@@ -142,8 +166,13 @@ export default {
 			}
 			return out
 		},
+
 		formatEuro(cents) {
-			if (cents === null || cents === undefined || !Number.isFinite(Number(cents))) {
+			if (
+				cents === null
+				|| cents === undefined
+				|| !Number.isFinite(Number(cents))
+			) {
 				return '—'
 			}
 			return new Intl.NumberFormat('nl-NL', {

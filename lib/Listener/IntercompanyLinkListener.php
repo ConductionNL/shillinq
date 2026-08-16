@@ -49,67 +49,65 @@ use Throwable;
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class IntercompanyLinkListener implements IEventListener
-{
+class IntercompanyLinkListener implements IEventListener {
 
-    /**
-     * The lifecycle state a linked pair lands in.
-     *
-     * @var string
-     */
-    private const STATE_LINKED = 'gekoppeld';
+	/**
+	 * The lifecycle state a linked pair lands in.
+	 *
+	 * @var string
+	 */
+	private const STATE_LINKED = 'gekoppeld';
 
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param IntercompanyLinkService $linkService The mirror + reconciliation orchestrator.
-     * @param LoggerInterface         $logger      Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly IntercompanyLinkService $linkService,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param IntercompanyLinkService $linkService The mirror + reconciliation orchestrator.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly IntercompanyLinkService $linkService,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an ObjectTransitionedEvent.
-     *
-     * @param Event $event Event from OpenRegister.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectTransitionedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectTransitionedEvent.
+	 *
+	 * @param Event $event Event from OpenRegister.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectTransitionedEvent === false) {
+			return;
+		}
 
-        try {
-            $schema = strtolower(trim((string) $event->getSchema()));
-            if ($schema !== 'intercompanyjournalentry' && $schema !== 'intercompany-journal-entry') {
-                return;
-            }
+		try {
+			$schema = strtolower(trim((string)$event->getSchema()));
+			if ($schema !== 'intercompanyjournalentry' && $schema !== 'intercompany-journal-entry') {
+				return;
+			}
 
-            if ((string) $event->getTo() !== self::STATE_LINKED) {
-                return;
-            }
+			if ((string)$event->getTo() !== self::STATE_LINKED) {
+				return;
+			}
 
-            $entity = $event->getObject();
-            $object = $entity->getObject();
-            if (is_array($object) === false) {
-                return;
-            }
+			$entity = $event->getObject();
+			$object = $entity->getObject();
+			if (is_array($object) === false) {
+				return;
+			}
 
-            $this->linkService->linkAndReconcile(entry: $object);
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'IntercompanyLinkListener: failed to mirror/reconcile the intercompany pair',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->linkService->linkAndReconcile(entry: $object);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'IntercompanyLinkListener: failed to mirror/reconcile the intercompany pair',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 }//end class

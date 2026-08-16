@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-3
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,104 +49,99 @@ use Throwable;
 /**
  * Determines whether an innovatiebox boekjaar is VSO-locked (REQ-IBA-008).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-3
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
-class VsoLockingValidator
-{
-    /**
-     * Construct the validator.
-     *
-     * @param ContainerInterface $container DI container — OR ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger (transient OR errors are downgraded to "not locked").
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class VsoLockingValidator {
+	/**
+	 * Construct the validator.
+	 *
+	 * @param ContainerInterface $container DI container — OR ObjectService is fetched lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger (transient OR errors are downgraded to "not locked").
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Whether the supplied administration + boekjaar is VSO-locked.
-     *
-     * A year is locked when at least one IBProfitAttribution row for that
-     * administration + boekjaar carries `vso_locked: true`. The check is
-     * filter-scoped to an O(1)-indexed lookup.
-     *
-     * @param string $administrationId Administration scope.
-     * @param int    $boekjaar         Fiscal year.
-     *
-     * @return bool TRUE when the year is VSO-locked.
-     *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-3
-     */
-    public function isYearLocked(string $administrationId, int $boekjaar): bool
-    {
-        if ($administrationId === '' || $boekjaar <= 0) {
-            return false;
-        }
+	/**
+	 * Whether the supplied administration + boekjaar is VSO-locked.
+	 *
+	 * A year is locked when at least one IBProfitAttribution row for that
+	 * administration + boekjaar carries `vso_locked: true`. The check is
+	 * filter-scoped to an O(1)-indexed lookup.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param int $financialYear Fiscal year.
+	 *
+	 * @return bool TRUE when the year is VSO-locked.
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
+	 */
+	public function isYearLocked(string $administrationId, int $financialYear): bool {
+		if ($administrationId === '' || $financialYear <= 0) {
+			return false;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema('IBProfitAttribution')
-                ->findAll(
-                        [
-                            'filters' => [
-                                'administrationId' => $administrationId,
-                                'boekjaar'         => $boekjaar,
-                                'vso_locked'       => true,
-                            ],
-                        ]
-                        );
-        } catch (Throwable $e) {
-            // Fail-soft: a transient OR fetch failure should not crash the
-            // write path. Log + return "not locked" so the listener proceeds
-            // (the audit-trail listener will still record the write attempt).
-            $this->logger->warning(
-                'VsoLockingValidator: lock-status fetch failed; assuming unlocked',
-                [
-                    'administrationId' => $administrationId,
-                    'boekjaar'         => $boekjaar,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($this->register())
+				->setSchema('IBProfitAttribution')
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							'financialYear' => $financialYear,
+							'vso_locked' => true,
+						],
+					]
+				);
+		} catch (Throwable $e) {
+			// Fail-soft: a transient OR fetch failure should not crash the
+			// write path. Log + return "not locked" so the listener proceeds
+			// (the audit-trail listener will still record the write attempt).
+			$this->logger->warning(
+				'VsoLockingValidator: lock-status fetch failed; assuming unlocked',
+				[
+					'administrationId' => $administrationId,
+					'financialYear' => $financialYear,
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-        if (is_array($rows) === false) {
-            return false;
-        }
+		if (is_array($rows) === false) {
+			return false;
+		}
 
-        foreach ($rows as $row) {
-            if (is_array($row) === false) {
-                continue;
-            }
+		foreach ($rows as $row) {
+			if (is_array($row) === false) {
+				continue;
+			}
 
-            if (($row['vso_locked'] ?? false) === true) {
-                return true;
-            }
-        }
+			if (($row['vso_locked'] ?? false) === true) {
+				return true;
+			}
+		}
 
-        return false;
+		return false;
+	}//end isYearLocked()
 
-    }//end isYearLocked()
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

@@ -60,293 +60,280 @@ use RuntimeException;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
  */
-class ThreeWayMatchExceptionController extends Controller
-{
+class ThreeWayMatchExceptionController extends Controller {
 
-    /**
-     * Short-slug identifier pattern shared by every scope/path parameter.
-     *
-     * @var string
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+	/**
+	 * Short-slug identifier pattern shared by every scope/path parameter.
+	 *
+	 * @var string
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
-    /**
-     * Cap on the resolution-notes free-text field — long enough for a
-     * meaningful motivation, short enough that we cannot be used as a
-     * blob store.
-     *
-     * @var int
-     */
-    private const NOTES_MAX_LENGTH = 2000;
+	/**
+	 * Cap on the resolution-notes free-text field — long enough for a
+	 * meaningful motivation, short enough that we cannot be used as a
+	 * blob store.
+	 *
+	 * @var int
+	 */
+	private const NOTES_MAX_LENGTH = 2000;
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                     $request               The request object.
-     * @param ExceptionResolutionService   $exceptions            Slice 08 server-authoritative
-     *                                                            service.
-     * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param IUserSession                 $userSession           User session guard.
-     * @param LoggerInterface              $logger                Logger (no stack traces to client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly ExceptionResolutionService $exceptions,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param ExceptionResolutionService $exceptions Slice 08 server-authoritative
+	 *                                               service.
+	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param IUserSession $userSession User session guard.
+	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly ExceptionResolutionService $exceptions,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Record an accept-with-motivation disposition.
-     *
-     * POST /api/three-way-match/exceptions/accept
-     * Body: administrationId, matchId, resolutionNotes.
-     *
-     * @return JSONResponse 200 with the updated ThreeWayMatch; 400 on
-     *                      validation; 401 anonymous; 404 cross-tenant or
-     *                      missing match; 500 without stack trace.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
-     */
-    #[NoAdminRequired]
-    public function accept(): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Record an accept-with-motivation disposition.
+	 *
+	 * POST /api/three-way-match/exceptions/accept
+	 * Body: administrationId, matchId, resolutionNotes.
+	 *
+	 * @return JSONResponse 200 with the updated ThreeWayMatch; 400 on
+	 *                      validation; 401 anonymous; 404 cross-tenant or
+	 *                      missing match; 500 without stack trace.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function accept(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $matchId = $this->scopeParam(name: 'matchId');
-        if ($matchId === '') {
-            return new JSONResponse(['error' => 'matchId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$matchId = $this->scopeParam(name: 'matchId');
+		if ($matchId === '') {
+			return new JSONResponse(['error' => 'matchId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $resolutionNotes = $this->notesParam(name: 'resolutionNotes');
-        if ($resolutionNotes === '') {
-            return new JSONResponse(['error' => 'resolutionNotes is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$resolutionNotes = $this->notesParam(name: 'resolutionNotes');
+		if ($resolutionNotes === '') {
+			return new JSONResponse(['error' => 'resolutionNotes is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            $match = $this->exceptions->acceptWithMotivation(
-                administrationId: $administrationId,
-                matchId: $matchId,
-                resolutionNotes: $resolutionNotes
-            );
-        } catch (RuntimeException $exception) {
-            return $this->mapRuntimeException(exception: $exception);
-        } catch (\Throwable $exception) {
-            $this->logger->error(
-                'ThreeWayMatchExceptionController: accept failed',
-                [
-                    'administrationId' => $administrationId,
-                    'matchId'          => $matchId,
-                    'exception'        => $exception->getMessage(),
-                ]
-            );
-            return new JSONResponse(['error' => 'Could not record acceptance'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		try {
+			$match = $this->exceptions->acceptWithMotivation(
+				administrationId: $administrationId,
+				matchId: $matchId,
+				resolutionNotes: $resolutionNotes
+			);
+		} catch (RuntimeException $exception) {
+			return $this->mapRuntimeException(exception: $exception);
+		} catch (\Throwable $exception) {
+			$this->logger->error(
+				'ThreeWayMatchExceptionController: accept failed',
+				[
+					'administrationId' => $administrationId,
+					'matchId' => $matchId,
+					'exception' => $exception->getMessage(),
+				]
+			);
+			return new JSONResponse(['error' => 'Could not record acceptance'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        return new JSONResponse($match, Http::STATUS_OK);
+		return new JSONResponse($match, Http::STATUS_OK);
+	}//end accept()
 
-    }//end accept()
+	/**
+	 * File a dispute on an out-of-tolerance match.
+	 *
+	 * POST /api/three-way-match/exceptions/dispute
+	 * Body: administrationId, matchId, disputeReason.
+	 *
+	 * @return JSONResponse 200 with {match, dispatch}; 400 on validation;
+	 *                      401 anonymous; 404 cross-tenant or missing
+	 *                      match / invoice; 500 without stack trace.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function dispute(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-    /**
-     * File a dispute on an out-of-tolerance match.
-     *
-     * POST /api/three-way-match/exceptions/dispute
-     * Body: administrationId, matchId, disputeReason.
-     *
-     * @return JSONResponse 200 with {match, dispatch}; 400 on validation;
-     *                      401 anonymous; 404 cross-tenant or missing
-     *                      match / invoice; 500 without stack trace.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
-     */
-    #[NoAdminRequired]
-    public function dispute(): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
+		$matchId = $this->scopeParam(name: 'matchId');
+		if ($matchId === '') {
+			return new JSONResponse(['error' => 'matchId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $matchId = $this->scopeParam(name: 'matchId');
-        if ($matchId === '') {
-            return new JSONResponse(['error' => 'matchId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$disputeReason = $this->notesParam(name: 'disputeReason');
+		if ($disputeReason === '') {
+			return new JSONResponse(['error' => 'disputeReason is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $disputeReason = $this->notesParam(name: 'disputeReason');
-        if ($disputeReason === '') {
-            return new JSONResponse(['error' => 'disputeReason is required'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$result = $this->exceptions->fileDispute(
+				administrationId: $administrationId,
+				matchId: $matchId,
+				disputeReason: $disputeReason
+			);
+		} catch (RuntimeException $exception) {
+			return $this->mapRuntimeException(exception: $exception);
+		} catch (\Throwable $exception) {
+			$this->logger->error(
+				'ThreeWayMatchExceptionController: dispute failed',
+				[
+					'administrationId' => $administrationId,
+					'matchId' => $matchId,
+					'exception' => $exception->getMessage(),
+				]
+			);
+			return new JSONResponse(['error' => 'Could not file dispute'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        try {
-            $result = $this->exceptions->fileDispute(
-                administrationId: $administrationId,
-                matchId: $matchId,
-                disputeReason: $disputeReason
-            );
-        } catch (RuntimeException $exception) {
-            return $this->mapRuntimeException(exception: $exception);
-        } catch (\Throwable $exception) {
-            $this->logger->error(
-                'ThreeWayMatchExceptionController: dispute failed',
-                [
-                    'administrationId' => $administrationId,
-                    'matchId'          => $matchId,
-                    'exception'        => $exception->getMessage(),
-                ]
-            );
-            return new JSONResponse(['error' => 'Could not file dispute'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end dispute()
 
-        return new JSONResponse($result, Http::STATUS_OK);
+	/**
+	 * Reject and block payment on an out-of-tolerance match.
+	 *
+	 * POST /api/three-way-match/exceptions/reject
+	 * Body: administrationId, matchId, rejectionReason.
+	 *
+	 * @return JSONResponse 200 with the updated ThreeWayMatch; 400 on
+	 *                      validation; 401 anonymous; 404 cross-tenant or
+	 *                      missing match; 500 without stack trace.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function reject(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-    }//end dispute()
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-    /**
-     * Reject and block payment on an out-of-tolerance match.
-     *
-     * POST /api/three-way-match/exceptions/reject
-     * Body: administrationId, matchId, rejectionReason.
-     *
-     * @return JSONResponse 200 with the updated ThreeWayMatch; 400 on
-     *                      validation; 401 anonymous; 404 cross-tenant or
-     *                      missing match; 500 without stack trace.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
-     */
-    #[NoAdminRequired]
-    public function reject(): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$matchId = $this->scopeParam(name: 'matchId');
+		if ($matchId === '') {
+			return new JSONResponse(['error' => 'matchId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
+		$rejectionReason = $this->notesParam(name: 'rejectionReason');
+		if ($rejectionReason === '') {
+			return new JSONResponse(['error' => 'rejectionReason is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $matchId = $this->scopeParam(name: 'matchId');
-        if ($matchId === '') {
-            return new JSONResponse(['error' => 'matchId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$match = $this->exceptions->rejectAndBlockPayment(
+				administrationId: $administrationId,
+				matchId: $matchId,
+				rejectionReason: $rejectionReason
+			);
+		} catch (RuntimeException $exception) {
+			return $this->mapRuntimeException(exception: $exception);
+		} catch (\Throwable $exception) {
+			$this->logger->error(
+				'ThreeWayMatchExceptionController: reject failed',
+				[
+					'administrationId' => $administrationId,
+					'matchId' => $matchId,
+					'exception' => $exception->getMessage(),
+				]
+			);
+			return new JSONResponse(['error' => 'Could not record rejection'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        $rejectionReason = $this->notesParam(name: 'rejectionReason');
-        if ($rejectionReason === '') {
-            return new JSONResponse(['error' => 'rejectionReason is required'], Http::STATUS_BAD_REQUEST);
-        }
+		return new JSONResponse($match, Http::STATUS_OK);
+	}//end reject()
 
-        try {
-            $match = $this->exceptions->rejectAndBlockPayment(
-                administrationId: $administrationId,
-                matchId: $matchId,
-                rejectionReason: $rejectionReason
-            );
-        } catch (RuntimeException $exception) {
-            return $this->mapRuntimeException(exception: $exception);
-        } catch (\Throwable $exception) {
-            $this->logger->error(
-                'ThreeWayMatchExceptionController: reject failed',
-                [
-                    'administrationId' => $administrationId,
-                    'matchId'          => $matchId,
-                    'exception'        => $exception->getMessage(),
-                ]
-            );
-            return new JSONResponse(['error' => 'Could not record rejection'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+	/**
+	 * Read and validate a scope parameter, returning '' when blank or
+	 * malformed.
+	 *
+	 * @param string $name Parameter name (body for POST / query for GET).
+	 *
+	 * @return string The validated value or '' (blank/malformed).
+	 */
+	private function scopeParam(string $name): string {
+		$value = trim((string)$this->request->getParam($name, ''));
+		if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
+			return '';
+		}
 
-        return new JSONResponse($match, Http::STATUS_OK);
+		return $value;
+	}//end scopeParam()
 
-    }//end reject()
+	/**
+	 * Read a free-text notes/reason parameter, trimming whitespace and
+	 * capping at {@see NOTES_MAX_LENGTH} characters.
+	 *
+	 * @param string $name Parameter name.
+	 *
+	 * @return string The trimmed value (possibly empty).
+	 */
+	private function notesParam(string $name): string {
+		$value = trim((string)$this->request->getParam($name, ''));
+		if ($value === '') {
+			return '';
+		}
 
-    /**
-     * Read and validate a scope parameter, returning '' when blank or
-     * malformed.
-     *
-     * @param string $name Parameter name (body for POST / query for GET).
-     *
-     * @return string The validated value or '' (blank/malformed).
-     */
-    private function scopeParam(string $name): string
-    {
-        $value = trim((string) $this->request->getParam($name, ''));
-        if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
-            return '';
-        }
+		if (mb_strlen($value) > self::NOTES_MAX_LENGTH) {
+			$value = mb_substr($value, 0, self::NOTES_MAX_LENGTH);
+		}
 
-        return $value;
+		return $value;
+	}//end notesParam()
 
-    }//end scopeParam()
+	/**
+	 * Map a service-level RuntimeException to a JSONResponse. Conventions:
+	 *  - "not found"  → 404
+	 *  - everything else → 400 (validation)
+	 *
+	 * @param \RuntimeException $exception The exception to map.
+	 *
+	 * @return JSONResponse
+	 */
+	private function mapRuntimeException(\RuntimeException $exception): JSONResponse {
+		$message = $exception->getMessage();
+		if (str_contains($message, 'not found') === true) {
+			return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+		}
 
-    /**
-     * Read a free-text notes/reason parameter, trimming whitespace and
-     * capping at {@see NOTES_MAX_LENGTH} characters.
-     *
-     * @param string $name Parameter name.
-     *
-     * @return string The trimmed value (possibly empty).
-     */
-    private function notesParam(string $name): string
-    {
-        $value = trim((string) $this->request->getParam($name, ''));
-        if ($value === '') {
-            return '';
-        }
-
-        if (mb_strlen($value) > self::NOTES_MAX_LENGTH) {
-            $value = mb_substr($value, 0, self::NOTES_MAX_LENGTH);
-        }
-
-        return $value;
-
-    }//end notesParam()
-
-    /**
-     * Map a service-level RuntimeException to a JSONResponse. Conventions:
-     *  - "not found"  → 404
-     *  - everything else → 400 (validation)
-     *
-     * @param \RuntimeException $exception The exception to map.
-     *
-     * @return JSONResponse
-     */
-    private function mapRuntimeException(\RuntimeException $exception): JSONResponse
-    {
-        $message = $exception->getMessage();
-        if (str_contains($message, 'not found') === true) {
-            return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-        }
-
-        return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
-
-    }//end mapRuntimeException()
+		return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
+	}//end mapRuntimeException()
 }//end class

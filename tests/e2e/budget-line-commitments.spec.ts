@@ -13,7 +13,7 @@
  * owned by other layers and referenced here so the spec Scenario carries
  * an @e2e proof —
  *   - the materialisation glue (idempotency, budget/mandate guard reuse,
- *     multi-year regel splitting) lives in
+ *     multi-year rule splitting) lives in
  *     `tests/Unit/Service/Commitment/CommitmentMaterialisationServiceTest.php`
  *     and `tests/Unit/Listener/CommitmentMaterialisationListenerTest.php`
  *     (PHPUnit);
@@ -49,7 +49,9 @@ test.describe('verplichtingen-commitment-accounting — budget-line committed-vs
 		page.setViewportSize({ width: 1600, height: 1200 })
 	})
 
-	test('renders the four committed-vs-realised columns and drills into a budget line', async ({ page }) => {
+	test('renders the four committed-vs-realised columns and drills into a budget line', async ({
+		page,
+	}) => {
 		await page.goto(`${APP}${ROUTE}`)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -67,18 +69,27 @@ test.describe('verplichtingen-commitment-accounting — budget-line committed-vs
 
 		// Drilling into a line lists its underlying Verplichting(s).
 		await row.click()
-		await expect(page.getByTestId('budget-line-drilldown')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('budget-line-drilldown')).toBeVisible({
+			timeout: 10_000,
+		})
 	})
 
-	test('empty administration renders the empty state without erroring', async ({ page }) => {
+	test('empty administration renders the empty state without erroring', async ({
+		page,
+	}) => {
 		await page.goto(`${APP}${ROUTE}`)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		const row = page.getByTestId('budget-line-row').first()
 		const hasRows = await row.isVisible().catch(() => false)
-		test.skip(hasRows, 'administration has seeded budget lines — empty-state assertion not applicable')
+		test.skip(
+			hasRows,
+			'administration has seeded budget lines — empty-state assertion not applicable',
+		)
 
-		await expect(page.getByText('No budget lines', { exact: false })).toBeVisible()
+		await expect(
+			page.getByText('No budget lines', { exact: false }),
+		).toBeVisible()
 	})
 })

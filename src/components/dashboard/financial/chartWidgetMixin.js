@@ -5,10 +5,15 @@
 // props from CnDashboardPage, the fetch-once data layer, the
 // trailing-12-months window and the per-widget Refresh-bus hookup.
 
-import { ref } from 'vue'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
+import { ref } from 'vue'
+import {
+	lastMonths,
+	monthLabel,
+	monthlyFinancialSeries,
+	monthsInRange,
+} from './financialSeries.js'
 import { useFinancialData } from './useFinancialData.js'
-import { lastMonths, monthLabel, monthlyFinancialSeries, monthsInRange } from './financialSeries.js'
 
 export const TRAILING_MONTHS = 12
 
@@ -57,9 +62,10 @@ export default {
 		months() {
 			// Unwrap ref (Vue 2.7 options-API inject may give either shape).
 			const injected = this.cnDashboardDateRange
-			const range = (injected && typeof injected === 'object' && 'value' in injected)
-				? injected.value
-				: injected
+			const range =
+				injected && typeof injected === 'object' && 'value' in injected
+					? injected.value
+					: injected
 			if (range && range.from && range.to) {
 				const ms = monthsInRange(range.from, range.to)
 				if (ms.length > 0) return ms
@@ -74,7 +80,12 @@ export default {
 		glSeries() {
 			if (!this.financialData) return null
 			const { accounts, transactions, lines } = this.financialData
-			return monthlyFinancialSeries({ accounts, transactions, lines, months: this.months })
+			return monthlyFinancialSeries({
+				accounts,
+				transactions,
+				lines,
+				months: this.months,
+			})
 		},
 	},
 

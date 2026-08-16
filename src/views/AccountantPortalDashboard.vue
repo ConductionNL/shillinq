@@ -28,26 +28,45 @@
 					{{ t('shillinq', 'Accountant portal') }}
 				</h2>
 				<p class="accountant-portal__description">
-					{{ t('shillinq', 'Status overview of every client administration you have access to. Only administrations you have a membership for are listed.') }}
+					{{
+						t(
+							'shillinq',
+							'Status overview of every client administration you have access to. Only administrations you have a membership for are listed.',
+						)
+					}}
 				</p>
 			</header>
 
-			<NcLoadingIcon v-if="loading"
+			<NcLoadingIcon
+				v-if="loading"
 				:size="32"
 				:name="t('shillinq', 'Loading client administrations')" />
-			<NcEmptyContent v-else-if="!administrations.length"
+			<NcEmptyContent
+				v-else-if="!administrations.length"
 				:name="t('shillinq', 'No client administrations')"
-				:description="t('shillinq', 'You have no administration memberships yet. Ask an administration owner to grant you access.')" />
+				:description="
+					t(
+						'shillinq',
+						'You have no administration memberships yet. Ask an administration owner to grant you access.',
+					)
+				" />
 			<div v-else class="accountant-portal__grid">
-				<article v-for="client in administrations"
+				<article
+					v-for="client in administrations"
 					:key="client.administrationId"
 					class="accountant-portal__card"
 					data-testid="accountant-client-card">
 					<header class="accountant-portal__card-header">
 						<h3 class="accountant-portal__card-title">
-							{{ client.name || client.administrationCode || client.administrationId }}
+							{{
+								client.name
+								|| client.administrationCode
+								|| client.administrationId
+							}}
 						</h3>
-						<span class="accountant-portal__role-badge">{{ client.role }}</span>
+						<span class="accountant-portal__role-badge">{{
+							client.role
+						}}</span>
 					</header>
 
 					<dl class="accountant-portal__status-list">
@@ -57,31 +76,48 @@
 						</div>
 						<div class="accountant-portal__status-row">
 							<dt>{{ t('shillinq', 'BTW filing') }}</dt>
-							<dd :class="{ 'accountant-portal__status-row--overdue': client.vatFiling && client.vatFiling.overdue }">
+							<dd
+								:class="{
+									'accountant-portal__status-row--overdue':
+										client.vatFiling && client.vatFiling.overdue,
+								}">
 								{{ vatFilingLabel(client.vatFiling) }}
 							</dd>
 						</div>
 						<div class="accountant-portal__status-row">
 							<dt>{{ t('shillinq', 'Missing documents') }}</dt>
-							<dd :class="{ 'accountant-portal__status-row--overdue': client.missingDocuments > 0 }">
+							<dd
+								:class="{
+									'accountant-portal__status-row--overdue':
+										client.missingDocuments > 0,
+								}">
 								{{ client.missingDocuments }}
 							</dd>
 						</div>
 						<div class="accountant-portal__status-row">
 							<dt>{{ t('shillinq', 'Needs attention') }}</dt>
-							<dd :class="{ 'accountant-portal__status-row--overdue': client.openItemsCount > 0 }">
+							<dd
+								:class="{
+									'accountant-portal__status-row--overdue':
+										client.openItemsCount > 0,
+								}">
 								{{ client.openItemsCount }}
 							</dd>
 						</div>
 					</dl>
 
-					<ul v-if="client.attentionItems && client.attentionItems.length" class="accountant-portal__attention-list">
-						<li v-for="item in client.attentionItems.slice(0, 3)" :key="item.id">
+					<ul
+						v-if="client.attentionItems && client.attentionItems.length"
+						class="accountant-portal__attention-list">
+						<li
+							v-for="item in client.attentionItems.slice(0, 3)"
+							:key="item.id">
 							{{ item.message }}
 						</li>
 					</ul>
 
-					<NcButton variant="secondary"
+					<NcButton
+						variant="secondary"
 						data-testid="accountant-handover-pack-button"
 						@click="downloadPack(client.administrationId)">
 						{{ t('shillinq', 'Download handover pack') }}
@@ -97,8 +133,16 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { fetchAccountantDashboard, downloadHandoverPack } from '../api/accountantApi.js'
+import {
+	NcAppContent,
+	NcButton,
+	NcEmptyContent,
+	NcLoadingIcon,
+} from '@nextcloud/vue'
+import {
+	downloadHandoverPack,
+	fetchAccountantDashboard,
+} from '../api/accountantApi.js'
 
 export default {
 	name: 'AccountantPortalDashboard',
@@ -135,13 +179,21 @@ export default {
 
 			try {
 				const data = await fetchAccountantDashboard()
-				this.administrations = Array.isArray(data?.administrations) ? data.administrations : []
+				this.administrations = Array.isArray(data?.administrations)
+					? data.administrations
+					: []
 			} catch (error) {
 				const status = error?.response?.status
 				if (status === 401) {
-					this.errorMessage = this.t('shillinq', 'Please sign in to view the accountant portal.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Please sign in to view the accountant portal.',
+					)
 				} else {
-					this.errorMessage = this.t('shillinq', 'Failed to load the accountant dashboard.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Failed to load the accountant dashboard.',
+					)
 				}
 			} finally {
 				this.loading = false

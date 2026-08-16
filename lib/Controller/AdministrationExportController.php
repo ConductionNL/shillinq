@@ -62,260 +62,250 @@ use ZipArchive;
  *
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  */
-class AdministrationExportController extends Controller
-{
-    /**
-     * Constructor.
-     *
-     * @param mixed                        $request    The request object (IRequest).
-     * @param AdministrationContextService $context    Administratie-aware RBAC context service.
-     * @param ContainerInterface           $container  DI container — resolves the XAF generator.
-     * @param IRootFolder                  $rootFolder Nextcloud Files root (attachment bundle).
-     * @param LoggerInterface              $logger     Logger (no stack traces to client).
-     *
-     * @return void
-     */
-    public function __construct(
-        $request,
-        private readonly AdministrationContextService $context,
-        private readonly ContainerInterface $container,
-        private readonly IRootFolder $rootFolder,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+class AdministrationExportController extends Controller {
+	/**
+	 * Constructor.
+	 *
+	 * @param mixed $request The request object (IRequest).
+	 * @param AdministrationContextService $context Administratie-aware RBAC context service.
+	 * @param ContainerInterface $container DI container — resolves the XAF generator.
+	 * @param IRootFolder $rootFolder Nextcloud Files root (attachment bundle).
+	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		$request,
+		private readonly AdministrationContextService $context,
+		private readonly ContainerInterface $container,
+		private readonly IRootFolder $rootFolder,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Stream the XAF 3.2 audit file (or a ZIP bundle) for one administration.
-     *
-     * @param string $id The administration id.
-     *
-     * @return Response 200 with the XAF/ZIP bytes; 400 bad id; 401 anonymous;
-     *                  404 masked non-membership; 500 on generation failure.
-     *
-     * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
-     */
-    #[NoAdminRequired]
-    public function exportXaf(string $id): Response
-    {
-        if ($this->context->currentUserId() === null) {
-            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Stream the XAF 3.2 audit file (or a ZIP bundle) for one administration.
+	 *
+	 * @param string $id The administration id.
+	 *
+	 * @return Response 200 with the XAF/ZIP bytes; 400 bad id; 401 anonymous;
+	 *                  404 masked non-membership; 500 on generation failure.
+	 *
+	 * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+	 */
+	#[NoAdminRequired]
+	public function exportXaf(string $id): Response {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $administrationId = trim($id);
-        if ($this->isValidIdentifier(identifier: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Invalid administration id'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = trim($id);
+		if ($this->isValidIdentifier(identifier: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Invalid administration id'], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            $allowed = $this->context->canAccess(administrationId: $administrationId);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'AdministrationExportController: failed to check export access',
-                ['exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Failed to resolve export'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		try {
+			$allowed = $this->context->canAccess(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'AdministrationExportController: failed to check export access',
+				['exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Failed to resolve export'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        if ($allowed === false) {
-            // Mask non-membership as 404 — never confirm administration existence (REQ-MA-001).
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
+		if ($allowed === false) {
+			// Mask non-membership as 404 — never confirm administration existence (REQ-MA-001).
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $period  = trim((string) $this->request->getParam('period', ''));
-        $context = [
-            'administrationId' => $administrationId,
-            'period'           => $period,
-        ];
+		$period = trim((string)$this->request->getParam('period', ''));
+		$context = [
+			'administrationId' => $administrationId,
+			'period' => $period,
+		];
 
-        try {
-            $generator = $this->container->get(XafAuditfileGenerator::class);
-            if (($generator instanceof XafAuditfileGenerator) === false) {
-                throw new RuntimeException('XAF generator unavailable');
-            }
+		try {
+			$generator = $this->container->get(XafAuditfileGenerator::class);
+			if (($generator instanceof XafAuditfileGenerator) === false) {
+				throw new RuntimeException('XAF generator unavailable');
+			}
 
-            $rendered = $generator->generate($context, 'xml');
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'AdministrationExportController: XAF generation failed',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Export generation failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+			$rendered = $generator->generate($context, 'xml');
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'AdministrationExportController: XAF generation failed',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Export generation failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        $full = $this->isTruthy(value: $this->request->getParam('full', ''));
-        if ($full === false) {
-            return new DataDownloadResponse(
-                $rendered->content,
-                $rendered->fileName,
-                $rendered->mimeType,
-            );
-        }
+		$full = $this->isTruthy(value: $this->request->getParam('full', ''));
+		if ($full === false) {
+			return new DataDownloadResponse(
+				$rendered->content,
+				$rendered->fileName,
+				$rendered->mimeType,
+			);
+		}
 
-        try {
-            $zipBytes = $this->bundleZip(
-                administrationId: $administrationId,
-                xafFileName: $rendered->fileName,
-                xafContent: $rendered->content
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'AdministrationExportController: XAF ZIP bundling failed',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'Export bundling failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		try {
+			$zipBytes = $this->bundleZip(
+				administrationId: $administrationId,
+				xafFileName: $rendered->fileName,
+				xafContent: $rendered->content
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'AdministrationExportController: XAF ZIP bundling failed',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Export bundling failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        return new DataDownloadResponse(
-            $zipBytes,
-            'xaf-'.$administrationId.'.zip',
-            'application/zip',
-        );
+		return new DataDownloadResponse(
+			$zipBytes,
+			'xaf-' . $administrationId . '.zip',
+			'application/zip',
+		);
 
-    }//end exportXaf()
+	}//end exportXaf()
 
-    /**
-     * Bundle the XAF document plus the administration's attached documents into a ZIP.
-     *
-     * The XAF file is always included. Attached NC-Files documents are added
-     * best-effort — each is streamed from Files by its stored fileId; a file that
-     * cannot be resolved is skipped (never fatal), so the ZIP always contains at
-     * least the audit file. Documents live in NC Files, so this references/streams
-     * them rather than duplicating storage.
-     *
-     * @param string $administrationId The administration scope.
-     * @param string $xafFileName      The XAF entry file name.
-     * @param string $xafContent       The XAF bytes.
-     *
-     * @return string The ZIP archive bytes.
-     *
-     * @throws RuntimeException When ZIP support is unavailable or the archive cannot be written.
-     */
-    private function bundleZip(string $administrationId, string $xafFileName, string $xafContent): string
-    {
-        if (class_exists(ZipArchive::class) === false) {
-            throw new RuntimeException('ZIP extension unavailable');
-        }
+	/**
+	 * Bundle the XAF document plus the administration's attached documents into a ZIP.
+	 *
+	 * The XAF file is always included. Attached NC-Files documents are added
+	 * best-effort — each is streamed from Files by its stored fileId; a file that
+	 * cannot be resolved is skipped (never fatal), so the ZIP always contains at
+	 * least the audit file. Documents live in NC Files, so this references/streams
+	 * them rather than duplicating storage.
+	 *
+	 * @param string $administrationId The administration scope.
+	 * @param string $xafFileName The XAF entry file name.
+	 * @param string $xafContent The XAF bytes.
+	 *
+	 * @return string The ZIP archive bytes.
+	 *
+	 * @throws RuntimeException When ZIP support is unavailable or the archive cannot be written.
+	 */
+	private function bundleZip(string $administrationId, string $xafFileName, string $xafContent): string {
+		if (class_exists(ZipArchive::class) === false) {
+			throw new RuntimeException('ZIP extension unavailable');
+		}
 
-        $tmp = tempnam(sys_get_temp_dir(), 'shillinq-xaf-');
-        if ($tmp === false) {
-            throw new RuntimeException('Could not allocate a temp file for the ZIP');
-        }
+		$tmp = tempnam(sys_get_temp_dir(), 'shillinq-xaf-');
+		if ($tmp === false) {
+			throw new RuntimeException('Could not allocate a temp file for the ZIP');
+		}
 
-        $zip = new ZipArchive();
-        if ($zip->open($tmp, (ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
-            if (file_exists($tmp) === true) {
-                unlink($tmp);
-            }
+		$zip = new ZipArchive();
+		if ($zip->open($tmp, (ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
+			if (file_exists($tmp) === true) {
+				unlink($tmp);
+			}
 
-            throw new RuntimeException('Could not open the ZIP archive');
-        }
+			throw new RuntimeException('Could not open the ZIP archive');
+		}
 
-        $zip->addFromString($xafFileName, $xafContent);
+		$zip->addFromString($xafFileName, $xafContent);
 
-        foreach ($this->attachedDocumentFileIds(administrationId: $administrationId) as $fileId) {
-            try {
-                $nodes = $this->rootFolder->getById($fileId);
-                $node  = ($nodes[0] ?? null);
-                if ($node !== null && method_exists($node, 'getContent') === true) {
-                    $zip->addFromString('documents/'.$node->getName(), $node->getContent());
-                }
-            } catch (\Throwable $e) {
-                // Best-effort: a single unreadable attachment must not fail the export.
-                $this->logger->warning(
-                    'AdministrationExportController: skipped an unreadable attachment',
-                    ['fileId' => $fileId, 'exception' => $e->getMessage()]
-                );
-            }
-        }
+		foreach ($this->attachedDocumentFileIds(administrationId: $administrationId) as $fileId) {
+			try {
+				$nodes = $this->rootFolder->getById($fileId);
+				$node = ($nodes[0] ?? null);
+				if ($node !== null && method_exists($node, 'getContent') === true) {
+					$zip->addFromString('documents/' . $node->getName(), $node->getContent());
+				}
+			} catch (\Throwable $e) {
+				// Best-effort: a single unreadable attachment must not fail the export.
+				$this->logger->warning(
+					'AdministrationExportController: skipped an unreadable attachment',
+					['fileId' => $fileId, 'exception' => $e->getMessage()]
+				);
+			}
+		}
 
-        $zip->close();
+		$zip->close();
 
-        $bytes = (string) file_get_contents($tmp);
-        if (file_exists($tmp) === true) {
-            unlink($tmp);
-        }
+		$bytes = (string)file_get_contents($tmp);
+		if (file_exists($tmp) === true) {
+			unlink($tmp);
+		}
 
-        return $bytes;
+		return $bytes;
+	}//end bundleZip()
 
-    }//end bundleZip()
+	/**
+	 * Resolve the NC-Files fileIds attached to the administration's documents.
+	 *
+	 * Best-effort: reads `Document` records scoped to the administration from
+	 * OpenRegister and returns their numeric fileIds. Returns an empty list when
+	 * no document surface is present — the ZIP then bundles only the XAF file.
+	 *
+	 * @param string $administrationId The administration scope.
+	 *
+	 * @return array<int, int>
+	 */
+	private function attachedDocumentFileIds(string $administrationId): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister('shillinq')
+				->setSchema('Document')
+				->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 1000]);
+		} catch (\Throwable $e) {
+			return [];
+		}
 
-    /**
-     * Resolve the NC-Files fileIds attached to the administration's documents.
-     *
-     * Best-effort: reads `Document` records scoped to the administration from
-     * OpenRegister and returns their numeric fileIds. Returns an empty list when
-     * no document surface is present — the ZIP then bundles only the XAF file.
-     *
-     * @param string $administrationId The administration scope.
-     *
-     * @return array<int, int>
-     */
-    private function attachedDocumentFileIds(string $administrationId): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister('shillinq')
-                ->setSchema('Document')
-                ->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 1000]);
-        } catch (\Throwable $e) {
-            return [];
-        }
+		$ids = [];
+		$rowList = [];
+		if (is_array($rows) === true) {
+			$rowList = $rows;
+		}
 
-        $ids     = [];
-        $rowList = [];
-        if (is_array($rows) === true) {
-            $rowList = $rows;
-        }
+		foreach ($rowList as $row) {
+			$data = $row;
+			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+				$data = (array)$row->jsonSerialize();
+			}
 
-        foreach ($rowList as $row) {
-            $data = $row;
-            if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-                $data = (array) $row->jsonSerialize();
-            }
+			if (is_array($data) === false) {
+				continue;
+			}
 
-            if (is_array($data) === false) {
-                continue;
-            }
+			$fileId = ($data['fileId'] ?? null);
+			if (is_int($fileId) === true || (is_string($fileId) === true && ctype_digit($fileId) === true)) {
+				$ids[] = (int)$fileId;
+			}
+		}
 
-            $fileId = ($data['fileId'] ?? null);
-            if (is_int($fileId) === true || (is_string($fileId) === true && ctype_digit($fileId) === true)) {
-                $ids[] = (int) $fileId;
-            }
-        }
+		return $ids;
+	}//end attachedDocumentFileIds()
 
-        return $ids;
+	/**
+	 * Validate an administration identifier slug before touching the data layer.
+	 *
+	 * @param string $identifier The identifier to validate.
+	 *
+	 * @return bool True when the identifier is a safe short slug.
+	 */
+	private function isValidIdentifier(string $identifier): bool {
+		return ($identifier !== '' && preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $identifier) === 1);
+	}//end isValidIdentifier()
 
-    }//end attachedDocumentFileIds()
+	/**
+	 * Interpret a request flag as a boolean (1/true/yes/on = true).
+	 *
+	 * @param mixed $value The raw request value.
+	 *
+	 * @return bool
+	 */
+	private function isTruthy(mixed $value): bool {
+		if (is_bool($value) === true) {
+			return $value;
+		}
 
-    /**
-     * Validate an administration identifier slug before touching the data layer.
-     *
-     * @param string $identifier The identifier to validate.
-     *
-     * @return bool True when the identifier is a safe short slug.
-     */
-    private function isValidIdentifier(string $identifier): bool
-    {
-        return ($identifier !== '' && preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $identifier) === 1);
-
-    }//end isValidIdentifier()
-
-    /**
-     * Interpret a request flag as a boolean (1/true/yes/on = true).
-     *
-     * @param mixed $value The raw request value.
-     *
-     * @return bool
-     */
-    private function isTruthy(mixed $value): bool
-    {
-        if (is_bool($value) === true) {
-            return $value;
-        }
-
-        return in_array(strtolower(trim((string) $value)), ['1', 'true', 'yes', 'on'], true);
-
-    }//end isTruthy()
+		return in_array(strtolower(trim((string)$value)), ['1', 'true', 'yes', 'on'], true);
+	}//end isTruthy()
 }//end class

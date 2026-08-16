@@ -31,7 +31,12 @@
 				{{ t('shillinq', 'Three-way matches') }}
 			</h2>
 			<p class="twm-index__hint">
-				{{ t('shillinq', 'Every supplier invoice scored against its purchase order(s) and goods receipt note(s) by the matching engine.') }}
+				{{
+					t(
+						'shillinq',
+						'Every supplier invoice scored against its purchase order(s) and goods receipt note(s) by the matching engine.',
+					)
+				}}
 			</p>
 		</header>
 
@@ -46,17 +51,26 @@
 				<option value="">
 					{{ t('shillinq', 'All statuses') }}
 				</option>
-				<option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
+				<option
+					v-for="opt in statusOptions"
+					:key="opt.value"
+					:value="opt.value">
 					{{ opt.label }}
 				</option>
 			</select>
 		</div>
 
-		<div v-if="loading" class="twm-index__loading" data-testid="twm-index-loading">
+		<div
+			v-if="loading"
+			class="twm-index__loading"
+			data-testid="twm-index-loading">
 			{{ t('shillinq', 'Loading three-way matches...') }}
 		</div>
 
-		<div v-else-if="error" class="twm-index__error" data-testid="twm-index-error">
+		<div
+			v-else-if="error"
+			class="twm-index__error"
+			data-testid="twm-index-error">
 			{{ error }}
 		</div>
 
@@ -66,9 +80,13 @@
 			data-testid="twm-index-table"
 			:columns="columns"
 			:rows="filteredMatches"
-			:empty-label="t('shillinq', 'No matches recorded yet.')">
+			:emptyLabel="t('shillinq', 'No matches recorded yet.')">
 			<template #cell-invoice="{ row }">
-				<router-link :to="{ name: 'SupplierInvoiceDetail', params: { id: row.invoiceId } }">
+				<router-link
+					:to="{
+						name: 'SupplierInvoiceDetail',
+						params: { id: row.invoiceId },
+					}">
 					{{ supplierInvoiceLabel(row) }}
 				</router-link>
 			</template>
@@ -92,10 +110,12 @@
 			<template #cell-refs="{ row }">
 				<span class="twm-index__refs">
 					<span v-if="(row.matchedPoIds || []).length > 0">
-						{{ t('shillinq', 'PO') }}: {{ (row.matchedPoIds || []).join(', ') }}
+						{{ t('shillinq', 'PO') }}:
+						{{ (row.matchedPoIds || []).join(', ') }}
 					</span>
 					<span v-if="(row.matchedGrnIds || []).length > 0">
-						{{ t('shillinq', 'GRN') }}: {{ (row.matchedGrnIds || []).join(', ') }}
+						{{ t('shillinq', 'GRN') }}:
+						{{ (row.matchedGrnIds || []).join(', ') }}
 					</span>
 				</span>
 			</template>
@@ -106,9 +126,11 @@
 					:data-testid="`twm-reevaluate-${row.id}`"
 					:disabled="reevaluating === row.id"
 					@click="reevaluate(row)">
-					{{ reevaluating === row.id
-						? t('shillinq', 'Evaluating...')
-						: t('shillinq', 'Re-evaluate') }}
+					{{
+						reevaluating === row.id
+							? t('shillinq', 'Evaluating...')
+							: t('shillinq', 'Re-evaluate')
+					}}
 				</button>
 			</template>
 		</CnDataTable>
@@ -117,14 +139,15 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'ThreeWayMatchIndex',
 	components: {
 		CnDataTable,
 	},
+
 	props: {
 		/**
 		 * Administration scope (server-resolved at the call site; the
@@ -137,6 +160,7 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			matches: [],
@@ -147,6 +171,7 @@ export default {
 			reevaluating: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * CnDataTable column definitions for the three-way-match list.
@@ -156,43 +181,93 @@ export default {
 		 */
 		columns() {
 			return [
-				{ key: 'invoice', label: this.t('shillinq', 'Invoice'), sortable: false },
-				{ key: 'supplier', label: this.t('shillinq', 'Supplier'), sortable: false },
-				{ key: 'amount', label: this.t('shillinq', 'Amount'), sortable: false },
-				{ key: 'matchDate', label: this.t('shillinq', 'Match date'), sortable: false },
-				{ key: 'matchStatus', label: this.t('shillinq', 'Status'), sortable: true },
-				{ key: 'refs', label: this.t('shillinq', 'Linked PO / GRN'), sortable: false },
+				{
+					key: 'invoice',
+					label: this.t('shillinq', 'Invoice'),
+					sortable: false,
+				},
+				{
+					key: 'supplier',
+					label: this.t('shillinq', 'Supplier'),
+					sortable: false,
+				},
+				{
+					key: 'amount',
+					label: this.t('shillinq', 'Amount'),
+					sortable: false,
+				},
+				{
+					key: 'matchDate',
+					label: this.t('shillinq', 'Match date'),
+					sortable: false,
+				},
+				{
+					key: 'matchStatus',
+					label: this.t('shillinq', 'Status'),
+					sortable: true,
+				},
+				{
+					key: 'refs',
+					label: this.t('shillinq', 'Linked PO / GRN'),
+					sortable: false,
+				},
 				{ key: 'actions', label: '', sortable: false },
 			]
 		},
+
 		statusOptions() {
 			return [
-				{ value: 'auto_approved', label: this.t('shillinq', 'Auto-approved') },
-				{ value: 'within_tolerance', label: this.t('shillinq', 'Within tolerance') },
-				{ value: 'exception_price', label: this.t('shillinq', 'Price exception') },
-				{ value: 'exception_quantity', label: this.t('shillinq', 'Quantity exception') },
-				{ value: 'exception_missing_grn', label: this.t('shillinq', 'Missing GRN') },
-				{ value: 'exception_missing_po', label: this.t('shillinq', 'Missing PO') },
+				{
+					value: 'auto_approved',
+					label: this.t('shillinq', 'Auto-approved'),
+				},
+				{
+					value: 'within_tolerance',
+					label: this.t('shillinq', 'Within tolerance'),
+				},
+				{
+					value: 'exception_price',
+					label: this.t('shillinq', 'Price exception'),
+				},
+				{
+					value: 'exception_quantity',
+					label: this.t('shillinq', 'Quantity exception'),
+				},
+				{
+					value: 'exception_missing_grn',
+					label: this.t('shillinq', 'Missing GRN'),
+				},
+				{
+					value: 'exception_missing_po',
+					label: this.t('shillinq', 'Missing PO'),
+				},
 				{ value: 'fraud_alert', label: this.t('shillinq', 'Fraud alert') },
 			]
 		},
+
 		filteredMatches() {
 			if (!this.statusFilter) {
 				return this.matches
 			}
-			return this.matches.filter(match => match.matchStatus === this.statusFilter)
+			return this.matches.filter(
+				(match) => match.matchStatus === this.statusFilter,
+			)
 		},
 	},
+
 	async created() {
 		await this.loadMatches()
 	},
+
 	methods: {
 		async loadMatches() {
 			this.loading = true
 			this.error = ''
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/ThreeWayMatch'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+					),
 				)
 				const rows = response.data?.results || response.data || []
 				this.matches = Array.isArray(rows) ? rows : []
@@ -200,11 +275,15 @@ export default {
 				// Pre-fetch invoice headers for the supplier + amount columns.
 				// One bulk call when the OR API supports an `id IN (..)` filter;
 				// otherwise we fall back to silent best-effort.
-				const invoiceIds = [...new Set(this.matches.map(m => m.invoiceId).filter(Boolean))]
+				const invoiceIds = [
+					...new Set(this.matches.map((m) => m.invoiceId).filter(Boolean)),
+				]
 				for (const id of invoiceIds) {
 					try {
 						const inv = await axios.get(
-							generateUrl(`/apps/shillinq/api/openregister/objects/SupplierInvoice/${id}`),
+							generateUrl(
+								`/apps/shillinq/api/openregister/objects/SupplierInvoice/${id}`,
+							),
 						)
 						this.invoices[id] = inv.data || null
 					} catch (e) {
@@ -212,11 +291,14 @@ export default {
 					}
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load three-way matches')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load three-way matches')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		async reevaluate(match) {
 			if (!match.invoiceId) {
 				return
@@ -226,7 +308,8 @@ export default {
 				const response = await axios.post(
 					generateUrl('/apps/shillinq/api/three-way-matches/evaluate'),
 					{
-						administrationId: this.administrationId || match.administrationId,
+						administrationId:
+							this.administrationId || match.administrationId,
 						invoiceId: match.invoiceId,
 					},
 				)
@@ -234,7 +317,9 @@ export default {
 				// record; otherwise reload the whole list as a safety net.
 				const updated = response.data
 				if (updated && updated.id) {
-					const i = this.matches.findIndex(m => m.id === match.id || m.id === updated.id)
+					const i = this.matches.findIndex(
+						(m) => m.id === match.id || m.id === updated.id,
+					)
 					if (i >= 0) {
 						this.matches.splice(i, 1, updated)
 					} else {
@@ -244,11 +329,14 @@ export default {
 					await this.loadMatches()
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Re-evaluation failed')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Re-evaluation failed')
 			} finally {
 				this.reevaluating = ''
 			}
 		},
+
 		supplierInvoiceLabel(match) {
 			const invoice = this.invoices[match.invoiceId]
 			if (invoice && invoice.invoiceNumber) {
@@ -256,18 +344,25 @@ export default {
 			}
 			return match.invoiceId || '—'
 		},
+
 		supplierLabel(match) {
 			const invoice = this.invoices[match.invoiceId]
 			return invoice?.supplierId || '—'
 		},
+
 		amountLabel(match) {
 			const invoice = this.invoices[match.invoiceId]
-			if (!invoice || invoice.totalInclVat === null || invoice.totalInclVat === undefined) {
+			if (
+				!invoice
+				|| invoice.totalInclVat === null
+				|| invoice.totalInclVat === undefined
+			) {
 				return '—'
 			}
 			const currency = invoice.currency || 'EUR'
 			return `${currency} ${(Number(invoice.totalInclVat) / 100).toFixed(2)}`
 		},
+
 		statusLabel(statusCode) {
 			const labels = {
 				auto_approved: this.t('shillinq', 'Auto-approved'),
@@ -280,6 +375,7 @@ export default {
 			}
 			return labels[statusCode] || statusCode || '—'
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'

@@ -32,24 +32,32 @@
 		<CnDataTable
 			:columns="columns"
 			:rows="rows"
-			:sort-key="sortKey"
-			:sort-order="sortOrder"
+			:sortKey="sortKey"
+			:sortOrder="sortOrder"
 			:loading="loading"
-			row-key="rowKey"
-			:loading-text="t('shillinq', 'Loading programmes…')"
-			:empty-text="t('shillinq', 'No active programmes found for this fiscal year.')"
+			rowKey="rowKey"
+			:loadingText="t('shillinq', 'Loading programmes…')"
+			:emptyText="
+				t('shillinq', 'No active programmes found for this fiscal year.')
+			"
 			@sort="onSort">
 			<template #column-budget="{ row }">
-				<span class="bbv-programme-table__money">{{ formatEuro(row.totalBudget) }}</span>
+				<span class="bbv-programme-table__money">{{
+					formatEuro(row.totalBudget)
+				}}</span>
 			</template>
 			<template #column-ytd="{ row }">
-				<span class="bbv-programme-table__money">{{ formatEuro(row.ytdSpend) }}</span>
+				<span class="bbv-programme-table__money">{{
+					formatEuro(row.ytdSpend)
+				}}</span>
 			</template>
 			<template #column-utilization="{ row }">
 				<span
 					class="bbv-programme-table__util"
 					:class="utilizationClass(row.complianceStatus)">
-					{{ formatPercentage(row.utilizationPercentage, row.utilization) }}
+					{{
+						formatPercentage(row.utilizationPercentage, row.utilization)
+					}}
 				</span>
 			</template>
 			<template #column-status="{ row }">
@@ -58,7 +66,9 @@
 					:class="badgeClass(row.complianceStatus)"
 					:title="badgeTooltip(row.complianceStatus)"
 					:data-testid="`bbv-status-${row.programmeCode}`">
-					<span aria-hidden="true">{{ badgeEmoji(row.complianceStatus) }}</span>
+					<span aria-hidden="true">{{
+						badgeEmoji(row.complianceStatus)
+					}}</span>
 					<span>{{ badgeLabel(row.complianceStatus) }}</span>
 				</span>
 			</template>
@@ -87,11 +97,13 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		loading: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['row-click'],
 	data() {
 		return {
@@ -99,17 +111,39 @@ export default {
 			sortOrder: 'asc',
 		}
 	},
+
 	computed: {
 		columns() {
 			return [
-				{ key: 'programmeCode', label: this.t('shillinq', 'Code'), sortable: true },
-				{ key: 'programmeName', label: this.t('shillinq', 'Name'), sortable: true },
-				{ key: 'budget', label: this.t('shillinq', 'Budget'), sortable: true },
+				{
+					key: 'programmeCode',
+					label: this.t('shillinq', 'Code'),
+					sortable: true,
+				},
+				{
+					key: 'programmeName',
+					label: this.t('shillinq', 'Name'),
+					sortable: true,
+				},
+				{
+					key: 'budget',
+					label: this.t('shillinq', 'Budget'),
+					sortable: true,
+				},
 				{ key: 'ytd', label: this.t('shillinq', 'YTD'), sortable: true },
-				{ key: 'utilization', label: this.t('shillinq', 'Utilization %'), sortable: true },
-				{ key: 'status', label: this.t('shillinq', 'Status'), sortable: true },
+				{
+					key: 'utilization',
+					label: this.t('shillinq', 'Utilization %'),
+					sortable: true,
+				},
+				{
+					key: 'status',
+					label: this.t('shillinq', 'Status'),
+					sortable: true,
+				},
 			]
 		},
+
 		rows() {
 			const decorated = this.programmes.map((p) => ({
 				...p,
@@ -134,12 +168,14 @@ export default {
 			return decorated
 		},
 	},
+
 	methods: {
 		t,
 		onSort({ key, order }) {
 			this.sortKey = key
 			this.sortOrder = order
 		},
+
 		sortValue(row, key) {
 			if (key === 'budget') {
 				return Number(row.totalBudget || 0)
@@ -151,11 +187,17 @@ export default {
 				return Number(row.utilization || 0)
 			}
 			if (key === 'status') {
-				const order = { 'non-compliant': 0, 'at-risk': 1, 'on-track': 2, unconfigured: 3 }
+				const order = {
+					'non-compliant': 0,
+					'at-risk': 1,
+					'on-track': 2,
+					unconfigured: 3,
+				}
 				return order[row.complianceStatus] ?? 4
 			}
 			return row[key] ?? ''
 		},
+
 		openRow(row) {
 			this.$emit('row-click', row)
 			if (this.$router && row.programmeCode) {
@@ -170,8 +212,13 @@ export default {
 				}
 			}
 		},
+
 		formatEuro(cents) {
-			if (cents === null || cents === undefined || !Number.isFinite(Number(cents))) {
+			if (
+				cents === null
+				|| cents === undefined
+				|| !Number.isFinite(Number(cents))
+			) {
 				return '—'
 			}
 			return new Intl.NumberFormat('nl-NL', {
@@ -180,6 +227,7 @@ export default {
 				maximumFractionDigits: 0,
 			}).format(Number(cents) / 100)
 		},
+
 		formatPercentage(percentField, ratioField) {
 			let value = percentField
 			if (value === null || value === undefined) {
@@ -194,39 +242,56 @@ export default {
 			}
 			return `${numeric.toFixed(1)} %`
 		},
+
 		utilizationClass(status) {
-			if (status === 'non-compliant') return 'bbv-programme-table__util--danger'
+			if (status === 'non-compliant')
+				return 'bbv-programme-table__util--danger'
 			if (status === 'at-risk') return 'bbv-programme-table__util--warning'
 			if (status === 'on-track') return 'bbv-programme-table__util--ok'
 			return 'bbv-programme-table__util--muted'
 		},
+
 		badgeClass(status) {
-			if (status === 'non-compliant') return 'bbv-programme-table__badge--danger'
+			if (status === 'non-compliant')
+				return 'bbv-programme-table__badge--danger'
 			if (status === 'at-risk') return 'bbv-programme-table__badge--warning'
 			if (status === 'on-track') return 'bbv-programme-table__badge--ok'
 			return 'bbv-programme-table__badge--muted'
 		},
+
 		badgeEmoji(status) {
 			if (status === 'non-compliant') return '🔴'
 			if (status === 'at-risk') return '🟡'
 			if (status === 'on-track') return '🟢'
 			return '⚪'
 		},
+
 		badgeLabel(status) {
-			if (status === 'non-compliant') return this.t('shillinq', 'Non-compliant')
+			if (status === 'non-compliant')
+				return this.t('shillinq', 'Non-compliant')
 			if (status === 'at-risk') return this.t('shillinq', 'At-risk')
 			if (status === 'on-track') return this.t('shillinq', 'On-track')
 			return this.t('shillinq', 'Unconfigured')
 		},
+
 		badgeTooltip(status) {
 			if (status === 'at-risk') {
-				return this.t('shillinq', 'Projected to exceed budget — review allocations')
+				return this.t(
+					'shillinq',
+					'Projected to exceed budget — review allocations',
+				)
 			}
 			if (status === 'non-compliant') {
-				return this.t('shillinq', 'Spend already exceeds the on-track threshold')
+				return this.t(
+					'shillinq',
+					'Spend already exceeds the on-track threshold',
+				)
 			}
 			if (status === 'unconfigured') {
-				return this.t('shillinq', 'No GL allocations configured for this programme')
+				return this.t(
+					'shillinq',
+					'No GL allocations configured for this programme',
+				)
 			}
 			return this.t('shillinq', 'Programme spend is within the on-track band')
 		},

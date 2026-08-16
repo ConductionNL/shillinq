@@ -60,7 +60,6 @@ export interface CreatedRef {
  * request context (which carries the authenticated storage state).
  */
 export class OrFixtures {
-
 	private created: CreatedRef[] = []
 
 	constructor(private readonly api: APIRequestContext) {}
@@ -100,7 +99,9 @@ export class OrFixtures {
 	 *         absent (the OR ImportHandler blocker).
 	 */
 	async missingSchema(schemaSlugs: string[]): Promise<string | null> {
-		const regs = await this.api.get(`${OR}/registers`, { headers: { 'OCS-APIRequest': 'true' } })
+		const regs = await this.api.get(`${OR}/registers`, {
+			headers: { 'OCS-APIRequest': 'true' },
+		})
 		if (!regs.ok()) {
 			return 'shillinq-register'
 		}
@@ -110,7 +111,9 @@ export class OrFixtures {
 		if (!hasRegister) {
 			return 'shillinq-register'
 		}
-		const schemas = await this.api.get(`${OR}/schemas?_limit=1000`, { headers: { 'OCS-APIRequest': 'true' } })
+		const schemas = await this.api.get(`${OR}/schemas?_limit=1000`, {
+			headers: { 'OCS-APIRequest': 'true' },
+		})
 		const sBody = await schemas.json().catch(() => ({}))
 		const sList: Array<{ slug?: string }> = sBody.results ?? sBody ?? []
 		const present = new Set(sList.map((s) => s.slug))
@@ -128,12 +131,21 @@ export class OrFixtures {
 	 * @param schemaSlug
 	 * @param data
 	 */
-	async create(schemaSlug: string, data: Record<string, unknown>): Promise<{ id: string; self: Record<string, unknown> }> {
-		const res = await this.api.post(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}`, {
-			headers: await this.headers(),
-			data,
-		})
-		expect(res.ok(), `create ${schemaSlug} failed: HTTP ${res.status()} ${await res.text()}`).toBeTruthy()
+	async create(
+		schemaSlug: string,
+		data: Record<string, unknown>,
+	): Promise<{ id: string; self: Record<string, unknown> }> {
+		const res = await this.api.post(
+			`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}`,
+			{
+				headers: await this.headers(),
+				data,
+			},
+		)
+		expect(
+			res.ok(),
+			`create ${schemaSlug} failed: HTTP ${res.status()} ${await res.text()}`,
+		).toBeTruthy()
 		const body = await res.json()
 		// OR returns either the object directly or { '@self': {...}, ... }.
 		const self = (body['@self'] ?? body) as Record<string, unknown>
@@ -149,10 +161,16 @@ export class OrFixtures {
 	 * @param id
 	 */
 	async get(schemaSlug: string, id: string): Promise<Record<string, unknown>> {
-		const res = await this.api.get(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
-			headers: { 'OCS-APIRequest': 'true' },
-		})
-		expect(res.ok(), `get ${schemaSlug}/${id} failed: HTTP ${res.status()}`).toBeTruthy()
+		const res = await this.api.get(
+			`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`,
+			{
+				headers: { 'OCS-APIRequest': 'true' },
+			},
+		)
+		expect(
+			res.ok(),
+			`get ${schemaSlug}/${id} failed: HTTP ${res.status()}`,
+		).toBeTruthy()
 		const body = await res.json()
 		return (body['@self'] ? body : body) as Record<string, unknown>
 	}
@@ -163,12 +181,22 @@ export class OrFixtures {
 	 * @param id
 	 * @param data
 	 */
-	async update(schemaSlug: string, id: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
-		const res = await this.api.put(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
-			headers: await this.headers(),
-			data,
-		})
-		expect(res.ok(), `update ${schemaSlug}/${id} failed: HTTP ${res.status()} ${await res.text()}`).toBeTruthy()
+	async update(
+		schemaSlug: string,
+		id: string,
+		data: Record<string, unknown>,
+	): Promise<Record<string, unknown>> {
+		const res = await this.api.put(
+			`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`,
+			{
+				headers: await this.headers(),
+				data,
+			},
+		)
+		expect(
+			res.ok(),
+			`update ${schemaSlug}/${id} failed: HTTP ${res.status()} ${await res.text()}`,
+		).toBeTruthy()
 		return res.json()
 	}
 
@@ -182,7 +210,10 @@ export class OrFixtures {
 	 * @param id     The object id (uuid).
 	 * @param action The lifecycle action name (e.g. 'verleen', 'approve').
 	 */
-	async transition(id: string, action: string): Promise<import('@playwright/test').APIResponse> {
+	async transition(
+		id: string,
+		action: string,
+	): Promise<import('@playwright/test').APIResponse> {
 		return this.api.post(`${OR}/objects/${id}/transition`, {
 			headers: await this.headers(),
 			data: { action },
@@ -196,9 +227,13 @@ export class OrFixtures {
 	 */
 	async remove(schemaSlug: string, id: string): Promise<void> {
 		await this.api
-			.delete(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, { headers: await this.headers() })
+			.delete(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
+				headers: await this.headers(),
+			})
 			.catch(() => undefined)
-		this.created = this.created.filter((c) => !(c.schemaSlug === schemaSlug && c.id === id))
+		this.created = this.created.filter(
+			(c) => !(c.schemaSlug === schemaSlug && c.id === id),
+		)
 	}
 
 	/** Delete every object created this run (afterAll). Best-effort. */
@@ -206,12 +241,14 @@ export class OrFixtures {
 		const headers = await this.headers()
 		for (const ref of [...this.created].reverse()) {
 			await this.api
-				.delete(`${OR}/objects/${ref.registerSlug}/${ref.schemaSlug}/${ref.id}`, { headers })
+				.delete(
+					`${OR}/objects/${ref.registerSlug}/${ref.schemaSlug}/${ref.id}`,
+					{ headers },
+				)
 				.catch(() => undefined)
 		}
 		this.created = []
 	}
-
 }
 
 /**

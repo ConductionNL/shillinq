@@ -29,7 +29,23 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
+ * The change directory it names was never committed, and the `reporting`
+ * capability has NO canonical spec. One was drafted during gate remediation
+ * and withdrawn: a spec written to fit the code, by the process whose job is
+ * to check the code against a spec, is not a specification anyone agreed to.
+ * Authoring it is the capability owner's decision, not a gate fix. No existing
+ * target is honest either — bookkeeping-iv3-reporting REQ-IV3-004 and
+ * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
+ * directory, so pointing there would report conformance to a rule this code
+ * breaks.
  */
 
 declare(strict_types=1);
@@ -39,32 +55,31 @@ namespace OCA\Shillinq\Reporting;
 /**
  * Contract for a single report type's generator.
  */
-interface ReportGeneratorInterface
-{
-    /**
-     * The ReportCatalogue report-type id this generator produces (e.g. 'saft',
-     * 'trial-balance', 'annual-accounts', 'vat-return').
-     *
-     * @return string
-     */
-    public static function reportType(): string;
+interface ReportGeneratorInterface {
+	/**
+	 * The ReportCatalogue report-type id this generator produces (e.g. 'saft',
+	 * 'trial-balance', 'annual-accounts', 'vat-return').
+	 *
+	 * @return string
+	 */
+	public static function reportType(): string;
 
-    /**
-     * The formats this generator can emit, in preference order. DATA reports return
-     * e.g. ['xml'] or ['csv']; DOCUMENT reports return ['docx', 'odt', 'pdf'] (the
-     * editable formats first, since docudesk renders them from one template).
-     *
-     * @return array<int, string>
-     */
-    public static function supportedFormats(): array;
+	/**
+	 * The formats this generator can emit, in preference order. DATA reports return
+	 * e.g. ['xml'] or ['csv']; DOCUMENT reports return ['docx', 'odt', 'pdf'] (the
+	 * editable formats first, since docudesk renders them from one template).
+	 *
+	 * @return array<int, string>
+	 */
+	public static function supportedFormats(): array;
 
-    /**
-     * Render the report.
-     *
-     * @param array<string, mixed> $context `{ period, administrationId, jurisdiction?, ... }`.
-     * @param string               $format  One of supportedFormats().
-     *
-     * @return GeneratedFile
-     */
-    public function generate(array $context, string $format): GeneratedFile;
+	/**
+	 * Render the report.
+	 *
+	 * @param array<string, mixed> $context `{ period, administrationId, jurisdiction?, ... }`.
+	 * @param string $format One of supportedFormats().
+	 *
+	 * @return GeneratedFile
+	 */
+	public function generate(array $context, string $format): GeneratedFile;
 }//end interface

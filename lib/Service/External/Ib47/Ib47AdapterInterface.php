@@ -76,32 +76,31 @@ namespace OCA\Shillinq\Service\External\Ib47;
  * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-interface Ib47AdapterInterface
-{
-    /**
-     * Submit an IB47 / UBD opgaaf to the Belastingdienst.
-     *
-     * @param array<string,mixed> $payload The IB47 submission envelope —
-     *                                     reportingYear, organizationLegalName,
-     *                                     kvkNumber, fiscalNumber,
-     *                                     beconNumber (optional intermediair),
-     *                                     recipients[] (BSN OR rsin, name,
-     *                                     addressLine, postalCode, city,
-     *                                     country, birthDate (natural persons),
-     *                                     paidAmount, paymentDate, natureCode),
-     *                                     totalRecipients,
-     *                                     totalPaidAmount,
-     *                                     correlationId.
-     *
-     * @return Ib47SubmissionResult The dispatch outcome (status + kenmerk).
-     */
-    public function submit(array $payload): Ib47SubmissionResult;
+interface Ib47AdapterInterface {
+	/**
+	 * Submit an IB47 / UBD opgaaf to the Belastingdienst.
+	 *
+	 * @param array<string,mixed> $payload The IB47 submission envelope —
+	 *                                     reportingYear, organizationLegalName,
+	 *                                     kvkNumber, fiscalNumber,
+	 *                                     beconNumber (optional intermediair),
+	 *                                     recipients[] (BSN OR rsin, name,
+	 *                                     addressLine, postalCode, city,
+	 *                                     country, birthDate (natural persons),
+	 *                                     paidAmount, paymentDate, natureCode),
+	 *                                     totalRecipients,
+	 *                                     totalPaidAmount,
+	 *                                     correlationId.
+	 *
+	 * @return Ib47SubmissionResult The dispatch outcome (status + kenmerk).
+	 */
+	public function submit(array $payload): Ib47SubmissionResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * the Belastingdienst.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * the Belastingdienst.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

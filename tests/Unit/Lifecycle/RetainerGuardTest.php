@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\RetainerGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -37,384 +38,369 @@ use Psr\Log\LoggerInterface;
  * present). All guards fail closed; inline-object cases that need no cross-record
  * lookup never touch the container.
  */
-class RetainerGuardTest extends TestCase
-{
+class RetainerGuardTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var RetainerGuard
-     */
-    private RetainerGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var RetainerGuard
+	 */
+	private RetainerGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        // phpcs:disable CustomSniffs.Functions.NamedParameters
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-        // phpcs:enable CustomSniffs.Functions.NamedParameters
+		// phpcs:disable CustomSniffs.Functions.NamedParameters
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new RetainerGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+		$this->guard = new RetainerGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Stub the ObjectService chain so findAll() returns the given rows for any
-     * schema query (used by canActivatePool's client lookup).
-     *
-     * @param array<int,array<string,mixed>> $rows Rows to return from findAll().
-     *
-     * @return void
-     */
-    private function stubObjectService(array $rows): void
-    {
-        $objectService = new class($rows) {
-            /**
-             * Construct the fake ObjectService.
-             *
-             * @param array<int,array<string,mixed>> $rows Rows to return.
-             */
-            public function __construct(private array $rows)
-            {
-            }//end __construct()
+	/**
+	 * Stub the ObjectService chain so findAll() returns the given rows for any
+	 * schema query (used by canActivatePool's client lookup).
+	 *
+	 * @param array<int,array<string,mixed>> $rows Rows to return from findAll().
+	 *
+	 * @return void
+	 */
+	private function stubObjectService(array $rows): void {
+		$objectService = new class($rows) {
+			/**
+			 * Construct the fake ObjectService.
+			 *
+			 * @param array<int,array<string,mixed>> $rows Rows to return.
+			 */
+			public function __construct(
+				private array $rows,
+			) {
+			}//end __construct()
 
-            // phpcs:disable CustomSniffs.Functions.NamedParameters
+			// phpcs:disable CustomSniffs.Functions.NamedParameters
 
-            /**
-             * Fluent register setter (no-op).
-             *
-             * @param string $r Register slug.
-             *
-             * @return self
-             */
-            public function setRegister(string $r): self
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register setter (no-op).
+			 *
+			 * @param string $r Register slug.
+			 *
+			 * @return self
+			 */
+			public function setRegister(string $r): self {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter (no-op).
-             *
-             * @param string $s Schema slug.
-             *
-             * @return self
-             */
-            public function setSchema(string $s): self
-            {
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter (no-op).
+			 *
+			 * @param string $s Schema slug.
+			 *
+			 * @return self
+			 */
+			public function setSchema(string $s): self {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Return the stubbed rows regardless of the query.
-             *
-             * @param array<string,mixed> $q Query.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $q): array
-            {
-                return $this->rows;
-            }//end findAll()
+			/**
+			 * Return the stubbed rows regardless of the query.
+			 *
+			 * @param array<string,mixed> $q Query.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $q): array {
+				return $this->rows;
+			}//end findAll()
 
-            // phpcs:enable CustomSniffs.Functions.NamedParameters
-        };
+			// phpcs:enable CustomSniffs.Functions.NamedParameters
+		};
 
-        $this->container->method('get')->willReturn($objectService);
+		$this->container->method('get')->willReturn($objectService);
 
-    }//end stubObjectService()
+	}//end stubObjectService()
 
-    /**
-     * A pool with no overlapping sibling for the same client/project may activate
-     * (REQ-RETN-001). The only sibling returned has a non-overlapping period.
-     *
-     * @return void
-     */
-    public function testPoolWithoutOverlapCanActivate(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        $this->stubObjectService(
-            rows: [
-                [
-                    'poolId'      => 'RETN-2026-02-001',
-                    'clientId'    => 'c1',
-                    'projectId'   => '',
-                    'periodStart' => '2026-02-01',
-                    'periodEnd'   => '2026-02-28',
-                    'status'      => 'active',
-                ],
-            ]
-        );
+	/**
+	 * A pool with no overlapping sibling for the same client/project may activate
+	 * (REQ-RETN-001). The only sibling returned has a non-overlapping period.
+	 *
+	 * @return void
+	 */
+	public function testPoolWithoutOverlapCanActivate(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->stubObjectService(
+			rows: [
+				[
+					'poolId' => 'RETN-2026-02-001',
+					'clientId' => 'c1',
+					'projectId' => '',
+					'periodStart' => '2026-02-01',
+					'periodEnd' => '2026-02-28',
+					'status' => 'active',
+				],
+			]
+		);
 
-        $pool = [
-            'poolId'      => 'RETN-2026-01-001',
-            'clientId'    => 'c1',
-            'projectId'   => '',
-            'periodStart' => '2026-01-01',
-            'periodEnd'   => '2026-01-31',
-        ];
+		$pool = [
+			'poolId' => 'RETN-2026-01-001',
+			'clientId' => 'c1',
+			'projectId' => '',
+			'periodStart' => '2026-01-01',
+			'periodEnd' => '2026-01-31',
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
 
-    }//end testPoolWithoutOverlapCanActivate()
+	}//end testPoolWithoutOverlapCanActivate()
 
-    /**
-     * A pool overlapping an existing active sibling for the same client/project
-     * is rejected (REQ-RETN-001 fail-closed).
-     *
-     * @return void
-     */
-    public function testOverlappingPoolCannotActivate(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        $this->stubObjectService(
-            rows: [
-                [
-                    'poolId'      => 'RETN-2026-01-002',
-                    'clientId'    => 'c1',
-                    'projectId'   => '',
-                    'periodStart' => '2026-01-15',
-                    'periodEnd'   => '2026-02-15',
-                    'status'      => 'active',
-                ],
-            ]
-        );
+	/**
+	 * A pool overlapping an existing active sibling for the same client/project
+	 * is rejected (REQ-RETN-001 fail-closed).
+	 *
+	 * @return void
+	 */
+	public function testOverlappingPoolCannotActivate(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->stubObjectService(
+			rows: [
+				[
+					'poolId' => 'RETN-2026-01-002',
+					'clientId' => 'c1',
+					'projectId' => '',
+					'periodStart' => '2026-01-15',
+					'periodEnd' => '2026-02-15',
+					'status' => 'active',
+				],
+			]
+		);
 
-        $pool = [
-            'poolId'      => 'RETN-2026-01-001',
-            'clientId'    => 'c1',
-            'projectId'   => '',
-            'periodStart' => '2026-01-01',
-            'periodEnd'   => '2026-01-31',
-        ];
+		$pool = [
+			'poolId' => 'RETN-2026-01-001',
+			'clientId' => 'c1',
+			'projectId' => '',
+			'periodStart' => '2026-01-01',
+			'periodEnd' => '2026-01-31',
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
 
-    }//end testOverlappingPoolCannotActivate()
+	}//end testOverlappingPoolCannotActivate()
 
-    /**
-     * An overlapping pool for a DIFFERENT project does not conflict — pools are
-     * scoped to (clientId, projectId) (REQ-RETN-001).
-     *
-     * @return void
-     */
-    public function testOverlapOnDifferentProjectDoesNotConflict(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        $this->stubObjectService(
-            rows: [
-                [
-                    'poolId'      => 'RETN-2026-01-002',
-                    'clientId'    => 'c1',
-                    'projectId'   => 'other',
-                    'periodStart' => '2026-01-15',
-                    'periodEnd'   => '2026-02-15',
-                    'status'      => 'active',
-                ],
-            ]
-        );
+	/**
+	 * An overlapping pool for a DIFFERENT project does not conflict — pools are
+	 * scoped to (clientId, projectId) (REQ-RETN-001).
+	 *
+	 * @return void
+	 */
+	public function testOverlapOnDifferentProjectDoesNotConflict(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->stubObjectService(
+			rows: [
+				[
+					'poolId' => 'RETN-2026-01-002',
+					'clientId' => 'c1',
+					'projectId' => 'other',
+					'periodStart' => '2026-01-15',
+					'periodEnd' => '2026-02-15',
+					'status' => 'active',
+				],
+			]
+		);
 
-        $pool = [
-            'poolId'      => 'RETN-2026-01-001',
-            'clientId'    => 'c1',
-            'projectId'   => 'migration',
-            'periodStart' => '2026-01-01',
-            'periodEnd'   => '2026-01-31',
-        ];
+		$pool = [
+			'poolId' => 'RETN-2026-01-001',
+			'clientId' => 'c1',
+			'projectId' => 'migration',
+			'periodStart' => '2026-01-01',
+			'periodEnd' => '2026-01-31',
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
 
-    }//end testOverlapOnDifferentProjectDoesNotConflict()
+	}//end testOverlapOnDifferentProjectDoesNotConflict()
 
-    /**
-     * An archived overlapping sibling does not block activation (only
-     * active/draft siblings conflict) (REQ-RETN-001).
-     *
-     * @return void
-     */
-    public function testArchivedOverlapDoesNotConflict(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        $this->stubObjectService(
-            rows: [
-                [
-                    'poolId'      => 'RETN-2026-01-002',
-                    'clientId'    => 'c1',
-                    'projectId'   => '',
-                    'periodStart' => '2026-01-15',
-                    'periodEnd'   => '2026-02-15',
-                    'status'      => 'archived',
-                ],
-            ]
-        );
+	/**
+	 * An archived overlapping sibling does not block activation (only
+	 * active/draft siblings conflict) (REQ-RETN-001).
+	 *
+	 * @return void
+	 */
+	public function testArchivedOverlapDoesNotConflict(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->stubObjectService(
+			rows: [
+				[
+					'poolId' => 'RETN-2026-01-002',
+					'clientId' => 'c1',
+					'projectId' => '',
+					'periodStart' => '2026-01-15',
+					'periodEnd' => '2026-02-15',
+					'status' => 'archived',
+				],
+			]
+		);
 
-        $pool = [
-            'poolId'      => 'RETN-2026-01-001',
-            'clientId'    => 'c1',
-            'projectId'   => '',
-            'periodStart' => '2026-01-01',
-            'periodEnd'   => '2026-01-31',
-        ];
+		$pool = [
+			'poolId' => 'RETN-2026-01-001',
+			'clientId' => 'c1',
+			'projectId' => '',
+			'periodStart' => '2026-01-01',
+			'periodEnd' => '2026-01-31',
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
 
-    }//end testArchivedOverlapDoesNotConflict()
+	}//end testArchivedOverlapDoesNotConflict()
 
-    /**
-     * A pool with an inverted period (start after end) is rejected
-     * (REQ-RETN-001 fail-closed).
-     *
-     * @return void
-     */
-    public function testInvertedPeriodCannotActivate(): void
-    {
-        $pool = [
-            'poolId'      => 'RETN-2026-01-001',
-            'clientId'    => 'c1',
-            'periodStart' => '2026-01-31',
-            'periodEnd'   => '2026-01-01',
-        ];
+	/**
+	 * A pool with an inverted period (start after end) is rejected
+	 * (REQ-RETN-001 fail-closed).
+	 *
+	 * @return void
+	 */
+	public function testInvertedPeriodCannotActivate(): void {
+		$pool = [
+			'poolId' => 'RETN-2026-01-001',
+			'clientId' => 'c1',
+			'periodStart' => '2026-01-31',
+			'periodEnd' => '2026-01-01',
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canActivatePool(poolId: 'RETN-2026-01-001', object: $pool));
 
-    }//end testInvertedPeriodCannotActivate()
+	}//end testInvertedPeriodCannotActivate()
 
-    /**
-     * A drawdown whose amount equals hoursOrAmount × drawdownRate materializes
-     * when no pool can be cross-checked (REQ-RETN-002, recorded rate authoritative).
-     *
-     * @return void
-     */
-    public function testConsistentDrawdownMaterializesWithoutPool(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        $this->stubObjectService(rows: []);
+	/**
+	 * A drawdown whose amount equals hoursOrAmount × drawdownRate materializes
+	 * when no pool can be cross-checked (REQ-RETN-002, recorded rate authoritative).
+	 *
+	 * @return void
+	 */
+	public function testConsistentDrawdownMaterializesWithoutPool(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->stubObjectService(rows: []);
 
-        $drawdown = [
-            'poolId'         => 'RETN-2026-01-001',
-            'hoursOrAmount'  => 20,
-            'drawdownRate'   => 75,
-            'drawdownAmount' => 1500,
-        ];
+		$drawdown = [
+			'poolId' => 'RETN-2026-01-001',
+			'hoursOrAmount' => 20,
+			'drawdownRate' => 75,
+			'drawdownAmount' => 1500,
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
 
-    }//end testConsistentDrawdownMaterializesWithoutPool()
+	}//end testConsistentDrawdownMaterializesWithoutPool()
 
-    /**
-     * A drawdown whose amount does NOT equal hoursOrAmount × drawdownRate is
-     * rejected (REQ-RETN-002 fail-closed).
-     *
-     * @return void
-     */
-    public function testInconsistentDrawdownCannotMaterialize(): void
-    {
-        $drawdown = [
-            'poolId'         => 'RETN-2026-01-001',
-            'hoursOrAmount'  => 20,
-            'drawdownRate'   => 75,
-            'drawdownAmount' => 1400,
-        ];
+	/**
+	 * A drawdown whose amount does NOT equal hoursOrAmount × drawdownRate is
+	 * rejected (REQ-RETN-002 fail-closed).
+	 *
+	 * @return void
+	 */
+	public function testInconsistentDrawdownCannotMaterialize(): void {
+		$drawdown = [
+			'poolId' => 'RETN-2026-01-001',
+			'hoursOrAmount' => 20,
+			'drawdownRate' => 75,
+			'drawdownAmount' => 1400,
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
 
-    }//end testInconsistentDrawdownCannotMaterialize()
+	}//end testInconsistentDrawdownCannotMaterialize()
 
-    /**
-     * A drawdown whose recorded rate diverges from the pool's configured
-     * retainerRate is rejected — rate immutability (REQ-RETN-002 / design D2).
-     *
-     * @return void
-     */
-    public function testDrawdownRateMustMatchPoolRate(): void
-    {
-        // Pool lookup returns a pool with a different retainerRate.
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        $this->stubObjectService(
-            rows: [
-                ['poolId' => 'RETN-2026-01-001', 'retainerRate' => 100],
-            ]
-        );
+	/**
+	 * A drawdown whose recorded rate diverges from the pool's configured
+	 * retainerRate is rejected — rate immutability (REQ-RETN-002 / design D2).
+	 *
+	 * @return void
+	 */
+	public function testDrawdownRateMustMatchPoolRate(): void {
+		// Pool lookup returns a pool with a different retainerRate.
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->stubObjectService(
+			rows: [
+				['poolId' => 'RETN-2026-01-001', 'retainerRate' => 100],
+			]
+		);
 
-        $drawdown = [
-            'poolId'         => 'RETN-2026-01-001',
-            'hoursOrAmount'  => 20,
-            'drawdownRate'   => 75,
-            'drawdownAmount' => 1500,
-        ];
+		$drawdown = [
+			'poolId' => 'RETN-2026-01-001',
+			'hoursOrAmount' => 20,
+			'drawdownRate' => 75,
+			'drawdownAmount' => 1500,
+		];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
 
-    }//end testDrawdownRateMustMatchPoolRate()
+	}//end testDrawdownRateMustMatchPoolRate()
 
-    /**
-     * A true-up with a recorded approver may be approved (REQ-RETN-011).
-     *
-     * @return void
-     */
-    public function testTrueUpWithApproverCanApprove(): void
-    {
-        $trueUp = ['trueUpId' => 'TU-1', 'approvedBy' => 'director-1'];
+	/**
+	 * A true-up with a recorded approver may be approved (REQ-RETN-011).
+	 *
+	 * @return void
+	 */
+	public function testTrueUpWithApproverCanApprove(): void {
+		$trueUp = ['trueUpId' => 'TU-1', 'approvedBy' => 'director-1'];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canApproveTrueUp(trueUpId: 'TU-1', object: $trueUp));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canApproveTrueUp(trueUpId: 'TU-1', object: $trueUp));
 
-    }//end testTrueUpWithApproverCanApprove()
+	}//end testTrueUpWithApproverCanApprove()
 
-    /**
-     * A true-up without a recorded approver cannot be approved
-     * (REQ-RETN-011 fail-closed).
-     *
-     * @return void
-     */
-    public function testTrueUpWithoutApproverCannotApprove(): void
-    {
-        $trueUp = ['trueUpId' => 'TU-1', 'approvedBy' => ''];
+	/**
+	 * A true-up without a recorded approver cannot be approved
+	 * (REQ-RETN-011 fail-closed).
+	 *
+	 * @return void
+	 */
+	public function testTrueUpWithoutApproverCannotApprove(): void {
+		$trueUp = ['trueUpId' => 'TU-1', 'approvedBy' => ''];
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canApproveTrueUp(trueUpId: 'TU-1', object: $trueUp));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canApproveTrueUp(trueUpId: 'TU-1', object: $trueUp));
 
-    }//end testTrueUpWithoutApproverCannotApprove()
+	}//end testTrueUpWithoutApproverCannotApprove()
 }//end class

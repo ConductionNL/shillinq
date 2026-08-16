@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Reconciles a Vpb payment record against the general ledger (REQ-VPB-008).
@@ -44,173 +44,160 @@ use Psr\Container\ContainerInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
  */
-class TaxPaymentReconciliationService
-{
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface  $container  DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig          $appConfig  App config for the register slug.
-     * @param TaxReportCalculator $calculator Pure-logic cents helper (reused for precision).
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly TaxReportCalculator $calculator,
-    ) {
-    }//end __construct()
+class TaxPaymentReconciliationService {
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param TaxReportCalculator $calculator Pure-logic cents helper (reused for precision).
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly TaxReportCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Reconcile a single payment record against the GL (REQ-VPB-008).
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     * @param string $paymentId        Slug or id of the TaxPaymentTracking record.
-     *
-     * @return array{matched: bool, paymentAmount: float, glAmount: float, variance: float, glLineCount: int}
-     *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
-     */
-    public function reconcile(string $administrationId, string $paymentId): array
-    {
-        $payment = $this->findPayment(administrationId: $administrationId, paymentId: $paymentId);
-        if ($payment === null) {
-            return [
-                'matched'       => false,
-                'paymentAmount' => 0.0,
-                'glAmount'      => 0.0,
-                'variance'      => 0.0,
-                'glLineCount'   => 0,
-            ];
-        }
+	/**
+	 * Reconcile a single payment record against the GL (REQ-VPB-008).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $paymentId Slug or id of the TaxPaymentTracking record.
+	 *
+	 * @return array{matched: bool, paymentAmount: float, glAmount: float, variance: float, glLineCount: int}
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-18
+	 */
+	public function reconcile(string $administrationId, string $paymentId): array {
+		$payment = $this->findPayment(administrationId: $administrationId, paymentId: $paymentId);
+		if ($payment === null) {
+			return [
+				'matched' => false,
+				'paymentAmount' => 0.0,
+				'glAmount' => 0.0,
+				'variance' => 0.0,
+				'glLineCount' => 0,
+			];
+		}
 
-        $account     = (string) ($payment['linkedGLAccount'] ?? '');
-        $paymentDate = (string) ($payment['paymentDate'] ?? '');
-        $periodId    = $this->periodFromDate(date: $paymentDate);
+		$account = (string)($payment['linkedGLAccount'] ?? '');
+		$paymentDate = (string)($payment['paymentDate'] ?? '');
+		$periodId = $this->periodFromDate(date: $paymentDate);
 
-        $glCents = 0;
-        $count   = 0;
-        if ($account !== '' && $periodId !== '') {
-            [$glCents, $count] = $this->glMovementForAccount(
-                periodId: $periodId,
-                accountNumber: $account
-            );
-        }
+		$glCents = 0;
+		$count = 0;
+		if ($account !== '' && $periodId !== '') {
+			[$glCents, $count] = $this->glMovementForAccount(
+				periodId: $periodId,
+				accountNumber: $account
+			);
+		}
 
-        $paymentCents  = $this->calculator->toCents(amount: ($payment['amount'] ?? 0));
-        $varianceCents = ($glCents - $paymentCents);
+		$paymentCents = $this->calculator->toCents(amount: ($payment['amount'] ?? 0));
+		$varianceCents = ($glCents - $paymentCents);
 
-        return [
-            'matched'       => ($count > 0 && $varianceCents === 0),
-            'paymentAmount' => $this->calculator->fromCents(cents: $paymentCents),
-            'glAmount'      => $this->calculator->fromCents(cents: $glCents),
-            'variance'      => $this->calculator->fromCents(cents: $varianceCents),
-            'glLineCount'   => $count,
-        ];
+		return [
+			'matched' => ($count > 0 && $varianceCents === 0),
+			'paymentAmount' => $this->calculator->fromCents(cents: $paymentCents),
+			'glAmount' => $this->calculator->fromCents(cents: $glCents),
+			'variance' => $this->calculator->fromCents(cents: $varianceCents),
+			'glLineCount' => $count,
+		];
 
-    }//end reconcile()
+	}//end reconcile()
 
-    /**
-     * Derive the quarterly period identifier (e.g. 2025-Q2) from an ISO date.
-     *
-     * @param string $date An ISO date or date-time string.
-     *
-     * @return string The period identifier, or '' when the date is unparseable.
-     */
-    private function periodFromDate(string $date): string
-    {
-        if ($date === '') {
-            return '';
-        }
+	/**
+	 * Derive the quarterly period identifier (e.g. 2025-Q2) from an ISO date.
+	 *
+	 * @param string $date An ISO date or date-time string.
+	 *
+	 * @return string The period identifier, or '' when the date is unparseable.
+	 */
+	private function periodFromDate(string $date): string {
+		if ($date === '') {
+			return '';
+		}
 
-        $timestamp = strtotime($date);
-        if ($timestamp === false) {
-            return '';
-        }
+		$timestamp = strtotime($date);
+		if ($timestamp === false) {
+			return '';
+		}
 
-        $year    = (int) date('Y', $timestamp);
-        $month   = (int) date('n', $timestamp);
-        $quarter = (int) ceil($month / 3);
+		$year = (int)date('Y', $timestamp);
+		$month = (int)date('n', $timestamp);
+		$quarter = (int)ceil($month / 3);
 
-        return $year.'-Q'.$quarter;
+		return $year . '-Q' . $quarter;
+	}//end periodFromDate()
 
-    }//end periodFromDate()
+	/**
+	 * Sum GLLine debit movements (cents) for an account in a period.
+	 *
+	 * @param string $periodId Fiscal period identifier.
+	 * @param string $accountNumber Account code to match.
+	 *
+	 * @return array{0:int,1:int} [summed cents, matched line count].
+	 */
+	private function glMovementForAccount(string $periodId, string $accountNumber): array {
+		$lines = $this->objectService
+			->setRegister($this->register())
+			->setSchema('GLLine')
+			->findAll(['filters' => ['periodId' => $periodId, 'accountNumber' => $accountNumber]]);
 
-    /**
-     * Sum GLLine debit movements (cents) for an account in a period.
-     *
-     * @param string $periodId      Fiscal period identifier.
-     * @param string $accountNumber Account code to match.
-     *
-     * @return array{0:int,1:int} [summed cents, matched line count].
-     */
-    private function glMovementForAccount(string $periodId, string $accountNumber): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $lines         = $objectService
-            ->setRegister($this->register())
-            ->setSchema('GLLine')
-            ->findAll(['filters' => ['periodId' => $periodId, 'accountNumber' => $accountNumber]]);
+		$cents = 0;
+		$count = 0;
+		foreach ($lines as $line) {
+			if (($line['eliminationFlag'] ?? false) === true) {
+				continue;
+			}
 
-        $cents = 0;
-        $count = 0;
-        foreach ($lines as $line) {
-            if (($line['eliminationFlag'] ?? false) === true) {
-                continue;
-            }
+			if ((string)($line['accountNumber'] ?? '') !== $accountNumber) {
+				continue;
+			}
 
-            if ((string) ($line['accountNumber'] ?? '') !== $accountNumber) {
-                continue;
-            }
+			$cents += $this->calculator->toCents(amount: ($line['amount'] ?? 0));
+			$count++;
+		}
 
-            $cents += $this->calculator->toCents(amount: ($line['amount'] ?? 0));
-            $count++;
-        }
+		return [$cents, $count];
+	}//end glMovementForAccount()
 
-        return [$cents, $count];
+	/**
+	 * Find a TaxPaymentTracking record by id/slug within an administration.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $paymentId Slug or id.
+	 *
+	 * @return array<string,mixed>|null The payment record, or null when absent.
+	 */
+	private function findPayment(string $administrationId, string $paymentId): ?array {
+		$payments = $this->objectService
+			->setRegister($this->register())
+			->setSchema('TaxPaymentTracking')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-    }//end glMovementForAccount()
+		foreach ($payments as $payment) {
+			$id = (string)($payment['id'] ?? ($payment['@self']['id'] ?? ''));
+			$slug = (string)($payment['@self']['slug'] ?? '');
+			if ($id === $paymentId || $slug === $paymentId) {
+				return $payment;
+			}
+		}
 
-    /**
-     * Find a TaxPaymentTracking record by id/slug within an administration.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $paymentId        Slug or id.
-     *
-     * @return array<string,mixed>|null The payment record, or null when absent.
-     */
-    private function findPayment(string $administrationId, string $paymentId): ?array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $payments      = $objectService
-            ->setRegister($this->register())
-            ->setSchema('TaxPaymentTracking')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+		return null;
+	}//end findPayment()
 
-        foreach ($payments as $payment) {
-            $id   = (string) ($payment['id'] ?? ($payment['@self']['id'] ?? ''));
-            $slug = (string) ($payment['@self']['slug'] ?? '');
-            if ($id === $paymentId || $slug === $paymentId) {
-                return $payment;
-            }
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return null;
-
-    }//end findPayment()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

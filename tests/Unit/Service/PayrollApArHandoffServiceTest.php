@@ -34,104 +34,99 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class PayrollApArHandoffServiceTest extends TestCase
-{
+final class PayrollApArHandoffServiceTest extends TestCase {
 
-    /**
-     * Service under test.
-     *
-     * @var PayrollApArHandoffService
-     */
-    private PayrollApArHandoffService $svc;
+	/**
+	 * Service under test.
+	 *
+	 * @var PayrollApArHandoffService
+	 */
+	private PayrollApArHandoffService $svc;
 
-    /**
-     * Build a fresh service before each test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->svc = new PayrollApArHandoffService();
+	/**
+	 * Build a fresh service before each test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->svc = new PayrollApArHandoffService();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Builds a Belastingdienst + UWV AP transaction pair from a typical LHAfdracht.
-     *
-     * @return void
-     */
-    public function testSplitsIntoBelastingdienstAndUwv(): void
-    {
-        $payloads = $this->svc->toApTransactionPayloads(
-            lhAfdracht: [
-                'werkgeverId'            => 'wg-1',
-                'periodeId'              => 'lp-2026-05',
-                'totaalLoonheffing'      => 18620.10,
-                'totaalPremiesSV'        => 7559.40,
-                'totaalZVW'              => 3654.00,
-                'totaalEindheffingenWKR' => 240.00,
-                'vervaldagAfdracht'      => '2026-06-30',
-                'administrationId'       => 'adm-1',
-            ]
-        );
+	/**
+	 * Builds a Belastingdienst + UWV AP transaction pair from a typical LHAfdracht.
+	 *
+	 * @return void
+	 */
+	public function testSplitsIntoBelastingdienstAndUwv(): void {
+		$payloads = $this->svc->toApTransactionPayloads(
+			lhRemittance: [
+				'employerId' => 'wg-1',
+				'periodId' => 'lp-2026-05',
+				'totalPayrollTax' => 18620.10,
+				'totalSocialInsuranceContributions' => 7559.40,
+				'totalHealthInsurance' => 3654.00,
+				'totalFinalLeviesWorkRelatedCosts' => 240.00,
+				'dueDateRemittance' => '2026-06-30',
+				'administrationId' => 'adm-1',
+			]
+		);
 
-        $this->assertCount(2, $payloads);
+		$this->assertCount(2, $payloads);
 
-        $bld = $payloads[0];
-        $this->assertSame(PayrollApArHandoffService::PAYEE_BELASTINGDIENST, $bld['payee']);
-        $this->assertEqualsWithDelta(22514.10, $bld['amount'], 0.005);
-        $this->assertSame('EUR', $bld['currency']);
-        $this->assertSame('2026-06-30', $bld['dueDate']);
-        $this->assertSame('wg-1', $bld['werkgeverId']);
-        $this->assertSame('lp-2026-05', $bld['periodeId']);
-        $this->assertSame('LHAfdracht', $bld['source']);
-        $this->assertSame('wg-1/lp-2026-05', $bld['sourceRef']);
-        $this->assertSame(18620.10, $bld['breakdown']['loonheffing']);
-        $this->assertSame(3654.00, $bld['breakdown']['zvw']);
-        $this->assertSame(240.00, $bld['breakdown']['eindheffingenWKR']);
+		$bld = $payloads[0];
+		$this->assertSame(PayrollApArHandoffService::PAYEE_BELASTINGDIENST, $bld['payee']);
+		$this->assertEqualsWithDelta(22514.10, $bld['amount'], 0.005);
+		$this->assertSame('EUR', $bld['currency']);
+		$this->assertSame('2026-06-30', $bld['dueDate']);
+		$this->assertSame('wg-1', $bld['employerId']);
+		$this->assertSame('lp-2026-05', $bld['periodId']);
+		$this->assertSame('LHAfdracht', $bld['source']);
+		$this->assertSame('wg-1/lp-2026-05', $bld['sourceRef']);
+		$this->assertSame(18620.10, $bld['breakdown']['payrollTax']);
+		$this->assertSame(3654.00, $bld['breakdown']['zvw']);
+		$this->assertSame(240.00, $bld['breakdown']['eindheffingenWKR']);
 
-        $uwv = $payloads[1];
-        $this->assertSame(PayrollApArHandoffService::PAYEE_UWV, $uwv['payee']);
-        $this->assertEqualsWithDelta(7559.40, $uwv['amount'], 0.005);
-        $this->assertSame('2026-06-30', $uwv['dueDate']);
-        $this->assertSame(7559.40, $uwv['breakdown']['premiesSV']);
+		$uwv = $payloads[1];
+		$this->assertSame(PayrollApArHandoffService::PAYEE_UWV, $uwv['payee']);
+		$this->assertEqualsWithDelta(7559.40, $uwv['amount'], 0.005);
+		$this->assertSame('2026-06-30', $uwv['dueDate']);
+		$this->assertSame(7559.40, $uwv['breakdown']['premiesSV']);
 
-    }//end testSplitsIntoBelastingdienstAndUwv()
+	}//end testSplitsIntoBelastingdienstAndUwv()
 
-    /**
-     * Omits a payload whose amount is zero.
-     *
-     * @return void
-     */
-    public function testOmitsZeroAmountPayloads(): void
-    {
-        $payloads = $this->svc->toApTransactionPayloads(
-            lhAfdracht: [
-                'werkgeverId'            => 'wg-1',
-                'periodeId'              => 'lp-2026-05',
-                'totaalLoonheffing'      => 0.0,
-                'totaalPremiesSV'        => 1234.56,
-                'totaalZVW'              => 0.0,
-                'totaalEindheffingenWKR' => 0.0,
-                'vervaldagAfdracht'      => '2026-06-30',
-            ]
-        );
+	/**
+	 * Omits a payload whose amount is zero.
+	 *
+	 * @return void
+	 */
+	public function testOmitsZeroAmountPayloads(): void {
+		$payloads = $this->svc->toApTransactionPayloads(
+			lhRemittance: [
+				'employerId' => 'wg-1',
+				'periodId' => 'lp-2026-05',
+				'totalPayrollTax' => 0.0,
+				'totalSocialInsuranceContributions' => 1234.56,
+				'totalHealthInsurance' => 0.0,
+				'totalFinalLeviesWorkRelatedCosts' => 0.0,
+				'dueDateRemittance' => '2026-06-30',
+			]
+		);
 
-        $this->assertCount(1, $payloads);
-        $this->assertSame(PayrollApArHandoffService::PAYEE_UWV, $payloads[0]['payee']);
+		$this->assertCount(1, $payloads);
+		$this->assertSame(PayrollApArHandoffService::PAYEE_UWV, $payloads[0]['payee']);
 
-    }//end testOmitsZeroAmountPayloads()
+	}//end testOmitsZeroAmountPayloads()
 
-    /**
-     * Returns no payloads when the LHAfdracht has no amounts at all.
-     *
-     * @return void
-     */
-    public function testReturnsEmptyWhenLhAfdrachtEmpty(): void
-    {
-        $payloads = $this->svc->toApTransactionPayloads(lhAfdracht: []);
-        $this->assertSame([], $payloads);
+	/**
+	 * Returns no payloads when the LHAfdracht has no amounts at all.
+	 *
+	 * @return void
+	 */
+	public function testReturnsEmptyWhenLhAfdrachtEmpty(): void {
+		$payloads = $this->svc->toApTransactionPayloads(lhRemittance: []);
+		$this->assertSame([], $payloads);
 
-    }//end testReturnsEmptyWhenLhAfdrachtEmpty()
+	}//end testReturnsEmptyWhenLhAfdrachtEmpty()
 }//end class

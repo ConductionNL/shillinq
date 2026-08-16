@@ -84,15 +84,14 @@
           "workingHours": {
             "type": "object",
             "nullable": true,
-            "description": "Optional working-hours template keyed by weekday (e.g. {\"monday\": \"09:00-17:00\"}). Null means 24/7 availability.",
+            "description": "Optional working-hours template keyed by weekday (e.g. {\"monday\": \"09:00-17:00\"}). A weekday that is OMITTED means the resource is closed that day. Omit it, do not send null: OpenRegister's validator reads JSON-Schema types and rejects null against type \"string\" regardless of the OpenAPI `nullable` keyword, which is honoured only at the TOP level of a schema and never inside a nested object's additionalProperties. Sending null is what dropped the seeded Calendar below (\"Property 'workingHours.saturday' should be type 'string' but is 'null'\"). A null value for the whole workingHours object still means 24/7 availability — that is top-level and is accepted.",
             "additionalProperties": {
               "type": "string",
               "nullable": true
             },
             "example": {
               "monday": "09:00-17:00",
-              "saturday": null,
-              "sunday": null
+              "friday": "09:00-17:00"
             },
             "title": "Working Hours"
           },
@@ -263,9 +262,7 @@
           "tuesday": "09:00-17:00",
           "wednesday": "09:00-17:00",
           "thursday": "09:00-17:00",
-          "friday": "09:00-17:00",
-          "saturday": null,
-          "sunday": null
+          "friday": "09:00-17:00"
         },
         "organization": "org-001",
         "status": "active"
@@ -284,8 +281,7 @@
           "wednesday": "08:00-18:00",
           "thursday": "08:00-18:00",
           "friday": "08:00-18:00",
-          "saturday": "09:00-13:00",
-          "sunday": null
+          "saturday": "09:00-13:00"
         },
         "organization": "org-001",
         "status": "active"
@@ -304,8 +300,7 @@
           "wednesday": "10:00-18:00",
           "thursday": "10:00-18:00",
           "friday": "10:00-20:00",
-          "saturday": "10:00-16:00",
-          "sunday": null
+          "saturday": "10:00-16:00"
         },
         "organization": "org-001",
         "status": "active"

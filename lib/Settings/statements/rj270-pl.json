@@ -29,13 +29,13 @@
       { "code": "VKKO", "label": "Verkoopkosten", "group": "kosten", "level": 1, "accountRange": ["4600", "4699"], "sign": "debit" },
       { "code": "ALGK", "label": "Algemene kosten", "group": "kosten", "level": 1, "accountRange": ["4700", "4899"], "sign": "debit" },
       { "code": "SOM-KOS", "label": "Som der bedrijfskosten", "group": "kosten", "level": 0, "computed": "sum-group:kosten", "sign": "debit" },
-      { "code": "BEDR-RES", "label": "Bedrijfsresultaat", "group": "resultaat", "level": 0, "computed": "section:SOM-OPB - section:SOM-KOS", "sign": "credit" },
+      { "code": "BEDR-RES", "label": "Bedrijfsresultaat", "group": "result", "level": 0, "computed": "section:SOM-OPB - section:SOM-KOS", "sign": "credit" },
       { "code": "RBAT", "label": "Rentebaten", "group": "financieel", "level": 1, "accountRange": ["8400", "8449"], "sign": "credit" },
       { "code": "RLST", "label": "Rentelasten", "group": "financieel", "level": 1, "accountRange": ["8450", "8499"], "sign": "debit" },
       { "code": "FIN-RES", "label": "Financieel resultaat", "group": "financieel", "level": 0, "computed": "section:RBAT - section:RLST", "sign": "credit" },
-      { "code": "RES-VBB", "label": "Resultaat voor belastingen", "group": "resultaat", "level": 0, "computed": "section:BEDR-RES + section:FIN-RES", "sign": "credit" },
+      { "code": "RES-VBB", "label": "Resultaat voor belastingen", "group": "result", "level": 0, "computed": "section:BEDR-RES + section:FIN-RES", "sign": "credit" },
       { "code": "VPB", "label": "Vennootschapsbelasting", "group": "belasting", "level": 1, "accountRange": ["8900", "8999"], "sign": "debit" },
-      { "code": "NET-RES", "label": "Nettoresultaat", "group": "resultaat", "level": 0, "computed": "section:RES-VBB - section:VPB", "sign": "credit" }
+      { "code": "NET-RES", "label": "Nettoresultaat", "group": "result", "level": 0, "computed": "section:RES-VBB - section:VPB", "sign": "credit" }
     ],
     "invariants": [
       { "code": "result-ties-balance", "label": "Nettoresultaat sluit aan op de balans", "expression": "section:NET-RES == balance-sheet:EV-RES", "description": "Het nettoresultaat uit de W&V moet aansluiten op de post Resultaat boekjaar in het eigen vermogen op de balans." }

@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\IntercompanyEliminationGuard;
 use OCA\Shillinq\Service\IntercompanyJournalService;
 use OCA\Shillinq\Service\IntercompanyLinkService;
@@ -35,142 +36,136 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-require_once __DIR__.'/../Service/InMemoryObjectService.php';
+require_once __DIR__ . '/../Service/InMemoryObjectService.php';
 
 /**
  * Tests the `eliminate` precondition.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class IntercompanyEliminationGuardTest extends TestCase
-{
+class IntercompanyEliminationGuardTest extends TestCase {
 
-    /**
-     * The in-memory ObjectService backing the chain.
-     *
-     * @var InMemoryObjectService
-     */
-    private InMemoryObjectService $objects;
+	/**
+	 * The in-memory ObjectService backing the chain.
+	 *
+	 * @var InMemoryObjectService
+	 */
+	private InMemoryObjectService $objects;
 
-    /**
-     * The guard under test.
-     *
-     * @var IntercompanyEliminationGuard
-     */
-    private IntercompanyEliminationGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var IntercompanyEliminationGuard
+	 */
+	private IntercompanyEliminationGuard $guard;
 
-    /**
-     * Set up the guard over the real services.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up the guard over the real services.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->objects = new InMemoryObjectService();
+		$this->objects = new InMemoryObjectService();
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($this->objects);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($this->objects);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $journalService = new IntercompanyJournalService();
-        $linkService    = new IntercompanyLinkService(
-            container: $container,
-            appConfig: $appConfig,
-            journalService: $journalService,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		$journalService = new IntercompanyJournalService();
+		$linkService = new IntercompanyLinkService(
+			appConfig: $appConfig,
+			journalService: $journalService,
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-        $this->guard = new IntercompanyEliminationGuard(
-            linkService: $linkService,
-            journalService: $journalService,
-        );
+		$this->guard = new IntercompanyEliminationGuard(
+			linkService: $linkService,
+			journalService: $journalService,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * The source side of the pair.
-     *
-     * @return array<string,mixed>
-     */
-    private function source(): array
-    {
-        return [
-            'id'                          => 'ic-src',
-            'intercompanyNumber'          => 'IC-2026-0001',
-            'sourceAdministrationId'      => 'adm-werk',
-            'destinationAdministrationId' => 'adm-beheer',
-            'amount'                      => 1000.0,
-            'status'                      => 'bevestigd_beide',
-        ];
+	/**
+	 * The source side of the pair.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function source(): array {
+		return [
+			'id' => 'ic-src',
+			'intercompanyNumber' => 'IC-2026-0001',
+			'sourceAdministrationId' => 'adm-werk',
+			'destinationAdministrationId' => 'adm-beheer',
+			'amount' => 1000.0,
+			'status' => 'bevestigd_beide',
+		];
 
-    }//end source()
+	}//end source()
 
-    /**
-     * A reconciled pair may be eliminated (REQ-GLTAX-002).
-     *
-     * @return void
-     */
-    public function testBalancedPairIsAllowed(): void
-    {
-        $this->objects->seed(
-            'IntercompanyJournalEntry',
-            [
-                $this->source(),
-                [
-                    'id'                          => 'ic-dst',
-                    'intercompanyNumber'          => 'IC-2026-0001',
-                    'sourceAdministrationId'      => 'adm-beheer',
-                    'destinationAdministrationId' => 'adm-werk',
-                    'amount'                      => 1000.0,
-                    'status'                      => 'bevestigd_beide',
-                ],
-            ]
-        );
+	/**
+	 * A reconciled pair may be eliminated (REQ-GLTAX-002).
+	 *
+	 * @return void
+	 */
+	public function testBalancedPairIsAllowed(): void {
+		$this->objects->seed(
+			'IntercompanyJournalEntry',
+			[
+				$this->source(),
+				[
+					'id' => 'ic-dst',
+					'intercompanyNumber' => 'IC-2026-0001',
+					'sourceAdministrationId' => 'adm-beheer',
+					'destinationAdministrationId' => 'adm-werk',
+					'amount' => 1000.0,
+					'status' => 'bevestigd_beide',
+				],
+			]
+		);
 
-        self::assertTrue($this->guard->requireReconciledPair(entry: $this->source()));
+		self::assertTrue($this->guard->requireReconciledPair(entry: $this->source()));
 
-    }//end testBalancedPairIsAllowed()
+	}//end testBalancedPairIsAllowed()
 
-    /**
-     * An out-of-balance pair may NOT be eliminated (REQ-GLTAX-002).
-     *
-     * @return void
-     */
-    public function testUnbalancedPairIsDenied(): void
-    {
-        $this->objects->seed(
-            'IntercompanyJournalEntry',
-            [
-                $this->source(),
-                [
-                    'id'                          => 'ic-dst',
-                    'intercompanyNumber'          => 'IC-2026-0001',
-                    'sourceAdministrationId'      => 'adm-beheer',
-                    'destinationAdministrationId' => 'adm-werk',
-                    'amount'                      => 999.99,
-                    'status'                      => 'bevestigd_beide',
-                ],
-            ]
-        );
+	/**
+	 * An out-of-balance pair may NOT be eliminated (REQ-GLTAX-002).
+	 *
+	 * @return void
+	 */
+	public function testUnbalancedPairIsDenied(): void {
+		$this->objects->seed(
+			'IntercompanyJournalEntry',
+			[
+				$this->source(),
+				[
+					'id' => 'ic-dst',
+					'intercompanyNumber' => 'IC-2026-0001',
+					'sourceAdministrationId' => 'adm-beheer',
+					'destinationAdministrationId' => 'adm-werk',
+					'amount' => 999.99,
+					'status' => 'bevestigd_beide',
+				],
+			]
+		);
 
-        self::assertFalse($this->guard->requireReconciledPair(entry: $this->source()));
+		self::assertFalse($this->guard->requireReconciledPair(entry: $this->source()));
 
-    }//end testUnbalancedPairIsDenied()
+	}//end testUnbalancedPairIsDenied()
 
-    /**
-     * No counter-side entry: fail closed (REQ-GLTAX-002).
-     *
-     * @return void
-     */
-    public function testMissingCounterSideIsDenied(): void
-    {
-        $this->objects->seed('IntercompanyJournalEntry', [$this->source()]);
+	/**
+	 * No counter-side entry: fail closed (REQ-GLTAX-002).
+	 *
+	 * @return void
+	 */
+	public function testMissingCounterSideIsDenied(): void {
+		$this->objects->seed('IntercompanyJournalEntry', [$this->source()]);
 
-        self::assertFalse($this->guard->requireReconciledPair(entry: $this->source()));
+		self::assertFalse($this->guard->requireReconciledPair(entry: $this->source()));
 
-    }//end testMissingCounterSideIsDenied()
+	}//end testMissingCounterSideIsDenied()
 }//end class

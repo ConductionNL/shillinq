@@ -153,7 +153,7 @@
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
 				"relatedLists": [
-					{"id": "loans", "title": "Loans under this statute", "schema": "Lening", "foreignKey": "treasurystatuutId", "columns": [
+					{"id": "loans", "title": "Loans under this statute", "schema": "Lening", "foreignKey": "treasuryStatuteId", "columns": [
 						{"key": "counterparty", "label": "Counterparty"},
 						{"key": "principal", "label": "Principal"},
 						{"key": "maturityDate", "label": "Maturity"},
@@ -303,7 +303,7 @@
 				"schema": "QuartaalrapportageFido",
 				"columns": [
 					{ "key": "auditYear", "label": "Year", "sortable": true },
-					{ "key": "kwartaal", "label": "Quarter", "sortable": true },
+					{ "key": "quarter", "label": "Quarter", "sortable": true },
 					{ "key": "toezichthouderName", "label": "Supervisor", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
@@ -322,7 +322,7 @@
 				"schema": "QuartaalrapportageFido",
 				"fields": [
 					{ "key": "auditYear", "label": "Year", "type": "number" },
-					{ "key": "kwartaal", "label": "Quarter", "type": "string" },
+					{ "key": "quarter", "label": "Quarter", "type": "string" },
 					{ "key": "organisationId", "label": "Organisation", "type": "string" },
 					{ "key": "narrative", "label": "Narrative", "type": "string" },
 					{ "key": "signOffTreasurer", "label": "Treasurer sign-off", "type": "object" },

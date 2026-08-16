@@ -38,291 +38,277 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class AdministrationBackupSchedulerJobTest extends TestCase
-{
+final class AdministrationBackupSchedulerJobTest extends TestCase {
 
-    /**
-     * The job under test.
-     *
-     * @var AdministrationBackupSchedulerJob
-     */
-    private AdministrationBackupSchedulerJob $job;
+	/**
+	 * The job under test.
+	 *
+	 * @var AdministrationBackupSchedulerJob
+	 */
+	private AdministrationBackupSchedulerJob $job;
 
-    /**
-     * Build the job with mocked dependencies.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Build the job with mocked dependencies.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $time      = $this->createMock(ITimeFactory::class);
-        $container = $this->createMock(ContainerInterface::class);
-        $appConfig = $this->createMock(IAppConfig::class);
-        $logger    = $this->createMock(LoggerInterface::class);
+		$time = $this->createMock(ITimeFactory::class);
+		$container = $this->createMock(ContainerInterface::class);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$logger = $this->createMock(LoggerInterface::class);
 
-        $this->job = new AdministrationBackupSchedulerJob(
-            time: $time,
-            container: $container,
-            appConfig: $appConfig,
-            logger: $logger,
-        );
+		$this->job = new AdministrationBackupSchedulerJob(
+			time: $time,
+			container: $container,
+			appConfig: $appConfig,
+			logger: $logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * A daily administration with no prior backup is due immediately.
-     *
-     * @return void
-     */
-    public function testDailyNeverBackedUpIsDue(): void
-    {
-        $now             = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration  = [
-            'id'             => 'adm-werk-001',
-            'backupSchedule' => 'dagelijks',
-            'status'         => 'actief',
-        ];
+	/**
+	 * A daily administration with no prior backup is due immediately.
+	 *
+	 * @return void
+	 */
+	public function testDailyNeverBackedUpIsDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'dagelijks',
+			'status' => 'actief',
+		];
 
-        self::assertTrue($this->job->isDue(administration: $administration, now: $now));
+		self::assertTrue($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testDailyNeverBackedUpIsDue()
+	}//end testDailyNeverBackedUpIsDue()
 
-    /**
-     * A daily administration backed up less than 24h ago is NOT due.
-     *
-     * @return void
-     */
-    public function testDailyWithinIntervalIsNotDue(): void
-    {
-        $now            = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'                    => 'adm-werk-001',
-            'backupSchedule'        => 'dagelijks',
-            'lastBackupCompletedAt' => '2026-06-08T01:00:00+00:00',
-        ];
+	/**
+	 * A daily administration backed up less than 24h ago is NOT due.
+	 *
+	 * @return void
+	 */
+	public function testDailyWithinIntervalIsNotDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'dagelijks',
+			'lastBackupCompletedAt' => '2026-06-08T01:00:00+00:00',
+		];
 
-        self::assertFalse($this->job->isDue(administration: $administration, now: $now));
+		self::assertFalse($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testDailyWithinIntervalIsNotDue()
+	}//end testDailyWithinIntervalIsNotDue()
 
-    /**
-     * A daily administration backed up more than 24h ago IS due.
-     *
-     * @return void
-     */
-    public function testDailyBeyondIntervalIsDue(): void
-    {
-        $now            = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'                    => 'adm-werk-001',
-            'backupSchedule'        => 'dagelijks',
-            'lastBackupCompletedAt' => '2026-06-07T07:00:00+00:00',
-        ];
+	/**
+	 * A daily administration backed up more than 24h ago IS due.
+	 *
+	 * @return void
+	 */
+	public function testDailyBeyondIntervalIsDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'dagelijks',
+			'lastBackupCompletedAt' => '2026-06-07T07:00:00+00:00',
+		];
 
-        self::assertTrue($this->job->isDue(administration: $administration, now: $now));
+		self::assertTrue($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testDailyBeyondIntervalIsDue()
+	}//end testDailyBeyondIntervalIsDue()
 
-    /**
-     * A weekly administration backed up 6 days ago is NOT yet due.
-     *
-     * @return void
-     */
-    public function testWeeklyWithinIntervalIsNotDue(): void
-    {
-        $now            = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'                    => 'adm-werk-001',
-            'backupSchedule'        => 'wekelijks',
-            'lastBackupCompletedAt' => '2026-06-02T08:00:00+00:00',
-        ];
+	/**
+	 * A weekly administration backed up 6 days ago is NOT yet due.
+	 *
+	 * @return void
+	 */
+	public function testWeeklyWithinIntervalIsNotDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'wekelijks',
+			'lastBackupCompletedAt' => '2026-06-02T08:00:00+00:00',
+		];
 
-        self::assertFalse($this->job->isDue(administration: $administration, now: $now));
+		self::assertFalse($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testWeeklyWithinIntervalIsNotDue()
+	}//end testWeeklyWithinIntervalIsNotDue()
 
-    /**
-     * A weekly administration backed up 8 days ago IS due.
-     *
-     * @return void
-     */
-    public function testWeeklyBeyondIntervalIsDue(): void
-    {
-        $now            = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'                    => 'adm-werk-001',
-            'backupSchedule'        => 'wekelijks',
-            'lastBackupCompletedAt' => '2026-05-31T08:00:00+00:00',
-        ];
+	/**
+	 * A weekly administration backed up 8 days ago IS due.
+	 *
+	 * @return void
+	 */
+	public function testWeeklyBeyondIntervalIsDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'wekelijks',
+			'lastBackupCompletedAt' => '2026-05-31T08:00:00+00:00',
+		];
 
-        self::assertTrue($this->job->isDue(administration: $administration, now: $now));
+		self::assertTrue($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testWeeklyBeyondIntervalIsDue()
+	}//end testWeeklyBeyondIntervalIsDue()
 
-    /**
-     * An on-request administration is NOT due without a nextBackupAt.
-     *
-     * @return void
-     */
-    public function testOnRequestWithoutNextIsNotDue(): void
-    {
-        $now            = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'             => 'adm-werk-001',
-            'backupSchedule' => 'aanvragen',
-        ];
+	/**
+	 * An on-request administration is NOT due without a nextBackupAt.
+	 *
+	 * @return void
+	 */
+	public function testOnRequestWithoutNextIsNotDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'aanvragen',
+		];
 
-        self::assertFalse($this->job->isDue(administration: $administration, now: $now));
+		self::assertFalse($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testOnRequestWithoutNextIsNotDue()
+	}//end testOnRequestWithoutNextIsNotDue()
 
-    /**
-     * An on-request administration with nextBackupAt in the past IS due.
-     *
-     * @return void
-     */
-    public function testOnRequestPastNextIsDue(): void
-    {
-        $now            = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'             => 'adm-werk-001',
-            'backupSchedule' => 'aanvragen',
-            'nextBackupAt'   => '2026-06-07T08:00:00+00:00',
-        ];
+	/**
+	 * An on-request administration with nextBackupAt in the past IS due.
+	 *
+	 * @return void
+	 */
+	public function testOnRequestPastNextIsDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'aanvragen',
+			'nextBackupAt' => '2026-06-07T08:00:00+00:00',
+		];
 
-        self::assertTrue($this->job->isDue(administration: $administration, now: $now));
+		self::assertTrue($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testOnRequestPastNextIsDue()
+	}//end testOnRequestPastNextIsDue()
 
-    /**
-     * An unknown schedule slug never fires automatically (defensive default).
-     *
-     * @return void
-     */
-    public function testUnknownScheduleIsNotDue(): void
-    {
-        $now            = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'             => 'adm-werk-001',
-            'backupSchedule' => 'jaarlijks',
-        ];
+	/**
+	 * An unknown schedule slug never fires automatically (defensive default).
+	 *
+	 * @return void
+	 */
+	public function testUnknownScheduleIsNotDue(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'jaarlijks',
+		];
 
-        self::assertFalse($this->job->isDue(administration: $administration, now: $now));
+		self::assertFalse($this->job->isDue(administration: $administration, now: $now));
 
-    }//end testUnknownScheduleIsNotDue()
+	}//end testUnknownScheduleIsNotDue()
 
-    /**
-     * evaluateDueAdministrations() filters each administration independently — no
-     * cross-administratie leakage (REQ-MA-001).
-     *
-     * @return void
-     */
-    public function testEvaluateDueFiltersIndependently(): void
-    {
-        $now             = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administrations = [
-            [
-                'id'                    => 'adm-werk-001',
-                'backupSchedule'        => 'dagelijks',
-                'lastBackupCompletedAt' => '2026-06-08T01:00:00+00:00',
-            ],
-            [
-                'id'             => 'adm-beheer-001',
-                'backupSchedule' => 'dagelijks',
-            ],
-            [
-                'id'             => 'adm-finance-001',
-                'backupSchedule' => 'aanvragen',
-                'nextBackupAt'   => '2026-06-09T00:00:00+00:00',
-            ],
-        ];
+	/**
+	 * evaluateDueAdministrations() filters each administration independently — no
+	 * cross-administratie leakage (REQ-MA-001).
+	 *
+	 * @return void
+	 */
+	public function testEvaluateDueFiltersIndependently(): void {
+		$now = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administrations = [
+			[
+				'id' => 'adm-werk-001',
+				'backupSchedule' => 'dagelijks',
+				'lastBackupCompletedAt' => '2026-06-08T01:00:00+00:00',
+			],
+			[
+				'id' => 'adm-beheer-001',
+				'backupSchedule' => 'dagelijks',
+			],
+			[
+				'id' => 'adm-finance-001',
+				'backupSchedule' => 'aanvragen',
+				'nextBackupAt' => '2026-06-09T00:00:00+00:00',
+			],
+		];
 
-        $due = $this->job->evaluateDueAdministrations(
-            administrations: $administrations,
-            now: $now
-        );
+		$due = $this->job->evaluateDueAdministrations(
+			administrations: $administrations,
+			now: $now
+		);
 
-        self::assertCount(1, $due);
-        self::assertSame('adm-beheer-001', $due[0]['id']);
+		self::assertCount(1, $due);
+		self::assertSame('adm-beheer-001', $due[0]['id']);
 
-    }//end testEvaluateDueFiltersIndependently()
+	}//end testEvaluateDueFiltersIndependently()
 
-    /**
-     * Archived administrations are flagged as snapshot-only (REQ-MA-007).
-     *
-     * @return void
-     */
-    public function testArchivedIsSnapshotOnly(): void
-    {
-        $archived = [
-            'id'     => 'adm-werk-001',
-            'status' => 'gearchiveerd',
-        ];
-        $active = [
-            'id'     => 'adm-beheer-001',
-            'status' => 'actief',
-        ];
+	/**
+	 * Archived administrations are flagged as snapshot-only (REQ-MA-007).
+	 *
+	 * @return void
+	 */
+	public function testArchivedIsSnapshotOnly(): void {
+		$archived = [
+			'id' => 'adm-werk-001',
+			'status' => 'gearchiveerd',
+		];
+		$active = [
+			'id' => 'adm-beheer-001',
+			'status' => 'actief',
+		];
 
-        self::assertTrue($this->job->isReadOnlyAdministration(administration: $archived));
-        self::assertFalse($this->job->isReadOnlyAdministration(administration: $active));
+		self::assertTrue($this->job->isReadOnlyAdministration(administration: $archived));
+		self::assertFalse($this->job->isReadOnlyAdministration(administration: $active));
 
-    }//end testArchivedIsSnapshotOnly()
+	}//end testArchivedIsSnapshotOnly()
 
-    /**
-     * buildBackupRunRecord carries exactly one administrationId and the right metadata.
-     *
-     * @return void
-     */
-    public function testBuildBackupRunRecord(): void
-    {
-        $started        = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $completed      = new DateTimeImmutable('2026-06-08T08:00:05+00:00');
-        $administration = [
-            'id'                 => 'adm-werk-001',
-            'administrationCode' => 'WERK-001',
-            'backupSchedule'     => 'dagelijks',
-            'status'             => 'actief',
-        ];
+	/**
+	 * buildBackupRunRecord carries exactly one administrationId and the right metadata.
+	 *
+	 * @return void
+	 */
+	public function testBuildBackupRunRecord(): void {
+		$started = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$completed = new DateTimeImmutable('2026-06-08T08:00:05+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'administrationCode' => 'WERK-001',
+			'backupSchedule' => 'dagelijks',
+			'status' => 'actief',
+		];
 
-        $record = $this->job->buildBackupRunRecord(
-            administration: $administration,
-            startedAt: $started,
-            completedAt: $completed,
-            status: 'success',
-            sizeBytes: 4096
-        );
+		$record = $this->job->buildBackupRunRecord(
+			administration: $administration,
+			startedAt: $started,
+			completedAt: $completed,
+			status: 'success',
+			sizeBytes: 4096
+		);
 
-        self::assertSame('adm-werk-001', $record['administrationId']);
-        self::assertSame('WERK-001', $record['administrationCode']);
-        self::assertSame('dagelijks', $record['schedule']);
-        self::assertSame('success', $record['status']);
-        self::assertFalse($record['snapshotOnly']);
-        self::assertSame(4096, $record['sizeBytes']);
-        self::assertNotNull($record['nextBackupAt']);
+		self::assertSame('adm-werk-001', $record['administrationId']);
+		self::assertSame('WERK-001', $record['administrationCode']);
+		self::assertSame('dagelijks', $record['schedule']);
+		self::assertSame('success', $record['status']);
+		self::assertFalse($record['snapshotOnly']);
+		self::assertSame(4096, $record['sizeBytes']);
+		self::assertNotNull($record['nextBackupAt']);
 
-    }//end testBuildBackupRunRecord()
+	}//end testBuildBackupRunRecord()
 
-    /**
-     * On-request schedules produce a null next-backup timestamp.
-     *
-     * @return void
-     */
-    public function testOnRequestHasNoNextTimestamp(): void
-    {
-        $completed      = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
-        $administration = [
-            'id'             => 'adm-werk-001',
-            'backupSchedule' => 'aanvragen',
-        ];
+	/**
+	 * On-request schedules produce a null next-backup timestamp.
+	 *
+	 * @return void
+	 */
+	public function testOnRequestHasNoNextTimestamp(): void {
+		$completed = new DateTimeImmutable('2026-06-08T08:00:00+00:00');
+		$administration = [
+			'id' => 'adm-werk-001',
+			'backupSchedule' => 'aanvragen',
+		];
 
-        self::assertNull(
-            $this->job->nextBackupTimestamp(
-                administration: $administration,
-                completedAt: $completed
-            )
-        );
+		self::assertNull(
+			$this->job->nextBackupTimestamp(
+				administration: $administration,
+				completedAt: $completed
+			)
+		);
 
-    }//end testOnRequestHasNoNextTimestamp()
+	}//end testOnRequestHasNoNextTimestamp()
 }//end class

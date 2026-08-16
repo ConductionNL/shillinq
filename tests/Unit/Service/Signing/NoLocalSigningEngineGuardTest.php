@@ -35,54 +35,49 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class NoLocalSigningEngineGuardTest extends TestCase
-{
+final class NoLocalSigningEngineGuardTest extends TestCase {
 
-    /**
-     * AcmReportGenerator must NOT expose a sign() method (REQ-SIGN-004).
-     *
-     * The method was the local PKI signing handler removed as part of the
-     * shillinq-delegate-signing change. Its absence is asserted statically
-     * via reflection to catch accidental re-introductions.
-     */
-    public function testAcmReportGeneratorHasNoSignMethod(): void
-    {
-        $reflection = new \ReflectionClass(AcmReportGenerator::class);
+	/**
+	 * AcmReportGenerator must NOT expose a sign() method (REQ-SIGN-004).
+	 *
+	 * The method was the local PKI signing handler removed as part of the
+	 * shillinq-delegate-signing change. Its absence is asserted statically
+	 * via reflection to catch accidental re-introductions.
+	 */
+	public function testAcmReportGeneratorHasNoSignMethod(): void {
+		$reflection = new \ReflectionClass(AcmReportGenerator::class);
 
-        self::assertFalse(
-            $reflection->hasMethod('sign'),
-            'AcmReportGenerator::sign() must not exist — local PKI signing was removed (REQ-SIGN-004). '
-            .'Signing is now delegated to docudesk via SigningDelegationService.'
-        );
+		self::assertFalse(
+			$reflection->hasMethod('sign'),
+			'AcmReportGenerator::sign() must not exist — local PKI signing was removed (REQ-SIGN-004). '
+			. 'Signing is now delegated to docudesk via SigningDelegationService.'
+		);
 
-    }//end testAcmReportGeneratorHasNoSignMethod()
+	}//end testAcmReportGeneratorHasNoSignMethod()
 
+	/**
+	 * SigningDelegationService must be the sole signing entry-point.
+	 *
+	 * Asserts the class exists and exposes the expected public API surface.
+	 */
+	public function testSigningDelegationServiceIsPresent(): void {
+		self::assertTrue(
+			class_exists(\OCA\Shillinq\Service\Signing\SigningDelegationService::class),
+			'SigningDelegationService must exist as the delegated signing entry-point (REQ-SIGN-001).'
+		);
 
-    /**
-     * SigningDelegationService must be the sole signing entry-point.
-     *
-     * Asserts the class exists and exposes the expected public API surface.
-     */
-    public function testSigningDelegationServiceIsPresent(): void
-    {
-        self::assertTrue(
-            class_exists(\OCA\Shillinq\Service\Signing\SigningDelegationService::class),
-            'SigningDelegationService must exist as the delegated signing entry-point (REQ-SIGN-001).'
-        );
+		$reflection = new \ReflectionClass(\OCA\Shillinq\Service\Signing\SigningDelegationService::class);
 
-        $reflection = new \ReflectionClass(\OCA\Shillinq\Service\Signing\SigningDelegationService::class);
+		self::assertTrue(
+			$reflection->hasMethod('requestSignature'),
+			'SigningDelegationService::requestSignature() must be present (REQ-SIGN-001).'
+		);
 
-        self::assertTrue(
-            $reflection->hasMethod('requestSignature'),
-            'SigningDelegationService::requestSignature() must be present (REQ-SIGN-001).'
-        );
+		self::assertTrue(
+			$reflection->hasMethod('onSigningCallback'),
+			'SigningDelegationService::onSigningCallback() must be present (REQ-SIGN-005).'
+		);
 
-        self::assertTrue(
-            $reflection->hasMethod('onSigningCallback'),
-            'SigningDelegationService::onSigningCallback() must be present (REQ-SIGN-005).'
-        );
-
-    }//end testSigningDelegationServiceIsPresent()
-
+	}//end testSigningDelegationServiceIsPresent()
 
 }//end class

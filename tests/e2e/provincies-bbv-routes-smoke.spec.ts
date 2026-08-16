@@ -23,7 +23,7 @@
  * Each route MUST answer 200 (logged in via storage state) or 302 to
  * /login (storage state unset); 5xx is a hard failure.
  *
- * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#smoke-tests
+ * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
 
 import { test, expect } from '@playwright/test'
@@ -34,13 +34,17 @@ const LINKER_INDEX_ROUTE = APP + '/bbv-provincie/budget-to-programme'
 const LINKER_DETAIL_ROUTE = APP + '/bbv-provincie/budget-to-programme/smoke-id'
 
 test.describe('Provincies BBV routes — 200 OK on the SPA shell', () => {
-
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-001/dashboard-route-200
 	 */
-	test('GET compliance-dashboard responds 200/302/401 (never 5xx)', async ({ request }) => {
+	test('GET compliance-dashboard responds 200/302/401 (never 5xx)', async ({
+		request,
+	}) => {
 		const res = await request.get(DASHBOARD_ROUTE, {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'text/html,application/json' },
+			headers: {
+				'OCS-APIREQUEST': 'true',
+				Accept: 'text/html,application/json',
+			},
 		})
 		// Declarative manifest pages are served by the Shillinq SPA shell;
 		// the auth posture is inherited from the app's default. A 302 to
@@ -54,9 +58,14 @@ test.describe('Provincies BBV routes — 200 OK on the SPA shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-index-route-200
 	 */
-	test('GET budget-to-programme responds 200/302/401 (never 5xx)', async ({ request }) => {
+	test('GET budget-to-programme responds 200/302/401 (never 5xx)', async ({
+		request,
+	}) => {
 		const res = await request.get(LINKER_INDEX_ROUTE, {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'text/html,application/json' },
+			headers: {
+				'OCS-APIREQUEST': 'true',
+				Accept: 'text/html,application/json',
+			},
 		})
 		expect(res.status()).toBeLessThan(500)
 		expect([200, 302, 401, 412].includes(res.status())).toBeTruthy()
@@ -65,9 +74,14 @@ test.describe('Provincies BBV routes — 200 OK on the SPA shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-003/linker-detail-route-200
 	 */
-	test('GET budget-to-programme/:id responds 200/302/401 (never 5xx)', async ({ request }) => {
+	test('GET budget-to-programme/:id responds 200/302/401 (never 5xx)', async ({
+		request,
+	}) => {
 		const res = await request.get(LINKER_DETAIL_ROUTE, {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'text/html,application/json' },
+			headers: {
+				'OCS-APIREQUEST': 'true',
+				Accept: 'text/html,application/json',
+			},
 		})
 		expect(res.status()).toBeLessThan(500)
 		expect([200, 302, 401, 412].includes(res.status())).toBeTruthy()
@@ -76,12 +90,16 @@ test.describe('Provincies BBV routes — 200 OK on the SPA shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-004/admin-settings-route-200
 	 */
-	test('GET /admin (admin settings) responds 200/302/401 (never 5xx)', async ({ request }) => {
+	test('GET /admin (admin settings) responds 200/302/401 (never 5xx)', async ({
+		request,
+	}) => {
 		const res = await request.get(APP + '/admin', {
-			headers: { 'OCS-APIREQUEST': 'true', 'Accept': 'text/html,application/json' },
+			headers: {
+				'OCS-APIREQUEST': 'true',
+				Accept: 'text/html,application/json',
+			},
 		})
 		expect(res.status()).toBeLessThan(500)
 		expect([200, 302, 401, 412].includes(res.status())).toBeTruthy()
 	})
-
 })

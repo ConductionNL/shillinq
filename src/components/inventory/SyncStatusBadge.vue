@@ -33,7 +33,13 @@
 				:key="conflict.at + index"
 				role="status">
 				<span>
-					{{ t('shillinq', 'Stock was updated by another user. {applied} record(s) merged at {at}.', { applied: conflict.applied, at: conflict.at }) }}
+					{{
+						t(
+							'shillinq',
+							'Stock was updated by another user. {applied} record(s) merged at {at}.',
+							{ applied: conflict.applied, at: conflict.at },
+						)
+					}}
 				</span>
 				<button type="button" @click="store.dismissConflict(index)">
 					{{ t('shillinq', 'Dismiss') }}
@@ -56,12 +62,19 @@ export default {
 			ticker: null,
 		}
 	},
+
 	computed: {
 		store() {
 			return useInventoryMobileScannerStore()
 		},
+
 		badgeClass() {
-			if (this.store.syncState === 'syncing' || this.store.syncState === 'pending' || this.store.syncState === 'failed' || this.isStale) {
+			if (
+				this.store.syncState === 'syncing'
+				|| this.store.syncState === 'pending'
+				|| this.store.syncState === 'failed'
+				|| this.isStale
+			) {
 				return 'sync-status-badge__button--yellow'
 			}
 			if (this.store.syncState === 'offline') {
@@ -69,6 +82,7 @@ export default {
 			}
 			return 'sync-status-badge__button--green'
 		},
+
 		isStale() {
 			if (!this.store.lastSyncedAt) {
 				return false
@@ -77,11 +91,14 @@ export default {
 			if (Number.isNaN(ts)) {
 				return false
 			}
-			return (this.now - ts) > STALE_THRESHOLD_MS
+			return this.now - ts > STALE_THRESHOLD_MS
 		},
+
 		humanLabel() {
 			if (this.store.syncState === 'failed') {
-				return this.t('shillinq', 'Sync failed; retry {sec}s', { sec: Math.ceil((this.store.retryInMs || 0) / 1000) })
+				return this.t('shillinq', 'Sync failed; retry {sec}s', {
+					sec: Math.ceil((this.store.retryInMs || 0) / 1000),
+				})
 			}
 			if (this.store.syncState === 'syncing') {
 				return this.t('shillinq', 'Syncing…')
@@ -90,25 +107,32 @@ export default {
 				return this.t('shillinq', 'Offline')
 			}
 			if (this.store.pendingCount > 0) {
-				return this.t('shillinq', 'Pending ({n})', { n: this.store.pendingCount })
+				return this.t('shillinq', 'Pending ({n})', {
+					n: this.store.pendingCount,
+				})
 			}
 			if (this.store.lastSyncedAt) {
-				return this.t('shillinq', 'Last synced {at}', { at: this.formatTime(this.store.lastSyncedAt) })
+				return this.t('shillinq', 'Last synced {at}', {
+					at: this.formatTime(this.store.lastSyncedAt),
+				})
 			}
 			return this.t('shillinq', 'Sync now')
 		},
 	},
+
 	mounted() {
 		this.ticker = setInterval(() => {
 			this.now = Date.now()
 		}, 30_000)
 	},
+
 	beforeUnmount() {
 		if (this.ticker !== null) {
 			clearInterval(this.ticker)
 			this.ticker = null
 		}
 	},
+
 	methods: {
 		async handleClick() {
 			if (!this.store.isOnline) {
@@ -116,6 +140,7 @@ export default {
 			}
 			await this.store.triggerSyncNow()
 		},
+
 		formatTime(iso) {
 			const ts = Date.parse(iso)
 			if (Number.isNaN(ts)) {
@@ -129,7 +154,9 @@ export default {
 </script>
 
 <style scoped>
-.sync-status-badge { position: relative; }
+.sync-status-badge {
+	position: relative;
+}
 
 .sync-status-badge__button {
 	display: inline-flex;
@@ -141,20 +168,33 @@ export default {
 }
 
 .sync-status-badge__dot {
-	width: 8px; height: 8px; border-radius: 50%;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
 	background: var(--color-success);
 }
 
-.sync-status-badge__button--green .sync-status-badge__dot { background: var(--color-success); }
+.sync-status-badge__button--green .sync-status-badge__dot {
+	background: var(--color-success);
+}
 
-.sync-status-badge__button--yellow .sync-status-badge__dot { background: var(--color-warning); }
+.sync-status-badge__button--yellow .sync-status-badge__dot {
+	background: var(--color-warning);
+}
 
-.sync-status-badge__button--red .sync-status-badge__dot { background: var(--color-error); }
+.sync-status-badge__button--red .sync-status-badge__dot {
+	background: var(--color-error);
+}
 
-.sync-status-badge__conflicts { list-style: none; padding: 0; margin-top: var(--default-grid-baseline, 4px); }
+.sync-status-badge__conflicts {
+	list-style: none;
+	padding: 0;
+	margin-top: var(--default-grid-baseline, 4px);
+}
 
 .sync-status-badge__conflicts li {
-	display: flex; gap: var(--default-grid-baseline, 4px);
+	display: flex;
+	gap: var(--default-grid-baseline, 4px);
 	background: var(--color-background-hover);
 	padding: var(--default-grid-baseline, 4px);
 	border-radius: var(--border-radius, 4px);

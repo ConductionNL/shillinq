@@ -35,227 +35,215 @@ use ReflectionMethod;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class EinvoicingUblPeppolFragmentTest extends TestCase
-{
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/add-shillinq-einvoicing-ubl-peppol.json';
+final class EinvoicingUblPeppolFragmentTest extends TestCase {
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/add-shillinq-einvoicing-ubl-peppol.json';
 
-    /**
-     * Absolute path to the fragment that declares ARInvoice's base fields
-     * (invoiceNumber, customerId, ...) — ARInvoice is fragment-only, not in
-     * the monolith, so the merge-without-clobbering test overlays onto this
-     * fragment rather than the monolith.
-     *
-     * @var string
-     */
-    private string $baseArInvoiceFragmentPath = __DIR__.'/../../../lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json';
+	/**
+	 * Absolute path to the fragment that declares ARInvoice's base fields
+	 * (invoiceNumber, customerId, ...) — ARInvoice is fragment-only, not in
+	 * the monolith, so the merge-without-clobbering test overlays onto this
+	 * fragment rather than the monolith.
+	 *
+	 * @var string
+	 */
+	private string $baseArInvoiceFragmentPath = __DIR__ . '/../../../lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * The fragment is present and valid JSON with the expected sections.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$fragment = $this->fragment();
 
-    }//end fragment()
+		self::assertIsArray($fragment);
+		self::assertArrayHasKey('components', $fragment);
+		self::assertArrayHasKey('schemas', $fragment['components']);
+		self::assertArrayHasKey('ARInvoice', $fragment['components']['schemas']);
+		self::assertArrayHasKey('CustomerMaster', $fragment['components']['schemas']);
 
-    /**
-     * The fragment is present and valid JSON with the expected sections.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $fragment = $this->fragment();
+	}//end testFragmentIsValidJson()
 
-        self::assertIsArray($fragment);
-        self::assertArrayHasKey('components', $fragment);
-        self::assertArrayHasKey('schemas', $fragment['components']);
-        self::assertArrayHasKey('ARInvoice', $fragment['components']['schemas']);
-        self::assertArrayHasKey('CustomerMaster', $fragment['components']['schemas']);
+	/**
+	 * REQ-AR-011: ARInvoice declares the four additive delivery fields, all
+	 * optional, deliveryStatus defaulting to not-sent.
+	 *
+	 * @return void
+	 */
+	public function testARInvoiceDeclaresDeliveryFields(): void {
+		$props = $this->fragment()['components']['schemas']['ARInvoice']['properties'];
 
-    }//end testFragmentIsValidJson()
+		foreach (['deliveryStatus', 'transmissionId', 'payloadFileUri', 'deliveryDetail', 'buyerPeppolParticipantId'] as $field) {
+			self::assertArrayHasKey($field, $props, "ARInvoice must declare $field");
+			self::assertTrue(($props[$field]['nullable'] ?? false), "$field must be optional/nullable");
+		}
 
-    /**
-     * REQ-AR-011: ARInvoice declares the four additive delivery fields, all
-     * optional, deliveryStatus defaulting to not-sent.
-     *
-     * @return void
-     */
-    public function testARInvoiceDeclaresDeliveryFields(): void
-    {
-        $props = $this->fragment()['components']['schemas']['ARInvoice']['properties'];
+		self::assertSame('not-sent', $props['deliveryStatus']['default']);
+		self::assertSame(
+			['not-sent', 'queued', 'sent', 'delivered', 'rejected', 'failed'],
+			$props['deliveryStatus']['enum']
+		);
 
-        foreach (['deliveryStatus', 'transmissionId', 'payloadFileUri', 'deliveryDetail', 'buyerPeppolParticipantId'] as $field) {
-            self::assertArrayHasKey($field, $props, "ARInvoice must declare $field");
-            self::assertTrue(($props[$field]['nullable'] ?? false), "$field must be optional/nullable");
-        }
+	}//end testARInvoiceDeclaresDeliveryFields()
 
-        self::assertSame('not-sent', $props['deliveryStatus']['default']);
-        self::assertSame(
-            ['not-sent', 'queued', 'sent', 'delivered', 'rejected', 'failed'],
-            $props['deliveryStatus']['enum']
-        );
+	/**
+	 * The fragment does NOT declare a second x-openregister-lifecycle block on
+	 * ARInvoice — OR supports exactly one per schema and a second would
+	 * collide with the canonical lifecycleState lifecycle (see fragment
+	 * _meta.description + tasks.md Deviations).
+	 *
+	 * @return void
+	 */
+	public function testFragmentDoesNotDeclareASecondLifecycleBlock(): void {
+		$arInvoice = $this->fragment()['components']['schemas']['ARInvoice'];
 
-    }//end testARInvoiceDeclaresDeliveryFields()
+		self::assertArrayNotHasKey(
+			'x-openregister-lifecycle',
+			$arInvoice,
+			'a second x-openregister-lifecycle on ARInvoice would deep-merge-collide with the canonical lifecycleState lifecycle'
+		);
+		// The documentation-only substitute is present instead.
+		self::assertArrayHasKey('x-shillinq-delivery-substates', $arInvoice);
+		self::assertSame('deliveryStatus', $arInvoice['x-shillinq-delivery-substates']['field']);
 
-    /**
-     * The fragment does NOT declare a second x-openregister-lifecycle block on
-     * ARInvoice — OR supports exactly one per schema and a second would
-     * collide with the canonical lifecycleState lifecycle (see fragment
-     * _meta.description + tasks.md Deviations).
-     *
-     * @return void
-     */
-    public function testFragmentDoesNotDeclareASecondLifecycleBlock(): void
-    {
-        $arInvoice = $this->fragment()['components']['schemas']['ARInvoice'];
+	}//end testFragmentDoesNotDeclareASecondLifecycleBlock()
 
-        self::assertArrayNotHasKey(
-            'x-openregister-lifecycle',
-            $arInvoice,
-            'a second x-openregister-lifecycle on ARInvoice would deep-merge-collide with the canonical lifecycleState lifecycle'
-        );
-        // The documentation-only substitute is present instead.
-        self::assertArrayHasKey('x-shillinq-delivery-substates', $arInvoice);
-        self::assertSame('deliveryStatus', $arInvoice['x-shillinq-delivery-substates']['field']);
+	/**
+	 * CustomerMaster declares the additive, optional peppolParticipantId field.
+	 *
+	 * @return void
+	 */
+	public function testCustomerMasterDeclaresPeppolParticipantId(): void {
+		$props = $this->fragment()['components']['schemas']['CustomerMaster']['properties'];
 
-    }//end testFragmentDoesNotDeclareASecondLifecycleBlock()
+		self::assertArrayHasKey('peppolParticipantId', $props);
+		self::assertTrue($props['peppolParticipantId']['nullable']);
 
-    /**
-     * CustomerMaster declares the additive, optional peppolParticipantId field.
-     *
-     * @return void
-     */
-    public function testCustomerMasterDeclaresPeppolParticipantId(): void
-    {
-        $props = $this->fragment()['components']['schemas']['CustomerMaster']['properties'];
+	}//end testCustomerMasterDeclaresPeppolParticipantId()
 
-        self::assertArrayHasKey('peppolParticipantId', $props);
-        self::assertTrue($props['peppolParticipantId']['nullable']);
+	/**
+	 * The fragment merges additively onto the ARInvoice-owning fragment
+	 * (add-shillinq-bookkeeping-compliance.json — ARInvoice is fragment-only,
+	 * not in the monolith) without disturbing its pre-existing property set
+	 * (ADR-037 disjoint union) or its canonical lifecycleState lifecycle.
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesWithoutClobberingBaseRegister(): void {
+		$base = json_decode((string)file_get_contents($this->baseArInvoiceFragmentPath), true);
+		$merged = $this->merge($base, $this->fragment());
+		$ar = $merged['components']['schemas']['ARInvoice'];
+		$props = $ar['properties'];
 
-    }//end testCustomerMasterDeclaresPeppolParticipantId()
+		// New fields present.
+		self::assertArrayHasKey('deliveryStatus', $props);
+		self::assertArrayHasKey('buyerPeppolParticipantId', $props);
+		// Pre-existing fields untouched.
+		self::assertArrayHasKey('invoiceNumber', $props);
+		self::assertArrayHasKey('customerId', $props);
+		// The canonical lifecycle is untouched — still keyed on lifecycleState.
+		self::assertArrayHasKey('x-openregister-lifecycle', $ar);
+		self::assertSame('lifecycleState', $ar['x-openregister-lifecycle']['field']);
 
-    /**
-     * The fragment merges additively onto the ARInvoice-owning fragment
-     * (add-shillinq-bookkeeping-compliance.json — ARInvoice is fragment-only,
-     * not in the monolith) without disturbing its pre-existing property set
-     * (ADR-037 disjoint union) or its canonical lifecycleState lifecycle.
-     *
-     * @return void
-     */
-    public function testFragmentMergesWithoutClobberingBaseRegister(): void
-    {
-        $base   = json_decode((string) file_get_contents($this->baseArInvoiceFragmentPath), true);
-        $merged = $this->merge($base, $this->fragment());
-        $ar     = $merged['components']['schemas']['ARInvoice'];
-        $props  = $ar['properties'];
+	}//end testFragmentMergesWithoutClobberingBaseRegister()
 
-        // New fields present.
-        self::assertArrayHasKey('deliveryStatus', $props);
-        self::assertArrayHasKey('buyerPeppolParticipantId', $props);
-        // Pre-existing fields untouched.
-        self::assertArrayHasKey('invoiceNumber', $props);
-        self::assertArrayHasKey('customerId', $props);
-        // The canonical lifecycle is untouched — still keyed on lifecycleState.
-        self::assertArrayHasKey('x-openregister-lifecycle', $ar);
-        self::assertSame('lifecycleState', $ar['x-openregister-lifecycle']['field']);
+	/**
+	 * Seed data: every ARInvoice seed object carries the schema's required
+	 * fields (invoiceNumber, customerId, administrationId, invoiceDate,
+	 * dueDate, grossAmount, netAmount, currency, periodId, lifecycleState)
+	 * plus a realistic deliveryStatus value.
+	 *
+	 * @return void
+	 */
+	public function testSeedArInvoicesCarryRequiredFieldsAndDeliveryStatus(): void {
+		$required = ['invoiceNumber', 'customerId', 'administrationId', 'invoiceDate', 'dueDate', 'grossAmount', 'netAmount', 'currency', 'periodId', 'lifecycleState'];
+		$objects = $this->fragment()['components']['objects'];
 
-    }//end testFragmentMergesWithoutClobberingBaseRegister()
+		$arInvoices = array_values(
+			array_filter(
+				$objects,
+				static fn (array $o): bool => (($o['@self']['schema'] ?? '') === 'ARInvoice')
+			)
+		);
 
-    /**
-     * Seed data: every ARInvoice seed object carries the schema's required
-     * fields (invoiceNumber, customerId, administrationId, invoiceDate,
-     * dueDate, grossAmount, netAmount, currency, periodId, lifecycleState)
-     * plus a realistic deliveryStatus value.
-     *
-     * @return void
-     */
-    public function testSeedArInvoicesCarryRequiredFieldsAndDeliveryStatus(): void
-    {
-        $required = ['invoiceNumber', 'customerId', 'administrationId', 'invoiceDate', 'dueDate', 'grossAmount', 'netAmount', 'currency', 'periodId', 'lifecycleState'];
-        $objects  = $this->fragment()['components']['objects'];
+		self::assertCount(3, $arInvoices, 'design.md seed table specifies exactly 3 ARInvoice objects');
 
-        $arInvoices = array_values(
-            array_filter(
-                $objects,
-                static fn (array $o): bool => (($o['@self']['schema'] ?? '') === 'ARInvoice')
-            )
-        );
+		foreach ($arInvoices as $invoice) {
+			foreach ($required as $field) {
+				self::assertArrayHasKey($field, $invoice, 'seed ARInvoice ' . ($invoice['invoiceNumber'] ?? '?') . " is missing required field $field");
+			}
 
-        self::assertCount(3, $arInvoices, 'design.md seed table specifies exactly 3 ARInvoice objects');
+			self::assertContains(
+				$invoice['deliveryStatus'],
+				['not-sent', 'queued', 'sent', 'delivered', 'rejected', 'failed']
+			);
+		}
 
-        foreach ($arInvoices as $invoice) {
-            foreach ($required as $field) {
-                self::assertArrayHasKey($field, $invoice, "seed ARInvoice ".($invoice['invoiceNumber'] ?? '?')." is missing required field $field");
-            }
+		$bySlug = [];
+		foreach ($arInvoices as $invoice) {
+			$bySlug[$invoice['invoiceNumber']] = $invoice['deliveryStatus'];
+		}
 
-            self::assertContains(
-                $invoice['deliveryStatus'],
-                ['not-sent', 'queued', 'sent', 'delivered', 'rejected', 'failed']
-            );
-        }
+		self::assertSame('delivered', $bySlug['2026-0042']);
+		self::assertSame('sent', $bySlug['2026-0051']);
+		self::assertSame('not-sent', $bySlug['2026-0060']);
 
-        $bySlug = [];
-        foreach ($arInvoices as $invoice) {
-            $bySlug[$invoice['invoiceNumber']] = $invoice['deliveryStatus'];
-        }
+	}//end testSeedArInvoicesCarryRequiredFieldsAndDeliveryStatus()
 
-        self::assertSame('delivered', $bySlug['2026-0042']);
-        self::assertSame('sent', $bySlug['2026-0051']);
-        self::assertSame('not-sent', $bySlug['2026-0060']);
+	/**
+	 * Seed data: every CustomerMaster seed object carries its schema's
+	 * required fields (customerId, legalName, email, administrationId,
+	 * lifecycleState).
+	 *
+	 * @return void
+	 */
+	public function testSeedCustomerMastersCarryRequiredFields(): void {
+		$required = ['customerId', 'legalName', 'email', 'administrationId', 'lifecycleState'];
+		$objects = $this->fragment()['components']['objects'];
 
-    }//end testSeedArInvoicesCarryRequiredFieldsAndDeliveryStatus()
+		$customers = array_values(
+			array_filter(
+				$objects,
+				static fn (array $o): bool => (($o['@self']['schema'] ?? '') === 'CustomerMaster')
+			)
+		);
 
-    /**
-     * Seed data: every CustomerMaster seed object carries its schema's
-     * required fields (customerId, legalName, email, administrationId,
-     * lifecycleState).
-     *
-     * @return void
-     */
-    public function testSeedCustomerMastersCarryRequiredFields(): void
-    {
-        $required = ['customerId', 'legalName', 'email', 'administrationId', 'lifecycleState'];
-        $objects  = $this->fragment()['components']['objects'];
+		self::assertCount(3, $customers);
 
-        $customers = array_values(
-            array_filter(
-                $objects,
-                static fn (array $o): bool => (($o['@self']['schema'] ?? '') === 'CustomerMaster')
-            )
-        );
+		foreach ($customers as $customer) {
+			foreach ($required as $field) {
+				self::assertArrayHasKey($field, $customer, 'seed CustomerMaster ' . ($customer['customerId'] ?? '?') . " is missing required field $field");
+			}
+		}
 
-        self::assertCount(3, $customers);
-
-        foreach ($customers as $customer) {
-            foreach ($required as $field) {
-                self::assertArrayHasKey($field, $customer, "seed CustomerMaster ".($customer['customerId'] ?? '?')." is missing required field $field");
-            }
-        }
-
-    }//end testSeedCustomerMastersCarryRequiredFields()
+	}//end testSeedCustomerMastersCarryRequiredFields()
 }//end class

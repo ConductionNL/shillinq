@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "shillinq-bookkeeping-tenderned-integratie",
 		"name": "Shillinq Bookkeeping TenderNed Integratie",
-		"description": "Newman integration tests for bookkeeping-tenderned-integratie. Exercises the four REQ-NNN flows end-to-end against a live Nextcloud + OpenRegister instance:\n\n- REQ-001 — import a TenderNed dossier into a concept Verplichting (POST /objects/.../TenderNedAanbesteding, POST /objects/.../Verplichting bron=tenderned/status=concept).\n- REQ-002 — auto-promote an awarded dossier (PATCH the aanbesteding to status=gegund and observe the linked Verplichting becoming active via OR lifecycle / shillinq listeners).\n- REQ-004 — block OpdrachtUitvoering completion without a bewijsstuk (POST without bewijsstukken should 4xx or remain in 'in-progress').\n- REQ-006 — buyer-only completion gate: a vendor cannot mark the eindoplevering as completed (PATCH with vendor-user 4xx).\n\nThere are NO bespoke shillinq HTTP controllers for this change (Task 9: declarative OR CRUD + lifecycle transitions only); the collection therefore drives the OR /api/objects surface and asserts the schema's lifecycle/guard behaviour. The Guard preconditions are also unit-tested via PHPUnit — this Newman run is the live end-to-end smoke.",
+		"description": "Newman integration tests for bookkeeping-tenderned-integratie. Exercises the four REQ-NNN flows end-to-end against a live Nextcloud + OpenRegister instance:\n\n- REQ-001 — import a TenderNed dossier into a concept Verplichting (POST /objects/.../TenderNedAanbesteding, POST /objects/.../Verplichting source=tenderned/status=concept).\n- REQ-002 — auto-promote an awarded dossier (PATCH the aanbesteding to status=gegund and observe the linked Verplichting becoming active via OR lifecycle / shillinq listeners).\n- REQ-004 — block OpdrachtUitvoering completion without a bewijsstuk (POST without supportingDocuments should 4xx or remain in 'in-progress').\n- REQ-006 — buyer-only completion gate: a vendor cannot mark the eindoplevering as completed (PATCH with vendor-user 4xx).\n\nThere are NO bespoke shillinq HTTP controllers for this change (Task 9: declarative OR CRUD + lifecycle transitions only); the collection therefore drives the OR /api/objects surface and asserts the schema's lifecycle/guard behaviour. The Guard preconditions are also unit-tested via PHPUnit — this Newman run is the live end-to-end smoke.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"event": [
@@ -56,7 +56,7 @@
 				},
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"aanbestedingId\": \"{{tender_aanbesteding_id}}\",\n  \"titel\": \"Newman test tender — schoonmaak Utrecht\",\n  \"aanbestedendeDienst\": \"{{tender_aanbestedende_dienst}}\",\n  \"gegundeLeverancier\": \"{{tender_supplier}}\",\n  \"contractWaarde\": 50000.0,\n  \"opdrachttype\": \"levering-in-fases\",\n  \"looptijdStart\": \"2026-07-01\",\n  \"looptijdEind\": \"2027-06-30\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"status\": \"open\",\n  \"tenderNedUrl\": \"https://www.tenderned.nl/aankondigingen/overzicht/{{tender_aanbesteding_id}}\"\n}"
+					"raw": "{\n  \"tenderId\": \"{{tender_aanbesteding_id}}\",\n  \"title\": \"Newman test tender — schoonmaak Utrecht\",\n  \"contractingService\": \"{{tender_aanbestedende_dienst}}\",\n  \"awardedSupplier\": \"{{tender_supplier}}\",\n  \"contractValue\": 50000.0,\n  \"assignmentType\": \"levering-in-fases\",\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"status\": \"open\",\n  \"tenderNedUrl\": \"https://www.tenderned.nl/aankondigingen/overzicht/{{tender_aanbesteding_id}}\"\n}"
 				}
 			},
 			"event": [{
@@ -91,7 +91,7 @@
 				},
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"verplichtingNummer\": \"V-NEWMAN-0001\",\n  \"omschrijving\": \"Newman concept obligation\",\n  \"bron\": \"tenderned\",\n  \"bronReferentie\": \"{{tender_aanbesteding_id}}\",\n  \"bedrag\": 50000.0,\n  \"looptijdStart\": \"2026-07-01\",\n  \"looptijdEind\": \"2027-06-30\",\n  \"status\": \"concept\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"mijlpalen\": []\n}"
+					"raw": "{\n  \"commitmentNumber\": \"V-NEWMAN-0001\",\n  \"description\": \"Newman concept obligation\",\n  \"source\": \"tenderned\",\n  \"sourceReference\": \"{{tender_aanbesteding_id}}\",\n  \"amount\": 50000.0,\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"status\": \"concept\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"milestones\": []\n}"
 				}
 			},
 			"event": [{
@@ -102,8 +102,8 @@
 						"pm.test('Verplichting created in concept state', function () {",
 						"    pm.expect([200, 201]).to.include(pm.response.code);",
 						"    const body = pm.response.json();",
-						"    pm.expect(body.bron || body.object?.bron).to.equal('tenderned');",
-						"    pm.expect(body.bronReferentie || body.object?.bronReferentie).to.equal(pm.collectionVariables.get('tender_aanbesteding_id'));",
+						"    pm.expect(body.source || body.object?.source).to.equal('tenderned');",
+						"    pm.expect(body.sourceReference || body.object?.sourceReference).to.equal(pm.collectionVariables.get('tender_aanbesteding_id'));",
 						"    const uuid = body.uuid || body['@self']?.uuid || body.id;",
 						"    pm.collectionVariables.set('verplichtingen_uuid', String(uuid));",
 						"});"
@@ -119,12 +119,12 @@
 					{ "key": "Accept", "value": "application/json" }
 				],
 				"url": {
-					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Verplichting?filters[bron]=tenderned&filters[bronReferentie]={{tender_aanbesteding_id}}",
+					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Verplichting?filters[source]=tenderned&filters[sourceReference]={{tender_aanbesteding_id}}",
 					"host": ["{{base_url}}"],
 					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "Verplichting"],
 					"query": [
-						{ "key": "filters[bron]", "value": "tenderned" },
-						{ "key": "filters[bronReferentie]", "value": "{{tender_aanbesteding_id}}" }
+						{ "key": "filters[source]", "value": "tenderned" },
+						{ "key": "filters[sourceReference]", "value": "{{tender_aanbesteding_id}}" }
 					]
 				}
 			},
@@ -139,8 +139,8 @@
 						"    const rows = body.results || body.objects || body;",
 						"    pm.expect(Array.isArray(rows)).to.be.true;",
 						"    pm.expect(rows.length).to.be.at.least(1);",
-						"    const found = rows.find(r => (r.bronReferentie || r.object?.bronReferentie) === pm.collectionVariables.get('tender_aanbesteding_id'));",
-						"    pm.expect(found, 'Verplichting with the expected bronReferentie').to.not.be.undefined;",
+						"    const found = rows.find(r => (r.sourceReference || r.object?.sourceReference) === pm.collectionVariables.get('tender_aanbesteding_id'));",
+						"    pm.expect(found, 'Verplichting with the expected sourceReference').to.not.be.undefined;",
 						"});"
 					]
 				}
@@ -162,7 +162,7 @@
 				},
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"verplichtingId\": \"V-NEWMAN-0001\",\n  \"mijlpaalId\": \"MS-001\",\n  \"opleveringsType\": \"deeloplevering\",\n  \"opleveringsDatum\": \"2026-10-01\",\n  \"goedgekeurd\": false,\n  \"status\": \"completed\",\n  \"bewijsstukken\": [],\n  \"administrationId\": \"{{administration_id}}\"\n}"
+					"raw": "{\n  \"commitmentId\": \"V-NEWMAN-0001\",\n  \"milestoneId\": \"MS-001\",\n  \"deliveryType\": \"deeloplevering\",\n  \"deliveryDate\": \"2026-10-01\",\n  \"approved\": false,\n  \"status\": \"completed\",\n  \"supportingDocuments\": [],\n  \"administrationId\": \"{{administration_id}}\"\n}"
 				}
 			},
 			"event": [{

@@ -86,452 +86,436 @@ use Throwable;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class ExtractionRequestController extends Controller
-{
-    /**
-     * The OpenRegister register slug for shillinq objects.
-     *
-     * @var string
-     */
-    private const REGISTER_SLUG = 'shillinq';
+class ExtractionRequestController extends Controller {
+	/**
+	 * The OpenRegister register slug for shillinq objects.
+	 *
+	 * @var string
+	 */
+	private const REGISTER_SLUG = 'shillinq';
 
-    /**
-     * Schemas this endpoint may operate on (REQ-RXC-001 docType targets).
-     *
-     * @var array<string>
-     */
-    private const ALLOWED_SCHEMAS = [
-        ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE,
-        ExtractionPrefillService::SCHEMA_RECEIPT,
-    ];
+	/**
+	 * Schemas this endpoint may operate on (REQ-RXC-001 docType targets).
+	 *
+	 * @var array<string>
+	 */
+	private const ALLOWED_SCHEMAS = [
+		ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE,
+		ExtractionPrefillService::SCHEMA_RECEIPT,
+	];
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                        $request               Request.
-     * @param DocudeskExtractionClient        $extractionClient      Outbound docudesk request client.
-     * @param GlAccountSuggestionClient       $suggestionClient      Outbound docudesk suggestion/correction client.
-     * @param ChartOfAccountsCandidateService $candidateService      Shillinq's own chart-of-accounts candidates.
-     * @param ExtractionPrefillService        $prefillService        Correction-recording service.
-     * @param AdministrationContextService    $administrationContext Server-resolved tenant scope (ADR-005).
-     * @param IUserSession                    $session               User session.
-     * @param ContainerInterface              $container             DI container (OR ObjectService).
-     * @param LoggerInterface                 $logger                Logger.
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly DocudeskExtractionClient $extractionClient,
-        private readonly GlAccountSuggestionClient $suggestionClient,
-        private readonly ChartOfAccountsCandidateService $candidateService,
-        private readonly ExtractionPrefillService $prefillService,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly IUserSession $session,
-        private readonly ContainerInterface $container,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request Request.
+	 * @param DocudeskExtractionClient $extractionClient Outbound docudesk request client.
+	 * @param GlAccountSuggestionClient $suggestionClient Outbound docudesk suggestion/correction client.
+	 * @param ChartOfAccountsCandidateService $candidateService Shillinq's own chart-of-accounts candidates.
+	 * @param ExtractionPrefillService $prefillService Correction-recording service.
+	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param IUserSession $session User session.
+	 * @param ContainerInterface $container DI container (OR ObjectService).
+	 * @param LoggerInterface $logger Logger.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly DocudeskExtractionClient $extractionClient,
+		private readonly GlAccountSuggestionClient $suggestionClient,
+		private readonly ChartOfAccountsCandidateService $candidateService,
+		private readonly ExtractionPrefillService $prefillService,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IUserSession $session,
+		private readonly ContainerInterface $container,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * (Re-)request docudesk extraction for a document (REQ-RXC-005).
-     *
-     * Accepts `{documentUri, docType, id?}`. When `id` is supplied it MUST
-     * resolve to an existing draft the caller may access (IDOR guard); when
-     * omitted (first-ever extraction of a document not yet drafted in
-     * shillinq) the request proceeds without an administration check — there
-     * is nothing shillinq-side to scope yet, and the resulting draft is
-     * created by the listener once the event arrives.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/receipt-extraction-consume/spec.md
-     */
-    #[NoAdminRequired]
-    public function request(): JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * (Re-)request docudesk extraction for a document (REQ-RXC-005).
+	 *
+	 * Accepts `{documentUri, docType, id?}`. When `id` is supplied it MUST
+	 * resolve to an existing draft the caller may access (IDOR guard); when
+	 * omitted (first-ever extraction of a document not yet drafted in
+	 * shillinq) the request proceeds without an administration check — there
+	 * is nothing shillinq-side to scope yet, and the resulting draft is
+	 * created by the listener once the event arrives.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
+	 */
+	#[NoAdminRequired]
+	public function request(): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $documentUri = trim((string) $this->request->getParam('documentUri', ''));
-        $docType     = trim((string) $this->request->getParam('docType', ''));
-        $id          = trim((string) $this->request->getParam('id', ''));
+		$documentUri = trim((string)$this->request->getParam('documentUri', ''));
+		$docType = trim((string)$this->request->getParam('docType', ''));
+		$id = trim((string)$this->request->getParam('id', ''));
 
-        if ($documentUri === '' || in_array($docType, ['receipt', 'supplier-invoice'], true) === false) {
-            return new JSONResponse(
-                ['error' => 'documentUri and a valid docType (receipt|supplier-invoice) are required'],
-                Http::STATUS_UNPROCESSABLE_ENTITY
-            );
-        }
+		if ($documentUri === '' || in_array($docType, ['receipt', 'supplier-invoice'], true) === false) {
+			return new JSONResponse(
+				['error' => 'documentUri and a valid docType (receipt|supplier-invoice) are required'],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
+		}
 
-        $schema = '';
-        if ($id !== '') {
-            $schema = (string) $this->prefillService->schemaForDocType(docType: $docType);
-            $guard  = $this->guardDraftAccess(schema: $schema, id: $id);
-            if ($guard !== null) {
-                return $guard;
-            }
-        }
+		$schema = '';
+		if ($id !== '') {
+			$schema = (string)$this->prefillService->schemaForDocType(docType: $docType);
+			$guard = $this->guardDraftAccess(schema: $schema, id: $id);
+			if ($guard !== null) {
+				return $guard;
+			}
+		}
 
-        $result = $this->extractionClient->requestExtraction(documentUri: $documentUri, docType: $docType);
-        if ($result['success'] === false) {
-            return new JSONResponse(
-                ['error' => $result['error'] ?? 'docudesk extraction request failed', 'accepted' => false],
-                Http::STATUS_SERVICE_UNAVAILABLE
-            );
-        }
+		$result = $this->extractionClient->requestExtraction(documentUri: $documentUri, docType: $docType);
+		if ($result['success'] === false) {
+			return new JSONResponse(
+				['error' => $result['error'] ?? 'docudesk extraction request failed', 'accepted' => false],
+				Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		}
 
-        // REQ-GAC-001: capture the docudesk financialExtraction id onto the
-        // existing draft, when one was targeted — the only channel available
-        // to later request a GL-account suggestion for it.
-        $extractionId = ($result['extractionId'] ?? null);
-        if ($id !== '' && $schema !== '' && is_string($extractionId) === true && $extractionId !== '') {
-            $this->persistExtractionId(schema: $schema, id: $id, extractionId: $extractionId);
-        }
+		// REQ-GAC-001: capture the docudesk financialExtraction id onto the
+		// existing draft, when one was targeted — the only channel available
+		// to later request a GL-account suggestion for it.
+		$extractionId = ($result['extractionId'] ?? null);
+		if ($id !== '' && $schema !== '' && is_string($extractionId) === true && $extractionId !== '') {
+			$this->persistExtractionId(schema: $schema, id: $id, extractionId: $extractionId);
+		}
 
-        return new JSONResponse(['accepted' => true], Http::STATUS_ACCEPTED);
+		return new JSONResponse(['accepted' => true], Http::STATUS_ACCEPTED);
+	}//end request()
 
-    }//end request()
+	/**
+	 * Persist the docudesk `financialExtraction` id onto an existing draft
+	 * (REQ-GAC-001). Best-effort: a failure is logged, not surfaced — the
+	 * (re-)extraction request itself already succeeded and the suggestion
+	 * feature simply stays unavailable for this draft until the id is
+	 * captured on a later attempt.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param string $id OR object id.
+	 * @param string $extractionId The docudesk financialExtraction object id.
+	 *
+	 * @return void
+	 */
+	private function persistExtractionId(string $schema, string $id, string $extractionId): void {
+		$existing = $this->findById(schema: $schema, id: $id);
+		if ($existing === null) {
+			return;
+		}
 
-    /**
-     * Persist the docudesk `financialExtraction` id onto an existing draft
-     * (REQ-GAC-001). Best-effort: a failure is logged, not surfaced — the
-     * (re-)extraction request itself already succeeded and the suggestion
-     * feature simply stays unavailable for this draft until the id is
-     * captured on a later attempt.
-     *
-     * @param string $schema       OR schema slug.
-     * @param string $id           OR object id.
-     * @param string $extractionId The docudesk financialExtraction object id.
-     *
-     * @return void
-     */
-    private function persistExtractionId(string $schema, string $id, string $extractionId): void
-    {
-        $existing = $this->findById(schema: $schema, id: $id);
-        if ($existing === null) {
-            return;
-        }
+		$existing['docudeskExtractionId'] = $extractionId;
 
-        $existing['docudeskExtractionId'] = $extractionId;
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$objectService
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema($schema)
+				->saveObject($existing);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'ExtractionRequestController: failed to persist docudeskExtractionId',
+				['schema' => $schema, 'id' => $id, 'exception' => $e->getMessage()]
+			);
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $objectService
-                ->setRegister(self::REGISTER_SLUG)
-                ->setSchema($schema)
-                ->saveObject($existing);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'ExtractionRequestController: failed to persist docudeskExtractionId',
-                ['schema' => $schema, 'id' => $id, 'exception' => $e->getMessage()]
-            );
-        }
+	}//end persistExtractionId()
 
-    }//end persistExtractionId()
+	/**
+	 * Commit an operator correction on an existing extraction draft (REQ-RXC-004).
+	 *
+	 * @param string $id The draft's OR object id.
+	 * @param string $schema Schema query param (SupplierInvoice|Receipt).
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
+	 */
+	#[NoAdminRequired]
+	public function confirm(string $id, string $schema = ''): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-    /**
-     * Commit an operator correction on an existing extraction draft (REQ-RXC-004).
-     *
-     * @param string $id     The draft's OR object id.
-     * @param string $schema Schema query param (SupplierInvoice|Receipt).
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/receipt-extraction-consume/spec.md
-     */
-    #[NoAdminRequired]
-    public function confirm(string $id, string $schema=''): JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		if (in_array($schema, self::ALLOWED_SCHEMAS, true) === false) {
+			return new JSONResponse(['error' => 'Unknown or missing schema'], Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
 
-        if (in_array($schema, self::ALLOWED_SCHEMAS, true) === false) {
-            return new JSONResponse(['error' => 'Unknown or missing schema'], Http::STATUS_UNPROCESSABLE_ENTITY);
-        }
+		$guard = $this->guardDraftAccess(schema: $schema, id: $id);
+		if ($guard !== null) {
+			return $guard;
+		}
 
-        $guard = $this->guardDraftAccess(schema: $schema, id: $id);
-        if ($guard !== null) {
-            return $guard;
-        }
+		$existing = $this->findById(schema: $schema, id: $id);
+		if ($existing === null) {
+			return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $existing = $this->findById(schema: $schema, id: $id);
-        if ($existing === null) {
-            return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
-        }
+		$incomingFields = $this->decodeBody();
+		// AdministrationId, id and the confidence/provenance bookkeeping
+		// fields are never operator-editable via this endpoint.
+		unset(
+			$incomingFields['administrationId'],
+			$incomingFields['id'],
+			$incomingFields['fieldConfidence'],
+			$incomingFields['overallConfidence'],
+			$incomingFields['extractedFieldsOriginal'],
+			$incomingFields['humanCorrected'],
+			$incomingFields['extractionStatus']
+		);
 
-        $incomingFields = $this->decodeBody();
-        // AdministrationId, id and the confidence/provenance bookkeeping
-        // fields are never operator-editable via this endpoint.
-        unset(
-            $incomingFields['administrationId'],
-            $incomingFields['id'],
-            $incomingFields['fieldConfidence'],
-            $incomingFields['overallConfidence'],
-            $incomingFields['extractedFieldsOriginal'],
-            $incomingFields['humanCorrected'],
-            $incomingFields['extractionStatus']
-        );
+		$updated = $this->prefillService->recordCorrection(existingDraft: $existing, incomingFields: $incomingFields);
 
-        $updated = $this->prefillService->recordCorrection(existingDraft: $existing, incomingFields: $incomingFields);
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$saved = $objectService
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema($schema)
+				->saveObject($updated);
+		} catch (Throwable $e) {
+			$this->logger->error('ExtractionRequestController.confirm failed to persist: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Failed to save correction'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $saved         = $objectService
-                ->setRegister(self::REGISTER_SLUG)
-                ->setSchema($schema)
-                ->saveObject($updated);
-        } catch (Throwable $e) {
-            $this->logger->error('ExtractionRequestController.confirm failed to persist: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Failed to save correction'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		if (is_array($saved) === true) {
+			$record = $saved;
+		} else {
+			$record = $updated;
+		}
 
-        if (is_array($saved) === true) {
-            $record = $saved;
-        } else {
-            $record = $updated;
-        }
+		// REQ-GAC-005: feed every committed booking back to docudesk as a
+		// correction — whether or not it matches the prior suggestion — so
+		// the ranker's history reflects it. Best-effort: never blocks or
+		// undoes the local booking that already succeeded above.
+		$this->feedBookingBack(record: $record);
 
-        // REQ-GAC-005: feed every committed booking back to docudesk as a
-        // correction — whether or not it matches the prior suggestion — so
-        // the ranker's history reflects it. Best-effort: never blocks or
-        // undoes the local booking that already succeeded above.
-        $this->feedBookingBack(record: $record);
+		return new JSONResponse(['record' => $record], Http::STATUS_OK);
+	}//end confirm()
 
-        return new JSONResponse(['record' => $record], Http::STATUS_OK);
+	/**
+	 * Post the committed GL-account booking back to docudesk as a
+	 * correction when the draft carries a known `docudeskExtractionId` and a
+	 * non-empty `glAccount` (REQ-GAC-005). No-op, not an error, when either
+	 * is absent — this is the graceful-degradation case (REQ-GAC-006).
+	 *
+	 * @param array<string,mixed> $record The just-persisted draft record.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+	 */
+	private function feedBookingBack(array $record): void {
+		$extractionId = (string)($record['docudeskExtractionId'] ?? '');
+		$accountCode = trim((string)($record['glAccount'] ?? ''));
+		if ($extractionId === '' || $accountCode === '') {
+			return;
+		}
 
-    }//end confirm()
+		$accountLabel = $record['glAccountLabel'] ?? null;
+		if (is_string($accountLabel) === false) {
+			$accountLabel = null;
+		}
 
-    /**
-     * Post the committed GL-account booking back to docudesk as a
-     * correction when the draft carries a known `docudeskExtractionId` and a
-     * non-empty `glAccount` (REQ-GAC-005). No-op, not an error, when either
-     * is absent — this is the graceful-degradation case (REQ-GAC-006).
-     *
-     * @param array<string,mixed> $record The just-persisted draft record.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
-     */
-    private function feedBookingBack(array $record): void
-    {
-        $extractionId = (string) ($record['docudeskExtractionId'] ?? '');
-        $accountCode  = trim((string) ($record['glAccount'] ?? ''));
-        if ($extractionId === '' || $accountCode === '') {
-            return;
-        }
+		$this->suggestionClient->postCorrection(
+			extractionId: $extractionId,
+			accountCode: $accountCode,
+			accountLabel: $accountLabel
+		);
 
-        $accountLabel = $record['glAccountLabel'] ?? null;
-        if (is_string($accountLabel) === false) {
-            $accountLabel = null;
-        }
+	}//end feedBookingBack()
 
-        $this->suggestionClient->postCorrection(
-            extractionId: $extractionId,
-            accountCode: $accountCode,
-            accountLabel: $accountLabel
-        );
+	/**
+	 * Compute a GL-account suggestion for a draft with a known docudesk
+	 * extraction id (REQ-GAC-003), supplying shillinq's own active,
+	 * administration-scoped chart of accounts as candidates (REQ-GAC-002).
+	 * Degrades gracefully — never an error — when the extraction id is
+	 * unknown, the account candidates cannot be resolved, or docudesk is
+	 * unreachable/returns no suggestion (REQ-GAC-006).
+	 *
+	 * @param string $id The draft's OR object id.
+	 * @param string $schema Schema query param (SupplierInvoice|Receipt).
+	 *
+	 * @return JSONResponse `{suggestion: {...}|null, reason?: string}`.
+	 *
+	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+	 */
+	#[NoAdminRequired]
+	public function suggestGlAccount(string $id, string $schema = ''): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-    }//end feedBookingBack()
+		if (in_array($schema, self::ALLOWED_SCHEMAS, true) === false) {
+			return new JSONResponse(['error' => 'Unknown or missing schema'], Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
 
-    /**
-     * Compute a GL-account suggestion for a draft with a known docudesk
-     * extraction id (REQ-GAC-003), supplying shillinq's own active,
-     * administration-scoped chart of accounts as candidates (REQ-GAC-002).
-     * Degrades gracefully — never an error — when the extraction id is
-     * unknown, the account candidates cannot be resolved, or docudesk is
-     * unreachable/returns no suggestion (REQ-GAC-006).
-     *
-     * @param string $id     The draft's OR object id.
-     * @param string $schema Schema query param (SupplierInvoice|Receipt).
-     *
-     * @return JSONResponse `{suggestion: {...}|null, reason?: string}`.
-     *
-     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
-     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
-     */
-    #[NoAdminRequired]
-    public function suggestGlAccount(string $id, string $schema=''): JSONResponse
-    {
-        if ($this->session->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+		$guard = $this->guardDraftAccess(schema: $schema, id: $id);
+		if ($guard !== null) {
+			return $guard;
+		}
 
-        if (in_array($schema, self::ALLOWED_SCHEMAS, true) === false) {
-            return new JSONResponse(['error' => 'Unknown or missing schema'], Http::STATUS_UNPROCESSABLE_ENTITY);
-        }
+		$draft = $this->findById(schema: $schema, id: $id);
+		if ($draft === null) {
+			return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $guard = $this->guardDraftAccess(schema: $schema, id: $id);
-        if ($guard !== null) {
-            return $guard;
-        }
+		$extractionId = trim((string)($draft['docudeskExtractionId'] ?? ''));
+		if ($extractionId === '') {
+			return new JSONResponse(['suggestion' => null, 'reason' => 'extraction-id-unknown'], Http::STATUS_OK);
+		}
 
-        $draft = $this->findById(schema: $schema, id: $id);
-        if ($draft === null) {
-            return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
-        }
+		$administrationId = (string)($draft['administrationId'] ?? '');
+		$candidateAccounts = $this->candidateService->activeCandidates(administrationId: $administrationId);
 
-        $extractionId = trim((string) ($draft['docudeskExtractionId'] ?? ''));
-        if ($extractionId === '') {
-            return new JSONResponse(['suggestion' => null, 'reason' => 'extraction-id-unknown'], Http::STATUS_OK);
-        }
+		$result = $this->suggestionClient->requestSuggestion(
+			extractionId: $extractionId,
+			candidateAccounts: $candidateAccounts
+		);
 
-        $administrationId  = (string) ($draft['administrationId'] ?? '');
-        $candidateAccounts = $this->candidateService->activeCandidates(administrationId: $administrationId);
+		if ($result['success'] === false || is_array($result['suggestion']) === false) {
+			return new JSONResponse(['suggestion' => null, 'reason' => 'provider-unavailable'], Http::STATUS_OK);
+		}
 
-        $result = $this->suggestionClient->requestSuggestion(
-            extractionId: $extractionId,
-            candidateAccounts: $candidateAccounts
-        );
+		$suggested = (array)($result['suggestion']['suggestedAccounts'] ?? []);
+		$top = $suggested[0] ?? null;
+		if (is_array($top) === false) {
+			return new JSONResponse(['suggestion' => null, 'reason' => 'no-suggestion'], Http::STATUS_OK);
+		}
 
-        if ($result['success'] === false || is_array($result['suggestion']) === false) {
-            return new JSONResponse(['suggestion' => null, 'reason' => 'provider-unavailable'], Http::STATUS_OK);
-        }
+		$suggestion = [
+			'code' => (string)($top['code'] ?? ''),
+			'label' => ($top['label'] ?? null),
+			'confidence' => (float)($top['confidence'] ?? 0),
+			'rationale' => (string)($top['rationale'] ?? ''),
+			'source' => (string)($result['suggestion']['source'] ?? 'none'),
+		];
 
-        $suggested = (array) ($result['suggestion']['suggestedAccounts'] ?? []);
-        $top       = $suggested[0] ?? null;
-        if (is_array($top) === false) {
-            return new JSONResponse(['suggestion' => null, 'reason' => 'no-suggestion'], Http::STATUS_OK);
-        }
+		$this->cacheSuggestion(schema: $schema, draft: $draft, suggestion: $suggestion);
 
-        $suggestion = [
-            'code'       => (string) ($top['code'] ?? ''),
-            'label'      => ($top['label'] ?? null),
-            'confidence' => (float) ($top['confidence'] ?? 0),
-            'rationale'  => (string) ($top['rationale'] ?? ''),
-            'source'     => (string) ($result['suggestion']['source'] ?? 'none'),
-        ];
+		return new JSONResponse(['suggestion' => $suggestion], Http::STATUS_OK);
+	}//end suggestGlAccount()
 
-        $this->cacheSuggestion(schema: $schema, draft: $draft, suggestion: $suggestion);
+	/**
+	 * Cache the last-fetched suggestion on the draft (design.md Seed Data —
+	 * `suggestedGlAccount`), so a later commit-time diff needs no extra
+	 * round-trip. Best-effort: a failure to persist the cache never blocks
+	 * returning the suggestion to the caller.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $draft The draft to update.
+	 * @param array<string,mixed> $suggestion The suggestion to cache.
+	 *
+	 * @return void
+	 */
+	private function cacheSuggestion(string $schema, array $draft, array $suggestion): void {
+		$draft['suggestedGlAccount'] = $suggestion;
 
-        return new JSONResponse(['suggestion' => $suggestion], Http::STATUS_OK);
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$objectService
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema($schema)
+				->saveObject($draft);
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'ExtractionRequestController: failed to cache suggestedGlAccount (non-blocking)',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+		}
 
-    }//end suggestGlAccount()
+	}//end cacheSuggestion()
 
-    /**
-     * Cache the last-fetched suggestion on the draft (design.md Seed Data —
-     * `suggestedGlAccount`), so a later commit-time diff needs no extra
-     * round-trip. Best-effort: a failure to persist the cache never blocks
-     * returning the suggestion to the caller.
-     *
-     * @param string              $schema     OR schema slug.
-     * @param array<string,mixed> $draft      The draft to update.
-     * @param array<string,mixed> $suggestion The suggestion to cache.
-     *
-     * @return void
-     */
-    private function cacheSuggestion(string $schema, array $draft, array $suggestion): void
-    {
-        $draft['suggestedGlAccount'] = $suggestion;
+	/**
+	 * Load a draft by id and, when found, guard that the caller may access
+	 * its administration (IDOR guard, ADR-005). Returns a masking 404
+	 * JSONResponse when access is denied or the draft is missing/malformed,
+	 * or NULL when the caller may proceed.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param string $id OR object id.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function guardDraftAccess(string $schema, string $id): ?JSONResponse {
+		if ($schema === '' || $id === '') {
+			return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $objectService
-                ->setRegister(self::REGISTER_SLUG)
-                ->setSchema($schema)
-                ->saveObject($draft);
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'ExtractionRequestController: failed to cache suggestedGlAccount (non-blocking)',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-        }
+		$existing = $this->findById(schema: $schema, id: $id);
+		if ($existing === null) {
+			return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
+		}
 
-    }//end cacheSuggestion()
+		$administrationId = (string)($existing['administrationId'] ?? '');
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			// Masked 404, never 403 — never disclose that another tenant's
+			// draft exists (REQ-MA-001).
+			return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
+		}
 
-    /**
-     * Load a draft by id and, when found, guard that the caller may access
-     * its administration (IDOR guard, ADR-005). Returns a masking 404
-     * JSONResponse when access is denied or the draft is missing/malformed,
-     * or NULL when the caller may proceed.
-     *
-     * @param string $schema OR schema slug.
-     * @param string $id     OR object id.
-     *
-     * @return JSONResponse|null
-     */
-    private function guardDraftAccess(string $schema, string $id): ?JSONResponse
-    {
-        if ($schema === '' || $id === '') {
-            return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
-        }
+		return null;
+	}//end guardDraftAccess()
 
-        $existing = $this->findById(schema: $schema, id: $id);
-        if ($existing === null) {
-            return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
-        }
+	/**
+	 * Find an object by id via the real ObjectService API.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param string $id OR object id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findById(string $schema, string $id): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema($schema)
+				->findAll(['filters' => ['id' => $id]]);
+		} catch (Throwable $e) {
+			return null;
+		}
 
-        $administrationId = (string) ($existing['administrationId'] ?? '');
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            // Masked 404, never 403 — never disclose that another tenant's
-            // draft exists (REQ-MA-001).
-            return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
-        }
+		if (is_array($rows) === false) {
+			return null;
+		}
 
-        return null;
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
 
-    }//end guardDraftAccess()
+		return null;
+	}//end findById()
 
-    /**
-     * Find an object by id via the real ObjectService API.
-     *
-     * @param string $schema OR schema slug.
-     * @param string $id     OR object id.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findById(string $schema, string $id): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister(self::REGISTER_SLUG)
-                ->setSchema($schema)
-                ->findAll(['filters' => ['id' => $id]]);
-        } catch (Throwable $e) {
-            return null;
-        }
+	/**
+	 * Decode the JSON request body, falling back to POST params.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function decodeBody(): array {
+		$raw = file_get_contents('php://input');
+		if ($raw !== false && $raw !== '') {
+			$decoded = json_decode($raw, true);
+			if (is_array($decoded) === true) {
+				return $decoded;
+			}
+		}
 
-        if (is_array($rows) === false) {
-            return null;
-        }
+		$params = $this->request->getParams();
+		if (is_array($params) === true) {
+			return $params;
+		}
 
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                return $row;
-            }
-        }
-
-        return null;
-
-    }//end findById()
-
-    /**
-     * Decode the JSON request body, falling back to POST params.
-     *
-     * @return array<string,mixed>
-     */
-    private function decodeBody(): array
-    {
-        $raw = file_get_contents('php://input');
-        if ($raw !== false && $raw !== '') {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded) === true) {
-                return $decoded;
-            }
-        }
-
-        $params = $this->request->getParams();
-        if (is_array($params) === true) {
-            return $params;
-        }
-
-        return [];
-
-    }//end decodeBody()
+		return [];
+	}//end decodeBody()
 }//end class

@@ -74,30 +74,29 @@ namespace OCA\Shillinq\Service\External\Kvk;
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-interface KvkHandelsregisterAdapterInterface
-{
-    /**
-     * Look up a legal entity by KvK number.
-     *
-     * @param string              $kvkNumber 8-digit KvK number — leading zeros
-     *                                       preserved.
-     * @param array<string,mixed> $context   Optional context — administrationId,
-     *                                       lookupReason (`onboarding` |
-     *                                       `ar-enrichment` |
-     *                                       `ap-enrichment` |
-     *                                       `consolidation-graph`),
-     *                                       correlationId.
-     *
-     * @return KvkLookupResult The lookup outcome (status + entity envelope
-     *                         + optional vestiging list).
-     */
-    public function lookup(string $kvkNumber, array $context=[]): KvkLookupResult;
+interface KvkHandelsregisterAdapterInterface {
+	/**
+	 * Look up a legal entity by KvK number.
+	 *
+	 * @param string $kvkNumber 8-digit KvK number — leading zeros
+	 *                          preserved.
+	 * @param array<string,mixed> $context Optional context — administrationId,
+	 *                                     lookupReason (`onboarding` |
+	 *                                     `ar-enrichment` |
+	 *                                     `ap-enrichment` |
+	 *                                     `consolidation-graph`),
+	 *                                     correlationId.
+	 *
+	 * @return KvkLookupResult The lookup outcome (status + entity envelope
+	 *                         + optional vestiging list).
+	 */
+	public function lookup(string $kvkNumber, array $context = []): KvkLookupResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * the KvK Handelsregister.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * the KvK Handelsregister.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

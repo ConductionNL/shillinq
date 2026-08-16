@@ -33,21 +33,20 @@ namespace OCA\Shillinq\Service\Dunning;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
  */
-interface PostNLAdapterInterface
-{
-    /**
-     * Submit a registered letter to PostNL.
-     *
-     * The implementation MUST return a DunningChannelSendResult whose
-     * `extras` carry `barcode` (the 3S-prefixed Track & Trace code) and
-     * `trackingUrl`. On a temporary failure return deliveryStatus=FAILED
-     * with a `errorMessage` so the caller can queue a retry.
-     *
-     * @param array<string,mixed> $payload Channel-specific payload — recipientAdres + letterPdfRef.
-     *
-     * @return DunningChannelSendResult The dispatch attempt outcome.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
-     */
-    public function sendRegisteredLetter(array $payload): DunningChannelSendResult;
+interface PostNLAdapterInterface {
+	/**
+	 * Submit a registered letter to PostNL.
+	 *
+	 * The implementation MUST return a DunningChannelSendResult whose
+	 * `extras` carry `barcode` (the 3S-prefixed Track & Trace code) and
+	 * `trackingUrl`. On a temporary failure return deliveryStatus=FAILED
+	 * with a `errorMessage` so the caller can queue a retry.
+	 *
+	 * @param array<string,mixed> $payload Channel-specific payload — recipientAdres + letterPdfRef.
+	 *
+	 * @return DunningChannelSendResult The dispatch attempt outcome.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+	 */
+	public function sendRegisteredLetter(array $payload): DunningChannelSendResult;
 }//end interface

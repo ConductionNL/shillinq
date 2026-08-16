@@ -44,240 +44,216 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class BudgetImpactEmitterTest extends TestCase
-{
+final class BudgetImpactEmitterTest extends TestCase {
 
-    /**
-     * Build a recording IEventDispatcher.
-     *
-     * @return IEventDispatcher
-     */
-    private function recordingDispatcher(): IEventDispatcher
-    {
-        return new class implements IEventDispatcher {
+	/**
+	 * Build a recording IEventDispatcher.
+	 *
+	 * @return IEventDispatcher
+	 */
+	private function recordingDispatcher(): IEventDispatcher {
+		return new class implements IEventDispatcher {
+			/**
+			 * @var array<int, array{name: string, event: Event}>
+			 */
+			public array $events = [];
 
-            /**
-             * @var array<int, array{name: string, event: Event}>
-             */
-            public array $events = [];
+			/**
+			 * @param string $eventName Event name.
+			 * @param Event $event Event payload.
+			 *
+			 * @return void
+			 */
+			public function dispatch(string $eventName, Event $event): void {
+				$this->events[] = ['name' => $eventName, 'event' => $event];
 
-            /**
-             * @param string $eventName Event name.
-             * @param Event  $event     Event payload.
-             *
-             * @return void
-             */
-            public function dispatch(string $eventName, Event $event): void
-            {
-                $this->events[] = ['name' => $eventName, 'event' => $event];
+			}//end dispatch()
 
-            }//end dispatch()
+			/**
+			 * @param string $eventName Event name.
+			 * @param Event $event Event payload.
+			 *
+			 * @return void
+			 */
+			public function dispatchTyped(Event $event): void {
+				$this->events[] = ['name' => get_class($event), 'event' => $event];
 
-            /**
-             * @param string $eventName Event name.
-             * @param Event  $event     Event payload.
-             *
-             * @return void
-             */
-            public function dispatchTyped(Event $event): void
-            {
-                $this->events[] = ['name' => get_class($event), 'event' => $event];
+			}//end dispatchTyped()
 
-            }//end dispatchTyped()
+			/**
+			 * @param string $eventName Event name.
+			 * @param callable $listener Listener.
+			 * @param int $priority Priority.
+			 *
+			 * @return void
+			 */
+			public function addListener(string $eventName, $listener, int $priority = 0): void {
+				// No-op.
 
-            /**
-             * @param string   $eventName Event name.
-             * @param callable $listener  Listener.
-             * @param int      $priority  Priority.
-             *
-             * @return void
-             */
-            public function addListener(string $eventName, $listener, int $priority=0): void
-            {
-                // No-op.
+			}//end addListener()
 
-            }//end addListener()
+			/**
+			 * @param string $eventName Event name.
+			 * @param string $serviceName Service name.
+			 * @param int $priority Priority.
+			 *
+			 * @return void
+			 */
+			public function addServiceListener(string $eventName, string $serviceName, int $priority = 0): void {
+				// No-op.
 
-            /**
-             * @param string         $eventName    Event name.
-             * @param string         $serviceName  Service name.
-             * @param int            $priority     Priority.
-             *
-             * @return void
-             */
-            public function addServiceListener(string $eventName, string $serviceName, int $priority=0): void
-            {
-                // No-op.
+			}//end addServiceListener()
 
-            }//end addServiceListener()
+			public function hasListeners(string $eventName): bool {
+				return false;
+			}//end hasListeners()
 
-            public function hasListeners(string $eventName): bool
-            {
-                return false;
+			public function removeListener(string $eventName, callable $listener): void {
+				// No-op.
 
-            }//end hasListeners()
+			}//end removeListener()
+		};
 
-            public function removeListener(string $eventName, callable $listener): void
-            {
-                // No-op.
+	}//end recordingDispatcher()
 
-            }//end removeListener()
-        };
+	/**
+	 * Build a throwing IEventDispatcher to exercise the fail-soft path.
+	 *
+	 * @return IEventDispatcher
+	 */
+	private function throwingDispatcher(): IEventDispatcher {
+		return new class implements IEventDispatcher {
+			public function dispatch(string $eventName, Event $event): void {
+				throw new \RuntimeException('boom');
+			}//end dispatch()
 
-    }//end recordingDispatcher()
+			public function dispatchTyped(Event $event): void {
+				// No-op.
 
-    /**
-     * Build a throwing IEventDispatcher to exercise the fail-soft path.
-     *
-     * @return IEventDispatcher
-     */
-    private function throwingDispatcher(): IEventDispatcher
-    {
-        return new class implements IEventDispatcher {
+			}//end dispatchTyped()
 
-            public function dispatch(string $eventName, Event $event): void
-            {
-                throw new \RuntimeException('boom');
+			public function addListener(string $eventName, $listener, int $priority = 0): void {
+				// No-op.
 
-            }//end dispatch()
+			}//end addListener()
 
-            public function dispatchTyped(Event $event): void
-            {
-                // No-op.
+			public function addServiceListener(string $eventName, string $serviceName, int $priority = 0): void {
+				// No-op.
 
-            }//end dispatchTyped()
+			}//end addServiceListener()
 
-            public function addListener(string $eventName, $listener, int $priority=0): void
-            {
-                // No-op.
+			public function hasListeners(string $eventName): bool {
+				return false;
+			}//end hasListeners()
 
-            }//end addListener()
+			public function removeListener(string $eventName, callable $listener): void {
+				// No-op.
 
-            public function addServiceListener(string $eventName, string $serviceName, int $priority=0): void
-            {
-                // No-op.
+			}//end removeListener()
+		};
 
-            }//end addServiceListener()
+	}//end throwingDispatcher()
 
-            public function hasListeners(string $eventName): bool
-            {
-                return false;
+	/**
+	 * `emitActivated()` dispatches a `shillinq.obligation.activated`
+	 * event with the budget-impact payload (REQ-007).
+	 *
+	 * @return void
+	 */
+	public function testEmitActivatedShapesAndDispatchesPayload(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
 
-            }//end hasListeners()
+		$emitter->emitActivated(
+			[
+				'sourceReference' => 'TN-2026-0001',
+				'amount' => 50000.0,
+				'costCentre' => 'KP-100',
+				'termStart' => '2026-01-01',
+				'termEnd' => '2026-12-31',
+				'administrationId' => 'adm-x',
+			],
+			['tenderNedUrl' => 'https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001']
+		);
 
-            public function removeListener(string $eventName, callable $listener): void
-            {
-                // No-op.
+		$this->assertCount(1, $dispatcher->events);
+		$this->assertSame(BudgetImpactEmitter::EVENT_OBLIGATION_ACTIVATED, $dispatcher->events[0]['name']);
 
-            }//end removeListener()
-        };
+		/** @var array<string, mixed> $args */
+		$args = $dispatcher->events[0]['event']->getArguments();
+		$this->assertSame('TN-2026-0001', $args['sourceReference']);
+		$this->assertSame(50000.0, $args['contractValue']);
+		$this->assertSame('KP-100', $args['costCentre']);
+		$this->assertSame(
+			'https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001',
+			$args['tenderNedUrl']
+		);
+		$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', (string)$args['emittedAt']);
 
-    }//end throwingDispatcher()
+	}//end testEmitActivatedShapesAndDispatchesPayload()
 
-    /**
-     * `emitActivated()` dispatches a `shillinq.obligation.activated`
-     * event with the budget-impact payload (REQ-007).
-     *
-     * @return void
-     */
-    public function testEmitActivatedShapesAndDispatchesPayload(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
+	/**
+	 * `emitMilestoneCompleted()` dispatches a `shillinq.milestone.completed`
+	 * event with the audit payload (REQ-005).
+	 *
+	 * @return void
+	 */
+	public function testEmitMilestoneCompletedShapesAndDispatchesPayload(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
 
-        $emitter->emitActivated(
-            [
-                'bronReferentie'   => 'TN-2026-0001',
-                'bedrag'           => 50000.0,
-                'kostenplaats'     => 'KP-100',
-                'looptijdStart'    => '2026-01-01',
-                'looptijdEind'     => '2026-12-31',
-                'administrationId' => 'adm-x',
-            ],
-            ['tenderNedUrl' => 'https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001']
-        );
+		$emitter->emitMilestoneCompleted(
+			[
+				'commitmentId' => 'TN-TN-2026-0001',
+				'milestoneId' => 'M-Q1',
+				'deliveryType' => 'eindoplevering',
+				'deliveryDate' => '2026-12-15',
+				'approved' => true,
+				'supportingDocuments' => [
+					['documentId' => 'doc-1'],
+					['documentId' => 'doc-2'],
+				],
+				'administrationId' => 'adm-x',
+			]
+		);
 
-        $this->assertCount(1, $dispatcher->events);
-        $this->assertSame(BudgetImpactEmitter::EVENT_OBLIGATION_ACTIVATED, $dispatcher->events[0]['name']);
+		$this->assertCount(1, $dispatcher->events);
+		$this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
 
-        /** @var array<string, mixed> $args */
-        $args = $dispatcher->events[0]['event']->getArguments();
-        $this->assertSame('TN-2026-0001', $args['bronReferentie']);
-        $this->assertSame(50000.0, $args['contractWaarde']);
-        $this->assertSame('KP-100', $args['kostenplaats']);
-        $this->assertSame(
-            'https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001',
-            $args['tenderNedUrl']
-        );
-        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', (string) $args['emittedAt']);
+		$args = $dispatcher->events[0]['event']->getArguments();
+		$this->assertSame('TN-TN-2026-0001', $args['commitmentId']);
+		$this->assertSame('M-Q1', $args['milestoneId']);
+		$this->assertSame('eindoplevering', $args['deliveryType']);
+		$this->assertTrue((bool)$args['approved']);
+		$this->assertSame(2, $args['bewijsstukCount']);
 
-    }//end testEmitActivatedShapesAndDispatchesPayload()
+	}//end testEmitMilestoneCompletedShapesAndDispatchesPayload()
 
-    /**
-     * `emitMilestoneCompleted()` dispatches a `shillinq.milestone.completed`
-     * event with the audit payload (REQ-005).
-     *
-     * @return void
-     */
-    public function testEmitMilestoneCompletedShapesAndDispatchesPayload(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
+	/**
+	 * A dispatcher exception is swallowed (fail-soft contract).
+	 *
+	 * @return void
+	 */
+	public function testEmitActivatedSwallowsDispatcherException(): void {
+		$emitter = new BudgetImpactEmitter($this->throwingDispatcher(), new NullLogger());
 
-        $emitter->emitMilestoneCompleted(
-            [
-                'verplichtingId'   => 'TN-TN-2026-0001',
-                'mijlpaalId'       => 'M-Q1',
-                'opleveringsType'  => 'eindoplevering',
-                'opleveringsDatum' => '2026-12-15',
-                'goedgekeurd'      => true,
-                'bewijsstukken'    => [
-                    ['documentId' => 'doc-1'],
-                    ['documentId' => 'doc-2'],
-                ],
-                'administrationId' => 'adm-x',
-            ]
-        );
+		// The test is "does not throw". If it raises, PHPUnit fails the test
+		// — no need for assertNoException semantics in PHPUnit 10.
+		$emitter->emitActivated(['sourceReference' => 'TN-X'], []);
+		$this->addToAssertionCount(1);
 
-        $this->assertCount(1, $dispatcher->events);
-        $this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
+	}//end testEmitActivatedSwallowsDispatcherException()
 
-        $args = $dispatcher->events[0]['event']->getArguments();
-        $this->assertSame('TN-TN-2026-0001', $args['verplichtingId']);
-        $this->assertSame('M-Q1', $args['mijlpaalId']);
-        $this->assertSame('eindoplevering', $args['opleveringsType']);
-        $this->assertTrue((bool) $args['goedgekeurd']);
-        $this->assertSame(2, $args['bewijsstukCount']);
+	/**
+	 * A dispatcher exception is swallowed (fail-soft contract).
+	 *
+	 * @return void
+	 */
+	public function testEmitMilestoneCompletedSwallowsDispatcherException(): void {
+		$emitter = new BudgetImpactEmitter($this->throwingDispatcher(), new NullLogger());
 
-    }//end testEmitMilestoneCompletedShapesAndDispatchesPayload()
+		$emitter->emitMilestoneCompleted(['commitmentId' => 'TN-X']);
+		$this->addToAssertionCount(1);
 
-    /**
-     * A dispatcher exception is swallowed (fail-soft contract).
-     *
-     * @return void
-     */
-    public function testEmitActivatedSwallowsDispatcherException(): void
-    {
-        $emitter = new BudgetImpactEmitter($this->throwingDispatcher(), new NullLogger());
-
-        // The test is "does not throw". If it raises, PHPUnit fails the test
-        // — no need for assertNoException semantics in PHPUnit 10.
-        $emitter->emitActivated(['bronReferentie' => 'TN-X'], []);
-        $this->addToAssertionCount(1);
-
-    }//end testEmitActivatedSwallowsDispatcherException()
-
-    /**
-     * A dispatcher exception is swallowed (fail-soft contract).
-     *
-     * @return void
-     */
-    public function testEmitMilestoneCompletedSwallowsDispatcherException(): void
-    {
-        $emitter = new BudgetImpactEmitter($this->throwingDispatcher(), new NullLogger());
-
-        $emitter->emitMilestoneCompleted(['verplichtingId' => 'TN-X']);
-        $this->addToAssertionCount(1);
-
-    }//end testEmitMilestoneCompletedSwallowsDispatcherException()
+	}//end testEmitMilestoneCompletedSwallowsDispatcherException()
 }//end class

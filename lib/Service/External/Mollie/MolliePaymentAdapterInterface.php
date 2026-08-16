@@ -77,34 +77,33 @@ namespace OCA\Shillinq\Service\External\Mollie;
  * @spec openspec/specs/bookings-deposits/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-interface MolliePaymentAdapterInterface
-{
-    /**
-     * Create a Mollie payment intent.
-     *
-     * @param array<string,mixed> $payload Payment envelope —
-     *                                     amount{value,currency},
-     *                                     description, redirectUrl,
-     *                                     webhookUrl, method (optional —
-     *                                     `ideal` | `creditcard` |
-     *                                     `bancontact` | `sepadirectdebit`),
-     *                                     metadata{invoiceId | depositPaymentId,
-     *                                     administrationId, correlationId}.
-     *
-     * @return MolliePaymentResult The dispatch outcome (status +
-     *                             Mollie-side paymentId + checkoutUrl).
-     *
-     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
-     */
-    public function createPayment(array $payload): MolliePaymentResult;
+interface MolliePaymentAdapterInterface {
+	/**
+	 * Create a Mollie payment intent.
+	 *
+	 * @param array<string,mixed> $payload Payment envelope —
+	 *                                     amount{value,currency},
+	 *                                     description, redirectUrl,
+	 *                                     webhookUrl, method (optional —
+	 *                                     `ideal` | `creditcard` |
+	 *                                     `bancontact` | `sepadirectdebit`),
+	 *                                     metadata{invoiceId | depositPaymentId,
+	 *                                     administrationId, correlationId}.
+	 *
+	 * @return MolliePaymentResult The dispatch outcome (status +
+	 *                             Mollie-side paymentId + checkoutUrl).
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function createPayment(array $payload): MolliePaymentResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * Mollie.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     *
-     * @spec openspec/specs/bookings-deposits/spec.md
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * Mollie.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 *
+	 * @spec openspec/specs/bookings-deposits/spec.md
+	 */
+	public function isDormant(): bool;
 }//end interface

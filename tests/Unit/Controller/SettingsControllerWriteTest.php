@@ -44,201 +44,189 @@ use ReflectionMethod;
  * checked for a 200, or only that the response was a JSONResponse, would pass
  * against a controller that silently wrote nothing.
  */
-final class SettingsControllerWriteTest extends TestCase
-{
+final class SettingsControllerWriteTest extends TestCase {
 
-    /**
-     * The mocked request.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * The mocked request.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * The mocked settings service.
-     *
-     * @var SettingsService&MockObject
-     */
-    private SettingsService&MockObject $settingsService;
+	/**
+	 * The mocked settings service.
+	 *
+	 * @var SettingsService&MockObject
+	 */
+	private SettingsService&MockObject $settingsService;
 
-    /**
-     * Controller under test.
-     *
-     * @var SettingsController
-     */
-    private SettingsController $controller;
+	/**
+	 * Controller under test.
+	 *
+	 * @var SettingsController
+	 */
+	private SettingsController $controller;
 
+	/**
+	 * Set up the mocks shared by every test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-    /**
-     * Set up the mocks shared by every test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->settingsService = $this->createMock(SettingsService::class);
 
-        $this->request         = $this->createMock(IRequest::class);
-        $this->settingsService = $this->createMock(SettingsService::class);
+		$this->controller = new SettingsController(
+			request: $this->request,
+			settingsService: $this->settingsService
+		);
 
-        $this->controller = new SettingsController(
-            request: $this->request,
-            settingsService: $this->settingsService
-        );
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * PUT /api/settings must persist the request parameters and return them.
+	 *
+	 * @return void
+	 */
+	public function testUpdatePersistsTheRequestParametersAndReturnsTheStoredConfig(): void {
+		$submitted = ['register' => 'shillinq'];
+		$stored = [
+			'register' => 'shillinq',
+			'rgs_template' => 'bbv',
+			'administration_id' => 'ADM-001',
+			'openregisters' => true,
+			'isAdmin' => true,
+		];
 
+		$this->request->method('getParams')->willReturn($submitted);
 
-    /**
-     * PUT /api/settings must persist the request parameters and return them.
-     *
-     * @return void
-     */
-    public function testUpdatePersistsTheRequestParametersAndReturnsTheStoredConfig(): void
-    {
-        $submitted = ['register' => 'shillinq'];
-        $stored    = [
-            'register'          => 'shillinq',
-            'rgs_template'      => 'bbv',
-            'administration_id' => 'ADM-001',
-            'openregisters'     => true,
-            'isAdmin'           => true,
-        ];
+		// The ITEM: the write reaches the service, with the submitted params.
+		$this->settingsService->expects($this->once())
+			->method('updateSettings')
+			->with($submitted)
+			->willReturn($stored);
 
-        $this->request->method('getParams')->willReturn($submitted);
+		$response = $this->controller->update();
 
-        // The ITEM: the write reaches the service, with the submitted params.
-        $this->settingsService->expects($this->once())
-            ->method('updateSettings')
-            ->with($submitted)
-            ->willReturn($stored);
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame(
+			[
+				'success' => true,
+				'config' => $stored,
+			],
+			$response->getData(),
+			'update() must return the config the service actually stored, not the submission'
+		);
 
-        $response = $this->controller->update();
+	}//end testUpdatePersistsTheRequestParametersAndReturnsTheStoredConfig()
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(
-            [
-                'success' => true,
-                'config'  => $stored,
-            ],
-            $response->getData(),
-            'update() must return the config the service actually stored, not the submission'
-        );
+	/**
+	 * POST /api/settings is the legacy alias and must write identically.
+	 *
+	 * The alias staying a real write — not an empty success — is load-bearing:
+	 * shillinq's admin settings UI still POSTs to this route.
+	 *
+	 * @return void
+	 */
+	public function testCreateDelegatesToUpdateAndStillWrites(): void {
+		$submitted = ['rgs_template' => 'bbv'];
+		$stored = ['rgs_template' => 'bbv'];
 
-    }//end testUpdatePersistsTheRequestParametersAndReturnsTheStoredConfig()
+		$this->request->method('getParams')->willReturn($submitted);
 
+		$this->settingsService->expects($this->once())
+			->method('updateSettings')
+			->with($submitted)
+			->willReturn($stored);
 
-    /**
-     * POST /api/settings is the legacy alias and must write identically.
-     *
-     * The alias staying a real write — not an empty success — is load-bearing:
-     * shillinq's admin settings UI still POSTs to this route.
-     *
-     * @return void
-     */
-    public function testCreateDelegatesToUpdateAndStillWrites(): void
-    {
-        $submitted = ['rgs_template' => 'bbv'];
-        $stored    = ['rgs_template' => 'bbv'];
+		$response = $this->controller->create();
 
-        $this->request->method('getParams')->willReturn($submitted);
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame(
+			[
+				'success' => true,
+				'config' => $stored,
+			],
+			$response->getData(),
+			'create() must produce the same written result as update()'
+		);
 
-        $this->settingsService->expects($this->once())
-            ->method('updateSettings')
-            ->with($submitted)
-            ->willReturn($stored);
+	}//end testCreateDelegatesToUpdateAndStillWrites()
 
-        $response = $this->controller->create();
+	/**
+	 * The write must not be skipped when the submission is empty.
+	 *
+	 * An early return on an empty payload would look identical to a
+	 * successful no-op write from the caller's side.
+	 *
+	 * @return void
+	 */
+	public function testEmptySubmissionStillReachesTheService(): void {
+		$this->request->method('getParams')->willReturn([]);
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(
-            [
-                'success' => true,
-                'config'  => $stored,
-            ],
-            $response->getData(),
-            'create() must produce the same written result as update()'
-        );
+		$this->settingsService->expects($this->once())
+			->method('updateSettings')
+			->with([])
+			->willReturn(['unchanged' => true]);
 
-    }//end testCreateDelegatesToUpdateAndStillWrites()
+		$response = $this->controller->update();
 
+		$this->assertSame(
+			[
+				'success' => true,
+				'config' => ['unchanged' => true],
+			],
+			$response->getData()
+		);
 
-    /**
-     * The write must not be skipped when the submission is empty.
-     *
-     * An early return on an empty payload would look identical to a
-     * successful no-op write from the caller's side.
-     *
-     * @return void
-     */
-    public function testEmptySubmissionStillReachesTheService(): void
-    {
-        $this->request->method('getParams')->willReturn([]);
+	}//end testEmptySubmissionStillReachesTheService()
 
-        $this->settingsService->expects($this->once())
-            ->method('updateSettings')
-            ->with([])
-            ->willReturn(['unchanged' => true]);
+	/**
+	 * Both write verbs must carry the app's admin posture.
+	 *
+	 * Nextcloud's SecurityMiddleware evaluates auth attributes on the
+	 * DISPATCHED method only, so `create()` delegating to `update()` does NOT
+	 * inherit `update()`'s posture — each needs its own attribute. Equally, a
+	 * write must never pick up the posture of a sibling READ method.
+	 *
+	 * @return void
+	 */
+	public function testBothWriteVerbsAreAdminGuardedIndependently(): void {
+		$inspected = 0;
 
-        $response = $this->controller->update();
+		foreach (['update', 'create'] as $method) {
+			$attributes = (new ReflectionMethod(SettingsController::class, $method))
+				->getAttributes(AuthorizedAdminSetting::class);
 
-        $this->assertSame(
-            [
-                'success' => true,
-                'config'  => ['unchanged' => true],
-            ],
-            $response->getData()
-        );
+			$this->assertCount(
+				1,
+				$attributes,
+				sprintf(
+					'SettingsController::%s() is a WRITE and must declare its own '
+					. '#[AuthorizedAdminSetting] — the middleware only reads attributes '
+					. 'on the dispatched method, so delegation does not inherit posture.',
+					$method
+				)
+			);
 
-    }//end testEmptySubmissionStillReachesTheService()
+			$this->assertSame(
+				[Application::APP_ID],
+				$attributes[0]->getArguments(),
+				sprintf(
+					'SettingsController::%s() must be bound to this app\'s admin setting, '
+					. 'matching the posture of the existing settings write.',
+					$method
+				)
+			);
 
+			$inspected++;
+		}//end foreach
 
-    /**
-     * Both write verbs must carry the app's admin posture.
-     *
-     * Nextcloud's SecurityMiddleware evaluates auth attributes on the
-     * DISPATCHED method only, so `create()` delegating to `update()` does NOT
-     * inherit `update()`'s posture — each needs its own attribute. Equally, a
-     * write must never pick up the posture of a sibling READ method.
-     *
-     * @return void
-     */
-    public function testBothWriteVerbsAreAdminGuardedIndependently(): void
-    {
-        $inspected = 0;
+		// Positive control: the loop above asserts nothing if it never ran.
+		$this->assertSame(2, $inspected, 'Both write verbs must have been inspected');
 
-        foreach (['update', 'create'] as $method) {
-            $attributes = (new ReflectionMethod(SettingsController::class, $method))
-                ->getAttributes(AuthorizedAdminSetting::class);
-
-            $this->assertCount(
-                1,
-                $attributes,
-                sprintf(
-                    'SettingsController::%s() is a WRITE and must declare its own '
-                    .'#[AuthorizedAdminSetting] — the middleware only reads attributes '
-                    .'on the dispatched method, so delegation does not inherit posture.',
-                    $method
-                )
-            );
-
-            $this->assertSame(
-                [Application::APP_ID],
-                $attributes[0]->getArguments(),
-                sprintf(
-                    'SettingsController::%s() must be bound to this app\'s admin setting, '
-                    .'matching the posture of the existing settings write.',
-                    $method
-                )
-            );
-
-            $inspected++;
-        }//end foreach
-
-        // Positive control: the loop above asserts nothing if it never ran.
-        $this->assertSame(2, $inspected, 'Both write verbs must have been inspected');
-
-    }//end testBothWriteVerbsAreAdminGuardedIndependently()
-
+	}//end testBothWriteVerbsAreAdminGuardedIndependently()
 
 }//end class

@@ -34,176 +34,166 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Reads programmabegroting data and produces sluitend-status and exports.
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
  */
-class ProgrammabegrotingService
-{
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface         $container DI container — OR's ObjectService is
-     *                                              fetched lazily.
-     * @param IAppConfig                 $appConfig App config for the register slug.
-     * @param SluitendCalculator         $sluitend  Computes the sluitend-flags and toezichtregime.
-     * @param ProgrammabegrotingExporter $exporter  Produces iv3 / EMU / JSON export shapes.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly SluitendCalculator $sluitend,
-        private readonly ProgrammabegrotingExporter $exporter,
-    ) {
-    }//end __construct()
+class ProgrammabegrotingService {
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 *                                      fetched lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param SluitendCalculator $sluitend Computes the sluitend-flags and toezichtregime.
+	 * @param ProgrammabegrotingExporter $exporter Produces iv3 / EMU / JSON export shapes.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly SluitendCalculator $sluitend,
+		private readonly ProgrammabegrotingExporter $exporter,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Return the computed sluitend-status for one begroting (REQ-008, REQ-011).
-     *
-     * Fetches the begroting and its meerjarenraming jaren scoped to the
-     * administration, evaluates each year and the overall flags via
-     * SluitendCalculator, and derives the toezichtregime.
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     * @param string $begrotingId      The Programmabegroting.id to evaluate.
-     *
-     * @return array{begrotingId:string,sluitendStructureel:bool,sluitendReëel:bool,toezichtRegime:string,jaren:array<int,array<string,mixed>>}
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
-     */
-    public function sluitendStatus(string $administrationId, string $begrotingId): array
-    {
-        $begroting = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $begrotingId, 'administrationId' => $administrationId]);
-        $nominale  = (float) ($begroting['nominaleOntwikkeling'] ?? 2.0);
+	/**
+	 * Return the computed sluitend-status for one begroting (REQ-008, REQ-011).
+	 *
+	 * Fetches the begroting and its meerjarenraming jaren scoped to the
+	 * administration, evaluates each year and the overall flags via
+	 * SluitendCalculator, and derives the toezichtregime.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $budgetId The Programmabegroting.id to evaluate.
+	 *
+	 * @return array{budgetId:string,structurallyBalanced:bool,sluitendReëel:bool,supervisionRegime:string,jaren:array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
+	 */
+	public function sluitendStatus(string $administrationId, string $budgetId): array {
+		$budget = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $budgetId, 'administrationId' => $administrationId]);
+		$nominale = (float)($budget['nominalDevelopment'] ?? 2.0);
 
-        $jaren = $this->fetchMany(schema: 'Meerjarenraming', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
+		$jaren = $this->fetchMany(schema: 'Meerjarenraming', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
 
-        $evaluated = [];
-        foreach ($jaren as $jaar) {
-            $result      = $this->sluitend->evaluateYear(year: $jaar, nominaleOntwikkeling: $nominale);
-            $evaluated[] = [
-                'jaar'             => ($jaar['jaar'] ?? null),
-                'saldoStructureel' => $result['saldoStructureel'],
-                'saldoReëel'       => $result['saldoReëel'],
-                'sluitend'         => $result['sluitend'],
-            ];
-        }
+		$evaluated = [];
+		foreach ($jaren as $year) {
+			$result = $this->sluitend->evaluateYear(year: $year, nominalDevelopment: $nominale);
+			$evaluated[] = [
+				'year' => ($year['year'] ?? null),
+				'balanceStructural' => $result['balanceStructural'],
+				'saldoReëel' => $result['saldoReëel'],
+				'sluitend' => $result['sluitend'],
+			];
+		}
 
-        $flags  = $this->sluitend->evaluateBegroting(years: $jaren, nominaleOntwikkeling: $nominale);
-        $regime = $this->sluitend->determineToezichtRegime(
-            sluitendStructureel: $flags['sluitendStructureel'],
-            sluitendReeel: $flags['sluitendReëel']
-        );
+		$flags = $this->sluitend->evaluateBegroting(years: $jaren, nominalDevelopment: $nominale);
+		$regime = $this->sluitend->determineToezichtRegime(
+			structurallyBalanced: $flags['structurallyBalanced'],
+			sluitendReeel: $flags['sluitendReëel']
+		);
 
-        return [
-            'begrotingId'         => $begrotingId,
-            'sluitendStructureel' => $flags['sluitendStructureel'],
-            'sluitendReëel'       => $flags['sluitendReëel'],
-            'toezichtRegime'      => $regime,
-            'jaren'               => $evaluated,
-        ];
+		return [
+			'budgetId' => $budgetId,
+			'structurallyBalanced' => $flags['structurallyBalanced'],
+			'sluitendReëel' => $flags['sluitendReëel'],
+			'supervisionRegime' => $regime,
+			'jaren' => $evaluated,
+		];
 
-    }//end sluitendStatus()
+	}//end sluitendStatus()
 
-    /**
-     * Produce the OpenCatalogi JSON export for one begroting (REQ-012).
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     * @param string $begrotingId      The Programmabegroting.id to export.
-     *
-     * @return array<string,mixed> The JSON-serialisable export shape.
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
-     */
-    public function jsonExport(string $administrationId, string $begrotingId): array
-    {
-        $begroting  = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $begrotingId, 'administrationId' => $administrationId]);
-        $programmas = $this->fetchMany(schema: 'Programma', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
-        $taakvelden = $this->fetchMany(schema: 'Taakveld', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
-        $paragrafen = $this->fetchMany(schema: 'Paragraaf', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
+	/**
+	 * Produce the OpenCatalogi JSON export for one begroting (REQ-012).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $budgetId The Programmabegroting.id to export.
+	 *
+	 * @return array<string,mixed> The JSON-serialisable export shape.
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
+	 */
+	public function jsonExport(string $administrationId, string $budgetId): array {
+		$budget = $this->fetchOne(schema: 'Programmabegroting', filters: ['id' => $budgetId, 'administrationId' => $administrationId]);
+		$programmas = $this->fetchMany(schema: 'Programma', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
+		$taskFields = $this->fetchMany(schema: 'Taakveld', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
+		$paragrafen = $this->fetchMany(schema: 'Paragraaf', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
 
-        return $this->exporter->jsonExport(
-            begroting: $begroting,
-            programmas: $programmas,
-            taakvelden: $taakvelden,
-            paragrafen: $paragrafen
-        );
+		return $this->exporter->jsonExport(
+			budget: $budget,
+			programmas: $programmas,
+			taskFields: $taskFields,
+			paragrafen: $paragrafen
+		);
 
-    }//end jsonExport()
+	}//end jsonExport()
 
-    /**
-     * Produce the iv3 taakveld-aggregated rows for one begroting (REQ-012).
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     * @param string $begrotingId      The Programmabegroting.id to export.
-     *
-     * @return array<int,array{taakveldCode:string,baten:float,lasten:float}> The iv3 rows.
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
-     */
-    public function iv3Export(string $administrationId, string $begrotingId): array
-    {
-        $taakvelden = $this->fetchMany(schema: 'Taakveld', filters: ['begrotingId' => $begrotingId, 'administrationId' => $administrationId]);
-        return $this->exporter->iv3Rows(taakvelden: $taakvelden);
+	/**
+	 * Produce the iv3 taakveld-aggregated rows for one begroting (REQ-012).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $budgetId The Programmabegroting.id to export.
+	 *
+	 * @return array<int,array{taskFieldCode:string,revenue:float,expenses:float}> The iv3 rows.
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
+	 */
+	public function iv3Export(string $administrationId, string $budgetId): array {
+		$taskFields = $this->fetchMany(schema: 'Taakveld', filters: ['budgetId' => $budgetId, 'administrationId' => $administrationId]);
+		return $this->exporter->iv3Rows(taskFields: $taskFields);
+	}//end iv3Export()
 
-    }//end iv3Export()
+	/**
+	 * Fetch a single object row matching the filters, or an empty array.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param array<string,mixed> $filters The ObjectService filters.
+	 *
+	 * @return array<string,mixed> The first matching row, or [].
+	 */
+	private function fetchOne(string $schema, array $filters): array {
+		foreach ($this->fetchMany(schema: $schema, filters: $filters) as $row) {
+			return $row;
+		}
 
-    /**
-     * Fetch a single object row matching the filters, or an empty array.
-     *
-     * @param string              $schema  The schema slug.
-     * @param array<string,mixed> $filters The ObjectService filters.
-     *
-     * @return array<string,mixed> The first matching row, or [].
-     */
-    private function fetchOne(string $schema, array $filters): array
-    {
-        foreach ($this->fetchMany(schema: $schema, filters: $filters) as $row) {
-            return $row;
-        }
+		return [];
+	}//end fetchOne()
 
-        return [];
-    }//end fetchOne()
+	/**
+	 * Fetch object rows matching the filters via ObjectService.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param array<string,mixed> $filters The ObjectService filters.
+	 *
+	 * @return array<int,array<string,mixed>> The matching rows.
+	 */
+	private function fetchMany(string $schema, array $filters): array {
+		$register = $this->resolveRegister();
 
-    /**
-     * Fetch object rows matching the filters via ObjectService.
-     *
-     * @param string              $schema  The schema slug.
-     * @param array<string,mixed> $filters The ObjectService filters.
-     *
-     * @return array<int,array<string,mixed>> The matching rows.
-     */
-    private function fetchMany(string $schema, array $filters): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
+		$rows = $this->objectService->setRegister($register)->setSchema($schema)->findAll(['filters' => $filters]);
+		$result = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$result[] = $row;
+			}
+		}
 
-        $rows   = $objectService->setRegister($register)->setSchema($schema)->findAll(['filters' => $filters]);
-        $result = [];
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                $result[] = $row;
-            }
-        }
+		return $result;
+	}//end fetchMany()
 
-        return $result;
-    }//end fetchMany()
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

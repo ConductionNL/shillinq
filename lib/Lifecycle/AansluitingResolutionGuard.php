@@ -52,63 +52,61 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  */
-class AansluitingResolutionGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class AansluitingResolutionGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the AansluitingResult carries a non-blank explanation
-     * (REQ-AANS-006).
-     *
-     * Fail-closed: returns false when explanationReasonText is missing,
-     * blank, or the record is not in the `explained` status.
-     *
-     * @param array<string,mixed> $result The AansluitingResult record.
-     *
-     * @return bool True when resolution may proceed.
-     *
-     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
-     */
-    public function canResolve(array $result): bool
-    {
-        try {
-            $status = (string) ($result['status'] ?? '');
-            if ($status !== 'explained') {
-                $this->logger->warning(
-                    'AansluitingResolutionGuard: result is not explained — denying resolve',
-                    ['resultId' => ($result['id'] ?? null), 'status' => $status]
-                );
+	/**
+	 * Returns true iff the AansluitingResult carries a non-blank explanation
+	 * (REQ-AANS-006).
+	 *
+	 * Fail-closed: returns false when explanationReasonText is missing,
+	 * blank, or the record is not in the `explained` status.
+	 *
+	 * @param array<string,mixed> $result The AansluitingResult record.
+	 *
+	 * @return bool True when resolution may proceed.
+	 *
+	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
+	 */
+	public function canResolve(array $result): bool {
+		try {
+			$status = (string)($result['status'] ?? '');
+			if ($status !== 'explained') {
+				$this->logger->warning(
+					'AansluitingResolutionGuard: result is not explained — denying resolve',
+					['resultId' => ($result['id'] ?? null), 'status' => $status]
+				);
 
-                return false;
-            }
+				return false;
+			}
 
-            $reasonText = trim((string) ($result['explanationReasonText'] ?? ''));
-            if ($reasonText === '') {
-                $this->logger->warning(
-                    'AansluitingResolutionGuard: explanationReasonText is blank — denying resolve',
-                    ['resultId' => ($result['id'] ?? null)]
-                );
+			$reasonText = trim((string)($result['explanationReasonText'] ?? ''));
+			if ($reasonText === '') {
+				$this->logger->warning(
+					'AansluitingResolutionGuard: explanationReasonText is blank — denying resolve',
+					['resultId' => ($result['id'] ?? null)]
+				);
 
-                return false;
-            }
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'AansluitingResolutionGuard: check failed — denying resolve (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'AansluitingResolutionGuard: check failed — denying resolve (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
 
-            return false;
-        }//end try
+			return false;
+		}//end try
 
-    }//end canResolve()
+	}//end canResolve()
 }//end class

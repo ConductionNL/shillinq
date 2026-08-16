@@ -70,162 +70,158 @@ use Throwable;
  *
  * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
  */
-class ACMReportSignTransitionListener implements IEventListener
-{
+class ACMReportSignTransitionListener implements IEventListener {
 
-    /**
-     * The finance schema this listener reacts to.
-     */
-    private const SCHEMA = 'ACMReport';
+	/**
+	 * The finance schema this listener reacts to.
+	 */
+	private const SCHEMA = 'ACMReport';
 
-    /**
-     * The `x-openregister-lifecycle` transition action id
-     * (`draft` -> `ready-for-submission`) that raises the request.
-     */
-    private const ACTION = 'sign';
+	/**
+	 * The `x-openregister-lifecycle` transition action id
+	 * (`draft` -> `ready-for-submission`) that raises the request.
+	 */
+	private const ACTION = 'sign';
 
-    /**
-     * The signingStatus values that must never trigger a duplicate outbound
-     * request (defensive — the `sign` transition is one-way from `draft`,
-     * so a legitimate re-fire should not occur, but a repeated
-     * ObjectTransitionedEvent delivery must still be a no-op).
-     *
-     * @var array<string>
-     */
-    private const ALREADY_REQUESTED_STATUSES = ['requested', 'in-progress', 'signed'];
+	/**
+	 * The signingStatus values that must never trigger a duplicate outbound
+	 * request (defensive — the `sign` transition is one-way from `draft`,
+	 * so a legitimate re-fire should not occur, but a repeated
+	 * ObjectTransitionedEvent delivery must still be a no-op).
+	 *
+	 * @var array<string>
+	 */
+	private const ALREADY_REQUESTED_STATUSES = ['requested', 'in-progress', 'signed'];
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface       $container       DI container — OR ObjectService pulled
-     *                                                  lazily (avoids a circular DI edge).
-     * @param SettingsService          $settingsService Shillinq settings (register slug).
-     * @param SigningDelegationService $signingService  The document-signing request service.
-     * @param ListenerSchemaResolver   $schemaResolver  Resolves the entity's schema id to its slug.
-     * @param LoggerInterface          $logger          Logger.
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly SettingsService $settingsService,
-        private readonly SigningDelegationService $signingService,
-        private readonly ListenerSchemaResolver $schemaResolver,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR ObjectService pulled
+	 *                                      lazily (avoids a circular DI edge).
+	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param SigningDelegationService $signingService The document-signing request service.
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LoggerInterface $logger Logger.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly SettingsService $settingsService,
+		private readonly SigningDelegationService $signingService,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle an ObjectTransitionedEvent on the ACMReport `sign` transition.
-     *
-     * @param Event $event OR transition event.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectTransitionedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectTransitionedEvent on the ACMReport `sign` transition.
+	 *
+	 * @param Event $event OR transition event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectTransitionedEvent === false) {
+			return;
+		}
 
-        try {
-            if ($event->getAction() !== self::ACTION) {
-                return;
-            }
+		try {
+			if ($event->getAction() !== self::ACTION) {
+				return;
+			}
 
-            $entity = $event->getObject();
-            if ($entity === null) {
-                return;
-            }
+			$entity = $event->getObject();
+			if ($entity === null) {
+				return;
+			}
 
-            $schema = $this->schemaResolver->schemaSlug(entity: $entity);
-            if ($this->isAcmReportSchema(schema: $schema) === false) {
-                return;
-            }
+			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
+			if ($this->isAcmReportSchema(schema: $schema) === false) {
+				return;
+			}
 
-            $financeObject = $entity->getObject();
-            if (is_array($financeObject) === false) {
-                return;
-            }
+			$financeObject = $entity->getObject();
+			if (is_array($financeObject) === false) {
+				return;
+			}
 
-            $subjectId = (string) ($financeObject['id'] ?? $entity->getId() ?? '');
-            if ($subjectId === '') {
-                $this->logger->info(
-                    'ACMReportSignTransitionListener: no subject id on sign transition (skipping)'
-                );
-                return;
-            }
+			$subjectId = (string)($financeObject['id'] ?? $entity->getId() ?? '');
+			if ($subjectId === '') {
+				$this->logger->info(
+					'ACMReportSignTransitionListener: no subject id on sign transition (skipping)'
+				);
+				return;
+			}
 
-            // Guarantee requestSignature() derives the same subjectId this
-            // listener will use to persist the result back.
-            $financeObject['id'] = $subjectId;
+			// Guarantee requestSignature() derives the same subjectId this
+			// listener will use to persist the result back.
+			$financeObject['id'] = $subjectId;
 
-            $currentStatus = (string) ($financeObject['signingStatus'] ?? '');
-            if (in_array($currentStatus, self::ALREADY_REQUESTED_STATUSES, true) === true) {
-                return;
-            }
+			$currentStatus = (string)($financeObject['signingStatus'] ?? '');
+			if (in_array($currentStatus, self::ALREADY_REQUESTED_STATUSES, true) === true) {
+				return;
+			}
 
-            $updated = $this->signingService->requestSignature(
-                financeObject: $financeObject,
-                subjectSchema: self::SCHEMA,
-                documentClass: 'acm-report'
-            );
+			$updated = $this->signingService->requestSignature(
+				financeObject: $financeObject,
+				subjectSchema: self::SCHEMA,
+				documentClass: 'acm-report'
+			);
 
-            $updates = ['signingStatus' => (string) ($updated['signingStatus'] ?? 'requested')];
-            if (array_key_exists('signingRequestRef', $updated) === true) {
-                $updates['signingRequestRef'] = $updated['signingRequestRef'];
-            }
+			$updates = ['signingStatus' => (string)($updated['signingStatus'] ?? 'requested')];
+			if (array_key_exists('signingRequestRef', $updated) === true) {
+				$updates['signingRequestRef'] = $updated['signingRequestRef'];
+			}
 
-            $this->persist(id: $subjectId, updates: $updates);
+			$this->persist(id: $subjectId, updates: $updates);
 
-            $this->logger->info(
-                    'ACMReportSignTransitionListener: signing request raised on sign transition',
-                    [
-                        'subjectId'         => $subjectId,
-                        'signingRequestRef' => ($updates['signingRequestRef'] ?? null),
-                    ]
-                    );
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'ACMReportSignTransitionListener: signing request failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->logger->info(
+				'ACMReportSignTransitionListener: signing request raised on sign transition',
+				[
+					'subjectId' => $subjectId,
+					'signingRequestRef' => ($updates['signingRequestRef'] ?? null),
+				]
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'ACMReportSignTransitionListener: signing request failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Check whether the schema slug is ACMReport.
-     *
-     * @param string $schema Schema slug from the event.
-     *
-     * @return bool
-     */
-    private function isAcmReportSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === 'acmreport'
-            || str_ends_with(haystack: $normalised, needle: 'acmreport'));
+	/**
+	 * Check whether the schema slug is ACMReport.
+	 *
+	 * @param string $schema Schema slug from the event.
+	 *
+	 * @return bool
+	 */
+	private function isAcmReportSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === 'acmreport'
+			|| str_ends_with(haystack: $normalised, needle: 'acmreport'));
 
-    }//end isAcmReportSchema()
+	}//end isAcmReportSchema()
 
-    /**
-     * Persist the signing-request mirror onto the finance object via OR.
-     *
-     * @param string              $id      The object id.
-     * @param array<string,mixed> $updates The fields to write.
-     *
-     * @return void
-     */
-    private function persist(string $id, array $updates): void
-    {
-        $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $objectService
-            ->setRegister($this->settingsService->getRegisterSlug())
-            ->setSchema(self::SCHEMA)
-            ->updateObject($id, $updates);
+	/**
+	 * Persist the signing-request mirror onto the finance object via OR.
+	 *
+	 * @param string $id The object id.
+	 * @param array<string,mixed> $updates The fields to write.
+	 *
+	 * @return void
+	 */
+	private function persist(string $id, array $updates): void {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$objectService
+			->setRegister($this->settingsService->getRegisterSlug())
+			->setSchema(self::SCHEMA)
+			->updateObject($id, $updates);
 
-    }//end persist()
+	}//end persist()
 }//end class

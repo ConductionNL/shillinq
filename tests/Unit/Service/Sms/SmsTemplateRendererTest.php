@@ -29,137 +29,120 @@ use PHPUnit\Framework\TestCase;
  * Verifies {{variable}} substitution, truncation, segmentation and the
  * allowed-variable validation.
  */
-final class SmsTemplateRendererTest extends TestCase
-{
+final class SmsTemplateRendererTest extends TestCase {
 
-    /**
-     * Subject under test.
-     *
-     * @var SmsTemplateRenderer
-     */
-    private SmsTemplateRenderer $renderer;
+	/**
+	 * Subject under test.
+	 *
+	 * @var SmsTemplateRenderer
+	 */
+	private SmsTemplateRenderer $renderer;
 
+	/**
+	 * Set up the subject.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->renderer = new SmsTemplateRenderer();
 
-    /**
-     * Set up the subject.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->renderer = new SmsTemplateRenderer();
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * Sample data renders to the expected body and stays within one segment.
+	 *
+	 * @return void
+	 */
+	public function testRenderSubstitutesSampleData(): void {
+		$tpl = 'Hallo {{customerName}}, boeking {{bookingRef}} op {{bookingDate}} om {{bookingTime}}.';
+		$body = $this->renderer->render(
+			$tpl,
+			[
+				'customerName' => 'Jan Jansen',
+				'bookingRef' => 'BK001',
+				'bookingDate' => '21 mei',
+				'bookingTime' => '14:30',
+			]
+		);
 
+		self::assertSame('Hallo Jan Jansen, boeking BK001 op 21 mei om 14:30.', $body);
+		self::assertTrue($this->renderer->fitsSingleSegment($body));
+		self::assertSame(1, $this->renderer->segmentCount($body));
 
-    /**
-     * Sample data renders to the expected body and stays within one segment.
-     *
-     * @return void
-     */
-    public function testRenderSubstitutesSampleData(): void
-    {
-        $tpl  = 'Hallo {{customerName}}, boeking {{bookingRef}} op {{bookingDate}} om {{bookingTime}}.';
-        $body = $this->renderer->render(
-            $tpl,
-            [
-                'customerName' => 'Jan Jansen',
-                'bookingRef'   => 'BK001',
-                'bookingDate'  => '21 mei',
-                'bookingTime'  => '14:30',
-            ]
-        );
+	}//end testRenderSubstitutesSampleData()
 
-        self::assertSame('Hallo Jan Jansen, boeking BK001 op 21 mei om 14:30.', $body);
-        self::assertTrue($this->renderer->fitsSingleSegment($body));
-        self::assertSame(1, $this->renderer->segmentCount($body));
+	/**
+	 * Undefined variables render as an empty string.
+	 *
+	 * @return void
+	 */
+	public function testUndefinedVariableRendersEmpty(): void {
+		self::assertSame('Hi !', $this->renderer->render('Hi {{customerName}}!', []));
 
-    }//end testRenderSubstitutesSampleData()
+	}//end testUndefinedVariableRendersEmpty()
 
+	/**
+	 * Whitespace inside the braces is tolerated.
+	 *
+	 * @return void
+	 */
+	public function testWhitespaceInPlaceholderIsTolerated(): void {
+		self::assertSame('Ref BK9', $this->renderer->render('Ref {{ bookingRef }}', ['bookingRef' => 'BK9']));
 
-    /**
-     * Undefined variables render as an empty string.
-     *
-     * @return void
-     */
-    public function testUndefinedVariableRendersEmpty(): void
-    {
-        self::assertSame('Hi !', $this->renderer->render('Hi {{customerName}}!', []));
+	}//end testWhitespaceInPlaceholderIsTolerated()
 
-    }//end testUndefinedVariableRendersEmpty()
+	/**
+	 * Location > 30 and organization > 20 chars are truncated with an ellipsis.
+	 *
+	 * @return void
+	 */
+	public function testTruncatesLongVariables(): void {
+		$longLocation = 'Kantoor Amsterdam Zuidas Toren Hoog 42 Etage';
+		$body = $this->renderer->render('{{bookingLocation}}', ['bookingLocation' => $longLocation]);
 
+		self::assertSame(30, mb_strlen($body));
+		self::assertStringEndsWith('…', $body);
 
-    /**
-     * Whitespace inside the braces is tolerated.
-     *
-     * @return void
-     */
-    public function testWhitespaceInPlaceholderIsTolerated(): void
-    {
-        self::assertSame('Ref BK9', $this->renderer->render('Ref {{ bookingRef }}', ['bookingRef' => 'BK9']));
+		$org = 'Een Hele Lange Organisatienaam BV';
+		$bodyOrg = $this->renderer->render('{{organizationName}}', ['organizationName' => $org]);
+		self::assertSame(20, mb_strlen($bodyOrg));
+		self::assertStringEndsWith('…', $bodyOrg);
 
-    }//end testWhitespaceInPlaceholderIsTolerated()
+	}//end testTruncatesLongVariables()
 
+	/**
+	 * Short values are not truncated.
+	 *
+	 * @return void
+	 */
+	public function testShortValuesNotTruncated(): void {
+		self::assertSame('Kantoor', $this->renderer->render('{{bookingLocation}}', ['bookingLocation' => 'Kantoor']));
 
-    /**
-     * Location > 30 and organization > 20 chars are truncated with an ellipsis.
-     *
-     * @return void
-     */
-    public function testTruncatesLongVariables(): void
-    {
-        $longLocation = 'Kantoor Amsterdam Zuidas Toren Hoog 42 Etage';
-        $body         = $this->renderer->render('{{bookingLocation}}', ['bookingLocation' => $longLocation]);
+	}//end testShortValuesNotTruncated()
 
-        self::assertSame(30, mb_strlen($body));
-        self::assertStringEndsWith('…', $body);
+	/**
+	 * Segment counting: ≤160 = 1, longer splits into 153-char concat segments.
+	 *
+	 * @return void
+	 */
+	public function testSegmentCount(): void {
+		self::assertSame(1, $this->renderer->segmentCount(str_repeat('a', 160)));
+		self::assertSame(2, $this->renderer->segmentCount(str_repeat('a', 161)));
+		self::assertSame(2, $this->renderer->segmentCount(str_repeat('a', 306)));
+		self::assertSame(3, $this->renderer->segmentCount(str_repeat('a', 307)));
+		self::assertFalse($this->renderer->fitsSingleSegment(str_repeat('a', 161)));
 
-        $org     = 'Een Hele Lange Organisatienaam BV';
-        $bodyOrg = $this->renderer->render('{{organizationName}}', ['organizationName' => $org]);
-        self::assertSame(20, mb_strlen($bodyOrg));
-        self::assertStringEndsWith('…', $bodyOrg);
+	}//end testSegmentCount()
 
-    }//end testTruncatesLongVariables()
+	/**
+	 * Disallowed variables are reported; an all-allowed template is clean.
+	 *
+	 * @return void
+	 */
+	public function testUnknownVariables(): void {
+		self::assertSame([], $this->renderer->unknownVariables('Hi {{customerName}} ref {{bookingRef}}'));
+		self::assertSame(['totallyBogus'], $this->renderer->unknownVariables('Hi {{customerName}} {{totallyBogus}}'));
 
-
-    /**
-     * Short values are not truncated.
-     *
-     * @return void
-     */
-    public function testShortValuesNotTruncated(): void
-    {
-        self::assertSame('Kantoor', $this->renderer->render('{{bookingLocation}}', ['bookingLocation' => 'Kantoor']));
-
-    }//end testShortValuesNotTruncated()
-
-
-    /**
-     * Segment counting: ≤160 = 1, longer splits into 153-char concat segments.
-     *
-     * @return void
-     */
-    public function testSegmentCount(): void
-    {
-        self::assertSame(1, $this->renderer->segmentCount(str_repeat('a', 160)));
-        self::assertSame(2, $this->renderer->segmentCount(str_repeat('a', 161)));
-        self::assertSame(2, $this->renderer->segmentCount(str_repeat('a', 306)));
-        self::assertSame(3, $this->renderer->segmentCount(str_repeat('a', 307)));
-        self::assertFalse($this->renderer->fitsSingleSegment(str_repeat('a', 161)));
-
-    }//end testSegmentCount()
-
-
-    /**
-     * Disallowed variables are reported; an all-allowed template is clean.
-     *
-     * @return void
-     */
-    public function testUnknownVariables(): void
-    {
-        self::assertSame([], $this->renderer->unknownVariables('Hi {{customerName}} ref {{bookingRef}}'));
-        self::assertSame(['totallyBogus'], $this->renderer->unknownVariables('Hi {{customerName}} {{totallyBogus}}'));
-
-    }//end testUnknownVariables()
+	}//end testUnknownVariables()
 
 }//end class

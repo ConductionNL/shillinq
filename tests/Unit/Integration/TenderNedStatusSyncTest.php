@@ -46,322 +46,301 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class TenderNedStatusSyncTest extends TestCase
-{
+final class TenderNedStatusSyncTest extends TestCase {
 
-    /**
-     * Build an IAppConfig returning a fixed tenant KvK.
-     *
-     * @param string $tenantKvk Tenant KvK value.
-     *
-     * @return IAppConfig
-     */
-    private function appConfigWithTenantKvk(string $tenantKvk): IAppConfig
-    {
-        $cfg = $this->createMock(IAppConfig::class);
-        $cfg->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default='') use ($tenantKvk): string {
-                if ($key === 'tenant_kvk') {
-                    return $tenantKvk;
-                }
-                return $default;
-            }
-        );
-        return $cfg;
+	/**
+	 * Build an IAppConfig returning a fixed tenant KvK.
+	 *
+	 * @param string $tenantKvk Tenant KvK value.
+	 *
+	 * @return IAppConfig
+	 */
+	private function appConfigWithTenantKvk(string $tenantKvk): IAppConfig {
+		$cfg = $this->createMock(IAppConfig::class);
+		$cfg->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use ($tenantKvk): string {
+				if ($key === 'tenant_kvk') {
+					return $tenantKvk;
+				}
+				return $default;
+			}
+		);
+		return $cfg;
+	}//end appConfigWithTenantKvk()
 
-    }//end appConfigWithTenantKvk()
+	/**
+	 * Build a container that resolves the OR ObjectService to a fluent stub
+	 * returning a fixed aanbesteding, and resolves the openconnector gateway
+	 * either to a recorder or to a not-bound exception.
+	 *
+	 * @param array<string,mixed>|null $tender Aanbesteding row or null.
+	 * @param object|null $gateway Spy gateway or null.
+	 *
+	 * @return ContainerInterface
+	 */
+	private function container(?array $tender, ?object $gateway): ContainerInterface {
+		$objectService = new class($tender) {
 
-    /**
-     * Build a container that resolves the OR ObjectService to a fluent stub
-     * returning a fixed aanbesteding, and resolves the openconnector gateway
-     * either to a recorder or to a not-bound exception.
-     *
-     * @param array<string,mixed>|null $aanbesteding   Aanbesteding row or null.
-     * @param object|null              $gateway        Spy gateway or null.
-     *
-     * @return ContainerInterface
-     */
-    private function container(?array $aanbesteding, ?object $gateway): ContainerInterface
-    {
-        $objectService = new class($aanbesteding) {
+			/**
+			 * @var array<string,mixed>|null
+			 */
+			private ?array $tender;
 
-            /**
-             * @var array<string,mixed>|null
-             */
-            private ?array $aanbesteding;
+			/**
+			 * @param array<string,mixed>|null $tender Aanbesteding.
+			 */
+			public function __construct(?array $tender) {
+				$this->tender = $tender;
+			}
 
-            /**
-             * @param array<string,mixed>|null $aanbesteding Aanbesteding.
-             */
-            public function __construct(?array $aanbesteding)
-            {
-                $this->aanbesteding = $aanbesteding;
-            }
+			public function setRegister(string $register): self {
+				return $this;
+			}
 
-            public function setRegister(string $register): self
-            {
-                return $this;
-            }
+			public function setSchema(string $schema): self {
+				return $this;
+			}
 
-            public function setSchema(string $schema): self
-            {
-                return $this;
-            }
+			public function findAll(array $opts = []): array {
+				if ($this->tender === null) {
+					return [];
+				}
 
-            public function findAll(array $opts=[]): array
-            {
-                if ($this->aanbesteding === null) {
-                    return [];
-                }
+				return [$this->tender];
+			}
+		};
 
-                return [$this->aanbesteding];
-            }
-        };
+		return new class($objectService, $gateway) implements ContainerInterface {
+			public function __construct(
+				private readonly object $objectService,
+				private readonly ?object $gateway,
+			) {
+			}
 
-        return new class($objectService, $gateway) implements ContainerInterface {
+			public function get(string $id): mixed {
+				if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
+					return $this->objectService;
+				}
 
-            public function __construct(
-                private readonly object $objectService,
-                private readonly ?object $gateway,
-            ) {
-            }
+				if ($id === 'OCA\\OpenConnector\\Service\\OutboundIntegrationGateway') {
+					if ($this->gateway === null) {
+						throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
+						};
+					}
+					return $this->gateway;
+				}
 
-            public function get(string $id): mixed
-            {
-                if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
-                    return $this->objectService;
-                }
+				throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
+				};
+			}
 
-                if ($id === 'OCA\\OpenConnector\\Service\\OutboundIntegrationGateway') {
-                    if ($this->gateway === null) {
-                        throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
-                        };
-                    }
-                    return $this->gateway;
-                }
+			public function has(string $id): bool {
+				return $id === 'OCA\\OpenRegister\\Service\\ObjectService'
+					|| ($id === 'OCA\\OpenConnector\\Service\\OutboundIntegrationGateway' && $this->gateway !== null);
+			}
+		};
 
-                throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
-                };
-            }
+	}//end container()
 
-            public function has(string $id): bool
-            {
-                return $id === 'OCA\\OpenRegister\\Service\\ObjectService'
-                    || ($id === 'OCA\\OpenConnector\\Service\\OutboundIntegrationGateway' && $this->gateway !== null);
-            }
-        };
+	/**
+	 * Build a spying openconnector gateway.
+	 *
+	 * @return object
+	 */
+	private function spyGateway(): object {
+		return new class {
+			/**
+			 * @var array<int, array{source: string, payload: array<string,mixed>}>
+			 */
+			public array $sends = [];
 
-    }//end container()
+			public function send(string $source, array $payload): void {
+				$this->sends[] = ['source' => $source, 'payload' => $payload];
 
-    /**
-     * Build a spying openconnector gateway.
-     *
-     * @return object
-     */
-    private function spyGateway(): object
-    {
-        return new class {
+			}//end send()
+		};
 
-            /**
-             * @var array<int, array{source: string, payload: array<string,mixed>}>
-             */
-            public array $sends = [];
+	}//end spyGateway()
 
-            public function send(string $source, array $payload): void
-            {
-                $this->sends[] = ['source' => $source, 'payload' => $payload];
+	/**
+	 * Empty `verplichtingId` -> skip (false).
+	 *
+	 * @return void
+	 */
+	public function testNoVerplichtingIdSkips(): void {
+		$sync = new TenderNedStatusSync(
+			$this->container(null, null),
+			$this->appConfigWithTenantKvk('30280353'),
+			new NullLogger()
+		);
 
-            }//end send()
-        };
+		$result = $sync->syncCompletion(['milestoneId' => 'M-EIND']);
 
-    }//end spyGateway()
+		$this->assertFalse($result);
 
-    /**
-     * Empty `verplichtingId` -> skip (false).
-     *
-     * @return void
-     */
-    public function testNoVerplichtingIdSkips(): void
-    {
-        $sync = new TenderNedStatusSync(
-            $this->container(null, null),
-            $this->appConfigWithTenantKvk('30280353'),
-            new NullLogger()
-        );
+	}//end testNoVerplichtingIdSkips()
 
-        $result = $sync->syncCompletion(['mijlpaalId' => 'M-EIND']);
+	/**
+	 * No linked aanbesteding -> skip (false).
+	 *
+	 * @return void
+	 */
+	public function testNoLinkedAanbestedingSkips(): void {
+		$sync = new TenderNedStatusSync(
+			$this->container(null, null),
+			$this->appConfigWithTenantKvk('30280353'),
+			new NullLogger()
+		);
 
-        $this->assertFalse($result);
+		$result = $sync->syncCompletion(['commitmentId' => 'TN-X', 'milestoneId' => 'M-EIND']);
 
-    }//end testNoVerplichtingIdSkips()
+		$this->assertFalse($result);
 
-    /**
-     * No linked aanbesteding -> skip (false).
-     *
-     * @return void
-     */
-    public function testNoLinkedAanbestedingSkips(): void
-    {
-        $sync = new TenderNedStatusSync(
-            $this->container(null, null),
-            $this->appConfigWithTenantKvk('30280353'),
-            new NullLogger()
-        );
+	}//end testNoLinkedAanbestedingSkips()
 
-        $result = $sync->syncCompletion(['verplichtingId' => 'TN-X', 'mijlpaalId' => 'M-EIND']);
+	/**
+	 * Tenant KvK does not match the aanbestedende dienst -> sync DENIED.
+	 *
+	 * @return void
+	 */
+	public function testNonAanbestedendeDienstIsDenied(): void {
+		$sync = new TenderNedStatusSync(
+			$this->container(
+				[
+					'tenderId' => 'TN-2026-0001',
+					'contractingService' => '99999999 Gemeente Anders',
+					'commitmentId' => 'TN-X',
+				],
+				$this->spyGateway()
+			),
+			$this->appConfigWithTenantKvk('30280353'),
+			new NullLogger()
+		);
 
-        $this->assertFalse($result);
+		$result = $sync->syncCompletion(
+			[
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [['documentId' => 'doc-1']],
+			]
+		);
 
-    }//end testNoLinkedAanbestedingSkips()
+		$this->assertFalse($result);
 
-    /**
-     * Tenant KvK does not match the aanbestedende dienst -> sync DENIED.
-     *
-     * @return void
-     */
-    public function testNonAanbestedendeDienstIsDenied(): void
-    {
-        $sync = new TenderNedStatusSync(
-            $this->container(
-                [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '99999999 Gemeente Anders',
-                    'verplichtingId'      => 'TN-X',
-                ],
-                $this->spyGateway()
-            ),
-            $this->appConfigWithTenantKvk('30280353'),
-            new NullLogger()
-        );
+	}//end testNonAanbestedendeDienstIsDenied()
 
-        $result = $sync->syncCompletion(
-            [
-                'verplichtingId'  => 'TN-X',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
-            ]
-        );
+	/**
+	 * Tenant KvK matches + openconnector gateway absent -> log-only success.
+	 *
+	 * @return void
+	 */
+	public function testGatewayAbsentLogsAndReturnsTrue(): void {
+		$sync = new TenderNedStatusSync(
+			$this->container(
+				[
+					'tenderId' => 'TN-2026-0001',
+					'contractingService' => '30280353 Gemeente Utrecht',
+					'commitmentId' => 'TN-X',
+				],
+				null
+			),
+			$this->appConfigWithTenantKvk('30280353'),
+			new NullLogger()
+		);
 
-        $this->assertFalse($result);
+		$result = $sync->syncCompletion(
+			[
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [['documentId' => 'doc-1']],
+			]
+		);
 
-    }//end testNonAanbestedendeDienstIsDenied()
+		$this->assertTrue($result);
 
-    /**
-     * Tenant KvK matches + openconnector gateway absent -> log-only success.
-     *
-     * @return void
-     */
-    public function testGatewayAbsentLogsAndReturnsTrue(): void
-    {
-        $sync = new TenderNedStatusSync(
-            $this->container(
-                [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'verplichtingId'      => 'TN-X',
-                ],
-                null
-            ),
-            $this->appConfigWithTenantKvk('30280353'),
-            new NullLogger()
-        );
+	}//end testGatewayAbsentLogsAndReturnsTrue()
 
-        $result = $sync->syncCompletion(
-            [
-                'verplichtingId'   => 'TN-X',
-                'mijlpaalId'       => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'    => [['documentId' => 'doc-1']],
-            ]
-        );
+	/**
+	 * Tenant KvK matches + gateway present -> gateway.send() invoked with
+	 * the completion payload.
+	 *
+	 * @return void
+	 */
+	public function testGatewayPresentSendsCompletionPayload(): void {
+		$gateway = $this->spyGateway();
+		$sync = new TenderNedStatusSync(
+			$this->container(
+				[
+					'tenderId' => 'TN-2026-0001',
+					'contractingService' => '30280353 Gemeente Utrecht',
+					'commitmentId' => 'TN-X',
+				],
+				$gateway
+			),
+			$this->appConfigWithTenantKvk('30280353'),
+			new NullLogger()
+		);
 
-        $this->assertTrue($result);
+		$result = $sync->syncCompletion(
+			[
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [['documentId' => 'doc-1']],
+				'administrationId' => 'adm-utrecht',
+			]
+		);
 
-    }//end testGatewayAbsentLogsAndReturnsTrue()
+		$this->assertTrue($result);
+		$this->assertCount(1, $gateway->sends);
+		$this->assertSame('tenderned.completion', $gateway->sends[0]['source']);
+		$this->assertSame('TN-2026-0001', $gateway->sends[0]['payload']['tenderId']);
+		$this->assertSame(TenderNedStatusSync::TENDERNED_STATUS_AFGEROND, $gateway->sends[0]['payload']['status']);
+		$this->assertSame('M-EIND', $gateway->sends[0]['payload']['eindopleveringId']);
+		$this->assertSame(1, $gateway->sends[0]['payload']['bewijsstukCount']);
 
-    /**
-     * Tenant KvK matches + gateway present -> gateway.send() invoked with
-     * the completion payload.
-     *
-     * @return void
-     */
-    public function testGatewayPresentSendsCompletionPayload(): void
-    {
-        $gateway = $this->spyGateway();
-        $sync    = new TenderNedStatusSync(
-            $this->container(
-                [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'verplichtingId'      => 'TN-X',
-                ],
-                $gateway
-            ),
-            $this->appConfigWithTenantKvk('30280353'),
-            new NullLogger()
-        );
+	}//end testGatewayPresentSendsCompletionPayload()
 
-        $result = $sync->syncCompletion(
-            [
-                'verplichtingId'   => 'TN-X',
-                'mijlpaalId'       => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'    => [['documentId' => 'doc-1']],
-                'administrationId' => 'adm-utrecht',
-            ]
-        );
+	/**
+	 * Gateway raises -> swallowed (fail-soft).
+	 *
+	 * @return void
+	 */
+	public function testGatewayExceptionIsSwallowed(): void {
+		$gateway = new class {
 
-        $this->assertTrue($result);
-        $this->assertCount(1, $gateway->sends);
-        $this->assertSame('tenderned.completion', $gateway->sends[0]['source']);
-        $this->assertSame('TN-2026-0001', $gateway->sends[0]['payload']['aanbestedingId']);
-        $this->assertSame(TenderNedStatusSync::TENDERNED_STATUS_AFGEROND, $gateway->sends[0]['payload']['status']);
-        $this->assertSame('M-EIND', $gateway->sends[0]['payload']['eindopleveringId']);
-        $this->assertSame(1, $gateway->sends[0]['payload']['bewijsstukCount']);
+			public function send(string $source, array $payload): void {
+				throw new \RuntimeException('upstream down');
+			}
+		};
 
-    }//end testGatewayPresentSendsCompletionPayload()
+		$sync = new TenderNedStatusSync(
+			$this->container(
+				[
+					'tenderId' => 'TN-2026-0001',
+					'contractingService' => '30280353 Gemeente Utrecht',
+					'commitmentId' => 'TN-X',
+				],
+				$gateway
+			),
+			$this->appConfigWithTenantKvk('30280353'),
+			new NullLogger()
+		);
 
-    /**
-     * Gateway raises -> swallowed (fail-soft).
-     *
-     * @return void
-     */
-    public function testGatewayExceptionIsSwallowed(): void
-    {
-        $gateway = new class {
+		$result = $sync->syncCompletion(
+			[
+				'commitmentId' => 'TN-X',
+				'milestoneId' => 'M-EIND',
+				'deliveryDate' => '2026-12-15',
+				'supportingDocuments' => [],
+			]
+		);
 
-            public function send(string $source, array $payload): void
-            {
-                throw new \RuntimeException('upstream down');
-            }
-        };
+		// The attempt was made (we reached `send()`), so the contract
+		// returns true; the failure is logged-only.
+		$this->assertTrue($result);
 
-        $sync = new TenderNedStatusSync(
-            $this->container(
-                [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'verplichtingId'      => 'TN-X',
-                ],
-                $gateway
-            ),
-            $this->appConfigWithTenantKvk('30280353'),
-            new NullLogger()
-        );
-
-        $result = $sync->syncCompletion(
-            [
-                'verplichtingId'   => 'TN-X',
-                'mijlpaalId'       => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'    => [],
-            ]
-        );
-
-        // The attempt was made (we reached `send()`), so the contract
-        // returns true; the failure is logged-only.
-        $this->assertTrue($result);
-
-    }//end testGatewayExceptionIsSwallowed()
+	}//end testGatewayExceptionIsSwallowed()
 }//end class

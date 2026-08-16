@@ -49,8 +49,7 @@ export async function unregisterInventoryServiceWorker() {
 	let unregistered = false
 	for (const reg of registrations) {
 		if (reg.scope && reg.scope.endsWith(SW_SCOPE)) {
-			// eslint-disable-next-line no-await-in-loop
-			unregistered = await reg.unregister() || unregistered
+			unregistered = (await reg.unregister()) || unregistered
 		}
 	}
 	return unregistered

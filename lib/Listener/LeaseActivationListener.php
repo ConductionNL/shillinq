@@ -62,174 +62,166 @@ use Throwable;
  *
  * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
  */
-class LeaseActivationListener implements IEventListener
-{
+class LeaseActivationListener implements IEventListener {
 
-    /**
-     * The lifecycle state an activated lease lands in.
-     *
-     * @var string
-     */
-    private const STATE_ACTIVE = 'active';
+	/**
+	 * The lifecycle state an activated lease lands in.
+	 *
+	 * @var string
+	 */
+	private const STATE_ACTIVE = 'active';
 
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param LeasePaymentScheduleService $scheduleService The amortization schedule generator.
-     * @param ListenerSchemaResolver      $schemaResolver  Resolves the entity's schema id to its slug.
-     * @param LoggerInterface             $logger          Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly LeasePaymentScheduleService $scheduleService,
-        private readonly ListenerSchemaResolver $schemaResolver,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param LeasePaymentScheduleService $scheduleService The amortization schedule generator.
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly LeasePaymentScheduleService $scheduleService,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an ObjectCreatedEvent / ObjectUpdatedEvent.
-     *
-     * @param Event $event Event from OpenRegister.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if (($event instanceof ObjectCreatedEvent) === false
-            && ($event instanceof ObjectUpdatedEvent) === false
-        ) {
-            return;
-        }
+	/**
+	 * Handle an ObjectCreatedEvent / ObjectUpdatedEvent.
+	 *
+	 * @param Event $event Event from OpenRegister.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
+	 */
+	public function handle(Event $event): void {
+		if (($event instanceof ObjectCreatedEvent) === false
+			&& ($event instanceof ObjectUpdatedEvent) === false
+		) {
+			return;
+		}
 
-        try {
-            $entity = $event->getObject();
-            if ($entity === null) {
-                return;
-            }
+		try {
+			$entity = $event->getObject();
+			if ($entity === null) {
+				return;
+			}
 
-            if ($this->isLeaseContractSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
-                return;
-            }
+			if ($this->isLeaseContractSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
+				return;
+			}
 
-            $new = $entity->getObject();
-            if (is_array($new) === false) {
-                return;
-            }
+			$new = $entity->getObject();
+			if (is_array($new) === false) {
+				return;
+			}
 
-            if ($this->isActivationEdge(event: $event, new: $new) === false) {
-                return;
-            }
+			if ($this->isActivationEdge(event: $event, new: $new) === false) {
+				return;
+			}
 
-            $leaseContractId  = $this->resolveLeaseId(lease: $new);
-            $administrationId = trim((string) ($new['administrationId'] ?? ''));
-            if ($leaseContractId === '' || $administrationId === '') {
-                $this->logger->warning(
-                    'LeaseActivationListener: activated lease carries no id/administrationId; schedule generation skipped',
-                    ['leaseNumber' => ($new['leaseNumber'] ?? null)]
-                );
-                return;
-            }
+			$leaseContractId = $this->resolveLeaseId(lease: $new);
+			$administrationId = trim((string)($new['administrationId'] ?? ''));
+			if ($leaseContractId === '' || $administrationId === '') {
+				$this->logger->warning(
+					'LeaseActivationListener: activated lease carries no id/administrationId; schedule generation skipped',
+					['leaseNumber' => ($new['leaseNumber'] ?? null)]
+				);
+				return;
+			}
 
-            // The schedule service re-guards classification (IFRS16-capitalised
-            // only) and the administration scope (ADR-005), so the listener
-            // stays thin.
-            $this->scheduleService->generateSchedule(
-                leaseContractId: $leaseContractId,
-                administrationId: $administrationId
-            );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'LeaseActivationListener: failed to generate the lease amortization schedule',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			// The schedule service re-guards classification (IFRS16-capitalised
+			// only) and the administration scope (ADR-005), so the listener
+			// stays thin.
+			$this->scheduleService->generateSchedule(
+				leaseContractId: $leaseContractId,
+				administrationId: $administrationId
+			);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'LeaseActivationListener: failed to generate the lease amortization schedule',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Whether this save moved the lease into the `active` state.
-     *
-     * For a create, the edge is simply "created active". For an update, the
-     * edge requires the previous state to be anything other than `active` and
-     * the new state to be `active` — so a later save of an already-active
-     * lease (which would otherwise clobber posted schedule rows) is ignored.
-     *
-     * @param Event               $event The inbound event.
-     * @param array<string,mixed> $new   The new object body.
-     *
-     * @return bool True when this save is the activation edge.
-     */
-    private function isActivationEdge(Event $event, array $new): bool
-    {
-        $newStatus = (string) ($new['status'] ?? '');
-        if ($newStatus !== self::STATE_ACTIVE) {
-            return false;
-        }
+	/**
+	 * Whether this save moved the lease into the `active` state.
+	 *
+	 * For a create, the edge is simply "created active". For an update, the
+	 * edge requires the previous state to be anything other than `active` and
+	 * the new state to be `active` — so a later save of an already-active
+	 * lease (which would otherwise clobber posted schedule rows) is ignored.
+	 *
+	 * @param Event $event The inbound event.
+	 * @param array<string,mixed> $new The new object body.
+	 *
+	 * @return bool True when this save is the activation edge.
+	 */
+	private function isActivationEdge(Event $event, array $new): bool {
+		$newStatus = (string)($new['status'] ?? '');
+		if ($newStatus !== self::STATE_ACTIVE) {
+			return false;
+		}
 
-        if ($event instanceof ObjectCreatedEvent) {
-            return true;
-        }
+		if ($event instanceof ObjectCreatedEvent) {
+			return true;
+		}
 
-        // ObjectUpdatedEvent: require a real edge from a non-active prior
-        // state. A missing old object (defensive) is treated as an edge.
-        $old = null;
-        if ($event instanceof ObjectUpdatedEvent) {
-            $oldEntity = $event->getOldObject();
-            if ($oldEntity !== null) {
-                $oldData = $oldEntity->getObject();
-                if (is_array($oldData) === true) {
-                    $old = (string) ($oldData['status'] ?? '');
-                }
-            }
-        }
+		// ObjectUpdatedEvent: require a real edge from a non-active prior
+		// state. A missing old object (defensive) is treated as an edge.
+		$old = null;
+		if ($event instanceof ObjectUpdatedEvent) {
+			$oldEntity = $event->getOldObject();
+			if ($oldEntity !== null) {
+				$oldData = $oldEntity->getObject();
+				if (is_array($oldData) === true) {
+					$old = (string)($oldData['status'] ?? '');
+				}
+			}
+		}
 
-        return $old !== self::STATE_ACTIVE;
+		return $old !== self::STATE_ACTIVE;
+	}//end isActivationEdge()
 
-    }//end isActivationEdge()
+	/**
+	 * Resolve the lease id to hand to the schedule generator.
+	 *
+	 * Prefers @self.slug, then @self.id, then the top-level id — matching how
+	 * LeasePaymentScheduleService::fetchLease() locates the contract.
+	 *
+	 * @param array<string,mixed> $lease The LeaseContract body.
+	 *
+	 * @return string The resolved lease id (empty when unresolvable).
+	 */
+	private function resolveLeaseId(array $lease): string {
+		$self = ($lease['@self'] ?? null);
+		if (is_array($self) === true) {
+			$slug = trim((string)($self['slug'] ?? ''));
+			if ($slug !== '') {
+				return $slug;
+			}
 
-    /**
-     * Resolve the lease id to hand to the schedule generator.
-     *
-     * Prefers @self.slug, then @self.id, then the top-level id — matching how
-     * LeasePaymentScheduleService::fetchLease() locates the contract.
-     *
-     * @param array<string,mixed> $lease The LeaseContract body.
-     *
-     * @return string The resolved lease id (empty when unresolvable).
-     */
-    private function resolveLeaseId(array $lease): string
-    {
-        $self = ($lease['@self'] ?? null);
-        if (is_array($self) === true) {
-            $slug = trim((string) ($self['slug'] ?? ''));
-            if ($slug !== '') {
-                return $slug;
-            }
+			$selfId = trim((string)($self['id'] ?? ''));
+			if ($selfId !== '') {
+				return $selfId;
+			}
+		}
 
-            $selfId = trim((string) ($self['id'] ?? ''));
-            if ($selfId !== '') {
-                return $selfId;
-            }
-        }
+		return trim((string)($lease['id'] ?? ''));
+	}//end resolveLeaseId()
 
-        return trim((string) ($lease['id'] ?? ''));
-
-    }//end resolveLeaseId()
-
-    /**
-     * Schema-name match for LeaseContract (plain slug or namespaced path).
-     *
-     * @param string $schema Schema identifier from the entity.
-     *
-     * @return bool True when the schema identifies a LeaseContract.
-     */
-    private function isLeaseContractSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === 'leasecontract' || str_ends_with($normalised, '/leasecontract'));
-
-    }//end isLeaseContractSchema()
+	/**
+	 * Schema-name match for LeaseContract (plain slug or namespaced path).
+	 *
+	 * @param string $schema Schema identifier from the entity.
+	 *
+	 * @return bool True when the schema identifies a LeaseContract.
+	 */
+	private function isLeaseContractSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === 'leasecontract' || str_ends_with($normalised, '/leasecontract'));
+	}//end isLeaseContractSchema()
 }//end class

@@ -34,56 +34,52 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * OCC command that seeds compliant local test data.
  */
-class RulesSeedTestDataCommand extends Command
-{
-    /**
-     * Construct the seed-testdata command.
-     *
-     * @param RuleTestDataSeeder $seeder The test-data seeder.
-     */
-    public function __construct(
-        private readonly RuleTestDataSeeder $seeder,
-    ) {
-        parent::__construct();
+class RulesSeedTestDataCommand extends Command {
+	/**
+	 * Construct the seed-testdata command.
+	 *
+	 * @param RuleTestDataSeeder $seeder The test-data seeder.
+	 */
+	public function __construct(
+		private readonly RuleTestDataSeeder $seeder,
+	) {
+		parent::__construct();
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Configure the command name and description.
-     *
-     * @return void
-     */
-    protected function configure(): void
-    {
-        $this->setName('shillinq:rules:seed-testdata')
-            ->setDescription('Backfill local test data to satisfy the enforced rules (idempotent; test/dev only).');
+	/**
+	 * Configure the command name and description.
+	 *
+	 * @return void
+	 */
+	protected function configure(): void {
+		$this->setName('shillinq:rules:seed-testdata')
+			->setDescription('Backfill local test data to satisfy the enforced rules (idempotent; test/dev only).');
 
-    }//end configure()
+	}//end configure()
 
-    /**
-     * Execute the command — run the seeder and print the result summary.
-     *
-     * @param InputInterface  $input  Console input.
-     * @param OutputInterface $output Console output.
-     *
-     * @return int
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $input is required by
-     *     Symfony Command::execute()'s signature; this command takes no
-     *     console input.
-     */
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $result = $this->seeder->seed();
+	/**
+	 * Execute the command — run the seeder and print the result summary.
+	 *
+	 * @param InputInterface $input Console input.
+	 * @param OutputInterface $output Console output.
+	 *
+	 * @return int
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $input is required by
+	 *     Symfony Command::execute()'s signature; this command takes no
+	 *     console input.
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output): int {
+		$result = $this->seeder->seed();
 
-        $output->writeln('<info>Shillinq rules test-data seeder</info>');
-        $output->writeln(sprintf('  sourceReference backfilled : %d', $result['sourceReferencesAdded']));
-        $output->writeln(sprintf('  GLLines added              : %d', $result['linesAdded']));
-        $output->writeln(sprintf('  ARInvoice lines backfilled : %d', ($result['invoiceLinesAdded'] ?? 0)));
-        $output->writeln(sprintf('  already compliant          : %d', $result['alreadyCompliant']));
-        $output->writeln('Run <info>occ shillinq:rules:audit</info> to confirm 100% compliance.');
+		$output->writeln('<info>Shillinq rules test-data seeder</info>');
+		$output->writeln(sprintf('  sourceReference backfilled : %d', $result['sourceReferencesAdded']));
+		$output->writeln(sprintf('  GLLines added              : %d', $result['linesAdded']));
+		$output->writeln(sprintf('  ARInvoice lines backfilled : %d', ($result['invoiceLinesAdded'] ?? 0)));
+		$output->writeln(sprintf('  already compliant          : %d', $result['alreadyCompliant']));
+		$output->writeln('Run <info>occ shillinq:rules:audit</info> to confirm 100% compliance.');
 
-        return 0;
-
-    }//end execute()
+		return 0;
+	}//end execute()
 }//end class

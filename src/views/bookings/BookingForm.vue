@@ -15,7 +15,7 @@
 				id="booking-title"
 				v-model="form.title"
 				type="text"
-				:placeholder="t('shillinq', 'Booking title')">
+				:placeholder="t('shillinq', 'Booking title')" />
 		</div>
 
 		<div class="booking-form__field">
@@ -23,15 +23,12 @@
 			<input
 				id="booking-start"
 				v-model="form.startTime"
-				type="datetime-local">
+				type="datetime-local" />
 		</div>
 
 		<div class="booking-form__field">
 			<label for="booking-end">{{ t('shillinq', 'End time') }}</label>
-			<input
-				id="booking-end"
-				v-model="form.endTime"
-				type="datetime-local">
+			<input id="booking-end" v-model="form.endTime" type="datetime-local" />
 		</div>
 
 		<div class="booking-form__field">
@@ -40,28 +37,35 @@
 				id="booking-attendee"
 				v-model="form.attendee"
 				type="text"
-				:placeholder="t('shillinq', 'Attendee name')">
+				:placeholder="t('shillinq', 'Attendee name')" />
 		</div>
 
 		<div class="booking-form__field">
 			<span class="booking-form__legend">{{ t('shillinq', 'Status') }}</span>
 			<label class="booking-form__radio">
-				<input v-model="form.status" type="radio" value="pending">
+				<input v-model="form.status" type="radio" value="pending" />
 				{{ t('shillinq', 'Pending') }}
 			</label>
 			<label class="booking-form__radio">
-				<input v-model="form.status" type="radio" value="confirmed">
+				<input v-model="form.status" type="radio" value="confirmed" />
 				{{ t('shillinq', 'Confirmed') }}
 			</label>
 		</div>
 
-		<p v-if="validationError" class="booking-form__error" data-testid="booking-form-error">
+		<p
+			v-if="validationError"
+			class="booking-form__error"
+			data-testid="booking-form-error">
 			{{ validationError }}
 		</p>
 
 		<div class="booking-form__actions">
 			<NcButton variant="primary" type="submit" :disabled="submitting">
-				{{ submitting ? t('shillinq', 'Saving…') : t('shillinq', 'Create Booking') }}
+				{{
+					submitting
+						? t('shillinq', 'Saving…')
+						: t('shillinq', 'Create Booking')
+				}}
 			</NcButton>
 		</div>
 
@@ -74,8 +78,8 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 import BookingConflictDialog from '../../modals/BookingConflictDialog.vue'
 
 const MIN_DURATION_MS = 15 * 60 * 1000
@@ -109,6 +113,7 @@ export default {
 				attendee: '',
 				status: 'pending',
 			},
+
 			validationError: '',
 			submitting: false,
 			showConflictDialog: false,
@@ -179,10 +184,11 @@ export default {
 		async postBooking(force) {
 			this.submitting = true
 			try {
-				const url = generateUrl(
-					'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
-					{ calendarId: this.calendarId },
-				) + (force ? '?force=1' : '')
+				const url =
+					generateUrl(
+						'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
+						{ calendarId: this.calendarId },
+					) + (force ? '?force=1' : '')
 
 				const payload = {
 					title: this.form.title,
@@ -216,7 +222,8 @@ export default {
 				}
 
 				const errBody = await response.json().catch(() => ({}))
-				this.validationError = errBody.error || t('shillinq', 'Failed to create booking')
+				this.validationError =
+					errBody.error || t('shillinq', 'Failed to create booking')
 			} catch (error) {
 				this.validationError = t('shillinq', 'Failed to create booking')
 			} finally {
@@ -240,7 +247,13 @@ export default {
 		 * @return {void}
 		 */
 		reset() {
-			this.form = { title: '', startTime: '', endTime: '', attendee: '', status: 'pending' }
+			this.form = {
+				title: '',
+				startTime: '',
+				endTime: '',
+				attendee: '',
+				status: 'pending',
+			}
 			this.validationError = ''
 			this.conflicts = []
 		},

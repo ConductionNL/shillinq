@@ -29,99 +29,94 @@ use Psr\Log\LoggerInterface;
 /**
  * @covers \OCA\Shillinq\Controller\SpendAnalyticsController
  */
-final class SpendAnalyticsControllerTest extends TestCase
-{
-    /**
-     * Build the controller with mocked dependencies.
-     *
-     * @param string|null $userId    The resolved user id (null = anonymous).
-     * @param string      $dimension The dimension query parameter value.
-     * @param array<string,mixed> $servicePayload The service payload to return.
-     *
-     * @return SpendAnalyticsController
-     */
-    private function makeController(?string $userId, string $dimension, array $servicePayload): SpendAnalyticsController
-    {
-        $request = $this->createMock(IRequest::class);
-        $request->method('getParam')->willReturnCallback(
-            static function (string $key, $default=null) use ($dimension) {
-                if ($key === 'dimension') {
-                    return $dimension;
-                }
+final class SpendAnalyticsControllerTest extends TestCase {
+	/**
+	 * Build the controller with mocked dependencies.
+	 *
+	 * @param string|null $userId The resolved user id (null = anonymous).
+	 * @param string $dimension The dimension query parameter value.
+	 * @param array<string,mixed> $servicePayload The service payload to return.
+	 *
+	 * @return SpendAnalyticsController
+	 */
+	private function makeController(?string $userId, string $dimension, array $servicePayload): SpendAnalyticsController {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static function (string $key, $default = null) use ($dimension) {
+				if ($key === 'dimension') {
+					return $dimension;
+				}
 
-                return $default;
-            }
-        );
+				return $default;
+			}
+		);
 
-        $service = $this->createMock(SpendAnalyticsService::class);
-        $service->method('spendBySupplier')->willReturn($servicePayload);
-        $service->method('spendByCategory')->willReturn($servicePayload);
-        $service->method('spendByCostCentre')->willReturn($servicePayload);
-        $service->method('spendByPeriod')->willReturn($servicePayload);
+		$service = $this->createMock(SpendAnalyticsService::class);
+		$service->method('spendBySupplier')->willReturn($servicePayload);
+		$service->method('spendByCategory')->willReturn($servicePayload);
+		$service->method('spendByCostCentre')->willReturn($servicePayload);
+		$service->method('spendByPeriod')->willReturn($servicePayload);
 
-        $context = $this->createMock(AdministrationContextService::class);
-        $context->method('currentUserId')->willReturn($userId);
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn($userId);
 
-        $l10n = $this->createMock(IL10N::class);
-        $l10n->method('t')->willReturnArgument(0);
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
 
-        $logger = $this->createMock(LoggerInterface::class);
+		$logger = $this->createMock(LoggerInterface::class);
 
-        return new SpendAnalyticsController(
-            request: $request,
-            service: $service,
-            context: $context,
-            l10n: $l10n,
-            logger: $logger
-        );
+		return new SpendAnalyticsController(
+			request: $request,
+			service: $service,
+			context: $context,
+			l10n: $l10n,
+			logger: $logger
+		);
 
-    }//end makeController()
+	}//end makeController()
 
-    /**
-     * Happy path — 200 with the view payload + translated label.
-     */
-    public function testSpendReturnsPayloadForValidDimension(): void
-    {
-        $payload    = [
-            'dimension' => 'supplier',
-            'groups'    => [['key' => 'V1', 'amount' => 150.0]],
-            'total'     => 150.0,
-            'backend'   => 'postgres',
-        ];
-        $controller = $this->makeController(userId: 'alice', dimension: 'supplier', servicePayload: $payload);
+	/**
+	 * Happy path — 200 with the view payload + translated label.
+	 */
+	public function testSpendReturnsPayloadForValidDimension(): void {
+		$payload = [
+			'dimension' => 'supplier',
+			'groups' => [['key' => 'V1', 'amount' => 150.0]],
+			'total' => 150.0,
+			'backend' => 'postgres',
+		];
+		$controller = $this->makeController(userId: 'alice', dimension: 'supplier', servicePayload: $payload);
 
-        $response = $controller->spend();
+		$response = $controller->spend();
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        $this->assertSame('supplier', $data['dimension']);
-        $this->assertSame('Spend by supplier', $data['label']);
-        $this->assertSame(150.0, $data['total']);
-        $this->assertSame('V1', $data['groups'][0]['key']);
-    }//end testSpendReturnsPayloadForValidDimension()
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('supplier', $data['dimension']);
+		$this->assertSame('Spend by supplier', $data['label']);
+		$this->assertSame(150.0, $data['total']);
+		$this->assertSame('V1', $data['groups'][0]['key']);
+	}//end testSpendReturnsPayloadForValidDimension()
 
-    /**
-     * Unknown dimension — HTTP 400.
-     */
-    public function testSpendRejectsUnknownDimension(): void
-    {
-        $controller = $this->makeController(userId: 'alice', dimension: '__nope', servicePayload: []);
+	/**
+	 * Unknown dimension — HTTP 400.
+	 */
+	public function testSpendRejectsUnknownDimension(): void {
+		$controller = $this->makeController(userId: 'alice', dimension: '__nope', servicePayload: []);
 
-        $response = $controller->spend();
+		$response = $controller->spend();
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-        $this->assertArrayHasKey('error', $response->getData());
-    }//end testSpendRejectsUnknownDimension()
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertArrayHasKey('error', $response->getData());
+	}//end testSpendRejectsUnknownDimension()
 
-    /**
-     * Anonymous request — HTTP 401.
-     */
-    public function testSpendRejectsAnonymous(): void
-    {
-        $controller = $this->makeController(userId: null, dimension: 'supplier', servicePayload: []);
+	/**
+	 * Anonymous request — HTTP 401.
+	 */
+	public function testSpendRejectsAnonymous(): void {
+		$controller = $this->makeController(userId: null, dimension: 'supplier', servicePayload: []);
 
-        $response = $controller->spend();
+		$response = $controller->spend();
 
-        $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-    }//end testSpendRejectsAnonymous()
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+	}//end testSpendRejectsAnonymous()
 }//end class

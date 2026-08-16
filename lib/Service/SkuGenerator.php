@@ -46,125 +46,119 @@ use InvalidArgumentException;
  *
  * @spec openspec/specs/inventory-barcode-sku/spec.md
  */
-class SkuGenerator
-{
-    /**
-     * Generate a SKU for the given product attributes using a named template.
-     *
-     * Reads the template from sku-templates.json, applies each rule's
-     * transform to the matching product attribute, then interpolates the
-     * transformed values into the template pattern (e.g.
-     * "{category}-{manufacturer}-{size}-{color}").
-     *
-     * Spec wording: "InventoryItem" — the live shillinq schema is `Product`.
-     * The generator is shape-agnostic: pass any array<string, mixed> of
-     * product attributes; only the keys referenced by the template's rules
-     * are consulted.
-     *
-     * @param array<string, mixed> $item       Product attribute map,
-     *                                         e.g. ['category' => 'Apparel', 'manufacturer' => 'Nike', ...].
-     * @param string               $templateId The template identifier (e.g. RETAIL_APPAREL_TEMPLATE).
-     *
-     * @return string The generated SKU.
-     *
-     * @throws \InvalidArgumentException When the template is unknown or malformed.
-     *
-     * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-11
-     */
-    public function generate(array $item, string $templateId): string
-    {
-        $template = $this->findTemplate(templateId: $templateId);
+class SkuGenerator {
+	/**
+	 * Generate a SKU for the given product attributes using a named template.
+	 *
+	 * Reads the template from sku-templates.json, applies each rule's
+	 * transform to the matching product attribute, then interpolates the
+	 * transformed values into the template pattern (e.g.
+	 * "{category}-{manufacturer}-{size}-{color}").
+	 *
+	 * Spec wording: "InventoryItem" — the live shillinq schema is `Product`.
+	 * The generator is shape-agnostic: pass any array<string, mixed> of
+	 * product attributes; only the keys referenced by the template's rules
+	 * are consulted.
+	 *
+	 * @param array<string, mixed> $item Product attribute map,
+	 *                                   e.g. ['category' => 'Apparel', 'manufacturer' => 'Nike', ...].
+	 * @param string $templateId The template identifier (e.g. RETAIL_APPAREL_TEMPLATE).
+	 *
+	 * @return string The generated SKU.
+	 *
+	 * @throws \InvalidArgumentException When the template is unknown or malformed.
+	 *
+	 * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-11
+	 */
+	public function generate(array $item, string $templateId): string {
+		$template = $this->findTemplate(templateId: $templateId);
 
-        $values = [];
-        foreach (($template['rules'] ?? []) as $rule) {
-            $field          = (string) ($rule['field'] ?? '');
-            $raw            = (string) ($item[$field] ?? '');
-            $values[$field] = $this->applyRule(rule: $rule, value: $raw);
-        }
+		$values = [];
+		foreach (($template['rules'] ?? []) as $rule) {
+			$field = (string)($rule['field'] ?? '');
+			$raw = (string)($item[$field] ?? '');
+			$values[$field] = $this->applyRule(rule: $rule, value: $raw);
+		}
 
-        // Interpolate {field} placeholders in the pattern with transformed values.
-        $pattern = (string) ($template['pattern'] ?? '');
-        return (string) preg_replace_callback(
-            '/\{([a-zA-Z0-9_]+)\}/',
-            static function (array $match) use ($values): string {
-                return ($values[$match[1]] ?? '');
-            },
-            $pattern
-        );
+		// Interpolate {field} placeholders in the pattern with transformed values.
+		$pattern = (string)($template['pattern'] ?? '');
+		return (string)preg_replace_callback(
+			'/\{([a-zA-Z0-9_]+)\}/',
+			static function (array $match) use ($values): string {
+				return ($values[$match[1]] ?? '');
+			},
+			$pattern
+		);
 
-    }//end generate()
+	}//end generate()
 
-    /**
-     * Apply a single template rule's transform to a raw attribute value.
-     *
-     * Supported types:
-     *  - `mapping`: lookup in the rule's mapping table; unmapped values pass through.
-     *  - `passthrough`: value verbatim.
-     *  - `hex_first_3_chars`: named-colour lookup, else first 3 chars uppercased.
-     * Unknown rule types fall back to passthrough.
-     *
-     * @param array<string, mixed> $rule  The rule definition (type, mapping, ...).
-     * @param string               $value The raw attribute value.
-     *
-     * @return string The transformed value.
-     */
-    private function applyRule(array $rule, string $value): string
-    {
-        $type    = (string) ($rule['type'] ?? 'passthrough');
-        $mapping = ($rule['mapping'] ?? []);
+	/**
+	 * Apply a single template rule's transform to a raw attribute value.
+	 *
+	 * Supported types:
+	 *  - `mapping`: lookup in the rule's mapping table; unmapped values pass through.
+	 *  - `passthrough`: value verbatim.
+	 *  - `hex_first_3_chars`: named-colour lookup, else first 3 chars uppercased.
+	 * Unknown rule types fall back to passthrough.
+	 *
+	 * @param array<string, mixed> $rule The rule definition (type, mapping, ...).
+	 * @param string $value The raw attribute value.
+	 *
+	 * @return string The transformed value.
+	 */
+	private function applyRule(array $rule, string $value): string {
+		$type = (string)($rule['type'] ?? 'passthrough');
+		$mapping = ($rule['mapping'] ?? []);
 
-        if ($type === 'mapping') {
-            return (string) ($mapping[$value] ?? $value);
-        }
+		if ($type === 'mapping') {
+			return (string)($mapping[$value] ?? $value);
+		}
 
-        if ($type === 'hex_first_3_chars') {
-            if (isset($mapping[$value]) === true) {
-                return (string) $mapping[$value];
-            }
+		if ($type === 'hex_first_3_chars') {
+			if (isset($mapping[$value]) === true) {
+				return (string)$mapping[$value];
+			}
 
-            return strtoupper(substr($value, 0, 3));
-        }
+			return strtoupper(substr($value, 0, 3));
+		}
 
-        // Passthrough and any unknown type.
-        return $value;
+		// Passthrough and any unknown type.
+		return $value;
+	}//end applyRule()
 
-    }//end applyRule()
+	/**
+	 * Locate a template by id in sku-templates.json.
+	 *
+	 * @param string $templateId The template identifier to find.
+	 *
+	 * @return array<string, mixed> The template definition.
+	 *
+	 * @throws \InvalidArgumentException When the file is missing/malformed or the id is unknown.
+	 */
+	private function findTemplate(string $templateId): array {
+		$path = __DIR__ . '/../Settings/sku-templates.json';
+		if (file_exists($path) === false) {
+			throw new InvalidArgumentException('SKU template file not found.');
+		}
 
-    /**
-     * Locate a template by id in sku-templates.json.
-     *
-     * @param string $templateId The template identifier to find.
-     *
-     * @return array<string, mixed> The template definition.
-     *
-     * @throws \InvalidArgumentException When the file is missing/malformed or the id is unknown.
-     */
-    private function findTemplate(string $templateId): array
-    {
-        $path = __DIR__.'/../Settings/sku-templates.json';
-        if (file_exists($path) === false) {
-            throw new InvalidArgumentException('SKU template file not found.');
-        }
+		$content = file_get_contents($path);
+		if ($content === false) {
+			throw new InvalidArgumentException('Failed to read SKU template file.');
+		}
 
-        $content = file_get_contents($path);
-        if ($content === false) {
-            throw new InvalidArgumentException('Failed to read SKU template file.');
-        }
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
+			throw new InvalidArgumentException(
+				'Failed to parse SKU template file: ' . json_last_error_msg()
+			);
+		}
 
-        $data = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-            throw new InvalidArgumentException(
-                'Failed to parse SKU template file: '.json_last_error_msg()
-            );
-        }
+		foreach (($data['templates'] ?? []) as $template) {
+			if (($template['templateId'] ?? '') === $templateId) {
+				return $template;
+			}
+		}
 
-        foreach (($data['templates'] ?? []) as $template) {
-            if (($template['templateId'] ?? '') === $templateId) {
-                return $template;
-            }
-        }
-
-        throw new InvalidArgumentException('Unknown SKU template: '.$templateId);
-
-    }//end findTemplate()
+		throw new InvalidArgumentException('Unknown SKU template: ' . $templateId);
+	}//end findTemplate()
 }//end class

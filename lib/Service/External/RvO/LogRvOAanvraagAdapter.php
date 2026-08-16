@@ -43,64 +43,62 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
-class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface
-{
-    /**
-     * Construct the log-backed RvO adapter.
-     *
-     * @param LoggerInterface $logger Structured logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface {
+	/**
+	 * Construct the log-backed RvO adapter.
+	 *
+	 * @param LoggerInterface $logger Structured logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Log the intent + synthesise a DEFERRED aanvraag result.
-     *
-     * @param array<string,mixed> $payload The RvO aanvraag envelope.
-     *
-     * @return RvORequestResult The dispatch outcome.
-     */
-    public function submit(array $payload): RvORequestResult
-    {
-        $sanitised = $payload;
-        // Strip raw attachment bytes from the log entry — checksum is enough.
-        unset($sanitised['attachmentBytes']);
+	/**
+	 * Log the intent + synthesise a DEFERRED aanvraag result.
+	 *
+	 * @param array<string,mixed> $payload The RvO aanvraag envelope.
+	 *
+	 * @return RvORequestResult The dispatch outcome.
+	 */
+	public function submit(array $payload): RvORequestResult {
+		$sanitised = $payload;
+		// Strip raw attachment bytes from the log entry — checksum is enough.
+		unset($sanitised['attachmentBytes']);
 
-        $aanvraagnummer = 'rvo-log-'.bin2hex(random_bytes(8));
-        $scheme         = (string) ($payload['scheme'] ?? 'unknown');
-        $this->logger->info(
-            'Shillinq RvO aanvraag deferred (no outbound connector bound)',
-            [
-                'aanvraagnummer' => $aanvraagnummer,
-                'scheme'         => $scheme,
-                'payload'        => $sanitised,
-            ]
-        );
+		$aanvraagnummer = 'rvo-log-' . bin2hex(random_bytes(8));
+		$scheme = (string)($payload['scheme'] ?? 'unknown');
+		$this->logger->info(
+			'Shillinq RvO aanvraag deferred (no outbound connector bound)',
+			[
+				'aanvraagnummer' => $aanvraagnummer,
+				'scheme' => $scheme,
+				'payload' => $sanitised,
+			]
+		);
 
-        return new RvORequestResult(
-            deliveryStatus: 'DEFERRED',
-            aanvraagnummer: $aanvraagnummer,
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `rvo-aanvraag` (eHerkenning Level 3 + Mijn-RvO REST '
-                    .'endpoint for the relevant scheme: wbso/sno/kia/eia/mia/vamil) and override '
-                    .'RvOAanvraagAdapterInterface in Application::register() to enable real transport.',
-                'scheme' => $scheme,
-            ],
-        );
-    }//end submit()
+		return new RvORequestResult(
+			deliveryStatus: 'DEFERRED',
+			aanvraagnummer: $aanvraagnummer,
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector source slug `rvo-aanvraag` (eHerkenning Level 3 + Mijn-RvO REST '
+					. 'endpoint for the relevant scheme: wbso/sno/kia/eia/mia/vamil) and override '
+					. 'RvOAanvraagAdapterInterface in Application::register() to enable real transport.',
+				'scheme' => $scheme,
+			],
+		);
+	}//end submit()
 
-    /**
-     * Report whether this adapter is dormant.
-     *
-     * @return bool True when no outbound connector is bound.
-     *
-     * @inheritDoc
-     */
-    public function isDormant(): bool
-    {
-        return true;
-    }//end isDormant()
+	/**
+	 * Report whether this adapter is dormant.
+	 *
+	 * @return bool True when no outbound connector is bound.
+	 *
+	 * @inheritDoc
+	 */
+	public function isDormant(): bool {
+		return true;
+	}//end isDormant()
 }//end class

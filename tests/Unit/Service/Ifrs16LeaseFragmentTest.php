@@ -35,223 +35,211 @@ use ReflectionMethod;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class Ifrs16LeaseFragmentTest extends TestCase
-{
+final class Ifrs16LeaseFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-ifrs-16-lease.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-ifrs-16-lease.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * The fragment is present and valid JSON with the expected sections.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertArrayHasKey('schemas', $data['components']);
+		self::assertArrayHasKey('objects', $data['components']);
 
-    }//end fragment()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment is present and valid JSON with the expected sections.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertArrayHasKey('schemas', $data['components']);
-        self::assertArrayHasKey('objects', $data['components']);
+	/**
+	 * All five IFRS 16 schemas are declared (REQ-LC-001, design.md D1).
+	 *
+	 * @return void
+	 */
+	public function testDeclaresFiveLeaseSchemas(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach (['LeaseContract', 'LeasePaymentSchedule', 'LeaseReassessmentEvent', 'LeaseDisclosureTable', 'LeasePortfolioExemption'] as $slug) {
+			self::assertArrayHasKey($slug, $schemas, "missing schema $slug");
+		}
 
-    }//end testFragmentIsValidJson()
+	}//end testDeclaresFiveLeaseSchemas()
 
-    /**
-     * All five IFRS 16 schemas are declared (REQ-LC-001, design.md D1).
-     *
-     * @return void
-     */
-    public function testDeclaresFiveLeaseSchemas(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach (['LeaseContract', 'LeasePaymentSchedule', 'LeaseReassessmentEvent', 'LeaseDisclosureTable', 'LeasePortfolioExemption'] as $slug) {
-            self::assertArrayHasKey($slug, $schemas, "missing schema $slug");
-        }
+	/**
+	 * LeaseContract declares the REQ-LC-002 core fields and the REQ-LC-004 lifecycle.
+	 *
+	 * @return void
+	 */
+	public function testLeaseContractFieldsAndLifecycle(): void {
+		$schema = $this->fragment()['components']['schemas']['LeaseContract'];
 
-    }//end testDeclaresFiveLeaseSchemas()
+		$required = [
+			'leaseNumber',
+			'counterparty',
+			'assetClass',
+			'commencementDate',
+			'endDate',
+			'nonCancellableTermMonths',
+			'paymentFrequency',
+			'paymentTiming',
+			'basePaymentAmount',
+			'paymentCurrency',
+			'ibrPercent',
+			'ibrDerivationMethod',
+			'classification',
+			'status',
+		];
+		foreach ($required as $field) {
+			self::assertArrayHasKey($field, $schema['properties'], "LeaseContract must declare $field");
+		}
 
-    /**
-     * LeaseContract declares the REQ-LC-002 core fields and the REQ-LC-004 lifecycle.
-     *
-     * @return void
-     */
-    public function testLeaseContractFieldsAndLifecycle(): void
-    {
-        $schema = $this->fragment()['components']['schemas']['LeaseContract'];
+		// Declarative state machine (REQ-LC-004).
+		self::assertArrayHasKey('x-openregister-lifecycle', $schema);
+		$lifecycle = $schema['x-openregister-lifecycle'];
+		self::assertSame('draft', $lifecycle['initial']);
+		self::assertContains('active', $lifecycle['states']);
+		self::assertContains('terminated', $lifecycle['states']);
 
-        $required = [
-            'leaseNumber',
-            'counterparty',
-            'assetClass',
-            'commencementDate',
-            'endDate',
-            'nonCancellableTermMonths',
-            'paymentFrequency',
-            'paymentTiming',
-            'basePaymentAmount',
-            'paymentCurrency',
-            'ibrPercent',
-            'ibrDerivationMethod',
-            'classification',
-            'status',
-        ];
-        foreach ($required as $field) {
-            self::assertArrayHasKey($field, $schema['properties'], "LeaseContract must declare $field");
-        }
+		// The draft→active transition is guarded by LeaseContractGuard (ADR-031).
+		$hasGuardedActivation = false;
+		foreach ($lifecycle['transitions'] as $transition) {
+			if ($transition['from'] === 'draft' && $transition['to'] === 'active') {
+				self::assertStringContainsString('LeaseContractGuard', ($transition['guard'] ?? ''));
+				$hasGuardedActivation = true;
+			}
+		}
 
-        // Declarative state machine (REQ-LC-004).
-        self::assertArrayHasKey('x-openregister-lifecycle', $schema);
-        $lifecycle = $schema['x-openregister-lifecycle'];
-        self::assertSame('draft', $lifecycle['initial']);
-        self::assertContains('active', $lifecycle['states']);
-        self::assertContains('terminated', $lifecycle['states']);
+		self::assertTrue($hasGuardedActivation, 'draft→active transition must be guarded');
 
-        // The draft→active transition is guarded by LeaseContractGuard (ADR-031).
-        $hasGuardedActivation = false;
-        foreach ($lifecycle['transitions'] as $transition) {
-            if ($transition['from'] === 'draft' && $transition['to'] === 'active') {
-                self::assertStringContainsString('LeaseContractGuard', ($transition['guard'] ?? ''));
-                $hasGuardedActivation = true;
-            }
-        }
+		// Classification enum is exactly the four IFRS 16 values (REQ-LC-002).
+		self::assertSame(
+			['IFRS16-capitalised', 'short-term-exempt', 'low-value-exempt', 'operating-pre-IFRS16'],
+			$schema['properties']['classification']['enum']
+		);
 
-        self::assertTrue($hasGuardedActivation, 'draft→active transition must be guarded');
+	}//end testLeaseContractFieldsAndLifecycle()
 
-        // Classification enum is exactly the four IFRS 16 values (REQ-LC-002).
-        self::assertSame(
-            ['IFRS16-capitalised', 'short-term-exempt', 'low-value-exempt', 'operating-pre-IFRS16'],
-            $schema['properties']['classification']['enum']
-        );
+	/**
+	 * LeasePaymentSchedule is read-only (REQ-LA-002 immutability).
+	 *
+	 * @return void
+	 */
+	public function testPaymentScheduleIsReadOnly(): void {
+		$schema = $this->fragment()['components']['schemas']['LeasePaymentSchedule'];
+		self::assertTrue($schema['readonly']);
+		self::assertTrue($schema['x-openregister']['readonly']);
 
-    }//end testLeaseContractFieldsAndLifecycle()
+	}//end testPaymentScheduleIsReadOnly()
 
-    /**
-     * LeasePaymentSchedule is read-only (REQ-LA-002 immutability).
-     *
-     * @return void
-     */
-    public function testPaymentScheduleIsReadOnly(): void
-    {
-        $schema = $this->fragment()['components']['schemas']['LeasePaymentSchedule'];
-        self::assertTrue($schema['readonly']);
-        self::assertTrue($schema['x-openregister']['readonly']);
+	/**
+	 * The lessor counterparty is a contact FK, never a bespoke person schema (ADR-022).
+	 *
+	 * @return void
+	 */
+	public function testCounterpartyIsContactFkNotNewSchema(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach (['Contact', 'Person', 'Customer', 'Lessor'] as $forbidden) {
+			self::assertArrayNotHasKey($forbidden, $schemas, "must not invent a $forbidden schema (ADR-022)");
+		}
 
-    }//end testPaymentScheduleIsReadOnly()
+		// The seed lessor references a contact: FK URI.
+		$objects = $this->fragment()['components']['objects'];
+		$lease = null;
+		foreach ($objects as $object) {
+			if (($object['@self']['schema'] ?? '') === 'LeaseContract') {
+				$lease = $object;
+				break;
+			}
+		}
 
-    /**
-     * The lessor counterparty is a contact FK, never a bespoke person schema (ADR-022).
-     *
-     * @return void
-     */
-    public function testCounterpartyIsContactFkNotNewSchema(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach (['Contact', 'Person', 'Customer', 'Lessor'] as $forbidden) {
-            self::assertArrayNotHasKey($forbidden, $schemas, "must not invent a $forbidden schema (ADR-022)");
-        }
+		self::assertNotNull($lease);
+		self::assertStringStartsWith('contact:', (string)$lease['counterparty']);
 
-        // The seed lessor references a contact: FK URI.
-        $objects = $this->fragment()['components']['objects'];
-        $lease   = null;
-        foreach ($objects as $object) {
-            if (($object['@self']['schema'] ?? '') === 'LeaseContract') {
-                $lease = $object;
-                break;
-            }
-        }
+	}//end testCounterpartyIsContactFkNotNewSchema()
 
-        self::assertNotNull($lease);
-        self::assertStringStartsWith('contact:', (string) $lease['counterparty']);
+	/**
+	 * Merging the fragment adds the lease schemas without dropping monolith schemas (ADR-037).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = $this->fragment();
 
-    }//end testCounterpartyIsContactFkNotNewSchema()
+		$merged = $this->merge($base, $frag);
+		$schemas = $merged['components']['schemas'];
 
-    /**
-     * Merging the fragment adds the lease schemas without dropping monolith schemas (ADR-037).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = $this->fragment();
+		self::assertArrayHasKey('LeaseContract', $schemas);
+		// A pre-existing monolith schema survives the merge.
+		self::assertArrayHasKey('GLTransaction', $schemas);
 
-        $merged  = $this->merge($base, $frag);
-        $schemas = $merged['components']['schemas'];
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 
-        self::assertArrayHasKey('LeaseContract', $schemas);
-        // A pre-existing monolith schema survives the merge.
-        self::assertArrayHasKey('GLTransaction', $schemas);
+	/**
+	 * Seed objects target only declared schemas and the shillinq register (ADR-037).
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsConsistent(): void {
+		$frag = $this->fragment();
+		$schemas = $frag['components']['schemas'];
+		$objects = $frag['components']['objects'];
 
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+		self::assertNotEmpty($objects);
+		$seenSchemas = [];
+		foreach ($objects as $object) {
+			self::assertArrayHasKey('@self', $object);
+			self::assertSame('shillinq', $object['@self']['register']);
+			self::assertArrayHasKey($object['@self']['schema'], $schemas);
+			$seenSchemas[$object['@self']['schema']] = true;
+		}
 
-    /**
-     * Seed objects target only declared schemas and the shillinq register (ADR-037).
-     *
-     * @return void
-     */
-    public function testSeedObjectsConsistent(): void
-    {
-        $frag    = $this->fragment();
-        $schemas = $frag['components']['schemas'];
-        $objects = $frag['components']['objects'];
+		// The three worked-example lease classifications are all seeded.
+		$classifications = [];
+		foreach ($objects as $object) {
+			if (($object['@self']['schema'] ?? '') === 'LeaseContract') {
+				$classifications[$object['classification']] = true;
+			}
+		}
 
-        self::assertNotEmpty($objects);
-        $seenSchemas = [];
-        foreach ($objects as $object) {
-            self::assertArrayHasKey('@self', $object);
-            self::assertSame('shillinq', $object['@self']['register']);
-            self::assertArrayHasKey($object['@self']['schema'], $schemas);
-            $seenSchemas[$object['@self']['schema']] = true;
-        }
+		self::assertArrayHasKey('IFRS16-capitalised', $classifications);
+		self::assertArrayHasKey('short-term-exempt', $classifications);
 
-        // The three worked-example lease classifications are all seeded.
-        $classifications = [];
-        foreach ($objects as $object) {
-            if (($object['@self']['schema'] ?? '') === 'LeaseContract') {
-                $classifications[$object['classification']] = true;
-            }
-        }
-
-        self::assertArrayHasKey('IFRS16-capitalised', $classifications);
-        self::assertArrayHasKey('short-term-exempt', $classifications);
-
-    }//end testSeedObjectsConsistent()
+	}//end testSeedObjectsConsistent()
 }//end class

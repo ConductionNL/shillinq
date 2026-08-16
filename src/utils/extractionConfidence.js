@@ -59,7 +59,10 @@ export function confidenceForField(record, field) {
  * @return {boolean}
  */
 export function isFieldCorrected(record, field) {
-	return Array.isArray(record?.humanCorrected) && record.humanCorrected.includes(field)
+	return (
+		Array.isArray(record?.humanCorrected)
+		&& record.humanCorrected.includes(field)
+	)
 }
 
 /**
@@ -90,7 +93,8 @@ export function requiresExplicitReview(record) {
 export function pendingDraftSummary(record, labelField = 'id') {
 	const r = record || {}
 	const label = String(r[labelField] || r.id || '')
-	const overall = typeof r.overallConfidence === 'number' ? r.overallConfidence : null
+	const overall =
+		typeof r.overallConfidence === 'number' ? r.overallConfidence : null
 	return { id: String(r.id ?? ''), label, overallConfidence: overall }
 }
 
@@ -111,7 +115,10 @@ export function pendingDraftSummary(record, labelField = 'id') {
  * @return {boolean}
  */
 export function hasKnownExtractionId(record) {
-	return typeof record?.docudeskExtractionId === 'string' && record.docudeskExtractionId.trim().length > 0
+	return (
+		typeof record?.docudeskExtractionId === 'string'
+		&& record.docudeskExtractionId.trim().length > 0
+	)
 }
 
 /**
@@ -137,7 +144,8 @@ export function glAccountSuggestionSummary(response) {
 	return {
 		code,
 		label: String(suggestion.label ?? ''),
-		confidence: typeof suggestion.confidence === 'number' ? suggestion.confidence : null,
+		confidence:
+			typeof suggestion.confidence === 'number' ? suggestion.confidence : null,
 		rationale: String(suggestion.rationale ?? ''),
 		source: String(suggestion.source ?? 'none'),
 	}

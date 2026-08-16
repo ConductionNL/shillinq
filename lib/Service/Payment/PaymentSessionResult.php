@@ -30,22 +30,21 @@ namespace OCA\Shillinq\Service\Payment;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
  */
-final class PaymentSessionResult
-{
-    /**
-     * Construct the session result.
-     *
-     * @param bool                 $dormant         True when the bound provider is a log-only stub.
-     * @param string               $checkoutUrl     Hosted-checkout URL — empty when
-     *                                              dormant.
-     * @param string               $paymentIntentId Provider-side intent id (synthetic when dormant).
-     * @param array<string, mixed> $extras          Provider-specific extras.
-     */
-    public function __construct(
-        public readonly bool $dormant,
-        public readonly string $checkoutUrl,
-        public readonly string $paymentIntentId,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class PaymentSessionResult {
+	/**
+	 * Construct the session result.
+	 *
+	 * @param bool $dormant True when the bound provider is a log-only stub.
+	 * @param string $checkoutUrl Hosted-checkout URL — empty when
+	 *                            dormant.
+	 * @param string $paymentIntentId Provider-side intent id (synthetic when dormant).
+	 * @param array<string, mixed> $extras Provider-specific extras.
+	 */
+	public function __construct(
+		public readonly bool $dormant,
+		public readonly string $checkoutUrl,
+		public readonly string $paymentIntentId,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

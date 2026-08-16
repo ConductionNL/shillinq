@@ -35,67 +35,62 @@ namespace OCA\Shillinq\Service\Payment;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003)
  */
-final class PortalPaymentSessionResult
-{
-    /**
-     * Private constructor — use the named factory methods.
-     *
-     * @param string      $status      One of 'ok'|'forbidden'|'deferred'|'downstream_error'.
-     * @param string|null $checkoutUrl The Mollie checkout URL (only set for 'ok').
-     */
-    private function __construct(
-        public readonly string $status,
-        public readonly ?string $checkoutUrl=null,
-    ) {
-    }//end __construct()
+final class PortalPaymentSessionResult {
+	/**
+	 * Private constructor — use the named factory methods.
+	 *
+	 * @param string $status One of 'ok'|'forbidden'|'deferred'|'downstream_error'.
+	 * @param string|null $checkoutUrl The Mollie checkout URL (only set for 'ok').
+	 */
+	private function __construct(
+		public readonly string $status,
+		public readonly ?string $checkoutUrl = null,
+	) {
+	}//end __construct()
 
-    /**
-     * A checkout URL was minted.
-     *
-     * @param string $checkoutUrl The Mollie checkout URL.
-     *
-     * @return self
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
-     */
-    public static function success(string $checkoutUrl): self
-    {
-        return new self(status: 'ok', checkoutUrl: $checkoutUrl);
-    }//end success()
+	/**
+	 * A checkout URL was minted.
+	 *
+	 * @param string $checkoutUrl The Mollie checkout URL.
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 */
+	public static function success(string $checkoutUrl): self {
+		return new self(status: 'ok', checkoutUrl: $checkoutUrl);
+	}//end success()
 
-    /**
-     * Uniform not-authorised outcome (foreign/non-payable/non-existent/malformed).
-     *
-     * @return self
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003)
-     */
-    public static function forbidden(): self
-    {
-        return new self(status: 'forbidden');
-    }//end forbidden()
+	/**
+	 * Uniform not-authorised outcome (foreign/non-payable/non-existent/malformed).
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003)
+	 */
+	public static function forbidden(): self {
+		return new self(status: 'forbidden');
+	}//end forbidden()
 
-    /**
-     * The bound provider is dormant — no checkout URL, honest degradation.
-     *
-     * @return self
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
-     */
-    public static function deferred(): self
-    {
-        return new self(status: 'deferred');
-    }//end deferred()
+	/**
+	 * The bound provider is dormant — no checkout URL, honest degradation.
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
+	 */
+	public static function deferred(): self {
+		return new self(status: 'deferred');
+	}//end deferred()
 
-    /**
-     * An OpenRegister or PSP call failed.
-     *
-     * @return self
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
-     */
-    public static function downstreamError(): self
-    {
-        return new self(status: 'downstream_error');
-    }//end downstreamError()
+	/**
+	 * An OpenRegister or PSP call failed.
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 */
+	public static function downstreamError(): self {
+		return new self(status: 'downstream_error');
+	}//end downstreamError()
 }//end class

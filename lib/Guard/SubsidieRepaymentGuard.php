@@ -52,92 +52,88 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class SubsidieRepaymentGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class SubsidieRepaymentGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition: sum of all non-`paid` RepaymentInstallment.amount for
-     * this Subsidie must be zero.
-     *
-     * @param array<string, mixed> $subsidie The Subsidie object being transitioned.
-     *
-     * @return bool True when the outstanding repayment balance is zero.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireZeroRepaymentBalance(array $subsidie): bool
-    {
-        $subsidieId = ($subsidie['id'] ?? null);
-        if ($subsidieId === null) {
-            // No persisted identity to look up installments against.
-            return false;
-        }
+	/**
+	 * Precondition: sum of all non-`paid` RepaymentInstallment.amount for
+	 * this Subsidie must be zero.
+	 *
+	 * @param array<string, mixed> $subsidy The Subsidie object being transitioned.
+	 *
+	 * @return bool True when the outstanding repayment balance is zero.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireZeroRepaymentBalance(array $subsidy): bool {
+		$subsidyId = ($subsidy['id'] ?? null);
+		if ($subsidyId === null) {
+			// No persisted identity to look up installments against.
+			return false;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $installments  = $objectService
-                ->setRegister($this->register())
-                ->setSchema('RepaymentInstallment')
-                ->findAll(['filters' => ['subsidieId' => $subsidieId]]);
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$installments = $objectService
+				->setRegister($this->register())
+				->setSchema('RepaymentInstallment')
+				->findAll(['filters' => ['subsidyId' => $subsidyId]]);
 
-            if (is_array($installments) === false) {
-                $installments = [];
-            }
+			if (is_array($installments) === false) {
+				$installments = [];
+			}
 
-            $outstandingCents = 0;
-            foreach ($installments as $installment) {
-                if ((string) ($installment['state'] ?? '') === 'paid') {
-                    continue;
-                }
+			$outstandingCents = 0;
+			foreach ($installments as $installment) {
+				if ((string)($installment['state'] ?? '') === 'paid') {
+					continue;
+				}
 
-                $outstandingCents += (int) round(((float) ($installment['amount'] ?? 0)) * 100);
-            }
+				$outstandingCents += (int)round(((float)($installment['amount'] ?? 0)) * 100);
+			}
 
-            if ($outstandingCents !== 0) {
-                $this->logger->info(
-                    'SubsidieRepaymentGuard: outstanding repayment balance — denying close',
-                    ['subsidieId' => $subsidieId, 'outstandingCents' => $outstandingCents]
-                );
-                return false;
-            }
+			if ($outstandingCents !== 0) {
+				$this->logger->info(
+					'SubsidieRepaymentGuard: outstanding repayment balance — denying close',
+					['subsidyId' => $subsidyId, 'outstandingCents' => $outstandingCents]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'SubsidieRepaymentGuard: requireZeroRepaymentBalance check failed — denying (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'SubsidieRepaymentGuard: requireZeroRepaymentBalance check failed — denying (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end requireZeroRepaymentBalance()
+	}//end requireZeroRepaymentBalance()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

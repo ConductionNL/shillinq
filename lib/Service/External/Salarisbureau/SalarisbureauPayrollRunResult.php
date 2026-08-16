@@ -34,24 +34,23 @@ namespace OCA\Shillinq\Service\External\Salarisbureau;
  *
  * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
-final class SalarisbureauPayrollRunResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
-     * @param string              $runId          Bureau-side run identifier.
-     * @param bool                $dormant        TRUE when the adapter was dormant.
-     * @param array<string,mixed> $extras         Provider-specific extras
-     *                                            (e.g. payslipUrls,
-     *                                            loonaangifteKenmerk,
-     *                                            rejectionReasons).
-     */
-    public function __construct(
-        public readonly string $deliveryStatus,
-        public readonly string $runId,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class SalarisbureauPayrollRunResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
+	 * @param string $runId Bureau-side run identifier.
+	 * @param bool $dormant TRUE when the adapter was dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras
+	 *                                    (e.g. payslipUrls,
+	 *                                    loonaangifteKenmerk,
+	 *                                    rejectionReasons).
+	 */
+	public function __construct(
+		public readonly string $deliveryStatus,
+		public readonly string $runId,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

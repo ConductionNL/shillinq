@@ -43,41 +43,40 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
  */
-final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier
-{
-    /**
-     * Construct the logging fallback notifier.
-     *
-     * @param LoggerInterface $logger PSR logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
+final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier {
+	/**
+	 * Construct the logging fallback notifier.
+	 *
+	 * @param LoggerInterface $logger PSR logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Emit one ERROR-level alert describing the rejected publish.
-     *
-     * The log entry references {@see PipelinqContactAdapter::CONFIG_KEY_TOKEN}
-     * so operators know *where* to rotate the token without us ever
-     * naming its value (ADR-005).
-     *
-     * @param TimelineEventDto $event The event whose publish was rejected.
-     *
-     * @return void
-     */
-    public function notifyAuthFailure(TimelineEventDto $event): void
-    {
-        $this->logger->error(
-            'Invalid pipelinq API token; check config',
-            [
-                'app'        => Application::APP_ID,
-                'configKey'  => PipelinqContactAdapter::CONFIG_KEY_TOKEN,
-                'type'       => $event->type(),
-                'externalId' => $event->externalId(),
-                'contactId'  => $event->contactId(),
-            ]
-        );
+	/**
+	 * Emit one ERROR-level alert describing the rejected publish.
+	 *
+	 * The log entry references {@see PipelinqContactAdapter::CONFIG_KEY_TOKEN}
+	 * so operators know *where* to rotate the token without us ever
+	 * naming its value (ADR-005).
+	 *
+	 * @param TimelineEventDto $event The event whose publish was rejected.
+	 *
+	 * @return void
+	 */
+	public function notifyAuthFailure(TimelineEventDto $event): void {
+		$this->logger->error(
+			'Invalid pipelinq API token; check config',
+			[
+				'app' => Application::APP_ID,
+				'configKey' => PipelinqContactAdapter::CONFIG_KEY_TOKEN,
+				'type' => $event->type(),
+				'externalId' => $event->externalId(),
+				'contactId' => $event->contactId(),
+			]
+		);
 
-    }//end notifyAuthFailure()
+	}//end notifyAuthFailure()
 }//end class

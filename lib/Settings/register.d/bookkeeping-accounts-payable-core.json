@@ -76,7 +76,7 @@
             "example": "24502797",
             "title": "KvK Number"
           },
-          "btwNumber": {
+          "vatNumber": {
             "type": "string",
             "description": "Dutch BTW / EU VAT number.",
             "nullable": true,
@@ -1260,7 +1260,7 @@
         "payeeType": "supplier",
         "tradingName": "Eneco",
         "kvkNumber": "24502797",
-        "btwNumber": "NL003726244B01",
+        "vatNumber": "NL003726244B01",
         "paymentTermDays": 30,
         "defaultExpenseAccountNumber": "4150",
         "bankAccount": {
@@ -1294,7 +1294,7 @@
         "payeeType": "supplier",
         "tradingName": "Office Centre",
         "kvkNumber": "27176868",
-        "btwNumber": "NL807898852B01",
+        "vatNumber": "NL807898852B01",
         "paymentTermDays": 14,
         "defaultExpenseAccountNumber": "4400",
         "bankAccount": {
@@ -1328,7 +1328,7 @@
         "payeeType": "supplier",
         "tradingName": "Deloitte",
         "kvkNumber": "24362853",
-        "btwNumber": "NL006847569B01",
+        "vatNumber": "NL006847569B01",
         "paymentTermDays": 30,
         "defaultExpenseAccountNumber": "4302",
         "bankAccount": {
@@ -1362,7 +1362,7 @@
         "payeeType": "freelancer",
         "tradingName": "JdV Reisadvies",
         "kvkNumber": "11122233",
-        "btwNumber": "NL001234567B01",
+        "vatNumber": "NL001234567B01",
         "paymentTermDays": 14,
         "defaultExpenseAccountNumber": "4302",
         "bankAccount": {

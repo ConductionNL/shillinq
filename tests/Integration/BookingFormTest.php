@@ -35,24 +35,20 @@ use PHPUnit\Framework\TestCase;
  * Run the actual suite via:
  *   npm run test:e2e -- bookings-resource-calendar.spec.ts
  */
-class BookingFormTest extends TestCase
-{
+class BookingFormTest extends TestCase {
 
-
-    /**
-     * Document the pointer so the test runner produces one passing case
-     * even when the Playwright environment is offline.
-     *
-     * @return void
-     */
-    public function testPlaywrightSpecReference(): void
-    {
-        $spec = __DIR__.'/../e2e/bookings-resource-calendar.spec.ts';
-        $this->assertFileExists(
-            $spec,
-            'Booking Form integration tests live in tests/e2e/bookings-resource-calendar.spec.ts (Playwright)'
-        );
-    }//end testPlaywrightSpecReference()
-
+	/**
+	 * Document the pointer so the test runner produces one passing case
+	 * even when the Playwright environment is offline.
+	 *
+	 * @return void
+	 */
+	public function testPlaywrightSpecReference(): void {
+		$spec = __DIR__ . '/../e2e/bookings-resource-calendar.spec.ts';
+		$this->assertFileExists(
+			$spec,
+			'Booking Form integration tests live in tests/e2e/bookings-resource-calendar.spec.ts (Playwright)'
+		);
+	}//end testPlaywrightSpecReference()
 
 }//end class

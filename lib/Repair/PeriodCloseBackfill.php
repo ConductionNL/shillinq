@@ -54,9 +54,9 @@ use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that backfills forward-looking FiscalPeriod records for
@@ -64,213 +64,204 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
  */
-class PeriodCloseBackfill implements IRepairStep
-{
-    use ReadsSourceRowsInBatches;
+class PeriodCloseBackfill implements IRepairStep {
+	use ReadsSourceRowsInBatches;
 
-    /**
-     * Number of calendar months ahead of the current month to backfill.
-     *
-     * @var int
-     */
-    private const HORIZON_MONTHS = 12;
+	/**
+	 * Number of calendar months ahead of the current month to backfill.
+	 *
+	 * @var int
+	 */
+	private const HORIZON_MONTHS = 12;
 
-    /**
-     * Constructor.
-     *
-     * @param SettingsService    $settingsService The settings service (register slug).
-     * @param LoggerInterface    $logger          The logger interface.
-     * @param ContainerInterface $container       The DI container (lazy OR ObjectService resolution).
-     */
-    public function __construct(
-        private SettingsService $settingsService,
-        private LoggerInterface $logger,
-        private ContainerInterface $container,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param LoggerInterface $logger The logger interface.
+	 */
+	public function __construct(
+		private SettingsService $settingsService,
+		private LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * The repair-step display name.
-     *
-     * @return string The display name.
-     *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
-     */
-    public function getName(): string
-    {
-        return 'Shillinq: backfill open FiscalPeriod records for every Administration (current month + next twelve months)';
+	/**
+	 * The repair-step display name.
+	 *
+	 * @return string The display name.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+	 */
+	public function getName(): string {
+		return 'Shillinq: backfill open FiscalPeriod records for every Administration (current month + next twelve months)';
+	}//end getName()
 
-    }//end getName()
+	/**
+	 * Run the backfill. Idempotent — never duplicates records and never
+	 * mutates existing FiscalPeriod state.
+	 *
+	 * @param IOutput $output The repair-step output (progress + warnings).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+	 */
+	public function run(IOutput $output): void {
+		try {
+			$registerSlug = $this->settingsService->getRegisterSlug();
 
-    /**
-     * Run the backfill. Idempotent — never duplicates records and never
-     * mutates existing FiscalPeriod state.
-     *
-     * @param IOutput $output The repair-step output (progress + warnings).
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
-     */
-    public function run(IOutput $output): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->settingsService->getRegisterSlug();
+			// List every Administration record. The repair step is
+			// best-effort: when no Administration records exist yet,
+			// the forward backfill is a no-op.
+			$administrations = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'Administration');
 
-            // List every Administration record. The repair step is
-            // best-effort: when no Administration records exist yet,
-            // the forward backfill is a no-op.
-            $administrations = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Administration');
+			if ($administrations === []) {
+				$output->info('Shillinq: no Administration records — forward FiscalPeriod backfill skipped.');
+				return;
+			}
 
-            if ($administrations === []) {
-                $output->info('Shillinq: no Administration records — forward FiscalPeriod backfill skipped.');
-                return;
-            }
+			$horizon = $this->buildHorizon();
 
-            $horizon = $this->buildHorizon();
+			$created = 0;
+			$skipped = 0;
+			foreach ($administrations as $administration) {
+				$arr = $this->rowPayload(row: $administration);
+				$administrationId = (string)($arr['administrationId'] ?? ($arr['id'] ?? ($arr['code'] ?? '')));
+				if ($administrationId === '') {
+					continue;
+				}
 
-            $created = 0;
-            $skipped = 0;
-            foreach ($administrations as $administration) {
-                $arr = $this->rowPayload(row: $administration);
-                $administrationId = (string) ($arr['administrationId'] ?? ($arr['id'] ?? ($arr['code'] ?? '')));
-                if ($administrationId === '') {
-                    continue;
-                }
+				foreach ($horizon as $period) {
+					if ($this->fiscalPeriodExists(
+						objectService: $this->objectService,
+						registerSlug: $registerSlug,
+						periodId: $period['periodId'],
+						administrationId: $administrationId
+					) === true
+					) {
+						$skipped++;
+						continue;
+					}
 
-                foreach ($horizon as $period) {
-                    if ($this->fiscalPeriodExists(
-                        objectService: $objectService,
-                        registerSlug: $registerSlug,
-                        periodId: $period['periodId'],
-                        administrationId: $administrationId
-                    ) === true
-                    ) {
-                        $skipped++;
-                        continue;
-                    }
+					$record = [
+						'periodId' => $period['periodId'],
+						'name' => $period['name'],
+						'administrationId' => $administrationId,
+						'startDate' => $period['startDate'],
+						'endDate' => $period['endDate'],
+						'fiscalYear' => $period['fiscalYear'],
+						'state' => 'open',
+						'reopenedHistory' => [],
+						'taskChecklistItems' => [],
+						'aiFlags' => [],
+					];
 
-                    $record = [
-                        'periodId'           => $period['periodId'],
-                        'name'               => $period['name'],
-                        'administrationId'   => $administrationId,
-                        'startDate'          => $period['startDate'],
-                        'endDate'            => $period['endDate'],
-                        'fiscalYear'         => $period['fiscalYear'],
-                        'state'              => 'open',
-                        'reopenedHistory'    => [],
-                        'taskChecklistItems' => [],
-                        'aiFlags'            => [],
-                    ];
+					// Runs in the installer/repair context where no web user is
+					// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so
+					// the backfill persists instead of throwing "User 'Anonymous'
+					// does not have permission to 'create'".
+					$this->objectService->saveObject(
+						object: $record,
+						register: $registerSlug,
+						schema: 'FiscalPeriod',
+						_rbac: false,
+						_multitenancy: false,
+					);
+					$created++;
+				}//end foreach
+			}//end foreach
 
-                    // Runs in the installer/repair context where no web user is
-                    // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so
-                    // the backfill persists instead of throwing "User 'Anonymous'
-                    // does not have permission to 'create'".
-                    $objectService->saveObject(
-                        object: $record,
-                        register: $registerSlug,
-                        schema: 'FiscalPeriod',
-                        _rbac: false,
-                        _multitenancy: false,
-                    );
-                    $created++;
-                }//end foreach
-            }//end foreach
+			$output->info(
+				'Shillinq: forward FiscalPeriod backfill complete — ' . $created . ' created, ' . $skipped . ' skipped (already exist).'
+			);
+		} catch (Throwable $e) {
+			// Backfill is best-effort: failing it must NOT block the
+			// app upgrade. Log + warn so an operator can re-run.
+			$output->warning('Shillinq: forward FiscalPeriod backfill failed: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: forward FiscalPeriod backfill failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-            $output->info(
-                'Shillinq: forward FiscalPeriod backfill complete — '.$created.' created, '.$skipped.' skipped (already exist).'
-            );
-        } catch (Throwable $e) {
-            // Backfill is best-effort: failing it must NOT block the
-            // app upgrade. Log + warn so an operator can re-run.
-            $output->warning('Shillinq: forward FiscalPeriod backfill failed: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: forward FiscalPeriod backfill failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+	}//end run()
 
-    }//end run()
+	/**
+	 * Whether a FiscalPeriod record already exists for the given
+	 * (periodId, administrationId) tuple.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param string $periodId The business periodId.
+	 * @param string $administrationId The administration scope.
+	 *
+	 * @return bool True when a match is found.
+	 */
+	private function fiscalPeriodExists(
+		object $objectService,
+		string $registerSlug,
+		string $periodId,
+		string $administrationId,
+	): bool {
+		$filters = [
+			'periodId' => $periodId,
+			'administrationId' => $administrationId,
+		];
 
-    /**
-     * Whether a FiscalPeriod record already exists for the given
-     * (periodId, administrationId) tuple.
-     *
-     * @param object $objectService    The OR ObjectService.
-     * @param string $registerSlug     The register slug.
-     * @param string $periodId         The business periodId.
-     * @param string $administrationId The administration scope.
-     *
-     * @return bool True when a match is found.
-     */
-    private function fiscalPeriodExists(
-        object $objectService,
-        string $registerSlug,
-        string $periodId,
-        string $administrationId
-    ): bool {
-        $filters = [
-            'periodId'         => $periodId,
-            'administrationId' => $administrationId,
-        ];
+		$found = $objectService
+			->setRegister($registerSlug)
+			->setSchema('FiscalPeriod')
+			->findAll(['filters' => $filters, 'limit' => 1]);
 
-        $found = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('FiscalPeriod')
-            ->findAll(['filters' => $filters, 'limit' => 1]);
+		return is_array($found) === true && $found !== [];
+	}//end fiscalPeriodExists()
 
-        return is_array($found) === true && $found !== [];
+	/**
+	 * Build the rolling horizon — the current calendar month + the next
+	 * HORIZON_MONTHS calendar months — each as a (periodId, name,
+	 * startDate, endDate, fiscalYear) tuple suitable for the
+	 * FiscalPeriod record.
+	 *
+	 * @return array<int,array{periodId:string,name:string,startDate:string,endDate:string,fiscalYear:int}> The horizon periods.
+	 */
+	private function buildHorizon(): array {
+		$names = [
+			1 => 'January',
+			2 => 'February',
+			3 => 'March',
+			4 => 'April',
+			5 => 'May',
+			6 => 'June',
+			7 => 'July',
+			8 => 'August',
+			9 => 'September',
+			10 => 'October',
+			11 => 'November',
+			12 => 'December',
+		];
 
-    }//end fiscalPeriodExists()
+		$now = new DateTimeImmutable('first day of this month');
+		$horizon = [];
+		// Current month + next HORIZON_MONTHS months (inclusive).
+		for ($i = 0; $i <= self::HORIZON_MONTHS; $i++) {
+			$month = $now->modify('+' . $i . ' month');
+			$year = (int)$month->format('Y');
+			$monthNum = (int)$month->format('n');
+			$startDate = $month->format('Y-m-01');
+			$endDay = (int)$month->format('t');
+			$endDate = $month->format('Y-m-') . sprintf('%02d', $endDay);
 
-    /**
-     * Build the rolling horizon — the current calendar month + the next
-     * HORIZON_MONTHS calendar months — each as a (periodId, name,
-     * startDate, endDate, fiscalYear) tuple suitable for the
-     * FiscalPeriod record.
-     *
-     * @return array<int,array{periodId:string,name:string,startDate:string,endDate:string,fiscalYear:int}> The horizon periods.
-     */
-    private function buildHorizon(): array
-    {
-        $names = [
-            1  => 'January',
-            2  => 'February',
-            3  => 'March',
-            4  => 'April',
-            5  => 'May',
-            6  => 'June',
-            7  => 'July',
-            8  => 'August',
-            9  => 'September',
-            10 => 'October',
-            11 => 'November',
-            12 => 'December',
-        ];
+			$horizon[] = [
+				'periodId' => sprintf('%04d-%02d', $year, $monthNum),
+				'name' => sprintf('%s %04d', $names[$monthNum], $year),
+				'startDate' => $startDate,
+				'endDate' => $endDate,
+				'fiscalYear' => $year,
+			];
+		}
 
-        $now     = new DateTimeImmutable('first day of this month');
-        $horizon = [];
-        // Current month + next HORIZON_MONTHS months (inclusive).
-        for ($i = 0; $i <= self::HORIZON_MONTHS; $i++) {
-            $month     = $now->modify('+'.$i.' month');
-            $year      = (int) $month->format('Y');
-            $monthNum  = (int) $month->format('n');
-            $startDate = $month->format('Y-m-01');
-            $endDay    = (int) $month->format('t');
-            $endDate   = $month->format('Y-m-').sprintf('%02d', $endDay);
-
-            $horizon[] = [
-                'periodId'   => sprintf('%04d-%02d', $year, $monthNum),
-                'name'       => sprintf('%s %04d', $names[$monthNum], $year),
-                'startDate'  => $startDate,
-                'endDate'    => $endDate,
-                'fiscalYear' => $year,
-            ];
-        }
-
-        return $horizon;
-
-    }//end buildHorizon()
+		return $horizon;
+	}//end buildHorizon()
 }//end class

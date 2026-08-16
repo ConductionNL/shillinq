@@ -17,12 +17,18 @@
 				{{ t('shillinq', 'Switch administration') }}
 			</h2>
 			<p class="administratie-switcher-page__description">
-				{{ t('shillinq', 'Select which administration you want to work in. Only administrations you have a membership for are listed.') }}
+				{{
+					t(
+						'shillinq',
+						'Select which administration you want to work in. Only administrations you have a membership for are listed.',
+					)
+				}}
 			</p>
-			<AdministratieSwitcher
-				:reload-after-switch="true"
-				@error="onError" />
-			<p v-if="errorMessage" class="administratie-switcher-page__error" role="alert">
+			<AdministratieSwitcher :reloadAfterSwitch="true" @error="onError" />
+			<p
+				v-if="errorMessage"
+				class="administratie-switcher-page__error"
+				role="alert">
 				{{ errorMessage }}
 			</p>
 		</div>
@@ -57,7 +63,10 @@ export default {
 		onError(error) {
 			const status = error?.response?.status
 			if (status === 401) {
-				this.errorMessage = t('shillinq', 'Please sign in to switch administrations.')
+				this.errorMessage = t(
+					'shillinq',
+					'Please sign in to switch administrations.',
+				)
 				return
 			}
 			this.errorMessage = t('shillinq', 'Failed to load administrations.')

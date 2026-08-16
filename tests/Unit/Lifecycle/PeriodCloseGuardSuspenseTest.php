@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCP\IAppConfig;
@@ -40,94 +41,85 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class PeriodCloseGuardSuspenseTest extends TestCase
-{
+final class PeriodCloseGuardSuspenseTest extends TestCase {
 
-    /**
-     * Build the guard with a container that yields the given ageing double.
-     *
-     * @param SuspenseAgeingService $ageing The ageing service the container returns.
-     *
-     * @return PeriodCloseGuard
-     */
-    private function guardWith(SuspenseAgeingService $ageing): PeriodCloseGuard
-    {
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($ageing);
+	/**
+	 * Build the guard with a container that yields the given ageing double.
+	 *
+	 * @param SuspenseAgeingService $ageing The ageing service the container returns.
+	 *
+	 * @return PeriodCloseGuard
+	 */
+	private function guardWith(SuspenseAgeingService $ageing): PeriodCloseGuard {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($ageing);
 
-        return new PeriodCloseGuard(
-            container: $container,
-            appConfig: $this->createMock(IAppConfig::class),
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		return new PeriodCloseGuard(
+			container: $container,
+			appConfig: $this->createMock(IAppConfig::class),
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end guardWith()
+	}//end guardWith()
 
+	/**
+	 * A non-empty suspense worklist BLOCKS the close — the failing-path proof.
+	 *
+	 * @return void
+	 */
+	public function testNonEmptySuspenseBlocksClose(): void {
+		$ageing = $this->createMock(SuspenseAgeingService::class);
+		$ageing->method('hasUnresolvedItems')->willReturn(true);
 
-    /**
-     * A non-empty suspense worklist BLOCKS the close — the failing-path proof.
-     *
-     * @return void
-     */
-    public function testNonEmptySuspenseBlocksClose(): void
-    {
-        $ageing = $this->createMock(SuspenseAgeingService::class);
-        $ageing->method('hasUnresolvedItems')->willReturn(true);
+		$drained = $this->guardWith($ageing)->suspenseAccountDrained(['administrationId' => 'adm-1']);
 
-        $drained = $this->guardWith($ageing)->suspenseAccountDrained(['administrationId' => 'adm-1']);
+		self::assertFalse($drained, 'A period with unresolved suspense items must not be closable');
 
-        self::assertFalse($drained, 'A period with unresolved suspense items must not be closable');
+	}//end testNonEmptySuspenseBlocksClose()
 
-    }//end testNonEmptySuspenseBlocksClose()
+	/**
+	 * An empty suspense worklist allows the close.
+	 *
+	 * @return void
+	 */
+	public function testEmptySuspenseAllowsClose(): void {
+		$ageing = $this->createMock(SuspenseAgeingService::class);
+		$ageing->method('hasUnresolvedItems')->willReturn(false);
 
+		$drained = $this->guardWith($ageing)->suspenseAccountDrained(['administrationId' => 'adm-1']);
 
-    /**
-     * An empty suspense worklist allows the close.
-     *
-     * @return void
-     */
-    public function testEmptySuspenseAllowsClose(): void
-    {
-        $ageing = $this->createMock(SuspenseAgeingService::class);
-        $ageing->method('hasUnresolvedItems')->willReturn(false);
+		self::assertTrue($drained);
 
-        $drained = $this->guardWith($ageing)->suspenseAccountDrained(['administrationId' => 'adm-1']);
+	}//end testEmptySuspenseAllowsClose()
 
-        self::assertTrue($drained);
+	/**
+	 * A record without an administration scope is allowed (no scope, allow).
+	 *
+	 * @return void
+	 */
+	public function testNoAdministrationAllowsClose(): void {
+		$ageing = $this->createMock(SuspenseAgeingService::class);
+		$ageing->expects($this->never())->method('hasUnresolvedItems');
 
-    }//end testEmptySuspenseAllowsClose()
+		$drained = $this->guardWith($ageing)->suspenseAccountDrained(['periodId' => '2026-01']);
 
+		self::assertTrue($drained);
 
-    /**
-     * A record without an administration scope is allowed (no scope, allow).
-     *
-     * @return void
-     */
-    public function testNoAdministrationAllowsClose(): void
-    {
-        $ageing = $this->createMock(SuspenseAgeingService::class);
-        $ageing->expects($this->never())->method('hasUnresolvedItems');
+	}//end testNoAdministrationAllowsClose()
 
-        $drained = $this->guardWith($ageing)->suspenseAccountDrained(['periodId' => '2026-01']);
+	/**
+	 * A failure to determine the worklist FAILS CLOSED (denies the close).
+	 *
+	 * @return void
+	 */
+	public function testFailsClosedWhenWorklistUnreadable(): void {
+		$ageing = $this->createMock(SuspenseAgeingService::class);
+		$ageing->method('hasUnresolvedItems')->willThrowException(new \RuntimeException('reconciliation backend unavailable'));
 
-        self::assertTrue($drained);
+		$drained = $this->guardWith($ageing)->suspenseAccountDrained(['administrationId' => 'adm-1']);
 
-    }//end testNoAdministrationAllowsClose()
+		self::assertFalse($drained, 'An indeterminate suspense check must block the close (fail-closed)');
 
-
-    /**
-     * A failure to determine the worklist FAILS CLOSED (denies the close).
-     *
-     * @return void
-     */
-    public function testFailsClosedWhenWorklistUnreadable(): void
-    {
-        $ageing = $this->createMock(SuspenseAgeingService::class);
-        $ageing->method('hasUnresolvedItems')->willThrowException(new \RuntimeException('reconciliation backend unavailable'));
-
-        $drained = $this->guardWith($ageing)->suspenseAccountDrained(['administrationId' => 'adm-1']);
-
-        self::assertFalse($drained, 'An indeterminate suspense check must block the close (fail-closed)');
-
-    }//end testFailsClosedWhenWorklistUnreadable()
+	}//end testFailsClosedWhenWorklistUnreadable()
 }//end class

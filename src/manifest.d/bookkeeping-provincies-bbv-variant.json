@@ -5,11 +5,6 @@
 			"label": "BBV Province",
 			"icon": "MapOutline",
 			"order": 75,
-			"visibilityPredicate": {
-				"administrationType": [
-					"provincie"
-				]
-			},
 			"children": [
 				{
 					"id": "BbvComplianceDashboard",
@@ -34,12 +29,6 @@
 			"route": "/bbv-provincie/compliance-dashboard",
 			"type": "dashboard",
 			"title": "BBV Compliance Dashboard",
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"provincie"
-				]
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "Budget",
@@ -110,7 +99,7 @@
 							"type": "bar",
 							"title": "Budget vs. actuals",
 							"orientation": "horizontal",
-							"groupBy": "programmaStructure",
+							"groupBy": "programmeStructure",
 							"series": [
 								{
 									"label": "Budget",
@@ -161,7 +150,7 @@
 						},
 						"columns": [
 							{
-								"key": "programmaStructure",
+								"key": "programmeStructure",
 								"label": "Programme"
 							},
 							{
@@ -184,7 +173,7 @@
 					},
 					"filters": [
 						{
-							"key": "programmaStructure",
+							"key": "programmeStructure",
 							"label": "Programme",
 							"type": "multi-select",
 							"options": [
@@ -223,12 +212,6 @@
 			"route": "/bbv-provincie/budget-to-programme",
 			"type": "index",
 			"title": "Budget Links",
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"provincie"
-				]
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "GLLine",
@@ -236,7 +219,7 @@
 				"defaultSort": "accountNumber",
 				"pageSize": 50,
 				"mappingStatus": {
-					"unmappedField": "programmaStructure",
+					"unmappedField": "programmeStructure",
 					"label": "Unmapped GL lines",
 					"thresholds": {
 						"red": 30,
@@ -260,7 +243,7 @@
 						"sortable": true
 					},
 					{
-						"key": "programmaStructure",
+						"key": "programmeStructure",
 						"label": "Current programme",
 						"sortable": true
 					},
@@ -283,7 +266,7 @@
 						]
 					},
 					{
-						"key": "programmaStructure",
+						"key": "programmeStructure",
 						"label": "Programme",
 						"type": "select",
 						"options": [
@@ -319,7 +302,7 @@
 							"cancelLabel": "Cancel",
 							"fields": [
 								{
-									"key": "programmaStructure",
+									"key": "programmeStructure",
 									"label": "Target programme",
 									"type": "select",
 									"required": true,
@@ -334,7 +317,7 @@
 									]
 								},
 								{
-									"key": "programmaAssignedAt",
+									"key": "programmeAssignedAt",
 									"label": "Effective date",
 									"type": "date",
 									"required": true,
@@ -353,12 +336,6 @@
 			"route": "/bbv-provincie/budget-to-programme/:id",
 			"type": "detail",
 			"title": "GL line",
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"provincie"
-				]
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "GLLine",
@@ -390,7 +367,7 @@
 						"type": "string"
 					},
 					{
-						"key": "programmaStructure",
+						"key": "programmeStructure",
 						"label": "Programme",
 						"type": "enum",
 						"options": [
@@ -404,7 +381,7 @@
 						]
 					},
 					{
-						"key": "programmaAssignedAt",
+						"key": "programmeAssignedAt",
 						"label": "Assigned at",
 						"type": "string"
 					}

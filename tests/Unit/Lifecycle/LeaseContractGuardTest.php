@@ -32,122 +32,113 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class LeaseContractGuardTest extends TestCase
-{
+final class LeaseContractGuardTest extends TestCase {
 
-    /**
-     * The guard under test.
-     *
-     * @var LeaseContractGuard
-     */
-    private LeaseContractGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var LeaseContractGuard
+	 */
+	private LeaseContractGuard $guard;
 
-    /**
-     * Set up the guard.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new LeaseContractGuard($this->createMock(LoggerInterface::class));
+	/**
+	 * Set up the guard.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new LeaseContractGuard($this->createMock(LoggerInterface::class));
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * A complete capitalised lease may activate (REQ-LC-004).
-     *
-     * @return void
-     */
-    public function testValidLeaseActivates(): void
-    {
-        self::assertTrue($this->guard->guardActivation('lease-1', $this->validLease()));
+	/**
+	 * A complete capitalised lease may activate (REQ-LC-004).
+	 *
+	 * @return void
+	 */
+	public function testValidLeaseActivates(): void {
+		self::assertTrue($this->guard->guardActivation('lease-1', $this->validLease()));
 
-    }//end testValidLeaseActivates()
+	}//end testValidLeaseActivates()
 
-    /**
-     * A null object fails closed (CWE-863).
-     *
-     * @return void
-     */
-    public function testNullObjectFailsClosed(): void
-    {
-        self::assertFalse($this->guard->guardActivation('lease-1', null));
+	/**
+	 * A null object fails closed (CWE-863).
+	 *
+	 * @return void
+	 */
+	public function testNullObjectFailsClosed(): void {
+		self::assertFalse($this->guard->guardActivation('lease-1', null));
 
-    }//end testNullObjectFailsClosed()
+	}//end testNullObjectFailsClosed()
 
-    /**
-     * An unrecognised classification fails (REQ-LC-002).
-     *
-     * @return void
-     */
-    public function testInvalidClassificationFails(): void
-    {
-        $lease = $this->validLease();
-        $lease['classification'] = 'made-up';
-        self::assertFalse($this->guard->guardActivation('lease-1', $lease));
+	/**
+	 * An unrecognised classification fails (REQ-LC-002).
+	 *
+	 * @return void
+	 */
+	public function testInvalidClassificationFails(): void {
+		$lease = $this->validLease();
+		$lease['classification'] = 'made-up';
+		self::assertFalse($this->guard->guardActivation('lease-1', $lease));
 
-    }//end testInvalidClassificationFails()
+	}//end testInvalidClassificationFails()
 
-    /**
-     * A missing economic field fails closed (REQ-LC-004).
-     *
-     * @return void
-     */
-    public function testMissingRequiredFieldFails(): void
-    {
-        $lease = $this->validLease();
-        unset($lease['ibrPercent']);
-        self::assertFalse($this->guard->guardActivation('lease-1', $lease));
+	/**
+	 * A missing economic field fails closed (REQ-LC-004).
+	 *
+	 * @return void
+	 */
+	public function testMissingRequiredFieldFails(): void {
+		$lease = $this->validLease();
+		unset($lease['ibrPercent']);
+		self::assertFalse($this->guard->guardActivation('lease-1', $lease));
 
-    }//end testMissingRequiredFieldFails()
+	}//end testMissingRequiredFieldFails()
 
-    /**
-     * A capitalised lease with a zero payment cannot activate (REQ-LC-003).
-     *
-     * @return void
-     */
-    public function testCapitalisedLeaseNeedsPositivePayment(): void
-    {
-        $lease = $this->validLease();
-        $lease['basePaymentAmount'] = 0.0;
-        self::assertFalse($this->guard->guardActivation('lease-1', $lease));
+	/**
+	 * A capitalised lease with a zero payment cannot activate (REQ-LC-003).
+	 *
+	 * @return void
+	 */
+	public function testCapitalisedLeaseNeedsPositivePayment(): void {
+		$lease = $this->validLease();
+		$lease['basePaymentAmount'] = 0.0;
+		self::assertFalse($this->guard->guardActivation('lease-1', $lease));
 
-    }//end testCapitalisedLeaseNeedsPositivePayment()
+	}//end testCapitalisedLeaseNeedsPositivePayment()
 
-    /**
-     * A short-term-exempt lease may activate with a zero IBR (REQ-LE-002).
-     *
-     * @return void
-     */
-    public function testShortTermExemptAllowsZeroIbr(): void
-    {
-        $lease = $this->validLease();
-        $lease['classification'] = 'short-term-exempt';
-        $lease['ibrPercent']     = 0.0;
-        self::assertTrue($this->guard->guardActivation('lease-1', $lease));
+	/**
+	 * A short-term-exempt lease may activate with a zero IBR (REQ-LE-002).
+	 *
+	 * @return void
+	 */
+	public function testShortTermExemptAllowsZeroIbr(): void {
+		$lease = $this->validLease();
+		$lease['classification'] = 'short-term-exempt';
+		$lease['ibrPercent'] = 0.0;
+		self::assertTrue($this->guard->guardActivation('lease-1', $lease));
 
-    }//end testShortTermExemptAllowsZeroIbr()
+	}//end testShortTermExemptAllowsZeroIbr()
 
-    /**
-     * A complete, valid capitalised lease fixture.
-     *
-     * @return array<string,mixed>
-     */
-    private function validLease(): array
-    {
-        return [
-            'leaseNumber'              => 'VH-2024-001',
-            'commencementDate'         => '2024-01-15',
-            'endDate'                  => '2027-01-14',
-            'nonCancellableTermMonths' => 36,
-            'paymentFrequency'         => 'monthly',
-            'paymentTiming'            => 'in-arrears',
-            'basePaymentAmount'        => 425.0,
-            'paymentCurrency'          => 'EUR',
-            'ibrPercent'               => 4.25,
-            'classification'           => 'IFRS16-capitalised',
-        ];
+	/**
+	 * A complete, valid capitalised lease fixture.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function validLease(): array {
+		return [
+			'leaseNumber' => 'VH-2024-001',
+			'commencementDate' => '2024-01-15',
+			'endDate' => '2027-01-14',
+			'nonCancellableTermMonths' => 36,
+			'paymentFrequency' => 'monthly',
+			'paymentTiming' => 'in-arrears',
+			'basePaymentAmount' => 425.0,
+			'paymentCurrency' => 'EUR',
+			'ibrPercent' => 4.25,
+			'classification' => 'IFRS16-capitalised',
+		];
 
-    }//end validLease()
+	}//end validLease()
 }//end class
