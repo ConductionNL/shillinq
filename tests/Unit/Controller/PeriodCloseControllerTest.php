@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PeriodCloseController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PeriodCloseAssistantService;
 use OCA\Shillinq\Service\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodCloseService;
@@ -72,6 +73,20 @@ final class PeriodCloseControllerTest extends TestCase {
 	private IUserSession&MockObject $userSession;
 
 	/**
+	 * Mock AdministrationContextService — the ADR-005 membership guard.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
+
+	/**
+	 * What canAccess() answers. Flipped by the REQ-MA-001 refusal tests.
+	 *
+	 * @var bool
+	 */
+	private bool $canAccess = true;
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var PeriodCloseController
@@ -89,10 +104,21 @@ final class PeriodCloseControllerTest extends TestCase {
 		$this->service = $this->createMock(PeriodCloseService::class);
 		$this->assistant = $this->createMock(PeriodCloseAssistantService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
+
+		// The ADR-005 membership guard. Default ALLOW so the pre-existing tests
+		// keep asserting what they were written to assert; the refusal tests
+		// below flip $this->canAccess. A callback rather than a second
+		// ->method('canAccess') call, because PHPUnit APPENDS matchers instead
+		// of replacing the first one.
+		$this->canAccess = true;
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
+
 		$this->controller = new PeriodCloseController(
 			request: $this->request,
 			periodCloseService: $this->service,
 			assistantService: $this->assistant,
+			context: $this->context,
 			userSession: $this->userSession,
 			logger: $this->createMock(LoggerInterface::class),
 		);
@@ -192,6 +218,65 @@ final class PeriodCloseControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
 	}//end testShowReturnsNotFound()
+
+	/**
+	 * show() refuses an administration the caller holds no membership for
+	 * (ADR-005 / REQ-MA-001), and refuses it BEFORE touching the service.
+	 *
+	 * ⚠️ The status code alone proves nothing here: testShowReturnsNotFound()
+	 * above also answers 404, from the service returning null. What separates a
+	 * REFUSAL from a LOOKUP-THAT-MISSED is that the service is never consulted,
+	 * so that is what this asserts. Without the guard the controller calls
+	 * getPeriodForClose() and this test errors on the never() matcher.
+	 *
+	 * @return void
+	 */
+	public function testShowRefusesInaccessibleAdministrationWithoutQueryingIt(): void {
+		$this->canAccess = false;
+		$this->stubParams(['administration_id' => 'someone-elses-adm']);
+		$this->stubUser('alice');
+		$this->service->expects(self::never())->method('getPeriodForClose');
+		$this->assistant->expects(self::never())->method('analyse');
+
+		$response = $this->controller->show('2026-01');
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testShowRefusesInaccessibleAdministrationWithoutQueryingIt()
+
+	/**
+	 * aiFlags() applies the same membership refusal, without querying (REQ-MA-001).
+	 *
+	 * @return void
+	 */
+	public function testAiFlagsRefusesInaccessibleAdministrationWithoutQueryingIt(): void {
+		$this->canAccess = false;
+		$this->stubParams(['administration_id' => 'someone-elses-adm']);
+		$this->stubUser('alice');
+		$this->service->expects(self::never())->method('getPeriodForClose');
+		$this->assistant->expects(self::never())->method('analyse');
+
+		$response = $this->controller->aiFlags('2026-01');
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testAiFlagsRefusesInaccessibleAdministrationWithoutQueryingIt()
+
+	/**
+	 * The lifecycle transitions (close/startClose/reopen/lockAudit) share one
+	 * private helper, so the membership refusal must hold for a WRITE too — a
+	 * non-member must not be able to close another administration's period.
+	 *
+	 * @return void
+	 */
+	public function testCloseRefusesInaccessibleAdministrationWithoutWriting(): void {
+		$this->canAccess = false;
+		$this->stubParams(['administration_id' => 'someone-elses-adm']);
+		$this->stubUser('bob@org.nl');
+		$this->service->expects(self::never())->method('closePeriod');
+
+		$response = $this->controller->close('2026-01');
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testCloseRefusesInaccessibleAdministrationWithoutWriting()
 
 	/**
 	 * The close() endpoint maps a forbidden service error to HTTP 403 (REQ-PC-008).
