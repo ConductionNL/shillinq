@@ -215,10 +215,12 @@ export default {
 	components: {
 		CnIndexPage,
 	},
+
 	setup() {
 		const store = useBudgetBBVMappingStore()
 		return { store }
 	},
+
 	data() {
 		return {
 			objects: [],
@@ -239,6 +241,7 @@ export default {
 				startDate: null,
 				endDate: null,
 			},
+
 			// Live-updates handle for the
 			// or-collection-{register-slug}-{schema-slug} subscription of
 			// the budgetBBVMapping collection (nc-vue beta.212,
@@ -253,6 +256,7 @@ export default {
 			liveUnwatch: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * Columns rendered by CnIndexPage, in render order (REQ-BBVW-004).
@@ -269,6 +273,7 @@ export default {
 				'lifecycleState',
 			]
 		},
+
 		/**
 		 * Per-column labels + flags. Pass through to CnIndexPage so the
 		 * BBV-specific spec language ("Programme", "Allocation %") wins
@@ -286,6 +291,7 @@ export default {
 				lifecycleState: { label: this.t('shillinq', 'Status'), sortable: true },
 			}
 		},
+
 		/**
 		 * Fiscal-year option list — three years either side of "now" so the
 		 * dropdown stays bounded without a server round-trip.
@@ -300,6 +306,7 @@ export default {
 			}
 			return list
 		},
+
 		/**
 		 * Server-derived "FY YYYY" label so the index header always reflects
 		 * the active fiscal year inherited from the Administration context
@@ -313,6 +320,7 @@ export default {
 			}
 			return this.t('shillinq', 'FY {year}', { year: this.scope.fiscalYear })
 		},
+
 		/**
 		 * In-memory filter pipeline. Server-side scoping by administration
 		 * arrives in slice 09; until then the index reads the fiscal-year
@@ -375,17 +383,20 @@ export default {
 			})
 		},
 	},
+
 	async created() {
 		await this.loadScope()
 		await this.loadMappings()
 		this.syncLiveSubscription()
 	},
+
 	beforeUnmount() {
 		if (this.searchDebounce) {
 			clearTimeout(this.searchDebounce)
 		}
 		this.releaseLiveSubscription()
 	},
+
 	methods: {
 		/**
 		 * Subscribe to live updates for the budgetBBVMapping collection
@@ -434,6 +445,7 @@ export default {
 				console.warn('[BudgetBBVMappingIndex] live subscription failed:', e?.message ?? e)
 			}
 		},
+
 		/**
 		 * Release the live collection subscription and its cache watcher,
 		 * and invalidate any in-flight subscribe (its resolution
@@ -454,6 +466,7 @@ export default {
 			}
 			this.liveHandle = null
 		},
+
 		/**
 		 * Load the active administration + fiscal-year scope from the
 		 * slice-04 envelope so the page header surfaces "FY YYYY" and the
@@ -498,6 +511,7 @@ export default {
 				}
 			}
 		},
+
 		/**
 		 * Load BudgetBBVMapping objects from the OpenRegister API via the
 		 * slice-06 store. Errors surface as the inline `error` banner so the
@@ -531,6 +545,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Debounce the search term so type-into-the-search-box does not
 		 * trigger a re-filter on every keystroke.
@@ -544,6 +559,7 @@ export default {
 				this.searchDebounce = null
 			}, SEARCH_DEBOUNCE_MS)
 		},
+
 		/**
 		 * Navigate to the detail view in create mode (id=new). Slice 07
 		 * builds the bespoke detail Vue; until then the manifest detail
@@ -555,6 +571,7 @@ export default {
 				params: { id: 'new' },
 			})
 		},
+
 		/**
 		 * Navigate to a mapping's detail view.
 		 *
@@ -569,6 +586,7 @@ export default {
 				params: { id: String(row.id) },
 			})
 		},
+
 		/**
 		 * Pagination change handler — re-fetch via the store. The OR
 		 * endpoint paginates; CnIndexPage emits 1-based page numbers.
@@ -597,6 +615,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Parse the allocation-bucket select value into a {min,max} range.
 		 *
@@ -618,6 +637,7 @@ export default {
 			}
 			return { min, max }
 		},
+
 		/**
 		 * Lifecycle-status palette key.
 		 *
@@ -631,6 +651,7 @@ export default {
 			}
 			return value.replace(/[^a-z0-9_-]/g, '-')
 		},
+
 		/**
 		 * Localised lifecycle-status label. Falls back to the raw value
 		 * when the state is not in the known palette (e.g. a future state
@@ -649,6 +670,7 @@ export default {
 			}
 			return labels[value] || row.lifecycleState || '—'
 		},
+
 		/**
 		 * Format an allocation percentage as "n %".
 		 *
@@ -665,6 +687,7 @@ export default {
 			}
 			return `${num} %`
 		},
+
 		/**
 		 * Format an ISO-8601 date for display. Empty / null values render
 		 * as an en-dash so the column reads cleanly.

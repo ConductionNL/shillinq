@@ -213,6 +213,7 @@ export default {
 		BBVProgrammePicker,
 		DeleteBudgetMappingDialog,
 	},
+
 	props: {
 		/**
 		 * Object id from the route (`:id`). Pass "new" or leave undefined
@@ -222,6 +223,7 @@ export default {
 			type: String,
 			default: 'new',
 		},
+
 		/**
 		 * Optional administration scope override. When omitted the page
 		 * derives it from the loaded record (edit) or the first GL
@@ -232,6 +234,7 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			loading: false,
@@ -250,6 +253,7 @@ export default {
 				status: 'active',
 				administrationId: this.administrationId || '',
 			},
+
 			selectedAccount: null,
 			selectedProgramme: null,
 			allocationFeedback: { message: '', severity: 'info' },
@@ -257,13 +261,16 @@ export default {
 			existingAllocationTotal: 0,
 		}
 	},
+
 	computed: {
 		isCreate() {
 			return !this.id || this.id === 'new'
 		},
+
 		recordId() {
 			return this.isCreate ? '' : String(this.id)
 		},
+
 		pageTitle() {
 			if (this.isCreate) {
 				return this.t('shillinq', 'New Budget Mapping')
@@ -276,12 +283,14 @@ export default {
 			}
 			return this.t('shillinq', 'Budget Mapping')
 		},
+
 		pageDescription() {
 			return this.t(
 				'shillinq',
 				'Link a GL account to a BBV programme with an allocation share for the selected fiscal-year window.',
 			)
 		},
+
 		saveLabel() {
 			if (this.saving) {
 				return this.t('shillinq', 'Saving…')
@@ -290,6 +299,7 @@ export default {
 				? this.t('shillinq', 'Create')
 				: this.t('shillinq', 'Save')
 		},
+
 		canSave() {
 			if (this.saving) {
 				return false
@@ -315,6 +325,7 @@ export default {
 			}
 			return true
 		},
+
 		fiscalYearOfMapping() {
 			const from = this.form.effectiveFrom
 			if (typeof from === 'string' && from.length >= 4) {
@@ -325,6 +336,7 @@ export default {
 			}
 			return new Date().getFullYear()
 		},
+
 		glAccountSummary() {
 			const a = this.selectedAccount
 			if (!a) {
@@ -339,6 +351,7 @@ export default {
 			const parts = [name, type, balance].filter(Boolean)
 			return parts.join(' · ')
 		},
+
 		programmeSummary() {
 			const p = this.selectedProgramme
 			if (!p) {
@@ -348,6 +361,7 @@ export default {
 			return parts.join(' · ')
 		},
 	},
+
 	watch: {
 		id: {
 			immediate: true,
@@ -356,17 +370,20 @@ export default {
 			},
 		},
 	},
+
 	beforeUnmount() {
 		if (this.allocationCheckTimer) {
 			clearTimeout(this.allocationCheckTimer)
 		}
 	},
+
 	methods: {
 		t,
 		defaultEffectiveFrom() {
 			const year = new Date().getFullYear()
 			return `${year}-01-01`
 		},
+
 		async loadRecord() {
 			if (this.isCreate) {
 				this.record = null
@@ -399,6 +416,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		onGlAccountSelected(account) {
 			this.selectedAccount = account || null
 			if (account?.administrationId && !this.form.administrationId) {
@@ -406,12 +424,14 @@ export default {
 			}
 			this.scheduleAllocationCheck()
 		},
+
 		onProgrammeSelected(programme) {
 			this.selectedProgramme = programme || null
 			if (programme?.administrationId && !this.form.administrationId) {
 				this.form.administrationId = programme.administrationId
 			}
 		},
+
 		scheduleAllocationCheck() {
 			// The 0..100 RANGE check runs IMMEDIATELY; only the cross-mapping
 			// projection (which costs a network round-trip) is debounced. They
@@ -458,6 +478,7 @@ export default {
 			}
 			return true
 		},
+
 		async refreshAllocationProjection() {
 			const gl = this.form.glAccountNumber
 			const fiscalYear = this.fiscalYearOfMapping
@@ -532,6 +553,7 @@ export default {
 				this.allocationFeedback = { message: '', severity: 'info' }
 			}
 		},
+
 		overlapsFiscalYear(row, fiscalYear) {
 			const yearStart = `${fiscalYear}-01-01`
 			const yearEnd = `${fiscalYear}-12-31`
@@ -545,6 +567,7 @@ export default {
 			}
 			return true
 		},
+
 		buildPayload() {
 			const payload = {
 				glAccountNumber: this.form.glAccountNumber,
@@ -561,6 +584,7 @@ export default {
 			}
 			return payload
 		},
+
 		async onSave() {
 			if (!this.canSave) {
 				return
@@ -593,15 +617,18 @@ export default {
 				this.saving = false
 			}
 		},
+
 		openDeleteDialog() {
 			if (this.isCreate) {
 				return
 			}
 			this.deleteDialogOpen = true
 		},
+
 		closeDeleteDialog() {
 			this.deleteDialogOpen = false
 		},
+
 		async onDelete() {
 			if (this.isCreate || !this.recordId) {
 				this.deleteDialogOpen = false
@@ -625,9 +652,11 @@ export default {
 				this.deleting = false
 			}
 		},
+
 		onCancel() {
 			this.returnToIndex()
 		},
+
 		returnToIndex() {
 			if (this.$router) {
 				try {
@@ -639,6 +668,7 @@ export default {
 			}
 			this.$emit('navigate', { name: 'BudgetBBVMappings' })
 		},
+
 		formatEuro(cents) {
 			const numeric = Number(cents)
 			if (!Number.isFinite(numeric)) {
