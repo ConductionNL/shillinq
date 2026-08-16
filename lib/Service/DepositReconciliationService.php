@@ -121,6 +121,7 @@ class DepositReconciliationService {
 	 *                                                 adapter at all. Optional so existing
 	 *                                                 call sites that pass an explicit
 	 *                                                 `pollPending($callable)` still work.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

@@ -67,6 +67,7 @@ class PayrollWebhookController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $appConfig App config (shared secret + register slug).
 	 * @param LoggerInterface $logger Logger for audit and fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		IRequest $request,
