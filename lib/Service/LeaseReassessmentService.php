@@ -88,8 +88,8 @@ class LeaseReassessmentService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LeaseAmortizationCalculator $calculator Pure-logic IFRS 16 arithmetic helper.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
-	 * @param LeaseDecideskWebhookService|null $decideskWebhook Optional decidesk webhook delivery service.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param LeaseDecideskWebhookService|null $decideskWebhook Optional decidesk webhook delivery service.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

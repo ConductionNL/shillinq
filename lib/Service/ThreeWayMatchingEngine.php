@@ -225,6 +225,7 @@ class ThreeWayMatchingEngine {
 	 *                                               matched invoice (received →
 	 *                                               matching → matched/exception).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ExceptionResolutionService|null $exceptionResolution Raises the
 	 *                                                             crediteuren-administrateur
 	 *                                                             alert when a match is routed

@@ -60,6 +60,7 @@ class RequisitionConversionService {
 	 * @param RequisitionConversionGuard $guard Fail-closed status precondition.
 	 * @param PurchaseOrderService $purchaseOrderService Reused, unmodified PO creation.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

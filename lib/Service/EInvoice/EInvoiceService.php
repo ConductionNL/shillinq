@@ -90,6 +90,7 @@ final class EInvoiceService {
 	 * @param ArInvoiceUblMapper $ublMapper NLCIUS UBL 2.1 mapper (REQ-EINV-001).
 	 * @param InvoicePdfGenerator $pdfGenerator Hybrid PDF embed (REQ-EINV-002).
 	 * @param EInvoiceValidationService $validationService Pre-send validation (REQ-EINV-003).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param PeppolTransmissionPortInterface|null $peppolPort Optional transmission port; defaults to
 	 *                                                         {@see LogPeppolTransmissionAdapter}.
 	 */

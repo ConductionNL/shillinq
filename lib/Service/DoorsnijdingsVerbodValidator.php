@@ -54,6 +54,7 @@ class DoorsnijdingsVerbodValidator {
 	 *
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param InnovatieboxAuditEventLogger|null $auditLogger Optional audit-event logger. When
 	 *                                                       provided, every validateNoDuplication
 	 *                                                       run emits a DoorsnijdingsVerbod.check_run
