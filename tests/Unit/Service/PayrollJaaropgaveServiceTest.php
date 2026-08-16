@@ -30,7 +30,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Asserts the yearly aggregate contract.
@@ -298,45 +297,9 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 
 	}//end testBouwJaaropgaveFlagsCumulatievenMismatch()
 
-	/**
-	 * Persisting an inconsistent statement is refused.
-	 *
-	 * @return void
-	 */
-	public function testPersistJaaropgaveRefusesInconsistent(): void {
-		$saved = [];
-		$service = $this->buildService(data: $this->dataset(), saved: $saved);
-
-		$this->expectException(RuntimeException::class);
-		$service->persistJaaropgave(
-			jaaropgave: [
-				'employeeId' => 'wn-1',
-				'year' => 2026,
-				'cumulatievenConsistent' => false,
-			]
-		);
-
-	}//end testPersistJaaropgaveRefusesInconsistent()
-
-	/**
-	 * Persisting a consistent statement captures the saved object.
-	 *
-	 * @return void
-	 */
-	public function testPersistJaaropgaveSavesWhenConsistent(): void {
-		$saved = [];
-		$service = $this->buildService(data: $this->dataset(), saved: $saved);
-
-		$statement = $service->bouwJaaropgave(
-			administrationId: 'adm-1',
-			employeeId: 'wn-1',
-			year: 2026
-		);
-
-		$service->persistJaaropgave(jaaropgave: $statement);
-
-		$this->assertCount(1, $saved);
-		$this->assertSame('Jaaropgave', $saved[0]['@self']['schema']);
-
-	}//end testPersistJaaropgaveSavesWhenConsistent()
+	// The two testPersistJaaropgave* cases were removed with
+	// PayrollJaaropgaveService::persistJaaropgave(), which had no production
+	// caller. The cumulatieven invariant itself is still asserted, on the
+	// payload the live path actually produces, by
+	// testBouwJaaropgaveFlagsCumulatievenMismatch above.
 }//end class

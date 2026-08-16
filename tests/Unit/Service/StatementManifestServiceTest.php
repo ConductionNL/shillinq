@@ -103,21 +103,9 @@ class StatementManifestServiceTest extends TestCase {
 
 	}//end testImportSkipsExistingWithoutForce()
 
-	/**
-	 * ImportForced() re-imports existing keys, overwriting operator edits.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
-	 */
-	public function testImportForcedReimports(): void {
-		$this->appConfig->method('getValueString')->willReturn('{"_meta":{},"sections":[]}');
-		$this->appConfig->expects($this->exactly(count: 3))->method('setValueString');
-
-		$result = $this->service->importForced();
-
-		self::assertTrue(condition: $result['success']);
-		self::assertSame(expected: 3, actual: $result['imported']);
-
-	}//end testImportForcedReimports()
+	// testImportForcedReimports was removed with
+	// StatementManifestService::importForced(). No caller existed for it —
+	// Repair\InitializeSettings, the only consumer, calls import(). The
+	// preserve-operator-edits behaviour it contrasted with is still asserted
+	// by testImportSkipsExistingWithoutForce above.
 }//end class
