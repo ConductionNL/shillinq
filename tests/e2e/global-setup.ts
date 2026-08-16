@@ -20,11 +20,13 @@
  * adopter).
  */
 
-import { chromium, request, type FullConfig } from '@playwright/test'
-import { resolveBaseURL } from './base-url'
+import type { FullConfig, Page } from '@playwright/test'
+
+import { chromium, request } from '@playwright/test'
 import { execSync } from 'child_process'
-import * as path from 'path'
 import * as fs from 'fs'
+import * as path from 'path'
+import { resolveBaseURL } from './base-url.ts'
 
 const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
@@ -52,7 +54,6 @@ function ensureBundleBuilt(): void {
 	if (fs.existsSync(BUNDLE_PATH)) {
 		return
 	}
-	// eslint-disable-next-line no-console
 	console.log(
 		`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`,
 	)
@@ -79,6 +80,95 @@ async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 		}
 	} finally {
 		await ctx.dispose()
+	}
+}
+
+/**
+ * Complete Shillinq's first-time setup, and mark the getting-started
+ * walkthrough as seen, on the instance under test.
+ *
+ * WHY THIS IS NOT OPTIONAL
+ * ------------------------
+ * Until `legal_country` / `legal_region` / `rgs_template` / `administration_id`
+ * are all set, the app renders NOTHING but its "Set up this app" dialog — no
+ * `#shillinq` root, no `<main>` content, on EVERY route. Measured 2026-08-16
+ * against a freshly-installed instance: 77 of 262 executed specs failed, and
+ * the dominant error was `element(s) not found` / `toBeVisible() failed`,
+ * because the setup dialog was the only thing on the page. The suite was
+ * describing an un-onboarded instance, not the app.
+ *
+ * The same is true of the walkthrough: once setup completes, a 4-step tour
+ * opens over the dashboard on first visit and swallows clicks. It is
+ * suppressed by writing the version the manifest declares
+ * (`walkthrough.completionConfigKey`) to the user's preferences — the same
+ * key `useWalkthrough()` reads.
+ *
+ * Driven through the setup API rather than by clicking the seven wizard tabs:
+ * the wizard is itself under test elsewhere, and a fixture that depends on the
+ * UI it is preparing fails for two unrelated reasons at once.
+ *
+ * `nl` / `municipality` is the widest choice — it is the organisation type the
+ * BBV compliance specs assume, and it leaves every non-BBV surface reachable.
+ * The provincie / waterschap variants scope themselves per spec.
+ *
+ * Idempotent: `init-administration` reports `skipped` when ADM-001 already
+ * exists, and re-running `seed` is a no-op. Failures here are FATAL by design —
+ * a suite that silently proceeds against an un-onboarded instance produces a
+ * red run that looks like broken code.
+ */
+async function completeAppSetup(page: Page): Promise<void> {
+	const result = await page.evaluate(async () => {
+		// The requesttoken must come from THIS page — a bare fetch without it is
+		// rejected, and a rejected setup call would leave the whole suite
+		// describing an un-onboarded instance.
+		const w = window as unknown as { OC?: { requestToken?: string } }
+		const token =
+			document.head.querySelector<HTMLMetaElement>('meta[name=csrf-token]')
+				?.content
+			|| w.OC?.requestToken
+			|| ''
+		const base = '/index.php/apps/shillinq/api'
+		const send = async (method: string, url: string, body: unknown) => {
+			const res = await fetch(url, {
+				method,
+				headers: { 'Content-Type': 'application/json', requesttoken: token },
+				body: JSON.stringify(body ?? {}),
+			})
+			return { url, status: res.status }
+		}
+
+		const calls = [
+			await send('POST', `${base}/setup/config`, {
+				legal_country: 'nl',
+				legal_region: 'municipality',
+				rgs_template: 'municipality',
+			}),
+			await send('POST', `${base}/setup/action/init-administration`, {}),
+			await send('POST', `${base}/setup/action/seed`, {}),
+			await send('PUT', `${base}/preferences/walkthrough_completed_version`, {
+				value: '999.0.0',
+			}),
+		]
+
+		const status = await fetch(`${base}/setup/status`, {
+			headers: { requesttoken: token },
+		})
+		const completed = status.ok
+			? ((await status.json().catch(() => ({}))) as { completed?: boolean })
+					.completed === true
+			: false
+
+		return { calls, completed }
+	})
+
+	const failed = result.calls.filter((c) => c.status >= 400)
+	if (failed.length > 0 || result.completed !== true) {
+		throw new Error(
+			'[playwright globalSetup] Shillinq first-time setup did not complete: '
+				+ JSON.stringify(result)
+				+ '. Every spec would then be asserting against the setup dialog '
+				+ 'rather than the app, so the run is stopped here instead.',
+		)
 	}
 }
 
@@ -129,6 +219,10 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 				+ `Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).`,
 		)
 	}
+
+	// Onboard the app before any spec runs. Must happen while this page is
+	// authenticated — the setup endpoints are admin-gated and CSRF-protected.
+	await completeAppSetup(page)
 
 	// Persist the storage state so individual specs reuse the session.
 	await context.storageState({ path: STORAGE_STATE })
