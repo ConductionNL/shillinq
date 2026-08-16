@@ -19,7 +19,9 @@
 					:key="v"
 					type="button"
 					class="calendar-view__view-button"
-					:class="{ 'calendar-view__view-button--active': currentView === v }"
+					:class="{
+						'calendar-view__view-button--active': currentView === v,
+					}"
 					:data-testid="`calendar-view-${v}`"
 					@click="currentView = v">
 					{{ viewLabel(v) }}
@@ -28,8 +30,12 @@
 		</header>
 
 		<!-- MONTH VIEW -->
-		<div v-if="currentView === 'month'" class="calendar-view__month" data-testid="calendar-month-grid">
-			<div v-for="day in monthDays"
+		<div
+			v-if="currentView === 'month'"
+			class="calendar-view__month"
+			data-testid="calendar-month-grid">
+			<div
+				v-for="day in monthDays"
 				:key="day.iso"
 				class="calendar-view__cell"
 				:data-date="day.iso">
@@ -41,7 +47,9 @@
 					:key="bookingId(booking)"
 					type="button"
 					class="calendar-view__booking"
-					:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
+					:class="{
+						'calendar-view__booking--conflict': isConflict(booking),
+					}"
 					:data-testid="`booking-${bookingId(booking)}`"
 					@click="$emit('booking:selected', bookingId(booking))">
 					{{ booking.title }}
@@ -50,8 +58,14 @@
 		</div>
 
 		<!-- WEEK VIEW -->
-		<div v-else-if="currentView === 'week'" class="calendar-view__week" data-testid="calendar-week-grid">
-			<div v-for="day in weekDays" :key="day.iso" class="calendar-view__week-column">
+		<div
+			v-else-if="currentView === 'week'"
+			class="calendar-view__week"
+			data-testid="calendar-week-grid">
+			<div
+				v-for="day in weekDays"
+				:key="day.iso"
+				class="calendar-view__week-column">
 				<div class="calendar-view__cell-date">
 					{{ day.label }}
 				</div>
@@ -64,14 +78,18 @@
 						class="calendar-view__slot-button"
 						:data-testid="`calendar-slot-${day.iso}-${hour}`"
 						@click="emitSlot(day.iso, hour)">
-						<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
+						<span class="calendar-view__slot-hour">{{
+							formatHour(hour)
+						}}</span>
 					</button>
 					<button
 						v-for="booking in bookingsForHour(day.iso, hour)"
 						:key="bookingId(booking)"
 						type="button"
 						class="calendar-view__booking"
-						:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
+						:class="{
+							'calendar-view__booking--conflict': isConflict(booking),
+						}"
 						:data-testid="`booking-${bookingId(booking)}`"
 						@click="$emit('booking:selected', bookingId(booking))">
 						{{ booking.title }}
@@ -82,23 +100,24 @@
 
 		<!-- DAY VIEW -->
 		<div v-else class="calendar-view__day" data-testid="calendar-day-grid">
-			<div
-				v-for="hour in hours"
-				:key="hour"
-				class="calendar-view__slot">
+			<div v-for="hour in hours" :key="hour" class="calendar-view__slot">
 				<button
 					type="button"
 					class="calendar-view__slot-button"
 					:data-testid="`calendar-slot-${dayIso}-${hour}`"
 					@click="emitSlot(dayIso, hour)">
-					<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
+					<span class="calendar-view__slot-hour">{{
+						formatHour(hour)
+					}}</span>
 				</button>
 				<button
 					v-for="booking in bookingsForHour(dayIso, hour)"
 					:key="bookingId(booking)"
 					type="button"
 					class="calendar-view__booking"
-					:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
+					:class="{
+						'calendar-view__booking--conflict': isConflict(booking),
+					}"
 					:data-testid="`booking-${bookingId(booking)}`"
 					@click="$emit('booking:selected', bookingId(booking))">
 					{{ booking.title }}
@@ -180,7 +199,10 @@ export default {
 		headerLabel() {
 			const opts = { year: 'numeric', month: 'long' }
 			if (this.currentView === 'day') {
-				return this.anchor.toLocaleDateString(undefined, { ...opts, day: 'numeric' })
+				return this.anchor.toLocaleDateString(undefined, {
+					...opts,
+					day: 'numeric',
+				})
 			}
 			return this.anchor.toLocaleDateString(undefined, opts)
 		},
@@ -217,7 +239,10 @@ export default {
 				date.setDate(monday.getDate() + i)
 				days.push({
 					iso: this.toIsoDate(date),
-					label: date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' }),
+					label: date.toLocaleDateString(undefined, {
+						weekday: 'short',
+						day: 'numeric',
+					}),
 				})
 			}
 			return days
@@ -252,7 +277,9 @@ export default {
 					'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
 					{ calendarId: this.calendarId },
 				)
-				const response = await fetch(url, { headers: { requesttoken: OC.requestToken } })
+				const response = await fetch(url, {
+					headers: { requesttoken: OC.requestToken },
+				})
 				if (response.ok) {
 					const data = await response.json()
 					// ENVELOPE KEY. CalendarController::bookings() answers
@@ -265,7 +292,7 @@ export default {
 					// always there.
 					this.bookings = Array.isArray(data)
 						? data
-						: (data.bookings || data.results || [])
+						: data.bookings || data.results || []
 				}
 			} catch (error) {
 				this.bookings = []
@@ -279,7 +306,9 @@ export default {
 		 * @return {Array<object>}
 		 */
 		bookingsForDay(iso) {
-			return this.bookings.filter((b) => this.toIsoDate(new Date(b.startTime)) === iso)
+			return this.bookings.filter(
+				(b) => this.toIsoDate(new Date(b.startTime)) === iso,
+			)
 		},
 
 		/**
@@ -322,10 +351,13 @@ export default {
 			// entries, and BookingConflictDialog keys its rows off `c.bookingId`.
 			// CalendarView was the single outlier, which made its chips
 			// unaddressable by anything that knew a booking by name.
-			return booking.bookingId
+			return (
+				booking.bookingId
 				|| booking.id
-				|| (booking['@self'] && (booking['@self'].id || booking['@self'].uuid))
+				|| (booking['@self']
+					&& (booking['@self'].id || booking['@self'].uuid))
 				|| ''
+			)
 		},
 
 		/**

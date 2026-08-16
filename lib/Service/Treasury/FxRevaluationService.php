@@ -49,6 +49,7 @@ namespace OCA\Shillinq\Service\Treasury;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -425,15 +426,18 @@ class FxRevaluationService {
 	 */
 	private function functionalCurrencyFor(string $administrationId): string {
 		try {
-			$found = $this->objectService
-				->setRegister($this->register())
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => ['id' => $administrationId],
-						'limit' => 1,
-					]
-				);
+			// NOT findAll(['filters' => ['id' => …]]) — that addresses JSON
+			// properties and the entity's `id` is not one, so it matched
+			// nothing for every administration and this method silently
+			// returned the EUR default for all of them, ignoring whatever
+			// functionalCurrency was actually configured.
+			$admin = ObjectIdentifier::findOne(
+				scoped: $this->objectService
+					->setRegister($this->register())
+					->setSchema('Administration'),
+				id: $administrationId,
+				fallbackProperty: 'administrationCode'
+			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'FxRevaluationService: failed to resolve Administration.functionalCurrency — defaulting to EUR',
@@ -442,11 +446,10 @@ class FxRevaluationService {
 			return self::DEFAULT_FUNCTIONAL_CURRENCY;
 		}
 
-		if (is_array($found) === false || $found === []) {
+		if ($admin === null) {
 			return self::DEFAULT_FUNCTIONAL_CURRENCY;
 		}
 
-		$admin = $this->asArray(row: $found[0]);
 		$currency = (string)($admin['functionalCurrency'] ?? '');
 		if ($currency === '') {
 			return self::DEFAULT_FUNCTIONAL_CURRENCY;

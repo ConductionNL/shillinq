@@ -42,7 +42,7 @@
 			v-if="loading"
 			class="vp-detail__loading"
 			data-testid="vp-detail-loading">
-			{{ t('shillinq', 'Loading scorecard...') }}
+			{{ t('shillinq', 'Loading scorecard…') }}
 		</div>
 
 		<div

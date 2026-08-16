@@ -42,6 +42,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -624,19 +625,17 @@ class BadoControleprotocolService {
 			return null;
 		}
 
-		$found = $this->objects()
-			->setRegister($this->register())
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($found as $candidate) {
-			$candidateId = (string)($candidate['id'] ?? ($candidate['@self']['id'] ?? ''));
-			if ($candidateId === $id) {
-				return $candidate;
-			}
-		}
-
-		return ($found[0] ?? null);
+		// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
+		// properties and the entity's `id` is not one, so that shape matched
+		// nothing for every value and this resolver returned null for every
+		// object it was asked for. find() answers the uuid directly, which
+		// makes the id-comparison loop that followed redundant.
+		return ObjectIdentifier::findOne(
+			scoped: $this->objects()
+				->setRegister($this->register())
+				->setSchema($schema),
+			id: $id
+		);
 	}//end resolveObject()
 
 	/**

@@ -58,7 +58,12 @@
 		-->
 		<CnIndexPage
 			:title="t('shillinq', 'Budget Mapping')"
-			:description="t('shillinq', 'Allocations of GL accounts to BBV programmes (REQ-BBVW-002 / REQ-BBVW-004).')"
+			:description="
+				t(
+					'shillinq',
+					'Allocations of GL accounts to BBV programmes (REQ-BBVW-002 / REQ-BBVW-004).',
+				)
+			"
 			:objects="filteredObjects"
 			:loading="loading"
 			:pagination="pagination"
@@ -87,7 +92,9 @@
 				BBVComplianceDashboard.vue, where the same template name works.
 			-->
 			<template #below-header>
-				<div class="bbv-mapping-index__filters" data-testid="bbv-mapping-index-filters">
+				<div
+					class="bbv-mapping-index__filters"
+					data-testid="bbv-mapping-index-filters">
 					<span
 						v-if="scope.fiscalYear"
 						class="bbv-mapping-index__fy"
@@ -99,9 +106,11 @@
 						type="search"
 						class="bbv-mapping-index__search"
 						data-testid="bbv-mapping-search"
-						:aria-label="t('shillinq', 'Search by GL account or programme code')"
-						:placeholder="t('shillinq', 'Search account or programme...')"
-						@input="onSearchInput">
+						:aria-label="
+							t('shillinq', 'Search by GL account or programme code')
+						"
+						:placeholder="t('shillinq', 'Search account or programme…')"
+						@input="onSearchInput" />
 					<select
 						v-model="fiscalYearFilter"
 						class="bbv-mapping-index__filter"
@@ -125,18 +134,10 @@
 						<option value="">
 							{{ t('shillinq', 'All allocations') }}
 						</option>
-						<option value="0-25">
-							0-25 %
-						</option>
-						<option value="25-50">
-							25-50 %
-						</option>
-						<option value="50-75">
-							50-75 %
-						</option>
-						<option value="75-100">
-							75-100 %
-						</option>
+						<option value="0-25">0-25 %</option>
+						<option value="25-50">25-50 %</option>
+						<option value="50-75">50-75 %</option>
+						<option value="75-100">75-100 %</option>
 					</select>
 					<!-- The wrapping <label> is a valid IMPLICIT association, but
 					     it is the only control pair on this page that relies on
@@ -153,7 +154,7 @@
 							type="date"
 							class="bbv-mapping-index__date"
 							data-testid="bbv-mapping-effective-from-after"
-							:aria-label="t('shillinq', 'Effective on or after')">
+							:aria-label="t('shillinq', 'Effective on or after')" />
 					</label>
 					<label class="bbv-mapping-index__date-label">
 						{{ t('shillinq', 'Effective on or before') }}
@@ -162,7 +163,7 @@
 							type="date"
 							class="bbv-mapping-index__date"
 							data-testid="bbv-mapping-effective-from-before"
-							:aria-label="t('shillinq', 'Effective on or before')">
+							:aria-label="t('shillinq', 'Effective on or before')" />
 					</label>
 				</div>
 			</template>
@@ -197,7 +198,10 @@
 			</template>
 		</CnIndexPage>
 
-		<p v-if="error" class="bbv-mapping-index__error" data-testid="bbv-mapping-index-error">
+		<p
+			v-if="error"
+			class="bbv-mapping-index__error"
+			data-testid="bbv-mapping-index-error">
 			{{ error }}
 		</p>
 	</div>
@@ -283,12 +287,35 @@ export default {
 		 */
 		columnOverrides() {
 			return {
-				glAccountNumber: { label: this.t('shillinq', 'GL Account'), sortable: true },
-				programmeCode: { label: this.t('shillinq', 'Programme'), sortable: true },
-				allocationPercentage: { label: this.t('shillinq', 'Allocation %'), sortable: true },
-				effectiveFrom: { label: this.t('shillinq', 'Effective From'), sortable: true },
-				effectiveTo: { label: this.t('shillinq', 'Effective To'), sortable: true },
-				lifecycleState: { label: this.t('shillinq', 'Status'), sortable: true },
+				glAccountNumber: {
+					label: this.t('shillinq', 'GL Account'),
+					sortable: true,
+				},
+
+				programmeCode: {
+					label: this.t('shillinq', 'Programme'),
+					sortable: true,
+				},
+
+				allocationPercentage: {
+					label: this.t('shillinq', 'Allocation %'),
+					sortable: true,
+				},
+
+				effectiveFrom: {
+					label: this.t('shillinq', 'Effective From'),
+					sortable: true,
+				},
+
+				effectiveTo: {
+					label: this.t('shillinq', 'Effective To'),
+					sortable: true,
+				},
+
+				lifecycleState: {
+					label: this.t('shillinq', 'Status'),
+					sortable: true,
+				},
 			}
 		},
 
@@ -333,10 +360,16 @@ export default {
 		 */
 		filteredObjects() {
 			const term = (this.searchTermApplied || '').trim().toLowerCase()
-			const after = this.effectiveFromAfter ? new Date(this.effectiveFromAfter) : null
-			const before = this.effectiveFromBefore ? new Date(this.effectiveFromBefore) : null
+			const after = this.effectiveFromAfter
+				? new Date(this.effectiveFromAfter)
+				: null
+			const before = this.effectiveFromBefore
+				? new Date(this.effectiveFromBefore)
+				: null
 			const allocation = this.parseAllocationBucket(this.allocationBucket)
-			const yearFilter = this.fiscalYearFilter ? Number(this.fiscalYearFilter) : null
+			const yearFilter = this.fiscalYearFilter
+				? Number(this.fiscalYearFilter)
+				: null
 
 			return (this.objects || []).filter((row) => {
 				if (term) {
@@ -347,8 +380,12 @@ export default {
 					}
 				}
 				if (yearFilter !== null) {
-					const startYear = row.effectiveFrom ? new Date(row.effectiveFrom).getFullYear() : null
-					const endYear = row.effectiveTo ? new Date(row.effectiveTo).getFullYear() : null
+					const startYear = row.effectiveFrom
+						? new Date(row.effectiveFrom).getFullYear()
+						: null
+					const endYear = row.effectiveTo
+						? new Date(row.effectiveTo).getFullYear()
+						: null
 					// A mapping matches the fiscal year if its effective
 					// window overlaps Jan 1 → Dec 31 of that year.
 					if (startYear !== null && startYear > yearFilter) {
@@ -368,7 +405,9 @@ export default {
 					}
 				}
 				if (after || before) {
-					const eff = row.effectiveFrom ? new Date(row.effectiveFrom) : null
+					const eff = row.effectiveFrom
+						? new Date(row.effectiveFrom)
+						: null
 					if (!eff) {
 						return false
 					}
@@ -412,7 +451,11 @@ export default {
 		 * @spec openspec/specs/realtime-updates/spec.md
 		 */
 		async syncLiveSubscription() {
-			if (typeof this.store.subscribe !== 'function' || this.liveHandle || this.livePending) {
+			if (
+				typeof this.store.subscribe !== 'function'
+				|| this.liveHandle
+				|| this.livePending
+			) {
 				return
 			}
 			this.livePending = true
@@ -434,7 +477,8 @@ export default {
 					(fresh) => {
 						if (Array.isArray(fresh) && this.liveHandle) {
 							this.objects = fresh
-							this.pagination = this.store.pagination?.[TYPE_SLUG] || null
+							this.pagination =
+								this.store.pagination?.[TYPE_SLUG] || null
 						}
 					},
 				)
@@ -442,7 +486,10 @@ export default {
 				this.livePending = false
 				this.liveHandle = null
 				// eslint-disable-next-line no-console
-				console.warn('[BudgetBBVMappingIndex] live subscription failed:', e?.message ?? e)
+				console.warn(
+					'[BudgetBBVMappingIndex] live subscription failed:',
+					e?.message ?? e,
+				)
 			}
 		},
 
@@ -490,7 +537,9 @@ export default {
 				// un-prefixed path is this component's OWN SPA page route, and
 				// registering the JSON endpoint there made the page unreachable
 				// in a browser (Access forbidden — CSRF check failed).
-				const response = await axios.get(generateUrl('/apps/shillinq/api/budget-mappings'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/budget-mappings'),
+				)
 				const data = response?.data?.scope || {}
 				this.scope = {
 					administrationId: data.administrationId || null,
@@ -534,12 +583,14 @@ export default {
 				this.pagination = this.store.pagination?.[TYPE_SLUG] || null
 				const storeError = this.store.errors?.[TYPE_SLUG]
 				if (storeError) {
-					this.error = storeError.message
+					this.error =
+						storeError.message
 						|| this.t('shillinq', 'Failed to load budget mappings')
 				}
 			} catch (e) {
 				this.objects = []
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load budget mappings')
 			} finally {
 				this.loading = false
@@ -609,7 +660,8 @@ export default {
 				this.objects = rows
 				this.pagination = this.store.pagination?.[TYPE_SLUG] || null
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load budget mappings')
 			} finally {
 				this.loading = false

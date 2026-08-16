@@ -176,7 +176,7 @@
 					data-testid="grn-form-submit">
 					{{
 						submitting
-							? t('shillinq', 'Saving...')
+							? t('shillinq', 'Saving…')
 							: t('shillinq', 'Save goods receipt')
 					}}
 				</NcButton>

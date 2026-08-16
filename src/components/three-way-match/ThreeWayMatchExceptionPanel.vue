@@ -34,7 +34,7 @@
 			v-if="loading"
 			class="twm-exception__loading"
 			data-testid="twm-exception-loading">
-			{{ t('shillinq', 'Loading match...') }}
+			{{ t('shillinq', 'Loading match…') }}
 		</div>
 
 		<div

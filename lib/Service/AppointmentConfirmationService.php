@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -417,20 +418,19 @@ class AppointmentConfirmationService {
 	 */
 	private function findAppointment(object $objectService, string $register, string $appointmentId): ?array {
 		try {
-			$byId = $objectService
-				->setRegister($register)
-				->setSchema('Appointment')
-				->findAll(['filters' => ['id' => $appointmentId], 'limit' => 1]);
-			if (empty($byId) === false) {
-				return $byId[0];
-			}
-
-			$byNumber = $objectService
-				->setRegister($register)
-				->setSchema('Appointment')
-				->findAll(['filters' => ['appointmentNumber' => $appointmentId], 'limit' => 1]);
-			if (empty($byNumber) === false) {
-				return $byNumber[0];
+			// The by-id arm used to be findAll(['filters' => ['id' => …]]),
+			// which matches NOTHING — `filters` addresses JSON properties and
+			// `id` is the entity's own column — so every lookup fell through to
+			// the appointmentNumber arm and an appointment addressed by uuid
+			// was reported absent. ObjectIdentifier::findOne() does the uuid
+			// lookup through find(), then the same appointmentNumber fallback.
+			$appointment = ObjectIdentifier::findOne(
+				scoped: $objectService->setRegister($register)->setSchema('Appointment'),
+				id: $appointmentId,
+				fallbackProperty: 'appointmentNumber'
+			);
+			if ($appointment !== null) {
+				return $appointment;
 			}
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq: failed to load appointment: ' . $e->getMessage());

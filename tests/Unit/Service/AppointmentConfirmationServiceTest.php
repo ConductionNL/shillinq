@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AppointmentConfirmationService;
 use OCA\Shillinq\Service\ConfirmationMailer;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -94,7 +95,40 @@ final class AppointmentConfirmationServiceTest extends TestCase {
 			}
 
 			/**
+			 * Single-object lookup by uuid.
+			 *
+			 * ⚠️ THROWS on a miss — it does not return null. Real
+			 * ObjectService raises DoesNotExistException for any identifier it
+			 * cannot resolve, so a caller wanting a fallback must wrap this in
+			 * its own try/catch. The double had no find() at all, which made it
+			 * blind to the lookup path the service actually takes.
+			 *
+			 * @param string $id Object uuid.
+			 *
+			 * @return array<string,mixed>
+			 *
+			 * @throws DoesNotExistException When no object matches.
+			 */
+			public function find(string $id): array {
+				foreach (($this->records[$this->schema] ?? []) as $row) {
+					if ((string)($row['id'] ?? '') === $id) {
+						return $row;
+					}
+				}
+
+				throw new DoesNotExistException(
+					sprintf("Object with identifier '%s' not found in any magic table", $id)
+				);
+			}
+
+			/**
 			 * Filter the selected schema's records.
+			 *
+			 * ⚠️ `filters` addresses JSON PROPERTIES only — the ObjectEntity's
+			 * `id` is its own column, so real OpenRegister matches ZERO rows
+			 * for `['filters' => ['id' => …]]` at every value, silently.
+			 * Mirrored here so this double cannot bless a lookup the engine
+			 * would answer with nothing.
 			 *
 			 * @param array<string,mixed> $query Query with optional filters/limit.
 			 *
@@ -102,6 +136,10 @@ final class AppointmentConfirmationServiceTest extends TestCase {
 			 */
 			public function findAll(array $query = []): array {
 				$filters = ($query['filters'] ?? []);
+				if (array_key_exists('id', $filters) === true) {
+					return [];
+				}
+
 				$rows = array_values($this->records[$this->schema] ?? []);
 				$out = array_filter(
 					$rows,

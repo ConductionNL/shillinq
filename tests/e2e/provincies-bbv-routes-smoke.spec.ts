@@ -74,10 +74,15 @@ const HTML_HEADERS = { 'OCS-APIREQUEST': 'true', Accept: 'text/html' }
  *
  * @return Resolves when every assertion has passed.
  */
-async function expectSpaShell(request: APIRequestContext, url: string): Promise<void> {
+async function expectSpaShell(
+	request: APIRequestContext,
+	url: string,
+): Promise<void> {
 	const res = await request.get(url, { headers: HTML_HEADERS })
 	expect(res.status(), `${url}: ${await res.text()}`).toBe(200)
-	expect(res.headers()['content-type'] ?? '', `${url}: content-type`).toContain('text/html')
+	expect(res.headers()['content-type'] ?? '', `${url}: content-type`).toContain(
+		'text/html',
+	)
 
 	const html = await res.text()
 	expect(html, `${url}: app shell mount point`).toContain('id="shillinq-app"')
@@ -85,33 +90,39 @@ async function expectSpaShell(request: APIRequestContext, url: string): Promise<
 }
 
 test.describe('Provincies BBV routes — served by the SPA shell', () => {
-
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-001/dashboard-route-200
 	 */
-	test('GET compliance-dashboard is served by the SPA shell', async ({ request }) => {
+	test('GET compliance-dashboard is served by the SPA shell', async ({
+		request,
+	}) => {
 		await expectSpaShell(request, DASHBOARD_ROUTE)
 	})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-index-route-200
 	 */
-	test('GET budget-to-programme is served by the SPA shell', async ({ request }) => {
+	test('GET budget-to-programme is served by the SPA shell', async ({
+		request,
+	}) => {
 		await expectSpaShell(request, LINKER_INDEX_ROUTE)
 	})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-003/linker-detail-route-200
 	 */
-	test('GET budget-to-programme/:id is served by the SPA shell', async ({ request }) => {
+	test('GET budget-to-programme/:id is served by the SPA shell', async ({
+		request,
+	}) => {
 		await expectSpaShell(request, LINKER_DETAIL_ROUTE)
 	})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-004/admin-settings-route-200
 	 */
-	test('GET /admin (admin settings) is served by the SPA shell', async ({ request }) => {
+	test('GET /admin (admin settings) is served by the SPA shell', async ({
+		request,
+	}) => {
 		await expectSpaShell(request, ADMIN_ROUTE)
 	})
-
 })
