@@ -31,6 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
@@ -39,7 +41,6 @@ use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCP\EventDispatcher\GenericEvent;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
@@ -51,11 +52,11 @@ use RuntimeException;
 final class ACMReportSignTransitionListenerTest extends TestCase {
 
 	/**
-	 * Recording fake ObjectService: captures updateObject() writes.
+	 * Every updateObject() write the listener issued, as ['id' => …] + payload.
 	 *
-	 * @var object
+	 * @var array<int,array<string,mixed>>
 	 */
-	private object $objectService;
+	private array $updates = [];
 
 	/**
 	 * Captured requestSignature() invocations: each entry is
@@ -84,29 +85,17 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		string $schemaSlug = 'ACMReport',
 	): ACMReportSignTransitionListener {
 		$this->signingCalls = [];
+		$this->updates = [];
 
-		$this->objectService = new class {
-
-			/**
-			 * @var array<int,array<string,mixed>>
-			 */
-			public array $updates = [];
-
-			public function setRegister(string $r): self {
-				return $this;
-			}//end setRegister()
-
-			public function setSchema(string $s): self {
-				return $this;
-			}//end setSchema()
-
-			/**
-			 * @param array<string,mixed> $updates
-			 */
-			public function updateObject(string $id, array $updates): void {
-				$this->updates[] = ['id' => $id] + $updates;
-			}//end updateObject()
-		};
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('updateObject')->willReturnCallback(
+			function (string $objectId, array $data): ObjectEntityInterface {
+				$this->updates[] = ['id' => $objectId] + $data;
+				return new ObjectEntity();
+			}
+		);
 
 		$signingService = $this->createMock(SigningDelegationService::class);
 		$signingService->method('requestSignature')->willReturnCallback(
@@ -126,24 +115,6 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 			}
 		);
 
-		$objectSvc = $this->objectService;
-		$container = new class($objectSvc) implements ContainerInterface {
-
-			private object $svc;
-
-			public function __construct(object $svc) {
-				$this->svc = $svc;
-			}//end __construct()
-
-			public function get(string $id): mixed {
-				return $this->svc;
-			}//end get()
-
-			public function has(string $id): bool {
-				return true;
-			}//end has()
-		};
-
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
@@ -151,11 +122,11 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		$schemaResolver->method('schemaSlug')->willReturn($schemaSlug);
 
 		return new ACMReportSignTransitionListener(
-			$container,
 			$settings,
 			$signingService,
 			$schemaResolver,
 			new NullLogger(),
+			$objectService,
 		);
 
 	}//end makeListener()
@@ -218,10 +189,10 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		self::assertSame('ACMReport', $subjectSchema);
 		self::assertSame('acm-report', $documentClass);
 
-		self::assertCount(1, $this->objectService->updates);
-		self::assertSame('acm-42', $this->objectService->updates[0]['id']);
-		self::assertSame('requested', $this->objectService->updates[0]['signingStatus']);
-		self::assertSame('ds-req-42', $this->objectService->updates[0]['signingRequestRef']);
+		self::assertCount(1, $this->updates);
+		self::assertSame('acm-42', $this->updates[0]['id']);
+		self::assertSame('requested', $this->updates[0]['signingStatus']);
+		self::assertSame('ds-req-42', $this->updates[0]['signingRequestRef']);
 
 	}//end testSignTransitionCallsRequestSignatureAndPersists()
 
@@ -236,7 +207,7 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		$listener->handle($this->makeEvent(['id' => 'acm-42'], action: 'submit'));
 
 		self::assertCount(0, $this->signingCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testNonSignActionIsIgnored()
 
@@ -253,7 +224,7 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		);
 
 		self::assertCount(0, $this->signingCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testNonAcmReportSchemaIsIgnored()
 
@@ -271,7 +242,7 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		);
 
 		self::assertCount(0, $this->signingCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testAlreadyRequestedStatusSkipsDuplicateRequest()
 
@@ -287,7 +258,7 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		$listener->handle($this->makeEvent(['id' => 'acm-42']));
 
 		self::assertCount(1, $this->signingCalls, 'requestSignature() must still have been invoked.');
-		self::assertCount(0, $this->objectService->updates, 'A fail-closed request must not persist a mirror.');
+		self::assertCount(0, $this->updates, 'A fail-closed request must not persist a mirror.');
 
 	}//end testFailSoftWhenRequestSignatureThrows()
 
@@ -302,7 +273,7 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		$listener->handle(new GenericEvent());
 
 		self::assertCount(0, $this->signingCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testNonMatchingEventTypeIsIgnored()
 }//end class

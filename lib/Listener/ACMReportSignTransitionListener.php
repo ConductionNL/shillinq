@@ -52,13 +52,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -96,21 +96,22 @@ class ACMReportSignTransitionListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR ObjectService pulled
-	 *                                      lazily (avoids a circular DI edge).
 	 * @param SettingsService $settingsService Shillinq settings (register slug).
 	 * @param SigningDelegationService $signingService The document-signing request service.
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published object
+	 *                                              surface (ADR-084), aliased in
+	 *                                              Application.php.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly SettingsService $settingsService,
 		private readonly SigningDelegationService $signingService,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -217,8 +218,7 @@ class ACMReportSignTransitionListener implements IEventListener {
 	 * @return void
 	 */
 	private function persist(string $id, array $updates): void {
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$objectService
+		$this->objectService
 			->setRegister($this->settingsService->getRegisterSlug())
 			->setSchema(self::SCHEMA)
 			->updateObject($id, $updates);

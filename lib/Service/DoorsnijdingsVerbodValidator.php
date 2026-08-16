@@ -50,10 +50,13 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  */
 class DoorsnijdingsVerbodValidator {
 	/**
-	 * Construct the validator with lazy DI of OpenRegister's ObjectService.
+	 * Construct the validator with OpenRegister's ObjectService injected
+	 * (ADR-083 rule 1).
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published object
+	 *                                              surface (ADR-084), aliased in
+	 *                                              Application.php.
 	 * @param InnovatieboxAuditEventLogger|null $auditLogger Optional audit-event logger. When
 	 *                                                       provided, every validateNoDuplication
 	 *                                                       run emits a DoorsnijdingsVerbod.check_run
@@ -227,8 +230,7 @@ class DoorsnijdingsVerbodValidator {
 	 * @return array<int,array<string,mixed>> GL lines carrying accountNumber + kostenplaats.
 	 */
 	private function fetchGlDeductions(string $administrationId, int $financialYear): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('GLLine')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $financialYear]]);
