@@ -42,11 +42,11 @@
             "type": "string",
             "enum": [
               "DEFAULT",
-              "OVERHEID",
+              "GOVERNMENT",
               "VIP",
               "AGGRESSIVE"
             ],
-            "description": "Customer cohort the ladder applies to. OVERHEID gets statutory 30-day terms per Wet betalingstermijnen overheid; VIP softens stage 4–5; AGGRESSIVE accelerates timing.",
+            "description": "Customer cohort the ladder applies to. GOVERNMENT gets statutory 30-day terms per Wet betalingstermijnen overheid; VIP softens stage 4–5; AGGRESSIVE accelerates timing.",
             "example": "DEFAULT",
             "title": "Klant Groep"
           },
@@ -85,9 +85,9 @@
                   "type": "string",
                   "enum": [
                     "EMAIL",
-                    "EMAIL+POSTREGISTRATIE",
-                    "AANGETEKENDE_POST",
-                    "INCASSOBUREAU_API"
+                    "eMAILPostRegistration",
+                    "REGISTERED_POST",
+                    "COLLECTION_AGENCY_API"
                   ],
                   "description": "Delivery channel for this stage.",
                   "title": "Kanaal"
@@ -102,11 +102,11 @@
                   "type": "string",
                   "nullable": true,
                   "enum": [
-                    "14_DAGEN_BRIEF_BIK",
-                    "VERZUIM_INTREDEN",
+                    "14_DAYS_BRIEF_BIK",
+                    "DEFAULT_ENTRY",
                     null
                   ],
-                  "description": "Optional legal effect marker. 14_DAGEN_BRIEF_BIK triggers the mandatory B2C 14-day grace text (art. 6:96 lid 6 BW); VERZUIM_INTREDEN marks formal default (verzuim van rechtswege).",
+                  "description": "Optional legal effect marker. 14_DAYS_BRIEF_BIK triggers the mandatory B2C 14-day grace text (art. 6:96 lid 6 BW); DEFAULT_ENTRY marks formal default (verzuim van rechtswege).",
                   "title": "Wettelijk Effect"
                 },
                 "action": {
@@ -403,9 +403,9 @@
             "type": "string",
             "enum": [
               "EMAIL",
-              "EMAIL+POSTREGISTRATIE",
-              "AANGETEKENDE_POST",
-              "INCASSOBUREAU_API"
+              "eMAILPostRegistration",
+              "REGISTERED_POST",
+              "COLLECTION_AGENCY_API"
             ],
             "description": "Delivery channel used for this stage.",
             "title": "Kanaal"
@@ -793,8 +793,8 @@
               "type": {
                 "type": "string",
                 "enum": [
-                  "HANDELSRENTE_B2B_6_119A_BW",
-                  "WETTELIJKE_RENTE_B2C_6_119_BW"
+                  "COMMERCIAL_INTEREST_B2_B_6_119_A_BW",
+                  "STATUTORY_INTEREST_B2_C_6_119_BW"
                 ],
                 "description": "Statutory basis for the rate.",
                 "title": "Type"
@@ -1164,9 +1164,9 @@
             "type": "string",
             "nullable": true,
             "enum": [
-              "LAAG",
-              "MIDDEN",
-              "HOOG",
+              "LOW",
+              "MEDIUM",
+              "HIGH",
               null
             ],
             "title": "Betalings Risico Indicatie",
@@ -1414,23 +1414,23 @@
           "nr": 3,
           "daysAfterExpiryDate": 30,
           "name": "Aanmaning + 14d-brief",
-          "channel": "EMAIL+POSTREGISTRATIE",
+          "channel": "eMAILPostRegistration",
           "templateId": "tpl-dunning-stage3-nl",
-          "statutoryEffect": "14_DAGEN_BRIEF_BIK"
+          "statutoryEffect": "14_DAYS_BRIEF_BIK"
         },
         {
           "nr": 4,
           "daysAfterExpiryDate": 60,
           "name": "Ingebrekestelling",
-          "channel": "AANGETEKENDE_POST",
+          "channel": "REGISTERED_POST",
           "templateId": "tpl-dunning-stage4-nl",
-          "statutoryEffect": "VERZUIM_INTREDEN"
+          "statutoryEffect": "DEFAULT_ENTRY"
         },
         {
           "nr": 5,
           "daysAfterExpiryDate": 90,
           "name": "Overdracht incasso",
-          "channel": "INCASSOBUREAU_API",
+          "channel": "COLLECTION_AGENCY_API",
           "templateId": "tpl-dunning-stage5-nl",
           "action": "TRANSFER_INCASSO"
         }
@@ -1446,7 +1446,7 @@
       },
       "name": "Overheid dunning-ladder (30-dagen termijn)",
       "enterpriseId": "ond-zzp-001",
-      "customerGroup": "OVERHEID",
+      "customerGroup": "GOVERNMENT",
       "stages": [
         {
           "nr": 1,
@@ -1533,7 +1533,7 @@
       "ladderId": "ladder-zzp-default-2026",
       "stageNr": 3,
       "executedOn": "2026-06-14T09:00:00Z",
-      "channel": "EMAIL+POSTREGISTRATIE",
+      "channel": "eMAILPostRegistration",
       "recipientEmail": "finance@acme.nl",
       "recipientName": "Crediteurenadministratie Acme BV",
       "templateId": "tpl-dunning-stage3-nl",
@@ -1573,7 +1573,7 @@
       },
       "statutoryRente": {
         "rate": 0.1015,
-        "type": "HANDELSRENTE_B2B_6_119A_BW",
+        "type": "COMMERCIAL_INTEREST_B2_B_6_119_A_BW",
         "effectiveDate": "2026-05-30",
         "calculatedOn": "2026-06-21",
         "days": 22,
@@ -1621,7 +1621,7 @@
       "scoreDate": "2026-05-01",
       "score": 6.4,
       "scoreScale": "1-10",
-      "paymentRiskIndication": "MIDDEN",
+      "paymentRiskIndication": "MEDIUM",
       "creditLimitAdvice": 25000.0,
       "costLookup": 1.85,
       "administrationId": "adm-1"

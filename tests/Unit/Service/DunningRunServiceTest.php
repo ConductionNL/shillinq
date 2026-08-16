@@ -65,7 +65,7 @@ final class DunningRunServiceTest extends TestCase {
 					return ($incasso !== null) ? $incasso : new class implements IncassoBureauAdapterInterface {
 						public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
 							return new DunningChannelSendResult(
-								channel: 'INCASSOBUREAU_API',
+								channel: 'COLLECTION_AGENCY_API',
 								deliveryStatus: 'DELIVERED',
 								providerMessageId: 'noop',
 								extras: ['dossierId' => 'test-dossier'],
@@ -77,7 +77,7 @@ final class DunningRunServiceTest extends TestCase {
 					return ($postnl !== null) ? $postnl : new class implements PostNLAdapterInterface {
 						public function sendRegisteredLetter(array $payload): DunningChannelSendResult {
 							return new DunningChannelSendResult(
-								channel: 'AANGETEKENDE_POST',
+								channel: 'REGISTERED_POST',
 								deliveryStatus: 'DELIVERED',
 								providerMessageId: 'noop',
 								extras: ['barcode' => '3S1234567890123', 'trackingUrl' => 'https://postnl.nl/tracktrace/3S1234567890123'],
@@ -305,9 +305,9 @@ final class DunningRunServiceTest extends TestCase {
 		$stages = [
 			['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL'],
 			['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL'],
-			['nr' => 3, 'daysAfterExpiryDate' => 30, 'channel' => 'EMAIL+POSTREGISTRATIE'],
-			['nr' => 4, 'daysAfterExpiryDate' => 60, 'channel' => 'AANGETEKENDE_POST'],
-			['nr' => 5, 'daysAfterExpiryDate' => 90, 'channel' => 'INCASSOBUREAU_API'],
+			['nr' => 3, 'daysAfterExpiryDate' => 30, 'channel' => 'eMAILPostRegistration'],
+			['nr' => 4, 'daysAfterExpiryDate' => 60, 'channel' => 'REGISTERED_POST'],
+			['nr' => 5, 'daysAfterExpiryDate' => 90, 'channel' => 'COLLECTION_AGENCY_API'],
 		];
 
 		self::assertSame(1, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 0)['nr']);
@@ -626,7 +626,7 @@ final class DunningRunServiceTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'invoiceId' => 'inv-1',
 				'stageNr' => 5,
-				'channel' => 'INCASSOBUREAU_API',
+				'channel' => 'COLLECTION_AGENCY_API',
 				'lifecycleState' => 'executed',
 				'deliveryStatus' => 'PENDING',
 			],
@@ -668,7 +668,7 @@ final class DunningRunServiceTest extends TestCase {
 		$incasso = new class implements IncassoBureauAdapterInterface {
 			public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
 				return new DunningChannelSendResult(
-					channel: 'INCASSOBUREAU_API',
+					channel: 'COLLECTION_AGENCY_API',
 					deliveryStatus: 'FAILED',
 					errorMessage: 'connection refused',
 				);
@@ -702,7 +702,7 @@ final class DunningRunServiceTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'invoiceId' => 'inv-1',
 				'stageNr' => 4,
-				'channel' => 'AANGETEKENDE_POST',
+				'channel' => 'REGISTERED_POST',
 				'lifecycleState' => 'executed',
 				'deliveryStatus' => 'PENDING',
 			],

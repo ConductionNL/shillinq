@@ -115,9 +115,9 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		$share = $largestAmount / $total;
 		$status = 'VEILIG';
 		if ($share >= DBAConstants::CONCENTRATIE_DREMPEL_KRITIEK) {
-			$status = 'KRITIEK';
+			$status = 'CRITICAL';
 		} elseif ($share >= DBAConstants::CONCENTRATIE_DREMPEL_HOOG) {
-			$status = 'WAARSCHUWING';
+			$status = 'WARNING';
 		}
 
 		return [
@@ -209,15 +209,15 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 */
 	public function computeOverallRisico(array $concentration, array $multiYearRelationships): string {
 		$status = (string)($concentration['status'] ?? 'VEILIG');
-		if ($status === 'KRITIEK' || count($multiYearRelationships) >= 2) {
-			return 'HOOG';
+		if ($status === 'CRITICAL' || count($multiYearRelationships) >= 2) {
+			return 'HIGH';
 		}
 
-		if ($status === 'WAARSCHUWING' || count($multiYearRelationships) === 1) {
-			return 'MIDDEN';
+		if ($status === 'WARNING' || count($multiYearRelationships) === 1) {
+			return 'MEDIUM';
 		}
 
-		return 'LAAG';
+		return 'LOW';
 	}//end computeOverallRisico()
 
 	/**

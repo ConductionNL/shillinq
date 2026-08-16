@@ -639,7 +639,7 @@ class InitializeSettings implements IRepairStep {
 					[
 						'register' => 'shillinq',
 						'schema' => 'Iv3Export',
-						'administrationType' => ['municipality', 'provincie', 'waterschap'],
+						'administrationType' => ['municipality', 'province', 'waterAuthority'],
 					]
 				),
 			]
@@ -769,7 +769,7 @@ class InitializeSettings implements IRepairStep {
 					[
 						'register' => 'shillinq',
 						'schema' => 'BcfClaim',
-						'administrationType' => ['municipality', 'provincie', 'waterschap'],
+						'administrationType' => ['municipality', 'province', 'waterAuthority'],
 					]
 				),
 			]
@@ -988,7 +988,7 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
-		$municipalTypes = ['municipality', 'provincie', 'waterschap'];
+		$municipalTypes = ['municipality', 'province', 'waterAuthority'];
 		$totalSeeded = 0;
 		$totalSkipped = 0;
 

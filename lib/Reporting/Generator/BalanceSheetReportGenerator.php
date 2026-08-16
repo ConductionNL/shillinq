@@ -237,6 +237,11 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 		foreach ($accounts as $account) {
 			$type = strtolower($this->str($account, 'accountType', 'type', 'category'));
 			$bucket = match ($type) {
+				// `activa` stays: this arm is a deliberately BILINGUAL tolerance
+				// list — its siblings still accept `vreemd-vermogen` and
+				// `eigen-vermogen` — so it keeps reading rows the value migration
+				// has not reached yet. Translating it produced a duplicate arm and
+				// psalm caught it as a ParadoxicalCondition.
 				'assets', 'asset', 'activa' => 'assets',
 				'liabilities', 'liability', 'debts', 'vreemd-vermogen' => 'liabilities',
 				'equity', 'eigen-vermogen' => 'equity',

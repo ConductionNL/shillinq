@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class InitializeBbvAdministration implements IRepairStep {
-	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'provincie', 'waterschap'];
+	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'province', 'waterAuthority'];
 
 	private const RESERVE_TAAKVELD = '0.10';
 

@@ -164,7 +164,7 @@ final class MultiAdministratieFragmentTest extends TestCase {
 		$entry = $this->fragment()['components']['schemas']['IntercompanyJournalEntry'];
 		$states = array_keys($entry['x-openregister-lifecycle']['states']);
 		self::assertSame(
-			['concept', 'gekoppeld', 'bevestigd_beide', 'eliminatie_geboekt'],
+			['draft', 'gekoppeld', 'bevestigd_beide', 'eliminatie_geboekt'],
 			$states
 		);
 

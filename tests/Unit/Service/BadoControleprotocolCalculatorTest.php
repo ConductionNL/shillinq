@@ -221,7 +221,7 @@ final class BadoControleprotocolCalculatorTest extends TestCase {
 	public function testClassifySeverityFallsBackToFindingType(): void {
 		$finding = [
 			'amount' => 40000.0,
-			'findingType' => 'onzekerheid',
+			'findingType' => 'uncertainty',
 		];
 		self::assertSame('materieel', $this->calc->classifySeverity($finding, $this->defaultRow, 1200000.0));
 

@@ -189,7 +189,7 @@ final class VerplichtingTransitionListenerTest extends TestCase {
 		$event = new ObjectCreatedEvent(
 			$this->entity('1089', [
 				'source' => 'tenderned',
-				'status' => 'concept',
+				'status' => 'draft',
 				'amount' => 5000.0,
 			])
 		);
@@ -217,7 +217,7 @@ final class VerplichtingTransitionListenerTest extends TestCase {
 				'amount' => 5000.0,
 			]),
 			'activeren',
-			'concept',
+			'draft',
 			'active',
 			'admin',
 			'shillinq',
@@ -243,12 +243,12 @@ final class VerplichtingTransitionListenerTest extends TestCase {
 		$event = new ObjectTransitionedEvent(
 			$this->entity('1089', [
 				'source' => 'tenderned',
-				'status' => 'concept',
+				'status' => 'draft',
 				'amount' => 5000.0,
 			]),
 			'reactiveren',
 			'active',
-			'concept',
+			'draft',
 			'admin',
 			'shillinq',
 			'Verplichting'

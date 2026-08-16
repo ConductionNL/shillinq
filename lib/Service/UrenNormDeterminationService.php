@@ -90,7 +90,7 @@ final class UrenNormDeterminationService {
 			'purposeNorm' => $norm,
 			'normBasis' => $basis,
 			'currentHours' => 0.0,
-			'thresholdStatus' => 'OP_KOERS',
+			'thresholdStatus' => 'ON_RATE',
 			'largelyCriterium' => $grotendeels,
 		];
 

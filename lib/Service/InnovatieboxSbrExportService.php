@@ -84,7 +84,7 @@ class InnovatieboxSbrExportService {
 	 * @param string $administrationId Administration scope (server-resolved, REQ-IBA-008).
 	 * @param int $financialYear Fiscal year.
 	 * @param string $method Election: 'per_asset_afpelmethode' (default)
-	 *                       or 'forfaitair_25pct'.
+	 *                       or 'flat_rate_25pct'.
 	 *
 	 * @return array<string,mixed> The SBR/XBRL instance hand-off payload.
 	 *
@@ -104,7 +104,7 @@ class InnovatieboxSbrExportService {
 			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, financialYear: $financialYear),
 			'collectie' => self::SBR_COLLECTION,
 			'identificerendePeriode' => sprintf('%04d', $financialYear),
-			'administratie' => $administrationId,
+			'administration' => $administrationId,
 			'gekozenMethode' => $method,
 			'regel23_kwalifWinst' => round((float)($totals['qualifying_profit_after_nexus'] ?? 0.0), 2),
 			'regel23_vpbInnovatie' => round((float)($totals['vpb_on_innovation_share'] ?? 0.0), 2),
@@ -113,7 +113,7 @@ class InnovatieboxSbrExportService {
 			'status' => 'READY_FOR_SBR',
 		];
 
-		if ($method === 'forfaitair_25pct') {
+		if ($method === 'flat_rate_25pct') {
 			// Forfaitair: collapse to a single line per art. 12bg.
 			$payload['forfaitairLine'] = [
 				'kwalifVoorCap' => round((float)($totals['qualifying_profit_for_nexus'] ?? 0.0), 2),
@@ -158,13 +158,13 @@ class InnovatieboxSbrExportService {
 		$rows = $this->extractRows(aggregation: $aggregation);
 		$totals = $this->extractTotals(aggregation: $aggregation);
 
-		if ($method === 'forfaitair_25pct') {
+		if ($method === 'flat_rate_25pct') {
 			$perAsset = [];
 		} else {
 			$perAsset = $this->renderAssetRows(rows: $rows);
 		}
 
-		if ($method === 'forfaitair_25pct') {
+		if ($method === 'flat_rate_25pct') {
 			$forfaitair = [
 				'kwalifVoorCap' => round((float)($totals['qualifying_profit_for_nexus'] ?? 0.0), 2),
 				'kwalifNaCap' => round((float)($totals['qualifying_profit_after_nexus'] ?? 0.0), 2),
@@ -181,7 +181,7 @@ class InnovatieboxSbrExportService {
 			'method' => $method,
 			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, financialYear: $financialYear),
 			'perAsset' => $perAsset,
-			'forfaitair' => $forfaitair,
+			'flatRate' => $forfaitair,
 			'totals' => [
 				'winst_voor_nexus' => round((float)($totals['qualifying_profit_for_nexus'] ?? 0.0), 2),
 				'winst_na_nexus' => round((float)($totals['qualifying_profit_after_nexus'] ?? 0.0), 2),

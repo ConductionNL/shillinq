@@ -207,6 +207,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
                 and it refuses ambiguous renames rather than merging them.
             -->
             <step>OCA\Shillinq\Repair\RenameDutchColumns</step>
+            <!--
+                Must run AFTER RenameDutchColumns: that step moves the COLUMNS,
+                this one moves what is IN them. Both are needed. Once the schema
+                declares `ACTIVE`, a row still holding `ACTIEF` does not error —
+                a filter on the new value returns null and the caller reads that
+                as "nothing to do", so the loss is silent.
+            -->
+            <step>OCA\Shillinq\Repair\RenameDutchValues</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first

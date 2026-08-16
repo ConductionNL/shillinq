@@ -99,7 +99,7 @@ class PensionIas19GuardTest extends TestCase {
 	public function testCompleteDbPlanCanActivate(): void {
 		$object = [
 			'planType' => 'DB',
-			'regulatoryFramework' => 'Pensioenwet',
+			'regulatoryFramework' => 'PensionsAct',
 			'pensionableSalaryDefinition' => 'Bruto jaarsalaris minus AOW-franchise',
 			'accrualRate' => 0.01875,
 		];
@@ -117,7 +117,7 @@ class PensionIas19GuardTest extends TestCase {
 	public function testDbPlanWithoutAccrualRateCannotActivate(): void {
 		$object = [
 			'planType' => 'DB',
-			'regulatoryFramework' => 'Pensioenwet',
+			'regulatoryFramework' => 'PensionsAct',
 			'pensionableSalaryDefinition' => 'Bruto jaarsalaris',
 			'accrualRate' => 0,
 		];
@@ -136,7 +136,7 @@ class PensionIas19GuardTest extends TestCase {
 	public function testDcPlanCanActivateWithoutAccrualRate(): void {
 		$object = [
 			'planType' => 'DC',
-			'regulatoryFramework' => 'Pensioenwet',
+			'regulatoryFramework' => 'PensionsAct',
 			'pensionableSalaryDefinition' => 'Bruto jaarsalaris',
 		];
 
@@ -154,7 +154,7 @@ class PensionIas19GuardTest extends TestCase {
 	public function testPlanMissingSalaryDefinitionCannotActivate(): void {
 		$object = [
 			'planType' => 'DC',
-			'regulatoryFramework' => 'Pensioenwet',
+			'regulatoryFramework' => 'PensionsAct',
 			'pensionableSalaryDefinition' => '   ',
 		];
 

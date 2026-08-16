@@ -120,7 +120,7 @@
             "enum": [
               "software",
               "hardware-related",
-              "data-algoritme",
+              "data-algorithm",
               "other"
             ],
             "example": "software",
@@ -389,7 +389,7 @@
             "type": "string",
             "enum": [
               "per_asset_afpelmethode",
-              "forfaitair_25pct",
+              "flat_rate_25pct",
               "cost_plus"
             ],
             "example": "per_asset_afpelmethode",
@@ -828,8 +828,8 @@
               "IBProfitAttribution.amendment_attempt_blocked",
               "CarryForwardLoss.created",
               "CarryForwardLoss.offset_applied",
-              "DoorsnijdingsVerbod.check_run",
-              "ForfaitairCap.applied"
+              "cross_cutting_prohibition_check_run",
+              "flatRateCapApplied"
             ],
             "example": "IBProfitAttribution.created",
             "title": "Event Type"
@@ -943,7 +943,7 @@
             "tot": "2024-12-31"
           }
         },
-        "type_intangible_asset": "data-algoritme",
+        "type_intangible_asset": "data-algorithm",
         "developmentPeriod": {
           "start": "2023-06-01"
         },
@@ -1053,7 +1053,7 @@
         },
         "qualifying_asset_id": "qa-2024-001",
         "financialYear": 2026,
-        "method": "forfaitair_25pct",
+        "method": "flat_rate_25pct",
         "gross_revenue_asset": 200000.0,
         "qualifying_profit_for_nexus": 200000.0,
         "nexus_calculation_id": "nx-2024-001",

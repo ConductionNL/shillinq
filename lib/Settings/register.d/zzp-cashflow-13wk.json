@@ -410,8 +410,8 @@
           "bufferStatus": {
             "type": "string",
             "enum": [
-              "BOVEN_BUFFER",
-              "VOORALARM",
+              "ABOVE_BUFFER",
+              "PRE_ALERT",
               "CRISIS"
             ],
             "description": "Buffer status per the active buffer policy (REQ-CF-002/009).",
@@ -430,7 +430,7 @@
                 "type": {
                   "type": "string",
                   "description": "Alert type, e.g. BUFFER_ONDERSCHRIJDING.",
-                  "example": "BUFFER_ONDERSCHRIJDING",
+                  "example": "BUFFER_SHORTFALL",
                   "title": "Type"
                 },
                 "severity": {
@@ -731,12 +731,12 @@
           "category": {
             "type": "string",
             "enum": [
-              "LEVERANCIER",
+              "SUPPLIER",
               "RECURRING",
-              "BTW",
+              "VAT",
               "IB",
-              "INVESTERING",
-              "OVERIG"
+              "INVESTMENT",
+              "OTHER"
             ],
             "description": "Outflow category for charting (REQ-CF-006).",
             "title": "Categorie"
@@ -744,10 +744,10 @@
           "paymentMethod": {
             "type": "string",
             "enum": [
-              "AUTOMATISCHE_INCASSO_SEPA",
+              "AUTOMATIC_COLLECTION_SEPA",
               "BANKTRANSFER",
               "IDEAL",
-              "OVERIG"
+              "OTHER"
             ],
             "description": "Payment method (REQ-CF-006).",
             "title": "Betalingsmethode"
@@ -841,14 +841,14 @@
           "category": {
             "type": "string",
             "enum": [
-              "RECURRING_HUUR",
-              "RECURRING_VERZEKERING",
-              "RECURRING_ABONNEMENTEN",
+              "RECURRING_RENT",
+              "RECURRING_INSURANCE",
+              "RECURRING_SUBSCRIPTIONS",
               "RECURRING_SOFTWARE",
-              "RECURRING_DGA_LOON",
-              "RECURRING_LIJFRENTEPREMIE",
+              "RECURRING_DGA_PAY",
+              "RECURRING_ANNUITY_PREMIUM",
               "RECURRING_LEASING",
-              "RECURRING_OVERIG"
+              "RECURRING_OTHER"
             ],
             "description": "Recurring category (REQ-CF-005).",
             "title": "Categorie"
@@ -865,11 +865,11 @@
           "frequency": {
             "type": "string",
             "enum": [
-              "WEKELIJKS",
-              "TWEEWEKELIJKS",
-              "MAANDELIJKS",
-              "KWARTAALS",
-              "JAARLIJKS"
+              "WEEKLY",
+              "FORTNIGHTLY",
+              "MONTHLY",
+              "QUARTERLY",
+              "ANNUALLY"
             ],
             "description": "Recurrence frequency (REQ-CF-005).",
             "title": "Frequentie"
@@ -900,7 +900,7 @@
             "type": "string",
             "enum": [
               "FIXED",
-              "CPI_AFGELOPEN_JAAR"
+              "CPI_PAST_YEAR"
             ],
             "default": "FIXED",
             "description": "Indexation rule: fixed amount or annual CBS-CPI update (REQ-CF-005).",
@@ -1016,7 +1016,7 @@
             "type": "string",
             "enum": [
               "MIN_FIXED_AMOUNT",
-              "MIN_MONTHS_VASTE_KOSTEN",
+              "MIN_MONTHS_FIXED_COST",
               "CUSTOM_FORMULA"
             ],
             "description": "Buffer calculation policy (REQ-CF-009).",
@@ -1522,7 +1522,7 @@
       "outflows_total": 7225.0,
       "netMovement": 5275.0,
       "closingBalance": 77775.0,
-      "bufferStatus": "BOVEN_BUFFER",
+      "bufferStatus": "ABOVE_BUFFER",
       "alerts": [],
       "administrationId": "adm-consultancy-nl"
     },
@@ -1560,8 +1560,8 @@
       "expiryDate": "2026-05-30",
       "plannedPaymentDate": "2026-05-30",
       "amount": 184.0,
-      "category": "LEVERANCIER",
-      "paymentMethod": "AUTOMATISCHE_INCASSO_SEPA",
+      "category": "SUPPLIER",
+      "paymentMethod": "AUTOMATIC_COLLECTION_SEPA",
       "administrationId": "adm-consultancy-nl"
     },
     {
@@ -1573,9 +1573,9 @@
       "recurId": "rec-huur-kantoor",
       "enterpriseId": "ond-zzp-c001",
       "label": "Huur kantoor",
-      "category": "RECURRING_HUUR",
+      "category": "RECURRING_RENT",
       "direction": "OUT",
-      "frequency": "MAANDELIJKS",
+      "frequency": "MONTHLY",
       "dagFromMonth": 1,
       "standardAmount": 1200.0,
       "indexationRule": "FIXED",
@@ -1592,12 +1592,12 @@
       "recurId": "rec-bav-verzekering",
       "enterpriseId": "ond-zzp-c001",
       "label": "BAV-verzekering",
-      "category": "RECURRING_VERZEKERING",
+      "category": "RECURRING_INSURANCE",
       "direction": "OUT",
-      "frequency": "JAARLIJKS",
+      "frequency": "ANNUALLY",
       "monthOfYear": 7,
       "standardAmount": 620.0,
-      "indexationRule": "CPI_AFGELOPEN_JAAR",
+      "indexationRule": "CPI_PAST_YEAR",
       "validFrom": "2024-07-01",
       "accountNumberExpense": "4310",
       "administrationId": "adm-consultancy-nl"
@@ -1610,7 +1610,7 @@
       },
       "policyId": "buf-erik",
       "enterpriseId": "ond-zzp-c001",
-      "policy": "MIN_MONTHS_VASTE_KOSTEN",
+      "policy": "MIN_MONTHS_FIXED_COST",
       "berekendeBuffer": 7500.0,
       "alertLowerLimit": 3750.0,
       "alertPreAlert": 11250.0,

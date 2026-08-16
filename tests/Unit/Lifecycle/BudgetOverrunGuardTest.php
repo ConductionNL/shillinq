@@ -126,7 +126,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 		$this->container->method('get')->willReturn(
 			$this->objectServiceStub(
 				taskFields: [['taskFieldCode' => '1.2', 'revenue' => 0.0, 'expenses' => 500.0]],
-				wijzigingen: [['status' => 'vastgesteld', 'movements' => [['taskFieldCode' => '1.2', 'lasten_delta' => 100.0]]]],
+				wijzigingen: [['status' => 'determined', 'movements' => [['taskFieldCode' => '1.2', 'lasten_delta' => 100.0]]]],
 				glLines: [['taskFieldCode' => '1.2', 'side' => 'debit', 'amount' => 400.0]]
 			)
 		);

@@ -272,7 +272,7 @@ final class UrenPrognoseService {
 				continue;
 			}
 
-			$month = (string)($assignment['maand'] ?? '');
+			$month = (string)($assignment['month'] ?? '');
 			$hours = (float)($assignment['hours'] ?? 0);
 			if ($month !== '') {
 				$overridesByMonth[$month] = $hours;

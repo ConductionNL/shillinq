@@ -107,8 +107,8 @@ class PayrollJaaropgaveService {
 			$payrollTaxC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
 			$svWgC += $this->calculator->toCents(amount: ($s['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
 			$zvwWgC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
-			$pensWnC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wn_aandeel'] ?? 0));
-			$pensWgC += $this->calculator->toCents(amount: ($s['pensioen']['premie_wg_aandeel'] ?? 0));
+			$pensWnC += $this->calculator->toCents(amount: ($s['pension']['premie_wn_aandeel'] ?? 0));
+			$pensWgC += $this->calculator->toCents(amount: ($s['pension']['premie_wg_aandeel'] ?? 0));
 			$vakUitbC += $this->calculator->toCents(amount: ($s['grossComponents']['vakantietoeslag_uitbetaling'] ?? 0));
 			$netC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
 

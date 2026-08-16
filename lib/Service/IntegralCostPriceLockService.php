@@ -57,6 +57,8 @@ class IntegralCostPriceLockService {
 	 * @return array<string,mixed> Definitief IKP record.
 	 *
 	 * @throws InvalidArgumentException When inputs are invalid.
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-002
 	 */
 	public function lock(array $input): array {
 		$provisional = (array)($input['voorlopigRecords'] ?? []);
@@ -142,7 +144,7 @@ class IntegralCostPriceLockService {
 			'commercialActivityId' => (string)$input['commercialActivityId'],
 			'period' => $fiscalYear . '-YTD',
 			'calculatedOn' => $now->format(DateTimeImmutable::ATOM),
-			'status' => 'definitief',
+			'status' => 'final',
 			'componenten' => [
 				'directPayrollCost' => round($payrollCostSum, 2),
 				'directMaterials' => round($materialenSum, 2),

@@ -274,11 +274,11 @@ class BIKStaffelCalculator {
 
 		$isB2C = ($partyType === 'B2C');
 		if ($isB2C === true) {
-			$type = 'WETTELIJKE_RENTE_B2C_6_119_BW';
+			$type = 'STATUTORY_INTEREST_B2_C_6_119_BW';
 			$table = self::WETTELIJKE_RENTE_B2C_TABLE;
 			$override = $rateB2C;
 		} else {
-			$type = 'HANDELSRENTE_B2B_6_119A_BW';
+			$type = 'COMMERCIAL_INTEREST_B2_B_6_119_A_BW';
 			$table = self::HANDELSRENTE_B2B_TABLE;
 			$override = $rateB2B;
 		}

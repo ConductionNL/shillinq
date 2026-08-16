@@ -52,9 +52,9 @@
           "periodType": {
             "type": "string",
             "enum": [
-              "kwartaal-emu-saldo",
-              "jaar-emu-saldo",
-              "jaar-emu-schuld"
+              "quarter-emu-balance",
+              "year-emu-balance",
+              "year-emu-debt"
             ],
             "description": "Aangifte type per Wet Hof (REQ-EMU-001/004).",
             "title": "Periode Type"
@@ -62,11 +62,11 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "submitted",
               "herzien"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Lifecycle status per Wet Hof art. 10 (REQ-EMU-001).",
             "title": "Status"
           },
@@ -155,11 +155,11 @@
           "bbvReconciliationCheck": {
             "type": "string",
             "enum": [
-              "geslaagd",
-              "mislukt",
-              "niet-uitgevoerd"
+              "succeeded",
+              "failed",
+              "non-executed"
             ],
-            "default": "niet-uitgevoerd",
+            "default": "non-executed",
             "description": "Reconciliation outcome (REQ-EMU-009).",
             "title": "BBV Aansluitingscontrole"
           },
@@ -178,14 +178,14 @@
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "retention": {
             "rule": "selectielijst:5.1.4",
             "period": "P10Y",
             "description": "EMU-rapportage records retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020 (REQ-EMU-012)."
           },
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Auto-generated draft; concerncontroller reviews and adjusts before submission (REQ-EMU-001)."
             },
@@ -200,7 +200,7 @@
           },
           "transitions": {
             "indienen": {
-              "from": "concept",
+              "from": "draft",
               "to": "submitted",
               "label": "Indienen bij CBS",
               "description": "Concerncontroller submits the approved concept via SBR/Digipoort; requires sign-off (REQ-EMU-006).",
@@ -348,14 +348,14 @@
           "type": {
             "type": "string",
             "enum": [
-              "eliminatie-afschrijving",
-              "eliminatie-voorzieningdotatie",
-              "eliminatie-onttrekking-reserve",
-              "toevoeging-bruto-investering",
-              "toevoeging-aflossing",
-              "eliminatie-boekwinst-desinvestering",
-              "correctie-transactiemoment",
-              "intercompany-eliminatie"
+              "elimination-depreciation",
+              "elimination-provision-contribution",
+              "elimination-withdrawal-reserve",
+              "addition-gross-investment",
+              "addition-repayment",
+              "elimination-book-profit-divestment",
+              "correction-transaction-moment",
+              "intercompany-elimination"
             ],
             "description": "Adjustment type per Wet Hof art. 3 (8 macro-rules, REQ-EMU-002/005).",
             "title": "Type"
@@ -363,9 +363,9 @@
           "direction": {
             "type": "string",
             "enum": [
-              "saldo-verhogend",
-              "saldo-verlagend",
-              "saldo-neutraal"
+              "balance-increasing",
+              "balance-decreasing",
+              "balance-neutral"
             ],
             "description": "Effect direction on the EMU-saldo (REQ-EMU-002).",
             "title": "Richting"
@@ -669,14 +669,14 @@
           "categoryEurostat": {
             "type": "string",
             "enum": [
-              "AF.2-deposits",
-              "AF.3-securities",
-              "AF.4-loans",
-              "AF.7-derivatives",
-              "overig"
+              "off_2-deposits",
+              "off_3-securities",
+              "off_4-loans",
+              "off_7-derivatives",
+              "other"
             ],
             "description": "Eurostat ESA2010 financial instrument category (REQ-EMU-004).",
-            "example": "AF.4-loans",
+            "example": "off_4-loans",
             "title": "Categorie Eurostat"
           },
           "currency": {
@@ -791,7 +791,7 @@
       },
       "periodYear": 2026,
       "periodQuarter": 2,
-      "periodType": "kwartaal-emu-saldo",
+      "periodType": "quarter-emu-balance",
       "status": "submitted",
       "submissionDate": "2026-07-15T09:23:00+02:00",
       "cbsConfirmationNumber": "CBS-EMU-2026Q2-001234567",
@@ -805,7 +805,7 @@
       "emuDebtCapacity": 13500000,
       "municipalAccountingBalanceRevenueExpenses": 4200000,
       "bbvTotaleAdjustments": -6500000,
-      "bbvReconciliationCheck": "geslaagd",
+      "bbvReconciliationCheck": "succeeded",
       "notes": "Afwijking veroorzaakt door versnelde dotatie aan voorziening pensioen wethouders (+450K) en hogere investering MFA Centrum (+820K kas).",
       "currency": "EUR"
     },
@@ -816,8 +816,8 @@
         "slug": "adj-2026-q2-0142"
       },
       "reportId": "emu-2026-q2-gem-1742",
-      "type": "eliminatie-afschrijving",
-      "direction": "saldo-verhogend",
+      "type": "elimination-depreciation",
+      "direction": "balance-increasing",
       "amount": 1240000,
       "source": {
         "generalLedgerAccount": "4801000",
@@ -851,7 +851,7 @@
       },
       "taskField": "8.1",
       "contraAccount": {
-        "kind": "leverancier",
+        "kind": "supplier",
         "name": "BAM Infra Nederland B.V.",
         "number": "F-2026-44218"
       },
@@ -881,7 +881,7 @@
       "termYears": 20,
       "endDate": "2034-12-31",
       "teltMeeInEmuDebt": true,
-      "categoryEurostat": "AF.4-loans",
+      "categoryEurostat": "off_4-loans",
       "currency": "EUR"
     }
   ]

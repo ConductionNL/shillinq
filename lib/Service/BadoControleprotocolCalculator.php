@@ -231,7 +231,7 @@ class BadoControleprotocolCalculator {
 				return 'lawfulness';
 			}
 
-			if ($findingType === 'faithfulness' || $findingType === 'onzekerheid') {
+			if ($findingType === 'faithfulness' || $findingType === 'uncertainty') {
 				return 'faithfulness';
 			}
 		}
@@ -263,7 +263,7 @@ class BadoControleprotocolCalculator {
 				continue;
 			}
 
-			$topic = (string)($finding['topic'] ?? 'overig');
+			$topic = (string)($finding['topic'] ?? 'other');
 			if (isset($byTopic[$topic]) === false) {
 				$byTopic[$topic] = $this->emptyTopicRow(topic: $topic);
 			}

@@ -212,8 +212,8 @@ final class PayrollServiceTest extends TestCase {
 			'Werkgever' => [
 				[
 					'id' => 'wg-1',
-					'awfRate' => 'LAAG',
-					'zvwRate' => 'LAAG',
+					'awfRate' => 'LOW',
+					'zvwRate' => 'LOW',
 					'administrationId' => 'adm-1',
 				],
 			],
@@ -229,7 +229,7 @@ final class PayrollServiceTest extends TestCase {
 					'pensionPremiumPctEmployer' => 0.182,
 					'pensionPremiumPctEmployee' => 0.072,
 					'holidayAllowancePct' => 0.08,
-					'payrollTaxTable' => 'WIT_REGULIER',
+					'payrollTaxTable' => 'WIT_REGULAR',
 					'payrollTaxTableDiscount' => true,
 					'administrationId' => 'adm-1',
 				],
@@ -238,7 +238,7 @@ final class PayrollServiceTest extends TestCase {
 				[
 					'id' => 'lp-1',
 					'employerId' => 'wg-1',
-					'periodType' => 'MAAND',
+					'periodType' => 'MONTH',
 					'periodEnd' => '2026-05-31',
 					'payrollTaxTableId' => 'lht-1',
 					'administrationId' => 'adm-1',
@@ -247,8 +247,8 @@ final class PayrollServiceTest extends TestCase {
 			'LoonheffingTabel2026' => [
 				[
 					'id' => 'lht-1',
-					'colour' => 'WIT',
-					'period' => 'MAAND',
+					'colour' => 'WHITE',
+					'period' => 'MONTH',
 					'withDiscount' => true,
 					'tableRules' => [
 						['from' => 3300, 'tot' => 6400, 'percentage' => 0.3697, 'vasteHeffing' => 888.6, 'korting' => 295.0],
@@ -276,7 +276,7 @@ final class PayrollServiceTest extends TestCase {
 		// Net = 4940 - 1199.91 - 0 - pensioen-wn 355.68 + 0 = 3384.41.
 		self::assertSame(3384.41, $slip['netPaid']);
 		self::assertSame('adm-1', $slip['administrationId']);
-		self::assertSame(899.08, $slip['pensioen']['premie_wg_aandeel']);
+		self::assertSame(899.08, $slip['pension']['premie_wg_aandeel']);
 
 	}//end testBerekenLoonStrookComputesNetto()
 
@@ -346,7 +346,7 @@ final class PayrollServiceTest extends TestCase {
 				'grossComponents' => ['totaal_bruto' => 4940.0, 'thuiswerkvergoeding' => 0.0],
 				'employerSocialInsurancePremiums' => ['totaal_werkgever' => 400.0],
 				'zvw' => ['afgedragen_wg' => 262.81],
-				'pensioen' => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],
+				'pension' => ['premie_wg_aandeel' => 899.08, 'premie_wn_aandeel' => 355.68],
 				'payrollTax' => 1199.91,
 				'netPaid' => 3384.41,
 				'administrationId' => 'adm-1',

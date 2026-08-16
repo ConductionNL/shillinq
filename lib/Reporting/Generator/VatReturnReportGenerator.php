@@ -130,7 +130,7 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 
 		$writer->startElement('BTWAangifte');
 		$writer->writeAttribute('period', $period);
-		$writer->writeAttribute('administratie', $this->contextString($context, 'administrationId'));
+		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
 		$writer->writeAttribute('valuta', 'EUR');
 		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
 

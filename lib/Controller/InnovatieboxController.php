@@ -225,7 +225,7 @@ class InnovatieboxController extends Controller {
 	 *  - administration_id (required) administration scope (REQ-IBA-008).
 	 *  - boekjaar          (required) fiscal year (4-digit).
 	 *  - methode           (optional) 'per_asset_afpelmethode' (default) or
-	 *                      'forfaitair_25pct'.
+	 *                      'flat_rate_25pct'.
 	 *
 	 * Returns {sbr, pdf} with the deterministic instanceRef, the per-asset
 	 * rows (or the single forfaitair line), and the totals that contribute
@@ -253,7 +253,7 @@ class InnovatieboxController extends Controller {
 			return $yearError;
 		}
 
-		$allowed = ['per_asset_afpelmethode', 'forfaitair_25pct', 'cost_plus'];
+		$allowed = ['per_asset_afpelmethode', 'flat_rate_25pct', 'cost_plus'];
 		if (in_array($method, $allowed, true) === false) {
 			return new JSONResponse(
 				['error' => 'methode must be one of ' . implode(', ', $allowed)],

@@ -230,7 +230,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
 			'financialYear' => 2026,
-			'method' => 'forfaitair_25pct',
+			'method' => 'flat_rate_25pct',
 			'qualifying_profit_for_nexus' => 125000,
 			'qualifying_profit_after_nexus' => 25000,
 			'vso_locked' => false,

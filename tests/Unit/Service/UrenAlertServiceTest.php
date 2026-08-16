@@ -63,16 +63,16 @@ final class UrenAlertServiceTest extends TestCase {
 	public function testIsOmslagOnlyOnHigherSeverity(): void {
 		$service = $this->build();
 
-		self::assertTrue($service->isOmslag(oldStatus: 'OP_KOERS', newStatus: 'RISICO'));
-		self::assertTrue($service->isOmslag(oldStatus: 'RISICO', newStatus: 'KRITIEK'));
-		self::assertTrue($service->isOmslag(oldStatus: 'OP_KOERS', newStatus: 'KRITIEK'));
+		self::assertTrue($service->isOmslag(oldStatus: 'ON_RATE', newStatus: 'RISK'));
+		self::assertTrue($service->isOmslag(oldStatus: 'RISK', newStatus: 'CRITICAL'));
+		self::assertTrue($service->isOmslag(oldStatus: 'ON_RATE', newStatus: 'CRITICAL'));
 
 		// Going safer is NOT an omslag worth alerting on.
-		self::assertFalse($service->isOmslag(oldStatus: 'KRITIEK', newStatus: 'RISICO'));
-		self::assertFalse($service->isOmslag(oldStatus: 'BEHAALD', newStatus: 'OP_KOERS'));
+		self::assertFalse($service->isOmslag(oldStatus: 'CRITICAL', newStatus: 'RISK'));
+		self::assertFalse($service->isOmslag(oldStatus: 'ACHIEVED', newStatus: 'ON_RATE'));
 
 		// Unknown statuses don't alert.
-		self::assertFalse($service->isOmslag(oldStatus: 'UNKNOWN', newStatus: 'KRITIEK'));
+		self::assertFalse($service->isOmslag(oldStatus: 'UNKNOWN', newStatus: 'CRITICAL'));
 
 	}//end testIsOmslagOnlyOnHigherSeverity()
 
@@ -89,12 +89,12 @@ final class UrenAlertServiceTest extends TestCase {
 				'purposeNorm' => 1225,
 				'currentHours' => 700.0,
 				'forecastYearEnd' => 1150.0,
-				'thresholdStatus' => 'RISICO',
+				'thresholdStatus' => 'RISK',
 			],
 			date: '2026-09-30'
 		);
 
-		self::assertSame('KWARTAAL_EINDE', $alert['type']);
+		self::assertSame('QUARTER_END', $alert['type']);
 		self::assertSame('INFO', $alert['urgency']);
 		self::assertSame('2026-09-30', $alert['triggerDate']);
 		self::assertSame(75.0, $alert['deficit']);
@@ -115,16 +115,16 @@ final class UrenAlertServiceTest extends TestCase {
 				'purposeNorm' => 1225,
 				'currentHours' => 600.0,
 				'forecastYearEnd' => 900.0,
-				'thresholdStatus' => 'KRITIEK',
+				'thresholdStatus' => 'CRITICAL',
 			],
-			oldStatus: 'RISICO',
-			newStatus: 'KRITIEK'
+			oldStatus: 'RISK',
+			newStatus: 'CRITICAL'
 		);
 
-		self::assertSame('OMSLAG_KRITIEK', $alert['type']);
-		self::assertSame('KRITIEK', $alert['urgency']);
-		self::assertStringContainsString('RISICO', $alert['cause']);
-		self::assertStringContainsString('KRITIEK', $alert['cause']);
+		self::assertSame('APPORTIONMENT_CRITICAL', $alert['type']);
+		self::assertSame('CRITICAL', $alert['urgency']);
+		self::assertStringContainsString('RISK', $alert['cause']);
+		self::assertStringContainsString('CRITICAL', $alert['cause']);
 		self::assertGreaterThanOrEqual(3, count($alert['actionPerspective']));
 
 	}//end testOmslagToKritiek()
@@ -140,7 +140,7 @@ final class UrenAlertServiceTest extends TestCase {
 				'purposeNorm' => 1225,
 				'currentHours' => 1250.0,
 				'forecastYearEnd' => 1400.0,
-				'thresholdStatus' => 'BEHAALD',
+				'thresholdStatus' => 'ACHIEVED',
 			]
 		);
 

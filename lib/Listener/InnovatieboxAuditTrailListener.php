@@ -522,7 +522,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		}
 
 		$method = (string)($data['method'] ?? '');
-		if ($method !== 'forfaitair_25pct') {
+		if ($method !== 'flat_rate_25pct') {
 			return false;
 		}
 

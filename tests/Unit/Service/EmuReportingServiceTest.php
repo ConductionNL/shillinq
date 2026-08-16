@@ -67,8 +67,8 @@ class EmuReportingServiceTest extends TestCase {
 		);
 
 		self::assertNotNull($adj);
-		self::assertSame('eliminatie-afschrijving', $adj['type']);
-		self::assertSame('saldo-verhogend', $adj['direction']);
+		self::assertSame('elimination-depreciation', $adj['type']);
+		self::assertSame('balance-increasing', $adj['direction']);
 		// bedrag is the absolute value (richting carries the sign).
 		self::assertSame(1240000.0, $adj['amount']);
 		self::assertSame('emu-2026-q2', $adj['reportId']);
@@ -83,8 +83,8 @@ class EmuReportingServiceTest extends TestCase {
 	public function testClassifyInvesteringLine(): void {
 		$adj = $this->service->classifyAdjustment(['accountNumber' => '010500', 'amount' => 820000.0], 'r1');
 		self::assertNotNull($adj);
-		self::assertSame('toevoeging-bruto-investering', $adj['type']);
-		self::assertSame('saldo-verlagend', $adj['direction']);
+		self::assertSame('addition-gross-investment', $adj['type']);
+		self::assertSame('balance-decreasing', $adj['direction']);
 	}//end testClassifyInvesteringLine()
 
 	/**
@@ -104,7 +104,7 @@ class EmuReportingServiceTest extends TestCase {
 			'r1'
 		);
 		self::assertNotNull($adj);
-		self::assertSame('correctie-transactiemoment', $adj['type']);
+		self::assertSame('correction-transaction-moment', $adj['type']);
 	}//end testClassifyTransactiemomentCorrection()
 
 	/**
@@ -124,9 +124,9 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testNetAdjustmentEffect(): void {
 		$adjustments = [
-			['amount' => 5200000.0, 'direction' => 'saldo-verhogend'],
-			['amount' => 8700000.0, 'direction' => 'saldo-verlagend'],
-			['amount' => 100000.0, 'direction' => 'saldo-neutraal'],
+			['amount' => 5200000.0, 'direction' => 'balance-increasing'],
+			['amount' => 8700000.0, 'direction' => 'balance-decreasing'],
+			['amount' => 100000.0, 'direction' => 'balance-neutral'],
 		];
 		// 5.2M - 8.7M = -3.5M (the design.md worked example).
 		self::assertSame(-3500000.0, $this->service->netAdjustmentEffect($adjustments));
@@ -139,15 +139,15 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testComputeBrutoSchuld(): void {
 		$positions = [
-			['categoryEurostat' => 'AF.4-loans', 'outstandingDebt' => 18750000.0, 'teltMeeInEmuDebt' => true],
-			['categoryEurostat' => 'AF.2-deposits', 'outstandingDebt' => 2100000.0, 'teltMeeInEmuDebt' => true],
-			['categoryEurostat' => 'AF.7-derivatives', 'outstandingDebt' => 800000.0, 'teltMeeInEmuDebt' => false],
+			['categoryEurostat' => 'off_4-loans', 'outstandingDebt' => 18750000.0, 'teltMeeInEmuDebt' => true],
+			['categoryEurostat' => 'off_2-deposits', 'outstandingDebt' => 2100000.0, 'teltMeeInEmuDebt' => true],
+			['categoryEurostat' => 'off_7-derivatives', 'outstandingDebt' => 800000.0, 'teltMeeInEmuDebt' => false],
 		];
 		$result = $this->service->computeBrutoSchuld($positions);
 
 		self::assertSame(20850000.0, $result['gross']);
-		self::assertArrayHasKey('AF.4-loans', $result['perCategory']);
-		self::assertArrayNotHasKey('AF.7-derivatives', $result['perCategory'], 'Derivaten tellen niet mee');
+		self::assertArrayHasKey('off_4-loans', $result['perCategory']);
+		self::assertArrayNotHasKey('off_7-derivatives', $result['perCategory'], 'Derivaten tellen niet mee');
 	}//end testComputeBrutoSchuld()
 
 	/**
@@ -157,7 +157,7 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testBrutoSchuldExcludesOverigCategory(): void {
 		$positions = [
-			['categoryEurostat' => 'overig', 'outstandingDebt' => 500000.0, 'teltMeeInEmuDebt' => true],
+			['categoryEurostat' => 'other', 'outstandingDebt' => 500000.0, 'teltMeeInEmuDebt' => true],
 		];
 		self::assertSame(0.0, $this->service->computeBrutoSchuld($positions)['gross']);
 	}//end testBrutoSchuldExcludesOverigCategory()
@@ -226,10 +226,10 @@ class EmuReportingServiceTest extends TestCase {
 	public function testReconciliationSucceeds(): void {
 		// BBV +4.2M, adjustments net -6.5M → expected sum of quarters -2.3M.
 		$adjustments = [
-			['amount' => 6500000.0, 'direction' => 'saldo-verlagend'],
+			['amount' => 6500000.0, 'direction' => 'balance-decreasing'],
 		];
 		$result = $this->service->reconcile(4200000.0, $adjustments, [-575000.0, -575000.0, -575000.0, -575000.0]);
-		self::assertSame('geslaagd', $result['controle']);
+		self::assertSame('succeeded', $result['controle']);
 		self::assertSame(0.0, $result['verschil']);
 		self::assertSame(-6500000.0, $result['totaleAdjustments']);
 	}//end testReconciliationSucceeds()
@@ -243,7 +243,7 @@ class EmuReportingServiceTest extends TestCase {
 		$this->logger->expects(self::once())->method('warning');
 		$result = $this->service->reconcile(4200000.0, [], [-2300000.0, 0.0, 0.0, 0.0]);
 		// Expected sum = BBV (4.2M) + 0 adjustments = 4.2M; actual = -2.3M → mismatch.
-		self::assertSame('mislukt', $result['controle']);
+		self::assertSame('failed', $result['controle']);
 		self::assertNotSame(0.0, $result['verschil']);
 	}//end testReconciliationFails()
 
@@ -296,9 +296,9 @@ class EmuReportingServiceTest extends TestCase {
 	 */
 	public function testRenderCbsTussenregelsTenRows(): void {
 		$adjustments = [
-			['type' => 'eliminatie-afschrijving', 'direction' => 'saldo-verhogend', 'amount' => 1240000.0],
-			['type' => 'toevoeging-bruto-investering', 'direction' => 'saldo-verlagend', 'amount' => 820000.0],
-			['type' => 'eliminatie-voorzieningdotatie', 'direction' => 'saldo-verhogend', 'amount' => 450000.0],
+			['type' => 'elimination-depreciation', 'direction' => 'balance-increasing', 'amount' => 1240000.0],
+			['type' => 'addition-gross-investment', 'direction' => 'balance-decreasing', 'amount' => 820000.0],
+			['type' => 'elimination-provision-contribution', 'direction' => 'balance-increasing', 'amount' => 450000.0],
 		];
 		$rows = $this->service->renderCbsTussenregels(4200000.0, $adjustments, -2300000.0);
 		self::assertCount(10, $rows);

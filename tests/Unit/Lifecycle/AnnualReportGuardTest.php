@@ -129,10 +129,10 @@ class AnnualReportGuardTest extends TestCase {
 		$balanceSheet = [
 			'reportId' => 'r-3',
 			'rubrieken' => [
-				['rubrieckCode' => 'B.II', 'side' => 'activa', 'currentYear' => 450000],
-				['rubrieckCode' => 'C.IV', 'side' => 'activa', 'currentYear' => 95000],
-				['rubrieckCode' => 'A', 'side' => 'passiva', 'currentYear' => 400000],
-				['rubrieckCode' => 'D', 'side' => 'passiva', 'currentYear' => 145000],
+				['rubrieckCode' => 'B.II', 'side' => 'assets', 'currentYear' => 450000],
+				['rubrieckCode' => 'C.IV', 'side' => 'assets', 'currentYear' => 95000],
+				['rubrieckCode' => 'A', 'side' => 'liabilities', 'currentYear' => 400000],
+				['rubrieckCode' => 'D', 'side' => 'liabilities', 'currentYear' => 145000],
 			],
 		];
 

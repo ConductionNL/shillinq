@@ -149,7 +149,7 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 
 	/**
 	 * The fragment seeds exactly the seven canonical provincie BBVProgramma
-	 * records, all with bbvVariant 'provincie'.
+	 * records, all with bbvVariant 'province'.
 	 *
 	 * @return void
 	 */
@@ -164,7 +164,7 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 
 		$codes = [];
 		foreach ($programmes as $programme) {
-			self::assertSame('provincie', $programme['bbvVariant']);
+			self::assertSame('province', $programme['bbvVariant']);
 			$codes[] = $programme['code'];
 		}
 

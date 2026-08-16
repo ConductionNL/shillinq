@@ -106,7 +106,7 @@ class ProfitAttributionService {
 		float $routineProfit = 0.0,
 		float $nexusBreak = 1.0,
 	): array {
-		if ($method === 'forfaitair_25pct') {
+		if ($method === 'flat_rate_25pct') {
 			return $this->forfaitair(profit: $grossRevenue);
 		}
 
@@ -175,7 +175,7 @@ class ProfitAttributionService {
 		$vpbZonder = ($kwalif * self::STANDARD_RATE);
 
 		return [
-			'method' => 'forfaitair_25pct',
+			'method' => 'flat_rate_25pct',
 			'qualifyingProfitForNexus' => round($forCap, 2),
 			'nexusFractionApplied' => 1.0,
 			'qualifyingProfitAfterNexus' => round($kwalif, 2),
