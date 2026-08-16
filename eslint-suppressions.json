@@ -173,16 +173,8 @@
     }
   },
   "src/composables/useBarcodeScanner.js": {
-    "import/no-unresolved": {
-      "count": 1
-    },
     "no-unused-vars": {
       "count": 5
-    }
-  },
-  "src/main.js": {
-    "no-undef": {
-      "count": 1
     }
   },
   "src/modals/BankStatementWizard.vue": {

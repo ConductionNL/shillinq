@@ -129,7 +129,11 @@ export async function decodeWithJsQrFallback(imageData) {
 		return null
 	}
 	try {
-		// eslint-disable-next-line import/no-unresolved
+		// No `eslint-disable` for `import/no-unresolved` here: the flat config
+		// does not register that rule, so the disable comment was itself the
+		// error ("Definition for rule 'import/no-unresolved' was not found").
+		// `webpackIgnore` keeps this a real runtime import rather than a bundled
+		// one, which is why the specifier is not resolvable at lint time.
 		const mod = await import(/* webpackIgnore: true */ 'jsqr')
 		const jsQR = mod && mod.default ? mod.default : mod
 		if (typeof jsQR !== 'function') {
