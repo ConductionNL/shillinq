@@ -51,7 +51,11 @@
 			:sidebarOpen="false"
 			objectType="bbv-budget-mapping"
 			:objectId="recordId || ''"
-			:sidebarProps="{ register: 'shillinq', schema: 'BudgetBBVMapping', title: t('shillinq', 'Mapping audit trail') }">
+			:sidebarProps="{
+				register: 'shillinq',
+				schema: 'BudgetBBVMapping',
+				title: t('shillinq', 'Mapping audit trail'),
+			}">
 			<template #actions>
 				<button
 					type="button"
@@ -94,29 +98,40 @@
 						parent's name, and nothing in the DOM answered to
 						`bbv-gl-account-picker` at all.
 					-->
-					<div class="bbv-mapping-detail__row" data-testid="bbv-mapping-detail-gl">
+					<div
+						class="bbv-mapping-detail__row"
+						data-testid="bbv-mapping-detail-gl">
 						<GlAccountPicker
 							v-model="form.glAccountNumber"
 							:administrationId="form.administrationId"
 							@selected="onGlAccountSelected" />
-						<p v-if="selectedAccount" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-gl-hint">
+						<p
+							v-if="selectedAccount"
+							class="bbv-mapping-detail__hint"
+							data-testid="bbv-mapping-detail-gl-hint">
 							{{ glAccountSummary }}
 						</p>
 					</div>
 
 					<!-- Same fallthrough hazard as the GL picker above. -->
-					<div class="bbv-mapping-detail__row" data-testid="bbv-mapping-detail-programme">
+					<div
+						class="bbv-mapping-detail__row"
+						data-testid="bbv-mapping-detail-programme">
 						<BBVProgrammePicker
 							v-model="form.programmeCode"
 							:administrationId="form.administrationId"
 							:fiscalYear="fiscalYearOfMapping"
 							@selected="onProgrammeSelected" />
-						<p v-if="selectedProgramme" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-programme-hint">
+						<p
+							v-if="selectedProgramme"
+							class="bbv-mapping-detail__hint"
+							data-testid="bbv-mapping-detail-programme-hint">
 							{{ programmeSummary }}
 						</p>
 					</div>
 
-					<div class="bbv-mapping-detail__row bbv-mapping-detail__row--inline">
+					<div
+						class="bbv-mapping-detail__row bbv-mapping-detail__row--inline">
 						<label class="bbv-mapping-detail__field">
 							<span>{{ t('shillinq', 'Allocation (%)') }}</span>
 							<input
@@ -127,7 +142,7 @@
 								step="0.01"
 								data-testid="bbv-mapping-detail-allocation"
 								class="bbv-mapping-detail__input"
-								@input="scheduleAllocationCheck">
+								@input="scheduleAllocationCheck" />
 						</label>
 						<label class="bbv-mapping-detail__field">
 							<span>{{ t('shillinq', 'Effective from') }}</span>
@@ -136,7 +151,7 @@
 								type="date"
 								data-testid="bbv-mapping-detail-effective-from"
 								class="bbv-mapping-detail__input"
-								@change="scheduleAllocationCheck">
+								@change="scheduleAllocationCheck" />
 						</label>
 						<label class="bbv-mapping-detail__field">
 							<span>{{ t('shillinq', 'Effective to') }}</span>
@@ -144,7 +159,7 @@
 								v-model="form.effectiveTo"
 								type="date"
 								data-testid="bbv-mapping-detail-effective-to"
-								class="bbv-mapping-detail__input">
+								class="bbv-mapping-detail__input" />
 						</label>
 						<label class="bbv-mapping-detail__field">
 							<span>{{ t('shillinq', 'Status') }}</span>
@@ -152,8 +167,12 @@
 								v-model="form.status"
 								class="bbv-mapping-detail__input"
 								data-testid="bbv-mapping-detail-status">
-								<option value="active">{{ t('shillinq', 'Active') }}</option>
-								<option value="archived">{{ t('shillinq', 'Archived') }}</option>
+								<option value="active">
+									{{ t('shillinq', 'Active') }}
+								</option>
+								<option value="archived">
+									{{ t('shillinq', 'Archived') }}
+								</option>
 							</select>
 						</label>
 					</div>
@@ -161,9 +180,11 @@
 					<div
 						v-if="allocationFeedback.message"
 						class="bbv-mapping-detail__alloc"
-						:class="allocationFeedback.severity === 'error'
-							? 'bbv-mapping-detail__alloc--error'
-							: 'bbv-mapping-detail__alloc--info'"
+						:class="
+							allocationFeedback.severity === 'error'
+								? 'bbv-mapping-detail__alloc--error'
+								: 'bbv-mapping-detail__alloc--info'
+						"
 						data-testid="bbv-mapping-detail-alloc-feedback"
 						role="status"
 						aria-live="polite">
@@ -307,17 +328,22 @@ export default {
 			if (!this.form.glAccountNumber || !this.form.programmeCode) {
 				return false
 			}
-			if (this.form.allocationPercentage === null
+			if (
+				this.form.allocationPercentage === null
 				|| this.form.allocationPercentage === undefined
 				|| this.form.allocationPercentage === ''
 				|| Number(this.form.allocationPercentage) < 0
-				|| Number(this.form.allocationPercentage) > 100) {
+				|| Number(this.form.allocationPercentage) > 100
+			) {
 				return false
 			}
 			if (!this.form.effectiveFrom) {
 				return false
 			}
-			if (this.form.effectiveTo && this.form.effectiveTo < this.form.effectiveFrom) {
+			if (
+				this.form.effectiveTo
+				&& this.form.effectiveTo < this.form.effectiveFrom
+			) {
 				return false
 			}
 			if (this.allocationFeedback.severity === 'error') {
@@ -345,9 +371,10 @@ export default {
 			const name = a.accountName || a.name || a.title || ''
 			const type = a.accountType || a.type || ''
 			const balanceCents = a.balance ?? a.balanceCents
-			const balance = balanceCents !== null && balanceCents !== undefined
-				? this.formatEuro(balanceCents)
-				: ''
+			const balance =
+				balanceCents !== null && balanceCents !== undefined
+					? this.formatEuro(balanceCents)
+					: ''
 			const parts = [name, type, balance].filter(Boolean)
 			return parts.join(' · ')
 		},
@@ -394,9 +421,15 @@ export default {
 			this.loadError = ''
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
+					),
 				)
-				const body = response.data?.object ?? response.data?.result ?? response.data ?? null
+				const body =
+					response.data?.object
+					?? response.data?.result
+					?? response.data
+					?? null
 				if (!body || typeof body !== 'object') {
 					throw new Error('Empty response')
 				}
@@ -404,13 +437,16 @@ export default {
 				this.form.glAccountNumber = body.glAccountNumber ?? ''
 				this.form.programmeCode = body.programmeCode ?? ''
 				this.form.allocationPercentage = body.allocationPercentage ?? 0
-				this.form.effectiveFrom = body.effectiveFrom ?? this.defaultEffectiveFrom()
+				this.form.effectiveFrom =
+					body.effectiveFrom ?? this.defaultEffectiveFrom()
 				this.form.effectiveTo = body.effectiveTo ?? ''
 				this.form.status = body.status ?? 'active'
-				this.form.administrationId = body.administrationId ?? this.administrationId ?? ''
+				this.form.administrationId =
+					body.administrationId ?? this.administrationId ?? ''
 				await this.refreshAllocationProjection()
 			} catch (e) {
-				this.loadError = e?.response?.data?.error
+				this.loadError =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load mapping.')
 			} finally {
 				this.loading = false
@@ -474,7 +510,10 @@ export default {
 			}
 			this.allocationFeedback = {
 				severity: 'error',
-				message: this.t('shillinq', 'Allocation must be between 0 % and 100 %.'),
+				message: this.t(
+					'shillinq',
+					'Allocation must be between 0 % and 100 %.',
+				),
 			}
 			return true
 		},
@@ -506,16 +545,26 @@ export default {
 					params.administrationId = adminId
 				}
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+					),
 					{ params },
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				const others = Array.isArray(rows) ? rows : []
 				const sumOthers = others.reduce((acc, row) => {
 					if (!row || typeof row !== 'object') {
 						return acc
 					}
-					if (!this.isCreate && this.recordId && String(row.id) === this.recordId) {
+					if (
+						!this.isCreate
+						&& this.recordId
+						&& String(row.id) === this.recordId
+					) {
 						return acc
 					}
 					if (!this.overlapsFiscalYear(row, fiscalYear)) {
@@ -526,26 +575,35 @@ export default {
 				}, 0)
 				this.existingAllocationTotal = sumOthers
 				const current = Number(this.form.allocationPercentage ?? 0)
-				const projected = sumOthers + (Number.isFinite(current) ? current : 0)
+				const projected =
+					sumOthers + (Number.isFinite(current) ? current : 0)
 				if (projected > ALLOCATION_OVER_THRESHOLD) {
 					const over = (projected - 100).toFixed(2)
 					this.allocationFeedback = {
 						severity: 'error',
-						message: this.t('shillinq', 'GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.', {
-							gl,
-							pct: projected.toFixed(2),
-							over,
-						}),
+						message: this.t(
+							'shillinq',
+							'GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.',
+							{
+								gl,
+								pct: projected.toFixed(2),
+								over,
+							},
+						),
 					}
 				} else {
 					const remaining = Math.max(0, 100 - sumOthers)
 					this.allocationFeedback = {
 						severity: 'info',
-						message: this.t('shillinq', 'GL {gl} total: {sum} % — you can add up to {remaining} %.', {
-							gl,
-							sum: sumOthers.toFixed(2),
-							remaining: remaining.toFixed(2),
-						}),
+						message: this.t(
+							'shillinq',
+							'GL {gl} total: {sum} % — you can add up to {remaining} %.',
+							{
+								gl,
+								sum: sumOthers.toFixed(2),
+								remaining: remaining.toFixed(2),
+							},
+						),
 					}
 				}
 			} catch (e) {
@@ -595,13 +653,17 @@ export default {
 			try {
 				if (this.isCreate) {
 					await axios.post(
-						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+						),
 						payload,
 					)
 					showSuccess(this.t('shillinq', 'Mapping created.'))
 				} else {
 					await axios.put(
-						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`),
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
+						),
 						payload,
 					)
 					showSuccess(this.t('shillinq', 'Mapping saved.'))
@@ -609,7 +671,8 @@ export default {
 				this.returnToIndex()
 			} catch (e) {
 				const responseError = e?.response?.data
-				this.saveError = (responseError && (responseError.error || responseError.message))
+				this.saveError =
+					(responseError && (responseError.error || responseError.message))
 					|| e?.message
 					|| this.t('shillinq', 'Failed to save mapping.')
 				showError(this.saveError)
@@ -637,14 +700,17 @@ export default {
 			this.deleting = true
 			try {
 				await axios.delete(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
+					),
 				)
 				showSuccess(this.t('shillinq', 'Mapping deleted.'))
 				this.deleteDialogOpen = false
 				this.returnToIndex()
 			} catch (e) {
 				const responseError = e?.response?.data
-				const message = (responseError && (responseError.error || responseError.message))
+				const message =
+					(responseError && (responseError.error || responseError.message))
 					|| e?.message
 					|| this.t('shillinq', 'Failed to delete mapping.')
 				showError(message)

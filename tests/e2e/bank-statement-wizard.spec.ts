@@ -47,11 +47,15 @@ async function dismissWizard(page: Page): Promise<void> {
 	// `<div class="cn-support-dialog__body">… subtree intercepts pointer
 	// events`. Dismissing only `#firstrunwizard` is the same partial cleanup
 	// tests/e2e/spec-coverage/_helpers.ts already fixed in `dismissOverlays()`.
-	const support = page.locator('.cn-support-dialog, [class*="support-dialog" i]').first()
+	const support = page
+		.locator('.cn-support-dialog, [class*="support-dialog" i]')
+		.first()
 	if (await support.isVisible().catch(() => false)) {
-		const close = support.locator(
-			'button[aria-label*="lose" i], button[aria-label*="luiten" i], .modal-container__close',
-		).first()
+		const close = support
+			.locator(
+				'button[aria-label*="lose" i], button[aria-label*="luiten" i], .modal-container__close',
+			)
+			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click({ timeout: 2_000 }).catch(() => {})
 		} else {

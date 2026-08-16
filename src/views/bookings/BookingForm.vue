@@ -16,7 +16,7 @@
 				v-model="form.title"
 				type="text"
 				data-testid="booking-form-title"
-				:placeholder="t('shillinq', 'Booking title')">
+				:placeholder="t('shillinq', 'Booking title')" />
 		</div>
 
 		<div class="booking-form__field">
@@ -25,7 +25,7 @@
 				id="booking-start"
 				v-model="form.startTime"
 				type="datetime-local"
-				data-testid="booking-form-start">
+				data-testid="booking-form-start" />
 		</div>
 
 		<div class="booking-form__field">
@@ -34,7 +34,7 @@
 				id="booking-end"
 				v-model="form.endTime"
 				type="datetime-local"
-				data-testid="booking-form-end">
+				data-testid="booking-form-end" />
 		</div>
 
 		<div class="booking-form__field">
@@ -44,7 +44,7 @@
 				v-model="form.attendee"
 				type="text"
 				data-testid="booking-form-attendee"
-				:placeholder="t('shillinq', 'Attendee name')">
+				:placeholder="t('shillinq', 'Attendee name')" />
 		</div>
 
 		<div class="booking-form__field">
@@ -54,7 +54,7 @@
 					v-model="form.status"
 					type="radio"
 					value="pending"
-					data-testid="booking-form-status-pending">
+					data-testid="booking-form-status-pending" />
 				{{ t('shillinq', 'Pending') }}
 			</label>
 			<label class="booking-form__radio">
@@ -62,19 +62,20 @@
 					v-model="form.status"
 					type="radio"
 					value="confirmed"
-					data-testid="booking-form-status-confirmed">
+					data-testid="booking-form-status-confirmed" />
 				{{ t('shillinq', 'Confirmed') }}
 			</label>
 		</div>
 
-		<p v-if="validationError" class="booking-form__error" data-testid="booking-form-error">
+		<p
+			v-if="validationError"
+			class="booking-form__error"
+			data-testid="booking-form-error">
 			{{ validationError }}
 		</p>
 
 		<div class="booking-form__actions">
-			<NcButton
-				data-testid="booking-form-cancel"
-				@click="$emit('cancel')">
+			<NcButton data-testid="booking-form-cancel" @click="$emit('cancel')">
 				{{ t('shillinq', 'Cancel') }}
 			</NcButton>
 			<NcButton
@@ -82,7 +83,11 @@
 				type="submit"
 				data-testid="booking-form-submit"
 				:disabled="submitting">
-				{{ submitting ? t('shillinq', 'Saving…') : t('shillinq', 'Create Booking') }}
+				{{
+					submitting
+						? t('shillinq', 'Saving…')
+						: t('shillinq', 'Create Booking')
+				}}
 			</NcButton>
 		</div>
 
@@ -228,10 +233,11 @@ export default {
 		async postBooking(force) {
 			this.submitting = true
 			try {
-				const url = generateUrl(
-					'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
-					{ calendarId: this.calendarId },
-				) + (force ? '?force=1' : '')
+				const url =
+					generateUrl(
+						'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
+						{ calendarId: this.calendarId },
+					) + (force ? '?force=1' : '')
 
 				const payload = {
 					title: this.form.title,
@@ -265,7 +271,8 @@ export default {
 				}
 
 				const errBody = await response.json().catch(() => ({}))
-				this.validationError = errBody.error || t('shillinq', 'Failed to create booking')
+				this.validationError =
+					errBody.error || t('shillinq', 'Failed to create booking')
 			} catch (error) {
 				this.validationError = t('shillinq', 'Failed to create booking')
 			} finally {

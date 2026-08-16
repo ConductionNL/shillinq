@@ -48,11 +48,12 @@ const MAPPING_DETAIL_PAGE = APP + '/budget-mappings/smoke-id'
 const JSON_HEADERS = { 'OCS-APIREQUEST': 'true', Accept: 'application/json' }
 
 test.describe('BBV routes — 200 OK + envelope shape', () => {
-
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-001/dashboard-route-200
 	 */
-	test('GET /api/bbv-dashboard responds 200 with the widget envelope', async ({ request }) => {
+	test('GET /api/bbv-dashboard responds 200 with the widget envelope', async ({
+		request,
+	}) => {
 		const res = await request.get(DASHBOARD_API, { headers: JSON_HEADERS })
 		expect(res.status(), await res.text()).toBe(200)
 
@@ -71,7 +72,9 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-index-route-200
 	 */
-	test('GET /api/budget-mappings responds 200 with the index envelope', async ({ request }) => {
+	test('GET /api/budget-mappings responds 200 with the index envelope', async ({
+		request,
+	}) => {
 		const res = await request.get(MAPPING_INDEX_API, { headers: JSON_HEADERS })
 		expect(res.status(), await res.text()).toBe(200)
 
@@ -85,7 +88,9 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-new-route-200
 	 */
-	test('GET /api/budget-mappings/new responds 200 (new = synthetic id)', async ({ request }) => {
+	test('GET /api/budget-mappings/new responds 200 (new = synthetic id)', async ({
+		request,
+	}) => {
 		// The route is `/api/budget-mappings/{id}` — "new" is treated as a
 		// synthetic id by the controller (no record lookup; the detail
 		// page itself handles the new-vs-edit branching).
@@ -100,7 +105,9 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-detail-route-200
 	 */
-	test('GET /api/budget-mappings/:id responds 200 with the detail envelope', async ({ request }) => {
+	test('GET /api/budget-mappings/:id responds 200 with the detail envelope', async ({
+		request,
+	}) => {
 		const res = await request.get(MAPPING_DETAIL_API, { headers: JSON_HEADERS })
 		expect(res.status(), await res.text()).toBe(200)
 
@@ -111,11 +118,9 @@ test.describe('BBV routes — 200 OK + envelope shape', () => {
 		expect(body).toHaveProperty('indexRoute')
 		expect(body.id).toBe('smoke-id')
 	})
-
 })
 
 test.describe('BBV page routes are served by the SPA shell, not an app route', () => {
-
 	/**
 	 * Regression guard for the slice-04 route collision: the three manifest
 	 * page routes must reach the Shillinq app shell (an HTML document that
@@ -149,5 +154,4 @@ test.describe('BBV page routes are served by the SPA shell, not an app route', (
 			expect(html).toContain('shillinq-main')
 		})
 	}
-
 })

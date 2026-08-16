@@ -235,7 +235,13 @@ export default defineConfig({
 	//    which is what happened to all three.
 	retries: 0,
 	reporter: [
-		['html', { open: 'never', outputFolder: path.resolve(__dirname, 'playwright-report') }],
+		[
+			'html',
+			{
+				open: 'never',
+				outputFolder: path.resolve(__dirname, 'playwright-report'),
+			},
+		],
 		['list'],
 	],
 	outputDir: path.resolve(__dirname, 'test-results'),

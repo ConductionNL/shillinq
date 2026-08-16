@@ -93,7 +93,8 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		// is technically visible, so Playwright does not re-target — it just
 		// retried the click for the full 60s while the span reported
 		// "intercepts pointer events". The span is what a user actually clicks.
-		const switchSurface = page.getByTestId('deadline-category-payment-run')
+		const switchSurface = page
+			.getByTestId('deadline-category-payment-run')
 			.locator('.checkbox-radio-switch__content')
 			.first()
 

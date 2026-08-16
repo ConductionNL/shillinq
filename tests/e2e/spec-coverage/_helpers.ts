@@ -77,7 +77,9 @@ export function recordShillinqErrors(page: Page): PageRec {
 	const rec: PageRec = { shillinq5xx: [], pageErrors: [] }
 	page.on('response', (r) => {
 		if (r.status() >= 500 && /\/apps\/shillinq\//.test(r.url())) {
-			rec.shillinq5xx.push(`${r.status()} ${r.url().replace(/.*\/apps\/shillinq/, '…/shillinq')}`)
+			rec.shillinq5xx.push(
+				`${r.status()} ${r.url().replace(/.*\/apps\/shillinq/, '…/shillinq')}`,
+			)
 		}
 	})
 	page.on('pageerror', (e) => {
@@ -94,9 +96,15 @@ export async function dismissOverlays(page: Page): Promise<void> {
 		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
 	// cn-support-dialog / generic NC modal that can intercept clicks.
-	const support = page.locator('.cn-support-dialog, [class*="support-dialog" i]').first()
+	const support = page
+		.locator('.cn-support-dialog, [class*="support-dialog" i]')
+		.first()
 	if (await support.isVisible().catch(() => false)) {
-		const close = support.locator('button[aria-label*="lose" i], button[aria-label*="luiten" i], .modal-container__close').first()
+		const close = support
+			.locator(
+				'button[aria-label*="lose" i], button[aria-label*="luiten" i], .modal-container__close',
+			)
+			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click({ timeout: 2_000 }).catch(() => {})
 		} else {
@@ -108,7 +116,9 @@ export async function dismissOverlays(page: Page): Promise<void> {
 
 /** Strip `/index.php`, the query/hash and any trailing slash from a path. */
 function normalisePath(urlOrPath: string): string {
-	const path = urlOrPath.startsWith('http') ? new URL(urlOrPath).pathname : urlOrPath.split(/[?#]/)[0]
+	const path = urlOrPath.startsWith('http')
+		? new URL(urlOrPath).pathname
+		: urlOrPath.split(/[?#]/)[0]
 	return path.replace('/index.php', '').replace(/\/+$/, '') || '/'
 }
 
@@ -147,12 +157,15 @@ export async function gotoPage(page: Page, route: string): Promise<void> {
 	await page.waitForSelector('#content-vue', { timeout: 15_000 })
 	await dismissOverlays(page)
 	await page.waitForTimeout(900)
-	expect(page.url(), `route ${route} should stay on the shillinq surface`).toContain('/apps/shillinq')
+	expect(
+		page.url(),
+		`route ${route} should stay on the shillinq surface`,
+	).toContain('/apps/shillinq')
 	expect(
 		normalisePath(page.url()),
 		`route ${route} must be declared by the manifest and resolve to itself — `
-		+ 'a path other than the requested one means vue-router hit the '
-		+ "'/:pathMatch(.*)*' catch-all in src/main.js and redirected to the Dashboard",
+			+ 'a path other than the requested one means vue-router hit the '
+			+ "'/:pathMatch(.*)*' catch-all in src/main.js and redirected to the Dashboard",
 	).toBe(normalisePath(target))
 }
 
@@ -165,7 +178,11 @@ export async function gotoPage(page: Page, route: string): Promise<void> {
  * `titleRe` lets callers pass a looser matcher for titles that the renderer
  * truncates or re-cases.
  */
-export async function assertIndexSurface(page: Page, title: string, opts: { titleRe?: RegExp } = {}): Promise<void> {
+export async function assertIndexSurface(
+	page: Page,
+	title: string,
+	opts: { titleRe?: RegExp } = {},
+): Promise<void> {
 	// ⚠️ SCOPE EVERY SURFACE LOCATOR TO `#app-content-vue`, NOT `#content-vue`.
 	// `#content-vue` is NcContent — it wraps BOTH `#app-navigation-vue` (the
 	// sidebar) and `#app-content-vue` (the page), and the sidebar is IDENTICAL
@@ -181,20 +198,34 @@ export async function assertIndexSurface(page: Page, title: string, opts: { titl
 	//    behavioural proof the page mounted (vs a blank shell or an error
 	//    page): a data table, an empty-content block, a list, or the
 	//    primary-action toolbar (Add / Actions / Export / Reconcile …).
-	const tables = await host.locator('table:visible').count().catch(() => 0)
+	const tables = await host
+		.locator('table:visible')
+		.count()
+		.catch(() => 0)
 	// Scoped to the page too: a `.empty-content` block belonging to a
 	// Nextcloud dialog, a toast, or CnAppRoot's "OpenRegister required"
 	// dependency state is not evidence that THIS page's index rendered.
-	const empty = await host.locator('.empty-content, .emptycontent, [class*="empty-content" i]').count().catch(() => 0)
-	const lists = await host.locator('ul[class*="list" i] li, [class*="app-content-list" i] [class*="item" i], [role="row"]').count().catch(() => 0)
+	const empty = await host
+		.locator('.empty-content, .emptycontent, [class*="empty-content" i]')
+		.count()
+		.catch(() => 0)
+	const lists = await host
+		.locator(
+			'ul[class*="list" i] li, [class*="app-content-list" i] [class*="item" i], [role="row"]',
+		)
+		.count()
+		.catch(() => 0)
 	// Page-specific action affordances. The global "Settings" button is
 	// deliberately excluded — it renders on every shillinq page and is not
 	// proof that this page's index surface mounted.
-	const actionBtns = await host.locator(
-		'button:has-text("Add"), button:has-text("Nieuw"), button:has-text("New"), button:has-text("Toevoegen"), '
-		+ 'button:has-text("Actions"), button:has-text("Acties"), button:has-text("Export"), button:has-text("Reconcile"), '
-		+ 'button:has-text("Filter"), button:has-text("Post"), button:has-text("Lock"), button:has-text("Vastleggen")',
-	).count().catch(() => 0)
+	const actionBtns = await host
+		.locator(
+			'button:has-text("Add"), button:has-text("Nieuw"), button:has-text("New"), button:has-text("Toevoegen"), '
+				+ 'button:has-text("Actions"), button:has-text("Acties"), button:has-text("Export"), button:has-text("Reconcile"), '
+				+ 'button:has-text("Filter"), button:has-text("Post"), button:has-text("Lock"), button:has-text("Vastleggen")',
+		)
+		.count()
+		.catch(() => 0)
 	const surfaces = tables + empty + lists + actionBtns
 
 	expect(
@@ -238,10 +269,14 @@ export async function assertIndexSurface(page: Page, title: string, opts: { titl
 	//    re-nesting `host.locator('#app-content-vue, main')` would look for a
 	//    content region INSIDE the content region and always find nothing,
 	//    silently disabling this check.
-	const matcher = opts.titleRe ?? new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+	const matcher =
+		opts.titleRe ?? new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
 	const titleNode = host.getByText(matcher).first()
 	if (await titleNode.count().catch(() => 0)) {
-		await expect(titleNode, `title "${title}" should be visible when present`).toBeVisible({ timeout: 8_000 })
+		await expect(
+			titleNode,
+			`title "${title}" should be visible when present`,
+		).toBeVisible({ timeout: 8_000 })
 	}
 }
 

@@ -68,7 +68,9 @@ const loadJson = (file) => {
 	try {
 		return JSON.parse(fs.readFileSync(file, 'utf8'))
 	} catch (err) {
-		console.error(`[validate-fragment-required] failed to parse ${file}: ${err.message}`)
+		console.error(
+			`[validate-fragment-required] failed to parse ${file}: ${err.message}`,
+		)
 		process.exit(1)
 	}
 }
@@ -100,10 +102,18 @@ function main() {
 	const files = registerFiles()
 	if (files.length < 50) {
 		// A scan that silently found nothing to check must NOT report success.
-		console.error(`[validate-fragment-required] FAIL — only ${files.length} register file(s)`)
-		console.error('[validate-fragment-required] were found, which is implausibly few. The scan')
-		console.error('[validate-fragment-required] did not run properly; a green result here would')
-		console.error('[validate-fragment-required] say nothing about the fragments.')
+		console.error(
+			`[validate-fragment-required] FAIL — only ${files.length} register file(s)`,
+		)
+		console.error(
+			'[validate-fragment-required] were found, which is implausibly few. The scan',
+		)
+		console.error(
+			'[validate-fragment-required] did not run properly; a green result here would',
+		)
+		console.error(
+			'[validate-fragment-required] say nothing about the fragments.',
+		)
 		process.exit(1)
 	}
 
@@ -125,23 +135,38 @@ function main() {
 	const duplicate = []
 	for (const [name, entries] of [...declarations].sort()) {
 		if (entries.length < 2) continue
-		const allSame = entries.every((e) => sameSet(e.required, entries[0].required))
+		const allSame = entries.every((e) =>
+			sameSet(e.required, entries[0].required),
+		)
 		;(allSame ? duplicate : conflicting).push({ name, entries })
 	}
 
-	console.log(`[validate-fragment-required] register files scanned: ${files.length}`)
-	console.log(`[validate-fragment-required] schema keys declaring \`required\`: ${declarations.size}`)
-	console.log(`[validate-fragment-required] DUPLICATE (same set declared twice — malformed but satisfiable): ${duplicate.length}`)
-	console.log(`[validate-fragment-required] CONFLICTING (merged union is unsatisfiable): ${conflicting.length} (baseline ${BASELINE})`)
+	console.log(
+		`[validate-fragment-required] register files scanned: ${files.length}`,
+	)
+	console.log(
+		`[validate-fragment-required] schema keys declaring \`required\`: ${declarations.size}`,
+	)
+	console.log(
+		`[validate-fragment-required] DUPLICATE (same set declared twice — malformed but satisfiable): ${duplicate.length}`,
+	)
+	console.log(
+		`[validate-fragment-required] CONFLICTING (merged union is unsatisfiable): ${conflicting.length} (baseline ${BASELINE})`,
+	)
 
 	for (const { name, entries } of conflicting) {
 		const union = [...new Set(entries.flatMap((e) => e.required))].sort()
-		console.log(`    ${name} — merged \`required\` demands all ${union.length} of: ${union.join(', ')}`)
-		for (const e of entries) console.log(`        ${e.file}: ${e.required.join(', ')}`)
+		console.log(
+			`    ${name} — merged \`required\` demands all ${union.length} of: ${union.join(', ')}`,
+		)
+		for (const e of entries)
+			console.log(`        ${e.file}: ${e.required.join(', ')}`)
 	}
 	if (duplicate.length > 0) {
 		console.log('')
-		console.log('[validate-fragment-required] DUPLICATE (lower severity — collapse to one owner):')
+		console.log(
+			'[validate-fragment-required] DUPLICATE (lower severity — collapse to one owner):',
+		)
 		for (const { name, entries } of duplicate) {
 			console.log(`    ${name}: ${entries.map((e) => e.file).join(', ')}`)
 		}
@@ -149,24 +174,48 @@ function main() {
 
 	if (conflicting.length > BASELINE) {
 		console.error('')
-		console.error(`[validate-fragment-required] FAIL — ${conflicting.length} schema keys have a`)
-		console.error(`[validate-fragment-required] conflicting multi-fragment \`required\`, up from the`)
+		console.error(
+			`[validate-fragment-required] FAIL — ${conflicting.length} schema keys have a`,
+		)
+		console.error(
+			`[validate-fragment-required] conflicting multi-fragment \`required\`, up from the`,
+		)
 		console.error(`[validate-fragment-required] baseline of ${BASELINE}.`)
-		console.error('[validate-fragment-required] ADR-037 CONCATENATES list values on merge, so the')
-		console.error('[validate-fragment-required] effective `required` is the UNION of both lists and')
-		console.error('[validate-fragment-required] no payload of either model can satisfy it. Nothing')
-		console.error('[validate-fragment-required] reports this at runtime: ImportHandler only WARNS')
-		console.error('[validate-fragment-required] and `occ app:enable` still exits 0.')
-		console.error('[validate-fragment-required] FIX: give the schema ONE owning fragment that')
-		console.error('[validate-fragment-required] declares `required`; overlay fragments contribute')
-		console.error('[validate-fragment-required] properties only. Do NOT raise BASELINE.')
+		console.error(
+			'[validate-fragment-required] ADR-037 CONCATENATES list values on merge, so the',
+		)
+		console.error(
+			'[validate-fragment-required] effective `required` is the UNION of both lists and',
+		)
+		console.error(
+			'[validate-fragment-required] no payload of either model can satisfy it. Nothing',
+		)
+		console.error(
+			'[validate-fragment-required] reports this at runtime: ImportHandler only WARNS',
+		)
+		console.error(
+			'[validate-fragment-required] and `occ app:enable` still exits 0.',
+		)
+		console.error(
+			'[validate-fragment-required] FIX: give the schema ONE owning fragment that',
+		)
+		console.error(
+			'[validate-fragment-required] declares `required`; overlay fragments contribute',
+		)
+		console.error(
+			'[validate-fragment-required] properties only. Do NOT raise BASELINE.',
+		)
 		process.exit(1)
 	}
 
 	if (conflicting.length < BASELINE) {
 		console.log('')
-		console.log(`[validate-fragment-required] PASS — and ${BASELINE - conflicting.length} better than baseline.`)
-		console.log(`[validate-fragment-required] Please lower BASELINE in tests/validate-fragment-required.js to ${conflicting.length}.`)
+		console.log(
+			`[validate-fragment-required] PASS — and ${BASELINE - conflicting.length} better than baseline.`,
+		)
+		console.log(
+			`[validate-fragment-required] Please lower BASELINE in tests/validate-fragment-required.js to ${conflicting.length}.`,
+		)
 		process.exit(0)
 	}
 

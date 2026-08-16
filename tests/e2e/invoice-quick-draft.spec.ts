@@ -51,7 +51,9 @@ test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 	test('Create invoice opens the quick-draft modal in place', async ({ page }) => {
 		const before = page.url()
 		await page.getByTestId('cn-action-create-invoice').click()
-		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({
+			timeout: 10_000,
+		})
 		// REQ: opens without leaving the dashboard.
 		expect(page.url()).toBe(before)
 		await expect(page.getByTestId('iqd-customer')).toBeVisible()
@@ -61,7 +63,9 @@ test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 
 	test('line items recompute the live totals', async ({ page }) => {
 		await page.getByTestId('cn-action-create-invoice').click()
-		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({
+			timeout: 10_000,
+		})
 
 		await page.getByTestId('iqd-line-description').first().fill('Consulting')
 		await page.getByTestId('iqd-line-quantity').first().fill('2')
@@ -74,15 +78,21 @@ test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 
 	test('add line button adds another row', async ({ page }) => {
 		await page.getByTestId('cn-action-create-invoice').click()
-		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({
+			timeout: 10_000,
+		})
 		await expect(page.getByTestId('iqd-line')).toHaveCount(1)
 		await page.getByTestId('iqd-add-line').click()
 		await expect(page.getByTestId('iqd-line')).toHaveCount(2)
 	})
 
-	test('save is disabled until a customer and a priced line are present', async ({ page }) => {
+	test('save is disabled until a customer and a priced line are present', async ({
+		page,
+	}) => {
 		await page.getByTestId('cn-action-create-invoice').click()
-		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({
+			timeout: 10_000,
+		})
 		// No customer yet → save disabled.
 		await expect(page.getByTestId('iqd-save')).toBeDisabled()
 	})

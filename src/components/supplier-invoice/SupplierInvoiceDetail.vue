@@ -25,7 +25,7 @@
 			v-if="loading"
 			class="si-detail__loading"
 			data-testid="si-detail-loading">
-			{{ t('shillinq', 'Loading supplier invoice...') }}
+			{{ t('shillinq', 'Loading supplier invoice…') }}
 		</div>
 
 		<div

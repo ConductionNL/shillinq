@@ -18,7 +18,7 @@
 				{{
 					t(
 						'shillinq',
-						'Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.',
+						'Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.',
 					)
 				}}
 			</p>

@@ -53,8 +53,10 @@ function slotValue(hours: number): string {
 	d.setUTCHours(0, 0, 0, 0)
 	d.setUTCHours(hours)
 	const pad = (n: number) => String(n).padStart(2, '0')
-	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+	return (
+		`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 		+ `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+	)
 }
 
 /**
@@ -67,7 +69,8 @@ function slotValue(hours: number): string {
  * has no stop handler, so the click bubbles to the slot button.
  */
 async function clickSlot(page: Page): Promise<void> {
-	await page.locator('[data-testid^="calendar-slot-"]')
+	await page
+		.locator('[data-testid^="calendar-slot-"]')
 		.first()
 		.locator('.calendar-view__slot-hour')
 		.click()
@@ -87,13 +90,13 @@ async function openCalendar(page: Page): Promise<void> {
 	// route that is not declared by the manifest silently redirects to the
 	// dashboard via main.js's '/:pathMatch(.*)*' catch-all, and every later
 	// selector then times out blaming the widget instead of the routing.
-	await expect(page.locator('[data-testid="calendar-view"]'))
-		.toBeVisible({ timeout: 20_000 })
+	await expect(page.locator('[data-testid="calendar-view"]')).toBeVisible({
+		timeout: 20_000,
+	})
 	await expect(page).toHaveURL(new RegExp(`${CALENDAR_ROUTE}$`))
 }
 
 test.describe('bookings calendar — month/week/day views render', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await openCalendar(page)
 	})
@@ -103,7 +106,9 @@ test.describe('bookings calendar — month/week/day views render', () => {
 	 */
 	test('month view renders with seed bookings', async ({ page }) => {
 		await page.locator('[data-testid="calendar-view-month"]').click()
-		await expect(page.locator('[data-testid="calendar-month-grid"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="calendar-month-grid"]'),
+		).toBeVisible()
 		const bookings = page.locator('[data-testid^="booking-bk-"]')
 		await expect(bookings.first()).toBeVisible({ timeout: 10_000 })
 	})
@@ -113,7 +118,9 @@ test.describe('bookings calendar — month/week/day views render', () => {
 	 */
 	test('week view renders 7-column hourly grid', async ({ page }) => {
 		await page.locator('[data-testid="calendar-view-week"]').click()
-		await expect(page.locator('[data-testid="calendar-week-grid"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="calendar-week-grid"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -141,7 +148,9 @@ test.describe('bookings calendar — month/week/day views render', () => {
 	/**
 	 * @e2e bookings-resource-calendar/REQ-006/booking-selected-event
 	 */
-	test('clicking a booking is handled by the host without a page error', async ({ page }) => {
+	test('clicking a booking is handled by the host without a page error', async ({
+		page,
+	}) => {
 		const pageErrors: string[] = []
 		page.on('pageerror', (e) => pageErrors.push(String(e)))
 
@@ -153,7 +162,10 @@ test.describe('bookings calendar — month/week/day views render', () => {
 		// The grid emits booking:selected; the host handles it. The old version
 		// of this test ended in `expect(true).toBe(true)` and could not fail —
 		// assert the absence of an uncaught page error instead.
-		expect(pageErrors, `uncaught page errors: ${pageErrors.join(' | ')}`).toHaveLength(0)
+		expect(
+			pageErrors,
+			`uncaught page errors: ${pageErrors.join(' | ')}`,
+		).toHaveLength(0)
 		await expect(page.locator('[data-testid="calendar-view"]')).toBeVisible()
 	})
 
@@ -163,32 +175,44 @@ test.describe('bookings calendar — month/week/day views render', () => {
 	test('clicking a slot opens the booking form', async ({ page }) => {
 		await page.locator('[data-testid="calendar-view-day"]').click()
 		await clickSlot(page)
-		await expect(page.locator('[data-testid="booking-form-panel"]'))
-			.toBeVisible({ timeout: 5_000 })
+		await expect(page.locator('[data-testid="booking-form-panel"]')).toBeVisible(
+			{ timeout: 5_000 },
+		)
 	})
-
 })
 
 test.describe('booking form — REQ-007 validation + happy/conflict paths', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await openCalendar(page)
 		await page.locator('[data-testid="calendar-view-day"]').click()
 		await clickSlot(page)
-		await expect(page.locator('[data-testid="booking-form"]'))
-			.toBeVisible({ timeout: 5_000 })
+		await expect(page.locator('[data-testid="booking-form"]')).toBeVisible({
+			timeout: 5_000,
+		})
 	})
 
 	/**
 	 * @e2e bookings-resource-calendar/REQ-007/form-fields-present
 	 */
-	test('form renders title, start, end, attendee and status fields', async ({ page }) => {
-		await expect(page.locator('[data-testid="booking-form-title"]')).toBeVisible()
-		await expect(page.locator('[data-testid="booking-form-start"]')).toBeVisible()
+	test('form renders title, start, end, attendee and status fields', async ({
+		page,
+	}) => {
+		await expect(
+			page.locator('[data-testid="booking-form-title"]'),
+		).toBeVisible()
+		await expect(
+			page.locator('[data-testid="booking-form-start"]'),
+		).toBeVisible()
 		await expect(page.locator('[data-testid="booking-form-end"]')).toBeVisible()
-		await expect(page.locator('[data-testid="booking-form-attendee"]')).toBeVisible()
-		await expect(page.locator('[data-testid="booking-form-status-pending"]')).toBeVisible()
-		await expect(page.locator('[data-testid="booking-form-status-confirmed"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="booking-form-attendee"]'),
+		).toBeVisible()
+		await expect(
+			page.locator('[data-testid="booking-form-status-pending"]'),
+		).toBeVisible()
+		await expect(
+			page.locator('[data-testid="booking-form-status-confirmed"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -197,15 +221,26 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 	 *
 	 * @e2e bookings-resource-calendar/REQ-007/short-duration-rejected
 	 */
-	test('client-side validation rejects sub-15-minute duration', async ({ page }) => {
-		await page.locator('[data-testid="booking-form-title"]').fill('UI test: too short')
+	test('client-side validation rejects sub-15-minute duration', async ({
+		page,
+	}) => {
+		await page
+			.locator('[data-testid="booking-form-title"]')
+			.fill('UI test: too short')
 		await page.locator('[data-testid="booking-form-attendee"]').fill('UI Tester')
-		await page.locator('[data-testid="booking-form-start"]').fill('2027-08-01T10:00')
-		await page.locator('[data-testid="booking-form-end"]').fill('2027-08-01T10:10')
+		await page
+			.locator('[data-testid="booking-form-start"]')
+			.fill('2027-08-01T10:00')
+		await page
+			.locator('[data-testid="booking-form-end"]')
+			.fill('2027-08-01T10:10')
 		await page.locator('[data-testid="booking-form-submit"]').click()
-		await expect(page.locator('[data-testid="booking-form-error"]')).toBeVisible()
-		await expect(page.locator('[data-testid="booking-form-error"]'))
-			.toContainText(/15 minutes/i)
+		await expect(
+			page.locator('[data-testid="booking-form-error"]'),
+		).toBeVisible()
+		await expect(
+			page.locator('[data-testid="booking-form-error"]'),
+		).toContainText(/15 minutes/i)
 	})
 
 	/**
@@ -213,8 +248,9 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 	 */
 	test('cancel button closes the form', async ({ page }) => {
 		await page.locator('[data-testid="booking-form-cancel"]').click()
-		await expect(page.locator('[data-testid="booking-form-panel"]'))
-			.toBeHidden({ timeout: 5_000 })
+		await expect(page.locator('[data-testid="booking-form-panel"]')).toBeHidden({
+			timeout: 5_000,
+		})
 	})
 
 	/**
@@ -224,8 +260,12 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 	 * @e2e bookings-resource-calendar/REQ-007/conflict-modal-opens-on-409
 	 */
 	test('conflict modal opens when API returns 409', async ({ page }) => {
-		await page.locator('[data-testid="booking-form-title"]').fill('UI test: known conflict')
-		await page.locator('[data-testid="booking-form-attendee"]').fill('UI Conflict')
+		await page
+			.locator('[data-testid="booking-form-title"]')
+			.fill('UI test: known conflict')
+		await page
+			.locator('[data-testid="booking-form-attendee"]')
+			.fill('UI Conflict')
 		await page.locator('[data-testid="booking-form-start"]').fill(slotValue(6))
 		await page.locator('[data-testid="booking-form-end"]').fill(slotValue(7))
 		await page.locator('[data-testid="booking-form-status-confirmed"]').check()
@@ -236,7 +276,8 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 		// defects in different layers. Naming the response makes the failure say
 		// which one.
 		const createPost = page.waitForResponse(
-			(response) => /\/api\/v2\/calendars\/[^/]+\/bookings/.test(response.url())
+			(response) =>
+				/\/api\/v2\/calendars\/[^/]+\/bookings/.test(response.url())
 				&& response.request().method() === 'POST',
 		)
 		await page.locator('[data-testid="booking-form-submit"]').click()
@@ -246,11 +287,13 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 			`a booking inside the seeded bk-002/bk-003 overlap must be refused 409, got ${createResponse.status()}`,
 		).toBe(409)
 
-		await expect(page.locator('[data-testid="bk-conflict-dialog"]'))
-			.toBeVisible({ timeout: 10_000 })
+		await expect(page.locator('[data-testid="bk-conflict-dialog"]')).toBeVisible(
+			{ timeout: 10_000 },
+		)
 		await page.locator('[data-testid="bk-conflict-cancel"]').click()
-		await expect(page.locator('[data-testid="bk-conflict-dialog"]'))
-			.toBeHidden({ timeout: 5_000 })
+		await expect(page.locator('[data-testid="bk-conflict-dialog"]')).toBeHidden({
+			timeout: 5_000,
+		})
 	})
 
 	/**
@@ -260,14 +303,20 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 	 * @e2e bookings-resource-calendar/REQ-007/successful-create-closes-form
 	 */
 	test('successful create closes the form', async ({ page }) => {
-		await page.locator('[data-testid="booking-form-title"]').fill('UI test: clean slot')
+		await page
+			.locator('[data-testid="booking-form-title"]')
+			.fill('UI test: clean slot')
 		await page.locator('[data-testid="booking-form-attendee"]').fill('UI Happy')
-		await page.locator('[data-testid="booking-form-start"]').fill('2028-09-15T09:00')
-		await page.locator('[data-testid="booking-form-end"]').fill('2028-09-15T09:30')
+		await page
+			.locator('[data-testid="booking-form-start"]')
+			.fill('2028-09-15T09:00')
+		await page
+			.locator('[data-testid="booking-form-end"]')
+			.fill('2028-09-15T09:30')
 		await page.locator('[data-testid="booking-form-status-pending"]').check()
 		await page.locator('[data-testid="booking-form-submit"]').click()
-		await expect(page.locator('[data-testid="booking-form-panel"]'))
-			.toBeHidden({ timeout: 15_000 })
+		await expect(page.locator('[data-testid="booking-form-panel"]')).toBeHidden({
+			timeout: 15_000,
+		})
 	})
-
 })
