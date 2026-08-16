@@ -81,6 +81,7 @@ export default {
 	},
 
 	methods: {
+		/** @spec exclude Re-export of the l10n `translate` helper for the template; no behaviour of its own. */
 		t,
 
 		/**
@@ -90,6 +91,8 @@ export default {
 		 * (CnWidgetWrapper / CnChartWidget subscribe to it).
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/recurring-invoicing/spec.md
 		 */
 		onSaved() {
 			this.open = false
