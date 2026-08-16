@@ -80,15 +80,33 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	test('dashboard exposes 13-week chart widget slot', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
 		await page.waitForLoadState('domcontentloaded')
-		// Either a chart canvas, a manifest-rendered widget container, or the
-		// CashflowDashboard skeleton's chart slot must be present.
-		const chartCandidates = page.locator(
-			'[data-widget="cashflow-13week-chart"], canvas, [data-widget-id="cashflow-13week-chart"]',
-		)
-		await expect(chartCandidates.first()).toBeVisible({ timeout: 10_000 })
+		// ⚠️ NOT `canvas`, and not a `data-widget*` attribute.
+		//
+		// The `type: "chart"` widget declared in manifest.json renders through
+		// ApexCharts, which draws an <svg> into a DIV it classes
+		// `apexcharts-canvas` — there is no <canvas> element on the page, and
+		// the renderer emits no data-widget/data-widget-id attribute for the
+		// widget's `id`. All three alternatives in the old selector therefore
+		// matched nothing, so this failed while the chart was rendering fine.
+		//
+		// Assert on the library's own wrapper plus the drawn SVG, so an empty
+		// widget shell (mounted but never painted) still fails.
+		const chart = page.locator('.cn-chart-widget__canvas .apexcharts-canvas svg')
+		await expect(chart.first()).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByText('13-Week Cashflow Forecast')).toBeVisible()
 	})
 
 	/**
+	 * ⚠️ FAILS on purpose — the assertion is correct and the product is not.
+	 * Do not quarantine or retarget it. See #868.
+	 *
+	 * REQ-CF-016 requires a PDF export of the 13-week forecast for bank and
+	 * accountant meetings, and archived Task 25 is ticked [x] claiming the
+	 * button among the things it delivered. It was never built: manifest.json's
+	 * CashflowDashboard config declares three widgets and mentions neither
+	 * "export" nor "pdf", and the live dashboard's three overflow menus hold
+	 * only Refresh / Documentation / Request a feature.
+	 *
 	 * @e2e bookkeeping-cashflow-13wk/REQ-CF-016/dashboard-has-export-pdf-affordance
 	 */
 	test('dashboard exposes an Export PDF affordance', async ({ page }) => {
