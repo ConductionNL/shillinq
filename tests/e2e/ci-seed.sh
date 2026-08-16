@@ -166,6 +166,43 @@ else
 	echo "[ci-seed] no ./occ in $(pwd) — skipping the pretty-URL config step."
 fi
 
+# ── 0b. Disable Nextcloud's own first-run wizard ─────────────────────────────
+# `firstrunwizard` is a STOCK Nextcloud app, enabled by default, and on a fresh
+# profile it renders a full-viewport opaque modal over the SPA:
+#
+#     <div role="dialog" aria-modal="true" id="firstrunwizard"
+#          class="first-run-wizard modal-mask modal-mask--opaque">
+#
+# It is the single largest cause of spec failure on a clean instance. Measured
+# 2026-08-16 against a container serving current `development`, seeded by this
+# script: of 90 `locator.click: Test timeout` failures, **84** logged
+# `#firstrunwizard … subtree intercepts pointer events`.
+#
+# ⚠️ The symptom does NOT look like an overlay. Playwright reports the target as
+# "visible, enabled and stable" and then retries the click until the test times
+# out — so it presents as a dozen unrelated flaky-click defects, not one cause.
+#
+# 33 spec files carry a `dismissWizard()` helper for exactly this, but a helper
+# that runs inside the test races the modal's own mount, and cannot help a spec
+# whose first action is a click. Removing the app removes the race.
+#
+# Test-environment setup, not a product change: nothing in shillinq depends on
+# `firstrunwizard`, and it is disabled only on the instance under test.
+#
+# Effect, nothing else changed between the runs:
+#
+#     three worst spec files   26 failed  ->  9 failed / 17 passed
+#     FULL chromium suite      200 passed / 71 failed / 3 skipped
+#                         ->   213 passed / 49 failed / 7 skipped
+#
+if [ -f "./occ" ]; then
+	if php ./occ app:disable firstrunwizard >/dev/null 2>&1; then
+		echo "[ci-seed] disabled Nextcloud's firstrunwizard (its modal intercepts pointer events)."
+	else
+		echo "[ci-seed] firstrunwizard not present or already disabled."
+	fi
+fi
+
 # ── 1. Import the Shillinq configuration ─────────────────────────────────────
 # Shillinq's `appinfo/routes.php` returns
 # `\OCA\OpenRegister\AppHost\Routes::standard()`, whose canonical table ships
