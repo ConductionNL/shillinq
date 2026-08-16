@@ -60,6 +60,7 @@ class LeaseAuditPackGenerator {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LeasePaymentScheduleService $scheduleService Schedule rows for the pack.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
