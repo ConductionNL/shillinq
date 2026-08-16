@@ -83,8 +83,11 @@ class ObjectEntity implements \OCA\OpenRegister\Contract\ObjectEntityInterface {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	public function getObject(): ?array {
-		return $this->object;
+	public function getObject(): array {
+		// The contract declares `array`, not `?array`. A return type may be
+		// narrowed by an implementor but never widened, so `?array` here is a
+		// fatal at class load -- which is what it was doing.
+		return ($this->object ?? []);
 	}//end getObject()
 
 	/**
