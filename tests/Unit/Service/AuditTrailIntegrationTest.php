@@ -44,6 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\AuditExportService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
@@ -286,11 +287,11 @@ final class AuditTrailIntegrationTest extends TestCase {
 		);
 
 		return new PurchaseOrderApprovalService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			userSession: $userSession,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildApprovalService()
@@ -356,13 +357,13 @@ final class AuditTrailIntegrationTest extends TestCase {
 		};
 
 		return new ExceptionResolutionService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			userSession: $userSession,
 			notificationManager: $notificationManager,
 			logger: $logger,
 			creditNoteAdapter: $adapter,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildResolutionService()

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\EInvoice;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
@@ -198,7 +199,6 @@ final class EInvoiceServiceTest extends TestCase {
 		$validationService = new EInvoiceValidationService(vies: $vies, peppolPort: $port);
 
 		return new EInvoiceService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: new NullLogger(),
@@ -206,7 +206,8 @@ final class EInvoiceServiceTest extends TestCase {
 			ublMapper: new ArInvoiceUblMapper(),
 			pdfGenerator: new InvoicePdfGenerator(),
 			validationService: $validationService,
-			peppolPort: $port
+			peppolPort: $port,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

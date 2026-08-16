@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\PeriodStatusGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -83,7 +84,9 @@ final class PeriodStatusGuardTest extends TestCase {
 		$config = $this->createStub(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
 
-		return new PeriodStatusGuard($container, $config, new NullLogger());
+		return new PeriodStatusGuard( $config, new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 	}//end guard()
 
 	/**

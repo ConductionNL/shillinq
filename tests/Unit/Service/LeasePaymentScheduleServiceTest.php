@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeasePaymentScheduleService;
 use OCP\IAppConfig;
@@ -171,10 +172,10 @@ final class LeasePaymentScheduleServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new LeasePaymentScheduleService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new LeaseAmortizationCalculator(),
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

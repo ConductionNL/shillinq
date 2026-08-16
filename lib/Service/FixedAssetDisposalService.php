@@ -57,9 +57,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Posts the closing GL journal for a disposed FixedAsset (REQ-GLTAX-001).
@@ -120,7 +120,6 @@ class FixedAssetDisposalService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for the lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config (account codes + register slug).
 	 * @param DisposalJournalEmitter $emitter The pure-logic disposal journal kernel.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
@@ -130,11 +129,11 @@ class FixedAssetDisposalService {
 	 * canonical name fleet-wide.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly DisposalJournalEmitter $emitter,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -543,8 +542,7 @@ class FixedAssetDisposalService {
 	 * @throws \RuntimeException When the row type is unsupported.
 	 */
 	private function saveOnSchema(string $schema, array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);
@@ -580,8 +578,7 @@ class FixedAssetDisposalService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

@@ -51,9 +51,9 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 11 — records approver identity + decidedAt on the next pending
@@ -113,7 +113,6 @@ class PurchaseOrderApprovalService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's
 	 *                                      ObjectService is fetched
 	 *                                      lazily so unit tests
 	 *                                      swap an in-memory stub.
@@ -131,11 +130,11 @@ class PurchaseOrderApprovalService {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
 	) {
 
@@ -392,8 +391,7 @@ class PurchaseOrderApprovalService {
 	 */
 	private function saveObject(string $schema, array $object): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->saveObject($object);
@@ -423,8 +421,7 @@ class PurchaseOrderApprovalService {
 	 */
 	private function findOne(string $schema, array $filters): ?array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

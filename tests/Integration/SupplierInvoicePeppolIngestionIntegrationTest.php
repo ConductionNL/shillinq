@@ -39,6 +39,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Integration;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
@@ -205,10 +206,10 @@ final class SupplierInvoicePeppolIngestionIntegrationTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 
 		$service = new SupplierInvoiceService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		// OpenRegister stamps the numeric schema id on the entity; the slug

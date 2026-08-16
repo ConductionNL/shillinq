@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\BackgroundJob\BookingReminderJob;
 use OCA\Shillinq\Service\BookingNotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -97,9 +98,9 @@ class BookingReminderJobTest extends TestCase {
 		$this->job = new BookingReminderJob(
 			time: $this->time,
 			notificationService: $this->notificationService,
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end setUp()
 

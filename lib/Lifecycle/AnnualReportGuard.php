@@ -46,8 +46,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for AnnualReport opmaken and vaststellen.
@@ -64,14 +64,13 @@ class AnnualReportGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -251,10 +250,9 @@ class AnnualReportGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$reports = $objectService
+		$reports = $this->objectService
 			->setRegister($register)
 			->setSchema('AnnualReport')
 			->findAll(['filters' => ['id' => $annualReportId]]);
@@ -276,10 +274,9 @@ class AnnualReportGuard {
 	 * @return array<string,mixed>|null The BalanceSheet, or null when not found.
 	 */
 	private function resolveBalanceSheet(string $reportId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$sheets = $objectService
+		$sheets = $this->objectService
 			->setRegister($register)
 			->setSchema('BalanceSheet')
 			->findAll(['filters' => ['reportId' => $reportId]]);

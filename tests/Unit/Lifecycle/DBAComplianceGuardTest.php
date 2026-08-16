@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\DBAComplianceGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -90,9 +91,9 @@ class DBAComplianceGuardTest extends TestCase {
 		);
 
 		$this->guard = new DBAComplianceGuard(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()
@@ -383,9 +384,9 @@ class DBAComplianceGuardTest extends TestCase {
 		);
 
 		$guard = new DBAComplianceGuard(
-			container: $this->container,
 			appConfig: $appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		// 40 hours x EUR 34 -> EUR 34/hour, above the constant 33 but below the

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\KorMonitorService;
 use OCA\Shillinq\Service\KorThresholdCalculator;
 use OCP\IAppConfig;
@@ -161,9 +162,9 @@ final class KorMonitorServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new KorMonitorService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new KorThresholdCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

@@ -20,7 +20,28 @@ namespace OCA\OpenRegister\Db;
 /**
  * Stub for OCA\OpenRegister\Db\ObjectEntity used by shillinq tests.
  */
-class ObjectEntity {
+class ObjectEntity implements \OCA\OpenRegister\Contract\ObjectEntityInterface {
+		/**
+		 * @return ?string
+		 */
+		public function getOrganisation(): ?string {
+			return $this->organisation ?? null;
+		}
+
+		/**
+		 * @return ?string
+		 */
+		public function getOwner(): ?string {
+			return $this->owner ?? null;
+		}
+
+		/**
+		 * @return array<string,mixed>
+		 */
+		public function jsonSerialize(): array {
+			return (array)($this->object ?? []);
+		}
+
 
 	/**
 	 * The decoded object payload.
@@ -62,8 +83,11 @@ class ObjectEntity {
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	public function getObject(): ?array {
-		return $this->object;
+	public function getObject(): array {
+		// The contract declares `array`, not `?array`. A return type may be
+		// narrowed by an implementor but never widened, so `?array` here is a
+		// fatal at class load -- which is what it was doing.
+		return ($this->object ?? []);
 	}//end getObject()
 
 	/**

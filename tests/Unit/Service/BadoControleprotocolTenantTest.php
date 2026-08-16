@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use JsonSerializable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BadoControleprotocolCalculator;
 use OCA\Shillinq\Service\BadoControleprotocolService;
 use OCP\IAppConfig;
@@ -85,10 +86,10 @@ final class BadoControleprotocolTenantTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
 		$this->service = new BadoControleprotocolService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: $this->createMock(BadoControleprotocolCalculator::class),
 			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\GRIRReconciliationController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\GRIRClearingService;
@@ -116,10 +117,10 @@ class GRIRReconciliationControllerTest extends TestCase {
 		$administrationContext->method('canAccess')->willReturn($canAccess);
 
 		$service = new GRIRClearingService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$request = $this->createMock(IRequest::class);

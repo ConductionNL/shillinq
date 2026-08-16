@@ -40,8 +40,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for intercompany-match tolerance evaluation.
@@ -56,14 +56,13 @@ class IntercompanyToleranceGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -192,15 +191,14 @@ class IntercompanyToleranceGuard {
 			return [];
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
 		$relationType = $this->lookupRelationType(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			relationId: $relationId,
 			administrationId: $administrationId
 		);
 
-		$rules = $objectService
+		$rules = $this->objectService
 			->setRegister($this->getRegisterSlug())
 			->setSchema('ToleranceRule')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

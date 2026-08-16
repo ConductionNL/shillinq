@@ -53,8 +53,8 @@ use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that backfills FiscalPeriod records for every distinct
@@ -70,12 +70,11 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 *
 	 * @param SettingsService $settingsService The settings service (register slug).
 	 * @param LoggerInterface $logger The logger interface.
-	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
 		private SettingsService $settingsService,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -102,13 +101,12 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
 			// Stream every GLLine carrying a non-empty periodId; collect
 			// the (administrationId, periodId) tuples we have not yet
 			// materialised as FiscalPeriod records.
-			$lines = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'GLLine');
+			$lines = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'GLLine');
 
 			if ($lines === []) {
 				$output->info('Shillinq: no GLLine records — FiscalPeriod backfill skipped.');
@@ -139,7 +137,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 			$skipped = 0;
 			foreach ($tuples as $tuple) {
 				if ($this->fiscalPeriodExists(
-					objectService: $objectService,
+					objectService: $this->objectService,
 					registerSlug: $registerSlug,
 					periodId: $tuple['periodId'],
 					administrationId: $tuple['administrationId']
@@ -158,7 +156,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 				// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
 				// backfill persists instead of throwing "User 'Anonymous' does not
 				// have permission to 'create'".
-				$objectService->saveObject(
+				$this->objectService->saveObject(
 					object: $record,
 					register: $registerSlug,
 					schema: 'FiscalPeriod',

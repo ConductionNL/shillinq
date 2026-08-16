@@ -34,8 +34,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Single-method compliance precondition for TreasuryAccount lifecycle transitions.
@@ -55,14 +55,13 @@ class ComplianceValidator {
 	/**
 	 * Construct ComplianceValidator with lazy-loaded ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService fetched lazily.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.
 	 * @param LoggerInterface $logger Nextcloud logger for compliance audit logging.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -108,9 +107,7 @@ class ComplianceValidator {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-			$rules = $objectService
+			$rules = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankingRule')
 				->findAll(
@@ -132,7 +129,7 @@ class ComplianceValidator {
 
 			$blockingFailures = [];
 			foreach ($rules as $rule) {
-				$passed = $this->evaluateRule(rule: $rule, account: $account, objectService: $objectService);
+				$passed = $this->evaluateRule(rule: $rule, account: $account, objectService: $this->objectService);
 				if ($passed === false) {
 					$severity = ($rule['severity'] ?? 'blocking');
 					if ($severity === 'blocking') {

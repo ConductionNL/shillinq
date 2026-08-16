@@ -41,8 +41,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for JournalEntry post and void transitions.
@@ -58,14 +58,13 @@ class JournalEntryGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -162,10 +161,9 @@ class JournalEntryGuard {
 				return false;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$register = $this->resolveRegister();
 
-			$transactions = $objectService
+			$transactions = $this->objectService
 				->setRegister($register)
 				->setSchema('GLTransaction')
 				->findAll(['filters' => ['id' => $glTransactionId]]);
@@ -204,10 +202,9 @@ class JournalEntryGuard {
 			return [];
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$entries = $objectService
+		$entries = $this->objectService
 			->setRegister($register)
 			->setSchema('JournalEntry')
 			->findAll(['filters' => ['id' => $journalEntryId]]);

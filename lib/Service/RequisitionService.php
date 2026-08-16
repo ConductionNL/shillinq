@@ -43,9 +43,9 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Requisition create / submit / approve / reject (REQ-REQ-001..004).
@@ -56,7 +56,6 @@ class RequisitionService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService
 	 *                                      is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
@@ -66,11 +65,11 @@ class RequisitionService {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly BudgetBlocker $budgetBlocker,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -452,8 +451,7 @@ class RequisitionService {
 	 */
 	private function saveObject(string $schema, array $object): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->saveObject($object);
@@ -502,8 +500,7 @@ class RequisitionService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

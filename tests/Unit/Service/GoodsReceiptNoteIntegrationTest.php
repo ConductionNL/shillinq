@@ -34,6 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\GoodsReceiptNoteService;
 use OCP\IAppConfig;
@@ -362,10 +363,10 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 		);
 
 		return new GoodsReceiptNoteService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

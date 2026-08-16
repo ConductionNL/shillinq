@@ -36,8 +36,8 @@ use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Makes the local test data compliant with the enforced rules (idempotent).
@@ -54,18 +54,17 @@ class RuleTestDataSeeder {
 	/**
 	 * Construct the rule test-data seeder.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IUserManager $userManager To resolve an admin user for updates.
 	 * @param IGroupManager $groupManager To find an admin user.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserManager $userManager,
 		private readonly IGroupManager $groupManager,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -359,7 +358,7 @@ class RuleTestDataSeeder {
 	 * @return mixed The OpenRegister ObjectService.
 	 */
 	private function objectService(): mixed {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

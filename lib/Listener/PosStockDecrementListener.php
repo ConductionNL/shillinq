@@ -77,9 +77,9 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\Notification\IManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatcher from pipelinq's PosStockMovedEvent -> SalesDispatchStockIssueService.
@@ -111,7 +111,6 @@ class PosStockDecrementListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI for the OR ObjectService (InventoryStock existence probe).
 	 * @param SalesDispatchStockIssueService $dispatchService The reused issue/reversal service.
 	 * @param IAppConfig $appConfig App config for the register slug (same key SalesDispatchStockIssueService reads).
 	 * @param IGroupManager $groupManager Resolves the `admin` group for the audit surface.
@@ -119,12 +118,12 @@ class PosStockDecrementListener implements IEventListener {
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly SalesDispatchStockIssueService $dispatchService,
 		private readonly IAppConfig $appConfig,
 		private readonly IGroupManager $groupManager,
 		private readonly IManager $notificationMgr,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -380,7 +379,7 @@ class PosStockDecrementListener implements IEventListener {
 	 * @return object
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

@@ -48,8 +48,8 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that folds Receipt/MileageEntry/PerDiem into
@@ -64,13 +64,12 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 * @param SettingsService $settingsService The settings service (register slug).
 	 * @param IGroupManager $groupManager The group manager (resolve an admin IUser).
 	 * @param LoggerInterface $logger The logger interface.
-	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
 		private SettingsService $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -93,14 +92,13 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 			$admin = $this->resolveAdmin();
 
 			// Index every Project by every identifier a source object might
 			// reference (id / uuid / projectNumber / code). Values are kept
 			// as live mutable arrays so multiple lines fold into one save.
-			$projects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Project');
+			$projects = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'Project');
 
 			if ($projects === []) {
 				$output->info('Shillinq: no Project records — expense/hours fold skipped.');
@@ -111,13 +109,13 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 			// Pre-load ExpenseClaimEntry rows so claim-routed expenses can
 			// resolve a projectId via the claim (keyed by claim id/number).
-			$claimIndex = $this->indexClaims(objectService: $objectService, registerSlug: $registerSlug);
+			$claimIndex = $this->indexClaims(objectService: $this->objectService, registerSlug: $registerSlug);
 
 			$touched = [];
 
 			// Fold expense families → costLines.
 			$touched = ($this->foldCostFamily(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				schema: 'Receipt',
 				type: 'receipt',
@@ -129,7 +127,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			) + $touched);
 
 			$touched = ($this->foldCostFamily(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				schema: 'MileageEntry',
 				type: 'mileage',
@@ -141,7 +139,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			) + $touched);
 
 			$touched = ($this->foldCostFamily(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				schema: 'PerDiem',
 				type: 'perdiem',
@@ -154,7 +152,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 			// Fold UrenRegistratie → hoursLines.
 			$touched = ($this->foldHours(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				byKey: $byKey,
 				projectArrays: $projectArrays,
@@ -170,7 +168,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 				$record = $projectArrays[$projectKey];
 				try {
-					$objectService
+					$this->objectService
 						->setRegister($registerSlug)
 						->setSchema('Project')
 						->saveObject(

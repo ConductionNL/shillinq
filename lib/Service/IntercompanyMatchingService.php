@@ -41,8 +41,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrating service for the intercompany elimination engine.
@@ -53,17 +53,16 @@ class IntercompanyMatchingService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IntercompanyMatchingCalculator $calculator Pure-logic arithmetic + classification helper.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IntercompanyMatchingCalculator $calculator,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -87,7 +86,7 @@ class IntercompanyMatchingService {
 	 * @return object The ObjectService instance.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

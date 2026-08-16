@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
 use OCA\Shillinq\Service\VatSuppletieDetectionService;
 use OCP\IAppConfig;
@@ -92,16 +93,16 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		$vatReturnService = new VATReturnService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$detectionService = new VatSuppletieDetectionService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			vatReturnService: $vatReturnService,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		return [$vatReturnService, $detectionService];

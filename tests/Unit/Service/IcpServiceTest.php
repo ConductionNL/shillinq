@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\IcpCalculator;
 use OCA\Shillinq\Service\IcpService;
 use OCP\IAppConfig;
@@ -189,9 +190,9 @@ final class IcpServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new IcpService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new IcpCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

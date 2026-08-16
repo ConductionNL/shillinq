@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Integration;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
@@ -327,19 +328,19 @@ final class MultiPoConsolidationIntegrationTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 
 		$supplierInvoiceService = new SupplierInvoiceService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$service = new MultiPoConsolidationService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			userSession: $userSession,
 			supplierInvoiceService: $supplierInvoiceService,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		// Phase 1 — consolidation fan-out.

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\SupplierInvoiceImportController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
@@ -148,8 +149,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			supplierInvoiceService: $this->service,
 			administrationContext: $this->administrationContext,
 			session: $this->session,
-			container: $this->container,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()
@@ -282,8 +283,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			supplierInvoiceService: $this->service,
 			administrationContext: $this->administrationContext,
 			session: $session,
-			container: $this->container,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$response = $controller->import();

@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Emits the period loonsom for the WKR app to compute the free-space ceiling.
@@ -46,14 +46,13 @@ class PayrollWkrHandoffService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container (OR's ObjectService is lazy).
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Cents arithmetic helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -127,7 +126,7 @@ class PayrollWkrHandoffService {
 	 * @return object The ObjectService.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

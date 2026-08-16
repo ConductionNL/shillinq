@@ -54,8 +54,8 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\VarianceGate;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Per REQ-ICC-006 snapshot fan-out + REQ-ICC-007 variance posting.
@@ -88,17 +88,16 @@ class CycleCountService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config — used to read register
 	 *                              slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs payloads.
 	 * @param VarianceGate $varianceGate Pure helper for threshold + recalculation.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly VarianceGate $varianceGate,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -157,7 +156,6 @@ class CycleCountService {
 				return true;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$sequence = 0;
 			foreach ($stockRows as $stock) {
 				if (is_array($stock) === false) {
@@ -200,7 +198,7 @@ class CycleCountService {
 					'administrationId' => $administrationId,
 				];
 
-				$objectService
+				$this->objectService
 					->setRegister($this->register())
 					->setSchema('InventoryCycleCountLine')
 					->saveObject($line);
@@ -268,7 +266,6 @@ class CycleCountService {
 				return true;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$sequence = 0;
 			foreach ($lines as $line) {
 				if (is_array($line) === false) {
@@ -351,7 +348,7 @@ class CycleCountService {
 					'locked' => false,
 				];
 
-				$saved = $objectService
+				$saved = $this->objectService
 					->setRegister($this->register())
 					->setSchema('StockMove')
 					->saveObject($move);
@@ -368,7 +365,7 @@ class CycleCountService {
 				// Stamp the back-reference on the line so a future retry skips it.
 				$lineUpdate = $line;
 				$lineUpdate['adjustmentStockMoveId'] = $stockMoveId;
-				$objectService
+				$this->objectService
 					->setRegister($this->register())
 					->setSchema('InventoryCycleCountLine')
 					->saveObject($lineUpdate);
@@ -402,8 +399,7 @@ class CycleCountService {
 	public function recalculateLine(array $line): array {
 		$refreshed = $this->varianceGate->recalculateLine(line: $line);
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService
+			$this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryCycleCountLine')
 				->saveObject($refreshed);
@@ -450,14 +446,13 @@ class CycleCountService {
 		string $categoryFilter,
 	): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$filters = ['administrationId' => $administrationId];
 
 			if ($countType === 'partial' && $locationFilter !== '') {
 				$filters['locationId'] = $locationFilter;
 			}
 
-			$rows = ($objectService
+			$rows = ($this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryStock')
 				->findAll(['filters' => $filters]) ?? []);
@@ -504,7 +499,6 @@ class CycleCountService {
 	 */
 	private function filterByCategory(array $stockRows, string $administrationId, string $category): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$skuToCategory = [];
 			$rawSkus = [];
 			foreach ($stockRows as $row) {
@@ -522,7 +516,7 @@ class CycleCountService {
 				)
 			);
 			foreach ($skus as $sku) {
-				$product = $objectService
+				$product = $this->objectService
 					->setRegister($this->register())
 					->setSchema('Product')
 					->find(['filters' => ['administrationId' => $administrationId, 'sku' => $sku]]);
@@ -565,8 +559,7 @@ class CycleCountService {
 	 */
 	private function findLinesForCount(string $administrationId, string $countId): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = ($objectService
+			$rows = ($this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryCycleCountLine')
 				->findAll(

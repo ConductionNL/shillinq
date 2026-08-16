@@ -46,8 +46,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Per REQ-SM-004 reservation CAS + REQ-SM-005 stock-ledger commit.
@@ -67,14 +67,13 @@ class StockReservationGuard {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs the full payload.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -323,8 +322,7 @@ class StockReservationGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryStock')
 			->findAll(
@@ -357,7 +355,6 @@ class StockReservationGuard {
 	 */
 	private function casUpdate(array $row, array $patch): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$id = (string)($row['id'] ?? ($row['@self']['id'] ?? ''));
 			if ($id === '') {
 				return false;
@@ -365,7 +362,7 @@ class StockReservationGuard {
 
 			// Re-read the canonical row to detect concurrent writes; abort on version
 			// mismatch (CAS) so the operator retries with fresh state.
-			$current = $objectService
+			$current = $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryStock')
 				->find($id);
@@ -385,7 +382,7 @@ class StockReservationGuard {
 			}
 
 			$merged = array_merge($currentArray, $patch);
-			$objectService
+			$this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryStock')
 				->updateObject(id: $id, object: $merged, register: $this->register(), schema: 'InventoryStock');
@@ -422,7 +419,6 @@ class StockReservationGuard {
 		float $unitCost,
 	): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$row = [
 				'administrationId' => $administrationId,
 				'locationId' => $locationId,
@@ -434,7 +430,7 @@ class StockReservationGuard {
 				'version' => 1,
 			];
 
-			$objectService->saveObject(object: $row, register: $this->register(), schema: 'InventoryStock');
+			$this->objectService->saveObject(object: $row, register: $this->register(), schema: 'InventoryStock');
 			return true;
 		} catch (\Throwable $e) {
 			$this->logger->error(

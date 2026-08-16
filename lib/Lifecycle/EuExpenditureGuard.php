@@ -47,8 +47,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for EuExpenditure declare and submit transitions.
@@ -80,14 +80,13 @@ class EuExpenditureGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -219,8 +218,7 @@ class EuExpenditureGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$entries = $objectService
+		$entries = $this->objectService
 			->setRegister($this->resolveRegister())
 			->setSchema('EuExpenditure')
 			->findAll(['filters' => ['id' => $euExpenditureId], 'limit' => 1]);
@@ -246,8 +244,7 @@ class EuExpenditureGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$projects = $objectService
+		$projects = $this->objectService
 			->setRegister($this->resolveRegister())
 			->setSchema('EuProject')
 			->findAll(['filters' => ['id' => $euProjectId], 'limit' => 1]);
@@ -270,8 +267,7 @@ class EuExpenditureGuard {
 	 * @return bool True when an active EligibilityRule lists the category.
 	 */
 	private function isCostCategoryEligible(string $fonds, string $costCategory): bool {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rules = $objectService
+		$rules = $this->objectService
 			->setRegister($this->resolveRegister())
 			->setSchema('EligibilityRule')
 			->findAll(['filters' => ['fonds' => $fonds, 'state' => 'active']]);
@@ -302,8 +298,7 @@ class EuExpenditureGuard {
 	 */
 	private function resolveRequiredEvidence(?string $fonds, string $costCategory): array {
 		if ($fonds !== null) {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rules = $objectService
+			$rules = $this->objectService
 				->setRegister($this->resolveRegister())
 				->setSchema('EligibilityRule')
 				->findAll(['filters' => ['fonds' => $fonds, 'state' => 'active']]);
@@ -334,8 +329,7 @@ class EuExpenditureGuard {
 	 * @return array<string> The present document-type enums.
 	 */
 	private function resolvePresentDocumentTypes(string $euExpenditureId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$documents = $objectService
+		$documents = $this->objectService
 			->setRegister($this->resolveRegister())
 			->setSchema('SupportingDocument')
 			->findAll(['filters' => ['euExpenditureId' => $euExpenditureId]]);

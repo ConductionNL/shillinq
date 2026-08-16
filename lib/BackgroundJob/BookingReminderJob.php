@@ -30,8 +30,8 @@ use OCA\Shillinq\Service\BookingNotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Hourly cron job that evaluates reminder triggers for upcoming bookings.
@@ -68,7 +68,6 @@ class BookingReminderJob extends TimedJob {
 	 *
 	 * @param ITimeFactory $time The time factory.
 	 * @param BookingNotificationService $notificationService The notification service.
-	 * @param ContainerInterface $container The DI container.
 	 * @param IAppConfig $appConfig The app config.
 	 * @param LoggerInterface $logger The logger.
 	 *
@@ -77,9 +76,9 @@ class BookingReminderJob extends TimedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private BookingNotificationService $notificationService,
-		private ContainerInterface $container,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(time: $time);
 		// Run every hour.
@@ -134,7 +133,6 @@ class BookingReminderJob extends TimedJob {
 	 */
 	private function processReminderWindow(int $windowMinutes): int {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
@@ -146,7 +144,7 @@ class BookingReminderJob extends TimedJob {
 
 			// ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
 			// findObjects() does not exist on OpenRegister's ObjectService.
-			$bookings = $objectService
+			$bookings = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('Booking')
 				->findAll(

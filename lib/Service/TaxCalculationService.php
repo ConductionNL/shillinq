@@ -37,8 +37,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates deferred-tax calculation at fiscal-period close.
@@ -56,17 +56,16 @@ class TaxCalculationService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is
 	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param TaxCalculationHelper $helper Pure-logic helper (loss compensation, rate calc).
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly TaxCalculationHelper $helper,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -951,6 +950,6 @@ class TaxCalculationService {
 	 * @return mixed OR ObjectService instance.
 	 */
 	private function objectService(): mixed {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 }//end class

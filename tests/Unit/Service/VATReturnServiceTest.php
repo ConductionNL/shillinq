@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -87,9 +88,9 @@ final class VATReturnServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new VATReturnService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

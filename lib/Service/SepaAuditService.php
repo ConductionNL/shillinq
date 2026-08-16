@@ -35,9 +35,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ZipArchive;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Builds the SEPA mandate audit dossier ZIP (REQ-SDD-010).
@@ -48,16 +48,15 @@ class SepaAuditService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $context RBAC guard — the caller's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -87,10 +86,9 @@ class SepaAuditService {
 		}
 
 		$register = $this->resolveRegister();
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
 		$mandate = $this->findOne(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'SepaMandate',
 			filters: ['id' => $mandateId]
@@ -108,7 +106,7 @@ class SepaAuditService {
 		}
 
 		$collections = $this->findMany(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'DirectDebitCollection',
 			filters: ['mandateId' => $mandateId]
@@ -122,7 +120,7 @@ class SepaAuditService {
 		}
 
 		$rTransactions = $this->findRelated(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'RTransaction',
 			field: 'collectionId',
@@ -130,7 +128,7 @@ class SepaAuditService {
 		);
 
 		$preNotifications = $this->findRelated(
-			objectService: $objectService,
+			objectService: $this->objectService,
 			register: $register,
 			schema: 'PreNotification',
 			field: 'collectionId',

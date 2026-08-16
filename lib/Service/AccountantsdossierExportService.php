@@ -71,10 +71,10 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use ZipArchive;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Builds the BADO accountantsdossier bundle for one Controleprotocol.
@@ -170,16 +170,15 @@ class AccountantsdossierExportService {
 	/**
 	 * Construct the exporter with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug + signer hand-off.
 	 * @param IUserSession $userSession Session for generatedBy attribution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -1071,7 +1070,7 @@ class AccountantsdossierExportService {
 	 * @return mixed
 	 */
 	private function objects(): mixed {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objects()
 
 	/**

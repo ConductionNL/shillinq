@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\BudgetOverrunGuard;
 use OCA\Shillinq\Service\BegrotingswijzigingStacker;
 use OCP\IAppConfig;
@@ -79,10 +80,10 @@ final class BudgetOverrunGuardTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
 		$this->guard = new BudgetOverrunGuard(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			stacker: new BegrotingswijzigingStacker(),
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

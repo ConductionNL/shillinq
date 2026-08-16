@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
@@ -260,19 +261,19 @@ final class MultiPoConsolidationServiceTest extends TestCase {
 		// stub so the slice-07 inline PO-link projection is exercised
 		// end-to-end alongside the consolidation fan-out.
 		$supplierInvoiceService = new SupplierInvoiceService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		return new MultiPoConsolidationService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			userSession: $this->userSession,
 			supplierInvoiceService: $supplierInvoiceService,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

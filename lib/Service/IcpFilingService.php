@@ -36,9 +36,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
 use ZipArchive;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Owns the ICP filing write path: corrections, audit-export bundles, outage scan.
@@ -49,18 +49,17 @@ class IcpFilingService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IcpCalculator $calculator Pure-logic ICP helper.
 	 * @param IcpService $icp Read-side ICP service (period-window supplies).
 	 * @param ViesService $vies VIES validation / evidence-reuse helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IcpCalculator $calculator,
 		private readonly IcpService $icp,
 		private readonly ViesService $vies,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -210,8 +209,7 @@ class IcpFilingService {
 			}
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$validations = $objectService
+		$validations = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ViesValidation')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'outage' => true]]);
@@ -254,8 +252,7 @@ class IcpFilingService {
 			}
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$validations = $objectService
+		$validations = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ViesValidation')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -282,8 +279,7 @@ class IcpFilingService {
 	 * @return array<string,mixed> The opgaaf record, or [] when none exists.
 	 */
 	private function findReturn(string $administrationId, string $period): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$opgaven = $objectService
+		$opgaven = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IcpOpgaaf')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'period' => $period]]);

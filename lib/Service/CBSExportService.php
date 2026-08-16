@@ -52,8 +52,8 @@ namespace OCA\Shillinq\Service;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Aggregates GL data into a CBS IV3-extended submission with declarative
@@ -97,16 +97,15 @@ class CBSExportService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug + mapping overrides.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -686,7 +685,7 @@ class CBSExportService {
 	 * @return object The ObjectService instance.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

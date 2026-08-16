@@ -39,8 +39,8 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\BegrotingswijzigingStacker;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Precondition guard preventing GL lasten postings beyond the authorized budget.
@@ -51,16 +51,15 @@ class BudgetOverrunGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param BegrotingswijzigingStacker $stacker Computes the stacked authorized lasten.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly BegrotingswijzigingStacker $stacker,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -109,7 +108,6 @@ class BudgetOverrunGuard {
 				return false;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$register = $this->resolveRegister();
 
 			$basis = $this->toRows(

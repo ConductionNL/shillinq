@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\DunningGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -93,9 +94,9 @@ class DunningGuardTest extends TestCase {
 			);
 
 		$this->guard = new DunningGuard(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

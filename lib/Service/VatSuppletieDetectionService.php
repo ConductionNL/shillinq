@@ -65,9 +65,9 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Detects filed-vs-ledger drift on a VATReturn and compiles a VatCorrection.
@@ -117,17 +117,16 @@ class VatSuppletieDetectionService {
 	 * a direct dependency on VATReturnService, whose GL-derivation engine
 	 * this service re-uses rather than duplicating (REQ-VBTW-013).
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug + clearing account.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param VATReturnService $vatReturnService The GL-derivation engine this service diffs against.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly VATReturnService $vatReturnService,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -392,8 +391,7 @@ class VatSuppletieDetectionService {
 	private function attachAccounts(array $deltas, string $originalReturnId): array {
 		$lines = [];
 		if ($originalReturnId !== '') {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister($this->register())
 				->setSchema('VATLine')
 				->findAll(['filters' => ['returnId' => $originalReturnId]]);
@@ -561,17 +559,16 @@ class VatSuppletieDetectionService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchCorrection(string $vatCorrectionId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$correction = $objectService
+		$correction = $this->objectService
 			->setRegister($this->register())
 			->setSchema('VatCorrection')
 			->find($vatCorrectionId);
 
-		if (is_array($correction) === false) {
+		if ($correction === null) {
 			throw new RuntimeException(sprintf('VatCorrection %s not found', $vatCorrectionId));
 		}
 
-		return $correction;
+		return $correction->jsonSerialize();
 	}//end fetchCorrection()
 
 	/**
@@ -583,17 +580,12 @@ class VatSuppletieDetectionService {
 	 * @return array<string,mixed> The saved record (with id).
 	 */
 	private function saveObject(string $schema, array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);
 
-		if (is_array($saved) === false) {
-			throw new RuntimeException(sprintf('ObjectService::saveObject(%s) did not return an array', $schema));
-		}
-
-		return $saved;
+		return $saved->jsonSerialize();
 	}//end saveObject()
 
 	/**

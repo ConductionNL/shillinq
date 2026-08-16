@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\StockReservationGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -72,9 +73,9 @@ class StockReservationGuardInventoryStockTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 
 		$this->guard = new StockReservationGuard(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

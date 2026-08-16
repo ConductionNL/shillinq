@@ -31,9 +31,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * OpenRegister-backed supplier qualification service.
@@ -46,16 +46,15 @@ class SupplierQualificationService {
 	/**
 	 * Construct the service with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param AdministrationContextService $administrationContext Tenant access/identity resolver.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -245,8 +244,7 @@ class SupplierQualificationService {
 	 */
 	private function saveObject(string $schema, array $object): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->saveObject($object);
@@ -276,8 +274,7 @@ class SupplierQualificationService {
 	 */
 	private function findOne(string $schema, array $filters): ?array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

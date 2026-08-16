@@ -48,8 +48,8 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * HTTP API for importing a bank statement file into BankStatement + lines.
@@ -82,7 +82,6 @@ class BankStatementImportController extends Controller {
 	 * @param IRequest $request Request.
 	 * @param StatementParser $parser Deterministic CAMT.053/MT940/CSV parser.
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
-	 * @param ContainerInterface $container DI container (lazy ObjectService).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 */
@@ -90,9 +89,9 @@ class BankStatementImportController extends Controller {
 		IRequest $request,
 		private readonly StatementParser $parser,
 		private readonly AdministrationContextService $administrationContext,
-		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -144,10 +143,9 @@ class BankStatementImportController extends Controller {
 				);
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
 			$transactionCount = count($parsed);
-			$statement = $objectService
+			$statement = $this->objectService
 				->setRegister(self::REGISTER_SLUG)
 				->setSchema('BankStatement')
 				->saveObject(
@@ -166,7 +164,7 @@ class BankStatementImportController extends Controller {
 			$lineNumber = 0;
 			foreach ($parsed as $line) {
 				$lineNumber++;
-				$objectService
+				$this->objectService
 					->setRegister(self::REGISTER_SLUG)
 					->setSchema('BankStatementLine')
 					->saveObject($this->mapLine(line: $line, statementId: $statementId, admin: $admin, lineNumber: $lineNumber));

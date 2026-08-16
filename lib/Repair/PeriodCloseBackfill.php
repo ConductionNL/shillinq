@@ -54,9 +54,9 @@ use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that backfills forward-looking FiscalPeriod records for
@@ -79,12 +79,11 @@ class PeriodCloseBackfill implements IRepairStep {
 	 *
 	 * @param SettingsService $settingsService The settings service (register slug).
 	 * @param LoggerInterface $logger The logger interface.
-	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
 		private SettingsService $settingsService,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -111,13 +110,12 @@ class PeriodCloseBackfill implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
 			// List every Administration record. The repair step is
 			// best-effort: when no Administration records exist yet,
 			// the forward backfill is a no-op.
-			$administrations = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Administration');
+			$administrations = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'Administration');
 
 			if ($administrations === []) {
 				$output->info('Shillinq: no Administration records — forward FiscalPeriod backfill skipped.');
@@ -137,7 +135,7 @@ class PeriodCloseBackfill implements IRepairStep {
 
 				foreach ($horizon as $period) {
 					if ($this->fiscalPeriodExists(
-						objectService: $objectService,
+						objectService: $this->objectService,
 						registerSlug: $registerSlug,
 						periodId: $period['periodId'],
 						administrationId: $administrationId
@@ -164,7 +162,7 @@ class PeriodCloseBackfill implements IRepairStep {
 					// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so
 					// the backfill persists instead of throwing "User 'Anonymous'
 					// does not have permission to 'create'".
-					$objectService->saveObject(
+					$this->objectService->saveObject(
 						object: $record,
 						register: $registerSlug,
 						schema: 'FiscalPeriod',

@@ -36,9 +36,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Period-scoped Dutch payroll processing over OpenRegister.
@@ -55,16 +55,15 @@ class PayrollService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Pure-logic payroll arithmetic helper.
 	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -651,7 +650,7 @@ class PayrollService {
 	 * @return object The ObjectService.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

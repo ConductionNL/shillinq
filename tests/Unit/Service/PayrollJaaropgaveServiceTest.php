@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PayrollCalculator;
 use OCA\Shillinq\Service\PayrollJaaropgaveService;
 use OCP\IAppConfig;
@@ -192,10 +193,10 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new PayrollJaaropgaveService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new PayrollCalculator(),
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -132,9 +133,9 @@ final class SupplierQualificationGuardTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		return new SupplierQualificationGuard(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end buildGuard()
 

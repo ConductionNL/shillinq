@@ -46,8 +46,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Records and computes IFRS 16 lease-reassessment events.
@@ -84,7 +84,6 @@ class LeaseReassessmentService {
 	 * soft — the persisted LeaseReassessmentEvent remains the source of
 	 * truth for the audit trail.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LeaseAmortizationCalculator $calculator Pure-logic IFRS 16 arithmetic helper.
@@ -92,10 +91,10 @@ class LeaseReassessmentService {
 	 * @param LeaseDecideskWebhookService|null $decideskWebhook Optional decidesk webhook delivery service.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LeaseAmortizationCalculator $calculator,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly ?LeaseDecideskWebhookService $decideskWebhook = null,
 	) {
 	}//end __construct()
@@ -796,7 +795,7 @@ class LeaseReassessmentService {
 	 * @return object The ObjectService instance.
 	 */
 	private function objectService(): object {
-		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $this->objectService;
 	}//end objectService()
 
 	/**

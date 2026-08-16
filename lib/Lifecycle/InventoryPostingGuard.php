@@ -60,8 +60,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle guard for the inventory-cogs-posting envelope. ADR-031
@@ -77,14 +77,13 @@ class InventoryPostingGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for structured-warning + fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -284,7 +283,6 @@ class InventoryPostingGuard {
 				'inventoryAdjustmentAccountNumber',
 			];
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
 			foreach ($fields as $field) {
 				$accountNumber = (string)($proposed[$field] ?? '');
@@ -292,7 +290,7 @@ class InventoryPostingGuard {
 					continue;
 				}
 
-				$matches = $objectService
+				$matches = $this->objectService
 					->setRegister($this->register())
 					->setSchema('Account')
 					->findAll(
@@ -342,8 +340,7 @@ class InventoryPostingGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$matches = $objectService
+		$matches = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryGLConfig')
 			->findAll(

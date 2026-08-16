@@ -51,6 +51,7 @@ use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for the period-close feature.
@@ -92,6 +93,7 @@ class PeriodCloseGuard {
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -172,8 +174,7 @@ class PeriodCloseGuard {
 				return true;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister($this->register())
 				->setSchema('GLLine')
 				->findAll(['filters' => ['periodId' => $periodId]]);
@@ -358,8 +359,7 @@ class PeriodCloseGuard {
 			return $transaction;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('GLTransaction')
 			->findAll(['filters' => ['id' => $transaction], 'limit' => 1]);
@@ -383,8 +383,7 @@ class PeriodCloseGuard {
 			return $period;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => ['id' => $period], 'limit' => 1]);
@@ -405,13 +404,12 @@ class PeriodCloseGuard {
 	 * @return array<string,mixed>|null The PeriodClose record, or null when none exists.
 	 */
 	private function findPeriod(string $periodId, string $administrationId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$filters = ['periodId' => $periodId];
 		if ($administrationId !== '') {
 			$filters['administrationId'] = $administrationId;
 		}
 
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => $filters, 'limit' => 1]);

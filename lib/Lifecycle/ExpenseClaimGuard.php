@@ -31,8 +31,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for ExpenseClaimEntry submit and post transitions.
@@ -47,14 +47,13 @@ class ExpenseClaimGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -184,7 +183,6 @@ class ExpenseClaimGuard {
 		array $mileageIds,
 		array $perDiemIds,
 	): bool {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->getRegisterSlug();
 
 		$checks = [
@@ -195,7 +193,7 @@ class ExpenseClaimGuard {
 
 		foreach ($checks as $check) {
 			foreach ($check['ids'] as $itemId) {
-				$item = $objectService
+				$item = $this->objectService
 					->setRegister(register: $register)
 					->setSchema(schema: $check['schema'])
 					->find(id: $itemId);
@@ -233,10 +231,9 @@ class ExpenseClaimGuard {
 		$adminId = (string)($claim['administrationId'] ?? '');
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$register = $this->getRegisterSlug();
 
-			$years = $objectService
+			$years = $this->objectService
 				->setRegister(register: $register)
 				->setSchema(schema: 'FiscalYear')
 				->findAll(

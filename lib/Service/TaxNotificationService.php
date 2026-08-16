@@ -38,8 +38,8 @@ use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\Notification\IManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatches Vpb deadline reminders (REQ-VPB-013).
@@ -62,16 +62,15 @@ class TaxNotificationService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IManager $notificationMgr Nextcloud notification manager.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IManager $notificationMgr,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -177,8 +176,7 @@ class TaxNotificationService {
 	 * @return array<int,array<string,mixed>> Open TaxDeadline records.
 	 */
 	private function fetchPendingDeadlines(): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$deadlines = $objectService
+		$deadlines = $this->objectService
 			->setRegister($this->register())
 			->setSchema('TaxDeadline')
 			->findAll([]);

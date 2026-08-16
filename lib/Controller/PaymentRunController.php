@@ -51,8 +51,8 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * HTTP API for exporting + reconciling a PaymentRun.
@@ -75,7 +75,6 @@ class PaymentRunController extends Controller {
 	 * @param PaymentRunExportService $exportService SEPA export orchestration.
 	 * @param PaymentRunReconciliationService $reconciliationService CAMT.053 reconciliation.
 	 * @param AdministrationContextService $administrationContext Tenant scope (ADR-005 guard).
-	 * @param ContainerInterface $container DI container (lazy ObjectService).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 */
@@ -84,9 +83,9 @@ class PaymentRunController extends Controller {
 		private readonly PaymentRunExportService $exportService,
 		private readonly PaymentRunReconciliationService $reconciliationService,
 		private readonly AdministrationContextService $administrationContext,
-		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -204,8 +203,7 @@ class PaymentRunController extends Controller {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$run = $objectService
+		$run = $this->objectService
 			->setRegister(self::REGISTER_SLUG)
 			->setSchema('PaymentRun')
 			->find($id);

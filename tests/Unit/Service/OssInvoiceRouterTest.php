@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\OssInvoiceRouter;
 use OCA\Shillinq\Service\OssRateResolver;
 use OCP\IAppConfig;
@@ -52,7 +53,9 @@ class OssInvoiceRouterTest extends TestCase {
 		parent::setUp();
 		$container = $this->createMock(ContainerInterface::class);
 		$appConfig = $this->createMock(IAppConfig::class);
-		$resolver = new OssRateResolver($container, $appConfig);
+		$resolver = new OssRateResolver( $appConfig,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 		$this->router = new OssInvoiceRouter($resolver);
 
 	}//end setUp()

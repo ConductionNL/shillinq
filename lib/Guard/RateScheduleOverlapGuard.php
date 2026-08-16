@@ -44,8 +44,8 @@ namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Guards RateSchedule `reactivate` — no other active RateSchedule for the
@@ -60,14 +60,13 @@ class RateScheduleOverlapGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -93,8 +92,7 @@ class RateScheduleOverlapGuard {
 		$expiryDate = ($schedule['expiryDate'] ?? null);
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$siblings = $objectService
+			$siblings = $this->objectService
 				->setRegister($this->register())
 				->setSchema('RateSchedule')
 				->findAll(

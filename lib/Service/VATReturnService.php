@@ -49,9 +49,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Composes VAT returns from GL transactions using the real OpenRegister API.
@@ -71,14 +71,13 @@ class VATReturnService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -286,8 +285,7 @@ class VATReturnService {
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function fetchFiledDeclarations(string $returnId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('VATDeclaration')
 			->findAll(['filters' => ['returnId' => $returnId]]);
@@ -657,28 +655,27 @@ class VATReturnService {
 	 * @return void
 	 */
 	private function purgeChildren(string $returnId): void {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($register)
 			->setSchema('VATLine')
 			->findAll(['filters' => ['returnId' => $returnId]]);
 		foreach ($lines as $line) {
 			$id = (string)($line['id'] ?? ($line['@self']['id'] ?? ''));
 			if ($id !== '') {
-				$objectService->setRegister($register)->setSchema('VATLine')->deleteObject($id);
+				$this->objectService->setRegister($register)->setSchema('VATLine')->deleteObject($id);
 			}
 		}
 
-		$declarations = $objectService
+		$declarations = $this->objectService
 			->setRegister($register)
 			->setSchema('VATDeclaration')
 			->findAll(['filters' => ['returnId' => $returnId]]);
 		foreach ($declarations as $declaration) {
 			$id = (string)($declaration['id'] ?? ($declaration['@self']['id'] ?? ''));
 			if ($id !== '') {
-				$objectService->setRegister($register)->setSchema('VATDeclaration')->deleteObject($id);
+				$this->objectService->setRegister($register)->setSchema('VATDeclaration')->deleteObject($id);
 			}
 		}
 
@@ -705,8 +702,7 @@ class VATReturnService {
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function findReturn(string $returnId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$found = $objectService
+		$found = $this->objectService
 			->setRegister($this->register())
 			->setSchema('BtwAangifte')
 			->find($returnId);
@@ -742,8 +738,7 @@ class VATReturnService {
 	 * @return array<string,array<string,mixed>> accountNumber => Account.
 	 */
 	private function fetchVATAccounts(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$accounts = $objectService
+		$accounts = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -773,8 +768,7 @@ class VATReturnService {
 	 * @return array<int,array<string,mixed>> List of GLTransaction objects.
 	 */
 	private function fetchGLTransactions(string $administrationId, string $startDate, string $endDate): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('GLTransaction')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -869,8 +863,7 @@ class VATReturnService {
 	 * @throws RuntimeException When the row cannot be normalised to an array.
 	 */
 	private function saveObject(string $schema, array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema($schema)
 			->saveObject($data);

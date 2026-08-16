@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
@@ -584,7 +585,6 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 		$logger = new NullLogger();
 
 		return new PurchaseOrderService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			notificationManager: $notificationManager,
@@ -592,6 +592,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			peppolAdapter: $adapter,
 			purchaseOrderMailer: $mailer,
 			peppolMapper: new PeppolBisOrderMapper(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

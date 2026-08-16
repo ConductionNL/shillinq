@@ -46,8 +46,8 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\BcfClaimService;
 use OCA\Shillinq\Service\BcfCompensationCalculator;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for the BcfClaim draft -> submitted transition.
@@ -62,18 +62,17 @@ class BcfClaimGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param BcfClaimService $claimService Server-authoritative claim computation.
 	 * @param BcfCompensationCalculator $calculator Pure-logic submit-precondition helper.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly BcfClaimService $claimService,
 		private readonly BcfCompensationCalculator $calculator,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -147,8 +146,7 @@ class BcfClaimGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$claims = $objectService
+		$claims = $this->objectService
 			->setRegister($this->register())
 			->setSchema('BcfClaim')
 			->findAll(['filters' => ['id' => $bcfClaimId]]);
@@ -177,8 +175,7 @@ class BcfClaimGuard {
 	 * @return bool True when the quarter's period is closed.
 	 */
 	private function isQuarterClosed(string $administrationId, string $claimQuarter): bool {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$periods = $objectService
+		$periods = $this->objectService
 			->setRegister($this->register())
 			->setSchema('FiscalPeriod')
 			->findAll(

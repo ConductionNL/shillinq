@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BcfClaimService;
 use OCA\Shillinq\Service\BcfCompensationCalculator;
 use OCP\IAppConfig;
@@ -73,9 +74,9 @@ final class BcfClaimServiceTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
 		$this->service = new BcfClaimService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new BcfCompensationCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

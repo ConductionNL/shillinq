@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -57,9 +58,9 @@ final class MovingAverageValuationServiceTest extends TestCase {
 		$logger = $this->createStub(LoggerInterface::class);
 
 		return new MovingAverageValuationService(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeService()

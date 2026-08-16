@@ -46,10 +46,10 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 05 — Supplier invoice ingestion from UBL (Peppol) and PDF (OCR).
@@ -134,7 +134,6 @@ class SupplierInvoiceService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService
 	 *                                      is fetched lazily so unit tests
 	 *                                      can swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR register slug.
@@ -144,10 +143,10 @@ class SupplierInvoiceService {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -862,8 +861,7 @@ class SupplierInvoiceService {
 	 */
 	private function saveObject(string $schema, array $object): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->saveObject($object);
@@ -912,8 +910,7 @@ class SupplierInvoiceService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

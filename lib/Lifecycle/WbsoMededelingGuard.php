@@ -44,8 +44,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for the WbsoMededeling submit / resubmit transitions.
@@ -60,14 +60,13 @@ class WbsoMededelingGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -149,10 +148,9 @@ class WbsoMededelingGuard {
 	 * @return array<string,mixed>|null The beschikking object, or null when not found.
 	 */
 	private function resolveDecision(string $administrationId, string $decisionNumber): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$beschikkingen = $objectService
+		$beschikkingen = $this->objectService
 			->setRegister($register)
 			->setSchema('WbsoBeschikking')
 			->findAll(

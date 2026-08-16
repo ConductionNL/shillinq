@@ -47,8 +47,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REQ-SM-005 + REQ-SM-009 read-side aggregation for the Stock Ledger
@@ -62,14 +62,13 @@ class StockLedgerService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -252,18 +251,17 @@ class StockLedgerService {
 			return [];
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$base = [
 			'administrationId' => $administrationId,
 			'itemId' => $sku,
 			'lifecycleState' => 'posted',
 		];
 
-		$sourceSide = ($objectService
+		$sourceSide = ($this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])]) ?? []);
-		$destinationSide = ($objectService
+		$destinationSide = ($this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])]) ?? []);
@@ -307,8 +305,7 @@ class StockLedgerService {
 			return [];
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = ($objectService
+		$rows = ($this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(

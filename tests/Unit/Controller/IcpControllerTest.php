@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\IcpController;
 use OCA\Shillinq\Service\ArInvoiceIcpPdfRenderer;
 use OCA\Shillinq\Service\IcpFilingService;
@@ -138,9 +139,9 @@ final class IcpControllerTest extends TestCase {
 			filingService: $this->filing,
 			viesService: $this->vies,
 			pdfRenderer: $this->pdfRenderer,
-			container: $this->container,
 			userSession: $this->userSession,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

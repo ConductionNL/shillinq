@@ -47,8 +47,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for Invoice post and cancel transitions.
@@ -65,14 +65,13 @@ class InvoiceGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -196,10 +195,9 @@ class InvoiceGuard {
 
 		$ownId = (string)($invoice['id'] ?? '');
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$others = $objectService
+		$others = $this->objectService
 			->setRegister($register)
 			->setSchema('Invoice')
 			->findAll([]);
@@ -319,10 +317,9 @@ class InvoiceGuard {
 			return [];
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($register)
 			->setSchema('InvoiceLine')
 			->findAll(['filters' => ['invoiceId' => $invoiceId]]);
@@ -349,10 +346,9 @@ class InvoiceGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($register)
 			->setSchema($schema)
 			->findAll(['filters' => ['id' => $id]]);

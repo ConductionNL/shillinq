@@ -30,6 +30,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Evaluates booking notification triggers and dispatches via openconnector.
@@ -71,6 +72,7 @@ class BookingNotificationService {
 		private ContainerInterface $container,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -256,7 +258,6 @@ class BookingNotificationService {
 	 */
 	public function recordAuditTrail(array $notification, string $status, string $reason): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
@@ -280,7 +281,7 @@ class BookingNotificationService {
 				'sentAt' => (new DateTimeImmutable())->format('c'),
 			];
 
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $record,
 				register: $registerSlug,
 				schema: 'NotificationDelivery',
@@ -418,13 +419,12 @@ class BookingNotificationService {
 	 */
 	public function isOptedOut(string $recipient, string $triggerType): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
 
-			$results = $objectService
+			$results = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('NotificationOptOut')
 				->findAll(['filters' => ['recipient' => $recipient], 'limit' => 1]);
@@ -480,7 +480,6 @@ class BookingNotificationService {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
@@ -489,7 +488,7 @@ class BookingNotificationService {
 			// Check per-booking hourly limit.
 			if ($bookingId !== '') {
 				$hourStart = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:00:00\Z');
-				$bookingHit = $objectService
+				$bookingHit = $this->objectService
 					->setRegister($registerSlug)
 					->setSchema('NotificationDelivery')
 					->findAll(
@@ -510,7 +509,7 @@ class BookingNotificationService {
 			// Check per-organizer daily limit.
 			if ($organizerId !== '') {
 				$dayStart = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\T00:00:00\Z');
-				$organizerHit = $objectService
+				$organizerHit = $this->objectService
 					->setRegister($registerSlug)
 					->setSchema('NotificationDelivery')
 					->findAll(
@@ -561,7 +560,6 @@ class BookingNotificationService {
 		int $windowMinutes = self::DEFAULT_DEDUP_WINDOW_MINUTES,
 	): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
@@ -572,7 +570,7 @@ class BookingNotificationService {
 				new DateTimeZone('UTC')
 			))->format('c');
 
-			$existing = $objectService
+			$existing = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('NotificationDelivery')
 				->findAll(
@@ -676,13 +674,12 @@ class BookingNotificationService {
 	 */
 	private function loadActiveTriggers(string $eventType, ?string $bookingId): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
 
-			return $objectService
+			return $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('BookingNotificationTrigger')
 				->findAll(
@@ -716,7 +713,6 @@ class BookingNotificationService {
 	 */
 	private function loadTemplate(string $triggerId, string $eventType): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
@@ -725,7 +721,7 @@ class BookingNotificationService {
 			if ($triggerId !== '') {
 				// ADR-022: use the real ObjectService API (find/findAll);
 				// findObject()/findObjects() do not exist on OpenRegister's ObjectService.
-				$template = $objectService->find(
+				$template = $this->objectService->find(
 					id: $triggerId,
 					register: $registerSlug,
 					schema: 'BookingNotificationTemplate'
@@ -736,7 +732,7 @@ class BookingNotificationService {
 			}
 
 			// Fallback: find active template matching the event type.
-			$results = $objectService
+			$results = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('BookingNotificationTemplate')
 				->findAll(

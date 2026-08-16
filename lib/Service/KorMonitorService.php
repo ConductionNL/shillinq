@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes the KOR threshold-status for one administration + year from the AR ledger.
@@ -51,14 +51,13 @@ class KorMonitorService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param KorThresholdCalculator $calculator Pure-logic KOR arithmetic helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly KorThresholdCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -123,8 +122,7 @@ class KorMonitorService {
 	 */
 	private function resolveOptOutPermitted(string $administrationId): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registrations = $objectService
+			$registrations = $this->objectService
 				->setRegister($this->register())
 				->setSchema('KORRegistration')
 				->findAll(
@@ -160,8 +158,7 @@ class KorMonitorService {
 	 * @return array<int,array<string,mixed>> KOR-eligible AR-invoice records.
 	 */
 	private function fetchKorInvoices(string $administrationId, int $year): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$invoices = $objectService
+		$invoices = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ARInvoice')
 			->findAll(
@@ -239,8 +236,7 @@ class KorMonitorService {
 		$default = $this->calculator->toCents(amount: 20000);
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registrations = $objectService
+			$registrations = $this->objectService
 				->setRegister($this->register())
 				->setSchema('KORRegistration')
 				->findAll(

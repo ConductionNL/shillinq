@@ -45,6 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\InventoryPostingGuard;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
 use OCP\IAppConfig;
@@ -78,9 +79,9 @@ final class InventoryPostingGuardTest extends TestCase {
 		$logger = $this->createStub(LoggerInterface::class);
 
 		return new InventoryPostingGuard(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeGuard()

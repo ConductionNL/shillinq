@@ -42,8 +42,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for the SubsidieVerantwoording approve transition.
@@ -68,14 +68,13 @@ class SubsidieVerantwoordingGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug and threshold.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -138,10 +137,9 @@ class SubsidieVerantwoordingGuard {
 	 * @return bool True when a non-blocking auditor statement exists.
 	 */
 	private function hasApprovedAuditorStatement(string $grantId): bool {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$statements = $objectService
+		$statements = $this->objectService
 			->setRegister($register)
 			->setSchema('AuditorStatement')
 			->findAll(['filters' => ['grantId' => $grantId]]);
@@ -169,10 +167,9 @@ class SubsidieVerantwoordingGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$records = $objectService
+		$records = $this->objectService
 			->setRegister($register)
 			->setSchema('SubsidieVerantwoording')
 			->findAll(['filters' => ['id' => $accountabilityId]]);

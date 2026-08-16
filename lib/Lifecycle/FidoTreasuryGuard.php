@@ -50,8 +50,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for the Wet Fido / Treasurystatuut registers.
@@ -84,14 +84,13 @@ class FidoTreasuryGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -379,7 +378,6 @@ class FidoTreasuryGuard {
 	 * @return array<string,mixed>|null The adopted statuut, or null when unavailable.
 	 */
 	private function resolveAdoptedStatuut(string $organisationId, string $statuutId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
 		if ($statuutId === '' && $organisationId === '') {
@@ -395,7 +393,7 @@ class FidoTreasuryGuard {
 			$filters['organisationId'] = $organisationId;
 		}
 
-		$results = $objectService
+		$results = $this->objectService
 			->setRegister($register)
 			->setSchema('Treasurystatuut')
 			->findAll(['filters' => $filters]);
@@ -447,10 +445,9 @@ class FidoTreasuryGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$results = $objectService
+		$results = $this->objectService
 			->setRegister($register)
 			->setSchema($schema)
 			->findAll(['filters' => ['id' => $id]]);

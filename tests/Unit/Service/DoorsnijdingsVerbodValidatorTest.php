@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -52,8 +53,8 @@ final class DoorsnijdingsVerbodValidatorTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->val = new DoorsnijdingsVerbodValidator(
-			$this->createMock(ContainerInterface::class),
-			$this->createMock(IAppConfig::class)
+			$this->createMock(IAppConfig::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

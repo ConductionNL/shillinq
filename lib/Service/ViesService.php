@@ -43,8 +43,8 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Validates EU VAT-IDs against VIES and persists immutable evidence records.
@@ -81,16 +81,15 @@ class ViesService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IClientService $clientService Nextcloud HTTP client factory.
 	 * @param LoggerInterface $logger Logger (no special-category data logged).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IClientService $clientService,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -241,8 +240,7 @@ class ViesService {
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
 	public function findRecentValid(string $administrationId, string $vatId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$records = $objectService
+		$records = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ViesValidation')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'vatId' => $vatId]]);
@@ -363,8 +361,7 @@ class ViesService {
 		];
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $record,
 				register: $this->register(),
 				schema: 'ViesValidation',

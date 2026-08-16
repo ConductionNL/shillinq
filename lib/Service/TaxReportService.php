@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes a period-scoped Vpb quarterly tax statement from the general ledger.
@@ -55,15 +55,14 @@ class TaxReportService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param TaxReportCalculator $calculator Pure-logic aggregation helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly TaxReportCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -169,10 +168,9 @@ class TaxReportService {
 	 *                                        accountType, taxTreatment, amount, side.
 	 */
 	private function fetchTaxRows(string $administrationId, string $periodId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
-		$transactions = $objectService
+		$transactions = $this->objectService
 			->setRegister($register)
 			->setSchema('GLTransaction')
 			->findAll(
@@ -189,7 +187,7 @@ class TaxReportService {
 
 		$accounts = $this->fetchAccounts(administrationId: $administrationId);
 
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($register)
 			->setSchema('GLLine')
 			->findAll(['filters' => ['periodId' => $periodId]]);
@@ -232,8 +230,7 @@ class TaxReportService {
 	 * @return array<string,array<string,mixed>> accountNumber => Account object.
 	 */
 	private function fetchAccounts(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$accounts = $objectService
+		$accounts = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

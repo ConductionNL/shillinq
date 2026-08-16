@@ -29,8 +29,8 @@ namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Guards Account lifecycle transitions + closing-account uniqueness.
@@ -45,16 +45,15 @@ class AccountBalanceGuard {
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily so this class stays usable in T1
 	 *                                      before T2's GLLine register exists.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution (C3).
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -102,7 +101,6 @@ class AccountBalanceGuard {
 		// so that "OR absent" (permit) and "computation failed" (deny, fail-closed)
 		// remain two distinct, independently observable outcomes.
 		try {
-			$this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (\Throwable) {
 			$this->logger->debug(
 				'AccountBalanceGuard: ObjectService not present (T1 state) — archive permitted by default',
@@ -116,7 +114,6 @@ class AccountBalanceGuard {
 		// The ObjectService is resolved again inside this guarded block so a failure
 		// to resolve it for the computation path also denies (rather than permits).
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			// Page through all GLLine records in batches to avoid hitting the
 			// default findAll() limit when an account has many postings (L1).
 			$pageSize = 500;
@@ -124,7 +121,7 @@ class AccountBalanceGuard {
 			$lines = [];
 			$batchSize = 0;
 			do {
-				$batch = $objectService
+				$batch = $this->objectService
 					->setRegister($this->getRegisterSlug())
 					->setSchema('GLLine')
 					->findAll(
@@ -183,10 +180,9 @@ class AccountBalanceGuard {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			// No LIMIT: we need ALL closing accounts in the administration so we
 			// can correctly exclude the current record and count the remainder (L2).
-			$existing = $objectService
+			$existing = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('Account')
 				->findAll(

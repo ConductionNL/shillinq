@@ -50,9 +50,9 @@ use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatcher from posted StockMove -> valuation engine + COGS poster.
@@ -75,7 +75,6 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @param FifoValuationService $fifo FIFO engine.
 	 * @param MovingAverageValuationService $average Moving-average engine.
 	 * @param CogsPosterService $cogs COGS poster.
-	 * @param ContainerInterface $container DI for ObjectService lazy resolution.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
@@ -83,9 +82,9 @@ class StockMoveTransitionedListener implements IEventListener {
 		private readonly FifoValuationService $fifo,
 		private readonly MovingAverageValuationService $average,
 		private readonly CogsPosterService $cogs,
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -192,8 +191,7 @@ class StockMoveTransitionedListener implements IEventListener {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryValuation')
 				->findAll(

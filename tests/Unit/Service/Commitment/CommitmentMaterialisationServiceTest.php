@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Commitment;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\MandaatEnforcer;
 use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
@@ -108,12 +109,12 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$budget = new BudgetBlocker(container: $this->container, appConfig: $this->appConfig, logger: $this->logger, mandate: $mandate);
 
 		return new CommitmentMaterialisationService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			mandate: $mandate,
 			budget: $budget,
 			dispatcher: $this->dispatcher,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

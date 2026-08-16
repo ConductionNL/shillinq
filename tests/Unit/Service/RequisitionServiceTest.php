@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\MandaatEnforcer;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -233,11 +234,11 @@ final class RequisitionServiceTest extends TestCase {
 		$budget = new BudgetBlocker(container: $container, appConfig: $this->appConfig, logger: $this->logger, mandate: $mandate);
 
 		return new RequisitionService(
-			container: $container,
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			budgetBlocker: $budget,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

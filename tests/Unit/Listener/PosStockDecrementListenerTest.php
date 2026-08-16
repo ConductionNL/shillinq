@@ -94,6 +94,7 @@ if (class_exists(\OCA\Pipelinq\Event\PosStockMovedEvent::class, false) === false
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Pipelinq\Event\PosStockMovedEvent;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
@@ -269,12 +270,12 @@ class PosStockDecrementListenerTest extends TestCase {
 		);
 
 		$this->listener = new PosStockDecrementListener(
-			container: $this->container,
 			dispatchService: $this->dispatchService,
 			appConfig: $this->appConfig,
 			groupManager: $this->groupManager,
 			notificationMgr: $this->notificationMgr,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end setUpListener()
 
@@ -825,16 +826,22 @@ class PosStockDecrementListenerTest extends TestCase {
 		// Real business-logic classes throughout — nothing about the
 		// existing decrement + valuation + COGS pipeline is mocked or
 		// reimplemented.
-		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger);
-		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger);
-		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger);
+		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
+		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
+		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 		$stockMoveListener = new StockMoveTransitionedListener(
 			fifo: $fifo,
 			average: $average,
 			cogs: $cogs,
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(
@@ -842,6 +849,7 @@ class PosStockDecrementListenerTest extends TestCase {
 			appConfig: $appConfig,
 			logger: $logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$groupManager = $this->createMock(IGroupManager::class);
@@ -849,12 +857,12 @@ class PosStockDecrementListenerTest extends TestCase {
 		$notificationMgr = $this->createMock(IManager::class);
 
 		$posListener = new PosStockDecrementListener(
-			container: $container,
 			dispatchService: $dispatchService,
 			appConfig: $appConfig,
 			groupManager: $groupManager,
 			notificationMgr: $notificationMgr,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		// Step 1: a POS sale of 4 units of SKU-1001 -> expect exactly one new

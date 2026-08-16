@@ -52,8 +52,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Ledger-replay valuation reporting (as-of-date / ageing / turnover).
@@ -70,14 +70,13 @@ class InventoryValuationReportService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -511,7 +510,6 @@ class InventoryValuationReportService {
 	 * @return array<string,array<int,array<string,mixed>>>
 	 */
 	private function groupedMoves(string $administrationId, string $cutoff, ?string $sku, ?string $warehouse): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$filters = [
 			'administrationId' => $administrationId,
 			'lifecycleState' => 'posted',
@@ -520,7 +518,7 @@ class InventoryValuationReportService {
 			$filters['itemId'] = $sku;
 		}
 
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(['filters' => $filters]);
@@ -609,8 +607,7 @@ class InventoryValuationReportService {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function rawMoves(array $filters): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(['filters' => $filters]);
@@ -638,8 +635,7 @@ class InventoryValuationReportService {
 	 */
 	private function methodFor(string $administrationId, string $sku, string $warehouse): string {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryValuation')
 				->findAll(

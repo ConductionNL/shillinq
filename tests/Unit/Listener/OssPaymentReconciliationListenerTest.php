@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
@@ -89,9 +90,9 @@ class OssPaymentReconciliationListenerTest extends TestCase {
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		$resolver = new OssRecordResolver(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$this->schemaResolver = $this->createMock(ListenerSchemaResolver::class);

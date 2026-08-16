@@ -36,8 +36,8 @@ use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Document-register helper service (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009).
@@ -73,14 +73,13 @@ class WbsoDocumentService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container; OR ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config (register slug).
 	 * @param IUserSession $userSession Authenticated session (createdBy).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -92,8 +91,7 @@ class WbsoDocumentService {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function getDocumentsByAdministration(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Document')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -160,9 +158,8 @@ class WbsoDocumentService {
 
 		$this->validateDocumentPayload(payload: $payload);
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Document')
 			->saveObject($payload);
@@ -204,9 +201,8 @@ class WbsoDocumentService {
 		$document['filedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 		$document['filedBy'] = $approver;
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Document')
 			->saveObject($document);
@@ -254,9 +250,8 @@ class WbsoDocumentService {
 		$document['archivedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 		$document['archivalReason'] = $reason;
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		return $objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('Document')
 			->saveObject($document);

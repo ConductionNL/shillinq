@@ -36,6 +36,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCP\IAppConfig;
@@ -406,11 +407,11 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 		);
 
 		return new PurchaseOrderApprovalService(
-			container: $container,
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			userSession: $userSession,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

@@ -44,8 +44,8 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * GET ICP ledger / reconciliation / periodicity endpoints.
@@ -68,7 +68,6 @@ class IcpController extends Controller {
 	 * @param IcpFilingService $filingService The ICP filing write service (correction + export).
 	 * @param ViesService $viesService The VIES validation service.
 	 * @param ArInvoiceIcpPdfRenderer $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
@@ -80,9 +79,9 @@ class IcpController extends Controller {
 		private readonly IcpFilingService $filingService,
 		private readonly ViesService $viesService,
 		private readonly ArInvoiceIcpPdfRenderer $pdfRenderer,
-		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -474,9 +473,7 @@ class IcpController extends Controller {
 	 * @return array{invoice:?array<string,mixed>,customer:array<string,mixed>,seller:array<string,mixed>}
 	 */
 	private function loadInvoiceContext(string $invoiceId, string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-		$invoices = $objectService
+		$invoices = $this->objectService
 			->setRegister('shillinq')
 			->setSchema('ARInvoice')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -499,7 +496,7 @@ class IcpController extends Controller {
 		$customer = [];
 		$customerKey = trim((string)($invoice['customerId'] ?? ''));
 		if ($customerKey !== '') {
-			$candidates = $objectService
+			$candidates = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('CustomerMaster')
 				->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -517,7 +514,7 @@ class IcpController extends Controller {
 		}
 
 		$seller = [];
-		$administrations = $objectService
+		$administrations = $this->objectService
 			->setRegister('shillinq')
 			->setSchema('Administration')
 			->findAll(['filters' => []]);

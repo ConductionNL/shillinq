@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Detects innovatiebox/GL cost duplication (doorsnijdingsverbod, REQ-IBA-004).
@@ -52,7 +52,6 @@ class DoorsnijdingsVerbodValidator {
 	/**
 	 * Construct the validator with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param InnovatieboxAuditEventLogger|null $auditLogger Optional audit-event logger. When
@@ -64,8 +63,8 @@ class DoorsnijdingsVerbodValidator {
 	 *                                                       OpenRegister event chain.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly ?InnovatieboxAuditEventLogger $auditLogger = null,
 	) {
 	}//end __construct()
@@ -199,8 +198,7 @@ class DoorsnijdingsVerbodValidator {
 	 * @return array<int,array<string,mixed>> Exclusive allocation rows.
 	 */
 	private function fetchExclusiveAllocations(string $administrationId, int $financialYear): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IBExpenseAllocation')
 			->findAll(

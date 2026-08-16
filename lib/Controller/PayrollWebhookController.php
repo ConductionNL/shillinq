@@ -42,8 +42,8 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Receives signed external-payroll CloudEvents and reflects deductions onto Payroll.
@@ -66,14 +66,13 @@ class PayrollWebhookController extends Controller {
 	 *
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $appConfig App config (shared secret + register slug).
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for audit and fail-closed diagnostics.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IAppConfig $appConfig,
-		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -212,10 +211,9 @@ class PayrollWebhookController extends Controller {
 	 * @return array<string,mixed>|null Summary on success, null when the payroll is unknown.
 	 */
 	private function applyEvent(string $eventId, string $payrollId, array $data): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$payrolls = $objectService
+		$payrolls = $this->objectService
 			->setRegister($register)
 			->setSchema('Payroll')
 			->findAll(['filters' => ['id' => $payrollId]]);
@@ -260,7 +258,7 @@ class PayrollWebhookController extends Controller {
 				$rate = (float)$deduction['rate'];
 			}
 
-			$objectService
+			$this->objectService
 				->setRegister($register)
 				->setSchema('Deduction')
 				->saveObject(
@@ -281,7 +279,7 @@ class PayrollWebhookController extends Controller {
 		// Reflect the external calculation and stamp the idempotency reference.
 		$payroll['status'] = 'calculated';
 		$payroll['externalReference'] = $eventId;
-		$objectService
+		$this->objectService
 			->setRegister($register)
 			->setSchema('Payroll')
 			->saveObject($payroll);

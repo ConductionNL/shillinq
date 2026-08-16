@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\ComplianceValidator;
 use OCP\IAppConfig;
@@ -92,9 +93,9 @@ class ComplianceValidatorTest extends TestCase {
 			->willReturn('shillinq');
 
 		$this->validator = new ComplianceValidator(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

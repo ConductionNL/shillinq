@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\ObligationTaskBridge;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -75,6 +76,7 @@ class ObligationTaskBridgeTest extends TestCase {
 		$this->bridge = new ObligationTaskBridge(
 			container: $this->container,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end setUp()
 

@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Reads programmabegroting data and produces sluitend-status and exports.
@@ -45,17 +45,16 @@ class ProgrammabegrotingService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is
 	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param SluitendCalculator $sluitend Computes the sluitend-flags and toezichtregime.
 	 * @param ProgrammabegrotingExporter $exporter Produces iv3 / EMU / JSON export shapes.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly SluitendCalculator $sluitend,
 		private readonly ProgrammabegrotingExporter $exporter,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -171,10 +170,9 @@ class ProgrammabegrotingService {
 	 * @return array<int,array<string,mixed>> The matching rows.
 	 */
 	private function fetchMany(string $schema, array $filters): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$rows = $objectService->setRegister($register)->setSchema($schema)->findAll(['filters' => $filters]);
+		$rows = $this->objectService->setRegister($register)->setSchema($schema)->findAll(['filters' => $filters]);
 		$result = [];
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {

@@ -55,9 +55,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative FIFO cost layer engine driving {@see CogsPosterService}.
@@ -73,14 +73,13 @@ class FifoValuationService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -438,8 +437,7 @@ class FifoValuationService {
 		string $warehouse,
 		string $administrationId,
 	): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(
@@ -493,8 +491,7 @@ class FifoValuationService {
 		string $administrationId,
 		?string $excludeMoveUuid = null,
 	): float {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(
@@ -542,8 +539,7 @@ class FifoValuationService {
 		string $warehouse,
 		string $administrationId,
 	): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$existing = $objectService
+		$existing = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryValuation')
 			->findAll(
@@ -589,8 +585,7 @@ class FifoValuationService {
 	 * @return array<string,mixed> Persisted snapshot (with id).
 	 */
 	private function saveValuation(array $data): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema('InventoryValuation')
 			->saveObject($data);

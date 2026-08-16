@@ -68,9 +68,9 @@ use OCA\Shillinq\Lifecycle\MandaatEnforcer;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Assembles a Verplichting + Verplichtingsregels from an approved
@@ -90,7 +90,6 @@ class CommitmentMaterialisationService {
 	/**
 	 * Construct the service with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param MandaatEnforcer $mandate Reused mandate-sufficiency guard (REQ-VPL-002).
 	 * @param BudgetBlocker $budget Reused budget-room guard (REQ-VPL-001).
@@ -98,12 +97,12 @@ class CommitmentMaterialisationService {
 	 * @param LoggerInterface $logger Logger for fail-soft/fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly MandaatEnforcer $mandate,
 		private readonly BudgetBlocker $budget,
 		private readonly IEventDispatcher $dispatcher,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -532,16 +531,15 @@ class CommitmentMaterialisationService {
 	 * @return array<string, mixed> The persisted Verplichting.
 	 */
 	private function persist(array $draft, array $ruleInputs): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		$saved = $objectService
+		$saved = $this->objectService
 			->setRegister(register: $this->getRegisterSlug())
 			->setSchema(schema: 'Verplichting')
 			->saveObject(object: $draft);
 
 		$ruleNumber = 1;
 		foreach ($ruleInputs as $rule) {
-			$objectService
+			$this->objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'Verplichtingsregel')
 				->saveObject(
@@ -585,8 +583,7 @@ class CommitmentMaterialisationService {
 			$financialYear = (int)($first['financialYear'] ?? (int)(new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
 			$amount = ((float)($commitment['total_amount_excl_vat'] ?? 0)) / 100;
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService
+			$this->objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'Rechtmatigheidsbevinding')
 				->saveObject(
@@ -705,13 +702,12 @@ class CommitmentMaterialisationService {
 	 */
 	private function findMany(string $schema, array $filters, int $limit = 0): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$query = ['filters' => $filters];
 			if ($limit > 0) {
 				$query['limit'] = $limit;
 			}
 
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: $schema)
 				->findAll($query);

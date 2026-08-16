@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Guards the ARInvoice `issue` transition against the customer credit limit.
@@ -61,15 +61,14 @@ class CreditLimitGuard {
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
 	 *                                      lazily so the class loads even when OR is absent.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -124,11 +123,10 @@ class CreditLimitGuard {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->getRegisterSlug();
 
 			// Resolve the customer to read their credit limit.
-			$customers = $objectService
+			$customers = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('CustomerMaster')
 				->findAll(
@@ -165,7 +163,7 @@ class CreditLimitGuard {
 			// Sum the customer's outstanding receivable, excluding this invoice
 			// (so a re-issue or idempotent retry doesn't double-count itself).
 			$outstandingCents = $this->sumOutstandingCents(
-				objectService: $objectService,
+				objectService: $this->objectService,
 				registerSlug: $registerSlug,
 				customerNumber: $customerNumber,
 				administrationId: $administrationId,

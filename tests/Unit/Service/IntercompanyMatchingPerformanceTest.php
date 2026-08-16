@@ -36,6 +36,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\IntercompanyMatchingCalculator;
 use OCA\Shillinq\Service\IntercompanyMatchingService;
 use OCP\IAppConfig;
@@ -163,7 +164,8 @@ final class IntercompanyMatchingPerformanceTest extends TestCase {
 			$container,
 			$appConfig,
 			new IntercompanyMatchingCalculator(),
-			$logger
+			$logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

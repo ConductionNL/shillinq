@@ -70,9 +70,9 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 06 — single-PO 3-way matching engine.
@@ -211,7 +211,6 @@ class ThreeWayMatchingEngine {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container
 	 *                                      — OR's
 	 *                                      ObjectService
 	 *                                      is fetched
@@ -237,11 +236,11 @@ class ThreeWayMatchingEngine {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly ToleranceProfileService $toleranceService,
 		private readonly SupplierInvoiceService $invoiceService,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly ?ExceptionResolutionService $exceptionResolution = null,
 	) {
 
@@ -1109,8 +1108,7 @@ class ThreeWayMatchingEngine {
 	 */
 	private function saveObject(string $schema, array $object): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->saveObject($object);
@@ -1159,8 +1157,7 @@ class ThreeWayMatchingEngine {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

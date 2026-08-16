@@ -43,8 +43,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Server-authoritative inventory operations for the mobile scanner.
@@ -59,13 +59,12 @@ class InventoryScanService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for register slug resolution.
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -535,8 +534,7 @@ class InventoryScanService {
 	 * @return void
 	 */
 	private function saveObject(string $schema, array $object): void {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->saveObject(
+		$this->objectService->saveObject(
 			object: $object,
 			register: $this->getRegisterSlug(),
 			schema: $schema,
@@ -573,13 +571,12 @@ class InventoryScanService {
 	 */
 	private function findMany(string $schema, array $filters, ?int $limit = null): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$params = ['filters' => $filters];
 			if ($limit !== null) {
 				$params['limit'] = $limit;
 			}
 
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: $schema)
 				->findAll($params);

@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\CogsPosterService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -68,9 +69,9 @@ final class CogsPosterServiceTest extends TestCase {
 		$logger ??= $this->createStub(LoggerInterface::class);
 
 		return new CogsPosterService(
-			container: $container,
 			appConfig: $appConfig,
 			logger: $logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeService()

@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\TrialBalanceCalculator;
 use OCA\Shillinq\Service\TrialBalanceService;
 use OCP\IAppConfig;
@@ -80,9 +81,9 @@ final class TrialBalancePerformanceTest extends TestCase {
 		$container->method('get')->willReturn($stub);
 
 		$service = new TrialBalanceService(
-			container: $container,
 			appConfig: $appConfig,
 			calculator: new TrialBalanceCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 		$startedAt = microtime(true);

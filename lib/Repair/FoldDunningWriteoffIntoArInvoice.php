@@ -57,8 +57,8 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that folds DunningRun + OninbaarAfschrijving onto ARInvoice.
@@ -74,13 +74,12 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 * @param SettingsService $settingsService The settings service (register slug).
 	 * @param IGroupManager $groupManager The group manager (admin IUser resolution).
 	 * @param LoggerInterface $logger The logger interface.
-	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
 		private SettingsService $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -104,14 +103,13 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 			$actingUser = $this->resolveAdminUser();
 
 			// Stream every OninbaarAfschrijving write-off row. RBAC +
 			// multi-tenancy are bypassed: the repair runs in the
 			// installer/upgrade context with no authenticated session.
-			$writeOffs = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'OninbaarAfschrijving');
+			$writeOffs = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'OninbaarAfschrijving');
 
 			if ($writeOffs === []) {
 				$output->info('Shillinq: no OninbaarAfschrijving rows — ARInvoice writeOff/dunning fold skipped.');
@@ -193,7 +191,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 				// Derive the dunning summary from the latest DunningRun for
 				// this factuurId. Absent any run, dunning is left null.
 				$dunning = $this->deriveDunningSummary(
-					objectService: $objectService,
+					objectService: $this->objectService,
 					registerSlug: $registerSlug,
 					invoiceId: $invoiceId
 				);
@@ -201,7 +199,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 					$invoiceArr['dunning'] = $dunning;
 				}
 
-				$objectService->saveObject(
+				$this->objectService->saveObject(
 					object: $invoiceArr,
 					register: $registerSlug,
 					schema: 'ARInvoice',

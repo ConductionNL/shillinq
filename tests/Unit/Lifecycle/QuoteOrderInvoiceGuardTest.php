@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\QuoteOrderInvoiceGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -82,9 +83,9 @@ class QuoteOrderInvoiceGuardTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
 		$this->guard = new QuoteOrderInvoiceGuard(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end setUp()

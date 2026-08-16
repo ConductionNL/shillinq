@@ -41,9 +41,9 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\RequisitionConversionGuard;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Materialises an approved Requisition into a PurchaseOrder (REQ-REQ-005).
@@ -54,7 +54,6 @@ class RequisitionConversionService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService
 	 *                                      is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
@@ -65,12 +64,12 @@ class RequisitionConversionService {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly RequisitionConversionGuard $guard,
 		private readonly PurchaseOrderService $purchaseOrderService,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -187,8 +186,7 @@ class RequisitionConversionService {
 	 */
 	private function saveObject(string $schema, array $object): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->saveObject($object);
@@ -237,8 +235,7 @@ class RequisitionConversionService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);

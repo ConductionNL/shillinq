@@ -42,8 +42,8 @@ namespace OCA\Shillinq\Lifecycle;
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Statutory termijn guards for the bezwaar/beroep workflow.
@@ -64,14 +64,13 @@ class ObjectionPeriodGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -194,13 +193,12 @@ class ObjectionPeriodGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
 		// 'DefinitieveAanslag' and the 'taxReturn' filter key are the data
 		// contract — the registered schema title and one of its property
 		// columns. Both move with the schema rename and its migration.
-		$assessments = $objectService
+		$assessments = $this->objectService
 			->setRegister($register)
 			->setSchema('DefinitieveAanslag')
 			->findAll(['filters' => ['taxReturn' => $taxReturnId]]);
@@ -227,10 +225,9 @@ class ObjectionPeriodGuard {
 			return null;
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->resolveRegister();
 
-		$objects = $objectService
+		$objects = $this->objectService
 			->setRegister($register)
 			->setSchema($schema)
 			->findAll(['filters' => ['id' => $id]]);

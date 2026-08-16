@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes per-contract revenue cut-off balances and waterfall rows.
@@ -60,14 +60,13 @@ class RevenueCutoffService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param RevenueRecognitionCalculator $calculator Pure-logic IFRS 15 arithmetic helper.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly RevenueRecognitionCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -141,8 +140,7 @@ class RevenueCutoffService {
 	 * @return array<string,array<string,mixed>> contractNumber => Contract object.
 	 */
 	private function fetchContracts(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$contracts = $objectService
+		$contracts = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Contract')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -167,8 +165,7 @@ class RevenueCutoffService {
 	 * @return array<string,array{cumulative:float,period:float}> contractId => recognised amounts.
 	 */
 	private function recognisedByContract(string $administrationId, string $periodEnd): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$events = $objectService
+		$events = $this->objectService
 			->setRegister($this->register())
 			->setSchema('RevenueRecognitionEvent')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
@@ -216,8 +213,7 @@ class RevenueCutoffService {
 	 * @return array<string,float> contractId => total allocated price.
 	 */
 	private function allocatedByContract(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$allocations = $objectService
+		$allocations = $this->objectService
 			->setRegister($this->register())
 			->setSchema('PriceAllocation')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);

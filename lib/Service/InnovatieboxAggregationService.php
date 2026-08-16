@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes the per-asset innovatiebox Vpb roll-up (REQ-IBA-006).
@@ -47,7 +47,6 @@ class InnovatieboxAggregationService {
 	/**
 	 * Construct the aggregation service.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is
 	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param CarryForwardLossService $lossService Loss-offset arithmetic helper.
@@ -57,10 +56,10 @@ class InnovatieboxAggregationService {
 	 *                                            status='valid' is now stale (REQ-IBA-001).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly CarryForwardLossService $lossService,
 		private readonly QualifyingAssetValidator $validator,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -209,8 +208,7 @@ class InnovatieboxAggregationService {
 	 * @return array<int,array<string,mixed>> Valid assets.
 	 */
 	private function fetchValidAssets(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('QualifyingAsset')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'status' => 'valid']]);
@@ -246,8 +244,7 @@ class InnovatieboxAggregationService {
 	 * @return array<int,array<string,mixed>> Attribution rows.
 	 */
 	private function fetchAttributions(string $administrationId, int $financialYear): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IBProfitAttribution')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $financialYear]]);
@@ -267,8 +264,7 @@ class InnovatieboxAggregationService {
 	 * @return array<int,array<string,mixed>> Open loss rows.
 	 */
 	private function fetchOpenLosses(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('CarryForwardLoss')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'status' => 'open']]);

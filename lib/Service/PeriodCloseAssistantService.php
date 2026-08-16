@@ -47,7 +47,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Detects incomplete pre-close tasks and formats them as close-assistant flags.
@@ -58,14 +58,13 @@ class PeriodCloseAssistantService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param SuspenseAgeingService $suspenseAgeing Aged suspense worklist source (REQ-PCG-002).
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly SuspenseAgeingService $suspenseAgeing,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -120,10 +119,9 @@ class PeriodCloseAssistantService {
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
 	 */
 	public function detectOpenSubLedger(string $administrationId, string $periodId, string $subLedgerType): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
-		$transactions = $objectService
+		$transactions = $this->objectService
 			->setRegister($register)
 			->setSchema('GLTransaction')
 			->findAll(
@@ -148,7 +146,7 @@ class PeriodCloseAssistantService {
 			return ['count' => 0, 'total' => 0.0];
 		}
 
-		$lines = $objectService
+		$lines = $this->objectService
 			->setRegister($register)
 			->setSchema('GLLine')
 			->findAll(
@@ -196,17 +194,16 @@ class PeriodCloseAssistantService {
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
 	 */
 	public function detectUnreconciledBankReceipts(string $administrationId, string $periodId, string $endDate = ''): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$register = $this->register();
 
-		$statements = $objectService
+		$statements = $this->objectService
 			->setRegister($register)
 			->setSchema('BankStatement')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
 		// Posted GL transactions for the period — their sourceReference set lets
 		// us recognise statements that have already been reconciled / posted.
-		$posted = $objectService
+		$posted = $this->objectService
 			->setRegister($register)
 			->setSchema('GLTransaction')
 			->findAll(
@@ -259,9 +256,7 @@ class PeriodCloseAssistantService {
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
 	 */
 	public function detectOutstandingExpenseClaims(string $administrationId): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-		$claims = $objectService
+		$claims = $this->objectService
 			->setRegister($this->register())
 			->setSchema('ExpenseClaimEntry')
 			->findAll(

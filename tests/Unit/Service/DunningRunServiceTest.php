@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
@@ -105,6 +106,7 @@ final class DunningRunServiceTest extends TestCase {
 			container: $container,
 			appConfig: $appConfig,
 			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end makeService()

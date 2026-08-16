@@ -31,8 +31,8 @@ namespace OCA\Shillinq\Consolidation;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Guards financial-statement lifecycle transitions.
@@ -48,14 +48,13 @@ class ConsolidationGuard {
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -105,8 +104,7 @@ class ConsolidationGuard {
 			// findObject() does not exist — it raised an Error that the
 			// \Throwable arm below swallowed into `return false`, so this
 			// guard denied EVERY finalise without ever reading a FiscalYear.
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$fiscalYear = $objectService->find(
+			$fiscalYear = $this->objectService->find(
 				id: $fiscalYearId,
 				register: $this->getRegisterSlug(),
 				schema: 'FiscalYear'
@@ -161,8 +159,7 @@ class ConsolidationGuard {
 
 		try {
 			// ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$consolidationGroup = $objectService->find(
+			$consolidationGroup = $this->objectService->find(
 				id: $consolidationGroupId,
 				register: $this->getRegisterSlug(),
 				schema: 'ConsolidationGroup'
@@ -182,7 +179,7 @@ class ConsolidationGuard {
 			}
 
 			foreach ($administrationIds as $administrationId) {
-				$balanceSheets = $objectService
+				$balanceSheets = $this->objectService
 					->setRegister($this->getRegisterSlug())
 					->setSchema('BalanceSheet')
 					->findAll(

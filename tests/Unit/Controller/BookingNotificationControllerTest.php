@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\BookingNotificationController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BookingNotificationService;
@@ -127,11 +128,11 @@ class BookingNotificationControllerTest extends TestCase {
 		$this->controller = new BookingNotificationController(
 			request: $this->request,
 			settingsService: $this->settingsService,
-			container: $this->container,
 			groupManager: $this->groupManager,
 			userSession: $this->userSession,
 			logger: $this->logger,
 			administrationContext: $this->administrationContext,
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end setUp()
 

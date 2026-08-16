@@ -48,8 +48,8 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * HTTP API for BillableInvoice drafting + posting.
@@ -61,7 +61,6 @@ class InvoiceApiController extends Controller {
 	 * @param IRequest $request Request.
 	 * @param InvoiceGenerationService $service Drafting/posting service.
 	 * @param InvoicePdfGenerator $pdfGenerator PDF/HTML renderer.
-	 * @param ContainerInterface $container DI container.
 	 * @param IUserSession $session User session.
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
 	 * @param LoggerInterface $logger Logger.
@@ -70,10 +69,10 @@ class InvoiceApiController extends Controller {
 		IRequest $request,
 		private readonly InvoiceGenerationService $service,
 		private readonly InvoicePdfGenerator $pdfGenerator,
-		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -140,8 +139,7 @@ class InvoiceApiController extends Controller {
 				$filters['status'] = $status;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$all = $objectService
+			$all = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoice')
 				->findAll(['filters' => $filters]);
@@ -174,22 +172,25 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-			$invoice = $objectService
+			$found = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoice')
 				->find($invoiceId);
 
-			if (is_array($invoice) === false) {
+			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
+
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 			}
 
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoiceLine')
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
@@ -229,12 +230,15 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$invoice = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
-			if (is_array($invoice) === false) {
+			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
+
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
@@ -273,18 +277,21 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$invoice = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
-			if (is_array($invoice) === false) {
+			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
+
+			// find() hands back an entity; everything below this line reads the
+			// invoice as an array, so normalise once here rather than at each use.
+			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 			}
 
-			$lines = $objectService
+			$lines = $this->objectService
 				->setRegister('shillinq')
 				->setSchema('BillableInvoiceLine')
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);

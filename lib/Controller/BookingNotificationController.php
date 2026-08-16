@@ -36,8 +36,8 @@ use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REST endpoints for notification trigger configuration and admin monitoring.
@@ -54,7 +54,6 @@ class BookingNotificationController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param SettingsService $settingsService The settings service.
-	 * @param ContainerInterface $container The DI container.
 	 * @param IGroupManager $groupManager The group manager.
 	 * @param IUserSession $userSession The user session.
 	 * @param LoggerInterface $logger The logger.
@@ -65,11 +64,11 @@ class BookingNotificationController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private SettingsService $settingsService,
-		private ContainerInterface $container,
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
 		private AdministrationContextService $administrationContext,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -92,10 +91,9 @@ class BookingNotificationController extends Controller {
 		$this->authorizeBookingAccess(bookingId: $id);
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
-			$triggers = $objectService
+			$triggers = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('BookingNotificationTrigger')
 				->findAll(['filters' => ['bookingId' => $id], 'limit' => 100]);
@@ -132,13 +130,12 @@ class BookingNotificationController extends Controller {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
 			$saved = [];
 			foreach ($data['triggers'] as $triggerData) {
 				$triggerData['bookingId'] = $id;
-				$saved[] = $objectService->saveObject(
+				$saved[] = $this->objectService->saveObject(
 					object: $triggerData,
 					register: $registerSlug,
 					schema: 'BookingNotificationTrigger',
@@ -167,22 +164,21 @@ class BookingNotificationController extends Controller {
 	#[NoCSRFRequired]
 	public function getNotificationMonitor(): JSONResponse {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
 			$todayStart = (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('c');
 			$weekStart = (new DateTimeImmutable('-7 days', new DateTimeZone('UTC')))->format('c');
 			$monthStart = (new DateTimeImmutable('-30 days', new DateTimeZone('UTC')))->format('c');
 
-			$todayDeliveries = $objectService
+			$todayDeliveries = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('NotificationDelivery')
 				->findAll(['filters' => ['sentAt[gte]' => $todayStart], 'limit' => 1000]);
-			$weekDeliveries = $objectService
+			$weekDeliveries = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('NotificationDelivery')
 				->findAll(['filters' => ['sentAt[gte]' => $weekStart], 'limit' => 5000]);
-			$monthDeliveries = $objectService
+			$monthDeliveries = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('NotificationDelivery')
 				->findAll(['filters' => ['sentAt[gte]' => $monthStart], 'limit' => 10000]);
@@ -223,10 +219,9 @@ class BookingNotificationController extends Controller {
 	#[AuthorizedAdminSetting(Application::APP_ID)]
 	public function disableAllTriggers(): JSONResponse {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
-			$triggers = $objectService
+			$triggers = $this->objectService
 				->setRegister($registerSlug)
 				->setSchema('BookingNotificationTrigger')
 				->findAll(['filters' => ['active' => true], 'limit' => 1000]);
@@ -234,7 +229,7 @@ class BookingNotificationController extends Controller {
 			$disabled = 0;
 			foreach ($triggers as $trigger) {
 				$trigger['active'] = false;
-				$objectService->saveObject(
+				$this->objectService->saveObject(
 					object: $trigger,
 					register: $registerSlug,
 					schema: 'BookingNotificationTrigger',
@@ -289,14 +284,13 @@ class BookingNotificationController extends Controller {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
 			// ADR-022: the real ObjectService API is find()/findAll().
 			// findObject() does not exist — calling it raised an Error that the
 			// \Throwable arm below turned into a blanket 403, so this guard
 			// denied EVERY non-admin instead of checking anything.
-			$booking = $objectService->find(
+			$booking = $this->objectService->find(
 				id: $bookingId,
 				register: $registerSlug,
 				schema: 'Booking'

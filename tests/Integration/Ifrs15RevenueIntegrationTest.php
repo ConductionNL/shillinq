@@ -54,6 +54,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Integration;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\RevenueCutoffService;
 use OCA\Shillinq\Service\RevenueRecognitionCalculator;
 use OCP\IAppConfig;
@@ -247,9 +248,9 @@ final class Ifrs15RevenueIntegrationTest extends TestCase {
 		$this->container->method('get')->willReturn($stub);
 
 		return new RevenueCutoffService(
-			container: $this->container,
 			appConfig: $this->appConfig,
 			calculator: new RevenueRecognitionCalculator(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 
 	}//end buildService()

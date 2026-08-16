@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\WbsoAccountService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -162,7 +163,9 @@ final class WbsoAccountServiceTest extends TestCase {
 
 		$this->container->method('get')->willReturn($stub);
 
-		return new WbsoAccountService(container: $this->container, appConfig: $this->appConfig);
+		return new WbsoAccountService(container: $this->container, appConfig: $this->appConfig,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 	}//end buildService()
 
 	/**
