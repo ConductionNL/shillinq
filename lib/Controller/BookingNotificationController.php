@@ -58,6 +58,7 @@ class BookingNotificationController extends Controller {
 	 * @param IUserSession $userSession The user session.
 	 * @param LoggerInterface $logger The logger.
 	 * @param AdministrationContextService $administrationContext The administration membership seam.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

@@ -82,12 +82,14 @@ if (class_exists(\OCA\Decidesk\Event\DecisionConcludedEvent::class, false) === f
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\Decidesk\Event\DecisionConcludedEvent;
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
 /**
@@ -98,12 +100,11 @@ use Psr\Log\NullLogger;
 final class SignoffDecisionConcludedListenerTest extends TestCase {
 
 	/**
-	 * Recording fake ObjectService: captures find() lookups and updateObject()
-	 * writes, and returns a configured object for the matching id.
+	 * Every updateObject() write the listener issued, as ['id' => …] + payload.
 	 *
-	 * @var object
+	 * @var array<int,array<string,mixed>>
 	 */
-	private object $objectService;
+	private array $updates = [];
 
 	/**
 	 * Build the SUT wired to the recording ObjectService.
@@ -113,75 +114,35 @@ final class SignoffDecisionConcludedListenerTest extends TestCase {
 	 * @return SignoffDecisionConcludedListener
 	 */
 	private function makeListener(?array $found): SignoffDecisionConcludedListener {
-		$this->objectService = new class($found) {
+		$this->updates = [];
 
-			/**
-			 * @var array<string,mixed>|null
-			 */
-			private ?array $found;
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('find')->willReturnCallback(
+			static function () use ($found): ?ObjectEntityInterface {
+				if ($found === null) {
+					return null;
+				}
 
-			/**
-			 * @var array<int,array<string,mixed>>
-			 */
-			public array $updates = [];
-
-			/**
-			 * @param array<string,mixed>|null $found
-			 */
-			public function __construct(?array $found) {
-				$this->found = $found;
-			}//end __construct()
-
-			public function setRegister(string $r): self {
-				return $this;
-			}//end setRegister()
-
-			public function setSchema(string $s): self {
-				return $this;
-			}//end setSchema()
-
-			/**
-			 * @return array<string,mixed>|null
-			 */
-			public function find(string $id): ?array {
-				return $this->found;
-			}//end find()
-
-			/**
-			 * @param array<string,mixed> $updates
-			 */
-			public function updateObject(string $id, array $updates): void {
-				$this->updates[] = ['id' => $id] + $updates;
-			}//end updateObject()
-		};
-
-		$svc = $this->objectService;
-
-		$container = new class($svc) implements ContainerInterface {
-
-			private object $svc;
-
-			public function __construct(object $svc) {
-				$this->svc = $svc;
-			}//end __construct()
-
-			public function get(string $id): mixed {
-				return $this->svc;
-			}//end get()
-
-			public function has(string $id): bool {
-				return true;
-			}//end has()
-		};
+				return (new ObjectEntity())->setObject($found);
+			}
+		);
+		$objectService->method('updateObject')->willReturnCallback(
+			function (string $objectId, array $data): ObjectEntityInterface {
+				$this->updates[] = ['id' => $objectId] + $data;
+				return new ObjectEntity();
+			}
+		);
 
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new SignoffDecisionConcludedListener(
-			$container,
 			$settings,
 			new SignoffDecisionService($settings, $this->createMock(IEventDispatcher::class), new NullLogger()),
 			new NullLogger(),
+			$objectService,
 		);
 
 	}//end makeListener()
@@ -205,7 +166,7 @@ final class SignoffDecisionConcludedListenerTest extends TestCase {
 			)
 		);
 
-		$this->assertCount(0, $this->objectService->updates);
+		$this->assertCount(0, $this->updates);
 
 	}//end testForeignSourceAppIsIgnored()
 
@@ -228,10 +189,10 @@ final class SignoffDecisionConcludedListenerTest extends TestCase {
 			)
 		);
 
-		$this->assertCount(1, $this->objectService->updates);
-		$this->assertSame('approved', $this->objectService->updates[0]['decisionOutcome']);
-		$this->assertSame('dec-1', $this->objectService->updates[0]['decisionRef']);
-		$this->assertTrue($this->objectService->updates[0]['signoffGateOpen']);
+		$this->assertCount(1, $this->updates);
+		$this->assertSame('approved', $this->updates[0]['decisionOutcome']);
+		$this->assertSame('dec-1', $this->updates[0]['decisionRef']);
+		$this->assertTrue($this->updates[0]['signoffGateOpen']);
 
 	}//end testApprovedProjectsOutcomeAndOpensGate()
 
@@ -254,9 +215,9 @@ final class SignoffDecisionConcludedListenerTest extends TestCase {
 			)
 		);
 
-		$this->assertCount(1, $this->objectService->updates);
-		$this->assertSame('rejected', $this->objectService->updates[0]['decisionOutcome']);
-		$this->assertArrayNotHasKey('signoffGateOpen', $this->objectService->updates[0]);
+		$this->assertCount(1, $this->updates);
+		$this->assertSame('rejected', $this->updates[0]['decisionOutcome']);
+		$this->assertArrayNotHasKey('signoffGateOpen', $this->updates[0]);
 
 	}//end testRejectedProjectsOutcomeWithoutGate()
 
@@ -279,7 +240,7 @@ final class SignoffDecisionConcludedListenerTest extends TestCase {
 			)
 		);
 
-		$this->assertCount(0, $this->objectService->updates);
+		$this->assertCount(0, $this->updates);
 
 	}//end testWithdrawnStatusIsIgnored()
 
@@ -302,7 +263,7 @@ final class SignoffDecisionConcludedListenerTest extends TestCase {
 			)
 		);
 
-		$this->assertCount(0, $this->objectService->updates);
+		$this->assertCount(0, $this->updates);
 
 	}//end testMissingObjectIsSkippedFailSoft()
 }//end class

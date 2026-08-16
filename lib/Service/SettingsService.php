@@ -388,10 +388,138 @@ class SettingsService {
 
 		if (($result['success'] ?? false) === true) {
 			$result['administrationCode'] = $this->readDefaultAdministrationCode();
+			$result['membership'] = $this->grantDefaultAdministrationMembership(
+				administrationCode: $result['administrationCode']
+			);
 		}
 
 		return $result;
 	}//end seedDefaultAdministration()
+
+	/**
+	 * Grant the operator running first-time setup a membership on an administration.
+	 *
+	 * WHY THIS EXISTS (shillinq#569). Seeding an Administration record is not
+	 * enough to make it usable: access is granted by an AdministrationMembership
+	 * (REQ-MA-003), and NOTHING in the codebase created one. So every fresh
+	 * install finished setup with `completed: true` and
+	 * `GET /api/administrations/context` returning `administrations: []` — for
+	 * every user, on every install — leaving every administration-scoped surface
+	 * unreachable with no error anywhere.
+	 *
+	 * Role `eigenaar` with posting and closing rights: the caller has already
+	 * passed `AuthorizedAdminSetting`, and an operator who provisions the default
+	 * administration is its owner. Only the CALLING user is granted — this is not
+	 * a broadcast to every account.
+	 *
+	 * ⚠️ The membership is written against the **administrationCode**, NOT the
+	 * OpenRegister uuid, even though the uuid is the more "correct" identifier.
+	 * `buildContext()` echoes this value back as `activeAdministrationId`, and
+	 * consumers downstream already run on the code: the `administration_id`
+	 * app-config holds `ADM-001` and ~20 call sites scope on it, and
+	 * `tests/e2e/ci-seed.sh` stamps its booking fixtures with
+	 * `activeAdministrationId`, falling back to the literal `ADM-001` when the
+	 * context is empty. Writing the uuid here would silently switch that value
+	 * from a code to a uuid and strand every fixture the seed created.
+	 *
+	 * `findAdministration()` resolves either id space, so this is a choice about
+	 * which one the rest of the system sees — and the answer is the one it
+	 * already uses.
+	 *
+	 * Idempotent: a membership for the same (userId, administrationId) is left
+	 * alone, so re-running setup never duplicates or downgrades an existing grant.
+	 * Never throws — a failure here is reported in the result and logged, and must
+	 * not turn a successful seed into a failed setup action.
+	 *
+	 * @param string $administrationCode The administrationCode of the seeded administration.
+	 *
+	 * @return array<string,mixed> `{ granted: bool, reason?: string, administrationId?: string }`.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+	 */
+	private function grantDefaultAdministrationMembership(string $administrationCode): array {
+		if ($administrationCode === '') {
+			return ['granted' => false, 'reason' => 'no administrationCode'];
+		}
+
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return ['granted' => false, 'reason' => 'no authenticated user'];
+		}
+
+		$userId = $user->getUID();
+
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registerSlug = $this->getRegisterSlug();
+
+			// Confirm the administration exists before granting anything, by the
+			// administrationCode — a real JSON property, and therefore filterable.
+			// Filtering on `id` here would match nothing (see findAdministration()).
+			$administrations = $objectService
+				->setRegister($registerSlug)
+				->setSchema('Administration')
+				->findAll(
+					[
+						'filters' => ['administrationCode' => $administrationCode],
+						'limit' => 1,
+					]
+				);
+
+			if (empty($administrations) === true) {
+				return ['granted' => false, 'reason' => 'administration not found: ' . $administrationCode];
+			}
+
+			// The code is the id space the rest of the system runs on — see the
+			// docblock. Deliberately not the uuid.
+			$administrationId = $administrationCode;
+
+			$existing = $objectService
+				->setRegister($registerSlug)
+				->setSchema('AdministrationMembership')
+				->findAll(
+					[
+						'filters' => [
+							'userId' => $userId,
+							'administrationId' => $administrationId,
+						],
+						'limit' => 1,
+					]
+				);
+
+			if (empty($existing) === false) {
+				return ['granted' => false, 'reason' => 'already a member', 'administrationId' => $administrationId];
+			}
+
+			$objectService->saveObject(
+				object: [
+					'userId' => $userId,
+					'administrationId' => $administrationId,
+					'role' => 'eigenaar',
+					'mayPostJournalEntries' => true,
+					'mayCloseFiscalYear' => true,
+					'validFrom' => date('Y-m-d'),
+					'validUntil' => null,
+					'grantedBy' => $userId,
+				],
+				register: $registerSlug,
+				schema: 'AdministrationMembership',
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'SettingsService: failed to grant default administration membership',
+				['userId' => $userId, 'administrationCode' => $administrationCode, 'exception' => $e->getMessage()]
+			);
+			return ['granted' => false, 'reason' => 'exception: ' . $e->getMessage()];
+		}//end try
+
+		$this->logger->info(
+			'SettingsService: granted default administration membership',
+			['userId' => $userId, 'administrationId' => $administrationId]
+		);
+
+		return ['granted' => true, 'administrationId' => $administrationId];
+	}//end grantDefaultAdministrationMembership()
 
 	/**
 	 * Read the `administrationCode` of the bundled default-administration seed.
@@ -653,7 +781,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
 	public function seedBbvAccountMappings(string $administrationId, string $administrationType): array {
-		$municipalTypes = ['municipality', 'province', 'waterAuthority'];
+		$municipalTypes = ['municipality', 'provincie', 'waterschap'];
 		if (in_array($administrationType, $municipalTypes, true) === false) {
 			return [
 				'success' => true,
@@ -2866,7 +2994,7 @@ class SettingsService {
 			$files = [
 				'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
 				'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
-				'abb-example-municipality.json' => ['GeneralInterestDecision', 'besluiten', 'reference'],
+				'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
 				'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
 			];
 

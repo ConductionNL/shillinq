@@ -116,6 +116,7 @@ class PosStockDecrementListener implements IEventListener {
 	 * @param IGroupManager $groupManager Resolves the `admin` group for the audit surface.
 	 * @param IManager $notificationMgr Nextcloud notification manager for the audit surface.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly SalesDispatchStockIssueService $dispatchService,

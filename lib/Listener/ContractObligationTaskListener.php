@@ -55,6 +55,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -62,7 +63,6 @@ use OCA\Shillinq\Service\ObligationTaskBridge;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -93,21 +93,22 @@ class ContractObligationTaskListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR ObjectService pulled
-	 *                                      lazily (avoids a circular DI edge).
 	 * @param SettingsService $settingsService Shillinq settings (register slug).
 	 * @param ObligationTaskBridge $bridge NC Tasks / Deck glue.
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published object
+	 *                                              surface (ADR-084), aliased in
+	 *                                              Application.php.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly SettingsService $settingsService,
 		private readonly ObligationTaskBridge $bridge,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -229,8 +230,7 @@ class ContractObligationTaskListener implements IEventListener {
 			$updates['taskUri'] = (string)$result['taskUri'];
 		}
 
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$objectService
+		$this->objectService
 			->setRegister($this->settingsService->getRegisterSlug())
 			->setSchema(self::SCHEMA)
 			->updateObject($id, $updates);

@@ -42,11 +42,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -82,19 +82,20 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR ObjectService pulled
-	 *                                      lazily.
 	 * @param SettingsService $settingsService Shillinq settings (register slug).
 	 * @param SignoffDecisionService $signoffService The sign-off consumer service.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published object
+	 *                                              surface (ADR-084), aliased in
+	 *                                              Application.php.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly SettingsService $settingsService,
 		private readonly SignoffDecisionService $signoffService,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -321,8 +322,7 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	 */
 	private function findObject(string $schema, string $id): ?array {
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$result = $objectService
+			$result = $this->objectService
 				->setRegister($this->settingsService->getRegisterSlug())
 				->setSchema($schema)
 				->find($id);
@@ -344,8 +344,7 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	 * @return void
 	 */
 	private function persist(string $schema, string $id, array $updates): void {
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$objectService
+		$this->objectService
 			->setRegister($this->settingsService->getRegisterSlug())
 			->setSchema($schema)
 			->updateObject($id, $updates);

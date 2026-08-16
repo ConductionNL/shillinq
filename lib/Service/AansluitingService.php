@@ -103,16 +103,16 @@ class AansluitingService {
 	private const FILED_VAT_RETURN_STATUSES = ['submitted', 'verified', 'filed'];
 
 	/**
-	 * Construct the service with lazy DI of OpenRegister's ObjectService and
-	 * direct dependencies on the two services whose computation this class
-	 * reuses rather than duplicating (REQ-AANS-002).
+	 * Construct the service with OpenRegister's ObjectService injected
+	 * (ADR-083 rule 1) and direct dependencies on the two services whose
+	 * computation this class reuses rather than duplicating (REQ-AANS-002).
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param AansluitingCalculator $calculator Pure-logic tolerance/diff helper.
 	 * @param VATReturnService $vatReturnService The BTW ledger-derivation engine this service diffs against.
 	 * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -678,8 +678,7 @@ class AansluitingService {
 	 * @return array<string,mixed>|null
 	 */
 	private function fetchExistingResult(string $reconciliationId, string $periodId): ?array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$results = $objectService
+		$results = $this->objectService
 			->setRegister($this->register())
 			->setSchema('AansluitingResult')
 			->findAll(['filters' => ['reconciliationId' => $reconciliationId, 'periodId' => $periodId]]);

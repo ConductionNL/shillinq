@@ -237,22 +237,14 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Verplichting",
-        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2).",
+        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Verplichting schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig() CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
-        "required": [
-          "commitmentNumber",
-          "description",
-          "source",
-          "amount",
-          "administrationId",
-          "status"
-        ],
         "properties": {
           "commitmentNumber": {
             "type": "string",
-            "description": "Sequential obligation number unique per administration.",
+            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by VerplichtingGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json owns this schema and declares `verplichtingsnummer` for the commitment-accounting path, which is the spelling in the merged `required` list. Until the two collapse, a record written through the TenderNed path does not satisfy that requirement. Resolving the split belongs to the English domain rename (Verplichting -> Commitment), which owns the repair step that migrates stored values; renaming here without one would make every stored value invisible, because OpenRegister's MagicMapper discards undeclared properties.",
             "example": "VPL-2026-0001",
             "title": "Verplichting Nummer"
           },

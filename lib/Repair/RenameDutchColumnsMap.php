@@ -12,11 +12,12 @@
  * The LEFT side is the original Dutch COLUMN name — what the repair step looks
  * for in the database — and must never be renamed.
  *
- * @category Repair
- * @package  OCA\\Shillinq\\Repair
- * @author   Conduction B.V. <info@conduction.nl>
- * @license  EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- * @link     https://www.conduction.nl
+ * @category  Repair
+ * @package   OCA\\Shillinq\\Repair
+ * @author    Conduction B.V. <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @link      https://www.conduction.nl
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

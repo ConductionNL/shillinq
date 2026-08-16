@@ -47,13 +47,13 @@ class InnovatieboxAggregationService {
 	/**
 	 * Construct the aggregation service.
 	 *
-	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param CarryForwardLossService $lossService Loss-offset arithmetic helper.
 	 * @param QualifyingAssetValidator $validator Toegangsticket validator — re-runs the
 	 *                                            S&O / octrooi / combinatie rules at compute
 	 *                                            time to catch assets whose persisted
 	 *                                            status='valid' is now stale (REQ-IBA-001).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

@@ -104,12 +104,13 @@ class BarcodeLookupController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-12
+	 * Rate limit: lookup against published product data — the code is a GTIN,
+	 * not a credential, so this is a volume ceiling and not a brute-force
+	 * counter. Loose, because a scanner in a stockroom fires these in rapid
+	 * succession.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// Barcode lookup against published product data — the code is a GTIN, not
-	// a credential, so a volume ceiling and no brute-force counter. Loose,
-	// because a scanner in a stockroom fires these in rapid succession.
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function lookup(string $code, ?string $uomCode = null): JSONResponse {
 		$guardResponse = $this->guard();

@@ -56,7 +56,7 @@
 				},
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"tenderId\": \"{{tender_aanbesteding_id}}\",\n  \"title\": \"Newman test tender — schoonmaak Utrecht\",\n  \"contractingService\": \"{{tender_aanbestedende_dienst}}\",\n  \"awardedSupplier\": \"{{tender_supplier}}\",\n  \"contractValue\": 50000.0,\n  \"assignmentType\": \"levering-in-fases\",\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"status\": \"open\",\n  \"tenderNedUrl\": \"https://www.tenderned.nl/aankondigingen/overzicht/{{tender_aanbesteding_id}}\"\n}"
+					"raw": "{\n  \"tenderId\": \"{{tender_aanbesteding_id}}\",\n  \"title\": \"Newman test tender — schoonmaak Utrecht\",\n  \"contractingService\": \"{{tender_aanbestedende_dienst}}\",\n  \"awardedSupplier\": \"{{tender_supplier}}\",\n  \"contractValue\": 50000.0,\n  \"assignmentType\": \"delivery-in-phases\",\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"status\": \"open\",\n  \"tenderNedUrl\": \"https://www.tenderned.nl/aankondigingen/overzicht/{{tender_aanbesteding_id}}\"\n}"
 				}
 			},
 			"event": [{
@@ -91,7 +91,7 @@
 				},
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"commitmentNumber\": \"V-NEWMAN-0001\",\n  \"description\": \"Newman concept obligation\",\n  \"source\": \"tenderned\",\n  \"sourceReference\": \"{{tender_aanbesteding_id}}\",\n  \"amount\": 50000.0,\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"status\": \"concept\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"milestones\": []\n}"
+					"raw": "{\n  \"commitmentNumber\": \"V-NEWMAN-0001\",\n  \"description\": \"Newman concept obligation\",\n  \"source\": \"tenderned\",\n  \"sourceReference\": \"{{tender_aanbesteding_id}}\",\n  \"amount\": 50000.0,\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"status\": \"draft\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"milestones\": []\n}"
 				}
 			},
 			"event": [{

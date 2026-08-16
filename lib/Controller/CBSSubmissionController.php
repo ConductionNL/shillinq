@@ -69,11 +69,11 @@ class CBSSubmissionController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 *                                      lazily.
 	 * @param CBSExportService $exportService The CBS export pipeline.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

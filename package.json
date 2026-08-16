@@ -27,6 +27,7 @@
     "check:manifest-budget": "node tests/check-manifest-budget.js",
     "check:registers": "node tests/validate-registers.js",
     "check:seeds": "node tests/validate-seeds.js",
+    "check:fragment-required": "node tests/validate-fragment-required.js",
     "check:markers": "node tests/validate-semantic-markers.js",
     "test:e2e": "playwright test",
     "test:e2e:docs": "playwright test --project docs-capture",

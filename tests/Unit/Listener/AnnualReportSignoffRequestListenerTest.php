@@ -33,6 +33,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\AnnualReportSignoffRequestListener;
@@ -40,7 +42,6 @@ use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\GenericEvent;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
@@ -52,11 +53,11 @@ use RuntimeException;
 final class AnnualReportSignoffRequestListenerTest extends TestCase {
 
 	/**
-	 * Recording fake ObjectService: captures updateObject() writes.
+	 * Every updateObject() write the listener issued, as ['id' => …] + payload.
 	 *
-	 * @var object
+	 * @var array<int,array<string,mixed>>
 	 */
-	private object $objectService;
+	private array $updates = [];
 
 	/**
 	 * Captured requestSignoff() invocations: each entry is
@@ -80,29 +81,17 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 	 */
 	private function makeListener(?array $requestResult): AnnualReportSignoffRequestListener {
 		$this->signoffCalls = [];
+		$this->updates = [];
 
-		$this->objectService = new class {
-
-			/**
-			 * @var array<int,array<string,mixed>>
-			 */
-			public array $updates = [];
-
-			public function setRegister(string $r): self {
-				return $this;
-			}//end setRegister()
-
-			public function setSchema(string $s): self {
-				return $this;
-			}//end setSchema()
-
-			/**
-			 * @param array<string,mixed> $updates
-			 */
-			public function updateObject(string $id, array $updates): void {
-				$this->updates[] = ['id' => $id] + $updates;
-			}//end updateObject()
-		};
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('updateObject')->willReturnCallback(
+			function (string $objectId, array $data): ObjectEntityInterface {
+				$this->updates[] = ['id' => $objectId] + $data;
+				return new ObjectEntity();
+			}
+		);
 
 		$signoffService = $this->createMock(SignoffDecisionService::class);
 		$signoffService->method('requestSignoff')->willReturnCallback(
@@ -122,32 +111,14 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 			}
 		);
 
-		$objectSvc = $this->objectService;
-		$container = new class($objectSvc) implements ContainerInterface {
-
-			private object $svc;
-
-			public function __construct(object $svc) {
-				$this->svc = $svc;
-			}//end __construct()
-
-			public function get(string $id): mixed {
-				return $this->svc;
-			}//end get()
-
-			public function has(string $id): bool {
-				return true;
-			}//end has()
-		};
-
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new AnnualReportSignoffRequestListener(
-			$container,
 			$settings,
 			$signoffService,
 			new NullLogger(),
+			$objectService,
 		);
 
 	}//end makeListener()
@@ -206,10 +177,10 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		self::assertSame('AnnualReport', $subjectSchema);
 		self::assertSame('adoption', $decisionType);
 
-		self::assertCount(1, $this->objectService->updates);
-		self::assertSame('ar-42', $this->objectService->updates[0]['id']);
-		self::assertSame('pending', $this->objectService->updates[0]['decisionOutcome']);
-		self::assertSame('dec-42', $this->objectService->updates[0]['decisionRef']);
+		self::assertCount(1, $this->updates);
+		self::assertSame('ar-42', $this->updates[0]['id']);
+		self::assertSame('pending', $this->updates[0]['decisionOutcome']);
+		self::assertSame('dec-42', $this->updates[0]['decisionRef']);
 
 	}//end testOpgemaaktTransitionCallsRequestSignoffAndPersists()
 
@@ -224,7 +195,7 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		$listener->handle($this->makeEvent(['id' => 'ar-42'], to: 'determined', from: 'in-review'));
 
 		self::assertCount(0, $this->signoffCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testNonOpgemaaktTargetIsIgnored()
 
@@ -239,7 +210,7 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		$listener->handle($this->makeEvent(['id' => 'other-1'], schema: 'ACMReport'));
 
 		self::assertCount(0, $this->signoffCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testNonAnnualReportSchemaIsIgnored()
 
@@ -258,7 +229,7 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		);
 
 		self::assertCount(0, $this->signoffCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testExistingDecisionOutcomeSkipsDuplicateRequest()
 
@@ -275,7 +246,7 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		$listener->handle($this->makeEvent(['id' => 'ar-42']));
 
 		self::assertCount(1, $this->signoffCalls, 'requestSignoff() must still have been invoked.');
-		self::assertCount(0, $this->objectService->updates, 'A fail-closed request must not persist a mirror.');
+		self::assertCount(0, $this->updates, 'A fail-closed request must not persist a mirror.');
 
 	}//end testFailSoftWhenRequestSignoffThrows()
 
@@ -290,7 +261,7 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		$listener->handle(new GenericEvent());
 
 		self::assertCount(0, $this->signoffCalls);
-		self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->updates);
 
 	}//end testNonMatchingEventTypeIsIgnored()
 }//end class

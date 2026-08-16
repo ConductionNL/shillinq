@@ -53,6 +53,7 @@ class InvoiceGenerationService {
 	 * @param InvoiceDeduplicationService $deduper Source-id conflict scanner.
 	 * @param VATCalculationService $vat VAT totaller.
 	 * @param UsageRatingCalculator $usageRating Meter-quantity rating (usage model).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

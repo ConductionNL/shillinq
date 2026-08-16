@@ -18,7 +18,10 @@ import {
 } from './_helpers'
 
 test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
-	test.describe.configure({ mode: 'serial' })
+	// No `mode: 'serial'` — see the header of ./_helpers.ts. The Dashboard
+	// test's uncaught "Element not found" page error was silently costing
+	// the Settings tests below it their verdict.
+
 
 	test('Dashboard — root SPA mounts with the Dashboard surface', async ({
 		page,
@@ -96,8 +99,9 @@ test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
 
 	test('Features & roadmap — page mounts', async ({ page }) => {
 		const rec = recordShillinqErrors(page)
-		// The manifest declares this route kebab-cased; '/FeaturesRoadmap' is
-		// the page ID, not its route, and hit the SPA catch-all instead.
+		// `/features-roadmap` is the ROUTE; `FeaturesRoadmap` is the page ID.
+		// The id was used as a path here, so the deep link fell through
+		// main.js's '/:pathMatch(.*)*' catch-all onto the Dashboard.
 		await gotoPage(page, '/features-roadmap')
 		// Renders a roadmap surface (content text / cards / list).
 		const surfaces = await page

@@ -70,6 +70,7 @@ class MovingAverageValuationService {
 	 *
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

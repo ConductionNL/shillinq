@@ -37,33 +37,57 @@
 -->
 <template>
 	<div class="bbv-mapping-index" data-testid="bbv-mapping-index">
+		<!--
+			🔴 `:empty-title`, `:empty-action-label` and `@empty-action` below are
+			LEFT KEBAB-CASED ON PURPOSE — do not "fix" them to camelCase to clear
+			`vue/attribute-hyphenation` / `vue/v-on-event-hyphenation`.
+
+			None of the three is part of CnIndexPage's API: nc-vue 2.3.0 declares
+			`emptyText` (default the untranslated string `'No items found'`) and
+			its `emits` list has no `empty-action`. So all three are INERT — the
+			two attributes fall through onto the root DOM element and the listener
+			is never called. Renaming them to camelCase changes the rendered DOM
+			attribute names and leaves them exactly as inert, which is why the
+			rewrite was withheld rather than applied.
+
+			The real defect is a BEHAVIOUR one: this index shows CnIndexPage's
+			untranslated default empty text, and its empty-state action does
+			nothing. Fixing it means `:empty-text` plus an `#empty` slot (or an
+			nc-vue change), and it needs verifying through the UI — it is not a
+			lint fix and is deliberately out of this change's scope.
+		-->
 		<CnIndexPage
 			:title="t('shillinq', 'Budget Mapping')"
-			:description="
-				t(
-					'shillinq',
-					'Allocations of GL accounts to BBV programmes (REQ-BBVW-002 / REQ-BBVW-004).',
-				)
-			"
+			:description="t('shillinq', 'Allocations of GL accounts to BBV programmes (REQ-BBVW-002 / REQ-BBVW-004).')"
 			:objects="filteredObjects"
 			:loading="loading"
 			:pagination="pagination"
 			:includeColumns="visibleColumns"
 			:columnOverrides="columnOverrides"
-			:emptyTitle="t('shillinq', 'No mappings recorded yet')"
-			:emptyActionLabel="t('shillinq', 'Add mapping')"
+			:empty-title="t('shillinq', 'No mappings recorded yet')"
+			:empty-action-label="t('shillinq', 'Add mapping')"
 			:addLabel="t('shillinq', 'Add mapping')"
 			:rowKey="rowKey"
 			data-testid="bbv-mapping-index-page"
 			@add="onAdd"
-			@emptyAction="onAdd"
+			@empty-action="onAdd"
 			@refresh="loadMappings"
 			@rowClick="onRowClick"
 			@pageChanged="onPageChange">
-			<template #header-actions>
-				<div
-					class="bbv-mapping-index__filters"
-					data-testid="bbv-mapping-index-filters">
+			<!--
+				`below-header`, NOT `header-actions`. CnIndexPage 2.2.0-vue3.2
+				declares below-header / mass-actions / action-items / actions /
+				import-fields / form-fields / empty / column-* / row-actions /
+				list-item / row-icon / row-badges / card — there is no
+				`header-actions` slot on it. Vue drops unmatched slot content
+				SILENTLY, so this whole filter block (search, fiscal year,
+				allocation, effective-from range) rendered nowhere while the
+				surrounding page looked healthy. The spelling was borrowed from
+				CnDashboardPage, which DOES have `header-actions` — see
+				BBVComplianceDashboard.vue, where the same template name works.
+			-->
+			<template #below-header>
+				<div class="bbv-mapping-index__filters" data-testid="bbv-mapping-index-filters">
 					<span
 						v-if="scope.fiscalYear"
 						class="bbv-mapping-index__fy"
@@ -75,13 +99,9 @@
 						type="search"
 						class="bbv-mapping-index__search"
 						data-testid="bbv-mapping-search"
-						:aria-label="
-							t('shillinq', 'Search by GL account or programme code')
-						"
-						:placeholder="
-							t('shillinq', 'Search account or programme...')
-						"
-						@input="onSearchInput" />
+						:aria-label="t('shillinq', 'Search by GL account or programme code')"
+						:placeholder="t('shillinq', 'Search account or programme...')"
+						@input="onSearchInput">
 					<select
 						v-model="fiscalYearFilter"
 						class="bbv-mapping-index__filter"
@@ -105,18 +125,35 @@
 						<option value="">
 							{{ t('shillinq', 'All allocations') }}
 						</option>
-						<option value="0-25">0-25 %</option>
-						<option value="25-50">25-50 %</option>
-						<option value="50-75">50-75 %</option>
-						<option value="75-100">75-100 %</option>
+						<option value="0-25">
+							0-25 %
+						</option>
+						<option value="25-50">
+							25-50 %
+						</option>
+						<option value="50-75">
+							50-75 %
+						</option>
+						<option value="75-100">
+							75-100 %
+						</option>
 					</select>
+					<!-- The wrapping <label> is a valid IMPLICIT association, but
+					     it is the only control pair on this page that relies on
+					     it, and hydra gate-40 (form-label-association) requires
+					     an explicit one. The `aria-label` text is deliberately
+					     IDENTICAL to the visible label text: an accessible name
+					     that differs from the visible text overrides it for
+					     screen-reader and voice-control users and breaks WCAG
+					     2.5.3 Label in Name. Keep the two strings in step. -->
 					<label class="bbv-mapping-index__date-label">
 						{{ t('shillinq', 'Effective on or after') }}
 						<input
 							v-model="effectiveFromAfter"
 							type="date"
 							class="bbv-mapping-index__date"
-							data-testid="bbv-mapping-effective-from-after" />
+							data-testid="bbv-mapping-effective-from-after"
+							:aria-label="t('shillinq', 'Effective on or after')">
 					</label>
 					<label class="bbv-mapping-index__date-label">
 						{{ t('shillinq', 'Effective on or before') }}
@@ -124,7 +161,8 @@
 							v-model="effectiveFromBefore"
 							type="date"
 							class="bbv-mapping-index__date"
-							data-testid="bbv-mapping-effective-from-before" />
+							data-testid="bbv-mapping-effective-from-before"
+							:aria-label="t('shillinq', 'Effective on or before')">
 					</label>
 				</div>
 			</template>
@@ -159,10 +197,7 @@
 			</template>
 		</CnIndexPage>
 
-		<p
-			v-if="error"
-			class="bbv-mapping-index__error"
-			data-testid="bbv-mapping-index-error">
+		<p v-if="error" class="bbv-mapping-index__error" data-testid="bbv-mapping-index-error">
 			{{ error }}
 		</p>
 	</div>
@@ -248,35 +283,12 @@ export default {
 		 */
 		columnOverrides() {
 			return {
-				glAccountNumber: {
-					label: this.t('shillinq', 'GL Account'),
-					sortable: true,
-				},
-
-				programmeCode: {
-					label: this.t('shillinq', 'Programme'),
-					sortable: true,
-				},
-
-				allocationPercentage: {
-					label: this.t('shillinq', 'Allocation %'),
-					sortable: true,
-				},
-
-				effectiveFrom: {
-					label: this.t('shillinq', 'Effective From'),
-					sortable: true,
-				},
-
-				effectiveTo: {
-					label: this.t('shillinq', 'Effective To'),
-					sortable: true,
-				},
-
-				lifecycleState: {
-					label: this.t('shillinq', 'Status'),
-					sortable: true,
-				},
+				glAccountNumber: { label: this.t('shillinq', 'GL Account'), sortable: true },
+				programmeCode: { label: this.t('shillinq', 'Programme'), sortable: true },
+				allocationPercentage: { label: this.t('shillinq', 'Allocation %'), sortable: true },
+				effectiveFrom: { label: this.t('shillinq', 'Effective From'), sortable: true },
+				effectiveTo: { label: this.t('shillinq', 'Effective To'), sortable: true },
+				lifecycleState: { label: this.t('shillinq', 'Status'), sortable: true },
 			}
 		},
 
@@ -321,16 +333,10 @@ export default {
 		 */
 		filteredObjects() {
 			const term = (this.searchTermApplied || '').trim().toLowerCase()
-			const after = this.effectiveFromAfter
-				? new Date(this.effectiveFromAfter)
-				: null
-			const before = this.effectiveFromBefore
-				? new Date(this.effectiveFromBefore)
-				: null
+			const after = this.effectiveFromAfter ? new Date(this.effectiveFromAfter) : null
+			const before = this.effectiveFromBefore ? new Date(this.effectiveFromBefore) : null
 			const allocation = this.parseAllocationBucket(this.allocationBucket)
-			const yearFilter = this.fiscalYearFilter
-				? Number(this.fiscalYearFilter)
-				: null
+			const yearFilter = this.fiscalYearFilter ? Number(this.fiscalYearFilter) : null
 
 			return (this.objects || []).filter((row) => {
 				if (term) {
@@ -341,12 +347,8 @@ export default {
 					}
 				}
 				if (yearFilter !== null) {
-					const startYear = row.effectiveFrom
-						? new Date(row.effectiveFrom).getFullYear()
-						: null
-					const endYear = row.effectiveTo
-						? new Date(row.effectiveTo).getFullYear()
-						: null
+					const startYear = row.effectiveFrom ? new Date(row.effectiveFrom).getFullYear() : null
+					const endYear = row.effectiveTo ? new Date(row.effectiveTo).getFullYear() : null
 					// A mapping matches the fiscal year if its effective
 					// window overlaps Jan 1 → Dec 31 of that year.
 					if (startYear !== null && startYear > yearFilter) {
@@ -366,9 +368,7 @@ export default {
 					}
 				}
 				if (after || before) {
-					const eff = row.effectiveFrom
-						? new Date(row.effectiveFrom)
-						: null
+					const eff = row.effectiveFrom ? new Date(row.effectiveFrom) : null
 					if (!eff) {
 						return false
 					}
@@ -412,11 +412,7 @@ export default {
 		 * @spec openspec/specs/realtime-updates/spec.md
 		 */
 		async syncLiveSubscription() {
-			if (
-				typeof this.store.subscribe !== 'function'
-				|| this.liveHandle
-				|| this.livePending
-			) {
+			if (typeof this.store.subscribe !== 'function' || this.liveHandle || this.livePending) {
 				return
 			}
 			this.livePending = true
@@ -438,8 +434,7 @@ export default {
 					(fresh) => {
 						if (Array.isArray(fresh) && this.liveHandle) {
 							this.objects = fresh
-							this.pagination =
-								this.store.pagination?.[TYPE_SLUG] || null
+							this.pagination = this.store.pagination?.[TYPE_SLUG] || null
 						}
 					},
 				)
@@ -447,10 +442,7 @@ export default {
 				this.livePending = false
 				this.liveHandle = null
 				// eslint-disable-next-line no-console
-				console.warn(
-					'[BudgetBBVMappingIndex] live subscription failed:',
-					e?.message ?? e,
-				)
+				console.warn('[BudgetBBVMappingIndex] live subscription failed:', e?.message ?? e)
 			}
 		},
 
@@ -484,6 +476,8 @@ export default {
 		 * server-derived defaults; the user can manually pick a year.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 		 */
 		async loadScope() {
 			try {
@@ -492,9 +486,11 @@ export default {
 				// from axios via the same generateUrl helper.
 				const axios = (await import('@nextcloud/axios')).default
 				const { generateUrl } = await import('@nextcloud/router')
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/budget-mappings'),
-				)
+				// `/api/` prefix is load-bearing — see appinfo/routes.php: the
+				// un-prefixed path is this component's OWN SPA page route, and
+				// registering the JSON endpoint there made the page unreachable
+				// in a browser (Access forbidden — CSRF check failed).
+				const response = await axios.get(generateUrl('/apps/shillinq/api/budget-mappings'))
 				const data = response?.data?.scope || {}
 				this.scope = {
 					administrationId: data.administrationId || null,
@@ -538,14 +534,12 @@ export default {
 				this.pagination = this.store.pagination?.[TYPE_SLUG] || null
 				const storeError = this.store.errors?.[TYPE_SLUG]
 				if (storeError) {
-					this.error =
-						storeError.message
+					this.error = storeError.message
 						|| this.t('shillinq', 'Failed to load budget mappings')
 				}
 			} catch (e) {
 				this.objects = []
-				this.error =
-					e?.response?.data?.error
+				this.error = e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load budget mappings')
 			} finally {
 				this.loading = false
@@ -615,8 +609,7 @@ export default {
 				this.objects = rows
 				this.pagination = this.store.pagination?.[TYPE_SLUG] || null
 			} catch (e) {
-				this.error =
-					e?.response?.data?.error
+				this.error = e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load budget mappings')
 			} finally {
 				this.loading = false

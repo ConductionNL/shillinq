@@ -162,6 +162,7 @@ class PurchaseOrderService {
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param INotificationManager $notificationManager NC notification dispatcher.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param PeppolTransmissionAdapterInterface|null $peppolAdapter Optional Peppol port (slice 03);
 	 *                                                               defaults to
 	 *                                                               LogPeppolTransmissionAdapter.
