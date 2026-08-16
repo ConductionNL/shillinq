@@ -25,23 +25,19 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 use OCA\Shillinq\Guard\ProjectTransitionGuard;
 use PHPUnit\Framework\TestCase;
 
-final class ProjectTransitionGuardTest extends TestCase
-{
-    private ProjectTransitionGuard $guard;
+final class ProjectTransitionGuardTest extends TestCase {
+	private ProjectTransitionGuard $guard;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new ProjectTransitionGuard();
-    }//end setUp()
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new ProjectTransitionGuard();
+	}//end setUp()
 
-    public function testPutOnHoldAllowedWithReason(): void
-    {
-        self::assertTrue($this->guard->requireReason(['closureJustification' => 'Customer requested pause']));
-    }//end testPutOnHoldAllowedWithReason()
+	public function testPutOnHoldAllowedWithReason(): void {
+		self::assertTrue($this->guard->requireReason(['closureJustification' => 'Customer requested pause']));
+	}//end testPutOnHoldAllowedWithReason()
 
-    public function testPutOnHoldDeniedWithoutReason(): void
-    {
-        self::assertFalse($this->guard->requireReason(['closureJustification' => null]));
-    }//end testPutOnHoldDeniedWithoutReason()
+	public function testPutOnHoldDeniedWithoutReason(): void {
+		self::assertFalse($this->guard->requireReason(['closureJustification' => null]));
+	}//end testPutOnHoldDeniedWithoutReason()
 }//end class

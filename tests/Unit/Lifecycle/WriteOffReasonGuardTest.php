@@ -25,23 +25,19 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 use OCA\Shillinq\Lifecycle\WriteOffReasonGuard;
 use PHPUnit\Framework\TestCase;
 
-final class WriteOffReasonGuardTest extends TestCase
-{
-    private WriteOffReasonGuard $guard;
+final class WriteOffReasonGuardTest extends TestCase {
+	private WriteOffReasonGuard $guard;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new WriteOffReasonGuard();
-    }//end setUp()
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new WriteOffReasonGuard();
+	}//end setUp()
 
-    public function testWriteOffAllowedWithReason(): void
-    {
-        self::assertTrue($this->guard->requireReason(['writeOffReason' => 'Customer declared bankrupt']));
-    }//end testWriteOffAllowedWithReason()
+	public function testWriteOffAllowedWithReason(): void {
+		self::assertTrue($this->guard->requireReason(['writeOffReason' => 'Customer declared bankrupt']));
+	}//end testWriteOffAllowedWithReason()
 
-    public function testWriteOffDeniedWithoutReason(): void
-    {
-        self::assertFalse($this->guard->requireReason(['writeOffReason' => '']));
-    }//end testWriteOffDeniedWithoutReason()
+	public function testWriteOffDeniedWithoutReason(): void {
+		self::assertFalse($this->guard->requireReason(['writeOffReason' => '']));
+	}//end testWriteOffDeniedWithoutReason()
 }//end class

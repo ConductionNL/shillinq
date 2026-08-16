@@ -14,15 +14,15 @@ declare(strict_types=1);
 define('PHPUNIT_RUN', 1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$ocpRoot = __DIR__.'/../vendor/nextcloud/ocp';
+$ocpRoot = __DIR__ . '/../vendor/nextcloud/ocp';
 spl_autoload_register(static function (string $class) use ($ocpRoot): void {
-    if (str_starts_with($class, 'OCP\\') === false && str_starts_with($class, 'NCU\\') === false) {
-        return;
-    }
+	if (str_starts_with($class, 'OCP\\') === false && str_starts_with($class, 'NCU\\') === false) {
+		return;
+	}
 
-    $relative = str_replace('\\', '/', $class).'.php';
-    $candidate = $ocpRoot.'/'.$relative;
-    if (is_file($candidate) === true) {
-        require_once $candidate;
-    }
+	$relative = str_replace('\\', '/', $class) . '.php';
+	$candidate = $ocpRoot . '/' . $relative;
+	if (is_file($candidate) === true) {
+		require_once $candidate;
+	}
 });

@@ -34,221 +34,206 @@ use RuntimeException;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class AdministrationArchivalServiceTest extends TestCase
-{
+final class AdministrationArchivalServiceTest extends TestCase {
 
-    /**
-     * Service under test.
-     *
-     * @var AdministrationArchivalService
-     */
-    private AdministrationArchivalService $service;
+	/**
+	 * Service under test.
+	 *
+	 * @var AdministrationArchivalService
+	 */
+	private AdministrationArchivalService $service;
 
-    /**
-     * Set up the service with mocked dependencies.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up the service with mocked dependencies.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $container = $this->createMock(ContainerInterface::class);
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
-        $logger = $this->createMock(LoggerInterface::class);
+		$container = $this->createMock(ContainerInterface::class);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$logger = $this->createMock(LoggerInterface::class);
 
-        $this->service = new AdministrationArchivalService(
-            container: $container,
-            appConfig: $appConfig,
-            logger: $logger,
-        );
+		$this->service = new AdministrationArchivalService(
+			container: $container,
+			appConfig: $appConfig,
+			logger: $logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Active administration accepts writes.
-     *
-     * @return void
-     */
-    public function testActiefIsWritable(): void
-    {
-        self::assertTrue(
-            $this->service->writesAllowed(administration: ['status' => 'actief'])
-        );
+	/**
+	 * Active administration accepts writes.
+	 *
+	 * @return void
+	 */
+	public function testActiefIsWritable(): void {
+		self::assertTrue(
+			$this->service->writesAllowed(administration: ['status' => 'actief'])
+		);
 
-    }//end testActiefIsWritable()
+	}//end testActiefIsWritable()
 
-    /**
-     * In-liquidatie administration still accepts (closing) writes.
-     *
-     * @return void
-     */
-    public function testInLiquidatieIsWritable(): void
-    {
-        self::assertTrue(
-            $this->service->writesAllowed(administration: ['status' => 'in_liquidatie'])
-        );
+	/**
+	 * In-liquidatie administration still accepts (closing) writes.
+	 *
+	 * @return void
+	 */
+	public function testInLiquidatieIsWritable(): void {
+		self::assertTrue(
+			$this->service->writesAllowed(administration: ['status' => 'in_liquidatie'])
+		);
 
-    }//end testInLiquidatieIsWritable()
+	}//end testInLiquidatieIsWritable()
 
-    /**
-     * Archived administration rejects writes.
-     *
-     * @return void
-     */
-    public function testGearchiveerdRejectsWrites(): void
-    {
-        self::assertFalse(
-            $this->service->writesAllowed(administration: ['status' => 'gearchiveerd'])
-        );
+	/**
+	 * Archived administration rejects writes.
+	 *
+	 * @return void
+	 */
+	public function testGearchiveerdRejectsWrites(): void {
+		self::assertFalse(
+			$this->service->writesAllowed(administration: ['status' => 'gearchiveerd'])
+		);
 
-    }//end testGearchiveerdRejectsWrites()
+	}//end testGearchiveerdRejectsWrites()
 
-    /**
-     * Opgeheven administration rejects writes.
-     *
-     * @return void
-     */
-    public function testOpgehevenRejectsWrites(): void
-    {
-        self::assertFalse(
-            $this->service->writesAllowed(administration: ['status' => 'opgeheven'])
-        );
+	/**
+	 * Opgeheven administration rejects writes.
+	 *
+	 * @return void
+	 */
+	public function testOpgehevenRejectsWrites(): void {
+		self::assertFalse(
+			$this->service->writesAllowed(administration: ['status' => 'opgeheven'])
+		);
 
-    }//end testOpgehevenRejectsWrites()
+	}//end testOpgehevenRejectsWrites()
 
-    /**
-     * An unknown or missing status is default-secure: writes are rejected.
-     *
-     * @return void
-     */
-    public function testUnknownStatusIsDefaultSecure(): void
-    {
-        self::assertFalse(
-            $this->service->writesAllowed(administration: [])
-        );
-        self::assertFalse(
-            $this->service->writesAllowed(administration: ['status' => 'iets_anders'])
-        );
+	/**
+	 * An unknown or missing status is default-secure: writes are rejected.
+	 *
+	 * @return void
+	 */
+	public function testUnknownStatusIsDefaultSecure(): void {
+		self::assertFalse(
+			$this->service->writesAllowed(administration: [])
+		);
+		self::assertFalse(
+			$this->service->writesAllowed(administration: ['status' => 'iets_anders'])
+		);
 
-    }//end testUnknownStatusIsDefaultSecure()
+	}//end testUnknownStatusIsDefaultSecure()
 
-    /**
-     * assertWritable raises on archived state.
-     *
-     * @return void
-     */
-    public function testAssertWritableRaisesOnGearchiveerd(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/administratie gearchiveerd/');
-        $this->service->assertWritable(administration: ['status' => 'gearchiveerd']);
+	/**
+	 * assertWritable raises on archived state.
+	 *
+	 * @return void
+	 */
+	public function testAssertWritableRaisesOnGearchiveerd(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessageMatches('/administratie gearchiveerd/');
+		$this->service->assertWritable(administration: ['status' => 'gearchiveerd']);
 
-    }//end testAssertWritableRaisesOnGearchiveerd()
+	}//end testAssertWritableRaisesOnGearchiveerd()
 
-    /**
-     * assertWritable raises on missing status (default-secure).
-     *
-     * @return void
-     */
-    public function testAssertWritableRaisesOnMissingStatus(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->service->assertWritable(administration: []);
+	/**
+	 * assertWritable raises on missing status (default-secure).
+	 *
+	 * @return void
+	 */
+	public function testAssertWritableRaisesOnMissingStatus(): void {
+		$this->expectException(RuntimeException::class);
+		$this->service->assertWritable(administration: []);
 
-    }//end testAssertWritableRaisesOnMissingStatus()
+	}//end testAssertWritableRaisesOnMissingStatus()
 
-    /**
-     * assertWritable is a no-op for actief.
-     *
-     * @return void
-     */
-    public function testAssertWritableActiefIsNoop(): void
-    {
-        // No assertion needed — the absence of an exception is the contract.
-        $this->service->assertWritable(administration: ['status' => 'actief']);
-        self::assertTrue(true);
+	/**
+	 * assertWritable is a no-op for actief.
+	 *
+	 * @return void
+	 */
+	public function testAssertWritableActiefIsNoop(): void {
+		// No assertion needed — the absence of an exception is the contract.
+		$this->service->assertWritable(administration: ['status' => 'actief']);
+		self::assertTrue(true);
 
-    }//end testAssertWritableActiefIsNoop()
+	}//end testAssertWritableActiefIsNoop()
 
-    /**
-     * Lifecycle transitions match the schema-declared graph.
-     *
-     * @return void
-     */
-    public function testIsTransitionAllowedMatchesLifecycle(): void
-    {
-        // Allowed transitions out of actief.
-        self::assertTrue($this->service->isTransitionAllowed(from: 'actief', to: 'gearchiveerd'));
-        self::assertTrue($this->service->isTransitionAllowed(from: 'actief', to: 'in_liquidatie'));
+	/**
+	 * Lifecycle transitions match the schema-declared graph.
+	 *
+	 * @return void
+	 */
+	public function testIsTransitionAllowedMatchesLifecycle(): void {
+		// Allowed transitions out of actief.
+		self::assertTrue($this->service->isTransitionAllowed(from: 'actief', to: 'gearchiveerd'));
+		self::assertTrue($this->service->isTransitionAllowed(from: 'actief', to: 'in_liquidatie'));
 
-        // in_liquidatie -> opgeheven, gearchiveerd.
-        self::assertTrue($this->service->isTransitionAllowed(from: 'in_liquidatie', to: 'opgeheven'));
-        self::assertTrue($this->service->isTransitionAllowed(from: 'in_liquidatie', to: 'gearchiveerd'));
+		// in_liquidatie -> opgeheven, gearchiveerd.
+		self::assertTrue($this->service->isTransitionAllowed(from: 'in_liquidatie', to: 'opgeheven'));
+		self::assertTrue($this->service->isTransitionAllowed(from: 'in_liquidatie', to: 'gearchiveerd'));
 
-        // Terminal states have no transitions.
-        self::assertFalse($this->service->isTransitionAllowed(from: 'gearchiveerd', to: 'actief'));
-        self::assertFalse($this->service->isTransitionAllowed(from: 'opgeheven', to: 'actief'));
+		// Terminal states have no transitions.
+		self::assertFalse($this->service->isTransitionAllowed(from: 'gearchiveerd', to: 'actief'));
+		self::assertFalse($this->service->isTransitionAllowed(from: 'opgeheven', to: 'actief'));
 
-        // Same-state transitions are a no-op (tolerated).
-        self::assertTrue($this->service->isTransitionAllowed(from: 'actief', to: 'actief'));
+		// Same-state transitions are a no-op (tolerated).
+		self::assertTrue($this->service->isTransitionAllowed(from: 'actief', to: 'actief'));
 
-    }//end testIsTransitionAllowedMatchesLifecycle()
+	}//end testIsTransitionAllowedMatchesLifecycle()
 
-    /**
-     * Retention clock starts on the active -> read-only transition (REQ-MA-007).
-     *
-     * @return void
-     */
-    public function testRetentionClockStartsOnArchive(): void
-    {
-        self::assertTrue(
-            $this->service->shouldStartRetentionClock(from: 'actief', to: 'gearchiveerd')
-        );
-        self::assertTrue(
-            $this->service->shouldStartRetentionClock(from: 'in_liquidatie', to: 'opgeheven')
-        );
+	/**
+	 * Retention clock starts on the active -> read-only transition (REQ-MA-007).
+	 *
+	 * @return void
+	 */
+	public function testRetentionClockStartsOnArchive(): void {
+		self::assertTrue(
+			$this->service->shouldStartRetentionClock(from: 'actief', to: 'gearchiveerd')
+		);
+		self::assertTrue(
+			$this->service->shouldStartRetentionClock(from: 'in_liquidatie', to: 'opgeheven')
+		);
 
-    }//end testRetentionClockStartsOnArchive()
+	}//end testRetentionClockStartsOnArchive()
 
-    /**
-     * The retention clock does NOT start on transitions within the writable set.
-     *
-     * @return void
-     */
-    public function testRetentionClockDoesNotStartBetweenWritableStates(): void
-    {
-        self::assertFalse(
-            $this->service->shouldStartRetentionClock(from: 'actief', to: 'in_liquidatie')
-        );
+	/**
+	 * The retention clock does NOT start on transitions within the writable set.
+	 *
+	 * @return void
+	 */
+	public function testRetentionClockDoesNotStartBetweenWritableStates(): void {
+		self::assertFalse(
+			$this->service->shouldStartRetentionClock(from: 'actief', to: 'in_liquidatie')
+		);
 
-    }//end testRetentionClockDoesNotStartBetweenWritableStates()
+	}//end testRetentionClockDoesNotStartBetweenWritableStates()
 
-    /**
-     * The retention clock does NOT restart for transitions between read-only states.
-     *
-     * @return void
-     */
-    public function testRetentionClockDoesNotRestartBetweenReadOnlyStates(): void
-    {
-        // We don't allow gearchiveerd -> opgeheven in the graph, so this returns
-        // false because the transition itself isn't allowed.
-        self::assertFalse(
-            $this->service->shouldStartRetentionClock(from: 'gearchiveerd', to: 'opgeheven')
-        );
+	/**
+	 * The retention clock does NOT restart for transitions between read-only states.
+	 *
+	 * @return void
+	 */
+	public function testRetentionClockDoesNotRestartBetweenReadOnlyStates(): void {
+		// We don't allow gearchiveerd -> opgeheven in the graph, so this returns
+		// false because the transition itself isn't allowed.
+		self::assertFalse(
+			$this->service->shouldStartRetentionClock(from: 'gearchiveerd', to: 'opgeheven')
+		);
 
-    }//end testRetentionClockDoesNotRestartBetweenReadOnlyStates()
+	}//end testRetentionClockDoesNotRestartBetweenReadOnlyStates()
 
-    /**
-     * assertWritableById rejects an empty id outright.
-     *
-     * @return void
-     */
-    public function testAssertWritableByIdRejectsEmpty(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->service->assertWritableById(administrationId: '');
+	/**
+	 * assertWritableById rejects an empty id outright.
+	 *
+	 * @return void
+	 */
+	public function testAssertWritableByIdRejectsEmpty(): void {
+		$this->expectException(RuntimeException::class);
+		$this->service->assertWritableById(administrationId: '');
 
-    }//end testAssertWritableByIdRejectsEmpty()
+	}//end testAssertWritableByIdRejectsEmpty()
 }//end class

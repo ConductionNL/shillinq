@@ -42,9 +42,9 @@
           "organisationType": {
             "type": "string",
             "enum": [
-              "gemeente",
-              "provincie",
-              "waterschap",
+              "municipality",
+              "province",
+              "waterAuthority",
               "GR"
             ],
             "description": "Type of decentralised government (Gemeentewet 213 / Provinciewet 217 / Waterschapswet 109 / Wgr 35).",
@@ -61,12 +61,12 @@
             "nullable": true,
             "description": "Reference to the raadsbesluit/statenbesluit/AB-besluit that adopts the protocol (REQ-004).",
             "properties": {
-              "besluitnummer": {
+              "decisionNumber": {
                 "type": "string",
                 "title": "Besluitnummer",
                 "description": "The besluitnummer."
               },
-              "datum": {
+              "date": {
                 "type": "string",
                 "format": "date",
                 "title": "Datum",
@@ -75,9 +75,9 @@
               "decisionType": {
                 "type": "string",
                 "enum": [
-                  "raadsbesluit",
+                  "councilResolution",
                   "statenbesluit",
-                  "AB-besluit"
+                  "ab-decision"
                 ],
                 "title": "Decision Type",
                 "description": "The type or category of decision."
@@ -119,9 +119,9 @@
           "materialityBase": {
             "type": "string",
             "enum": [
-              "lasten",
-              "baten",
-              "balanstotaal"
+              "expenses",
+              "revenue",
+              "balanceSheetTotal"
             ],
             "description": "Base used to compute materialiteit (REQ-003).",
             "title": "Materiality Base"
@@ -208,12 +208,26 @@
               "action": "adopt"
             },
             "description": "Notify the concerncontroller when a protocol is adopted.",
-            "recipients": {
-              "role": "concerncontroller",
-              "scope": "@self.organisationId"
-            },
-            "title": "Controleprotocol vastgesteld",
-            "message": "Controleprotocol @self.version voor auditjaar @self.auditYear is vastgesteld."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "concerncontroller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Controleprotocol {{version}} voor auditjaar {{auditYear}} is vastgesteld",
+              "en": "Audit protocol {{version}} for audit year {{auditYear}} has been adopted"
+            }
           }
         },
         "x-openregister-events": {
@@ -270,10 +284,10 @@
         "required": [
           "protocol",
           "topic",
-          "getrouwheidApprovalCeiling",
-          "getrouwheidQualificationCeiling",
-          "rechtmatigheidApprovalCeiling",
-          "rechtmatigheidQualificationCeiling",
+          "faithfulnessApprovalCeiling",
+          "faithfulnessQualificationCeiling",
+          "lawfulnessApprovalCeiling",
+          "lawfulnessQualificationCeiling",
           "uncertaintyCeiling"
         ],
         "properties": {
@@ -288,7 +302,7 @@
             "example": "Sociaal Domein",
             "title": "Topic"
           },
-          "getrouwheidApprovalCeiling": {
+          "faithfulnessApprovalCeiling": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -296,7 +310,7 @@
             "description": "Getrouwheid approval ceiling as percent of materialiteit; statutory max 1%.",
             "title": "Getrouwheid Approval Ceiling"
           },
-          "getrouwheidQualificationCeiling": {
+          "faithfulnessQualificationCeiling": {
             "type": "number",
             "minimum": 0,
             "maximum": 3,
@@ -304,7 +318,7 @@
             "description": "Getrouwheid qualification ceiling; statutory max 3% (BADO art. 5 lid 2).",
             "title": "Getrouwheid Qualification Ceiling"
           },
-          "rechtmatigheidApprovalCeiling": {
+          "lawfulnessApprovalCeiling": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -312,7 +326,7 @@
             "description": "Rechtmatigheid approval ceiling; statutory max 1%.",
             "title": "Rechtmatigheid Approval Ceiling"
           },
-          "rechtmatigheidQualificationCeiling": {
+          "lawfulnessQualificationCeiling": {
             "type": "number",
             "minimum": 0,
             "maximum": 3,
@@ -392,8 +406,8 @@
             "type": "string",
             "enum": [
               "overall",
-              "programma",
-              "taakveld",
+              "programme",
+              "taskField",
               "sisa"
             ],
             "description": "Granularity of the materialiteit row.",
@@ -618,14 +632,14 @@
           "findingType": {
             "type": "string",
             "enum": [
-              "rechtmatigheid",
-              "getrouwheid",
-              "onzekerheid"
+              "lawfulness",
+              "faithfulness",
+              "uncertainty"
             ],
             "description": "Which BADO axis the exception concerns.",
             "title": "Finding Type"
           },
-          "rechtmatigheid": {
+          "lawfulness": {
             "type": "string",
             "enum": [
               "compliant",
@@ -635,7 +649,7 @@
             "description": "Rechtmatigheid axis outcome.",
             "title": "Rechtmatigheid"
           },
-          "getrouwheid": {
+          "faithfulness": {
             "type": "string",
             "enum": [
               "faithful",
@@ -865,18 +879,18 @@
                 "title": "Auditor",
                 "description": "The auditor."
               },
-              "afmVergunningsnummer": {
+              "afmPermitNumber": {
                 "type": "string",
                 "title": "Afm Vergunningsnummer",
                 "description": "The afm vergunningsnummer."
               },
-              "datum": {
+              "date": {
                 "type": "string",
                 "format": "date",
                 "title": "Datum",
                 "description": "The date and time for datum."
               },
-              "plaats": {
+              "place": {
                 "type": "string",
                 "title": "Plaats",
                 "description": "The date and time for plaats."
@@ -990,8 +1004,8 @@
         "type": "object",
         "required": [
           "protocol",
-          "regelingCode",
-          "verantwoordingsplichtige",
+          "schemeCode",
+          "accountableParty",
           "assuranceLevel"
         ],
         "properties": {
@@ -1000,19 +1014,19 @@
             "description": "FK to the parent Controleprotocol.",
             "title": "Protocol"
           },
-          "regelingCode": {
+          "schemeCode": {
             "type": "string",
             "description": "SiSa-bijlage regeling code.",
             "example": "JBI",
             "title": "Regeling Code"
           },
-          "verantwoordingsplichtige": {
+          "accountableParty": {
             "type": "string",
             "description": "Entity responsible for the regeling accounting.",
-            "example": "gemeente",
+            "example": "municipality",
             "title": "Verantwoordingsplichtige"
           },
-          "specifiekeUitkering": {
+          "specificBenefit": {
             "type": "string",
             "nullable": true,
             "description": "Grant name / description.",
@@ -1078,18 +1092,18 @@
         },
         "version": "2026.1",
         "auditYear": 2026,
-        "organisationType": "gemeente",
+        "organisationType": "municipality",
         "organisationId": "adm-gemeente-hoorn",
         "adoptionDecision": {
-          "besluitnummer": "2026-123",
-          "datum": "2026-02-15",
-          "decisionType": "raadsbesluit"
+          "decisionNumber": "2026-123",
+          "date": "2026-02-15",
+          "decisionType": "councilResolution"
         },
         "adoptionDate": "2026-02-15",
         "effectiveFrom": "2026-01-01",
         "effectiveTo": "2026-12-31",
         "status": "adopted",
-        "materialityBase": "lasten",
+        "materialityBase": "expenses",
         "materialityAmount": 1200000.0,
         "referenceFramework": "BBV 2024 / Wet Fido / SiSa 2026",
         "currency": "EUR"
@@ -1102,10 +1116,10 @@
         },
         "protocol": "bado-protocol-hoorn-2026",
         "topic": "Sociaal Domein",
-        "getrouwheidApprovalCeiling": 1,
-        "getrouwheidQualificationCeiling": 3,
-        "rechtmatigheidApprovalCeiling": 1,
-        "rechtmatigheidQualificationCeiling": 3,
+        "faithfulnessApprovalCeiling": 1,
+        "faithfulnessQualificationCeiling": 3,
+        "lawfulnessApprovalCeiling": 1,
+        "lawfulnessQualificationCeiling": 3,
         "uncertaintyCeiling": 3,
         "methodologyNote": "Kernrisicogebied; gemengd-gefinancierde regelingen vereisen extra deelwaarneming."
       },
@@ -1117,10 +1131,10 @@
         },
         "protocol": "bado-protocol-hoorn-2026",
         "topic": "Ruimtelijke Ordening",
-        "getrouwheidApprovalCeiling": 1,
-        "getrouwheidQualificationCeiling": 3,
-        "rechtmatigheidApprovalCeiling": 1,
-        "rechtmatigheidQualificationCeiling": 3,
+        "faithfulnessApprovalCeiling": 1,
+        "faithfulnessQualificationCeiling": 3,
+        "lawfulnessApprovalCeiling": 1,
+        "lawfulnessQualificationCeiling": 3,
         "uncertaintyCeiling": 3
       },
       "bado-materialiteit-hoorn-2026-overall": {
@@ -1160,9 +1174,9 @@
         "sample": "bado-sample-hoorn-2026-sociaal-domein",
         "transaction": "glpost-hoorn-2026-reintegratie-014",
         "topic": "Sociaal Domein",
-        "findingType": "rechtmatigheid",
-        "rechtmatigheid": "exception",
-        "getrouwheid": "faithful",
+        "findingType": "lawfulness",
+        "lawfulness": "exception",
+        "faithfulness": "faithful",
         "severity": "te-corrigeren",
         "amount": 14000.0,
         "narrative": "Besteding reintegratiebudget niet vooraf geautoriseerd conform mandaat.",
@@ -1179,9 +1193,9 @@
         "sample": "bado-sample-hoorn-2026-sociaal-domein",
         "transaction": "glpost-hoorn-2026-subsidie-221",
         "topic": "Sociaal Domein",
-        "findingType": "getrouwheid",
-        "rechtmatigheid": "compliant",
-        "getrouwheid": "misstated",
+        "findingType": "faithfulness",
+        "lawfulness": "compliant",
+        "faithfulness": "misstated",
         "severity": "acceptabel",
         "amount": 3000.0,
         "narrative": "Subsidie onjuist verbijzonderd; onderbouwende stukken later aangeleverd.",
@@ -1196,9 +1210,9 @@
           "slug": "bado-sisa-hoorn-2026-jbi"
         },
         "protocol": "bado-protocol-hoorn-2026",
-        "regelingCode": "JBI",
-        "verantwoordingsplichtige": "gemeente",
-        "specifiekeUitkering": "Jeugdbescherming Integrale Aanpak",
+        "schemeCode": "JBI",
+        "accountableParty": "municipality",
+        "specificBenefit": "Jeugdbescherming Integrale Aanpak",
         "assuranceLevel": "financial-statement",
         "findings": [
           "bado-finding-hoorn-2026-001"

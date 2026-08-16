@@ -24,11 +24,11 @@
             "type": "object",
             "description": "The last-fetched docudesk GL-account suggestion (REQ-GAC-003): {code, label, confidence, rationale, source}. Cached on the draft so the operator's eventual booking choice can be compared against it without a live round-trip. Never auto-applied to glAccount (REQ-GAC-004) — informational only.",
             "properties": {
-              "code": { "type": "string" },
-              "label": { "type": "string", "nullable": true },
-              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-              "rationale": { "type": "string" },
-              "source": { "type": "string", "enum": ["history", "keyword-rule", "none"] }
+              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4300'. Informational only — never written to glAccount without operator confirmation (REQ-GAC-004)." },
+              "label": { "type": "string", "nullable": true, "title": "Account Label", "description": "Human-readable name of the suggested account as docudesk knew it at suggestion time. Cached so the suggestion still reads sensibly if the account is later renamed; null when docudesk returned no name." },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1, "title": "Confidence", "description": "How strongly docudesk backs this suggestion, from 0 (no confidence) to 1 (certain). A decimal fraction, not a percentage." },
+              "rationale": { "type": "string", "title": "Rationale", "description": "Docudesk's own plain-language explanation of why this account was suggested, shown to the operator so the suggestion can be judged rather than merely accepted." },
+              "source": { "type": "string", "enum": ["history", "keyword-rule", "none"], "title": "Source", "description": "How the suggestion was derived: history = this supplier's past bookings, keyword-rule = a text-matching mapping rule, none = docudesk had no basis to suggest anything." }
             },
             "nullable": true,
             "example": { "code": "4300", "label": "Kantoorkosten", "confidence": 0.8, "rationale": "Booked to 4300 in 8 of the last 10 invoices from this supplier", "source": "history" },
@@ -56,11 +56,11 @@
             "type": "object",
             "description": "The last-fetched docudesk GL-account suggestion (REQ-GAC-003): {code, label, confidence, rationale, source}. Never auto-applied to glAccount (REQ-GAC-004).",
             "properties": {
-              "code": { "type": "string" },
-              "label": { "type": "string", "nullable": true },
-              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-              "rationale": { "type": "string" },
-              "source": { "type": "string", "enum": ["history", "keyword-rule", "none"] }
+              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4400'. Informational only — never written to glAccount without operator confirmation (REQ-GAC-004)." },
+              "label": { "type": "string", "nullable": true, "title": "Account Label", "description": "Human-readable name of the suggested account as docudesk knew it at suggestion time. Cached so the suggestion still reads sensibly if the account is later renamed; null when docudesk returned no name." },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1, "title": "Confidence", "description": "How strongly docudesk backs this suggestion, from 0 (no confidence) to 1 (certain). A decimal fraction, not a percentage." },
+              "rationale": { "type": "string", "title": "Rationale", "description": "Docudesk's own plain-language explanation of why this account was suggested, shown to the operator so the suggestion can be judged rather than merely accepted." },
+              "source": { "type": "string", "enum": ["history", "keyword-rule", "none"], "title": "Source", "description": "How the suggestion was derived: history = this supplier's past bookings, keyword-rule = a text-matching mapping rule, none = docudesk had no basis to suggest anything." }
             },
             "nullable": true,
             "example": { "code": "4400", "label": "Representatiekosten", "confidence": 0.4, "rationale": "Keyword 'lunch' matched mapping rule → 4400", "source": "keyword-rule" },

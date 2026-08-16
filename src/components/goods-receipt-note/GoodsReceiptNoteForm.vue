@@ -27,7 +27,7 @@
 				<NcSelect
 					v-model="administrationId"
 					:options="administrationOptions"
-					:input-label="t('shillinq', 'Administration')"
+					:inputLabel="t('shillinq', 'Administration')"
 					:reduce="(o) => o.value"
 					data-testid="grn-form-administration" />
 
@@ -35,7 +35,7 @@
 					v-model="selectedPoIds"
 					multiple
 					:options="poOptions"
-					:input-label="t('shillinq', 'Purchase order(s)')"
+					:inputLabel="t('shillinq', 'Purchase order(s)')"
 					:reduce="(o) => o.value"
 					data-testid="grn-form-pos" />
 
@@ -53,7 +53,12 @@
 			<fieldset class="grn-form__lines">
 				<legend>{{ t('shillinq', 'Line items') }}</legend>
 				<p v-if="availableLines.length === 0" class="grn-form__lines-empty">
-					{{ t('shillinq', 'Pick at least one purchase order to load lines.') }}
+					{{
+						t(
+							'shillinq',
+							'Pick at least one purchase order to load lines.',
+						)
+					}}
 				</p>
 				<ul v-else class="grn-form__lines-list">
 					<li
@@ -62,9 +67,14 @@
 						class="grn-form__line"
 						:data-testid="`grn-form-line-${line.id}`">
 						<header class="grn-form__line-header">
-							<strong>{{ line.description || line.productOrServiceCode || line.id }}</strong>
+							<strong>{{
+								line.description
+								|| line.productOrServiceCode
+								|| line.id
+							}}</strong>
 							<span class="grn-form__line-ordered">
-								{{ t('shillinq', 'Ordered') }}: {{ formatQty(line.quantityOrdered) }}
+								{{ t('shillinq', 'Ordered') }}:
+								{{ formatQty(line.quantityOrdered) }}
 								{{ line.unitOfMeasure || '' }}
 							</span>
 						</header>
@@ -73,7 +83,9 @@
 							<label class="grn-form__field">
 								<span>{{ t('shillinq', 'Received') }}</span>
 								<NcInputField
-									v-model.number="lineState[line.id].quantityReceived"
+									v-model.number="
+										lineState[line.id].quantityReceived
+									"
 									type="number"
 									step="0.001"
 									min="0"
@@ -83,7 +95,9 @@
 							<label class="grn-form__field">
 								<span>{{ t('shillinq', 'Accepted') }}</span>
 								<NcInputField
-									v-model.number="lineState[line.id].quantityAccepted"
+									v-model.number="
+										lineState[line.id].quantityAccepted
+									"
 									type="number"
 									step="0.001"
 									min="0"
@@ -93,7 +107,9 @@
 							<label class="grn-form__field">
 								<span>{{ t('shillinq', 'Rejected') }}</span>
 								<NcInputField
-									v-model.number="lineState[line.id].quantityRejected"
+									v-model.number="
+										lineState[line.id].quantityRejected
+									"
 									type="number"
 									step="0.001"
 									min="0"
@@ -107,7 +123,7 @@
 								<NcSelect
 									v-model="lineState[line.id].rejectionReason"
 									:options="rejectionReasonOptions"
-									:input-label="t('shillinq', 'Rejection reason')"
+									:inputLabel="t('shillinq', 'Rejection reason')"
 									:reduce="(o) => o.value" />
 							</label>
 
@@ -115,8 +131,10 @@
 								<span>{{ t('shillinq', 'Batch / lot') }}</span>
 								<NcTextField
 									v-model="lineState[line.id].batchReference"
-									:label="t('shillinq', 'Batch reference (optional)')"
-									:show-trailing-button="false" />
+									:label="
+										t('shillinq', 'Batch reference (optional)')
+									"
+									:showTrailingButton="false" />
 							</label>
 						</div>
 					</li>
@@ -132,8 +150,11 @@
 					multiple
 					:aria-label="t('shillinq', 'Choose delivery photos to attach')"
 					data-testid="grn-form-photo-input"
-					@change="onPhotoSelected">
-				<ul v-if="photos.length > 0" class="grn-form__photo-list" data-testid="grn-form-photo-list">
+					@change="onPhotoSelected" />
+				<ul
+					v-if="photos.length > 0"
+					class="grn-form__photo-list"
+					data-testid="grn-form-photo-list">
 					<li v-for="photo in photos" :key="photo.id">
 						{{ photo.name }}
 					</li>
@@ -153,7 +174,11 @@
 					type="submit"
 					:disabled="submitting || !canSubmit"
 					data-testid="grn-form-submit">
-					{{ submitting ? t('shillinq', 'Saving...') : t('shillinq', 'Save goods receipt') }}
+					{{
+						submitting
+							? t('shillinq', 'Saving...')
+							: t('shillinq', 'Save goods receipt')
+					}}
 				</NcButton>
 			</div>
 		</form>
@@ -161,9 +186,9 @@
 </template>
 
 <script>
-import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
 
 export default {
 	name: 'GoodsReceiptNoteForm',
@@ -173,6 +198,7 @@ export default {
 		NcInputField,
 		NcSelect,
 	},
+
 	data() {
 		return {
 			administrationId: '',
@@ -189,6 +215,7 @@ export default {
 			submitting: false,
 		}
 	},
+
 	computed: {
 		canSubmit() {
 			if (!this.administrationId) {
@@ -198,35 +225,50 @@ export default {
 				return false
 			}
 			// At least one line must report a received quantity.
-			return Object.values(this.lineState).some((entry) => Number(entry.quantityReceived) > 0)
+			return Object.values(this.lineState).some(
+				(entry) => Number(entry.quantityReceived) > 0,
+			)
 		},
+
 		rejectionReasonOptions() {
 			return [
 				{ value: 'schade', label: this.t('shillinq', 'Damage') },
-				{ value: 'verkeerd_product', label: this.t('shillinq', 'Wrong product') },
+				{
+					value: 'verkeerd_product',
+					label: this.t('shillinq', 'Wrong product'),
+				},
 				{ value: 'expired', label: this.t('shillinq', 'Expired') },
 				{ value: 'niet_besteld', label: this.t('shillinq', 'Not ordered') },
-				{ value: 'short_shipped', label: this.t('shillinq', 'Short shipped') },
+				{
+					value: 'short_shipped',
+					label: this.t('shillinq', 'Short shipped'),
+				},
 				{ value: 'other', label: this.t('shillinq', 'Other') },
 			]
 		},
 	},
+
 	watch: {
 		selectedPoIds: {
 			handler() {
 				this.refreshLines()
 			},
+
 			deep: true,
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadOpenPurchaseOrders()
 	},
+
 	methods: {
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/administrations/context'),
+				)
 				const admins = response.data?.administrations || []
 				this.administrationOptions = admins.map((a) => ({
 					value: a.administrationId,
@@ -236,20 +278,28 @@ export default {
 					this.administrationId = response.data.activeAdministrationId
 				}
 			} catch (e) {
-				this.error = this.t('shillinq', 'Failed to load administration context')
+				this.error = this.t(
+					'shillinq',
+					'Failed to load administration context',
+				)
 			}
 		},
+
 		async loadOpenPurchaseOrders() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/PurchaseOrder'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/PurchaseOrder',
+					),
 				)
 				const records = response.data?.results || response.data || []
 				const open = records.filter((row) => {
 					const state = row.lifecycleState || ''
 					return state !== 'draft' && state !== 'cancelled'
 				})
-				this.openPurchaseOrders = Object.fromEntries(open.map((row) => [row.id || row.poNumber, row]))
+				this.openPurchaseOrders = Object.fromEntries(
+					open.map((row) => [row.id || row.poNumber, row]),
+				)
 				this.poOptions = open.map((row) => ({
 					value: row.id || row.poNumber,
 					label: row.poNumber || row.id,
@@ -259,6 +309,7 @@ export default {
 				this.poOptions = []
 			}
 		},
+
 		async refreshLines() {
 			if (this.selectedPoIds.length === 0) {
 				this.availableLines = []
@@ -270,7 +321,9 @@ export default {
 			for (const poId of this.selectedPoIds) {
 				try {
 					const response = await axios.get(
-						generateUrl('/apps/shillinq/api/openregister/objects/PurchaseOrderLine'),
+						generateUrl(
+							'/apps/shillinq/api/openregister/objects/PurchaseOrderLine',
+						),
 						{ params: { filter: { poId } } },
 					)
 					const records = response.data?.results || response.data || []
@@ -296,17 +349,24 @@ export default {
 			}
 			this.lineState = nextState
 		},
+
 		onPhotoSelected(event) {
 			const files = Array.from(event.target.files || [])
 			// File-id resolution is delegated to docudesk on submit; here we
 			// stash a preview-friendly name so the operator sees the list.
 			for (const file of files) {
-				this.photos.push({ id: `${file.name}-${file.size}`, name: file.name, file })
+				this.photos.push({
+					id: `${file.name}-${file.size}`,
+					name: file.name,
+					file,
+				})
 			}
 		},
+
 		formatQty(qty) {
 			return Number(qty || 0).toFixed(3)
 		},
+
 		async uploadPhotosToDocudesk() {
 			if (this.photos.length === 0) {
 				return []
@@ -332,10 +392,14 @@ export default {
 			}
 			return ids
 		},
+
 		async onSubmit() {
 			this.error = ''
 			if (!this.canSubmit) {
-				this.error = this.t('shillinq', 'Pick at least one PO and one line with a received quantity')
+				this.error = this.t(
+					'shillinq',
+					'Pick at least one PO and one line with a received quantity',
+				)
 				return
 			}
 
@@ -353,7 +417,8 @@ export default {
 					},
 				)
 				const grn = grnResponse.data || {}
-				const grnId = grn.id || (grn['@self'] && grn['@self'].id) || grn.grnNumber
+				const grnId =
+					grn.id || (grn['@self'] && grn['@self'].id) || grn.grnNumber
 				if (!grnId) {
 					throw new Error('Missing GRN id in response')
 				}
@@ -364,12 +429,15 @@ export default {
 						continue
 					}
 					await axios.post(
-						generateUrl(`/apps/shillinq/api/goods-receipt-notes/${grnId}/lines`),
+						generateUrl(
+							`/apps/shillinq/api/goods-receipt-notes/${grnId}/lines`,
+						),
 						{
 							administrationId: this.administrationId,
 							poLineId: line.id,
 							quantityReceived: state.quantityReceived,
-							quantityAccepted: state.quantityAccepted || state.quantityReceived,
+							quantityAccepted:
+								state.quantityAccepted || state.quantityReceived,
 							quantityRejected: state.quantityRejected || 0,
 							rejectionReason: state.rejectionReason,
 							batchReference: state.batchReference,
@@ -377,9 +445,14 @@ export default {
 					)
 				}
 
-				this.$router.push({ name: 'GoodsReceiptNoteDetail', params: { id: grnId } })
+				this.$router.push({
+					name: 'GoodsReceiptNoteDetail',
+					params: { id: grnId },
+				})
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to save goods receipt')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to save goods receipt')
 			} finally {
 				this.submitting = false
 			}

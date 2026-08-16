@@ -57,81 +57,77 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class GLReversalGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class GLReversalGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for `void`: the linked GLTransaction must be `reversed`.
-     *
-     * @param array<string, mixed> $object The object being transitioned (ExpenseClaimEntry,
-     *                                     APInvoice, or ARInvoice).
-     *
-     * @return bool True when the linked GLTransaction is reversed and void may proceed.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function isReversed(array $object): bool
-    {
-        $glTransactionId = trim((string) ($object['glTransactionId'] ?? ''));
-        if ($glTransactionId === '') {
-            // Nothing was ever materialised — refuse to void (fail-closed;
-            // an operator should reject/cancel, not void, in that state).
-            return false;
-        }
+	/**
+	 * Precondition for `void`: the linked GLTransaction must be `reversed`.
+	 *
+	 * @param array<string, mixed> $object The object being transitioned (ExpenseClaimEntry,
+	 *                                     APInvoice, or ARInvoice).
+	 *
+	 * @return bool True when the linked GLTransaction is reversed and void may proceed.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function isReversed(array $object): bool {
+		$glTransactionId = trim((string)($object['glTransactionId'] ?? ''));
+		if ($glTransactionId === '') {
+			// Nothing was ever materialised — refuse to void (fail-closed;
+			// an operator should reject/cancel, not void, in that state).
+			return false;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $found         = $objectService
-                ->setRegister($this->register())
-                ->setSchema('GLTransaction')
-                ->findAll(['filters' => ['id' => $glTransactionId], 'limit' => 1]);
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$found = $objectService
+				->setRegister($this->register())
+				->setSchema('GLTransaction')
+				->findAll(['filters' => ['id' => $glTransactionId], 'limit' => 1]);
 
-            if (is_array($found) === false || $found === []) {
-                $this->logger->info(
-                    'GLReversalGuard: linked GLTransaction not found — denying void',
-                    ['glTransactionId' => $glTransactionId]
-                );
-                return false;
-            }
+			if (is_array($found) === false || $found === []) {
+				$this->logger->info(
+					'GLReversalGuard: linked GLTransaction not found — denying void',
+					['glTransactionId' => $glTransactionId]
+				);
+				return false;
+			}
 
-            $transaction = (array) $found[0];
-            return (string) ($transaction['state'] ?? '') === 'reversed';
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'GLReversalGuard: isReversed check failed — denying void (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			$transaction = (array)$found[0];
+			return (string)($transaction['state'] ?? '') === 'reversed';
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GLReversalGuard: isReversed check failed — denying void (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end isReversed()
+	}//end isReversed()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

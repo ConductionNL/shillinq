@@ -34,259 +34,244 @@ use ReflectionMethod;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class SoftCloseFluxFragmentTest extends TestCase
-{
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-soft-close-flux.json';
+final class SoftCloseFluxFragmentTest extends TestCase {
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-soft-close-flux.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Schemas that REQ-CLS-001..010 mandate.
-     *
-     * @var array<int,string>
-     */
-    private const NEW_SCHEMAS = [
-        'PeriodStatus',
-        'AutoAccrualRule',
-        'AutoAccrualPosting',
-        'CloseChecklistTemplate',
-        'CloseChecklistInstance',
-        'FluxRun',
-        'FluxItem',
-        'FluxAttribution',
-        'MaterialityPolicy',
-        'ContinuousCloseAlert',
-        'CloseMetrics',
-    ];
+	/**
+	 * Schemas that REQ-CLS-001..010 mandate.
+	 *
+	 * @var array<int,string>
+	 */
+	private const NEW_SCHEMAS = [
+		'PeriodStatus',
+		'AutoAccrualRule',
+		'AutoAccrualPosting',
+		'CloseChecklistTemplate',
+		'CloseChecklistInstance',
+		'FluxRun',
+		'FluxItem',
+		'FluxAttribution',
+		'MaterialityPolicy',
+		'ContinuousCloseAlert',
+		'CloseMetrics',
+	];
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * The fragment is present and valid JSON with the expected sections.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertArrayHasKey('schemas', $data['components']);
+		self::assertArrayHasKey('objects', $data['components']);
 
-    }//end fragment()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment is present and valid JSON with the expected sections.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertArrayHasKey('schemas', $data['components']);
-        self::assertArrayHasKey('objects', $data['components']);
+	/**
+	 * Every required schema is declared (REQ-CLS-001..010).
+	 *
+	 * @return void
+	 */
+	public function testAllElevenSchemasDeclared(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach (self::NEW_SCHEMAS as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare schema $name");
+			self::assertSame($name, $schemas[$name]['slug'], 'Schema slug must match name');
+		}
 
-    }//end testFragmentIsValidJson()
+	}//end testAllElevenSchemasDeclared()
 
-    /**
-     * Every required schema is declared (REQ-CLS-001..010).
-     *
-     * @return void
-     */
-    public function testAllElevenSchemasDeclared(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach (self::NEW_SCHEMAS as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare schema $name");
-            self::assertSame($name, $schemas[$name]['slug'], "Schema slug must match name");
-        }
+	/**
+	 * Every new schema carries audit-trail metadata (REQ-AT-001, ADR-022).
+	 *
+	 * @return void
+	 */
+	public function testEverySchemaHasAuditTrailEnabled(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach (self::NEW_SCHEMAS as $name) {
+			$schema = $schemas[$name];
+			self::assertArrayHasKey('x-openregister-audit-trail', $schema, "$name must declare x-openregister-audit-trail");
+			self::assertTrue($schema['x-openregister-audit-trail']['enabled'], "$name audit-trail must be enabled");
+		}
 
-    }//end testAllElevenSchemasDeclared()
+	}//end testEverySchemaHasAuditTrailEnabled()
 
-    /**
-     * Every new schema carries audit-trail metadata (REQ-AT-001, ADR-022).
-     *
-     * @return void
-     */
-    public function testEverySchemaHasAuditTrailEnabled(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach (self::NEW_SCHEMAS as $name) {
-            $schema = $schemas[$name];
-            self::assertArrayHasKey('x-openregister-audit-trail', $schema, "$name must declare x-openregister-audit-trail");
-            self::assertTrue($schema['x-openregister-audit-trail']['enabled'], "$name audit-trail must be enabled");
-        }
+	/**
+	 * PeriodStatus declares the 5-stage lifecycle with the four transitions (REQ-CLS-001).
+	 *
+	 * @return void
+	 */
+	public function testPeriodStatusLifecycleHasFiveStagesAndFourTransitions(): void {
+		$lifecycle = $this->fragment()['components']['schemas']['PeriodStatus']['x-openregister-lifecycle'];
+		self::assertSame('open', $lifecycle['initialState']);
+		foreach (['open', 'soft-closed', 'hard-closed', 'audited', 'locked'] as $stage) {
+			self::assertArrayHasKey($stage, $lifecycle['states'], "PeriodStatus lifecycle must declare $stage");
+		}
 
-    }//end testEverySchemaHasAuditTrailEnabled()
+		foreach (['softClose', 'hardClose', 'audit', 'lock'] as $transition) {
+			self::assertArrayHasKey($transition, $lifecycle['transitions'], "PeriodStatus lifecycle must declare $transition");
+		}
 
-    /**
-     * PeriodStatus declares the 5-stage lifecycle with the four transitions (REQ-CLS-001).
-     *
-     * @return void
-     */
-    public function testPeriodStatusLifecycleHasFiveStagesAndFourTransitions(): void
-    {
-        $lifecycle = $this->fragment()['components']['schemas']['PeriodStatus']['x-openregister-lifecycle'];
-        self::assertSame('open', $lifecycle['initialState']);
-        foreach (['open', 'soft-closed', 'hard-closed', 'audited', 'locked'] as $stage) {
-            self::assertArrayHasKey($stage, $lifecycle['states'], "PeriodStatus lifecycle must declare $stage");
-        }
+	}//end testPeriodStatusLifecycleHasFiveStagesAndFourTransitions()
 
-        foreach (['softClose', 'hardClose', 'audit', 'lock'] as $transition) {
-            self::assertArrayHasKey($transition, $lifecycle['transitions'], "PeriodStatus lifecycle must declare $transition");
-        }
+	/**
+	 * AutoAccrualPosting lifecycle is posted → reversed (REQ-CLS-010).
+	 *
+	 * @return void
+	 */
+	public function testAutoAccrualPostingLifecycle(): void {
+		$lifecycle = $this->fragment()['components']['schemas']['AutoAccrualPosting']['x-openregister-lifecycle'];
+		self::assertSame('posted', $lifecycle['initialState']);
+		self::assertArrayHasKey('posted', $lifecycle['states']);
+		self::assertArrayHasKey('reversed', $lifecycle['states']);
+		self::assertArrayHasKey('reverse', $lifecycle['transitions']);
 
-    }//end testPeriodStatusLifecycleHasFiveStagesAndFourTransitions()
+	}//end testAutoAccrualPostingLifecycle()
 
-    /**
-     * AutoAccrualPosting lifecycle is posted → reversed (REQ-CLS-010).
-     *
-     * @return void
-     */
-    public function testAutoAccrualPostingLifecycle(): void
-    {
-        $lifecycle = $this->fragment()['components']['schemas']['AutoAccrualPosting']['x-openregister-lifecycle'];
-        self::assertSame('posted', $lifecycle['initialState']);
-        self::assertArrayHasKey('posted', $lifecycle['states']);
-        self::assertArrayHasKey('reversed', $lifecycle['states']);
-        self::assertArrayHasKey('reverse', $lifecycle['transitions']);
+	/**
+	 * CloseChecklistInstance lifecycle is pending → in-progress → completed (REQ-CLS-004).
+	 *
+	 * @return void
+	 */
+	public function testCloseChecklistInstanceLifecycle(): void {
+		$lifecycle = $this->fragment()['components']['schemas']['CloseChecklistInstance']['x-openregister-lifecycle'];
+		self::assertSame('pending', $lifecycle['initialState']);
+		foreach (['pending', 'in-progress', 'completed'] as $state) {
+			self::assertArrayHasKey($state, $lifecycle['states']);
+		}
 
-    }//end testAutoAccrualPostingLifecycle()
+	}//end testCloseChecklistInstanceLifecycle()
 
-    /**
-     * CloseChecklistInstance lifecycle is pending → in-progress → completed (REQ-CLS-004).
-     *
-     * @return void
-     */
-    public function testCloseChecklistInstanceLifecycle(): void
-    {
-        $lifecycle = $this->fragment()['components']['schemas']['CloseChecklistInstance']['x-openregister-lifecycle'];
-        self::assertSame('pending', $lifecycle['initialState']);
-        foreach (['pending', 'in-progress', 'completed'] as $state) {
-            self::assertArrayHasKey($state, $lifecycle['states']);
-        }
+	/**
+	 * Merging the fragment augments GLTransaction.post additively (REQ-CLS-001, ADR-037).
+	 *
+	 * The PeriodStatusGuard precondition is appended without dropping any
+	 * existing precondition / requires / action on the post transition.
+	 *
+	 * @return void
+	 */
+	public function testAugmentsGlTransactionPostAdditively(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = $this->fragment();
 
-    }//end testCloseChecklistInstanceLifecycle()
+		$merged = $this->merge($base, $frag);
+		$post = $merged['components']['schemas']['GLTransaction']['x-openregister-lifecycle']['transitions']['post'];
 
-    /**
-     * Merging the fragment augments GLTransaction.post additively (REQ-CLS-001, ADR-037).
-     *
-     * The PeriodStatusGuard precondition is appended without dropping any
-     * existing precondition / requires / action on the post transition.
-     *
-     * @return void
-     */
-    public function testAugmentsGlTransactionPostAdditively(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = $this->fragment();
+		self::assertContains(
+			'OCA\\Shillinq\\Lifecycle\\PeriodStatusGuard::postingAllowed',
+			$post['preconditions']
+		);
 
-        $merged = $this->merge($base, $frag);
-        $post   = $merged['components']['schemas']['GLTransaction']['x-openregister-lifecycle']['transitions']['post'];
+		// BalanceGuard requires + actions survive the merge.
+		self::assertSame('OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced', $post['requires']);
+		self::assertArrayHasKey('actions', $post);
 
-        self::assertContains(
-            'OCA\\Shillinq\\Lifecycle\\PeriodStatusGuard::postingAllowed',
-            $post['preconditions']
-        );
+	}//end testAugmentsGlTransactionPostAdditively()
 
-        // BalanceGuard requires + actions survive the merge.
-        self::assertSame('OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced', $post['requires']);
-        self::assertArrayHasKey('actions', $post);
+	/**
+	 * Seed AutoAccrualRule objects cover the five calculation methods spec'd in REQ-CLS-003.
+	 *
+	 * @return void
+	 */
+	public function testSeedRulesCoverCalculationMethods(): void {
+		$objects = $this->fragment()['components']['objects'];
+		$methods = [];
+		foreach ($objects as $object) {
+			if (($object['@self']['schema'] ?? '') !== 'AutoAccrualRule') {
+				continue;
+			}
+			$methods[] = $object['calculationMethod'] ?? '';
+		}
+		// Five rules, five methods represented (rent fixed, utilities percentage, interest
+		// straight-line, salaries external-lookup, depreciation straight-line).
+		self::assertContains('fixed-amount', $methods);
+		self::assertContains('percentage-of-revenue', $methods);
+		self::assertContains('straight-line-from-contract', $methods);
+		self::assertContains('external-lookup', $methods);
 
-    }//end testAugmentsGlTransactionPostAdditively()
+	}//end testSeedRulesCoverCalculationMethods()
 
-    /**
-     * Seed AutoAccrualRule objects cover the five calculation methods spec'd in REQ-CLS-003.
-     *
-     * @return void
-     */
-    public function testSeedRulesCoverCalculationMethods(): void
-    {
-        $objects = $this->fragment()['components']['objects'];
-        $methods = [];
-        foreach ($objects as $object) {
-            if (($object['@self']['schema'] ?? '') !== 'AutoAccrualRule') {
-                continue;
-            }
-            $methods[] = $object['calculationMethod'] ?? '';
-        }
-        // Five rules, five methods represented (rent fixed, utilities percentage, interest
-        // straight-line, salaries external-lookup, depreciation straight-line).
-        self::assertContains('fixed-amount', $methods);
-        self::assertContains('percentage-of-revenue', $methods);
-        self::assertContains('straight-line-from-contract', $methods);
-        self::assertContains('external-lookup', $methods);
+	/**
+	 * Default CloseChecklistTemplate ships task-dependency edges (REQ-CLS-004).
+	 *
+	 * @return void
+	 */
+	public function testSeedChecklistTemplateHasDependencies(): void {
+		$objects = $this->fragment()['components']['objects'];
+		foreach ($objects as $object) {
+			if (($object['@self']['schema'] ?? '') !== 'CloseChecklistTemplate') {
+				continue;
+			}
+			$tasks = $object['tasks'];
+			$hasDeps = false;
+			foreach ($tasks as $task) {
+				if (!empty($task['dependsOn'])) {
+					$hasDeps = true;
+					break;
+				}
+			}
+			self::assertTrue($hasDeps, 'Default checklist template must carry at least one task dependency.');
+			return;
+		}
+		self::fail('No CloseChecklistTemplate seed object found.');
 
-    }//end testSeedRulesCoverCalculationMethods()
+	}//end testSeedChecklistTemplateHasDependencies()
 
-    /**
-     * Default CloseChecklistTemplate ships task-dependency edges (REQ-CLS-004).
-     *
-     * @return void
-     */
-    public function testSeedChecklistTemplateHasDependencies(): void
-    {
-        $objects = $this->fragment()['components']['objects'];
-        foreach ($objects as $object) {
-            if (($object['@self']['schema'] ?? '') !== 'CloseChecklistTemplate') {
-                continue;
-            }
-            $tasks = $object['tasks'];
-            $hasDeps = false;
-            foreach ($tasks as $task) {
-                if (!empty($task['dependsOn'])) {
-                    $hasDeps = true;
-                    break;
-                }
-            }
-            self::assertTrue($hasDeps, 'Default checklist template must carry at least one task dependency.');
-            return;
-        }
-        self::fail('No CloseChecklistTemplate seed object found.');
+	/**
+	 * MaterialityPolicy seed ships special-rule overrides for cash + tax + revenue (REQ-CLS-005).
+	 *
+	 * @return void
+	 */
+	public function testSeedMaterialityPolicyHasSpecialRules(): void {
+		$objects = $this->fragment()['components']['objects'];
+		foreach ($objects as $object) {
+			if (($object['@self']['schema'] ?? '') !== 'MaterialityPolicy') {
+				continue;
+			}
+			self::assertArrayHasKey('cash', $object['specialRules']);
+			self::assertArrayHasKey('tax', $object['specialRules']);
+			self::assertArrayHasKey('revenue', $object['specialRules']);
+			return;
+		}
+		self::fail('No MaterialityPolicy seed object found.');
 
-    }//end testSeedChecklistTemplateHasDependencies()
-
-    /**
-     * MaterialityPolicy seed ships special-rule overrides for cash + tax + revenue (REQ-CLS-005).
-     *
-     * @return void
-     */
-    public function testSeedMaterialityPolicyHasSpecialRules(): void
-    {
-        $objects = $this->fragment()['components']['objects'];
-        foreach ($objects as $object) {
-            if (($object['@self']['schema'] ?? '') !== 'MaterialityPolicy') {
-                continue;
-            }
-            self::assertArrayHasKey('cash', $object['specialRules']);
-            self::assertArrayHasKey('tax', $object['specialRules']);
-            self::assertArrayHasKey('revenue', $object['specialRules']);
-            return;
-        }
-        self::fail('No MaterialityPolicy seed object found.');
-
-    }//end testSeedMaterialityPolicyHasSpecialRules()
+	}//end testSeedMaterialityPolicyHasSpecialRules()
 }

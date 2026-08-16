@@ -38,88 +38,85 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
-final class PayrollApArHandoffService
-{
+final class PayrollApArHandoffService {
 
-    /**
-     * Payee: Belastingdienst (BLD) — loonheffing + ZVW + WKR-eindheffingen.
-     *
-     * @var string
-     */
-    public const PAYEE_BELASTINGDIENST = 'BELASTINGDIENST';
+	/**
+	 * Payee: Belastingdienst (BLD) — loonheffing + ZVW + WKR-eindheffingen.
+	 *
+	 * @var string
+	 */
+	public const PAYEE_BELASTINGDIENST = 'BELASTINGDIENST';
 
-    /**
-     * Payee: UWV — werknemersverzekeringen-premies (AWF, AOF, WHK, WKO).
-     *
-     * @var string
-     */
-    public const PAYEE_UWV = 'UWV';
+	/**
+	 * Payee: UWV — werknemersverzekeringen-premies (AWF, AOF, WHK, WKO).
+	 *
+	 * @var string
+	 */
+	public const PAYEE_UWV = 'UWV';
 
-    /**
-     * Build AP transaction payloads from an LHAfdracht (REQ-PAY-011).
-     *
-     * Returns up to two AP transactions: one to the Belastingdienst (LH + ZVW
-     * + WKR-eindheffingen) and one to UWV (premies SV werkgever). A payload is
-     * omitted when its amount is zero.
-     *
-     * @param array<string,mixed> $lhAfdracht The LHAfdracht in VOORBEREID status.
-     *
-     * @return array<int,array<string,mixed>> AP transaction payloads.
-     *
-     * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
-     */
-    public function toApTransactionPayloads(array $lhAfdracht): array
-    {
-        $werkgeverId = (string) ($lhAfdracht['werkgeverId'] ?? '');
-        $periodeId   = (string) ($lhAfdracht['periodeId'] ?? '');
-        $dueDate     = ($lhAfdracht['vervaldagAfdracht'] ?? null);
-        $adminId     = ($lhAfdracht['administrationId'] ?? null);
+	/**
+	 * Build AP transaction payloads from an LHAfdracht (REQ-PAY-011).
+	 *
+	 * Returns up to two AP transactions: one to the Belastingdienst (LH + ZVW
+	 * + WKR-eindheffingen) and one to UWV (premies SV werkgever). A payload is
+	 * omitted when its amount is zero.
+	 *
+	 * @param array<string,mixed> $lhRemittance The LHAfdracht in VOORBEREID status.
+	 *
+	 * @return array<int,array<string,mixed>> AP transaction payloads.
+	 *
+	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
+	 */
+	public function toApTransactionPayloads(array $lhRemittance): array {
+		$employerId = (string)($lhRemittance['employerId'] ?? '');
+		$periodId = (string)($lhRemittance['periodId'] ?? '');
+		$dueDate = ($lhRemittance['dueDateRemittance'] ?? null);
+		$adminId = ($lhRemittance['administrationId'] ?? null);
 
-        $loonheffing = (float) ($lhAfdracht['totaalLoonheffing'] ?? 0.0);
-        $zvw         = (float) ($lhAfdracht['totaalZVW'] ?? 0.0);
-        $wkr         = (float) ($lhAfdracht['totaalEindheffingenWKR'] ?? 0.0);
-        $premiesSV   = (float) ($lhAfdracht['totaalPremiesSV'] ?? 0.0);
+		$payrollTax = (float)($lhRemittance['totalPayrollTax'] ?? 0.0);
+		$zvw = (float)($lhRemittance['totalHealthInsurance'] ?? 0.0);
+		$wkr = (float)($lhRemittance['totalFinalLeviesWorkRelatedCosts'] ?? 0.0);
+		$premiesSV = (float)($lhRemittance['totalSocialInsuranceContributions'] ?? 0.0);
 
-        $belastingdienstBedrag = ($loonheffing + $zvw + $wkr);
+		$taxAuthorityAmount = ($payrollTax + $zvw + $wkr);
 
-        $payloads = [];
-        if ($belastingdienstBedrag > 0.0) {
-            $payloads[] = [
-                'payee'            => self::PAYEE_BELASTINGDIENST,
-                'amount'           => round($belastingdienstBedrag, 2),
-                'currency'         => 'EUR',
-                'dueDate'          => $dueDate,
-                'werkgeverId'      => $werkgeverId,
-                'periodeId'        => $periodeId,
-                'administrationId' => $adminId,
-                'breakdown'        => [
-                    'loonheffing'      => $loonheffing,
-                    'zvw'              => $zvw,
-                    'eindheffingenWKR' => $wkr,
-                ],
-                'omschrijving'     => sprintf('Loonheffing + ZVW + WKR afdracht periode %s', $periodeId),
-                'source'           => 'LHAfdracht',
-                'sourceRef'        => sprintf('%s/%s', $werkgeverId, $periodeId),
-            ];
-        }
+		$payloads = [];
+		if ($taxAuthorityAmount > 0.0) {
+			$payloads[] = [
+				'payee' => self::PAYEE_BELASTINGDIENST,
+				'amount' => round($taxAuthorityAmount, 2),
+				'currency' => 'EUR',
+				'dueDate' => $dueDate,
+				'employerId' => $employerId,
+				'periodId' => $periodId,
+				'administrationId' => $adminId,
+				'breakdown' => [
+					'payrollTax' => $payrollTax,
+					'zvw' => $zvw,
+					'eindheffingenWKR' => $wkr,
+				],
+				'description' => sprintf('Loonheffing + ZVW + WKR afdracht periode %s', $periodId),
+				'source' => 'LHAfdracht',
+				'sourceRef' => sprintf('%s/%s', $employerId, $periodId),
+			];
+		}
 
-        if ($premiesSV > 0.0) {
-            $payloads[] = [
-                'payee'            => self::PAYEE_UWV,
-                'amount'           => round($premiesSV, 2),
-                'currency'         => 'EUR',
-                'dueDate'          => $dueDate,
-                'werkgeverId'      => $werkgeverId,
-                'periodeId'        => $periodeId,
-                'administrationId' => $adminId,
-                'breakdown'        => ['premiesSV' => $premiesSV],
-                'omschrijving'     => sprintf('Premies werknemersverzekeringen periode %s', $periodeId),
-                'source'           => 'LHAfdracht',
-                'sourceRef'        => sprintf('%s/%s', $werkgeverId, $periodeId),
-            ];
-        }
+		if ($premiesSV > 0.0) {
+			$payloads[] = [
+				'payee' => self::PAYEE_UWV,
+				'amount' => round($premiesSV, 2),
+				'currency' => 'EUR',
+				'dueDate' => $dueDate,
+				'employerId' => $employerId,
+				'periodId' => $periodId,
+				'administrationId' => $adminId,
+				'breakdown' => ['premiesSV' => $premiesSV],
+				'description' => sprintf('Premies werknemersverzekeringen periode %s', $periodId),
+				'source' => 'LHAfdracht',
+				'sourceRef' => sprintf('%s/%s', $employerId, $periodId),
+			];
+		}
 
-        return $payloads;
-
-    }//end toApTransactionPayloads()
+		return $payloads;
+	}//end toApTransactionPayloads()
 }//end class

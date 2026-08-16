@@ -12,12 +12,12 @@
 -->
 <template>
 	<CnAppRoot
-		:ai-companion="true"
+		:aiCompanion="true"
 		:manifest="manifest"
-		:page-types="pageTypes"
-		:custom-components="customComponents"
+		:pageTypes="pageTypes"
+		:customComponents="customComponents"
 		:registry="registry"
-		app-id="shillinq"
+		appId="shillinq"
 		:translate="translateForApp"
 		:permissions="permissions">
 		<!--
@@ -31,15 +31,15 @@
 				v-if="objectSidebarState.active"
 				:title="objectSidebarState.title"
 				:subtitle="objectSidebarState.subtitle"
-				:object-type="objectSidebarState.objectType"
-				:object-id="objectSidebarState.objectId"
+				:objectType="objectSidebarState.objectType"
+				:objectId="objectSidebarState.objectId"
 				:register="objectSidebarState.register"
 				:schema="objectSidebarState.schema"
-				:hidden-tabs="objectSidebarState.hiddenTabs"
+				:hiddenTabs="objectSidebarState.hiddenTabs"
 				:tabs="objectSidebarState.tabs"
-				:use-registry="objectSidebarState.useRegistry"
-				:exclude-integrations="objectSidebarState.excludeIntegrations"
-				:requested-tab="objectSidebarState.requestedTab"
+				:useRegistry="objectSidebarState.useRegistry"
+				:excludeIntegrations="objectSidebarState.excludeIntegrations"
+				:requestedTab="objectSidebarState.requestedTab"
 				:registry="registry"
 				:open="objectSidebarState.open"
 				@update:open="objectSidebarState.open = $event" />
@@ -48,9 +48,9 @@
 </template>
 
 <script>
-import { reactive } from 'vue'
-import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot, CnObjectSidebar } from '@conduction/nextcloud-vue'
+import { translate as ncT } from '@nextcloud/l10n'
+import { reactive } from 'vue'
 import { initializeStores } from './store/store.js'
 
 export default {
@@ -87,6 +87,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Page-type registry — `{ index, detail, dashboard, settings, ... }`.
 		 * Wired through to descendant `CnPageRenderer` instances.
@@ -95,6 +96,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * V2 kind-tagged component registry (ADR-036). Each entry is
 		 * `{ kind: "page" | "widget" | "sidebarTab" | "modal" | "settingsSection",
@@ -107,6 +109,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Flat `{ name: component }` map of every registry component (pages,
 		 * widgets, …), derived from the kind-tagged `registry` in main.js. The

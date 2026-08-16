@@ -34,20 +34,17 @@ namespace OCA\Shillinq\Guard;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class ProjectActivationGuard
-{
-    /**
-     * Precondition for `activate`: `startDate` must be set.
-     *
-     * @param array<string, mixed> $project The Project object being transitioned.
-     *
-     * @return bool True when the project may be activated.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireStartDate(array $project): bool
-    {
-        return trim((string) ($project['startDate'] ?? '')) !== '';
-
-    }//end requireStartDate()
+class ProjectActivationGuard {
+	/**
+	 * Precondition for `activate`: `startDate` must be set.
+	 *
+	 * @param array<string, mixed> $project The Project object being transitioned.
+	 *
+	 * @return bool True when the project may be activated.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireStartDate(array $project): bool {
+		return trim((string)($project['startDate'] ?? '')) !== '';
+	}//end requireStartDate()
 }//end class

@@ -12,7 +12,8 @@
 			"route": "/inkoop/supplier-invoices/:id",
 			"type": "custom",
 			"title": "Supplier Invoice",
-			"component": "SupplierInvoiceDetail"
+			"component": "SupplierInvoiceDetail",
+			"_note": "`type: detail` renders declared fields of ONE object. This page must additionally render (a) the parsed `lines[]` embedded in the invoice — a nested array, not a related collection with a foreign key, so config.relatedCollections cannot fetch it; (b) an OCR-confidence indicator that only exists when the invoice arrived through the PDF/OCR ingest path; and (c) the UBL/Peppol provenance block, present only on Peppol-ingested invoices. Both (b) and (c) are conditional on HOW the record was ingested, which no declarative field list expresses."
 		}
 	]
 }

@@ -101,487 +101,478 @@ namespace OCA\Shillinq\Portal;
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Pre-existing debt (issue
  *     #506): deferred pending a dedicated refactor.
  */
-class PortalContributionProvider
-{
-    /**
-     * The audiences this provider contributes to (contract v2, preferred).
-     *
-     * The registry probes for this method first; the audience vocabulary is
-     * an open string set. Shillinq serves the parties on both sides of its
-     * ledgers: customers (AR side) and suppliers (AP side).
-     *
-     * @return array<int, string> The audience identifiers.
-     *
-     * @spec openspec/specs/portal-contribution/spec.md
-     */
-    public function getAudiences(): array
-    {
-        return [
-            'customer',
-            'supplier',
-            'accountant',
-        ];
+class PortalContributionProvider {
+	/**
+	 * The audiences this provider contributes to (contract v2, preferred).
+	 *
+	 * The registry probes for this method first; the audience vocabulary is
+	 * an open string set. Shillinq serves the parties on both sides of its
+	 * ledgers: customers (AR side) and suppliers (AP side).
+	 *
+	 * @return array<int, string> The audience identifiers.
+	 *
+	 * @spec openspec/specs/portal-contribution/spec.md
+	 */
+	public function getAudiences(): array {
+		return [
+			'customer',
+			'supplier',
+			'accountant',
+		];
 
-    }//end getAudiences()
+	}//end getAudiences()
 
-    /**
-     * The single audience this provider contributes to (contract v1 fallback).
-     *
-     * Kept alongside getAudiences() so the provider also works against a v1
-     * registry that predates multi-audience support. A v1 registry serves a
-     * single audience, so the primary (customer) surface is declared; the
-     * supplier surface then only exists on contract-v2 registries.
-     *
-     * @return string The audience identifier.
-     *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
-     */
-    public function getAudience(): string
-    {
-        return 'customer';
+	/**
+	 * The single audience this provider contributes to (contract v1 fallback).
+	 *
+	 * Kept alongside getAudiences() so the provider also works against a v1
+	 * registry that predates multi-audience support. A v1 registry serves a
+	 * single audience, so the primary (customer) surface is declared; the
+	 * supplier surface then only exists on contract-v2 registries.
+	 *
+	 * @return string The audience identifier.
+	 *
+	 * @spec openspec/changes/portal-contribution/tasks.md#task-2
+	 */
+	public function getAudience(): string {
+		return 'customer';
+	}//end getAudience()
 
-    }//end getAudience()
+	/**
+	 * Build the declarative portal manifest for one resolved subject.
+	 *
+	 * The subject array is server-derived by portaliq (subjectRef UUID,
+	 * audience, organisation, trust level low|substantial|high). Branches on
+	 * `$subject['audience']` and returns null for any audience this app does
+	 * not serve — fail-closed; the registry already filters by audience, but
+	 * a provider must not rely on that. The customer manifest never contains
+	 * supplier collections and vice versa (other parties' data stays out).
+	 *
+	 * @param array<string, mixed> $subject The resolved portal subject.
+	 *
+	 * @return array<string, mixed>|null The manifest, or null when not contributing.
+	 *
+	 * @spec openspec/changes/portal-contribution/tasks.md#task-2
+	 */
+	public function getContribution(array $subject): ?array {
+		$audience = $subject['audience'] ?? '';
 
-    /**
-     * Build the declarative portal manifest for one resolved subject.
-     *
-     * The subject array is server-derived by portaliq (subjectRef UUID,
-     * audience, organisation, trust level low|substantial|high). Branches on
-     * `$subject['audience']` and returns null for any audience this app does
-     * not serve — fail-closed; the registry already filters by audience, but
-     * a provider must not rely on that. The customer manifest never contains
-     * supplier collections and vice versa (other parties' data stays out).
-     *
-     * @param array<string, mixed> $subject The resolved portal subject.
-     *
-     * @return array<string, mixed>|null The manifest, or null when not contributing.
-     *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
-     */
-    public function getContribution(array $subject): ?array
-    {
-        $audience = $subject['audience'] ?? '';
+		if ($audience === 'customer') {
+			return $this->customerManifest();
+		}
 
-        if ($audience === 'customer') {
-            return $this->customerManifest();
-        }
+		if ($audience === 'supplier') {
+			return $this->supplierManifest();
+		}
 
-        if ($audience === 'supplier') {
-            return $this->supplierManifest();
-        }
+		if ($audience === 'accountant') {
+			return $this->accountantManifest();
+		}
 
-        if ($audience === 'accountant') {
-            return $this->accountantManifest();
-        }
+		return null;
+	}//end getContribution()
 
-        return null;
+	/**
+	 * The read-only customer (AR-side) manifest.
+	 *
+	 * The first five collections (Q2C: Invoice / BillableInvoice / Quote /
+	 * SalesOrder / Contract) are scoped by a verified UUID domain reference to
+	 * the customer record (Nextcloud contact / AR customer master) matched
+	 * against claims.shillinq.customerId — unchanged from Wave 1.
+	 *
+	 * Wave 2 adds the AR sub-ledger surface the Wave-1 slice deferred:
+	 *
+	 * - `salesInvoices` (schema ARInvoice) — scoped by `customerId`, the
+	 *   CustomerMaster OBJECT UUID (base schema declares it `format: uuid`,
+	 *   `$ref: CustomerMaster`, `inversedBy: invoices`), matched against the
+	 *   new bare-name claim `customerMasterId`. The CustomerMaster object UUID
+	 *   is globally unique, so — unlike the per-administration customer CODE —
+	 *   it cannot leak across administrations. A `fields` whitelist projects
+	 *   the row to the customer-safe subset (invoice header, lines, artefact
+	 *   URIs, the dunning summary group) and deliberately drops internal
+	 *   accounting fields (glTransactionId, matchedBankLineId, the writeOff
+	 *   bad-debt group, administrationId) so a debtor never sees them.
+	 * - `paymentRequests` (schema PaymentRequest) — carries no customer
+	 *   property, so it is reached through a one-hop reverse `via` join
+	 *   through ARInvoice.customerId (contract v2.2, `match: 'scopeField'`):
+	 *   the join collects the subject's own ARInvoice ids, then keeps only
+	 *   PaymentRequests whose `invoiceReference` is in that set. `confirmationSummary`
+	 *   (portal-payment-initiation, REQ-SPPI-005) joins the whitelist so a
+	 *   settled request shows the debtor a plain-language receipt. The computed
+	 *   `paymentLink` (OpenConnector hosted payment UI, short-lived signed
+	 *   token; null unless state=pending) is the pay-now surface — clicking it
+	 *   settles the invoice through the existing capture → matchPaid flow.
+	 *
+	 * Dunning is surfaced read-only via the ARInvoice.dunning summary group
+	 * (currentStage / nextDunningDate / incassokosten / rente); the DunningRun
+	 * schema itself stays excluded (recipient PII + rendered letters).
+	 *
+	 * portal-payment-initiation (REQ-SPPI-006) adds the write leg: a single
+	 * `pay` `endpoint-forward` action, referenced as a `rowAction` on
+	 * `salesInvoices` and `paymentRequests` so portaliq renders a per-row
+	 * pay-now control. The action is pure declarative data (no I/O, no state)
+	 * exactly like every other key on this manifest; the imperative ownership
+	 * + PSP work is the receiver's job (`PortalPaymentInitiationController` /
+	 * `PortalPaymentSessionService`).
+	 *
+	 * @return array<string, mixed> The customer manifest.
+	 *
+	 * @spec openspec/specs/portal-contribution/spec.md
+	 */
+	private function customerManifest(): array {
+		return [
+			'label' => 'Shillinq',
+			'collections' => [
+				[
+					'id' => 'invoices',
+					'register' => 'shillinq',
+					'schema' => 'Invoice',
+					'scopeField' => 'customerReference',
+					'scopeClaim' => 'customerId',
+					'label' => 'My invoices',
+					'listable' => true,
+				],
+				[
+					'id' => 'projectInvoices',
+					'register' => 'shillinq',
+					'schema' => 'BillableInvoice',
+					'scopeField' => 'customerId',
+					'scopeClaim' => 'customerId',
+					'label' => 'My project invoices',
+					'listable' => true,
+				],
+				[
+					'id' => 'quotes',
+					'register' => 'shillinq',
+					'schema' => 'Quote',
+					'scopeField' => 'customerReference',
+					'scopeClaim' => 'customerId',
+					'label' => 'My quotes',
+					'listable' => true,
+				],
+				[
+					'id' => 'salesOrders',
+					'register' => 'shillinq',
+					'schema' => 'SalesOrder',
+					'scopeField' => 'customerReference',
+					'scopeClaim' => 'customerId',
+					'label' => 'My orders',
+					'listable' => true,
+				],
+				[
+					'id' => 'contracts',
+					'register' => 'shillinq',
+					'schema' => 'Contract',
+					'scopeField' => 'customerId',
+					'scopeClaim' => 'customerId',
+					'label' => 'My contracts',
+					'listable' => true,
+				],
+				[
+					'id' => 'salesInvoices',
+					'register' => 'shillinq',
+					'schema' => 'ARInvoice',
+					'scopeField' => 'customerId',
+					'scopeClaim' => 'customerMasterId',
+					'label' => 'My invoices',
+					'listable' => true,
+					'rowAction' => 'pay',
+					'fields' => [
+						'invoiceNumber',
+						'invoiceType',
+						'invoiceDate',
+						'dueDate',
+						'currency',
+						'totalAmount',
+						'taxAmount',
+						'lines',
+						'state',
+						'sourceDocumentUri',
+						'ublXml',
+						'dunning',
+					],
+					'columns' => [
+						[
+							'field' => 'invoiceNumber',
+							'label' => 'Invoice',
+							'render' => 'text',
+						],
+						[
+							'field' => 'invoiceDate',
+							'label' => 'Date',
+							'render' => 'date',
+						],
+						[
+							'field' => 'dueDate',
+							'label' => 'Due',
+							'render' => 'date',
+						],
+						[
+							'field' => 'totalAmount',
+							'label' => 'Amount',
+							'render' => 'currency',
+						],
+						[
+							'field' => 'state',
+							'label' => 'Status',
+							'render' => 'badge',
+						],
+					],
+					'detail' => [
+						'layout' => 'card',
+						'fields' => [
+							'invoiceNumber',
+							'invoiceType',
+							'invoiceDate',
+							'dueDate',
+							'currency',
+							'totalAmount',
+							'taxAmount',
+							'lines',
+							'state',
+							'sourceDocumentUri',
+							'ublXml',
+							'dunning',
+						],
+					],
+					'defaultSort' => [
+						'field' => 'invoiceDate',
+						'direction' => 'desc',
+					],
+				],
+				[
+					'id' => 'paymentRequests',
+					'register' => 'shillinq',
+					'schema' => 'PaymentRequest',
+					'scopeField' => 'invoiceReference',
+					'scopeClaim' => 'customerMasterId',
+					'via' => [
+						'register' => 'shillinq',
+						'schema' => 'ARInvoice',
+						'scopeField' => 'customerId',
+						'targetField' => 'id',
+						'match' => 'scopeField',
+					],
+					'label' => 'Pay my invoices',
+					'listable' => true,
+					'rowAction' => 'pay',
+					'fields' => [
+						'invoiceReference',
+						'amount',
+						'currency',
+						'paymentGateway',
+						'state',
+						'paymentLink',
+						'expiresAt',
+						'capturedAt',
+						'failureReason',
+						'confirmationSummary',
+					],
+					'columns' => [
+						[
+							'field' => 'invoiceReference',
+							'label' => 'Invoice',
+							'render' => 'text',
+						],
+						[
+							'field' => 'amount',
+							'label' => 'Amount',
+							'render' => 'currency',
+						],
+						[
+							'field' => 'state',
+							'label' => 'Status',
+							'render' => 'badge',
+						],
+						[
+							'field' => 'paymentLink',
+							'label' => 'Pay now',
+							'render' => 'link',
+						],
+					],
+					'detail' => [
+						'layout' => 'card',
+						'fields' => [
+							'invoiceReference',
+							'amount',
+							'currency',
+							'paymentGateway',
+							'state',
+							'paymentLink',
+							'expiresAt',
+							'capturedAt',
+							'failureReason',
+							'confirmationSummary',
+						],
+					],
+					'defaultSort' => [
+						'field' => 'expiresAt',
+						'direction' => 'desc',
+					],
+				],
+			],
+			// Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
+			// action, forwarded server-to-server by portaliq to
+			// PortalPaymentInitiationController (route declared in
+			// appinfo/routes.php). minTrust tracks the AR surface — salesInvoices /
+			// paymentRequests above declare no explicit minTrust (default 'low'), so
+			// the action does not gate any tighter than the data it acts on; bump
+			// both together if/when the AR surface moves to 'substantial' (Wave 2
+			// note above).
+			'actions' => [
+				[
+					'id' => 'pay',
+					'label' => 'Pay now',
+					'type' => 'endpoint-forward',
+					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+					'method' => 'POST',
+					'minTrust' => 'low',
+				],
+			],
+			'notifications' => [],
+		];
 
-    }//end getContribution()
+	}//end customerManifest()
 
-    /**
-     * The read-only customer (AR-side) manifest.
-     *
-     * The first five collections (Q2C: Invoice / BillableInvoice / Quote /
-     * SalesOrder / Contract) are scoped by a verified UUID domain reference to
-     * the customer record (Nextcloud contact / AR customer master) matched
-     * against claims.shillinq.customerId — unchanged from Wave 1.
-     *
-     * Wave 2 adds the AR sub-ledger surface the Wave-1 slice deferred:
-     *
-     * - `salesInvoices` (schema ARInvoice) — scoped by `customerId`, the
-     *   CustomerMaster OBJECT UUID (base schema declares it `format: uuid`,
-     *   `$ref: CustomerMaster`, `inversedBy: invoices`), matched against the
-     *   new bare-name claim `customerMasterId`. The CustomerMaster object UUID
-     *   is globally unique, so — unlike the per-administration customer CODE —
-     *   it cannot leak across administrations. A `fields` whitelist projects
-     *   the row to the customer-safe subset (invoice header, lines, artefact
-     *   URIs, the dunning summary group) and deliberately drops internal
-     *   accounting fields (glTransactionId, matchedBankLineId, the writeOff
-     *   bad-debt group, administrationId) so a debtor never sees them.
-     * - `paymentRequests` (schema PaymentRequest) — carries no customer
-     *   property, so it is reached through a one-hop reverse `via` join
-     *   through ARInvoice.customerId (contract v2.2, `match: 'scopeField'`):
-     *   the join collects the subject's own ARInvoice ids, then keeps only
-     *   PaymentRequests whose `invoiceReference` is in that set. `confirmationSummary`
-     *   (portal-payment-initiation, REQ-SPPI-005) joins the whitelist so a
-     *   settled request shows the debtor a plain-language receipt. The computed
-     *   `paymentLink` (OpenConnector hosted payment UI, short-lived signed
-     *   token; null unless state=pending) is the pay-now surface — clicking it
-     *   settles the invoice through the existing capture → matchPaid flow.
-     *
-     * Dunning is surfaced read-only via the ARInvoice.dunning summary group
-     * (currentStage / nextDunningDate / incassokosten / rente); the DunningRun
-     * schema itself stays excluded (recipient PII + rendered letters).
-     *
-     * portal-payment-initiation (REQ-SPPI-006) adds the write leg: a single
-     * `pay` `endpoint-forward` action, referenced as a `rowAction` on
-     * `salesInvoices` and `paymentRequests` so portaliq renders a per-row
-     * pay-now control. The action is pure declarative data (no I/O, no state)
-     * exactly like every other key on this manifest; the imperative ownership
-     * + PSP work is the receiver's job (`PortalPaymentInitiationController` /
-     * `PortalPaymentSessionService`).
-     *
-     * @return array<string, mixed> The customer manifest.
-     *
-     * @spec openspec/specs/portal-contribution/spec.md
-     */
-    private function customerManifest(): array
-    {
-        return [
-            'label'         => 'Shillinq',
-            'collections'   => [
-                [
-                    'id'         => 'invoices',
-                    'register'   => 'shillinq',
-                    'schema'     => 'Invoice',
-                    'scopeField' => 'customerReference',
-                    'scopeClaim' => 'customerId',
-                    'label'      => 'My invoices',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'projectInvoices',
-                    'register'   => 'shillinq',
-                    'schema'     => 'BillableInvoice',
-                    'scopeField' => 'customerId',
-                    'scopeClaim' => 'customerId',
-                    'label'      => 'My project invoices',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'quotes',
-                    'register'   => 'shillinq',
-                    'schema'     => 'Quote',
-                    'scopeField' => 'customerReference',
-                    'scopeClaim' => 'customerId',
-                    'label'      => 'My quotes',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'salesOrders',
-                    'register'   => 'shillinq',
-                    'schema'     => 'SalesOrder',
-                    'scopeField' => 'customerReference',
-                    'scopeClaim' => 'customerId',
-                    'label'      => 'My orders',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'contracts',
-                    'register'   => 'shillinq',
-                    'schema'     => 'Contract',
-                    'scopeField' => 'customerId',
-                    'scopeClaim' => 'customerId',
-                    'label'      => 'My contracts',
-                    'listable'   => true,
-                ],
-                [
-                    'id'          => 'salesInvoices',
-                    'register'    => 'shillinq',
-                    'schema'      => 'ARInvoice',
-                    'scopeField'  => 'customerId',
-                    'scopeClaim'  => 'customerMasterId',
-                    'label'       => 'My invoices',
-                    'listable'    => true,
-                    'rowAction'   => 'pay',
-                    'fields'      => [
-                        'invoiceNumber',
-                        'invoiceType',
-                        'invoiceDate',
-                        'dueDate',
-                        'currency',
-                        'totalAmount',
-                        'taxAmount',
-                        'lines',
-                        'state',
-                        'sourceDocumentUri',
-                        'ublXml',
-                        'dunning',
-                    ],
-                    'columns'     => [
-                        [
-                            'field'  => 'invoiceNumber',
-                            'label'  => 'Invoice',
-                            'render' => 'text',
-                        ],
-                        [
-                            'field'  => 'invoiceDate',
-                            'label'  => 'Date',
-                            'render' => 'date',
-                        ],
-                        [
-                            'field'  => 'dueDate',
-                            'label'  => 'Due',
-                            'render' => 'date',
-                        ],
-                        [
-                            'field'  => 'totalAmount',
-                            'label'  => 'Amount',
-                            'render' => 'currency',
-                        ],
-                        [
-                            'field'  => 'state',
-                            'label'  => 'Status',
-                            'render' => 'badge',
-                        ],
-                    ],
-                    'detail'      => [
-                        'layout' => 'card',
-                        'fields' => [
-                            'invoiceNumber',
-                            'invoiceType',
-                            'invoiceDate',
-                            'dueDate',
-                            'currency',
-                            'totalAmount',
-                            'taxAmount',
-                            'lines',
-                            'state',
-                            'sourceDocumentUri',
-                            'ublXml',
-                            'dunning',
-                        ],
-                    ],
-                    'defaultSort' => [
-                        'field'     => 'invoiceDate',
-                        'direction' => 'desc',
-                    ],
-                ],
-                [
-                    'id'          => 'paymentRequests',
-                    'register'    => 'shillinq',
-                    'schema'      => 'PaymentRequest',
-                    'scopeField'  => 'invoiceReference',
-                    'scopeClaim'  => 'customerMasterId',
-                    'via'         => [
-                        'register'    => 'shillinq',
-                        'schema'      => 'ARInvoice',
-                        'scopeField'  => 'customerId',
-                        'targetField' => 'id',
-                        'match'       => 'scopeField',
-                    ],
-                    'label'       => 'Pay my invoices',
-                    'listable'    => true,
-                    'rowAction'   => 'pay',
-                    'fields'      => [
-                        'invoiceReference',
-                        'amount',
-                        'currency',
-                        'paymentGateway',
-                        'state',
-                        'paymentLink',
-                        'expiresAt',
-                        'capturedAt',
-                        'failureReason',
-                        'confirmationSummary',
-                    ],
-                    'columns'     => [
-                        [
-                            'field'  => 'invoiceReference',
-                            'label'  => 'Invoice',
-                            'render' => 'text',
-                        ],
-                        [
-                            'field'  => 'amount',
-                            'label'  => 'Amount',
-                            'render' => 'currency',
-                        ],
-                        [
-                            'field'  => 'state',
-                            'label'  => 'Status',
-                            'render' => 'badge',
-                        ],
-                        [
-                            'field'  => 'paymentLink',
-                            'label'  => 'Pay now',
-                            'render' => 'link',
-                        ],
-                    ],
-                    'detail'      => [
-                        'layout' => 'card',
-                        'fields' => [
-                            'invoiceReference',
-                            'amount',
-                            'currency',
-                            'paymentGateway',
-                            'state',
-                            'paymentLink',
-                            'expiresAt',
-                            'capturedAt',
-                            'failureReason',
-                            'confirmationSummary',
-                        ],
-                    ],
-                    'defaultSort' => [
-                        'field'     => 'expiresAt',
-                        'direction' => 'desc',
-                    ],
-                ],
-            ],
-            // Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
-            // action, forwarded server-to-server by portaliq to
-            // PortalPaymentInitiationController (route declared in
-            // appinfo/routes.php). minTrust tracks the AR surface — salesInvoices /
-            // paymentRequests above declare no explicit minTrust (default 'low'), so
-            // the action does not gate any tighter than the data it acts on; bump
-            // both together if/when the AR surface moves to 'substantial' (Wave 2
-            // note above).
-            'actions'       => [
-                [
-                    'id'       => 'pay',
-                    'label'    => 'Pay now',
-                    'type'     => 'endpoint-forward',
-                    'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
-                    'method'   => 'POST',
-                    'minTrust' => 'low',
-                ],
-            ],
-            'notifications' => [],
-        ];
+	/**
+	 * The read-only supplier (AP-side) manifest.
+	 *
+	 * Both scopeFields are verified UUID references to the Payee (vendor)
+	 * record, matched against claims.shillinq.supplierId. GoodsReceipt is
+	 * deliberately absent (it carries no supplier reference at all) and
+	 * GoodsReceiptNote is deferred (its only supplier linkage is the poIds
+	 * ARRAY of PurchaseOrder FKs — beyond the one-hop scalar via join);
+	 * suppliers see match outcomes via SupplierInvoice.statusCode instead.
+	 *
+	 * @return array<string, mixed> The supplier manifest.
+	 *
+	 * @spec openspec/changes/portal-contribution/tasks.md#task-2
+	 */
+	private function supplierManifest(): array {
+		return [
+			'label' => 'Shillinq',
+			'collections' => [
+				[
+					'id' => 'purchaseOrders',
+					'register' => 'shillinq',
+					'schema' => 'PurchaseOrder',
+					'scopeField' => 'supplierId',
+					'scopeClaim' => 'supplierId',
+					'label' => 'Purchase orders',
+					'listable' => true,
+				],
+				[
+					'id' => 'supplierInvoices',
+					'register' => 'shillinq',
+					'schema' => 'SupplierInvoice',
+					'scopeField' => 'supplierId',
+					'scopeClaim' => 'supplierId',
+					'label' => 'My invoices',
+					'listable' => true,
+				],
+			],
+			'actions' => [],
+			'notifications' => [],
+		];
 
-    }//end customerManifest()
+	}//end supplierManifest()
 
-    /**
-     * The read-only supplier (AP-side) manifest.
-     *
-     * Both scopeFields are verified UUID references to the Payee (vendor)
-     * record, matched against claims.shillinq.supplierId. GoodsReceipt is
-     * deliberately absent (it carries no supplier reference at all) and
-     * GoodsReceiptNote is deferred (its only supplier linkage is the poIds
-     * ARRAY of PurchaseOrder FKs — beyond the one-hop scalar via join);
-     * suppliers see match outcomes via SupplierInvoice.statusCode instead.
-     *
-     * @return array<string, mixed> The supplier manifest.
-     *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
-     */
-    private function supplierManifest(): array
-    {
-        return [
-            'label'         => 'Shillinq',
-            'collections'   => [
-                [
-                    'id'         => 'purchaseOrders',
-                    'register'   => 'shillinq',
-                    'schema'     => 'PurchaseOrder',
-                    'scopeField' => 'supplierId',
-                    'scopeClaim' => 'supplierId',
-                    'label'      => 'Purchase orders',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'supplierInvoices',
-                    'register'   => 'shillinq',
-                    'schema'     => 'SupplierInvoice',
-                    'scopeField' => 'supplierId',
-                    'scopeClaim' => 'supplierId',
-                    'label'      => 'My invoices',
-                    'listable'   => true,
-                ],
-            ],
-            'actions'       => [],
-            'notifications' => [],
-        ];
+	/**
+	 * The read-only accountant (external bookkeeper) review manifest.
+	 *
+	 * Unlike the customer/supplier surfaces — scoped by a party UUID on the
+	 * row — an external accountant is authorised over a whole administration,
+	 * so every collection scopes by the row's `administrationId` tenancy key
+	 * matched against claims.shillinq.accountantAdministrationId (a multi-value
+	 * claim: an accountant authorised for two client administrations carries
+	 * both UUIDs, and portaliq's claim matching returns only those rows).
+	 *
+	 * The collections are the financial-review surfaces an external boekhouder
+	 * opens to review and file the books: sales invoices (AR), purchase
+	 * invoices (AP), the journal, the general ledger, the trial balance and
+	 * the VAT returns. Every schema below was verified to declare an
+	 * `administrationId` property so the scope resolves to a real field.
+	 *
+	 * DEVIATION (task 2.3 / REQ-SPC-011 no-dead-scope rule): the spec lists
+	 * `financialStatements` (schema FinancialStatement) as a candidate
+	 * collection, but no FinancialStatement definition in lib/Settings declares
+	 * an `administrationId` property (its three fragments —
+	 * checks-national-reporting{,-tail}.json, checks-ifrsusgaap.json — carry
+	 * only reporting fields). Emitting it would be a dead/fail-open scope and a
+	 * cross-administration-leakage risk, which REQ-SPC-011 forbids, so it is
+	 * intentionally omitted until FinancialStatement carries administrationId.
+	 * Adding it back is then pure manifest data (no contract change).
+	 *
+	 * Read-only this ADR-046 Wave: actions and notifications are empty. Write
+	 * accountant collaboration (posting adjustments, correction requests) is a
+	 * deliberately deferred later wave.
+	 *
+	 * @return array<string, mixed> The accountant manifest.
+	 *
+	 * @spec openspec/specs/portal-contribution/spec.md
+	 */
+	private function accountantManifest(): array {
+		return [
+			'label' => 'Shillinq',
+			'collections' => [
+				[
+					'id' => 'salesInvoices',
+					'register' => 'shillinq',
+					'schema' => 'ARInvoice',
+					'scopeField' => 'administrationId',
+					'scopeClaim' => 'accountantAdministrationId',
+					'label' => 'Sales invoices',
+					'listable' => true,
+				],
+				[
+					'id' => 'purchaseInvoices',
+					'register' => 'shillinq',
+					'schema' => 'SupplierInvoice',
+					'scopeField' => 'administrationId',
+					'scopeClaim' => 'accountantAdministrationId',
+					'label' => 'Purchase invoices',
+					'listable' => true,
+				],
+				[
+					'id' => 'journalEntries',
+					'register' => 'shillinq',
+					'schema' => 'JournalEntry',
+					'scopeField' => 'administrationId',
+					'scopeClaim' => 'accountantAdministrationId',
+					'label' => 'Journal entries',
+					'listable' => true,
+				],
+				[
+					'id' => 'generalLedger',
+					'register' => 'shillinq',
+					'schema' => 'GLTransaction',
+					'scopeField' => 'administrationId',
+					'scopeClaim' => 'accountantAdministrationId',
+					'label' => 'General ledger',
+					'listable' => true,
+				],
+				[
+					'id' => 'trialBalance',
+					'register' => 'shillinq',
+					'schema' => 'TrialBalance',
+					'scopeField' => 'administrationId',
+					'scopeClaim' => 'accountantAdministrationId',
+					'label' => 'Trial balance',
+					'listable' => true,
+				],
+				[
+					'id' => 'vatReturns',
+					'register' => 'shillinq',
+					'schema' => 'VatReturn',
+					'scopeField' => 'administrationId',
+					'scopeClaim' => 'accountantAdministrationId',
+					'label' => 'VAT returns',
+					'listable' => true,
+				],
+			],
+			'actions' => [],
+			'notifications' => [],
+		];
 
-    }//end supplierManifest()
-
-    /**
-     * The read-only accountant (external bookkeeper) review manifest.
-     *
-     * Unlike the customer/supplier surfaces — scoped by a party UUID on the
-     * row — an external accountant is authorised over a whole administration,
-     * so every collection scopes by the row's `administrationId` tenancy key
-     * matched against claims.shillinq.accountantAdministrationId (a multi-value
-     * claim: an accountant authorised for two client administrations carries
-     * both UUIDs, and portaliq's claim matching returns only those rows).
-     *
-     * The collections are the financial-review surfaces an external boekhouder
-     * opens to review and file the books: sales invoices (AR), purchase
-     * invoices (AP), the journal, the general ledger, the trial balance and
-     * the VAT returns. Every schema below was verified to declare an
-     * `administrationId` property so the scope resolves to a real field.
-     *
-     * DEVIATION (task 2.3 / REQ-SPC-011 no-dead-scope rule): the spec lists
-     * `financialStatements` (schema FinancialStatement) as a candidate
-     * collection, but no FinancialStatement definition in lib/Settings declares
-     * an `administrationId` property (its three fragments —
-     * checks-national-reporting{,-tail}.json, checks-ifrsusgaap.json — carry
-     * only reporting fields). Emitting it would be a dead/fail-open scope and a
-     * cross-administration-leakage risk, which REQ-SPC-011 forbids, so it is
-     * intentionally omitted until FinancialStatement carries administrationId.
-     * Adding it back is then pure manifest data (no contract change).
-     *
-     * Read-only this ADR-046 Wave: actions and notifications are empty. Write
-     * accountant collaboration (posting adjustments, correction requests) is a
-     * deliberately deferred later wave.
-     *
-     * @return array<string, mixed> The accountant manifest.
-     *
-     * @spec openspec/specs/portal-contribution/spec.md
-     */
-    private function accountantManifest(): array
-    {
-        return [
-            'label'         => 'Shillinq',
-            'collections'   => [
-                [
-                    'id'         => 'salesInvoices',
-                    'register'   => 'shillinq',
-                    'schema'     => 'ARInvoice',
-                    'scopeField' => 'administrationId',
-                    'scopeClaim' => 'accountantAdministrationId',
-                    'label'      => 'Sales invoices',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'purchaseInvoices',
-                    'register'   => 'shillinq',
-                    'schema'     => 'SupplierInvoice',
-                    'scopeField' => 'administrationId',
-                    'scopeClaim' => 'accountantAdministrationId',
-                    'label'      => 'Purchase invoices',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'journalEntries',
-                    'register'   => 'shillinq',
-                    'schema'     => 'JournalEntry',
-                    'scopeField' => 'administrationId',
-                    'scopeClaim' => 'accountantAdministrationId',
-                    'label'      => 'Journal entries',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'generalLedger',
-                    'register'   => 'shillinq',
-                    'schema'     => 'GLTransaction',
-                    'scopeField' => 'administrationId',
-                    'scopeClaim' => 'accountantAdministrationId',
-                    'label'      => 'General ledger',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'trialBalance',
-                    'register'   => 'shillinq',
-                    'schema'     => 'TrialBalance',
-                    'scopeField' => 'administrationId',
-                    'scopeClaim' => 'accountantAdministrationId',
-                    'label'      => 'Trial balance',
-                    'listable'   => true,
-                ],
-                [
-                    'id'         => 'vatReturns',
-                    'register'   => 'shillinq',
-                    'schema'     => 'VatReturn',
-                    'scopeField' => 'administrationId',
-                    'scopeClaim' => 'accountantAdministrationId',
-                    'label'      => 'VAT returns',
-                    'listable'   => true,
-                ],
-            ],
-            'actions'       => [],
-            'notifications' => [],
-        ];
-
-    }//end accountantManifest()
+	}//end accountantManifest()
 }//end class

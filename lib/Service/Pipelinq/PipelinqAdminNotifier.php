@@ -41,19 +41,18 @@ namespace OCA\Shillinq\Service\Pipelinq;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
  */
-interface PipelinqAdminNotifier
-{
-    /**
-     * Notify an administrator that the configured pipelinq token was
-     * rejected by the remote (401 Unauthorized).
-     *
-     * Implementations MUST be cheap and non-throwing — the caller invokes
-     * this from a listener whose primary side-effect (the booking
-     * transition commit) has already happened.
-     *
-     * @param TimelineEventDto $event The event whose publish was rejected.
-     *
-     * @return void
-     */
-    public function notifyAuthFailure(TimelineEventDto $event): void;
+interface PipelinqAdminNotifier {
+	/**
+	 * Notify an administrator that the configured pipelinq token was
+	 * rejected by the remote (401 Unauthorized).
+	 *
+	 * Implementations MUST be cheap and non-throwing — the caller invokes
+	 * this from a listener whose primary side-effect (the booking
+	 * transition commit) has already happened.
+	 *
+	 * @param TimelineEventDto $event The event whose publish was rejected.
+	 *
+	 * @return void
+	 */
+	public function notifyAuthFailure(TimelineEventDto $event): void;
 }//end interface

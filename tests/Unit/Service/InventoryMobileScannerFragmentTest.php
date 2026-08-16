@@ -34,227 +34,214 @@ use ReflectionMethod;
  * sync-batch operationType enum, and merges additively onto the monolith
  * register (ADR-037).
  */
-final class InventoryMobileScannerFragmentTest extends TestCase
-{
+final class InventoryMobileScannerFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/inventory-mobile-scanner.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/inventory-mobile-scanner.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Absolute path to the frontend manifest fragment (ADR-037).
-     *
-     * @var string
-     */
-    private string $manifestPath = __DIR__.'/../../../src/manifest.d/inventory-mobile-scanner.json';
+	/**
+	 * Absolute path to the frontend manifest fragment (ADR-037).
+	 *
+	 * @var string
+	 */
+	private string $manifestPath = __DIR__ . '/../../../src/manifest.d/inventory-mobile-scanner.json';
 
-    /**
-     * Absolute path to the PWA web manifest.
-     *
-     * @var string
-     */
-    private string $webManifestPath = __DIR__.'/../../../public/manifest.webmanifest';
+	/**
+	 * Absolute path to the PWA web manifest.
+	 *
+	 * @var string
+	 */
+	private string $webManifestPath = __DIR__ . '/../../../public/manifest.webmanifest';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Decode the fragment file to an array.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function fragment(): array {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		return $data;
+	}//end fragment()
 
-    /**
-     * Decode the fragment file to an array.
-     *
-     * @return array<string,mixed>
-     */
-    private function fragment(): array
-    {
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        return $data;
+	/**
+	 * Fragment file exists and is valid JSON.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = $this->fragment();
+		self::assertArrayHasKey('schemas', $data['components']);
 
-    }//end fragment()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * Fragment file exists and is valid JSON.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = $this->fragment();
-        self::assertArrayHasKey('schemas', $data['components']);
+	/**
+	 * Fragment declares all five audit / dedup schemas.
+	 *
+	 * @return void
+	 */
+	public function testAllSchemasArePresent(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach (['MobileScannerSyncBatch', 'GoodsReceipt', 'InventoryTransfer', 'OrderPick', 'InventoryCount'] as $slug) {
+			self::assertArrayHasKey($slug, $schemas, "Fragment must declare $slug");
+		}
 
-    }//end testFragmentIsValidJson()
+	}//end testAllSchemasArePresent()
 
-    /**
-     * Fragment declares all five audit / dedup schemas.
-     *
-     * @return void
-     */
-    public function testAllSchemasArePresent(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach (['MobileScannerSyncBatch', 'GoodsReceipt', 'InventoryTransfer', 'OrderPick', 'InventoryCount'] as $slug) {
-            self::assertArrayHasKey($slug, $schemas, "Fragment must declare $slug");
-        }
+	/**
+	 * Money / quantity fields use multipleOf 0.01 per ADR-000.
+	 *
+	 * @return void
+	 */
+	public function testQuantitiesUseTwoDecimalPrecision(): void {
+		$schemas = $this->fragment()['components']['schemas'];
 
-    }//end testAllSchemasArePresent()
+		foreach (['GoodsReceipt', 'InventoryTransfer', 'OrderPick'] as $slug) {
+			$props = $schemas[$slug]['properties'];
+			self::assertArrayHasKey('quantity', $props, "$slug missing quantity");
+			self::assertSame(0.01, $props['quantity']['multipleOf'], "$slug.quantity must use multipleOf 0.01");
+		}
 
-    /**
-     * Money / quantity fields use multipleOf 0.01 per ADR-000.
-     *
-     * @return void
-     */
-    public function testQuantitiesUseTwoDecimalPrecision(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
+		$count = $schemas['InventoryCount']['properties'];
+		foreach (['systemQuantity', 'physicalQuantity', 'variance'] as $field) {
+			self::assertSame(0.01, $count[$field]['multipleOf'], "InventoryCount.$field must use multipleOf 0.01");
+		}
 
-        foreach (['GoodsReceipt', 'InventoryTransfer', 'OrderPick'] as $slug) {
-            $props = $schemas[$slug]['properties'];
-            self::assertArrayHasKey('quantity', $props, "$slug missing quantity");
-            self::assertSame(0.01, $props['quantity']['multipleOf'], "$slug.quantity must use multipleOf 0.01");
-        }
+	}//end testQuantitiesUseTwoDecimalPrecision()
 
-        $count = $schemas['InventoryCount']['properties'];
-        foreach (['systemQuantity', 'physicalQuantity', 'variance'] as $field) {
-            self::assertSame(0.01, $count[$field]['multipleOf'], "InventoryCount.$field must use multipleOf 0.01");
-        }
+	/**
+	 * MobileScannerSyncBatch enforces the operationType enum and dispositions.
+	 *
+	 * @return void
+	 */
+	public function testSyncBatchEnumeratesOperationsAndStatuses(): void {
+		$schema = $this->fragment()['components']['schemas']['MobileScannerSyncBatch'];
+		$props = $schema['properties'];
 
-    }//end testQuantitiesUseTwoDecimalPrecision()
+		self::assertSame(
+			['receive', 'transfer', 'pick', 'count'],
+			$props['operationType']['enum'],
+		);
+		self::assertSame(
+			['accepted', 'duplicate', 'rejected_permission', 'rejected_validation'],
+			$props['status']['enum'],
+		);
+		self::assertContains('transactionId', $schema['required']);
+		self::assertContains('userId', $schema['required']);
+		self::assertContains('occurredAt', $schema['required']);
 
-    /**
-     * MobileScannerSyncBatch enforces the operationType enum and dispositions.
-     *
-     * @return void
-     */
-    public function testSyncBatchEnumeratesOperationsAndStatuses(): void
-    {
-        $schema = $this->fragment()['components']['schemas']['MobileScannerSyncBatch'];
-        $props  = $schema['properties'];
+	}//end testSyncBatchEnumeratesOperationsAndStatuses()
 
-        self::assertSame(
-            ['receive', 'transfer', 'pick', 'count'],
-            $props['operationType']['enum'],
-        );
-        self::assertSame(
-            ['accepted', 'duplicate', 'rejected_permission', 'rejected_validation'],
-            $props['status']['enum'],
-        );
-        self::assertContains('transactionId', $schema['required']);
-        self::assertContains('userId', $schema['required']);
-        self::assertContains('occurredAt', $schema['required']);
+	/**
+	 * Transfer / pick quantities are strictly positive (exclusiveMinimum=true,
+	 * minimum=0) so the schema validator rejects zero / negative values
+	 * regardless of any business-logic gate.
+	 *
+	 * @return void
+	 */
+	public function testTransferAndPickRequireStrictlyPositiveQuantity(): void {
+		$schemas = $this->fragment()['components']['schemas'];
 
-    }//end testSyncBatchEnumeratesOperationsAndStatuses()
+		foreach (['InventoryTransfer', 'OrderPick'] as $slug) {
+			$qty = $schemas[$slug]['properties']['quantity'];
+			self::assertSame(0, $qty['minimum'], "$slug.quantity must have minimum 0");
+			self::assertTrue(($qty['exclusiveMinimum'] ?? false), "$slug.quantity must be exclusiveMinimum");
+		}
 
-    /**
-     * Transfer / pick quantities are strictly positive (exclusiveMinimum=true,
-     * minimum=0) so the schema validator rejects zero / negative values
-     * regardless of any business-logic gate.
-     *
-     * @return void
-     */
-    public function testTransferAndPickRequireStrictlyPositiveQuantity(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
+	}//end testTransferAndPickRequireStrictlyPositiveQuantity()
 
-        foreach (['InventoryTransfer', 'OrderPick'] as $slug) {
-            $qty = $schemas[$slug]['properties']['quantity'];
-            self::assertSame(0, $qty['minimum'], "$slug.quantity must have minimum 0");
-            self::assertTrue(($qty['exclusiveMinimum'] ?? false), "$slug.quantity must be exclusiveMinimum");
-        }
+	/**
+	 * Fragment merges additively onto the monolith — no schemas are
+	 * overwritten and the merged result still carries every fragment slug.
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		self::assertFileExists($this->registerPath);
 
-    }//end testTransferAndPickRequireStrictlyPositiveQuantity()
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		self::assertIsArray($base);
 
-    /**
-     * Fragment merges additively onto the monolith — no schemas are
-     * overwritten and the merged result still carries every fragment slug.
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        self::assertFileExists($this->registerPath);
+		$merged = $this->merge($base, $this->fragment());
 
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        self::assertIsArray($base);
+		$mergedSchemas = $merged['components']['schemas'];
+		foreach (['MobileScannerSyncBatch', 'GoodsReceipt', 'InventoryTransfer', 'OrderPick', 'InventoryCount'] as $slug) {
+			self::assertArrayHasKey($slug, $mergedSchemas, "Merged register must carry $slug");
+		}
 
-        $merged = $this->merge($base, $this->fragment());
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 
-        $mergedSchemas = $merged['components']['schemas'];
-        foreach (['MobileScannerSyncBatch', 'GoodsReceipt', 'InventoryTransfer', 'OrderPick', 'InventoryCount'] as $slug) {
-            self::assertArrayHasKey($slug, $mergedSchemas, "Merged register must carry $slug");
-        }
+	/**
+	 * The frontend manifest fragment registers all five PWA pages and the
+	 * Inventory menu entry.
+	 *
+	 * @return void
+	 */
+	public function testFrontendManifestRegistersPages(): void {
+		self::assertFileExists($this->manifestPath);
+		$manifest = json_decode((string)file_get_contents($this->manifestPath), true);
+		self::assertIsArray($manifest);
 
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+		$pageIds = array_column(($manifest['pages'] ?? []), 'id');
+		foreach (['MobileScannerHome', 'MobileScannerReceive', 'MobileScannerTransfer', 'MobileScannerPick', 'MobileScannerCount'] as $expected) {
+			self::assertContains($expected, $pageIds, "Manifest must register $expected");
+		}
 
-    /**
-     * The frontend manifest fragment registers all five PWA pages and the
-     * Inventory menu entry.
-     *
-     * @return void
-     */
-    public function testFrontendManifestRegistersPages(): void
-    {
-        self::assertFileExists($this->manifestPath);
-        $manifest = json_decode((string) file_get_contents($this->manifestPath), true);
-        self::assertIsArray($manifest);
+		$menuIds = array_column(($manifest['menu'] ?? []), 'id');
+		self::assertContains('Inventory', $menuIds, 'Manifest must add the Inventory menu entry');
 
-        $pageIds = array_column(($manifest['pages'] ?? []), 'id');
-        foreach (['MobileScannerHome', 'MobileScannerReceive', 'MobileScannerTransfer', 'MobileScannerPick', 'MobileScannerCount'] as $expected) {
-            self::assertContains($expected, $pageIds, "Manifest must register $expected");
-        }
+	}//end testFrontendManifestRegistersPages()
 
-        $menuIds = array_column(($manifest['menu'] ?? []), 'id');
-        self::assertContains('Inventory', $menuIds, 'Manifest must add the Inventory menu entry');
+	/**
+	 * PWA web manifest declares standalone display, the four shortcuts and
+	 * both 192/512 icon entries per REQ-UI-003.
+	 *
+	 * @return void
+	 */
+	public function testWebManifestExposesShortcutsAndIcons(): void {
+		self::assertFileExists($this->webManifestPath);
+		$web = json_decode((string)file_get_contents($this->webManifestPath), true);
+		self::assertIsArray($web);
 
-    }//end testFrontendManifestRegistersPages()
+		self::assertSame('standalone', $web['display']);
+		self::assertSame('portrait', $web['orientation']);
 
-    /**
-     * PWA web manifest declares standalone display, the four shortcuts and
-     * both 192/512 icon entries per REQ-UI-003.
-     *
-     * @return void
-     */
-    public function testWebManifestExposesShortcutsAndIcons(): void
-    {
-        self::assertFileExists($this->webManifestPath);
-        $web = json_decode((string) file_get_contents($this->webManifestPath), true);
-        self::assertIsArray($web);
+		$shortcutNames = array_column(($web['shortcuts'] ?? []), 'name');
+		foreach (['Receive', 'Transfer', 'Pick', 'Count'] as $shortcut) {
+			self::assertContains($shortcut, $shortcutNames, "Web manifest must expose $shortcut shortcut");
+		}
 
-        self::assertSame('standalone', $web['display']);
-        self::assertSame('portrait', $web['orientation']);
+		$iconSizes = array_column(($web['icons'] ?? []), 'sizes');
+		self::assertContains('192x192', $iconSizes, 'PWA must ship 192×192 icon');
+		self::assertContains('512x512', $iconSizes, 'PWA must ship 512×512 icon');
 
-        $shortcutNames = array_column(($web['shortcuts'] ?? []), 'name');
-        foreach (['Receive', 'Transfer', 'Pick', 'Count'] as $shortcut) {
-            self::assertContains($shortcut, $shortcutNames, "Web manifest must expose $shortcut shortcut");
-        }
-
-        $iconSizes = array_column(($web['icons'] ?? []), 'sizes');
-        self::assertContains('192x192', $iconSizes, 'PWA must ship 192×192 icon');
-        self::assertContains('512x512', $iconSizes, 'PWA must ship 512×512 icon');
-
-    }//end testWebManifestExposesShortcutsAndIcons()
+	}//end testWebManifestExposesShortcutsAndIcons()
 
 }//end class

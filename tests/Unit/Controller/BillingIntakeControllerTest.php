@@ -27,7 +27,6 @@ use OCA\Shillinq\Controller\BillingIntakeController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TimeIntakeService;
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -43,193 +42,184 @@ use RuntimeException;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class BillingIntakeControllerTest extends TestCase
-{
-    /**
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+final class BillingIntakeControllerTest extends TestCase {
+	/**
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * @var TimeIntakeService&MockObject
-     */
-    private TimeIntakeService&MockObject $service;
+	/**
+	 * @var TimeIntakeService&MockObject
+	 */
+	private TimeIntakeService&MockObject $service;
 
-    /**
-     * @var AdministrationContextService&MockObject
-     */
-    private AdministrationContextService&MockObject $administrationContext;
+	/**
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $administrationContext;
 
-    /**
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $session;
+	/**
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $session;
 
-    /**
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * @var BillingIntakeController
-     */
-    private BillingIntakeController $controller;
+	/**
+	 * @var BillingIntakeController
+	 */
+	private BillingIntakeController $controller;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request                = $this->createMock(IRequest::class);
-        $this->service                = $this->createMock(TimeIntakeService::class);
-        $this->administrationContext  = $this->createMock(AdministrationContextService::class);
-        $this->session                = $this->createMock(IUserSession::class);
-        $this->logger                  = $this->createMock(LoggerInterface::class);
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->service = $this->createMock(TimeIntakeService::class);
+		$this->administrationContext = $this->createMock(AdministrationContextService::class);
+		$this->session = $this->createMock(IUserSession::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->session->method('getUser')->willReturn($user);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->session->method('getUser')->willReturn($user);
 
-        $this->administrationContext->method('buildContext')->willReturn(
-            ['userId' => 'alice', 'administrations' => [], 'activeAdministrationId' => 'adm-1']
-        );
+		$this->administrationContext->method('buildContext')->willReturn(
+			['userId' => 'alice', 'administrations' => [], 'activeAdministrationId' => 'adm-1']
+		);
 
-        $this->request->method('getParams')->willReturn([]);
+		$this->request->method('getParams')->willReturn([]);
 
-        $this->controller = new BillingIntakeController(
-            request: $this->request,
-            service: $this->service,
-            administrationContext: $this->administrationContext,
-            session: $this->session,
-            logger: $this->logger,
-        );
+		$this->controller = new BillingIntakeController(
+			request: $this->request,
+			service: $this->service,
+			administrationContext: $this->administrationContext,
+			session: $this->session,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * An anonymous request returns 401 and never calls the service.
-     *
-     * @return void
-     */
-    public function testAnonymousReturns401(): void
-    {
-        $session = $this->createMock(IUserSession::class);
-        $session->method('getUser')->willReturn(null);
+	/**
+	 * An anonymous request returns 401 and never calls the service.
+	 *
+	 * @return void
+	 */
+	public function testAnonymousReturns401(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
 
-        $controller = new BillingIntakeController(
-            request: $this->request,
-            service: $this->service,
-            administrationContext: $this->administrationContext,
-            session: $session,
-            logger: $this->logger,
-        );
+		$controller = new BillingIntakeController(
+			request: $this->request,
+			service: $this->service,
+			administrationContext: $this->administrationContext,
+			session: $session,
+			logger: $this->logger,
+		);
 
-        $this->service->expects(self::never())->method('ingest');
+		$this->service->expects(self::never())->method('ingest');
 
-        $response = $controller->timeIntake();
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$response = $controller->timeIntake();
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-    }//end testAnonymousReturns401()
+	}//end testAnonymousReturns401()
 
-    /**
-     * A valid batch delegates to the service with the SERVER-resolved
-     * administrationId (ADR-005) — a client-supplied administrationId in the
-     * body is ignored — and returns the service's response verbatim.
-     *
-     * @return void
-     */
-    public function testValidBatchDelegatesAndReturns200(): void
-    {
-        $this->service->expects(self::once())
-            ->method('ingest')
-            ->with('adm-1', 'alice', self::isType('array'))
-            ->willReturn(['invoiceId' => 'inv-1', 'invoiceNumber' => 'BIL-2026-0001', 'status' => 'draft', 'lines' => 2, 'duplicated' => false]);
+	/**
+	 * A valid batch delegates to the service with the SERVER-resolved
+	 * administrationId (ADR-005) — a client-supplied administrationId in the
+	 * body is ignored — and returns the service's response verbatim.
+	 *
+	 * @return void
+	 */
+	public function testValidBatchDelegatesAndReturns200(): void {
+		$this->service->expects(self::once())
+			->method('ingest')
+			->with('adm-1', 'alice', self::isType('array'))
+			->willReturn(['invoiceId' => 'inv-1', 'invoiceNumber' => 'BIL-2026-0001', 'status' => 'draft', 'lines' => 2, 'duplicated' => false]);
 
-        $body = json_encode(['batchId' => 'B1', 'administrationId' => 'adm-999', 'entries' => []]);
-        self::assertIsString($body);
-        $this->withRawBody($body);
+		$body = json_encode(['batchId' => 'B1', 'administrationId' => 'adm-999', 'entries' => []]);
+		self::assertIsString($body);
+		$this->withRawBody($body);
 
-        $response = $this->controller->timeIntake();
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$response = $this->controller->timeIntake();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
-        $data = $response->getData();
-        self::assertSame('inv-1', $data['invoiceId']);
-        self::assertFalse($data['duplicated']);
+		$data = $response->getData();
+		self::assertSame('inv-1', $data['invoiceId']);
+		self::assertFalse($data['duplicated']);
 
-    }//end testValidBatchDelegatesAndReturns200()
+	}//end testValidBatchDelegatesAndReturns200()
 
-    /**
-     * An InvalidArgumentException from the service maps to HTTP 400.
-     *
-     * @return void
-     */
-    public function testInvalidArgumentMapsTo400(): void
-    {
-        $this->service->method('ingest')->willThrowException(new InvalidArgumentException('batchId is required.'));
+	/**
+	 * An InvalidArgumentException from the service maps to HTTP 400.
+	 *
+	 * @return void
+	 */
+	public function testInvalidArgumentMapsTo400(): void {
+		$this->service->method('ingest')->willThrowException(new InvalidArgumentException('batchId is required.'));
 
-        $response = $this->controller->timeIntake();
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$response = $this->controller->timeIntake();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testInvalidArgumentMapsTo400()
+	}//end testInvalidArgumentMapsTo400()
 
-    /**
-     * A "Conflict: ..." RuntimeException maps to HTTP 409.
-     *
-     * @return void
-     */
-    public function testConflictRuntimeExceptionMapsTo409(): void
-    {
-        $this->service->method('ingest')->willThrowException(new RuntimeException('Conflict: batchId already used.'));
+	/**
+	 * A "Conflict: ..." RuntimeException maps to HTTP 409.
+	 *
+	 * @return void
+	 */
+	public function testConflictRuntimeExceptionMapsTo409(): void {
+		$this->service->method('ingest')->willThrowException(new RuntimeException('Conflict: batchId already used.'));
 
-        $response = $this->controller->timeIntake();
-        self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$response = $this->controller->timeIntake();
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 
-    }//end testConflictRuntimeExceptionMapsTo409()
+	}//end testConflictRuntimeExceptionMapsTo409()
 
-    /**
-     * Any other RuntimeException maps to HTTP 422.
-     *
-     * @return void
-     */
-    public function testOtherRuntimeExceptionMapsTo422(): void
-    {
-        $this->service->method('ingest')->willThrowException(new RuntimeException('billingModel must be t_and_m.'));
+	/**
+	 * Any other RuntimeException maps to HTTP 422.
+	 *
+	 * @return void
+	 */
+	public function testOtherRuntimeExceptionMapsTo422(): void {
+		$this->service->method('ingest')->willThrowException(new RuntimeException('billingModel must be t_and_m.'));
 
-        $response = $this->controller->timeIntake();
-        self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		$response = $this->controller->timeIntake();
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
 
-    }//end testOtherRuntimeExceptionMapsTo422()
+	}//end testOtherRuntimeExceptionMapsTo422()
 
-    /**
-     * An unexpected Throwable maps to HTTP 500 with a generic message (no
-     * internal detail leakage).
-     *
-     * @return void
-     */
-    public function testUnexpectedThrowableMapsTo500(): void
-    {
-        $this->service->method('ingest')->willThrowException(new \Error('boom'));
+	/**
+	 * An unexpected Throwable maps to HTTP 500 with a generic message (no
+	 * internal detail leakage).
+	 *
+	 * @return void
+	 */
+	public function testUnexpectedThrowableMapsTo500(): void {
+		$this->service->method('ingest')->willThrowException(new \Error('boom'));
 
-        $response = $this->controller->timeIntake();
-        self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-        self::assertSame('Internal error', $response->getData()['error']);
+		$response = $this->controller->timeIntake();
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame('Internal error', $response->getData()['error']);
 
-    }//end testUnexpectedThrowableMapsTo500()
+	}//end testUnexpectedThrowableMapsTo500()
 
-    /**
-     * Configure the request mock to deliver a raw php://input-style body.
-     *
-     * decodeBody() reads php://input directly, which cannot be mocked via
-     * IRequest — instead we rely on the getParams() fallback path by
-     * decoding the JSON ourselves and feeding it through getParams().
-     *
-     * @param string $json JSON-encoded body.
-     *
-     * @return void
-     */
-    private function withRawBody(string $json): void
-    {
-        $decoded = json_decode($json, true);
-        self::assertIsArray($decoded);
-        $this->request->method('getParams')->willReturn($decoded);
+	/**
+	 * Configure the request mock to deliver a raw php://input-style body.
+	 *
+	 * decodeBody() reads php://input directly, which cannot be mocked via
+	 * IRequest — instead we rely on the getParams() fallback path by
+	 * decoding the JSON ourselves and feeding it through getParams().
+	 *
+	 * @param string $json JSON-encoded body.
+	 *
+	 * @return void
+	 */
+	private function withRawBody(string $json): void {
+		$decoded = json_decode($json, true);
+		self::assertIsArray($decoded);
+		$this->request->method('getParams')->willReturn($decoded);
 
-    }//end withRawBody()
+	}//end withRawBody()
 }//end class

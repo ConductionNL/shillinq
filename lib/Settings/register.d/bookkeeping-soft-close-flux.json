@@ -787,13 +787,13 @@
           "scope": {
             "type": "string",
             "enum": [
-              "administratie",
+              "administration",
               "segment",
               "cost-centre",
               "consolidated"
             ],
             "description": "Scope of the run (REQ-CLS-005).",
-            "example": "administratie",
+            "example": "administration",
             "title": "Scope"
           },
           "scopeFilter": {

@@ -21,41 +21,36 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for OCA\OpenRegister\Event\ObjectUpdatedEvent.
  */
-class ObjectUpdatedEvent extends Event
-{
-    /**
-     * Construct the event.
-     *
-     * @param ObjectEntity|null $object    The updated object (new value).
-     * @param ObjectEntity|null $oldObject The pre-update object (old value).
-     */
-    public function __construct(
-        private ?ObjectEntity $object=null,
-        private ?ObjectEntity $oldObject=null,
-    ) {
-        parent::__construct();
+class ObjectUpdatedEvent extends Event {
+	/**
+	 * Construct the event.
+	 *
+	 * @param ObjectEntity|null $object The updated object (new value).
+	 * @param ObjectEntity|null $oldObject The pre-update object (old value).
+	 */
+	public function __construct(
+		private ?ObjectEntity $object = null,
+		private ?ObjectEntity $oldObject = null,
+	) {
+		parent::__construct();
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the updated object (new value).
-     *
-     * @return ObjectEntity|null
-     */
-    public function getObject(): ?ObjectEntity
-    {
-        return $this->object;
+	/**
+	 * Return the updated object (new value).
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getObject(): ?ObjectEntity {
+		return $this->object;
+	}//end getObject()
 
-    }//end getObject()
-
-    /**
-     * Return the pre-update object (old value).
-     *
-     * @return ObjectEntity|null
-     */
-    public function getOldObject(): ?ObjectEntity
-    {
-        return $this->oldObject;
-
-    }//end getOldObject()
+	/**
+	 * Return the pre-update object (old value).
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getOldObject(): ?ObjectEntity {
+		return $this->oldObject;
+	}//end getOldObject()
 }//end class

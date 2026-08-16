@@ -34,223 +34,210 @@ use ReflectionMethod;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class MultiAdministratieFragmentTest extends TestCase
-{
+final class MultiAdministratieFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-multi-administratie.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-multi-administratie.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * The fragment is present, valid JSON, and has the expected sections.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertArrayHasKey('schemas', $data['components']);
+		self::assertArrayHasKey('objects', $data['components']);
 
-    }//end fragment()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment is present, valid JSON, and has the expected sections.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertArrayHasKey('schemas', $data['components']);
-        self::assertArrayHasKey('objects', $data['components']);
+	/**
+	 * The five administratie-family schemas are declared (REQ-MA-001 .. REQ-MA-006).
+	 *
+	 * @return void
+	 */
+	public function testDeclaresFiveSchemas(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach ([
+			'Administration',
+			'AdministrationMembership',
+			'IntercompanyJournalEntry',
+			'ConsolidationMapping',
+			'AdministrationMigration',
+		] as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+			self::assertSame($name, $schemas[$name]['slug']);
+		}
 
-    }//end testFragmentIsValidJson()
+	}//end testDeclaresFiveSchemas()
 
-    /**
-     * The five administratie-family schemas are declared (REQ-MA-001 .. REQ-MA-006).
-     *
-     * @return void
-     */
-    public function testDeclaresFiveSchemas(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach ([
-            'Administration',
-            'AdministrationMembership',
-            'IntercompanyJournalEntry',
-            'ConsolidationMapping',
-            'AdministrationMigration',
-        ] as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-            self::assertSame($name, $schemas[$name]['slug']);
-        }
+	/**
+	 * Administration declares the multi-tenant + lifecycle fields (REQ-MA-001/002/007).
+	 *
+	 * @return void
+	 */
+	public function testAdministrationFields(): void {
+		$administration = $this->fragment()['components']['schemas']['Administration'];
+		foreach ([
+			'administrationCode',
+			'name',
+			'legalForm',
+			'fiscalYearStartMonth',
+			'vatRegime',
+			'parentAdministrationId',
+			'status',
+			'backupSchedule',
+			'dataRetentionYears',
+		] as $field) {
+			self::assertArrayHasKey($field, $administration['properties'], "Administration must declare $field");
+		}
 
-    }//end testDeclaresFiveSchemas()
+		self::assertContains('administrationCode', $administration['required']);
 
-    /**
-     * Administration declares the multi-tenant + lifecycle fields (REQ-MA-001/002/007).
-     *
-     * @return void
-     */
-    public function testAdministrationFields(): void
-    {
-        $administration = $this->fragment()['components']['schemas']['Administration'];
-        foreach ([
-            'administrationCode',
-            'name',
-            'legalForm',
-            'fiscalYearStartMonth',
-            'vatRegime',
-            'parentAdministrationId',
-            'status',
-            'backupSchedule',
-            'dataRetentionYears',
-        ] as $field) {
-            self::assertArrayHasKey($field, $administration['properties'], "Administration must declare $field");
-        }
+		// Archival lifecycle (REQ-MA-007): actief is the initial state and archive is a transition.
+		self::assertSame('status', $administration['x-openregister-lifecycle']['field']);
+		self::assertSame('actief', $administration['x-openregister-lifecycle']['initialState']);
+		self::assertArrayHasKey('archive', $administration['x-openregister-lifecycle']['transitions']);
 
-        self::assertContains('administrationCode', $administration['required']);
+	}//end testAdministrationFields()
 
-        // Archival lifecycle (REQ-MA-007): actief is the initial state and archive is a transition.
-        self::assertSame('status', $administration['x-openregister-lifecycle']['field']);
-        self::assertSame('actief', $administration['x-openregister-lifecycle']['initialState']);
-        self::assertArrayHasKey('archive', $administration['x-openregister-lifecycle']['transitions']);
+	/**
+	 * Membership is a user-administratie-role join (REQ-MA-003).
+	 *
+	 * @return void
+	 */
+	public function testMembershipJoinFields(): void {
+		$membership = $this->fragment()['components']['schemas']['AdministrationMembership'];
+		foreach (['userId', 'administrationId', 'role'] as $field) {
+			self::assertContains($field, $membership['required'], "Membership must require $field");
+		}
 
-    }//end testAdministrationFields()
+		$roles = $membership['properties']['role']['enum'];
+		foreach (['eigenaar', 'controller', 'boekhouder', 'inkijker', 'accountant_extern'] as $role) {
+			self::assertContains($role, $roles, "Membership role enum must include $role");
+		}
 
-    /**
-     * Membership is a user-administratie-role join (REQ-MA-003).
-     *
-     * @return void
-     */
-    public function testMembershipJoinFields(): void
-    {
-        $membership = $this->fragment()['components']['schemas']['AdministrationMembership'];
-        foreach (['userId', 'administrationId', 'role'] as $field) {
-            self::assertContains($field, $membership['required'], "Membership must require $field");
-        }
+	}//end testMembershipJoinFields()
 
-        $roles = $membership['properties']['role']['enum'];
-        foreach (['eigenaar', 'controller', 'boekhouder', 'inkijker', 'accountant_extern'] as $role) {
-            self::assertContains($role, $roles, "Membership role enum must include $role");
-        }
+	/**
+	 * Intercompany status lifecycle is concept → gekoppeld → bevestigd_beide → eliminatie_geboekt (REQ-MA-004).
+	 *
+	 * @return void
+	 */
+	public function testIntercompanyLifecycle(): void {
+		$entry = $this->fragment()['components']['schemas']['IntercompanyJournalEntry'];
+		$states = array_keys($entry['x-openregister-lifecycle']['states']);
+		self::assertSame(
+			['draft', 'gekoppeld', 'bevestigd_beide', 'eliminatie_geboekt'],
+			$states
+		);
 
-    }//end testMembershipJoinFields()
+	}//end testIntercompanyLifecycle()
 
-    /**
-     * Intercompany status lifecycle is concept → gekoppeld → bevestigd_beide → eliminatie_geboekt (REQ-MA-004).
-     *
-     * @return void
-     */
-    public function testIntercompanyLifecycle(): void
-    {
-        $entry  = $this->fragment()['components']['schemas']['IntercompanyJournalEntry'];
-        $states = array_keys($entry['x-openregister-lifecycle']['states']);
-        self::assertSame(
-            ['concept', 'gekoppeld', 'bevestigd_beide', 'eliminatie_geboekt'],
-            $states
-        );
+	/**
+	 * Merging the fragment adds the new schemas without dropping the monolith's
+	 * existing ConsolidationGroup / Account schemas (ADR-037 disjoint union).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = $this->fragment();
 
-    }//end testIntercompanyLifecycle()
+		$merged = $this->merge($base, $frag);
+		$schemas = $merged['components']['schemas'];
 
-    /**
-     * Merging the fragment adds the new schemas without dropping the monolith's
-     * existing ConsolidationGroup / Account schemas (ADR-037 disjoint union).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = $this->fragment();
+		self::assertArrayHasKey('Administration', $schemas);
+		self::assertArrayHasKey('IntercompanyJournalEntry', $schemas);
+		// Pre-existing schemas survive the merge.
+		self::assertArrayHasKey('ConsolidationGroup', $schemas);
+		self::assertArrayHasKey('Account', $schemas);
+		self::assertArrayHasKey('GLTransaction', $schemas);
 
-        $merged  = $this->merge($base, $frag);
-        $schemas = $merged['components']['schemas'];
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 
-        self::assertArrayHasKey('Administration', $schemas);
-        self::assertArrayHasKey('IntercompanyJournalEntry', $schemas);
-        // Pre-existing schemas survive the merge.
-        self::assertArrayHasKey('ConsolidationGroup', $schemas);
-        self::assertArrayHasKey('Account', $schemas);
-        self::assertArrayHasKey('GLTransaction', $schemas);
+	/**
+	 * Seed objects target only declared schemas and carry the shillinq register (REQ-MA-001).
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsAreConsistent(): void {
+		$frag = $this->fragment();
+		$schemas = $frag['components']['schemas'];
+		$objects = $frag['components']['objects'];
 
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+		self::assertNotEmpty($objects);
+		foreach ($objects as $object) {
+			self::assertArrayHasKey('@self', $object);
+			self::assertSame('shillinq', $object['@self']['register']);
+			self::assertArrayHasKey($object['@self']['schema'], $schemas);
+		}
 
-    /**
-     * Seed objects target only declared schemas and carry the shillinq register (REQ-MA-001).
-     *
-     * @return void
-     */
-    public function testSeedObjectsAreConsistent(): void
-    {
-        $frag    = $this->fragment();
-        $schemas = $frag['components']['schemas'];
-        $objects = $frag['components']['objects'];
+	}//end testSeedObjectsAreConsistent()
 
-        self::assertNotEmpty($objects);
-        foreach ($objects as $object) {
-            self::assertArrayHasKey('@self', $object);
-            self::assertSame('shillinq', $object['@self']['register']);
-            self::assertArrayHasKey($object['@self']['schema'], $schemas);
-        }
+	/**
+	 * The holding-werkmij example links Werk → Beheer via parent + intercompany (REQ-MA-003/004).
+	 *
+	 * @return void
+	 */
+	public function testHoldingWerkmijExampleIsLinked(): void {
+		$objects = $this->fragment()['components']['objects'];
+		$bySlug = [];
+		foreach ($objects as $object) {
+			$bySlug[$object['@self']['slug']] = $object;
+		}
 
-    }//end testSeedObjectsAreConsistent()
+		// Werk is a dochter of Beheer.
+		self::assertSame('adm-beheer-001', $bySlug['adm-werk-001']['parentAdministrationId']);
+		self::assertContains('adm-werk-001', $bySlug['adm-beheer-001']['childAdministrationIds']);
 
-    /**
-     * The holding-werkmij example links Werk → Beheer via parent + intercompany (REQ-MA-003/004).
-     *
-     * @return void
-     */
-    public function testHoldingWerkmijExampleIsLinked(): void
-    {
-        $objects = $this->fragment()['components']['objects'];
-        $bySlug  = [];
-        foreach ($objects as $object) {
-            $bySlug[$object['@self']['slug']] = $object;
-        }
+		// The controller has different roles per administration.
+		self::assertSame('controller', $bySlug['lid-controller-werk-001']['role']);
+		self::assertSame('inkijker', $bySlug['lid-controller-beheer-001']['role']);
 
-        // Werk is a dochter of Beheer.
-        self::assertSame('adm-beheer-001', $bySlug['adm-werk-001']['parentAdministrationId']);
-        self::assertContains('adm-werk-001', $bySlug['adm-beheer-001']['childAdministrationIds']);
+		// The intercompany entry flows from Werk to Beheer and balances (variance 0).
+		$ic = $bySlug['ic-2026-00042'];
+		self::assertSame('adm-werk-001', $ic['sourceAdministrationId']);
+		self::assertSame('adm-beheer-001', $ic['destinationAdministrationId']);
+		self::assertSame(0.0, (float)$ic['varianceAmount']);
 
-        // The controller has different roles per administration.
-        self::assertSame('controller', $bySlug['lid-controller-werk-001']['role']);
-        self::assertSame('inkijker', $bySlug['lid-controller-beheer-001']['role']);
+	}//end testHoldingWerkmijExampleIsLinked()
 
-        // The intercompany entry flows from Werk to Beheer and balances (variance 0).
-        $ic = $bySlug['ic-2026-00042'];
-        self::assertSame('adm-werk-001', $ic['sourceAdministrationId']);
-        self::assertSame('adm-beheer-001', $ic['destinationAdministrationId']);
-        self::assertSame(0.0, (float) $ic['varianceAmount']);
-
-    }//end testHoldingWerkmijExampleIsLinked()
-
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

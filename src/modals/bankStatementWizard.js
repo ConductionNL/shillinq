@@ -32,7 +32,9 @@ export function formatOptions() {
  * @return {string} The normalised IBAN ('' when falsy).
  */
 export function normalizeIban(iban) {
-	return String(iban || '').replace(/\s+/g, '').toUpperCase()
+	return String(iban || '')
+		.replace(/\s+/g, '')
+		.toUpperCase()
 }
 
 /**
@@ -52,7 +54,7 @@ function readIbanStore() {
 			globalThis.localStorage?.removeItem(IBAN_MAP_KEY)
 			return {}
 		}
-		return (parsed.map && typeof parsed.map === 'object') ? parsed.map : {}
+		return parsed.map && typeof parsed.map === 'object' ? parsed.map : {}
 	} catch (e) {
 		return {}
 	}
@@ -70,7 +72,7 @@ export function loadIbanMapping(iban) {
 	const key = normalizeIban(iban)
 	if (!key) return null
 	const map = readIbanStore()
-	return (key in map && map[key]) ? String(map[key]) : null
+	return key in map && map[key] ? String(map[key]) : null
 }
 
 /**
@@ -132,7 +134,10 @@ export function setReturnBreadcrumb(statementId) {
 	try {
 		globalThis.sessionStorage?.setItem(
 			BREADCRUMB_FLAG,
-			JSON.stringify({ from: 'financial-overview', statementId: String(statementId || '') }),
+			JSON.stringify({
+				from: 'financial-overview',
+				statementId: String(statementId || ''),
+			}),
 		)
 	} catch (e) {
 		// Non-fatal.

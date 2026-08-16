@@ -44,27 +44,24 @@ namespace OCA\Shillinq\Guard;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class BcfSubmissionGuard
-{
-    /**
-     * Precondition for `submit`: `totalClaimAmount` must not exceed
-     * `approvalThreshold`.
-     *
-     * @param array<string, mixed> $claim The BcfClaim object being transitioned.
-     *
-     * @return bool True when the claim may be submitted.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireApproval(array $claim): bool
-    {
-        $threshold = ($claim['approvalThreshold'] ?? null);
-        if ($threshold === null) {
-            return true;
-        }
+class BcfSubmissionGuard {
+	/**
+	 * Precondition for `submit`: `totalClaimAmount` must not exceed
+	 * `approvalThreshold`.
+	 *
+	 * @param array<string, mixed> $claim The BcfClaim object being transitioned.
+	 *
+	 * @return bool True when the claim may be submitted.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireApproval(array $claim): bool {
+		$threshold = ($claim['approvalThreshold'] ?? null);
+		if ($threshold === null) {
+			return true;
+		}
 
-        $amount = (float) ($claim['totalClaimAmount'] ?? 0);
-        return $amount <= (float) $threshold;
-
-    }//end requireApproval()
+		$amount = (float)($claim['totalClaimAmount'] ?? 0);
+		return $amount <= (float)$threshold;
+	}//end requireApproval()
 }//end class

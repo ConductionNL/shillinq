@@ -47,26 +47,25 @@ namespace OCA\Shillinq\Service\Payment;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
  */
-interface PaymentProviderInterface
-{
-    /**
-     * Request a payment session (iDEAL) for the given envelope.
-     *
-     * @param PaymentSessionRequest $request The session request — amount/currency
-     *                                       MUST already be server-resolved.
-     *
-     * @return PaymentSessionResult The session outcome.
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
-     */
-    public function createSession(PaymentSessionRequest $request): PaymentSessionResult;
+interface PaymentProviderInterface {
+	/**
+	 * Request a payment session (iDEAL) for the given envelope.
+	 *
+	 * @param PaymentSessionRequest $request The session request — amount/currency
+	 *                                       MUST already be server-resolved.
+	 *
+	 * @return PaymentSessionResult The session outcome.
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
+	 */
+	public function createSession(PaymentSessionRequest $request): PaymentSessionResult;
 
-    /**
-     * Whether the bound provider is dormant (not contacting a real PSP).
-     *
-     * @return bool True when the adapter is a log-only stub.
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the bound provider is dormant (not contacting a real PSP).
+	 *
+	 * @return bool True when the adapter is a log-only stub.
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
+	 */
+	public function isDormant(): bool;
 }//end interface

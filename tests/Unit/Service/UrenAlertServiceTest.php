@@ -29,160 +29,143 @@ use Psr\Log\LoggerInterface;
 /**
  * Covers REQ-URC-003: alert-trigger quarterly + drempel-omslag with handelingsperspectief.
  */
-final class UrenAlertServiceTest extends TestCase
-{
+final class UrenAlertServiceTest extends TestCase {
 
+	/**
+	 * Build a service.
+	 *
+	 * @return UrenAlertService
+	 */
+	private function build(): UrenAlertService {
+		return new UrenAlertService(logger: $this->createMock(LoggerInterface::class));
+	}//end build()
 
-    /**
-     * Build a service.
-     *
-     * @return UrenAlertService
-     */
-    private function build(): UrenAlertService
-    {
-        return new UrenAlertService(logger: $this->createMock(LoggerInterface::class));
+	/**
+	 * Quarter-end dates are detected.
+	 *
+	 * @return void
+	 */
+	public function testIsKwartaalEindeRecognisesAllFour(): void {
+		$service = $this->build();
+		self::assertTrue($service->isKwartaalEinde(date: '2026-03-31'));
+		self::assertTrue($service->isKwartaalEinde(date: '2026-06-30'));
+		self::assertTrue($service->isKwartaalEinde(date: '2026-09-30'));
+		self::assertTrue($service->isKwartaalEinde(date: '2026-12-31'));
+		self::assertFalse($service->isKwartaalEinde(date: '2026-04-15'));
 
-    }//end build()
+	}//end testIsKwartaalEindeRecognisesAllFour()
 
+	/**
+	 * Omslag from OP_KOERS to RISICO triggers, BEHAALD → OP_KOERS does not.
+	 *
+	 * @return void
+	 */
+	public function testIsOmslagOnlyOnHigherSeverity(): void {
+		$service = $this->build();
 
-    /**
-     * Quarter-end dates are detected.
-     *
-     * @return void
-     */
-    public function testIsKwartaalEindeRecognisesAllFour(): void
-    {
-        $service = $this->build();
-        self::assertTrue($service->isKwartaalEinde(datum: '2026-03-31'));
-        self::assertTrue($service->isKwartaalEinde(datum: '2026-06-30'));
-        self::assertTrue($service->isKwartaalEinde(datum: '2026-09-30'));
-        self::assertTrue($service->isKwartaalEinde(datum: '2026-12-31'));
-        self::assertFalse($service->isKwartaalEinde(datum: '2026-04-15'));
+		self::assertTrue($service->isOmslag(oldStatus: 'ON_RATE', newStatus: 'RISK'));
+		self::assertTrue($service->isOmslag(oldStatus: 'RISK', newStatus: 'CRITICAL'));
+		self::assertTrue($service->isOmslag(oldStatus: 'ON_RATE', newStatus: 'CRITICAL'));
 
-    }//end testIsKwartaalEindeRecognisesAllFour()
+		// Going safer is NOT an omslag worth alerting on.
+		self::assertFalse($service->isOmslag(oldStatus: 'CRITICAL', newStatus: 'RISK'));
+		self::assertFalse($service->isOmslag(oldStatus: 'ACHIEVED', newStatus: 'ON_RATE'));
 
+		// Unknown statuses don't alert.
+		self::assertFalse($service->isOmslag(oldStatus: 'UNKNOWN', newStatus: 'CRITICAL'));
 
-    /**
-     * Omslag from OP_KOERS to RISICO triggers, BEHAALD → OP_KOERS does not.
-     *
-     * @return void
-     */
-    public function testIsOmslagOnlyOnHigherSeverity(): void
-    {
-        $service = $this->build();
+	}//end testIsOmslagOnlyOnHigherSeverity()
 
-        self::assertTrue($service->isOmslag(oldStatus: 'OP_KOERS', newStatus: 'RISICO'));
-        self::assertTrue($service->isOmslag(oldStatus: 'RISICO', newStatus: 'KRITIEK'));
-        self::assertTrue($service->isOmslag(oldStatus: 'OP_KOERS', newStatus: 'KRITIEK'));
+	/**
+	 * Kwartaal-alert sets type, urgentie INFO, ≥3 acties.
+	 *
+	 * @return void
+	 */
+	public function testKwartaalAlertShape(): void {
+		$alert = $this->build()->bouwKwartaalAlert(
+			year: [
+				'administrationId' => 'adm-1',
+				'enterpriseId' => 'ond-1',
+				'purposeNorm' => 1225,
+				'currentHours' => 700.0,
+				'forecastYearEnd' => 1150.0,
+				'thresholdStatus' => 'RISK',
+			],
+			date: '2026-09-30'
+		);
 
-        // Going safer is NOT an omslag worth alerting on.
-        self::assertFalse($service->isOmslag(oldStatus: 'KRITIEK', newStatus: 'RISICO'));
-        self::assertFalse($service->isOmslag(oldStatus: 'BEHAALD', newStatus: 'OP_KOERS'));
+		self::assertSame('QUARTER_END', $alert['type']);
+		self::assertSame('INFO', $alert['urgency']);
+		self::assertSame('2026-09-30', $alert['triggerDate']);
+		self::assertSame(75.0, $alert['deficit']);
+		self::assertGreaterThanOrEqual(3, count($alert['actionPerspective']));
 
-        // Unknown statuses don't alert.
-        self::assertFalse($service->isOmslag(oldStatus: 'UNKNOWN', newStatus: 'KRITIEK'));
+	}//end testKwartaalAlertShape()
 
-    }//end testIsOmslagOnlyOnHigherSeverity()
+	/**
+	 * Omslag to KRITIEK builds an OMSLAG_KRITIEK alert with urgentie KRITIEK.
+	 *
+	 * @return void
+	 */
+	public function testOmslagToKritiek(): void {
+		$alert = $this->build()->bouwOmslagAlert(
+			year: [
+				'administrationId' => 'adm-1',
+				'enterpriseId' => 'ond-1',
+				'purposeNorm' => 1225,
+				'currentHours' => 600.0,
+				'forecastYearEnd' => 900.0,
+				'thresholdStatus' => 'CRITICAL',
+			],
+			oldStatus: 'RISK',
+			newStatus: 'CRITICAL'
+		);
 
+		self::assertSame('APPORTIONMENT_CRITICAL', $alert['type']);
+		self::assertSame('CRITICAL', $alert['urgency']);
+		self::assertStringContainsString('RISK', $alert['cause']);
+		self::assertStringContainsString('CRITICAL', $alert['cause']);
+		self::assertGreaterThanOrEqual(3, count($alert['actionPerspective']));
 
-    /**
-     * Kwartaal-alert sets type, urgentie INFO, ≥3 acties.
-     *
-     * @return void
-     */
-    public function testKwartaalAlertShape(): void
-    {
-        $alert = $this->build()->bouwKwartaalAlert(
-            year: [
-                'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-1',
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 700.0,
-                'prognoseEindeJaar' => 1150.0,
-                'drempelStatus'     => 'RISICO',
-            ],
-            datum: '2026-09-30'
-        );
+	}//end testOmslagToKritiek()
 
-        self::assertSame('KWARTAAL_EINDE', $alert['type']);
-        self::assertSame('INFO', $alert['urgentie']);
-        self::assertSame('2026-09-30', $alert['aanleidingDatum']);
-        self::assertSame(75.0, $alert['tekort']);
-        self::assertGreaterThanOrEqual(3, count($alert['handelingsperspectief']));
+	/**
+	 * Handelingsperspectief always returns ≥3 acties even when BEHAALD.
+	 *
+	 * @return void
+	 */
+	public function testHandelingsperspectiefMinimumWhenBehaald(): void {
+		$acties = $this->build()->handelingsperspectief(
+			year: [
+				'purposeNorm' => 1225,
+				'currentHours' => 1250.0,
+				'forecastYearEnd' => 1400.0,
+				'thresholdStatus' => 'ACHIEVED',
+			]
+		);
 
-    }//end testKwartaalAlertShape()
+		self::assertGreaterThanOrEqual(3, count($acties));
 
+	}//end testHandelingsperspectiefMinimumWhenBehaald()
 
-    /**
-     * Omslag to KRITIEK builds an OMSLAG_KRITIEK alert with urgentie KRITIEK.
-     *
-     * @return void
-     */
-    public function testOmslagToKritiek(): void
-    {
-        $alert = $this->build()->bouwOmslagAlert(
-            year: [
-                'administrationId'  => 'adm-1',
-                'ondernemingId'     => 'ond-1',
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 600.0,
-                'prognoseEindeJaar' => 900.0,
-                'drempelStatus'     => 'KRITIEK',
-            ],
-            oldStatus: 'RISICO',
-            newStatus: 'KRITIEK'
-        );
+	/**
+	 * Handelingsperspectief mentions fiscal verlies EUR when there is a tekort.
+	 *
+	 * @return void
+	 */
+	public function testHandelingsperspectiefMentionsFiscaalVerliesOnTekort(): void {
+		$acties = $this->build()->handelingsperspectief(
+			year: [
+				'purposeNorm' => 1225,
+				'currentHours' => 400.0,
+				'forecastYearEnd' => 800.0,
+			]
+		);
 
-        self::assertSame('OMSLAG_KRITIEK', $alert['type']);
-        self::assertSame('KRITIEK', $alert['urgentie']);
-        self::assertStringContainsString('RISICO', $alert['oorzaak']);
-        self::assertStringContainsString('KRITIEK', $alert['oorzaak']);
-        self::assertGreaterThanOrEqual(3, count($alert['handelingsperspectief']));
+		$joined = implode(' || ', $acties);
+		self::assertStringContainsString('EUR', $joined);
+		self::assertStringContainsString('acquisitie', strtolower($joined));
 
-    }//end testOmslagToKritiek()
-
-
-    /**
-     * Handelingsperspectief always returns ≥3 acties even when BEHAALD.
-     *
-     * @return void
-     */
-    public function testHandelingsperspectiefMinimumWhenBehaald(): void
-    {
-        $acties = $this->build()->handelingsperspectief(
-            year: [
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 1250.0,
-                'prognoseEindeJaar' => 1400.0,
-                'drempelStatus'     => 'BEHAALD',
-            ]
-        );
-
-        self::assertGreaterThanOrEqual(3, count($acties));
-
-    }//end testHandelingsperspectiefMinimumWhenBehaald()
-
-
-    /**
-     * Handelingsperspectief mentions fiscal verlies EUR when there is a tekort.
-     *
-     * @return void
-     */
-    public function testHandelingsperspectiefMentionsFiscaalVerliesOnTekort(): void
-    {
-        $acties = $this->build()->handelingsperspectief(
-            year: [
-                'doelNorm'          => 1225,
-                'lopendeUren'       => 400.0,
-                'prognoseEindeJaar' => 800.0,
-            ]
-        );
-
-        $joined = implode(' || ', $acties);
-        self::assertStringContainsString('EUR', $joined);
-        self::assertStringContainsString('acquisitie', strtolower($joined));
-
-    }//end testHandelingsperspectiefMentionsFiscaalVerliesOnTekort()
-
+	}//end testHandelingsperspectiefMentionsFiscaalVerliesOnTekort()
 
 }//end class

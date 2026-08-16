@@ -10,14 +10,23 @@
  */
 
 import { test } from '@playwright/test'
-import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+import {
+	gotoPage,
+	assertIndexSurface,
+	assertNoShillinqFailures,
+	recordShillinqErrors,
+} from './_helpers'
 
-const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
+const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/inkoop/purchase-orders', title: 'Purchase Orders' },
 	{ route: '/inkoop/goods-receipts', title: 'Goods Receipts' },
 	{ route: '/inkoop/supplier-invoices', title: 'Supplier Invoices' },
 	{ route: '/inkoop/3way-matches', title: '3-way Matches', titleRe: /3-?way/i },
-	{ route: '/inkoop/3way-matches/exceptions', title: 'Match Exceptions', titleRe: /Exception/i },
+	{
+		route: '/inkoop/3way-matches/exceptions',
+		title: 'Match Exceptions',
+		titleRe: /Exception/i,
+	},
 	{ route: '/inkoop/receipts', title: 'Receipts' },
 	{ route: '/inkoop/expense-claims', title: 'Expense Claims' },
 	{ route: '/inkoop/mileage-log', title: 'Mileage Log' },

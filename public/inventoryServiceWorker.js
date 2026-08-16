@@ -36,24 +36,32 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(
-		caches.open(CACHE_STATIC).then((cache) => cache.addAll(STATIC_ASSETS).catch(() => null)),
+		caches
+			.open(CACHE_STATIC)
+			.then((cache) => cache.addAll(STATIC_ASSETS).catch(() => null)),
 	)
 	self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
 	event.waitUntil(
-		caches.keys().then((keys) => Promise.all(
-			keys
-				.filter((key) => !key.startsWith(VERSION))
-				.map((key) => caches.delete(key)),
-		)),
+		caches
+			.keys()
+			.then((keys) =>
+				Promise.all(
+					keys
+						.filter((key) => !key.startsWith(VERSION))
+						.map((key) => caches.delete(key)),
+				),
+			),
 	)
 	self.clients.claim()
 })
 
-const isApiRequest = (url) => url.pathname.includes('/apps/shillinq/api/v1/inventory/')
-const isImageRequest = (req) => req.destination === 'image' || /\.(png|jpg|jpeg|svg|webp)$/i.test(req.url)
+const isApiRequest = (url) =>
+	url.pathname.includes('/apps/shillinq/api/v1/inventory/')
+const isImageRequest = (req) =>
+	req.destination === 'image' || /\.(png|jpg|jpeg|svg|webp)$/i.test(req.url)
 
 self.addEventListener('fetch', (event) => {
 	const req = event.request
@@ -97,7 +105,7 @@ async function cacheFirstWithExpiry(req, cacheName, maxAgeMs) {
 	const cached = await cache.match(req)
 	if (cached) {
 		const stored = cached.headers.get('x-sw-cached-at')
-		const age = stored ? (Date.now() - Number(stored)) : Infinity
+		const age = stored ? Date.now() - Number(stored) : Infinity
 		if (Number.isFinite(age) && age < maxAgeMs) {
 			return cached
 		}
@@ -108,7 +116,11 @@ async function cacheFirstWithExpiry(req, cacheName, maxAgeMs) {
 			const headers = new Headers(response.headers)
 			headers.set('x-sw-cached-at', String(Date.now()))
 			const body = await response.clone().blob()
-			const stamped = new Response(body, { status: response.status, statusText: response.statusText, headers })
+			const stamped = new Response(body, {
+				status: response.status,
+				statusText: response.statusText,
+				headers,
+			})
 			cache.put(req, stamped)
 		}
 		return response

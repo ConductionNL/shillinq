@@ -114,7 +114,7 @@
 					{"key": "type", "label": "Type", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
 					{"key": "totalVatAmount", "label": "VAT amount", "sortable": true},
-					{"key": "belastingdienstKenmerk", "label": "Kenmerk", "sortable": true},
+					{"key": "taxAuthorityReference", "label": "Kenmerk", "sortable": true},
 					{"key": "administrationId", "label": "Administration", "sortable": true}
 				],
 				"defaultSort": "periodYear",
@@ -138,7 +138,7 @@
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "totalTaxableBase", "label": "Taxable base", "type": "number"},
 					{"key": "totalVatAmount", "label": "VAT amount", "type": "number"},
-					{"key": "belastingdienstKenmerk", "label": "Kenmerk", "type": "string"},
+					{"key": "taxAuthorityReference", "label": "Kenmerk", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
 				"_note": "TAX RETURN — a quarterly Union-OSS VAT return. Body shows the period, correction linkage, taxable base and total VAT, plus the Belastingdienst kenmerk that confirms filing; the embedded per-country line items and distribution ride on the object. XML/CSV filing payloads download from the export links; audit trail in the sidebar. It is a filed return, not a mailbox — no comms leaves.",

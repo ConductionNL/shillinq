@@ -52,13 +52,22 @@ const fs = require('fs')
 const path = require('path')
 
 const REPO_ROOT = path.resolve(__dirname, '..')
-const MAIN_REGISTER = path.join(REPO_ROOT, 'lib', 'Settings', 'shillinq_register.json')
+const MAIN_REGISTER = path.join(
+	REPO_ROOT,
+	'lib',
+	'Settings',
+	'shillinq_register.json',
+)
 const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 
 // Number of shipped seed objects that fail their own schema's `required`
 // list. Measured on the commit that added this gate. NEVER raise this to make
 // a build pass — that is the whole point of the ratchet.
-const BASELINE = 74
+// Lowered 74 -> 71 on 2026-08-16: the three `Service` seeds in
+// 10-bookings-create-appointment.json and 30-bookings-self-service-widget.json
+// now carry the full merged-schema `required` set (code, prepareTime,
+// bufferBefore, bufferAfter, basePrice, dynamicPricing, serviceCategory).
+const BASELINE = 71
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
 
@@ -68,7 +77,12 @@ const asArray = (value) => (Array.isArray(value) ? value : [])
 function deepMerge(base, overlay) {
 	for (const [key, value] of Object.entries(overlay)) {
 		const baseValue = base[key]
-		if (value && typeof value === 'object' && baseValue && typeof baseValue === 'object') {
+		if (
+			value
+			&& typeof value === 'object'
+			&& baseValue
+			&& typeof baseValue === 'object'
+		) {
 			const bothLists = Array.isArray(baseValue) && Array.isArray(value)
 			const neitherList = !Array.isArray(baseValue) && !Array.isArray(value)
 			if (bothLists) base[key] = baseValue.concat(value)
@@ -101,7 +115,8 @@ function main() {
 	//   foreach ([$data['components']['objects'], $data['objects']] as $seedBucket)
 	const collect = (source, doc) => {
 		for (const obj of asArray(doc.objects)) seeds.push({ source, obj })
-		for (const obj of asArray(doc.components && doc.components.objects)) seeds.push({ source, obj })
+		for (const obj of asArray(doc.components && doc.components.objects))
+			seeds.push({ source, obj })
 	}
 
 	let merged = loadJson(MAIN_REGISTER)
@@ -135,11 +150,17 @@ function main() {
 
 		checked++
 		const required = [...new Set(asArray(def.required))]
-		const missing = required.filter((prop) => obj[prop] === undefined || obj[prop] === null)
+		const missing = required.filter(
+			(prop) => obj[prop] === undefined || obj[prop] === null,
+		)
 		if (missing.length === 0) continue
 
 		if (!offenders.has(schemaName)) {
-			offenders.set(schemaName, { count: 0, missing: new Set(), sources: new Set() })
+			offenders.set(schemaName, {
+				count: 0,
+				missing: new Set(),
+				sources: new Set(),
+			})
 		}
 		const entry = offenders.get(schemaName)
 		entry.count++
@@ -151,41 +172,71 @@ function main() {
 
 	console.log(`[validate-seeds] seed objects checked: ${checked}`)
 	if (unknownSchema > 0) {
-		console.log(`[validate-seeds] seeds naming a schema no fragment declares: ${unknownSchema}`)
+		console.log(
+			`[validate-seeds] seeds naming a schema no fragment declares: ${unknownSchema}`,
+		)
 	}
-	console.log(`[validate-seeds] seeds that cannot satisfy their schema: ${failing} (baseline ${BASELINE})`)
+	console.log(
+		`[validate-seeds] seeds that cannot satisfy their schema: ${failing} (baseline ${BASELINE})`,
+	)
 
 	// A scan that silently found nothing to check must NOT report success.
 	if (checked < 300) {
-		console.error(`[validate-seeds] FAIL — only ${checked} seed objects were checked, which is`)
-		console.error('[validate-seeds] implausibly few. The scan did not run properly; a green')
-		console.error('[validate-seeds] result here would say nothing about the seeds.')
+		console.error(
+			`[validate-seeds] FAIL — only ${checked} seed objects were checked, which is`,
+		)
+		console.error(
+			'[validate-seeds] implausibly few. The scan did not run properly; a green',
+		)
+		console.error(
+			'[validate-seeds] result here would say nothing about the seeds.',
+		)
 		process.exit(1)
 	}
 
-	for (const [schema, entry] of [...offenders].sort((a, b) => b[1].count - a[1].count)) {
+	for (const [schema, entry] of [...offenders].sort(
+		(a, b) => b[1].count - a[1].count,
+	)) {
 		console.log(
 			`    ${String(entry.count).padStart(3)} x ${schema} — missing: ${[...entry.missing].join(', ')}`
-			+ `  (declared in ${[...entry.sources].join(', ')})`,
+				+ `  (declared in ${[...entry.sources].join(', ')})`,
 		)
 	}
 
 	if (failing > BASELINE) {
 		console.error('')
-		console.error(`[validate-seeds] FAIL — ${failing} seed objects cannot import, up from the`)
-		console.error(`[validate-seeds] baseline of ${BASELINE}. Something in this change made it worse.`)
-		console.error('[validate-seeds] Most likely cause: a schema key declared by two fragments with')
-		console.error('[validate-seeds] different `required` lists. ADR-037 merges fragments by key and')
-		console.error('[validate-seeds] CONCATENATES list values, so the effective `required` is the UNION')
-		console.error('[validate-seeds] of both and no payload of either model can satisfy it.')
-		console.error('[validate-seeds] Fix the seed or the schema — do NOT raise BASELINE.')
+		console.error(
+			`[validate-seeds] FAIL — ${failing} seed objects cannot import, up from the`,
+		)
+		console.error(
+			`[validate-seeds] baseline of ${BASELINE}. Something in this change made it worse.`,
+		)
+		console.error(
+			'[validate-seeds] Most likely cause: a schema key declared by two fragments with',
+		)
+		console.error(
+			'[validate-seeds] different `required` lists. ADR-037 merges fragments by key and',
+		)
+		console.error(
+			'[validate-seeds] CONCATENATES list values, so the effective `required` is the UNION',
+		)
+		console.error(
+			'[validate-seeds] of both and no payload of either model can satisfy it.',
+		)
+		console.error(
+			'[validate-seeds] Fix the seed or the schema — do NOT raise BASELINE.',
+		)
 		process.exit(1)
 	}
 
 	if (failing < BASELINE) {
 		console.log('')
-		console.log(`[validate-seeds] PASS — and ${BASELINE - failing} better than baseline.`)
-		console.log(`[validate-seeds] Please lower BASELINE in tests/validate-seeds.js to ${failing}.`)
+		console.log(
+			`[validate-seeds] PASS — and ${BASELINE - failing} better than baseline.`,
+		)
+		console.log(
+			`[validate-seeds] Please lower BASELINE in tests/validate-seeds.js to ${failing}.`,
+		)
 		process.exit(0)
 	}
 

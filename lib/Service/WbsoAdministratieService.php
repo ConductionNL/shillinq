@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes a per-beschikking realisatie summary from the S&O hour administration.
@@ -46,169 +46,158 @@ use Psr\Container\ContainerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class WbsoAdministratieService
-{
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-    ) {
-    }//end __construct()
+class WbsoAdministratieService {
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the WBSO realisatie summary for one administration (REQ-WBSO-010).
-     *
-     * Returns one row per WbsoBeschikking carrying the granted hours, the realised
-     * hours (sum of confirmed + locked SoUurregistratie hours), the remaining
-     * headroom and a boolean exceeded flag. Hours are summed in integer-tenths to
-     * avoid IEEE-754 float drift, then returned as floats.
-     *
-     * @param string $administrationId Administration scope (server-resolved, REQ-WBSO-004).
-     *
-     * @return array{data: array<int,array<string,mixed>>, total: int}
-     *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
-     */
-    public function realisatieSummary(string $administrationId): array
-    {
-        $beschikkingen  = $this->fetchBeschikkingen(administrationId: $administrationId);
-        $realisedTenths = $this->realisedHoursByBeschikking(administrationId: $administrationId);
+	/**
+	 * Compute the WBSO realisatie summary for one administration (REQ-WBSO-010).
+	 *
+	 * Returns one row per WbsoBeschikking carrying the granted hours, the realised
+	 * hours (sum of confirmed + locked SoUurregistratie hours), the remaining
+	 * headroom and a boolean exceeded flag. Hours are summed in integer-tenths to
+	 * avoid IEEE-754 float drift, then returned as floats.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved, REQ-WBSO-004).
+	 *
+	 * @return array{data: array<int,array<string,mixed>>, total: int}
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+	 */
+	public function realisatieSummary(string $administrationId): array {
+		$beschikkingen = $this->fetchBeschikkingen(administrationId: $administrationId);
+		$realisedTenths = $this->realisedHoursByDecision(administrationId: $administrationId);
 
-        $rows = [];
-        foreach ($beschikkingen as $beschikkingNumber => $beschikking) {
-            $grantedTenths = (int) round(((float) ($beschikking['grantedSoHours'] ?? 0)) * 10);
-            $realised      = (int) ($realisedTenths[$beschikkingNumber] ?? 0);
-            $remaining     = ($grantedTenths - $realised);
-            $rows[]        = [
-                'beschikkingNumber' => (string) $beschikkingNumber,
-                'rvoReference'      => (string) ($beschikking['rvoReference'] ?? ''),
-                'projectNumber'     => (string) ($beschikking['projectNumber'] ?? ''),
-                'state'             => (string) ($beschikking['state'] ?? ''),
-                'grantedSoHours'    => ((float) $grantedTenths / 10),
-                'realisedSoHours'   => ((float) $realised / 10),
-                'remainingSoHours'  => ((float) $remaining / 10),
-                'exceeded'          => ($realised > $grantedTenths),
-                'administrationId'  => $administrationId,
-            ];
-        }//end foreach
+		$rows = [];
+		foreach ($beschikkingen as $decisionNumber => $decision) {
+			$grantedTenths = (int)round(((float)($decision['grantedSoHours'] ?? 0)) * 10);
+			$realised = (int)($realisedTenths[$decisionNumber] ?? 0);
+			$remaining = ($grantedTenths - $realised);
+			$rows[] = [
+				'decisionNumber' => (string)$decisionNumber,
+				'rvoReference' => (string)($decision['rvoReference'] ?? ''),
+				'projectNumber' => (string)($decision['projectNumber'] ?? ''),
+				'state' => (string)($decision['state'] ?? ''),
+				'grantedSoHours' => ((float)$grantedTenths / 10),
+				'realisedSoHours' => ((float)$realised / 10),
+				'remainingSoHours' => ((float)$remaining / 10),
+				'exceeded' => ($realised > $grantedTenths),
+				'administrationId' => $administrationId,
+			];
+		}//end foreach
 
-        usort(
-            $rows,
-            static function (array $a, array $b): int {
-                return strcmp((string) $a['beschikkingNumber'], (string) $b['beschikkingNumber']);
-            }
-        );
+		usort(
+			$rows,
+			static function (array $a, array $b): int {
+				return strcmp((string)$a['decisionNumber'], (string)$b['decisionNumber']);
+			}
+		);
 
-        return [
-            'data'  => $rows,
-            'total' => count($rows),
-        ];
+		return [
+			'data' => $rows,
+			'total' => count($rows),
+		];
 
-    }//end realisatieSummary()
+	}//end realisatieSummary()
 
-    /**
-     * Sum realised S&O hours (confirmed + locked entries) per beschikking, in tenths.
-     *
-     * Draft entries are excluded — they are not yet part of the realisatie
-     * (REQ-WBSO-008). Each SoUurregistratie is scoped to the administration.
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return array<string,int> beschikkingNumber => realised hours in tenths.
-     */
-    private function realisedHoursByBeschikking(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->register();
+	/**
+	 * Sum realised S&O hours (confirmed + locked entries) per beschikking, in tenths.
+	 *
+	 * Draft entries are excluded — they are not yet part of the realisatie
+	 * (REQ-WBSO-008). Each SoUurregistratie is scoped to the administration.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,int> beschikkingNumber => realised hours in tenths.
+	 */
+	private function realisedHoursByDecision(string $administrationId): array {
+		$register = $this->register();
 
-        $entries = $objectService
-            ->setRegister($register)
-            ->setSchema('SoUurregistratie')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+		$entries = $this->objectService
+			->setRegister($register)
+			->setSchema('SoUurregistratie')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-        $byBeschikking = [];
-        foreach ($entries as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+		$byDecision = [];
+		foreach ($entries as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-            $state = (string) ($entry['state'] ?? '');
-            if ($state !== 'confirmed' && $state !== 'locked') {
-                continue;
-            }
+			$state = (string)($entry['state'] ?? '');
+			if ($state !== 'confirmed' && $state !== 'locked') {
+				continue;
+			}
 
-            $beschikkingNumber = (string) ($entry['beschikkingNumber'] ?? '');
-            if ($beschikkingNumber === '') {
-                continue;
-            }
+			$decisionNumber = (string)($entry['decisionNumber'] ?? '');
+			if ($decisionNumber === '') {
+				continue;
+			}
 
-            $tenths = (int) round(((float) ($entry['hours'] ?? 0)) * 10);
-            if ($tenths < 0) {
-                continue;
-            }
+			$tenths = (int)round(((float)($entry['hours'] ?? 0)) * 10);
+			if ($tenths < 0) {
+				continue;
+			}
 
-            if (isset($byBeschikking[$beschikkingNumber]) === false) {
-                $byBeschikking[$beschikkingNumber] = 0;
-            }
+			if (isset($byDecision[$decisionNumber]) === false) {
+				$byDecision[$decisionNumber] = 0;
+			}
 
-            $byBeschikking[$beschikkingNumber] += $tenths;
-        }//end foreach
+			$byDecision[$decisionNumber] += $tenths;
+		}//end foreach
 
-        return $byBeschikking;
+		return $byDecision;
+	}//end realisedHoursByBeschikking()
 
-    }//end realisedHoursByBeschikking()
+	/**
+	 * Fetch the administration's WbsoBeschikking records keyed by beschikkingNumber.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,array<string,mixed>> beschikkingNumber => beschikking object.
+	 */
+	private function fetchBeschikkingen(string $administrationId): array {
+		$records = $this->objectService
+			->setRegister($this->register())
+			->setSchema('WbsoBeschikking')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-    /**
-     * Fetch the administration's WbsoBeschikking records keyed by beschikkingNumber.
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return array<string,array<string,mixed>> beschikkingNumber => beschikking object.
-     */
-    private function fetchBeschikkingen(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $records       = $objectService
-            ->setRegister($this->register())
-            ->setSchema('WbsoBeschikking')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+		$byNumber = [];
+		foreach ($records as $record) {
+			if (is_array($record) === false) {
+				continue;
+			}
 
-        $byNumber = [];
-        foreach ($records as $record) {
-            if (is_array($record) === false) {
-                continue;
-            }
+			$number = (string)($record['decisionNumber'] ?? '');
+			if ($number !== '') {
+				$byNumber[$number] = $record;
+			}
+		}
 
-            $number = (string) ($record['beschikkingNumber'] ?? '');
-            if ($number !== '') {
-                $byNumber[$number] = $record;
-            }
-        }
+		return $byNumber;
+	}//end fetchBeschikkingen()
 
-        return $byNumber;
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    }//end fetchBeschikkingen()
+		return $register;
+	}//end register()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
-
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

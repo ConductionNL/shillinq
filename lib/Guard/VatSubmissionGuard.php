@@ -50,27 +50,24 @@ namespace OCA\Shillinq\Guard;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class VatSubmissionGuard
-{
-    /**
-     * Precondition for `submit`: `amount` must not exceed `approvalThreshold`.
-     *
-     * @param array<string, mixed> $return The VatReturn object being transitioned.
-     *
-     * @return bool True when the return may be submitted.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireApproval(array $return): bool
-    {
-        $threshold = ($return['approvalThreshold'] ?? null);
-        if ($threshold === null) {
-            // No threshold configured for this administration — no gate active.
-            return true;
-        }
+class VatSubmissionGuard {
+	/**
+	 * Precondition for `submit`: `amount` must not exceed `approvalThreshold`.
+	 *
+	 * @param array<string, mixed> $return The VatReturn object being transitioned.
+	 *
+	 * @return bool True when the return may be submitted.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireApproval(array $return): bool {
+		$threshold = ($return['approvalThreshold'] ?? null);
+		if ($threshold === null) {
+			// No threshold configured for this administration — no gate active.
+			return true;
+		}
 
-        $amount = (float) ($return['amount'] ?? 0);
-        return $amount <= (float) $threshold;
-
-    }//end requireApproval()
+		$amount = (float)($return['amount'] ?? 0);
+		return $amount <= (float)$threshold;
+	}//end requireApproval()
 }//end class

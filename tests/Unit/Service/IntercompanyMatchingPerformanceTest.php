@@ -36,6 +36,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\IntercompanyMatchingCalculator;
 use OCA\Shillinq\Service\IntercompanyMatchingService;
 use OCP\IAppConfig;
@@ -54,303 +55,290 @@ use Psr\Log\LoggerInterface;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 #[Group('performance')]
-final class IntercompanyMatchingPerformanceTest extends TestCase
-{
-    /**
-     * Number of IC-transactions to seed for the full-match case (REQ-ICE-010
-     * "typical month" target of 4 000 transactions for a 12-entity group).
-     */
-    private const TRANSACTION_COUNT = 4000;
+final class IntercompanyMatchingPerformanceTest extends TestCase {
+	/**
+	 * Number of IC-transactions to seed for the full-match case (REQ-ICE-010
+	 * "typical month" target of 4 000 transactions for a 12-entity group).
+	 */
+	private const TRANSACTION_COUNT = 4000;
 
-    /**
-     * Number of IC-transactions to seed for the incremental delta case.
-     */
-    private const INCREMENTAL_DELTA = 100;
+	/**
+	 * Number of IC-transactions to seed for the incremental delta case.
+	 */
+	private const INCREMENTAL_DELTA = 100;
 
-    /**
-     * Soft budget the full-match case must beat (seconds) per REQ-ICE-010.
-     */
-    private const FULL_MATCH_BUDGET_SECONDS = 300.0;
+	/**
+	 * Soft budget the full-match case must beat (seconds) per REQ-ICE-010.
+	 */
+	private const FULL_MATCH_BUDGET_SECONDS = 300.0;
 
-    /**
-     * Soft budget the incremental case must beat (seconds) per REQ-ICE-010.
-     */
-    private const INCREMENTAL_BUDGET_SECONDS = 30.0;
+	/**
+	 * Soft budget the incremental case must beat (seconds) per REQ-ICE-010.
+	 */
+	private const INCREMENTAL_BUDGET_SECONDS = 30.0;
 
-    /**
-     * Full month matching for a single relation with ~4 000 transactions must
-     * complete under the REQ-ICE-010 budget.
-     *
-     * @return void
-     */
-    public function testFullMonthMatchUnderFiveMinutes(): void
-    {
-        $service = $this->buildService(transactionCount: self::TRANSACTION_COUNT);
+	/**
+	 * Full month matching for a single relation with ~4 000 transactions must
+	 * complete under the REQ-ICE-010 budget.
+	 *
+	 * @return void
+	 */
+	public function testFullMonthMatchUnderFiveMinutes(): void {
+		$service = $this->buildService(transactionCount: self::TRANSACTION_COUNT);
 
-        $startedAt = microtime(true);
-        $match     = $service->matchRelationPeriod('rel-perf', '2026-01');
-        $elapsed   = (microtime(true) - $startedAt);
+		$startedAt = microtime(true);
+		$match = $service->matchRelationPeriod('rel-perf', '2026-01');
+		$elapsed = (microtime(true) - $startedAt);
 
-        // The seeded dataset posts paired debits across A/B with identical
-        // totals so the match is always a perfect-match status; the assertion
-        // guards against accidental algorithmic regressions that quietly drop
-        // transactions on one side.
-        self::assertSame('perfect-match', $match['matchStatus']);
-        self::assertSame(0.0, $match['mismatchAmount']);
+		// The seeded dataset posts paired debits across A/B with identical
+		// totals so the match is always a perfect-match status; the assertion
+		// guards against accidental algorithmic regressions that quietly drop
+		// transactions on one side.
+		self::assertSame('perfect-match', $match['matchStatus']);
+		self::assertSame(0.0, $match['mismatchAmount']);
 
-        self::assertLessThan(
-            self::FULL_MATCH_BUDGET_SECONDS,
-            $elapsed,
-            sprintf(
-                'IntercompanyMatchingService::matchRelationPeriod() took %.3fs for %d transactions; REQ-ICE-010 budget is %.1fs (5 minutes).',
-                $elapsed,
-                self::TRANSACTION_COUNT,
-                self::FULL_MATCH_BUDGET_SECONDS
-            )
-        );
+		self::assertLessThan(
+			self::FULL_MATCH_BUDGET_SECONDS,
+			$elapsed,
+			sprintf(
+				'IntercompanyMatchingService::matchRelationPeriod() took %.3fs for %d transactions; REQ-ICE-010 budget is %.1fs (5 minutes).',
+				$elapsed,
+				self::TRANSACTION_COUNT,
+				self::FULL_MATCH_BUDGET_SECONDS
+			)
+		);
 
-    }//end testFullMonthMatchUnderFiveMinutes()
+	}//end testFullMonthMatchUnderFiveMinutes()
 
-    /**
-     * Incremental re-match for a delta of ~100 transactions on the same
-     * relation must complete in under 30 seconds per REQ-ICE-010.
-     *
-     * @return void
-     */
-    public function testIncrementalReMatchUnderThirtySeconds(): void
-    {
-        $service = $this->buildService(transactionCount: self::INCREMENTAL_DELTA);
+	/**
+	 * Incremental re-match for a delta of ~100 transactions on the same
+	 * relation must complete in under 30 seconds per REQ-ICE-010.
+	 *
+	 * @return void
+	 */
+	public function testIncrementalReMatchUnderThirtySeconds(): void {
+		$service = $this->buildService(transactionCount: self::INCREMENTAL_DELTA);
 
-        $startedAt = microtime(true);
-        $match     = $service->matchRelationPeriod('rel-perf', '2026-01');
-        $elapsed   = (microtime(true) - $startedAt);
+		$startedAt = microtime(true);
+		$match = $service->matchRelationPeriod('rel-perf', '2026-01');
+		$elapsed = (microtime(true) - $startedAt);
 
-        self::assertSame('perfect-match', $match['matchStatus']);
+		self::assertSame('perfect-match', $match['matchStatus']);
 
-        self::assertLessThan(
-            self::INCREMENTAL_BUDGET_SECONDS,
-            $elapsed,
-            sprintf(
-                'Incremental matchRelationPeriod() took %.3fs for %d transactions; REQ-ICE-010 budget is %.1fs (30 seconds).',
-                $elapsed,
-                self::INCREMENTAL_DELTA,
-                self::INCREMENTAL_BUDGET_SECONDS
-            )
-        );
+		self::assertLessThan(
+			self::INCREMENTAL_BUDGET_SECONDS,
+			$elapsed,
+			sprintf(
+				'Incremental matchRelationPeriod() took %.3fs for %d transactions; REQ-ICE-010 budget is %.1fs (30 seconds).',
+				$elapsed,
+				self::INCREMENTAL_DELTA,
+				self::INCREMENTAL_BUDGET_SECONDS
+			)
+		);
 
-    }//end testIncrementalReMatchUnderThirtySeconds()
+	}//end testIncrementalReMatchUnderThirtySeconds()
 
-    /**
-     * Build a wired IntercompanyMatchingService backed by a seeded stub.
-     *
-     * @param int $transactionCount The number of paired IC-transactions to seed.
-     *
-     * @return IntercompanyMatchingService
-     */
-    private function buildService(int $transactionCount): IntercompanyMatchingService
-    {
-        $container = $this->createMock(ContainerInterface::class);
-        $appConfig = $this->createMock(IAppConfig::class);
-        $logger    = $this->createMock(LoggerInterface::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Build a wired IntercompanyMatchingService backed by a seeded stub.
+	 *
+	 * @param int $transactionCount The number of paired IC-transactions to seed.
+	 *
+	 * @return IntercompanyMatchingService
+	 */
+	private function buildService(int $transactionCount): IntercompanyMatchingService {
+		$container = $this->createMock(ContainerInterface::class);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $relations    = [$this->seedRelation()];
-        $transactions = $this->seedTransactions(count: $transactionCount);
+		$relations = [$this->seedRelation()];
+		$transactions = $this->seedTransactions(count: $transactionCount);
 
-        $stub = $this->newObjectServiceStub(
-            relations: $relations,
-            transactions: $transactions,
-        );
-        $container->method('get')->willReturn($stub);
+		$stub = $this->newObjectServiceStub(
+			relations: $relations,
+			transactions: $transactions,
+		);
+		$container->method('get')->willReturn($stub);
 
-        return new IntercompanyMatchingService(
-            $container,
-            $appConfig,
-            new IntercompanyMatchingCalculator(),
-            $logger
-        );
+		return new IntercompanyMatchingService(
+			$container,
+			$appConfig,
+			new IntercompanyMatchingCalculator(),
+			$logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * Build the single IntercompanyRelation fixture used by all transactions.
-     *
-     * @return array<string,mixed>
-     */
-    private function seedRelation(): array
-    {
-        return [
-            'relationId'        => 'rel-perf',
-            'administrationId'  => 'adm-perf',
-            'entityAId'         => 'entA',
-            'entityBId'         => 'entB',
-            'defaultAccountA'   => '8200',
-            'defaultAccountB'   => '4400',
-            'toleranceAbsolute' => 10.0,
-            'toleranceRelative' => 0.5,
-        ];
+	/**
+	 * Build the single IntercompanyRelation fixture used by all transactions.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function seedRelation(): array {
+		return [
+			'relationId' => 'rel-perf',
+			'administrationId' => 'adm-perf',
+			'entityAId' => 'entA',
+			'entityBId' => 'entB',
+			'defaultAccountA' => '8200',
+			'defaultAccountB' => '4400',
+			'toleranceAbsolute' => 10.0,
+			'toleranceRelative' => 0.5,
+		];
 
-    }//end seedRelation()
+	}//end seedRelation()
 
-    /**
-     * Seed `$count` paired IC-transactions (half A-side, half B-side) on a
-     * single relation. Each pair shares an integer-cent amount so totals match
-     * exactly and the result is a perfect-match status.
-     *
-     * @param int $count The total transaction count (paired across A/B).
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function seedTransactions(int $count): array
-    {
-        $transactions = [];
-        $half         = (int) ($count / 2);
-        for ($i = 0; $i < $half; $i++) {
-            $amount         = (100.0 + ($i % 50));
-            $transactions[] = [
-                'id'                     => 'txA-'.$i,
-                'sourceAdministrationId' => 'entA',
-                'relationId'             => 'rel-perf',
-                'debitAmount'            => $amount,
-                'creditAmount'           => 0.0,
-                'currency'               => 'EUR',
-            ];
-            $transactions[] = [
-                'id'                     => 'txB-'.$i,
-                'sourceAdministrationId' => 'entB',
-                'relationId'             => 'rel-perf',
-                'debitAmount'            => $amount,
-                'creditAmount'           => 0.0,
-                'currency'               => 'EUR',
-            ];
-        }
+	/**
+	 * Seed `$count` paired IC-transactions (half A-side, half B-side) on a
+	 * single relation. Each pair shares an integer-cent amount so totals match
+	 * exactly and the result is a perfect-match status.
+	 *
+	 * @param int $count The total transaction count (paired across A/B).
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function seedTransactions(int $count): array {
+		$transactions = [];
+		$half = (int)($count / 2);
+		for ($i = 0; $i < $half; $i++) {
+			$amount = (100.0 + ($i % 50));
+			$transactions[] = [
+				'id' => 'txA-' . $i,
+				'sourceAdministrationId' => 'entA',
+				'relationId' => 'rel-perf',
+				'debitAmount' => $amount,
+				'creditAmount' => 0.0,
+				'currency' => 'EUR',
+			];
+			$transactions[] = [
+				'id' => 'txB-' . $i,
+				'sourceAdministrationId' => 'entB',
+				'relationId' => 'rel-perf',
+				'debitAmount' => $amount,
+				'creditAmount' => 0.0,
+				'currency' => 'EUR',
+			];
+		}
 
-        return $transactions;
+		return $transactions;
+	}//end seedTransactions()
 
-    }//end seedTransactions()
+	/**
+	 * Construct an anonymous ObjectService stub that mimics setRegister /
+	 * setSchema / findAll / saveObject. Matches the shape exercised by
+	 * IntercompanyMatchingService.
+	 *
+	 * @param array<int,array<string,mixed>> $relations IntercompanyRelation rows.
+	 * @param array<int,array<string,mixed>> $transactions IntercompanyTransaction rows.
+	 *
+	 * @return object
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) The anonymous-class stub
+	 * mirrors the OR ObjectService fluent shape; splitting it across helpers
+	 * would obscure the test wiring without reducing complexity.
+	 */
+	private function newObjectServiceStub(array $relations, array $transactions): object {
+		return new class($relations, $transactions) {
+			/**
+			 * IntercompanyRelation rows.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $relations;
 
-    /**
-     * Construct an anonymous ObjectService stub that mimics setRegister /
-     * setSchema / findAll / saveObject. Matches the shape exercised by
-     * IntercompanyMatchingService.
-     *
-     * @param array<int,array<string,mixed>> $relations    IntercompanyRelation rows.
-     * @param array<int,array<string,mixed>> $transactions IntercompanyTransaction rows.
-     *
-     * @return object
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength) The anonymous-class stub
-     * mirrors the OR ObjectService fluent shape; splitting it across helpers
-     * would obscure the test wiring without reducing complexity.
-     */
-    private function newObjectServiceStub(array $relations, array $transactions): object
-    {
-        return new class($relations, $transactions) {
+			/**
+			 * IntercompanyTransaction rows.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $transactions;
 
-            /**
-             * IntercompanyRelation rows.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $relations;
+			/**
+			 * Last selected schema slug.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * IntercompanyTransaction rows.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $transactions;
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int,array<string,mixed>> $relations Relation rows.
+			 * @param array<int,array<string,mixed>> $transactions Transaction rows.
+			 */
+			public function __construct(array $relations, array $transactions) {
+				$this->relations = $relations;
+				$this->transactions = $transactions;
+			}//end __construct()
 
-            /**
-             * Last selected schema slug.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Fluent register setter (no-op for the stub).
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Constructor.
-             *
-             * @param array<int,array<string,mixed>> $relations    Relation rows.
-             * @param array<int,array<string,mixed>> $transactions Transaction rows.
-             */
-            public function __construct(array $relations, array $transactions)
-            {
-                $this->relations    = $relations;
-                $this->transactions = $transactions;
-            }//end __construct()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Fluent register setter (no-op for the stub).
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Return rows for the active schema (no prior matches → trivially
+			 * consistent roll-forward).
+			 *
+			 * @param array<string,mixed> $params Query params (mirrors the OR
+			 *                                    ObjectService signature; the
+			 *                                    perf stub does not filter).
+			 *
+			 * @return array<int,array<string,mixed>>
+			 *
+			 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature must
+			 * mirror OR ObjectService::findAll for the service call to type-match.
+			 */
+			public function findAll(array $params = []): array {
+				if ($this->schema === 'IntercompanyRelation') {
+					return $this->relations;
+				}
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+				if ($this->schema === 'IntercompanyTransaction') {
+					return $this->transactions;
+				}
 
-            /**
-             * Return rows for the active schema (no prior matches → trivially
-             * consistent roll-forward).
-             *
-             * @param array<string,mixed> $params Query params (mirrors the OR
-             *                                    ObjectService signature; the
-             *                                    perf stub does not filter).
-             *
-             * @return array<int,array<string,mixed>>
-             *
-             * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature must
-             * mirror OR ObjectService::findAll for the service call to type-match.
-             */
-            public function findAll(array $params=[]): array
-            {
-                if ($this->schema === 'IntercompanyRelation') {
-                    return $this->relations;
-                }
+				// IntercompanyMatch reads (existing matches lookup +
+				// roll-forward) return empty so the perf path measures only
+				// detection + aggregation cost.
+				return [];
+			}//end findAll()
 
-                if ($this->schema === 'IntercompanyTransaction') {
-                    return $this->transactions;
-                }
+			/**
+			 * Echo the object back without recording (perf path).
+			 *
+			 * @param array<string,mixed> $object The object being saved.
+			 * @param string|null $register The register slug (unused).
+			 * @param string|null $schema The schema slug (unused).
+			 *
+			 * @return array<string,mixed>
+			 *
+			 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature must
+			 * mirror OR ObjectService::saveObject for the service call to type-match.
+			 */
+			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+				return $object;
+			}//end saveObject()
+		};
 
-                // IntercompanyMatch reads (existing matches lookup +
-                // roll-forward) return empty so the perf path measures only
-                // detection + aggregation cost.
-                return [];
-            }//end findAll()
-
-            /**
-             * Echo the object back without recording (perf path).
-             *
-             * @param array<string,mixed> $object   The object being saved.
-             * @param string|null         $register The register slug (unused).
-             * @param string|null         $schema   The schema slug (unused).
-             *
-             * @return array<string,mixed>
-             *
-             * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature must
-             * mirror OR ObjectService::saveObject for the service call to type-match.
-             */
-            public function saveObject(array $object, ?string $register=null, ?string $schema=null): array
-            {
-                return $object;
-            }//end saveObject()
-        };
-
-    }//end newObjectServiceStub()
+	}//end newObjectServiceStub()
 }//end class

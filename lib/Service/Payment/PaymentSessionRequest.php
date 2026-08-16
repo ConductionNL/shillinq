@@ -30,28 +30,27 @@ namespace OCA\Shillinq\Service\Payment;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-001)
  */
-final class PaymentSessionRequest
-{
-    /**
-     * Construct the session request.
-     *
-     * @param float                $amount      Server-resolved outstanding amount.
-     * @param string               $currency    ISO 4217 currency code.
-     * @param string               $description Payer-facing description (e.g. invoice number).
-     * @param string               $redirectUrl Where the payer lands after the PSP flow.
-     * @param string               $webhookUrl  The shared, signature-verified webhook endpoint.
-     * @param string               $method      Payment method — always 'ideal' for this
-     *                                          flow.
-     * @param array<string, mixed> $metadata    Correlation metadata (invoiceId, administrationId, correlationId).
-     */
-    public function __construct(
-        public readonly float $amount,
-        public readonly string $currency,
-        public readonly string $description,
-        public readonly string $redirectUrl,
-        public readonly string $webhookUrl,
-        public readonly string $method,
-        public readonly array $metadata=[],
-    ) {
-    }//end __construct()
+final class PaymentSessionRequest {
+	/**
+	 * Construct the session request.
+	 *
+	 * @param float $amount Server-resolved outstanding amount.
+	 * @param string $currency ISO 4217 currency code.
+	 * @param string $description Payer-facing description (e.g. invoice number).
+	 * @param string $redirectUrl Where the payer lands after the PSP flow.
+	 * @param string $webhookUrl The shared, signature-verified webhook endpoint.
+	 * @param string $method Payment method — always 'ideal' for this
+	 *                       flow.
+	 * @param array<string, mixed> $metadata Correlation metadata (invoiceId, administrationId, correlationId).
+	 */
+	public function __construct(
+		public readonly float $amount,
+		public readonly string $currency,
+		public readonly string $description,
+		public readonly string $redirectUrl,
+		public readonly string $webhookUrl,
+		public readonly string $method,
+		public readonly array $metadata = [],
+	) {
+	}//end __construct()
 }//end class

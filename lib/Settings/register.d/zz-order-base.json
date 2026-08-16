@@ -143,7 +143,7 @@
             "title": "Discount",
             "description": "The count or quantity of dis."
           },
-          "btwRate": {
+          "vatRate": {
             "type": "number",
             "nullable": true,
             "title": "BTW Rate",

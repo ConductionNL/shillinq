@@ -17,10 +17,10 @@
 		<label class="scenario-creator__field">
 			<span>{{ t('shillinq', 'Scenario name') }}</span>
 			<input
-				v-model="scenario.naam"
+				v-model="scenario.name"
 				type="text"
 				required
-				:placeholder="t('shillinq', 'e.g. Acme pays late by 4 weeks')">
+				:placeholder="t('shillinq', 'e.g. Acme pays late by 4 weeks')" />
 		</label>
 
 		<label class="scenario-creator__field">
@@ -57,29 +57,29 @@
 					v-model="adjustment.arInvoiceId"
 					type="text"
 					:aria-label="t('shillinq', 'AR invoice ID')"
-					:placeholder="t('shillinq', 'AR invoice ID')">
+					:placeholder="t('shillinq', 'AR invoice ID')" />
 				<input
 					v-if="adjustment.type === 'AR_PROJECTION_OVERRIDE'"
 					v-model.number="adjustment.weekShift"
 					type="number"
 					:aria-label="t('shillinq', 'Week shift')"
-					:placeholder="t('shillinq', 'Week shift')">
+					:placeholder="t('shillinq', 'Week shift')" />
 				<input
 					v-if="adjustment.type === 'AR_PROJECTION_OVERRIDE'"
-					v-model.number="adjustment.kansVanBetaling"
+					v-model.number="adjustment.kansFromPayment"
 					type="number"
 					min="0"
 					max="1"
 					step="0.05"
 					:aria-label="t('shillinq', 'Probability (0-1)')"
-					:placeholder="t('shillinq', 'Probability (0-1)')">
+					:placeholder="t('shillinq', 'Probability (0-1)')" />
 
 				<input
 					v-if="adjustment.type === 'RECURRING_COST_ADJUSTMENT'"
 					v-model="adjustment.recurId"
 					type="text"
 					:aria-label="t('shillinq', 'Recurring ID')"
-					:placeholder="t('shillinq', 'Recurring ID')">
+					:placeholder="t('shillinq', 'Recurring ID')" />
 				<select
 					v-if="adjustment.type === 'RECURRING_COST_ADJUSTMENT'"
 					v-model="adjustment.adjustmentType"
@@ -100,14 +100,14 @@
 					v-model="adjustment.name"
 					type="text"
 					:aria-label="t('shillinq', 'Deal name')"
-					:placeholder="t('shillinq', 'Deal name')">
+					:placeholder="t('shillinq', 'Deal name')" />
 				<input
 					v-if="adjustment.type === 'NEW_REVENUE'"
 					v-model.number="adjustment.amount"
 					type="number"
 					step="0.01"
 					:aria-label="t('shillinq', 'Amount EUR')"
-					:placeholder="t('shillinq', 'Amount EUR')">
+					:placeholder="t('shillinq', 'Amount EUR')" />
 				<input
 					v-if="adjustment.type === 'NEW_REVENUE'"
 					v-model.number="adjustment.probability"
@@ -116,13 +116,13 @@
 					max="1"
 					step="0.05"
 					:aria-label="t('shillinq', 'Probability')"
-					:placeholder="t('shillinq', 'Probability')">
+					:placeholder="t('shillinq', 'Probability')" />
 				<input
 					v-if="adjustment.type === 'NEW_REVENUE'"
 					v-model.number="adjustment.expectedReceiptWeek"
 					type="number"
 					:aria-label="t('shillinq', 'Expected week')"
-					:placeholder="t('shillinq', 'Expected week')">
+					:placeholder="t('shillinq', 'Expected week')" />
 
 				<input
 					v-if="adjustment.type === 'BUFFER_POLICY_OVERRIDE'"
@@ -130,7 +130,7 @@
 					type="number"
 					step="0.01"
 					:aria-label="t('shillinq', 'Buffer EUR')"
-					:placeholder="t('shillinq', 'Buffer EUR')">
+					:placeholder="t('shillinq', 'Buffer EUR')" />
 
 				<button type="button" @click="removeAdjustment(index)">
 					{{ t('shillinq', 'Remove') }}
@@ -161,6 +161,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		administrationId: {
 			type: String,
 			required: true,
@@ -171,7 +172,7 @@ export default {
 		return {
 			scenario: {
 				horizonId: this.horizonId,
-				naam: '',
+				name: '',
 				description: '',
 				aanpassingen: [],
 				administrationId: this.administrationId,
@@ -186,11 +187,16 @@ export default {
 				type: 'AR_PROJECTION_OVERRIDE',
 			})
 		},
+
 		removeAdjustment(index) {
 			this.scenario.aanpassingen.splice(index, 1)
 		},
+
 		handleSubmit() {
-			this.$emit('create-scenario', { ...this.scenario, createdAt: new Date().toISOString() })
+			this.$emit('create-scenario', {
+				...this.scenario,
+				createdAt: new Date().toISOString(),
+			})
 		},
 	},
 }

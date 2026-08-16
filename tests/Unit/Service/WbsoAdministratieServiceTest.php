@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\WbsoAdministratieService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -36,277 +37,264 @@ use Psr\Container\ContainerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class WbsoAdministratieServiceTest extends TestCase
-{
+final class WbsoAdministratieServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the service with an ObjectService stub returning the given data sets.
-     *
-     * @param array<int,array<string,mixed>> $beschikkingen WbsoBeschikking records.
-     * @param array<int,array<string,mixed>> $uren          SoUurregistratie records.
-     *
-     * @return WbsoAdministratieService
-     */
-    private function buildService(array $beschikkingen, array $uren): WbsoAdministratieService
-    {
-        $stub = new class($beschikkingen, $uren) {
+	/**
+	 * Build the service with an ObjectService stub returning the given data sets.
+	 *
+	 * @param array<int,array<string,mixed>> $beschikkingen WbsoBeschikking records.
+	 * @param array<int,array<string,mixed>> $hours SoUurregistratie records.
+	 *
+	 * @return WbsoAdministratieService
+	 */
+	private function buildService(array $beschikkingen, array $hours): WbsoAdministratieService {
+		$stub = new class($beschikkingen, $hours) {
 
-            /**
-             * Data sets keyed by schema slug.
-             *
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $data;
+			/**
+			 * Data sets keyed by schema slug.
+			 *
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $data;
 
-            /**
-             * Active schema.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Active schema.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Constructor.
-             *
-             * @param array<int,array<string,mixed>> $beschikkingen WbsoBeschikking records.
-             * @param array<int,array<string,mixed>> $uren          SoUurregistratie records.
-             */
-            public function __construct(array $beschikkingen, array $uren)
-            {
-                $this->data = [
-                    'WbsoBeschikking'  => $beschikkingen,
-                    'SoUurregistratie' => $uren,
-                ];
-            }//end __construct()
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int,array<string,mixed>> $beschikkingen WbsoBeschikking records.
+			 * @param array<int,array<string,mixed>> $hours SoUurregistratie records.
+			 */
+			public function __construct(array $beschikkingen, array $hours) {
+				$this->data = [
+					'WbsoBeschikking' => $beschikkingen,
+					'SoUurregistratie' => $hours,
+				];
+			}//end __construct()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter; records the active schema.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter; records the active schema.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Return the data set for the active schema, applying equality filters.
-             *
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->data[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
+			/**
+			 * Return the data set for the active schema, applying equality filters.
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->data[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
+				if ($filters === []) {
+					return $rows;
+				}
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
-        };
+							return true;
+						}
+					)
+				);
+			}//end findAll()
+		};
 
-        $this->container->method('get')->willReturn($stub);
+		$this->container->method('get')->willReturn($stub);
 
-        return new WbsoAdministratieService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-        );
+		return new WbsoAdministratieService(
+			appConfig: $this->appConfig,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * Build a beschikking row.
-     *
-     * @param string $number  beschikkingNumber.
-     * @param float  $granted grantedSoHours.
-     * @param string $admin   administrationId.
-     *
-     * @return array<string,mixed>
-     */
-    private function beschikking(string $number, float $granted, string $admin): array
-    {
-        return [
-            'beschikkingNumber' => $number,
-            'rvoReference'      => 'S&O '.$number,
-            'projectNumber'     => 'PRJ-'.$number,
-            'grantedSoHours'    => $granted,
-            'state'             => 'granted',
-            'administrationId'  => $admin,
-        ];
+	/**
+	 * Build a beschikking row.
+	 *
+	 * @param string $number beschikkingNumber.
+	 * @param float $granted grantedSoHours.
+	 * @param string $admin administrationId.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function decision(string $number, float $granted, string $admin): array {
+		return [
+			'decisionNumber' => $number,
+			'rvoReference' => 'S&O ' . $number,
+			'projectNumber' => 'PRJ-' . $number,
+			'grantedSoHours' => $granted,
+			'state' => 'granted',
+			'administrationId' => $admin,
+		];
 
-    }//end beschikking()
+	}//end beschikking()
 
-    /**
-     * Build an hour entry row.
-     *
-     * @param string $number beschikkingNumber FK.
-     * @param float  $hours  hours.
-     * @param string $state  entry state.
-     * @param string $admin  administrationId.
-     *
-     * @return array<string,mixed>
-     */
-    private function uur(string $number, float $hours, string $state, string $admin): array
-    {
-        return [
-            'beschikkingNumber' => $number,
-            'hours'             => $hours,
-            'state'             => $state,
-            'administrationId'  => $admin,
-        ];
+	/**
+	 * Build an hour entry row.
+	 *
+	 * @param string $number beschikkingNumber FK.
+	 * @param float $hours hours.
+	 * @param string $state entry state.
+	 * @param string $admin administrationId.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function uur(string $number, float $hours, string $state, string $admin): array {
+		return [
+			'decisionNumber' => $number,
+			'hours' => $hours,
+			'state' => $state,
+			'administrationId' => $admin,
+		];
 
-    }//end uur()
+	}//end uur()
 
-    /**
-     * Confirmed + locked hours roll up; draft hours are excluded (REQ-WBSO-008).
-     *
-     * @return void
-     */
-    public function testRollsUpConfirmedAndLockedHoursOnly(): void
-    {
-        $service = $this->buildService(
-            [$this->beschikking('WBSO-1', 1200.0, 'adm-a')],
-            [
-                $this->uur('WBSO-1', 6.5, 'confirmed', 'adm-a'),
-                $this->uur('WBSO-1', 7.0, 'locked', 'adm-a'),
-                $this->uur('WBSO-1', 8.0, 'draft', 'adm-a'),
-            ]
-        );
+	/**
+	 * Confirmed + locked hours roll up; draft hours are excluded (REQ-WBSO-008).
+	 *
+	 * @return void
+	 */
+	public function testRollsUpConfirmedAndLockedHoursOnly(): void {
+		$service = $this->buildService(
+			[$this->decision('WBSO-1', 1200.0, 'adm-a')],
+			[
+				$this->uur('WBSO-1', 6.5, 'confirmed', 'adm-a'),
+				$this->uur('WBSO-1', 7.0, 'locked', 'adm-a'),
+				$this->uur('WBSO-1', 8.0, 'draft', 'adm-a'),
+			]
+		);
 
-        $result = $service->realisatieSummary('adm-a');
-        self::assertSame(1, $result['total']);
-        $row = $result['data'][0];
-        // 6.5 + 7.0 = 13.5; draft 8.0 excluded.
-        self::assertSame(13.5, $row['realisedSoHours']);
-        self::assertSame(1200.0, $row['grantedSoHours']);
-        self::assertSame((1200.0 - 13.5), $row['remainingSoHours']);
-        self::assertFalse($row['exceeded']);
+		$result = $service->realisatieSummary('adm-a');
+		self::assertSame(1, $result['total']);
+		$row = $result['data'][0];
+		// 6.5 + 7.0 = 13.5; draft 8.0 excluded.
+		self::assertSame(13.5, $row['realisedSoHours']);
+		self::assertSame(1200.0, $row['grantedSoHours']);
+		self::assertSame((1200.0 - 13.5), $row['remainingSoHours']);
+		self::assertFalse($row['exceeded']);
 
-    }//end testRollsUpConfirmedAndLockedHoursOnly()
+	}//end testRollsUpConfirmedAndLockedHoursOnly()
 
-    /**
-     * The exceeded flag is set when realised hours pass the granted ceiling.
-     *
-     * @return void
-     */
-    public function testExceededFlagSet(): void
-    {
-        $service = $this->buildService(
-            [$this->beschikking('WBSO-1', 10.0, 'adm-a')],
-            [
-                $this->uur('WBSO-1', 8.0, 'locked', 'adm-a'),
-                $this->uur('WBSO-1', 5.0, 'confirmed', 'adm-a'),
-            ]
-        );
+	/**
+	 * The exceeded flag is set when realised hours pass the granted ceiling.
+	 *
+	 * @return void
+	 */
+	public function testExceededFlagSet(): void {
+		$service = $this->buildService(
+			[$this->decision('WBSO-1', 10.0, 'adm-a')],
+			[
+				$this->uur('WBSO-1', 8.0, 'locked', 'adm-a'),
+				$this->uur('WBSO-1', 5.0, 'confirmed', 'adm-a'),
+			]
+		);
 
-        $row = $service->realisatieSummary('adm-a')['data'][0];
-        self::assertSame(13.0, $row['realisedSoHours']);
-        self::assertTrue($row['exceeded']);
-        self::assertSame((10.0 - 13.0), $row['remainingSoHours']);
+		$row = $service->realisatieSummary('adm-a')['data'][0];
+		self::assertSame(13.0, $row['realisedSoHours']);
+		self::assertTrue($row['exceeded']);
+		self::assertSame((10.0 - 13.0), $row['remainingSoHours']);
 
-    }//end testExceededFlagSet()
+	}//end testExceededFlagSet()
 
-    /**
-     * Reads are scoped to the administration; other tenants' data never appears (REQ-WBSO-004).
-     *
-     * @return void
-     */
-    public function testScopesToAdministration(): void
-    {
-        $service = $this->buildService(
-            [
-                $this->beschikking('WBSO-1', 1200.0, 'adm-a'),
-                $this->beschikking('WBSO-9', 999.0, 'adm-other'),
-            ],
-            [
-                $this->uur('WBSO-1', 6.5, 'confirmed', 'adm-a'),
-                $this->uur('WBSO-9', 50.0, 'locked', 'adm-other'),
-            ]
-        );
+	/**
+	 * Reads are scoped to the administration; other tenants' data never appears (REQ-WBSO-004).
+	 *
+	 * @return void
+	 */
+	public function testScopesToAdministration(): void {
+		$service = $this->buildService(
+			[
+				$this->decision('WBSO-1', 1200.0, 'adm-a'),
+				$this->decision('WBSO-9', 999.0, 'adm-other'),
+			],
+			[
+				$this->uur('WBSO-1', 6.5, 'confirmed', 'adm-a'),
+				$this->uur('WBSO-9', 50.0, 'locked', 'adm-other'),
+			]
+		);
 
-        $result = $service->realisatieSummary('adm-a');
-        self::assertSame(1, $result['total']);
-        self::assertSame('WBSO-1', $result['data'][0]['beschikkingNumber']);
+		$result = $service->realisatieSummary('adm-a');
+		self::assertSame(1, $result['total']);
+		self::assertSame('WBSO-1', $result['data'][0]['decisionNumber']);
 
-    }//end testScopesToAdministration()
+	}//end testScopesToAdministration()
 
-    /**
-     * A beschikking with no hour entries reports zero realised and full headroom.
-     *
-     * @return void
-     */
-    public function testZeroRealisationForEmptyBeschikking(): void
-    {
-        $service = $this->buildService(
-            [$this->beschikking('WBSO-1', 100.0, 'adm-a')],
-            []
-        );
+	/**
+	 * A beschikking with no hour entries reports zero realised and full headroom.
+	 *
+	 * @return void
+	 */
+	public function testZeroRealisationForEmptyBeschikking(): void {
+		$service = $this->buildService(
+			[$this->decision('WBSO-1', 100.0, 'adm-a')],
+			[]
+		);
 
-        $row = $service->realisatieSummary('adm-a')['data'][0];
-        self::assertSame(0.0, $row['realisedSoHours']);
-        self::assertSame(100.0, $row['remainingSoHours']);
-        self::assertFalse($row['exceeded']);
+		$row = $service->realisatieSummary('adm-a')['data'][0];
+		self::assertSame(0.0, $row['realisedSoHours']);
+		self::assertSame(100.0, $row['remainingSoHours']);
+		self::assertFalse($row['exceeded']);
 
-    }//end testZeroRealisationForEmptyBeschikking()
+	}//end testZeroRealisationForEmptyBeschikking()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

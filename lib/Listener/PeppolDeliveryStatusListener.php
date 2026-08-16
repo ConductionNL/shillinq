@@ -62,324 +62,311 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-class PeppolDeliveryStatusListener implements IEventListener
-{
-    /**
-     * Cross-app cloud-event name this listener consumes.
-     *
-     * @var string
-     */
-    public const EVENT_NAME = 'nl.conduction.peppol.delivery.status';
+class PeppolDeliveryStatusListener implements IEventListener {
+	/**
+	 * Cross-app cloud-event name this listener consumes.
+	 *
+	 * @var string
+	 */
+	public const EVENT_NAME = 'nl.conduction.peppol.delivery.status';
 
-    /**
-     * Notification object type for the finance-operator "rejected" alert.
-     *
-     * @var string
-     */
-    private const NOTIFICATION_OBJECT_TYPE = 'ar_invoice';
+	/**
+	 * Notification object type for the finance-operator "rejected" alert.
+	 *
+	 * @var string
+	 */
+	private const NOTIFICATION_OBJECT_TYPE = 'ar_invoice';
 
-    /**
-     * Notification subject identifier for a rejected e-invoice.
-     *
-     * @var string
-     */
-    private const NOTIFICATION_SUBJECT_REJECTED = 'einvoice_delivery_rejected';
+	/**
+	 * Notification subject identifier for a rejected e-invoice.
+	 *
+	 * @var string
+	 */
+	private const NOTIFICATION_SUBJECT_REJECTED = 'einvoice_delivery_rejected';
 
-    /**
-     * Declared delivery sub-lifecycle transitions (REQ-AR-011), keyed
-     * `"<from>|<to>"`. Only these pairs are applied; anything else is logged
-     * and skipped (fail-soft, never corrupts state).
-     *
-     * @var array<string,bool>
-     */
-    private const ALLOWED_TRANSITIONS = [
-        'queued|sent'         => true,
-        'sent|delivered'      => true,
-        'queued|rejected'     => true,
-        'sent|rejected'       => true,
-        'queued|failed'       => true,
-        // Idempotent re-delivery of the same status is harmless.
-        'sent|sent'           => true,
-        'delivered|delivered' => true,
-        'rejected|rejected'   => true,
-        'failed|failed'       => true,
-    ];
+	/**
+	 * Declared delivery sub-lifecycle transitions (REQ-AR-011), keyed
+	 * `"<from>|<to>"`. Only these pairs are applied; anything else is logged
+	 * and skipped (fail-soft, never corrupts state).
+	 *
+	 * @var array<string,bool>
+	 */
+	private const ALLOWED_TRANSITIONS = [
+		'queued|sent' => true,
+		'sent|delivered' => true,
+		'queued|rejected' => true,
+		'sent|rejected' => true,
+		'queued|failed' => true,
+		// Idempotent re-delivery of the same status is harmless.
+		'sent|sent' => true,
+		'delivered|delivered' => true,
+		'rejected|rejected' => true,
+		'failed|failed' => true,
+	];
 
-    /**
-     * Construct the listener.
-     *
-     * @param ContainerInterface   $container           DI container — OR's ObjectService is fetched
-     *                                                  lazily.
-     * @param IAppConfig           $appConfig           App config for the register slug.
-     * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
-     * @param LoggerInterface      $logger              Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly INotificationManager $notificationManager,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the listener.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
+	 *                                      lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly INotificationManager $notificationManager,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle a `nl.conduction.peppol.delivery.status` event.
-     *
-     * @param Event $event The dispatched GenericEvent carrying
-     *                     {objectUri, transmissionId, status, timestamp, detail}.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof GenericEvent === false) {
-            return;
-        }
+	/**
+	 * Handle a `nl.conduction.peppol.delivery.status` event.
+	 *
+	 * @param Event $event The dispatched GenericEvent carrying
+	 *                     {objectUri, transmissionId, status, timestamp, detail}.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof GenericEvent === false) {
+			return;
+		}
 
-        try {
-            $payload = $event->getArguments();
-            $this->apply(payload: $payload);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'PeppolDeliveryStatusListener: failed to apply delivery-status event — fail-soft',
-                ['exception' => $e->getMessage()]
-            );
-        }
+		try {
+			$payload = $event->getArguments();
+			$this->apply(payload: $payload);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'PeppolDeliveryStatusListener: failed to apply delivery-status event — fail-soft',
+				['exception' => $e->getMessage()]
+			);
+		}
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Apply one delivery-status payload to the matching ARInvoice.
-     *
-     * @param array<string,mixed> $payload {objectUri, transmissionId, status, timestamp, detail}.
-     *
-     * @return void
-     */
-    private function apply(array $payload): void
-    {
-        $objectUri = trim((string) ($payload['objectUri'] ?? ''));
-        $status    = trim((string) ($payload['status'] ?? ''));
-        $detail    = (string) ($payload['detail'] ?? '');
+	/**
+	 * Apply one delivery-status payload to the matching ARInvoice.
+	 *
+	 * @param array<string,mixed> $payload {objectUri, transmissionId, status, timestamp, detail}.
+	 *
+	 * @return void
+	 */
+	private function apply(array $payload): void {
+		$objectUri = trim((string)($payload['objectUri'] ?? ''));
+		$status = trim((string)($payload['status'] ?? ''));
+		$detail = (string)($payload['detail'] ?? '');
 
-        if ($objectUri === '' || $status === '') {
-            return;
-        }
+		if ($objectUri === '' || $status === '') {
+			return;
+		}
 
-        $id = $this->extractId(objectUri: $objectUri);
-        if ($id === '') {
-            return;
-        }
+		$id = $this->extractId(objectUri: $objectUri);
+		if ($id === '') {
+			return;
+		}
 
-        $invoice = $this->findByIdOrInvoiceNumber(id: $id);
-        if ($invoice === null) {
-            $this->logger->info(
-                'PeppolDeliveryStatusListener: no matching ARInvoice for objectUri — skipping',
-                ['objectUri' => $objectUri]
-            );
-            return;
-        }
+		$invoice = $this->findByIdOrInvoiceNumber(id: $id);
+		if ($invoice === null) {
+			$this->logger->info(
+				'PeppolDeliveryStatusListener: no matching ARInvoice for objectUri — skipping',
+				['objectUri' => $objectUri]
+			);
+			return;
+		}
 
-        $currentStatus = (string) ($invoice['deliveryStatus'] ?? 'not-sent');
-        $transitionKey = $currentStatus.'|'.$status;
-        if (isset(self::ALLOWED_TRANSITIONS[$transitionKey]) === false) {
-            $this->logger->info(
-                'PeppolDeliveryStatusListener: illegal delivery-status transition — skipping',
-                ['from' => $currentStatus, 'to' => $status, 'objectUri' => $objectUri]
-            );
-            return;
-        }
+		$currentStatus = (string)($invoice['deliveryStatus'] ?? 'not-sent');
+		$transitionKey = $currentStatus . '|' . $status;
+		if (isset(self::ALLOWED_TRANSITIONS[$transitionKey]) === false) {
+			$this->logger->info(
+				'PeppolDeliveryStatusListener: illegal delivery-status transition — skipping',
+				['from' => $currentStatus, 'to' => $status, 'objectUri' => $objectUri]
+			);
+			return;
+		}
 
-        $invoice['deliveryStatus'] = $status;
-        $invoice['deliveryDetail'] = $detail;
-        $transmissionId            = trim((string) ($payload['transmissionId'] ?? ''));
-        if ($transmissionId !== '') {
-            $invoice['transmissionId'] = $transmissionId;
-        }
+		$invoice['deliveryStatus'] = $status;
+		$invoice['deliveryDetail'] = $detail;
+		$transmissionId = trim((string)($payload['transmissionId'] ?? ''));
+		if ($transmissionId !== '') {
+			$invoice['transmissionId'] = $transmissionId;
+		}
 
-        $this->saveObject(schema: 'ARInvoice', object: $invoice);
+		$this->saveObject(schema: 'ARInvoice', object: $invoice);
 
-        if ($status === 'rejected') {
-            $this->notifyFinanceOperators(invoice: $invoice, detail: $detail);
-        }
+		if ($status === 'rejected') {
+			$this->notifyFinanceOperators(invoice: $invoice, detail: $detail);
+		}
 
-    }//end apply()
+	}//end apply()
 
-    /**
-     * Extract the trailing id segment from an `openregister://{register}/ARInvoice/{id}` URI.
-     *
-     * @param string $objectUri The event's objectUri.
-     *
-     * @return string
-     */
-    private function extractId(string $objectUri): string
-    {
-        $parts = explode('/', rtrim($objectUri, '/'));
+	/**
+	 * Extract the trailing id segment from an `openregister://{register}/ARInvoice/{id}` URI.
+	 *
+	 * @param string $objectUri The event's objectUri.
+	 *
+	 * @return string
+	 */
+	private function extractId(string $objectUri): string {
+		$parts = explode('/', rtrim($objectUri, '/'));
 
-        return trim((string) end($parts));
+		return trim((string)end($parts));
+	}//end extractId()
 
-    }//end extractId()
+	/**
+	 * Find an ARInvoice by OR object id, falling back to invoiceNumber (the
+	 * objectUri id segment may be either, depending on whether the record had
+	 * an OR-assigned id at emission time).
+	 *
+	 * @param string $id Candidate id or invoiceNumber.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findByIdOrInvoiceNumber(string $id): ?array {
+		$byId = $this->findAll(schema: 'ARInvoice', filters: ['id' => $id]);
+		foreach ($byId as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
 
-    /**
-     * Find an ARInvoice by OR object id, falling back to invoiceNumber (the
-     * objectUri id segment may be either, depending on whether the record had
-     * an OR-assigned id at emission time).
-     *
-     * @param string $id Candidate id or invoiceNumber.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findByIdOrInvoiceNumber(string $id): ?array
-    {
-        $byId = $this->findAll(schema: 'ARInvoice', filters: ['id' => $id]);
-        foreach ($byId as $row) {
-            if (is_array($row) === true) {
-                return $row;
-            }
-        }
+		$byNumber = $this->findAll(schema: 'ARInvoice', filters: ['invoiceNumber' => $id]);
+		foreach ($byNumber as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
 
-        $byNumber = $this->findAll(schema: 'ARInvoice', filters: ['invoiceNumber' => $id]);
-        foreach ($byNumber as $row) {
-            if (is_array($row) === true) {
-                return $row;
-            }
-        }
+		return null;
+	}//end findByIdOrInvoiceNumber()
 
-        return null;
+	/**
+	 * Notify every `ar-controller` in the invoice's administration that the
+	 * e-invoice was rejected (REQ-EINV-005 — surfaced, never silent).
+	 *
+	 * @param array<string,mixed> $invoice Updated ARInvoice record.
+	 * @param string $detail Rejection detail from the event.
+	 *
+	 * @return void
+	 */
+	private function notifyFinanceOperators(array $invoice, string $detail): void {
+		$administrationId = (string)($invoice['administrationId'] ?? '');
+		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? '');
+		if ($administrationId === '') {
+			return;
+		}
 
-    }//end findByIdOrInvoiceNumber()
+		$memberships = $this->findAll(
+			schema: 'AdministrationMembership',
+			filters: [
+				'administrationId' => $administrationId,
+				'role' => 'ar-controller',
+			]
+		);
 
-    /**
-     * Notify every `ar-controller` in the invoice's administration that the
-     * e-invoice was rejected (REQ-EINV-005 — surfaced, never silent).
-     *
-     * @param array<string,mixed> $invoice Updated ARInvoice record.
-     * @param string              $detail  Rejection detail from the event.
-     *
-     * @return void
-     */
-    private function notifyFinanceOperators(array $invoice, string $detail): void
-    {
-        $administrationId = (string) ($invoice['administrationId'] ?? '');
-        $invoiceNumber    = (string) ($invoice['invoiceNumber'] ?? '');
-        if ($administrationId === '') {
-            return;
-        }
+		foreach ($memberships as $membership) {
+			$userId = trim((string)($membership['userId'] ?? ''));
+			if ($userId === '') {
+				continue;
+			}
 
-        $memberships = $this->findAll(
-            schema: 'AdministrationMembership',
-            filters: [
-                'administrationId' => $administrationId,
-                'role'             => 'ar-controller',
-            ]
-        );
+			try {
+				$notification = $this->notificationManager->createNotification();
+				$notification
+					->setApp(Application::APP_ID)
+					->setUser($userId)
+					->setDateTime(new DateTime())
+					->setObject(self::NOTIFICATION_OBJECT_TYPE, $invoiceNumber)
+					->setSubject(
+						self::NOTIFICATION_SUBJECT_REJECTED,
+						[
+							'invoiceNumber' => $invoiceNumber,
+							'detail' => $detail,
+						]
+					);
+				$this->notificationManager->notify($notification);
+			} catch (Throwable $e) {
+				$this->logger->warning(
+					'PeppolDeliveryStatusListener: failed to dispatch rejected-e-invoice notification',
+					['invoiceNumber' => $invoiceNumber, 'userId' => $userId, 'exception' => $e->getMessage()]
+				);
+			}//end try
+		}//end foreach
 
-        foreach ($memberships as $membership) {
-            $userId = trim((string) ($membership['userId'] ?? ''));
-            if ($userId === '') {
-                continue;
-            }
+	}//end notifyFinanceOperators()
 
-            try {
-                $notification = $this->notificationManager->createNotification();
-                $notification
-                    ->setApp(Application::APP_ID)
-                    ->setUser($userId)
-                    ->setDateTime(new DateTime())
-                    ->setObject(self::NOTIFICATION_OBJECT_TYPE, $invoiceNumber)
-                    ->setSubject(
-                            self::NOTIFICATION_SUBJECT_REJECTED,
-                            [
-                                'invoiceNumber' => $invoiceNumber,
-                                'detail'        => $detail,
-                            ]
-                            );
-                $this->notificationManager->notify($notification);
-            } catch (Throwable $e) {
-                $this->logger->warning(
-                    'PeppolDeliveryStatusListener: failed to dispatch rejected-e-invoice notification',
-                    ['invoiceNumber' => $invoiceNumber, 'userId' => $userId, 'exception' => $e->getMessage()]
-                );
-            }//end try
-        }//end foreach
+	/**
+	 * Persist an object via the real ObjectService API.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $object Object payload.
+	 *
+	 * @return void
+	 */
+	private function saveObject(string $schema, array $object): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->saveObject($object);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'PeppolDeliveryStatusListener: failed to persist ARInvoice delivery-status update',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+		}
 
-    }//end notifyFinanceOperators()
+	}//end saveObject()
 
-    /**
-     * Persist an object via the real ObjectService API.
-     *
-     * @param string              $schema OR schema slug.
-     * @param array<string,mixed> $object Object payload.
-     *
-     * @return void
-     */
-    private function saveObject(string $schema, array $object): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $objectService
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->saveObject($object);
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'PeppolDeliveryStatusListener: failed to persist ARInvoice delivery-status update',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-        }
+	/**
+	 * Fetch all matching records via the real ObjectService API.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $filters Equality filters.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findAll(string $schema, array $filters): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->findAll(['filters' => $filters]);
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'PeppolDeliveryStatusListener: OR query unavailable — skipping',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+			return [];
+		}
 
-    }//end saveObject()
+		$result = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$result[] = $row;
+			}
+		}
 
-    /**
-     * Fetch all matching records via the real ObjectService API.
-     *
-     * @param string              $schema  OR schema slug.
-     * @param array<string,mixed> $filters Equality filters.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function findAll(string $schema, array $filters): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->findAll(['filters' => $filters]);
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'PeppolDeliveryStatusListener: OR query unavailable — skipping',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-            return [];
-        }
+		return $result;
+	}//end findAll()
 
-        $result = [];
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                $result[] = $row;
-            }
-        }
+	/**
+	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $result;
-
-    }//end findAll()
-
-    /**
-     * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

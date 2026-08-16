@@ -39,6 +39,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCP\IAppConfig;
@@ -52,218 +53,210 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class SupplierInvoiceServiceTest extends TestCase
-{
+final class SupplierInvoiceServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Set up shared mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
-        $this->logger = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up shared mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the service over an in-memory ObjectService stub.
-     *
-     * @param array<string,array<int,array<string,mixed>>> $data                      Schema => rows.
-     * @param array<int,array<string,mixed>>               $saved                     Captured saves (by reference).
-     * @param array<int,string>                            $accessibleAdministrations Tenants canAccess returns true for.
-     *
-     * @return SupplierInvoiceService
-     */
-    private function buildService(
-        array $data,
-        array &$saved,
-        array $accessibleAdministrations,
-    ): SupplierInvoiceService {
-        $stub = new class($data, $saved) {
+	/**
+	 * Build the service over an in-memory ObjectService stub.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
+	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
+	 * @param array<int,string> $accessibleAdministrations Tenants canAccess returns true for.
+	 *
+	 * @return SupplierInvoiceService
+	 */
+	private function buildService(
+		array $data,
+		array &$saved,
+		array $accessibleAdministrations,
+	): SupplierInvoiceService {
+		$stub = new class($data, $saved) {
 
-            /**
-             * Schema => rows.
-             *
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $data;
+			/**
+			 * Schema => rows.
+			 *
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $data;
 
-            /**
-             * Captured saves (mutable ref).
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $saved;
+			/**
+			 * Captured saves (mutable ref).
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $saved;
 
-            /**
-             * Active schema.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Active schema.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Auto-increment id counter for saved objects.
-             *
-             * @var integer
-             */
-            private int $idCounter = 0;
+			/**
+			 * Auto-increment id counter for saved objects.
+			 *
+			 * @var integer
+			 */
+			private int $idCounter = 0;
 
-            /**
-             * Constructor.
-             *
-             * @param array<string,array<int,array<string,mixed>>> $data  Schema rows.
-             * @param array<int,array<string,mixed>>               $saved Capture ref.
-             */
-            public function __construct(array $data, array &$saved)
-            {
-                $this->data  = $data;
-                $this->saved = &$saved;
-            }//end __construct()
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string,array<int,array<string,mixed>>> $data Schema rows.
+			 * @param array<int,array<string,mixed>> $saved Capture ref.
+			 */
+			public function __construct(array $data, array &$saved) {
+				$this->data = $data;
+				$this->saved = &$saved;
+			}//end __construct()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Return rows for the active schema, applying equality filters.
-             *
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->data[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
+			/**
+			 * Return rows for the active schema, applying equality filters.
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->data[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
+				if ($filters === []) {
+					return $rows;
+				}
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
+							return true;
+						}
+					)
+				);
+			}//end findAll()
 
-            /**
-             * Capture a saved object; stamp an id when absent.
-             *
-             * @param array<string,mixed> $object Object payload.
-             *
-             * @return array<string,mixed>
-             */
-            public function saveObject(array $object): array
-            {
-                if (isset($object['id']) === false || $object['id'] === '') {
-                    $this->idCounter++;
-                    $object['id'] = 'obj-'.$this->idCounter;
-                }
+			/**
+			 * Capture a saved object; stamp an id when absent.
+			 *
+			 * @param array<string,mixed> $object Object payload.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object): array {
+				if (isset($object['id']) === false || $object['id'] === '') {
+					$this->idCounter++;
+					$object['id'] = 'obj-' . $this->idCounter;
+				}
 
-                // Replace by id if it exists in the current schema.
-                $rows    = ($this->data[$this->schema] ?? []);
-                $updated = false;
-                foreach ($rows as $i => $row) {
-                    if (($row['id'] ?? null) === $object['id']) {
-                        $this->data[$this->schema][$i] = $object;
-                        $updated = true;
-                        break;
-                    }
-                }
+				// Replace by id if it exists in the current schema.
+				$rows = ($this->data[$this->schema] ?? []);
+				$updated = false;
+				foreach ($rows as $i => $row) {
+					if (($row['id'] ?? null) === $object['id']) {
+						$this->data[$this->schema][$i] = $object;
+						$updated = true;
+						break;
+					}
+				}
 
-                if ($updated === false) {
-                    $this->data[$this->schema][] = $object;
-                }
+				if ($updated === false) {
+					$this->data[$this->schema][] = $object;
+				}
 
-                $this->saved[] = ['schema' => $this->schema, 'object' => $object];
-                return $object;
-            }//end saveObject()
-        };
+				$this->saved[] = ['schema' => $this->schema, 'object' => $object];
+				return $object;
+			}//end saveObject()
+		};
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
-        $this->container = $container;
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
+		$this->container = $container;
 
-        $administrationContext = $this->createMock(AdministrationContextService::class);
-        $administrationContext->method('canAccess')->willReturnCallback(
-            static function (string $administrationId) use ($accessibleAdministrations): bool {
-                return in_array($administrationId, $accessibleAdministrations, true);
-            }
-        );
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('canAccess')->willReturnCallback(
+			static function (string $administrationId) use ($accessibleAdministrations): bool {
+				return in_array($administrationId, $accessibleAdministrations, true);
+			}
+		);
 
-        return new SupplierInvoiceService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            administrationContext: $administrationContext,
-            logger: $this->logger,
-        );
+		return new SupplierInvoiceService(
+			appConfig: $this->appConfig,
+			administrationContext: $administrationContext,
+			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * Build a minimal but standards-shaped Peppol BIS Invoice XML.
-     *
-     * @return string
-     */
-    private function ublXml(): string
-    {
-        return <<<'XML'
+	/**
+	 * Build a minimal but standards-shaped Peppol BIS Invoice XML.
+	 *
+	 * @return string
+	 */
+	private function ublXml(): string {
+		return <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
          xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
@@ -309,421 +302,409 @@ final class SupplierInvoiceServiceTest extends TestCase
 </Invoice>
 XML;
 
-    }//end ublXml()
+	}//end ublXml()
 
-    /**
-     * parseUblInvoice maps header fields, totals (cents) and line items.
-     *
-     * @return void
-     */
-    public function testParseUblInvoiceMapsHeaderAndLines(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
+	/**
+	 * parseUblInvoice maps header fields, totals (cents) and line items.
+	 *
+	 * @return void
+	 */
+	public function testParseUblInvoiceMapsHeaderAndLines(): void {
+		$saved = [];
+		$service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
 
-        $parsed = $service->parseUblInvoice(ublXml: $this->ublXml());
+		$parsed = $service->parseUblInvoice(ublXml: $this->ublXml());
 
-        self::assertSame('INV-ERS-2026-00445', $parsed['invoiceNumber']);
-        self::assertSame('vendor-ers-001', $parsed['supplierId']);
-        self::assertSame('2026-07-20', $parsed['invoiceDate']);
-        self::assertSame('2026-08-19', $parsed['dueDate']);
-        self::assertSame('EUR', $parsed['currency']);
-        self::assertSame('REF-001-9914', $parsed['paymentReference']);
+		self::assertSame('INV-ERS-2026-00445', $parsed['invoiceNumber']);
+		self::assertSame('vendor-ers-001', $parsed['supplierId']);
+		self::assertSame('2026-07-20', $parsed['invoiceDate']);
+		self::assertSame('2026-08-19', $parsed['dueDate']);
+		self::assertSame('EUR', $parsed['currency']);
+		self::assertSame('REF-001-9914', $parsed['paymentReference']);
 
-        // Integer-cent invariant (4000.00 -> 400000; 840.00 -> 84000; 4840.00 -> 484000).
-        self::assertSame(400000, $parsed['totalExclVat']);
-        self::assertSame(84000, $parsed['totalVat']);
-        self::assertSame(484000, $parsed['totalInclVat']);
+		// Integer-cent invariant (4000.00 -> 400000; 840.00 -> 84000; 4840.00 -> 484000).
+		self::assertSame(400000, $parsed['totalExclVat']);
+		self::assertSame(84000, $parsed['totalVat']);
+		self::assertSame(484000, $parsed['totalInclVat']);
 
-        self::assertCount(1, $parsed['lines']);
-        self::assertSame(1, $parsed['lines'][0]['lineNumber']);
-        self::assertSame('COFFEE-PRO-1', $parsed['lines'][0]['productCode']);
-        self::assertSame('Coffee Pro 1', $parsed['lines'][0]['description']);
-        self::assertSame(2.0, $parsed['lines'][0]['quantity']);
-        self::assertSame(200000, $parsed['lines'][0]['unitPrice']);
-        self::assertSame(400000, $parsed['lines'][0]['lineExtension']);
-        // UBL Percent 21 -> 0.21 fraction.
-        self::assertEqualsWithDelta(0.21, $parsed['lines'][0]['vatRate'], 0.0001);
+		self::assertCount(1, $parsed['lines']);
+		self::assertSame(1, $parsed['lines'][0]['lineNumber']);
+		self::assertSame('COFFEE-PRO-1', $parsed['lines'][0]['productCode']);
+		self::assertSame('Coffee Pro 1', $parsed['lines'][0]['description']);
+		self::assertSame(2.0, $parsed['lines'][0]['quantity']);
+		self::assertSame(200000, $parsed['lines'][0]['unitPrice']);
+		self::assertSame(400000, $parsed['lines'][0]['lineExtension']);
+		// UBL Percent 21 -> 0.21 fraction.
+		self::assertEqualsWithDelta(0.21, $parsed['lines'][0]['vatRate'], 0.0001);
 
-    }//end testParseUblInvoiceMapsHeaderAndLines()
+	}//end testParseUblInvoiceMapsHeaderAndLines()
 
-    /**
-     * parseUblInvoice rejects malformed XML.
-     *
-     * @return void
-     */
-    public function testParseUblInvoiceRejectsMalformedXml(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
+	/**
+	 * parseUblInvoice rejects malformed XML.
+	 *
+	 * @return void
+	 */
+	public function testParseUblInvoiceRejectsMalformedXml(): void {
+		$saved = [];
+		$service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('UBL Invoice XML is malformed');
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('UBL Invoice XML is malformed');
 
-        // libxml emits a warning on parse failure; silence to keep the test
-        // output clean.
-        $previous = libxml_use_internal_errors(true);
-        try {
-            $service->parseUblInvoice(ublXml: '<not-an-xml');
-        } finally {
-            libxml_use_internal_errors($previous);
-        }
+		// libxml emits a warning on parse failure; silence to keep the test
+		// output clean.
+		$previous = libxml_use_internal_errors(true);
+		try {
+			$service->parseUblInvoice(ublXml: '<not-an-xml');
+		} finally {
+			libxml_use_internal_errors($previous);
+		}
 
-    }//end testParseUblInvoiceRejectsMalformedXml()
+	}//end testParseUblInvoiceRejectsMalformedXml()
 
-    /**
-     * parseUblInvoice rejects UBL documents missing the InvoiceNumber id.
-     *
-     * @return void
-     */
-    public function testParseUblInvoiceRejectsMissingInvoiceNumber(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
+	/**
+	 * parseUblInvoice rejects UBL documents missing the InvoiceNumber id.
+	 *
+	 * @return void
+	 */
+	public function testParseUblInvoiceRejectsMissingInvoiceNumber(): void {
+		$saved = [];
+		$service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
 
-        $xml = '<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" '
-            .'xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">'
-            .'<cbc:IssueDate>2026-07-20</cbc:IssueDate>'
-            .'</Invoice>';
+		$xml = '<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" '
+			. 'xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">'
+			. '<cbc:IssueDate>2026-07-20</cbc:IssueDate>'
+			. '</Invoice>';
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('UBL Invoice is missing InvoiceNumber');
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('UBL Invoice is missing InvoiceNumber');
 
-        $service->parseUblInvoice(ublXml: $xml);
+		$service->parseUblInvoice(ublXml: $xml);
 
-    }//end testParseUblInvoiceRejectsMissingInvoiceNumber()
+	}//end testParseUblInvoiceRejectsMissingInvoiceNumber()
 
-    /**
-     * ingestUBLInvoice persists a SupplierInvoice at statusCode=received,
-     * records ublSourceUri + peppolReceivedAt, and embeds the line items.
-     *
-     * @return void
-     */
-    public function testIngestUBLInvoicePersistsAtReceivedWithProvenance(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(
-            data: ['SupplierInvoice' => []],
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+	/**
+	 * ingestUBLInvoice persists a SupplierInvoice at statusCode=received,
+	 * records ublSourceUri + peppolReceivedAt, and embeds the line items.
+	 *
+	 * @return void
+	 */
+	public function testIngestUBLInvoicePersistsAtReceivedWithProvenance(): void {
+		$saved = [];
+		$service = $this->buildService(
+			data: ['SupplierInvoice' => []],
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $persisted = $service->ingestUBLInvoice(
-            administrationId: 'adm-1',
-            ublXml: $this->ublXml(),
-            context: [
-                'peppolMessageId'  => 'msg-2026-07-20-abcdef',
-                'peppolReceivedAt' => '2026-07-20T10:15:00+02:00',
-            ]
-        );
+		$persisted = $service->ingestUBLInvoice(
+			administrationId: 'adm-1',
+			ublXml: $this->ublXml(),
+			context: [
+				'peppolMessageId' => 'msg-2026-07-20-abcdef',
+				'peppolReceivedAt' => '2026-07-20T10:15:00+02:00',
+			]
+		);
 
-        self::assertSame('INV-ERS-2026-00445', $persisted['invoiceNumber']);
-        self::assertSame('vendor-ers-001', $persisted['supplierId']);
-        self::assertSame('adm-1', $persisted['administrationId']);
-        self::assertSame('received', $persisted['statusCode']);
-        self::assertSame('ubl', $persisted['sourceFormat']);
-        self::assertSame('peppol:msg-2026-07-20-abcdef', $persisted['ublSourceUri']);
-        self::assertSame('2026-07-20T10:15:00+02:00', $persisted['peppolReceivedAt']);
-        self::assertSame(484000, $persisted['totalInclVat']);
-        self::assertCount(1, $persisted['lines']);
-        // Service stamps an OR record id (the test stub mimics OR's behaviour).
-        self::assertNotEmpty($persisted['id']);
+		self::assertSame('INV-ERS-2026-00445', $persisted['invoiceNumber']);
+		self::assertSame('vendor-ers-001', $persisted['supplierId']);
+		self::assertSame('adm-1', $persisted['administrationId']);
+		self::assertSame('received', $persisted['statusCode']);
+		self::assertSame('ubl', $persisted['sourceFormat']);
+		self::assertSame('peppol:msg-2026-07-20-abcdef', $persisted['ublSourceUri']);
+		self::assertSame('2026-07-20T10:15:00+02:00', $persisted['peppolReceivedAt']);
+		self::assertSame(484000, $persisted['totalInclVat']);
+		self::assertCount(1, $persisted['lines']);
+		// Service stamps an OR record id (the test stub mimics OR's behaviour).
+		self::assertNotEmpty($persisted['id']);
 
-        // Exactly one SupplierInvoice save.
-        $invoiceSaves = array_filter(
-            $saved,
-            static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
-        );
-        self::assertCount(1, $invoiceSaves);
+		// Exactly one SupplierInvoice save.
+		$invoiceSaves = array_filter(
+			$saved,
+			static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
+		);
+		self::assertCount(1, $invoiceSaves);
 
-    }//end testIngestUBLInvoicePersistsAtReceivedWithProvenance()
+	}//end testIngestUBLInvoicePersistsAtReceivedWithProvenance()
 
-    /**
-     * ingestUBLInvoice de-duplicates against an existing record so a
-     * Peppol delivery retry does not create a second SupplierInvoice.
-     *
-     * @return void
-     */
-    public function testIngestUBLInvoiceIsIdempotentOnRetry(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(
-            data: ['SupplierInvoice' => []],
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+	/**
+	 * ingestUBLInvoice de-duplicates against an existing record so a
+	 * Peppol delivery retry does not create a second SupplierInvoice.
+	 *
+	 * @return void
+	 */
+	public function testIngestUBLInvoiceIsIdempotentOnRetry(): void {
+		$saved = [];
+		$service = $this->buildService(
+			data: ['SupplierInvoice' => []],
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $first  = $service->ingestUBLInvoice(
-            administrationId: 'adm-1',
-            ublXml: $this->ublXml(),
-            context: ['peppolMessageId' => 'msg-1']
-        );
-        $second = $service->ingestUBLInvoice(
-            administrationId: 'adm-1',
-            ublXml: $this->ublXml(),
-            context: ['peppolMessageId' => 'msg-1-retry']
-        );
+		$first = $service->ingestUBLInvoice(
+			administrationId: 'adm-1',
+			ublXml: $this->ublXml(),
+			context: ['peppolMessageId' => 'msg-1']
+		);
+		$second = $service->ingestUBLInvoice(
+			administrationId: 'adm-1',
+			ublXml: $this->ublXml(),
+			context: ['peppolMessageId' => 'msg-1-retry']
+		);
 
-        self::assertSame($first['id'], $second['id']);
-        self::assertSame($first['invoiceNumber'], $second['invoiceNumber']);
-        // Only one SupplierInvoice save occurred.
-        $invoiceSaves = array_filter(
-            $saved,
-            static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
-        );
-        self::assertCount(1, $invoiceSaves);
+		self::assertSame($first['id'], $second['id']);
+		self::assertSame($first['invoiceNumber'], $second['invoiceNumber']);
+		// Only one SupplierInvoice save occurred.
+		$invoiceSaves = array_filter(
+			$saved,
+			static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
+		);
+		self::assertCount(1, $invoiceSaves);
 
-    }//end testIngestUBLInvoiceIsIdempotentOnRetry()
+	}//end testIngestUBLInvoiceIsIdempotentOnRetry()
 
-    /**
-     * ingestUBLInvoice masks cross-tenant calls as "Administration not found"
-     * per ADR-005.
-     *
-     * @return void
-     */
-    public function testIngestUBLInvoiceRejectsCrossTenant(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(
-            data: [],
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+	/**
+	 * ingestUBLInvoice masks cross-tenant calls as "Administration not found"
+	 * per ADR-005.
+	 *
+	 * @return void
+	 */
+	public function testIngestUBLInvoiceRejectsCrossTenant(): void {
+		$saved = [];
+		$service = $this->buildService(
+			data: [],
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Administration not found');
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Administration not found');
 
-        $service->ingestUBLInvoice(
-            administrationId: 'adm-OTHER',
-            ublXml: $this->ublXml(),
-        );
+		$service->ingestUBLInvoice(
+			administrationId: 'adm-OTHER',
+			ublXml: $this->ublXml(),
+		);
 
-    }//end testIngestUBLInvoiceRejectsCrossTenant()
+	}//end testIngestUBLInvoiceRejectsCrossTenant()
 
-    /**
-     * ingestPDFInvoice persists a SupplierInvoice with the OCR confidence
-     * score and sourceFormat=pdf.
-     *
-     * @return void
-     */
-    public function testIngestPDFInvoicePersistsWithOcrConfidence(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(
-            data: ['SupplierInvoice' => []],
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+	/**
+	 * ingestPDFInvoice persists a SupplierInvoice with the OCR confidence
+	 * score and sourceFormat=pdf.
+	 *
+	 * @return void
+	 */
+	public function testIngestPDFInvoicePersistsWithOcrConfidence(): void {
+		$saved = [];
+		$service = $this->buildService(
+			data: ['SupplierInvoice' => []],
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $persisted = $service->ingestPDFInvoice(
-            administrationId: 'adm-1',
-            ocrPayload: [
-                'invoiceNumber' => 'INV-PDF-2026-001',
-                'supplierId'    => 'vendor-pdf-001',
-                'invoiceDate'   => '2026-07-15',
-                'currency'      => 'EUR',
-                'totalExclVat'  => 1234.56,
-                'totalVat'      => 259.26,
-                'totalInclVat'  => 1493.82,
-                'lines'         => [
-                    ['productCode' => 'A1', 'quantity' => 1, 'unitPrice' => 1234.56, 'lineExtension' => 1234.56, 'vatRate' => 0.21],
-                ],
-            ],
-            confidenceScore: 0.873,
-            context: ['pdfSourceUri' => 'nc-file:42']
-        );
+		$persisted = $service->ingestPDFInvoice(
+			administrationId: 'adm-1',
+			ocrPayload: [
+				'invoiceNumber' => 'INV-PDF-2026-001',
+				'supplierId' => 'vendor-pdf-001',
+				'invoiceDate' => '2026-07-15',
+				'currency' => 'EUR',
+				'totalExclVat' => 1234.56,
+				'totalVat' => 259.26,
+				'totalInclVat' => 1493.82,
+				'lines' => [
+					['productCode' => 'A1', 'quantity' => 1, 'unitPrice' => 1234.56, 'lineExtension' => 1234.56, 'vatRate' => 0.21],
+				],
+			],
+			confidenceScore: 0.873,
+			context: ['pdfSourceUri' => 'nc-file:42']
+		);
 
-        self::assertSame('INV-PDF-2026-001', $persisted['invoiceNumber']);
-        self::assertSame('received', $persisted['statusCode']);
-        self::assertSame('pdf', $persisted['sourceFormat']);
-        // Clamped + rounded to multipleOf 0.01.
-        self::assertSame(0.87, $persisted['ocrConfidenceScore']);
-        self::assertSame(123456, $persisted['totalExclVat']);
-        self::assertSame(25926, $persisted['totalVat']);
-        self::assertSame(149382, $persisted['totalInclVat']);
-        self::assertSame('nc-file:42', $persisted['pdfSourceUri']);
-        self::assertCount(1, $persisted['lines']);
-        self::assertSame(123456, $persisted['lines'][0]['lineExtension']);
+		self::assertSame('INV-PDF-2026-001', $persisted['invoiceNumber']);
+		self::assertSame('received', $persisted['statusCode']);
+		self::assertSame('pdf', $persisted['sourceFormat']);
+		// Clamped + rounded to multipleOf 0.01.
+		self::assertSame(0.87, $persisted['ocrConfidenceScore']);
+		self::assertSame(123456, $persisted['totalExclVat']);
+		self::assertSame(25926, $persisted['totalVat']);
+		self::assertSame(149382, $persisted['totalInclVat']);
+		self::assertSame('nc-file:42', $persisted['pdfSourceUri']);
+		self::assertCount(1, $persisted['lines']);
+		self::assertSame(123456, $persisted['lines'][0]['lineExtension']);
 
-    }//end testIngestPDFInvoicePersistsWithOcrConfidence()
+	}//end testIngestPDFInvoicePersistsWithOcrConfidence()
 
-    /**
-     * ingestPDFInvoice clamps confidence scores outside [0, 1] (some OCR
-     * engines emit noisy values).
-     *
-     * @return void
-     */
-    public function testIngestPDFInvoiceClampsConfidenceScore(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(
-            data: ['SupplierInvoice' => []],
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+	/**
+	 * ingestPDFInvoice clamps confidence scores outside [0, 1] (some OCR
+	 * engines emit noisy values).
+	 *
+	 * @return void
+	 */
+	public function testIngestPDFInvoiceClampsConfidenceScore(): void {
+		$saved = [];
+		$service = $this->buildService(
+			data: ['SupplierInvoice' => []],
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $highClamp = $service->ingestPDFInvoice(
-            administrationId: 'adm-1',
-            ocrPayload: ['invoiceNumber' => 'A', 'supplierId' => 'vendor-a'],
-            confidenceScore: 1.34,
-        );
+		$highClamp = $service->ingestPDFInvoice(
+			administrationId: 'adm-1',
+			ocrPayload: ['invoiceNumber' => 'A', 'supplierId' => 'vendor-a'],
+			confidenceScore: 1.34,
+		);
 
-        $lowClamp = $service->ingestPDFInvoice(
-            administrationId: 'adm-1',
-            ocrPayload: ['invoiceNumber' => 'B', 'supplierId' => 'vendor-b'],
-            confidenceScore: -0.2,
-        );
+		$lowClamp = $service->ingestPDFInvoice(
+			administrationId: 'adm-1',
+			ocrPayload: ['invoiceNumber' => 'B', 'supplierId' => 'vendor-b'],
+			confidenceScore: -0.2,
+		);
 
-        self::assertSame(1.0, $highClamp['ocrConfidenceScore']);
-        self::assertSame(0.0, $lowClamp['ocrConfidenceScore']);
+		self::assertSame(1.0, $highClamp['ocrConfidenceScore']);
+		self::assertSame(0.0, $lowClamp['ocrConfidenceScore']);
 
-    }//end testIngestPDFInvoiceClampsConfidenceScore()
+	}//end testIngestPDFInvoiceClampsConfidenceScore()
 
-    /**
-     * ingestPDFInvoice rejects payloads missing the mandatory identifiers
-     * (an OCR engine that cannot even read the invoice number cannot
-     * produce a usable SupplierInvoice — slice 08's exception workflow
-     * picks up these cases out-of-band).
-     *
-     * @return void
-     */
-    public function testIngestPDFInvoiceRejectsPayloadWithoutInvoiceNumber(): void
-    {
-        $saved   = [];
-        $service = $this->buildService(
-            data: [],
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+	/**
+	 * ingestPDFInvoice rejects payloads missing the mandatory identifiers
+	 * (an OCR engine that cannot even read the invoice number cannot
+	 * produce a usable SupplierInvoice — slice 08's exception workflow
+	 * picks up these cases out-of-band).
+	 *
+	 * @return void
+	 */
+	public function testIngestPDFInvoiceRejectsPayloadWithoutInvoiceNumber(): void {
+		$saved = [];
+		$service = $this->buildService(
+			data: [],
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('OCR payload is missing invoiceNumber');
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('OCR payload is missing invoiceNumber');
 
-        $service->ingestPDFInvoice(
-            administrationId: 'adm-1',
-            ocrPayload: ['supplierId' => 'vendor-only'],
-            confidenceScore: 0.95,
-        );
+		$service->ingestPDFInvoice(
+			administrationId: 'adm-1',
+			ocrPayload: ['supplierId' => 'vendor-only'],
+			confidenceScore: 0.95,
+		);
 
-    }//end testIngestPDFInvoiceRejectsPayloadWithoutInvoiceNumber()
+	}//end testIngestPDFInvoiceRejectsPayloadWithoutInvoiceNumber()
 
-    /**
-     * setStatus drives the lifecycle from received -> matching -> matched
-     * and stamps a per-state timestamp.
-     *
-     * @return void
-     */
-    public function testSetStatusFollowsHappyPath(): void
-    {
-        $saved = [];
-        $data  = [
-            'SupplierInvoice' => [
-                [
-                    'id'               => 'inv-1',
-                    'administrationId' => 'adm-1',
-                    'invoiceNumber'    => 'INV-A',
-                    'supplierId'       => 'vendor-a',
-                    'statusCode'       => 'received',
-                ],
-            ],
-        ];
+	/**
+	 * setStatus drives the lifecycle from received -> matching -> matched
+	 * and stamps a per-state timestamp.
+	 *
+	 * @return void
+	 */
+	public function testSetStatusFollowsHappyPath(): void {
+		$saved = [];
+		$data = [
+			'SupplierInvoice' => [
+				[
+					'id' => 'inv-1',
+					'administrationId' => 'adm-1',
+					'invoiceNumber' => 'INV-A',
+					'supplierId' => 'vendor-a',
+					'statusCode' => 'received',
+				],
+			],
+		];
 
-        $service = $this->buildService(
-            data: $data,
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+		$service = $this->buildService(
+			data: $data,
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $afterMatching = $service->setStatus(
-            administrationId: 'adm-1',
-            invoiceId: 'inv-1',
-            toStatus: 'matching'
-        );
-        self::assertSame('matching', $afterMatching['statusCode']);
-        self::assertNotEmpty($afterMatching['matchingAt']);
+		$afterMatching = $service->setStatus(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-1',
+			toStatus: 'matching'
+		);
+		self::assertSame('matching', $afterMatching['statusCode']);
+		self::assertNotEmpty($afterMatching['matchingAt']);
 
-        $afterMatched = $service->setStatus(
-            administrationId: 'adm-1',
-            invoiceId: 'inv-1',
-            toStatus: 'matched'
-        );
-        self::assertSame('matched', $afterMatched['statusCode']);
+		$afterMatched = $service->setStatus(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-1',
+			toStatus: 'matched'
+		);
+		self::assertSame('matched', $afterMatched['statusCode']);
 
-    }//end testSetStatusFollowsHappyPath()
+	}//end testSetStatusFollowsHappyPath()
 
-    /**
-     * setStatus rejects an illegal transition (received -> paid skips the
-     * matching + approval steps).
-     *
-     * @return void
-     */
-    public function testSetStatusRejectsIllegalTransition(): void
-    {
-        $saved = [];
-        $data  = [
-            'SupplierInvoice' => [
-                [
-                    'id'               => 'inv-1',
-                    'administrationId' => 'adm-1',
-                    'invoiceNumber'    => 'INV-A',
-                    'supplierId'       => 'vendor-a',
-                    'statusCode'       => 'received',
-                ],
-            ],
-        ];
+	/**
+	 * setStatus rejects an illegal transition (received -> paid skips the
+	 * matching + approval steps).
+	 *
+	 * @return void
+	 */
+	public function testSetStatusRejectsIllegalTransition(): void {
+		$saved = [];
+		$data = [
+			'SupplierInvoice' => [
+				[
+					'id' => 'inv-1',
+					'administrationId' => 'adm-1',
+					'invoiceNumber' => 'INV-A',
+					'supplierId' => 'vendor-a',
+					'statusCode' => 'received',
+				],
+			],
+		];
 
-        $service = $this->buildService(
-            data: $data,
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+		$service = $this->buildService(
+			data: $data,
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Illegal transition from received to paid');
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Illegal transition from received to paid');
 
-        $service->setStatus(
-            administrationId: 'adm-1',
-            invoiceId: 'inv-1',
-            toStatus: 'paid'
-        );
+		$service->setStatus(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-1',
+			toStatus: 'paid'
+		);
 
-    }//end testSetStatusRejectsIllegalTransition()
+	}//end testSetStatusRejectsIllegalTransition()
 
-    /**
-     * setStatus masks cross-tenant access as "Supplier invoice not found"
-     * even when the invoice exists in another administration (ADR-005).
-     *
-     * @return void
-     */
-    public function testSetStatusMasksCrossTenantAsNotFound(): void
-    {
-        $saved = [];
-        $data  = [
-            'SupplierInvoice' => [
-                [
-                    'id'               => 'inv-other',
-                    'administrationId' => 'adm-OTHER',
-                    'invoiceNumber'    => 'INV-X',
-                    'supplierId'       => 'vendor-x',
-                    'statusCode'       => 'received',
-                ],
-            ],
-        ];
+	/**
+	 * setStatus masks cross-tenant access as "Supplier invoice not found"
+	 * even when the invoice exists in another administration (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testSetStatusMasksCrossTenantAsNotFound(): void {
+		$saved = [];
+		$data = [
+			'SupplierInvoice' => [
+				[
+					'id' => 'inv-other',
+					'administrationId' => 'adm-OTHER',
+					'invoiceNumber' => 'INV-X',
+					'supplierId' => 'vendor-x',
+					'statusCode' => 'received',
+				],
+			],
+		];
 
-        $service = $this->buildService(
-            data: $data,
-            saved: $saved,
-            accessibleAdministrations: ['adm-1']
-        );
+		$service = $this->buildService(
+			data: $data,
+			saved: $saved,
+			accessibleAdministrations: ['adm-1']
+		);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Supplier invoice not found');
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Supplier invoice not found');
 
-        $service->setStatus(
-            administrationId: 'adm-OTHER',
-            invoiceId: 'inv-other',
-            toStatus: 'matching'
-        );
+		$service->setStatus(
+			administrationId: 'adm-OTHER',
+			invoiceId: 'inv-other',
+			toStatus: 'matching'
+		);
 
-    }//end testSetStatusMasksCrossTenantAsNotFound()
+	}//end testSetStatusMasksCrossTenantAsNotFound()
 }//end class

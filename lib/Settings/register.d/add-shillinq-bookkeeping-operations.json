@@ -10,7 +10,7 @@
     "schemas": {
       "Account": {
         "properties": {
-          "isSchatkistAccount": {
+          "isTreasuryAccount": {
             "type": "boolean",
             "default": false,
             "description": "REQ-SBK-002: flags this account as a Treasury (schatkist) account so SchatkistPosition aggregates its postings. Additive extension merged onto the T1 Account schema via ADR-037 deep-merge.",
@@ -208,12 +208,26 @@
               "action": "submit"
             },
             "description": "Notify the vat-administrator when a return is submitted.",
-            "recipients": {
-              "role": "vat-administrator",
-              "scope": "@self.administrationId"
-            },
-            "title": "BTW-aangifte ingediend",
-            "message": "BTW-aangifte voor @self.periodYear is ingediend via Digipoort."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "vat-administrator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "BTW-aangifte voor {{periodYear}} is ingediend via Digipoort",
+              "en": "VAT return for {{periodYear}} was submitted through Digipoort"
+            }
           }
         },
         "x-openregister-rbac": {
@@ -649,7 +663,7 @@
         "required": [
           "administrationId",
           "accountNumber",
-          "taakveld"
+          "taskField"
         ],
         "properties": {
           "administrationId": {
@@ -664,20 +678,20 @@
             "example": "4250",
             "title": "Account Number"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "description": "BBV taakveld code per bbv-taakvelden-2024.json seed.",
             "example": "0.1",
             "title": "Taakveld"
           },
-          "programmaCode": {
+          "programmeCode": {
             "type": "string",
             "nullable": true,
             "description": "Operator-defined programma code.",
             "example": "1000",
             "title": "Programma Code"
           },
-          "paragraafCode": {
+          "paragraphCode": {
             "type": "string",
             "nullable": true,
             "description": "Optional paragraaf code.",
@@ -730,7 +744,7 @@
             "description": "GL postings grouped by taakveld for programma roll-up reporting (REQ-BBV-007).",
             "source": "GLLine",
             "groupBy": [
-              "taakveld"
+              "taskField"
             ],
             "filter": {
               "administrationId": "@self.administrationId"
@@ -788,7 +802,7 @@
             "example": "Bestuur",
             "title": "Description"
           },
-          "programmaFocus": {
+          "programmeFocus": {
             "type": "string",
             "nullable": true,
             "description": "Hint linking the taakveld to a typical programma.",
@@ -1000,12 +1014,26 @@
               "action": "submit"
             },
             "description": "Notify the bcf-administrator when a claim is submitted.",
-            "recipients": {
-              "role": "bcf-administrator",
-              "scope": "@self.administrationId"
-            },
-            "title": "BCF-claim ingediend",
-            "message": "BCF-claim @self.claimNumber is ingediend bij het Compensatiefonds."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bcf-administrator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "BCF-claim {{claimNumber}} is ingediend bij het BTW-compensatiefonds",
+              "en": "BCF claim {{claimNumber}} was submitted to the VAT compensation fund"
+            }
           }
         },
         "x-openregister-rbac": {
@@ -1080,19 +1108,19 @@
             "description": "True for the first 2 years (800-hour threshold).",
             "title": "Qualifies Starters"
           },
-          "zelfstandigenaftrek": {
+          "selfEmployedDeduction": {
             "type": "number",
             "default": 0,
             "description": "Self-employed deduction (MonetaryAmount, from seed).",
             "title": "Zelfstandigenaftrek"
           },
-          "startersaftrek": {
+          "starterDeduction": {
             "type": "number",
             "default": 0,
             "description": "Starters deduction (MonetaryAmount, if qualifiesStarters).",
             "title": "Startersaftrek"
           },
-          "mkbWinstvrijstelling": {
+          "mkbProfitExemption": {
             "type": "number",
             "default": 0,
             "description": "MKB profit exemption (MonetaryAmount, from seed).",
@@ -1273,13 +1301,13 @@
             "description": "ISO 4217, default EUR.",
             "title": "Currency"
           },
-          "drempelbedragApplies": {
+          "thresholdAmountApplies": {
             "type": "boolean",
             "default": false,
             "description": "Whether the drempelbedrag applies for this administration (REQ-SBK-006).",
             "title": "Drempelbedrag Applies"
           },
-          "drempelbedragAmount": {
+          "thresholdAmountAmount": {
             "type": "number",
             "nullable": true,
             "description": "Threshold amount from schatkist-thresholds seed (e.g. 0.75% of begroting).",
@@ -1299,7 +1327,7 @@
             "source": "GLLine",
             "filter": {
               "administrationId": "@self.administrationId",
-              "isSchatkistAccount": true,
+              "isTreasuryAccount": true,
               "postingDate": "@self.businessDate"
             },
             "sum": [
@@ -1310,14 +1338,35 @@
         },
         "x-openregister-notifications": {
           "onAboveThreshold": {
-            "trigger": "field.aboveThreshold==true",
-            "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag (REQ-SBK-008).",
-            "recipients": {
-              "role": "treasury-officer",
-              "scope": "@self.administrationId"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "aboveThreshold",
+                "operator": "equals",
+                "value": true
+              }
             },
-            "title": "Schatkist-drempel overschreden",
-            "message": "De schatkist-positie van @self.position EUR op @self.businessDate overschrijdt het drempelbedrag."
+            "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag (REQ-SBK-008).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "treasury-officer"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Schatkist-drempel overschreden: positie {{position}} EUR op {{businessDate}}",
+              "en": "Treasury banking threshold exceeded: position {{position}} EUR on {{businessDate}}"
+            }
           }
         },
         "x-openregister-widgets": {
@@ -1334,7 +1383,7 @@
             "visibility": {
               "field": "administrationType",
               "in": [
-                "gemeente"
+                "municipality"
               ]
             }
           }
@@ -1368,13 +1417,13 @@
         "x-schema-org": "schema:PaymentChargeSpecification",
         "type": "object",
         "required": [
-          "subsidieId",
+          "subsidyId",
           "installmentNumber",
           "dueDate",
           "amount"
         ],
         "properties": {
-          "subsidieId": {
+          "subsidyId": {
             "type": "string",
             "description": "FK to the Subsidie being repaid.",
             "example": "SUB-2026-0001",

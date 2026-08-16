@@ -41,8 +41,9 @@
 		{
 			"id": "ExpenseSettlementClassifier",
 			"route": "/expense-settlement-classifier",
-			"type": "bulk-form",
+			"type": "custom",
 			"title": "Expense Settlement Classifier",
+			"_note": "Was declared as `type: \"bulk-form\"`, which is not one of the 14 page types: CnPageRenderer looked it up in the pageTypes registry, found nothing, logged 'Unknown page type' and rendered NOTHING, so this page has never worked. There is no standard type to move it to — it selects rows across THREE schemas at once (Receipt, MileageEntry, PerDiem, each with its own column set and its own 'unclassified' filter) and writes one shared form (settlementMode, linked customer, markup rule) to every selected row, whereas `type: form` edits a single object of a single schema and `type: index` has mass actions but no shared form. Declared `custom` and left without a component until the bulk classifier is built — the page renders the empty state, which is the same thing it does today but no longer behind a page type that does not exist. Flow, sources and submit contract are retained below under config so the implementation stays manifest-owned (REQ-ERP-001 / REQ-ERP-003 / REQ-ERP-006).",
 			"config": {
 				"register": "shillinq",
 				"description": "Bulk-classify uncategorised receipts, mileage entries, and per-diem records as reimbursable (paid via SEPA) or pass-through (billed to a customer at cost + markup). The selected markup rule + customer are written to every selected line item; child items inherit the claim mode at parent-claim submission per REQ-ERP-001 / REQ-ERP-003.",

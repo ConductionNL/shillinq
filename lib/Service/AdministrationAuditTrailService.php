@@ -56,265 +56,254 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
  */
-class AdministrationAuditTrailService
-{
-    /**
-     * Default page size when the caller does not specify one.
-     */
-    private const DEFAULT_PAGE_SIZE = 100;
+class AdministrationAuditTrailService {
+	/**
+	 * Default page size when the caller does not specify one.
+	 */
+	private const DEFAULT_PAGE_SIZE = 100;
 
-    /**
-     * Default per-administratie result cap to keep cross-tenant queries
-     * bounded; the caller raises explicitly if needed.
-     */
-    private const DEFAULT_PER_ADMINISTRATION_LIMIT = 500;
+	/**
+	 * Default per-administratie result cap to keep cross-tenant queries
+	 * bounded; the caller raises explicitly if needed.
+	 */
+	private const DEFAULT_PER_ADMINISTRATION_LIMIT = 500;
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface           $container DI container — OR's ObjectService is fetched
-     *                                                lazily.
-     * @param IAppConfig                   $appConfig App config for the register slug.
-     * @param AdministrationContextService $context   Multi-tenant RBAC resolver.
-     * @param LoggerInterface              $logger    Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly AdministrationContextService $context,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched
+	 *                                      lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param AdministrationContextService $context Multi-tenant RBAC resolver.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly AdministrationContextService $context,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Query the audit trail for a single administration (REQ-MA-009).
-     *
-     * Returns null when the caller has no AdministrationMembership for the
-     * target administration — the caller MUST mask this as a 404 (never 403)
-     * to avoid leaking tenant existence (REQ-MA-001).
-     *
-     * @param string $administrationId The administration to query.
-     * @param string $schema           The schema to pull audit rows from.
-     * @param int    $limit            Per-call result cap (defaults to 100).
-     *
-     * @return array<int,array<string,mixed>>|null
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
-     */
-    public function queryForAdministration(
-        string $administrationId,
-        string $schema,
-        int $limit=self::DEFAULT_PAGE_SIZE
-    ): ?array {
-        if ($administrationId === '' || $schema === '') {
-            return null;
-        }
+	/**
+	 * Query the audit trail for a single administration (REQ-MA-009).
+	 *
+	 * Returns null when the caller has no AdministrationMembership for the
+	 * target administration — the caller MUST mask this as a 404 (never 403)
+	 * to avoid leaking tenant existence (REQ-MA-001).
+	 *
+	 * @param string $administrationId The administration to query.
+	 * @param string $schema The schema to pull audit rows from.
+	 * @param int $limit Per-call result cap (defaults to 100).
+	 *
+	 * @return array<int,array<string,mixed>>|null
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+	 */
+	public function queryForAdministration(
+		string $administrationId,
+		string $schema,
+		int $limit = self::DEFAULT_PAGE_SIZE,
+	): ?array {
+		if ($administrationId === '' || $schema === '') {
+			return null;
+		}
 
-        if ($this->context->canAccess(administrationId: $administrationId) === false) {
-            return null;
-        }
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return null;
+		}
 
-        $rows = $this->fetchByAdministration(
-            administrationId: $administrationId,
-            schema: $schema,
-            limit: $limit
-        );
+		$rows = $this->fetchByAdministration(
+			administrationId: $administrationId,
+			schema: $schema,
+			limit: $limit
+		);
 
-        return $this->sortByTimestampDesc(rows: $this->tagWithAdministration(rows: $rows, administrationId: $administrationId));
+		return $this->sortByTimestampDesc(rows: $this->tagWithAdministration(rows: $rows, administrationId: $administrationId));
+	}//end queryForAdministration()
 
-    }//end queryForAdministration()
+	/**
+	 * Aggregate the audit trail across every administration the caller may access
+	 * (REQ-MA-009).
+	 *
+	 * Each row in the result carries an explicit `administrationId` tag so the
+	 * caller (e.g. a holding-controller dashboard) can render or filter per
+	 * administratie. The aggregation respects the user's membership boundary —
+	 * no row from an administratie outside `accessibleAdministrationIds()` is
+	 * ever included (REQ-MA-001).
+	 *
+	 * @param string $schema The schema to pull audit rows from.
+	 * @param int $perAdministrationLimit Per-administratie row cap (defaults to 500).
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+	 */
+	public function queryAcrossAccessibleAdministrations(
+		string $schema,
+		int $perAdministrationLimit = self::DEFAULT_PER_ADMINISTRATION_LIMIT,
+	): array {
+		if ($schema === '') {
+			return [];
+		}
 
-    /**
-     * Aggregate the audit trail across every administration the caller may access
-     * (REQ-MA-009).
-     *
-     * Each row in the result carries an explicit `administrationId` tag so the
-     * caller (e.g. a holding-controller dashboard) can render or filter per
-     * administratie. The aggregation respects the user's membership boundary —
-     * no row from an administratie outside `accessibleAdministrationIds()` is
-     * ever included (REQ-MA-001).
-     *
-     * @param string $schema                 The schema to pull audit rows from.
-     * @param int    $perAdministrationLimit Per-administratie row cap (defaults to 500).
-     *
-     * @return array<int,array<string,mixed>>
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
-     */
-    public function queryAcrossAccessibleAdministrations(
-        string $schema,
-        int $perAdministrationLimit=self::DEFAULT_PER_ADMINISTRATION_LIMIT
-    ): array {
-        if ($schema === '') {
-            return [];
-        }
+		$aggregated = [];
+		foreach ($this->context->accessibleAdministrationIds() as $administrationId) {
+			$rows = $this->fetchByAdministration(
+				administrationId: $administrationId,
+				schema: $schema,
+				limit: $perAdministrationLimit
+			);
+			$aggregated = array_merge(
+				$aggregated,
+				$this->tagWithAdministration(rows: $rows, administrationId: $administrationId)
+			);
+		}
 
-        $aggregated = [];
-        foreach ($this->context->accessibleAdministrationIds() as $administrationId) {
-            $rows       = $this->fetchByAdministration(
-                administrationId: $administrationId,
-                schema: $schema,
-                limit: $perAdministrationLimit
-            );
-            $aggregated = array_merge(
-                $aggregated,
-                $this->tagWithAdministration(rows: $rows, administrationId: $administrationId)
-            );
-        }
+		return $this->sortByTimestampDesc(rows: $aggregated);
+	}//end queryAcrossAccessibleAdministrations()
 
-        return $this->sortByTimestampDesc(rows: $aggregated);
+	/**
+	 * Tag a list of audit rows with the administration they were pulled from.
+	 *
+	 * Pure helper — exposed for unit testing. Any row already carrying an
+	 * `administrationId` value is left as-is so we never overwrite a
+	 * server-authoritative tag.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Audit rows.
+	 * @param string $administrationId The owning administration.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
+	 */
+	public function tagWithAdministration(array $rows, string $administrationId): array {
+		$tagged = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === false) {
+				continue;
+			}
 
-    }//end queryAcrossAccessibleAdministrations()
+			if (array_key_exists('administrationId', $row) === false || ((string)$row['administrationId']) === '') {
+				$row['administrationId'] = $administrationId;
+			}
 
-    /**
-     * Tag a list of audit rows with the administration they were pulled from.
-     *
-     * Pure helper — exposed for unit testing. Any row already carrying an
-     * `administrationId` value is left as-is so we never overwrite a
-     * server-authoritative tag.
-     *
-     * @param array<int,array<string,mixed>> $rows             Audit rows.
-     * @param string                         $administrationId The owning administration.
-     *
-     * @return array<int,array<string,mixed>>
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-22
-     */
-    public function tagWithAdministration(array $rows, string $administrationId): array
-    {
-        $tagged = [];
-        foreach ($rows as $row) {
-            if (is_array($row) === false) {
-                continue;
-            }
+			$tagged[] = $row;
+		}
 
-            if (array_key_exists('administrationId', $row) === false || ((string) $row['administrationId']) === '') {
-                $row['administrationId'] = $administrationId;
-            }
+		return $tagged;
+	}//end tagWithAdministration()
 
-            $tagged[] = $row;
-        }
+	/**
+	 * Sort audit rows by timestamp (newest first) for the aggregated view.
+	 *
+	 * Picks `auditTrailUpdatedAt` first, then `updatedAt`, then `createdAt`;
+	 * rows without any timestamp slot sort to the end (stable order). Pure
+	 * helper exposed for unit testing.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Audit rows.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function sortByTimestampDesc(array $rows): array {
+		$candidateKeys = ['auditTrailUpdatedAt', 'updatedAt', 'createdAt'];
 
-        return $tagged;
+		usort(
+			$rows,
+			static function ($left, $right) use ($candidateKeys): int {
+				$leftStamp = '';
+				$rightStamp = '';
+				foreach ($candidateKeys as $key) {
+					if ($leftStamp === '' && is_array($left) === true) {
+						$leftStamp = (string)($left[$key] ?? '');
+					}
 
-    }//end tagWithAdministration()
+					if ($rightStamp === '' && is_array($right) === true) {
+						$rightStamp = (string)($right[$key] ?? '');
+					}
+				}
 
-    /**
-     * Sort audit rows by timestamp (newest first) for the aggregated view.
-     *
-     * Picks `auditTrailUpdatedAt` first, then `updatedAt`, then `createdAt`;
-     * rows without any timestamp slot sort to the end (stable order). Pure
-     * helper exposed for unit testing.
-     *
-     * @param array<int,array<string,mixed>> $rows Audit rows.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    public function sortByTimestampDesc(array $rows): array
-    {
-        $candidateKeys = ['auditTrailUpdatedAt', 'updatedAt', 'createdAt'];
+				if ($leftStamp === '' && $rightStamp === '') {
+					return 0;
+				}
 
-        usort(
-            $rows,
-            static function ($left, $right) use ($candidateKeys): int {
-                $leftStamp  = '';
-                $rightStamp = '';
-                foreach ($candidateKeys as $key) {
-                    if ($leftStamp === '' && is_array($left) === true) {
-                        $leftStamp = (string) ($left[$key] ?? '');
-                    }
+				if ($leftStamp === '') {
+					return 1;
+				}
 
-                    if ($rightStamp === '' && is_array($right) === true) {
-                        $rightStamp = (string) ($right[$key] ?? '');
-                    }
-                }
+				if ($rightStamp === '') {
+					return -1;
+				}
 
-                if ($leftStamp === '' && $rightStamp === '') {
-                    return 0;
-                }
+				return strcmp($rightStamp, $leftStamp);
+			}
+		);
 
-                if ($leftStamp === '') {
-                    return 1;
-                }
+		return $rows;
+	}//end sortByTimestampDesc()
 
-                if ($rightStamp === '') {
-                    return -1;
-                }
+	/**
+	 * Fetch audit rows for a single administratie (storage call).
+	 *
+	 * @param string $administrationId The administration id.
+	 * @param string $schema The schema slug.
+	 * @param int $limit Result cap.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function fetchByAdministration(string $administrationId, string $schema, int $limit): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$entities = $objectService
+				->setRegister($this->resolveRegister())
+				->setSchema($schema)
+				->findAll(
+					[
+						'filters' => ['administrationId' => $administrationId],
+						'limit' => $limit,
+					]
+				);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'AdministrationAuditTrailService: failed to fetch audit rows',
+				[
+					'administrationId' => $administrationId,
+					'schema' => $schema,
+					'exception' => $e->getMessage(),
+				]
+			);
+			return [];
+		}//end try
 
-                return strcmp($rightStamp, $leftStamp);
-            }
-        );
+		$rows = [];
+		foreach ($entities as $entity) {
+			if (is_array($entity) === true) {
+				$rows[] = $entity;
+				continue;
+			}
 
-        return $rows;
+			if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
+				$data = $entity->getObject();
+				if (is_array($data) === true) {
+					$rows[] = $data;
+				}
+			}
+		}
 
-    }//end sortByTimestampDesc()
+		return $rows;
+	}//end fetchByAdministration()
 
-    /**
-     * Fetch audit rows for a single administratie (storage call).
-     *
-     * @param string $administrationId The administration id.
-     * @param string $schema           The schema slug.
-     * @param int    $limit            Result cap.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function fetchByAdministration(string $administrationId, string $schema, int $limit): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $entities      = $objectService
-                ->setRegister($this->resolveRegister())
-                ->setSchema($schema)
-                ->findAll(
-                    [
-                        'filters' => ['administrationId' => $administrationId],
-                        'limit'   => $limit,
-                    ]
-                );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'AdministrationAuditTrailService: failed to fetch audit rows',
-                [
-                    'administrationId' => $administrationId,
-                    'schema'           => $schema,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
-            return [];
-        }//end try
+	/**
+	 * Resolve the configured register slug, defaulting to `shillinq`.
+	 *
+	 * @return string
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        $rows = [];
-        foreach ($entities as $entity) {
-            if (is_array($entity) === true) {
-                $rows[] = $entity;
-                continue;
-            }
-
-            if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
-                $data = $entity->getObject();
-                if (is_array($data) === true) {
-                    $rows[] = $data;
-                }
-            }
-        }
-
-        return $rows;
-
-    }//end fetchByAdministration()
-
-    /**
-     * Resolve the configured register slug, defaulting to `shillinq`.
-     *
-     * @return string
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

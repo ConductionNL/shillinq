@@ -15,9 +15,17 @@
 		<form class="pick-op__form" @submit.prevent="handleConfirm">
 			<label>
 				<span>{{ t('shillinq', 'Location') }}</span>
-				<select v-model="location" required :aria-label="t('shillinq', 'Pick location')">
-					<option value="">{{ t('shillinq', 'Select a location') }}</option>
-					<option v-for="loc in store.locations" :key="loc.code" :value="loc.code">
+				<select
+					v-model="location"
+					required
+					:aria-label="t('shillinq', 'Pick location')">
+					<option value="">
+						{{ t('shillinq', 'Select a location') }}
+					</option>
+					<option
+						v-for="loc in store.locations"
+						:key="loc.code"
+						:value="loc.code">
 						{{ loc.name }} ({{ loc.code }})
 					</option>
 				</select>
@@ -31,7 +39,7 @@
 						type="text"
 						required
 						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')">
+						:aria-label="t('shillinq', 'Stock keeping unit')" />
 					<button type="button" @click="scanning = true">
 						{{ t('shillinq', 'Scan') }}
 					</button>
@@ -40,7 +48,10 @@
 
 			<label>
 				<span>{{ t('shillinq', 'Order line id (optional)') }}</span>
-				<input v-model="orderLineId" type="text" :aria-label="t('shillinq', 'Order line id')">
+				<input
+					v-model="orderLineId"
+					type="text"
+					:aria-label="t('shillinq', 'Order line id')" />
 			</label>
 
 			<label>
@@ -51,7 +62,7 @@
 					min="0.01"
 					step="0.01"
 					required
-					:aria-label="t('shillinq', 'Quantity to pick')">
+					:aria-label="t('shillinq', 'Quantity to pick')" />
 			</label>
 
 			<div v-if="error" class="pick-op__error" role="alert">
@@ -100,29 +111,44 @@ export default {
 			lastSubmittedAt: 0,
 		}
 	},
+
 	computed: {
 		store() {
 			return useInventoryMobileScannerStore()
 		},
 	},
+
 	methods: {
 		handleScan(value) {
 			this.sku = value
 			this.scanning = false
 		},
+
 		async handleConfirm() {
 			this.error = null
 			this.warning = null
 			this.successMessage = null
 
-			if (!this.location || !this.sku || !this.quantity || this.quantity <= 0) {
-				this.error = this.t('shillinq', 'Location, SKU and a positive quantity are required.')
+			if (
+				!this.location
+				|| !this.sku
+				|| !this.quantity
+				|| this.quantity <= 0
+			) {
+				this.error = this.t(
+					'shillinq',
+					'Location, SKU and a positive quantity are required.',
+				)
 				return
 			}
 
 			try {
 				if (this.store.db) {
-					const onHand = await readStockQuantity(this.store.db, this.sku, this.location)
+					const onHand = await readStockQuantity(
+						this.store.db,
+						this.sku,
+						this.location,
+					)
 					if (onHand < this.quantity) {
 						this.warning = this.t(
 							'shillinq',
@@ -138,7 +164,10 @@ export default {
 
 			const now = Date.now()
 			if (now - this.lastSubmittedAt < 5000) {
-				this.error = this.t('shillinq', 'Already submitted; waiting for server ACK.')
+				this.error = this.t(
+					'shillinq',
+					'Already submitted; waiting for server ACK.',
+				)
 				return
 			}
 			this.lastSubmittedAt = now
@@ -161,7 +190,10 @@ export default {
 				this.quantity = null
 				this.orderLineId = ''
 			} catch (e) {
-				this.error = e && e.message ? e.message : this.t('shillinq', 'Could not record pick.')
+				this.error =
+					e && e.message
+						? e.message
+						: this.t('shillinq', 'Could not record pick.')
 			} finally {
 				this.submitting = false
 			}
@@ -171,19 +203,42 @@ export default {
 </script>
 
 <style scoped>
-.pick-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+.pick-op {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
 
-.pick-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
+.pick-op__form label {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: var(--default-grid-baseline, 4px);
+}
 
-.pick-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
+.pick-op__sku-row {
+	display: flex;
+	gap: var(--default-grid-baseline, 4px);
+}
 
-.pick-op__sku-row input { flex: 1; }
+.pick-op__sku-row input {
+	flex: 1;
+}
 
-.pick-op__error { color: var(--color-error); }
+.pick-op__error {
+	color: var(--color-error);
+}
 
-.pick-op__warning { color: var(--color-warning); }
+.pick-op__warning {
+	color: var(--color-warning);
+}
 
-.pick-op__success { color: var(--color-success); }
+.pick-op__success {
+	color: var(--color-success);
+}
 
-.pick-op__actions { display: flex; justify-content: flex-end; }
+.pick-op__actions {
+	display: flex;
+	justify-content: flex-end;
+}
 </style>

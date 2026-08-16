@@ -45,84 +45,81 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
  */
-class WbsoAdministratieController extends Controller
-{
-    /**
-     * Constructor for the WbsoAdministratieController.
-     *
-     * @param IRequest                 $request The request object.
-     * @param WbsoAdministratieService $service The realisatie computation service.
-     * @param LoggerInterface          $logger  Logger for diagnostics (no stack traces to client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly WbsoAdministratieService $service,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+class WbsoAdministratieController extends Controller {
+	/**
+	 * Constructor for the WbsoAdministratieController.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param WbsoAdministratieService $service The realisatie computation service.
+	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly WbsoAdministratieService $service,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the WBSO realisatie summary for one administration (REQ-WBSO-010).
-     *
-     * Query parameters:
-     *  - administration_id (required) administration scope (REQ-WBSO-004).
-     *
-     * Returns HTTP 200 with { data, total } on success; HTTP 400 on a
-     * missing/malformed parameter; HTTP 500 (without a stack trace) on an
-     * unexpected fetch failure.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
-     *
-     * @no-admin-idor-exempt read-only WBSO realisatie summary; administration scope
-     *   is validated against the caller's membership by OpenRegister's ObjectService
-     *   RBAC layer (REQ-WBSO-004) — the administration_id input is format-validated
-     *   and all data reads are multitenancy-scoped server-side before return.
-     */
-    #[NoAdminRequired]
-    public function realisatie(): JSONResponse
-    {
-        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+	/**
+	 * Return the WBSO realisatie summary for one administration (REQ-WBSO-010).
+	 *
+	 * Query parameters:
+	 *  - administration_id (required) administration scope (REQ-WBSO-004).
+	 *
+	 * Returns HTTP 200 with { data, total } on success; HTTP 400 on a
+	 * missing/malformed parameter; HTTP 500 (without a stack trace) on an
+	 * unexpected fetch failure.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+	 *
+	 * @no-admin-idor-exempt read-only WBSO realisatie summary; administration scope
+	 *   is validated against the caller's membership by OpenRegister's ObjectService
+	 *   RBAC layer (REQ-WBSO-004) — the administration_id input is format-validated
+	 *   and all data reads are multitenancy-scoped server-side before return.
+	 */
+	#[NoAdminRequired]
+	public function realisatie(): JSONResponse {
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 
-        if ($administrationId === '') {
-            return new JSONResponse(
-                ['error' => 'administration_id is required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($administrationId === '') {
+			return new JSONResponse(
+				['error' => 'administration_id is required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        // Reject obviously malformed identifiers before touching the data layer
-        // (REQ-WBSO-004) — administration identifiers are short slugs.
-        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-            return new JSONResponse(
-                ['error' => 'administration_id must be a valid administration identifier'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		// Reject obviously malformed identifiers before touching the data layer
+		// (REQ-WBSO-004) — administration identifiers are short slugs.
+		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+			return new JSONResponse(
+				['error' => 'administration_id must be a valid administration identifier'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        try {
-            $result = $this->service->realisatieSummary(administrationId: $administrationId);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'WbsoAdministratieController: failed to compute realisatie summary',
-                [
-                    'administrationId' => $administrationId,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
+		try {
+			$result = $this->service->realisatieSummary(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'WbsoAdministratieController: failed to compute realisatie summary',
+				[
+					'administrationId' => $administrationId,
+					'exception' => $e->getMessage(),
+				]
+			);
 
-            return new JSONResponse(
-                ['error' => 'Failed to compute WBSO realisatie summary'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+			return new JSONResponse(
+				['error' => 'Failed to compute WBSO realisatie summary'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-        return new JSONResponse($result, Http::STATUS_OK);
-
-    }//end realisatie()
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end realisatie()
 }//end class

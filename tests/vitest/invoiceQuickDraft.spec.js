@@ -23,14 +23,19 @@ import {
 
 describe('invoiceQuickDraft — totals', () => {
 	it('defaultDraftLine seeds qty 1 and 21% VAT', () => {
-		expect(defaultDraftLine()).toEqual({ description: '', quantity: 1, unitPrice: 0, btwRate: 21 })
+		expect(defaultDraftLine()).toEqual({
+			description: '',
+			quantity: 1,
+			unitPrice: 0,
+			vatRate: 21,
+		})
 	})
 
 	it('computes net, VAT and gross across mixed VAT rates', () => {
 		const lines = [
-			{ quantity: 2, unitPrice: 100, btwRate: 21 }, // net 200, vat 42
-			{ quantity: 1, unitPrice: 50, btwRate: 9 }, // net 50, vat 4.5
-			{ quantity: 3, unitPrice: 10, btwRate: 0 }, // net 30, vat 0
+			{ quantity: 2, unitPrice: 100, vatRate: 21 }, // net 200, vat 42
+			{ quantity: 1, unitPrice: 50, vatRate: 9 }, // net 50, vat 4.5
+			{ quantity: 3, unitPrice: 10, vatRate: 0 }, // net 30, vat 0
 		]
 		const totals = computeTotals(lines)
 		expect(totals.net).toBe(280)
@@ -39,7 +44,11 @@ describe('invoiceQuickDraft — totals', () => {
 	})
 
 	it('treats missing/invalid fields as zero', () => {
-		expect(computeTotals([{ description: 'x' }])).toEqual({ net: 0, vat: 0, gross: 0 })
+		expect(computeTotals([{ description: 'x' }])).toEqual({
+			net: 0,
+			vat: 0,
+			gross: 0,
+		})
 		expect(computeTotals([])).toEqual({ net: 0, vat: 0, gross: 0 })
 		expect(computeTotals(null)).toEqual({ net: 0, vat: 0, gross: 0 })
 	})
@@ -74,8 +83,13 @@ describe('invoiceQuickDraft — payload', () => {
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{ description: ' Consulting ', quantity: 2, unitPrice: 100, btwRate: 21 },
-				{ description: '', quantity: 0, unitPrice: 0, btwRate: 21 }, // dropped
+				{
+					description: ' Consulting ',
+					quantity: 2,
+					unitPrice: 100,
+					vatRate: 21,
+				},
+				{ description: '', quantity: 0, unitPrice: 0, vatRate: 21 }, // dropped
 			],
 		})
 		expect(payload.lifecycleState).toBe('draft')
@@ -91,7 +105,7 @@ describe('invoiceQuickDraft — payload', () => {
 			description: 'Consulting',
 			quantity: 2,
 			unitPrice: 100,
-			btwRate: 21,
+			vatRate: 21,
 			glAccount: '8000',
 		})
 	})
@@ -102,7 +116,7 @@ describe('invoiceQuickDraft — payload', () => {
 			invoiceDate: '2026-02-01',
 			dueDate: '2026-03-03',
 			administrationId: 'ADM-001',
-			lines: [{ description: 'X', quantity: 1, unitPrice: 10, btwRate: 21 }],
+			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
 		expect(payload.administrationId).toBe('ADM-001')
 		expect(payload.periodId).toBe('2026-02')
@@ -117,7 +131,7 @@ describe('invoiceQuickDraft — payload', () => {
 			administrationId: 'ADM-001',
 			invoiceNumber: 'F2026-007',
 			periodId: '2026-Q1',
-			lines: [{ description: 'X', quantity: 1, unitPrice: 10, btwRate: 21 }],
+			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
 		expect(payload.invoiceNumber).toBe('F2026-007')
 		expect(payload.periodId).toBe('2026-Q1')
@@ -133,7 +147,10 @@ describe('invoiceQuickDraft — period + provisional number helpers', () => {
 	})
 
 	it('builds a unique, provisional draft invoice number', () => {
-		const num = provisionalInvoiceNumber('2026-07-09', new Date(2026, 6, 9, 8, 30, 5))
+		const num = provisionalInvoiceNumber(
+			'2026-07-09',
+			new Date(2026, 6, 9, 8, 30, 5),
+		)
 		expect(num).toBe('DRAFT-20260709-083005')
 	})
 
@@ -148,13 +165,22 @@ describe('invoiceQuickDraft — preferences persistence', () => {
 		const store = {}
 		globalThis.localStorage = {
 			getItem: (k) => (k in store ? store[k] : null),
-			setItem: (k, v) => { store[k] = String(v) },
-			removeItem: (k) => { delete store[k] },
+			setItem: (k, v) => {
+				store[k] = String(v)
+			},
+			removeItem: (k) => {
+				delete store[k]
+			},
 		}
 	})
 
 	it('round-trips per-customer preferences', () => {
-		saveQuickDraftPrefs('cust-1', { glAccount: '8000', vatCode: 9, description: 'Hosting', unitPrice: 49 })
+		saveQuickDraftPrefs('cust-1', {
+			glAccount: '8000',
+			vatCode: 9,
+			description: 'Hosting',
+			unitPrice: 49,
+		})
 		const prefs = loadQuickDraftPrefs('cust-1')
 		expect(prefs.glAccount).toBe('8000')
 		expect(prefs.vatCode).toBe(9)
@@ -169,15 +195,22 @@ describe('invoiceQuickDraft — preferences persistence', () => {
 
 	it('expires preferences older than 90 days', () => {
 		saveQuickDraftPrefs('cust-1', { glAccount: '8000' })
-		const raw = JSON.parse(globalThis.localStorage.getItem('shillinq:invoice-quick-draft:cust-1'))
-		raw.savedAt = Date.now() - (91 * 24 * 60 * 60 * 1000)
-		globalThis.localStorage.setItem('shillinq:invoice-quick-draft:cust-1', JSON.stringify(raw))
+		const raw = JSON.parse(
+			globalThis.localStorage.getItem('shillinq:invoice-quick-draft:cust-1'),
+		)
+		raw.savedAt = Date.now() - 91 * 24 * 60 * 60 * 1000
+		globalThis.localStorage.setItem(
+			'shillinq:invoice-quick-draft:cust-1',
+			JSON.stringify(raw),
+		)
 		expect(loadQuickDraftPrefs('cust-1')).toBeNull()
 	})
 
 	it('never throws when localStorage is unavailable', () => {
 		globalThis.localStorage = undefined
-		expect(() => saveQuickDraftPrefs('cust-1', { glAccount: '8000' })).not.toThrow()
+		expect(() =>
+			saveQuickDraftPrefs('cust-1', { glAccount: '8000' }),
+		).not.toThrow()
 		expect(loadQuickDraftPrefs('cust-1')).toBeNull()
 	})
 })

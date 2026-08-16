@@ -36,7 +36,6 @@ import { test, expect } from '@playwright/test'
 const SHILLINQ_ADMIN_SETTINGS = '/settings/admin/shillinq'
 
 test.describe('pipelinq customer-bridge — admin configuration panel', () => {
-
 	test.beforeEach(async ({ page }) => {
 		// Navigate to the shillinq admin settings page. The pipelinq
 		// integration panel mounts as a CnSettingsSection inside
@@ -62,14 +61,18 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 	 * endpoint + API token form fields and the Save + Test Connection
 	 * action buttons.
 	 */
-	test('admin panel mounts with endpoint, token and action buttons', async ({ page }) => {
+	test('admin panel mounts with endpoint, token and action buttons', async ({
+		page,
+	}) => {
 		await expect(page.getByRole('main')).toBeVisible({ timeout: 10_000 })
 
 		// The integration panel ships the heading "Pipelinq integration"
 		// — see src/views/settings/PipelinqIntegration.vue. We assert
 		// via text rather than a CSS hook so an @nextcloud/vue bump
 		// can re-organise the DOM without breaking the test.
-		const heading = page.getByText('Pipelinq integration', { exact: false }).first()
+		const heading = page
+			.getByText('Pipelinq integration', { exact: false })
+			.first()
 		await expect(heading).toBeVisible({ timeout: 10_000 })
 	})
 
@@ -81,7 +84,9 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 	 * THEN the request reaches the backend (no client-side validation
 	 * error) and the form remains rendered for follow-up actions.
 	 */
-	test('admin can fill endpoint + token without client validation errors', async ({ page }) => {
+	test('admin can fill endpoint + token without client validation errors', async ({
+		page,
+	}) => {
 		// Find inputs by their associated <label> text — the labels are
 		// "API endpoint" + "API token" in PipelinqIntegration.vue.
 		const endpoint = page.getByLabel(/API endpoint/i).first()
@@ -116,7 +121,9 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		}
 
 		// Endpoint persists in the form after Save.
-		await expect(endpoint).toHaveValue('https://pipelinq.example.test/api', { timeout: 5_000 })
+		await expect(endpoint).toHaveValue('https://pipelinq.example.test/api', {
+			timeout: 5_000,
+		})
 	})
 
 	/**
@@ -133,7 +140,9 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 	 * PipelinqConfigTest::testConnection() suite.
 	 */
 	test('test-connection button is present and clickable', async ({ page }) => {
-		const testButton = page.getByRole('button', { name: /Test connection/i }).first()
+		const testButton = page
+			.getByRole('button', { name: /Test connection/i })
+			.first()
 
 		const visible = await testButton.isVisible().catch(() => false)
 		if (!visible) {
@@ -203,7 +212,9 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 
 		const reloadedEndpoint = page.getByLabel(/API endpoint/i).first()
 		if (await reloadedEndpoint.isVisible().catch(() => false)) {
-			await expect(reloadedEndpoint).toHaveValue(persistedValue, { timeout: 5_000 })
+			await expect(reloadedEndpoint).toHaveValue(persistedValue, {
+				timeout: 5_000,
+			})
 		} else {
 			// Tolerant fallback if the panel did not mount after
 			// reload — assertion will surface as a UI-shell failure
@@ -211,5 +222,4 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 			await expect(page.getByRole('main')).toBeVisible()
 		}
 	})
-
 })

@@ -43,244 +43,232 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-final class UrenAlertService
-{
+final class UrenAlertService {
 
-    /**
-     * Quarter-end dates (MM-DD) at which an informative alert fires.
-     *
-     * @var array<int, string>
-     */
-    public const QUARTER_END_MD = [
-        '03-31',
-        '06-30',
-        '09-30',
-        '12-31',
-    ];
+	/**
+	 * Quarter-end dates (MM-DD) at which an informative alert fires.
+	 *
+	 * @var array<int, string>
+	 */
+	public const QUARTER_END_MD = [
+		'03-31',
+		'06-30',
+		'09-30',
+		'12-31',
+	];
 
-    /**
-     * Severity-rank of drempel-status (lower → less severe).
-     *
-     * @var array<string, int>
-     */
-    private const SEVERITY_RANK = [
-        'BEHAALD'  => 0,
-        'OP_KOERS' => 1,
-        'RISICO'   => 2,
-        'KRITIEK'  => 3,
-    ];
+	/**
+	 * Severity-rank of drempel-status (lower → less severe).
+	 *
+	 * @var array<string, int>
+	 */
+	private const SEVERITY_RANK = [
+		'ACHIEVED' => 0,
+		'ON_RATE' => 1,
+		'RISK' => 2,
+		'CRITICAL' => 3,
+	];
 
-    /**
-     * Construct the service.
-     *
-     * @param LoggerInterface $logger Diagnostics logger.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the service.
+	 *
+	 * @param LoggerInterface $logger Diagnostics logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Decide whether the given Y-m-d is a quarter-end date.
-     *
-     * @param string $datum Y-m-d.
-     *
-     * @return bool
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
-     */
-    public function isKwartaalEinde(string $datum): bool
-    {
-        return in_array(substr($datum, 5), self::QUARTER_END_MD, true);
+	/**
+	 * Decide whether the given Y-m-d is a quarter-end date.
+	 *
+	 * @param string $date Y-m-d.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+	 */
+	public function isKwartaalEinde(string $date): bool {
+		return in_array(substr($date, 5), self::QUARTER_END_MD, true);
+	}//end isKwartaalEinde()
 
-    }//end isKwartaalEinde()
+	/**
+	 * Whether the transition from old → new drempel-status is an omslag worth alerting on.
+	 *
+	 * Higher-severity transitions only (BEHAALD → OP_KOERS does NOT alert).
+	 *
+	 * @param string $oldStatus Previous status.
+	 * @param string $newStatus New status.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+	 */
+	public function isOmslag(string $oldStatus, string $newStatus): bool {
+		$oldRank = (self::SEVERITY_RANK[$oldStatus] ?? -1);
+		$newRank = (self::SEVERITY_RANK[$newStatus] ?? -1);
+		if ($oldRank < 0 || $newRank < 0) {
+			return false;
+		}
 
-    /**
-     * Whether the transition from old → new drempel-status is an omslag worth alerting on.
-     *
-     * Higher-severity transitions only (BEHAALD → OP_KOERS does NOT alert).
-     *
-     * @param string $oldStatus Previous status.
-     * @param string $newStatus New status.
-     *
-     * @return bool
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
-     */
-    public function isOmslag(string $oldStatus, string $newStatus): bool
-    {
-        $oldRank = (self::SEVERITY_RANK[$oldStatus] ?? -1);
-        $newRank = (self::SEVERITY_RANK[$newStatus] ?? -1);
-        if ($oldRank < 0 || $newRank < 0) {
-            return false;
-        }
+		return ($newRank > $oldRank && $newRank >= self::SEVERITY_RANK['RISK']);
+	}//end isOmslag()
 
-        return ($newRank > $oldRank && $newRank >= self::SEVERITY_RANK['RISICO']);
+	/**
+	 * Build a quarterly informative alert for an onderneming.
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear record.
+	 * @param string $date Quarter-end Y-m-d.
+	 *
+	 * @return array<string, mixed> UrenAlert shape.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+	 */
+	public function bouwKwartaalAlert(array $year, string $date): array {
+		if ($this->isKwartaalEinde(date: $date) === false) {
+			$this->logger->debug(
+				'UrenAlertService: bouwKwartaalAlert called on non-quarter-end date',
+				['date' => $date]
+			);
+		}
 
-    }//end isOmslag()
+		$alert = $this->seedAlert(
+			year: $year,
+			type: 'QUARTER_END',
+			urgency: 'INFO',
+			triggerDate: $date
+		);
 
-    /**
-     * Build a quarterly informative alert for an onderneming.
-     *
-     * @param array<string, mixed> $year  UrencriteriumYear record.
-     * @param string               $datum Quarter-end Y-m-d.
-     *
-     * @return array<string, mixed> UrenAlert shape.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
-     */
-    public function bouwKwartaalAlert(array $year, string $datum): array
-    {
-        if ($this->isKwartaalEinde(datum: $datum) === false) {
-            $this->logger->debug(
-                'UrenAlertService: bouwKwartaalAlert called on non-quarter-end date',
-                ['datum' => $datum]
-            );
-        }
+		$alert['actionPerspective'] = $this->handelingsperspectief(year: $year);
+		$this->logger->info(
+			'UrenAlertService: quarter-end alert built',
+			[
+				'enterpriseId' => $alert['enterpriseId'],
+				'date' => $date,
+				'thresholdStatus' => ($year['thresholdStatus'] ?? null),
+			]
+		);
 
-        $alert = $this->seedAlert(
-            year: $year,
-            type: 'KWARTAAL_EINDE',
-            urgentie: 'INFO',
-            aanleidingDatum: $datum
-        );
+		return $alert;
+	}//end bouwKwartaalAlert()
 
-        $alert['handelingsperspectief'] = $this->handelingsperspectief(year: $year);
-        $this->logger->info(
-            'UrenAlertService: quarter-end alert built',
-            [
-                'ondernemingId' => $alert['ondernemingId'],
-                'datum'         => $datum,
-                'drempelStatus' => ($year['drempelStatus'] ?? null),
-            ]
-        );
+	/**
+	 * Build an omslag alert (status drop).
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear record.
+	 * @param string $oldStatus Previous status.
+	 * @param string $newStatus New status.
+	 *
+	 * @return array<string, mixed> UrenAlert shape.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+	 */
+	public function bouwOmslagAlert(array $year, string $oldStatus, string $newStatus): array {
+		if ($this->isOmslag(oldStatus: $oldStatus, newStatus: $newStatus) === false) {
+			$this->logger->debug(
+				'UrenAlertService: bouwOmslagAlert called for non-escalating transition',
+				['oldStatus' => $oldStatus, 'newStatus' => $newStatus]
+			);
+		}
 
-        return $alert;
+		if ($newStatus === 'CRITICAL') {
+			$type = 'APPORTIONMENT_CRITICAL';
+			$urgency = 'CRITICAL';
+		} else {
+			$type = 'APPORTIONMENT_RISK';
+			$urgency = 'WARNING';
+		}
 
-    }//end bouwKwartaalAlert()
+		$alert = $this->seedAlert(
+			year: $year,
+			type: $type,
+			urgency: $urgency,
+			triggerDate: gmdate('Y-m-d')
+		);
 
-    /**
-     * Build an omslag alert (status drop).
-     *
-     * @param array<string, mixed> $year      UrencriteriumYear record.
-     * @param string               $oldStatus Previous status.
-     * @param string               $newStatus New status.
-     *
-     * @return array<string, mixed> UrenAlert shape.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
-     */
-    public function bouwOmslagAlert(array $year, string $oldStatus, string $newStatus): array
-    {
-        if ($this->isOmslag(oldStatus: $oldStatus, newStatus: $newStatus) === false) {
-            $this->logger->debug(
-                'UrenAlertService: bouwOmslagAlert called for non-escalating transition',
-                ['oldStatus' => $oldStatus, 'newStatus' => $newStatus]
-            );
-        }
+		$alert['cause'] = sprintf(
+			'Prognose-omslag van %s naar %s',
+			$oldStatus,
+			$newStatus
+		);
+		$alert['actionPerspective'] = $this->handelingsperspectief(year: $year);
 
-        if ($newStatus === 'KRITIEK') {
-            $type     = 'OMSLAG_KRITIEK';
-            $urgentie = 'KRITIEK';
-        } else {
-            $type     = 'OMSLAG_RISICO';
-            $urgentie = 'WAARSCHUWING';
-        }
+		return $alert;
+	}//end bouwOmslagAlert()
 
-        $alert = $this->seedAlert(
-            year: $year,
-            type: $type,
-            urgentie: $urgentie,
-            aanleidingDatum: gmdate('Y-m-d')
-        );
+	/**
+	 * Generate handelingsperspectief acties from the year-state. Returns ≥3 acties.
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear record.
+	 *
+	 * @return array<int, string> ≥3 acties.
+	 */
+	public function handelingsperspectief(array $year): array {
+		$prognose = (float)($year['forecastYearEnd'] ?? 0);
+		$norm = (int)($year['purposeNorm'] ?? 1225);
+		$deficit = max(0.0, ($norm - $prognose));
 
-        $alert['oorzaak'] = sprintf(
-            'Prognose-omslag van %s naar %s',
-            $oldStatus,
-            $newStatus
-        );
-        $alert['handelingsperspectief'] = $this->handelingsperspectief(year: $year);
+		$acties = [];
 
-        return $alert;
+		if ($deficit > 0.0) {
+			$acties[] = sprintf(
+				'Plan %s extra uur in de resterende maanden om de norm te halen',
+				rtrim(rtrim(number_format($deficit, 1, '.', ''), '0'), '.')
+			);
+			$acties[] = 'Heroverweeg geplande vakantie of niet-essentiële vrije dagen in Q4';
+			$acties[] = 'Registreer vergeten administratie- of scholing-uren uit Q1-Q3';
+		}
 
-    }//end bouwOmslagAlert()
+		// Acquisitie-suggestie based on prognose distance.
+		if ($prognose < $norm) {
+			$acties[] = 'Plan minimaal 20 acquisitie-uren om nieuwe opdrachten te genereren';
+		}
 
-    /**
-     * Generate handelingsperspectief acties from the year-state. Returns ≥3 acties.
-     *
-     * @param array<string, mixed> $year UrencriteriumYear record.
-     *
-     * @return array<int, string> ≥3 acties.
-     */
-    public function handelingsperspectief(array $year): array
-    {
-        $prognose = (float) ($year['prognoseEindeJaar'] ?? 0);
-        $norm     = (int) ($year['doelNorm'] ?? 1225);
-        $tekort   = max(0.0, ($norm - $prognose));
+		// Fiscaal verlies context (informational).
+		if ($deficit > 0.0) {
+			$acties[] = sprintf(
+				'Bij niet behalen norm: zelfstandigenaftrek + startersaftrek vervalt — '
+				. 'gederfd fiscaal voordeel circa %.0f EUR (indicatief, art. 3.76 Wet IB 2001)',
+				($deficit * 5.0)
+			);
+		}
 
-        $acties = [];
+		if (count($acties) < 3) {
+			// BEHAALD or OP_KOERS still gets informational acties.
+			$acties[] = 'Houd urenregistratie sluitend tot 31 december (zorgvuldigheidsbewijs)';
+			$acties[] = 'Genereer kwartaal-evidence-export ter borging (REQ-URC-010)';
+			$acties[] = 'Plan tijdig de IB-aangifte-integratie voor jaareinde';
+		}
 
-        if ($tekort > 0.0) {
-            $acties[] = sprintf(
-                'Plan %s extra uur in de resterende maanden om de norm te halen',
-                rtrim(rtrim(number_format($tekort, 1, '.', ''), '0'), '.')
-            );
-            $acties[] = 'Heroverweeg geplande vakantie of niet-essentiële vrije dagen in Q4';
-            $acties[] = 'Registreer vergeten administratie- of scholing-uren uit Q1-Q3';
-        }
+		return array_slice($acties, 0, 5);
+	}//end handelingsperspectief()
 
-        // Acquisitie-suggestie based on prognose distance.
-        if ($prognose < $norm) {
-            $acties[] = 'Plan minimaal 20 acquisitie-uren om nieuwe opdrachten te genereren';
-        }
+	/**
+	 * Build the canonical alert seed (type, urgentie, etc) shared across alert kinds.
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear record.
+	 * @param string $type Alert type enum.
+	 * @param string $urgency Alert urgency enum.
+	 * @param string $triggerDate Trigger date Y-m-d.
+	 *
+	 * @return array<string, mixed> Alert seed.
+	 */
+	private function seedAlert(array $year, string $type, string $urgency, string $triggerDate): array {
+		$norm = (int)($year['purposeNorm'] ?? 1225);
+		$prognose = (float)($year['forecastYearEnd'] ?? 0);
+		$deficit = max(0.0, ($norm - $prognose));
 
-        // Fiscaal verlies context (informational).
-        if ($tekort > 0.0) {
-            $acties[] = sprintf(
-                'Bij niet behalen norm: zelfstandigenaftrek + startersaftrek vervalt — '
-                .'gederfd fiscaal voordeel circa %.0f EUR (indicatief, art. 3.76 Wet IB 2001)',
-                ($tekort * 5.0)
-            );
-        }
+		return [
+			'administrationId' => (string)($year['administrationId'] ?? ''),
+			'enterpriseId' => (string)($year['enterpriseId'] ?? ''),
+			'type' => $type,
+			'urgency' => $urgency,
+			'triggerDate' => $triggerDate,
+			'currentHours' => (float)($year['currentHours'] ?? 0),
+			'norm' => $norm,
+			'forecastYearEnd' => $prognose,
+			'deficit' => $deficit,
+		];
 
-        if (count($acties) < 3) {
-            // BEHAALD or OP_KOERS still gets informational acties.
-            $acties[] = 'Houd urenregistratie sluitend tot 31 december (zorgvuldigheidsbewijs)';
-            $acties[] = 'Genereer kwartaal-evidence-export ter borging (REQ-URC-010)';
-            $acties[] = 'Plan tijdig de IB-aangifte-integratie voor jaareinde';
-        }
-
-        return array_slice($acties, 0, 5);
-
-    }//end handelingsperspectief()
-
-    /**
-     * Build the canonical alert seed (type, urgentie, etc) shared across alert kinds.
-     *
-     * @param array<string, mixed> $year            UrencriteriumYear record.
-     * @param string               $type            Alert type enum.
-     * @param string               $urgentie        Alert urgency enum.
-     * @param string               $aanleidingDatum Trigger date Y-m-d.
-     *
-     * @return array<string, mixed> Alert seed.
-     */
-    private function seedAlert(array $year, string $type, string $urgentie, string $aanleidingDatum): array
-    {
-        $norm     = (int) ($year['doelNorm'] ?? 1225);
-        $prognose = (float) ($year['prognoseEindeJaar'] ?? 0);
-        $tekort   = max(0.0, ($norm - $prognose));
-
-        return [
-            'administrationId'  => (string) ($year['administrationId'] ?? ''),
-            'ondernemingId'     => (string) ($year['ondernemingId'] ?? ''),
-            'type'              => $type,
-            'urgentie'          => $urgentie,
-            'aanleidingDatum'   => $aanleidingDatum,
-            'lopendeUren'       => (float) ($year['lopendeUren'] ?? 0),
-            'norm'              => $norm,
-            'prognoseEindeJaar' => $prognose,
-            'tekort'            => $tekort,
-        ];
-
-    }//end seedAlert()
+	}//end seedAlert()
 }//end class

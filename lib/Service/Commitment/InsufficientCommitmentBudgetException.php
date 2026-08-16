@@ -37,6 +37,5 @@ use RuntimeException;
  *
  * @spec openspec/changes/verplichtingen-commitment-accounting/tasks.md#task-1
  */
-class InsufficientCommitmentBudgetException extends RuntimeException
-{
+class InsufficientCommitmentBudgetException extends RuntimeException {
 }//end class

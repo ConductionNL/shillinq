@@ -51,122 +51,120 @@ use Psr\Log\LoggerInterface;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class InventoryValuationReportController extends Controller
-{
+class InventoryValuationReportController extends Controller {
 
-    /**
-     * Identifier validation pattern shared across parameters.
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\- ]{1,64}$/';
+	/**
+	 * Identifier validation pattern shared across parameters.
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\- ]{1,64}$/';
 
-    /**
-     * Construct the controller.
-     *
-     * @param IRequest                        $request The request object.
-     * @param InventoryValuationReportService $report  The valuation reporting service.
-     * @param AdministrationContextService    $context Admin-membership / IDOR context.
-     * @param LoggerInterface                 $logger  Logger; never leaks stack traces.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly InventoryValuationReportService $report,
-        private readonly AdministrationContextService $context,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Construct the controller.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param InventoryValuationReportService $report The valuation reporting service.
+	 * @param AdministrationContextService $context Admin-membership / IDOR context.
+	 * @param LoggerInterface $logger Logger; never leaks stack traces.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly InventoryValuationReportService $report,
+		private readonly AdministrationContextService $context,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the inventory value as of a cut-off date, optionally with an
-     * ageing breakdown for a single (sku, warehouse).
-     *
-     * Query parameters:
-     *   - administration_id (required) tenant scope.
-     *   - as_of             (required) ISO date (yyyy-mm-dd) or timestamp; inclusive.
-     *   - sku               (optional) restrict to one product.
-     *   - warehouse         (optional) restrict to one warehouse.
-     *   - ageing            (optional) '1' to include the ageing bucket breakdown (needs sku + warehouse).
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/inventory-accounting-correctness/spec.md
-     */
-    #[NoAdminRequired]
-    public function report(): JSONResponse
-    {
-        if ($this->context->currentUserId() === null) {
-            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Return the inventory value as of a cut-off date, optionally with an
+	 * ageing breakdown for a single (sku, warehouse).
+	 *
+	 * Query parameters:
+	 *   - administration_id (required) tenant scope.
+	 *   - as_of             (required) ISO date (yyyy-mm-dd) or timestamp; inclusive.
+	 *   - sku               (optional) restrict to one product.
+	 *   - warehouse         (optional) restrict to one warehouse.
+	 *   - ageing            (optional) '1' to include the ageing bucket breakdown (needs sku + warehouse).
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	#[NoAdminRequired]
+	public function report(): JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $asOf       = trim((string) $this->request->getParam('as_of', ''));
-        $sku        = trim((string) $this->request->getParam('sku', ''));
-        $warehouse  = trim((string) $this->request->getParam('warehouse', ''));
-        $wantAgeing = ((string) $this->request->getParam('ageing', '') === '1');
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		$asOf = trim((string)$this->request->getParam('as_of', ''));
+		$sku = trim((string)$this->request->getParam('sku', ''));
+		$warehouse = trim((string)$this->request->getParam('warehouse', ''));
+		$wantAgeing = ((string)$this->request->getParam('ageing', '') === '1');
 
-        if ($administrationId === '' || $asOf === '') {
-            return new JSONResponse(
-                ['error' => 'administration_id and as_of are required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($administrationId === '' || $asOf === '') {
+			return new JSONResponse(
+				['error' => 'administration_id and as_of are required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if (preg_match(self::ID_PATTERN, $administrationId) !== 1
-            || preg_match('/^\d{4}-\d{2}-\d{2}([T ].*)?$/', $asOf) !== 1
-            || ($sku !== '' && preg_match(self::ID_PATTERN, $sku) !== 1)
-            || ($warehouse !== '' && preg_match(self::ID_PATTERN, $warehouse) !== 1)
-        ) {
-            return new JSONResponse(
-                ['error' => 'Invalid administration_id, as_of, sku or warehouse'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
+			|| preg_match('/^\d{4}-\d{2}-\d{2}([T ].*)?$/', $asOf) !== 1
+			|| ($sku !== '' && preg_match(self::ID_PATTERN, $sku) !== 1)
+			|| ($warehouse !== '' && preg_match(self::ID_PATTERN, $warehouse) !== 1)
+		) {
+			return new JSONResponse(
+				['error' => 'Invalid administration_id, as_of, sku or warehouse'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        try {
-            if ($this->context->canAccess(administrationId: $administrationId) === false) {
-                return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-            }
+		try {
+			if ($this->context->canAccess(administrationId: $administrationId) === false) {
+				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            $skuFilter = null;
-            if ($sku !== '') {
-                $skuFilter = $sku;
-            }
+			$skuFilter = null;
+			if ($sku !== '') {
+				$skuFilter = $sku;
+			}
 
-            $warehouseFilter = null;
-            if ($warehouse !== '') {
-                $warehouseFilter = $warehouse;
-            }
+			$warehouseFilter = null;
+			if ($warehouse !== '') {
+				$warehouseFilter = $warehouse;
+			}
 
-            $valuation = $this->report->valuationAsOf(
-                administrationId: $administrationId,
-                asOfDate: $asOf,
-                sku: $skuFilter,
-                warehouse: $warehouseFilter
-            );
+			$valuation = $this->report->valuationAsOf(
+				administrationId: $administrationId,
+				asOfDate: $asOf,
+				sku: $skuFilter,
+				warehouse: $warehouseFilter
+			);
 
-            $payload = ['valuation' => $valuation];
-            if ($wantAgeing === true && $sku !== '' && $warehouse !== '') {
-                $payload['ageing'] = $this->report->ageing(
-                    administrationId: $administrationId,
-                    asOfDate: $asOf,
-                    sku: $sku,
-                    warehouse: $warehouse
-                );
-            }
+			$payload = ['valuation' => $valuation];
+			if ($wantAgeing === true && $sku !== '' && $warehouse !== '') {
+				$payload['ageing'] = $this->report->ageing(
+					administrationId: $administrationId,
+					asOfDate: $asOf,
+					sku: $sku,
+					warehouse: $warehouse
+				);
+			}
 
-            return new JSONResponse($payload, Http::STATUS_OK);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'InventoryValuationReportController: failed to compute valuation report',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
+			return new JSONResponse($payload, Http::STATUS_OK);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'InventoryValuationReportController: failed to compute valuation report',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
 
-            return new JSONResponse(
-                ['error' => 'Failed to compute inventory valuation report'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+			return new JSONResponse(
+				['error' => 'Failed to compute inventory valuation report'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-    }//end report()
+	}//end report()
 }//end class

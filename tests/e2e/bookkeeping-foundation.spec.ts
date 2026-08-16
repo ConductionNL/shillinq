@@ -39,7 +39,9 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 		page.setViewportSize({ width: 1280, height: 800 })
 	})
 
-	test('Chart of Accounts (Grootboekschema) — index page mounts on /chart-of-accounts', async ({ page }) => {
+	test('Chart of Accounts (Grootboekschema) — index page mounts on /chart-of-accounts', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/chart-of-accounts')
 		await page.waitForLoadState('domcontentloaded')
 
@@ -57,7 +59,9 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('General Ledger (Grootboek) — index page mounts on /general-ledger', async ({ page }) => {
+	test('General Ledger (Grootboek) — index page mounts on /general-ledger', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/general-ledger')
 		await page.waitForLoadState('domcontentloaded')
 
@@ -71,7 +75,9 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Journals (Journaalposten) — index page mounts on /journals', async ({ page }) => {
+	test('Journals (Journaalposten) — index page mounts on /journals', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/journals')
 		await page.waitForLoadState('domcontentloaded')
 
@@ -85,7 +91,9 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Journals navigation entry is reachable from the Shillinq shell', async ({ page }) => {
+	test('Journals navigation entry is reachable from the Shillinq shell', async ({
+		page,
+	}) => {
 		// Start at the app root.
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
@@ -100,14 +108,18 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 		// The shell may render it under different markup depending on the
 		// renderer version, so accept anchor href OR navigation label.
 		const journalsLink = page
-			.locator('a[href*="/journals"], [data-testid*="journals" i], a:has-text("Journals"), a:has-text("Journaalposten")')
+			.locator(
+				'a[href*="/journals"], [data-testid*="journals" i], a:has-text("Journals"), a:has-text("Journaalposten")',
+			)
 			.first()
 
 		// Mounted means: either the link exists in the DOM (mounted by
 		// CnAppRoot) OR a navigation/sidebar element rendered at all (the
 		// dev container may not have the bookkeeping nav cluster expanded
 		// before the seed runs). Either way the SPA must stay on its URL.
-		await journalsLink.waitFor({ state: 'attached', timeout: 5_000 }).catch(() => {})
+		await journalsLink
+			.waitFor({ state: 'attached', timeout: 5_000 })
+			.catch(() => {})
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 })

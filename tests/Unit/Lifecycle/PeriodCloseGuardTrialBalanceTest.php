@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -35,144 +36,136 @@ use Psr\Log\LoggerInterface;
 /**
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class PeriodCloseGuardTrialBalanceTest extends TestCase
-{
-    /**
-     * @param array<int,array<string,mixed>> $periods FiscalPeriod rows.
-     * @param array<int,array<string,mixed>> $lines   GLLine rows.
-     *
-     * @return PeriodCloseGuard
-     */
-    private function buildGuard(array $periods, array $lines): PeriodCloseGuard
-    {
-        $stub = new class($periods, $lines) {
-            /**
-             * @var array<int,array<string,mixed>>
-             */
-            private array $periods;
+final class PeriodCloseGuardTrialBalanceTest extends TestCase {
+	/**
+	 * @param array<int,array<string,mixed>> $periods FiscalPeriod rows.
+	 * @param array<int,array<string,mixed>> $lines GLLine rows.
+	 *
+	 * @return PeriodCloseGuard
+	 */
+	private function buildGuard(array $periods, array $lines): PeriodCloseGuard {
+		$stub = new class($periods, $lines) {
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $periods;
 
-            /**
-             * @var array<int,array<string,mixed>>
-             */
-            private array $lines;
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $lines;
 
-            /**
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * @param array<int,array<string,mixed>> $periods FiscalPeriod rows.
-             * @param array<int,array<string,mixed>> $lines   GLLine rows.
-             */
-            public function __construct(array $periods, array $lines)
-            {
-                $this->periods = $periods;
-                $this->lines    = $lines;
-            }//end __construct()
+			/**
+			 * @param array<int,array<string,mixed>> $periods FiscalPeriod rows.
+			 * @param array<int,array<string,mixed>> $lines GLLine rows.
+			 */
+			public function __construct(array $periods, array $lines) {
+				$this->periods = $periods;
+				$this->lines = $lines;
+			}//end __construct()
 
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $source  = ($this->schema === 'GLLine' ? $this->lines : $this->periods);
-                $filters = ($params['filters'] ?? []);
-                return array_values(
-                    array_filter(
-                        $source,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+			/**
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$source = ($this->schema === 'GLLine' ? $this->lines : $this->periods);
+				$filters = ($params['filters'] ?? []);
+				return array_values(
+					array_filter(
+						$source,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
-        };
+							return true;
+						}
+					)
+				);
+			}//end findAll()
+		};
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        return new PeriodCloseGuard(
-            container: $container,
-            appConfig: $appConfig,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		return new PeriodCloseGuard(
+			container: $container,
+			appConfig: $appConfig,
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end buildGuard()
+	}//end buildGuard()
 
-    /**
-     * Good path: total posted debits equal total posted credits.
-     *
-     * @return void
-     */
-    public function testBeginCloseAllowedWhenTrialBalanceBalances(): void
-    {
-        $guard = $this->buildGuard(
-            [['periodId' => '2026-01', 'administrationId' => 'adm-1']],
-            [
-                ['periodId' => '2026-01', 'side' => 'debit', 'amount' => 18500.40],
-                ['periodId' => '2026-01', 'side' => 'credit', 'amount' => 18500.40],
-            ]
-        );
+	/**
+	 * Good path: total posted debits equal total posted credits.
+	 *
+	 * @return void
+	 */
+	public function testBeginCloseAllowedWhenTrialBalanceBalances(): void {
+		$guard = $this->buildGuard(
+			[['periodId' => '2026-01', 'administrationId' => 'adm-1']],
+			[
+				['periodId' => '2026-01', 'side' => 'debit', 'amount' => 18500.40],
+				['periodId' => '2026-01', 'side' => 'credit', 'amount' => 18500.40],
+			]
+		);
 
-        $allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
-        self::assertTrue($allowed);
+		$allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
+		self::assertTrue($allowed);
 
-    }//end testBeginCloseAllowedWhenTrialBalanceBalances()
+	}//end testBeginCloseAllowedWhenTrialBalanceBalances()
 
-    /**
-     * Bad path: debits and credits differ — deny beginClose.
-     *
-     * @return void
-     */
-    public function testBeginCloseDeniedWhenTrialBalanceDoesNotBalance(): void
-    {
-        $guard = $this->buildGuard(
-            [['periodId' => '2026-01', 'administrationId' => 'adm-1']],
-            [
-                ['periodId' => '2026-01', 'side' => 'debit', 'amount' => 20000.00],
-                ['periodId' => '2026-01', 'side' => 'credit', 'amount' => 18500.40],
-            ]
-        );
+	/**
+	 * Bad path: debits and credits differ — deny beginClose.
+	 *
+	 * @return void
+	 */
+	public function testBeginCloseDeniedWhenTrialBalanceDoesNotBalance(): void {
+		$guard = $this->buildGuard(
+			[['periodId' => '2026-01', 'administrationId' => 'adm-1']],
+			[
+				['periodId' => '2026-01', 'side' => 'debit', 'amount' => 20000.00],
+				['periodId' => '2026-01', 'side' => 'credit', 'amount' => 18500.40],
+			]
+		);
 
-        $allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
-        self::assertFalse($allowed);
+		$allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
+		self::assertFalse($allowed);
 
-    }//end testBeginCloseDeniedWhenTrialBalanceDoesNotBalance()
+	}//end testBeginCloseDeniedWhenTrialBalanceDoesNotBalance()
 
-    /**
-     * A period with no posted GLLines yet is trivially balanced.
-     *
-     * @return void
-     */
-    public function testBeginCloseAllowedWithNoPostedLinesYet(): void
-    {
-        $guard = $this->buildGuard([['periodId' => '2026-01', 'administrationId' => 'adm-1']], []);
+	/**
+	 * A period with no posted GLLines yet is trivially balanced.
+	 *
+	 * @return void
+	 */
+	public function testBeginCloseAllowedWithNoPostedLinesYet(): void {
+		$guard = $this->buildGuard([['periodId' => '2026-01', 'administrationId' => 'adm-1']], []);
 
-        $allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
-        self::assertTrue($allowed);
+		$allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
+		self::assertTrue($allowed);
 
-    }//end testBeginCloseAllowedWithNoPostedLinesYet()
+	}//end testBeginCloseAllowedWithNoPostedLinesYet()
 }//end class

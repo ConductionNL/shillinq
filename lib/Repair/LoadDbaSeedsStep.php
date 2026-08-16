@@ -48,161 +48,157 @@ use Throwable;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class LoadDbaSeedsStep implements IRepairStep
-{
+class LoadDbaSeedsStep implements IRepairStep {
 
-    /**
-     * Absolute path to the canonical seed JSON (the register fragment).
-     *
-     * @var string
-     */
-    private string $seedPath;
+	/**
+	 * Absolute path to the canonical seed JSON (the register fragment).
+	 *
+	 * @var string
+	 */
+	private string $seedPath;
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config for the register slug lookup.
-     * @param LoggerInterface    $logger    Logger for diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-        $this->seedPath = __DIR__.'/../Settings/register.d/dba-compliance-marker.json';
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
+	 * @param IAppConfig $appConfig App config for the register slug lookup.
+	 * @param LoggerInterface $logger Logger for diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+		$this->seedPath = __DIR__ . '/../Settings/register.d/dba-compliance-marker.json';
+	}//end __construct()
 
-    /**
-     * Human-readable name of this repair step.
-     *
-     * @return string
-     *
-     * @spec openspec/specs/dba-compliance-marker/spec.md
-     */
-    public function getName(): string
-    {
-        return 'Seed DBAModelovereenkomst Belastingdienst-templates (dba-compliance-marker)';
-    }//end getName()
+	/**
+	 * Human-readable name of this repair step.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	public function getName(): string {
+		return 'Seed DBAModelovereenkomst Belastingdienst-templates (dba-compliance-marker)';
+	}//end getName()
 
-    /**
-     * Run the repair step (REQ-DBA-002).
-     *
-     * @param IOutput $output Progress output.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/dba-compliance-marker/spec.md
-     */
-    public function run(IOutput $output): void
-    {
-        $output->info('Seeding DBAModelovereenkomst Belastingdienst-templates...');
+	/**
+	 * Run the repair step (REQ-DBA-002).
+	 *
+	 * @param IOutput $output Progress output.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	public function run(IOutput $output): void {
+		$output->info('Seeding DBAModelovereenkomst Belastingdienst-templates...');
 
-        if (file_exists($this->seedPath) === false) {
-            $output->warning('DBA seed fragment not found at '.$this->seedPath.', skipping');
-            return;
-        }
+		if (file_exists($this->seedPath) === false) {
+			$output->warning('DBA seed fragment not found at ' . $this->seedPath . ', skipping');
+			return;
+		}
 
-        $content = file_get_contents($this->seedPath);
-        if ($content === false) {
-            $output->warning('Failed to read DBA seed fragment, skipping');
-            return;
-        }
+		$content = file_get_contents($this->seedPath);
+		if ($content === false) {
+			$output->warning('Failed to read DBA seed fragment, skipping');
+			return;
+		}
 
-        $data = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-            $output->warning('Failed to parse DBA seed fragment: '.json_last_error_msg());
-            return;
-        }
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
+			$output->warning('Failed to parse DBA seed fragment: ' . json_last_error_msg());
+			return;
+		}
 
-        $objects = ($data['objects'] ?? []);
-        if (is_array($objects) === false || $objects === []) {
-            $output->info('DBA seed fragment carries no objects; nothing to seed');
-            return;
-        }
+		$objects = ($data['objects'] ?? []);
+		if (is_array($objects) === false || $objects === []) {
+			$output->info('DBA seed fragment carries no objects; nothing to seed');
+			return;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (Throwable $e) {
-            $output->warning('OpenRegister ObjectService unavailable; skipping DBA seed: '.$e->getMessage());
-            return;
-        }
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (Throwable $e) {
+			$output->warning('OpenRegister ObjectService unavailable; skipping DBA seed: ' . $e->getMessage());
+			return;
+		}
 
-        $registerSlug = $this->register();
-        $seeded       = 0;
-        $skipped      = 0;
+		$registerSlug = $this->register();
+		$seeded = 0;
+		$skipped = 0;
 
-        foreach ($objects as $object) {
-            if (is_array($object) === false) {
-                continue;
-            }
+		foreach ($objects as $object) {
+			if (is_array($object) === false) {
+				continue;
+			}
 
-            $self   = (array) ($object['@self'] ?? []);
-            $schema = (string) ($self['schema'] ?? '');
-            $slug   = (string) ($self['slug'] ?? '');
-            if ($schema === '' || $slug === '') {
-                continue;
-            }
+			$self = (array)($object['@self'] ?? []);
+			$schema = (string)($self['schema'] ?? '');
+			$slug = (string)($self['slug'] ?? '');
+			if ($schema === '' || $slug === '') {
+				continue;
+			}
 
-            if ($schema !== 'DBAModelovereenkomst') {
-                continue;
-            }
+			if ($schema !== 'DBAModelovereenkomst') {
+				continue;
+			}
 
-            try {
-                $existing = $objectService
-                    ->setRegister($registerSlug)
-                    ->setSchema($schema)
-                    ->findAll(['filters' => ['slug' => $slug], 'limit' => 1]);
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
+			try {
+				$existing = $objectService
+					->setRegister($registerSlug)
+					->setSchema($schema)
+					->findAll(['filters' => ['slug' => $slug], 'limit' => 1]);
+				if (empty($existing) === false) {
+					$skipped++;
+					continue;
+				}
 
-                $payload = $object;
-                unset($payload['@self']);
-                $payload['slug'] = $slug;
+				$payload = $object;
+				unset($payload['@self']);
+				$payload['slug'] = $slug;
 
-                // Runs in the installer/repair context where no web user is
-                // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
-                // seed persists instead of throwing "User 'Anonymous' does not have
-                // permission to 'create'" — mirrors the OR ImportHandler fix.
-                $objectService->saveObject(
-                    object: $payload,
-                    register: $registerSlug,
-                    schema: $schema,
-                    _rbac: false,
-                    _multitenancy: false,
-                );
-                $seeded++;
-            } catch (Throwable $e) {
-                $this->logger->warning(
-                    'DBA seed: failed to save record',
-                    ['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
-                );
-            }//end try
-        }//end foreach
+				// Runs in the installer/repair context where no web user is
+				// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+				// seed persists instead of throwing "User 'Anonymous' does not have
+				// permission to 'create'" — mirrors the OR ImportHandler fix.
+				$objectService->saveObject(
+					object: $payload,
+					register: $registerSlug,
+					schema: $schema,
+					_rbac: false,
+					_multitenancy: false,
+				);
+				$seeded++;
+			} catch (Throwable $e) {
+				$this->logger->warning(
+					'DBA seed: failed to save record',
+					['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
+				);
+			}//end try
+		}//end foreach
 
-        $output->info(
-            sprintf(
-                'DBA modelovereenkomst seed: %d created, %d skipped (already exist).',
-                $seeded,
-                $skipped,
-            )
-        );
-    }//end run()
+		$output->info(
+			sprintf(
+				'DBA modelovereenkomst seed: %d created, %d skipped (already exist).',
+				$seeded,
+				$skipped,
+			)
+		);
+	}//end run()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

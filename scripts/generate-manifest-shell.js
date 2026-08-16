@@ -111,7 +111,8 @@ function buildShellFragment(fragment, fragmentStem) {
  * @return {{fragments: Array<object>}} The shell document.
  */
 function generateShellDocument(dir = MANIFEST_D_DIR) {
-	const files = fs.readdirSync(dir)
+	const files = fs
+		.readdirSync(dir)
 		.filter((name) => name.endsWith('.json'))
 		.sort()
 
@@ -137,8 +138,8 @@ function main() {
 	// eslint-disable-next-line no-console
 	console.log(
 		`[generate-manifest-shell] wrote ${SHELL_OUTPUT_PATH} `
-		+ `(${shell.fragments.length} fragments, `
-		+ `${shell.fragments.reduce((n, f) => n + f.pages.length, 0)} pages)`,
+			+ `(${shell.fragments.length} fragments, `
+			+ `${shell.fragments.reduce((n, f) => n + f.pages.length, 0)} pages)`,
 	)
 }
 
@@ -146,4 +147,9 @@ if (require.main === module) {
 	main()
 }
 
-module.exports = { generateShellDocument, buildShellFragment, slimPages, SHELL_PAGE_KEYS }
+module.exports = {
+	generateShellDocument,
+	buildShellFragment,
+	slimPages,
+	SHELL_PAGE_KEYS,
+}

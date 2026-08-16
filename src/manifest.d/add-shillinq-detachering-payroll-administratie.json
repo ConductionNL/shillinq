@@ -4,34 +4,25 @@
 			"id": "Bookkeeping",
 			"children": [
 				{
-					"id": "DetacheringPayroll",
-					"label": "Secondment & payroll",
-					"icon": "CashSync",
-					"order": 45,
-					"featureFlag": "mkb-detachering",
-					"children": [
-						{
-							"id": "SalarisFeed",
-							"label": "Salary feeds",
-							"icon": "FileImportOutline",
-							"route": "SalarisFeed",
-							"order": 10
-						},
-						{
-							"id": "OpdrachtgeversVerklaringen",
-							"label": "Client statements",
-							"icon": "AccountStarOutline",
-							"route": "OpdrachtgeversVerklaringen",
-							"order": 20
-						},
-						{
-							"id": "IB47Jaarbatch",
-							"label": "IB47 annual batch",
-							"icon": "FileDocumentOutline",
-							"route": "IB47Jaarbatch",
-							"order": 30
-						}
-					]
+					"id": "SalarisFeed",
+					"label": "Salary feeds",
+					"icon": "FileImportOutline",
+					"route": "SalarisFeed",
+					"order": 45
+				},
+				{
+					"id": "OpdrachtgeversVerklaringen",
+					"label": "Client statements",
+					"icon": "AccountStarOutline",
+					"route": "OpdrachtgeversVerklaringen",
+					"order": 46
+				},
+				{
+					"id": "IB47Jaarbatch",
+					"label": "IB47 annual batch",
+					"icon": "FileDocumentOutline",
+					"route": "IB47Jaarbatch",
+					"order": 47
 				}
 			]
 		}
@@ -41,20 +32,16 @@
 			"id": "SalarisFeed",
 			"route": "/bookkeeping/detachering-payroll/salaris-feeds",
 			"type": "index",
-			"title": "Salary feeds",
-			"featureFlag": "mkb-detachering",
-			"config": {
+			"title": "Salary feeds",			"config": {
 				"register": "shillinq",
-				"schema": "SalarisFeed",
-				"featureFlag": "mkb-detachering",
-				"columns": [
+				"schema": "SalarisFeed",				"columns": [
 					{
 						"key": "salarisbureauSlug",
 						"label": "Payroll bureau",
 						"sortable": true
 					},
 					{
-						"key": "loontijdvak",
+						"key": "payrollPeriod",
 						"label": "Pay period",
 						"sortable": true
 					},
@@ -64,7 +51,7 @@
 						"sortable": true
 					},
 					{
-						"key": "loonkosten",
+						"key": "payrollCost",
 						"label": "Labour costs (EUR)",
 						"sortable": true
 					},
@@ -82,13 +69,9 @@
 			"id": "SalarisFeedDetail",
 			"route": "/bookkeeping/detachering-payroll/salaris-feeds/:id",
 			"type": "detail",
-			"title": "Salary feed",
-			"featureFlag": "mkb-detachering",
-			"config": {
+			"title": "Salary feed",			"config": {
 				"register": "shillinq",
-				"schema": "SalarisFeed",
-				"featureFlag": "mkb-detachering",
-				"_note": "IMPORT TRANSACTION (one employee's payroll line imported from an external salarisbureau, ready to book). The body is the cost breakdown that gets posted — labour cost, net pay, social contributions, payroll tax, pension — with the import status and the resulting journal-entry reference. lifecycleActions drive the import → booked transition. No child schema and no comms (a feed line is data, not a person to email). Audit trail sidebar is the import/booking provenance.",
+				"schema": "SalarisFeed",				"_note": "IMPORT TRANSACTION (one employee's payroll line imported from an external salarisbureau, ready to book). The body is the cost breakdown that gets posted — labour cost, net pay, social contributions, payroll tax, pension — with the import status and the resulting journal-entry reference. lifecycleActions drive the import → booked transition. No child schema and no comms (a feed line is data, not a person to email). Audit trail sidebar is the import/booking provenance.",
 				"fields": [
 					{
 						"key": "salarisbureauSlug",
@@ -96,7 +79,7 @@
 						"type": "string"
 					},
 					{
-						"key": "loontijdvak",
+						"key": "payrollPeriod",
 						"label": "Pay period",
 						"type": "string"
 					},
@@ -111,12 +94,12 @@
 						"type": "string"
 					},
 					{
-						"key": "loonkosten",
+						"key": "payrollCost",
 						"label": "Labour costs (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "nettoloon",
+						"key": "netPay",
 						"label": "Net pay (EUR)",
 						"type": "number"
 					},
@@ -126,7 +109,7 @@
 						"type": "number"
 					},
 					{
-						"key": "loonheffing",
+						"key": "payrollTax",
 						"label": "Payroll tax (EUR)",
 						"type": "number"
 					},
@@ -179,35 +162,31 @@
 			"id": "OpdrachtgeversVerklaringen",
 			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen",
 			"type": "index",
-			"title": "Client statements",
-			"featureFlag": "mkb-detachering",
-			"config": {
+			"title": "Client statements",			"config": {
 				"register": "shillinq",
-				"schema": "OpdrachtgeversVerklaring",
-				"featureFlag": "mkb-detachering",
-				"columns": [
+				"schema": "OpdrachtgeversVerklaring",				"columns": [
 					{
-						"key": "zzpNaam",
+						"key": "freelancerName",
 						"label": "Freelancer",
 						"sortable": true
 					},
 					{
-						"key": "looptijdStart",
+						"key": "termStart",
 						"label": "Start date",
 						"sortable": true
 					},
 					{
-						"key": "looptijdEind",
+						"key": "termEnd",
 						"label": "End date",
 						"sortable": true
 					},
 					{
-						"key": "verklaringStatus",
+						"key": "declarationStatus",
 						"label": "Status",
 						"sortable": true
 					},
 					{
-						"key": "risicoBeoordeling",
+						"key": "riskAssessment",
 						"label": "Risk assessment",
 						"sortable": true
 					}
@@ -220,13 +199,9 @@
 			"id": "OpdrachtgeversVerklaringDetail",
 			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen/:id",
 			"type": "detail",
-			"title": "Client statement",
-			"featureFlag": "mkb-detachering",
-			"config": {
+			"title": "Client statement",			"config": {
 				"register": "shillinq",
-				"schema": "OpdrachtgeversVerklaring",
-				"featureFlag": "mkb-detachering",
-				"_note": "DBA CLIENT STATEMENT (the opdrachtgeversverklaring that fixes the freelancer relationship and its false-self-employment risk). The body carries the assignment, term, model agreement, risk assessment and the generated statement-document link. The existing generate-document action + lifecycleActions confirm the agreement and produce the doc via docudesk. It is a compliance artefact, not correspondence, so no email/calendar; the audit trail sidebar is the who-signed-off record for a labour-law document.",
+				"schema": "OpdrachtgeversVerklaring",				"_note": "DBA CLIENT STATEMENT (the opdrachtgeversverklaring that fixes the freelancer relationship and its false-self-employment risk). The body carries the assignment, term, model agreement, risk assessment and the generated statement-document link. The existing generate-document action + lifecycleActions confirm the agreement and produce the doc via docudesk. It is a compliance artefact, not correspondence, so no email/calendar; the audit trail sidebar is the who-signed-off record for a labour-law document.",
 				"fields": [
 					{
 						"key": "zzpId",
@@ -234,27 +209,27 @@
 						"type": "string"
 					},
 					{
-						"key": "zzpNaam",
+						"key": "freelancerName",
 						"label": "Freelancer name",
 						"type": "string"
 					},
 					{
-						"key": "opdrachtBeschrijving",
+						"key": "assignmentDescription",
 						"label": "Assignment description",
 						"type": "string"
 					},
 					{
-						"key": "looptijdStart",
+						"key": "termStart",
 						"label": "Start date",
 						"type": "date"
 					},
 					{
-						"key": "looptijdEind",
+						"key": "termEnd",
 						"label": "End date",
 						"type": "date"
 					},
 					{
-						"key": "verklaringStatus",
+						"key": "declarationStatus",
 						"label": "Status",
 						"type": "string"
 					},
@@ -264,12 +239,12 @@
 						"type": "string"
 					},
 					{
-						"key": "verklaringDocumentUri",
+						"key": "declarationDocumentUri",
 						"label": "Statement document",
 						"type": "link"
 					},
 					{
-						"key": "risicoBeoordeling",
+						"key": "riskAssessment",
 						"label": "Risk assessment",
 						"type": "string"
 					},
@@ -286,7 +261,7 @@
 						"label": "Generate document",
 						"icon": "FileDocumentEditOutline",
 						"visibleWhen": {
-							"field": "verklaringStatus",
+							"field": "declarationStatus",
 							"in": ["concept"]
 						},
 						"type": "lifecycle-transition",
@@ -321,30 +296,26 @@
 			"id": "IB47Jaarbatch",
 			"route": "/bookkeeping/detachering-payroll/ib47",
 			"type": "index",
-			"title": "IB47 annual batch",
-			"featureFlag": "mkb-detachering",
-			"config": {
+			"title": "IB47 annual batch",			"config": {
 				"register": "shillinq",
-				"schema": "IB47Record",
-				"featureFlag": "mkb-detachering",
-				"columns": [
+				"schema": "IB47Record",				"columns": [
 					{
-						"key": "belastingjaar",
+						"key": "taxYear",
 						"label": "Tax year",
 						"sortable": true
 					},
 					{
-						"key": "ontvangerNaam",
+						"key": "recipientName",
 						"label": "Recipient",
 						"sortable": true
 					},
 					{
-						"key": "betalingenTotaal",
+						"key": "paymentsTotal",
 						"label": "Total payments (EUR)",
 						"sortable": true
 					},
 					{
-						"key": "betalingTypeCode",
+						"key": "paymentTypeCode",
 						"label": "Type",
 						"sortable": true
 					},
@@ -362,26 +333,22 @@
 			"id": "IB47RecordDetail",
 			"route": "/bookkeeping/detachering-payroll/ib47/:id",
 			"type": "detail",
-			"title": "IB47 record",
-			"featureFlag": "mkb-detachering",
-			"config": {
+			"title": "IB47 record",			"config": {
 				"register": "shillinq",
-				"schema": "IB47Record",
-				"featureFlag": "mkb-detachering",
-				"_note": "IB47 TAX RECORD (a single third-party payment reported annually to the Belastingdienst — opgaaf van betalingen aan derden). The body is the reportable data: tax year, client, recipient (with encrypted BSN readable only to the payroll-officer role), address, total payments, type code and the dry-run flag/month used to validate before the real submission. A statutory record, not a correspondence, so no comms; the audit trail sidebar is the submission/dry-run history for a privacy-sensitive filing.",
+				"schema": "IB47Record",				"_note": "IB47 TAX RECORD (a single third-party payment reported annually to the Belastingdienst — opgaaf van betalingen aan derden). The body is the reportable data: tax year, client, recipient (with encrypted BSN readable only to the payroll-officer role), address, total payments, type code and the dry-run flag/month used to validate before the real submission. A statutory record, not a correspondence, so no comms; the audit trail sidebar is the submission/dry-run history for a privacy-sensitive filing.",
 				"fields": [
 					{
-						"key": "belastingjaar",
+						"key": "taxYear",
 						"label": "Tax year",
 						"type": "integer"
 					},
 					{
-						"key": "opdrachtgeverId",
+						"key": "clientId",
 						"label": "Client",
 						"type": "string"
 					},
 					{
-						"key": "ontvangerNaam",
+						"key": "recipientName",
 						"label": "Recipient name",
 						"type": "string"
 					},
@@ -397,12 +364,12 @@
 						"type": "string"
 					},
 					{
-						"key": "betalingenTotaal",
+						"key": "paymentsTotal",
 						"label": "Total payments (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "betalingTypeCode",
+						"key": "paymentTypeCode",
 						"label": "Payment type code",
 						"type": "string"
 					},

@@ -15,7 +15,12 @@
 		<div class="standards-policy__header">
 			<h2>{{ t('shillinq', 'Accounting standards') }}</h2>
 			<p class="standards-policy__intro">
-				{{ t('shillinq', 'Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.') }}
+				{{
+					t(
+						'shillinq',
+						'Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.',
+					)
+				}}
 			</p>
 		</div>
 
@@ -31,7 +36,7 @@
 					:data-testid="`standards-policy-row-${row.key}`">
 					<span class="standards-policy__rank">{{ index + 1 }}</span>
 					<NcCheckboxRadioSwitch
-						:model-value="row.enabled"
+						:modelValue="row.enabled"
 						type="switch"
 						@update:modelValue="setEnabled(index, $event)">
 						<span class="standards-policy__label">{{ row.label }}</span>
@@ -41,7 +46,13 @@
 						target="_blank"
 						rel="noopener noreferrer"
 						class="standards-policy__docs"
-						:aria-label="t('shillinq', 'Read about {standard} (opens in a new tab)', { standard: row.label })"
+						:aria-label="
+							t(
+								'shillinq',
+								'Read about {standard} (opens in a new tab)',
+								{ standard: row.label },
+							)
+						"
 						:title="t('shillinq', 'Read about this standard')">
 						<OpenInNew :size="16" />
 					</a>
@@ -67,8 +78,12 @@
 				</li>
 			</ul>
 
-			<div class="standards-policy__resolved" data-testid="standards-policy-resolved">
-				<span class="standards-policy__resolved-label">{{ t('shillinq', 'Resolved framework (highest enabled):') }}</span>
+			<div
+				class="standards-policy__resolved"
+				data-testid="standards-policy-resolved">
+				<span class="standards-policy__resolved-label">{{
+					t('shillinq', 'Resolved framework (highest enabled):')
+				}}</span>
 				<strong>{{ resolvedLabel }}</strong>
 			</div>
 
@@ -86,13 +101,13 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcCheckboxRadioSwitch, NcLoadingIcon } from '@nextcloud/vue'
-import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
+import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 
@@ -106,30 +121,106 @@ const DOCS_BASE = 'https://shillinq.conduction.nl/standards/'
  */
 const FRAMEWORKS = [
 	{ key: 'ifrs', label: 'IFRS / IAS (IASB)', docs: `${DOCS_BASE}ifrs` },
-	{ key: 'ifrs-eu', label: 'IFRS (EU-endorsed)', docs: `${DOCS_BASE}eu-national-gaap#eu-endorsed-ifrs` },
-	{ key: 'dutch-gaap', label: 'Dutch GAAP (BW Title 9 + RJ)', docs: `${DOCS_BASE}dutch-gaap` },
-	{ key: 'de-hgb', label: 'German HGB (+ SKR / DRS)', docs: `${DOCS_BASE}eu-national-gaap#german-hgb` },
-	{ key: 'fr-pcg', label: 'French PCG (ANC)', docs: `${DOCS_BASE}eu-national-gaap#french-pcg` },
-	{ key: 'it-oic', label: 'Italian GAAP (OIC)', docs: `${DOCS_BASE}eu-national-gaap#italian-oic` },
-	{ key: 'es-pgc', label: 'Spanish PGC (ICAC)', docs: `${DOCS_BASE}eu-national-gaap#spanish-pgc` },
-	{ key: 'dutch-tax', label: 'Dutch tax (goed koopmansgebruik)', docs: `${DOCS_BASE}dutch-gaap#deep-dive--goed-koopmansgebruik-fiscal-accounting` },
+	{
+		key: 'ifrs-eu',
+		label: 'IFRS (EU-endorsed)',
+		docs: `${DOCS_BASE}eu-national-gaap#eu-endorsed-ifrs`,
+	},
+	{
+		key: 'dutch-gaap',
+		label: 'Dutch GAAP (BW Title 9 + RJ)',
+		docs: `${DOCS_BASE}dutch-gaap`,
+	},
+	{
+		key: 'de-hgb',
+		label: 'German HGB (+ SKR / DRS)',
+		docs: `${DOCS_BASE}eu-national-gaap#german-hgb`,
+	},
+	{
+		key: 'fr-pcg',
+		label: 'French PCG (ANC)',
+		docs: `${DOCS_BASE}eu-national-gaap#french-pcg`,
+	},
+	{
+		key: 'it-oic',
+		label: 'Italian GAAP (OIC)',
+		docs: `${DOCS_BASE}eu-national-gaap#italian-oic`,
+	},
+	{
+		key: 'es-pgc',
+		label: 'Spanish PGC (ICAC)',
+		docs: `${DOCS_BASE}eu-national-gaap#spanish-pgc`,
+	},
+	{
+		key: 'dutch-tax',
+		label: 'Dutch tax (goed koopmansgebruik)',
+		docs: `${DOCS_BASE}dutch-gaap#deep-dive--goed-koopmansgebruik-fiscal-accounting`,
+	},
 	{ key: 'us-gaap', label: 'US GAAP (FASB ASC)', docs: `${DOCS_BASE}us-gaap` },
-	{ key: 'us-tax-basis', label: 'US income-tax basis (IRC)', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
-	{ key: 'us-cash-basis', label: 'US cash basis (OCBOA)', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
-	{ key: 'us-modified-cash', label: 'US modified-cash basis', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
-	{ key: 'us-frf-smes', label: 'US FRF for SMEs (AICPA)', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
-	{ key: 'ipsas', label: 'IPSAS (public sector)', docs: `${DOCS_BASE}public-sector` },
-	{ key: 'bbv', label: 'Dutch BBV (municipal)', docs: `${DOCS_BASE}public-sector#dutch-bbv` },
-	{ key: 'us-gasb', label: 'US GASB (state & local gov)', docs: `${DOCS_BASE}public-sector#us-gasb` },
-	{ key: 'us-fasab', label: 'US FASAB (federal gov)', docs: `${DOCS_BASE}public-sector#us-fasab` },
-	{ key: 'esrs', label: 'ESRS (CSRD sustainability)', docs: `${DOCS_BASE}sustainability` },
-	{ key: 'ifrs-sustainability', label: 'IFRS S1 / S2 (ISSB)', docs: `${DOCS_BASE}sustainability#ifrs-sustainability-issb` },
+	{
+		key: 'us-tax-basis',
+		label: 'US income-tax basis (IRC)',
+		docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa`,
+	},
+	{
+		key: 'us-cash-basis',
+		label: 'US cash basis (OCBOA)',
+		docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa`,
+	},
+	{
+		key: 'us-modified-cash',
+		label: 'US modified-cash basis',
+		docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa`,
+	},
+	{
+		key: 'us-frf-smes',
+		label: 'US FRF for SMEs (AICPA)',
+		docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa`,
+	},
+	{
+		key: 'ipsas',
+		label: 'IPSAS (public sector)',
+		docs: `${DOCS_BASE}public-sector`,
+	},
+	{
+		key: 'bbv',
+		label: 'Dutch BBV (municipal)',
+		docs: `${DOCS_BASE}public-sector#dutch-bbv`,
+	},
+	{
+		key: 'us-gasb',
+		label: 'US GASB (state & local gov)',
+		docs: `${DOCS_BASE}public-sector#us-gasb`,
+	},
+	{
+		key: 'us-fasab',
+		label: 'US FASAB (federal gov)',
+		docs: `${DOCS_BASE}public-sector#us-fasab`,
+	},
+	{
+		key: 'esrs',
+		label: 'ESRS (CSRD sustainability)',
+		docs: `${DOCS_BASE}sustainability`,
+	},
+	{
+		key: 'ifrs-sustainability',
+		label: 'IFRS S1 / S2 (ISSB)',
+		docs: `${DOCS_BASE}sustainability#ifrs-sustainability-issb`,
+	},
 ]
 
 export default {
 	name: 'StandardsPolicyEditor',
 
-	components: { NcButton, NcCheckboxRadioSwitch, NcLoadingIcon, ArrowUp, ArrowDown, ContentSave, OpenInNew },
+	components: {
+		NcButton,
+		NcCheckboxRadioSwitch,
+		NcLoadingIcon,
+		ArrowUp,
+		ArrowDown,
+		ContentSave,
+		OpenInNew,
+	},
 
 	data() {
 		return {
@@ -160,36 +251,51 @@ export default {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+					),
 					{ params: { _limit: 1 } },
 				)
 				const rows = response.data?.results ?? response.data?.objects ?? []
-				const policy = Array.isArray(rows) && rows.length > 0 ? rows[0] : null
+				const policy =
+					Array.isArray(rows) && rows.length > 0 ? rows[0] : null
 				if (policy) {
 					this.recordId = policy['@self']?.id ?? policy.id ?? null
-					this.applyPolicy(Array.isArray(policy.frameworks) ? policy.frameworks : [])
+					this.applyPolicy(
+						Array.isArray(policy.frameworks) ? policy.frameworks : [],
+					)
 				}
 			} catch (e) {
 				// No saved policy yet (or the schema is not seeded) — start from
 				// the default catalogue. This is the expected first-use state, so
 				// it is not surfaced as an error.
 				// eslint-disable-next-line no-console
-				console.debug('[StandardsPolicyEditor] no existing policy; using defaults', e)
+				console.debug(
+					'[StandardsPolicyEditor] no existing policy; using defaults',
+					e,
+				)
 			} finally {
 				this.loading = false
 			}
 		},
 
-		/** Merge a persisted frameworks[] list into rows, ordered by precedence. */
+		/**
+		 * Merge a persisted frameworks[] list into rows, ordered by precedence.
+		 *
+		 * @param saved
+		 */
 		applyPolicy(saved) {
 			const byKey = new Map(saved.map((f) => [f.key, f]))
 			const precedenceOf = (key) => {
 				const p = byKey.get(key)?.precedence
 				return Number.isFinite(p) ? p : Number.MAX_SAFE_INTEGER
 			}
-			this.rows = FRAMEWORKS
-				.map((f) => ({ key: f.key, label: f.label, docs: f.docs, enabled: byKey.get(f.key)?.enabled === true }))
-				.sort((a, b) => precedenceOf(a.key) - precedenceOf(b.key))
+			this.rows = FRAMEWORKS.map((f) => ({
+				key: f.key,
+				label: f.label,
+				docs: f.docs,
+				enabled: byKey.get(f.key)?.enabled === true,
+			})).sort((a, b) => precedenceOf(a.key) - precedenceOf(b.key))
 		},
 
 		setEnabled(index, value) {
@@ -227,15 +333,22 @@ export default {
 			try {
 				if (this.recordId) {
 					await axios.put(
-						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`),
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
+						),
 						payload,
 					)
 				} else {
 					const response = await axios.post(
-						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+						generateUrl(
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+						),
 						payload,
 					)
-					this.recordId = response.data?.['@self']?.id ?? response.data?.id ?? this.recordId
+					this.recordId =
+						response.data?.['@self']?.id
+						?? response.data?.id
+						?? this.recordId
 				}
 				showSuccess(this.t('shillinq', 'Standards policy saved.'))
 			} catch (e) {

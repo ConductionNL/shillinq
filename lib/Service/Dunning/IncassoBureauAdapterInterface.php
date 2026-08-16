@@ -33,24 +33,23 @@ namespace OCA\Shillinq\Service\Dunning;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
  */
-interface IncassoBureauAdapterInterface
-{
-    /**
-     * POST a dossier bundle to the configured incasso bureau.
-     *
-     * Implementations MUST treat the bundle as the source of truth for the
-     * handover: it carries the invoice header, every DunningRun, the latest
-     * IncassoKostenBerekening, any DunningPauseDispute events, and the
-     * evidenceRefs URIs needed to satisfy the bureau's Wki / Wsnp claims.
-     *
-     * @param string              $administrationId Administration scope.
-     * @param string              $factuurId        Invoice FK (for back-correlation).
-     * @param array<string,mixed> $dossier          The dossier bundle (composed by IncassoDossierComposer).
-     *
-     * @return DunningChannelSendResult The dispatch attempt outcome. On success the
-     *                                  `extras` array MUST carry `dossierId` (provider id).
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
-     */
-    public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult;
+interface IncassoBureauAdapterInterface {
+	/**
+	 * POST a dossier bundle to the configured incasso bureau.
+	 *
+	 * Implementations MUST treat the bundle as the source of truth for the
+	 * handover: it carries the invoice header, every DunningRun, the latest
+	 * IncassoKostenBerekening, any DunningPauseDispute events, and the
+	 * evidenceRefs URIs needed to satisfy the bureau's Wki / Wsnp claims.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $invoiceId Invoice FK (for back-correlation).
+	 * @param array<string,mixed> $dossier The dossier bundle (composed by IncassoDossierComposer).
+	 *
+	 * @return DunningChannelSendResult The dispatch attempt outcome. On success the
+	 *                                  `extras` array MUST carry `dossierId` (provider id).
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+	 */
+	public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult;
 }//end interface

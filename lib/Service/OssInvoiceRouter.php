@@ -40,55 +40,52 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-class OssInvoiceRouter
-{
-    /**
-     * Construct the router with the OSS-destination predicate.
-     *
-     * @param OssRateResolver $rateResolver Provides the EU-member-state predicate.
-     */
-    public function __construct(
-        private readonly OssRateResolver $rateResolver,
-    ) {
-    }//end __construct()
+class OssInvoiceRouter {
+	/**
+	 * Construct the router with the OSS-destination predicate.
+	 *
+	 * @param OssRateResolver $rateResolver Provides the EU-member-state predicate.
+	 */
+	public function __construct(
+		private readonly OssRateResolver $rateResolver,
+	) {
+	}//end __construct()
 
-    /**
-     * Route an invoice on customerType + destination + VAT-ID validity (REQ-OSS-015).
-     *
-     * Returns a decision array:
-     *  - route   : 'oss' | 'icp' | 'domestic'
-     *  - reason  : machine code for the chosen route
-     *  - warning : optional warning code when a B2B sale is reclassified to B2C
-     *
-     * @param string $customerType        'b2c' or 'b2b'.
-     * @param string $destinationCountry  ISO 3166-1 alpha-2 destination country.
-     * @param string $vatValidationStatus 'valid' | 'invalid' | '' (only relevant for b2b).
-     *
-     * @return array{route: string, reason: string, warning: ?string}
-     *
-     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
-     */
-    public function route(string $customerType, string $destinationCountry, string $vatValidationStatus=''): array
-    {
-        $type = strtolower(trim($customerType));
+	/**
+	 * Route an invoice on customerType + destination + VAT-ID validity (REQ-OSS-015).
+	 *
+	 * Returns a decision array:
+	 *  - route   : 'oss' | 'icp' | 'domestic'
+	 *  - reason  : machine code for the chosen route
+	 *  - warning : optional warning code when a B2B sale is reclassified to B2C
+	 *
+	 * @param string $customerType 'b2c' or 'b2b'.
+	 * @param string $destinationCountry ISO 3166-1 alpha-2 destination country.
+	 * @param string $vatValidationStatus 'valid' | 'invalid' | '' (only relevant for b2b).
+	 *
+	 * @return array{route: string, reason: string, warning: ?string}
+	 *
+	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
+	 */
+	public function route(string $customerType, string $destinationCountry, string $vatValidationStatus = ''): array {
+		$type = strtolower(trim($customerType));
 
-        // Domestic NL and non-EU destinations never enter OSS (REQ-OSS-001).
-        if ($this->rateResolver->isOssDestination(countryCode: $destinationCountry) === false) {
-            return ['route' => 'domestic', 'reason' => 'oss.route.domestic', 'warning' => null];
-        }
+		// Domestic NL and non-EU destinations never enter OSS (REQ-OSS-001).
+		if ($this->rateResolver->isOssDestination(countryCode: $destinationCountry) === false) {
+			return ['route' => 'domestic', 'reason' => 'oss.route.domestic', 'warning' => null];
+		}
 
-        if ($type === 'b2b') {
-            if (strtolower(trim($vatValidationStatus)) === 'valid') {
-                // B2B with a validated VAT-ID: reverse-charge / ICP, never OSS (REQ-OSS-006).
-                return ['route' => 'icp', 'reason' => 'oss.route.reverse_charge', 'warning' => null];
-            }
+		if ($type === 'b2b') {
+			if (strtolower(trim($vatValidationStatus)) === 'valid') {
+				// B2B with a validated VAT-ID: reverse-charge / ICP, never OSS (REQ-OSS-006).
+				return ['route' => 'icp', 'reason' => 'oss.route.reverse_charge', 'warning' => null];
+			}
 
-            // B2B without a validated VAT-ID: reclassify to B2C, route to OSS, warn (REQ-OSS-006).
-            return ['route' => 'oss', 'reason' => 'oss.route.b2b_reclassified', 'warning' => 'oss.vatid.missing_reclassified_b2c'];
-        }
+			// B2B without a validated VAT-ID: reclassify to B2C, route to OSS, warn (REQ-OSS-006).
+			return ['route' => 'oss', 'reason' => 'oss.route.b2b_reclassified', 'warning' => 'oss.vatid.missing_reclassified_b2c'];
+		}
 
-        // B2C cross-border EU: OSS (REQ-OSS-015).
-        return ['route' => 'oss', 'reason' => 'oss.route.b2c', 'warning' => null];
-
-    }//end route()
+		// B2C cross-border EU: OSS (REQ-OSS-015).
+		return ['route' => 'oss', 'reason' => 'oss.route.b2c', 'warning' => null];
+	}//end route()
 }//end class

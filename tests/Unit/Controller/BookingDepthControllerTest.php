@@ -49,313 +49,298 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
  */
-final class BookingDepthControllerTest extends TestCase
-{
+final class BookingDepthControllerTest extends TestCase {
 
-    /**
-     * DI container mock (resolves the fake ObjectService).
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * DI container mock (resolves the fake ObjectService).
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Settings mock.
-     *
-     * @var SettingsService&MockObject
-     */
-    private SettingsService&MockObject $settings;
+	/**
+	 * Settings mock.
+	 *
+	 * @var SettingsService&MockObject
+	 */
+	private SettingsService&MockObject $settings;
 
-    /**
-     * Auth/context mock.
-     *
-     * @var AdministrationContextService&MockObject
-     */
-    private AdministrationContextService&MockObject $context;
+	/**
+	 * Auth/context mock.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
 
-    /**
-     * Request mock.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Request mock.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Set up shared mocks + real services.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->settings  = $this->createMock(SettingsService::class);
-        $this->context   = $this->createMock(AdministrationContextService::class);
-        $this->request   = $this->createMock(IRequest::class);
+	/**
+	 * Set up shared mocks + real services.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->settings = $this->createMock(SettingsService::class);
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->request = $this->createMock(IRequest::class);
 
-        $this->settings->method('isOpenRegisterAvailable')->willReturn(true);
-        $this->settings->method('getRegisterSlug')->willReturn('shillinq');
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the controller with the real service stack.
-     *
-     * @return BookingDepthController
-     */
-    private function makeController(): BookingDepthController
-    {
-        $logger = $this->createMock(LoggerInterface::class);
+	/**
+	 * Build the controller with the real service stack.
+	 *
+	 * @return BookingDepthController
+	 */
+	private function makeController(): BookingDepthController {
+		$logger = $this->createMock(LoggerInterface::class);
 
-        $cacheFactory = $this->createMock(ICacheFactory::class);
-        $cacheFactory->method('isLocalCacheAvailable')->willReturn(false);
-        $time = $this->createMock(ITimeFactory::class);
-        $time->method('getTime')->willReturn(strtotime('2029-01-01T00:00:00Z'));
+		$cacheFactory = $this->createMock(ICacheFactory::class);
+		$cacheFactory->method('isLocalCacheAvailable')->willReturn(false);
+		$time = $this->createMock(ITimeFactory::class);
+		$time->method('getTime')->willReturn(strtotime('2029-01-01T00:00:00Z'));
 
-        $slotService = new SlotService(
-            container: $this->createMock(ContainerInterface::class),
-            settings: $this->createMock(SettingsService::class),
-            cacheFactory: $cacheFactory,
-            time: $time,
-            logger: $logger,
-        );
+		$slotService = new SlotService(
+			container: $this->createMock(ContainerInterface::class),
+			settings: $this->createMock(SettingsService::class),
+			cacheFactory: $cacheFactory,
+			time: $time,
+			logger: $logger,
+		);
 
-        return new BookingDepthController(
-            request: $this->request,
-            container: $this->container,
-            settings: $this->settings,
-            context: $this->context,
-            noShowFee: new NoShowFeeCaptureService(
-                adapter: new LogDepositPaymentAdapter($logger),
-                logger: $logger,
-            ),
-            series: new RecurringSeriesService(slotService: $slotService, logger: $logger),
-            logger: $logger,
-        );
+		return new BookingDepthController(
+			request: $this->request,
+			container: $this->container,
+			settings: $this->settings,
+			context: $this->context,
+			noShowFee: new NoShowFeeCaptureService(
+				adapter: new LogDepositPaymentAdapter($logger),
+				logger: $logger,
+			),
+			series: new RecurringSeriesService(slotService: $slotService, logger: $logger),
+			logger: $logger,
+		);
 
-    }//end makeController()
+	}//end makeController()
 
-    /**
-     * A schema-aware fake ObjectService: findAll returns the canned records for
-     * the last setSchema(), saveObject echoes the payload back.
-     *
-     * @param array<string, array<int, array<string, mixed>>> $bySchema Records per schema.
-     *
-     * @return object
-     */
-    private function makeObjectService(array $bySchema): object
-    {
-        return new class($bySchema) {
+	/**
+	 * A schema-aware fake ObjectService: findAll returns the canned records for
+	 * the last setSchema(), saveObject echoes the payload back.
+	 *
+	 * @param array<string, array<int, array<string, mixed>>> $bySchema Records per schema.
+	 *
+	 * @return object
+	 */
+	private function makeObjectService(array $bySchema): object {
+		return new class($bySchema) {
+			/**
+			 * Canned records keyed by schema.
+			 *
+			 * @var array<string, array<int, array<string, mixed>>>
+			 */
+			public array $bySchema;
 
-            /**
-             * Canned records keyed by schema.
-             *
-             * @var array<string, array<int, array<string, mixed>>>
-             */
-            public array $bySchema;
+			/**
+			 * Current schema selected by setSchema().
+			 *
+			 * @var string
+			 */
+			public string $schema = '';
 
-            /**
-             * Current schema selected by setSchema().
-             *
-             * @var string
-             */
-            public string $schema = '';
+			/**
+			 * Persisted objects, for assertions.
+			 *
+			 * @var array<int, array{schema: string, object: array<string, mixed>}>
+			 */
+			public array $saved = [];
 
-            /**
-             * Persisted objects, for assertions.
-             *
-             * @var array<int, array{schema: string, object: array<string, mixed>}>
-             */
-            public array $saved = [];
+			/**
+			 * @param array<string, array<int, array<string, mixed>>> $bySchema Records per schema.
+			 */
+			public function __construct(array $bySchema) {
+				$this->bySchema = $bySchema;
+			}//end __construct()
 
-            /**
-             * @param array<string, array<int, array<string, mixed>>> $bySchema Records per schema.
-             */
-            public function __construct(array $bySchema)
-            {
-                $this->bySchema = $bySchema;
-            }//end __construct()
+			/**
+			 * @param string $_register Ignored.
+			 *
+			 * @return self
+			 */
+			public function setRegister(string $_register): self {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * @param string $_register Ignored.
-             *
-             * @return self
-             */
-            public function setRegister(string $_register): self
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * @param string $schema Selected schema.
+			 *
+			 * @return self
+			 */
+			public function setSchema(string $schema): self {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * @param string $schema Selected schema.
-             *
-             * @return self
-             */
-            public function setSchema(string $schema): self
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * @param array<string, mixed> $_filters Ignored.
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function findAll(array $_filters = []): array {
+				return ($this->bySchema[$this->schema] ?? []);
+			}//end findAll()
 
-            /**
-             * @param array<string, mixed> $_filters Ignored.
-             *
-             * @return array<int, array<string, mixed>>
-             */
-            public function findAll(array $_filters=[]): array
-            {
-                return ($this->bySchema[$this->schema] ?? []);
-            }//end findAll()
+			/**
+			 * @param array<string, mixed> $object Object payload.
+			 * @param string $register Register slug.
+			 * @param string $schema Schema slug.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function saveObject(array $object, string $register, string $schema): array {
+				$this->saved[] = ['schema' => $schema, 'object' => $object];
+				return $object;
+			}//end saveObject()
+		};
 
-            /**
-             * @param array<string, mixed> $object   Object payload.
-             * @param string               $register Register slug.
-             * @param string               $schema   Schema slug.
-             *
-             * @return array<string, mixed>
-             */
-            public function saveObject(array $object, string $register, string $schema): array
-            {
-                $this->saved[] = ['schema' => $schema, 'object' => $object];
-                return $object;
-            }//end saveObject()
-        };
+	}//end makeObjectService()
 
-    }//end makeObjectService()
+	/**
+	 * captureNoShow rejects an anonymous caller with 401.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowRejectsAnonymous(): void {
+		$this->context->method('currentUserId')->willReturn(null);
+		$response = $this->makeController()->captureNoShow('apt-1');
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-    /**
-     * captureNoShow rejects an anonymous caller with 401.
-     *
-     * @return void
-     */
-    public function testCaptureNoShowRejectsAnonymous(): void
-    {
-        $this->context->method('currentUserId')->willReturn(null);
-        $response = $this->makeController()->captureNoShow('apt-1');
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+	}//end testCaptureNoShowRejectsAnonymous()
 
-    }//end testCaptureNoShowRejectsAnonymous()
+	/**
+	 * captureNoShow rejects a caller without administration access with 403.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowRejectsForbidden(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->context->method('canAccess')->willReturn(false);
 
-    /**
-     * captureNoShow rejects a caller without administration access with 403.
-     *
-     * @return void
-     */
-    public function testCaptureNoShowRejectsForbidden(): void
-    {
-        $this->context->method('currentUserId')->willReturn('user-1');
-        $this->context->method('canAccess')->willReturn(false);
+		$objectService = $this->makeObjectService(
+			['Appointment' => [['appointmentId' => 'apt-1', 'administrationId' => 'admin-x']]]
+		);
+		$this->container->method('get')->willReturn($objectService);
 
-        $objectService = $this->makeObjectService(
-            ['Appointment' => [['appointmentId' => 'apt-1', 'administrationId' => 'admin-x']]]
-        );
-        $this->container->method('get')->willReturn($objectService);
+		$response = $this->makeController()->captureNoShow('apt-1');
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 
-        $response = $this->makeController()->captureNoShow('apt-1');
-        self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testCaptureNoShowRejectsForbidden()
 
-    }//end testCaptureNoShowRejectsForbidden()
+	/**
+	 * captureNoShow charges the defined fee and persists the appointment.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowChargesFeeAndPersists(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->context->method('canAccess')->willReturn(true);
 
-    /**
-     * captureNoShow charges the defined fee and persists the appointment.
-     *
-     * @return void
-     */
-    public function testCaptureNoShowChargesFeeAndPersists(): void
-    {
-        $this->context->method('currentUserId')->willReturn('user-1');
-        $this->context->method('canAccess')->willReturn(true);
+		$objectService = $this->makeObjectService(
+			[
+				'Appointment' => [
+					[
+						'appointmentId' => 'apt-1',
+						'administrationId' => 'admin-1',
+						'appointmentCost' => 10000,
+						'appliedPolicy' => ['noShowFee' => 100],
+					],
+				],
+			]
+		);
+		$this->container->method('get')->willReturn($objectService);
 
-        $objectService = $this->makeObjectService(
-            [
-                'Appointment' => [
-                    [
-                        'appointmentId'    => 'apt-1',
-                        'administrationId' => 'admin-1',
-                        'appointmentCost'  => 10000,
-                        'appliedPolicy'    => ['noShowFee' => 100],
-                    ],
-                ],
-            ]
-        );
-        $this->container->method('get')->willReturn($objectService);
+		$response = $this->makeController()->captureNoShow('apt-1');
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
-        $response = $this->makeController()->captureNoShow('apt-1');
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$body = $response->getData();
+		self::assertTrue($body['charged']);
+		self::assertSame(10000, $body['feeCents']);
+		self::assertSame(NoShowFeeCaptureService::STATUS_CAPTURED, $body['noShowFeeStatus']);
 
-        $body = $response->getData();
-        self::assertTrue($body['charged']);
-        self::assertSame(10000, $body['feeCents']);
-        self::assertSame(NoShowFeeCaptureService::STATUS_CAPTURED, $body['noShowFeeStatus']);
+		// The appointment was persisted with the no-show bookkeeping + status.
+		self::assertNotEmpty($objectService->saved);
+		$saved = $objectService->saved[0]['object'];
+		self::assertSame('no_show', $saved['status']);
+		self::assertSame(10000, $saved['noShowFeeAmount']);
 
-        // The appointment was persisted with the no-show bookkeeping + status.
-        self::assertNotEmpty($objectService->saved);
-        $saved = $objectService->saved[0]['object'];
-        self::assertSame('no_show', $saved['status']);
-        self::assertSame(10000, $saved['noShowFeeAmount']);
+	}//end testCaptureNoShowChargesFeeAndPersists()
 
-    }//end testCaptureNoShowChargesFeeAndPersists()
+	/**
+	 * createSeries generates + persists individual appointments for each valid
+	 * occurrence of the recurrence rule.
+	 *
+	 * @return void
+	 */
+	public function testCreateSeriesGeneratesAppointments(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->context->method('canAccess')->willReturn(true);
 
-    /**
-     * createSeries generates + persists individual appointments for each valid
-     * occurrence of the recurrence rule.
-     *
-     * @return void
-     */
-    public function testCreateSeriesGeneratesAppointments(): void
-    {
-        $this->context->method('currentUserId')->willReturn('user-1');
-        $this->context->method('canAccess')->willReturn(true);
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) {
+				$params = [
+					'administrationId' => 'admin-1',
+					'seriesId' => 'series-1',
+					'serviceId' => 'svc-yoga',
+					'resourceId' => 'res-a',
+					'startTime' => '2030-01-07T09:00:00Z',
+					'durationMinutes' => 60,
+					'recurrenceRule' => 'FREQ=WEEKLY;BYDAY=MO;COUNT=4',
+					'customerId' => 'cust-1',
+				];
+				return ($params[$key] ?? $default);
+			}
+		);
 
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null) {
-                $params = [
-                    'administrationId' => 'admin-1',
-                    'seriesId'         => 'series-1',
-                    'serviceId'        => 'svc-yoga',
-                    'resourceId'       => 'res-a',
-                    'startTime'        => '2030-01-07T09:00:00Z',
-                    'durationMinutes'  => 60,
-                    'recurrenceRule'   => 'FREQ=WEEKLY;BYDAY=MO;COUNT=4',
-                    'customerId'       => 'cust-1',
-                ];
-                return ($params[$key] ?? $default);
-            }
-        );
+		$objectService = $this->makeObjectService(
+			[
+				'Resource' => [['resourceId' => 'res-a', 'openingTime' => '09:00', 'closingTime' => '17:00']],
+				'Appointment' => [],
+			]
+		);
+		$this->container->method('get')->willReturn($objectService);
 
-        $objectService = $this->makeObjectService(
-            [
-                'Resource'    => [['resourceId' => 'res-a', 'openingTime' => '09:00', 'closingTime' => '17:00']],
-                'Appointment' => [],
-            ]
-        );
-        $this->container->method('get')->willReturn($objectService);
+		$response = $this->makeController()->createSeries();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
-        $response = $this->makeController()->createSeries();
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$body = $response->getData();
+		self::assertSame('series-1', $body['seriesId']);
+		self::assertSame(4, $body['generated']);
+		self::assertSame(0, $body['skipped']);
 
-        $body = $response->getData();
-        self::assertSame('series-1', $body['seriesId']);
-        self::assertSame(4, $body['generated']);
-        self::assertSame(0, $body['skipped']);
+		// One AppointmentSeries + four Appointment saves.
+		$schemasSaved = array_map(static fn (array $s): string => $s['schema'], $objectService->saved);
+		self::assertContains('AppointmentSeries', $schemasSaved);
+		self::assertSame(4, count(array_filter($schemasSaved, static fn (string $s): bool => $s === 'Appointment')));
 
-        // One AppointmentSeries + four Appointment saves.
-        $schemasSaved = array_map(static fn(array $s): string => $s['schema'], $objectService->saved);
-        self::assertContains('AppointmentSeries', $schemasSaved);
-        self::assertSame(4, count(array_filter($schemasSaved, static fn(string $s): bool => $s === 'Appointment')));
+	}//end testCreateSeriesGeneratesAppointments()
 
-    }//end testCreateSeriesGeneratesAppointments()
+	/**
+	 * createSeries rejects an anonymous caller with 401.
+	 *
+	 * @return void
+	 */
+	public function testCreateSeriesRejectsAnonymous(): void {
+		$this->context->method('currentUserId')->willReturn(null);
+		$response = $this->makeController()->createSeries();
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-    /**
-     * createSeries rejects an anonymous caller with 401.
-     *
-     * @return void
-     */
-    public function testCreateSeriesRejectsAnonymous(): void
-    {
-        $this->context->method('currentUserId')->willReturn(null);
-        $response = $this->makeController()->createSeries();
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-
-    }//end testCreateSeriesRejectsAnonymous()
+	}//end testCreateSeriesRejectsAnonymous()
 }//end class

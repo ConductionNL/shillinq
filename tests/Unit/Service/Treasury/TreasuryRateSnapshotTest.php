@@ -32,59 +32,52 @@ use PHPUnit\Framework\TestCase;
  *
  * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
  */
-final class TreasuryRateSnapshotTest extends TestCase
-{
+final class TreasuryRateSnapshotTest extends TestCase {
 
+	/**
+	 * Live snapshot: isLive() true, isDormant() false, asFloat() preserves
+	 * the decimal-string value as a float.
+	 *
+	 * @return void
+	 */
+	public function testLiveSnapshotIsLive(): void {
+		$s = new TreasuryRateSnapshot('1.1058', 'ECB', '2026-04-01', 'EURUSD', false, 'r-1');
 
-    /**
-     * Live snapshot: isLive() true, isDormant() false, asFloat() preserves
-     * the decimal-string value as a float.
-     *
-     * @return void
-     */
-    public function testLiveSnapshotIsLive(): void
-    {
-        $s = new TreasuryRateSnapshot('1.1058', 'ECB', '2026-04-01', 'EURUSD', false, 'r-1');
+		self::assertTrue($s->isLive());
+		self::assertFalse($s->isDormant());
+		self::assertSame(1.1058, $s->asFloat());
 
-        self::assertTrue($s->isLive());
-        self::assertFalse($s->isDormant());
-        self::assertSame(1.1058, $s->asFloat());
+	}//end testLiveSnapshotIsLive()
 
-    }//end testLiveSnapshotIsLive()
+	/**
+	 * Dormant snapshot: isDormant() true, asFloat() returns 0.0.
+	 *
+	 * @return void
+	 */
+	public function testDormantSnapshotIsDormantAndZero(): void {
+		$s = new TreasuryRateSnapshot('0', 'LOG_DEFERRED', '2026-04-01', 'EURUSD', true, 'log-1');
 
+		self::assertTrue($s->isDormant());
+		self::assertFalse($s->isLive());
+		self::assertSame(0.0, $s->asFloat());
 
-    /**
-     * Dormant snapshot: isDormant() true, asFloat() returns 0.0.
-     *
-     * @return void
-     */
-    public function testDormantSnapshotIsDormantAndZero(): void
-    {
-        $s = new TreasuryRateSnapshot('0', 'LOG_DEFERRED', '2026-04-01', 'EURUSD', true, 'log-1');
+	}//end testDormantSnapshotIsDormantAndZero()
 
-        self::assertTrue($s->isDormant());
-        self::assertFalse($s->isLive());
-        self::assertSame(0.0, $s->asFloat());
+	/**
+	 * Public readonly properties carry the construction values verbatim
+	 * (audit trail).
+	 *
+	 * @return void
+	 */
+	public function testPublicPropertiesAreCarriedThrough(): void {
+		$s = new TreasuryRateSnapshot('0.85', 'BLOOMBERG', '2026-04-01', 'GBPEUR', false, 'bb-99');
 
-    }//end testDormantSnapshotIsDormantAndZero()
+		self::assertSame('0.85', $s->value);
+		self::assertSame('BLOOMBERG', $s->source);
+		self::assertSame('2026-04-01', $s->asOf);
+		self::assertSame('GBPEUR', $s->rateCode);
+		self::assertSame('bb-99', $s->rateId);
 
-
-    /**
-     * Public readonly properties carry the construction values verbatim
-     * (audit trail).
-     *
-     * @return void
-     */
-    public function testPublicPropertiesAreCarriedThrough(): void
-    {
-        $s = new TreasuryRateSnapshot('0.85', 'BLOOMBERG', '2026-04-01', 'GBPEUR', false, 'bb-99');
-
-        self::assertSame('0.85', $s->value);
-        self::assertSame('BLOOMBERG', $s->source);
-        self::assertSame('2026-04-01', $s->asOf);
-        self::assertSame('GBPEUR', $s->rateCode);
-        self::assertSame('bb-99', $s->rateId);
-
-    }//end testPublicPropertiesAreCarriedThrough()
+	}//end testPublicPropertiesAreCarriedThrough()
 
 }//end class

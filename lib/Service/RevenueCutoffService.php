@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes per-contract revenue cut-off balances and waterfall rows.
@@ -56,212 +56,198 @@ use Psr\Container\ContainerInterface;
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
  */
-class RevenueCutoffService
-{
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface           $container  DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                   $appConfig  App config for the register slug.
-     * @param RevenueRecognitionCalculator $calculator Pure-logic IFRS 15 arithmetic helper.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly RevenueRecognitionCalculator $calculator,
-    ) {
-    }//end __construct()
+class RevenueCutoffService {
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param RevenueRecognitionCalculator $calculator Pure-logic IFRS 15 arithmetic helper.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly RevenueRecognitionCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the revenue cut-off for one administration (REQ-IFRS15-007, REQ-IFRS15-008).
-     *
-     * Returns a per-contract list of cut-off rows: cumulative recognised, cumulative
-     * billed (from the supplied $billedByContract map), the contract asset /
-     * liability split, the transaction price allocated, the remaining amount, and the
-     * period recognised. The job is idempotent — it derives balances from the current
-     * event + billing snapshot, so re-running on the same snapshot yields identical
-     * rows (REQ-IFRS15-007).
-     *
-     * @param string              $administrationId Administration scope (server-resolved).
-     * @param string              $periodEnd        Period-end date the cut-off covers (REQ-IFRS15-008).
-     * @param array<string,float> $billedByContract contractId => cumulative billed amount (from AR module).
-     *
-     * @return array{data: array<int,array<string,mixed>>, total: int}
-     *
-     * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
-     */
-    public function compute(string $administrationId, string $periodEnd, array $billedByContract=[]): array
-    {
-        $contracts  = $this->fetchContracts(administrationId: $administrationId);
-        $recognised = $this->recognisedByContract(administrationId: $administrationId, periodEnd: $periodEnd);
-        $allocated  = $this->allocatedByContract(administrationId: $administrationId);
+	/**
+	 * Compute the revenue cut-off for one administration (REQ-IFRS15-007, REQ-IFRS15-008).
+	 *
+	 * Returns a per-contract list of cut-off rows: cumulative recognised, cumulative
+	 * billed (from the supplied $billedByContract map), the contract asset /
+	 * liability split, the transaction price allocated, the remaining amount, and the
+	 * period recognised. The job is idempotent — it derives balances from the current
+	 * event + billing snapshot, so re-running on the same snapshot yields identical
+	 * rows (REQ-IFRS15-007).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $periodEnd Period-end date the cut-off covers (REQ-IFRS15-008).
+	 * @param array<string,float> $billedByContract contractId => cumulative billed amount (from AR module).
+	 *
+	 * @return array{data: array<int,array<string,mixed>>, total: int}
+	 *
+	 * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+	 */
+	public function compute(string $administrationId, string $periodEnd, array $billedByContract = []): array {
+		$contracts = $this->fetchContracts(administrationId: $administrationId);
+		$recognised = $this->recognisedByContract(administrationId: $administrationId, periodEnd: $periodEnd);
+		$allocated = $this->allocatedByContract(administrationId: $administrationId);
 
-        $rows        = [];
-        $contractIds = array_unique(array_merge(array_keys($contracts), array_keys($recognised)));
-        sort($contractIds);
-        foreach ($contractIds as $contractId) {
-            $cumulativeRecognised = (float) ($recognised[$contractId]['cumulative'] ?? 0.0);
-            $periodRecognised     = (float) ($recognised[$contractId]['period'] ?? 0.0);
-            $cumulativeBilled     = (float) ($billedByContract[$contractId] ?? 0.0);
-            $allocatedPrice       = (float) ($allocated[$contractId] ?? 0.0);
+		$rows = [];
+		$contractIds = array_unique(array_merge(array_keys($contracts), array_keys($recognised)));
+		sort($contractIds);
+		foreach ($contractIds as $contractId) {
+			$cumulativeRecognised = (float)($recognised[$contractId]['cumulative'] ?? 0.0);
+			$periodRecognised = (float)($recognised[$contractId]['period'] ?? 0.0);
+			$cumulativeBilled = (float)($billedByContract[$contractId] ?? 0.0);
+			$allocatedPrice = (float)($allocated[$contractId] ?? 0.0);
 
-            $split     = $this->calculator->contractAssetLiability(
-                cumulativeRecognised: $cumulativeRecognised,
-                cumulativeBilled: $cumulativeBilled
-            );
-            $remaining = $this->calculator->remainingAmount(
-                transactionPriceAllocated: $allocatedPrice,
-                cumulativeRecognised: $cumulativeRecognised
-            );
+			$split = $this->calculator->contractAssetLiability(
+				cumulativeRecognised: $cumulativeRecognised,
+				cumulativeBilled: $cumulativeBilled
+			);
+			$remaining = $this->calculator->remainingAmount(
+				transactionPriceAllocated: $allocatedPrice,
+				cumulativeRecognised: $cumulativeRecognised
+			);
 
-            $rows[] = [
-                'contractId'                => (string) $contractId,
-                'periodEnd'                 => $periodEnd,
-                'transactionPriceAllocated' => $allocatedPrice,
-                'cumulativeRecognised'      => $cumulativeRecognised,
-                'periodRecognised'          => $periodRecognised,
-                'cumulativeBilled'          => $cumulativeBilled,
-                'remainingAmount'           => $remaining,
-                'contractAsset'             => $split['asset'],
-                'contractLiability'         => $split['liability'],
-                'administrationId'          => $administrationId,
-            ];
-        }//end foreach
+			$rows[] = [
+				'contractId' => (string)$contractId,
+				'periodEnd' => $periodEnd,
+				'transactionPriceAllocated' => $allocatedPrice,
+				'cumulativeRecognised' => $cumulativeRecognised,
+				'periodRecognised' => $periodRecognised,
+				'cumulativeBilled' => $cumulativeBilled,
+				'remainingAmount' => $remaining,
+				'contractAsset' => $split['asset'],
+				'contractLiability' => $split['liability'],
+				'administrationId' => $administrationId,
+			];
+		}//end foreach
 
-        return [
-            'data'  => $rows,
-            'total' => count($rows),
-        ];
+		return [
+			'data' => $rows,
+			'total' => count($rows),
+		];
 
-    }//end compute()
+	}//end compute()
 
-    /**
-     * Fetch the administration's contracts keyed by contractNumber (REQ-IFRS15-007).
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return array<string,array<string,mixed>> contractNumber => Contract object.
-     */
-    private function fetchContracts(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $contracts     = $objectService
-            ->setRegister($this->register())
-            ->setSchema('Contract')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+	/**
+	 * Fetch the administration's contracts keyed by contractNumber (REQ-IFRS15-007).
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,array<string,mixed>> contractNumber => Contract object.
+	 */
+	private function fetchContracts(string $administrationId): array {
+		$contracts = $this->objectService
+			->setRegister($this->register())
+			->setSchema('Contract')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-        $byNumber = [];
-        foreach ($contracts as $contract) {
-            $number = (string) ($contract['contractNumber'] ?? '');
-            if ($number !== '') {
-                $byNumber[$number] = $contract;
-            }
-        }
+		$byNumber = [];
+		foreach ($contracts as $contract) {
+			$number = (string)($contract['contractNumber'] ?? '');
+			if ($number !== '') {
+				$byNumber[$number] = $contract;
+			}
+		}
 
-        return $byNumber;
+		return $byNumber;
+	}//end fetchContracts()
 
-    }//end fetchContracts()
+	/**
+	 * Sum recognised revenue per contract: cumulative through period end + this period (REQ-IFRS15-008).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $periodEnd Period-end date dividing cumulative-prior from this period.
+	 *
+	 * @return array<string,array{cumulative:float,period:float}> contractId => recognised amounts.
+	 */
+	private function recognisedByContract(string $administrationId, string $periodEnd): array {
+		$events = $this->objectService
+			->setRegister($this->register())
+			->setSchema('RevenueRecognitionEvent')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-    /**
-     * Sum recognised revenue per contract: cumulative through period end + this period (REQ-IFRS15-008).
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $periodEnd        Period-end date dividing cumulative-prior from this period.
-     *
-     * @return array<string,array{cumulative:float,period:float}> contractId => recognised amounts.
-     */
-    private function recognisedByContract(string $administrationId, string $periodEnd): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $events        = $objectService
-            ->setRegister($this->register())
-            ->setSchema('RevenueRecognitionEvent')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+		$byContract = [];
+		foreach ($events as $event) {
+			$contractId = (string)($event['contractId'] ?? '');
+			if ($contractId === '') {
+				continue;
+			}
 
-        $byContract = [];
-        foreach ($events as $event) {
-            $contractId = (string) ($event['contractId'] ?? '');
-            if ($contractId === '') {
-                continue;
-            }
+			$end = (string)($event['periodEnd'] ?? '');
+			// Events with periodEnd after the cut-off date are out of scope.
+			if ($end !== '' && $end > $periodEnd) {
+				continue;
+			}
 
-            $end = (string) ($event['periodEnd'] ?? '');
-            // Events with periodEnd after the cut-off date are out of scope.
-            if ($end !== '' && $end > $periodEnd) {
-                continue;
-            }
+			if (isset($byContract[$contractId]) === false) {
+				$byContract[$contractId] = ['cumulativeCents' => 0, 'periodCents' => 0];
+			}
 
-            if (isset($byContract[$contractId]) === false) {
-                $byContract[$contractId] = ['cumulativeCents' => 0, 'periodCents' => 0];
-            }
+			$cents = $this->calculator->toCents(amount: ($event['recognisedAmount'] ?? 0));
+			$byContract[$contractId]['cumulativeCents'] += $cents;
+			if ($end === $periodEnd) {
+				$byContract[$contractId]['periodCents'] += $cents;
+			}
+		}//end foreach
 
-            $cents = $this->calculator->toCents(amount: ($event['recognisedAmount'] ?? 0));
-            $byContract[$contractId]['cumulativeCents'] += $cents;
-            if ($end === $periodEnd) {
-                $byContract[$contractId]['periodCents'] += $cents;
-            }
-        }//end foreach
+		$result = [];
+		foreach ($byContract as $contractId => $amounts) {
+			$result[$contractId] = [
+				'cumulative' => $this->calculator->fromCents(cents: $amounts['cumulativeCents']),
+				'period' => $this->calculator->fromCents(cents: $amounts['periodCents']),
+			];
+		}
 
-        $result = [];
-        foreach ($byContract as $contractId => $amounts) {
-            $result[$contractId] = [
-                'cumulative' => $this->calculator->fromCents(cents: $amounts['cumulativeCents']),
-                'period'     => $this->calculator->fromCents(cents: $amounts['periodCents']),
-            ];
-        }
+		return $result;
+	}//end recognisedByContract()
 
-        return $result;
+	/**
+	 * Sum the allocated transaction price per contract from PriceAllocation rows (REQ-IFRS15-004).
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,float> contractId => total allocated price.
+	 */
+	private function allocatedByContract(string $administrationId): array {
+		$allocations = $this->objectService
+			->setRegister($this->register())
+			->setSchema('PriceAllocation')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-    }//end recognisedByContract()
+		$byContract = [];
+		foreach ($allocations as $allocation) {
+			$contractId = (string)($allocation['contractId'] ?? '');
+			if ($contractId === '') {
+				continue;
+			}
 
-    /**
-     * Sum the allocated transaction price per contract from PriceAllocation rows (REQ-IFRS15-004).
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return array<string,float> contractId => total allocated price.
-     */
-    private function allocatedByContract(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $allocations   = $objectService
-            ->setRegister($this->register())
-            ->setSchema('PriceAllocation')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+			$cents = $this->calculator->toCents(amount: ($allocation['allocatedAmount'] ?? 0));
+			$byContract[$contractId] = (($byContract[$contractId] ?? 0) + $cents);
+		}
 
-        $byContract = [];
-        foreach ($allocations as $allocation) {
-            $contractId = (string) ($allocation['contractId'] ?? '');
-            if ($contractId === '') {
-                continue;
-            }
+		$result = [];
+		foreach ($byContract as $contractId => $cents) {
+			$result[$contractId] = $this->calculator->fromCents(cents: $cents);
+		}
 
-            $cents = $this->calculator->toCents(amount: ($allocation['allocatedAmount'] ?? 0));
-            $byContract[$contractId] = (($byContract[$contractId] ?? 0) + $cents);
-        }
+		return $result;
+	}//end allocatedByContract()
 
-        $result = [];
-        foreach ($byContract as $contractId => $cents) {
-            $result[$contractId] = $this->calculator->fromCents(cents: $cents);
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $result;
-
-    }//end allocatedByContract()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

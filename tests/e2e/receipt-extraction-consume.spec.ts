@@ -51,7 +51,10 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 
 		const importButton = page.getByRole('button', { name: /import bill/i })
 		const hasImportButton = await importButton.isVisible().catch(() => false)
-		test.skip(!hasImportButton, 'Financial overview Import bill action not visible in this fixture')
+		test.skip(
+			!hasImportButton,
+			'Financial overview Import bill action not visible in this fixture',
+		)
 
 		await importButton.click()
 		const modal = page.getByTestId('bill-import-modal')
@@ -59,7 +62,10 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 
 		const pendingDraft = page.getByTestId(/^bim-pending-/).first()
 		const hasPendingDraft = await pendingDraft.isVisible().catch(() => false)
-		test.skip(!hasPendingDraft, 'no pending extraction draft seeded in this administration')
+		test.skip(
+			!hasPendingDraft,
+			'no pending extraction draft seeded in this administration',
+		)
 
 		await pendingDraft.click()
 		await expect(page.getByTestId('bim-review-step')).toBeVisible()
@@ -78,17 +84,26 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 
 		const importButton = page.getByRole('button', { name: /import bill/i })
 		const hasImportButton = await importButton.isVisible().catch(() => false)
-		test.skip(!hasImportButton, 'Financial overview Import bill action not visible in this fixture')
+		test.skip(
+			!hasImportButton,
+			'Financial overview Import bill action not visible in this fixture',
+		)
 		await importButton.click()
 
 		const pendingDraft = page.getByTestId(/^bim-pending-/).first()
 		const hasPendingDraft = await pendingDraft.isVisible().catch(() => false)
-		test.skip(!hasPendingDraft, 'no pending extraction draft seeded in this administration')
+		test.skip(
+			!hasPendingDraft,
+			'no pending extraction draft seeded in this administration',
+		)
 		await pendingDraft.click()
 
 		const rerequest = page.getByTestId('bim-rerequest')
 		const canRerequest = await rerequest.isVisible().catch(() => false)
-		test.skip(!canRerequest, 'draft carries no sourceDocumentUri to re-request against')
+		test.skip(
+			!canRerequest,
+			'draft carries no sourceDocumentUri to re-request against',
+		)
 
 		await rerequest.click()
 		// REQ-RXC-006: the click only requests a fresh extraction — it never
@@ -96,7 +111,9 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await expect(page.getByTestId('bill-import-modal')).toBeVisible()
 	})
 
-	test('even a fully-confident extraction requires explicit confirmation', async ({ page }) => {
+	test('even a fully-confident extraction requires explicit confirmation', async ({
+		page,
+	}) => {
 		// @e2e openspec/specs/receipt-extraction-consume/spec.md#even-a-fully-confident-extraction-requires-confirmation
 		await page.goto(`${APP}/`)
 		await page.waitForLoadState('domcontentloaded')
@@ -104,12 +121,18 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 
 		const importButton = page.getByRole('button', { name: /import bill/i })
 		const hasImportButton = await importButton.isVisible().catch(() => false)
-		test.skip(!hasImportButton, 'Financial overview Import bill action not visible in this fixture')
+		test.skip(
+			!hasImportButton,
+			'Financial overview Import bill action not visible in this fixture',
+		)
 		await importButton.click()
 
 		const pendingDraft = page.getByTestId(/^bim-pending-/).first()
 		const hasPendingDraft = await pendingDraft.isVisible().catch(() => false)
-		test.skip(!hasPendingDraft, 'no pending extraction draft seeded in this administration')
+		test.skip(
+			!hasPendingDraft,
+			'no pending extraction draft seeded in this administration',
+		)
 		await pendingDraft.click()
 
 		// Save is always a separate, explicit button click — opening the
@@ -145,7 +168,9 @@ test.describe('receipt-extraction-consume — ReceiptCapture prefill + correctio
 		await expect(badge).toContainText('%')
 	})
 
-	test('operator corrects a low-confidence field and commits', async ({ page }) => {
+	test('operator corrects a low-confidence field and commits', async ({
+		page,
+	}) => {
 		// @e2e openspec/specs/receipt-extraction-consume/spec.md#operator-corrects-a-low-confidence-field
 		await page.goto(`${APP}/inkoop/receipts`)
 		await page.waitForLoadState('domcontentloaded')
@@ -165,6 +190,8 @@ test.describe('receipt-extraction-consume — ReceiptCapture prefill + correctio
 		await expect(saveButton).toBeEnabled()
 		await saveButton.click()
 
-		await expect(page.getByTestId('rc-save-error')).toBeHidden({ timeout: 10_000 }).catch(() => {})
+		await expect(page.getByTestId('rc-save-error'))
+			.toBeHidden({ timeout: 10_000 })
+			.catch(() => {})
 	})
 })

@@ -56,256 +56,244 @@ use Psr\Log\NullLogger;
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInterface
-{
+final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInterface {
 
-    /**
-     * OpenRegister schemas searched (in order) for a `peppolParticipantId`
-     * property matching the requested party id. `Vendor` covers PO suppliers;
-     * `CustomerMaster` covers AR debtors.
-     *
-     * @var array<int,array{schema:string,idField:string}>
-     */
-    private const PARTY_SCHEMAS = [
-        ['schema' => 'Vendor', 'idField' => 'id'],
-        ['schema' => 'CustomerMaster', 'idField' => 'customerId'],
-    ];
+	/**
+	 * OpenRegister schemas searched (in order) for a `peppolParticipantId`
+	 * property matching the requested party id. `Vendor` covers PO suppliers;
+	 * `CustomerMaster` covers AR debtors.
+	 *
+	 * @var array<int,array{schema:string,idField:string}>
+	 */
+	private const PARTY_SCHEMAS = [
+		['schema' => 'Vendor', 'idField' => 'id'],
+		['schema' => 'CustomerMaster', 'idField' => 'customerId'],
+	];
 
-    /**
-     * DI container — used to lazily fetch OR's ObjectService for the party lookup.
-     * The container indirection keeps this class testable without forcing a
-     * hard dependency on OpenRegister when a schema is absent (e.g. greenfield
-     * deployments).
-     *
-     * @var ContainerInterface
-     */
-    private ContainerInterface $container;
+	/**
+	 * DI container — used to lazily fetch OR's ObjectService for the party lookup.
+	 * The container indirection keeps this class testable without forcing a
+	 * hard dependency on OpenRegister when a schema is absent (e.g. greenfield
+	 * deployments).
+	 *
+	 * @var ContainerInterface
+	 */
+	private ContainerInterface $container;
 
-    /**
-     * App config (resolves the register slug).
-     *
-     * @var IAppConfig
-     */
-    private IAppConfig $appConfig;
+	/**
+	 * App config (resolves the register slug).
+	 *
+	 * @var IAppConfig
+	 */
+	private IAppConfig $appConfig;
 
-    /**
-     * Logger sink.
-     *
-     * @var LoggerInterface
-     */
-    private LoggerInterface $logger;
+	/**
+	 * Logger sink.
+	 *
+	 * @var LoggerInterface
+	 */
+	private LoggerInterface $logger;
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface   $container DI container — OR's ObjectService
-     *                                        is fetched lazily.
-     * @param IAppConfig           $appConfig App config for the register slug.
-     * @param LoggerInterface|null $logger    Optional logger (defaults to NullLogger).
-     *
-     * @return void
-     */
-    public function __construct(
-        ContainerInterface $container,
-        IAppConfig $appConfig,
-        ?LoggerInterface $logger=null
-    ) {
-        $this->container = $container;
-        $this->appConfig = $appConfig;
-        $this->logger    = ($logger ?? new NullLogger());
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService
+	 *                                      is fetched lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface|null $logger Optional logger (defaults to NullLogger).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		ContainerInterface $container,
+		IAppConfig $appConfig,
+		?LoggerInterface $logger = null,
+	) {
+		$this->container = $container;
+		$this->appConfig = $appConfig;
+		$this->logger = ($logger ?? new NullLogger());
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Resolve a party's Peppol participant id from the Vendor / CustomerMaster
-     * schemas.
-     *
-     * Returns `null` when neither schema is present, the party has no row, or
-     * the row does not carry a non-empty `peppolParticipantId`. Any thrown
-     * lookup error is treated as "not registered" — the caller falls back to
-     * PDF + email rather than failing the transmission outright.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $partyId          The party id to look up (PurchaseOrder.supplierId
-     *                                 or ARInvoice.customerId).
-     *
-     * @return string|null The Peppol participant id, or null when not registered.
-     *
-     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
-     *
-     * @inheritDoc
-     */
-    public function lookupParticipant(string $administrationId, string $partyId): ?string
-    {
-        if ($administrationId === '' || $partyId === '') {
-            return null;
-        }
+	/**
+	 * Resolve a party's Peppol participant id from the Vendor / CustomerMaster
+	 * schemas.
+	 *
+	 * Returns `null` when neither schema is present, the party has no row, or
+	 * the row does not carry a non-empty `peppolParticipantId`. Any thrown
+	 * lookup error is treated as "not registered" — the caller falls back to
+	 * PDF + email rather than failing the transmission outright.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $partyId The party id to look up (PurchaseOrder.supplierId
+	 *                        or ARInvoice.customerId).
+	 *
+	 * @return string|null The Peppol participant id, or null when not registered.
+	 *
+	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 *
+	 * @inheritDoc
+	 */
+	public function lookupParticipant(string $administrationId, string $partyId): ?string {
+		if ($administrationId === '' || $partyId === '') {
+			return null;
+		}
 
-        foreach (self::PARTY_SCHEMAS as $target) {
-            $participantId = $this->lookupInSchema(
-                administrationId: $administrationId,
-                partyId: $partyId,
-                schema: $target['schema'],
-                idField: $target['idField']
-            );
-            if ($participantId !== null) {
-                return $participantId;
-            }
-        }
+		foreach (self::PARTY_SCHEMAS as $target) {
+			$participantId = $this->lookupInSchema(
+				administrationId: $administrationId,
+				partyId: $partyId,
+				schema: $target['schema'],
+				idField: $target['idField']
+			);
+			if ($participantId !== null) {
+				return $participantId;
+			}
+		}
 
-        return null;
+		return null;
+	}//end lookupParticipant()
 
-    }//end lookupParticipant()
+	/**
+	 * Submit an already-stored document to the Peppol network (shared port).
+	 *
+	 * @param string $participantId The recipient Peppol participant identifier.
+	 * @param string $documentType Peppol document-type identifier (e.g. `ubl-invoice-2.1`).
+	 * @param string $payloadFileUri Docudesk/Files FK URI of the stored document.
+	 *
+	 * @return string The transmission identifier.
+	 *
+	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 *
+	 * @inheritDoc
+	 */
+	public function submit(string $participantId, string $documentType, string $payloadFileUri): string {
+		$this->logger->info(
+			'shillinq.peppol.submit',
+			[
+				'participantId' => $participantId,
+				'documentType' => $documentType,
+				'payloadFileUri' => $payloadFileUri,
+			]
+		);
 
-    /**
-     * Submit an already-stored document to the Peppol network (shared port).
-     *
-     * @param string $participantId  The recipient Peppol participant identifier.
-     * @param string $documentType   Peppol document-type identifier (e.g. `ubl-invoice-2.1`).
-     * @param string $payloadFileUri Docudesk/Files FK URI of the stored document.
-     *
-     * @return string The transmission identifier.
-     *
-     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
-     *
-     * @inheritDoc
-     */
-    public function submit(string $participantId, string $documentType, string $payloadFileUri): string
-    {
-        $this->logger->info(
-            'shillinq.peppol.submit',
-            [
-                'participantId'  => $participantId,
-                'documentType'   => $documentType,
-                'payloadFileUri' => $payloadFileUri,
-            ]
-        );
+		return $this->fabricateUrn(seed: $participantId . ':' . $documentType . ':' . $payloadFileUri);
+	}//end submit()
 
-        return $this->fabricateUrn(seed: $participantId.':'.$documentType.':'.$payloadFileUri);
+	/**
+	 * Submit a UBL 2.1 Order to the Peppol network (PO-specific alias surface).
+	 *
+	 * Preserves the exact PO call-site contract (raw XML in, URN out) — never
+	 * logs the document body, only its length.
+	 *
+	 * @param string $participantId The recipient Peppol participant identifier.
+	 * @param string $ublOrderXml The UBL order XML payload.
+	 *
+	 * @return string The transmission identifier.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+	 *
+	 * @inheritDoc
+	 */
+	public function submitOrder(string $participantId, string $ublOrderXml): string {
+		// Length only — never log the UBL body (may contain supplier PII).
+		$this->logger->info(
+			'shillinq.peppol.submit',
+			[
+				'participantId' => $participantId,
+				'ublLength' => strlen($ublOrderXml),
+			]
+		);
 
-    }//end submit()
+		return $this->fabricateUrn(seed: $participantId . ':' . $ublOrderXml);
+	}//end submitOrder()
 
-    /**
-     * Submit a UBL 2.1 Order to the Peppol network (PO-specific alias surface).
-     *
-     * Preserves the exact PO call-site contract (raw XML in, URN out) — never
-     * logs the document body, only its length.
-     *
-     * @param string $participantId The recipient Peppol participant identifier.
-     * @param string $ublOrderXml   The UBL order XML payload.
-     *
-     * @return string The transmission identifier.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
-     *
-     * @inheritDoc
-     */
-    public function submitOrder(string $participantId, string $ublOrderXml): string
-    {
-        // Length only — never log the UBL body (may contain supplier PII).
-        $this->logger->info(
-            'shillinq.peppol.submit',
-            [
-                'participantId' => $participantId,
-                'ublLength'     => strlen($ublOrderXml),
-            ]
-        );
+	/**
+	 * Deterministic URN derived from a seed string so the dev adapter remains
+	 * reproducible across reruns (helps golden-file / snapshot tests).
+	 *
+	 * @param string $seed Value to hash.
+	 *
+	 * @return string A `urn:uuid:...`-shaped identifier.
+	 */
+	private function fabricateUrn(string $seed): string {
+		$hash = substr(hash('sha256', $seed), 0, 32);
 
-        return $this->fabricateUrn(seed: $participantId.':'.$ublOrderXml);
+		return sprintf(
+			'urn:uuid:%s-%s-%s-%s-%s',
+			substr($hash, 0, 8),
+			substr($hash, 8, 4),
+			substr($hash, 12, 4),
+			substr($hash, 16, 4),
+			substr($hash, 20, 12)
+		);
 
-    }//end submitOrder()
+	}//end fabricateUrn()
 
-    /**
-     * Deterministic URN derived from a seed string so the dev adapter remains
-     * reproducible across reruns (helps golden-file / snapshot tests).
-     *
-     * @param string $seed Value to hash.
-     *
-     * @return string A `urn:uuid:...`-shaped identifier.
-     */
-    private function fabricateUrn(string $seed): string
-    {
-        $hash = substr(hash('sha256', $seed), 0, 32);
+	/**
+	 * Look up a `peppolParticipantId` on one OR schema, filtered by administration
+	 * + party id.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $partyId Party id to match.
+	 * @param string $schema OR schema slug to search.
+	 * @param string $idField The row field that carries the party id
+	 *                        (`id` for Vendor, `customerId` for CustomerMaster).
+	 *
+	 * @return string|null
+	 */
+	private function lookupInSchema(string $administrationId, string $partyId, string $schema, string $idField): ?string {
+		try {
+			$register = $this->register();
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($register)
+				->setSchema($schema)
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							$idField => $partyId,
+						],
+					]
+				);
+		} catch (\Throwable $e) {
+			$this->logger->info(
+				'shillinq.peppol.lookup.skipped',
+				[
+					'schema' => $schema,
+					'reason' => 'schema_unavailable',
+					'exception' => $e->getMessage(),
+				]
+			);
+			return null;
+		}//end try
 
-        return sprintf(
-            'urn:uuid:%s-%s-%s-%s-%s',
-            substr($hash, 0, 8),
-            substr($hash, 8, 4),
-            substr($hash, 12, 4),
-            substr($hash, 16, 4),
-            substr($hash, 20, 12)
-        );
+		foreach ($rows as $row) {
+			if (is_array($row) === false) {
+				continue;
+			}
 
-    }//end fabricateUrn()
+			$participantId = trim((string)($row['peppolParticipantId'] ?? ''));
+			if ($participantId !== '') {
+				return $participantId;
+			}
+		}
 
-    /**
-     * Look up a `peppolParticipantId` on one OR schema, filtered by administration
-     * + party id.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $partyId          Party id to match.
-     * @param string $schema           OR schema slug to search.
-     * @param string $idField          The row field that carries the party id
-     *                                 (`id` for Vendor, `customerId` for CustomerMaster).
-     *
-     * @return string|null
-     */
-    private function lookupInSchema(string $administrationId, string $partyId, string $schema, string $idField): ?string
-    {
-        try {
-            $register      = $this->register();
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($register)
-                ->setSchema($schema)
-                ->findAll(
-                    [
-                        'filters' => [
-                            'administrationId' => $administrationId,
-                            $idField           => $partyId,
-                        ],
-                    ]
-                );
-        } catch (\Throwable $e) {
-            $this->logger->info(
-                'shillinq.peppol.lookup.skipped',
-                [
-                    'schema'    => $schema,
-                    'reason'    => 'schema_unavailable',
-                    'exception' => $e->getMessage(),
-                ]
-            );
-            return null;
-        }//end try
+		return null;
+	}//end lookupInSchema()
 
-        foreach ($rows as $row) {
-            if (is_array($row) === false) {
-                continue;
-            }
+	/**
+	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-            $participantId = trim((string) ($row['peppolParticipantId'] ?? ''));
-            if ($participantId !== '') {
-                return $participantId;
-            }
-        }
-
-        return null;
-
-    }//end lookupInSchema()
-
-    /**
-     * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

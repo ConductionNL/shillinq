@@ -72,130 +72,120 @@ use RuntimeException;
 /**
  * Pure, unit-testable migration core for the Subsidie/Order consolidation.
  */
-final class SubsidieOrderConsolidationMigrator
-{
+final class SubsidieOrderConsolidationMigrator {
 
-    /**
-     * The renamed booking-order schema slug (source).
-     */
-    public const BOOKING_ORDER_FROM = 'Order';
+	/**
+	 * The renamed booking-order schema slug (source).
+	 */
+	public const BOOKING_ORDER_FROM = 'Order';
 
-    /**
-     * The renamed booking-order schema slug (target).
-     */
-    public const BOOKING_ORDER_TO = 'BookingOrder';
+	/**
+	 * The renamed booking-order schema slug (target).
+	 */
+	public const BOOKING_ORDER_TO = 'BookingOrder';
 
-    /**
-     * The from/to slug pair for the booking-order rename.
-     *
-     * @return array{from: string, to: string}
-     *
-     * @spec openspec/specs/schema-consolidation/spec.md
-     */
-    public function bookingOrderRename(): array
-    {
-        return ['from' => self::BOOKING_ORDER_FROM, 'to' => self::BOOKING_ORDER_TO];
+	/**
+	 * The from/to slug pair for the booking-order rename.
+	 *
+	 * @return array{from: string, to: string}
+	 *
+	 * @spec openspec/specs/schema-consolidation/spec.md
+	 */
+	public function bookingOrderRename(): array {
+		return ['from' => self::BOOKING_ORDER_FROM, 'to' => self::BOOKING_ORDER_TO];
+	}//end bookingOrderRename()
 
-    }//end bookingOrderRename()
+	/**
+	 * Whether the Subsidie consolidation requires an object migration.
+	 *
+	 * Always false: all historical Subsidie definitions resolved to one live
+	 * schema slug (OR imports only `components.schemas`), so consolidating the
+	 * definitions orphans no objects. See the class docblock.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/schema-consolidation/spec.md
+	 */
+	public function subsidieMigrationRequired(): bool {
+		return false;
+	}//end subsidieMigrationRequired()
 
-    /**
-     * Whether the Subsidie consolidation requires an object migration.
-     *
-     * Always false: all historical Subsidie definitions resolved to one live
-     * schema slug (OR imports only `components.schemas`), so consolidating the
-     * definitions orphans no objects. See the class docblock.
-     *
-     * @return bool
-     *
-     * @spec openspec/specs/schema-consolidation/spec.md
-     */
-    public function subsidieMigrationRequired(): bool
-    {
-        return false;
+	/**
+	 * Re-point a persisted object of a renamed schema to its new slug.
+	 *
+	 * Pure and byte-safe: only the object's `@self.schema` pointer is rewritten
+	 * when it matches `$from`; every other field is preserved verbatim (no
+	 * regulatory field is touched). An object not under `$from` is returned
+	 * unchanged.
+	 *
+	 * @param array<string, mixed> $object The persisted object (with an `@self` envelope).
+	 * @param string $from The source schema slug.
+	 * @param string $to The target schema slug.
+	 *
+	 * @return array<string, mixed> The migrated (or unchanged) object.
+	 *
+	 * @spec openspec/specs/schema-consolidation/spec.md
+	 */
+	public function mapObjectToRenamedSchema(array $object, string $from, string $to): array {
+		$self = ($object['@self'] ?? null);
+		if (is_array($self) === true && ($self['schema'] ?? null) === $from) {
+			$self['schema'] = $to;
+			$object['@self'] = $self;
+		}
 
-    }//end subsidieMigrationRequired()
+		return $object;
+	}//end mapObjectToRenamedSchema()
 
-    /**
-     * Re-point a persisted object of a renamed schema to its new slug.
-     *
-     * Pure and byte-safe: only the object's `@self.schema` pointer is rewritten
-     * when it matches `$from`; every other field is preserved verbatim (no
-     * regulatory field is touched). An object not under `$from` is returned
-     * unchanged.
-     *
-     * @param array<string, mixed> $object The persisted object (with an `@self` envelope).
-     * @param string               $from   The source schema slug.
-     * @param string               $to     The target schema slug.
-     *
-     * @return array<string, mixed> The migrated (or unchanged) object.
-     *
-     * @spec openspec/specs/schema-consolidation/spec.md
-     */
-    public function mapObjectToRenamedSchema(array $object, string $from, string $to): array
-    {
-        $self = ($object['@self'] ?? null);
-        if (is_array($self) === true && ($self['schema'] ?? null) === $from) {
-            $self['schema']  = $to;
-            $object['@self'] = $self;
-        }
+	/**
+	 * Migrate a batch of source objects to the renamed schema, guarded by count.
+	 *
+	 * Every source object is re-pointed; the migrated count MUST equal the source
+	 * count or the migration ABORTS (the source rows are the caller's — this
+	 * method never deletes them, so an abort leaves the source intact).
+	 *
+	 * @param array<int, array<string, mixed>> $sourceObjects The objects under the source slug.
+	 * @param string $from The source schema slug.
+	 * @param string $to The target schema slug.
+	 *
+	 * @return array<int, array<string, mixed>> The migrated objects.
+	 *
+	 * @throws RuntimeException When the migrated count does not match the source count.
+	 *
+	 * @spec openspec/specs/schema-consolidation/spec.md
+	 */
+	public function migrateBatch(array $sourceObjects, string $from, string $to): array {
+		$migrated = [];
+		foreach ($sourceObjects as $object) {
+			$migrated[] = $this->mapObjectToRenamedSchema(object: $object, from: $from, to: $to);
+		}
 
-        return $object;
+		$this->assertCountsMatch(sourceCount: count($sourceObjects), migratedCount: count($migrated));
 
-    }//end mapObjectToRenamedSchema()
+		return $migrated;
+	}//end migrateBatch()
 
-    /**
-     * Migrate a batch of source objects to the renamed schema, guarded by count.
-     *
-     * Every source object is re-pointed; the migrated count MUST equal the source
-     * count or the migration ABORTS (the source rows are the caller's — this
-     * method never deletes them, so an abort leaves the source intact).
-     *
-     * @param array<int, array<string, mixed>> $sourceObjects The objects under the source slug.
-     * @param string                           $from          The source schema slug.
-     * @param string                           $to            The target schema slug.
-     *
-     * @return array<int, array<string, mixed>> The migrated objects.
-     *
-     * @throws RuntimeException When the migrated count does not match the source count.
-     *
-     * @spec openspec/specs/schema-consolidation/spec.md
-     */
-    public function migrateBatch(array $sourceObjects, string $from, string $to): array
-    {
-        $migrated = [];
-        foreach ($sourceObjects as $object) {
-            $migrated[] = $this->mapObjectToRenamedSchema(object: $object, from: $from, to: $to);
-        }
+	/**
+	 * Assert a source→target object count match, aborting on mismatch.
+	 *
+	 * @param int $sourceCount The number of source objects.
+	 * @param int $migratedCount The number of migrated objects.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the counts differ (no-row-loss guard).
+	 *
+	 * @spec openspec/specs/schema-consolidation/spec.md
+	 */
+	public function assertCountsMatch(int $sourceCount, int $migratedCount): void {
+		if ($sourceCount !== $migratedCount) {
+			throw new RuntimeException(
+				sprintf(
+					'Migration aborted: source count %d does not match migrated count %d; source data left intact.',
+					$sourceCount,
+					$migratedCount
+				)
+			);
+		}
 
-        $this->assertCountsMatch(sourceCount: count($sourceObjects), migratedCount: count($migrated));
-
-        return $migrated;
-
-    }//end migrateBatch()
-
-    /**
-     * Assert a source→target object count match, aborting on mismatch.
-     *
-     * @param int $sourceCount   The number of source objects.
-     * @param int $migratedCount The number of migrated objects.
-     *
-     * @return void
-     *
-     * @throws RuntimeException When the counts differ (no-row-loss guard).
-     *
-     * @spec openspec/specs/schema-consolidation/spec.md
-     */
-    public function assertCountsMatch(int $sourceCount, int $migratedCount): void
-    {
-        if ($sourceCount !== $migratedCount) {
-            throw new RuntimeException(
-                sprintf(
-                    'Migration aborted: source count %d does not match migrated count %d; source data left intact.',
-                    $sourceCount,
-                    $migratedCount
-                )
-            );
-        }
-
-    }//end assertCountsMatch()
+	}//end assertCountsMatch()
 }//end class

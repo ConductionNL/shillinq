@@ -23,7 +23,8 @@ export const CREDITORS_WIDGET = 'widget-open-creditors'
  *
  * @type {string}
  */
-export const PDF_DEFERRAL_MESSAGE = 'PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.'
+export const PDF_DEFERRAL_MESSAGE =
+	'PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.'
 
 /**
  * Detect the import format from a file name (falling back to a content
@@ -35,7 +36,10 @@ export const PDF_DEFERRAL_MESSAGE = 'PDF OCR extraction is not yet available. Pl
  * @return {string} The detected format.
  */
 export function detectFormat(fileName, contents = '') {
-	const ext = String(fileName || '').split('.').pop().toLowerCase()
+	const ext = String(fileName || '')
+		.split('.')
+		.pop()
+		.toLowerCase()
 	if (ext === 'xml' || ext === 'ubl') return 'ubl'
 	if (ext === 'csv') return 'csv'
 	if (ext === 'pdf') return 'pdf'
@@ -125,8 +129,9 @@ function centsToEuro(cents) {
  */
 export function canSaveReview(form) {
 	const f = form || {}
-	return ['supplier', 'invoiceNumber', 'invoiceDate', 'glAccount']
-		.every((k) => String(f[k] ?? '').trim().length > 0)
+	return ['supplier', 'invoiceNumber', 'invoiceDate', 'glAccount'].every(
+		(k) => String(f[k] ?? '').trim().length > 0,
+	)
 }
 
 /**
@@ -140,13 +145,17 @@ export function canSaveReview(form) {
 export function importErrorMessage(error) {
 	const status = error?.response?.status
 	if (status === 409) {
-		return error?.response?.data?.error
+		return (
+			error?.response?.data?.error
 			|| 'This invoice number already exists for this supplier'
+		)
 	}
-	return error?.response?.data?.error
+	return (
+		error?.response?.data?.error
 		|| error?.response?.data?.message
 		|| error?.message
 		|| 'Import failed.'
+	)
 }
 
 /**
@@ -169,14 +178,14 @@ export function refreshEventPayload() {
 // ---------------------------------------------------------------------------
 
 export {
-	REVIEW_THRESHOLD,
-	ONE_CLICK_CONFIDENCE_GATE,
-	isExtractionDraft,
 	confidenceForField,
-	isFieldCorrected,
-	requiresExplicitReview,
-	hasKnownExtractionId,
 	glAccountSuggestionSummary,
+	hasKnownExtractionId,
+	isExtractionDraft,
+	isFieldCorrected,
+	ONE_CLICK_CONFIDENCE_GATE,
+	requiresExplicitReview,
+	REVIEW_THRESHOLD,
 } from '../utils/extractionConfidence.js'
 
 /**
@@ -202,6 +211,7 @@ export function reviewFormFromDraft(record) {
 export function pendingDraftSummary(record) {
 	const r = record || {}
 	const label = String(r.invoiceNumber || r.supplierId || r.id || '')
-	const overall = typeof r.overallConfidence === 'number' ? r.overallConfidence : null
+	const overall =
+		typeof r.overallConfidence === 'number' ? r.overallConfidence : null
 	return { id: String(r.id ?? ''), label, overallConfidence: overall }
 }

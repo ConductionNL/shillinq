@@ -2,7 +2,35 @@ name: Code Quality
 
 on:
   push:
-    branches: [main, development, feature/**, bugfix/**, hotfix/**]
+    # An ALLOW-LIST of branch prefixes is a gate with a hole in it, and the
+    # hole is SILENT: a branch matching nothing gets no CI at all, and its last
+    # visible status is whatever it inherited — indistinguishable, on every
+    # dashboard, from a branch that passed.
+    #
+    # Two live examples, both found 2026-08-14: `perf/**` was uncovered in
+    # openconnector, where a merge carrying unresolved conflict markers and 84
+    # failing tests was pushed and nothing ran; and `feat/**` was uncovered in
+    # openregister — note the list said `feature/**`, so every branch anyone
+    # named `feat/...` had been running unchecked.
+    #
+    # Prefixes are added rather than replaced with `**` because this workflow is
+    # expensive (PHPUnit matrix, Newman, Playwright). The fast structural checks
+    # DO run on `**` — see merge-hygiene.yml, added in the same change.
+    #
+    # ⚠️ Adding prefixes is not the durable fix; the next invented one is
+    # uncovered again. The durable fix is branch protection requiring a PR into
+    # development, which the pull_request trigger below already gates correctly.
+    branches:
+      - main
+      - development
+      - feature/**
+      - feat/**
+      - bugfix/**
+      - hotfix/**
+      - perf/**
+      - refactor/**
+      - chore/**
+      - fix/**
   pull_request:
     branches: [main, master, development, beta]
   workflow_dispatch:
@@ -72,13 +100,39 @@ jobs:
       # journeydoc-capture all pin `fromJSON(inputs.nextcloud-test-refs)[0]`, so
       # stable31 sitting FIRST meant all three ran entirely on the version
       # openregister cannot load.
-      nextcloud-test-refs: '["stable32", "stable33"]'
+      #
+      # THE LIST IS THE WHOLE DECLARED RANGE. appinfo/info.xml declares
+      # <nextcloud min-version="32" max-version="34"/>, so 32, 33 and 34 each get
+      # a leg. Adopting NC 34 by REPLACING the list left 32 and 33 advertised to
+      # the App Store with no job touching them — the declared floor became the
+      # untested end, which is the same drift as never testing 34, reversed.
+      nextcloud-test-refs: '["stable34", "stable32", "stable33"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
+
+      # ── E2E browser tests ────────────────────────────────────────────────
+      # `enable-playwright` defaults to FALSE and was never set here, so the
+      # "E2E Tests (Playwright)" job has reported `skipped` on every run this
+      # repo has ever produced — while the tree ships a root
+      # `playwright.config.ts` and 53 spec files under `tests/e2e/`. A skipped
+      # job is not a pass: it is the absence of a measurement, and the Quality
+      # Report renders it identically to a green one.
+      #
+      # `playwright-test-path` does double duty in the shared workflow: it is
+      # both the test directory AND the first place it looks for a config
+      # (`${playwright-test-path}/playwright.config.ts`, falling back to the
+      # repo root). We ship tests/e2e/playwright.config.ts precisely so that
+      # lookup hits it — the workflow passes no `--project`, so if the ROOT
+      # config were picked it would also run `docs-capture` (re-shooting every
+      # journeydoc screenshot, which has its own job) and `visual` (pixel
+      # baselines that cannot byte-match a CI runner). See that file's header.
+      enable-playwright: true
+      playwright-test-path: tests/e2e
+
       enable-newman: true
       # Shillinq delegates ALL object CRUD to OpenRegister (@conduction/nextcloud-vue
       # store factories hit /apps/openregister/api/objects), so a Nextcloud without
@@ -203,7 +257,35 @@ jobs:
       #                          looks like an application bug. Measured at 89
       #                          before this commit, 81 after; the baseline is
       #                          a hard ceiling that may only be lowered.
-      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "test:l10n"]'
+      #   check:fragment-required  NEW. Ratchet on the CAUSE that check:seeds
+      #                          measures the damage of. ADR-037 merges register
+      #                          fragments by schema key and CONCATENATES list
+      #                          values, so two fragments declaring `required`
+      #                          for one schema make the effective list the
+      #                          UNION of both — and no payload of either model
+      #                          can then satisfy it. Measured at 47 conflicting
+      #                          schema keys on `development` (plus 16 that
+      #                          declare the SAME set twice, which is malformed
+      #                          per JSON Schema but still satisfiable and is
+      #                          reported without failing). Compares as SETS,
+      #                          not sequences: an order-sensitive compare
+      #                          reports 49 here, and the 2 extra are schemas
+      #                          declaring the same names in a different order,
+      #                          which merge fine. The baseline is a hard
+      #                          ceiling that may only be lowered.
+      #
+      # `format` (prettier --check) is listed because the shared workflow has NO
+      # prettier job of its own — `quality.yml` runs eslint and stylelint and
+      # mentions prettier ZERO times. This repo already carries
+      # `@nextcloud/prettier-config` and a `format` script, so without this leg
+      # `npm run format` never runs outside a developer's editor and the tree
+      # drifts straight back out of format between merges — the same inert-
+      # formatter failure mode that made the old `.prettierrc` worth deleting.
+      # Centralising the config never stopped drift; the gate does.
+      # Measured on this tree before enabling: PASSES, 216 of 222 tracked
+      # frontend files in scope (docs/ excluded via .prettierignore; build
+      # output via .gitignore, which prettier 3 also reads).
+      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "test:l10n", "format"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both

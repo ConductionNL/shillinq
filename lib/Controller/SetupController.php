@@ -49,169 +49,164 @@ use OCP\IRequest;
  *
  * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
  */
-class SetupController extends Controller
-{
-    /**
-     * Setup contract version; matches manifest.setup.version.
-     *
-     * @var int
-     */
-    private const SETUP_VERSION = 1;
+class SetupController extends Controller {
+	/**
+	 * Setup contract version; matches manifest.setup.version.
+	 *
+	 * @var int
+	 */
+	private const SETUP_VERSION = 1;
 
-    /**
-     * Construct the setup controller.
-     *
-     * @param string          $appName         The app id.
-     * @param IRequest        $request         The request.
-     * @param IAppConfig      $appConfig       App-config reader/writer.
-     * @param SettingsService $settingsService OR availability + config import + seeders.
-     */
-    public function __construct(
-        string $appName,
-        IRequest $request,
-        private readonly IAppConfig $appConfig,
-        private readonly SettingsService $settingsService,
-    ) {
-        parent::__construct($appName, $request);
-    }//end __construct()
+	/**
+	 * Construct the setup controller.
+	 *
+	 * @param string $appName The app id.
+	 * @param IRequest $request The request.
+	 * @param IAppConfig $appConfig App-config reader/writer.
+	 * @param SettingsService $settingsService OR availability + config import + seeders.
+	 */
+	public function __construct(
+		string $appName,
+		IRequest $request,
+		private readonly IAppConfig $appConfig,
+		private readonly SettingsService $settingsService,
+	) {
+		parent::__construct($appName, $request);
+	}//end __construct()
 
-    /**
-     * Report per-step setup status for the wizard.
-     *
-     * @return DataResponse `{ version, completed, steps: { <id>: { done } } }`.
-     *
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
-     */
-    #[AuthorizedAdminSetting(AdminSettings::class)]
-    public function status(): DataResponse
-    {
-        $countryDone  = $this->config(key: 'legal_country') !== '';
-        $regionDone   = $this->config(key: 'legal_region') !== '';
-        $rgsDone      = $this->config(key: 'rgs_template') !== '';
-        $adminDone    = $this->config(key: 'administration_id') !== '';
-        $seedDone     = $this->config(key: 'setup_seed_done') === '1';
-        $requiredDone = ($countryDone === true && $regionDone === true && $rgsDone === true && $adminDone === true);
+	/**
+	 * Report per-step setup status for the wizard.
+	 *
+	 * @return DataResponse `{ version, completed, steps: { <id>: { done } } }`.
+	 *
+	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 */
+	#[AuthorizedAdminSetting(AdminSettings::class)]
+	public function status(): DataResponse {
+		$countryDone = $this->config(key: 'legal_country') !== '';
+		$regionDone = $this->config(key: 'legal_region') !== '';
+		$rgsDone = $this->config(key: 'rgs_template') !== '';
+		$adminDone = $this->config(key: 'administration_id') !== '';
+		$seedDone = $this->config(key: 'setup_seed_done') === '1';
+		$requiredDone = ($countryDone === true && $regionDone === true && $rgsDone === true && $adminDone === true);
 
-        if ($requiredDone === true) {
-            $this->appConfig->setValueString(Application::APP_ID, 'setup_completed_version', (string) self::SETUP_VERSION);
-        }
+		if ($requiredDone === true) {
+			$this->appConfig->setValueString(Application::APP_ID, 'setup_completed_version', (string)self::SETUP_VERSION);
+		}
 
-        return new DataResponse(
-            [
-                'version'   => self::SETUP_VERSION,
-                'completed' => $requiredDone,
-                'steps'     => [
-                    'country'        => ['done' => $countryDone],
-                    'organisation'   => ['done' => $regionDone],
-                    'rgs-template'   => ['done' => $rgsDone],
-                    'administration' => ['done' => $adminDone],
-                    'seed'           => ['done' => $seedDone],
-                ],
-            ]
-        );
-    }//end status()
+		return new DataResponse(
+			[
+				'version' => self::SETUP_VERSION,
+				'completed' => $requiredDone,
+				'steps' => [
+					'country' => ['done' => $countryDone],
+					'organisation' => ['done' => $regionDone],
+					'rgs-template' => ['done' => $rgsDone],
+					'administration' => ['done' => $adminDone],
+					'seed' => ['done' => $seedDone],
+				],
+			]
+		);
+	}//end status()
 
-    /**
-     * Persist app-config values from a `choice` / `config-fields` step.
-     *
-     * @return DataResponse `{ success }`.
-     *
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
-     */
-    #[AuthorizedAdminSetting(AdminSettings::class)]
-    public function saveConfig(): DataResponse
-    {
-        foreach ($this->request->getParams() as $key => $value) {
-            if ($key === '_route') {
-                continue;
-            }
+	/**
+	 * Persist app-config values from a `choice` / `config-fields` step.
+	 *
+	 * @return DataResponse `{ success }`.
+	 *
+	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 */
+	#[AuthorizedAdminSetting(AdminSettings::class)]
+	public function saveConfig(): DataResponse {
+		foreach ($this->request->getParams() as $key => $value) {
+			if ($key === '_route') {
+				continue;
+			}
 
-            $this->appConfig->setValueString(
-                Application::APP_ID,
-                (string) $key,
-                is_scalar($value) ? (string) $value : json_encode($value),
-            );
-        }
+			$this->appConfig->setValueString(
+				Application::APP_ID,
+				(string)$key,
+				is_scalar($value) ? (string)$value : json_encode($value),
+			);
+		}
 
-        return new DataResponse(['success' => true]);
-    }//end saveConfig()
+		return new DataResponse(['success' => true]);
+	}//end saveConfig()
 
-    /**
-     * Run a privileged server-side setup action.
-     *
-     * @param string $actionId One of `init-administration` | `seed`.
-     *
-     * @return DataResponse `{ success, message, detail }`.
-     *
-     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
-     */
-    #[AuthorizedAdminSetting(AdminSettings::class)]
-    public function runAction(string $actionId): DataResponse
-    {
-        if ($actionId === 'init-administration') {
-            $this->settingsService->loadConfigurationForced();
-            $result = $this->settingsService->seedDefaultAdministration();
+	/**
+	 * Run a privileged server-side setup action.
+	 *
+	 * @param string $actionId One of `init-administration` | `seed`.
+	 *
+	 * @return DataResponse `{ success, message, detail }`.
+	 *
+	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 */
+	#[AuthorizedAdminSetting(AdminSettings::class)]
+	public function runAction(string $actionId): DataResponse {
+		if ($actionId === 'init-administration') {
+			$this->settingsService->loadConfigurationForced();
+			$result = $this->settingsService->seedDefaultAdministration();
 
-            if (($result['success'] ?? false) !== true) {
-                return new DataResponse(
-                    ['success' => false, 'message' => ($result['message'] ?? 'Failed to create default administration.')],
-                    Http::STATUS_INTERNAL_SERVER_ERROR,
-                );
-            }
+			if (($result['success'] ?? false) !== true) {
+				return new DataResponse(
+					['success' => false, 'message' => ($result['message'] ?? 'Failed to create default administration.')],
+					Http::STATUS_INTERNAL_SERVER_ERROR,
+				);
+			}
 
-            // Read the real administrationCode the seed created/found — never
-            // guess it, so a future change to the seed file (or seeding onto an
-            // instance where it was already created under a different code)
-            // never silently sets the wrong administration_id.
-            $adminId = (string) ($result['administrationCode'] ?? '');
-            if ($adminId === '') {
-                return new DataResponse(
-                    ['success' => false, 'message' => 'Default administration seed did not report an administrationCode.'],
-                    Http::STATUS_INTERNAL_SERVER_ERROR,
-                );
-            }
+			// Read the real administrationCode the seed created/found — never
+			// guess it, so a future change to the seed file (or seeding onto an
+			// instance where it was already created under a different code)
+			// never silently sets the wrong administration_id.
+			$adminId = (string)($result['administrationCode'] ?? '');
+			if ($adminId === '') {
+				return new DataResponse(
+					['success' => false, 'message' => 'Default administration seed did not report an administrationCode.'],
+					Http::STATUS_INTERNAL_SERVER_ERROR,
+				);
+			}
 
-            $this->appConfig->setValueString(Application::APP_ID, 'administration_id', $adminId);
-            return new DataResponse(['success' => true, 'message' => 'Default administration created.', 'detail' => $result]);
-        }//end if
+			$this->appConfig->setValueString(Application::APP_ID, 'administration_id', $adminId);
+			return new DataResponse(['success' => true, 'message' => 'Default administration created.', 'detail' => $result]);
+		}//end if
 
-        if ($actionId === 'seed') {
-            $region   = $this->config(key: 'legal_region');
-            $template = $this->config(key: 'rgs_template');
-            $adminId  = $this->config(key: 'administration_id');
-            if ($region === '' || $template === '' || $adminId === '') {
-                return new DataResponse(
-                    ['success' => false, 'message' => 'Choose region, RGS template and administration before seeding.'],
-                    Http::STATUS_UNPROCESSABLE_ENTITY,
-                );
-            }
+		if ($actionId === 'seed') {
+			$region = $this->config(key: 'legal_region');
+			$template = $this->config(key: 'rgs_template');
+			$adminId = $this->config(key: 'administration_id');
+			if ($region === '' || $template === '' || $adminId === '') {
+				return new DataResponse(
+					['success' => false, 'message' => 'Choose region, RGS template and administration before seeding.'],
+					Http::STATUS_UNPROCESSABLE_ENTITY,
+				);
+			}
 
-            $this->settingsService->seedRgsTemplate(templateVariant: $template, administrationId: $adminId);
-            $this->settingsService->seedBtwTariffs();
-            $this->settingsService->seedBbvTaakvelden();
-            // Statutory retention rules (region-specific per REQ-ARC-002); idempotent,
-            // and re-running here matters when OpenRegister was enabled AFTER shillinq
-            // so the install-time repair step never seeded it (ADR-042 recovery path).
-            $this->settingsService->seedSelectielijst();
-            $this->appConfig->setValueString(Application::APP_ID, 'setup_seed_done', '1');
-            return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
-        }//end if
+			$this->settingsService->seedRgsTemplate(templateVariant: $template, administrationId: $adminId);
+			$this->settingsService->seedBtwTariffs();
+			$this->settingsService->seedBbvTaakvelden();
+			// Statutory retention rules (region-specific per REQ-ARC-002); idempotent,
+			// and re-running here matters when OpenRegister was enabled AFTER shillinq
+			// so the install-time repair step never seeded it (ADR-042 recovery path).
+			$this->settingsService->seedSelectielijst();
+			$this->appConfig->setValueString(Application::APP_ID, 'setup_seed_done', '1');
+			return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
+		}//end if
 
-        return new DataResponse(
-            ['success' => false, 'message' => 'Unknown setup action: '.$actionId],
-            Http::STATUS_NOT_FOUND,
-        );
-    }//end runAction()
+		return new DataResponse(
+			['success' => false, 'message' => 'Unknown setup action: ' . $actionId],
+			Http::STATUS_NOT_FOUND,
+		);
+	}//end runAction()
 
-    /**
-     * Read a shillinq app-config string value.
-     *
-     * @param string $key The config key.
-     *
-     * @return string The value, or '' when unset.
-     */
-    private function config(string $key): string
-    {
-        return $this->appConfig->getValueString(Application::APP_ID, $key, '');
-    }//end config()
+	/**
+	 * Read a shillinq app-config string value.
+	 *
+	 * @param string $key The config key.
+	 *
+	 * @return string The value, or '' when unset.
+	 */
+	private function config(string $key): string {
+		return $this->appConfig->getValueString(Application::APP_ID, $key, '');
+	}//end config()
 }//end class

@@ -38,139 +38,133 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for PipelinqSettingsController.
  */
-final class PipelinqSettingsControllerTest extends TestCase
-{
+final class PipelinqSettingsControllerTest extends TestCase {
 
-    /**
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * @var PipelinqConfig&MockObject
-     */
-    private PipelinqConfig&MockObject $pipelinqConfig;
+	/**
+	 * @var PipelinqConfig&MockObject
+	 */
+	private PipelinqConfig&MockObject $pipelinqConfig;
 
-    /**
-     * Controller under test.
-     *
-     * @var PipelinqSettingsController
-     */
-    private PipelinqSettingsController $controller;
+	/**
+	 * Controller under test.
+	 *
+	 * @var PipelinqSettingsController
+	 */
+	private PipelinqSettingsController $controller;
 
-    /**
-     * Set up mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request        = $this->createMock(IRequest::class);
-        $this->pipelinqConfig = $this->createMock(PipelinqConfig::class);
+	/**
+	 * Set up mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->pipelinqConfig = $this->createMock(PipelinqConfig::class);
 
-        $this->controller = new PipelinqSettingsController(
-            request: $this->request,
-            pipelinqConfig: $this->pipelinqConfig,
-        );
+		$this->controller = new PipelinqSettingsController(
+			request: $this->request,
+			pipelinqConfig: $this->pipelinqConfig,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * index() returns endpoint + hasToken — and NEVER the token itself.
-     *
-     * Verifies the "token reload-masked" half of the
-     * configuration-is-persisted-securely scenario.
-     */
-    public function testIndexReturnsEndpointAndHasTokenFlagOnly(): void
-    {
-        $this->pipelinqConfig->method('getPipelinqEndpoint')->willReturn('https://pipelinq.example.com');
-        $this->pipelinqConfig->method('hasPipelinqToken')->willReturn(true);
-        // The controller MUST NOT call getPipelinqToken — only the flag.
-        $this->pipelinqConfig->expects(self::never())->method('getPipelinqToken');
+	/**
+	 * index() returns endpoint + hasToken — and NEVER the token itself.
+	 *
+	 * Verifies the "token reload-masked" half of the
+	 * configuration-is-persisted-securely scenario.
+	 */
+	public function testIndexReturnsEndpointAndHasTokenFlagOnly(): void {
+		$this->pipelinqConfig->method('getPipelinqEndpoint')->willReturn('https://pipelinq.example.com');
+		$this->pipelinqConfig->method('hasPipelinqToken')->willReturn(true);
+		// The controller MUST NOT call getPipelinqToken — only the flag.
+		$this->pipelinqConfig->expects(self::never())->method('getPipelinqToken');
 
-        $response = $this->controller->index();
-        self::assertInstanceOf(JSONResponse::class, $response);
-        $data = $response->getData();
+		$response = $this->controller->index();
+		self::assertInstanceOf(JSONResponse::class, $response);
+		$data = $response->getData();
 
-        self::assertSame('https://pipelinq.example.com', $data['endpoint']);
-        self::assertTrue($data['hasToken']);
-        self::assertArrayNotHasKey('token', $data, 'Token MUST NOT be returned to the frontend');
+		self::assertSame('https://pipelinq.example.com', $data['endpoint']);
+		self::assertTrue($data['hasToken']);
+		self::assertArrayNotHasKey('token', $data, 'Token MUST NOT be returned to the frontend');
 
-    }//end testIndexReturnsEndpointAndHasTokenFlagOnly()
+	}//end testIndexReturnsEndpointAndHasTokenFlagOnly()
 
-    /**
-     * POST without a token preserves the currently-stored secret.
-     *
-     * Supports "edit endpoint only" without forcing the admin to
-     * re-enter the token.
-     */
-    public function testCreatePreservesTokenWhenAbsent(): void
-    {
-        $this->request->method('getParam')->willReturnMap(
-            [
-                ['endpoint', null, 'https://new.example.com'],
-                ['token', null, null],
-            ]
-        );
+	/**
+	 * POST without a token preserves the currently-stored secret.
+	 *
+	 * Supports "edit endpoint only" without forcing the admin to
+	 * re-enter the token.
+	 */
+	public function testCreatePreservesTokenWhenAbsent(): void {
+		$this->request->method('getParam')->willReturnMap(
+			[
+				['endpoint', null, 'https://new.example.com'],
+				['token', null, null],
+			]
+		);
 
-        $this->pipelinqConfig->expects(self::once())
-            ->method('setPipelinqEndpoint')
-            ->with('https://new.example.com');
-        $this->pipelinqConfig->expects(self::never())->method('setPipelinqToken');
+		$this->pipelinqConfig->expects(self::once())
+			->method('setPipelinqEndpoint')
+			->with('https://new.example.com');
+		$this->pipelinqConfig->expects(self::never())->method('setPipelinqToken');
 
-        $this->pipelinqConfig->method('getPipelinqEndpoint')->willReturn('https://new.example.com');
-        $this->pipelinqConfig->method('hasPipelinqToken')->willReturn(true);
+		$this->pipelinqConfig->method('getPipelinqEndpoint')->willReturn('https://new.example.com');
+		$this->pipelinqConfig->method('hasPipelinqToken')->willReturn(true);
 
-        $response = $this->controller->create();
-        $data     = $response->getData();
-        self::assertTrue($data['success']);
-        self::assertArrayNotHasKey('token', $data);
+		$response = $this->controller->create();
+		$data = $response->getData();
+		self::assertTrue($data['success']);
+		self::assertArrayNotHasKey('token', $data);
 
-    }//end testCreatePreservesTokenWhenAbsent()
+	}//end testCreatePreservesTokenWhenAbsent()
 
-    /**
-     * POST with an explicit token rotates the stored secret.
-     */
-    public function testCreateRotatesTokenWhenProvided(): void
-    {
-        $this->request->method('getParam')->willReturnMap(
-            [
-                ['endpoint', null, 'https://pipelinq.example.com'],
-                ['token', null, 'rotated-secret'],
-            ]
-        );
+	/**
+	 * POST with an explicit token rotates the stored secret.
+	 */
+	public function testCreateRotatesTokenWhenProvided(): void {
+		$this->request->method('getParam')->willReturnMap(
+			[
+				['endpoint', null, 'https://pipelinq.example.com'],
+				['token', null, 'rotated-secret'],
+			]
+		);
 
-        $this->pipelinqConfig->expects(self::once())->method('setPipelinqEndpoint');
-        $this->pipelinqConfig->expects(self::once())
-            ->method('setPipelinqToken')
-            ->with('rotated-secret');
+		$this->pipelinqConfig->expects(self::once())->method('setPipelinqEndpoint');
+		$this->pipelinqConfig->expects(self::once())
+			->method('setPipelinqToken')
+			->with('rotated-secret');
 
-        $this->pipelinqConfig->method('getPipelinqEndpoint')->willReturn('https://pipelinq.example.com');
-        $this->pipelinqConfig->method('hasPipelinqToken')->willReturn(true);
+		$this->pipelinqConfig->method('getPipelinqEndpoint')->willReturn('https://pipelinq.example.com');
+		$this->pipelinqConfig->method('hasPipelinqToken')->willReturn(true);
 
-        $response = $this->controller->create();
-        self::assertTrue($response->getData()['success']);
+		$response = $this->controller->create();
+		self::assertTrue($response->getData()['success']);
 
-    }//end testCreateRotatesTokenWhenProvided()
+	}//end testCreateRotatesTokenWhenProvided()
 
-    /**
-     * test() delegates to PipelinqConfig::testConnection() and
-     * surfaces the outcome verbatim.
-     */
-    public function testTestDelegatesToConfig(): void
-    {
-        $expected = [
-            'success' => true,
-            'status'  => 200,
-            'message' => 'Pipelinq connection succeeded.',
-        ];
-        $this->pipelinqConfig->expects(self::once())
-            ->method('testConnection')
-            ->willReturn($expected);
+	/**
+	 * test() delegates to PipelinqConfig::testConnection() and
+	 * surfaces the outcome verbatim.
+	 */
+	public function testTestDelegatesToConfig(): void {
+		$expected = [
+			'success' => true,
+			'status' => 200,
+			'message' => 'Pipelinq connection succeeded.',
+		];
+		$this->pipelinqConfig->expects(self::once())
+			->method('testConnection')
+			->willReturn($expected);
 
-        $response = $this->controller->test();
-        self::assertSame($expected, $response->getData());
+		$response = $this->controller->test();
+		self::assertSame($expected, $response->getData());
 
-    }//end testTestDelegatesToConfig()
+	}//end testTestDelegatesToConfig()
 }//end class

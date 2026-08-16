@@ -40,13 +40,13 @@
                 "description": "Planned date the next dunning stage is due to be executed (ISO date). Computed by the credit-control scheduler; not carried on a historical DunningRun.",
                 "title": "Next Dunning Date"
               },
-              "incassokostenBedrag": {
+              "collectionCostAmount": {
                 "type": "number",
                 "nullable": true,
                 "description": "Incasso (collection) costs accrued as at the latest dunning stage (EUR). Source: DunningRun.incassokostenBedrag.",
                 "title": "Incassokosten Bedrag"
               },
-              "renteBedrag": {
+              "interestAmount": {
                 "type": "number",
                 "nullable": true,
                 "description": "Wettelijke rente (statutory interest) accrued as at the latest dunning stage (EUR). Source: DunningRun.renteBedrag.",
@@ -80,24 +80,24 @@
                   "Faillissement",
                   "Schuldsanering",
                   "1jaar-onbetaald",
-                  "overig"
+                  "other"
                 ],
-                "description": "Categorised write-off ground, derived from the OninbaarAfschrijving.art29OBVerklaring declaration: bankruptcy (Faillissement), debt restructuring (Schuldsanering), one year unpaid (1jaar-onbetaald) or other (overig).",
+                "description": "Categorised write-off ground, derived from the OninbaarAfschrijving.art29OBVerklaring declaration: bankruptcy (Faillissement), debt restructuring (Schuldsanering), one year unpaid (1jaar-onbetaald) or other (other).",
                 "title": "Written Off Reason"
               },
-              "art29OBVerklaring": {
+              "art29OBDeclaration": {
                 "type": "string",
                 "nullable": true,
                 "description": "Verbatim reason / declaration text underpinning the write-off (e.g. 'Faillissement vonnis 2026-04-12', 'Schuldsanering WSNP'). Source: OninbaarAfschrijving.art29OBVerklaring.",
                 "title": "Art29Ob Verklaring"
               },
-              "hoofdsomAfgeschreven": {
+              "principalDepreciated": {
                 "type": "number",
                 "nullable": true,
                 "description": "Principal amount written off, excluding VAT (EUR). Source: OninbaarAfschrijving.hoofdsomAfgeschreven.",
                 "title": "Hoofdsom Afgeschreven"
               },
-              "btwBedrag": {
+              "vatAmount": {
                 "type": "number",
                 "nullable": true,
                 "description": "VAT amount eligible for teruggaaf per art. 29 OB (EUR). Source: OninbaarAfschrijving.btwBedrag.",
@@ -115,7 +115,7 @@
                 "description": "FK to the materialised GLTransaction recording the write-off booking. Source: OninbaarAfschrijving.boekingId.",
                 "title": "Written Off GL Transaction ID"
               },
-              "btwTeruggaafPeriode": {
+              "vatRefundPeriod": {
                 "type": "string",
                 "nullable": true,
                 "description": "VAT filing period the art. 29 OB teruggaaf has been queued for (e.g. '2026-Q2'). Source: OninbaarAfschrijving.btwAangiftePeriode.",

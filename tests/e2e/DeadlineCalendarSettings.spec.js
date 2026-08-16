@@ -48,14 +48,19 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		page.setViewportSize({ width: 1600, height: 1200 })
 	})
 
-	test('renders the four deadline categories with AR opt-in off by default', async ({ page }) => {
+	test('renders the four deadline categories with AR opt-in off by default', async ({
+		page,
+	}) => {
 		await page.goto(`${APP}${ROUTE}`)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		const filing = page.getByTestId('deadline-category-filing')
 		const deployed = await filing.isVisible().catch(() => false)
-		test.skip(!deployed, 'deadline-calendar settings page not deployed on this build')
+		test.skip(
+			!deployed,
+			'deadline-calendar settings page not deployed on this build',
+		)
 
 		await expect(page.getByTestId('deadline-category-payment-run')).toBeVisible()
 		await expect(page.getByTestId('deadline-category-ar-due')).toBeVisible()
@@ -67,14 +72,19 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		await expect(page.getByTestId('deadline-lead-filing')).toBeVisible()
 	})
 
-	test('toggling the payment-run category off saves through the settings endpoint', async ({ page }) => {
+	test('toggling the payment-run category off saves through the settings endpoint', async ({
+		page,
+	}) => {
 		await page.goto(`${APP}${ROUTE}`)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		const toggle = page.getByTestId('deadline-toggle-payment-run')
 		const deployed = await toggle.isVisible().catch(() => false)
-		test.skip(!deployed, 'deadline-calendar settings page not deployed on this build')
+		test.skip(
+			!deployed,
+			'deadline-calendar settings page not deployed on this build',
+		)
 
 		// Click the SWITCH SURFACE, not the input. `data-testid` falls through
 		// NcCheckboxRadioSwitch onto its <input>, which @nextcloud/vue 9 renders
@@ -94,7 +104,8 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		await expect(toggle).toBeChecked({ checked: !before })
 
 		const saveResponse = page.waitForResponse(
-			(response) => response.url().includes('/api/deadline-calendar/settings')
+			(response) =>
+				response.url().includes('/api/deadline-calendar/settings')
 				&& response.request().method() === 'POST',
 		)
 		await page.getByTestId('deadline-settings-save').click()

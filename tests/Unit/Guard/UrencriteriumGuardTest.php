@@ -32,82 +32,77 @@ use Psr\Log\LoggerInterface;
  * - Other-person and other-year hours are filtered out.
  * - Reproducible: same input → identical output.
  */
-class UrencriteriumGuardTest extends TestCase
-{
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+class UrencriteriumGuardTest extends TestCase {
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var UrencriteriumGuard
-     */
-    private UrencriteriumGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var UrencriteriumGuard
+	 */
+	private UrencriteriumGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new UrencriteriumGuard(logger: $this->logger);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new UrencriteriumGuard(logger: $this->logger);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * REQ-ZZP-002: 200 excluded (sick) hours are not counted; 1200 qualify.
-     *
-     * @return void
-     */
-    public function testExcludedHoursDoNotQualify(): void
-    {
-        $records = [
-            ['personId' => 'p1', 'workDate' => '2026-03-01', 'hours' => 1200, 'category' => 'billable'],
-            ['personId' => 'p1', 'workDate' => '2026-04-01', 'hours' => 200, 'category' => 'excluded', 'excludedReason' => 'sick'],
-        ];
+	/**
+	 * REQ-ZZP-002: 200 excluded (sick) hours are not counted; 1200 qualify.
+	 *
+	 * @return void
+	 */
+	public function testExcludedHoursDoNotQualify(): void {
+		$records = [
+			['personId' => 'p1', 'workDate' => '2026-03-01', 'hours' => 1200, 'category' => 'billable'],
+			['personId' => 'p1', 'workDate' => '2026-04-01', 'hours' => 200, 'category' => 'excluded', 'excludedReason' => 'sick'],
+		];
 
-        $result = $this->guard->currentYtdHours($records, 'p1', 2026);
+		$result = $this->guard->currentYtdHours($records, 'p1', 2026);
 
-        self::assertSame(1200.0, $result);
-        self::assertLessThan(1225.0, $result);
+		self::assertSame(1200.0, $result);
+		self::assertLessThan(1225.0, $result);
 
-    }//end testExcludedHoursDoNotQualify()
+	}//end testExcludedHoursDoNotQualify()
 
-    /**
-     * REQ-ZZP-003: hours for another person or another year are excluded.
-     *
-     * @return void
-     */
-    public function testFiltersByPersonAndYear(): void
-    {
-        $records = [
-            ['personId' => 'p1', 'workDate' => '2026-03-01', 'hours' => 800, 'category' => 'billable'],
-            ['personId' => 'p2', 'workDate' => '2026-03-01', 'hours' => 999, 'category' => 'billable'],
-            ['personId' => 'p1', 'workDate' => '2025-12-31', 'hours' => 999, 'category' => 'billable'],
-            ['personId' => 'p1', 'workDate' => '2026-09-01', 'hours' => 500, 'category' => 'project'],
-        ];
+	/**
+	 * REQ-ZZP-003: hours for another person or another year are excluded.
+	 *
+	 * @return void
+	 */
+	public function testFiltersByPersonAndYear(): void {
+		$records = [
+			['personId' => 'p1', 'workDate' => '2026-03-01', 'hours' => 800, 'category' => 'billable'],
+			['personId' => 'p2', 'workDate' => '2026-03-01', 'hours' => 999, 'category' => 'billable'],
+			['personId' => 'p1', 'workDate' => '2025-12-31', 'hours' => 999, 'category' => 'billable'],
+			['personId' => 'p1', 'workDate' => '2026-09-01', 'hours' => 500, 'category' => 'project'],
+		];
 
-        $result = $this->guard->currentYtdHours($records, 'p1', 2026);
+		$result = $this->guard->currentYtdHours($records, 'p1', 2026);
 
-        self::assertSame(1300.0, $result);
+		self::assertSame(1300.0, $result);
 
-    }//end testFiltersByPersonAndYear()
+	}//end testFiltersByPersonAndYear()
 
-    /**
-     * Empty input yields zero.
-     *
-     * @return void
-     */
-    public function testEmptyInputIsZero(): void
-    {
-        self::assertSame(0.0, $this->guard->currentYtdHours([], 'p1', 2026));
+	/**
+	 * Empty input yields zero.
+	 *
+	 * @return void
+	 */
+	public function testEmptyInputIsZero(): void {
+		self::assertSame(0.0, $this->guard->currentYtdHours([], 'p1', 2026));
 
-    }//end testEmptyInputIsZero()
+	}//end testEmptyInputIsZero()
 }//end class

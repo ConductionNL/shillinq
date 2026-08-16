@@ -51,283 +51,272 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class WaterschappenBbv09FiscalAuditIntegrationTest extends TestCase
-{
+final class WaterschappenBbv09FiscalAuditIntegrationTest extends TestCase {
 
+	/**
+	 * Schemas whose audit-trail integration the slice MUST verify.
+	 *
+	 * @var array<int,string>
+	 */
+	private const BBV_SCHEMAS = [
+		'BBVProgramme',
+		'BudgetBBVMapping',
+	];
 
-    /**
-     * Schemas whose audit-trail integration the slice MUST verify.
-     *
-     * @var array<int,string>
-     */
-    private const BBV_SCHEMAS = [
-        'BBVProgramme',
-        'BudgetBBVMapping',
-    ];
+	/**
+	 * Load the base shillinq_register.json + merge every register.d/*.json
+	 * fragment exactly the way SettingsService does at install time. Returns
+	 * the merged OpenAPI components object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function loadMergedComponents(): array {
+		$basePath = __DIR__ . '/../../lib/Settings/shillinq_register.json';
+		$baseRaw = file_get_contents($basePath);
+		if ($baseRaw === false) {
+			self::fail('Could not read shillinq_register.json base config.');
+		}
 
-    /**
-     * Load the base shillinq_register.json + merge every register.d/*.json
-     * fragment exactly the way SettingsService does at install time. Returns
-     * the merged OpenAPI components object.
-     *
-     * @return array<string,mixed>
-     */
-    private function loadMergedComponents(): array
-    {
-        $basePath = __DIR__.'/../../lib/Settings/shillinq_register.json';
-        $baseRaw  = file_get_contents($basePath);
-        if ($baseRaw === false) {
-            self::fail('Could not read shillinq_register.json base config.');
-        }
+		$base = json_decode($baseRaw, true);
+		if (is_array($base) === false) {
+			self::fail('shillinq_register.json base config is not valid JSON.');
+		}
 
-        $base = json_decode($baseRaw, true);
-        if (is_array($base) === false) {
-            self::fail('shillinq_register.json base config is not valid JSON.');
-        }
+		$fragmentDir = __DIR__ . '/../../lib/Settings/register.d';
+		$fragments = glob($fragmentDir . '/*.json');
+		if ($fragments === false) {
+			$fragments = [];
+		}
 
-        $fragmentDir = __DIR__.'/../../lib/Settings/register.d';
-        $fragments   = glob($fragmentDir.'/*.json');
-        if ($fragments === false) {
-            $fragments = [];
-        }
+		sort($fragments);
+		foreach ($fragments as $fragmentPath) {
+			$fragmentRaw = file_get_contents($fragmentPath);
+			if ($fragmentRaw === false) {
+				continue;
+			}
 
-        sort($fragments);
-        foreach ($fragments as $fragmentPath) {
-            $fragmentRaw = file_get_contents($fragmentPath);
-            if ($fragmentRaw === false) {
-                continue;
-            }
+			$fragmentData = json_decode($fragmentRaw, true);
+			if (is_array($fragmentData) === false) {
+				continue;
+			}
 
-            $fragmentData = json_decode($fragmentRaw, true);
-            if (is_array($fragmentData) === false) {
-                continue;
-            }
+			$base = $this->deepMerge($base, $fragmentData);
+		}
 
-            $base = $this->deepMerge($base, $fragmentData);
-        }
+		$components = ($base['components'] ?? []);
+		if (is_array($components) === false) {
+			self::fail('Merged register config has no components map.');
+		}
 
-        $components = ($base['components'] ?? []);
-        if (is_array($components) === false) {
-            self::fail('Merged register config has no components map.');
-        }
+		return $components;
+	}//end loadMergedComponents()
 
-        return $components;
+	/**
+	 * Recursive deep-merge used by SettingsService::loadRegisterConfigData.
+	 *
+	 * @param array<mixed,mixed> $base Base array.
+	 * @param array<mixed,mixed> $patch Patch overlaid on top.
+	 *
+	 * @return array<mixed,mixed>
+	 */
+	private function deepMerge(array $base, array $patch): array {
+		foreach ($patch as $key => $value) {
+			if (is_array($value) === true
+				&& array_key_exists($key, $base) === true
+				&& is_array($base[$key]) === true
+			) {
+				$base[$key] = $this->deepMerge($base[$key], $value);
+				continue;
+			}
 
-    }//end loadMergedComponents()
+			$base[$key] = $value;
+		}
 
-    /**
-     * Recursive deep-merge used by SettingsService::loadRegisterConfigData.
-     *
-     * @param array<mixed,mixed> $base  Base array.
-     * @param array<mixed,mixed> $patch Patch overlaid on top.
-     *
-     * @return array<mixed,mixed>
-     */
-    private function deepMerge(array $base, array $patch): array
-    {
-        foreach ($patch as $key => $value) {
-            if (is_array($value) === true
-                && array_key_exists($key, $base) === true
-                && is_array($base[$key]) === true
-            ) {
-                $base[$key] = $this->deepMerge($base[$key], $value);
-                continue;
-            }
+		return $base;
+	}//end deepMerge()
 
-            $base[$key] = $value;
-        }
+	/**
+	 * The BBVProgramme schema MUST declare a non-nullable integer
+	 * fiscalYear property — the implicit fiscal-year scope (REQ-BBVW-006)
+	 * is impossible without it.
+	 *
+	 * @return void
+	 */
+	public function testBbvProgrammeCarriesFiscalYearProperty(): void {
+		$components = $this->loadMergedComponents();
+		$schemas = ($components['schemas'] ?? []);
 
-        return $base;
+		self::assertArrayHasKey(
+			'BBVProgramme',
+			$schemas,
+			'BBVProgramme schema MUST exist for slice-09 fiscal scoping.'
+		);
 
-    }//end deepMerge()
+		$programme = $schemas['BBVProgramme'];
+		self::assertArrayHasKey(
+			'fiscalYear',
+			($programme['properties'] ?? []),
+			'BBVProgramme MUST declare a fiscalYear property.'
+		);
 
-    /**
-     * The BBVProgramme schema MUST declare a non-nullable integer
-     * fiscalYear property — the implicit fiscal-year scope (REQ-BBVW-006)
-     * is impossible without it.
-     *
-     * @return void
-     */
-    public function testBbvProgrammeCarriesFiscalYearProperty(): void
-    {
-        $components = $this->loadMergedComponents();
-        $schemas    = ($components['schemas'] ?? []);
+		$fiscalYear = $programme['properties']['fiscalYear'];
+		self::assertSame(
+			'integer',
+			($fiscalYear['type'] ?? null),
+			'fiscalYear MUST be typed as integer.'
+		);
+		self::assertContains(
+			'fiscalYear',
+			($programme['required'] ?? []),
+			'fiscalYear MUST be required on BBVProgramme.'
+		);
 
-        self::assertArrayHasKey(
-            'BBVProgramme',
-            $schemas,
-            'BBVProgramme schema MUST exist for slice-09 fiscal scoping.'
-        );
+	}//end testBbvProgrammeCarriesFiscalYearProperty()
 
-        $programme = $schemas['BBVProgramme'];
-        self::assertArrayHasKey(
-            'fiscalYear',
-            ($programme['properties'] ?? []),
-            'BBVProgramme MUST declare a fiscalYear property.'
-        );
+	/**
+	 * BudgetBBVMapping has no fiscalYear column but MUST carry the
+	 * effective-date window the dashboard uses to derive the year scope.
+	 *
+	 * @return void
+	 */
+	public function testBudgetBbvMappingCarriesEffectiveFromWindow(): void {
+		$components = $this->loadMergedComponents();
+		$schemas = ($components['schemas'] ?? []);
 
-        $fiscalYear = $programme['properties']['fiscalYear'];
-        self::assertSame(
-            'integer',
-            ($fiscalYear['type'] ?? null),
-            'fiscalYear MUST be typed as integer.'
-        );
-        self::assertContains(
-            'fiscalYear',
-            ($programme['required'] ?? []),
-            'fiscalYear MUST be required on BBVProgramme.'
-        );
+		self::assertArrayHasKey(
+			'BudgetBBVMapping',
+			$schemas,
+			'BudgetBBVMapping schema MUST exist for slice-09 fiscal scoping.'
+		);
 
-    }//end testBbvProgrammeCarriesFiscalYearProperty()
+		$mapping = $schemas['BudgetBBVMapping'];
+		$props = ($mapping['properties'] ?? []);
+		self::assertArrayHasKey(
+			'effectiveFrom',
+			$props,
+			'BudgetBBVMapping MUST declare an effectiveFrom date window.'
+		);
 
-    /**
-     * BudgetBBVMapping has no fiscalYear column but MUST carry the
-     * effective-date window the dashboard uses to derive the year scope.
-     *
-     * @return void
-     */
-    public function testBudgetBbvMappingCarriesEffectiveFromWindow(): void
-    {
-        $components = $this->loadMergedComponents();
-        $schemas    = ($components['schemas'] ?? []);
+	}//end testBudgetBbvMappingCarriesEffectiveFromWindow()
 
-        self::assertArrayHasKey(
-            'BudgetBBVMapping',
-            $schemas,
-            'BudgetBBVMapping schema MUST exist for slice-09 fiscal scoping.'
-        );
+	/**
+	 * Administration MUST carry the fiscalYearStartMonth + Day fields the
+	 * FiscalYearContextService reads to derive the active fiscal-year
+	 * boundary (REQ-MA-002).
+	 *
+	 * @return void
+	 */
+	public function testAdministrationCarriesFiscalYearStartFields(): void {
+		$components = $this->loadMergedComponents();
+		$schemas = ($components['schemas'] ?? []);
 
-        $mapping = $schemas['BudgetBBVMapping'];
-        $props   = ($mapping['properties'] ?? []);
-        self::assertArrayHasKey(
-            'effectiveFrom',
-            $props,
-            'BudgetBBVMapping MUST declare an effectiveFrom date window.'
-        );
+		self::assertArrayHasKey(
+			'Administration',
+			$schemas,
+			'Administration schema MUST exist for slice-09 FY resolution.'
+		);
 
-    }//end testBudgetBbvMappingCarriesEffectiveFromWindow()
+		$admin = $schemas['Administration'];
+		$props = ($admin['properties'] ?? []);
+		self::assertArrayHasKey(
+			'fiscalYearStartMonth',
+			$props,
+			'Administration MUST declare fiscalYearStartMonth.'
+		);
+		self::assertArrayHasKey(
+			'fiscalYearStartDay',
+			$props,
+			'Administration MUST declare fiscalYearStartDay.'
+		);
 
-    /**
-     * Administration MUST carry the fiscalYearStartMonth + Day fields the
-     * FiscalYearContextService reads to derive the active fiscal-year
-     * boundary (REQ-MA-002).
-     *
-     * @return void
-     */
-    public function testAdministrationCarriesFiscalYearStartFields(): void
-    {
-        $components = $this->loadMergedComponents();
-        $schemas    = ($components['schemas'] ?? []);
+	}//end testAdministrationCarriesFiscalYearStartFields()
 
-        self::assertArrayHasKey(
-            'Administration',
-            $schemas,
-            'Administration schema MUST exist for slice-09 FY resolution.'
-        );
+	/**
+	 * Neither BBVProgramme nor BudgetBBVMapping may opt out of OR's
+	 * immutable audit trail. The OR default for any registered schema is
+	 * "audited" — only an explicit `x-openregister-audit: false` (or an
+	 * equivalent register-level toggle) would suppress capture. REQ-BBVW-007
+	 * forbids any such opt-out: every CRUD on these registers MUST flow
+	 * through the OR audit trail (giant D6 / ADR-022).
+	 *
+	 * @return void
+	 */
+	public function testBbvSchemasDoNotOptOutOfAuditTrail(): void {
+		$components = $this->loadMergedComponents();
+		$schemas = ($components['schemas'] ?? []);
 
-        $admin = $schemas['Administration'];
-        $props = ($admin['properties'] ?? []);
-        self::assertArrayHasKey(
-            'fiscalYearStartMonth',
-            $props,
-            'Administration MUST declare fiscalYearStartMonth.'
-        );
-        self::assertArrayHasKey(
-            'fiscalYearStartDay',
-            $props,
-            'Administration MUST declare fiscalYearStartDay.'
-        );
+		foreach (self::BBV_SCHEMAS as $schemaName) {
+			self::assertArrayHasKey(
+				$schemaName,
+				$schemas,
+				$schemaName . ' schema MUST exist for slice-09 audit verification.'
+			);
 
-    }//end testAdministrationCarriesFiscalYearStartFields()
+			$schema = $schemas[$schemaName];
 
-    /**
-     * Neither BBVProgramme nor BudgetBBVMapping may opt out of OR's
-     * immutable audit trail. The OR default for any registered schema is
-     * "audited" — only an explicit `x-openregister-audit: false` (or an
-     * equivalent register-level toggle) would suppress capture. REQ-BBVW-007
-     * forbids any such opt-out: every CRUD on these registers MUST flow
-     * through the OR audit trail (giant D6 / ADR-022).
-     *
-     * @return void
-     */
-    public function testBbvSchemasDoNotOptOutOfAuditTrail(): void
-    {
-        $components = $this->loadMergedComponents();
-        $schemas    = ($components['schemas'] ?? []);
+			// OR opt-outs would surface as one of these toggles; their
+			// presence with a falsey value is forbidden by REQ-BBVW-007.
+			foreach ([
+				'x-openregister-audit',
+				'x-openregister-audit-trail',
+				'x-openregister-immutable-audit',
+			] as $optOutKey
+			) {
+				if (array_key_exists($optOutKey, $schema) === false) {
+					continue;
+				}
 
-        foreach (self::BBV_SCHEMAS as $schemaName) {
-            self::assertArrayHasKey(
-                $schemaName,
-                $schemas,
-                $schemaName.' schema MUST exist for slice-09 audit verification.'
-            );
+				self::assertNotFalse(
+					$schema[$optOutKey],
+					$schemaName . ' MUST NOT opt out of the OR audit trail (' . $optOutKey . ' was false).'
+				);
+			}
+		}//end foreach
 
-            $schema = $schemas[$schemaName];
+	}//end testBbvSchemasDoNotOptOutOfAuditTrail()
 
-            // OR opt-outs would surface as one of these toggles; their
-            // presence with a falsey value is forbidden by REQ-BBVW-007.
-            foreach ([
-                'x-openregister-audit',
-                'x-openregister-audit-trail',
-                'x-openregister-immutable-audit',
-            ] as $optOutKey
-            ) {
-                if (array_key_exists($optOutKey, $schema) === false) {
-                    continue;
-                }
+	/**
+	 * The slice MUST NOT have introduced an app-local audit table or
+	 * service for BBV registers (giant D6 / ADR-022): OR is the single
+	 * source of audit truth. We verify the shipped lib/Service directory
+	 * does not contain a BBV-specific *AuditService* and the slice-09
+	 * fragment does not declare an app-local *Audit* schema for the BBV
+	 * registers.
+	 *
+	 * @return void
+	 */
+	public function testSliceDoesNotShipAppLocalAuditService(): void {
+		$servicesDir = __DIR__ . '/../../lib/Service';
+		$candidates = glob($servicesDir . '/*BBV*Audit*.php');
+		if ($candidates === false) {
+			$candidates = [];
+		}
 
-                self::assertNotFalse(
-                    $schema[$optOutKey],
-                    $schemaName.' MUST NOT opt out of the OR audit trail ('.$optOutKey.' was false).'
-                );
-            }
-        }//end foreach
+		self::assertSame(
+			[],
+			$candidates,
+			'Slice 09 MUST NOT introduce an app-local BBV audit service '
+			. '(giant D6 / ADR-022).'
+		);
 
-    }//end testBbvSchemasDoNotOptOutOfAuditTrail()
+		$components = $this->loadMergedComponents();
+		$schemas = ($components['schemas'] ?? []);
 
-    /**
-     * The slice MUST NOT have introduced an app-local audit table or
-     * service for BBV registers (giant D6 / ADR-022): OR is the single
-     * source of audit truth. We verify the shipped lib/Service directory
-     * does not contain a BBV-specific *AuditService* and the slice-09
-     * fragment does not declare an app-local *Audit* schema for the BBV
-     * registers.
-     *
-     * @return void
-     */
-    public function testSliceDoesNotShipAppLocalAuditService(): void
-    {
-        $servicesDir = __DIR__.'/../../lib/Service';
-        $candidates  = glob($servicesDir.'/*BBV*Audit*.php');
-        if ($candidates === false) {
-            $candidates = [];
-        }
+		// BBV-prefixed *Audit* schemas would be the app-local-audit anti-pattern.
+		foreach (array_keys($schemas) as $name) {
+			if (is_string($name) === false) {
+				continue;
+			}
 
-        self::assertSame(
-            [],
-            $candidates,
-            'Slice 09 MUST NOT introduce an app-local BBV audit service '
-            .'(giant D6 / ADR-022).'
-        );
+			if (preg_match('/^(?:BBV|BudgetBBV).*Audit/i', $name) === 1) {
+				self::fail(
+					'Slice 09 MUST NOT introduce an app-local BBV audit '
+					. 'schema; the OR immutable audit trail captures CRUD '
+					. 'on BBVProgramme + BudgetBBVMapping automatically. '
+					. 'Found: ' . $name
+				);
+			}
+		}
 
-        $components = $this->loadMergedComponents();
-        $schemas    = ($components['schemas'] ?? []);
-
-        // BBV-prefixed *Audit* schemas would be the app-local-audit anti-pattern.
-        foreach (array_keys($schemas) as $name) {
-            if (is_string($name) === false) {
-                continue;
-            }
-
-            if (preg_match('/^(?:BBV|BudgetBBV).*Audit/i', $name) === 1) {
-                self::fail(
-                    'Slice 09 MUST NOT introduce an app-local BBV audit '
-                    .'schema; the OR immutable audit trail captures CRUD '
-                    .'on BBVProgramme + BudgetBBVMapping automatically. '
-                    .'Found: '.$name
-                );
-            }
-        }
-
-    }//end testSliceDoesNotShipAppLocalAuditService()
+	}//end testSliceDoesNotShipAppLocalAuditService()
 }//end class

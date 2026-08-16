@@ -36,27 +36,24 @@ namespace OCA\Shillinq\Guard;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class ProjectCloseGuard
-{
-    /**
-     * Precondition for `close`: `wipBalance` must be zero, or a non-empty
-     * `closureJustification` must be recorded when it is not.
-     *
-     * @param array<string, mixed> $project The Project object being transitioned.
-     *
-     * @return bool True when the project may be closed.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireWipJustificationOrZero(array $project): bool
-    {
-        $wipBalance = (float) ($project['wipBalance'] ?? 0);
-        if (abs($wipBalance) < 0.005) {
-            // Effectively zero (within cent-rounding tolerance).
-            return true;
-        }
+class ProjectCloseGuard {
+	/**
+	 * Precondition for `close`: `wipBalance` must be zero, or a non-empty
+	 * `closureJustification` must be recorded when it is not.
+	 *
+	 * @param array<string, mixed> $project The Project object being transitioned.
+	 *
+	 * @return bool True when the project may be closed.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireWipJustificationOrZero(array $project): bool {
+		$wipBalance = (float)($project['wipBalance'] ?? 0);
+		if (abs($wipBalance) < 0.005) {
+			// Effectively zero (within cent-rounding tolerance).
+			return true;
+		}
 
-        return trim((string) ($project['closureJustification'] ?? '')) !== '';
-
-    }//end requireWipJustificationOrZero()
+		return trim((string)($project['closureJustification'] ?? '')) !== '';
+	}//end requireWipJustificationOrZero()
 }//end class

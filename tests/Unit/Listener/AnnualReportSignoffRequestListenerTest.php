@@ -36,8 +36,8 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\AnnualReportSignoffRequestListener;
-use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\GenericEvent;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -49,262 +49,248 @@ use RuntimeException;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class AnnualReportSignoffRequestListenerTest extends TestCase
-{
+final class AnnualReportSignoffRequestListenerTest extends TestCase {
 
-    /**
-     * Recording fake ObjectService: captures updateObject() writes.
-     *
-     * @var object
-     */
-    private object $objectService;
+	/**
+	 * Recording fake ObjectService: captures updateObject() writes.
+	 *
+	 * @var object
+	 */
+	private object $objectService;
 
-    /**
-     * Captured requestSignoff() invocations: each entry is
-     * [financeObject, subjectSchema, decisionType].
-     *
-     * @var array<int,array{0:array<string,mixed>,1:string,2:string}>
-     */
-    private array $signoffCalls = [];
+	/**
+	 * Captured requestSignoff() invocations: each entry is
+	 * [financeObject, subjectSchema, decisionType].
+	 *
+	 * @var array<int,array{0:array<string,mixed>,1:string,2:string}>
+	 */
+	private array $signoffCalls = [];
 
-    /**
-     * Build the SUT wired to a recording ObjectService and a
-     * SignoffDecisionService mock whose requestSignoff() records every call
-     * into $this->signoffCalls.
-     *
-     * @param array<string,mixed>|null $requestResult The value requestSignoff()
-     *                                                 returns, or null to make it throw
-     *                                                 (simulating decidesk absent —
-     *                                                 fail-closed).
-     *
-     * @return AnnualReportSignoffRequestListener
-     */
-    private function makeListener(?array $requestResult): AnnualReportSignoffRequestListener
-    {
-        $this->signoffCalls = [];
+	/**
+	 * Build the SUT wired to a recording ObjectService and a
+	 * SignoffDecisionService mock whose requestSignoff() records every call
+	 * into $this->signoffCalls.
+	 *
+	 * @param array<string,mixed>|null $requestResult The value requestSignoff()
+	 *                                                returns, or null to make it throw
+	 *                                                (simulating decidesk absent —
+	 *                                                fail-closed).
+	 *
+	 * @return AnnualReportSignoffRequestListener
+	 */
+	private function makeListener(?array $requestResult): AnnualReportSignoffRequestListener {
+		$this->signoffCalls = [];
 
-        $this->objectService = new class {
+		$this->objectService = new class {
 
-            /**
-             * @var array<int,array<string,mixed>>
-             */
-            public array $updates = [];
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			public array $updates = [];
 
-            public function setRegister(string $r): self
-            {
-                return $this;
-            }//end setRegister()
+			public function setRegister(string $r): self {
+				return $this;
+			}//end setRegister()
 
-            public function setSchema(string $s): self
-            {
-                return $this;
-            }//end setSchema()
+			public function setSchema(string $s): self {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * @param array<string,mixed> $updates
-             */
-            public function updateObject(string $id, array $updates): void
-            {
-                $this->updates[] = ['id' => $id] + $updates;
-            }//end updateObject()
-        };
+			/**
+			 * @param array<string,mixed> $updates
+			 */
+			public function updateObject(string $id, array $updates): void {
+				$this->updates[] = ['id' => $id] + $updates;
+			}//end updateObject()
+		};
 
-        $signoffService = $this->createMock(SignoffDecisionService::class);
-        $signoffService->method('requestSignoff')->willReturnCallback(
-            function (
-                array $financeObject,
-                string $subjectSchema='document',
-                string $decisionType='sign-off'
-            ) use ($requestResult): array {
-                $this->signoffCalls[] = [$financeObject, $subjectSchema, $decisionType];
-                if ($requestResult === null) {
-                    throw new RuntimeException(
-                        'decidesk is not installed; sign-off decision cannot be raised.'
-                    );
-                }
+		$signoffService = $this->createMock(SignoffDecisionService::class);
+		$signoffService->method('requestSignoff')->willReturnCallback(
+			function (
+				array $financeObject,
+				string $subjectSchema = 'document',
+				string $decisionType = 'sign-off',
+			) use ($requestResult): array {
+				$this->signoffCalls[] = [$financeObject, $subjectSchema, $decisionType];
+				if ($requestResult === null) {
+					throw new RuntimeException(
+						'decidesk is not installed; sign-off decision cannot be raised.'
+					);
+				}
 
-                return $requestResult;
-            }
-        );
+				return $requestResult;
+			}
+		);
 
-        $objectSvc = $this->objectService;
-        $container = new class($objectSvc) implements ContainerInterface {
+		$objectSvc = $this->objectService;
+		$container = new class($objectSvc) implements ContainerInterface {
 
-            private object $svc;
+			private object $svc;
 
-            public function __construct(object $svc)
-            {
-                $this->svc = $svc;
-            }//end __construct()
+			public function __construct(object $svc) {
+				$this->svc = $svc;
+			}//end __construct()
 
-            public function get(string $id): mixed
-            {
-                return $this->svc;
-            }//end get()
+			public function get(string $id): mixed {
+				return $this->svc;
+			}//end get()
 
-            public function has(string $id): bool
-            {
-                return true;
-            }//end has()
-        };
+			public function has(string $id): bool {
+				return true;
+			}//end has()
+		};
 
-        $settings = $this->createMock(SettingsService::class);
-        $settings->method('getRegisterSlug')->willReturn('shillinq');
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-        return new AnnualReportSignoffRequestListener(
-            $container,
-            $settings,
-            $signoffService,
-            new NullLogger(),
-        );
+		return new AnnualReportSignoffRequestListener(
+			$container,
+			$settings,
+			$signoffService,
+			new NullLogger(),
+		);
 
-    }//end makeListener()
+	}//end makeListener()
 
-    /**
-     * Build an ObjectTransitionedEvent carrying the given payload/to/schema.
-     *
-     * @param array<string,mixed> $payload The object payload.
-     * @param string              $to      Target lifecycle state.
-     * @param string              $schema  Schema slug.
-     * @param string              $id      Object id.
-     * @param string              $from    Source lifecycle state.
-     *
-     * @return ObjectTransitionedEvent
-     */
-    private function makeEvent(
-        array $payload,
-        string $to='opgemaakt',
-        string $schema='AnnualReport',
-        string $id='ar-42',
-        string $from='concept'
-    ): ObjectTransitionedEvent {
-        $entity = (new ObjectEntity())
-            ->setSchema($schema)
-            ->setId($id)
-            ->setObject($payload);
+	/**
+	 * Build an ObjectTransitionedEvent carrying the given payload/to/schema.
+	 *
+	 * @param array<string,mixed> $payload The object payload.
+	 * @param string $to Target lifecycle state.
+	 * @param string $schema Schema slug.
+	 * @param string $id Object id.
+	 * @param string $from Source lifecycle state.
+	 *
+	 * @return ObjectTransitionedEvent
+	 */
+	private function makeEvent(
+		array $payload,
+		string $to = 'opgemaakt',
+		string $schema = 'AnnualReport',
+		string $id = 'ar-42',
+		string $from = 'draft',
+	): ObjectTransitionedEvent {
+		$entity = (new ObjectEntity())
+			->setSchema($schema)
+			->setId($id)
+			->setObject($payload);
 
-        return new ObjectTransitionedEvent(
-            $entity,
-            'opmaken',
-            $from,
-            $to,
-            'bestuurder1',
-            'shillinq',
-            $schema,
-        );
+		return new ObjectTransitionedEvent(
+			$entity,
+			'opmaken',
+			$from,
+			$to,
+			'bestuurder1',
+			'shillinq',
+			$schema,
+		);
 
-    }//end makeEvent()
+	}//end makeEvent()
 
-    /**
-     * The `opgemaakt` transition on AnnualReport calls requestSignoff() and
-     * persists the returned decisionRef + decisionOutcome.
-     *
-     * @return void
-     */
-    public function testOpgemaaktTransitionCallsRequestSignoffAndPersists(): void
-    {
-        $listener = $this->makeListener(
-            ['id' => 'ar-42', 'decisionOutcome' => 'pending', 'decisionRef' => 'dec-42']
-        );
+	/**
+	 * The `opgemaakt` transition on AnnualReport calls requestSignoff() and
+	 * persists the returned decisionRef + decisionOutcome.
+	 *
+	 * @return void
+	 */
+	public function testOpgemaaktTransitionCallsRequestSignoffAndPersists(): void {
+		$listener = $this->makeListener(
+			['id' => 'ar-42', 'decisionOutcome' => 'pending', 'decisionRef' => 'dec-42']
+		);
 
-        $listener->handle($this->makeEvent(['id' => 'ar-42', 'administrationId' => 'adm-1']));
+		$listener->handle($this->makeEvent(['id' => 'ar-42', 'administrationId' => 'adm-1']));
 
-        self::assertCount(1, $this->signoffCalls, 'requestSignoff() must be called exactly once.');
-        [$financeObject, $subjectSchema, $decisionType] = $this->signoffCalls[0];
-        self::assertSame('ar-42', $financeObject['id']);
-        self::assertSame('AnnualReport', $subjectSchema);
-        self::assertSame('adoption', $decisionType);
+		self::assertCount(1, $this->signoffCalls, 'requestSignoff() must be called exactly once.');
+		[$financeObject, $subjectSchema, $decisionType] = $this->signoffCalls[0];
+		self::assertSame('ar-42', $financeObject['id']);
+		self::assertSame('AnnualReport', $subjectSchema);
+		self::assertSame('adoption', $decisionType);
 
-        self::assertCount(1, $this->objectService->updates);
-        self::assertSame('ar-42', $this->objectService->updates[0]['id']);
-        self::assertSame('pending', $this->objectService->updates[0]['decisionOutcome']);
-        self::assertSame('dec-42', $this->objectService->updates[0]['decisionRef']);
+		self::assertCount(1, $this->objectService->updates);
+		self::assertSame('ar-42', $this->objectService->updates[0]['id']);
+		self::assertSame('pending', $this->objectService->updates[0]['decisionOutcome']);
+		self::assertSame('dec-42', $this->objectService->updates[0]['decisionRef']);
 
-    }//end testOpgemaaktTransitionCallsRequestSignoffAndPersists()
+	}//end testOpgemaaktTransitionCallsRequestSignoffAndPersists()
 
-    /**
-     * A transition target other than `opgemaakt` is ignored entirely.
-     *
-     * @return void
-     */
-    public function testNonOpgemaaktTargetIsIgnored(): void
-    {
-        $listener = $this->makeListener(['id' => 'ar-42', 'decisionOutcome' => 'pending']);
+	/**
+	 * A transition target other than `opgemaakt` is ignored entirely.
+	 *
+	 * @return void
+	 */
+	public function testNonOpgemaaktTargetIsIgnored(): void {
+		$listener = $this->makeListener(['id' => 'ar-42', 'decisionOutcome' => 'pending']);
 
-        $listener->handle($this->makeEvent(['id' => 'ar-42'], to: 'vastgesteld', from: 'in-review'));
+		$listener->handle($this->makeEvent(['id' => 'ar-42'], to: 'determined', from: 'in-review'));
 
-        self::assertCount(0, $this->signoffCalls);
-        self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->signoffCalls);
+		self::assertCount(0, $this->objectService->updates);
 
-    }//end testNonOpgemaaktTargetIsIgnored()
+	}//end testNonOpgemaaktTargetIsIgnored()
 
-    /**
-     * An `opgemaakt` transition on a different schema is ignored.
-     *
-     * @return void
-     */
-    public function testNonAnnualReportSchemaIsIgnored(): void
-    {
-        $listener = $this->makeListener(['id' => 'other-1', 'decisionOutcome' => 'pending']);
+	/**
+	 * An `opgemaakt` transition on a different schema is ignored.
+	 *
+	 * @return void
+	 */
+	public function testNonAnnualReportSchemaIsIgnored(): void {
+		$listener = $this->makeListener(['id' => 'other-1', 'decisionOutcome' => 'pending']);
 
-        $listener->handle($this->makeEvent(['id' => 'other-1'], schema: 'ACMReport'));
+		$listener->handle($this->makeEvent(['id' => 'other-1'], schema: 'ACMReport'));
 
-        self::assertCount(0, $this->signoffCalls);
-        self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->signoffCalls);
+		self::assertCount(0, $this->objectService->updates);
 
-    }//end testNonAnnualReportSchemaIsIgnored()
+	}//end testNonAnnualReportSchemaIsIgnored()
 
-    /**
-     * An AnnualReport already carrying a non-empty decisionOutcome (pending /
-     * approved / rejected) does not raise a duplicate request — covers the
-     * `in-review` -> `reviewAnnuleren` -> `opgemaakt` re-entry cycle.
-     *
-     * @return void
-     */
-    public function testExistingDecisionOutcomeSkipsDuplicateRequest(): void
-    {
-        $listener = $this->makeListener(['id' => 'ar-42', 'decisionOutcome' => 'pending']);
+	/**
+	 * An AnnualReport already carrying a non-empty decisionOutcome (pending /
+	 * approved / rejected) does not raise a duplicate request — covers the
+	 * `in-review` -> `reviewAnnuleren` -> `opgemaakt` re-entry cycle.
+	 *
+	 * @return void
+	 */
+	public function testExistingDecisionOutcomeSkipsDuplicateRequest(): void {
+		$listener = $this->makeListener(['id' => 'ar-42', 'decisionOutcome' => 'pending']);
 
-        $listener->handle(
-            $this->makeEvent(['id' => 'ar-42', 'decisionOutcome' => 'pending'], from: 'in-review')
-        );
+		$listener->handle(
+			$this->makeEvent(['id' => 'ar-42', 'decisionOutcome' => 'pending'], from: 'in-review')
+		);
 
-        self::assertCount(0, $this->signoffCalls);
-        self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->signoffCalls);
+		self::assertCount(0, $this->objectService->updates);
 
-    }//end testExistingDecisionOutcomeSkipsDuplicateRequest()
+	}//end testExistingDecisionOutcomeSkipsDuplicateRequest()
 
-    /**
-     * When requestSignoff() fails closed (decidesk absent), the listener
-     * swallows the exception (fail-soft) and does not persist anything —
-     * never marking the report approved on a failure path.
-     *
-     * @return void
-     */
-    public function testFailSoftWhenRequestSignoffThrows(): void
-    {
-        $listener = $this->makeListener(null);
+	/**
+	 * When requestSignoff() fails closed (decidesk absent), the listener
+	 * swallows the exception (fail-soft) and does not persist anything —
+	 * never marking the report approved on a failure path.
+	 *
+	 * @return void
+	 */
+	public function testFailSoftWhenRequestSignoffThrows(): void {
+		$listener = $this->makeListener(null);
 
-        $listener->handle($this->makeEvent(['id' => 'ar-42']));
+		$listener->handle($this->makeEvent(['id' => 'ar-42']));
 
-        self::assertCount(1, $this->signoffCalls, 'requestSignoff() must still have been invoked.');
-        self::assertCount(0, $this->objectService->updates, 'A fail-closed request must not persist a mirror.');
+		self::assertCount(1, $this->signoffCalls, 'requestSignoff() must still have been invoked.');
+		self::assertCount(0, $this->objectService->updates, 'A fail-closed request must not persist a mirror.');
 
-    }//end testFailSoftWhenRequestSignoffThrows()
+	}//end testFailSoftWhenRequestSignoffThrows()
 
-    /**
-     * A non-ObjectTransitionedEvent is ignored without error.
-     *
-     * @return void
-     */
-    public function testNonMatchingEventTypeIsIgnored(): void
-    {
-        $listener = $this->makeListener(['id' => 'ar-42', 'decisionOutcome' => 'pending']);
+	/**
+	 * A non-ObjectTransitionedEvent is ignored without error.
+	 *
+	 * @return void
+	 */
+	public function testNonMatchingEventTypeIsIgnored(): void {
+		$listener = $this->makeListener(['id' => 'ar-42', 'decisionOutcome' => 'pending']);
 
-        $listener->handle(new GenericEvent());
+		$listener->handle(new GenericEvent());
 
-        self::assertCount(0, $this->signoffCalls);
-        self::assertCount(0, $this->objectService->updates);
+		self::assertCount(0, $this->signoffCalls);
+		self::assertCount(0, $this->objectService->updates);
 
-    }//end testNonMatchingEventTypeIsIgnored()
+	}//end testNonMatchingEventTypeIsIgnored()
 }//end class

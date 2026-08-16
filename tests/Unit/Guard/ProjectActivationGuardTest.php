@@ -25,28 +25,23 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 use OCA\Shillinq\Guard\ProjectActivationGuard;
 use PHPUnit\Framework\TestCase;
 
-final class ProjectActivationGuardTest extends TestCase
-{
-    private ProjectActivationGuard $guard;
+final class ProjectActivationGuardTest extends TestCase {
+	private ProjectActivationGuard $guard;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new ProjectActivationGuard();
-    }//end setUp()
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new ProjectActivationGuard();
+	}//end setUp()
 
-    public function testActivateAllowedWithStartDate(): void
-    {
-        self::assertTrue($this->guard->requireStartDate(['startDate' => '2026-01-01']));
-    }//end testActivateAllowedWithStartDate()
+	public function testActivateAllowedWithStartDate(): void {
+		self::assertTrue($this->guard->requireStartDate(['startDate' => '2026-01-01']));
+	}//end testActivateAllowedWithStartDate()
 
-    public function testActivateDeniedWithoutStartDate(): void
-    {
-        self::assertFalse($this->guard->requireStartDate(['startDate' => null]));
-    }//end testActivateDeniedWithoutStartDate()
+	public function testActivateDeniedWithoutStartDate(): void {
+		self::assertFalse($this->guard->requireStartDate(['startDate' => null]));
+	}//end testActivateDeniedWithoutStartDate()
 
-    public function testActivateDeniedWithBlankStartDate(): void
-    {
-        self::assertFalse($this->guard->requireStartDate(['startDate' => '   ']));
-    }//end testActivateDeniedWithBlankStartDate()
+	public function testActivateDeniedWithBlankStartDate(): void {
+		self::assertFalse($this->guard->requireStartDate(['startDate' => '   ']));
+	}//end testActivateDeniedWithBlankStartDate()
 }//end class

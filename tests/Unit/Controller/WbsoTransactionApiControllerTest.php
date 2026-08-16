@@ -42,188 +42,181 @@ use RuntimeException;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class WbsoTransactionApiControllerTest extends TestCase
-{
+final class WbsoTransactionApiControllerTest extends TestCase {
 
-    /**
-     * Request.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Request.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Service.
-     *
-     * @var WbsoTransactionService&MockObject
-     */
-    private WbsoTransactionService&MockObject $transactions;
+	/**
+	 * Service.
+	 *
+	 * @var WbsoTransactionService&MockObject
+	 */
+	private WbsoTransactionService&MockObject $transactions;
 
-    /**
-     * Rbac.
-     *
-     * @var WbsoRbacResolver&MockObject
-     */
-    private WbsoRbacResolver&MockObject $rbac;
+	/**
+	 * Rbac.
+	 *
+	 * @var WbsoRbacResolver&MockObject
+	 */
+	private WbsoRbacResolver&MockObject $rbac;
 
-    /**
-     * Session.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $session;
+	/**
+	 * Session.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $session;
 
-    /**
-     * Logger.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Controller.
-     *
-     * @var WbsoTransactionApiController
-     */
-    private WbsoTransactionApiController $controller;
+	/**
+	 * Controller.
+	 *
+	 * @var WbsoTransactionApiController
+	 */
+	private WbsoTransactionApiController $controller;
 
-    /**
-     * Set up.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request      = $this->createMock(IRequest::class);
-        $this->transactions = $this->createMock(WbsoTransactionService::class);
-        $this->rbac         = $this->createMock(WbsoRbacResolver::class);
-        $this->session      = $this->createMock(IUserSession::class);
-        $this->logger       = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->transactions = $this->createMock(WbsoTransactionService::class);
+		$this->rbac = $this->createMock(WbsoRbacResolver::class);
+		$this->session = $this->createMock(IUserSession::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->session->method('getUser')->willReturn($user);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->session->method('getUser')->willReturn($user);
 
-        $this->controller = new WbsoTransactionApiController(
-            request: $this->request,
-            transactions: $this->transactions,
-            rbac: $this->rbac,
-            userSession: $this->session,
-            logger: $this->logger,
-        );
-    }//end setUp()
+		$this->controller = new WbsoTransactionApiController(
+			request: $this->request,
+			transactions: $this->transactions,
+			rbac: $this->rbac,
+			userSession: $this->session,
+			logger: $this->logger,
+		);
+	}//end setUp()
 
-    /**
-     * Index returns 200 with rows.
-     *
-     * @return void
-     */
-    public function testIndexReturnsRows(): void
-    {
-        $this->request->method('getParam')->willReturn('adm-1');
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->transactions->method('listTransactions')->willReturn([
-            ['id' => 'tx-1', 'transactionNumber' => 'INV-1', 'amount' => 100.0, 'status' => 'draft'],
-        ]);
+	/**
+	 * Index returns 200 with rows.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsRows(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('listTransactions')->willReturn([
+			['id' => 'tx-1', 'transactionNumber' => 'INV-1', 'amount' => 100.0, 'status' => 'draft'],
+		]);
 
-        $response = $this->controller->index();
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        self::assertCount(1, $data['transactions']);
-        self::assertTrue($data['canCreate']);
+		$response = $this->controller->index();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertCount(1, $data['transactions']);
+		self::assertTrue($data['canCreate']);
 
-    }//end testIndexReturnsRows()
+	}//end testIndexReturnsRows()
 
-    /**
-     * Reverse requires administrator role.
-     *
-     * @return void
-     */
-    public function testReverseRequiresAdmin(): void
-    {
-        $this->request->method('getParam')->willReturn('adm-1');
-        $this->rbac->method('hasAny')->willReturnMap([
-            [['administrator'], false],
-        ]);
+	/**
+	 * Reverse requires administrator role.
+	 *
+	 * @return void
+	 */
+	public function testReverseRequiresAdmin(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturnMap([
+			[['administrator'], false],
+		]);
 
-        $response = $this->controller->reverse(id: 'tx-1');
-        self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$response = $this->controller->reverse(id: 'tx-1');
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 
-    }//end testReverseRequiresAdmin()
+	}//end testReverseRequiresAdmin()
 
-    /**
-     * Reversing a non-posted transaction returns 409.
-     *
-     * @return void
-     */
-    public function testReverseConflictReturns409(): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null): mixed {
-                return match ($key) {
-                    'administration_id' => 'adm-1',
-                    'reason'            => 'oops',
-                    default             => $default,
-                };
-            }
-        );
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->transactions->method('reverseTransaction')->willThrowException(new RuntimeException('Only posted transactions can be reversed'));
+	/**
+	 * Reversing a non-posted transaction returns 409.
+	 *
+	 * @return void
+	 */
+	public function testReverseConflictReturns409(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				return match ($key) {
+					'administration_id' => 'adm-1',
+					'reason' => 'oops',
+					default => $default,
+				};
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('reverseTransaction')->willThrowException(new RuntimeException('Only posted transactions can be reversed'));
 
-        $response = $this->controller->reverse(id: 'tx-1');
-        self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$response = $this->controller->reverse(id: 'tx-1');
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 
-    }//end testReverseConflictReturns409()
+	}//end testReverseConflictReturns409()
 
-    /**
-     * Post happy path returns 200.
-     *
-     * @return void
-     */
-    public function testPostHappyPath(): void
-    {
-        $this->request->method('getParam')->willReturn('adm-1');
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->transactions->method('postTransaction')->willReturn([
-            'id'     => 'tx-1',
-            'status' => 'posted',
-        ]);
+	/**
+	 * Post happy path returns 200.
+	 *
+	 * @return void
+	 */
+	public function testPostHappyPath(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('postTransaction')->willReturn([
+			'id' => 'tx-1',
+			'status' => 'posted',
+		]);
 
-        $response = $this->controller->post(id: 'tx-1');
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$response = $this->controller->post(id: 'tx-1');
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
-    }//end testPostHappyPath()
+	}//end testPostHappyPath()
 
-    /**
-     * Create returns 201 on success.
-     *
-     * @return void
-     */
-    public function testCreateReturns201(): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null): mixed {
-                return match ($key) {
-                    'administration_id'   => 'adm-1',
-                    'transactionNumber'   => 'INV-9',
-                    'transactionType'     => 'invoice',
-                    'transactionDate'     => '2026-01-15',
-                    'amount'              => 100.0,
-                    'description'         => 'Test',
-                    default               => $default,
-                };
-            }
-        );
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->transactions->method('createTransaction')->willReturn([
-            'id'                => 'tx-9',
-            'transactionNumber' => 'INV-9',
-            'status'            => 'draft',
-        ]);
+	/**
+	 * Create returns 201 on success.
+	 *
+	 * @return void
+	 */
+	public function testCreateReturns201(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				return match ($key) {
+					'administration_id' => 'adm-1',
+					'transactionNumber' => 'INV-9',
+					'transactionType' => 'invoice',
+					'transactionDate' => '2026-01-15',
+					'amount' => 100.0,
+					'description' => 'Test',
+					default => $default,
+				};
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('createTransaction')->willReturn([
+			'id' => 'tx-9',
+			'transactionNumber' => 'INV-9',
+			'status' => 'draft',
+		]);
 
-        $response = $this->controller->create();
-        self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$response = $this->controller->create();
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
 
-    }//end testCreateReturns201()
+	}//end testCreateReturns201()
 }//end class

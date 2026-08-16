@@ -59,411 +59,390 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
-class BankRuleController extends Controller
-{
-    /**
-     * Register slug fallback.
-     *
-     * @var string
-     */
-    private const REGISTER_SLUG = 'shillinq';
+class BankRuleController extends Controller {
+	/**
+	 * Register slug fallback.
+	 *
+	 * @var string
+	 */
+	private const REGISTER_SLUG = 'shillinq';
 
-    /**
-     * Bounded read cap for candidate lines / history (ADR-058).
-     *
-     * @var int
-     */
-    private const READ_CAP = 500;
+	/**
+	 * Bounded read cap for candidate lines / history (ADR-058).
+	 *
+	 * @var int
+	 */
+	private const READ_CAP = 500;
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                     $request           Inbound request.
-     * @param BankRulePreviewService       $previewService    Read-only predicate evaluator.
-     * @param BankRuleSuggestionService    $suggestionService History-based learning path.
-     * @param AdministrationContextService $administration    Server-resolved tenant scope.
-     * @param ContainerInterface           $container         DI container (lazy OR ObjectService).
-     * @param IUserSession                 $userSession       Current NC user.
-     * @param LoggerInterface              $logger            Logger.
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly BankRulePreviewService $previewService,
-        private readonly BankRuleSuggestionService $suggestionService,
-        private readonly AdministrationContextService $administration,
-        private readonly ContainerInterface $container,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request Inbound request.
+	 * @param BankRulePreviewService $previewService Read-only predicate evaluator.
+	 * @param BankRuleSuggestionService $suggestionService History-based learning path.
+	 * @param AdministrationContextService $administration Server-resolved tenant scope.
+	 * @param ContainerInterface $container DI container (lazy OR ObjectService).
+	 * @param IUserSession $userSession Current NC user.
+	 * @param LoggerInterface $logger Logger.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly BankRulePreviewService $previewService,
+		private readonly BankRuleSuggestionService $suggestionService,
+		private readonly AdministrationContextService $administration,
+		private readonly ContainerInterface $container,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Dry-run a draft rule against recent unmatched lines (REQ-BR-011).
-     *
-     * Body: rule (object with predicates[]) — required; anchorDate (Y-m-d) — optional.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
-     */
-    #[NoAdminRequired]
-    public function preview(): JSONResponse
-    {
-        $this->requireAuthenticatedSession();
+	/**
+	 * Dry-run a draft rule against recent unmatched lines (REQ-BR-011).
+	 *
+	 * Body: rule (object with predicates[]) — required; anchorDate (Y-m-d) — optional.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+	 */
+	#[NoAdminRequired]
+	public function preview(): JSONResponse {
+		$this->requireAuthenticatedSession();
 
-        $rule = $this->request->getParam('rule');
-        if (is_array($rule) === false) {
-            return new JSONResponse(['error' => 'rule (object with predicates) is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$rule = $this->request->getParam('rule');
+		if (is_array($rule) === false) {
+			return new JSONResponse(['error' => 'rule (object with predicates) is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $predicates = ($rule['predicates'] ?? null);
-        if (is_array($predicates) === false || $predicates === []) {
-            return new JSONResponse(['error' => 'rule.predicates must be a non-empty array'], Http::STATUS_BAD_REQUEST);
-        }
+		$predicates = ($rule['predicates'] ?? null);
+		if (is_array($predicates) === false || $predicates === []) {
+			return new JSONResponse(['error' => 'rule.predicates must be a non-empty array'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $anchorDate = $this->request->getParam('anchorDate');
-        if (is_string($anchorDate) === false || $anchorDate === '') {
-            $anchorDate = null;
-        }
+		$anchorDate = $this->request->getParam('anchorDate');
+		if (is_string($anchorDate) === false || $anchorDate === '') {
+			$anchorDate = null;
+		}
 
-        try {
-            $admin = $this->resolveAdministrationId();
-            $lines = $this->readObjects(
-                schema: 'BankStatementLine',
-                filters: ['administrationId' => $admin, 'matchState' => 'unmatched'],
-            );
+		try {
+			$admin = $this->resolveAdministrationId();
+			$lines = $this->readObjects(
+				schema: 'BankStatementLine',
+				filters: ['administrationId' => $admin, 'matchState' => 'unmatched'],
+			);
 
-            $result = $this->previewService->previewRule(rule: $rule, candidateLines: $lines, anchorDate: $anchorDate);
-        } catch (\Throwable $e) {
-            $this->logger->error('BankRuleController.preview failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'preview failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+			$result = $this->previewService->previewRule(rule: $rule, candidateLines: $lines, anchorDate: $anchorDate);
+		} catch (\Throwable $e) {
+			$this->logger->error('BankRuleController.preview failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'preview failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        return new JSONResponse($result, Http::STATUS_OK);
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end preview()
 
-    }//end preview()
+	/**
+	 * Suggest a GL account for one bank line from the active rules (REQ-BR-011).
+	 *
+	 * Body: lineId — required.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+	 */
+	#[NoAdminRequired]
+	public function suggestAccount(): JSONResponse {
+		$this->requireAuthenticatedSession();
 
-    /**
-     * Suggest a GL account for one bank line from the active rules (REQ-BR-011).
-     *
-     * Body: lineId — required.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
-     */
-    #[NoAdminRequired]
-    public function suggestAccount(): JSONResponse
-    {
-        $this->requireAuthenticatedSession();
+		$lineId = trim((string)$this->request->getParam('lineId', ''));
+		if ($lineId === '') {
+			return new JSONResponse(['error' => 'lineId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $lineId = trim((string) $this->request->getParam('lineId', ''));
-        if ($lineId === '') {
-            return new JSONResponse(['error' => 'lineId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$admin = $this->resolveAdministrationId();
 
-        try {
-            $admin = $this->resolveAdministrationId();
+			$line = $this->readOne(schema: 'BankStatementLine', id: $lineId);
+			if ($line === null) {
+				return new JSONResponse(['error' => 'bank line ' . $lineId . ' not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            $line = $this->readOne(schema: 'BankStatementLine', id: $lineId);
-            if ($line === null) {
-                return new JSONResponse(['error' => 'bank line '.$lineId.' not found'], Http::STATUS_NOT_FOUND);
-            }
+			// IDOR guard: the line must belong to the resolved administration.
+			if ((string)($line['administrationId'] ?? '') !== $admin) {
+				return new JSONResponse(['error' => 'bank line ' . $lineId . ' not found'], Http::STATUS_NOT_FOUND);
+			}
 
-            // IDOR guard: the line must belong to the resolved administration.
-            if ((string) ($line['administrationId'] ?? '') !== $admin) {
-                return new JSONResponse(['error' => 'bank line '.$lineId.' not found'], Http::STATUS_NOT_FOUND);
-            }
+			$rules = $this->readObjects(
+				schema: 'MatchingRule',
+				filters: ['administrationId' => $admin, 'lifecycleState' => 'active'],
+			);
 
-            $rules = $this->readObjects(
-                schema: 'MatchingRule',
-                filters: ['administrationId' => $admin, 'lifecycleState' => 'active'],
-            );
+			$suggestion = $this->previewService->suggestForLine(line: $line, activeRules: $rules);
+		} catch (\Throwable $e) {
+			$this->logger->error('BankRuleController.suggestAccount failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'suggest-account failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-            $suggestion = $this->previewService->suggestForLine(line: $line, activeRules: $rules);
-        } catch (\Throwable $e) {
-            $this->logger->error('BankRuleController.suggestAccount failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'suggest-account failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+		return new JSONResponse(['suggestion' => $suggestion], Http::STATUS_OK);
+	}//end suggestAccount()
 
-        return new JSONResponse(['suggestion' => $suggestion], Http::STATUS_OK);
+	/**
+	 * Proposed rules from confirmed reconciliation history (REQ-BR-012).
+	 *
+	 * Query: k — optional repeat threshold.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+	 */
+	#[NoAdminRequired]
+	public function suggestions(): JSONResponse {
+		$this->requireAuthenticatedSession();
 
-    }//end suggestAccount()
+		$k = (int)$this->request->getParam('k', (string)BankRuleSuggestionService::DEFAULT_THRESHOLD);
+		if ($k < 1) {
+			$k = BankRuleSuggestionService::DEFAULT_THRESHOLD;
+		}
 
-    /**
-     * Proposed rules from confirmed reconciliation history (REQ-BR-012).
-     *
-     * Query: k — optional repeat threshold.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
-     */
-    #[NoAdminRequired]
-    public function suggestions(): JSONResponse
-    {
-        $this->requireAuthenticatedSession();
+		try {
+			$admin = $this->resolveAdministrationId();
+			$history = $this->assembleHistory(admin: $admin);
 
-        $k = (int) $this->request->getParam('k', (string) BankRuleSuggestionService::DEFAULT_THRESHOLD);
-        if ($k < 1) {
-            $k = BankRuleSuggestionService::DEFAULT_THRESHOLD;
-        }
+			// No AI provider is wired by default — deterministic ordering (REQ-BR-012
+			// graceful degradation). A TaskProcessing ranker MAY be injected later.
+			$proposals = $this->suggestionService->suggestRulesFromHistory(history: $history, k: $k, aiRanker: null);
+		} catch (\Throwable $e) {
+			$this->logger->error('BankRuleController.suggestions failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'suggestions failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        try {
-            $admin   = $this->resolveAdministrationId();
-            $history = $this->assembleHistory(admin: $admin);
+		return new JSONResponse(['suggestions' => $proposals, 'threshold' => $k], Http::STATUS_OK);
+	}//end suggestions()
 
-            // No AI provider is wired by default — deterministic ordering (REQ-BR-012
-            // graceful degradation). A TaskProcessing ranker MAY be injected later.
-            $proposals = $this->suggestionService->suggestRulesFromHistory(history: $history, k: $k, aiRanker: null);
-        } catch (\Throwable $e) {
-            $this->logger->error('BankRuleController.suggestions failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'suggestions failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+	/**
+	 * Persist an accepted proposal as a real MatchingRule (REQ-BR-012).
+	 *
+	 * This is the ONLY write in this controller — a suggestion never applies
+	 * itself; the operator confirms it here.
+	 *
+	 * Body: ruleName, predicates[], targetType, targetGlAccount — required shape.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+	 */
+	#[NoAdminRequired]
+	public function acceptSuggestion(): JSONResponse {
+		$this->requireAuthenticatedSession();
 
-        return new JSONResponse(['suggestions' => $proposals, 'threshold' => $k], Http::STATUS_OK);
+		$ruleName = trim((string)$this->request->getParam('ruleName', ''));
+		$predicates = $this->request->getParam('predicates');
+		$targetType = trim((string)$this->request->getParam('targetType', 'gl-transaction'));
+		$targetGl = trim((string)$this->request->getParam('targetGlAccount', ''));
 
-    }//end suggestions()
+		if ($ruleName === '' || is_array($predicates) === false || $predicates === []) {
+			return new JSONResponse(
+				['error' => 'ruleName and a non-empty predicates array are required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-    /**
-     * Persist an accepted proposal as a real MatchingRule (REQ-BR-012).
-     *
-     * This is the ONLY write in this controller — a suggestion never applies
-     * itself; the operator confirms it here.
-     *
-     * Body: ruleName, predicates[], targetType, targetGlAccount — required shape.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
-     */
-    #[NoAdminRequired]
-    public function acceptSuggestion(): JSONResponse
-    {
-        $this->requireAuthenticatedSession();
+		try {
+			$admin = $this->resolveAdministrationId();
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-        $ruleName   = trim((string) $this->request->getParam('ruleName', ''));
-        $predicates = $this->request->getParam('predicates');
-        $targetType = trim((string) $this->request->getParam('targetType', 'gl-transaction'));
-        $targetGl   = trim((string) $this->request->getParam('targetGlAccount', ''));
+			$payload = [
+				'ruleName' => $ruleName,
+				'priority' => (int)$this->request->getParam('priority', '100'),
+				'targetType' => $targetType,
+				'predicates' => array_values($predicates),
+				'autoConfirm' => false,
+				'administrationId' => $admin,
+				'lifecycleState' => 'active',
+			];
+			if ($targetGl !== '') {
+				$payload['targetGlAccount'] = $targetGl;
+			}
 
-        if ($ruleName === '' || is_array($predicates) === false || $predicates === []) {
-            return new JSONResponse(
-                ['error' => 'ruleName and a non-empty predicates array are required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+			$created = $objectService
+				->setRegister($this->registerSlug())
+				->setSchema('MatchingRule')
+				->saveObject($payload);
 
-        try {
-            $admin         = $this->resolveAdministrationId();
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$created = $this->toArray(result: $created) ?? [];
+		} catch (\Throwable $e) {
+			$this->logger->error('BankRuleController.acceptSuggestion failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'accept failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-            $payload = [
-                'ruleName'         => $ruleName,
-                'priority'         => (int) $this->request->getParam('priority', '100'),
-                'targetType'       => $targetType,
-                'predicates'       => array_values($predicates),
-                'autoConfirm'      => false,
-                'administrationId' => $admin,
-                'lifecycleState'   => 'active',
-            ];
-            if ($targetGl !== '') {
-                $payload['targetGlAccount'] = $targetGl;
-            }
+		return new JSONResponse($created, Http::STATUS_CREATED);
+	}//end acceptSuggestion()
 
-            $created = $objectService
-                ->setRegister($this->registerSlug())
-                ->setSchema('MatchingRule')
-                ->saveObject($payload);
+	/**
+	 * Assemble a normalised categorisation history from confirmed GL-transaction
+	 * matches. Read failures degrade to an empty history (no suggestions, not a 500).
+	 *
+	 * @param string $admin The resolved administration id.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function assembleHistory(string $admin): array {
+		$matches = $this->readObjects(
+			schema: 'ReconciliationMatch',
+			filters: ['administrationId' => $admin, 'state' => 'confirmed', 'targetType' => 'gl-transaction'],
+		);
 
-            $created = $this->toArray(result: $created) ?? [];
-        } catch (\Throwable $e) {
-            $this->logger->error('BankRuleController.acceptSuggestion failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'accept failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+		$history = [];
+		foreach ($matches as $match) {
+			$targetRefs = ($match['targetRefs'] ?? []);
+			if (is_array($targetRefs) === false || $targetRefs === []) {
+				continue;
+			}
 
-        return new JSONResponse($created, Http::STATUS_CREATED);
+			$gl = (string)($targetRefs[0] ?? '');
+			$bankLineId = '';
+			$lineRefs = ($match['bankLineRefs'] ?? []);
+			if (is_array($lineRefs) === true && $lineRefs !== []) {
+				$bankLineId = (string)($lineRefs[0] ?? '');
+			}
 
-    }//end acceptSuggestion()
+			if ($gl === '' || $bankLineId === '') {
+				continue;
+			}
 
-    /**
-     * Assemble a normalised categorisation history from confirmed GL-transaction
-     * matches. Read failures degrade to an empty history (no suggestions, not a 500).
-     *
-     * @param string $admin The resolved administration id.
-     *
-     * @return list<array<string,mixed>>
-     */
-    private function assembleHistory(string $admin): array
-    {
-        $matches = $this->readObjects(
-            schema: 'ReconciliationMatch',
-            filters: ['administrationId' => $admin, 'state' => 'confirmed', 'targetType' => 'gl-transaction'],
-        );
+			$line = $this->readOne(schema: 'BankStatementLine', id: $bankLineId);
+			if ($line === null) {
+				continue;
+			}
 
-        $history = [];
-        foreach ($matches as $match) {
-            $targetRefs = ($match['targetRefs'] ?? []);
-            if (is_array($targetRefs) === false || $targetRefs === []) {
-                continue;
-            }
+			$history[] = [
+				'counterpartyName' => (string)($line['counterpartyName'] ?? ''),
+				'counterpartyIban' => (string)($line['counterpartyIban'] ?? ''),
+				'targetType' => 'gl-transaction',
+				'targetGlAccount' => $gl,
+			];
+		}//end foreach
 
-            $gl         = (string) ($targetRefs[0] ?? '');
-            $bankLineId = '';
-            $lineRefs   = ($match['bankLineRefs'] ?? []);
-            if (is_array($lineRefs) === true && $lineRefs !== []) {
-                $bankLineId = (string) ($lineRefs[0] ?? '');
-            }
+		return $history;
+	}//end assembleHistory()
 
-            if ($gl === '' || $bankLineId === '') {
-                continue;
-            }
+	/**
+	 * Read a bounded list of objects for a schema + filters via OR ObjectService.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param array<string,mixed> $filters Equality filters.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function readObjects(string $schema, array $filters): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$rows = $objectService
+			->setRegister($this->registerSlug())
+			->setSchema($schema)
+			->findAll(['filters' => $filters, 'limit' => self::READ_CAP]);
 
-            $line = $this->readOne(schema: 'BankStatementLine', id: $bankLineId);
-            if ($line === null) {
-                continue;
-            }
+		if (is_array($rows) === false) {
+			$rows = [];
+		}
 
-            $history[] = [
-                'counterpartyName' => (string) ($line['counterpartyName'] ?? ''),
-                'counterpartyIban' => (string) ($line['counterpartyIban'] ?? ''),
-                'targetType'       => 'gl-transaction',
-                'targetGlAccount'  => $gl,
-            ];
-        }//end foreach
+		$out = [];
+		foreach ($rows as $row) {
+			$arr = $this->toArray(result: $row);
+			if ($arr !== null) {
+				$out[] = $arr;
+			}
+		}
 
-        return $history;
+		return $out;
+	}//end readObjects()
 
-    }//end assembleHistory()
+	/**
+	 * Read a single object by id, or null on absence/error.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param string $id The object id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function readOne(string $schema, string $id): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$row = $objectService
+				->setRegister($this->registerSlug())
+				->setSchema($schema)
+				->find($id);
 
-    /**
-     * Read a bounded list of objects for a schema + filters via OR ObjectService.
-     *
-     * @param string              $schema  The schema slug.
-     * @param array<string,mixed> $filters Equality filters.
-     *
-     * @return list<array<string,mixed>>
-     */
-    private function readObjects(string $schema, array $filters): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $rows          = $objectService
-            ->setRegister($this->registerSlug())
-            ->setSchema($schema)
-            ->findAll(['filters' => $filters, 'limit' => self::READ_CAP]);
+			return $this->toArray(result: $row);
+		} catch (\Throwable $e) {
+			return null;
+		}
 
-        if (is_array($rows) === false) {
-            $rows = [];
-        }
+	}//end readOne()
 
-        $out = [];
-        foreach ($rows as $row) {
-            $arr = $this->toArray(result: $row);
-            if ($arr !== null) {
-                $out[] = $arr;
-            }
-        }
+	/**
+	 * Resolve the current administration id server-side (IDOR-safe).
+	 *
+	 * @return string
+	 */
+	private function resolveAdministrationId(): string {
+		try {
+			$context = $this->administration->buildContext();
+			$candidate = (string)($context['activeAdministrationId'] ?? '');
+			if ($candidate !== '') {
+				return $candidate;
+			}
+		} catch (\Throwable $e) {
+			// Fall through to default.
+		}
 
-        return $out;
+		return 'default';
+	}//end resolveAdministrationId()
 
-    }//end readObjects()
+	/**
+	 * Return the configured register slug.
+	 *
+	 * @return string
+	 */
+	private function registerSlug(): string {
+		return self::REGISTER_SLUG;
+	}//end registerSlug()
 
-    /**
-     * Read a single object by id, or null on absence/error.
-     *
-     * @param string $schema The schema slug.
-     * @param string $id     The object id.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function readOne(string $schema, string $id): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $row           = $objectService
-                ->setRegister($this->registerSlug())
-                ->setSchema($schema)
-                ->find($id);
+	/**
+	 * Require an authenticated Nextcloud session.
+	 *
+	 * @return void
+	 *
+	 * @throws OCSForbiddenException When no authenticated user is present.
+	 */
+	private function requireAuthenticatedSession(): void {
+		if ($this->userSession->getUser() === null) {
+			throw new OCSForbiddenException('authenticated session required for bank-rule operations');
+		}
 
-            return $this->toArray(result: $row);
-        } catch (\Throwable $e) {
-            return null;
-        }
+	}//end requireAuthenticatedSession()
 
-    }//end readOne()
+	/**
+	 * Normalise an OR find/findAll/save result to a plain array.
+	 *
+	 * @param mixed $result The OR return value.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function toArray(mixed $result): ?array {
+		if (is_array($result) === true) {
+			return $result;
+		}
 
-    /**
-     * Resolve the current administration id server-side (IDOR-safe).
-     *
-     * @return string
-     */
-    private function resolveAdministrationId(): string
-    {
-        try {
-            $context   = $this->administration->buildContext();
-            $candidate = (string) ($context['activeAdministrationId'] ?? '');
-            if ($candidate !== '') {
-                return $candidate;
-            }
-        } catch (\Throwable $e) {
-            // Fall through to default.
-        }
+		if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
+			$serialized = $result->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
+		}
 
-        return 'default';
-
-    }//end resolveAdministrationId()
-
-    /**
-     * Return the configured register slug.
-     *
-     * @return string
-     */
-    private function registerSlug(): string
-    {
-        return self::REGISTER_SLUG;
-
-    }//end registerSlug()
-
-    /**
-     * Require an authenticated Nextcloud session.
-     *
-     * @return void
-     *
-     * @throws OCSForbiddenException When no authenticated user is present.
-     */
-    private function requireAuthenticatedSession(): void
-    {
-        if ($this->userSession->getUser() === null) {
-            throw new OCSForbiddenException('authenticated session required for bank-rule operations');
-        }
-
-    }//end requireAuthenticatedSession()
-
-    /**
-     * Normalise an OR find/findAll/save result to a plain array.
-     *
-     * @param mixed $result The OR return value.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function toArray(mixed $result): ?array
-    {
-        if (is_array($result) === true) {
-            return $result;
-        }
-
-        if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-            $serialized = $result->jsonSerialize();
-            if (is_array($serialized) === true) {
-                return $serialized;
-            }
-        }
-
-        return null;
-
-    }//end toArray()
+		return null;
+	}//end toArray()
 }//end class

@@ -10,7 +10,7 @@
   },
   "retentionRules": [
     {
-      "selectielijstCode": "5.1.1",
+      "selectionListCode": "5.1.1",
       "description": "Begroting, jaarrekening, rekeningschema en meerjarenraming — financiële grondslagen van de administratie",
       "recordCategory": "financial",
       "retentionYears": null,
@@ -20,7 +20,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.1.2",
+      "selectionListCode": "5.1.2",
       "description": "Dagelijkse financiële verantwoording: facturen, betalingen, dagboeken, bankafschriften, kasboeken en alle primaire boekingsdocumenten",
       "recordCategory": "financial",
       "retentionYears": 7,
@@ -30,7 +30,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.1.3",
+      "selectionListCode": "5.1.3",
       "description": "Correspondentie naar aanleiding van financiële verplichtingen (herinneringen, aanmaningen, bezwaren over facturen)",
       "recordCategory": "correspondentie",
       "retentionYears": 7,
@@ -40,7 +40,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.1.4",
+      "selectionListCode": "5.1.4",
       "description": "Verantwoordingsdocumenten: jaarverslagen, rapportages voor toezichthouders, SiSa-bijlagen, IV3-rapportages, accountantsverklaringen",
       "recordCategory": "verantwoording",
       "retentionYears": 10,
@@ -50,7 +50,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.2.1",
+      "selectionListCode": "5.2.1",
       "description": "Projectadministratie: urenadministratie, inkooporders voor projecten, projectkostenstaten",
       "recordCategory": "financial",
       "retentionYears": 7,
@@ -60,7 +60,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.2.2",
+      "selectionListCode": "5.2.2",
       "description": "Projectverantwoording: eindrapportages, afrekeningen, evaluatiedocumenten van afgeronde projecten",
       "recordCategory": "verantwoording",
       "retentionYears": 10,
@@ -70,7 +70,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.3.1",
+      "selectionListCode": "5.3.1",
       "description": "BTW-aangiften en BTW-correspondentie met de Belastingdienst",
       "recordCategory": "financial",
       "retentionYears": 7,
@@ -80,7 +80,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.3.2",
+      "selectionListCode": "5.3.2",
       "description": "Correspondentie met Belastingdienst over BTW, BCF en overige fiscale zaken (niet zijnde aangifte-documenten)",
       "recordCategory": "correspondentie",
       "retentionYears": 7,
@@ -90,7 +90,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.4.1",
+      "selectionListCode": "5.4.1",
       "description": "Contracten, raamovereenkomsten en overeenkomsten met leveranciers en dienstverleners",
       "recordCategory": "financial",
       "retentionTrigger": "7 years after contractEndDate",
@@ -100,7 +100,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "5.4.2",
+      "selectionListCode": "5.4.2",
       "description": "Aanbestedingsdossiers inclusief offertes, gunningsdocumenten en evaluatierapporten",
       "recordCategory": "verantwoording",
       "retentionYears": 10,
@@ -110,9 +110,9 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "3.5.1",
+      "selectionListCode": "3.5.1",
       "description": "Subsidieverlening, -beschikking en -verantwoording inclusief aanvraagdossier, tussenevaluaties en eindafrekening",
-      "recordCategory": "subsidie",
+      "recordCategory": "subsidy",
       "retentionTrigger": "10 years after vaststellingDate",
       "disposition": "archive",
       "legalBasis": "Algemene wet bestuursrecht art. 4:57 + Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 3.5.1",
@@ -120,9 +120,9 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "3.5.2",
+      "selectionListCode": "3.5.2",
       "description": "Subsidiedeclaraties en voortgangsrapportages (tussentijdse financiële verantwoording)",
-      "recordCategory": "subsidie",
+      "recordCategory": "subsidy",
       "retentionYears": 7,
       "disposition": "destroy",
       "legalBasis": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 3.5.2",
@@ -130,7 +130,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "3.5.3",
+      "selectionListCode": "3.5.3",
       "description": "Correspondentie over subsidieverlening (aanvragen, bezwaren, uitwisseling toelichting)",
       "recordCategory": "correspondentie",
       "retentionYears": 5,
@@ -140,7 +140,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "2.1.1",
+      "selectionListCode": "2.1.1",
       "description": "Salarisadministratie: loonstroken, jaaropgaven, salarisspecificaties en loonbelastingaangiften",
       "recordCategory": "personeel",
       "retentionYears": 7,
@@ -150,7 +150,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "2.1.2",
+      "selectionListCode": "2.1.2",
       "description": "Urenadministratie en tijdschrijven door medewerkers (zzp-urencriterium, projecturen)",
       "recordCategory": "personeel",
       "retentionYears": 7,
@@ -160,7 +160,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "2.1.3",
+      "selectionListCode": "2.1.3",
       "description": "Personeelsdossiers: aanstellingen, functioneringsverslagen, exitgesprekken (persoonsgebonden)",
       "recordCategory": "personeel",
       "retentionTrigger": "10 years after employmentEndDate",
@@ -170,7 +170,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "1.1.1",
+      "selectionListCode": "1.1.1",
       "description": "Vergaderingstukken gemeenteraad: agenda, notulen, besluitenlijst en bijlagen van raadsvergaderingen",
       "recordCategory": "algemeen-bestuur",
       "retentionYears": null,
@@ -180,7 +180,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "1.1.2",
+      "selectionListCode": "1.1.2",
       "description": "Raadsbesluiten, verordeningen en beleidsregels vastgesteld door de gemeenteraad",
       "recordCategory": "algemeen-bestuur",
       "retentionYears": null,
@@ -190,7 +190,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "1.1.3",
+      "selectionListCode": "1.1.3",
       "description": "Vergaderingstukken college van B&W: agenda, besluitenlijst en bijlagen van collegevergaderingen",
       "recordCategory": "algemeen-bestuur",
       "retentionYears": 20,
@@ -200,7 +200,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "1.2.1",
+      "selectionListCode": "1.2.1",
       "description": "Correspondentie met hogere overheden, toezichthoudende organen en andere overheidsinstanties",
       "recordCategory": "correspondentie",
       "retentionYears": 10,
@@ -210,7 +210,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "4.1.1",
+      "selectionListCode": "4.1.1",
       "description": "Schatkistbankieren: dagelijkse saldirapportages, tegenrekening-mutaties en renteafschriften",
       "recordCategory": "financial",
       "retentionYears": 7,
@@ -220,7 +220,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "4.1.2",
+      "selectionListCode": "4.1.2",
       "description": "Treasury: kasbeheer, uitzettingen, leningen, garanties en derivatenposities",
       "recordCategory": "financial",
       "retentionYears": 10,
@@ -230,7 +230,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "4.2.1",
+      "selectionListCode": "4.2.1",
       "description": "IV3-rapportages: informatie voor derden t.b.v. CBS statistieken en EMU-saldoberekening",
       "recordCategory": "verantwoording",
       "retentionYears": 10,
@@ -240,7 +240,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "4.3.1",
+      "selectionListCode": "4.3.1",
       "description": "BCF-declaraties (BTW compensatiefonds): ingediende declaraties en toekenningsbeschikkingen",
       "recordCategory": "financial",
       "retentionYears": 10,
@@ -250,7 +250,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "4.4.1",
+      "selectionListCode": "4.4.1",
       "description": "BBV-rapportages: financiële overzichten conform Besluit Begroting en Verantwoording provincies en gemeenten",
       "recordCategory": "verantwoording",
       "retentionYears": null,
@@ -260,7 +260,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "4.5.1",
+      "selectionListCode": "4.5.1",
       "description": "KOR-regime registraties: kleine ondernemersregeling aanmeldingen, ontheffingen en voortgangscorrespondentie",
       "recordCategory": "financial",
       "retentionYears": 7,
@@ -270,7 +270,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "6.1.1",
+      "selectionListCode": "6.1.1",
       "description": "Audittrail-metadata van vernietigde of geanonimiseerde records (hash-chain events). Bewaard conform Archiefwet-vereiste dat het spoor van vernietiging zelf bewaard blijft.",
       "recordCategory": "archief",
       "retentionYears": null,
@@ -280,7 +280,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "6.1.2",
+      "selectionListCode": "6.1.2",
       "description": "Vernietigingslijsten en -machtigingen: registratie van welke records op welk tijdstip zijn vernietigd of overgebracht",
       "recordCategory": "archief",
       "retentionYears": null,
@@ -290,7 +290,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "7.1.1",
+      "selectionListCode": "7.1.1",
       "description": "ZZP / detachering: urenadministratie, opdrachtbevestigingen en facturatie aan opdrachtgevers",
       "recordCategory": "financial",
       "retentionYears": 7,
@@ -300,7 +300,7 @@
       "_meta": { "source": "seeded" }
     },
     {
-      "selectielijstCode": "7.1.2",
+      "selectionListCode": "7.1.2",
       "description": "ZZP IB-aangifte export: inkomstenbescheiden, jaaropgaven en IB-aangiftedossiers",
       "recordCategory": "financial",
       "retentionYears": 7,

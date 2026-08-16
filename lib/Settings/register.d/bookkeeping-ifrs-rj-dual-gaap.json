@@ -715,28 +715,28 @@
             "type": "string",
             "description": "RJ variant elected (REQ-DGAAP-010).",
             "enum": [
-              "RJ-onverkort",
+              "rj-in_full",
               "RJk",
-              "IFRS-volledig"
+              "ifrs-complete"
             ],
             "example": "RJk",
             "title": "Rj Variant"
           },
-          "sizeCriteriaBalanstotaal": {
+          "sizeCriteriaBalanceSheetTotal": {
             "type": "number",
             "description": "Measured balance-sheet total used for the size test (REQ-DGAAP-010).",
             "nullable": true,
             "example": 5800000.0,
             "title": "Size Criteria Balanstotaal"
           },
-          "sizeCriteriaNettoOmzet": {
+          "sizeCriteriaNetRevenue": {
             "type": "number",
             "description": "Measured net turnover used for the size test (REQ-DGAAP-010).",
             "nullable": true,
             "example": 11200000.0,
             "title": "Size Criteria Netto Omzet"
           },
-          "sizeCriteriaGemiddeldWerknemers": {
+          "sizeCriteriaAverageEmployees": {
             "type": "integer",
             "description": "Measured average headcount used for the size test (REQ-DGAAP-010).",
             "nullable": true,
@@ -750,7 +750,7 @@
             "example": 0,
             "title": "Size Criteria Breach Years"
           },
-          "avaBesluitReference": {
+          "avaDecisionReference": {
             "type": "string",
             "description": "Reference to the AVA (general meeting) resolution recording the election (REQ-DGAAP-010).",
             "nullable": true,
@@ -1129,11 +1129,11 @@
         "primaryFramework": "NL-GAAP-RJ",
         "complyOrExplainMotivation": "Kleine rechtspersoon op basis van BW2 art 2:396; geen beursnotering.",
         "rjVariant": "RJk",
-        "sizeCriteriaBalanstotaal": 5800000.0,
-        "sizeCriteriaNettoOmzet": 11200000.0,
-        "sizeCriteriaGemiddeldWerknemers": 42,
+        "sizeCriteriaBalanceSheetTotal": 5800000.0,
+        "sizeCriteriaNetRevenue": 11200000.0,
+        "sizeCriteriaAverageEmployees": 42,
         "sizeCriteriaBreachYears": 0,
-        "avaBesluitReference": "AVA-2026-03-12-besluit-4",
+        "avaDecisionReference": "AVA-2026-03-12-besluit-4",
         "effectiveFrom": "2026-01-01",
         "effectiveTo": null,
         "state": "active",

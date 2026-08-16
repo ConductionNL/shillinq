@@ -45,23 +45,34 @@ test.describe('recurring-invoicing — profile create modal', () => {
 		}
 	})
 
-	test('the index exposes the new-profile action and opens the modal', async ({ page }) => {
-		const action = page.getByRole('button', { name: /new recurring profile/i })
+	test('the index exposes the new-profile action and opens the modal', async ({
+		page,
+	}) => {
+		const action = page
+			.getByRole('button', { name: /new recurring profile/i })
 			.or(page.getByText(/new recurring profile/i))
 		await expect(action.first()).toBeVisible({ timeout: 15_000 })
 		await action.first().click()
-		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({
+			timeout: 10_000,
+		})
 		await expect(page.getByTestId('rip-name')).toBeVisible()
 		await expect(page.getByTestId('rip-customer')).toBeVisible()
 	})
 
 	test('the next-invoice preview expands period tokens', async ({ page }) => {
-		const action = page.getByRole('button', { name: /new recurring profile/i })
+		const action = page
+			.getByRole('button', { name: /new recurring profile/i })
 			.or(page.getByText(/new recurring profile/i))
 		await action.first().click()
-		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({
+			timeout: 10_000,
+		})
 
-		await page.getByTestId('rip-line-description').first().fill('Hosting {month} {year}')
+		await page
+			.getByTestId('rip-line-description')
+			.first()
+			.fill('Hosting {month} {year}')
 		await page.getByTestId('rip-line-unit-price').first().fill('99')
 
 		const year = String(new Date().getFullYear())
@@ -70,11 +81,16 @@ test.describe('recurring-invoicing — profile create modal', () => {
 		await expect(page.getByTestId('rip-preview')).toContainText(year)
 	})
 
-	test('add line adds a row and validation blocks an empty save', async ({ page }) => {
-		const action = page.getByRole('button', { name: /new recurring profile/i })
+	test('add line adds a row and validation blocks an empty save', async ({
+		page,
+	}) => {
+		const action = page
+			.getByRole('button', { name: /new recurring profile/i })
 			.or(page.getByText(/new recurring profile/i))
 		await action.first().click()
-		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({
+			timeout: 10_000,
+		})
 
 		await expect(page.getByTestId('rip-line')).toHaveCount(1)
 		await page.getByTestId('rip-add-line').click()

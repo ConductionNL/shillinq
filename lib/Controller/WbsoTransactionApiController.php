@@ -49,299 +49,283 @@ use RuntimeException;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-27
  */
-class WbsoTransactionApiController extends Controller
-{
+class WbsoTransactionApiController extends Controller {
 
-    /**
-     * Identifier-safe slug pattern.
-     *
-     * @var string
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+	/**
+	 * Identifier-safe slug pattern.
+	 *
+	 * @var string
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
-    /**
-     * Construct the controller.
-     *
-     * @param IRequest               $request      Request.
-     * @param WbsoTransactionService $transactions Transaction service.
-     * @param WbsoRbacResolver       $rbac         Role resolver.
-     * @param IUserSession           $userSession  Session.
-     * @param LoggerInterface        $logger       Logger.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly WbsoTransactionService $transactions,
-        private readonly WbsoRbacResolver $rbac,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+	/**
+	 * Construct the controller.
+	 *
+	 * @param IRequest $request Request.
+	 * @param WbsoTransactionService $transactions Transaction service.
+	 * @param WbsoRbacResolver $rbac Role resolver.
+	 * @param IUserSession $userSession Session.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly WbsoTransactionService $transactions,
+		private readonly WbsoRbacResolver $rbac,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * GET /api/v1/transactions (bookkeeper / auditor / admin).
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function index(): JSONResponse
-    {
-        $auth = $this->requireAuthenticated();
-        if ($auth !== null) {
-            return $auth;
-        }
+	/**
+	 * GET /api/v1/transactions (bookkeeper / auditor / admin).
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function index(): JSONResponse {
+		$auth = $this->requireAuthenticated();
+		if ($auth !== null) {
+			return $auth;
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $filters = [
-            'status'   => (string) $this->request->getParam('status', ''),
-            'type'     => (string) $this->request->getParam('type', ''),
-            'dateFrom' => (string) $this->request->getParam('dateFrom', ''),
-            'dateTo'   => (string) $this->request->getParam('dateTo', ''),
-        ];
+		$filters = [
+			'status' => (string)$this->request->getParam('status', ''),
+			'type' => (string)$this->request->getParam('type', ''),
+			'dateFrom' => (string)$this->request->getParam('dateFrom', ''),
+			'dateTo' => (string)$this->request->getParam('dateTo', ''),
+		];
 
-        try {
-            $rows = $this->transactions->listTransactions(administrationId: $administrationId, filters: $filters);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to load transactions', context: ['exception' => $e->getMessage()]);
-        }
+		try {
+			$rows = $this->transactions->listTransactions(administrationId: $administrationId, filters: $filters);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to load transactions', context: ['exception' => $e->getMessage()]);
+		}
 
-        return new JSONResponse(
-            [
-                'transactions' => $rows,
-                'canCreate'    => $this->rbac->hasAny(['bookkeeper', 'administrator']),
-            ],
-            Http::STATUS_OK
-        );
+		return new JSONResponse(
+			[
+				'transactions' => $rows,
+				'canCreate' => $this->rbac->hasAny(['bookkeeper', 'administrator']),
+			],
+			Http::STATUS_OK
+		);
 
-    }//end index()
+	}//end index()
 
-    /**
-     * GET /api/v1/transactions/{id}.
-     *
-     * @param string $id Transaction id or transactionNumber.
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function show(string $id): JSONResponse
-    {
-        $auth = $this->requireAuthenticated();
-        if ($auth !== null) {
-            return $auth;
-        }
+	/**
+	 * GET /api/v1/transactions/{id}.
+	 *
+	 * @param string $id Transaction id or transactionNumber.
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function show(string $id): JSONResponse {
+		$auth = $this->requireAuthenticated();
+		if ($auth !== null) {
+			return $auth;
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if (preg_match(self::ID_PATTERN, $id) !== 1) {
-            return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
-        }
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            $row = $this->transactions->getTransaction(administrationId: $administrationId, transactionId: $id);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to load transaction', context: ['exception' => $e->getMessage()]);
-        }
+		try {
+			$row = $this->transactions->getTransaction(administrationId: $administrationId, transactionId: $id);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to load transaction', context: ['exception' => $e->getMessage()]);
+		}
 
-        if ($row === null) {
-            return new JSONResponse(['error' => 'Transaction not found'], Http::STATUS_NOT_FOUND);
-        }
+		if ($row === null) {
+			return new JSONResponse(['error' => 'Transaction not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        return new JSONResponse($row, Http::STATUS_OK);
+		return new JSONResponse($row, Http::STATUS_OK);
+	}//end show()
 
-    }//end show()
+	/**
+	 * POST /api/v1/transactions (bookkeeper or admin).
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function create(): JSONResponse {
+		$auth = $this->requireAuthenticated();
+		if ($auth !== null) {
+			return $auth;
+		}
 
-    /**
-     * POST /api/v1/transactions (bookkeeper or admin).
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function create(): JSONResponse
-    {
-        $auth = $this->requireAuthenticated();
-        if ($auth !== null) {
-            return $auth;
-        }
+		if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
+			return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
+		}
 
-        if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
-            return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$payload = [
+			'transactionNumber' => (string)$this->request->getParam('transactionNumber', ''),
+			'transactionType' => (string)$this->request->getParam('transactionType', ''),
+			'transactionDate' => (string)$this->request->getParam('transactionDate', ''),
+			'amount' => $this->request->getParam('amount', 0),
+			'description' => (string)$this->request->getParam('description', ''),
+		];
 
-        $payload = [
-            'transactionNumber' => (string) $this->request->getParam('transactionNumber', ''),
-            'transactionType'   => (string) $this->request->getParam('transactionType', ''),
-            'transactionDate'   => (string) $this->request->getParam('transactionDate', ''),
-            'amount'            => $this->request->getParam('amount', 0),
-            'description'       => (string) $this->request->getParam('description', ''),
-        ];
+		try {
+			$row = $this->transactions->createTransaction(administrationId: $administrationId, payload: $payload);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to create transaction', context: ['exception' => $e->getMessage()]);
+		}
 
-        try {
-            $row = $this->transactions->createTransaction(administrationId: $administrationId, payload: $payload);
-        } catch (InvalidArgumentException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to create transaction', context: ['exception' => $e->getMessage()]);
-        }
+		return new JSONResponse($row, Http::STATUS_CREATED);
+	}//end create()
 
-        return new JSONResponse($row, Http::STATUS_CREATED);
+	/**
+	 * POST /api/v1/transactions/{id}/post (bookkeeper or admin).
+	 *
+	 * @param string $id Transaction id.
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function post(string $id): JSONResponse {
+		$auth = $this->requireAuthenticated();
+		if ($auth !== null) {
+			return $auth;
+		}
 
-    }//end create()
+		if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
+			return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
+		}
 
-    /**
-     * POST /api/v1/transactions/{id}/post (bookkeeper or admin).
-     *
-     * @param string $id Transaction id.
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function post(string $id): JSONResponse
-    {
-        $auth = $this->requireAuthenticated();
-        if ($auth !== null) {
-            return $auth;
-        }
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
-            return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
-        }
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$row = $this->transactions->postTransaction(administrationId: $administrationId, transactionId: $id);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+		} catch (RuntimeException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to post transaction', context: ['exception' => $e->getMessage()]);
+		}
 
-        if (preg_match(self::ID_PATTERN, $id) !== 1) {
-            return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
-        }
+		return new JSONResponse($row, Http::STATUS_OK);
+	}//end post()
 
-        try {
-            $row = $this->transactions->postTransaction(administrationId: $administrationId, transactionId: $id);
-        } catch (InvalidArgumentException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
-        } catch (RuntimeException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to post transaction', context: ['exception' => $e->getMessage()]);
-        }
+	/**
+	 * POST /api/v1/transactions/{id}/reverse (admin only).
+	 *
+	 * @param string $id Transaction id.
+	 *
+	 * @return JSONResponse
+	 */
+	#[NoAdminRequired]
+	public function reverse(string $id): JSONResponse {
+		$auth = $this->requireAuthenticated();
+		if ($auth !== null) {
+			return $auth;
+		}
 
-        return new JSONResponse($row, Http::STATUS_OK);
+		if ($this->rbac->hasAny(['administrator']) === false) {
+			return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
+		}
 
-    }//end post()
+		$administrationId = $this->resolveAdministration();
+		if ($administrationId === null) {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-    /**
-     * POST /api/v1/transactions/{id}/reverse (admin only).
-     *
-     * @param string $id Transaction id.
-     *
-     * @return JSONResponse
-     */
-    #[NoAdminRequired]
-    public function reverse(string $id): JSONResponse
-    {
-        $auth = $this->requireAuthenticated();
-        if ($auth !== null) {
-            return $auth;
-        }
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->rbac->hasAny(['administrator']) === false) {
-            return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
-        }
+		$reason = trim((string)$this->request->getParam('reason', ''));
 
-        $administrationId = $this->resolveAdministration();
-        if ($administrationId === null) {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		try {
+			$row = $this->transactions->reverseTransaction(
+				administrationId: $administrationId,
+				transactionId: $id,
+				reason: $reason,
+			);
+		} catch (InvalidArgumentException $e) {
+			$status = Http::STATUS_BAD_REQUEST;
+			if ($e->getMessage() === 'Transaction not found') {
+				$status = Http::STATUS_NOT_FOUND;
+			}
 
-        if (preg_match(self::ID_PATTERN, $id) !== 1) {
-            return new JSONResponse(['error' => 'Invalid transaction id'], Http::STATUS_BAD_REQUEST);
-        }
+			return new JSONResponse(['error' => $e->getMessage()], $status);
+		} catch (RuntimeException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to reverse transaction', context: ['exception' => $e->getMessage()]);
+		}
 
-        $reason = trim((string) $this->request->getParam('reason', ''));
+		return new JSONResponse($row, Http::STATUS_CREATED);
+	}//end reverse()
 
-        try {
-            $row = $this->transactions->reverseTransaction(
-                administrationId: $administrationId,
-                transactionId: $id,
-                reason: $reason,
-            );
-        } catch (InvalidArgumentException $e) {
-            $status = Http::STATUS_BAD_REQUEST;
-            if ($e->getMessage() === 'Transaction not found') {
-                $status = Http::STATUS_NOT_FOUND;
-            }
+	/**
+	 * Authentication precondition.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function requireAuthenticated(): ?JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+		}
 
-            return new JSONResponse(['error' => $e->getMessage()], $status);
-        } catch (RuntimeException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
-        } catch (\Throwable $e) {
-            return $this->fail(message: 'Failed to reverse transaction', context: ['exception' => $e->getMessage()]);
-        }
+		return null;
+	}//end requireAuthenticated()
 
-        return new JSONResponse($row, Http::STATUS_CREATED);
+	/**
+	 * Resolve administration scope, default to the demo administration.
+	 *
+	 * @return string|null
+	 */
+	private function resolveAdministration(): ?string {
+		$value = trim((string)$this->request->getParam('administration_id', 'adm-consultancy-nl'));
+		if ($value === '') {
+			return null;
+		}
 
-    }//end reverse()
+		if (preg_match(self::ID_PATTERN, $value) !== 1) {
+			return null;
+		}
 
-    /**
-     * Authentication precondition.
-     *
-     * @return JSONResponse|null
-     */
-    private function requireAuthenticated(): ?JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-        }
+		return $value;
+	}//end resolveAdministration()
 
-        return null;
+	/**
+	 * Logger + 500 response without stack-traces.
+	 *
+	 * @param string $message Client-facing message.
+	 * @param array<string,mixed> $context Structured log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function fail(string $message, array $context): JSONResponse {
+		$this->logger->error('WbsoTransactionApiController: ' . $message, $context);
 
-    }//end requireAuthenticated()
-
-    /**
-     * Resolve administration scope, default to the demo administration.
-     *
-     * @return string|null
-     */
-    private function resolveAdministration(): ?string
-    {
-        $value = trim((string) $this->request->getParam('administration_id', 'adm-consultancy-nl'));
-        if ($value === '') {
-            return null;
-        }
-
-        if (preg_match(self::ID_PATTERN, $value) !== 1) {
-            return null;
-        }
-
-        return $value;
-
-    }//end resolveAdministration()
-
-    /**
-     * Logger + 500 response without stack-traces.
-     *
-     * @param string              $message Client-facing message.
-     * @param array<string,mixed> $context Structured log context.
-     *
-     * @return JSONResponse
-     */
-    private function fail(string $message, array $context): JSONResponse
-    {
-        $this->logger->error('WbsoTransactionApiController: '.$message, $context);
-
-        return new JSONResponse(['error' => $message], Http::STATUS_INTERNAL_SERVER_ERROR);
-
-    }//end fail()
+		return new JSONResponse(['error' => $message], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end fail()
 }//end class

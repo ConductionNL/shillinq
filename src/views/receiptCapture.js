@@ -28,8 +28,14 @@ export function reviewFormFromReceipt(record) {
 		photoUri: String(r.photoUri ?? ''),
 		amount: typeof r.amount === 'number' ? r.amount : Number(r.amount) || 0,
 		currency: String(r.currency ?? 'EUR'),
-		amountInBaseCurrency: typeof r.amountInBaseCurrency === 'number' ? r.amountInBaseCurrency : Number(r.amountInBaseCurrency) || 0,
-		exchangeRate: (r.exchangeRate === null || r.exchangeRate === undefined) ? null : Number(r.exchangeRate),
+		amountInBaseCurrency:
+			typeof r.amountInBaseCurrency === 'number'
+				? r.amountInBaseCurrency
+				: Number(r.amountInBaseCurrency) || 0,
+		exchangeRate:
+			r.exchangeRate === null || r.exchangeRate === undefined
+				? null
+				: Number(r.exchangeRate),
 		receiptDate: String(r.receiptDate ?? ''),
 		category: String(r.category ?? ''),
 		extractedText: String(r.extractedText ?? ''),
@@ -57,8 +63,9 @@ export function canSaveReceipt(form) {
 	if (Number.isFinite(Number(f.amount)) === false || Number(f.amount) < 0) {
 		return false
 	}
-	return ['currency', 'receiptDate', 'category']
-		.every((k) => String(f[k] ?? '').trim().length > 0)
+	return ['currency', 'receiptDate', 'category'].every(
+		(k) => String(f[k] ?? '').trim().length > 0,
+	)
 }
 
 /**
@@ -77,7 +84,12 @@ export function buildReceiptConfirmPayload(form) {
 		amount: Number(f.amount) || 0,
 		currency: f.currency,
 		amountInBaseCurrency: Number(f.amountInBaseCurrency) || 0,
-		exchangeRate: (f.exchangeRate === null || f.exchangeRate === undefined || f.exchangeRate === '') ? null : Number(f.exchangeRate),
+		exchangeRate:
+			f.exchangeRate === null
+			|| f.exchangeRate === undefined
+			|| f.exchangeRate === ''
+				? null
+				: Number(f.exchangeRate),
 		receiptDate: f.receiptDate,
 		category: f.category,
 		extractedText: f.extractedText,
@@ -96,8 +108,10 @@ export function buildReceiptConfirmPayload(form) {
  * @return {string} The message to show inline.
  */
 export function receiptErrorMessage(error) {
-	return error?.response?.data?.error
+	return (
+		error?.response?.data?.error
 		|| error?.response?.data?.message
 		|| error?.message
 		|| 'Failed to load or save the receipt.'
+	)
 }

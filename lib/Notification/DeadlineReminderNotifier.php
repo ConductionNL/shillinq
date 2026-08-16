@@ -43,77 +43,70 @@ use OCP\Notification\UnknownNotificationException;
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
-class DeadlineReminderNotifier implements INotifier
-{
-    /**
-     * Construct the notifier.
-     *
-     * @param IFactory $l10nFactory The l10n factory for per-language rendering.
-     */
-    public function __construct(
-        private readonly IFactory $l10nFactory,
-    ) {
-    }//end __construct()
+class DeadlineReminderNotifier implements INotifier {
+	/**
+	 * Construct the notifier.
+	 *
+	 * @param IFactory $l10nFactory The l10n factory for per-language rendering.
+	 */
+	public function __construct(
+		private readonly IFactory $l10nFactory,
+	) {
+	}//end __construct()
 
-    /**
-     * The notifier id (app id).
-     *
-     * @return string The identifier.
-     *
-     * @spec openspec/specs/compliance-deadline-calendar/spec.md
-     */
-    public function getID(): string
-    {
-        return Application::APP_ID;
+	/**
+	 * The notifier id (app id).
+	 *
+	 * @return string The identifier.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	public function getID(): string {
+		return Application::APP_ID;
+	}//end getID()
 
-    }//end getID()
+	/**
+	 * The human-readable notifier name.
+	 *
+	 * @return string The name.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	public function getName(): string {
+		return $this->l10nFactory->get(Application::APP_ID)->t('Shillinq');
+	}//end getName()
 
-    /**
-     * The human-readable notifier name.
-     *
-     * @return string The name.
-     *
-     * @spec openspec/specs/compliance-deadline-calendar/spec.md
-     */
-    public function getName(): string
-    {
-        return $this->l10nFactory->get(Application::APP_ID)->t('Shillinq');
+	/**
+	 * Prepare a `deadline_reminder` notification for display.
+	 *
+	 * @param INotification $notification The raw notification.
+	 * @param string $languageCode The language to render in.
+	 *
+	 * @return INotification The prepared notification.
+	 *
+	 * @throws UnknownNotificationException When the notification is not ours.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	public function prepare(INotification $notification, string $languageCode): INotification {
+		if ($notification->getApp() !== Application::APP_ID
+			|| $notification->getSubject() !== 'deadline_reminder'
+		) {
+			throw new UnknownNotificationException();
+		}
 
-    }//end getName()
+		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
+		$parameters = $notification->getSubjectParameters();
+		$summary = (string)($parameters['summary'] ?? '');
+		$dueDate = (string)($parameters['dueDate'] ?? '');
 
-    /**
-     * Prepare a `deadline_reminder` notification for display.
-     *
-     * @param INotification $notification The raw notification.
-     * @param string        $languageCode The language to render in.
-     *
-     * @return INotification The prepared notification.
-     *
-     * @throws UnknownNotificationException When the notification is not ours.
-     *
-     * @spec openspec/specs/compliance-deadline-calendar/spec.md
-     */
-    public function prepare(INotification $notification, string $languageCode): INotification
-    {
-        if ($notification->getApp() !== Application::APP_ID
-            || $notification->getSubject() !== 'deadline_reminder'
-        ) {
-            throw new UnknownNotificationException();
-        }
+		$notification->setParsedSubject(
+			$l->t('Deadline approaching: %1$s (due %2$s)', [$summary, $dueDate])
+		);
+		$notification->setParsedMessage(
+			$l->t('This deadline is coming up. Open Shillinq to review it.')
+		);
 
-        $l          = $this->l10nFactory->get(Application::APP_ID, $languageCode);
-        $parameters = $notification->getSubjectParameters();
-        $summary    = (string) ($parameters['summary'] ?? '');
-        $dueDate    = (string) ($parameters['dueDate'] ?? '');
-
-        $notification->setParsedSubject(
-            $l->t('Deadline approaching: %1$s (due %2$s)', [$summary, $dueDate])
-        );
-        $notification->setParsedMessage(
-            $l->t('This deadline is coming up. Open Shillinq to review it.')
-        );
-
-        return $notification;
-
-    }//end prepare()
+		return $notification;
+	}//end prepare()
 }//end class

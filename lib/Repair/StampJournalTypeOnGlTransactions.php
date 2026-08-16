@@ -63,294 +63,287 @@ use Psr\Log\LoggerInterface;
  * intercompany field groups) onto existing GLTransaction records from
  * their legacy ClosingEntry / IntercompanyTransaction sources.
  */
-class StampJournalTypeOnGlTransactions implements IRepairStep
-{
-    use ReadsSourceRowsInBatches;
+class StampJournalTypeOnGlTransactions implements IRepairStep {
+	use ReadsSourceRowsInBatches;
 
-    /**
-     * Constructor.
-     *
-     * @param SettingsService    $settingsService The settings service (register slug).
-     * @param LoggerInterface    $logger          The logger interface.
-     * @param ContainerInterface $container       The DI container (lazy OR ObjectService resolution).
-     */
-    public function __construct(
-        private SettingsService $settingsService,
-        private LoggerInterface $logger,
-        private ContainerInterface $container,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param LoggerInterface $logger The logger interface.
+	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
+	 */
+	public function __construct(
+		private SettingsService $settingsService,
+		private LoggerInterface $logger,
+		private ContainerInterface $container,
+	) {
+	}//end __construct()
 
-    /**
-     * The repair-step display name.
-     *
-     * @return string The display name.
-     */
-    public function getName(): string
-    {
-        return 'Shillinq: stamp journalType (closing/intercompany) onto GLTransaction records';
+	/**
+	 * The repair-step display name.
+	 *
+	 * @return string The display name.
+	 */
+	public function getName(): string {
+		return 'Shillinq: stamp journalType (closing/intercompany) onto GLTransaction records';
+	}//end getName()
 
-    }//end getName()
+	/**
+	 * Run the stamp. Idempotent — a GLTransaction already carrying the
+	 * target journalType is skipped.
+	 *
+	 * @param IOutput $output The repair-step output (progress + warnings).
+	 *
+	 * @return void
+	 */
+	public function run(IOutput $output): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registerSlug = $this->settingsService->getRegisterSlug();
 
-    /**
-     * Run the stamp. Idempotent — a GLTransaction already carrying the
-     * target journalType is skipped.
-     *
-     * @param IOutput $output The repair-step output (progress + warnings).
-     *
-     * @return void
-     */
-    public function run(IOutput $output): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->settingsService->getRegisterSlug();
+			$closingStamped = $this->stampClosing(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				output: $output
+			);
+			$intercompanyStamped = $this->stampIntercompany(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				output: $output
+			);
 
-            $closingStamped      = $this->stampClosing(
-                objectService: $objectService,
-                registerSlug: $registerSlug,
-                output: $output
-            );
-            $intercompanyStamped = $this->stampIntercompany(
-                objectService: $objectService,
-                registerSlug: $registerSlug,
-                output: $output
-            );
+			$output->info(
+				'Shillinq: journalType stamp complete — '
+				. $closingStamped . ' closing, '
+				. $intercompanyStamped . ' intercompany GLTransaction(s) stamped.'
+			);
+		} catch (\Throwable $e) {
+			// Stamp is best-effort: failing it must NOT block the app
+			// upgrade. Log + warn so an operator can re-run.
+			$output->warning('Shillinq: journalType stamp failed: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: journalType stamp failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-            $output->info(
-                'Shillinq: journalType stamp complete — '
-                .$closingStamped.' closing, '
-                .$intercompanyStamped.' intercompany GLTransaction(s) stamped.'
-            );
-        } catch (\Throwable $e) {
-            // Stamp is best-effort: failing it must NOT block the app
-            // upgrade. Log + warn so an operator can re-run.
-            $output->warning('Shillinq: journalType stamp failed: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: journalType stamp failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+	}//end run()
 
-    }//end run()
+	/**
+	 * Stamp journalType='closing' (+ folded closing fields) onto every
+	 * GLTransaction linked from a ClosingEntry via `glTransactionId`.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param IOutput $output The repair-step output.
+	 *
+	 * @return int The number of GLTransaction records stamped.
+	 */
+	private function stampClosing(
+		object $objectService,
+		string $registerSlug,
+		IOutput $output,
+	): int {
+		$closingEntries = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'ClosingEntry');
 
-    /**
-     * Stamp journalType='closing' (+ folded closing fields) onto every
-     * GLTransaction linked from a ClosingEntry via `glTransactionId`.
-     *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The register slug.
-     * @param IOutput $output        The repair-step output.
-     *
-     * @return int The number of GLTransaction records stamped.
-     */
-    private function stampClosing(
-        object $objectService,
-        string $registerSlug,
-        IOutput $output
-    ): int {
-        $closingEntries = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'ClosingEntry');
+		if ($closingEntries === []) {
+			return 0;
+		}
 
-        if ($closingEntries === []) {
-            return 0;
-        }
+		$stamped = 0;
+		foreach ($closingEntries as $entry) {
+			try {
+				$arr = $this->rowPayload(row: $entry);
+				$glTransactionId = (string)($arr['glTransactionId'] ?? '');
+				if ($glTransactionId === '') {
+					continue;
+				}
 
-        $stamped = 0;
-        foreach ($closingEntries as $entry) {
-            try {
-                $arr = $this->rowPayload(row: $entry);
-                $glTransactionId = (string) ($arr['glTransactionId'] ?? '');
-                if ($glTransactionId === '') {
-                    continue;
-                }
+				$transaction = $this->findGlTransaction(
+					objectService: $objectService,
+					registerSlug: $registerSlug,
+					id: $glTransactionId
+				);
+				if ($transaction === null) {
+					continue;
+				}
 
-                $transaction = $this->findGlTransaction(
-                    objectService: $objectService,
-                    registerSlug: $registerSlug,
-                    id: $glTransactionId
-                );
-                if ($transaction === null) {
-                    continue;
-                }
+				// Idempotent: already stamped → skip.
+				if (((string)($transaction['journalType'] ?? '')) === 'closing') {
+					continue;
+				}
 
-                // Idempotent: already stamped → skip.
-                if (((string) ($transaction['journalType'] ?? '')) === 'closing') {
-                    continue;
-                }
+				$transaction['journalType'] = 'closing';
 
-                $transaction['journalType'] = 'closing';
+				$entryType = (string)($arr['entryType'] ?? '');
+				if ($entryType !== '') {
+					$transaction['closingEntryType'] = $entryType;
+				}
 
-                $entryType = (string) ($arr['entryType'] ?? '');
-                if ($entryType !== '') {
-                    $transaction['closingEntryType'] = $entryType;
-                }
+				$fiscalYearId = (string)($arr['fiscalYearId'] ?? '');
+				if ($fiscalYearId !== '') {
+					$transaction['fiscalYearId'] = $fiscalYearId;
+				}
 
-                $fiscalYearId = (string) ($arr['fiscalYearId'] ?? '');
-                if ($fiscalYearId !== '') {
-                    $transaction['fiscalYearId'] = $fiscalYearId;
-                }
+				$approvalStatus = (string)($arr['approvalStatus'] ?? '');
+				if ($approvalStatus !== '') {
+					$transaction['approvalStatus'] = $approvalStatus;
+				}
 
-                $approvalStatus = (string) ($arr['approvalStatus'] ?? '');
-                if ($approvalStatus !== '') {
-                    $transaction['approvalStatus'] = $approvalStatus;
-                }
+				$objectService->saveObject(
+					object: $transaction,
+					register: $registerSlug,
+					schema: 'GLTransaction',
+					_rbac: false,
+					_multitenancy: false,
+				);
+				$stamped++;
+			} catch (\Throwable $e) {
+				$output->warning(
+					'Shillinq: failed to stamp closing GLTransaction: ' . $e->getMessage()
+				);
+			}//end try
+		}//end foreach
 
-                $objectService->saveObject(
-                    object: $transaction,
-                    register: $registerSlug,
-                    schema: 'GLTransaction',
-                    _rbac: false,
-                    _multitenancy: false,
-                );
-                $stamped++;
-            } catch (\Throwable $e) {
-                $output->warning(
-                    'Shillinq: failed to stamp closing GLTransaction: '.$e->getMessage()
-                );
-            }//end try
-        }//end foreach
+		return $stamped;
+	}//end stampClosing()
 
-        return $stamped;
+	/**
+	 * Stamp journalType='intercompany' (+ folded intercompany fields)
+	 * onto every GLTransaction linked from an IntercompanyTransaction via
+	 * `sourceJournalEntryId`.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param IOutput $output The repair-step output.
+	 *
+	 * @return int The number of GLTransaction records stamped.
+	 */
+	private function stampIntercompany(
+		object $objectService,
+		string $registerSlug,
+		IOutput $output,
+	): int {
+		$intercompany = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'IntercompanyTransaction');
 
-    }//end stampClosing()
+		if ($intercompany === []) {
+			return 0;
+		}
 
-    /**
-     * Stamp journalType='intercompany' (+ folded intercompany fields)
-     * onto every GLTransaction linked from an IntercompanyTransaction via
-     * `sourceJournalEntryId`.
-     *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The register slug.
-     * @param IOutput $output        The repair-step output.
-     *
-     * @return int The number of GLTransaction records stamped.
-     */
-    private function stampIntercompany(
-        object $objectService,
-        string $registerSlug,
-        IOutput $output
-    ): int {
-        $intercompany = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'IntercompanyTransaction');
+		$stamped = 0;
+		foreach ($intercompany as $ic) {
+			try {
+				$arr = $this->rowPayload(row: $ic);
+				$glTransactionId = (string)($arr['sourceJournalEntryId'] ?? '');
+				if ($glTransactionId === '') {
+					continue;
+				}
 
-        if ($intercompany === []) {
-            return 0;
-        }
+				$transaction = $this->findGlTransaction(
+					objectService: $objectService,
+					registerSlug: $registerSlug,
+					id: $glTransactionId
+				);
+				if ($transaction === null) {
+					continue;
+				}
 
-        $stamped = 0;
-        foreach ($intercompany as $ic) {
-            try {
-                $arr = $this->rowPayload(row: $ic);
-                $glTransactionId = (string) ($arr['sourceJournalEntryId'] ?? '');
-                if ($glTransactionId === '') {
-                    continue;
-                }
+				// Idempotent: already stamped → skip.
+				if (((string)($transaction['journalType'] ?? '')) === 'intercompany') {
+					continue;
+				}
 
-                $transaction = $this->findGlTransaction(
-                    objectService: $objectService,
-                    registerSlug: $registerSlug,
-                    id: $glTransactionId
-                );
-                if ($transaction === null) {
-                    continue;
-                }
+				$transaction['journalType'] = 'intercompany';
 
-                // Idempotent: already stamped → skip.
-                if (((string) ($transaction['journalType'] ?? '')) === 'intercompany') {
-                    continue;
-                }
+				$sourceAdministrationId = (string)($arr['sourceAdministrationId'] ?? '');
+				if ($sourceAdministrationId !== '') {
+					$transaction['sourceAdministrationId'] = $sourceAdministrationId;
+				}
 
-                $transaction['journalType'] = 'intercompany';
+				$counterpartyEntityId = (string)($arr['counterpartyEntityId'] ?? '');
+				if ($counterpartyEntityId !== '') {
+					$transaction['counterpartyEntityId'] = $counterpartyEntityId;
+				}
 
-                $sourceAdministrationId = (string) ($arr['sourceAdministrationId'] ?? '');
-                if ($sourceAdministrationId !== '') {
-                    $transaction['sourceAdministrationId'] = $sourceAdministrationId;
-                }
+				$detectionMethod = (string)($arr['detectionMethod'] ?? '');
+				if ($detectionMethod !== '') {
+					$transaction['detectionMethod'] = $detectionMethod;
+				}
 
-                $counterpartyEntityId = (string) ($arr['counterpartyEntityId'] ?? '');
-                if ($counterpartyEntityId !== '') {
-                    $transaction['counterpartyEntityId'] = $counterpartyEntityId;
-                }
+				$detectionConfidence = (string)($arr['detectionConfidence'] ?? '');
+				if ($detectionConfidence !== '') {
+					$transaction['detectionConfidence'] = $detectionConfidence;
+				}
 
-                $detectionMethod = (string) ($arr['detectionMethod'] ?? '');
-                if ($detectionMethod !== '') {
-                    $transaction['detectionMethod'] = $detectionMethod;
-                }
+				if (array_key_exists('isMatched', $arr) === true) {
+					$transaction['isMatched'] = (bool)$arr['isMatched'];
+				}
 
-                $detectionConfidence = (string) ($arr['detectionConfidence'] ?? '');
-                if ($detectionConfidence !== '') {
-                    $transaction['detectionConfidence'] = $detectionConfidence;
-                }
+				$matchId = (string)($arr['matchId'] ?? '');
+				if ($matchId !== '') {
+					$transaction['matchId'] = $matchId;
+				}
 
-                if (array_key_exists('isMatched', $arr) === true) {
-                    $transaction['isMatched'] = (bool) $arr['isMatched'];
-                }
+				$objectService->saveObject(
+					object: $transaction,
+					register: $registerSlug,
+					schema: 'GLTransaction',
+					_rbac: false,
+					_multitenancy: false,
+				);
+				$stamped++;
+			} catch (\Throwable $e) {
+				$output->warning(
+					'Shillinq: failed to stamp intercompany GLTransaction: ' . $e->getMessage()
+				);
+			}//end try
+		}//end foreach
 
-                $matchId = (string) ($arr['matchId'] ?? '');
-                if ($matchId !== '') {
-                    $transaction['matchId'] = $matchId;
-                }
+		return $stamped;
+	}//end stampIntercompany()
 
-                $objectService->saveObject(
-                    object: $transaction,
-                    register: $registerSlug,
-                    schema: 'GLTransaction',
-                    _rbac: false,
-                    _multitenancy: false,
-                );
-                $stamped++;
-            } catch (\Throwable $e) {
-                $output->warning(
-                    'Shillinq: failed to stamp intercompany GLTransaction: '.$e->getMessage()
-                );
-            }//end try
-        }//end foreach
+	/**
+	 * Resolve a single GLTransaction record by its OpenRegister id/uuid,
+	 * returned as the plain object-data array (carrying its `id`, so a
+	 * subsequent saveObject is an UPDATE not a CREATE). Null when not
+	 * found.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param string $id The GLTransaction id/uuid.
+	 *
+	 * @return array<string,mixed>|null The GLTransaction object data, or null.
+	 */
+	private function findGlTransaction(
+		object $objectService,
+		string $registerSlug,
+		string $id,
+	): ?array {
+		try {
+			$found = $objectService
+				->setRegister($registerSlug)
+				->setSchema('GLTransaction')
+				->find(
+					id: $id,
+					_rbac: false,
+					_multitenancy: false
+				);
+		} catch (\Throwable) {
+			return null;
+		}
 
-        return $stamped;
+		if ($found === null) {
+			return null;
+		}
 
-    }//end stampIntercompany()
+		// GetObject() returns the clean object data with `id` prepended,
+		// which makes the later saveObject resolve as an UPDATE.
+		$data = $found->getObject();
+		if (is_array($data) === false || $data === []) {
+			return null;
+		}
 
-    /**
-     * Resolve a single GLTransaction record by its OpenRegister id/uuid,
-     * returned as the plain object-data array (carrying its `id`, so a
-     * subsequent saveObject is an UPDATE not a CREATE). Null when not
-     * found.
-     *
-     * @param object $objectService The OR ObjectService.
-     * @param string $registerSlug  The register slug.
-     * @param string $id            The GLTransaction id/uuid.
-     *
-     * @return array<string,mixed>|null The GLTransaction object data, or null.
-     */
-    private function findGlTransaction(
-        object $objectService,
-        string $registerSlug,
-        string $id
-    ): ?array {
-        try {
-            $found = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('GLTransaction')
-                ->find(
-                    id: $id,
-                    _rbac: false,
-                    _multitenancy: false
-                );
-        } catch (\Throwable) {
-            return null;
-        }
-
-        if ($found === null) {
-            return null;
-        }
-
-        // GetObject() returns the clean object data with `id` prepended,
-        // which makes the later saveObject resolve as an UPDATE.
-        $data = $found->getObject();
-        if (is_array($data) === false || $data === []) {
-            return null;
-        }
-
-        return $data;
-
-    }//end findGlTransaction()
+		return $data;
+	}//end findGlTransaction()
 }//end class

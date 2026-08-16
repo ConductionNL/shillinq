@@ -47,8 +47,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for EuExpenditure declare and submit transitions.
@@ -61,315 +61,300 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  */
-class EuExpenditureGuard
-{
+class EuExpenditureGuard {
 
-    /**
-     * Verplichte bewijsstukken per cost-category when no EligibilityRule
-     * evidenceRequired override is found. Mirrors design.md D6.
-     *
-     * @var array<string,array<string>>
-     */
-    private const DEFAULT_REQUIRED_EVIDENCE = [
-        'personeel'               => ['contract', 'salaris_specificatie', 'urenstaat'],
-        'kapitaal'                => ['factuur', 'betaalbewijs'],
-        'externe_dienstverlening' => ['contract', 'factuur', 'betaalbewijs'],
-        'reis_verblijf'           => ['factuur', 'presentielijst'],
-        'indirecte_kosten'        => [],
-    ];
+	/**
+	 * Verplichte bewijsstukken per cost-category when no EligibilityRule
+	 * evidenceRequired override is found. Mirrors design.md D6.
+	 *
+	 * @var array<string,array<string>>
+	 */
+	private const DEFAULT_REQUIRED_EVIDENCE = [
+		'personeel' => ['contract', 'salaris_specificatie', 'urenstaat'],
+		'kapitaal' => ['factuur', 'betaalbewijs'],
+		'externe_dienstverlening' => ['contract', 'factuur', 'betaalbewijs'],
+		'reis_verblijf' => ['factuur', 'presentielijst'],
+		'indirecte_kosten' => [],
+	];
 
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the expenditure may be declared.
-     *
-     * REQ-EUF-011: the cost_category must be eligible for the project's fonds
-     * per an active EligibilityRule, and eligibilityConfirmed must be set.
-     * Non-eligible cost-categories (or unconfirmed eligibility) are blocked.
-     *
-     * Fail-closed: returns false on any exception or malformed input
-     * (REQ-EUF-011 / CWE-863).
-     *
-     * @param string                   $euExpenditureId The EuExpenditure.id (call-signature parity).
-     * @param array<string,mixed>|null $object          The EuExpenditure object being transitioned.
-     *
-     * @return bool True when the expenditure may be declared.
-     *
-     * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
-     */
-    public function canDeclare(string $euExpenditureId, ?array $object=null): bool
-    {
-        try {
-            $expenditure = $this->resolveExpenditure(euExpenditureId: $euExpenditureId, object: $object);
-            if ($expenditure === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the expenditure may be declared.
+	 *
+	 * REQ-EUF-011: the cost_category must be eligible for the project's fonds
+	 * per an active EligibilityRule, and eligibilityConfirmed must be set.
+	 * Non-eligible cost-categories (or unconfirmed eligibility) are blocked.
+	 *
+	 * Fail-closed: returns false on any exception or malformed input
+	 * (REQ-EUF-011 / CWE-863).
+	 *
+	 * @param string $euExpenditureId The EuExpenditure.id (call-signature parity).
+	 * @param array<string,mixed>|null $object The EuExpenditure object being transitioned.
+	 *
+	 * @return bool True when the expenditure may be declared.
+	 *
+	 * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+	 */
+	public function canDeclare(string $euExpenditureId, ?array $object = null): bool {
+		try {
+			$expenditure = $this->resolveExpenditure(euExpenditureId: $euExpenditureId, object: $object);
+			if ($expenditure === null) {
+				return false;
+			}
 
-            $costCategory = (string) ($expenditure['costCategory'] ?? '');
-            $euProjectId  = (string) ($expenditure['euProjectId'] ?? '');
-            if ($costCategory === '' || $euProjectId === '') {
-                return false;
-            }
+			$costCategory = (string)($expenditure['costCategory'] ?? '');
+			$euProjectId = (string)($expenditure['euProjectId'] ?? '');
+			if ($costCategory === '' || $euProjectId === '') {
+				return false;
+			}
 
-            // The eligibilityConfirmed flag is set when the cost-category passed
-            // the booking-time validation against the fund's eligibility-rules.
-            if (($expenditure['eligibilityConfirmed'] ?? false) !== true) {
-                return false;
-            }
+			// The eligibilityConfirmed flag is set when the cost-category passed
+			// the booking-time validation against the fund's eligibility-rules.
+			if (($expenditure['eligibilityConfirmed'] ?? false) !== true) {
+				return false;
+			}
 
-            $fonds = $this->resolveProjectFonds(euProjectId: $euProjectId);
-            if ($fonds === null) {
-                return false;
-            }
+			$fonds = $this->resolveProjectFonds(euProjectId: $euProjectId);
+			if ($fonds === null) {
+				return false;
+			}
 
-            return $this->isCostCategoryEligible(fonds: $fonds, costCategory: $costCategory);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'EuExpenditureGuard: declare eligibility check failed — denying declare transition (fail-closed)',
-                ['euExpenditureId' => $euExpenditureId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canDeclare()
+			return $this->isCostCategoryEligible(fonds: $fonds, costCategory: $costCategory);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'EuExpenditureGuard: declare eligibility check failed — denying declare transition (fail-closed)',
+				['euExpenditureId' => $euExpenditureId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canDeclare()
 
-    /**
-     * Returns true iff the declaration may be submitted to the MA.
-     *
-     * REQ-EUF-004: every verplicht bewijsstuk document-type for the
-     * cost_category must be present as a linked SupportingDocument.
-     * REQ-EUF-005: when procurementRequired is set, an aanbestedingsdossier
-     * SupportingDocument must additionally be present.
-     *
-     * Fail-closed: returns false on any exception (REQ-EUF-004 / CWE-863).
-     *
-     * @param string                   $euExpenditureId The EuExpenditure.id.
-     * @param array<string,mixed>|null $object          The EuExpenditure object being transitioned.
-     *
-     * @return bool True when the declaration may be submitted.
-     *
-     * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
-     */
-    public function canSubmit(string $euExpenditureId, ?array $object=null): bool
-    {
-        try {
-            $expenditure = $this->resolveExpenditure(euExpenditureId: $euExpenditureId, object: $object);
-            if ($expenditure === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the declaration may be submitted to the MA.
+	 *
+	 * REQ-EUF-004: every verplicht bewijsstuk document-type for the
+	 * cost_category must be present as a linked SupportingDocument.
+	 * REQ-EUF-005: when procurementRequired is set, an aanbestedingsdossier
+	 * SupportingDocument must additionally be present.
+	 *
+	 * Fail-closed: returns false on any exception (REQ-EUF-004 / CWE-863).
+	 *
+	 * @param string $euExpenditureId The EuExpenditure.id.
+	 * @param array<string,mixed>|null $object The EuExpenditure object being transitioned.
+	 *
+	 * @return bool True when the declaration may be submitted.
+	 *
+	 * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+	 */
+	public function canSubmit(string $euExpenditureId, ?array $object = null): bool {
+		try {
+			$expenditure = $this->resolveExpenditure(euExpenditureId: $euExpenditureId, object: $object);
+			if ($expenditure === null) {
+				return false;
+			}
 
-            $costCategory  = (string) ($expenditure['costCategory'] ?? '');
-            $expenditureId = (string) ($expenditure['id'] ?? $euExpenditureId);
-            if ($costCategory === '' || $expenditureId === '') {
-                return false;
-            }
+			$costCategory = (string)($expenditure['costCategory'] ?? '');
+			$expenditureId = (string)($expenditure['id'] ?? $euExpenditureId);
+			if ($costCategory === '' || $expenditureId === '') {
+				return false;
+			}
 
-            $presentTypes = $this->resolvePresentDocumentTypes(euExpenditureId: $expenditureId);
+			$presentTypes = $this->resolvePresentDocumentTypes(euExpenditureId: $expenditureId);
 
-            $required = $this->resolveRequiredEvidence(
-                fonds: $this->resolveProjectFonds(euProjectId: (string) ($expenditure['euProjectId'] ?? '')),
-                costCategory: $costCategory
-            );
-            foreach ($required as $type) {
-                if (in_array($type, $presentTypes, true) === false) {
-                    return false;
-                }
-            }
+			$required = $this->resolveRequiredEvidence(
+				fonds: $this->resolveProjectFonds(euProjectId: (string)($expenditure['euProjectId'] ?? '')),
+				costCategory: $costCategory
+			);
+			foreach ($required as $type) {
+				if (in_array($type, $presentTypes, true) === false) {
+					return false;
+				}
+			}
 
-            // REQ-EUF-005: aanbestedingsplichtige uitgave vereist een aanbestedingsdossier.
-            if (($expenditure['procurementRequired'] ?? false) === true
-                && in_array('aanbestedingsdossier', $presentTypes, true) === false
-            ) {
-                return false;
-            }
+			// REQ-EUF-005: aanbestedingsplichtige uitgave vereist een aanbestedingsdossier.
+			if (($expenditure['procurementRequired'] ?? false) === true
+				&& in_array('aanbestedingsdossier', $presentTypes, true) === false
+			) {
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'EuExpenditureGuard: submit completeness check failed — denying submit transition (fail-closed)',
-                ['euExpenditureId' => $euExpenditureId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canSubmit()
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'EuExpenditureGuard: submit completeness check failed — denying submit transition (fail-closed)',
+				['euExpenditureId' => $euExpenditureId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canSubmit()
 
-    /**
-     * Resolve the EuExpenditure object, preferring the supplied object and
-     * falling back to an ObjectService lookup by id.
-     *
-     * @param string                   $euExpenditureId The EuExpenditure.id to look up.
-     * @param array<string,mixed>|null $object          The in-flight object, if provided.
-     *
-     * @return array<string,mixed>|null The expenditure, or null when unresolved.
-     */
-    private function resolveExpenditure(string $euExpenditureId, ?array $object): ?array
-    {
-        if ($object !== null) {
-            return $object;
-        }
+	/**
+	 * Resolve the EuExpenditure object, preferring the supplied object and
+	 * falling back to an ObjectService lookup by id.
+	 *
+	 * @param string $euExpenditureId The EuExpenditure.id to look up.
+	 * @param array<string,mixed>|null $object The in-flight object, if provided.
+	 *
+	 * @return array<string,mixed>|null The expenditure, or null when unresolved.
+	 */
+	private function resolveExpenditure(string $euExpenditureId, ?array $object): ?array {
+		if ($object !== null) {
+			return $object;
+		}
 
-        if ($euExpenditureId === '') {
-            return null;
-        }
+		if ($euExpenditureId === '') {
+			return null;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $entries       = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema('EuExpenditure')
-            ->findAll(['filters' => ['id' => $euExpenditureId], 'limit' => 1]);
+		$entries = $this->objectService
+			->setRegister($this->resolveRegister())
+			->setSchema('EuExpenditure')
+			->findAll(['filters' => ['id' => $euExpenditureId], 'limit' => 1]);
 
-        foreach ($entries as $entry) {
-            if (is_array($entry) === true) {
-                return $entry;
-            }
-        }
+		foreach ($entries as $entry) {
+			if (is_array($entry) === true) {
+				return $entry;
+			}
+		}
 
-        return null;
-    }//end resolveExpenditure()
+		return null;
+	}//end resolveExpenditure()
 
-    /**
-     * Resolve the fonds of an EuProject by id.
-     *
-     * @param string $euProjectId The EuProject.id.
-     *
-     * @return string|null The fonds enum value, or null when unresolved.
-     */
-    private function resolveProjectFonds(string $euProjectId): ?string
-    {
-        if ($euProjectId === '') {
-            return null;
-        }
+	/**
+	 * Resolve the fonds of an EuProject by id.
+	 *
+	 * @param string $euProjectId The EuProject.id.
+	 *
+	 * @return string|null The fonds enum value, or null when unresolved.
+	 */
+	private function resolveProjectFonds(string $euProjectId): ?string {
+		if ($euProjectId === '') {
+			return null;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $projects      = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema('EuProject')
-            ->findAll(['filters' => ['id' => $euProjectId], 'limit' => 1]);
+		$projects = $this->objectService
+			->setRegister($this->resolveRegister())
+			->setSchema('EuProject')
+			->findAll(['filters' => ['id' => $euProjectId], 'limit' => 1]);
 
-        foreach ($projects as $project) {
-            if (is_array($project) === true && isset($project['fonds']) === true) {
-                return (string) $project['fonds'];
-            }
-        }
+		foreach ($projects as $project) {
+			if (is_array($project) === true && isset($project['fonds']) === true) {
+				return (string)$project['fonds'];
+			}
+		}
 
-        return null;
-    }//end resolveProjectFonds()
+		return null;
+	}//end resolveProjectFonds()
 
-    /**
-     * Whether the cost-category is eligible for the fonds per an active rule.
-     *
-     * @param string $fonds        The fonds enum value.
-     * @param string $costCategory The cost-category enum value.
-     *
-     * @return bool True when an active EligibilityRule lists the category.
-     */
-    private function isCostCategoryEligible(string $fonds, string $costCategory): bool
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $rules         = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema('EligibilityRule')
-            ->findAll(['filters' => ['fonds' => $fonds, 'state' => 'active']]);
+	/**
+	 * Whether the cost-category is eligible for the fonds per an active rule.
+	 *
+	 * @param string $fonds The fonds enum value.
+	 * @param string $costCategory The cost-category enum value.
+	 *
+	 * @return bool True when an active EligibilityRule lists the category.
+	 */
+	private function isCostCategoryEligible(string $fonds, string $costCategory): bool {
+		$rules = $this->objectService
+			->setRegister($this->resolveRegister())
+			->setSchema('EligibilityRule')
+			->findAll(['filters' => ['fonds' => $fonds, 'state' => 'active']]);
 
-        foreach ($rules as $rule) {
-            if (is_array($rule) === false) {
-                continue;
-            }
+		foreach ($rules as $rule) {
+			if (is_array($rule) === false) {
+				continue;
+			}
 
-            $categories = ($rule['applicableCostCategories'] ?? []);
-            if (is_array($categories) === true && in_array($costCategory, $categories, true) === true) {
-                return true;
-            }
-        }
+			$categories = ($rule['applicableCostCategories'] ?? []);
+			if (is_array($categories) === true && in_array($costCategory, $categories, true) === true) {
+				return true;
+			}
+		}
 
-        return false;
-    }//end isCostCategoryEligible()
+		return false;
+	}//end isCostCategoryEligible()
 
-    /**
-     * Resolve the verplichte bewijsstuk document-types for a cost-category,
-     * preferring the fonds' EligibilityRule.evidenceRequired override and
-     * falling back to the DEFAULT_REQUIRED_EVIDENCE table.
-     *
-     * @param string|null $fonds        The fonds enum value, if known.
-     * @param string      $costCategory The cost-category enum value.
-     *
-     * @return array<string> The required document-type enums.
-     */
-    private function resolveRequiredEvidence(?string $fonds, string $costCategory): array
-    {
-        if ($fonds !== null) {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rules         = $objectService
-                ->setRegister($this->resolveRegister())
-                ->setSchema('EligibilityRule')
-                ->findAll(['filters' => ['fonds' => $fonds, 'state' => 'active']]);
+	/**
+	 * Resolve the verplichte bewijsstuk document-types for a cost-category,
+	 * preferring the fonds' EligibilityRule.evidenceRequired override and
+	 * falling back to the DEFAULT_REQUIRED_EVIDENCE table.
+	 *
+	 * @param string|null $fonds The fonds enum value, if known.
+	 * @param string $costCategory The cost-category enum value.
+	 *
+	 * @return array<string> The required document-type enums.
+	 */
+	private function resolveRequiredEvidence(?string $fonds, string $costCategory): array {
+		if ($fonds !== null) {
+			$rules = $this->objectService
+				->setRegister($this->resolveRegister())
+				->setSchema('EligibilityRule')
+				->findAll(['filters' => ['fonds' => $fonds, 'state' => 'active']]);
 
-            foreach ($rules as $rule) {
-                if (is_array($rule) === false) {
-                    continue;
-                }
+			foreach ($rules as $rule) {
+				if (is_array($rule) === false) {
+					continue;
+				}
 
-                $evidence = ($rule['evidenceRequired'] ?? null);
-                if (is_array($evidence) === true
-                    && isset($evidence[$costCategory]) === true
-                    && is_array($evidence[$costCategory]) === true
-                ) {
-                    return array_values($evidence[$costCategory]);
-                }
-            }
-        }//end if
+				$evidence = ($rule['evidenceRequired'] ?? null);
+				if (is_array($evidence) === true
+					&& isset($evidence[$costCategory]) === true
+					&& is_array($evidence[$costCategory]) === true
+				) {
+					return array_values($evidence[$costCategory]);
+				}
+			}
+		}//end if
 
-        return (self::DEFAULT_REQUIRED_EVIDENCE[$costCategory] ?? []);
-    }//end resolveRequiredEvidence()
+		return (self::DEFAULT_REQUIRED_EVIDENCE[$costCategory] ?? []);
+	}//end resolveRequiredEvidence()
 
-    /**
-     * Resolve the document-types of every SupportingDocument linked to an expenditure.
-     *
-     * @param string $euExpenditureId The EuExpenditure.id.
-     *
-     * @return array<string> The present document-type enums.
-     */
-    private function resolvePresentDocumentTypes(string $euExpenditureId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $documents     = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema('SupportingDocument')
-            ->findAll(['filters' => ['euExpenditureId' => $euExpenditureId]]);
+	/**
+	 * Resolve the document-types of every SupportingDocument linked to an expenditure.
+	 *
+	 * @param string $euExpenditureId The EuExpenditure.id.
+	 *
+	 * @return array<string> The present document-type enums.
+	 */
+	private function resolvePresentDocumentTypes(string $euExpenditureId): array {
+		$documents = $this->objectService
+			->setRegister($this->resolveRegister())
+			->setSchema('SupportingDocument')
+			->findAll(['filters' => ['euExpenditureId' => $euExpenditureId]]);
 
-        $types = [];
-        foreach ($documents as $document) {
-            if (is_array($document) === true && isset($document['documentType']) === true) {
-                $types[] = (string) $document['documentType'];
-            }
-        }
+		$types = [];
+		foreach ($documents as $document) {
+			if (is_array($document) === true && isset($document['documentType']) === true) {
+				$types[] = (string)$document['documentType'];
+			}
+		}
 
-        return $types;
-    }//end resolvePresentDocumentTypes()
+		return $types;
+	}//end resolvePresentDocumentTypes()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

@@ -9,23 +9,39 @@
  @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-20
 -->
 <template>
-	<li role="treeitem" class="wbso-account-node" :aria-expanded="hasChildren ? expanded : null">
+	<li
+		role="treeitem"
+		class="wbso-account-node"
+		:aria-expanded="hasChildren ? expanded : null">
 		<div class="wbso-account-node__row" :style="{ paddingLeft: indent }">
-			<button v-if="hasChildren"
+			<button
+				v-if="hasChildren"
 				type="button"
 				class="wbso-account-node__toggle"
-				:aria-label="expanded ? t('shillinq', 'Collapse') : t('shillinq', 'Expand')"
+				:aria-label="
+					expanded ? t('shillinq', 'Collapse') : t('shillinq', 'Expand')
+				"
 				@click="expanded = !expanded">
 				{{ expanded ? '▾' : '▸' }}
 			</button>
 			<span v-else class="wbso-account-node__leaf-bullet">•</span>
-			<span class="wbso-account-node__number">{{ account.accountNumber }}</span>
+			<span class="wbso-account-node__number">{{
+				account.accountNumber
+			}}</span>
 			<span class="wbso-account-node__name">{{ account.name }}</span>
-			<span class="wbso-account-node__type">{{ translateType(account.accountType) }}</span>
-			<span class="wbso-account-node__status" :data-status="account.status">{{ translateStatus(account.status) }}</span>
+			<span class="wbso-account-node__type">{{
+				translateType(account.accountType)
+			}}</span>
+			<span class="wbso-account-node__status" :data-status="account.status">{{
+				translateStatus(account.status)
+			}}</span>
 		</div>
-		<ul v-if="hasChildren && expanded" class="wbso-account-node__children" role="group">
-			<AccountNode v-for="child in account.children"
+		<ul
+			v-if="hasChildren && expanded"
+			class="wbso-account-node__children"
+			role="group">
+			<AccountNode
+				v-for="child in account.children"
 				:key="child.accountNumber"
 				:account="child"
 				:depth="depth + 1" />
@@ -42,6 +58,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		depth: {
 			type: Number,
 			default: 0,
@@ -56,8 +73,12 @@ export default {
 
 	computed: {
 		hasChildren() {
-			return Array.isArray(this.account.children) && this.account.children.length > 0
+			return (
+				Array.isArray(this.account.children)
+				&& this.account.children.length > 0
+			)
 		},
+
 		indent() {
 			return `${this.depth * 1.25}rem`
 		},
@@ -80,6 +101,7 @@ export default {
 			}
 			return map[type] || type
 		},
+
 		/**
 		 * Translate a status slug.
 		 *

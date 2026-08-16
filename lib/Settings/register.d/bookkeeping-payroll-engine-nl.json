@@ -19,11 +19,11 @@
         "type": "object",
         "required": [
           "kvk",
-          "naam",
-          "loonheffingsnummer",
+          "name",
+          "payrollTaxNumber",
           "sectorcode",
-          "awfTarief",
-          "zvwTarief",
+          "awfRate",
+          "zvwRate",
           "administrationId"
         ],
         "properties": {
@@ -33,13 +33,13 @@
             "example": "12345678",
             "title": "KvK"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Legal employer name.",
             "example": "Conduction B.V.",
             "title": "Naam"
           },
-          "loonheffingsnummer": {
+          "payrollTaxNumber": {
             "type": "string",
             "description": "Belastingdienst wage-tax number (loonheffingennummer).",
             "example": "851234567L01",
@@ -51,31 +51,31 @@
             "example": 32,
             "title": "Sectorcode"
           },
-          "sectorOmschrijving": {
+          "sectorDescription": {
             "type": "string",
             "nullable": true,
             "description": "Human-readable sector description.",
             "example": "Overige zakelijke dienstverlening II",
             "title": "Sector Omschrijving"
           },
-          "awfTarief": {
+          "awfRate": {
             "type": "string",
             "enum": [
-              "LAAG",
-              "HOOG"
+              "LOW",
+              "HIGH"
             ],
-            "description": "AWF tariff bucket (LAAG for predominantly permanent written contracts).",
-            "example": "LAAG",
+            "description": "AWF tariff bucket (LOW for predominantly permanent written contracts).",
+            "example": "LOW",
             "title": "Awf Tarief"
           },
-          "zvwTarief": {
+          "zvwRate": {
             "type": "string",
             "enum": [
-              "LAAG",
-              "HOOG"
+              "LOW",
+              "HIGH"
             ],
             "description": "ZVW employer-contribution tariff bucket.",
-            "example": "LAAG",
+            "example": "LOW",
             "title": "Zvw Tarief"
           },
           "wkrBudget2026": {
@@ -92,7 +92,7 @@
             "example": 220.0,
             "title": "Wkr Budget Verbruikt2026"
           },
-          "vakantiegeldUitbetalingMaand": {
+          "holidayAllowanceDisbursementMonth": {
             "type": "integer",
             "minimum": 1,
             "maximum": 12,
@@ -101,13 +101,13 @@
             "example": 5,
             "title": "Vakantiegeld Uitbetaling Maand"
           },
-          "ploegendienst": {
+          "shiftWork": {
             "type": "boolean",
             "default": false,
             "description": "Whether the employer runs shift work.",
             "title": "Ploegendienst"
           },
-          "horeca": {
+          "hospitality": {
             "type": "boolean",
             "default": false,
             "description": "Whether the employer is in hospitality (fooienregeling).",
@@ -131,17 +131,17 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-000-werkgever-setup.md",
         "type": "object",
         "required": [
-          "werkgeverId",
+          "employerId",
           "personId",
-          "achternaam",
-          "inDienstSinds",
-          "loonheffingstabel",
+          "lastName",
+          "inServiceSinds",
+          "payrollTaxTable",
           "sectorcode",
           "contractType",
           "administrationId"
         ],
         "properties": {
-          "werkgeverId": {
+          "employerId": {
             "type": "string",
             "description": "Employer this employee belongs to (FK to Werkgever).",
             "example": "wg-conduction-bv",
@@ -160,20 +160,20 @@
             "example": "123456789",
             "title": "BSN"
           },
-          "voorletters": {
+          "initials": {
             "type": "string",
             "nullable": true,
             "description": "Initials.",
             "example": "J.M.",
             "title": "Voorletters"
           },
-          "achternaam": {
+          "lastName": {
             "type": "string",
             "description": "Surname (denormalised for the payslip).",
             "example": "Jansen",
             "title": "Achternaam"
           },
-          "geboortedatum": {
+          "dateOfBirth": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -181,7 +181,7 @@
             "example": "1985-03-12",
             "title": "Geboortedatum"
           },
-          "geslacht": {
+          "gender": {
             "type": "string",
             "enum": [
               "M",
@@ -193,14 +193,14 @@
             "example": "M",
             "title": "Geslacht"
           },
-          "inDienstSinds": {
+          "inServiceSinds": {
             "type": "string",
             "format": "date",
             "description": "Employment start date (drives pro-rata first period).",
             "example": "2024-04-01",
             "title": "In Dienst Sinds"
           },
-          "uitDienstPer": {
+          "outServicePer": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -208,26 +208,26 @@
             "example": null,
             "title": "Uit Dienst Per"
           },
-          "burgerlijkeStaat": {
+          "maritalStatement": {
             "type": "string",
             "nullable": true,
             "description": "Marital status.",
             "example": "GEHUWD",
             "title": "Burgerlijke Staat"
           },
-          "loonheffingstabel": {
+          "payrollTaxTable": {
             "type": "string",
             "enum": [
-              "WIT_REGULIER",
-              "GROEN_REGULIER",
-              "WIT_BIJZONDER",
-              "GROEN_BIJZONDER"
+              "WIT_REGULAR",
+              "GREEN_REGULAR",
+              "WIT_SPECIAL",
+              "GREEN_SPECIAL"
             ],
             "description": "Applicable wage-tax table colour/kind (REQ-PAY-002).",
-            "example": "WIT_REGULIER",
+            "example": "WIT_REGULAR",
             "title": "Loonheffingstabel"
           },
-          "loonheffingstabelKorting": {
+          "payrollTaxTableDiscount": {
             "type": "boolean",
             "default": true,
             "description": "Whether the loonheffingskorting is applied for this employee (only one employer may apply it).",
@@ -243,12 +243,12 @@
           "premieGroupWGF": {
             "type": "string",
             "enum": [
-              "AWF_LAAG",
-              "AWF_HOOG"
+              "AWF_LOW",
+              "AWF_HIGH"
             ],
             "nullable": true,
             "description": "AWF premium group for this contract.",
-            "example": "AWF_LAAG",
+            "example": "AWF_LOW",
             "title": "Premie Group Wgf"
           },
           "contractType": {
@@ -257,7 +257,7 @@
             "example": "ONBEPAALDE_TIJD_SCHRIFTELIJK_GEEN_OPROEP",
             "title": "Contract Type"
           },
-          "uurloon": {
+          "hourlyPay": {
             "type": "number",
             "nullable": true,
             "description": "Hourly wage.",
@@ -271,56 +271,56 @@
             "example": 40,
             "title": "Contracturen Per Week"
           },
-          "jaarloonSV": {
+          "annualPaySV": {
             "type": "number",
             "nullable": true,
             "description": "Indicative annual SV wage.",
             "example": 59280.0,
             "title": "Jaarloon Sv"
           },
-          "jaarloonBruto": {
+          "annualPayGross": {
             "type": "number",
             "nullable": true,
             "description": "Indicative gross annual wage (used for the DGA gebruikelijk-loon check).",
             "example": 59280.0,
             "title": "Jaarloon Bruto"
           },
-          "vakantiegeldPct": {
+          "holidayAllowancePct": {
             "type": "number",
             "default": 0.08,
             "description": "Holiday-allowance accrual percentage (WML minimum 8%).",
             "example": 0.08,
             "title": "Vakantiegeld Pct"
           },
-          "eindejaarsuitkeringPct": {
+          "yearEndBonusPct": {
             "type": "number",
             "default": 0,
             "description": "Year-end bonus percentage, if any (REQ-PAY-006).",
             "example": 0,
             "title": "Eindejaarsuitkering Pct"
           },
-          "dertiendeMaand": {
+          "thirteenthMonth": {
             "type": "boolean",
             "default": false,
             "description": "Whether a 13th month applies (REQ-PAY-006).",
             "example": false,
             "title": "Dertiende Maand"
           },
-          "pensioenRegeling": {
+          "pensionScheme": {
             "type": "string",
             "nullable": true,
             "description": "Pension scheme identifier.",
             "example": "PME_DC",
             "title": "Pensioen Regeling"
           },
-          "pensioenPremiePctWerkgever": {
+          "pensionPremiumPctEmployer": {
             "type": "number",
             "default": 0,
             "description": "Employer pension premium share.",
             "example": 0.182,
             "title": "Pensioen Premie Pct Werkgever"
           },
-          "pensioenPremiePctWerknemer": {
+          "pensionPremiumPctEmployee": {
             "type": "number",
             "default": 0,
             "description": "Employee pension premium share (withheld from net).",
@@ -347,14 +347,14 @@
             "example": false,
             "title": "Is Dga"
           },
-          "expat30PctRegeling": {
+          "expat30PctScheme": {
             "type": "boolean",
             "default": false,
             "description": "Whether the 30%-ruling applies (REQ-PAY-015).",
             "example": false,
             "title": "Expat30Pct Regeling"
           },
-          "gebruikelijkLoonUitzondering": {
+          "customaryPayException": {
             "type": "string",
             "nullable": true,
             "description": "Recorded justification when DGA wage is below the norm (REQ-PAY-009).",
@@ -388,56 +388,56 @@
         "readonly": true,
         "type": "object",
         "required": [
-          "jaar",
-          "kleur",
-          "periode",
-          "metKorting",
-          "versienummer",
-          "tabelRegels",
-          "geldigVan"
+          "year",
+          "colour",
+          "period",
+          "withDiscount",
+          "versionNumber",
+          "tableRules",
+          "validFrom"
         ],
         "properties": {
-          "jaar": {
+          "year": {
             "type": "integer",
             "description": "Tax year.",
             "example": 2026,
             "title": "Jaar"
           },
-          "kleur": {
+          "colour": {
             "type": "string",
             "enum": [
-              "WIT",
-              "GROEN"
+              "WHITE",
+              "GREEN"
             ],
             "description": "Table colour (white = employment income, green = benefits).",
-            "example": "WIT",
+            "example": "WHITE",
             "title": "Kleur"
           },
-          "periode": {
+          "period": {
             "type": "string",
             "enum": [
               "WEEK",
-              "4WEKEN",
-              "MAAND",
-              "JAAR"
+              "4_WEEKS",
+              "MONTH",
+              "YEAR"
             ],
             "description": "Pay-period granularity the table is calibrated for.",
-            "example": "MAAND",
+            "example": "MONTH",
             "title": "Periode"
           },
-          "metKorting": {
+          "withDiscount": {
             "type": "boolean",
             "description": "Whether the loonheffingskorting variant.",
             "example": true,
             "title": "Met Korting"
           },
-          "versienummer": {
+          "versionNumber": {
             "type": "string",
             "description": "Publication version (e.g. the Dec-2025 release).",
             "example": "2025-W47",
             "title": "Versienummer"
           },
-          "tabelRegels": {
+          "tableRules": {
             "type": "array",
             "description": "Bracket rows: {vanaf, tot, percentage, vasteHeffing, korting}. Wage falls in [vanaf, tot]; LH = vasteHeffing + percentage*(wage-vanaf) - korting (floored at 0).",
             "items": {
@@ -445,21 +445,21 @@
             },
             "title": "Tabel Regels"
           },
-          "bron": {
+          "source": {
             "type": "string",
             "nullable": true,
             "description": "Source citation.",
             "example": "Belastingdienst LH-tabel 2026 januari, versienr 2025-W47",
             "title": "Bron"
           },
-          "geldigVan": {
+          "validFrom": {
             "type": "string",
             "format": "date",
             "description": "First date the table applies.",
             "example": "2026-01-01",
             "title": "Geldig Van"
           },
-          "geldigTot": {
+          "validTo": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -478,60 +478,60 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-014-mutaties.md",
         "type": "object",
         "required": [
-          "werkgeverId",
-          "periodeType",
-          "jaar",
-          "periodeNr",
-          "periodeStart",
-          "periodeEind",
+          "employerId",
+          "periodType",
+          "year",
+          "periodNr",
+          "periodStart",
+          "periodEnd",
           "status",
           "administrationId"
         ],
         "properties": {
-          "werkgeverId": {
+          "employerId": {
             "type": "string",
             "description": "Employer (FK to Werkgever).",
             "example": "wg-conduction-bv",
             "title": "Werkgever ID"
           },
-          "periodeType": {
+          "periodType": {
             "type": "string",
             "enum": [
               "WEEK",
-              "4WEKEN",
-              "MAAND"
+              "4_WEEKS",
+              "MONTH"
             ],
             "description": "Pay-period type.",
-            "example": "MAAND",
+            "example": "MONTH",
             "title": "Periode Type"
           },
-          "jaar": {
+          "year": {
             "type": "integer",
             "description": "Calendar year.",
             "example": 2026,
             "title": "Jaar"
           },
-          "periodeNr": {
+          "periodNr": {
             "type": "integer",
             "description": "Period number within the year.",
             "example": 5,
             "title": "Periode Nr"
           },
-          "periodeStart": {
+          "periodStart": {
             "type": "string",
             "format": "date",
             "description": "Period start.",
             "example": "2026-05-01",
             "title": "Periode Start"
           },
-          "periodeEind": {
+          "periodEnd": {
             "type": "string",
             "format": "date",
             "description": "Period end.",
             "example": "2026-05-31",
             "title": "Periode Eind"
           },
-          "betaaldatum": {
+          "paymentDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -550,45 +550,45 @@
             "example": "GESLOTEN",
             "title": "Status"
           },
-          "loonheffingstabelId": {
+          "payrollTaxTableId": {
             "type": "string",
             "nullable": true,
             "description": "FK to the LoonheffingTabel2026 record used.",
             "example": "lht-2026-wit-maand-met-korting",
             "title": "Loonheffingstabel ID"
           },
-          "loonheffingstabelVersie": {
+          "payrollTaxTableVersion": {
             "type": "string",
             "nullable": true,
             "description": "Denormalised table version for audit.",
             "example": "2025-W47",
             "title": "Loonheffingstabel Versie"
           },
-          "totaalBrutoloon": {
+          "totalGrossPay": {
             "type": "number",
             "default": 0,
             "description": "Sum of gross across all payslips.",
             "title": "Totaal Brutoloon"
           },
-          "totaalNettoBetaald": {
+          "totalNetPaid": {
             "type": "number",
             "default": 0,
             "description": "Sum of net paid.",
             "title": "Totaal Netto Betaald"
           },
-          "totaalLHAfdracht": {
+          "totalPayrollTaxRemittance": {
             "type": "number",
             "default": 0,
             "description": "Sum of wage tax.",
             "title": "Totaal Lh Afdracht"
           },
-          "totaalPremiesSVAfdracht": {
+          "totalSocialInsuranceRemittance": {
             "type": "number",
             "default": 0,
             "description": "Sum of employer SV premiums.",
             "title": "Totaal Premies Sv Afdracht"
           },
-          "totaalZVWAfdracht": {
+          "totalHealthInsuranceRemittance": {
             "type": "number",
             "default": 0,
             "description": "Sum of employer ZVW contribution.",
@@ -611,29 +611,29 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-001-bruto-netto-berekening.md",
         "type": "object",
         "required": [
-          "werknemerId",
-          "periodeId",
-          "brutoComponenten",
-          "fiscaalLoon",
-          "premieloon_SV",
-          "loonheffing",
-          "nettoBetaald",
+          "employeeId",
+          "periodId",
+          "grossComponents",
+          "fiscalPay",
+          "contribution_pay_sv",
+          "payrollTax",
+          "netPaid",
           "administrationId"
         ],
         "properties": {
-          "werknemerId": {
+          "employeeId": {
             "type": "string",
             "description": "Employee (FK to Werknemer).",
             "example": "wn-2024-0042",
             "title": "Werknemer ID"
           },
-          "periodeId": {
+          "periodId": {
             "type": "string",
             "description": "Period (FK to LoonPeriode).",
             "example": "lp-2026-05-wg-conduction-bv",
             "title": "Periode ID"
           },
-          "brutoComponenten": {
+          "grossComponents": {
             "type": "object",
             "description": "Gross line items incl. totaal_bruto, belastingvrije toelagen (kilometervergoeding, thuiswerkvergoeding) and vakantietoeslag_uitbetaling.",
             "example": {
@@ -643,19 +643,19 @@
             },
             "title": "Bruto Componenten"
           },
-          "fiscaalLoon": {
+          "fiscalPay": {
             "type": "number",
             "description": "Taxable wage (gross minus tax-free allowances).",
             "example": 4959.2,
             "title": "Fiscaal Loon"
           },
-          "premieloon_SV": {
+          "contribution_pay_sv": {
             "type": "number",
             "description": "SV premium wage, capped at the period-pro-rata maximum.",
             "example": 4940.0,
             "title": "Premieloon Sv"
           },
-          "loonheffing": {
+          "payrollTax": {
             "type": "number",
             "description": "Wage tax withheld.",
             "example": 1083.4,
@@ -670,7 +670,7 @@
             },
             "title": "Inhoudingen Sv"
           },
-          "premiesSVWerkgever": {
+          "employerSocialInsurancePremiums": {
             "type": "object",
             "nullable": true,
             "description": "Employer-share SV premiums (awf, aof_basis, whk, wko).",
@@ -701,7 +701,7 @@
             },
             "title": "Pensioen"
           },
-          "nettoBetaald": {
+          "netPaid": {
             "type": "number",
             "description": "Net amount paid out (REQ-PAY-001).",
             "example": 3520.12,
@@ -717,7 +717,7 @@
             },
             "title": "Cumulatieven"
           },
-          "vakantieDagenReservering": {
+          "holidayDaysAccrual": {
             "type": "object",
             "nullable": true,
             "description": "Holiday accrual for the period.",
@@ -743,60 +743,60 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md",
         "type": "object",
         "required": [
-          "werkgeverId",
-          "periodeId",
-          "totaalLoonheffing",
-          "totaalAfdracht",
+          "employerId",
+          "periodId",
+          "totalPayrollTax",
+          "totalRemittance",
           "status",
           "administrationId"
         ],
         "properties": {
-          "werkgeverId": {
+          "employerId": {
             "type": "string",
             "description": "Employer (FK to Werkgever).",
             "example": "wg-conduction-bv",
             "title": "Werkgever ID"
           },
-          "periodeId": {
+          "periodId": {
             "type": "string",
             "description": "Period (FK to LoonPeriode).",
             "example": "lp-2026-05-wg-conduction-bv",
             "title": "Periode ID"
           },
-          "totaalLoonheffing": {
+          "totalPayrollTax": {
             "type": "number",
             "description": "Total wage tax for the period.",
             "example": 18620.1,
             "title": "Totaal Loonheffing"
           },
-          "totaalEindheffingenWKR": {
+          "totalFinalLeviesWorkRelatedCosts": {
             "type": "number",
             "default": 0,
             "description": "WKR final levy fetched from the WKR app (REQ-PAY-011).",
             "example": 0,
             "title": "Totaal Eindheffingen Wkr"
           },
-          "totaalPremiesSV": {
+          "totalSocialInsuranceContributions": {
             "type": "number",
             "default": 0,
             "description": "Total employer SV premiums.",
             "example": 7559.4,
             "title": "Totaal Premies Sv"
           },
-          "totaalZVW": {
+          "totalHealthInsurance": {
             "type": "number",
             "default": 0,
             "description": "Total employer ZVW contribution.",
             "example": 3654.0,
             "title": "Totaal Zvw"
           },
-          "totaalAfdracht": {
+          "totalRemittance": {
             "type": "number",
             "description": "Grand total payable to the Belastingdienst.",
             "example": 29833.5,
             "title": "Totaal Afdracht"
           },
-          "vervaldagAfdracht": {
+          "dueDateRemittance": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -841,27 +841,27 @@
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-012-gl-boeking.md",
         "type": "object",
         "required": [
-          "periodeId",
-          "datum",
-          "regels",
+          "periodId",
+          "date",
+          "rules",
           "balanced",
           "administrationId"
         ],
         "properties": {
-          "periodeId": {
+          "periodId": {
             "type": "string",
             "description": "Period (FK to LoonPeriode).",
             "example": "lp-2026-05-wg-conduction-bv",
             "title": "Periode ID"
           },
-          "datum": {
+          "date": {
             "type": "string",
             "format": "date",
             "description": "Posting date.",
             "example": "2026-05-31",
             "title": "Datum"
           },
-          "regels": {
+          "rules": {
             "type": "array",
             "description": "Balanced GL lines: {rekening, naam, debet, credit}.",
             "items": {
@@ -892,17 +892,17 @@
           "slug": "wg-conduction-bv"
         },
         "kvk": "12345678",
-        "naam": "Conduction B.V.",
-        "loonheffingsnummer": "851234567L01",
+        "name": "Conduction B.V.",
+        "payrollTaxNumber": "851234567L01",
         "sectorcode": 32,
-        "sectorOmschrijving": "Overige zakelijke dienstverlening II",
-        "awfTarief": "LAAG",
-        "zvwTarief": "LAAG",
+        "sectorDescription": "Overige zakelijke dienstverlening II",
+        "awfRate": "LOW",
+        "zvwRate": "LOW",
         "wkrBudget2026": 8742.0,
         "wkrBudgetVerbruikt2026": 220.0,
-        "vakantiegeldUitbetalingMaand": 5,
-        "ploegendienst": false,
-        "horeca": false,
+        "holidayAllowanceDisbursementMonth": 5,
+        "shiftWork": false,
+        "hospitality": false,
         "administrationId": "adm-smb-1"
       },
       {
@@ -911,32 +911,32 @@
           "schema": "Werknemer",
           "slug": "wn-2024-0042"
         },
-        "werkgeverId": "wg-conduction-bv",
+        "employerId": "wg-conduction-bv",
         "personId": "person-jansen",
         "bsn": "123456789",
-        "voorletters": "J.M.",
-        "achternaam": "Jansen",
-        "geboortedatum": "1985-03-12",
-        "geslacht": "M",
-        "inDienstSinds": "2024-04-01",
-        "uitDienstPer": null,
-        "burgerlijkeStaat": "GEHUWD",
-        "loonheffingstabel": "WIT_REGULIER",
-        "loonheffingstabelKorting": true,
+        "initials": "J.M.",
+        "lastName": "Jansen",
+        "dateOfBirth": "1985-03-12",
+        "gender": "M",
+        "inServiceSinds": "2024-04-01",
+        "outServicePer": null,
+        "maritalStatement": "GEHUWD",
+        "payrollTaxTable": "WIT_REGULAR",
+        "payrollTaxTableDiscount": true,
         "sectorcode": 32,
-        "premieGroupWGF": "AWF_LAAG",
+        "premieGroupWGF": "AWF_LOW",
         "contractType": "ONBEPAALDE_TIJD_SCHRIFTELIJK_GEEN_OPROEP",
-        "uurloon": 28.5,
+        "hourlyPay": 28.5,
         "contracturenPerWeek": 40,
-        "jaarloonSV": 59280.0,
-        "jaarloonBruto": 59280.0,
-        "vakantiegeldPct": 0.08,
-        "pensioenRegeling": "PME_DC",
-        "pensioenPremiePctWerkgever": 0.182,
-        "pensioenPremiePctWerknemer": 0.072,
+        "annualPaySV": 59280.0,
+        "annualPayGross": 59280.0,
+        "holidayAllowancePct": 0.08,
+        "pensionScheme": "PME_DC",
+        "pensionPremiumPctEmployer": 0.182,
+        "pensionPremiumPctEmployee": 0.072,
         "thuiswerkdagenPerWeek": 2,
         "is_dga": false,
-        "expat30PctRegeling": false,
+        "expat30PctScheme": false,
         "administrationId": "adm-smb-1"
       },
       {
@@ -945,32 +945,32 @@
           "schema": "Werknemer",
           "slug": "wn-2024-0043"
         },
-        "werkgeverId": "wg-conduction-bv",
+        "employerId": "wg-conduction-bv",
         "personId": "person-devries",
         "bsn": "234567890",
-        "voorletters": "A.",
-        "achternaam": "De Vries",
-        "geboortedatum": "1992-09-04",
-        "geslacht": "V",
-        "inDienstSinds": "2025-01-15",
-        "uitDienstPer": null,
-        "burgerlijkeStaat": "ONGEHUWD",
-        "loonheffingstabel": "WIT_REGULIER",
-        "loonheffingstabelKorting": true,
+        "initials": "A.",
+        "lastName": "De Vries",
+        "dateOfBirth": "1992-09-04",
+        "gender": "V",
+        "inServiceSinds": "2025-01-15",
+        "outServicePer": null,
+        "maritalStatement": "ONGEHUWD",
+        "payrollTaxTable": "WIT_REGULAR",
+        "payrollTaxTableDiscount": true,
         "sectorcode": 32,
-        "premieGroupWGF": "AWF_LAAG",
+        "premieGroupWGF": "AWF_LOW",
         "contractType": "ONBEPAALDE_TIJD_SCHRIFTELIJK_GEEN_OPROEP",
-        "uurloon": 26.0,
+        "hourlyPay": 26.0,
         "contracturenPerWeek": 24,
-        "jaarloonSV": 32448.0,
-        "jaarloonBruto": 32448.0,
-        "vakantiegeldPct": 0.08,
-        "pensioenRegeling": "PME_DC",
-        "pensioenPremiePctWerkgever": 0.182,
-        "pensioenPremiePctWerknemer": 0.072,
+        "annualPaySV": 32448.0,
+        "annualPayGross": 32448.0,
+        "holidayAllowancePct": 0.08,
+        "pensionScheme": "PME_DC",
+        "pensionPremiumPctEmployer": 0.182,
+        "pensionPremiumPctEmployee": 0.072,
         "thuiswerkdagenPerWeek": 1,
         "is_dga": false,
-        "expat30PctRegeling": false,
+        "expat30PctScheme": false,
         "administrationId": "adm-smb-1"
       },
       {
@@ -979,33 +979,33 @@
           "schema": "Werknemer",
           "slug": "wn-dga-0001"
         },
-        "werkgeverId": "wg-conduction-bv",
+        "employerId": "wg-conduction-bv",
         "personId": "person-bakker",
         "bsn": "345678901",
-        "voorletters": "R.",
-        "achternaam": "Bakker",
-        "geboortedatum": "1979-06-21",
-        "geslacht": "M",
-        "inDienstSinds": "2020-01-01",
-        "uitDienstPer": null,
-        "burgerlijkeStaat": "GEHUWD",
-        "loonheffingstabel": "WIT_REGULIER",
-        "loonheffingstabelKorting": false,
+        "initials": "R.",
+        "lastName": "Bakker",
+        "dateOfBirth": "1979-06-21",
+        "gender": "M",
+        "inServiceSinds": "2020-01-01",
+        "outServicePer": null,
+        "maritalStatement": "GEHUWD",
+        "payrollTaxTable": "WIT_REGULAR",
+        "payrollTaxTableDiscount": false,
         "sectorcode": 32,
-        "premieGroupWGF": "AWF_LAAG",
+        "premieGroupWGF": "AWF_LOW",
         "contractType": "DGA",
-        "uurloon": 0,
+        "hourlyPay": 0,
         "contracturenPerWeek": 40,
-        "jaarloonSV": 48000.0,
-        "jaarloonBruto": 48000.0,
-        "vakantiegeldPct": 0.08,
-        "pensioenRegeling": null,
-        "pensioenPremiePctWerkgever": 0,
-        "pensioenPremiePctWerknemer": 0,
+        "annualPaySV": 48000.0,
+        "annualPayGross": 48000.0,
+        "holidayAllowancePct": 0.08,
+        "pensionScheme": null,
+        "pensionPremiumPctEmployer": 0,
+        "pensionPremiumPctEmployee": 0,
         "thuiswerkdagenPerWeek": 0,
         "is_dga": true,
-        "expat30PctRegeling": false,
-        "gebruikelijkLoonUitzondering": null,
+        "expat30PctScheme": false,
+        "customaryPayException": null,
         "administrationId": "adm-smb-1"
       },
       {
@@ -1014,44 +1014,44 @@
           "schema": "LoonheffingTabel2026",
           "slug": "lht-2026-wit-maand-met-korting"
         },
-        "jaar": 2026,
-        "kleur": "WIT",
-        "periode": "MAAND",
-        "metKorting": true,
-        "versienummer": "2025-W47",
-        "tabelRegels": [
+        "year": 2026,
+        "colour": "WHITE",
+        "period": "MONTH",
+        "withDiscount": true,
+        "versionNumber": "2025-W47",
+        "tableRules": [
           {
-            "vanaf": 0,
+            "from": 0,
             "tot": 1200,
             "percentage": 0.0935,
             "vasteHeffing": 0,
             "korting": 295.0
           },
           {
-            "vanaf": 1200,
+            "from": 1200,
             "tot": 3300,
             "percentage": 0.3697,
             "vasteHeffing": 112.2,
             "korting": 295.0
           },
           {
-            "vanaf": 3300,
+            "from": 3300,
             "tot": 6400,
             "percentage": 0.3697,
             "vasteHeffing": 888.6,
             "korting": 295.0
           },
           {
-            "vanaf": 6400,
+            "from": 6400,
             "tot": null,
             "percentage": 0.495,
             "vasteHeffing": 2034.7,
             "korting": 0
           }
         ],
-        "bron": "Belastingdienst LH-tabel 2026 januari (illustratieve brackets), versienr 2025-W47",
-        "geldigVan": "2026-01-01",
-        "geldigTot": null
+        "source": "Belastingdienst LH-tabel 2026 januari (illustratieve brackets), versienr 2025-W47",
+        "validFrom": "2026-01-01",
+        "validTo": null
       },
       {
         "@self": {
@@ -1059,37 +1059,37 @@
           "schema": "LoonheffingTabel2026",
           "slug": "lht-2026-wit-maand-zonder-korting"
         },
-        "jaar": 2026,
-        "kleur": "WIT",
-        "periode": "MAAND",
-        "metKorting": false,
-        "versienummer": "2025-W47",
-        "tabelRegels": [
+        "year": 2026,
+        "colour": "WHITE",
+        "period": "MONTH",
+        "withDiscount": false,
+        "versionNumber": "2025-W47",
+        "tableRules": [
           {
-            "vanaf": 0,
+            "from": 0,
             "tot": 3300,
             "percentage": 0.3697,
             "vasteHeffing": 0,
             "korting": 0
           },
           {
-            "vanaf": 3300,
+            "from": 3300,
             "tot": 6400,
             "percentage": 0.3697,
             "vasteHeffing": 0,
             "korting": 0
           },
           {
-            "vanaf": 6400,
+            "from": 6400,
             "tot": null,
             "percentage": 0.495,
             "vasteHeffing": 1146.07,
             "korting": 0
           }
         ],
-        "bron": "Belastingdienst LH-tabel 2026 januari (illustratieve brackets), versienr 2025-W47",
-        "geldigVan": "2026-01-01",
-        "geldigTot": null
+        "source": "Belastingdienst LH-tabel 2026 januari (illustratieve brackets), versienr 2025-W47",
+        "validFrom": "2026-01-01",
+        "validTo": null
       },
       {
         "@self": {
@@ -1097,21 +1097,21 @@
           "schema": "LoonPeriode",
           "slug": "lp-2026-05-wg-conduction-bv"
         },
-        "werkgeverId": "wg-conduction-bv",
-        "periodeType": "MAAND",
-        "jaar": 2026,
-        "periodeNr": 5,
-        "periodeStart": "2026-05-01",
-        "periodeEind": "2026-05-31",
-        "betaaldatum": "2026-05-27",
+        "employerId": "wg-conduction-bv",
+        "periodType": "MONTH",
+        "year": 2026,
+        "periodNr": 5,
+        "periodStart": "2026-05-01",
+        "periodEnd": "2026-05-31",
+        "paymentDate": "2026-05-27",
         "status": "GESLOTEN",
-        "loonheffingstabelId": "lht-2026-wit-maand-met-korting",
-        "loonheffingstabelVersie": "2025-W47",
-        "totaalBrutoloon": 7644.0,
-        "totaalNettoBetaald": 5215.38,
-        "totaalLHAfdracht": 1907.05,
-        "totaalPremiesSVAfdracht": 622.85,
-        "totaalZVWAfdracht": 406.66,
+        "payrollTaxTableId": "lht-2026-wit-maand-met-korting",
+        "payrollTaxTableVersion": "2025-W47",
+        "totalGrossPay": 7644.0,
+        "totalNetPaid": 5215.38,
+        "totalPayrollTaxRemittance": 1907.05,
+        "totalSocialInsuranceRemittance": 622.85,
+        "totalHealthInsuranceRemittance": 406.66,
         "administrationId": "adm-smb-1"
       },
       {
@@ -1120,20 +1120,20 @@
           "schema": "LoonStrook",
           "slug": "ls-wn-2024-0042-2026-05"
         },
-        "werknemerId": "wn-2024-0042",
-        "periodeId": "lp-2026-05-wg-conduction-bv",
-        "brutoComponenten": {
+        "employeeId": "wn-2024-0042",
+        "periodId": "lp-2026-05-wg-conduction-bv",
+        "grossComponents": {
           "basissalaris": 4940.0,
           "thuiswerkvergoeding": 19.2,
           "totaal_bruto": 4959.2
         },
-        "fiscaalLoon": 4940.0,
-        "premieloon_SV": 4940.0,
-        "loonheffing": 1219.78,
+        "fiscalPay": 4940.0,
+        "contribution_pay_sv": 4940.0,
+        "payrollTax": 1219.78,
         "inhoudingenSV": {
           "totaal_sv_wn": 0
         },
-        "premiesSVWerkgever": {
+        "employerSocialInsurancePremiums": {
           "awf": 130.42,
           "aof_basis": 265.66,
           "whk": 6.42,
@@ -1147,12 +1147,12 @@
           "premie_wn_aandeel": 355.68,
           "premie_wg_aandeel": 899.08
         },
-        "nettoBetaald": 3383.74,
+        "netPaid": 3383.74,
         "cumulatieven": {
           "fiscaalloon_ytd": 24700.0,
           "vakantiegeld_reservering_ytd": 1976.0
         },
-        "vakantieDagenReservering": {
+        "holidayDaysAccrual": {
           "opgebouwdPeriode": 2.0
         },
         "administrationId": "adm-smb-1"
@@ -1163,20 +1163,20 @@
           "schema": "LoonStrook",
           "slug": "ls-wn-2024-0043-2026-05"
         },
-        "werknemerId": "wn-2024-0043",
-        "periodeId": "lp-2026-05-wg-conduction-bv",
-        "brutoComponenten": {
+        "employeeId": "wn-2024-0043",
+        "periodId": "lp-2026-05-wg-conduction-bv",
+        "grossComponents": {
           "basissalaris": 2704.0,
           "thuiswerkvergoeding": 9.6,
           "totaal_bruto": 2713.6
         },
-        "fiscaalLoon": 2704.0,
-        "premieloon_SV": 2704.0,
-        "loonheffing": 687.27,
+        "fiscalPay": 2704.0,
+        "contribution_pay_sv": 2704.0,
+        "payrollTax": 687.27,
         "inhoudingenSV": {
           "totaal_sv_wn": 0
         },
-        "premiesSVWerkgever": {
+        "employerSocialInsurancePremiums": {
           "awf": 71.39,
           "aof_basis": 145.44,
           "whk": 3.52,
@@ -1190,12 +1190,12 @@
           "premie_wn_aandeel": 194.69,
           "premie_wg_aandeel": 492.13
         },
-        "nettoBetaald": 1831.64,
+        "netPaid": 1831.64,
         "cumulatieven": {
           "fiscaalloon_ytd": 13520.0,
           "vakantiegeld_reservering_ytd": 1081.6
         },
-        "vakantieDagenReservering": {
+        "holidayDaysAccrual": {
           "opgebouwdPeriode": 1.2
         },
         "administrationId": "adm-smb-1"
@@ -1206,14 +1206,14 @@
           "schema": "LHAfdracht",
           "slug": "lha-2026-05-wg-conduction-bv"
         },
-        "werkgeverId": "wg-conduction-bv",
-        "periodeId": "lp-2026-05-wg-conduction-bv",
-        "totaalLoonheffing": 1907.05,
-        "totaalEindheffingenWKR": 0,
-        "totaalPremiesSV": 622.85,
-        "totaalZVW": 406.66,
-        "totaalAfdracht": 2936.56,
-        "vervaldagAfdracht": "2026-06-30",
+        "employerId": "wg-conduction-bv",
+        "periodId": "lp-2026-05-wg-conduction-bv",
+        "totalPayrollTax": 1907.05,
+        "totalFinalLeviesWorkRelatedCosts": 0,
+        "totalSocialInsuranceContributions": 622.85,
+        "totalHealthInsurance": 406.66,
+        "totalRemittance": 2936.56,
+        "dueDateRemittance": "2026-06-30",
         "status": "VOORBEREID",
         "sbrInstanceRef": null,
         "administrationId": "adm-smb-1"
@@ -1224,60 +1224,60 @@
           "schema": "Loonjournaalpost",
           "slug": "jp-2026-05-wg-conduction-bv"
         },
-        "periodeId": "lp-2026-05-wg-conduction-bv",
-        "datum": "2026-05-31",
-        "regels": [
+        "periodId": "lp-2026-05-wg-conduction-bv",
+        "date": "2026-05-31",
+        "rules": [
           {
             "rekening": "4001",
-            "naam": "Brutolonen",
+            "name": "Brutolonen",
             "debet": 7644.0,
             "credit": 0
           },
           {
             "rekening": "4002",
-            "naam": "Belastingvrije vergoedingen",
+            "name": "Belastingvrije vergoedingen",
             "debet": 28.8,
             "credit": 0
           },
           {
             "rekening": "4010",
-            "naam": "Sociale lasten WG",
+            "name": "Sociale lasten WG",
             "debet": 622.85,
             "credit": 0
           },
           {
             "rekening": "4012",
-            "naam": "ZVW-bijdrage WG",
+            "name": "ZVW-bijdrage WG",
             "debet": 406.66,
             "credit": 0
           },
           {
             "rekening": "4020",
-            "naam": "Pensioenpremie WG",
+            "name": "Pensioenpremie WG",
             "debet": 1391.21,
             "credit": 0
           },
           {
             "rekening": "1610",
-            "naam": "Te betalen netto loon",
+            "name": "Te betalen netto loon",
             "debet": 0,
             "credit": 5215.38
           },
           {
             "rekening": "1620",
-            "naam": "Af te dragen loonheffing",
+            "name": "Af te dragen loonheffing",
             "debet": 0,
             "credit": 1907.05
           },
           {
             "rekening": "1630",
-            "naam": "Af te dragen premies SV+ZVW",
+            "name": "Af te dragen premies SV+ZVW",
             "debet": 0,
             "credit": 1029.51
           },
           {
             "rekening": "1640",
-            "naam": "Af te dragen pensioenpremie",
+            "name": "Af te dragen pensioenpremie",
             "debet": 0,
             "credit": 1941.58
           }

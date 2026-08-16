@@ -30,7 +30,7 @@
 				<NcSelect
 					v-model="administrationId"
 					:options="administrationOptions"
-					:input-label="t('shillinq', 'Administration')"
+					:inputLabel="t('shillinq', 'Administration')"
 					:reduce="(o) => o.value"
 					data-testid="po-form-administration" />
 
@@ -72,7 +72,9 @@
 							<th scope="col">{{ t('shillinq', 'GL account') }}</th>
 							<th scope="col">{{ t('shillinq', 'Line total') }}</th>
 							<th scope="col">
-								<span class="po-form__sr-only">{{ t('shillinq', 'Actions') }}</span>
+								<span class="po-form__sr-only">{{
+									t('shillinq', 'Actions')
+								}}</span>
 							</th>
 						</tr>
 					</thead>
@@ -85,7 +87,7 @@
 								<NcTextField
 									v-model="line.productCode"
 									:label="t('shillinq', 'Product code')"
-									:show-trailing-button="false" />
+									:showTrailingButton="false" />
 							</td>
 							<td>
 								<NcInputField
@@ -112,7 +114,7 @@
 								<NcTextField
 									v-model="line.glAccount"
 									:label="t('shillinq', 'GL account')"
-									:show-trailing-button="false" />
+									:showTrailingButton="false" />
 							</td>
 							<td>{{ formatMoney(lineTotal(line)) }}</td>
 							<td>
@@ -126,21 +128,35 @@
 						</tr>
 					</tbody>
 				</table>
-				<NcButton variant="secondary" data-testid="po-form-add-line" @click="addLine">
+				<NcButton
+					variant="secondary"
+					data-testid="po-form-add-line"
+					@click="addLine">
 					{{ t('shillinq', 'Add line') }}
 				</NcButton>
 			</fieldset>
 
 			<fieldset class="po-form__chain">
-				<legend>{{ t('shillinq', 'Approval chain (server-determined)') }}</legend>
+				<legend>
+					{{ t('shillinq', 'Approval chain (server-determined)') }}
+				</legend>
 				<p class="po-form__total" data-testid="po-form-total">
-					{{ t('shillinq', 'Total') }}: <strong>{{ formatMoney(total) }}</strong>
+					{{ t('shillinq', 'Total') }}:
+					<strong>{{ formatMoney(total) }}</strong>
 				</p>
-				<ul v-if="approvalChain.length > 0" class="po-form__chain-list" data-testid="po-form-chain">
+				<ul
+					v-if="approvalChain.length > 0"
+					class="po-form__chain-list"
+					data-testid="po-form-chain">
 					<li v-for="entry in approvalChain" :key="entry.role">
 						<span class="po-form__chain-order">#{{ entry.order }}</span>
-						<span class="po-form__chain-role">{{ roleLabel(entry.role) }}</span>
-						<span class="po-form__chain-status po-form__chain-status--pending">{{ t('shillinq', 'pending') }}</span>
+						<span class="po-form__chain-role">{{
+							roleLabel(entry.role)
+						}}</span>
+						<span
+							class="po-form__chain-status po-form__chain-status--pending"
+							>{{ t('shillinq', 'pending') }}</span
+						>
 					</li>
 				</ul>
 				<p v-else class="po-form__chain-empty">
@@ -152,8 +168,15 @@
 				{{ error }}
 			</div>
 
-			<p class="po-form__transmission-hint" data-testid="po-form-transmission-hint">
-				{{ t('shillinq', 'Once the approval chain is complete you can send this PO via Peppol or PDF+email from the detail view.') }}
+			<p
+				class="po-form__transmission-hint"
+				data-testid="po-form-transmission-hint">
+				{{
+					t(
+						'shillinq',
+						'Once the approval chain is complete you can send this PO via Peppol or PDF+email from the detail view.',
+					)
+				}}
 			</p>
 
 			<div class="po-form__actions">
@@ -162,7 +185,11 @@
 					type="submit"
 					:disabled="submitting"
 					data-testid="po-form-submit">
-					{{ submitting ? t('shillinq', 'Creating...') : t('shillinq', 'Create purchase order') }}
+					{{
+						submitting
+							? t('shillinq', 'Creating...')
+							: t('shillinq', 'Create purchase order')
+					}}
 				</NcButton>
 			</div>
 		</form>
@@ -170,9 +197,15 @@
 </template>
 
 <script>
-import { NcButton, NcInputField, NcSelect, NcTextArea, NcTextField } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import {
+	NcButton,
+	NcInputField,
+	NcSelect,
+	NcTextArea,
+	NcTextField,
+} from '@nextcloud/vue'
 
 export default {
 	name: 'PurchaseOrderForm',
@@ -183,6 +216,7 @@ export default {
 		NcInputField,
 		NcSelect,
 	},
+
 	data() {
 		return {
 			administrationId: '',
@@ -198,6 +232,7 @@ export default {
 			submitting: false,
 		}
 	},
+
 	computed: {
 		/**
 		 * PO total in euro, summed from line totals using integer cents.
@@ -212,6 +247,7 @@ export default {
 			return cents / 100
 		},
 	},
+
 	watch: {
 		// Refresh the chain preview whenever the total changes, debounced by Vue's
 		// reactivity batching. Server-authoritative — never compute locally.
@@ -222,9 +258,11 @@ export default {
 			},
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 	},
+
 	methods: {
 		emptyLine() {
 			return {
@@ -235,24 +273,29 @@ export default {
 				glAccount: '',
 			}
 		},
+
 		addLine() {
 			this.lines.push(this.emptyLine())
 		},
+
 		removeLine(idx) {
 			this.lines.splice(idx, 1)
 			if (this.lines.length === 0) {
 				this.lines.push(this.emptyLine())
 			}
 		},
+
 		lineTotal(line) {
 			const qty = Number(line.quantity) || 0
 			const unit = Number(line.unitPrice) || 0
 			return Math.round(qty * unit * 100) / 100
 		},
+
 		formatMoney(amount) {
 			const symbol = this.currency || 'EUR'
 			return `${symbol} ${Number(amount || 0).toFixed(2)}`
 		},
+
 		roleLabel(role) {
 			const labels = {
 				teamleider: this.t('shillinq', 'Team lead'),
@@ -261,9 +304,12 @@ export default {
 			}
 			return labels[role] || role
 		},
+
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/administrations/context'),
+				)
 				const admins = response.data?.administrations || []
 				this.administrationOptions = admins.map((a) => ({
 					value: a.administrationId,
@@ -274,9 +320,13 @@ export default {
 				}
 			} catch (e) {
 				// Surface as an inline error rather than crashing the form.
-				this.error = this.t('shillinq', 'Failed to load administration context')
+				this.error = this.t(
+					'shillinq',
+					'Failed to load administration context',
+				)
 			}
 		},
+
 		async refreshApprovalChain(amount) {
 			if (!amount || amount <= 0) {
 				this.approvalChain = []
@@ -292,6 +342,7 @@ export default {
 				this.approvalChain = []
 			}
 		},
+
 		async onSubmit() {
 			this.error = ''
 			if (!this.administrationId) {
@@ -307,7 +358,10 @@ export default {
 				return
 			}
 			if (this.total <= 0) {
-				this.error = this.t('shillinq', 'Purchase order total must be positive')
+				this.error = this.t(
+					'shillinq',
+					'Purchase order total must be positive',
+				)
 				return
 			}
 
@@ -328,10 +382,15 @@ export default {
 				const po = response.data || {}
 				const id = po.id || (po['@self'] && po['@self'].id) || po.poNumber
 				if (id) {
-					this.$router.push({ name: 'PurchaseOrderDetail', params: { id } })
+					this.$router.push({
+						name: 'PurchaseOrderDetail',
+						params: { id },
+					})
 				}
 			} catch (e) {
-				const message = e?.response?.data?.error || this.t('shillinq', 'Failed to create purchase order')
+				const message =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to create purchase order')
 				this.error = message
 			} finally {
 				this.submitting = false

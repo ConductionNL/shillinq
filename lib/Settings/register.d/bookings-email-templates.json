@@ -192,7 +192,7 @@
               "email"
             ],
             "template": "@self",
-            "sender": "@self.senderAddress",
+            "sender": "{{senderAddress}}",
             "appliesWhen": {
               "field": "status",
               "in": [
@@ -431,8 +431,8 @@
               "email"
             ],
             "template": "@self",
-            "sender": "@self.senderAddress",
-            "scheduleOffsetHours": "@self.hoursBeforeBooking",
+            "sender": "{{senderAddress}}",
+            "scheduleOffsetHours": "{{hoursBeforeBooking}}",
             "appliesWhen": {
               "field": "status",
               "in": [
@@ -667,7 +667,7 @@
               "email"
             ],
             "template": "@self",
-            "sender": "@self.senderAddress",
+            "sender": "{{senderAddress}}",
             "appliesWhen": {
               "field": "status",
               "in": [

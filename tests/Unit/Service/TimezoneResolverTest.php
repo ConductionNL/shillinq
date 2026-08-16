@@ -30,100 +30,88 @@ use Psr\Log\NullLogger;
 /**
  * Behavioural tests for the customer-timezone resolution chain.
  */
-final class TimezoneResolverTest extends TestCase
-{
+final class TimezoneResolverTest extends TestCase {
 
+	/**
+	 * The explicit override is honoured when it is a valid IANA timezone.
+	 */
+	public function testExplicitOverrideWins(): void {
+		$config = $this->createStub(IConfig::class);
+		$config->method('getUserValue')->willReturn('Europe/Amsterdam');
 
-    /**
-     * The explicit override is honoured when it is a valid IANA timezone.
-     */
-    public function testExplicitOverrideWins(): void
-    {
-        $config = $this->createStub(IConfig::class);
-        $config->method('getUserValue')->willReturn('Europe/Amsterdam');
+		$resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
+		self::assertSame(
+			'America/New_York',
+			$resolver->resolve('jan', 'America/New_York')
+		);
 
-        $resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
-        self::assertSame(
-            'America/New_York',
-            $resolver->resolve('jan', 'America/New_York')
-        );
+	}//end testExplicitOverrideWins()
 
-    }//end testExplicitOverrideWins()
+	/**
+	 * Invalid overrides fall through to the next strategy (NC user config).
+	 */
+	public function testInvalidOverrideFallsThrough(): void {
+		$config = $this->createStub(IConfig::class);
+		$config->method('getUserValue')->willReturn('Europe/Amsterdam');
 
+		$resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
+		self::assertSame(
+			'Europe/Amsterdam',
+			$resolver->resolve('jan', 'Not/A_Real_Zone')
+		);
 
-    /**
-     * Invalid overrides fall through to the next strategy (NC user config).
-     */
-    public function testInvalidOverrideFallsThrough(): void
-    {
-        $config = $this->createStub(IConfig::class);
-        $config->method('getUserValue')->willReturn('Europe/Amsterdam');
+	}//end testInvalidOverrideFallsThrough()
 
-        $resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
-        self::assertSame(
-            'Europe/Amsterdam',
-            $resolver->resolve('jan', 'Not/A_Real_Zone')
-        );
+	/**
+	 * Customer's NC user config drives the result when no override is set.
+	 */
+	public function testUsesUserConfigTimezone(): void {
+		$config = $this->createStub(IConfig::class);
+		$config->method('getUserValue')->willReturn('Asia/Tokyo');
 
-    }//end testInvalidOverrideFallsThrough()
+		$resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
+		self::assertSame('Asia/Tokyo', $resolver->resolve('jan'));
 
+	}//end testUsesUserConfigTimezone()
 
-    /**
-     * Customer's NC user config drives the result when no override is set.
-     */
-    public function testUsesUserConfigTimezone(): void
-    {
-        $config = $this->createStub(IConfig::class);
-        $config->method('getUserValue')->willReturn('Asia/Tokyo');
+	/**
+	 * Anonymous customer (no userId) falls back to the server default.
+	 */
+	public function testAnonymousUsesServerDefault(): void {
+		$config = $this->createStub(IConfig::class);
+		$config->method('getUserValue')->willReturn('');
 
-        $resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
-        self::assertSame('Asia/Tokyo', $resolver->resolve('jan'));
+		$resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
+		$previous = date_default_timezone_get();
+		date_default_timezone_set('Europe/Amsterdam');
+		try {
+			self::assertSame('Europe/Amsterdam', $resolver->resolve(null));
+		} finally {
+			date_default_timezone_set($previous);
+		}
 
-    }//end testUsesUserConfigTimezone()
+	}//end testAnonymousUsesServerDefault()
 
+	/**
+	 * Empty user config + bad server default fall through to UTC.
+	 */
+	public function testUltimateFallbackIsUtc(): void {
+		$config = $this->createStub(IConfig::class);
+		$config->method('getUserValue')->willReturn('Not/A_Zone');
 
-    /**
-     * Anonymous customer (no userId) falls back to the server default.
-     */
-    public function testAnonymousUsesServerDefault(): void
-    {
-        $config = $this->createStub(IConfig::class);
-        $config->method('getUserValue')->willReturn('');
+		$resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
+		$previous = date_default_timezone_get();
+		// The server default is always a valid zone, so the assertion is
+		// that the resolver never throws and returns either the system
+		// default OR UTC.
+		try {
+			$tz = $resolver->resolve('jan');
+			self::assertNotSame('', $tz);
+			self::assertNotNull((new \DateTimeZone($tz)));
+		} finally {
+			date_default_timezone_set($previous);
+		}
 
-        $resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
-        $previous = date_default_timezone_get();
-        date_default_timezone_set('Europe/Amsterdam');
-        try {
-            self::assertSame('Europe/Amsterdam', $resolver->resolve(null));
-        } finally {
-            date_default_timezone_set($previous);
-        }
-
-    }//end testAnonymousUsesServerDefault()
-
-
-    /**
-     * Empty user config + bad server default fall through to UTC.
-     */
-    public function testUltimateFallbackIsUtc(): void
-    {
-        $config = $this->createStub(IConfig::class);
-        $config->method('getUserValue')->willReturn('Not/A_Zone');
-
-        $resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
-        $previous = date_default_timezone_get();
-        // The server default is always a valid zone, so the assertion is
-        // that the resolver never throws and returns either the system
-        // default OR UTC.
-        try {
-            $tz = $resolver->resolve('jan');
-            self::assertNotSame('', $tz);
-            self::assertNotNull((new \DateTimeZone($tz)));
-        } finally {
-            date_default_timezone_set($previous);
-        }
-
-    }//end testUltimateFallbackIsUtc()
-
+	}//end testUltimateFallbackIsUtc()
 
 }//end class

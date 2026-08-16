@@ -16,11 +16,11 @@
 			"route": "/reporting-compliance",
 			"type": "custom",
 			"title": "Reporting & Compliance",
-			"icon": "FileChartOutline",
 			"component": "ReportingComplianceOverview",
-			"group": "Compliance",
+			"_note": "Renders the STATIC ReportCatalogue as category-grouped cards, each with its own output-format picker and a Generate dialog that POSTs /api/reporting/generate. The catalogue is code, not an OpenRegister collection, so `type: index` has no config.register/config.schema to bind; and `type: dashboard` places widgets on a grid, not a per-card format selector plus a generate action. Grouping into 'Compliance' comes from the menu, not from the page.",
 			"config": {
-				"register": "shillinq"
+				"register": "shillinq",
+				"icon": "FileChartOutline"
 			}
 		},
 		{
@@ -28,13 +28,13 @@
 			"route": "/reporting-compliance/generated",
 			"type": "custom",
 			"title": "Generated reports",
-			"icon": "FileDownloadOutline",
 			"component": "GeneratedReportsIndex",
-			"group": "Compliance",
+			"_note": "Reads GET /api/reporting/generated rather than the objects API, because each row needs a download link to /api/reporting/download/{id} — a streamed Files-backed artefact, not an object field — and the three facets (category, period, administration) filter the fetched set in memory. `type: index` binds its rows to config.register + config.schema through the object store, so it can neither call that endpoint nor render the download cell. Grouping into 'Compliance' comes from the menu, not from the page.",
 			"config": {
 				"register": "shillinq",
 				"schema": "GeneratedReport",
-				"indexRoute": "ReportingComplianceOverview"
+				"indexRoute": "ReportingComplianceOverview",
+				"icon": "FileDownloadOutline"
 			}
 		}
 	]

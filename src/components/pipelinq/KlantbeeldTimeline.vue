@@ -63,20 +63,28 @@
 				class="klantbeeld-timeline__row"
 				:data-testid="`klantbeeld-row-${index}`"
 				:data-status="row.status || ''">
-				<div class="klantbeeld-timeline__row-date" :data-testid="`klantbeeld-row-${index}-date`">
+				<div
+					class="klantbeeld-timeline__row-date"
+					:data-testid="`klantbeeld-row-${index}-date`">
 					{{ formatDate(row.date) }}
 				</div>
-				<div class="klantbeeld-timeline__row-description" :data-testid="`klantbeeld-row-${index}-description`">
+				<div
+					class="klantbeeld-timeline__row-description"
+					:data-testid="`klantbeeld-row-${index}-description`">
 					{{ row.description || label('(no description)') }}
 				</div>
-				<div class="klantbeeld-timeline__row-amount" :data-testid="`klantbeeld-row-${index}-amount`">
+				<div
+					class="klantbeeld-timeline__row-amount"
+					:data-testid="`klantbeeld-row-${index}-amount`">
 					{{ formatAmount(row) }}
 				</div>
 				<div
 					v-if="row.status"
 					class="klantbeeld-timeline__row-status"
 					:data-testid="`klantbeeld-row-${index}-status`">
-					<span class="klantbeeld-timeline__pill" :class="`klantbeeld-timeline__pill--${row.status}`">
+					<span
+						class="klantbeeld-timeline__pill"
+						:class="`klantbeeld-timeline__pill--${row.status}`">
 						{{ label(row.status) }}
 					</span>
 				</div>
@@ -97,10 +105,10 @@
 
 <script>
 import {
-	selectHistoryState,
 	formatTransactionAmount,
 	formatTransactionDate,
 	nextPageParams,
+	selectHistoryState,
 } from '../../composables/usePipelinqProfile.js'
 
 export default {
@@ -115,6 +123,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Whether more pages exist after the current one. The parent
 		 * decides this — typically `true` until a fetch returns fewer
@@ -124,6 +133,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/**
 		 * Disable the Load-more button while the parent is fetching.
 		 */
@@ -132,15 +142,18 @@ export default {
 			default: false,
 		},
 	},
+
 	computed: {
 		state() {
 			return selectHistoryState(this.payload)
 		},
+
 		transactions() {
 			const rows = this.payload?.klantbeeld?.transactions
 			return Array.isArray(rows) ? rows : []
 		},
 	},
+
 	methods: {
 		label(key) {
 			if (typeof t === 'function') {
@@ -148,15 +161,19 @@ export default {
 			}
 			return key
 		},
+
 		formatDate(iso) {
 			return formatTransactionDate(iso)
 		},
+
 		formatAmount(row) {
 			return formatTransactionAmount(row)
 		},
+
 		rowKey(row, index) {
 			return `${row?.date || ''}-${row?.description || ''}-${index}`
 		},
+
 		onLoadMore() {
 			this.$emit('load-more', nextPageParams(this.payload?.klantbeeld))
 		},

@@ -30,114 +30,108 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class BegrotingswijzigingStackerTest extends TestCase
-{
+final class BegrotingswijzigingStackerTest extends TestCase {
 
-    /**
-     * The stacker under test.
-     *
-     * @var BegrotingswijzigingStacker
-     */
-    private BegrotingswijzigingStacker $stacker;
+	/**
+	 * The stacker under test.
+	 *
+	 * @var BegrotingswijzigingStacker
+	 */
+	private BegrotingswijzigingStacker $stacker;
 
-    /**
-     * Set up the stacker.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->stacker = new BegrotingswijzigingStacker();
+	/**
+	 * Set up the stacker.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->stacker = new BegrotingswijzigingStacker();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * REQ-009 scenario: a vastgestelde wijziging delta stacks onto the basis.
-     *
-     * @return void
-     */
-    public function testVastgesteldeWijzigingStacksOntoBasis(): void
-    {
-        $basis       = [
-            ['taakveldCode' => '1.1', 'baten' => 100.0, 'lasten' => 500.0],
-        ];
-        $wijzigingen = [
-            [
-                'status'   => 'vastgesteld',
-                'mutaties' => [
-                    ['taakveldCode' => '1.1', 'baten_delta' => 50.0, 'lasten_delta' => -100.0],
-                ],
-            ],
-        ];
+	/**
+	 * REQ-009 scenario: a vastgestelde wijziging delta stacks onto the basis.
+	 *
+	 * @return void
+	 */
+	public function testVastgesteldeWijzigingStacksOntoBasis(): void {
+		$basis = [
+			['taskFieldCode' => '1.1', 'revenue' => 100.0, 'expenses' => 500.0],
+		];
+		$wijzigingen = [
+			[
+				'status' => 'determined',
+				'movements' => [
+					['taskFieldCode' => '1.1', 'baten_delta' => 50.0, 'lasten_delta' => -100.0],
+				],
+			],
+		];
 
-        $stand = $this->stacker->currentStand(basisTaakvelden: $basis, wijzigingen: $wijzigingen);
-        self::assertSame(150.0, $stand['1.1']['baten']);
-        self::assertSame(400.0, $stand['1.1']['lasten']);
+		$position = $this->stacker->currentStand(basisTaskFields: $basis, wijzigingen: $wijzigingen);
+		self::assertSame(150.0, $position['1.1']['revenue']);
+		self::assertSame(400.0, $position['1.1']['expenses']);
 
-    }//end testVastgesteldeWijzigingStacksOntoBasis()
+	}//end testVastgesteldeWijzigingStacksOntoBasis()
 
-    /**
-     * A draft wijziging has no effect on the stand (REQ-009 immutability).
-     *
-     * @return void
-     */
-    public function testDraftWijzigingDoesNotStack(): void
-    {
-        $basis       = [['taakveldCode' => '1.1', 'baten' => 100.0, 'lasten' => 500.0]];
-        $wijzigingen = [
-            [
-                'status'   => 'draft',
-                'mutaties' => [['taakveldCode' => '1.1', 'baten_delta' => 999.0, 'lasten_delta' => 999.0]],
-            ],
-        ];
+	/**
+	 * A draft wijziging has no effect on the stand (REQ-009 immutability).
+	 *
+	 * @return void
+	 */
+	public function testDraftWijzigingDoesNotStack(): void {
+		$basis = [['taskFieldCode' => '1.1', 'revenue' => 100.0, 'expenses' => 500.0]];
+		$wijzigingen = [
+			[
+				'status' => 'draft',
+				'movements' => [['taskFieldCode' => '1.1', 'baten_delta' => 999.0, 'lasten_delta' => 999.0]],
+			],
+		];
 
-        $stand = $this->stacker->currentStand(basisTaakvelden: $basis, wijzigingen: $wijzigingen);
-        self::assertSame(100.0, $stand['1.1']['baten']);
-        self::assertSame(500.0, $stand['1.1']['lasten']);
+		$position = $this->stacker->currentStand(basisTaskFields: $basis, wijzigingen: $wijzigingen);
+		self::assertSame(100.0, $position['1.1']['revenue']);
+		self::assertSame(500.0, $position['1.1']['expenses']);
 
-    }//end testDraftWijzigingDoesNotStack()
+	}//end testDraftWijzigingDoesNotStack()
 
-    /**
-     * A reversal (negative delta) nets the stand back exactly (event-sourcing).
-     *
-     * @return void
-     */
-    public function testReversalNetsBackExactly(): void
-    {
-        $basis       = [['taakveldCode' => '1.1', 'baten' => 0.0, 'lasten' => 500.0]];
-        $wijzigingen = [
-            ['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '1.1', 'lasten_delta' => 100.0]]],
-            ['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '1.1', 'lasten_delta' => -100.0]]],
-        ];
+	/**
+	 * A reversal (negative delta) nets the stand back exactly (event-sourcing).
+	 *
+	 * @return void
+	 */
+	public function testReversalNetsBackExactly(): void {
+		$basis = [['taskFieldCode' => '1.1', 'revenue' => 0.0, 'expenses' => 500.0]];
+		$wijzigingen = [
+			['status' => 'determined', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => 100.0]]],
+			['status' => 'determined', 'movements' => [['taskFieldCode' => '1.1', 'lasten_delta' => -100.0]]],
+		];
 
-        $stand = $this->stacker->currentStand(basisTaakvelden: $basis, wijzigingen: $wijzigingen);
-        self::assertSame(500.0, $stand['1.1']['lasten']);
+		$position = $this->stacker->currentStand(basisTaskFields: $basis, wijzigingen: $wijzigingen);
+		self::assertSame(500.0, $position['1.1']['expenses']);
 
-    }//end testReversalNetsBackExactly()
+	}//end testReversalNetsBackExactly()
 
-    /**
-     * The authorizedLasten helper returns the stacked lasten for a taakveldCode (REQ-010).
-     *
-     * @return void
-     */
-    public function testAuthorizedLastenStacked(): void
-    {
-        $basis       = [['taakveldCode' => '6.1', 'baten' => 0.0, 'lasten' => 1000.0]];
-        $wijzigingen = [
-            ['status' => 'vastgesteld', 'mutaties' => [['taakveldCode' => '6.1', 'lasten_delta' => 250.0]]],
-        ];
+	/**
+	 * The authorizedLasten helper returns the stacked lasten for a taakveldCode (REQ-010).
+	 *
+	 * @return void
+	 */
+	public function testAuthorizedLastenStacked(): void {
+		$basis = [['taskFieldCode' => '6.1', 'revenue' => 0.0, 'expenses' => 1000.0]];
+		$wijzigingen = [
+			['status' => 'determined', 'movements' => [['taskFieldCode' => '6.1', 'lasten_delta' => 250.0]]],
+		];
 
-        self::assertSame(
-            1250.0,
-            $this->stacker->authorizedLasten(taakveldCode: '6.1', basisTaakvelden: $basis, wijzigingen: $wijzigingen)
-        );
-        self::assertSame(
-            0.0,
-            $this->stacker->authorizedLasten(taakveldCode: 'unknown', basisTaakvelden: $basis, wijzigingen: $wijzigingen)
-        );
+		self::assertSame(
+			1250.0,
+			$this->stacker->authorizedLasten(taskFieldCode: '6.1', basisTaskFields: $basis, wijzigingen: $wijzigingen)
+		);
+		self::assertSame(
+			0.0,
+			$this->stacker->authorizedLasten(taskFieldCode: 'unknown', basisTaskFields: $basis, wijzigingen: $wijzigingen)
+		);
 
-    }//end testAuthorizedLastenStacked()
+	}//end testAuthorizedLastenStacked()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
