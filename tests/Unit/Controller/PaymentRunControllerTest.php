@@ -107,7 +107,6 @@ class PaymentRunControllerTest extends TestCase {
 			$export,
 			$reconcile,
 			$adminContext,
-			$container,
 			$session,
 			$this->createMock(LoggerInterface::class),
 			objectService: $this->createMock(ObjectServiceInterface::class),
