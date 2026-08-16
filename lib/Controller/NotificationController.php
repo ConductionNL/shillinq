@@ -52,6 +52,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -496,10 +497,23 @@ class NotificationController extends Controller {
 	private function requireAccessibleBooking(string $bookingId): ?JSONResponse {
 		try {
 			$service = $this->resolveObjectService();
-			$rows = $service
-				->setRegister($this->settings->getRegisterSlug())
-				->setSchema('Booking')
-				->findAll(['filters' => ['id' => $bookingId]]);
+			// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
+			// properties and `id` is the entity's own column, so that shape
+			// matched nothing for every value and this guard refused every
+			// booking addressed by uuid. findOne() resolves the uuid via find()
+			// and falls back to the `bookingId` property, which is the other
+			// identifier the loop below already accepts.
+			$booking = ObjectIdentifier::findOne(
+				scoped: $service
+					->setRegister($this->settings->getRegisterSlug())
+					->setSchema('Booking'),
+				id: $bookingId,
+				fallbackProperty: 'bookingId'
+			);
+			$rows = [];
+			if ($booking !== null) {
+				$rows = [$booking];
+			}
 		} catch (Throwable $e) {
 			$this->logger->warning('shillinq.notification.booking.unavailable', ['error' => $e->getMessage()]);
 			return new JSONResponse(data: ['message' => 'Booking unavailable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);

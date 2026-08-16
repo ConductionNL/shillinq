@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -462,13 +463,17 @@ class PeriodCloseService {
 		}
 
 		// Fall back to the record-id lookup, still scoped to the administration.
-		$byId = $this->objectService
-			->setRegister($register)
-			->setSchema('FiscalPeriod')
-			->findAll(['filters' => ['id' => $periodId], 'limit' => 1]);
+		// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
+		// properties and the entity's `id` is not one, so this arm matched
+		// nothing for every value and the fallback never actually fell back.
+		$record = ObjectIdentifier::findOne(
+			scoped: $this->objectService
+				->setRegister($register)
+				->setSchema('FiscalPeriod'),
+			id: $periodId
+		);
 
-		if (is_array($byId) === true && $byId !== []) {
-			$record = $this->normaliseRow(row: $byId[0]);
+		if ($record !== null) {
 			$recordAdmin = (string)($record['administrationId'] ?? '');
 			if ($administrationId === '' || $recordAdmin === '' || $recordAdmin === $administrationId) {
 				return $record;

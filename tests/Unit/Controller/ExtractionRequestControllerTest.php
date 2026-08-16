@@ -29,6 +29,7 @@ use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
@@ -219,7 +220,37 @@ final class ExtractionRequestControllerTest extends TestCase {
 			}//end setSchema()
 
 			/**
+			 * Single-object lookup by uuid.
+			 *
+			 * ⚠️ THROWS on a miss — it does not return null, so a caller
+			 * wanting a fallback must wrap it in its own try/catch. The double
+			 * had no find() at all, so the lookup path the controller actually
+			 * takes was never exercised here.
+			 *
+			 * @param string $id Object uuid.
+			 *
+			 * @return array<string,mixed>
+			 *
+			 * @throws DoesNotExistException When no object matches.
+			 */
+			public function find(string $id): array {
+				foreach (($this->test->stubRows[$this->schema] ?? []) as $row) {
+					if ((string)($row['id'] ?? '') === $id) {
+						return $row;
+					}
+				}
+
+				throw new DoesNotExistException(
+					sprintf("Object with identifier '%s' not found in any magic table", $id)
+				);
+			}//end find()
+
+			/**
 			 * Filter the schema's stub rows by the given equality filters.
+			 *
+			 * ⚠️ `filters` addresses JSON PROPERTIES only — the ObjectEntity's
+			 * `id` is its own column, so real OpenRegister matches ZERO rows
+			 * for `['filters' => ['id' => …]]` at every value, silently.
 			 *
 			 * @param array<string,mixed> $params Query params.
 			 *
@@ -228,6 +259,10 @@ final class ExtractionRequestControllerTest extends TestCase {
 			public function findAll(array $params = []): array {
 				$rows = ($this->test->stubRows[$this->schema] ?? []);
 				$filters = ($params['filters'] ?? []);
+				if (array_key_exists('id', $filters) === true) {
+					return [];
+				}
+
 				return array_values(
 					array_filter(
 						$rows,

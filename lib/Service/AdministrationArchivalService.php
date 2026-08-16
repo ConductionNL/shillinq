@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -252,16 +253,20 @@ class AdministrationArchivalService {
 	 */
 	private function findAdministration(string $administrationId): ?array {
 		try {
+			// NOT findAll(['filters' => ['id' => …]]) — that addresses JSON
+			// properties, and the entity's `id` is not one, so it matched
+			// nothing for every value and this method reported every
+			// administration as absent. An administration is addressed by its
+			// administrationCode ('ADM-001') throughout the app, which is why
+			// findOne() needs the fallback.
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$matches = $objectService
-				->setRegister($this->resolveRegister())
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => ['id' => $administrationId],
-						'limit' => 1,
-					]
-				);
+			return ObjectIdentifier::findOne(
+				scoped: $objectService
+					->setRegister($this->resolveRegister())
+					->setSchema('Administration'),
+				id: $administrationId,
+				fallbackProperty: 'administrationCode'
+			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'AdministrationArchivalService: failed to load administration',
@@ -269,21 +274,6 @@ class AdministrationArchivalService {
 			);
 			return null;
 		}
-
-		foreach ($matches as $match) {
-			if (is_array($match) === true) {
-				return $match;
-			}
-
-			if (is_object($match) === true && method_exists($match, 'getObject') === true) {
-				$data = $match->getObject();
-				if (is_array($data) === true) {
-					return $data;
-				}
-			}
-		}
-
-		return null;
 	}//end findAdministration()
 
 	/**

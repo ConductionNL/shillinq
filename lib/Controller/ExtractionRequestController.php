@@ -56,6 +56,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
@@ -475,26 +476,20 @@ class ExtractionRequestController extends Controller {
 	 */
 	private function findById(string $schema, string $id): ?array {
 		try {
+			// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses
+			// JSON properties and the entity's `id` is not one, so that shape
+			// matched nothing for every value and this resolver returned null
+			// for every object it was asked for.
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
-				->setRegister(self::REGISTER_SLUG)
-				->setSchema($schema)
-				->findAll(['filters' => ['id' => $id]]);
+			return ObjectIdentifier::findOne(
+				scoped: $objectService
+					->setRegister(self::REGISTER_SLUG)
+					->setSchema($schema),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			return null;
 		}
-
-		if (is_array($rows) === false) {
-			return null;
-		}
-
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
 	}//end findById()
 
 	/**
