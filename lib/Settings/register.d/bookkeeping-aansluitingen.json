@@ -40,10 +40,10 @@
             "type": "string",
             "description": "The resolver AansluitingService dispatches to for source A / source B totals (REQ-AANS-002). Only two are implemented in this change; additional types are a named follow-up (see proposal.md).",
             "enum": [
-              "btw-ledger-aangifte",
+              "vat-ledger-return",
               "subledger-gl-control"
             ],
-            "example": "btw-ledger-aangifte",
+            "example": "vat-ledger-return",
             "title": "Aansluiting Type"
           },
           "sourceALabel": {
@@ -412,7 +412,7 @@
           "slug": "aansl-btw-ledger-aangifte-smb"
         },
         "name": "BTW-grootboek naar aangifte",
-        "reconciliationType": "btw-ledger-aangifte",
+        "reconciliationType": "vat-ledger-return",
         "sourceALabel": "BTW-grootboek (huidig)",
         "sourceBLabel": "Ingediende BTW-aangifte",
         "toleranceCents": 100,

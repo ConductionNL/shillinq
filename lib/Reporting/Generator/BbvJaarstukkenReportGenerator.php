@@ -205,10 +205,10 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			'lokaleHeffingen' => 'Lokale heffingen',
 			'weerstandsvermogen' => 'Weerstandsvermogen en risicobeheersing',
 			'onderhoudKapitaalgoederen' => 'Onderhoud kapitaalgoederen',
-			'financiering' => 'Financiering',
-			'bedrijfsvoering' => 'Bedrijfsvoering',
+			'financiering' => 'Financing',
+			'bedrijfsvoering' => 'Operations',
 			'verbondenPartijen' => 'Verbonden partijen',
-			'grondbeleid' => 'Grondbeleid',
+			'grondbeleid' => 'LandPolicy',
 		];
 
 		$present = [];
@@ -432,8 +432,8 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	private function entityTypeLabel(string $type): string {
 		return match ($type) {
 			'municipality' => 'Gemeente',
-			'provincie' => 'Provincie',
-			'waterschap' => 'Waterschap',
+			'province' => 'Provincie',
+			'waterAuthority' => 'Waterschap',
 			default => $type,
 		};
 

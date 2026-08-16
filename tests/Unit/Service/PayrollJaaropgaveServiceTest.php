@@ -216,7 +216,7 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 				'payrollTax' => 1083.40,
 				'employerSocialInsurancePremiums' => ['totaal_werkgever' => 500.86],
 				'zvw' => ['afgedragen_wg' => 262.80],
-				'pensioen' => ['premie_wn_aandeel' => 355.68, 'premie_wg_aandeel' => 898.88],
+				'pension' => ['premie_wn_aandeel' => 355.68, 'premie_wg_aandeel' => 898.88],
 				'grossComponents' => ['totaal_bruto' => 4959.20, 'vakantietoeslag_uitbetaling' => 0.0],
 				'netPaid' => 3520.12,
 				'cumulatieven' => ['fiscaalloon_ytd' => $ytdFiscal, 'vakantiegeld_reservering_ytd' => $ytdVak],

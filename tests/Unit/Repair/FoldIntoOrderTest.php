@@ -276,7 +276,7 @@ class FoldIntoOrderTest extends TestCase {
 			'rejectionReason' => null,
 			'repaymentPlanId' => null,
 			'hasRepaymentPlan' => false,
-			'state' => 'vastgesteld',
+			'state' => 'determined',
 			'currency' => 'EUR',
 		];
 
@@ -300,7 +300,7 @@ class FoldIntoOrderTest extends TestCase {
 		self::assertSame('SUB-2026-001', $order['orderNumber']);
 		self::assertSame('Stichting Cultuur Almelo', $order['counterpartyName']);
 		self::assertSame(20000.0, $order['totalAmount']);
-		self::assertSame('vastgesteld', $order['state']);
+		self::assertSame('determined', $order['state']);
 		self::assertSame('Subsidie', $order['migratedFrom']['schema']);
 		self::assertSame('SUB-2026-001', $order['migratedFrom']['key']);
 
@@ -382,8 +382,8 @@ class FoldIntoOrderTest extends TestCase {
 			'assignmentName' => 'Backend ontwikkeling betaalmodule',
 			'startDate' => '2026-03-01',
 			'expectedRevenue' => 4800000,
-			'intakeStatus' => 'ACTIEF',
-			'riskLevel' => 'LAAG_MIDDEN',
+			'intakeStatus' => 'ACTIVE',
+			'riskLevel' => 'LOW_MIDDEN',
 			'modelAgreementId' => 'modov-bd-2024-tussenkomstvrij-v3',
 		];
 
@@ -404,9 +404,9 @@ class FoldIntoOrderTest extends TestCase {
 		$order = $saved[0];
 		self::assertSame('engagement', $order['orderType']);
 		self::assertSame('DBA-dba-opdr-2026-0042', $order['orderNumber']);
-		self::assertSame('ACTIEF', $order['state'], 'engagement state vocabulary preserved verbatim');
+		self::assertSame('ACTIVE', $order['state'], 'engagement state vocabulary preserved verbatim');
 		self::assertSame(48000.0, $order['totalAmount']);
-		self::assertSame('LAAG_MIDDEN', $order['engagement']['riskLevel']);
+		self::assertSame('LOW_MIDDEN', $order['engagement']['riskLevel']);
 		self::assertSame('modov-bd-2024-tussenkomstvrij-v3', $order['engagement']['modelAgreementId']);
 		self::assertSame('DBAOpdracht', $order['migratedFrom']['schema']);
 
@@ -490,7 +490,7 @@ class FoldIntoOrderTest extends TestCase {
 				'counterpartyName' => 'Stichting ' . $i,
 				'requestedAmount' => 1000.0,
 				'grantedAmount' => 900.0,
-				'state' => 'verleend',
+				'state' => 'granted',
 				'currency' => 'EUR',
 			];
 		}
@@ -538,7 +538,7 @@ class FoldIntoOrderTest extends TestCase {
 			'counterpartyName' => 'Stichting Entity',
 			'requestedAmount' => 5000.0,
 			'grantedAmount' => 4500.0,
-			'state' => 'verleend',
+			'state' => 'granted',
 			'currency' => 'EUR',
 		];
 
@@ -616,7 +616,7 @@ class FoldIntoOrderTest extends TestCase {
 					'subsidyNumber' => 'SUB-IDEM-1',
 					'counterpartyName' => 'Stichting Idem',
 					'grantedAmount' => 100.0,
-					'state' => 'verleend',
+					'state' => 'granted',
 					'currency' => 'EUR',
 				],
 			],
@@ -627,8 +627,8 @@ class FoldIntoOrderTest extends TestCase {
 					'customerId' => 'kl-1',
 					'assignmentName' => 'Opdracht Idem',
 					'startDate' => '2026-02-01',
-					'intakeStatus' => 'ACTIEF',
-					'riskLevel' => 'LAAG',
+					'intakeStatus' => 'ACTIVE',
+					'riskLevel' => 'LOW',
 				],
 			],
 		];

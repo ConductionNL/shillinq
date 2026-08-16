@@ -53,26 +53,26 @@ class EmuReportingService {
 	 * @var array<int,array{0:string,1:string,2:string}>
 	 */
 	private const MACRO_RULES = [
-		['48', 'eliminatie-afschrijving', 'saldo-verhogend'],
-		['460', 'eliminatie-voorzieningdotatie', 'saldo-verhogend'],
-		['49', 'eliminatie-onttrekking-reserve', 'saldo-neutraal'],
-		['010', 'toevoeging-bruto-investering', 'saldo-verlagend'],
-		['020', 'toevoeging-bruto-investering', 'saldo-verlagend'],
-		['210', 'toevoeging-aflossing', 'saldo-verlagend'],
-		['220', 'toevoeging-aflossing', 'saldo-verlagend'],
-		['230', 'toevoeging-aflossing', 'saldo-verlagend'],
-		['931', 'eliminatie-boekwinst-desinvestering', 'saldo-verlagend'],
-		['939', 'eliminatie-boekwinst-desinvestering', 'saldo-verhogend'],
+		['48', 'elimination-depreciation', 'balance-increasing'],
+		['460', 'elimination-provision-contribution', 'balance-increasing'],
+		['49', 'elimination-withdrawal-reserve', 'balance-neutral'],
+		['010', 'addition-gross-investment', 'balance-decreasing'],
+		['020', 'addition-gross-investment', 'balance-decreasing'],
+		['210', 'addition-repayment', 'balance-decreasing'],
+		['220', 'addition-repayment', 'balance-decreasing'],
+		['230', 'addition-repayment', 'balance-decreasing'],
+		['931', 'elimination-book-profit-divestment', 'balance-decreasing'],
+		['939', 'elimination-book-profit-divestment', 'balance-increasing'],
 	];
 
 	/**
 	 * Eurostat ESA2010 instrument categories that count toward the bruto
 	 * EMU-schuld (AF.2 deposits, AF.3 securities, AF.4 loans). AF.7 derivatives
-	 * and "overig" are excluded per REQ-EMU-004.
+	 * and "other" are excluded per REQ-EMU-004.
 	 *
 	 * @var array<int,string>
 	 */
-	private const EMU_SCHULD_CATEGORIES = ['AF.2-deposits', 'AF.3-securities', 'AF.4-loans'];
+	private const EMU_SCHULD_CATEGORIES = ['off_2-deposits', 'off_3-securities', 'off_4-loans'];
 
 	/**
 	 * Constructor.
@@ -124,7 +124,7 @@ class EmuReportingService {
 		$invoice = (string)($glLine['invoiceMoment'] ?? '');
 		$payment = (string)($glLine['paymentMoment'] ?? '');
 		if ($invoice !== '' && $payment !== '' && substr($invoice, 0, 10) !== substr($payment, 0, 10)) {
-			$type = 'correctie-transactiemoment';
+			$type = 'correction-transaction-moment';
 		}
 
 		return [
@@ -163,10 +163,10 @@ class EmuReportingService {
 		$cents = 0;
 		foreach ($adjustments as $adj) {
 			$amountCents = (int)round((float)($adj['amount'] ?? 0) * 100);
-			$direction = (string)($adj['direction'] ?? 'saldo-neutraal');
-			if ($direction === 'saldo-verhogend') {
+			$direction = (string)($adj['direction'] ?? 'balance-neutral');
+			if ($direction === 'balance-increasing') {
 				$cents += $amountCents;
-			} elseif ($direction === 'saldo-verlagend') {
+			} elseif ($direction === 'balance-decreasing') {
 				$cents -= $amountCents;
 			}
 		}
@@ -191,7 +191,7 @@ class EmuReportingService {
 		$perCategoryCents = [];
 		$grossCents = 0;
 		foreach ($debtPositions as $pos) {
-			$category = (string)($pos['categoryEurostat'] ?? 'overig');
+			$category = (string)($pos['categoryEurostat'] ?? 'other');
 			$telt = (bool)($pos['teltMeeInEmuDebt'] ?? false);
 			if ($telt === false || in_array($category, self::EMU_SCHULD_CATEGORIES, true) === false) {
 				continue;
@@ -323,12 +323,12 @@ class EmuReportingService {
 		$expected = ($bbvNetResult + $totaleAdjustments);
 		$verschil = round(($somKwartalen - $expected), 2);
 
-		$controle = 'geslaagd';
+		$controle = 'succeeded';
 		if (abs($verschil) > $tolerance) {
-			$controle = 'mislukt';
+			$controle = 'failed';
 		}
 
-		if ($controle === 'mislukt') {
+		if ($controle === 'failed') {
 			$this->logger->warning(
 				'EmuReportingService: reconciliation failed',
 				['verschil' => $verschil, 'bbv' => $bbvNetResult, 'adjustments' => $totaleAdjustments]
@@ -430,21 +430,21 @@ class EmuReportingService {
 
 		return [
 			['rule' => 1, 'label' => 'Saldo van baten en lasten BBV', 'amount' => round($bbvNetResult, 2)],
-			['rule' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
-			['rule' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
+			['rule' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['elimination-withdrawal-reserve'] ?? 0.0), 2)],
+			['rule' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['addition-gross-investment'] ?? 0.0), 2)],
 			['rule' => 4, 'label' => 'Bijdragen van derden in investeringen', 'amount' => 0.0],
-			['rule' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
-			['rule' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
+			['rule' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['elimination-book-profit-divestment'] ?? 0.0), 2)],
+			['rule' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['elimination-depreciation'] ?? 0.0), 2)],
 			[
 				'rule' => 7,
 				'label' => 'Dotaties voorzieningen ten laste exploitatie',
-				'amount' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2),
+				'amount' => round(($sumByType['elimination-provision-contribution'] ?? 0.0), 2),
 			],
 			['rule' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'amount' => 0.0],
 			[
 				'rule' => 9,
 				'label' => 'Boekwinst / verlies desinvesteringen',
-				'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2),
+				'amount' => round(($sumByType['elimination-book-profit-divestment'] ?? 0.0), 2),
 			],
 			['rule' => 10, 'label' => 'EMU-saldo', 'amount' => round($emuBalanceCalculated, 2)],
 		];
@@ -462,11 +462,11 @@ class EmuReportingService {
 		$centsByType = [];
 		foreach ($adjustments as $adj) {
 			$type = (string)($adj['type'] ?? '');
-			$direction = (string)($adj['direction'] ?? 'saldo-neutraal');
+			$direction = (string)($adj['direction'] ?? 'balance-neutral');
 			$amountCents = (int)round((float)($adj['amount'] ?? 0) * 100);
-			if ($direction === 'saldo-verlagend') {
+			if ($direction === 'balance-decreasing') {
 				$amountCents = -1 * $amountCents;
-			} elseif ($direction === 'saldo-neutraal') {
+			} elseif ($direction === 'balance-neutral') {
 				$amountCents = 0;
 			}
 

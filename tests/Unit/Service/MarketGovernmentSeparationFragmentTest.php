@@ -121,7 +121,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 		}
 
 		// The kostprijsMethode is the statutory enum.
-		self::assertContains('integrale-kostprijs-art-25i', $props['costPriceMethod']['enum']);
+		self::assertContains('integral-costprice-art-25i', $props['costPriceMethod']['enum']);
 
 	}//end testCommercialActivityHasMandatoryFields()
 
@@ -147,7 +147,7 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase {
 			self::assertArrayHasKey($component, $components, "componenten must include $component");
 		}
 
-		self::assertSame(['voorlopig', 'definitief'], $schema['properties']['status']['enum']);
+		self::assertSame(['voorlopig', 'final'], $schema['properties']['status']['enum']);
 
 	}//end testIntegralCostPriceHasSixComponents()
 

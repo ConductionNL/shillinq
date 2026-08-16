@@ -69,7 +69,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testReistijdWithinCapUnchanged(): void {
-		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 3.0);
+		$result = $this->guard->pasReistijdCapToe(category: 'TRAVEL_TIME_BUSINESS', hours: 3.0);
 		self::assertSame(3.0, $result['countedHours']);
 		self::assertNull($result['capNote']);
 
@@ -81,7 +81,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testReistijdCapAppliedWithNote(): void {
-		$result = $this->guard->pasReistijdCapToe(category: 'REISTIJD_ZAKELIJK', hours: 6.0);
+		$result = $this->guard->pasReistijdCapToe(category: 'TRAVEL_TIME_BUSINESS', hours: 6.0);
 		self::assertSame(4.0, $result['countedHours']);
 		self::assertSame('Reistijd-cap toegepast: 2 uur niet meegeteld', $result['capNote']);
 
@@ -93,7 +93,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testOtherCategoriesNotCapped(): void {
-		$result = $this->guard->pasReistijdCapToe(category: 'ACQUISITIE', hours: 9.0);
+		$result = $this->guard->pasReistijdCapToe(category: 'ACQUISITION', hours: 9.0);
 		self::assertSame(9.0, $result['countedHours']);
 		self::assertNull($result['capNote']);
 
@@ -133,7 +133,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 		$entry = [
 			'enterpriseId' => 'ond-1',
 			'date' => '2026-05-16',
-			'category' => 'ACQUISITIE',
+			'category' => 'ACQUISITION',
 			'hours' => 2,
 			'registrationMoment' => '2026-05-21T10:00:00Z',
 		];
@@ -150,7 +150,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 		$entry = [
 			'enterpriseId' => 'ond-1',
 			'date' => '2026-04-05',
-			'category' => 'ACQUISITIE',
+			'category' => 'ACQUISITION',
 			'hours' => 2,
 			'registrationMoment' => '2026-05-21T10:00:00Z',
 		];
@@ -167,7 +167,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 		$entry = [
 			'enterpriseId' => 'ond-1',
 			'date' => '2026-04-05',
-			'category' => 'ACQUISITIE',
+			'category' => 'ACQUISITION',
 			'hours' => 2,
 			'registrationMoment' => '2026-05-21T10:00:00Z',
 			'backfillReason' => 'Factuur opgemaakt op 20 mei voor werk van 5 april',
@@ -186,7 +186,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 		$entry = [
 			'enterpriseId' => 'ond-1',
 			'date' => '2026-05-21',
-			'category' => 'SCHOLING',
+			'category' => 'TRAINING',
 			'hours' => 8,
 			'registrationMoment' => '2026-05-21T18:00:00Z',
 		];
@@ -203,7 +203,7 @@ class UrenDagregistratieGuardTest extends TestCase {
 		$entry = [
 			'enterpriseId' => 'ond-1',
 			'date' => '2026-05-21',
-			'category' => 'SCHOLING',
+			'category' => 'TRAINING',
 			'hours' => 8,
 			'registrationMoment' => '2026-05-21T18:00:00Z',
 			'backfillEvidence' => 'file-cursus-99',

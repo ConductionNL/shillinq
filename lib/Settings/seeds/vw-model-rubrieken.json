@@ -8,7 +8,7 @@
     "url": "https://wetten.overheid.nl/BWBR0003045/"
   },
   "models": {
-    "A-categorisch": {
+    "a-categorical": {
       "statutoryBasis": "art. 2:377 lid 2 BW",
       "rubrieken": [
         { "position": 1, "rubrieckCode": "1", "label": "Netto-omzet" },
@@ -30,7 +30,7 @@
         { "position": "Netto resultaat", "label": "Resultaat na belastingen", "isSubtotal": true }
       ]
     },
-    "E-functioneel": {
+    "e-functional": {
       "statutoryBasis": "art. 2:377 lid 3 BW",
       "rubrieken": [
         { "position": 1, "rubrieckCode": "1", "label": "Netto-omzet" },

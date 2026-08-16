@@ -164,7 +164,7 @@ class DBAVbarMonitorService {
 				[
 					'filters' => [
 						'assignmentId' => $assignmentId,
-						'type' => 'VBAR_GRENS_ONDERSCHREDEN',
+						'type' => 'VBAR_GRENS_BELOW_THRESHOLD',
 						'status' => 'OPEN',
 					],
 					'limit' => 10,
@@ -196,9 +196,9 @@ class DBAVbarMonitorService {
 				[
 					'administrationId' => $administrationId,
 					'assignmentId' => $assignmentId,
-					'type' => 'VBAR_GRENS_ONDERSCHREDEN',
+					'type' => 'VBAR_GRENS_BELOW_THRESHOLD',
 					'detectionMoment' => (new DateTimeImmutable())->format('c'),
-					'severity' => 'MIDDEN',
+					'severity' => 'MEDIUM',
 					'details' => [
 						'invoiceId' => $invoiceId,
 						'uurtariefCents' => $hourlyRateCents,

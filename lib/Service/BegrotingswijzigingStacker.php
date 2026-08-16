@@ -65,7 +65,7 @@ class BegrotingswijzigingStacker {
 		}
 
 		foreach ($wijzigingen as $wijziging) {
-			if (($wijziging['status'] ?? 'draft') !== 'vastgesteld') {
+			if (($wijziging['status'] ?? 'draft') !== 'determined') {
 				continue;
 			}
 

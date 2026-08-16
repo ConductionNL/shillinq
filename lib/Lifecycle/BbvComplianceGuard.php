@@ -65,8 +65,8 @@ class BbvComplianceGuard {
 	 */
 	private const MUNICIPAL_TYPES = [
 		'municipality',
-		'provincie',
-		'waterschap',
+		'province',
+		'waterAuthority',
 	];
 
 	/**

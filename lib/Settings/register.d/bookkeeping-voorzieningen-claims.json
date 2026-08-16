@@ -38,16 +38,16 @@
             "type": "string",
             "description": "Discriminator selecting which type-specific detail register applies (REQ-PROV-001).",
             "enum": [
-              "pensioen",
-              "jubileum",
-              "herstructurering",
-              "garantie",
-              "milieu",
+              "pension",
+              "anniversary",
+              "restructuring",
+              "guarantee",
+              "environment",
               "claims",
-              "onderhoud",
-              "overig"
+              "maintenance",
+              "other"
             ],
-            "example": "garantie",
+            "example": "guarantee",
             "title": "Provision Type"
           },
           "description": {
@@ -1126,7 +1126,7 @@
               "arbeidsrecht",
               "IE-inbreuk",
               "belasting",
-              "overig"
+              "other"
             ],
             "example": "productaansprakelijkheid",
             "title": "Claim Type"
@@ -1200,7 +1200,7 @@
           "provisionType": {
             "type": "string",
             "description": "Aggregation key — provision type (REQ-PROV-008).",
-            "example": "garantie",
+            "example": "guarantee",
             "title": "Provision Type"
           },
           "count": {
@@ -1346,7 +1346,7 @@
           "schema": "Provision",
           "slug": "provision-garantie-standaard-2026"
         },
-        "provisionType": "garantie",
+        "provisionType": "guarantee",
         "description": "Waarborg op verkochte goederen 2026",
         "recognitionDate": "2026-01-01",
         "recognitionRationale": "Garantieclausule in algemene voorwaarden + 1.5% historische claim-rate (5-jaar gemiddelde)",
@@ -1374,7 +1374,7 @@
           "schema": "Provision",
           "slug": "provision-milieu-bodemsanering-rijnmond"
         },
-        "provisionType": "milieu",
+        "provisionType": "environment",
         "description": "Bodemsanering verontreinigde locatie Rijnmond per Wbb",
         "recognitionDate": "2025-01-01",
         "recognitionRationale": "Bodemsaneringsrapport Wbb fase 2 vastgesteld; saneringsplicht onbetwist",

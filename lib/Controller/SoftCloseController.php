@@ -158,7 +158,7 @@ class SoftCloseController extends Controller {
 
 		$accounts = (array)$this->request->getParam('accounts', []);
 		$policy = (array)$this->request->getParam('materialityPolicy', []);
-		$scope = (string)$this->request->getParam('scope', 'administratie');
+		$scope = (string)$this->request->getParam('scope', 'administration');
 		$basis = (string)$this->request->getParam('comparisonBasis', 'budget');
 
 		try {

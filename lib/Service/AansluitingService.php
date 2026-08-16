@@ -167,7 +167,7 @@ class AansluitingService {
 		$reconciliationType = (string)($definition['reconciliationType'] ?? '');
 
 		$resolved = match ($reconciliationType) {
-			'btw-ledger-aangifte' => $this->resolveVatLedgerTaxReturn(administrationId: $administrationId, periodId: $periodId),
+			'vat-ledger-return' => $this->resolveVatLedgerTaxReturn(administrationId: $administrationId, periodId: $periodId),
 			'subledger-gl-control' => $this->resolveSubledgerGlControl(definition: $definition, administrationId: $administrationId),
 			default => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $reconciliationType)),
 		};

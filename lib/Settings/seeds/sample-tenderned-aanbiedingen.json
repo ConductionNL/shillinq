@@ -19,7 +19,7 @@
 			"termStart": "2026-02-01",
 			"termEnd": "2027-01-31",
 			"awardedSupplier": "76741850 Conduction B.V.",
-			"assignmentType": "dienstverlening-doorlopend",
+			"assignmentType": "service-provision-continuous",
 			"status": "gegund"
 		},
 		{
@@ -34,7 +34,7 @@
 			"termStart": "2026-03-01",
 			"termEnd": "2028-02-29",
 			"awardedSupplier": "76741850 Conduction B.V.",
-			"assignmentType": "levering-in-fases",
+			"assignmentType": "delivery-in-phases",
 			"status": "gegund"
 		},
 		{

@@ -263,11 +263,11 @@
           "entityType": {
             "type": "string",
             "nullable": true,
-            "description": "Type of NL public body the BBV governs: gemeente (municipality), provincie (province) or waterschap (water authority).",
+            "description": "Type of NL public body the BBV governs: gemeente (municipality), province (province) or waterAuthority (water authority).",
             "enum": [
               "municipality",
-              "provincie",
-              "waterschap"
+              "province",
+              "waterAuthority"
             ],
             "example": "municipality",
             "title": "Entity Type"

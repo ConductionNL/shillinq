@@ -63,9 +63,9 @@ class EmuSubmissionGuardTest extends TestCase {
 		self::assertTrue(
 			$this->guard->requireApproval(
 				[
-					'status' => 'concept',
+					'status' => 'draft',
 					'emuBalanceCalculated' => -2300000.0,
-					'bbvReconciliationCheck' => 'geslaagd',
+					'bbvReconciliationCheck' => 'succeeded',
 				]
 			)
 		);
@@ -80,7 +80,7 @@ class EmuSubmissionGuardTest extends TestCase {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
 			$this->guard->requireApproval(
-				['status' => 'submitted', 'emuBalanceCalculated' => -2300000.0, 'bbvReconciliationCheck' => 'geslaagd']
+				['status' => 'submitted', 'emuBalanceCalculated' => -2300000.0, 'bbvReconciliationCheck' => 'succeeded']
 			)
 		);
 	}//end testAlreadySubmittedIsBlocked()
@@ -93,7 +93,7 @@ class EmuSubmissionGuardTest extends TestCase {
 	public function testConceptWithoutSaldoIsBlocked(): void {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
-			$this->guard->requireApproval(['status' => 'concept', 'bbvReconciliationCheck' => 'geslaagd'])
+			$this->guard->requireApproval(['status' => 'draft', 'bbvReconciliationCheck' => 'succeeded'])
 		);
 	}//end testConceptWithoutSaldoIsBlocked()
 
@@ -106,7 +106,7 @@ class EmuSubmissionGuardTest extends TestCase {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
 			$this->guard->requireApproval(
-				['status' => 'concept', 'emuBalanceCalculated' => 1.0, 'bbvReconciliationCheck' => 'mislukt']
+				['status' => 'draft', 'emuBalanceCalculated' => 1.0, 'bbvReconciliationCheck' => 'failed']
 			)
 		);
 	}//end testFailedReconciliationBlocks()
@@ -120,7 +120,7 @@ class EmuSubmissionGuardTest extends TestCase {
 		$this->logger->expects(self::once())->method('info');
 		self::assertFalse(
 			$this->guard->requireApproval(
-				['status' => 'concept', 'emuBalanceCalculated' => null, 'bbvReconciliationCheck' => 'geslaagd']
+				['status' => 'draft', 'emuBalanceCalculated' => null, 'bbvReconciliationCheck' => 'succeeded']
 			)
 		);
 	}//end testNullSaldoIsBlocked()

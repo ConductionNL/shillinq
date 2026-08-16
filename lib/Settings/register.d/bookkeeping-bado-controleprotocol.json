@@ -43,8 +43,8 @@
             "type": "string",
             "enum": [
               "municipality",
-              "provincie",
-              "waterschap",
+              "province",
+              "waterAuthority",
               "GR"
             ],
             "description": "Type of decentralised government (Gemeentewet 213 / Provinciewet 217 / Waterschapswet 109 / Wgr 35).",
@@ -77,7 +77,7 @@
                 "enum": [
                   "councilResolution",
                   "statenbesluit",
-                  "AB-besluit"
+                  "ab-decision"
                 ],
                 "title": "Decision Type",
                 "description": "The type or category of decision."
@@ -121,7 +121,7 @@
             "enum": [
               "expenses",
               "revenue",
-              "balanstotaal"
+              "balanceSheetTotal"
             ],
             "description": "Base used to compute materialiteit (REQ-003).",
             "title": "Materiality Base"
@@ -634,7 +634,7 @@
             "enum": [
               "lawfulness",
               "faithfulness",
-              "onzekerheid"
+              "uncertainty"
             ],
             "description": "Which BADO axis the exception concerns.",
             "title": "Finding Type"

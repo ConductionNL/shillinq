@@ -45,11 +45,11 @@ class DBAScoreCalculator {
 	 * Deliveroo-criteria duur-relatie point weights.
 	 */
 	private const DUUR_POINTS = [
-		'MINDER_DAN_3_MAANDEN' => 2,
-		'3_TOT_6_MAANDEN' => 4,
-		'6_TOT_12_MAANDEN' => 6,
-		'1_TOT_2_JAAR' => 8,
-		'MEER_DAN_2_JAAR' => 10,
+		'MINDER_DAN_3_MONTHS' => 2,
+		'3_TO_6_MONTHS' => 4,
+		'6_TO_12_MONTHS' => 6,
+		'1_TO_2_YEAR' => 8,
+		'MEER_DAN_2_YEAR' => 10,
 	];
 
 	/**
@@ -90,7 +90,7 @@ class DBAScoreCalculator {
 
 		$excluding = (bool)($deliverooBlock['excluding'] ?? false);
 		$duration = (string)($deliverooBlock['durationRelationship'] ?? '');
-		if ($excluding === true && in_array($duration, ['1_TOT_2_JAAR', 'MEER_DAN_2_JAAR'], true) === true) {
+		if ($excluding === true && in_array($duration, ['1_TO_2_YEAR', 'MEER_DAN_2_YEAR'], true) === true) {
 			$booster += 5;
 		}
 

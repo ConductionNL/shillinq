@@ -53,7 +53,7 @@ class AcmReportGenerator {
 	 *
 	 * @var string
 	 */
-	public const FORMAT = 'ACM-standaardformulier-mo-2024';
+	public const FORMAT = 'acm-standard_form-mo-2024';
 
 	/**
 	 * Compose an ACM report record for a reporting period (REQ-WMO-006).

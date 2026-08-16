@@ -137,7 +137,7 @@ final class InnovatieboxIntegrationTest extends TestCase {
 		$export = new InnovatieboxSbrExportService();
 
 		$profitResult = $profit->calculateKwalificerendeWinst(
-			method: 'forfaitair_25pct',
+			method: 'flat_rate_25pct',
 			grossRevenue: 500000.0
 		);
 		$this->assertSame(25000.0, $profitResult['qualifyingProfitAfterNexus']);
@@ -157,7 +157,7 @@ final class InnovatieboxIntegrationTest extends TestCase {
 			$aggregation,
 			'adm-mkb-1',
 			2026,
-			'forfaitair_25pct'
+			'flat_rate_25pct'
 		);
 
 		$this->assertSame([], $payload['perAssetRows']);

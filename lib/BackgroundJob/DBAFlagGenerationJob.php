@@ -289,7 +289,7 @@ class DBAFlagGenerationJob extends TimedJob {
 			$assignments = $objectService
 				->setRegister($register)
 				->setSchema('DBAOpdracht')
-				->findAll(['filters' => ['intakeStatus' => 'ACTIEF'], 'limit' => 1000]);
+				->findAll(['filters' => ['intakeStatus' => 'ACTIVE'], 'limit' => 1000]);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'Shillinq DBAFlagGenerationJob: failed to fetch opdrachten',
@@ -310,8 +310,8 @@ class DBAFlagGenerationJob extends TimedJob {
 					objectService: $objectService,
 					register: $register,
 					assignment: $assignment,
-					type: 'HERBEOORDELING_OVERDUE',
-					severity: 'MIDDEN',
+					type: 'REASSESSMENT_OVERDUE',
+					severity: 'MEDIUM',
 					details: ['intakeDate' => (string)($assignment['intakeDate'] ?? '')],
 					source: 'REQ-DBA-009; Wet DBA jaarlijkse herbeoordeling',
 					action: 'Vraag een herbeoordeling van de DBA-intake aan de ondernemer.'
@@ -337,8 +337,8 @@ class DBAFlagGenerationJob extends TimedJob {
 							objectService: $objectService,
 							register: $register,
 							assignment: $assignment,
-							type: 'MODELOVEREENKOMST_VERLOPEN',
-							severity: 'MIDDEN',
+							type: 'MODELAGREEMENT_EXPIRED',
+							severity: 'MEDIUM',
 							details: ['modelId' => $modelId, 'validTo' => (string)($modelArr['validTo'] ?? '')],
 							source: 'REQ-DBA-002; Belastingdienst modelovereenkomst-policy',
 							action: 'Kies een actueel modelovereenkomst en update de opdracht.'
@@ -364,8 +364,8 @@ class DBAFlagGenerationJob extends TimedJob {
 					objectService: $objectService,
 					register: $register,
 					assignment: $assignment,
-					type: 'WBA_VERLOPEN',
-					severity: 'LAAG',
+					type: 'WBA_EXPIRED',
+					severity: 'LOW',
 					details: ['wbaValidTo' => $wbaValidTo],
 					source: 'REQ-DBA-013; Belastingdienst WBA-policy (1 jaar geldigheid)',
 					action: 'Vraag een nieuwe WBA-beoordeling aan.'

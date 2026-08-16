@@ -24,7 +24,7 @@
                   "niet_getoetst",
                   "in_behandeling",
                   "getoetst",
-                  "vrijgesteld"
+                  "exempt"
                 ],
                 "default": "niet_getoetst",
                 "description": "Aggregate toets status across all linked rechtmatigheidstoets records (REQ-RV-001).",
@@ -139,11 +139,11 @@
           "toetstype": {
             "type": "string",
             "enum": [
-              "automatisch",
-              "handmatig",
+              "automatic",
+              "manual",
               "extern"
             ],
-            "description": "How the toets was produced (REQ-RV-001 automatisch / REQ-RV-002 handmatig).",
+            "description": "How the toets was produced (REQ-RV-001 automatic / REQ-RV-002 manual).",
             "title": "Toetstype"
           },
           "substantiation": {
@@ -314,8 +314,8 @@
           "kind": {
             "type": "string",
             "enum": [
-              "fout",
-              "onzekerheid"
+              "error",
+              "uncertainty"
             ],
             "description": "Finding type (REQ-RV-005).",
             "title": "Soort"
@@ -482,7 +482,7 @@
               "type": "created",
               "filter": {
                 "criterium": "begroting",
-                "kind": "fout"
+                "kind": "error"
               }
             },
             "description": "REQ-RV-001: notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
@@ -646,26 +646,26 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "vastgesteld_college",
               "behandeld_raad",
-              "definitief"
+              "final"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Paragraaf lifecycle status (REQ-RV-005 / REQ-RV-006).",
             "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "retention": {
             "rule": "selectielijst:5.1.4",
             "period": "P10Y",
             "description": "Jaarrekening-bestanddeel retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020."
           },
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Aggregated, awaiting college vaststelling."
             },
@@ -677,14 +677,14 @@
               "label": "Behandeld in raad",
               "description": "Behandeld in de raadsvergadering."
             },
-            "definitief": {
+            "final": {
               "label": "Definitief",
               "description": "Final; eligible for jaarrekening-export (REQ-RV-006)."
             }
           },
           "transitions": {
             "vaststellen_college": {
-              "from": "concept",
+              "from": "draft",
               "to": "vastgesteld_college",
               "label": "Vaststellen door college",
               "description": "College vaststelling; when binnen_tolerantie is false a portefeuillehouder-toelichting (verklaring_college) is required before advancing (REQ-RV-005).",
@@ -697,7 +697,7 @@
             },
             "finaliseren": {
               "from": "behandeld_raad",
-              "to": "definitief",
+              "to": "final",
               "label": "Definitief maken voor jaarrekening"
             }
           }
@@ -846,10 +846,10 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
-              "vastgesteld"
+              "draft",
+              "determined"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Concept until a raadsbesluit-referentie is recorded (REQ-RV-003).",
             "title": "Status"
           }
@@ -904,7 +904,7 @@
       "valid_from": "2026-01-01",
       "valid_to": "2026-12-31",
       "calculationBasis": "total_expenses_including_reserve_movements",
-      "status": "concept"
+      "status": "draft"
     }
   ]
 }

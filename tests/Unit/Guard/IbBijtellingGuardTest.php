@@ -59,7 +59,7 @@ class IbBijtellingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testRegularCarFlatRate(): void {
-		$benefitInKind = $this->guard->computeBijtelling(38000.0, 'REGULIER_22PCT', 0.17, 30000.0, 0.22);
+		$benefitInKind = $this->guard->computeBijtelling(38000.0, 'REGULAR_22_PCT', 0.17, 30000.0, 0.22);
 		self::assertSame(8360.0, $benefitInKind);
 	}//end testRegularCarFlatRate()
 
@@ -92,7 +92,7 @@ class IbBijtellingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testZeroCatalogueValueYieldsZero(): void {
-		self::assertSame(0.0, $this->guard->computeBijtelling(0.0, 'REGULIER_22PCT', 0.17, 30000.0, 0.22));
+		self::assertSame(0.0, $this->guard->computeBijtelling(0.0, 'REGULAR_22_PCT', 0.17, 30000.0, 0.22));
 	}//end testZeroCatalogueValueYieldsZero()
 
 	/**
@@ -103,7 +103,7 @@ class IbBijtellingGuardTest extends TestCase {
 	 */
 	public function testRateIsNotHardCoded(): void {
 		// Hypothetical 25% rate from a future IBTaxParameterYear.
-		$benefitInKind = $this->guard->computeBijtelling(40000.0, 'REGULIER_22PCT', 0.17, 30000.0, 0.25);
+		$benefitInKind = $this->guard->computeBijtelling(40000.0, 'REGULAR_22_PCT', 0.17, 30000.0, 0.25);
 		self::assertSame(10000.0, $benefitInKind);
 	}//end testRateIsNotHardCoded()
 }//end class

@@ -71,7 +71,7 @@ class UrenDagregistratieGuard {
 	 *
 	 * @var array<int, string>
 	 */
-	private const EVIDENCE_REQUIRED_CATEGORIES = ['SCHOLING', 'FICTIE_ZEZ'];
+	private const EVIDENCE_REQUIRED_CATEGORIES = ['TRAINING', 'FICTION_ZEZ'];
 
 	/**
 	 * Construct the guard.
@@ -131,7 +131,7 @@ class UrenDagregistratieGuard {
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
 	 */
 	public function pasReistijdCapToe(string $category, float $hours): array {
-		if ($category !== 'REISTIJD_ZAKELIJK' || $hours <= self::REISTIJD_CAP_PER_DAY) {
+		if ($category !== 'TRAVEL_TIME_BUSINESS' || $hours <= self::REISTIJD_CAP_PER_DAY) {
 			return ['countedHours' => $hours, 'capNote' => null];
 		}
 

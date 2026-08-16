@@ -177,8 +177,8 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPeriodeMaximum(): void {
-		self::assertSame(6206.67, $this->calc->periodeMaximum(PayrollCalculator::MAX_PREMIELOON_SV_JAAR_2026, 'MAAND'));
-		self::assertSame(5969.00, $this->calc->periodeMaximum(PayrollCalculator::MAX_ZVW_PREMIELOON_JAAR_2026, 'MAAND'));
+		self::assertSame(6206.67, $this->calc->periodeMaximum(PayrollCalculator::MAX_PREMIELOON_SV_JAAR_2026, 'MONTH'));
+		self::assertSame(5969.00, $this->calc->periodeMaximum(PayrollCalculator::MAX_ZVW_PREMIELOON_JAAR_2026, 'MONTH'));
 
 	}//end testPeriodeMaximum()
 
@@ -188,7 +188,7 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPremiesSVWerkgeverAwfLaag(): void {
-		$premies = $this->calc->employerSocialInsurancePremiums(4940.0, 'MAAND', 'LAAG', true, 0.0013, 0.0);
+		$premies = $this->calc->employerSocialInsurancePremiums(4940.0, 'MONTH', 'LOW', true, 0.0013, 0.0);
 		// AWF 2,64% x 4940 = 130,42.
 		self::assertSame(130.42, $premies['awf']);
 		// AOF-klein 5,38% x 4940 = 265,77.
@@ -209,7 +209,7 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testPremiesSVCappedAtMaximum(): void {
-		$premies = $this->calc->employerSocialInsurancePremiums(7000.0, 'MAAND', 'LAAG', true, 0.0, 0.0);
+		$premies = $this->calc->employerSocialInsurancePremiums(7000.0, 'MONTH', 'LOW', true, 0.0, 0.0);
 		// Capped at €6.206,67 -> AWF 2,64% x 6206,67 = 163,86.
 		self::assertSame(6206.67, $premies['premieloon_gemaximeerd']);
 		self::assertSame(163.86, $premies['awf']);
@@ -222,14 +222,14 @@ final class PayrollCalculatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testZvwWerkgever(): void {
-		$low = $this->calc->zvwWerkgever(4940.0, 'MAAND', 'LAAG');
+		$low = $this->calc->zvwWerkgever(4940.0, 'MONTH', 'LOW');
 		self::assertSame(262.81, $low['afgedragen_wg']);
 
-		$high = $this->calc->zvwWerkgever(4940.0, 'MAAND', 'HOOG');
+		$high = $this->calc->zvwWerkgever(4940.0, 'MONTH', 'HIGH');
 		self::assertSame(324.56, $high['afgedragen_wg']);
 
 		// €6.500/month exceeds the €5.969 cap -> 5,32% x 5969 = 317,55.
-		$capped = $this->calc->zvwWerkgever(6500.0, 'MAAND', 'LAAG');
+		$capped = $this->calc->zvwWerkgever(6500.0, 'MONTH', 'LOW');
 		self::assertSame(5969.00, $capped['basis']);
 		self::assertSame(317.55, $capped['afgedragen_wg']);
 

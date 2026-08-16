@@ -234,7 +234,7 @@ class RechtmatigheidGuard {
 	public function canExportParagraaf(array $paragraph): bool {
 		try {
 			$status = (string)($paragraph['status'] ?? '');
-			if ($status !== 'definitief') {
+			if ($status !== 'final') {
 				$this->logger->info(
 					'RechtmatigheidGuard: paragraaf not definitief — denying jaarrekening-export',
 					['financialYear' => ($paragraph['financialYear'] ?? 'unknown'), 'status' => $status]

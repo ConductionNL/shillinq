@@ -67,11 +67,11 @@ class EmuSubmissionGuard {
 		$status = (string)($emuReport['status'] ?? '');
 		$balanceComputed = array_key_exists('emuBalanceCalculated', $emuReport)
 			&& $emuReport['emuBalanceCalculated'] !== null;
-		$reconciliation = (string)($emuReport['bbvReconciliationCheck'] ?? 'niet-uitgevoerd');
+		$reconciliation = (string)($emuReport['bbvReconciliationCheck'] ?? 'non-executed');
 
-		$permitted = $status === 'concept'
+		$permitted = $status === 'draft'
 			&& $balanceComputed === true
-			&& $reconciliation !== 'mislukt';
+			&& $reconciliation !== 'failed';
 
 		if ($permitted === false) {
 			$this->logger->info(

@@ -119,13 +119,13 @@
           "rapportageBasis": {
             "type": "string",
             "enum": [
-              "RJ-commercieel",
-              "RJ-fiscaal",
+              "rj-commercial",
+              "rj-fiscal",
               "IFRS-EU"
             ],
-            "default": "RJ-commercieel",
-            "description": "Reporting basis (waarderingsgrondslag). RJ-commercieel is the Titel 9 default.",
-            "example": "RJ-commercieel",
+            "default": "rj-commercial",
+            "description": "Reporting basis (waarderingsgrondslag). rj-commercial is the Titel 9 default.",
+            "example": "rj-commercial",
             "title": "Rapportage Grondslag"
           },
           "valuta": {
@@ -138,15 +138,15 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "opgemaakt",
               "in-review",
-              "vastgesteld",
+              "determined",
               "gedeponeerd"
             ],
-            "default": "concept",
-            "description": "Lifecycle status (REQ-T9-010). concept: real-time, editable; opgemaakt: bestuur-signed immutable snapshot; in-review: under accountant review (bestuur read-only); vastgesteld: AV-approved, frozen; gedeponeerd: filed at KVK.",
-            "example": "concept",
+            "default": "draft",
+            "description": "Lifecycle status (REQ-T9-010). draft: real-time, editable; opgemaakt: bestuur-signed immutable snapshot; in-review: under accountant review (bestuur read-only); determined: AV-approved, frozen; gedeponeerd: filed at KVK.",
+            "example": "draft",
             "title": "Status"
           },
           "layoutDate": {
@@ -244,9 +244,9 @@
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": {
+            "draft": {
               "label": "Concept",
               "description": "Earliest form; balans/V&W recalculate as the GL changes (REQ-T9-010). Editable."
             },
@@ -258,7 +258,7 @@
               "label": "In review (accountant)",
               "description": "Under accountant review. Bestuur source data is read-only until the review is cancelled (REQ-T9-007)."
             },
-            "vastgesteld": {
+            "determined": {
               "label": "Vastgesteld door AV",
               "description": "Approved by the algemene vergadering; final snapshot frozen; deponering activated (REQ-T9-010)."
             },
@@ -269,7 +269,7 @@
           },
           "transitions": {
             "opmaken": {
-              "from": "concept",
+              "from": "draft",
               "to": "opgemaakt",
               "label": "Opmaken door bestuur",
               "description": "Bestuur signs the concept; an immutable snapshot is created (REQ-T9-010, design D2). Requires the balans to balance (activa = passiva).",
@@ -289,20 +289,20 @@
             },
             "vaststellenZonderReview": {
               "from": "opgemaakt",
-              "to": "vastgesteld",
+              "to": "determined",
               "label": "Vaststellen door AV",
               "description": "AV approves directly where no accountantsverklaring is verplicht (klein/micro; REQ-T9-007/REQ-T9-009). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
             },
             "vaststellen": {
               "from": "in-review",
-              "to": "vastgesteld",
+              "to": "determined",
               "label": "Vaststellen na review",
               "description": "AV approves after accountant sign-off; an accountantsverklaring MUST be attached for middelgroot+ (REQ-T9-007/REQ-T9-010). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
             },
             "deponeren": {
-              "from": "vastgesteld",
+              "from": "determined",
               "to": "gedeponeerd",
               "label": "Deponeren bij KVK",
               "description": "Hand the final AnnualReport snapshot to bookkeeping-sbr-xbrl-reporting for SBR-XBRL conversion and Digipoort submission (REQ-T9-008).",
@@ -507,7 +507,7 @@
               "final"
             ],
             "default": "draft",
-            "description": "draft while the parent AnnualReport is concept; final once opgemaakt (design D2).",
+            "description": "draft while the parent AnnualReport is draft; final once opgemaakt (design D2).",
             "title": "Status"
           },
           "rubrieken": {
@@ -536,8 +536,8 @@
                 "side": {
                   "type": "string",
                   "enum": [
-                    "activa",
-                    "passiva"
+                    "assets",
+                    "liabilities"
                   ],
                   "description": "Which side of the balans this rubriek belongs to.",
                   "title": "Zijde"
@@ -631,12 +631,12 @@
           "model": {
             "type": "string",
             "enum": [
-              "A-categorisch",
-              "E-functioneel"
+              "a-categorical",
+              "e-functional"
             ],
-            "default": "A-categorisch",
+            "default": "a-categorical",
             "description": "V&W model per art. 2:377 BW (REQ-T9-003). A: costs by type; E: costs by function.",
-            "example": "A-categorisch",
+            "example": "a-categorical",
             "title": "Model"
           },
           "netResult": {
@@ -659,7 +659,7 @@
               "final"
             ],
             "default": "draft",
-            "description": "draft while concept; final once opgemaakt.",
+            "description": "draft while draft; final once opgemaakt.",
             "title": "Status"
           },
           "accountingPolicyChangeRationale": {
@@ -819,7 +819,7 @@
               "final"
             ],
             "default": "draft",
-            "description": "draft while concept; final once opgemaakt.",
+            "description": "draft while draft; final once opgemaakt.",
             "title": "Status"
           },
           "operationalCashFlow": {
@@ -1157,12 +1157,12 @@
           "currentStap": {
             "type": "string",
             "enum": [
-              "concept",
+              "draft",
               "in-review",
-              "vastgesteld",
+              "determined",
               "gedeponeerd"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Current workflow step mirroring the AnnualReport status (design D6).",
             "example": "in-review",
             "title": "Huidig Stap"
@@ -1342,9 +1342,9 @@
         ],
         "override": false
       },
-      "rapportageBasis": "RJ-commercieel",
+      "rapportageBasis": "rj-commercial",
       "valuta": "EUR",
-      "status": "concept",
+      "status": "draft",
       "layoutDate": null,
       "determinationDate": null,
       "depositDate": null,
@@ -1377,9 +1377,9 @@
         ],
         "override": false
       },
-      "rapportageBasis": "RJ-commercieel",
+      "rapportageBasis": "rj-commercial",
       "valuta": "EUR",
-      "status": "concept",
+      "status": "draft",
       "layoutDate": null,
       "determinationDate": null,
       "depositDate": null,
@@ -1408,7 +1408,7 @@
         {
           "rubrieckCode": "B.I",
           "rubrieckLabel": "Immateriële vaste activa",
-          "side": "activa",
+          "side": "assets",
           "currentYear": 120000,
           "previousYear": 130000,
           "notes": [
@@ -1418,7 +1418,7 @@
         {
           "rubrieckCode": "B.II",
           "rubrieckLabel": "Materiële vaste activa",
-          "side": "activa",
+          "side": "assets",
           "currentYear": 450000,
           "previousYear": 500000,
           "notes": [
@@ -1428,7 +1428,7 @@
         {
           "rubrieckCode": "C.II",
           "rubrieckLabel": "Vorderingen",
-          "side": "activa",
+          "side": "assets",
           "currentYear": 180000,
           "previousYear": 160000,
           "notes": [
@@ -1438,7 +1438,7 @@
         {
           "rubrieckCode": "C.IV",
           "rubrieckLabel": "Liquide middelen",
-          "side": "activa",
+          "side": "assets",
           "currentYear": 95000,
           "previousYear": 85000,
           "notes": []
@@ -1446,7 +1446,7 @@
         {
           "rubrieckCode": "A",
           "rubrieckLabel": "Eigen vermogen",
-          "side": "passiva",
+          "side": "liabilities",
           "currentYear": 380000,
           "previousYear": 370000,
           "notes": [
@@ -1456,7 +1456,7 @@
         {
           "rubrieckCode": "B",
           "rubrieckLabel": "Voorzieningen",
-          "side": "passiva",
+          "side": "liabilities",
           "currentYear": 45000,
           "previousYear": 50000,
           "notes": [
@@ -1466,7 +1466,7 @@
         {
           "rubrieckCode": "C",
           "rubrieckLabel": "Langlopende schulden",
-          "side": "passiva",
+          "side": "liabilities",
           "currentYear": 280000,
           "previousYear": 300000,
           "notes": [
@@ -1476,7 +1476,7 @@
         {
           "rubrieckCode": "D",
           "rubrieckLabel": "Kortlopende schulden",
-          "side": "passiva",
+          "side": "liabilities",
           "currentYear": 140000,
           "previousYear": 130000,
           "notes": [
@@ -1493,7 +1493,7 @@
       },
       "reportId": "annual-report-adm-001-2025",
       "vwDate": "2025-12-31",
-      "model": "A-categorisch",
+      "model": "a-categorical",
       "netResult": 266000,
       "currency": "EUR",
       "status": "draft",
@@ -1635,7 +1635,7 @@
         "slug": "review-workflow-adm-003-2025"
       },
       "reportId": "annual-report-adm-003-2025",
-      "currentStap": "concept",
+      "currentStap": "draft",
       "stepsArray": [
         {
           "stap": "in-review",

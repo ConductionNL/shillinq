@@ -121,7 +121,7 @@ class DBAComplianceGuardTest extends TestCase {
 		self::assertFalse($this->guard->canActivateOpdracht(assignmentId: 'dba-opdr-2', object: ['intakeStatus' => 'DRAFT']));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
-		self::assertFalse($this->guard->canActivateOpdracht(assignmentId: 'dba-opdr-3', object: ['intakeStatus' => 'GEEN']));
+		self::assertFalse($this->guard->canActivateOpdracht(assignmentId: 'dba-opdr-3', object: ['intakeStatus' => 'NONE']));
 
 	}//end testCannotActivateOpdrachtWithoutCompletedIntake()
 
@@ -243,14 +243,14 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testDeriveRiskBandBoundaries(): void {
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		self::assertSame('LAAG', $this->guard->deriveRiskBand(score: 0));
-		self::assertSame('LAAG', $this->guard->deriveRiskBand(score: 24));
-		self::assertSame('LAAG_MIDDEN', $this->guard->deriveRiskBand(score: 25));
-		self::assertSame('LAAG_MIDDEN', $this->guard->deriveRiskBand(score: 49));
-		self::assertSame('MIDDEN_HOOG', $this->guard->deriveRiskBand(score: 50));
-		self::assertSame('MIDDEN_HOOG', $this->guard->deriveRiskBand(score: 74));
-		self::assertSame('HOOG', $this->guard->deriveRiskBand(score: 75));
-		self::assertSame('HOOG', $this->guard->deriveRiskBand(score: 100));
+		self::assertSame('LOW', $this->guard->deriveRiskBand(score: 0));
+		self::assertSame('LOW', $this->guard->deriveRiskBand(score: 24));
+		self::assertSame('LOW_MIDDEN', $this->guard->deriveRiskBand(score: 25));
+		self::assertSame('LOW_MIDDEN', $this->guard->deriveRiskBand(score: 49));
+		self::assertSame('MIDDEN_HIGH', $this->guard->deriveRiskBand(score: 50));
+		self::assertSame('MIDDEN_HIGH', $this->guard->deriveRiskBand(score: 74));
+		self::assertSame('HIGH', $this->guard->deriveRiskBand(score: 75));
+		self::assertSame('HIGH', $this->guard->deriveRiskBand(score: 100));
 		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
 	}//end testDeriveRiskBandBoundaries()
@@ -263,9 +263,9 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testComputeCompletenessFullDossier(): void {
 		$documents = [
-			['type' => 'GETEKENDE_OVEREENKOMST'],
-			['type' => 'FACTUUR_EERSTE'],
-			['type' => 'URENSTAAT_KWARTAAL'],
+			['type' => 'SIGNED_AGREEMENT'],
+			['type' => 'INVOICE_FIRST'],
+			['type' => 'TIMESHEET_QUARTER'],
 		];
 
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
@@ -285,15 +285,15 @@ class DBAComplianceGuardTest extends TestCase {
 	 */
 	public function testComputeCompletenessMissingUrenstaat(): void {
 		$documents = [
-			['type' => 'GETEKENDE_OVEREENKOMST'],
-			['type' => 'FACTUUR_EERSTE'],
+			['type' => 'SIGNED_AGREEMENT'],
+			['type' => 'INVOICE_FIRST'],
 		];
 
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
 		$result = $this->guard->computeCompleteness(documents: $documents);
 
 		self::assertEqualsWithDelta(0.6667, $result['score'], 0.001);
-		self::assertSame(['URENSTAAT_KWARTAAL'], $result['missing']);
+		self::assertSame(['TIMESHEET_QUARTER'], $result['missing']);
 		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
 	}//end testComputeCompletenessMissingUrenstaat()

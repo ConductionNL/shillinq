@@ -213,7 +213,7 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 		$subsidyStates = $this->statesForType($lifecycle, 'subsidy');
 
 		self::assertSame(
-			['aanvraag', 'verleend', 'vastgesteld', 'uitbetaald', 'teruggevorderd', 'afgehandeld'],
+			['request', 'granted', 'determined', 'disbursed', 'reclaimed', 'handled'],
 			$subsidyStates
 		);
 
@@ -248,7 +248,7 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 		$engagementStates = $this->statesForType($lifecycle, 'engagement');
 
 		self::assertSame(
-			['DRAFT', 'INTAKE_VEREIST', 'INTAKE_VOLTOOID', 'ACTIEF', 'BEEINDIGD'],
+			['DRAFT', 'INTAKE_REQUIRED', 'INTAKE_COMPLETED', 'ACTIVE', 'ENDED'],
 			$engagementStates
 		);
 

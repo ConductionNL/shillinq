@@ -199,8 +199,8 @@ class AnnualReportGuard {
 		}
 
 		return [
-			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'activa'),
-			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'passiva'),
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'assets'),
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'liabilities'),
 		];
 	}//end balanceTotalsInCents()
 
@@ -208,7 +208,7 @@ class AnnualReportGuard {
 	 * Sum the huidigJaar amounts (in integer cents) of the rubrieken on one zijde.
 	 *
 	 * @param array<int,mixed> $rubrieken The balans rubriek rows.
-	 * @param string $side The side to total ('activa' or 'passiva').
+	 * @param string $side The side to total ('assets' or 'liabilities').
 	 *
 	 * @return int The summed amount in integer cents.
 	 */

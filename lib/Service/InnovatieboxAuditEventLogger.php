@@ -65,8 +65,8 @@ class InnovatieboxAuditEventLogger {
 	public const EVENT_PROFIT_AMENDMENT_BLOCKED = 'IBProfitAttribution.amendment_attempt_blocked';
 	public const EVENT_LOSS_CREATED = 'CarryForwardLoss.created';
 	public const EVENT_LOSS_OFFSET_APPLIED = 'CarryForwardLoss.offset_applied';
-	public const EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN = 'DoorsnijdingsVerbod.check_run';
-	public const EVENT_FORFAITAIR_CAP_APPLIED = 'ForfaitairCap.applied';
+	public const EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN = 'cross_cutting_prohibition_check_run';
+	public const EVENT_FORFAITAIR_CAP_APPLIED = 'flatRateCapApplied';
 
 	/**
 	 * Construct the logger.

@@ -68,7 +68,7 @@ class LogPostNLAdapter implements PostNLAdapterInterface {
 		);
 
 		return new DunningChannelSendResult(
-			channel: 'AANGETEKENDE_POST',
+			channel: 'REGISTERED_POST',
 			deliveryStatus: 'DELIVERED',
 			providerMessageId: 'postnl-log-' . bin2hex(random_bytes(8)),
 			extras: [

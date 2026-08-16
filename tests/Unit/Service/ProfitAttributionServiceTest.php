@@ -98,8 +98,8 @@ final class ProfitAttributionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testForfaitairCapBinds(): void {
-		$r = $this->svc->calculateKwalificerendeWinst('forfaitair_25pct', 200000.0);
-		self::assertSame('forfaitair_25pct', $r['method']);
+		$r = $this->svc->calculateKwalificerendeWinst('flat_rate_25pct', 200000.0);
+		self::assertSame('flat_rate_25pct', $r['method']);
 		self::assertSame(25000.0, $r['qualifyingProfitAfterNexus']);
 		self::assertSame(2250.0, $r['vpbOnInnovationShare']);
 		self::assertTrue($r['forfaitairCapApplied']);
@@ -112,7 +112,7 @@ final class ProfitAttributionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testForfaitairBelowCap(): void {
-		$r = $this->svc->calculateKwalificerendeWinst('forfaitair_25pct', 80000.0);
+		$r = $this->svc->calculateKwalificerendeWinst('flat_rate_25pct', 80000.0);
 		self::assertSame(20000.0, $r['qualifyingProfitAfterNexus']);
 		self::assertFalse($r['forfaitairCapApplied']);
 

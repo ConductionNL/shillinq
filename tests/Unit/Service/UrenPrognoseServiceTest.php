@@ -150,7 +150,7 @@ final class UrenPrognoseServiceTest extends TestCase {
 				'currentHours' => 0.0,
 				'dailyTallies' => $this->steadyTallies('2026-06-30', 84),
 				'geplandeOpdrachten' => [
-					['maand' => '2026-09', 'hours' => 200.0],
+					['month' => '2026-09', 'hours' => 200.0],
 				],
 				'purposeNorm' => 1225,
 			]

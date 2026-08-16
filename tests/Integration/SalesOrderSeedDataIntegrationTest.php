@@ -107,15 +107,15 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 
 		$amount = (float)$line['amount'];
 		switch ($line['frequency']) {
-			case 'MAANDELIJKS':
+			case 'MONTHLY':
 				return $amount;
-			case 'KWARTAALS':
+			case 'QUARTERLY':
 				return ($amount / 3);
-			case 'JAARLIJKS':
+			case 'ANNUALLY':
 				return ($amount / 12);
-			case 'WEKELIJKS':
+			case 'WEEKLY':
 				return (($amount * 52) / 12);
-			case 'TWEEWEKELIJKS':
+			case 'FORTNIGHTLY':
 				return (($amount * 26) / 12);
 			default:
 				self::fail('Unknown frequentie: ' . (string)$line['frequency']);

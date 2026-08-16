@@ -126,11 +126,11 @@ final class CreditControlDunningFragmentTest extends TestCase {
 		$schema = $this->fragment()['components']['schemas']['DunningLadder'];
 		$stage = $schema['properties']['stages']['items']['properties'];
 		self::assertSame(
-			['EMAIL', 'EMAIL+POSTREGISTRATIE', 'AANGETEKENDE_POST', 'INCASSOBUREAU_API'],
+			['EMAIL', 'eMAILPostRegistration', 'REGISTERED_POST', 'COLLECTION_AGENCY_API'],
 			$stage['channel']['enum']
 		);
-		self::assertContains('14_DAGEN_BRIEF_BIK', $stage['statutoryEffect']['enum']);
-		self::assertContains('VERZUIM_INTREDEN', $stage['statutoryEffect']['enum']);
+		self::assertContains('14_DAYS_BRIEF_BIK', $stage['statutoryEffect']['enum']);
+		self::assertContains('DEFAULT_ENTRY', $stage['statutoryEffect']['enum']);
 
 	}//end testDunningLadderDeclaresKanaalAndWettelijkEffect()
 
@@ -164,7 +164,7 @@ final class CreditControlDunningFragmentTest extends TestCase {
 		// The rente type enum must cite the two BW articles per REQ-CCD-003.
 		$type = $schema['properties']['statutoryRente']['properties']['type']['enum'];
 		self::assertSame(
-			['HANDELSRENTE_B2B_6_119A_BW', 'WETTELIJKE_RENTE_B2C_6_119_BW'],
+			['COMMERCIAL_INTEREST_B2_B_6_119_A_BW', 'STATUTORY_INTEREST_B2_C_6_119_BW'],
 			$type
 		);
 
@@ -260,7 +260,7 @@ final class CreditControlDunningFragmentTest extends TestCase {
 		self::assertNotNull($sample, 'Sample IncassoKostenBerekening seed must be present');
 		self::assertSame(8400.0, (float)$sample['principal']);
 		self::assertSame(795.0, (float)$sample['calculation']['applied']);
-		self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $sample['statutoryRente']['type']);
+		self::assertSame('COMMERCIAL_INTEREST_B2_B_6_119_A_BW', $sample['statutoryRente']['type']);
 
 	}//end testExampleIncassoKostenSeedComputes795Eur()
 

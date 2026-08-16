@@ -135,7 +135,7 @@ class CommitmentMaterialisationService {
 		$ruleInputs = $this->buildRulesFromPurchaseOrderLines(purchaseOrder: $purchaseOrder, lines: $lines);
 
 		$counterparty = [
-			'kind' => 'leverancier',
+			'kind' => 'supplier',
 			'contactId' => (string)($purchaseOrder['supplierId'] ?? ''),
 		];
 
@@ -171,9 +171,9 @@ class CommitmentMaterialisationService {
 		$administrationId = (string)($contract['administrationId'] ?? '');
 		$ruleInputs = $this->buildRulesFromContract(contract: $contract);
 
-		$counterpartyKind = 'overig';
+		$counterpartyKind = 'other';
 		if ((string)($contract['direction'] ?? '') === 'inbound') {
-			$counterpartyKind = 'leverancier';
+			$counterpartyKind = 'supplier';
 		}
 
 		$counterparty = [
@@ -250,7 +250,7 @@ class CommitmentMaterialisationService {
 			'commitmentNumber' => $sourceReference,
 			'sourceReference' => $sourceReference,
 			'kind' => $kind,
-			'status' => 'concept',
+			'status' => 'draft',
 			'total_amount_excl_vat' => $total,
 			'counterparty' => $counterparty,
 			'rules' => $ruleInputs,
@@ -429,7 +429,7 @@ class CommitmentMaterialisationService {
 		return match ($contractType) {
 			'lease' => 'leasing',
 			'employment' => 'arbeidscontract',
-			default => 'overig',
+			default => 'other',
 		};
 
 	}//end mapContractSoort()
@@ -593,7 +593,7 @@ class CommitmentMaterialisationService {
 					object: [
 						'administrationId' => (string)($commitment['administrationId'] ?? ''),
 						'findingNumber' => 'RV-' . ($commitment['commitmentNumber'] ?? '') . '-OVERRIDE',
-						'kind' => 'fout',
+						'kind' => 'error',
 						'criterium' => 'begroting',
 						'financialYear' => $financialYear,
 						'programme' => (string)($first['programme'] ?? ''),

@@ -97,7 +97,7 @@ class ProvisionGuardTest extends TestCase {
 	 */
 	private function completeImmaterialProvision(): array {
 		return [
-			'provisionType' => 'garantie',
+			'provisionType' => 'guarantee',
 			'description' => 'Waarborg 2026',
 			'recognitionDate' => '2026-01-01',
 			'recognitionRationale' => '1.5% claim-rate × omzet',
@@ -329,7 +329,7 @@ class ProvisionGuardTest extends TestCase {
 	 */
 	public function testHerstructureringProvisionWithoutDetailFkBlocksActivation(): void {
 		$object = $this->completeImmaterialProvision();
-		$object['provisionType'] = 'herstructurering';
+		$object['provisionType'] = 'restructuring';
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse($this->guard->canActivateProvision(provisionId: 'p-her', object: $object));
 

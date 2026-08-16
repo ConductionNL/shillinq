@@ -62,7 +62,7 @@ class CashflowRecurringGuard {
 	 *
 	 * @var array<int,string>
 	 */
-	private const MONTHLY_FREQUENCIES = ['MAANDELIJKS'];
+	private const MONTHLY_FREQUENCIES = ['MONTHLY'];
 
 	/**
 	 * Construct the guard.
@@ -159,7 +159,7 @@ class CashflowRecurringGuard {
 			}
 		}
 
-		if ($frequency === 'JAARLIJKS') {
+		if ($frequency === 'ANNUALLY') {
 			$month = ($recurring['monthOfYear'] ?? null);
 			if (is_int($month) === false || $month < 1 || $month > 12) {
 				$this->logger->info(
@@ -233,11 +233,11 @@ class CashflowRecurringGuard {
 	 */
 	private function hasApplicableIndexation(array $recurring): bool {
 		$rule = (string)($recurring['indexationRule'] ?? 'FIXED');
-		if ($rule !== 'CPI_AFGELOPEN_JAAR') {
+		if ($rule !== 'CPI_PAST_YEAR') {
 			return true;
 		}
 
-		if ((string)($recurring['frequency'] ?? '') !== 'JAARLIJKS') {
+		if ((string)($recurring['frequency'] ?? '') !== 'ANNUALLY') {
 			$this->logger->info(
 				'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
 				['recurId' => ($recurring['recurId'] ?? 'unknown')]
