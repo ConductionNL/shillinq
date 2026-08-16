@@ -354,10 +354,20 @@ test.describe('BBV mapping detail — edit flow', () => {
 				page.locator('[data-testid="budget-bbv-mapping-detail"] .app-sidebar, .app-sidebar'),
 			).toBeAttached({ timeout: 10_000 })
 		} finally {
-			await request.delete(
+			// Surface a failed teardown instead of swallowing it. This ran as
+			// `.catch(() => {})` first and left a seeded mapping behind on the
+			// shared dev instance — a silent leak that the next run then counts
+			// as pre-existing data.
+			const deleted = await request.delete(
 				`/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping/${id}`,
 				{ headers: { 'OCS-APIRequest': 'true' } },
-			).catch(() => {})
+			)
+			if (deleted.ok() === false) {
+				// eslint-disable-next-line no-console
+				console.warn(
+					`[bbv] failed to clean up seeded mapping ${id}: HTTP ${deleted.status()}`,
+				)
+			}
 		}
 	})
 
