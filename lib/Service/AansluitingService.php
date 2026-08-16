@@ -113,6 +113,7 @@ class AansluitingService {
 	 * @param AansluitingCalculator $calculator Pure-logic tolerance/diff helper.
 	 * @param VATReturnService $vatReturnService The BTW ledger-derivation engine this service diffs against.
 	 * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

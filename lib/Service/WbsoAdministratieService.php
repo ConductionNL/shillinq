@@ -51,6 +51,7 @@ class WbsoAdministratieService {
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
