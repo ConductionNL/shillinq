@@ -49,6 +49,8 @@
 				],
 				"defaultSort": "invoiceDate",
 				"detailRoute": "SupplierInvoiceDetail",
+				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. See the Receipts index in manifest.json: SupplierInvoiceDetail is overlaid as `type:\"custom\"`, so rows here opened nothing without this key.",
+				"rowRoute": "SupplierInvoiceDetail",
 				"description": "Supplier invoices with no attached source document (UBL/OCR/Peppol origin never resolved) — a declarative OpenRegister `sourceDocumentUri IS NULL` filter (routing-audit-2026-07-14.md item 2), oldest invoice date first so the longest-outstanding gaps surface at the top. Not a bespoke worklist service.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
 			}
@@ -74,6 +76,8 @@
 				],
 				"defaultSort": "receiptDate",
 				"detailRoute": "ReceiptDetail",
+				"_note_rowRoute": "Same as the supplier-invoice worklist above: ReceiptDetail is overlaid as `type:\"custom\"`, so rows here opened nothing without this key.",
+				"rowRoute": "ReceiptDetail",
 				"description": "Expense receipts with no attached source photo/scan — the same declarative `sourceDocumentUri IS NULL` filter as the supplier-invoice worklist, oldest receipt date first.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}

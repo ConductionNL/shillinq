@@ -298,20 +298,48 @@ test.describe('BBV mapping detail — edit flow', () => {
 	})
 
 	/**
-	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-007/mapping-detail-sidebar-audit-trail
+	 * ⚠️ THIS TEST USED TO CARRY
+	 *   `@e2e …/REQ-BBVW-007/mapping-detail-sidebar-audit-trail`
+	 * AND ASSERT `bbv-mapping-detail-form` ON THE ROUTE `…/edit-stub`.
+	 * Both halves were wrong, and the tag was the worse half.
+	 *
+	 *  - It never touched a sidebar or an audit trail. It asserted the FORM.
+	 *    An `@e2e` tag on a test that does not exercise its scenario is exactly
+	 *    what the fleet's L8 rule forbids: it made REQ-BBVW-007 look covered.
+	 *  - The assertion was structurally impossible. `edit-stub` is a synthetic
+	 *    id, `BudgetBBVMappingDetail.loadRecord()` sets `loadError` when
+	 *    OpenRegister cannot resolve it, and `CnDetailPage` is passed
+	 *    `:error="!!loadError"` — which suppresses the `#default` slot the form
+	 *    lives in. So the form CANNOT render for a missing record, by design.
+	 *    (Its sibling at `…/new` passes because `isCreate` short-circuits the
+	 *    load, which is why the two behave differently.)
+	 *
+	 * REQ-BBVW-007's sidebar scenario needs a REAL, seeded `BudgetBBVMapping`
+	 * record: the object sidebar only activates when CnDetailPage receives both
+	 * `objectType` AND a non-empty `objectId`, and this suite creates no
+	 * record (the create-flow tests fill the form but never save). The CI seed
+	 * currently drops 71 objects while reporting `"success": true`, so no such
+	 * record exists — that is DECISION-3 on the fleet board, not something this
+	 * spec can paper over. It is NOT claimed as covered here.
+	 *
+	 * What IS asserted below is the real, currently-guaranteed behaviour on the
+	 * same route, and it can fail: a regression that rendered an EMPTY EDITABLE
+	 * FORM for a record that does not exist — inviting an operator to "edit"
+	 * nothing and save it as a new mapping — would break this test.
 	 */
-	test('audit-trail surface is reachable from the detail page sidebar', async ({ page }) => {
+	test('a mapping id that does not exist reports the failure instead of rendering an empty edit form', async ({ page }) => {
 		await page.goto(APP + MAPPING_INDEX_ROUTE + '/edit-stub')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
-		// The bespoke detail page uses the manifest detail wrapper which
-		// renders a sidebar slot. The slot is empty until the slice-09
-		// audit listener materialises entries; here we assert the page
-		// renders without an unhandled exception by checking the form
-		// renders.
-		await expect(page.getByTestId('bbv-mapping-detail-form'))
+		// The page still mounts — a missing record must not blank the route.
+		await expect(page.getByTestId('budget-bbv-mapping-detail'))
 			.toBeVisible({ timeout: 15_000 })
+
+		// …and it must NOT present the editable mapping form for a record it
+		// could not load.
+		await expect(page.getByTestId('bbv-mapping-detail-form'))
+			.toBeHidden({ timeout: 15_000 })
 	})
 
 })
@@ -319,26 +347,59 @@ test.describe('BBV mapping detail — edit flow', () => {
 test.describe('BBV scoping + validation', () => {
 
 	/**
-	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-006/fiscal-year-selector-changes-scope
+	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-006/fiscal-year-scope-is-surfaced-and-requeryable
+	 *
+	 * ⚠️ THIS TEST ASSERTED AN AFFORDANCE THE REQUIREMENT NEVER ASKED FOR.
+	 * It looked for `bbv-dashboard-year`, a `<select>` of fiscal years. No such
+	 * control exists, has ever existed, or was ever specified. REQ-BBVW-006
+	 * ("Fiscal Year Scoping") says the fiscal year is IMPLICIT — inherited from
+	 * the active Administration — and its scenario asks only that
+	 *
+	 *     "The user sees a label or breadcrumb indicating 'FY 2026'"
+	 *     "If the user switches to a different administration or fiscal year,
+	 *      data updates automatically"
+	 *
+	 * and the change's own tasks.md ticks exactly that: *"Surface the active
+	 * fiscal year in the UI (label/breadcrumb)"* and *"Refresh BBV data
+	 * automatically when the administration changes"*.
+	 *
+	 * `BBVComplianceDashboard.vue` ships that: a read-only
+	 * `bbv-dashboard-fy-label` rendering `FY {year}`, an administration
+	 * `<select>` (`bbv-dashboard-administration`, rendered only when the user
+	 * has more than one administration — CI has one), and a Refresh control
+	 * that re-queries `/api/bbv-dashboard` with the active scope.
+	 *
+	 * So this now asserts the scope is SURFACED and RE-QUERYABLE, which is the
+	 * requirement. It can fail: drop the label, or break the re-query, and it
+	 * goes red.
 	 */
-	test('dashboard fiscal-year selector is present and accepts a change', async ({ page }) => {
+	test('dashboard surfaces the active fiscal-year scope and re-queries it', async ({ page }) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
-		const year = page.getByTestId('bbv-dashboard-year')
-		await expect(year).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('bbv-compliance-dashboard'))
+			.toBeVisible({ timeout: 15_000 })
 
-		// Selecting a different year MUST trigger a re-query — we assert
-		// the select accepts the change rather than the underlying GET
-		// (Newman owns the API assertion).
-		const beforeValue = await year.inputValue().catch(() => '')
-		const options = await year.locator('option').allTextContents().catch(() => [])
-		const other = options.find((y) => y !== beforeValue)
-		if (other !== undefined) {
-			await year.selectOption(other)
-			await expect(year).toHaveValue(other)
-		}
+		// 1. The fiscal-year scope is visible, and it is a real year — not an
+		//    empty chip, not the untranslated `FY {year}` placeholder.
+		const fyLabel = page.getByTestId('bbv-dashboard-fy-label')
+		await expect(fyLabel).toBeVisible({ timeout: 15_000 })
+		await expect(fyLabel).toHaveText(/\b(19|20)\d{2}\b/)
+
+		// 2. The scope is re-queryable: arm the response wait BEFORE the click,
+		//    then assert the dashboard endpoint was actually hit again. A
+		//    Refresh button that no longer re-queries fails here.
+		const requery = page.waitForResponse(
+			(r) => /\/apps\/shillinq\/api\/bbv-dashboard/.test(r.url()),
+			{ timeout: 20_000 },
+		)
+		await page.getByTestId('bbv-dashboard-refresh').click()
+		const response = await requery
+		expect(response.status()).toBeLessThan(400)
+
+		// 3. …and the scope label survives the re-query with the same year.
+		await expect(fyLabel).toHaveText(/\b(19|20)\d{2}\b/)
 	})
 
 	/**

@@ -45,14 +45,31 @@ test.describe('recurring-invoicing — profile create modal', () => {
 		}
 	})
 
+	/**
+	 * ⚠️ WHY THESE THREE TESTS FAILED, AND WHAT CHANGED.
+	 *
+	 * They were RED because the affordance genuinely did not exist. The page
+	 * declared `config.headerActions[{id: "new-recurring-profile"}]`, and
+	 * CnActionsBar renders a manifest header action as an `NcActionButton`
+	 * inside the COLLAPSED ⋯ overflow menu — so `toBeVisible()` could never
+	 * pass — while its click only made CnIndexPage `$emit('header-action')`,
+	 * which CnPageRenderer does not listen for. The fragment's own
+	 * `_note_open_modal_gap` recorded both halves. The modal itself was
+	 * complete and registered; nothing could open it.
+	 *
+	 * The inert entry is gone and the page now declares a `header-actions`
+	 * slot WIDGET (`RecurringInvoiceProfileLauncher`, kind:"widget") that
+	 * renders a visible primary button and mounts the modal. The assertions
+	 * below are unchanged in substance — same modal, same fields — and are
+	 * now anchored on the launcher's stable testid rather than on a loose
+	 * text match that would also have matched the invisible overflow item.
+	 */
 	test('the index exposes the new-profile action and opens the modal', async ({
 		page,
 	}) => {
-		const action = page
-			.getByRole('button', { name: /new recurring profile/i })
-			.or(page.getByText(/new recurring profile/i))
-		await expect(action.first()).toBeVisible({ timeout: 15_000 })
-		await action.first().click()
+		const action = page.getByTestId('recurring-profile-new')
+		await expect(action).toBeVisible({ timeout: 15_000 })
+		await action.click()
 		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({
 			timeout: 10_000,
 		})
@@ -61,10 +78,9 @@ test.describe('recurring-invoicing — profile create modal', () => {
 	})
 
 	test('the next-invoice preview expands period tokens', async ({ page }) => {
-		const action = page
-			.getByRole('button', { name: /new recurring profile/i })
-			.or(page.getByText(/new recurring profile/i))
-		await action.first().click()
+		const action = page.getByTestId('recurring-profile-new')
+		await expect(action).toBeVisible({ timeout: 15_000 })
+		await action.click()
 		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({
 			timeout: 10_000,
 		})
@@ -84,10 +100,9 @@ test.describe('recurring-invoicing — profile create modal', () => {
 	test('add line adds a row and validation blocks an empty save', async ({
 		page,
 	}) => {
-		const action = page
-			.getByRole('button', { name: /new recurring profile/i })
-			.or(page.getByText(/new recurring profile/i))
-		await action.first().click()
+		const action = page.getByTestId('recurring-profile-new')
+		await expect(action).toBeVisible({ timeout: 15_000 })
+		await action.click()
 		await expect(page.getByTestId('recurring-profile-modal')).toBeVisible({
 			timeout: 10_000,
 		})

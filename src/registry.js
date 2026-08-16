@@ -302,6 +302,15 @@ import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
 // modal-isolated under src/modals/ (hydra gate-13).
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 
+// recurring-invoicing (REQ-RIN-008): the LAUNCHER for the modal above. The
+// index page's `config.headerActions[]` entry could never open it — CnIndexPage
+// renders a manifest header action inside the collapsed ⋯ overflow and its
+// click only `$emit`s `header-action`, which CnPageRenderer does not listen
+// for (the gap the fragment's own `_note_open_modal_gap` recorded). Registered
+// kind:"widget" so the page can declare it in CnPageRenderer's `header-actions`
+// widget slot, which CnWidgetGrid resolves against THIS registry.
+import RecurringInvoiceProfileLauncher from './components/invoice/RecurringInvoiceProfileLauncher.vue'
+
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
 // ribbons are now declarative `config.headerActions[]` (type:"open-modal");
@@ -343,6 +352,11 @@ import AccountantPortalDashboard from './views/AccountantPortalDashboard.vue'
 
 export default {
 	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
+	RecurringInvoiceProfileLauncher: {
+		kind: 'widget',
+		component: RecurringInvoiceProfileLauncher,
+		_note: 'Not a data widget: it is the create affordance for RecurringInvoiceProfileModal. CnIndexPage has no declarative way to open a registry modal (its headerActions[] click is emit-only and CnPageRenderer does not listen), so the button and the modal live together in one header-actions slot widget.',
+	},
 
 	// ADR-049 Phase-4: modals launched by declarative headerActions (open-modal).
 	InvoiceQuickDraftModal: { kind: 'modal', component: InvoiceQuickDraftModal },

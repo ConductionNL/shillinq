@@ -4,51 +4,34 @@
  *
  * Provincies BBV variant — Playwright UI coverage.
  *
- * Covers the two manifest pages declared by the
+ * Covers the three manifest pages declared by the
  * `bookkeeping-provincies-bbv-variant` change:
  *
  *  - BBV Compliance Dashboard (`/bbv-provincie/compliance-dashboard`)
- *    — renders the four KPI cards (Total budget / Committed / Spent /
- *    Remaining), the budget-vs-actuals bar chart, the spend-trend
- *    line chart, the exceptions block, and the three declared filter
- *    facets (programme / fiscal year / budget status). Filter changes
- *    persist as URL state and re-query the dashboard reactively.
- *    (REQ-BBC-001, REQ-BBC-002, REQ-BBC-003.)
+ *  - Budget-to-Programme Linker index (`/bbv-provincie/budget-to-programme`)
+ *  - Linker detail (`/bbv-provincie/budget-to-programme/:id`)
  *
- *  - Budget-to-Programme Linker (`/bbv-provincie/budget-to-programme`)
- *    — renders the GL-line index with the mapping-status badge,
- *    multi-select checkboxes, the "Link to Programme" bulk action,
- *    and the three declared filter facets (account type / programme
- *    / assignment status). The bulk action opens a CnFormDialog with
- *    a required Target Programme dropdown and an Effective Date
- *    picker defaulting to today. Selecting at least one row enables
- *    the bulk action; submitting writes
- *    `programmeStructure` + `programmeAssignedAt` per row via
- *    ObjectService.updateObject(). The OR audit trail logs the
- *    assignment per ADR-022.
- *    (REQ-BBL-001, REQ-BBL-002, REQ-BBL-003, REQ-BBL-004, REQ-BBL-005.)
+ * ⚠️ WHY EVERY ASSERTION IN THIS FILE WAS REWRITTEN
+ * -------------------------------------------------
+ * The previous version asserted eleven bespoke `data-testid`s —
+ * `bbv-compliance-dashboard`, `bbv-dashboard-exceptions`,
+ * `bbv-dashboard-filters`, `bbv-linker-index`, `bbv-linker-table`,
+ * `bbv-linker-filters`, `bbv-linker-detail`, `bbv-linker-mapping-status`,
+ * `bbv-kpi-*`, `bbv-chart-*`, `bbv-filter-*`. Grep the repository: **none of
+ * them exists anywhere outside this spec file.** All three pages are declared
+ * with NO `component` (see `src/manifest.d/bookkeeping-provincies-bbv-variant
+ * .json`), so they are rendered by the GENERIC manifest renderer, which emits
+ * the library's own testids (`cn-dashboard-page`, `cn-index-page`,
+ * `cn-detail-page`, `.grid-stack-item[gs-id=…]`) and never an app-invented one.
+ * The one id that does exist elsewhere, `bbv-compliance-dashboard`, belongs to
+ * `src/components/Dashboard/BBVComplianceDashboard.vue`, which is bound to the
+ * WATERSCHAPPEN route `/bbv-dashboard`, not to any provincie route.
  *
- *  - Linker detail page (`/bbv-provincie/budget-to-programme/:id`)
- *    — single-row form with a `programmeStructure` enum picker and a
- *    `programmeAssignedAt` date. Saving captures before/after in the
- *    OR audit trail (REQ-BBL-003).
- *
- *  - Admin settings: the Dashboard Refresh Interval dropdown is
- *    present and saveable (REQ-BBC-004).
- *
- *  - Visibility predicate: both pages are guarded by
- *    `administrationType: ['province']` — the navigation entry is
- *    hidden when the active administration is not a provincie
- *    (manifest `visibilityPredicate`).
- *
- * These specs drive the SHELL of each page — components mount, the
- * declared affordances are present, and navigation between dashboard
- * + linker index + linker detail works. Per the fleet rule
- * (Playwright UI-only, Newman for API), the aggregation arithmetic
- * and the validation rules are covered by the OR aggregation layer
- * and the declarative manifest dialog rules; API/contract assertions
- * live in the Newman collection. Route smoke tests (200 OK + manifest
- * envelope shape) live in `provincies-bbv-routes-smoke.spec.ts`.
+ * The old file also contained four tests shaped
+ *   `if (await x.isVisible().catch(() => false)) { await expect(x).toBeVisible() }`
+ * which cannot fail under any circumstance — they report green whether the
+ * affordance exists or not. Those are gone; each is now a real assertion or is
+ * documented as uncovered.
  *
  * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md
  */
@@ -58,40 +41,122 @@ import { test, expect, type Page } from '@playwright/test'
 const APP = '/apps/shillinq'
 const DASHBOARD_ROUTE = '/bbv-provincie/compliance-dashboard'
 const LINKER_INDEX_ROUTE = '/bbv-provincie/budget-to-programme'
-const LINKER_NEW_ROUTE = '/bbv-provincie/budget-to-programme/new'
 const LINKER_DETAIL_ROUTE = '/bbv-provincie/budget-to-programme/smoke-id'
 
-async function dismissWizard(page: Page): Promise<void> {
+async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => {})
 		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
+	const support = page
+		.locator('[data-testid-modal="cn-support-dialog"], .cn-support-dialog')
+		.first()
+	if (await support.isVisible().catch(() => false)) {
+		await page.keyboard.press('Escape').catch(() => {})
+		await support.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {})
+	}
+}
+
+/** Strip `/index.php`, query and hash, and any trailing slash. */
+function normalisePath(urlOrPath: string): string {
+	const path = urlOrPath.startsWith('http')
+		? new URL(urlOrPath).pathname
+		: urlOrPath.split(/[?#]/)[0]
+	return path.replace('/index.php', '').replace(/\/+$/, '') || '/'
+}
+
+/**
+ * Deep-link to a manifest route and prove the SPA RESOLVED it.
+ *
+ * `src/main.js` ends its route table with `{ path: '/:pathMatch(.*)*',
+ * redirect: '/' }`, so an undeclared route silently lands on the Dashboard and
+ * satisfies any "are we still inside shillinq" check. Comparing the settled
+ * path to the requested one turns that redirect back into a failure.
+ */
+async function gotoRoute(page: Page, route: string): Promise<void> {
+	const target = APP + route
+	await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 25_000 })
+	await page.waitForSelector('#content-vue', { timeout: 15_000 })
+	await dismissOverlays(page)
+	expect(
+		normalisePath(page.url()),
+		`route ${route} must be declared by the manifest and resolve to itself — `
+			+ "a different path means vue-router hit the '/:pathMatch(.*)*' catch-all "
+			+ 'in src/main.js and redirected to the Dashboard',
+	).toBe(normalisePath(target))
 }
 
 test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto(APP + DASHBOARD_ROUTE)
-		await page.waitForLoadState('domcontentloaded')
-		await dismissWizard(page)
+		await gotoRoute(page, DASHBOARD_ROUTE)
 	})
 
 	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-001/dashboard-kpi-cards-render
+	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-001/dashboard-route-resolves
+	 *
+	 * The route itself is declared and resolves — this is the half of the page
+	 * that genuinely works, and it is asserted separately so the four tests
+	 * below fail with a narrower meaning than "the page is broken".
+	 */
+	test('dashboard route resolves and mounts a dashboard page', async ({
+		page,
+	}) => {
+		await expect(page.getByTestId('cn-dashboard-page')).toBeVisible({
+			timeout: 15_000,
+		})
+		await expect(page.getByTestId('cn-dashboard-page-header')).toContainText(
+			/BBV Compliance Dashboard/i,
+		)
+	})
+
+	/**
+	 * ⚠️ THE FOUR TESTS BELOW FAIL, AND THAT IS THE SPEC WORKING — see #866.
+	 *
+	 * `src/manifest.d/bookkeeping-provincies-bbv-variant.json` declares this
+	 * dashboard's whole body under `config.dashboard.{kpis,charts,exceptions,
+	 * filters}`. **No renderer implements that vocabulary.**
+	 *
+	 * Measured, not assumed:
+	 *   - `CnDashboardPage` declares exactly two content props, `widgets` and
+	 *     `layout` (plus `dateRange` / `headerActions`). It has no `kpis`,
+	 *     `charts`, `exceptions` or `filters` prop.
+	 *   - `CnPageRenderer` has zero references to `config.dashboard`.
+	 *   - `grep -r kpis` across all of @conduction/nextcloud-vue's `src/`
+	 *     returns two hits, both in a docblock EXAMPLE naming a widget id.
+	 *   - Of the twelve `type:"dashboard"` pages shillinq declares, ELEVEN use
+	 *     `widgets` + `layout`. This one page is the only `config.dashboard`
+	 *     in the manifest — a one-off written against a schema that does not
+	 *     exist.
+	 *
+	 * So the page mounts an EMPTY CnDashboardPage: no KPI, no chart, no
+	 * exceptions block, no filter facet, for every visitor. The tests are
+	 * correct and the product is not.
+	 *
+	 * This is NOT a mechanical translation and is deliberately NOT attempted
+	 * here: two of the four KPIs (`committed`, `spent`) and both chart series
+	 * are sourced from the named OpenRegister aggregation
+	 * `programmeBudgetVsActuals`, and `CnStatsBlockWidget` / `CnChartWidget`
+	 * fetch `/api/objects/aggregations/{register}/{schema}/value` with a
+	 * `metric` + `field`, not a named aggregation. Converting the fragment
+	 * therefore needs a product decision about how programme budget-vs-actuals
+	 * is surfaced — escalated rather than guessed.
 	 */
 	test('dashboard mounts the four KPI cards declared by the manifest', async ({
 		page,
 	}) => {
-		await expect(page.getByTestId('bbv-compliance-dashboard')).toBeVisible({
+		await expect(page.getByTestId('cn-dashboard-page')).toBeVisible({
 			timeout: 15_000,
 		})
-
-		// The four declared KPIs (total budget, committed, spent, remaining)
-		// from manifest.d/bookkeeping-provincies-bbv-variant.json.
-		await expect(page.getByTestId('bbv-kpi-total-budget')).toBeVisible()
-		await expect(page.getByTestId('bbv-kpi-committed')).toBeVisible()
-		await expect(page.getByTestId('bbv-kpi-spent')).toBeVisible()
-		await expect(page.getByTestId('bbv-kpi-remaining')).toBeVisible()
+		// The manifest declares KPIs "Total budget", "Committed", "Spent" and
+		// "Remaining". Whatever renders them, their labels must be on the page.
+		const body = page.locator('#app-content-vue, main').first()
+		for (const label of ['Total budget', 'Committed', 'Spent', 'Remaining']) {
+			await expect(
+				body.getByText(label, { exact: false }).first(),
+				`KPI "${label}" is declared in the manifest but does not render`,
+			).toBeVisible({ timeout: 15_000 })
+		}
 	})
 
 	/**
@@ -100,217 +165,198 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	test('dashboard renders the budget-vs-actuals and trend charts', async ({
 		page,
 	}) => {
-		await expect(page.getByTestId('bbv-compliance-dashboard')).toBeVisible({
+		await expect(page.getByTestId('cn-dashboard-page')).toBeVisible({
 			timeout: 15_000,
 		})
-
-		// The two declared charts (horizontal bar + cumulative line).
-		await expect(page.getByTestId('bbv-chart-budget-vs-actuals')).toBeVisible()
-		await expect(page.getByTestId('bbv-chart-spend-trend')).toBeVisible()
+		const body = page.locator('#app-content-vue, main').first()
+		// Two charts are declared: "Budget vs. actuals" (bar) and "Trend"
+		// (line). Each must mount a chart widget body — the ApexCharts SVG, or
+		// CnChartWidget's own empty state on a data-less instance. A dashboard
+		// with no chart widget at all fails.
+		await expect(
+			body.getByText('Budget vs. actuals', { exact: false }).first(),
+		).toBeVisible({ timeout: 15_000 })
+		await expect(
+			body.getByText('Trend', { exact: false }).first(),
+		).toBeVisible({ timeout: 15_000 })
+		await expect(
+			body
+				.locator('.cn-chart-widget svg, [data-testid="cn-chart-widget-empty"]')
+				.first(),
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-003/exceptions-block-renders
 	 */
-	test('dashboard mounts the exceptions block with link affordance', async ({
+	test('dashboard mounts the exceptions block with its declared empty state', async ({
 		page,
 	}) => {
-		const exceptions = page.getByTestId('bbv-dashboard-exceptions')
-		await expect(exceptions).toBeVisible({ timeout: 15_000 })
-		// Either the empty-state copy ("No overspends") or the list of
-		// overspent programmes — both are valid mount states.
+		await expect(page.getByTestId('cn-dashboard-page')).toBeVisible({
+			timeout: 15_000,
+		})
+		const body = page.locator('#app-content-vue, main').first()
+		// The manifest declares `exceptions.title: "Exceptions"` with
+		// `emptyState: "No overspends"`. Either the populated list or that
+		// empty-state copy is a valid mount; neither present is a failure.
+		await expect(
+			body.getByText('Exceptions', { exact: false }).first(),
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-002/dashboard-filters-render
 	 */
-	test('dashboard renders the three declared filter facets', async ({ page }) => {
-		const filters = page.getByTestId('bbv-dashboard-filters')
-		await expect(filters).toBeVisible({ timeout: 15_000 })
-
-		// Programme + fiscal year + budget status filters from the
-		// manifest filters[] block.
-		await expect(page.getByTestId('bbv-filter-programmeStructure')).toBeVisible()
-		await expect(page.getByTestId('bbv-filter-fiscalYear')).toBeVisible()
-		await expect(page.getByTestId('bbv-filter-status')).toBeVisible()
-	})
-
-	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-002/programme-filter-narrows-dashboard
-	 */
-	test('programme filter accepts a selection and updates the URL state', async ({
+	test('dashboard renders the three declared filter facets', async ({
 		page,
 	}) => {
-		const filter = page.getByTestId('bbv-filter-programmeStructure')
-		if (await filter.isVisible().catch(() => false)) {
-			// The manifest declares a multi-select with seven options;
-			// selecting "mobiliteit" narrows the dashboard envelope. The
-			// store update is reflected as a query-string update because
-			// the manifest dashboard wires filter state through the
-			// router. Detailed envelope arithmetic is asserted in Newman.
-			await filter.click().catch(() => {})
+		await expect(page.getByTestId('cn-dashboard-page')).toBeVisible({
+			timeout: 15_000,
+		})
+		const body = page.locator('#app-content-vue, main').first()
+		// `filters[]` declares Programme (multi-select), Fiscal year (select)
+		// and Budget status (multi-select).
+		for (const label of ['Programme', 'Fiscal year', 'Budget status']) {
+			await expect(
+				body.getByText(label, { exact: false }).first(),
+				`filter facet "${label}" is declared in the manifest but does not render`,
+			).toBeVisible({ timeout: 15_000 })
 		}
-		// Smoke-pass: dashboard does not 500 on filter interaction.
-		await expect(page.getByTestId('bbv-compliance-dashboard')).toBeVisible()
 	})
 })
 
 test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto(APP + LINKER_INDEX_ROUTE)
-		await page.waitForLoadState('domcontentloaded')
-		await dismissWizard(page)
+		await gotoRoute(page, LINKER_INDEX_ROUTE)
 	})
 
 	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-004/linker-mapping-status-badge
+	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-index-renders
+	 *
+	 * The linker index is a `type:"index"` page with no `component`, so it is
+	 * rendered by CnIndexPage. Assert the library's real index surface: the
+	 * page title, and one of the recognised index bodies (a data table, an
+	 * empty-content block, a list, or the primary-action toolbar). This holds
+	 * on a bare CI instance with no seeded GL lines — an empty CnIndexPage
+	 * still renders its empty-content block and its toolbar.
 	 */
-	test('linker index renders the mapping-status badge', async ({ page }) => {
-		await expect(page.getByTestId('bbv-linker-index')).toBeVisible({
-			timeout: 15_000,
-		})
-		await expect(page.getByTestId('bbv-linker-mapping-status')).toBeVisible()
-	})
-
-	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-bulk-select-and-action
-	 */
-	test('linker shows the GL-line table with multi-select and a disabled bulk action', async ({
-		page,
-	}) => {
-		await expect(page.getByTestId('bbv-linker-table')).toBeVisible({
+	test('linker index mounts a real index surface', async ({ page }) => {
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
 			timeout: 15_000,
 		})
 
-		// The CnDataTable's master-select checkbox + the per-row checkboxes
-		// from the manifest `selectable: true` config.
-		const masterSelect = page.getByTestId('bbv-linker-select-all')
-		// The "Link to Programme" CTA is rendered but disabled while
-		// nothing is selected (manifest `requiresSelection: true`).
-		const bulkCta = page.getByTestId('bbv-linker-bulk-link')
+		const host = page.locator('#app-content-vue, main').first()
+		await expect(host.getByText('Budget Links', { exact: false }).first())
+			.toBeVisible({ timeout: 15_000 })
 
-		// Both affordances mount; behaviour around disabled state is
-		// exercised by the dialog tests below and the OR object endpoints
-		// covered by Newman.
-		if (await masterSelect.isVisible().catch(() => false)) {
-			await expect(masterSelect).toBeVisible()
-		}
-		if (await bulkCta.isVisible().catch(() => false)) {
-			await expect(bulkCta).toBeVisible()
-		}
+		const tables = await host.locator('table:visible').count()
+		const empty = await host
+			.locator('.empty-content, .emptycontent, [class*="empty-content" i]')
+			.count()
+		const rows = await host.locator('[role="row"]').count()
+		const actionsBar = await page.getByTestId('cn-actions-bar').count()
+		expect(
+			tables + empty + rows + actionsBar,
+			'the linker index rendered no table, no empty state, no rows and no actions bar',
+		).toBeGreaterThan(0)
 	})
 
 	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-bulk-dialog-fields
+	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-004/linker-columns-render
+	 *
+	 * The manifest declares the GL-line columns the linker must show. Column
+	 * headers render from `config.columns[]` whether or not any row exists, so
+	 * this is a data-independent assertion about the declared contract.
 	 */
-	test('opening the bulk dialog renders the Target Programme + Effective Date fields', async ({
+	test('linker index renders the manifest-declared GL-line columns', async ({
 		page,
 	}) => {
-		// If seed data is loaded, select the master checkbox to enable
-		// the bulk action, then open the CnFormDialog.
-		const masterSelect = page.getByTestId('bbv-linker-select-all')
-		if (await masterSelect.isVisible().catch(() => false)) {
-			await masterSelect.click().catch(() => {})
-		}
-		const bulkCta = page.getByTestId('bbv-linker-bulk-link')
-		if (await bulkCta.isVisible().catch(() => false)) {
-			await bulkCta.click().catch(() => {})
-			// The CnFormDialog mounts with the two declared fields.
-			const dialog = page.getByTestId('bbv-linker-dialog')
-			if (await dialog.isVisible().catch(() => false)) {
-				await expect(
-					page.getByTestId('bbv-linker-dialog-programmeStructure'),
-				).toBeVisible()
-				await expect(
-					page.getByTestId('bbv-linker-dialog-programmeAssignedAt'),
-				).toBeVisible()
-			}
-		}
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
+		const host = page.locator('#app-content-vue, main').first()
+		await expect(
+			host.getByRole('columnheader', { name: /programme/i }).first(),
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-filter-facets
+	 *
+	 * `config.filters[]` declares three facets — Account type, Programme,
+	 * Assignment status. `filters` IS a supported CnIndexPage concept (unlike
+	 * `bulkActions` / `mappingStatus` below), so their declared labels must
+	 * appear on the page. The previous version of this test asserted
+	 * `bbv-linker-filters` and three `bbv-linker-filter-*` testids, none of
+	 * which exists anywhere outside that spec file.
 	 */
 	test('linker index renders the three declared filter facets', async ({
 		page,
 	}) => {
-		await expect(page.getByTestId('bbv-linker-filters')).toBeVisible({
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
 			timeout: 15_000,
 		})
-
-		// accountType + programmeStructure + assignmentStatus from the
-		// manifest filters[] block.
-		await expect(page.getByTestId('bbv-linker-filter-accountType')).toBeVisible()
-		await expect(
-			page.getByTestId('bbv-linker-filter-programmeStructure'),
-		).toBeVisible()
-		await expect(
-			page.getByTestId('bbv-linker-filter-assignmentStatus'),
-		).toBeVisible()
+		const host = page.locator('#app-content-vue, main').first()
+		for (const label of ['Account type', 'Programme', 'Assignment status']) {
+			await expect(
+				host.getByText(label, { exact: false }).first(),
+				`filter facet "${label}" is declared in config.filters[] but does not render`,
+			).toBeVisible({ timeout: 15_000 })
+		}
 	})
+
+	/**
+	 * ⚠️ NOT COVERED HERE, AND SAID SO RATHER THAN FAKED.
+	 *
+	 * `config.bulkActions[]` (the "Link to Programme" CTA + its CnFormDialog
+	 * with Target Programme / Effective Date) and `config.mappingStatus` are
+	 * declared by the fragment and are NOT props of CnIndexPage — the library
+	 * has zero references to either key, exactly like `config.dashboard` on the
+	 * dashboard page above (#866). The previous file "covered" both with
+	 * `if (await cta.isVisible()) { expect(cta).toBeVisible() }`, an assertion
+	 * that cannot fail and reported green while nothing rendered.
+	 *
+	 * Rather than keep a test that measures nothing, the claim is withdrawn:
+	 * there is no `@e2e` tag for REQ-BBL-001's bulk-link scenario in this file
+	 * any more. It belongs to #866 with the dashboard vocabulary.
+	 */
 })
 
 test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto(APP + LINKER_DETAIL_ROUTE)
-		await page.waitForLoadState('domcontentloaded')
-		await dismissWizard(page)
-	})
-
 	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-003/linker-detail-renders
+	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-003/linker-detail-handles-missing-record
+	 *
+	 * `smoke-id` is a synthetic id that resolves to no object. A `type:"detail"`
+	 * page must still mount its route and report the miss — it must not blank
+	 * the surface, and it must not offer an editable form for a record that
+	 * does not exist. Driving a real record needs a seeded GL line, which the
+	 * CI seed currently drops (DECISION-3 on the fleet board), so the
+	 * populated-detail scenario is not claimed as covered here.
 	 */
-	test('detail page mounts with the programme + assignedAt fields', async ({
+	test('detail route resolves and reports a record it cannot load', async ({
 		page,
 	}) => {
-		await expect(page.getByTestId('bbv-linker-detail')).toBeVisible({
+		await gotoRoute(page, LINKER_DETAIL_ROUTE)
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
-
-		// The two editable fields declared by the manifest detail config.
-		await expect(
-			page.getByTestId('bbv-linker-detail-programmeStructure'),
-		).toBeVisible()
-		await expect(
-			page.getByTestId('bbv-linker-detail-programmeAssignedAt'),
-		).toBeVisible()
-	})
-
-	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-003/linker-detail-back-to-index
-	 */
-	test('detail page exposes the back-to-index affordance', async ({ page }) => {
-		// The manifest `indexRoute: BudgetToProgrammeLinker` wires a
-		// breadcrumb / back button. Either the CnDetailPage default
-		// affordance or the explicit testid is acceptable.
-		const back = page.getByTestId('bbv-linker-detail-back')
-		if (await back.isVisible().catch(() => false)) {
-			await back.click()
-			await page.waitForLoadState('domcontentloaded')
-			expect(page.url()).toMatch(/budget-to-programme/)
-		}
+		await expect(page.getByTestId('cn-detail-page-header')).toBeVisible()
 	})
 })
 
-test.describe('Provincies BBV — admin settings refresh interval', () => {
-	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-004/refresh-interval-dropdown
-	 */
-	test('Dashboard Refresh Interval dropdown is present and saveable in admin settings', async ({
-		page,
-	}) => {
-		await page.goto(APP + '/admin')
-		await page.waitForLoadState('domcontentloaded')
-		await dismissWizard(page)
+/**
+ * ⚠️ REQ-BBC-004 (Dashboard Refresh Interval, admin settings) HAS NO COVERAGE
+ * HERE, AND THE FILE NO LONGER PRETENDS IT DOES.
+ *
+ * The removed test navigated to `${APP}/admin` — a route the manifest does not
+ * declare at all (checked against all 590 declared page routes), so vue-router
+ * sent it to the Dashboard via the catch-all — and then ran
+ *   `if (await refresh.isVisible()) { await expect(refresh).toBeVisible() }`
+ * which is green whatever is on screen. The dropdown it looked for,
+ * `shillinq-dashboard-refresh-interval`, exists nowhere in `src/`.
+ *
+ * A test that navigates to a route that does not exist and then asserts
+ * nothing is the purest form of an invisible pass. Withdrawing the claim is
+ * the honest outcome; building the setting belongs to #866.
+ */
 
-		// The Shillinq AdminSettings.vue exposes the refresh-interval
-		// dropdown declared in task 11. When the admin page is not
-		// reachable (e.g. during a non-admin smoke), the test gracefully
-		// no-ops because the smoke storage state may not carry admin
-		// rights.
-		const refresh = page.getByTestId('shillinq-dashboard-refresh-interval')
-		if (await refresh.isVisible().catch(() => false)) {
-			await expect(refresh).toBeVisible()
-		}
-	})
-})
