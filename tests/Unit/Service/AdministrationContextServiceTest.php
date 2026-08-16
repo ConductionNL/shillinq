@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -157,7 +158,41 @@ final class AdministrationContextServiceTest extends TestCase {
 			}//end setSchema()
 
 			/**
+			 * Single-object lookup.
+			 *
+			 * ⚠️ THROWS on a miss — it does not return null, and it only ever
+			 * answers to a uuid. Real ObjectService raises
+			 * DoesNotExistException, so a caller that wants a fallback must
+			 * wrap this in its own try/catch. The double omitted this method
+			 * entirely, which meant the find()-then-fall-back path the service
+			 * actually takes was never exercised here.
+			 *
+			 * @param string $id Object uuid.
+			 *
+			 * @return array<string,mixed>
+			 *
+			 * @throws DoesNotExistException When no object matches.
+			 */
+			public function find(string $id): array {
+				foreach (($this->data[$this->schema] ?? []) as $row) {
+					if (($row['id'] ?? null) === $id) {
+						return $row;
+					}
+				}
+
+				throw new DoesNotExistException(
+					sprintf("Object with identifier '%s' not found in any magic table", $id)
+				);
+			}//end find()
+
+			/**
 			 * Return the data set for the active schema with simple equality filters.
+			 *
+			 * ⚠️ `filters` addresses JSON PROPERTIES only. The ObjectEntity's
+			 * `id` is its own column, so real OpenRegister matches ZERO rows for
+			 * `['filters' => ['id' => ...]]` at every value — silently. Mirrored
+			 * below so this double cannot bless a lookup the engine would answer
+			 * with nothing.
 			 *
 			 * @param array<string,mixed> $params Query parameters.
 			 *
@@ -168,6 +203,10 @@ final class AdministrationContextServiceTest extends TestCase {
 				$filters = ($params['filters'] ?? []);
 				if ($filters === []) {
 					return $rows;
+				}
+
+				if (array_key_exists('id', $filters) === true) {
+					return [];
 				}
 
 				return array_values(
@@ -204,9 +243,20 @@ final class AdministrationContextServiceTest extends TestCase {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function sampleAdministrations(): array {
+		// ⚠️ `administrationCode` carries the identifier the memberships
+		// reference, because that is the id space the service resolves on.
+		//
+		// findAdministration() looks the record up by find($id) — which only
+		// answers to a uuid — and otherwise falls back to filtering on
+		// `administrationCode`. Production agrees: buildContext() echoes the
+		// code back as `activeAdministrationId`, and ci-seed.sh stamps fixtures
+		// with it. These rows previously carried `administrationCode` values
+		// ('WERK-001') that nothing referenced, while the memberships pointed at
+		// the `id` — which no lookup path can match — so both role tests
+		// resolved zero administrations.
 		return [
-			['id' => 'adm-werk-001', 'administrationCode' => 'WERK-001', 'name' => 'Werk B.V.', 'status' => 'actief'],
-			['id' => 'adm-beheer-001', 'administrationCode' => 'BEHEER-001', 'name' => 'Beheer B.V.', 'status' => 'actief'],
+			['id' => '3f1c8a90-0000-4000-8000-000000000001', 'administrationCode' => 'adm-werk-001', 'name' => 'Werk B.V.', 'status' => 'actief'],
+			['id' => '3f1c8a90-0000-4000-8000-000000000002', 'administrationCode' => 'adm-beheer-001', 'name' => 'Beheer B.V.', 'status' => 'actief'],
 		];
 	}//end sampleAdministrations()
 
