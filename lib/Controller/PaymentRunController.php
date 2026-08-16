@@ -77,6 +77,7 @@ class PaymentRunController extends Controller {
 	 * @param AdministrationContextService $administrationContext Tenant scope (ADR-005 guard).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		IRequest $request,

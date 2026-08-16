@@ -173,6 +173,7 @@ class AccountantsdossierExportService {
 	 * @param IAppConfig $appConfig App config for the register slug + signer hand-off.
 	 * @param IUserSession $userSession Session for generatedBy attribution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

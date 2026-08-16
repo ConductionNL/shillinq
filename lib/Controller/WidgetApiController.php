@@ -95,13 +95,14 @@ class WidgetApiController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
+	 * Rate limit: public booking widget. These back a citizen-facing embed —
+	 * services and slots are read repeatedly as someone picks a date, so the
+	 * ceiling is generous. No credential is in play, so no brute-force counter.
+	 *
 	 * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-4
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// Public booking widget. These back a citizen-facing embed: services and
-	// slots are read repeatedly as someone picks a date, so the ceiling is
-	// generous. No credential in play, so no brute-force counter.
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function services(): JSONResponse {
 		$authResult = $this->guard();
@@ -263,11 +264,12 @@ class WidgetApiController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-4
+	 * Rate limit: tighter than its siblings, because this one BOOKS.
+	 * `services` / `slots` are reads a visitor repeats while choosing; a
+	 * booking is a write and a commitment.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// Tighter than its siblings: this one BOOKS. services/slots are reads a
-	// visitor repeats while choosing; a booking is a write and a commitment.
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function appointments(
 		string $serviceId = '',

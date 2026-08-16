@@ -103,6 +103,7 @@ class FxRevaluationService {
 	 * @param IAppConfig $appConfig App config for the register slug + GL account overrides.
 	 * @param TreasuryRateService $treasuryRateService Rate-lookup facade (REQ-MC-007).
 	 * @param LoggerInterface $logger Structured logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

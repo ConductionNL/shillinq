@@ -62,6 +62,7 @@ class RevenueCutoffService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param RevenueRecognitionCalculator $calculator Pure-logic IFRS 15 arithmetic helper.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

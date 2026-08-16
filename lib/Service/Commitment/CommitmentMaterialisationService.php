@@ -95,6 +95,7 @@ class CommitmentMaterialisationService {
 	 * @param BudgetBlocker $budget Reused budget-room guard (REQ-VPL-001).
 	 * @param IEventDispatcher $dispatcher NC event dispatcher (rechtmatigheid trigger transport).
 	 * @param LoggerInterface $logger Logger for fail-soft/fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

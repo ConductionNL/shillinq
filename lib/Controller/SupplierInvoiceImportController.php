@@ -91,6 +91,7 @@ class SupplierInvoiceImportController extends Controller {
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

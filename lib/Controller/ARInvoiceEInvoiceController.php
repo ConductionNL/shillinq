@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -43,6 +44,19 @@ use Throwable;
 
 /**
  * ARInvoice e-invoicing REST endpoint (send-einvoice).
+ *
+ * The endpoint is authenticated (#[NoAdminRequired]) AND authorised per
+ * administration in this controller, via
+ * AdministrationContextService::canAccess() (ADR-005, REQ-MA-001).
+ *
+ * ⚠️ This endpoint has an EXTERNAL side effect: it transmits an invoice over
+ * the Peppol network under the instance's own access-point credentials. An
+ * unauthorised call is therefore not merely a data read — it makes this
+ * installation send another administration's invoice to a real recipient, and
+ * that cannot be taken back. `scopeParam()` below is a FORMAT check only, and
+ * this app declares no `authorization` block on its schemas, so OpenRegister
+ * (which treats an absent block as open to every authenticated user — see the
+ * same note on VATReturnController) refuses nothing downstream either.
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
@@ -62,6 +76,7 @@ class ARInvoiceEInvoiceController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param EInvoiceService $eInvoiceService Orchestrator (server-authoritative).
 	 * @param IUserSession $userSession User session guard.
+	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
 	 * @return void
@@ -70,6 +85,7 @@ class ARInvoiceEInvoiceController extends Controller {
 		IRequest $request,
 		private readonly EInvoiceService $eInvoiceService,
 		private readonly IUserSession $userSession,
+		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -104,6 +120,13 @@ class ARInvoiceEInvoiceController extends Controller {
 		$administrationId = $this->scopeParam(name: 'administrationId');
 		if ($administrationId === '') {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			// 404, never 403 — canAccess()'s own documented contract. A 403 here
+			// would confirm the administration exists and turn this endpoint
+			// into an enumeration oracle for the instance's tenant list.
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
 		try {

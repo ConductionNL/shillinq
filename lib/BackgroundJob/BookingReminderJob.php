@@ -70,6 +70,7 @@ class BookingReminderJob extends TimedJob {
 	 * @param BookingNotificationService $notificationService The notification service.
 	 * @param IAppConfig $appConfig The app config.
 	 * @param LoggerInterface $logger The logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

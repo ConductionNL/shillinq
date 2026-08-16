@@ -99,6 +99,7 @@ class CBSExportService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug + mapping overrides.
 	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */
