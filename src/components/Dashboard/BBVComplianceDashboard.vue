@@ -42,9 +42,9 @@
 			:widgets="widgets"
 			:layout="layout"
 			:loading="loading"
-			:cell-height="80"
-			:grid-margin="16"
-			:empty-label="t('shillinq', 'No widgets configured.')">
+			:cellHeight="80"
+			:gridMargin="16"
+			:emptyLabel="t('shillinq', 'No widgets configured.')">
 			<template #header-actions>
 				<span
 					v-if="scope.fiscalYear"
@@ -91,7 +91,7 @@
 				<BBVProgrammeTable
 					:programmes="programmes"
 					:loading="loading"
-					@row-click="onProgrammeClick" />
+					@rowClick="onProgrammeClick" />
 			</template>
 		</CnDashboardPage>
 
@@ -103,14 +103,13 @@
 
 <script>
 import { CnDashboardPage } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
-
-import BBVKPICards from './BBVKPICards.vue'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import BBVComplianceChart from './BBVComplianceChart.vue'
-import BBVTrendChart from './BBVTrendChart.vue'
+import BBVKPICards from './BBVKPICards.vue'
 import BBVProgrammeTable from './BBVProgrammeTable.vue'
+import BBVTrendChart from './BBVTrendChart.vue'
 
 export default {
 	name: 'BBVComplianceDashboard',

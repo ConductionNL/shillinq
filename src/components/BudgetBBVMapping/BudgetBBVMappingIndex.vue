@@ -37,24 +37,43 @@
 -->
 <template>
 	<div class="bbv-mapping-index" data-testid="bbv-mapping-index">
+		<!--
+			🔴 `:empty-title`, `:empty-action-label` and `@empty-action` below are
+			LEFT KEBAB-CASED ON PURPOSE — do not "fix" them to camelCase to clear
+			`vue/attribute-hyphenation` / `vue/v-on-event-hyphenation`.
+
+			None of the three is part of CnIndexPage's API: nc-vue 2.3.0 declares
+			`emptyText` (default the untranslated string `'No items found'`) and
+			its `emits` list has no `empty-action`. So all three are INERT — the
+			two attributes fall through onto the root DOM element and the listener
+			is never called. Renaming them to camelCase changes the rendered DOM
+			attribute names and leaves them exactly as inert, which is why the
+			rewrite was withheld rather than applied.
+
+			The real defect is a BEHAVIOUR one: this index shows CnIndexPage's
+			untranslated default empty text, and its empty-state action does
+			nothing. Fixing it means `:empty-text` plus an `#empty` slot (or an
+			nc-vue change), and it needs verifying through the UI — it is not a
+			lint fix and is deliberately out of this change's scope.
+		-->
 		<CnIndexPage
 			:title="t('shillinq', 'Budget Mapping')"
 			:description="t('shillinq', 'Allocations of GL accounts to BBV programmes (REQ-BBVW-002 / REQ-BBVW-004).')"
 			:objects="filteredObjects"
 			:loading="loading"
 			:pagination="pagination"
-			:include-columns="visibleColumns"
-			:column-overrides="columnOverrides"
+			:includeColumns="visibleColumns"
+			:columnOverrides="columnOverrides"
 			:empty-title="t('shillinq', 'No mappings recorded yet')"
 			:empty-action-label="t('shillinq', 'Add mapping')"
-			:add-label="t('shillinq', 'Add mapping')"
-			:row-key="rowKey"
+			:addLabel="t('shillinq', 'Add mapping')"
+			:rowKey="rowKey"
 			data-testid="bbv-mapping-index-page"
 			@add="onAdd"
 			@empty-action="onAdd"
 			@refresh="loadMappings"
-			@row-click="onRowClick"
-			@page-changed="onPageChange">
+			@rowClick="onRowClick"
+			@pageChanged="onPageChange">
 			<!--
 				`below-header`, NOT `header-actions`. CnIndexPage 2.2.0-vue3.2
 				declares below-header / mass-actions / action-items / actions /
