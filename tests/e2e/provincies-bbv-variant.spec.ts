@@ -298,6 +298,13 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 	 * appear on the page. The previous version of this test asserted
 	 * `bbv-linker-filters` and three `bbv-linker-filter-*` testids, none of
 	 * which exists anywhere outside that spec file.
+	 *
+	 * ⚠️ IT IS RED, and the rewrite is what proved why — #866. The page itself
+	 * is fine: the two tests above pass, including the one asserting that this
+	 * index really does query `/apps/openregister/api/objects/shillinq/GLLine`.
+	 * Only the DECLARED BODY fails to appear, so `config.filters[]` joins
+	 * `config.dashboard.*`, `config.bulkActions[]` and `config.mappingStatus`
+	 * on this fragment's list of keys nothing reads.
 	 */
 	test('linker index renders the three declared filter facets', async ({
 		page,

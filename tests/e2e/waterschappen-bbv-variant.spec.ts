@@ -372,6 +372,18 @@ test.describe('BBV scoping + validation', () => {
 	 * So this now asserts the scope is SURFACED and RE-QUERYABLE, which is the
 	 * requirement. It can fail: drop the label, or break the re-query, and it
 	 * goes red.
+	 *
+	 * ⚠️ AND IT IS RED — see #869, which this rewrite is what surfaced.
+	 * `bbv-dashboard-fy-label` does not render on a live instance. The
+	 * dashboard component mounts (the `bbv-compliance-dashboard` assertion
+	 * above passes in the same run), but the label is `v-if="scope.fiscalYear"`
+	 * and `GET /api/bbv-dashboard` is returning its fallback envelope, whose
+	 * `scope.fiscalYear` is `null`. So the one UI obligation REQ-BBVW-006
+	 * states — *"the user sees a label or breadcrumb indicating FY 2026"* — is
+	 * unmet, and the change's tasks.md ticks it `[x]`.
+	 *
+	 * The old assertion masked this: it failed on a fictional `<select>`, which
+	 * is a louder wrong reason than the real one. Left asserting.
 	 */
 	test('dashboard surfaces the active fiscal-year scope and re-queries it', async ({ page }) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
