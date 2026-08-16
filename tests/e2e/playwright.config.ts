@@ -47,7 +47,13 @@
 import { defineConfig, devices } from '@playwright/test'
 import * as path from 'path'
 
-import { BASE_URL } from './base-url'
+// `resolveBaseURL()`, NOT `BASE_URL`. base-url.ts exports the FUNCTION and
+// `BASE_URL_ENV_NAMES`; there is no `BASE_URL` const. Playwright transpiles
+// this config without type-checking, so importing a name that does not exist
+// is not an error — it is `undefined`, and `baseURL: undefined` makes every
+// relative `page.goto('/apps/...')` a "Cannot navigate to invalid URL".
+// That is what failed 169 of 271 tests on this suite's first ever CI run.
+import { resolveBaseURL } from './base-url'
 
 const APP_ROOT = path.resolve(__dirname, '..', '..')
 
@@ -104,7 +110,7 @@ export default defineConfig({
 		// Single source of truth — tests/e2e/base-url.ts. The specs import the
 		// same resolver, so `page.goto()` (which uses this baseURL) and the
 		// specs' own `page.request` calls cannot address different hosts.
-		baseURL: BASE_URL,
+		baseURL: resolveBaseURL(),
 		storageState: path.resolve(__dirname, '.auth', 'admin.json'),
 		trace: 'retain-on-failure',
 		screenshot: 'only-on-failure',
