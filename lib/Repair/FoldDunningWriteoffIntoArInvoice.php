@@ -74,6 +74,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	 * @param SettingsService $settingsService The settings service (register slug).
 	 * @param IGroupManager $groupManager The group manager (admin IUser resolution).
 	 * @param LoggerInterface $logger The logger interface.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private SettingsService $settingsService,

@@ -61,9 +61,9 @@ class CreditLimitGuard {
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
-	 *                                      lazily so the class loads even when OR is absent.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

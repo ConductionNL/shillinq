@@ -70,6 +70,7 @@ class IcpController extends Controller {
 	 * @param ArInvoiceIcpPdfRenderer $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */
