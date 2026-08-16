@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\FluxService;
 use OCA\Shillinq\Service\SoftCloseExecutor;
 use OCP\AppFramework\Controller;
@@ -46,6 +47,20 @@ use Psr\Log\LoggerInterface;
 /**
  * REST surface for soft-close execution + flux analysis (REQ-CLS-002, REQ-CLS-007).
  *
+ * The endpoints are authenticated (#[NoAdminRequired]) AND authorised per
+ * administration in this controller, via
+ * AdministrationContextService::canAccess() (ADR-005, REQ-MA-001).
+ *
+ * ⚠️ These two endpoints WRITE: a soft-close run posts accruals, FX, revenue
+ * and lease entries into the administration's ledger. The administration id
+ * arrives on the request and SoftCloseExecutor/FluxService treat it purely as a
+ * scope term — they act on whichever administration they are handed. There is
+ * no downstream backstop either: this app declares no `authorization` block on
+ * its schemas, and OpenRegister treats an absent block as open to every
+ * authenticated user (see the same note on VATReturnController). The membership
+ * check below is the only thing that keeps one tenant's bookkeeping out of
+ * another tenant's ledger.
+ *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-22
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
@@ -59,6 +74,7 @@ class SoftCloseController extends Controller {
 	 * @param IRequest $request Request object.
 	 * @param SoftCloseExecutor $softCloseExecutor Orchestration service.
 	 * @param FluxService $fluxService Flux analysis service.
+	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
@@ -66,6 +82,7 @@ class SoftCloseController extends Controller {
 		IRequest $request,
 		private readonly SoftCloseExecutor $softCloseExecutor,
 		private readonly FluxService $fluxService,
+		private readonly AdministrationContextService $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -98,6 +115,11 @@ class SoftCloseController extends Controller {
 		$administrationId = trim($administrationId);
 		if ($this->validId(value: $administrationId) === false) {
 			return $this->error(message: 'administration_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$periodId = trim((string)$this->request->getParam('periodId', ''));
@@ -149,6 +171,11 @@ class SoftCloseController extends Controller {
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
 		if ($this->validId(value: $administrationId) === false) {
 			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$periodId = trim((string)$this->request->getParam('periodId', ''));
@@ -252,6 +279,28 @@ class SoftCloseController extends Controller {
 	private function validId(string $value): bool {
 		return $value !== '' && preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $value) === 1;
 	}//end validId()
+
+	/**
+	 * Refuse the request unless the caller holds a membership for the
+	 * administration it named (ADR-005 / REQ-MA-001).
+	 *
+	 * 404, never 403 — AdministrationContextService::canAccess()'s own
+	 * documented contract. A 403 would confirm the administration exists and
+	 * turn these endpoints into an enumeration oracle for the tenant list.
+	 *
+	 * @param string $administrationId The format-checked administration id.
+	 *
+	 * @return JSONResponse|null A refusal to return to the client, or null when authorised.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	private function requireAccessibleAdministration(string $administrationId): ?JSONResponse {
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return $this->error(message: 'Administration not found', status: Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end requireAccessibleAdministration()
 
 	/**
 	 * Build a client-safe error response.

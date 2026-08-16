@@ -200,6 +200,7 @@ class VendorPerformanceAggregation {
 	 *
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

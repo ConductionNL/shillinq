@@ -86,7 +86,23 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 			'deadline-calendar settings page not deployed on this build',
 		)
 
-		await toggle.click()
+		// Click the SWITCH SURFACE, not the input. `data-testid` falls through
+		// NcCheckboxRadioSwitch onto its <input>, which @nextcloud/vue 9 renders
+		// underneath a styled `.checkbox-radio-switch__content` span. The input
+		// is technically visible, so Playwright does not re-target — it just
+		// retried the click for the full 60s while the span reported
+		// "intercepts pointer events". The span is what a user actually clicks.
+		const switchSurface = page.getByTestId('deadline-category-payment-run')
+			.locator('.checkbox-radio-switch__content')
+			.first()
+
+		const before = await toggle.isChecked()
+		await switchSurface.click()
+		// Assert the toggle actually moved before saving — otherwise a POST of
+		// an unchanged payload would still return 200 and this test would pass
+		// without having toggled anything.
+		await expect(toggle).toBeChecked({ checked: !before })
+
 		const saveResponse = page.waitForResponse(
 			(response) =>
 				response.url().includes('/api/deadline-calendar/settings')
@@ -97,7 +113,8 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		expect(response.ok()).toBeTruthy()
 
 		// Restore the default so the test stays idempotent.
-		await toggle.click()
+		await switchSurface.click()
+		await expect(toggle).toBeChecked({ checked: before })
 		await page.getByTestId('deadline-settings-save').click()
 	})
 })

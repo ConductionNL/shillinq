@@ -56,10 +56,10 @@ class TaxCalculationService {
 	/**
 	 * Construct the service.
 	 *
-	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param TaxCalculationHelper $helper Pure-logic helper (loss compensation, rate calc).
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

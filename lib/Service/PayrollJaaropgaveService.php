@@ -58,6 +58,7 @@ class PayrollJaaropgaveService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Cents arithmetic helper (no IO).
 	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

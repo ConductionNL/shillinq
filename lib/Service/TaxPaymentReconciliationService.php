@@ -50,6 +50,7 @@ class TaxPaymentReconciliationService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param TaxReportCalculator $calculator Pure-logic cents helper (reused for precision).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

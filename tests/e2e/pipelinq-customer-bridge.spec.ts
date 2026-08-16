@@ -188,11 +188,24 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		const persistedValue = 'https://pipelinq.persistence.test/api'
 		await endpoint.fill(persistedValue)
 
-		const save = page.getByRole('button', { name: /Save/i }).first()
-		if (await save.isVisible().catch(() => false)) {
-			await save.click()
-			await page.waitForLoadState('domcontentloaded')
-		}
+		// Scope the Save button to the PIPELINQ form and wait for its own POST.
+		// The admin settings page hosts several CnSettingsSections, each with a
+		// "Save" button, so `getByRole('button', {name:/Save/i}).first()` could
+		// submit a different section entirely; and `waitForLoadState(
+		// 'domcontentloaded')` resolves immediately on an already-loaded page,
+		// so the reload could race the in-flight POST. Either alone is enough
+		// to make the endpoint read back empty and blame persistence.
+		const form = page.locator('form:has(#pipelinq-endpoint)')
+		const save = form.getByRole('button', { name: /Save/i }).first()
+		await expect(save).toBeVisible()
+
+		const savePost = page.waitForResponse(
+			(response) => response.url().includes('/api/pipelinq/settings')
+				&& response.request().method() === 'POST',
+		)
+		await save.click()
+		const saveResponse = await savePost
+		expect(saveResponse.ok(), `pipelinq settings POST returned ${saveResponse.status()}`).toBeTruthy()
 
 		await page.reload()
 		await page.waitForLoadState('domcontentloaded')

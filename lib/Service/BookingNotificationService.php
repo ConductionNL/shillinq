@@ -65,6 +65,7 @@ class BookingNotificationService {
 	 * @param ContainerInterface $container The DI container.
 	 * @param IAppConfig $appConfig The Nextcloud app config.
 	 * @param LoggerInterface $logger The logger interface.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */

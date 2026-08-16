@@ -339,24 +339,65 @@ class AdministrationContextService {
 	}//end membershipsForUser()
 
 	/**
-	 * Fetch a single Administration record by its id.
+	 * Fetch a single Administration record by its id or its administrationCode.
 	 *
-	 * @param string $administrationId The administration id.
+	 * ⚠️ `findAll(['filters' => ['id' => …]])` MATCHES NOTHING. `filters` addresses
+	 * the object's JSON properties, and `id` is the ObjectEntity's own identifier,
+	 * not a property — so the filter is applied against a field that does not
+	 * exist and returns an empty set for EVERY value, valid uuids included.
+	 * Measured against a live register: filtering `id` on the real uuid returned
+	 * 0 rows, filtering `administrationCode` on `ADM-001` returned 1, and
+	 * `find($uuid)` returned the record.
+	 *
+	 * That was the whole of shillinq#569. buildContext() skips a membership whose
+	 * administration does not resolve, and this path returns null WITHOUT logging,
+	 * so every user's context came back `administrations: []` while first-time
+	 * setup reported `completed: true` — no error anywhere, and every
+	 * administration-scoped surface silently unreachable.
+	 *
+	 * Both id spaces are resolved because both are in the data: memberships
+	 * written against the OpenRegister uuid, and fixtures/config written against
+	 * the human `administrationCode` (the value `administration_id` app-config
+	 * holds, and the one ~20 other call sites scope on).
+	 *
+	 * @param string $administrationId The administration uuid or administrationCode.
 	 *
 	 * @return array<string,mixed>|null
 	 */
 	private function findAdministration(string $administrationId): ?array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$matches = $objectService
+			$scoped = $objectService
 				->setRegister($this->register())
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => ['id' => $administrationId],
-						'limit' => 1,
-					]
-				);
+				->setSchema('Administration');
+
+			// Primary: the OpenRegister uuid, via the single-object lookup that
+			// actually addresses it.
+			//
+			// ⚠️ Its own try/catch, deliberately. find() THROWS
+			// DoesNotExistException ("Object with identifier 'ADM-001' not found
+			// in any magic table") for anything that is not a uuid — it does not
+			// return null. Letting that reach the outer catch would return null
+			// before the administrationCode fallback below ever runs, which is
+			// exactly the bug this method is being fixed for, reintroduced one
+			// layer down. A miss here is a normal id-space mismatch, not an error.
+			try {
+				$arr = $this->asArray(row: $scoped->find($administrationId));
+				if ($arr !== []) {
+					return $arr;
+				}
+			} catch (\Throwable $notAUuid) {
+				// Fall through to the administrationCode lookup.
+			}
+
+			// Fallback: the human administrationCode, which IS a JSON property
+			// and therefore is filterable.
+			$matches = $scoped->findAll(
+				[
+					'filters' => ['administrationCode' => $administrationId],
+					'limit' => 1,
+				]
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AdministrationContextService: failed to load administration',
@@ -372,6 +413,14 @@ class AdministrationContextService {
 				return $arr;
 			}
 		}
+
+		// Reached only when a membership names an administration that does not
+		// exist. Logged rather than dropped: a silent skip here is what made the
+		// empty context so hard to attribute.
+		$this->logger->warning(
+			'AdministrationContextService: membership names an administration that does not resolve',
+			['administrationId' => $administrationId]
+		);
 
 		return null;
 	}//end findAdministration()

@@ -112,6 +112,7 @@ class DepositReconciliationService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ?DepositPaymentAdapterInterface $adapter Optional DepositPayment lifecycle
 	 *                                                 adapter. When supplied, the scheduled
 	 *                                                 polling workflow (REQ-DP-007) can call
