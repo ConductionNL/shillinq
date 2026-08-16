@@ -327,6 +327,74 @@ test.describe('BBV mapping detail — edit flow', () => {
 	 * FORM for a record that does not exist — inviting an operator to "edit"
 	 * nothing and save it as a new mapping — would break this test.
 	 */
+	/**
+	 * REQ-BBVW-007, on a record that exists.
+	 *
+	 * The sibling test below covers the 404 path — that a missing record must
+	 * NOT present an editable form. This one covers the requirement itself: the
+	 * audit-trail surface must be reachable from the detail sidebar. It needs a
+	 * real record, because the audit trail is keyed on `objectId` and because
+	 * BudgetBBVMappingDetail puts its buttons in CnDetailPage's `#actions` slot
+	 * and the form in `#default` while passing `:error="!!loadError"` — so on a
+	 * synthetic id the wrapper renders its "Not Found" state, `#actions` still
+	 * mounts and `#default` is suppressed by design.
+	 */
+	test('audit-trail surface is reachable from the detail page sidebar', async ({ page, request }) => {
+		const created = await request.post(
+			'/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping',
+			{
+				headers: { 'OCS-APIRequest': 'true' },
+				data: {
+					glAccountNumber: '4200',
+					programmeCode: 'P01',
+					allocationPercentage: 100,
+					fiscalYear: new Date().getFullYear(),
+					effectiveFrom: `${new Date().getFullYear()}-01-01`,
+					administrationId: 'ADM-001',
+				},
+			},
+		)
+		expect(created.ok()).toBeTruthy()
+		const id = (await created.json())?.id
+		expect(id, 'the seeded mapping must come back with an id').toBeTruthy()
+
+		try {
+			await page.goto(APP + MAPPING_INDEX_ROUTE + '/' + id)
+			await page.waitForLoadState('domcontentloaded')
+			await dismissWizard(page)
+
+			// The record loads, so the wrapper renders `#default` and the form
+			// is present — the negative case above is what used to fail here.
+			await expect(page.getByTestId('bbv-mapping-detail-form'))
+				.toBeVisible({ timeout: 15_000 })
+
+			// REQ-BBVW-007: the audit-trail panel must be reachable from the
+			// detail sidebar. CnDetailPage renders it collapsed
+			// (`:sidebarOpen="false"`), so assert it is attached rather than
+			// in the viewport.
+			await expect(page.getByTestId('budget-bbv-mapping-detail'))
+				.toBeVisible()
+			await expect(
+				page.locator('[data-testid="budget-bbv-mapping-detail"] .app-sidebar, .app-sidebar'),
+			).toBeAttached({ timeout: 10_000 })
+		} finally {
+			// Surface a failed teardown instead of swallowing it. This ran as
+			// `.catch(() => {})` first and left a seeded mapping behind on the
+			// shared dev instance — a silent leak that the next run then counts
+			// as pre-existing data.
+			const deleted = await request.delete(
+				`/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping/${id}`,
+				{ headers: { 'OCS-APIRequest': 'true' } },
+			)
+			if (deleted.ok() === false) {
+				// eslint-disable-next-line no-console
+				console.warn(
+					`[bbv] failed to clean up seeded mapping ${id}: HTTP ${deleted.status()}`,
+				)
+			}
+		}
+	})
+
 	test('a mapping id that does not exist reports the failure instead of rendering an empty edit form', async ({ page }) => {
 		await page.goto(APP + MAPPING_INDEX_ROUTE + '/edit-stub')
 		await page.waitForLoadState('domcontentloaded')
