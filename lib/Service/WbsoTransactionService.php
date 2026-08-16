@@ -163,10 +163,13 @@ class WbsoTransactionService {
 		$this->validateTransactionPayload(payload: $payload);
 
 
-		return $this->objectService
+		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
+		// this method declares — returning it raised a TypeError on every call.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Transaction')
-			->saveObject($payload);
+			->saveObject($payload)
+			->jsonSerialize();
 
 	}//end createTransaction()
 
@@ -197,10 +200,12 @@ class WbsoTransactionService {
 		$existing['postedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 
 
-		return $this->objectService
+		// ADR-084: see createTransaction() — the contract returns an entity.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Transaction')
-			->saveObject($existing);
+			->saveObject($existing)
+			->jsonSerialize();
 
 	}//end postTransaction()
 
@@ -250,10 +255,12 @@ class WbsoTransactionService {
 		];
 
 
-		return $this->objectService
+		// ADR-084: see createTransaction() — the contract returns an entity.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Transaction')
-			->saveObject($reversal);
+			->saveObject($reversal)
+			->jsonSerialize();
 
 	}//end reverseTransaction()
 

@@ -367,17 +367,15 @@ class BankReconciliationGuard {
 				->setSchema($schema)
 				->find($id);
 
-			if (is_array($result) === true) {
-				return $result;
+			// ADR-084: find() is declared `: ?ObjectEntityInterface`, which extends
+			// JsonSerializable — the is_array() arm above was unreachable by type.
+			if ($result === null) {
+				return null;
 			}
 
-			if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-				$serialized = $result->jsonSerialize();
-				if (is_array($serialized) === true) {
-					return $serialized;
-				}
-
-				return null;
+			$serialized = $result->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
 			}
 
 			return null;

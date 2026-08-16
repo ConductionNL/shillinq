@@ -213,15 +213,9 @@ class PaymentRunController extends Controller {
 			return null;
 		}
 
-		if (is_object($run) === true && method_exists($run, 'jsonSerialize') === true) {
-			return (array)$run->jsonSerialize();
-		}
-
-		if (is_array($run) === true) {
-			return $run;
-		}
-
-		return null;
+		// ADR-084: find() is declared `: ?ObjectEntityInterface`, which extends
+		// JsonSerializable — the is_array() arm below it was unreachable by type.
+		return (array)$run->jsonSerialize();
 	}//end resolveRun()
 
 	/**

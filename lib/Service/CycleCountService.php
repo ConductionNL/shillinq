@@ -453,13 +453,11 @@ class CycleCountService {
 				$filters['locationId'] = $locationFilter;
 			}
 
-			$rows = ($this->objectService
+			// ADR-084: findAll() is declared `: array` — never null, always an array.
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryStock')
-				->findAll(['filters' => $filters]) ?? []);
-			if (is_array($rows) === false) {
-				return [];
-			}
+				->findAll(['filters' => $filters]);
 
 			// Category filter requires a Product lookup. Fall back to client-side
 			// filter (the volume of stock rows per administration is bounded by SKU
@@ -517,10 +515,23 @@ class CycleCountService {
 				)
 			);
 			foreach ($skus as $sku) {
-				$product = $this->objectService
+				// ADR-084: this passed a filter ARRAY to find(int|string $id), which
+				// looks up a single object by identifier — it never applied the
+				// filters, and the is_array() test on its ObjectEntityInterface
+				// result was false regardless, so every SKU was categorised ''.
+				// findAll() is the filtered lookup and returns array rows.
+				$products = $this->objectService
 					->setRegister($this->register())
 					->setSchema('Product')
-					->find(['filters' => ['administrationId' => $administrationId, 'sku' => $sku]]);
+					->findAll(
+						[
+							'filters' => [
+								'administrationId' => $administrationId,
+								'sku' => $sku,
+							],
+						]
+					);
+				$product = ($products[0] ?? null);
 				$cat = '';
 				if (is_array($product) === true && isset($product['category']) === true) {
 					$cat = (string)$product['category'];
@@ -560,7 +571,8 @@ class CycleCountService {
 	 */
 	private function findLinesForCount(string $administrationId, string $countId): array {
 		try {
-			$rows = ($this->objectService
+			// ADR-084: findAll() is declared `: array` — never null, always an array.
+			return $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryCycleCountLine')
 				->findAll(
@@ -570,12 +582,7 @@ class CycleCountService {
 							'countId' => $countId,
 						],
 					]
-				) ?? []);
-			if (is_array($rows) === true) {
-				return $rows;
-			}
-
-			return [];
+				);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: findLinesForCount failed',

@@ -865,11 +865,11 @@ class SupplierInvoiceService {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
-
-			return $object;
+			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
+			// is_array() arm here was unreachable by type and this helper returned
+			// the INPUT on every save — silently discarding the id/uuid the store
+			// had just generated, which callers then read back as empty.
+			return (array)$result->jsonSerialize();
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SupplierInvoiceService: failed to persist object',

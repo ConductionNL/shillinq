@@ -371,11 +371,11 @@ class StockReservationGuard {
 				return false;
 			}
 
-			if (is_array($current) === true) {
-				$currentArray = $current;
-			} else {
-				$currentArray = (array)$current;
-			}
+			// ADR-084: find() returns an ObjectEntityInterface, so the is_array()
+			// arm was unreachable and `(array)$current` cast the ENTITY — its
+			// `version` key was absent, so the compare-and-set below read every
+			// row as version 0 and reported a collision against any non-zero row.
+			$currentArray = (array)$current->jsonSerialize();
 
 			if ((int)($currentArray['version'] ?? 0) !== (int)($row['version'] ?? 0)) {
 				$this->logger->info('StockReservationGuard: CAS collision', ['id' => $id]);
@@ -383,10 +383,15 @@ class StockReservationGuard {
 			}
 
 			$merged = array_merge($currentArray, $patch);
+			// ADR-084: the contract declares updateObject(string $objectId, array $data,
+			// bool $_rbac, bool $_multitenancy). The register/schema scope is carried by
+			// the setRegister()/setSchema() chain above, so passing them here raised
+			// "Unknown named parameter $register" — swallowed by the catch below, which
+			// made every compare-and-set silently report a collision instead of writing.
 			$this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryStock')
-				->updateObject(id: $id, object: $merged, register: $this->register(), schema: 'InventoryStock');
+				->updateObject(objectId: $id, data: $merged);
 
 			return true;
 		} catch (\Throwable $e) {

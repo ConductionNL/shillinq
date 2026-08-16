@@ -356,10 +356,12 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$itemArray = (array)$item;
-				if (is_array($item) === true) {
-					$itemArray = $item;
-				}
+				// ADR-084: find() returns an ObjectEntityInterface, so the is_array()
+				// arm was unreachable and `(array)$item` cast the ENTITY — yielding
+				// its (mangled, private) property names rather than the stored
+				// payload, so `settlementMode` was never present and the mixed-mode
+				// rejection below could not fire.
+				$itemArray = (array)$item->jsonSerialize();
 
 				$itemMode = ($itemArray['settlementMode'] ?? null);
 
@@ -509,10 +511,10 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$itemArray = (array)$item;
-				if (is_array($item) === true) {
-					$itemArray = $item;
-				}
+				// ADR-084: see the note in the mixed-mode check above — `(array)$item`
+				// cast the ENTITY, not its payload, so no pass-through item was ever
+				// recognised and the cost total below always came out zero.
+				$itemArray = (array)$item->jsonSerialize();
 
 				if (($itemArray['settlementMode'] ?? null) !== 'pass-through') {
 					continue;
@@ -557,10 +559,10 @@ class ExpenseReimbursementGuard {
 			return false;
 		}
 
-		$txnArray = (array)$txn;
-		if (is_array($txn) === true) {
-			$txnArray = $txn;
-		}
+		// ADR-084: see the note in the mixed-mode check above — `(array)$txn` cast
+		// the ENTITY, so `status`/`isReversed` were never present and this guard
+		// read every transaction as neither posted nor reversed.
+		$txnArray = (array)$txn->jsonSerialize();
 
 		$status = ($txnArray['status'] ?? null);
 		$reversed = ($txnArray['isReversed'] ?? null);

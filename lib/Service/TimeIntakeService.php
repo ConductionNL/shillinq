@@ -718,11 +718,14 @@ class TimeIntakeService {
 	private function find(string $schema, string $id): ?array {
 		try {
 			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->find($id);
-			if (is_array($rs) === true) {
-				return $rs;
+			// ADR-084: find() is declared `: ?ObjectEntityInterface`, so the old
+			// is_array() arm was unreachable by type and this helper returned NULL
+			// for every existing record — every lookup read as "not found".
+			if ($rs === null) {
+				return null;
 			}
 
-			return null;
+			return (array)$rs->jsonSerialize();
 		} catch (\Throwable $e) {
 			return null;
 		}

@@ -39,13 +39,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -54,13 +53,6 @@ use Psr\Log\LoggerInterface;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class SupplierInvoiceServiceTest extends TestCase {
-
-	/**
-	 * Mock ContainerInterface.
-	 *
-	 * @var ContainerInterface&MockObject
-	 */
-	private ContainerInterface&MockObject $container;
 
 	/**
 	 * Mock IAppConfig.
@@ -103,136 +95,13 @@ final class SupplierInvoiceServiceTest extends TestCase {
 		array &$saved,
 		array $accessibleAdministrations,
 	): SupplierInvoiceService {
-		$stub = new class($data, $saved) {
-
-			/**
-			 * Schema => rows.
-			 *
-			 * @var array<string,array<int,array<string,mixed>>>
-			 */
-			private array $data;
-
-			/**
-			 * Captured saves (mutable ref).
-			 *
-			 * @var array<int,array<string,mixed>>
-			 */
-			private array $saved;
-
-			/**
-			 * Active schema.
-			 *
-			 * @var string
-			 */
-			private string $schema = '';
-
-			/**
-			 * Auto-increment id counter for saved objects.
-			 *
-			 * @var integer
-			 */
-			private int $idCounter = 0;
-
-			/**
-			 * Constructor.
-			 *
-			 * @param array<string,array<int,array<string,mixed>>> $data Schema rows.
-			 * @param array<int,array<string,mixed>> $saved Capture ref.
-			 */
-			public function __construct(array $data, array &$saved) {
-				$this->data = $data;
-				$this->saved = &$saved;
-			}//end __construct()
-
-			/**
-			 * Fluent register setter.
-			 *
-			 * @param string $register Register slug.
-			 *
-			 * @return static
-			 */
-			public function setRegister(string $register): static {
-				return $this;
-			}//end setRegister()
-
-			/**
-			 * Fluent schema setter.
-			 *
-			 * @param string $schema Schema slug.
-			 *
-			 * @return static
-			 */
-			public function setSchema(string $schema): static {
-				$this->schema = $schema;
-				return $this;
-			}//end setSchema()
-
-			/**
-			 * Return rows for the active schema, applying equality filters.
-			 *
-			 * @param array<string,mixed> $params Query parameters.
-			 *
-			 * @return array<int,array<string,mixed>>
-			 */
-			public function findAll(array $params = []): array {
-				$rows = ($this->data[$this->schema] ?? []);
-				$filters = ($params['filters'] ?? []);
-				if ($filters === []) {
-					return $rows;
-				}
-
-				return array_values(
-					array_filter(
-						$rows,
-						static function (array $row) use ($filters): bool {
-							foreach ($filters as $key => $value) {
-								if (($row[$key] ?? null) !== $value) {
-									return false;
-								}
-							}
-
-							return true;
-						}
-					)
-				);
-			}//end findAll()
-
-			/**
-			 * Capture a saved object; stamp an id when absent.
-			 *
-			 * @param array<string,mixed> $object Object payload.
-			 *
-			 * @return array<string,mixed>
-			 */
-			public function saveObject(array $object): array {
-				if (isset($object['id']) === false || $object['id'] === '') {
-					$this->idCounter++;
-					$object['id'] = 'obj-' . $this->idCounter;
-				}
-
-				// Replace by id if it exists in the current schema.
-				$rows = ($this->data[$this->schema] ?? []);
-				$updated = false;
-				foreach ($rows as $i => $row) {
-					if (($row['id'] ?? null) === $object['id']) {
-						$this->data[$this->schema][$i] = $object;
-						$updated = true;
-						break;
-					}
-				}
-
-				if ($updated === false) {
-					$this->data[$this->schema][] = $object;
-				}
-
-				$this->saved[] = ['schema' => $this->schema, 'object' => $object];
-				return $object;
-			}//end saveObject()
-		};
-
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($stub);
-		$this->container = $container;
+		// ADR-084: this file's own duck-typed stub reached the service through a
+		// ContainerInterface mock, while `objectService:` got a bare createMock() —
+		// so SupplierInvoiceService read an EMPTY double and the saveObject() path
+		// returned its own input, which made three assertions here pass without the
+		// store ever being consulted. The shared stub IMPLEMENTS the contract, so
+		// PHP itself rejects it if a signature moves upstream.
+		$stub = new InMemoryObjectServiceStub(data: $data, saveSink: $saved);
 
 		$administrationContext = $this->createMock(AdministrationContextService::class);
 		$administrationContext->method('canAccess')->willReturnCallback(
@@ -245,7 +114,7 @@ final class SupplierInvoiceServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $stub,
 		);
 
 	}//end buildService()
@@ -351,8 +220,8 @@ XML;
 		$this->expectException(\RuntimeException::class);
 		$this->expectExceptionMessage('UBL Invoice XML is malformed');
 
-		// libxml emits a warning on parse failure; silence to keep the test
-		// output clean.
+		// The libxml parser emits a warning on parse failure; silence it to keep
+		// the test output clean.
 		$previous = libxml_use_internal_errors(true);
 		try {
 			$service->parseUblInvoice(ublXml: '<not-an-xml');

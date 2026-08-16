@@ -22,10 +22,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\SupplierInvoiceImportController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -33,7 +35,6 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -77,13 +78,6 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 	private IUserSession&MockObject $session;
 
 	/**
-	 * Mock ContainerInterface.
-	 *
-	 * @var ContainerInterface&MockObject
-	 */
-	private ContainerInterface&MockObject $container;
-
-	/**
 	 * Mock LoggerInterface.
 	 *
 	 * @var LoggerInterface&MockObject
@@ -123,7 +117,6 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$this->service = $this->createMock(SupplierInvoiceService::class);
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->session = $this->createMock(IUserSession::class);
-		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 
 		// Authenticated session by default.
@@ -141,85 +134,46 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		);
 		$this->administrationContext->method('canAccess')->willReturn(true);
 
-		// ObjectService stub used for the duplicate pre-check + CSV writes.
-		$this->container->method('get')->willReturn($this->makeObjectServiceStub());
-
 		$this->controller = new SupplierInvoiceImportController(
 			request: $this->request,
 			supplierInvoiceService: $this->service,
 			administrationContext: $this->administrationContext,
 			session: $this->session,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $this->makeObjectServiceStub(),
 		);
 
 	}//end setUp()
 
 	/**
-	 * Build a fluent ObjectService stub (setRegister/setSchema/findAll/saveObject).
+	 * Build an ObjectService double over the real contract.
 	 *
-	 * @return object
+	 * @return ObjectServiceInterface
 	 */
-	private function makeObjectServiceStub(): object {
-		$test = $this;
-		return new class($test) {
-			/**
-			 * Back-reference to the test case.
-			 *
-			 * @var SupplierInvoiceImportControllerTest
-			 */
-			private $test;
-
-			/**
-			 * @param SupplierInvoiceImportControllerTest $test Test case.
-			 */
-			public function __construct($test) {
-				$this->test = $test;
+	private function makeObjectServiceStub(): ObjectServiceInterface {
+		// ADR-084: this file's own duck-typed stub reached the controller through a
+		// ContainerInterface mock, while `objectService:` got a bare createMock() —
+		// so the controller read an EMPTY double, recorded no filters, and its
+		// saveObject() helper returned its own input. createMock() of the real
+		// interface is regenerated from the contract, so a signature that moves
+		// upstream breaks this double instead of quietly answering the old shape.
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('findAll')->willReturnCallback(
+			function (array $config = []): array {
+				$this->recordFilters((array)($config['filters'] ?? []));
+				return $this->stubRowsForTest();
 			}
-
-			/**
-			 * @param string $r Register slug.
-			 *
-			 * @return self
-			 */
-			public function setRegister(string $r): self {
-				return $this;
-			}
-
-			/**
-			 * @param string $s Schema slug.
-			 *
-			 * @return self
-			 */
-			public function setSchema(string $s): self {
-				return $this;
-			}
-
-			/**
-			 * Mirrors OpenRegister ObjectService::findAll(array $config) — the filter
-			 * map travels inside $config['filters'], never as a top-level `filters:`
-			 * argument. Recording the unwrapped map keeps the test asserting the exact
-			 * filters OpenRegister would receive.
-			 *
-			 * @param array<string,mixed> $config Find configuration (filters, limit, …).
-			 *
-			 * @return array<int,array<string,mixed>>
-			 */
-			public function findAll(array $config = []): array {
-				$this->test->recordFilters((array)($config['filters'] ?? []));
-				return $this->test->stubRowsForTest();
-			}
-
-			/**
-			 * @param array<string,mixed> $object Object to persist.
-			 *
-			 * @return array<string,mixed>
-			 */
-			public function saveObject(array $object): array {
+		);
+		$objectService->method('saveObject')->willReturnCallback(
+			static function (array $object): ObjectEntityInterface {
 				$object['id'] = 'created-id';
-				return $object;
+				return new ObjectEntityStub(payload: $object);
 			}
-		};
+		);
+
+		return $objectService;
 
 	}//end makeObjectServiceStub()
 

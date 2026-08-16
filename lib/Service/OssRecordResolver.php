@@ -149,10 +149,9 @@ class OssRecordResolver {
 			->setSchema(self::SCHEMA_PAYMENT)
 			->saveObject($data);
 
-		if (is_array($saved) === true) {
-			return $saved;
-		}
-
+		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so an
+		// is_array() arm here is unreachable by type. The jsonSerialize() path
+		// below is the one that has always run.
 		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
 			$out = $saved->jsonSerialize();
 			if (is_array($out) === true) {

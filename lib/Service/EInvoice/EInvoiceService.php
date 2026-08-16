@@ -104,8 +104,12 @@ final class EInvoiceService {
 		private readonly ObjectServiceInterface $objectService,
 		?PeppolTransmissionPortInterface $peppolPort = null,
 	) {
+		// ADR-084: the adapter takes the ObjectService contract now, not the DI
+		// container. This site still passed `container: $container` — a parameter
+		// this constructor does not declare — so every EInvoiceService built
+		// without an explicit $peppolPort fataled at REQUEST time.
 		$this->peppolPort = ($peppolPort ?? new LogPeppolTransmissionAdapter(
-			container: $container,
+			objectService: $objectService,
 			appConfig: $appConfig,
 			logger: $logger
 		));
@@ -363,11 +367,11 @@ final class EInvoiceService {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
-
-			return $object;
+			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
+			// is_array() arm here was unreachable by type and this helper returned
+			// the INPUT on every save — silently discarding the id/uuid the store
+			// had just generated, which callers then read back as empty.
+			return (array)$result->jsonSerialize();
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'EInvoiceService: failed to persist object',

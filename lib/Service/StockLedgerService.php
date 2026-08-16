@@ -258,22 +258,15 @@ class StockLedgerService {
 			'lifecycleState' => 'posted',
 		];
 
-		$sourceSide = ($this->objectService
+		// ADR-084: findAll() is declared `: array` — never null, always an array.
+		$sourceSide = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
-			->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])]) ?? []);
-		$destinationSide = ($this->objectService
+			->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])]);
+		$destinationSide = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
-			->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])]) ?? []);
-
-		if (is_array($sourceSide) === false) {
-			$sourceSide = [];
-		}
-
-		if (is_array($destinationSide) === false) {
-			$destinationSide = [];
-		}
+			->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])]);
 
 		$byId = [];
 		foreach (array_merge($sourceSide, $destinationSide) as $move) {
@@ -306,7 +299,8 @@ class StockLedgerService {
 			return [];
 		}
 
-		$rows = ($this->objectService
+		// ADR-084: findAll() is declared `: array` — never null, always an array.
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(
@@ -318,13 +312,7 @@ class StockLedgerService {
 						'lifecycleState' => 'draft',
 					],
 				]
-			) ?? []);
-
-		if (is_array($rows) === true) {
-			return $rows;
-		}
-
-		return [];
+			);
 	}//end draftMovesForSource()
 
 	/**

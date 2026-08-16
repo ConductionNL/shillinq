@@ -22,13 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SupplierQualificationService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -45,9 +43,10 @@ final class SupplierQualificationServiceTest extends TestCase {
 	 * @return SupplierQualificationService
 	 */
 	private function buildService(array $data): SupplierQualificationService {
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn(new InMemoryObjectServiceStub($data));
-
+		// ADR-084: the in-memory stub used to reach the service through a
+		// ContainerInterface mock, while `objectService:` got a bare
+		// createMock() — so the service consulted an EMPTY double and the seeded
+		// $data was never read. Inject the stub itself.
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -59,7 +58,7 @@ final class SupplierQualificationServiceTest extends TestCase {
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new InMemoryObjectServiceStub($data),
 		);
 	}//end buildService()
 
