@@ -385,8 +385,15 @@ class Application extends App implements IBootstrap {
 			DoorsnijdingsVerbodValidator::class,
 			static function (ContainerInterface $c): DoorsnijdingsVerbodValidator {
 				return new DoorsnijdingsVerbodValidator(
-					container: $c,
 					appConfig: $c->get(IAppConfig::class),
+					// ADR-084 replaced the `$container` parameter with the
+					// published contract. This factory bypasses autowiring, so
+					// it does not follow a constructor automatically: passing
+					// `container:` here was `Error: Unknown named parameter
+					// $container` on every request that resolved the service —
+					// i.e. every InnovatieboxController route. See
+					// tests/Unit/AppInfo/CompositionRootArgumentsTest.php.
+					objectService: $c->get(ObjectServiceInterface::class),
 					auditLogger: $c->get(InnovatieboxAuditEventLogger::class),
 				);
 			}
