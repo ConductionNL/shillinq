@@ -52,16 +52,34 @@ webpackConfig.entry = {
 const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
 const localLibPkg = path.resolve(__dirname, '../nextcloud-vue/package.json')
 let useLocalLib = process.env.USE_LOCAL_LIB === 'true' && fs.existsSync(localLib)
-if (useLocalLib && fs.existsSync(localLibPkg)) {
-	const localVersion = String(
-		JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '',
-	)
-	const localMajor = parseInt(localVersion, 10)
-	if (!Number.isNaN(localMajor) && localMajor < 2) {
+if (useLocalLib) {
+	// The `localMajor < 2` test this replaces was blind to the skew it was
+	// written for: nc-vue's Vue 2 line and its Vue 3 line are BOTH major 2. The
+	// sibling is 2.0.5 (Vue 2) against a declared ^2.3.0 (Vue 3), so `2 < 2` was
+	// false and the Vue 2 checkout was accepted. Compare against the declared
+	// RANGE instead, and fail CLOSED if the check cannot run.
+	let localVersion = 'unreadable'
+	let satisfied = false
+	try {
+		// eslint-disable-next-line n/no-extraneous-require
+		const semver = require('semver')
+		const required =
+			require('./package.json').dependencies['@conduction/nextcloud-vue']
+		localVersion = String(
+			JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '',
+		)
+		satisfied = semver.satisfies(localVersion, required, {
+			includePrerelease: true,
+		})
+	} catch (e) {
+		satisfied = false
+	}
+
+	if (!satisfied) {
 		// eslint-disable-next-line no-console
 		console.warn(
 			`[shillinq] IGNORING sibling @conduction/nextcloud-vue@${localVersion} — `
-				+ 'that is the Vue 2 line and this app is Vue 3. Building against the npm dist.',
+				+ "it does not satisfy this app's declared range. Building against the npm dist.",
 		)
 		useLocalLib = false
 	}
