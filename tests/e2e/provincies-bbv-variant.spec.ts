@@ -226,9 +226,37 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 })
 
 test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
-	test.beforeEach(async ({ page }) => {
+	/**
+	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-004/linker-queries-its-declared-source
+	 *
+	 * The linker must be bound to the GL-line source the manifest declares
+	 * (`register: "shillinq"`, `schema: "GLLine"`). Asserting the OUTBOUND
+	 * query rather than rendered rows or column headers keeps this
+	 * data-independent: CI seeds no GL lines, and an empty CnIndexPage renders
+	 * its empty-content block instead of a table, so a column-header assertion
+	 * would fail for a reason that has nothing to do with the binding. A page
+	 * wired to the wrong schema, or wired to nothing, fails here.
+	 *
+	 * This test navigates itself — the wait must be armed BEFORE the
+	 * navigation or the request is already gone by the time we listen, so it
+	 * cannot live under the `beforeEach` the other two use.
+	 */
+	test('linker index queries the GL-line source declared by the manifest', async ({
+		page,
+	}) => {
+		const query = page.waitForResponse(
+			(r) => /\/apps\/openregister\/api\/objects\/shillinq\/GLLine/i.test(r.url()),
+			{ timeout: 25_000 },
+		)
 		await gotoRoute(page, LINKER_INDEX_ROUTE)
+		const response = await query
+		expect(response.status()).toBeLessThan(500)
 	})
+
+	test.describe('mounted surface', () => {
+		test.beforeEach(async ({ page }) => {
+			await gotoRoute(page, LINKER_INDEX_ROUTE)
+		})
 
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-index-renders
@@ -259,25 +287,6 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 			tables + empty + rows + actionsBar,
 			'the linker index rendered no table, no empty state, no rows and no actions bar',
 		).toBeGreaterThan(0)
-	})
-
-	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-004/linker-columns-render
-	 *
-	 * The manifest declares the GL-line columns the linker must show. Column
-	 * headers render from `config.columns[]` whether or not any row exists, so
-	 * this is a data-independent assertion about the declared contract.
-	 */
-	test('linker index renders the manifest-declared GL-line columns', async ({
-		page,
-	}) => {
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({
-			timeout: 15_000,
-		})
-		const host = page.locator('#app-content-vue, main').first()
-		await expect(
-			host.getByRole('columnheader', { name: /programme/i }).first(),
-		).toBeVisible({ timeout: 15_000 })
 	})
 
 	/**
@@ -320,6 +329,7 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 	 * there is no `@e2e` tag for REQ-BBL-001's bulk-link scenario in this file
 	 * any more. It belongs to #866 with the dashboard vocabulary.
 	 */
+	})
 })
 
 test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
