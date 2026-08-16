@@ -295,21 +295,19 @@ import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
 // recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
 // RecurringInvoiceProfile is a bespoke multi-line form with period-token
 // preview and an inline next-invoice projection — none of which the
-// generic schema-driven create form can author. It is launched from the
-// Recurring Invoices index page's "New recurring profile" action
-// (src/manifest.d/recurring-invoicing.json, type:"modal") so it must be
-// resolvable by component id; registered here as a kind:"modal" and
-// modal-isolated under src/modals/ (hydra gate-13).
-import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
-
-// recurring-invoicing (REQ-RIN-008): the LAUNCHER for the modal above. The
-// index page's `config.headerActions[]` entry could never open it — CnIndexPage
-// renders a manifest header action inside the collapsed ⋯ overflow and its
-// click only `$emit`s `header-action`, which CnPageRenderer does not listen
-// for (the gap the fragment's own `_note_open_modal_gap` recorded). Registered
-// kind:"widget" so the page can declare it in CnPageRenderer's `header-actions`
-// widget slot, which CnWidgetGrid resolves against THIS registry.
+// generic schema-driven create form can author. Modal-isolated under
+// src/modals/ (hydra gate-13) and registered below as a kind:"modal".
+//
+// Its LAUNCHER sits next to it. The index page's `config.headerActions[]`
+// entry could never open the modal: CnIndexPage renders a manifest header
+// action inside the collapsed ⋯ overflow, and its click only `$emit`s
+// `header-action`, which CnPageRenderer does not listen for (the gap the
+// fragment's own `_note_open_modal_gap` recorded). The launcher is
+// kind:"widget" so the page can declare it in CnPageRenderer's
+// `header-actions` widget slot, which CnWidgetGrid resolves against THIS
+// registry before its built-in widget table.
 import RecurringInvoiceProfileLauncher from './components/invoice/RecurringInvoiceProfileLauncher.vue'
+import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
