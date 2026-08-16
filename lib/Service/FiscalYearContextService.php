@@ -276,22 +276,56 @@ class FiscalYearContextService {
 	/**
 	 * Load an Administration record by id from OpenRegister.
 	 *
-	 * @param string $administrationId Administration id.
+	 * ⚠️ NOT `['filters' => ['id' => ...]]`.
+	 *
+	 * `filters` addresses the object's JSON PROPERTIES. The ObjectEntity's
+	 * `id` is the entity's own column and is merged into the serialised
+	 * output afterwards, so it is not a property the filter can see: that
+	 * shape matched zero rows for every value, uuids included, and returned
+	 * an empty array rather than raising — so this method returned null for
+	 * an administration that exists. `resolveActiveWindow()` then returned
+	 * null, the BBV dashboard envelope reported `fiscalYear: null`, and the
+	 * FY label (`v-if="scope.fiscalYear"`) never rendered, silently breaking
+	 * the fiscal-year inheritance REQ-BBVW-006 specifies.
+	 *
+	 * The confusing part is that the HTTP list API DOES answer `?id=ADM-001`
+	 * — it maps that onto the entity column — so the same lookup looks
+	 * healthy when probed over the wire and returns nothing in PHP.
+	 *
+	 * Resolution mirrors AdministrationContextService::findAdministration():
+	 * try the single-object lookup first (which handles a real uuid), then
+	 * fall back to the `administrationCode` property, which is the id space
+	 * the rest of the app and the e2e fixtures actually use.
+	 *
+	 * @param string $administrationId Administration id or administrationCode.
 	 *
 	 * @return array<string,mixed>|null Record or null when unavailable.
 	 */
 	private function loadAdministration(string $administrationId): ?array {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$matches = $objectService
+			$scoped = $objectService
 				->setRegister($this->register())
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => ['id' => $administrationId],
-						'limit' => 1,
-					]
-				);
+				->setSchema('Administration');
+
+			// Its own try/catch, deliberately: find() THROWS
+			// DoesNotExistException for anything that is not a uuid — it does
+			// not return null — so a shared catch would swallow the fallback.
+			try {
+				$single = $this->asRecord(candidate: $scoped->find($administrationId));
+				if ($single !== null) {
+					return $single;
+				}
+			} catch (Throwable $notAUuid) {
+				// Fall through to the administrationCode lookup below.
+			}
+
+			$matches = $scoped->findAll(
+				[
+					'filters' => ['administrationCode' => $administrationId],
+					'limit' => 1,
+				]
+			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'FiscalYearContextService: failed to load administration',
@@ -304,20 +338,52 @@ class FiscalYearContextService {
 		}//end try
 
 		foreach ($matches as $match) {
-			if (is_array($match) === true) {
-				return $match;
+			$record = $this->asRecord(candidate: $match);
+			if ($record !== null) {
+				return $record;
+			}
+		}
+
+		// Reaching here means the administration genuinely is not resolvable.
+		// Log it: the caller turns this into a null fiscal-year window, which
+		// the UI renders as a missing label rather than as an error.
+		$this->logger->warning(
+			'FiscalYearContextService: no Administration matched; fiscal-year scope will be null',
+			['administrationId' => $administrationId]
+		);
+
+		return null;
+	}//end loadAdministration()
+
+	/**
+	 * Normalise an OpenRegister result entry to a plain record array.
+	 *
+	 * Results arrive as either plain arrays or ObjectEntity instances
+	 * depending on the call shape: findAll() yields a list of either, and
+	 * find() returns a single one of either.
+	 *
+	 * @param mixed $candidate Result entry or single object.
+	 *
+	 * @return array<string,mixed>|null Record, or null when not usable.
+	 */
+	private function asRecord(mixed $candidate): ?array {
+		if (is_array($candidate) === true) {
+			if ($candidate === []) {
+				return null;
 			}
 
-			if (is_object($match) === true && method_exists($match, 'getObject') === true) {
-				$payload = $match->getObject();
-				if (is_array($payload) === true) {
-					return $payload;
-				}
+			return $candidate;
+		}
+
+		if (is_object($candidate) === true && method_exists($candidate, 'getObject') === true) {
+			$payload = $candidate->getObject();
+			if (is_array($payload) === true && $payload !== []) {
+				return $payload;
 			}
 		}
 
 		return null;
-	}//end loadAdministration()
+	}//end asRecord()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

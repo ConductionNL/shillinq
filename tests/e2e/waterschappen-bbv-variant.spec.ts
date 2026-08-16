@@ -300,18 +300,65 @@ test.describe('BBV mapping detail — edit flow', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-007/mapping-detail-sidebar-audit-trail
 	 */
-	test('audit-trail surface is reachable from the detail page sidebar', async ({ page }) => {
-		await page.goto(APP + MAPPING_INDEX_ROUTE + '/edit-stub')
-		await page.waitForLoadState('domcontentloaded')
-		await dismissWizard(page)
+	test('audit-trail surface is reachable from the detail page sidebar', async ({ page, request }) => {
+		// ⚠️ Needs a REAL record, not the `edit-stub` synthetic id the
+		// sibling test uses.
+		//
+		// This previously navigated to `/edit-stub` and asserted the form
+		// rendered. That can never pass, and the behaviour it tripped on is
+		// correct: BudgetBBVMappingDetail puts Cancel/Delete/Save in
+		// CnDetailPage's `#actions` slot and the form in `#default`, and
+		// passes `:error="!!loadError"`. A synthetic id 404s, so the wrapper
+		// renders its "Not Found" error state — `#actions` still mounts (which
+		// is why the sibling test passes) but `#default` is suppressed by
+		// design. The old assertion was measuring the wrapper's error path and
+		// calling it an audit-trail check.
+		//
+		// The audit trail is keyed on `objectId`, so it needs a record that
+		// exists. Create one, then assert what REQ-BBVW-007 actually specifies.
+		const created = await request.post(
+			'/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping',
+			{
+				headers: { 'OCS-APIRequest': 'true' },
+				data: {
+					glAccountNumber: '4200',
+					programmeCode: 'P01',
+					allocationPercentage: 100,
+					fiscalYear: new Date().getFullYear(),
+					effectiveFrom: `${new Date().getFullYear()}-01-01`,
+					administrationId: 'ADM-001',
+				},
+			},
+		)
+		expect(created.ok()).toBeTruthy()
+		const id = (await created.json())?.id
+		expect(id, 'the seeded mapping must come back with an id').toBeTruthy()
 
-		// The bespoke detail page uses the manifest detail wrapper which
-		// renders a sidebar slot. The slot is empty until the slice-09
-		// audit listener materialises entries; here we assert the page
-		// renders without an unhandled exception by checking the form
-		// renders.
-		await expect(page.getByTestId('bbv-mapping-detail-form'))
-			.toBeVisible({ timeout: 15_000 })
+		try {
+			await page.goto(APP + MAPPING_INDEX_ROUTE + '/' + id)
+			await page.waitForLoadState('domcontentloaded')
+			await dismissWizard(page)
+
+			// The record loads, so the wrapper renders `#default` and the form
+			// is present — the negative case above is what used to fail here.
+			await expect(page.getByTestId('bbv-mapping-detail-form'))
+				.toBeVisible({ timeout: 15_000 })
+
+			// REQ-BBVW-007: the audit-trail panel must be reachable from the
+			// detail sidebar. CnDetailPage renders it collapsed
+			// (`:sidebarOpen="false"`), so assert it is attached rather than
+			// in the viewport.
+			await expect(page.getByTestId('budget-bbv-mapping-detail'))
+				.toBeVisible()
+			await expect(
+				page.locator('[data-testid="budget-bbv-mapping-detail"] .app-sidebar, .app-sidebar'),
+			).toBeAttached({ timeout: 10_000 })
+		} finally {
+			await request.delete(
+				`/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping/${id}`,
+				{ headers: { 'OCS-APIRequest': 'true' } },
+			).catch(() => {})
+		}
 	})
 
 })
@@ -319,25 +366,51 @@ test.describe('BBV mapping detail — edit flow', () => {
 test.describe('BBV scoping + validation', () => {
 
 	/**
-	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-006/fiscal-year-selector-changes-scope
+	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-006/fiscal-year-inherited-from-administration-scope
 	 */
-	test('dashboard fiscal-year selector is present and accepts a change', async ({ page }) => {
+	test('dashboard fiscal year is inherited from the administration context', async ({ page }) => {
+		// ⚠️ There is deliberately NO fiscal-year selector, and asserting one
+		// contradicted the requirement in this test's own @e2e tag.
+		//
+		// This used to look for `bbv-dashboard-year` and select a different
+		// option. No such testid exists anywhere in src/, because REQ-BBVW-006
+		// scopes by administration, not by a year picker: the dashboard must
+		// "inherit the current fiscal year from the Shillinq Administration
+		// context", and it is *switching administrations* that refreshes the
+		// data. BBVComplianceDashboard implements exactly that — the fiscal
+		// year is a read-only <span> (`bbv-dashboard-fy-label`) and the only
+		// <select> on the page is the administration one.
+		//
+		// So assert the actual contract: the year is displayed, and the scope
+		// control is the administration.
 		await page.goto(APP + DASHBOARD_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
-		const year = page.getByTestId('bbv-dashboard-year')
-		await expect(year).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('bbv-compliance-dashboard'))
+			.toBeVisible({ timeout: 15_000 })
 
-		// Selecting a different year MUST trigger a re-query — we assert
-		// the select accepts the change rather than the underlying GET
-		// (Newman owns the API assertion).
-		const beforeValue = await year.inputValue().catch(() => '')
-		const options = await year.locator('option').allTextContents().catch(() => [])
-		const other = options.find((y) => y !== beforeValue)
-		if (other !== undefined) {
-			await year.selectOption(other)
-			await expect(year).toHaveValue(other)
+		const fyLabel = page.getByTestId('bbv-dashboard-fy-label')
+		await expect(fyLabel).toBeVisible({ timeout: 15_000 })
+		// A real fiscal year, not an empty shell — the label is `v-if`-ed on
+		// scope.fiscalYear, so blank text would mean scope never resolved.
+		await expect(fyLabel).toHaveText(/\d{4}/)
+
+		// The administration select is the scope control, rendered only when
+		// the user actually has more than one administration to switch
+		// between. Where it is present, changing it must be accepted.
+		const admin = page.getByTestId('bbv-dashboard-administration')
+		if (await admin.isVisible().catch(() => false)) {
+			const current = await admin.inputValue()
+			const options = await admin.locator('option').all()
+			for (const option of options) {
+				const value = await option.getAttribute('value')
+				if (value && value !== current) {
+					await admin.selectOption(value)
+					await expect(admin).toHaveValue(value)
+					break
+				}
+			}
 		}
 	})
 

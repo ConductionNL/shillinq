@@ -32,6 +32,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\FiscalYearContextService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -137,7 +138,49 @@ final class FiscalYearContextServiceTest extends TestCase {
 			}//end setSchema()
 
 			/**
+			 * Single-object lookup.
+			 *
+			 * ⚠️ THROWS on a miss — it does not return null. Real
+			 * ObjectService raises DoesNotExistException for anything that is
+			 * not a resolvable uuid, so a caller that wants a fallback has to
+			 * wrap this in its own try/catch. A double that returned null here
+			 * would let a missing catch block pass in tests and blow up in
+			 * production.
+			 *
+			 * @param string $id Object uuid.
+			 *
+			 * @return array<string,mixed>
+			 *
+			 * @throws DoesNotExistException When no object matches.
+			 */
+			public function find(string $id): array {
+				foreach ($this->administrations as $row) {
+					if (($row['uuid'] ?? null) === $id) {
+						return $row;
+					}
+				}
+
+				throw new DoesNotExistException(
+					sprintf("Object with identifier '%s' not found in any magic table", $id)
+				);
+			}//end find()
+
+			/**
 			 * FindAll on Administration with simple equality filters.
+			 *
+			 * ⚠️ `filters` addresses the object's JSON PROPERTIES only.
+			 *
+			 * The ObjectEntity's `id` is the entity's own column — it is merged
+			 * into the serialised output but is NOT something `filters` can
+			 * match, so real OpenRegister returns ZERO rows for
+			 * `['filters' => ['id' => ...]]` at every value, silently and
+			 * without raising.
+			 *
+			 * This double used to match `id` like any other array key, which
+			 * made it blind to exactly the bug it was covering: the service
+			 * filtered on `id`, always got nothing back, and reported a null
+			 * fiscal-year window — while these tests stayed green. The `id`
+			 * rejection below is what gives them the power to fail.
 			 *
 			 * @param array<string,mixed> $params Query parameters.
 			 *
@@ -152,6 +195,12 @@ final class FiscalYearContextServiceTest extends TestCase {
 				$filters = ($params['filters'] ?? []);
 				if ($filters === []) {
 					return $rows;
+				}
+
+				// Mirror the real engine: a filter on a non-property matches
+				// nothing at all, rather than falling back to the entity column.
+				if (array_key_exists('id', $filters) === true) {
+					return [];
 				}
 
 				return array_values(
@@ -193,7 +242,11 @@ final class FiscalYearContextServiceTest extends TestCase {
 
 		$admins = [
 			[
+				// `administrationCode` is the JSON property the lookup can
+				// actually filter on; `id` is the entity column, kept here so
+				// the fixture still mirrors a real serialised record.
 				'id' => 'adm-werk-001',
+				'administrationCode' => 'adm-werk-001',
 				'fiscalYearStartMonth' => 1,
 				'fiscalYearStartDay' => 1,
 			],
@@ -224,7 +277,9 @@ final class FiscalYearContextServiceTest extends TestCase {
 
 		$admins = [
 			[
+				// See the note on the adm-werk-001 fixture above.
 				'id' => 'adm-waterschap-1',
+				'administrationCode' => 'adm-waterschap-1',
 				'fiscalYearStartMonth' => 7,
 				'fiscalYearStartDay' => 1,
 			],
@@ -264,7 +319,11 @@ final class FiscalYearContextServiceTest extends TestCase {
 
 		$admins = [
 			[
+				// `administrationCode` is the JSON property the lookup can
+				// actually filter on; `id` is the entity column, kept here so
+				// the fixture still mirrors a real serialised record.
 				'id' => 'adm-werk-001',
+				'administrationCode' => 'adm-werk-001',
 				'fiscalYearStartMonth' => 1,
 				'fiscalYearStartDay' => 1,
 			],
@@ -289,6 +348,47 @@ final class FiscalYearContextServiceTest extends TestCase {
 		self::assertNull($service->resolveActiveWindow('adm-missing'));
 
 	}//end testUnknownAdministrationResolvesToNull()
+
+	/**
+	 * An administration that exists ONLY under its administrationCode still
+	 * resolves — i.e. the lookup does not depend on `filters.id`.
+	 *
+	 * This is the regression guard for the silent-null bug. The service used
+	 * to query `['filters' => ['id' => $administrationId]]`, which real
+	 * OpenRegister answers with zero rows for every value because `id` is the
+	 * entity's own column and `filters` addresses JSON properties only. The
+	 * lookup therefore returned null for an administration that plainly
+	 * existed, `resolveActiveWindow()` handed back null, and the BBV dashboard
+	 * rendered without its fiscal-year label — no exception, no log, nothing
+	 * that looked like a failure.
+	 *
+	 * The fixture below deliberately carries NO `id` key at all, so any future
+	 * rewrite that reaches for `filters.id` fails here instead of shipping.
+	 *
+	 * @return void
+	 */
+	public function testAdministrationResolvesWithoutAnIdProperty(): void {
+		$this->administrationContext->method('canAccess')->willReturn(true);
+
+		$admins = [
+			[
+				'administrationCode' => 'ADM-001',
+				'fiscalYearStartMonth' => 1,
+				'fiscalYearStartDay' => 1,
+			],
+		];
+		$service = $this->buildService($admins);
+
+		$window = $service->resolveActiveWindow(
+			'ADM-001',
+			new DateTimeImmutable('2026-06-15T00:00:00Z', new DateTimeZone('UTC'))
+		);
+
+		self::assertNotNull($window, 'the administration must resolve by its code');
+		self::assertSame(2026, $window['fiscalYear']);
+		self::assertSame('ADM-001', $window['administrationId']);
+
+	}//end testAdministrationResolvesWithoutAnIdProperty()
 
 	/**
 	 * An empty administrationId is rejected up-front.
@@ -318,7 +418,9 @@ final class FiscalYearContextServiceTest extends TestCase {
 
 		$admins = [
 			[
+				// See the note on the adm-werk-001 fixture above.
 				'id' => 'adm-waterschap-1',
+				'administrationCode' => 'adm-waterschap-1',
 				'fiscalYearStartMonth' => 1,
 				'fiscalYearStartDay' => 1,
 			],
