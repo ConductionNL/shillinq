@@ -32,6 +32,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
+import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
 const ROUTE = '/verplichtingen/budget-lines'
@@ -57,7 +58,7 @@ test.describe('verplichtingen-commitment-accounting — budget-line committed-vs
 		await dismissWizard(page)
 
 		const row = page.getByTestId('budget-line-row').first()
-		const opened = await row.isVisible().catch(() => false)
+		const opened = await becomesVisible(row)
 		test.skip(!opened, 'no Verplichtingsregel seeded in this administration')
 
 		// The four BBV columns are text-labelled, not colour-coded only
@@ -81,8 +82,15 @@ test.describe('verplichtingen-commitment-accounting — budget-line committed-vs
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
+		// ⚠️ INVERTED GATE — this one skips when rows ARE present, so the
+		// non-waiting probe failed in the direction that RUNS the test. On a
+		// seeded administration it therefore asserted "No budget lines" against
+		// a table that was merely still loading, and failed with a confusing
+		// message instead of skipping honestly. Polling makes the skip correct.
+		// 5s rather than the 10s default: the no-rows case is the common one and
+		// this wait is paid in full every time it holds.
 		const row = page.getByTestId('budget-line-row').first()
-		const hasRows = await row.isVisible().catch(() => false)
+		const hasRows = await becomesVisible(row, 5_000)
 		test.skip(
 			hasRows,
 			'administration has seeded budget lines — empty-state assertion not applicable',

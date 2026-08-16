@@ -30,6 +30,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
 const ROUTE = '/accountant-portal'
@@ -55,11 +56,11 @@ test.describe('accountant-portal — scoped multi-client dashboard (REQ-ACP-001/
 		await dismissWizard(page)
 
 		const heading = page.getByRole('heading', { name: 'Accountant portal' })
-		const deployed = await heading.isVisible().catch(() => false)
+		const deployed = await becomesVisible(heading)
 		test.skip(!deployed, 'accountant-portal page not deployed on this build')
 
 		const card = page.getByTestId('accountant-client-card').first()
-		const hasCard = await card.isVisible().catch(() => false)
+		const hasCard = await becomesVisible(card)
 		if (!hasCard) {
 			// A user with no AdministrationMembership sees the empty state, not an error.
 			await expect(page.getByText('No client administrations')).toBeVisible()
@@ -78,7 +79,7 @@ test.describe('accountant-portal — scoped multi-client dashboard (REQ-ACP-001/
 		await dismissWizard(page)
 
 		const button = page.getByTestId('accountant-handover-pack-button').first()
-		const hasButton = await button.isVisible().catch(() => false)
+		const hasButton = await becomesVisible(button)
 		test.skip(
 			!hasButton,
 			'no client administration available to test the handover-pack action against',

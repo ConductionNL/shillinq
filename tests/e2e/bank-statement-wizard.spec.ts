@@ -27,6 +27,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
+import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
 const ROUTE_BANK_IMPORT = '/configuratie/bank-import'
@@ -75,10 +76,18 @@ async function openWizard(page: Page): Promise<boolean> {
 	// that no longer exists anywhere in the app. The wizard now lives on the
 	// Configuratie page that hosts it (src/registry.js: BankImportPage,
 	// src/manifest.d/bank-import-settings.json).
+	//
+	// ⚠️ THE SELECTOR WAS REPAIRED; THE RACE WAS NOT. `isVisible()` does not
+	// wait — its `timeout` option is ignored — so this probe still asked "is
+	// the launcher here on this tick", one tick after a `goto`. It happens to
+	// answer yes on the current runner, which is why all eleven tests pass
+	// today; a slower runner silently returns all eleven to the same false
+	// "not available for this administration" skip, with no code change and no
+	// signal. `becomesVisible` polls, so the answer stops depending on timing.
 	await page.goto(`${APP}${ROUTE_BANK_IMPORT}`)
 	await dismissWizard(page)
 	const importBank = page.locator('[data-testid="bank-import-launch"]')
-	if (!(await importBank.isVisible().catch(() => false))) {
+	if (!(await becomesVisible(importBank))) {
 		return false
 	}
 	await importBank.click()
