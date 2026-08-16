@@ -70,33 +70,62 @@ function collectAppErrors(page: Page): string[] {
 }
 
 /**
- * Reach the External Adapters status index. Deep-link first; if the SPA resets
- * to the dashboard, fall back to clicking the "External Connections" nav node.
+ * Dismiss the Nextcloud first-run wizard and the cn-support-dialog overlay.
+ * Either of them sits on top of the SPA and swallows clicks; without this the
+ * helper below could only ever fail with "element not found" on the surface
+ * BEHIND the modal.
+ */
+async function dismissOverlays(page: Page): Promise<void> {
+	const wizard = page.locator('#firstrunwizard')
+	if (await wizard.isVisible().catch(() => false)) {
+		await page.keyboard.press('Escape').catch(() => {})
+		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
+	}
+	const support = page
+		.locator('[data-testid-modal="cn-support-dialog"], .cn-support-dialog')
+		.first()
+	if (await support.isVisible().catch(() => false)) {
+		await page.keyboard.press('Escape').catch(() => {})
+		await support.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {})
+	}
+}
+
+/**
+ * Reach the External Adapters status index by deep link.
+ *
+ * ⚠️ TWO DEFECTS LIVED IN THE PREVIOUS VERSION OF THIS HELPER, AND BETWEEN THEM
+ * THEY MADE IT IMPOSSIBLE FOR THE DEEP LINK TO EVER BE ACCEPTED:
+ *
+ *  1. `locator.isVisible({ timeout })` DOES NOT WAIT. Unlike `expect(...)
+ *     .toBeVisible()`, `isVisible()` is an immediate predicate — the `timeout`
+ *     option does not make it poll. It was called on the tick right after
+ *     `domcontentloaded`, i.e. before Vue had mounted anything, so it returned
+ *     `false` on EVERY run and the helper always took the fallback branch.
+ *
+ *  2. The fallback branch navigated to the app root and looked for an
+ *     "External Connections" group in the main navigation. That group does not
+ *     exist there: `src/menu-layout.json#settingsSection` lifts
+ *     `ExternalAdaptersStatus` and all fifteen adapter entries into Nextcloud's
+ *     COLLAPSED settings foldout, so `nav.getByText('External Connections')`
+ *     matched nothing, both clicks were swallowed by `.catch(() => {})`, and
+ *     the page stayed on the Dashboard until the 15 s assertion expired.
+ *
+ * The deep link itself is sound — `tests/e2e/external-adapters.spec.ts` drives
+ * the same route and passes. So: deep-link, dismiss overlays, and WAIT with a
+ * real polling assertion. No fallback path, because a fallback that silently
+ * swallows its own failures cannot report anything.
  */
 async function gotoAdapterStatus(page: Page): Promise<void> {
 	await page.goto(STATUS_ROUTE, { waitUntil: 'domcontentloaded' })
-	const list = page.locator('.external-adapters__list')
-	if (
-		await list
-			.first()
-			.isVisible({ timeout: 8_000 })
-			.catch(() => false)
-	) {
-		return
-	}
-	// Fallback: open the app root and navigate via the nav tree.
-	await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded' })
-	const nav = page.locator('[id^="app-navigation"], .app-navigation, nav').first()
-	const parent = nav.getByText('External Connections', { exact: false }).first()
-	if (await parent.isVisible().catch(() => false)) {
-		await parent.click().catch(() => {})
-	}
-	const statusLink = nav.getByText('Adapter Status', { exact: false }).first()
-	if (await statusLink.isVisible().catch(() => false)) {
-		await statusLink.click().catch(() => {})
-	}
-	await expect(page.locator('.external-adapters__list').first()).toBeVisible({
+	await dismissOverlays(page)
+	// The route must resolve to itself — `src/main.js` ends its route table
+	// with a `/:pathMatch(.*)*` catch-all that redirects to the Dashboard, and
+	// the Dashboard would satisfy a looser "we are still in shillinq" check.
+	await expect(page).toHaveURL(/\/external-adapters(\?|$|\/)/, {
 		timeout: 15_000,
+	})
+	await expect(page.locator('.external-adapters__list').first()).toBeVisible({
+		timeout: 20_000,
 	})
 }
 

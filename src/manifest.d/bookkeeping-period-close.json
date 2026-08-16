@@ -68,7 +68,9 @@
 					}
 				],
 				"defaultSort": "periodId",
-				"detailRoute": "PeriodCloseDetail"
+				"detailRoute": "PeriodCloseDetail",
+				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. PeriodCloseDetail is a `type:\"custom\"` page, so CnPageRenderer's register+schema detail lookup finds nothing and rows do not open without `rowRoute`.",
+				"rowRoute": "PeriodCloseDetail"
 			}
 		},
 		{

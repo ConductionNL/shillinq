@@ -80,16 +80,70 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	test('dashboard exposes 13-week chart widget slot', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
 		await page.waitForLoadState('domcontentloaded')
-		// Either a chart canvas, a manifest-rendered widget container, or the
-		// CashflowDashboard skeleton's chart slot must be present.
-		const chartCandidates = page.locator(
-			'[data-widget="cashflow-13week-chart"], canvas, [data-widget-id="cashflow-13week-chart"]',
+
+		// ⚠️ THE PREVIOUS LOCATOR COULD NOT MATCH ANYTHING THIS PAGE RENDERS.
+		// It looked for `[data-widget="cashflow-13week-chart"]`, `canvas`, or
+		// `[data-widget-id=…]`. All three are wrong:
+		//
+		//  - `data-widget` appears in exactly one place in the whole app,
+		//    `src/components/cashflow/CashflowDashboard.vue`, which is an
+		//    ORPHAN: it is imported by nothing, registered in no registry entry,
+		//    and bound as no manifest page's `component`. The test was written
+		//    against a component that never mounts.
+		//  - @conduction/nextcloud-vue emits NO `data-widget` /
+		//    `data-widget-id` attribute anywhere (grep: zero hits). Manifest
+		//    dashboards render through CnDashboardPage → CnDashboardGrid, whose
+		//    grid items are `.grid-stack-item[gs-id="<layout entry id>"]`.
+		//  - `canvas` is the wrong element: CnChartWidget renders through
+		//    vue3-apexcharts, and ApexCharts draws **SVG**, never a `<canvas>`.
+		//
+		// So assert what the manifest actually declares and the library
+		// actually emits: the dashboard page mounts, and the grid item for the
+		// `cashflow-13week-chart` widget (layout entry `layout-chart` in
+		// src/manifest.json) is present with the widget's own title.
+		await expect(page.getByTestId('cn-dashboard-page')).toBeVisible({
+			timeout: 15_000,
+		})
+
+		const chartItem = page.locator('.grid-stack-item[gs-id="layout-chart"]')
+		await expect(chartItem).toBeVisible({ timeout: 15_000 })
+
+		// The widget body resolved to something real: either the rendered
+		// ApexCharts SVG, or CnChartWidget's own honest empty state when the
+		// `bufferPolicyEvaluation` aggregation returns no rows on a bare CI
+		// instance. A blank grid cell is neither and still fails.
+		const chartBody = chartItem.locator(
+			'.cn-chart-widget svg, [data-testid="cn-chart-widget-empty"]',
 		)
-		await expect(chartCandidates.first()).toBeVisible({ timeout: 10_000 })
+		await expect(chartBody.first()).toBeVisible({ timeout: 15_000 })
 	})
 
 	/**
 	 * @e2e bookkeeping-cashflow-13wk/REQ-CF-016/dashboard-has-export-pdf-affordance
+	 */
+	/**
+	 * ⚠️ THIS TEST FAILS, AND THAT IS THE SPEC WORKING — see #865.
+	 *
+	 * REQ-CF-016 ("PDF export for bank/accountant meetings") is a CURRENT
+	 * requirement in `openspec/specs/bookkeeping-cashflow-13wk/spec.md`, and it
+	 * is unimplemented end to end:
+	 *
+	 *   - `lib/Service/CashflowPdfRenderer.php` exists and `render()` has ZERO
+	 *     callers anywhere in `lib/`;
+	 *   - `appinfo/routes.php` registers no cashflow export route at all;
+	 *   - the only "Export PDF" button in the codebase lives in
+	 *     `src/components/cashflow/CashflowDashboard.vue`, which is an ORPHAN
+	 *     component (no import, no registry entry, no manifest binding), and
+	 *     even if it mounted its click only `$emit`s `export-pdf` — nothing
+	 *     listens.
+	 *   - `/cashflow/dashboard` declares no `headerActions` in
+	 *     `src/manifest.json`, so no export affordance is rendered.
+	 *
+	 * Left asserting on purpose. Quarantining it, or relaxing it to "a button
+	 * exists somewhere", would convert a missing statutory-reporting capability
+	 * into an invisible one — the exact failure mode the fleet's L8 rule
+	 * forbids. Either the capability gets built or REQ-CF-016 gets withdrawn
+	 * from the spec; a green column must not be the third option.
 	 */
 	test('dashboard exposes an Export PDF affordance', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')

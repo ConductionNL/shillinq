@@ -63,7 +63,9 @@
 					}
 				],
 				"defaultSort": "startTime",
-				"detailRoute": "AfspraakDetail"
+				"detailRoute": "AfspraakDetail",
+				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. AfspraakDetail is a `type:\"custom\"` page, so CnPageRenderer's register+schema detail lookup finds nothing and rows do not open without `rowRoute`.",
+				"rowRoute": "AfspraakDetail"
 			}
 		},
 		{

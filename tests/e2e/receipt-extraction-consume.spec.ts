@@ -38,6 +38,33 @@ async function dismissWizard(page: Page): Promise<void> {
 	}
 }
 
+/**
+ * Wait up to `timeout` for a locator to become visible; return whether it did.
+ *
+ * ⚠️ THIS EXISTS BECAUSE `locator.isVisible()` DOES NOT WAIT. It is an
+ * immediate predicate — its `timeout` option is ignored — so calling it on the
+ * tick after `page.goto(…, 'domcontentloaded')` asks "is this here right now",
+ * before the SPA has fetched anything. Used as a `test.skip()` condition that
+ * is exactly how a skip stops meaning "the fixture lacks data" and starts
+ * meaning "I looked too early": the guards below skipped with the reason
+ * *"Import bill action not visible in this fixture"* even though `import-bill`
+ * is a declared, working `type:"open-modal"` header action on the Dashboard
+ * page (src/manifest.json) — i.e. the stated reason was false and the skip was
+ * an invisible pass.
+ *
+ * `waitFor` polls. The skip that survives it is a real one.
+ */
+async function becomesVisible(
+	locator: ReturnType<Page['locator']>,
+	timeout = 10_000,
+): Promise<boolean> {
+	return await locator
+		.first()
+		.waitFor({ state: 'visible', timeout })
+		.then(() => true)
+		.catch(() => false)
+}
+
 test.describe('receipt-extraction-consume — BillImportModal extraction review (REQ-RXC-002)', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
@@ -50,7 +77,7 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await dismissWizard(page)
 
 		const importButton = page.getByRole('button', { name: /import bill/i })
-		const hasImportButton = await importButton.isVisible().catch(() => false)
+		const hasImportButton = await becomesVisible(importButton, 15_000)
 		test.skip(
 			!hasImportButton,
 			'Financial overview Import bill action not visible in this fixture',
@@ -61,7 +88,7 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await expect(modal).toBeVisible({ timeout: 10_000 })
 
 		const pendingDraft = page.getByTestId(/^bim-pending-/).first()
-		const hasPendingDraft = await pendingDraft.isVisible().catch(() => false)
+		const hasPendingDraft = await becomesVisible(pendingDraft, 10_000)
 		test.skip(
 			!hasPendingDraft,
 			'no pending extraction draft seeded in this administration',
@@ -83,7 +110,7 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await dismissWizard(page)
 
 		const importButton = page.getByRole('button', { name: /import bill/i })
-		const hasImportButton = await importButton.isVisible().catch(() => false)
+		const hasImportButton = await becomesVisible(importButton, 15_000)
 		test.skip(
 			!hasImportButton,
 			'Financial overview Import bill action not visible in this fixture',
@@ -91,7 +118,7 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await importButton.click()
 
 		const pendingDraft = page.getByTestId(/^bim-pending-/).first()
-		const hasPendingDraft = await pendingDraft.isVisible().catch(() => false)
+		const hasPendingDraft = await becomesVisible(pendingDraft, 10_000)
 		test.skip(
 			!hasPendingDraft,
 			'no pending extraction draft seeded in this administration',
@@ -99,7 +126,7 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await pendingDraft.click()
 
 		const rerequest = page.getByTestId('bim-rerequest')
-		const canRerequest = await rerequest.isVisible().catch(() => false)
+		const canRerequest = await becomesVisible(rerequest, 5_000)
 		test.skip(
 			!canRerequest,
 			'draft carries no sourceDocumentUri to re-request against',
@@ -120,7 +147,7 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await dismissWizard(page)
 
 		const importButton = page.getByRole('button', { name: /import bill/i })
-		const hasImportButton = await importButton.isVisible().catch(() => false)
+		const hasImportButton = await becomesVisible(importButton, 15_000)
 		test.skip(
 			!hasImportButton,
 			'Financial overview Import bill action not visible in this fixture',
@@ -128,7 +155,7 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 		await importButton.click()
 
 		const pendingDraft = page.getByTestId(/^bim-pending-/).first()
-		const hasPendingDraft = await pendingDraft.isVisible().catch(() => false)
+		const hasPendingDraft = await becomesVisible(pendingDraft, 10_000)
 		test.skip(
 			!hasPendingDraft,
 			'no pending extraction draft seeded in this administration',
@@ -153,14 +180,29 @@ test.describe('receipt-extraction-consume — ReceiptCapture prefill + correctio
 		await dismissWizard(page)
 
 		const row = page.locator('table tbody tr').first()
-		const hasRow = await row.isVisible().catch(() => false)
+		const hasRow = await becomesVisible(row, 15_000)
 		test.skip(!hasRow, 'no Receipt rows seeded in this administration')
 
+		// ⚠️ THIS CLICK USED TO GO NOWHERE, AND THE TEST TIMED OUT ON `rc-amount`
+		// with no clue why. CnPageRenderer.onRowOpen() resolves a row click as
+		// `config.rowRoute ?? detailPageByRegisterSchema.get('<register> <schema>')`,
+		// and that map indexes ONLY `type: "detail"` pages. This fragment
+		// overlays ReceiptDetail as `type: "custom"` (ReceiptCapture), which
+		// removed it from the map, so the lookup returned null, CnPageRenderer
+		// never set `rowClickToView`, and every row on /inkoop/receipts was
+		// UNCLICKABLE for every user. `src/manifest.json` now names
+		// `rowRoute: "ReceiptDetail"` explicitly.
+		//
+		// Assert the navigation itself, so a regression here reports "the row
+		// did not open" instead of "a field was missing".
 		await row.click()
-		await expect(page.getByTestId('rc-amount')).toBeVisible({ timeout: 10_000 })
+		await expect(page).toHaveURL(/\/inkoop\/receipts\/[^/]+$/, {
+			timeout: 15_000,
+		})
+		await expect(page.getByTestId('rc-amount')).toBeVisible({ timeout: 15_000 })
 
 		const reviewHint = page.getByTestId('receipt-capture-review-hint')
-		const isDraft = await reviewHint.isVisible().catch(() => false)
+		const isDraft = await becomesVisible(reviewHint, 5_000)
 		test.skip(!isDraft, 'opened receipt is not an extraction draft')
 
 		const badge = page.getByTestId('fcb-amount')
@@ -177,12 +219,12 @@ test.describe('receipt-extraction-consume — ReceiptCapture prefill + correctio
 		await dismissWizard(page)
 
 		const row = page.locator('table tbody tr').first()
-		const hasRow = await row.isVisible().catch(() => false)
+		const hasRow = await becomesVisible(row, 15_000)
 		test.skip(!hasRow, 'no Receipt rows seeded in this administration')
 		await row.click()
 
 		const category = page.getByTestId('rc-category')
-		const visible = await category.isVisible().catch(() => false)
+		const visible = await becomesVisible(category, 15_000)
 		test.skip(!visible, 'ReceiptCapture did not render (draft failed to load)')
 
 		await category.fill('travel')

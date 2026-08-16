@@ -164,6 +164,8 @@
 				"defaultSort": "countId",
 				"defaultSortDirection": "desc",
 				"detailRoute": "CycleCountDetail",
+				"_note_rowRoute": "`detailRoute` is inert; the implicit fallback matches by register+schema and this index is bound to InventoryCycleCountLine. The description below promises a row-click drilldown that did nothing without `rowRoute`.",
+				"rowRoute": "CycleCountDetail",
 				"description": "Aggregated view of every flagged variance line per REQ-ICC-010. Group-by reasonCode produces the count-by-reason rollup; row click drills back to the originating count and its adjustment StockMove."
 			}
 		}
