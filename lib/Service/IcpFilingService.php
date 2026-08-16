@@ -47,7 +47,8 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  */
 class IcpFilingService {
 	/**
-	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 * Construct the service with OpenRegister's ObjectService injected
+	 * (ADR-083 rule 1).
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IcpCalculator $calculator Pure-logic ICP helper.
@@ -301,8 +302,7 @@ class IcpFilingService {
 	 */
 	private function saveReturn(array $return): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $return,
 				register: $this->register(),
 				schema: 'IcpOpgaaf',

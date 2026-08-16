@@ -60,11 +60,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -80,17 +80,18 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR ObjectService
-	 *                                      pulled lazily.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published object
+	 *                                              surface (ADR-084), aliased in
+	 *                                              Application.php.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -258,8 +259,7 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 			$updates['bankLineId'] = $bankLineId;
 		}
 
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$objectService
+		$this->objectService
 			->setRegister($this->getRegisterSlug())
 			->setSchema('ReconciliationMatch')
 			->updateObject($matchId, $updates);
@@ -305,8 +305,7 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 				return '';
 			}
 
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$line = $objectService
+			$line = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankStatementLine')
 				->find($lineId);
@@ -320,7 +319,7 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 				return '';
 			}
 
-			$statement = $objectService
+			$statement = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankStatement')
 				->find($statementId);
@@ -335,7 +334,7 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 				return '';
 			}
 
-			$sessions = $objectService
+			$sessions = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankReconciliation')
 				->findAll(

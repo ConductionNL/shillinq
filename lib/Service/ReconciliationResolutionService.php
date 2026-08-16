@@ -31,10 +31,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DomainException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OutOfBoundsException;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -47,19 +47,18 @@ class ReconciliationResolutionService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR ObjectService
-	 *                                      pulled lazily so the service
-	 *                                      stays usable without a
-	 *                                      compile-time OR dependency.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published
+	 *                                             object surface (ADR-084),
+	 *                                             aliased in Application.php.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -91,12 +90,11 @@ class ReconciliationResolutionService {
 		string $resolutionReason,
 		string $actor,
 	): array {
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 		$register = $this->getRegisterSlug();
 
 		// Load + validate the parent reconciliation.
 		try {
-			$parent = $objectService
+			$parent = $this->objectService
 				->setRegister($register)
 				->setSchema('BankReconciliation')
 				->find($reconId);
@@ -122,7 +120,7 @@ class ReconciliationResolutionService {
 
 		// Load + validate the match record.
 		try {
-			$match = $objectService
+			$match = $this->objectService
 				->setRegister($register)
 				->setSchema('ReconciliationMatch')
 				->find($matchId);
@@ -147,7 +145,7 @@ class ReconciliationResolutionService {
 			);
 		}
 
-		$updated = $objectService
+		$updated = $this->objectService
 			->setRegister($register)
 			->setSchema('ReconciliationMatch')
 			->updateObject(

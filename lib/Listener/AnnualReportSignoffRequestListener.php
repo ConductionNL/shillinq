@@ -51,12 +51,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -88,17 +88,18 @@ final class AnnualReportSignoffRequestListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR ObjectService pulled
-	 *                                      lazily.
 	 * @param SettingsService $settingsService Shillinq settings (register slug).
 	 * @param SignoffDecisionService $signoffService The sign-off request service.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published object
+	 *                                              surface (ADR-084), aliased in
+	 *                                              Application.php.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly SettingsService $settingsService,
 		private readonly SignoffDecisionService $signoffService,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -203,8 +204,7 @@ final class AnnualReportSignoffRequestListener implements IEventListener {
 	 * @return void
 	 */
 	private function persist(string $id, array $updates): void {
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$objectService
+		$this->objectService
 			->setRegister($this->settingsService->getRegisterSlug())
 			->setSchema(self::TARGET_SCHEMA)
 			->updateObject($id, $updates);

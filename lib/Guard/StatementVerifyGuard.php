@@ -47,9 +47,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -70,22 +70,20 @@ use Psr\Log\LoggerInterface;
  */
 class StatementVerifyGuard {
 	/**
-	 * Construct the guard with lazy DI of OR's ObjectService.
+	 * Construct the guard with OR's ObjectService injected (ADR-083 rule 1).
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService
-	 *                                      is fetched lazily so this class
-	 *                                      stays usable without a hard
-	 *                                      compile-time dependency on
-	 *                                      OpenRegister.
 	 * @param IAppConfig $appConfig App config for dynamic register
 	 *                              slug resolution.
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed
 	 *                                diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published
+	 *                                             object surface (ADR-084),
+	 *                                             aliased in Application.php.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -300,8 +298,6 @@ class StatementVerifyGuard {
 			return 0;
 		}
 
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-
 		// Page through GLLine entries filtered by accountNumber + entryDate
 		// window. We use accountNumber == bankAccountId by convention; T4
 		// expects bank accounts to share their IBAN/identifier with the GL
@@ -312,7 +308,7 @@ class StatementVerifyGuard {
 		$page = 1;
 		$batchSize = 0;
 		do {
-			$batch = $objectService
+			$batch = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('GLLine')
 				->findAll(
@@ -366,8 +362,7 @@ class StatementVerifyGuard {
 	 */
 	private function persistVarianceFields(string $id, int $expectedCents, int $varianceCents): void {
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$objectService
+			$this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('BankReconciliation')
 				->updateObject(
@@ -398,14 +393,12 @@ class StatementVerifyGuard {
 	 * @return array<int, array<string, mixed>> The match object arrays.
 	 */
 	private function findMatches(string $reconId): array {
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-
 		$matches = [];
 		$pageSize = 500;
 		$page = 1;
 		$batchSize = 0;
 		do {
-			$batch = $objectService
+			$batch = $this->objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('ReconciliationMatch')
 				->findAll(
