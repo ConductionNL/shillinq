@@ -57,7 +57,6 @@ async function dismissWizard(page: Page): Promise<void> {
 }
 
 test.describe('BBV dashboard — widget shell renders', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -67,10 +66,13 @@ test.describe('BBV dashboard — widget shell renders', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-003/dashboard-loads-all-widgets
 	 */
-	test('dashboard mounts the four widgets with counts and badges', async ({ page }) => {
+	test('dashboard mounts the four widgets with counts and badges', async ({
+		page,
+	}) => {
 		// CnDashboardPage wrapper must mount.
-		await expect(page.getByTestId('bbv-compliance-dashboard'))
-			.toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('bbv-compliance-dashboard')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// The four KPI cards (Total / On-track / At-risk / Non-compliant)
 		// declared by the slice-05 BBVKPICards component.
@@ -93,7 +95,9 @@ test.describe('BBV dashboard — widget shell renders', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-004/programme-table-row-navigates-to-detail
 	 */
-	test('programme table renders sortable rows; row click navigates to detail', async ({ page }) => {
+	test('programme table renders sortable rows; row click navigates to detail', async ({
+		page,
+	}) => {
 		const table = page.getByTestId('bbv-programme-table')
 		await expect(table).toBeVisible({ timeout: 15_000 })
 
@@ -114,11 +118,9 @@ test.describe('BBV dashboard — widget shell renders', () => {
 			expect(page.url()).toMatch(/budget-mappings|bbv-dashboard/)
 		}
 	})
-
 })
 
 test.describe('BBV mapping index — search + add + row click', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + MAPPING_INDEX_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -129,24 +131,30 @@ test.describe('BBV mapping index — search + add + row click', () => {
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-index-loads-seeded-mappings
 	 */
 	test('mapping index page mounts with filter chrome', async ({ page }) => {
-		await expect(page.getByTestId('bbv-mapping-index'))
-			.toBeVisible({ timeout: 15_000 })
-		await expect(page.getByTestId('bbv-mapping-index-filters'))
-			.toBeVisible()
+		await expect(page.getByTestId('bbv-mapping-index')).toBeVisible({
+			timeout: 15_000,
+		})
+		await expect(page.getByTestId('bbv-mapping-index-filters')).toBeVisible()
 
 		// The four declared filter facets (search + fiscal year +
 		// allocation bucket + effective-date window) are present.
 		await expect(page.getByTestId('bbv-mapping-search')).toBeVisible()
 		await expect(page.getByTestId('bbv-mapping-fiscal-year')).toBeVisible()
 		await expect(page.getByTestId('bbv-mapping-allocation')).toBeVisible()
-		await expect(page.getByTestId('bbv-mapping-effective-from-after')).toBeVisible()
-		await expect(page.getByTestId('bbv-mapping-effective-from-before')).toBeVisible()
+		await expect(
+			page.getByTestId('bbv-mapping-effective-from-after'),
+		).toBeVisible()
+		await expect(
+			page.getByTestId('bbv-mapping-effective-from-before'),
+		).toBeVisible()
 	})
 
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-search-filter
 	 */
-	test('search input accepts typed input and filters the table', async ({ page }) => {
+	test('search input accepts typed input and filters the table', async ({
+		page,
+	}) => {
 		const search = page.getByTestId('bbv-mapping-search')
 		await expect(search).toBeVisible({ timeout: 15_000 })
 		await search.fill('2.3.2')
@@ -169,14 +177,14 @@ test.describe('BBV mapping index — search + add + row click', () => {
 		if (await addCta.isVisible().catch(() => false)) {
 			await addCta.click()
 			await page.waitForLoadState('domcontentloaded')
-			expect(page.url()).toMatch(/budget-mappings\/new|budget-mappings\/[^/]+$/)
+			expect(page.url()).toMatch(
+				/budget-mappings\/new|budget-mappings\/[^/]+$/,
+			)
 		}
 	})
-
 })
 
 test.describe('BBV mapping detail — create flow', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + MAPPING_NEW_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
@@ -186,9 +194,12 @@ test.describe('BBV mapping detail — create flow', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-detail-pickers-render
 	 */
-	test('detail page renders pickers + allocation field + effective-date defaults', async ({ page }) => {
-		await expect(page.getByTestId('budget-bbv-mapping-detail'))
-			.toBeVisible({ timeout: 15_000 })
+	test('detail page renders pickers + allocation field + effective-date defaults', async ({
+		page,
+	}) => {
+		await expect(page.getByTestId('budget-bbv-mapping-detail')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// The two declared relation pickers (GL account + BBV programme)
 		// must mount in their own dedicated components.
@@ -198,15 +209,21 @@ test.describe('BBV mapping detail — create flow', () => {
 		// The allocation input, effective-from + effective-to fields,
 		// and the lifecycle status are present.
 		await expect(page.getByTestId('bbv-mapping-detail-allocation')).toBeVisible()
-		await expect(page.getByTestId('bbv-mapping-detail-effective-from')).toBeVisible()
-		await expect(page.getByTestId('bbv-mapping-detail-effective-to')).toBeVisible()
+		await expect(
+			page.getByTestId('bbv-mapping-detail-effective-from'),
+		).toBeVisible()
+		await expect(
+			page.getByTestId('bbv-mapping-detail-effective-to'),
+		).toBeVisible()
 		await expect(page.getByTestId('bbv-mapping-detail-status')).toBeVisible()
 	})
 
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-detail-effective-from-default
 	 */
-	test('Effective From defaults to a fiscal-year-aligned date', async ({ page }) => {
+	test('Effective From defaults to a fiscal-year-aligned date', async ({
+		page,
+	}) => {
 		const effFrom = page.getByTestId('bbv-mapping-detail-effective-from')
 		await expect(effFrom).toBeVisible({ timeout: 15_000 })
 
@@ -223,7 +240,9 @@ test.describe('BBV mapping detail — create flow', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-detail-allocation-range
 	 */
-	test('allocation accepts 0..100 and rejects out-of-range values', async ({ page }) => {
+	test('allocation accepts 0..100 and rejects out-of-range values', async ({
+		page,
+	}) => {
 		const alloc = page.getByTestId('bbv-mapping-detail-allocation')
 		await expect(alloc).toBeVisible({ timeout: 15_000 })
 
@@ -248,18 +267,17 @@ test.describe('BBV mapping detail — create flow', () => {
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-detail-save-cancel-affordances
 	 */
 	test('save + cancel + delete affordances are present', async ({ page }) => {
-		await expect(page.getByTestId('budget-bbv-mapping-detail'))
-			.toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('budget-bbv-mapping-detail')).toBeVisible({
+			timeout: 15_000,
+		})
 		await expect(page.getByTestId('bbv-mapping-detail-save')).toBeVisible()
 		await expect(page.getByTestId('bbv-mapping-detail-cancel')).toBeVisible()
 		// Delete is hidden in create mode per slice 07 — its absence is
 		// expected here. The edit-flow spec asserts presence.
 	})
-
 })
 
 test.describe('BBV mapping detail — edit flow', () => {
-
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-detail-edit-prefills-and-persists
 	 *
@@ -269,7 +287,9 @@ test.describe('BBV mapping detail — edit flow', () => {
 	 * mounts in edit mode (delete affordance visible) and the form
 	 * pre-fill hook fires.
 	 */
-	test('detail page mounts in edit mode and surfaces the delete affordance', async ({ page }) => {
+	test('detail page mounts in edit mode and surfaces the delete affordance', async ({
+		page,
+	}) => {
 		// "edit-stub" is a synthetic id; the page MUST still mount even
 		// when the underlying record is absent (OR returns 404 and the
 		// detail handles the empty-form path).
@@ -277,8 +297,9 @@ test.describe('BBV mapping detail — edit flow', () => {
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
-		await expect(page.getByTestId('budget-bbv-mapping-detail'))
-			.toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('budget-bbv-mapping-detail')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// In edit mode the delete CTA + audit-trail panel are rendered.
 		const deleteCta = page.getByTestId('bbv-mapping-detail-delete')
@@ -295,7 +316,9 @@ test.describe('BBV mapping detail — edit flow', () => {
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-007/mapping-detail-sidebar-audit-trail
 	 */
-	test('audit-trail surface is reachable from the detail page sidebar', async ({ page }) => {
+	test('audit-trail surface is reachable from the detail page sidebar', async ({
+		page,
+	}) => {
 		await page.goto(APP + MAPPING_INDEX_ROUTE + '/edit-stub')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -305,18 +328,19 @@ test.describe('BBV mapping detail — edit flow', () => {
 		// audit listener materialises entries; here we assert the page
 		// renders without an unhandled exception by checking the form
 		// renders.
-		await expect(page.getByTestId('bbv-mapping-detail-form'))
-			.toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('bbv-mapping-detail-form')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
-
 })
 
 test.describe('BBV scoping + validation', () => {
-
 	/**
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-006/fiscal-year-selector-changes-scope
 	 */
-	test('dashboard fiscal-year selector is present and accepts a change', async ({ page }) => {
+	test('dashboard fiscal-year selector is present and accepts a change', async ({
+		page,
+	}) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -328,7 +352,10 @@ test.describe('BBV scoping + validation', () => {
 		// the select accepts the change rather than the underlying GET
 		// (Newman owns the API assertion).
 		const beforeValue = await year.inputValue().catch(() => '')
-		const options = await year.locator('option').allTextContents().catch(() => [])
+		const options = await year
+			.locator('option')
+			.allTextContents()
+			.catch(() => [])
 		const other = options.find((y) => y !== beforeValue)
 		if (other !== undefined) {
 			await year.selectOption(other)
@@ -344,7 +371,9 @@ test.describe('BBV scoping + validation', () => {
 	 * over-100% rejection at the engine boundary; this test asserts the
 	 * UI affordance exposes the bound.
 	 */
-	test('allocation input enforces the 0..100 bound at the HTML level', async ({ page }) => {
+	test('allocation input enforces the 0..100 bound at the HTML level', async ({
+		page,
+	}) => {
 		await page.goto(APP + MAPPING_NEW_ROUTE)
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -379,5 +408,4 @@ test.describe('BBV scoping + validation', () => {
 		expect(await from.getAttribute('type')).toBe('date')
 		expect(await to.getAttribute('type')).toBe('date')
 	})
-
 })

@@ -34,36 +34,35 @@ namespace OCA\Shillinq\Service\External\Bunq;
  *
  * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
-final class BunqSyncResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $syncStatus          SYNCED /
-     *                                                 SCA_REQUIRED /
-     *                                                 SYNC_DEFERRED /
-     *                                                 SYNC_ERROR.
-     * @param string              $connectionReference Echoed input.
-     * @param int                 $transactionCount    Number of
-     *                                                 transactions
-     *                                                 ingested in the
-     *                                                 pull (0 for
-     *                                                 deferred / SCA).
-     * @param bool                $dormant             TRUE when the
-     *                                                 adapter was
-     *                                                 dormant.
-     * @param array<string,mixed> $extras              Provider-specific
-     *                                                 extras —
-     *                                                 camt053AttachmentUri,
-     *                                                 scaUrl,
-     *                                                 consentExpiresAt.
-     */
-    public function __construct(
-        public readonly string $syncStatus,
-        public readonly string $connectionReference,
-        public readonly int $transactionCount,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class BunqSyncResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $syncStatus SYNCED /
+	 *                           SCA_REQUIRED /
+	 *                           SYNC_DEFERRED /
+	 *                           SYNC_ERROR.
+	 * @param string $connectionReference Echoed input.
+	 * @param int $transactionCount Number of
+	 *                              transactions
+	 *                              ingested in the
+	 *                              pull (0 for
+	 *                              deferred / SCA).
+	 * @param bool $dormant TRUE when the
+	 *                      adapter was
+	 *                      dormant.
+	 * @param array<string,mixed> $extras Provider-specific
+	 *                                    extras —
+	 *                                    camt053AttachmentUri,
+	 *                                    scaUrl,
+	 *                                    consentExpiresAt.
+	 */
+	public function __construct(
+		public readonly string $syncStatus,
+		public readonly string $connectionReference,
+		public readonly int $transactionCount,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

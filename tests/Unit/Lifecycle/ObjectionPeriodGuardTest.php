@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\ObjectionPeriodGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -35,242 +36,227 @@ use Psr\Log\LoggerInterface;
  * Covers REQ-VPB-010 — bezwaar within 6 weeks of the aanslag dagtekening and
  * beroep within 6 weeks of the inspecteur uitspraak.
  */
-class ObjectionPeriodGuardTest extends TestCase
-{
+class ObjectionPeriodGuardTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var ObjectionPeriodGuard
-     */
-    private ObjectionPeriodGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var ObjectionPeriodGuard
+	 */
+	private ObjectionPeriodGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        // phpcs:disable CustomSniffs.Functions.NamedParameters
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-        // phpcs:enable CustomSniffs.Functions.NamedParameters
+		// phpcs:disable CustomSniffs.Functions.NamedParameters
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new ObjectionPeriodGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+		$this->guard = new ObjectionPeriodGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Bezwaar is admissible within the 6-week termijn from the aanslag dagtekening (REQ-VPB-010).
-     *
-     * @return void
-     */
-    public function testCanBezwaarMakenWithinTermijn(): void
-    {
-        $dagtekening = (new \DateTimeImmutable('today'))->modify('-1 week')->format('Y-m-d');
-        $this->container->method('get')->willReturn(
-            $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['aangifte' => 'aangifte-1', 'dagtekening' => $dagtekening]]])
-        );
+	/**
+	 * Bezwaar is admissible within the 6-week termijn from the aanslag dagtekening (REQ-VPB-010).
+	 *
+	 * @return void
+	 */
+	public function testCanBezwaarMakenWithinTermijn(): void {
+		$issueDate = (new \DateTimeImmutable('today'))->modify('-1 week')->format('Y-m-d');
+		$this->container->method('get')->willReturn(
+			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-1', 'issueDate' => $issueDate]]])
+		);
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canFileObjection(taxReturnId:'aangifte-1', object: ['id' => 'aangifte-1']));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canFileObjection(taxReturnId:'aangifte-1', object: ['id' => 'aangifte-1']));
 
-    }//end testCanBezwaarMakenWithinTermijn()
+	}//end testCanBezwaarMakenWithinTermijn()
 
-    /**
-     * Bezwaar is inadmissible once the 6-week termijn has passed (REQ-VPB-010).
-     *
-     * @return void
-     */
-    public function testCannotBezwaarMakenAfterTermijn(): void
-    {
-        $dagtekening = (new \DateTimeImmutable('today'))->modify('-8 weeks')->format('Y-m-d');
-        $this->container->method('get')->willReturn(
-            $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['aangifte' => 'aangifte-2', 'dagtekening' => $dagtekening]]])
-        );
+	/**
+	 * Bezwaar is inadmissible once the 6-week termijn has passed (REQ-VPB-010).
+	 *
+	 * @return void
+	 */
+	public function testCannotBezwaarMakenAfterTermijn(): void {
+		$issueDate = (new \DateTimeImmutable('today'))->modify('-8 weeks')->format('Y-m-d');
+		$this->container->method('get')->willReturn(
+			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-2', 'issueDate' => $issueDate]]])
+		);
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-2', object: ['id' => 'aangifte-2']));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-2', object: ['id' => 'aangifte-2']));
 
-    }//end testCannotBezwaarMakenAfterTermijn()
+	}//end testCannotBezwaarMakenAfterTermijn()
 
-    /**
-     * Bezwaar is denied (fail-closed) when no aanslag is linked (REQ-VPB-010).
-     *
-     * @return void
-     */
-    public function testCannotBezwaarMakenWithoutAanslag(): void
-    {
-        $this->container->method('get')->willReturn($this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => []]));
+	/**
+	 * Bezwaar is denied (fail-closed) when no aanslag is linked (REQ-VPB-010).
+	 *
+	 * @return void
+	 */
+	public function testCannotBezwaarMakenWithoutAanslag(): void {
+		$this->container->method('get')->willReturn($this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => []]));
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-3', object: ['id' => 'aangifte-3']));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-3', object: ['id' => 'aangifte-3']));
 
-    }//end testCannotBezwaarMakenWithoutAanslag()
+	}//end testCannotBezwaarMakenWithoutAanslag()
 
-    /**
-     * Beroep is admissible within 6 weeks of the inspecteur uitspraak (REQ-VPB-010).
-     *
-     * @return void
-     */
-    public function testCanBeroepInstellenWithinTermijn(): void
-    {
-        $uitspraak = (new \DateTimeImmutable('today'))->modify('-2 weeks')->format('Y-m-d');
+	/**
+	 * Beroep is admissible within 6 weeks of the inspecteur uitspraak (REQ-VPB-010).
+	 *
+	 * @return void
+	 */
+	public function testCanBeroepInstellenWithinTermijn(): void {
+		$ruling = (new \DateTimeImmutable('today'))->modify('-2 weeks')->format('Y-m-d');
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue(
-            $this->guard->canFileAppeal(objectionId:'bezwaar-1', object: ['uitspraakDatum' => $uitspraak])
-        );
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue(
+			$this->guard->canFileAppeal(objectionId:'bezwaar-1', object: ['rulingDate' => $ruling])
+		);
 
-    }//end testCanBeroepInstellenWithinTermijn()
+	}//end testCanBeroepInstellenWithinTermijn()
 
-    /**
-     * Beroep is inadmissible once the 6-week beroepstermijn has passed (REQ-VPB-010).
-     *
-     * @return void
-     */
-    public function testCannotBeroepInstellenAfterTermijn(): void
-    {
-        $uitspraak = (new \DateTimeImmutable('today'))->modify('-7 weeks')->format('Y-m-d');
+	/**
+	 * Beroep is inadmissible once the 6-week beroepstermijn has passed (REQ-VPB-010).
+	 *
+	 * @return void
+	 */
+	public function testCannotBeroepInstellenAfterTermijn(): void {
+		$ruling = (new \DateTimeImmutable('today'))->modify('-7 weeks')->format('Y-m-d');
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse(
-            $this->guard->canFileAppeal(objectionId:'bezwaar-2', object: ['uitspraakDatum' => $uitspraak])
-        );
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse(
+			$this->guard->canFileAppeal(objectionId:'bezwaar-2', object: ['rulingDate' => $ruling])
+		);
 
-    }//end testCannotBeroepInstellenAfterTermijn()
+	}//end testCannotBeroepInstellenAfterTermijn()
 
-    /**
-     * Beroep is denied (fail-closed) when no uitspraakDatum is recorded (REQ-VPB-010).
-     *
-     * @return void
-     */
-    public function testCannotBeroepInstellenWithoutUitspraak(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse(
-            $this->guard->canFileAppeal(objectionId:'bezwaar-3', object: ['uitspraakDatum' => ''])
-        );
+	/**
+	 * Beroep is denied (fail-closed) when no uitspraakDatum is recorded (REQ-VPB-010).
+	 *
+	 * @return void
+	 */
+	public function testCannotBeroepInstellenWithoutUitspraak(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse(
+			$this->guard->canFileAppeal(objectionId:'bezwaar-3', object: ['rulingDate' => ''])
+		);
 
-    }//end testCannotBeroepInstellenWithoutUitspraak()
+	}//end testCannotBeroepInstellenWithoutUitspraak()
 
-    /**
-     * An exception in the termijn path fails closed (REQ-VPB-010, CWE-863).
-     *
-     * @return void
-     */
-    public function testBezwaarExceptionFailsClosed(): void
-    {
-        $this->container->method('get')->willThrowException(new \RuntimeException('down'));
-        $this->logger->expects($this->once())->method('error');
+	/**
+	 * An exception in the termijn path fails closed (REQ-VPB-010, CWE-863).
+	 *
+	 * @return void
+	 */
+	public function testBezwaarExceptionFailsClosed(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('down'));
+		$this->logger->expects($this->once())->method('error');
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-x', object: ['id' => 'aangifte-x']));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-x', object: ['id' => 'aangifte-x']));
 
-    }//end testBezwaarExceptionFailsClosed()
+	}//end testBezwaarExceptionFailsClosed()
 
-    /**
-     * Build a schema-aware ObjectService stub.
-     *
-     * @param array<string,array<mixed>> $recordsBySchema Map of schema slug => records.
-     *
-     * @return object
-     */
-    private function buildSchemaStub(array $recordsBySchema): object
-    {
-        return new class($recordsBySchema) {
+	/**
+	 * Build a schema-aware ObjectService stub.
+	 *
+	 * @param array<string,array<mixed>> $recordsBySchema Map of schema slug => records.
+	 *
+	 * @return object
+	 */
+	private function buildSchemaStub(array $recordsBySchema): object {
+		return new class($recordsBySchema) {
+			/**
+			 * Map of schema slug => records.
+			 *
+			 * @var array<string,array<mixed>>
+			 */
+			private array $recordsBySchema;
 
-            /**
-             * Map of schema slug => records.
-             *
-             * @var array<string,array<mixed>>
-             */
-            private array $recordsBySchema;
+			/**
+			 * The currently selected schema.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * The currently selected schema.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string,array<mixed>> $recordsBySchema Map of schema => records.
+			 */
+			public function __construct(array $recordsBySchema) {
+				$this->recordsBySchema = $recordsBySchema;
+			}//end __construct()
 
-            /**
-             * Constructor.
-             *
-             * @param array<string,array<mixed>> $recordsBySchema Map of schema => records.
-             */
-            public function __construct(array $recordsBySchema)
-            {
-                $this->recordsBySchema = $recordsBySchema;
-            }//end __construct()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug (unused).
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent schema setter — selects the active record set.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Fluent schema setter — selects the active record set.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
-
-            /**
-             * Return the records for the active schema.
-             *
-             * @param array<string,mixed> $params Query parameters (unused in stub).
-             *
-             * @return array<mixed>
-             */
-            public function findAll(array $params=[]): array
-            {
-                return ($this->recordsBySchema[$this->schema] ?? []);
-            }//end findAll()
-        };
-    }//end buildSchemaStub()
+			/**
+			 * Return the records for the active schema.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 */
+			public function findAll(array $params = []): array {
+				return ($this->recordsBySchema[$this->schema] ?? []);
+			}//end findAll()
+		};
+	}//end buildSchemaStub()
 }//end class

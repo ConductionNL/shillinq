@@ -22,17 +22,29 @@
 					{{ t('shillinq', 'Committed vs. realised per budget line') }}
 				</h2>
 				<p class="budget-line-commitments__description">
-					{{ t('shillinq', 'Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).') }}
+					{{
+						t(
+							'shillinq',
+							'Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).',
+						)
+					}}
 				</p>
 			</header>
 
 			<section class="budget-line-commitments__body">
-				<NcLoadingIcon v-if="loading"
+				<NcLoadingIcon
+					v-if="loading"
 					:size="32"
 					:name="t('shillinq', 'Loading budget lines')" />
-				<NcEmptyContent v-else-if="!rows.length"
+				<NcEmptyContent
+					v-else-if="!rows.length"
 					:name="t('shillinq', 'No budget lines')"
-					:description="t('shillinq', 'No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.')" />
+					:description="
+						t(
+							'shillinq',
+							'No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.',
+						)
+					" />
 				<table v-else class="budget-line-commitments__table">
 					<thead>
 						<tr>
@@ -48,16 +60,24 @@
 							<th scope="col">
 								{{ t('shillinq', 'GL account') }}
 							</th>
-							<th scope="col" class="budget-line-commitments__amount-col">
+							<th
+								scope="col"
+								class="budget-line-commitments__amount-col">
 								{{ t('shillinq', 'Authorized') }}
 							</th>
-							<th scope="col" class="budget-line-commitments__amount-col">
+							<th
+								scope="col"
+								class="budget-line-commitments__amount-col">
 								{{ t('shillinq', 'Committed') }}
 							</th>
-							<th scope="col" class="budget-line-commitments__amount-col">
+							<th
+								scope="col"
+								class="budget-line-commitments__amount-col">
 								{{ t('shillinq', 'Realised') }}
 							</th>
-							<th scope="col" class="budget-line-commitments__amount-col">
+							<th
+								scope="col"
+								class="budget-line-commitments__amount-col">
 								{{ t('shillinq', 'Available') }}
 							</th>
 						</tr>
@@ -66,7 +86,8 @@
 						<!-- Vue 3 requires the v-for key on the <template> itself; the
 						     Vue 2 spelling put one on each child and is a compile error. -->
 						<template v-for="row in rows" :key="row.key">
-							<tr class="budget-line-commitments__row"
+							<tr
+								class="budget-line-commitments__row"
 								data-testid="budget-line-row"
 								tabindex="0"
 								role="button"
@@ -74,35 +95,65 @@
 								@click="toggleDrilldown(row)"
 								@keyup.enter="toggleDrilldown(row)">
 								<th scope="row">
-									{{ row.programma || '—' }}
+									{{ row.programme || '—' }}
 								</th>
-								<td>{{ row.kostenplaats || '—' }}</td>
-								<td>{{ row.boekjaar ?? '—' }}</td>
-								<td>{{ row.grootboekrekening || '—' }}</td>
+								<td>{{ row.cost_centre || '—' }}</td>
+								<td>{{ row.financial_year ?? '—' }}</td>
+								<td>{{ row.general_ledger_account || '—' }}</td>
 								<td class="budget-line-commitments__amount-cell">
 									{{ formatAmount(row.geautoriseerd) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
-									{{ formatAmount(row.verplicht) }}
+									{{ formatAmount(row.mandatory) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
 									{{ formatAmount(row.gerealiseerd) }}
 								</td>
-								<td class="budget-line-commitments__amount-cell"
-									:class="{ 'budget-line-commitments__amount-cell--negative': row.vrij < 0 }">
+								<td
+									class="budget-line-commitments__amount-cell"
+									:class="{
+										'budget-line-commitments__amount-cell--negative':
+											row.vrij < 0,
+									}">
 									{{ formatAmount(row.vrij) }}
 								</td>
 							</tr>
-							<tr v-if="expandedKey === row.key" class="budget-line-commitments__drilldown-row">
+							<tr
+								v-if="expandedKey === row.key"
+								class="budget-line-commitments__drilldown-row">
 								<td colspan="8">
-									<NcLoadingIcon v-if="drilldownLoading" :size="20" />
-									<p v-else-if="!drilldownItems.length" class="budget-line-commitments__drilldown-empty">
-										{{ t('shillinq', 'No underlying commitments found for this line.') }}
+									<NcLoadingIcon
+										v-if="drilldownLoading"
+										:size="20" />
+									<p
+										v-else-if="!drilldownItems.length"
+										class="budget-line-commitments__drilldown-empty">
+										{{
+											t(
+												'shillinq',
+												'No underlying commitments found for this line.',
+											)
+										}}
 									</p>
-									<ul v-else class="budget-line-commitments__drilldown-list" data-testid="budget-line-drilldown">
-										<li v-for="item in drilldownItems" :key="item.id || item.verplichting">
-											<span class="budget-line-commitments__drilldown-verplichting">{{ item.verplichting }}</span>
-											<span class="budget-line-commitments__drilldown-amount">{{ formatAmount(item.bedrag_excl_btw) }}</span>
+									<ul
+										v-else
+										class="budget-line-commitments__drilldown-list"
+										data-testid="budget-line-drilldown">
+										<li
+											v-for="item in drilldownItems"
+											:key="item.id || item.commitment">
+											<span
+												class="budget-line-commitments__drilldown-commitment"
+												>{{ item.commitment }}</span
+											>
+											<span
+												class="budget-line-commitments__drilldown-amount"
+												>{{
+													formatAmount(
+														item.amount_excl_vat,
+													)
+												}}</span
+											>
 										</li>
 									</ul>
 								</td>
@@ -110,7 +161,10 @@
 						</template>
 					</tbody>
 				</table>
-				<p v-if="errorMessage" class="budget-line-commitments__error" role="alert">
+				<p
+					v-if="errorMessage"
+					class="budget-line-commitments__error"
+					role="alert">
 					{{ errorMessage }}
 				</p>
 			</section>
@@ -119,10 +173,14 @@
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
-import { normaliseBudgetLineRows, formatAmount, drilldownFilters } from './budgetLineCommitmentsHelpers.js'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
+import {
+	drilldownFilters,
+	formatAmount,
+	normaliseBudgetLineRows,
+} from './budgetLineCommitmentsHelpers.js'
 
 export default {
 	name: 'BudgetLineCommitments',
@@ -165,16 +223,26 @@ export default {
 			} catch (error) {
 				const status = error?.response?.status
 				if (status === 404 || status === 501) {
-					this.errorMessage = this.t('shillinq', 'Aggregation endpoint unavailable on this OpenRegister build.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Aggregation endpoint unavailable on this OpenRegister build.',
+					)
 				} else if (status === 401 || status === 403) {
-					this.errorMessage = this.t('shillinq', 'Permission required to read budget-line data.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Permission required to read budget-line data.',
+					)
 				} else {
-					this.errorMessage = this.t('shillinq', 'Failed to load budget lines.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Failed to load budget lines.',
+					)
 				}
 			} finally {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Expand/collapse the drilldown for a budget-line row.
 		 *
@@ -198,9 +266,15 @@ export default {
 				Object.keys(filters).forEach((key) => {
 					params[`filters[${key}]`] = filters[key]
 				})
-				const url = generateUrl('/apps/shillinq/api/openregister/objects/Verplichtingsregel')
+				const url = generateUrl(
+					'/apps/shillinq/api/openregister/objects/Verplichtingsregel',
+				)
 				const { data } = await axios.get(url, { params })
-				const items = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : [])
+				const items = Array.isArray(data?.results)
+					? data.results
+					: Array.isArray(data)
+						? data
+						: []
 				this.drilldownItems = items
 			} catch (error) {
 				this.drilldownItems = []

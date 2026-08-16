@@ -64,102 +64,98 @@ use Throwable;
  *
  * @spec openspec/specs/grir-accrual-wiring/spec.md
  */
-class GRIRClearingListener implements IEventListener
-{
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param GRIRClearingService $grirClearingService The GR/IR posting orchestration service.
-     * @param LoggerInterface     $logger              Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly GRIRClearingService $grirClearingService,
-        private readonly LoggerInterface $logger,
-    ) {
+class GRIRClearingListener implements IEventListener {
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param GRIRClearingService $grirClearingService The GR/IR posting orchestration service.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly GRIRClearingService $grirClearingService,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an ObjectTransitionedEvent.
-     *
-     * @param Event $event Event from OpenRegister.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/grir-accrual-wiring/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectTransitionedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectTransitionedEvent.
+	 *
+	 * @param Event $event Event from OpenRegister.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/grir-accrual-wiring/spec.md
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectTransitionedEvent === false) {
+			return;
+		}
 
-        try {
-            $schema = strtolower(trim((string) $event->getSchema()));
-            $to     = (string) $event->getTo();
+		try {
+			$schema = strtolower(trim((string)$event->getSchema()));
+			$to = (string)$event->getTo();
 
-            $entity = $event->getObject();
-            $object = $entity->getObject();
-            if (is_array($object) === false) {
-                return;
-            }
+			$entity = $event->getObject();
+			$object = $entity->getObject();
+			if (is_array($object) === false) {
+				return;
+			}
 
-            $administrationId = trim((string) ($object['administrationId'] ?? ''));
-            if ($administrationId === '') {
-                return;
-            }
+			$administrationId = trim((string)($object['administrationId'] ?? ''));
+			if ($administrationId === '') {
+				return;
+			}
 
-            if ($this->isSchema(normalisedSchema: $schema, target: 'goodsreceiptnote') === true && $to === 'accepted') {
-                $this->grirClearingService->postGRIRForGoodsReceiptAccept(
-                    administrationId: $administrationId,
-                    grn: $object
-                );
-                return;
-            }
+			if ($this->isSchema(normalisedSchema: $schema, target: 'goodsreceiptnote') === true && $to === 'accepted') {
+				$this->grirClearingService->postGRIRForGoodsReceiptAccept(
+					administrationId: $administrationId,
+					grn: $object
+				);
+				return;
+			}
 
-            if ($this->isSchema(normalisedSchema: $schema, target: 'svcreceipt') === true && $to === 'accepted') {
-                $this->grirClearingService->postGRIRForServiceReceiptAccept(
-                    administrationId: $administrationId,
-                    receipt: $object
-                );
-                return;
-            }
+			if ($this->isSchema(normalisedSchema: $schema, target: 'svcreceipt') === true && $to === 'accepted') {
+				$this->grirClearingService->postGRIRForServiceReceiptAccept(
+					administrationId: $administrationId,
+					receipt: $object
+				);
+				return;
+			}
 
-            if ($this->isSchema(normalisedSchema: $schema, target: 'supplierinvoice') === true && $to === 'matched') {
-                $invoiceId = (string) ($object['id'] ?? ($object['@self']['id'] ?? ''));
-                if ($invoiceId === '') {
-                    return;
-                }
+			if ($this->isSchema(normalisedSchema: $schema, target: 'supplierinvoice') === true && $to === 'matched') {
+				$invoiceId = (string)($object['id'] ?? ($object['@self']['id'] ?? ''));
+				if ($invoiceId === '') {
+					return;
+				}
 
-                $this->grirClearingService->settleGRIRForMatchedInvoice(
-                    administrationId: $administrationId,
-                    invoiceId: $invoiceId
-                );
-            }
-        } catch (Throwable $e) {
-            // Fail-soft: the triggering transition itself already
-            // committed; never bubble up and block it. Mirrors
-            // DeliveryDispatchListener's / StockMoveTransitionedListener's
-            // fail-soft contract (REQ-004).
-            $this->logger->error(
-                'GRIRClearingListener: GR/IR posting dispatch failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+				$this->grirClearingService->settleGRIRForMatchedInvoice(
+					administrationId: $administrationId,
+					invoiceId: $invoiceId
+				);
+			}
+		} catch (Throwable $e) {
+			// Fail-soft: the triggering transition itself already
+			// committed; never bubble up and block it. Mirrors
+			// DeliveryDispatchListener's / StockMoveTransitionedListener's
+			// fail-soft contract (REQ-004).
+			$this->logger->error(
+				'GRIRClearingListener: GR/IR posting dispatch failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Schema-name match (plain slug or namespaced).
-     *
-     * @param string $normalisedSchema Already-lowercased, trimmed schema identifier.
-     * @param string $target           Target slug, lowercase.
-     *
-     * @return bool
-     */
-    private function isSchema(string $normalisedSchema, string $target): bool
-    {
-        return ($normalisedSchema === $target || str_ends_with($normalisedSchema, '/'.$target));
-
-    }//end isSchema()
+	/**
+	 * Schema-name match (plain slug or namespaced).
+	 *
+	 * @param string $normalisedSchema Already-lowercased, trimmed schema identifier.
+	 * @param string $target Target slug, lowercase.
+	 *
+	 * @return bool
+	 */
+	private function isSchema(string $normalisedSchema, string $target): bool {
+		return ($normalisedSchema === $target || str_ends_with($normalisedSchema, '/' . $target));
+	}//end isSchema()
 }//end class

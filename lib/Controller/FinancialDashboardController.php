@@ -56,164 +56,157 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class FinancialDashboardController extends Controller
-{
-    /**
-     * Accepted shape for the from/to bounds: a `YYYY-MM-DD` day, optionally
-     * followed by a time suffix (the service only reads the first ten
-     * characters, mirroring the client's `.slice(0, 10)`).
-     *
-     * @var string
-     */
-    private const DATE_PATTERN = '/^\d{4}-\d{2}-\d{2}([T ][0-9:.+\-Z]{1,22})?$/';
+class FinancialDashboardController extends Controller {
+	/**
+	 * Accepted shape for the from/to bounds: a `YYYY-MM-DD` day, optionally
+	 * followed by a time suffix (the service only reads the first ten
+	 * characters, mirroring the client's `.slice(0, 10)`).
+	 *
+	 * @var string
+	 */
+	private const DATE_PATTERN = '/^\d{4}-\d{2}-\d{2}([T ][0-9:.+\-Z]{1,22})?$/';
 
-    /**
-     * Constructor for the FinancialDashboardController.
-     *
-     * @param IRequest                     $request   The request object.
-     * @param FinancialDashboardService    $dashboard The series/summary computation service.
-     * @param AdministrationContextService $context   Authenticated-user context (ADR-005).
-     * @param LoggerInterface              $logger    Logger for diagnostics (no stack traces to client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly FinancialDashboardService $dashboard,
-        private readonly AdministrationContextService $context,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+	/**
+	 * Constructor for the FinancialDashboardController.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param FinancialDashboardService $dashboard The series/summary computation service.
+	 * @param AdministrationContextService $context Authenticated-user context (ADR-005).
+	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly FinancialDashboardService $dashboard,
+		private readonly AdministrationContextService $context,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Monthly financial series (turnover, costs, margin + %, billable vs
-     * non-billable hours, realized cashflow) over the requested range.
-     *
-     * Query parameters:
-     *  - from (optional) ISO-8601 lower bound; requires `to`.
-     *  - to   (optional) ISO-8601 upper bound; requires `from`.
-     *
-     * Without a range the trailing 12 months are returned (the widgets'
-     * fallback window). Returns HTTP 200 with { months, revenue, costs,
-     * margin, marginPct, billableHours, nonBillableHours, billablePct,
-     * cashIn, cashOut, cashNet }; HTTP 400 on malformed bounds; HTTP 500
-     * without a stack trace on an unexpected failure.
-     *
-     * @return JSONResponse The series payload.
-     *
-     * @spec openspec/specs/financial-dashboard-graphs/spec.md
-     */
-    #[NoAdminRequired]
-    public function series(): JSONResponse
-    {
-        return $this->respond(endpoint: 'series');
+	/**
+	 * Monthly financial series (turnover, costs, margin + %, billable vs
+	 * non-billable hours, realized cashflow) over the requested range.
+	 *
+	 * Query parameters:
+	 *  - from (optional) ISO-8601 lower bound; requires `to`.
+	 *  - to   (optional) ISO-8601 upper bound; requires `from`.
+	 *
+	 * Without a range the trailing 12 months are returned (the widgets'
+	 * fallback window). Returns HTTP 200 with { months, revenue, costs,
+	 * margin, marginPct, billableHours, nonBillableHours, billablePct,
+	 * cashIn, cashOut, cashNet }; HTTP 400 on malformed bounds; HTTP 500
+	 * without a stack trace on an unexpected failure.
+	 *
+	 * @return JSONResponse The series payload.
+	 *
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 */
+	#[NoAdminRequired]
+	public function series(): JSONResponse {
+		return $this->respond(endpoint: 'series');
+	}//end series()
 
-    }//end series()
+	/**
+	 * KPI summary (turnover, margin + %, open debtors/creditors, billable
+	 * hours, all-time cash position) over the requested range, with
+	 * previous-period values for the range-driven metrics (previous window =
+	 * same length immediately before the current one).
+	 *
+	 * Query parameters:
+	 *  - from (optional) ISO-8601 lower bound; requires `to`.
+	 *  - to   (optional) ISO-8601 upper bound; requires `from`.
+	 *
+	 * Returns HTTP 200 with { months, previousMonths, current, previousPeriod };
+	 * HTTP 400 on malformed bounds; HTTP 500 without a stack trace on an
+	 * unexpected failure.
+	 *
+	 * @return JSONResponse The summary payload.
+	 *
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 */
+	#[NoAdminRequired]
+	public function summary(): JSONResponse {
+		return $this->respond(endpoint: 'summary');
+	}//end summary()
 
-    /**
-     * KPI summary (turnover, margin + %, open debtors/creditors, billable
-     * hours, all-time cash position) over the requested range, with
-     * previous-period values for the range-driven metrics (previous window =
-     * same length immediately before the current one).
-     *
-     * Query parameters:
-     *  - from (optional) ISO-8601 lower bound; requires `to`.
-     *  - to   (optional) ISO-8601 upper bound; requires `from`.
-     *
-     * Returns HTTP 200 with { months, previousMonths, current, previousPeriod };
-     * HTTP 400 on malformed bounds; HTTP 500 without a stack trace on an
-     * unexpected failure.
-     *
-     * @return JSONResponse The summary payload.
-     *
-     * @spec openspec/specs/financial-dashboard-graphs/spec.md
-     */
-    #[NoAdminRequired]
-    public function summary(): JSONResponse
-    {
-        return $this->respond(endpoint: 'summary');
+	/**
+	 * Shared request handling for both endpoints: authentication gate,
+	 * from/to validation, service dispatch and the no-stack-trace 500 path.
+	 *
+	 * @param string $endpoint Either 'series' or 'summary'.
+	 *
+	 * @return JSONResponse The endpoint payload or an error envelope.
+	 */
+	private function respond(string $endpoint): JSONResponse {
+		// Authentication gate — the NC SecurityMiddleware already rejects
+		// anonymous requests for #[NoAdminRequired] routes; we check
+		// explicitly (ADR-005) so the data layer below can rely on a
+		// resolved user for its RBAC scoping.
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(
+				['error' => 'Not authenticated'],
+				Http::STATUS_UNAUTHORIZED
+			);
+		}
 
-    }//end summary()
+		$from = trim((string)$this->request->getParam('from', ''));
+		$to = trim((string)$this->request->getParam('to', ''));
 
-    /**
-     * Shared request handling for both endpoints: authentication gate,
-     * from/to validation, service dispatch and the no-stack-trace 500 path.
-     *
-     * @param string $endpoint Either 'series' or 'summary'.
-     *
-     * @return JSONResponse The endpoint payload or an error envelope.
-     */
-    private function respond(string $endpoint): JSONResponse
-    {
-        // Authentication gate — the NC SecurityMiddleware already rejects
-        // anonymous requests for #[NoAdminRequired] routes; we check
-        // explicitly (ADR-005) so the data layer below can rely on a
-        // resolved user for its RBAC scoping.
-        if ($this->context->currentUserId() === null) {
-            return new JSONResponse(
-                ['error' => 'Not authenticated'],
-                Http::STATUS_UNAUTHORIZED
-            );
-        }
+		if (($from === '') !== ($to === '')) {
+			return new JSONResponse(
+				['error' => 'from and to must be provided together'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        $from = trim((string) $this->request->getParam('from', ''));
-        $to   = trim((string) $this->request->getParam('to', ''));
+		if ($from !== '' && preg_match(self::DATE_PATTERN, $from) !== 1) {
+			return new JSONResponse(
+				['error' => 'from must be an ISO-8601 date'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if (($from === '') !== ($to === '')) {
-            return new JSONResponse(
-                ['error' => 'from and to must be provided together'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($to !== '' && preg_match(self::DATE_PATTERN, $to) !== 1) {
+			return new JSONResponse(
+				['error' => 'to must be an ISO-8601 date'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if ($from !== '' && preg_match(self::DATE_PATTERN, $from) !== 1) {
-            return new JSONResponse(
-                ['error' => 'from must be an ISO-8601 date'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		$fromParam = null;
+		if ($from !== '') {
+			$fromParam = $from;
+		}
 
-        if ($to !== '' && preg_match(self::DATE_PATTERN, $to) !== 1) {
-            return new JSONResponse(
-                ['error' => 'to must be an ISO-8601 date'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		$toParam = null;
+		if ($to !== '') {
+			$toParam = $to;
+		}
 
-        $fromParam = null;
-        if ($from !== '') {
-            $fromParam = $from;
-        }
+		try {
+			if ($endpoint === 'series') {
+				$result = $this->dashboard->series(from: $fromParam, to: $toParam);
+			} else {
+				$result = $this->dashboard->summary(from: $fromParam, to: $toParam);
+			}
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'FinancialDashboardController: failed to compute ' . $endpoint,
+				[
+					'from' => $from,
+					'to' => $to,
+					'exception' => $e->getMessage(),
+				]
+			);
 
-        $toParam = null;
-        if ($to !== '') {
-            $toParam = $to;
-        }
+			return new JSONResponse(
+				['error' => 'Failed to compute financial ' . $endpoint],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-        try {
-            if ($endpoint === 'series') {
-                $result = $this->dashboard->series(from: $fromParam, to: $toParam);
-            } else {
-                $result = $this->dashboard->summary(from: $fromParam, to: $toParam);
-            }
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'FinancialDashboardController: failed to compute '.$endpoint,
-                [
-                    'from'      => $from,
-                    'to'        => $to,
-                    'exception' => $e->getMessage(),
-                ]
-            );
-
-            return new JSONResponse(
-                ['error' => 'Failed to compute financial '.$endpoint],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
-
-        return new JSONResponse($result, Http::STATUS_OK);
-
-    }//end respond()
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end respond()
 }//end class

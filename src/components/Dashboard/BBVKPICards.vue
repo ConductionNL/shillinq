@@ -29,28 +29,28 @@
 			data-testid="bbv-kpi-total"
 			:title="t('shillinq', 'Total programmes')"
 			:count="totalCount"
-			:count-label="t('shillinq', 'active')"
+			:countLabel="t('shillinq', 'active')"
 			variant="default"
 			:loading="loading" />
 		<CnStatsBlock
 			data-testid="bbv-kpi-on-track"
 			:title="t('shillinq', 'On-track')"
 			:count="onTrackCount"
-			:count-label="t('shillinq', 'utilization ≤ 75%')"
+			:countLabel="t('shillinq', 'utilization ≤ 75%')"
 			variant="success"
 			:loading="loading" />
 		<CnStatsBlock
 			data-testid="bbv-kpi-at-risk"
 			:title="t('shillinq', 'At-risk')"
 			:count="atRiskCount"
-			:count-label="t('shillinq', '75–90% utilization')"
+			:countLabel="t('shillinq', '75–90% utilization')"
 			variant="warning"
 			:loading="loading" />
 		<CnStatsBlock
 			data-testid="bbv-kpi-non-compliant"
 			:title="t('shillinq', 'Non-compliant')"
 			:count="nonCompliantCount"
-			:count-label="t('shillinq', '> 90% utilization')"
+			:countLabel="t('shillinq', '> 90% utilization')"
 			variant="error"
 			:loading="loading" />
 	</div>
@@ -68,25 +68,35 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		loading: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	computed: {
 		totalCount() {
 			return this.programmes.length
 		},
+
 		onTrackCount() {
-			return this.programmes.filter(p => p.complianceStatus === 'on-track').length
+			return this.programmes.filter((p) => p.complianceStatus === 'on-track')
+				.length
 		},
+
 		atRiskCount() {
-			return this.programmes.filter(p => p.complianceStatus === 'at-risk').length
+			return this.programmes.filter((p) => p.complianceStatus === 'at-risk')
+				.length
 		},
+
 		nonCompliantCount() {
-			return this.programmes.filter(p => p.complianceStatus === 'non-compliant').length
+			return this.programmes.filter(
+				(p) => p.complianceStatus === 'non-compliant',
+			).length
 		},
 	},
+
 	methods: { t },
 }
 </script>

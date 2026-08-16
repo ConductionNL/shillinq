@@ -29,49 +29,46 @@ use ReflectionMethod;
 /**
  * Verifies the job delegates the cancellation sweep to the service.
  */
-final class CancelUnconfirmedAppointmentsTest extends TestCase
-{
-    /**
-     * The job delegates run() to AppointmentConfirmationService::cancelExpired().
-     *
-     * @return void
-     */
-    public function testRunInvokesCancelExpired(): void
-    {
-        $service = $this->createMock(AppointmentConfirmationService::class);
-        $service->expects($this->once())->method('cancelExpired')->willReturn(2);
+final class CancelUnconfirmedAppointmentsTest extends TestCase {
+	/**
+	 * The job delegates run() to AppointmentConfirmationService::cancelExpired().
+	 *
+	 * @return void
+	 */
+	public function testRunInvokesCancelExpired(): void {
+		$service = $this->createMock(AppointmentConfirmationService::class);
+		$service->expects($this->once())->method('cancelExpired')->willReturn(2);
 
-        $job = new CancelUnconfirmedAppointments(
-            $this->createMock(ITimeFactory::class),
-            $service,
-            $this->createMock(LoggerInterface::class),
-        );
+		$job = new CancelUnconfirmedAppointments(
+			$this->createMock(ITimeFactory::class),
+			$service,
+			$this->createMock(LoggerInterface::class),
+		);
 
-        $run = new ReflectionMethod($job, 'run');
-        $run->setAccessible(true);
-        $run->invoke($job, null);
-    }//end testRunInvokesCancelExpired()
+		$run = new ReflectionMethod($job, 'run');
+		$run->setAccessible(true);
+		$run->invoke($job, null);
+	}//end testRunInvokesCancelExpired()
 
-    /**
-     * A zero-cancellation run still completes cleanly.
-     *
-     * @return void
-     */
-    public function testRunWithNoCancellationsIsSafe(): void
-    {
-        $service = $this->createMock(AppointmentConfirmationService::class);
-        $service->method('cancelExpired')->willReturn(0);
+	/**
+	 * A zero-cancellation run still completes cleanly.
+	 *
+	 * @return void
+	 */
+	public function testRunWithNoCancellationsIsSafe(): void {
+		$service = $this->createMock(AppointmentConfirmationService::class);
+		$service->method('cancelExpired')->willReturn(0);
 
-        $job = new CancelUnconfirmedAppointments(
-            $this->createMock(ITimeFactory::class),
-            $service,
-            $this->createMock(LoggerInterface::class),
-        );
+		$job = new CancelUnconfirmedAppointments(
+			$this->createMock(ITimeFactory::class),
+			$service,
+			$this->createMock(LoggerInterface::class),
+		);
 
-        $run = new ReflectionMethod($job, 'run');
-        $run->setAccessible(true);
-        $run->invoke($job, null);
+		$run = new ReflectionMethod($job, 'run');
+		$run->setAccessible(true);
+		$run->invoke($job, null);
 
-        $this->addToAssertionCount(1);
-    }//end testRunWithNoCancellationsIsSafe()
+		$this->addToAssertionCount(1);
+	}//end testRunWithNoCancellationsIsSafe()
 }//end class

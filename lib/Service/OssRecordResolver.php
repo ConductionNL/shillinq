@@ -38,194 +38,180 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Reads OssReturn / OssPayment records through the real ObjectService API.
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class OssRecordResolver
-{
+class OssRecordResolver {
 
-    /**
-     * OssReturn schema slug.
-     *
-     * @var string
-     */
-    public const SCHEMA_RETURN = 'OssReturn';
+	/**
+	 * OssReturn schema slug.
+	 *
+	 * @var string
+	 */
+	public const SCHEMA_RETURN = 'OssReturn';
 
-    /**
-     * OssPayment schema slug.
-     *
-     * @var string
-     */
-    public const SCHEMA_PAYMENT = 'OssPayment';
+	/**
+	 * OssPayment schema slug.
+	 *
+	 * @var string
+	 */
+	public const SCHEMA_PAYMENT = 'OssPayment';
 
-    /**
-     * Construct the resolver.
-     *
-     * @param ContainerInterface $container DI container for the lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config (register slug).
-     * @param LoggerInterface    $logger    Logger (no sensitive payloads).
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the resolver.
+	 *
+	 * @param IAppConfig $appConfig App config (register slug).
+	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Resolve the OssReturn an OssPayment settles.
-     *
-     * @param array<string,mixed> $ossPayment The payment record.
-     *
-     * @return array<string,mixed>|null The linked return, or null when unresolvable.
-     *
-     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
-     */
-    public function findReturnForPayment(array $ossPayment): ?array
-    {
-        $returnId = trim((string) ($ossPayment['ossReturnId'] ?? ''));
-        if ($returnId === '') {
-            return null;
-        }
+	/**
+	 * Resolve the OssReturn an OssPayment settles.
+	 *
+	 * @param array<string,mixed> $ossPayment The payment record.
+	 *
+	 * @return array<string,mixed>|null The linked return, or null when unresolvable.
+	 *
+	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	public function findReturnForPayment(array $ossPayment): ?array {
+		$returnId = trim((string)($ossPayment['ossReturnId'] ?? ''));
+		if ($returnId === '') {
+			return null;
+		}
 
-        $rows = $this->findAll(
-            schema: self::SCHEMA_RETURN,
-            filters: ['id' => $returnId]
-        );
+		$rows = $this->findAll(
+			schema: self::SCHEMA_RETURN,
+			filters: ['id' => $returnId]
+		);
 
-        foreach ($rows as $row) {
-            return $row;
-        }
+		foreach ($rows as $row) {
+			return $row;
+		}
 
-        return null;
+		return null;
+	}//end findReturnForPayment()
 
-    }//end findReturnForPayment()
+	/**
+	 * Resolve the OssPayment settling an OssReturn.
+	 *
+	 * @param array<string,mixed> $ossReturn The return record.
+	 *
+	 * @return array<string,mixed>|null The linked payment, or null when none exists.
+	 *
+	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	public function findPaymentForReturn(array $ossReturn): ?array {
+		$returnId = trim((string)($ossReturn['id'] ?? ((($ossReturn['@self'] ?? [])['id']) ?? '')));
+		if ($returnId === '') {
+			return null;
+		}
 
-    /**
-     * Resolve the OssPayment settling an OssReturn.
-     *
-     * @param array<string,mixed> $ossReturn The return record.
-     *
-     * @return array<string,mixed>|null The linked payment, or null when none exists.
-     *
-     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
-     */
-    public function findPaymentForReturn(array $ossReturn): ?array
-    {
-        $returnId = trim((string) ($ossReturn['id'] ?? ((($ossReturn['@self'] ?? [])['id']) ?? '')));
-        if ($returnId === '') {
-            return null;
-        }
+		$rows = $this->findAll(
+			schema: self::SCHEMA_PAYMENT,
+			filters: ['ossReturnId' => $returnId]
+		);
 
-        $rows = $this->findAll(
-            schema: self::SCHEMA_PAYMENT,
-            filters: ['ossReturnId' => $returnId]
-        );
+		foreach ($rows as $row) {
+			return $row;
+		}
 
-        foreach ($rows as $row) {
-            return $row;
-        }
+		return null;
+	}//end findPaymentForReturn()
 
-        return null;
+	/**
+	 * Persist an OssPayment through the real ObjectService API.
+	 *
+	 * @param array<string,mixed> $data Record body.
+	 *
+	 * @return array<string,mixed> The saved record.
+	 *
+	 * @throws \RuntimeException When the row type is unsupported.
+	 *
+	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	public function savePayment(array $data): array {
+		$saved = $this->objectService
+			->setRegister($this->register())
+			->setSchema(self::SCHEMA_PAYMENT)
+			->saveObject($data);
 
-    }//end findPaymentForReturn()
+		if (is_array($saved) === true) {
+			return $saved;
+		}
 
-    /**
-     * Persist an OssPayment through the real ObjectService API.
-     *
-     * @param array<string,mixed> $data Record body.
-     *
-     * @return array<string,mixed> The saved record.
-     *
-     * @throws \RuntimeException When the row type is unsupported.
-     *
-     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
-     */
-    public function savePayment(array $data): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $saved         = $objectService
-            ->setRegister($this->register())
-            ->setSchema(self::SCHEMA_PAYMENT)
-            ->saveObject($data);
+		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
+			$out = $saved->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
 
-        if (is_array($saved) === true) {
-            return $saved;
-        }
+		if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
+			$out = $saved->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
 
-        if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-            $out = $saved->jsonSerialize();
-            if (is_array($out) === true) {
-                return $out;
-            }
-        }
+		throw new RuntimeException('OssRecordResolver: unsupported row type from ObjectService::saveObject');
+	}//end savePayment()
 
-        if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
-            $out = $saved->getObject();
-            if (is_array($out) === true) {
-                return $out;
-            }
-        }
+	/**
+	 * Find all records via the real ObjectService API (findAll).
+	 *
+	 * @param string $schema Schema slug.
+	 * @param array<string,mixed> $filters Equality filters.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findAll(string $schema, array $filters): array {
+		try {
+			$rows = $this->objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->findAll(['filters' => $filters]);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'OssRecordResolver: failed to query OpenRegister',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+			return [];
+		}
 
-        throw new RuntimeException('OssRecordResolver: unsupported row type from ObjectService::saveObject');
+		$result = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$result[] = $row;
+			}
+		}
 
-    }//end savePayment()
+		return $result;
+	}//end findAll()
 
-    /**
-     * Find all records via the real ObjectService API (findAll).
-     *
-     * @param string              $schema  Schema slug.
-     * @param array<string,mixed> $filters Equality filters.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function findAll(string $schema, array $filters): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->findAll(['filters' => $filters]);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'OssRecordResolver: failed to query OpenRegister',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-            return [];
-        }
+	/**
+	 * Resolve the OR register slug from app config.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        $result = [];
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                $result[] = $row;
-            }
-        }
-
-        return $result;
-
-    }//end findAll()
-
-    /**
-     * Resolve the OR register slug from app config.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

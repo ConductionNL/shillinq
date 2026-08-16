@@ -59,7 +59,11 @@ export default defineConfig({
 		// PR pipelines don't reshoot screenshots on every push.
 		{
 			name: 'chromium',
-			testIgnore: ['**/docs-screenshots.spec.ts', '**/bookings-screenshots.spec.ts', '**/visual/**'],
+			testIgnore: [
+				'**/docs-screenshots.spec.ts',
+				'**/bookings-screenshots.spec.ts',
+				'**/visual/**',
+			],
 			use: {
 				...devices['Desktop Chrome'],
 				// Pick up the authenticated storage state globalSetup wrote.

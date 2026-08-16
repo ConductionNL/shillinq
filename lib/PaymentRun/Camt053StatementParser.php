@@ -42,195 +42,184 @@ use SimpleXMLElement;
 /**
  * Deterministic native CAMT.053 booked-outgoing-entry parser.
  */
-class Camt053StatementParser
-{
-    /**
-     * Parse the booked outgoing entries of a CAMT.053 statement.
-     *
-     * @param string $contents The raw CAMT.053 XML.
-     *
-     * @return array<int, array{endToEndId: string, amount: float, creditorIban: string, currency: string}>
-     *         One entry per booked DBIT credit-transfer transaction.
-     */
-    public function parse(string $contents): array
-    {
-        $contents = trim(string: $contents);
-        if ($contents === '') {
-            return [];
-        }
+class Camt053StatementParser {
+	/**
+	 * Parse the booked outgoing entries of a CAMT.053 statement.
+	 *
+	 * Yields one entry per booked DBIT credit-transfer transaction.
+	 *
+	 * @param string $contents The raw CAMT.053 XML.
+	 *
+	 * @return array<int, array{endToEndId: string, amount: float, creditorIban: string, currency: string}>
+	 */
+	public function parse(string $contents): array {
+		$contents = trim(string: $contents);
+		if ($contents === '') {
+			return [];
+		}
 
-        // Reparse with all namespaces stripped so plain (un-prefixed) XPath
-        // works regardless of the statement's CAMT.053 minor version namespace.
-        $clean = $this->stripNamespaces(contents: $contents);
-        if ($clean === null) {
-            return [];
-        }
+		// Reparse with all namespaces stripped so plain (un-prefixed) XPath
+		// works regardless of the statement's CAMT.053 minor version namespace.
+		$clean = $this->stripNamespaces(contents: $contents);
+		if ($clean === null) {
+			return [];
+		}
 
-        $entries    = [];
-        $entryNodes = $clean->xpath(expression: '//Ntry');
-        if (is_array(value: $entryNodes) === false) {
-            return [];
-        }
+		$entries = [];
+		$entryNodes = $clean->xpath(expression: '//Ntry');
+		if (is_array(value: $entryNodes) === false) {
+			return [];
+		}
 
-        foreach ($entryNodes as $ntry) {
-            $status = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './Sts')));
-            $cdtDbt = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './CdtDbtInd')));
+		foreach ($entryNodes as $ntry) {
+			$status = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './Sts')));
+			$cdtDbt = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './CdtDbtInd')));
 
-            // Only booked outgoing transfers (money leaving the debtor account).
-            if ($status !== 'BOOK' || $cdtDbt !== 'DBIT') {
-                continue;
-            }
+			// Only booked outgoing transfers (money leaving the debtor account).
+			if ($status !== 'BOOK' || $cdtDbt !== 'DBIT') {
+				continue;
+			}
 
-            // A single Ntry may carry multiple TxDtls; emit one entry each.
-            $txDetails = $ntry->xpath(expression: './/TxDtls');
-            if (is_array(value: $txDetails) === true && $txDetails !== []) {
-                foreach ($txDetails as $tx) {
-                    $entries[] = $this->mapTransaction(tx: $tx, ntry: $ntry);
-                }
+			// A single Ntry may carry multiple TxDtls; emit one entry each.
+			$txDetails = $ntry->xpath(expression: './/TxDtls');
+			if (is_array(value: $txDetails) === true && $txDetails !== []) {
+				foreach ($txDetails as $tx) {
+					$entries[] = $this->mapTransaction(tx: $tx, ntry: $ntry);
+				}
 
-                continue;
-            }
+				continue;
+			}
 
-            // No TxDtls — fall back to the Ntry-level amount only.
-            $entries[] = [
-                'endToEndId'   => '',
-                'amount'       => $this->amount(node: $ntry),
-                'creditorIban' => '',
-                'currency'     => $this->currency(node: $ntry),
-            ];
-        }//end foreach
+			// No TxDtls — fall back to the Ntry-level amount only.
+			$entries[] = [
+				'endToEndId' => '',
+				'amount' => $this->amount(node: $ntry),
+				'creditorIban' => '',
+				'currency' => $this->currency(node: $ntry),
+			];
+		}//end foreach
 
-        return $entries;
+		return $entries;
+	}//end parse()
 
-    }//end parse()
+	/**
+	 * Map one TxDtls (with its parent Ntry for amount fallback) to an entry.
+	 *
+	 * @param SimpleXMLElement $tx The TxDtls element.
+	 * @param SimpleXMLElement $ntry The owning Ntry element (amount fallback).
+	 *
+	 * @return array{endToEndId: string, amount: float, creditorIban: string, currency: string}
+	 */
+	private function mapTransaction(SimpleXMLElement $tx, SimpleXMLElement $ntry): array {
+		$endToEnd = trim(string: $this->firstString(node: $tx, expression: './/Refs/EndToEndId'));
+		if (strtoupper(string: $endToEnd) === 'NOTPROVIDED') {
+			$endToEnd = '';
+		}
 
-    /**
-     * Map one TxDtls (with its parent Ntry for amount fallback) to an entry.
-     *
-     * @param SimpleXMLElement $tx   The TxDtls element.
-     * @param SimpleXMLElement $ntry The owning Ntry element (amount fallback).
-     *
-     * @return array{endToEndId: string, amount: float, creditorIban: string, currency: string}
-     */
-    private function mapTransaction(SimpleXMLElement $tx, SimpleXMLElement $ntry): array
-    {
-        $endToEnd = trim(string: $this->firstString(node: $tx, expression: './/Refs/EndToEndId'));
-        if (strtoupper(string: $endToEnd) === 'NOTPROVIDED') {
-            $endToEnd = '';
-        }
+		$iban = trim(string: $this->firstString(node: $tx, expression: './/CdtrAcct/Id/IBAN'));
 
-        $iban = trim(string: $this->firstString(node: $tx, expression: './/CdtrAcct/Id/IBAN'));
+		// Prefer the TxDtls amount; fall back to the Ntry amount.
+		$amount = $this->amount(node: $tx);
+		$currency = $this->currency(node: $tx);
+		if ($amount === 0.0) {
+			$amount = $this->amount(node: $ntry);
+			if ($currency === '') {
+				$currency = $this->currency(node: $ntry);
+			}
+		}
 
-        // Prefer the TxDtls amount; fall back to the Ntry amount.
-        $amount   = $this->amount(node: $tx);
-        $currency = $this->currency(node: $tx);
-        if ($amount === 0.0) {
-            $amount = $this->amount(node: $ntry);
-            if ($currency === '') {
-                $currency = $this->currency(node: $ntry);
-            }
-        }
+		return [
+			'endToEndId' => $endToEnd,
+			'amount' => $amount,
+			'creditorIban' => $iban,
+			'currency' => $currency,
+		];
 
-        return [
-            'endToEndId'   => $endToEnd,
-            'amount'       => $amount,
-            'creditorIban' => $iban,
-            'currency'     => $currency,
-        ];
+	}//end mapTransaction()
 
-    }//end mapTransaction()
+	/**
+	 * Read the (first) direct-child Amt value of an element as a float.
+	 *
+	 * @param SimpleXMLElement $node An Ntry or TxDtls element.
+	 *
+	 * @return float
+	 */
+	private function amount(SimpleXMLElement $node): float {
+		$value = $this->firstString(node: $node, expression: './Amt');
+		if ($value === '') {
+			return 0.0;
+		}
 
-    /**
-     * Read the (first) direct-child Amt value of an element as a float.
-     *
-     * @param SimpleXMLElement $node An Ntry or TxDtls element.
-     *
-     * @return float
-     */
-    private function amount(SimpleXMLElement $node): float
-    {
-        $value = $this->firstString(node: $node, expression: './Amt');
-        if ($value === '') {
-            return 0.0;
-        }
+		return round(num: (float)$value, precision: 2);
+	}//end amount()
 
-        return round(num: (float) $value, precision: 2);
+	/**
+	 * Read the Ccy attribute of the (first) direct-child Amt of an element.
+	 *
+	 * @param SimpleXMLElement $node An Ntry or TxDtls element.
+	 *
+	 * @return string
+	 */
+	private function currency(SimpleXMLElement $node): string {
+		$amtNodes = $node->xpath(expression: './Amt');
+		if (is_array(value: $amtNodes) === false || $amtNodes === []) {
+			return '';
+		}
 
-    }//end amount()
+		$attrs = $amtNodes[0]->attributes();
+		if ($attrs !== null && isset($attrs['Ccy']) === true) {
+			return strtoupper(string: trim(string: (string)$attrs['Ccy']));
+		}
 
-    /**
-     * Read the Ccy attribute of the (first) direct-child Amt of an element.
-     *
-     * @param SimpleXMLElement $node An Ntry or TxDtls element.
-     *
-     * @return string
-     */
-    private function currency(SimpleXMLElement $node): string
-    {
-        $amtNodes = $node->xpath(expression: './Amt');
-        if (is_array(value: $amtNodes) === false || $amtNodes === []) {
-            return '';
-        }
+		return '';
+	}//end currency()
 
-        $attrs = $amtNodes[0]->attributes();
-        if ($attrs !== null && isset($attrs['Ccy']) === true) {
-            return strtoupper(string: trim(string: (string) $attrs['Ccy']));
-        }
+	/**
+	 * Return the trimmed string value of the first node matching an XPath, or ''.
+	 *
+	 * @param SimpleXMLElement $node The context element.
+	 * @param string $expression The relative XPath expression.
+	 *
+	 * @return string
+	 */
+	private function firstString(SimpleXMLElement $node, string $expression): string {
+		$found = $node->xpath(expression: $expression);
+		if (is_array(value: $found) === false || $found === []) {
+			return '';
+		}
 
-        return '';
+		return (string)$found[0];
+	}//end firstString()
 
-    }//end currency()
+	/**
+	 * Reparse the document with all namespace declarations + element prefixes
+	 * removed so that plain (un-prefixed) XPath works regardless of the
+	 * statement's CAMT.053 minor version namespace.
+	 *
+	 * @param string $contents The raw CAMT.053 XML.
+	 *
+	 * @return SimpleXMLElement|null
+	 */
+	private function stripNamespaces(string $contents): ?SimpleXMLElement {
+		$stripped = preg_replace(pattern: '/\sxmlns(:\w+)?="[^"]*"/', replacement: '', subject: $contents);
+		if (is_string(value: $stripped) === false) {
+			return null;
+		}
 
-    /**
-     * Return the trimmed string value of the first node matching an XPath, or ''.
-     *
-     * @param SimpleXMLElement $node       The context element.
-     * @param string           $expression The relative XPath expression.
-     *
-     * @return string
-     */
-    private function firstString(SimpleXMLElement $node, string $expression): string
-    {
-        $found = $node->xpath(expression: $expression);
-        if (is_array(value: $found) === false || $found === []) {
-            return '';
-        }
+		$stripped = preg_replace(pattern: '/<(\/?)\w+:/', replacement: '<$1', subject: $stripped);
+		if (is_string(value: $stripped) === false) {
+			return null;
+		}
 
-        return (string) $found[0];
+		$previous = libxml_use_internal_errors(use_errors: true);
+		$xml = simplexml_load_string(data: $stripped);
+		libxml_clear_errors();
+		libxml_use_internal_errors(use_errors: $previous);
 
-    }//end firstString()
+		if ($xml === false) {
+			return null;
+		}
 
-    /**
-     * Reparse the document with all namespace declarations + element prefixes
-     * removed so that plain (un-prefixed) XPath works regardless of the
-     * statement's CAMT.053 minor version namespace.
-     *
-     * @param string $contents The raw CAMT.053 XML.
-     *
-     * @return SimpleXMLElement|null
-     */
-    private function stripNamespaces(string $contents): ?SimpleXMLElement
-    {
-        $stripped = preg_replace(pattern: '/\sxmlns(:\w+)?="[^"]*"/', replacement: '', subject: $contents);
-        if (is_string(value: $stripped) === false) {
-            return null;
-        }
-
-        $stripped = preg_replace(pattern: '/<(\/?)\w+:/', replacement: '<$1', subject: $stripped);
-        if (is_string(value: $stripped) === false) {
-            return null;
-        }
-
-        $previous = libxml_use_internal_errors(use_errors: true);
-        $xml      = simplexml_load_string(data: $stripped);
-        libxml_clear_errors();
-        libxml_use_internal_errors(use_errors: $previous);
-
-        if ($xml === false) {
-            return null;
-        }
-
-        return $xml;
-
-    }//end stripNamespaces()
+		return $xml;
+	}//end stripNamespaces()
 }//end class

@@ -32,105 +32,98 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class AansluitingResolutionGuardTest extends TestCase
-{
+final class AansluitingResolutionGuardTest extends TestCase {
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var AansluitingResolutionGuard
-     */
-    private AansluitingResolutionGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var AansluitingResolutionGuard
+	 */
+	private AansluitingResolutionGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new AansluitingResolutionGuard(logger: $this->logger);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new AansluitingResolutionGuard(logger: $this->logger);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Resolution is permitted when the result is explained with a non-blank reason.
-     *
-     * @return void
-     */
-    public function testAllowsResolveWhenExplained(): void
-    {
-        $result = ['id' => 'aanslres-1', 'status' => 'explained', 'explanationReasonText' => 'Timing difference, will clear next period.'];
+	/**
+	 * Resolution is permitted when the result is explained with a non-blank reason.
+	 *
+	 * @return void
+	 */
+	public function testAllowsResolveWhenExplained(): void {
+		$result = ['id' => 'aanslres-1', 'status' => 'explained', 'explanationReasonText' => 'Timing difference, will clear next period.'];
 
-        self::assertTrue($this->guard->canResolve(result: $result));
+		self::assertTrue($this->guard->canResolve(result: $result));
 
-    }//end testAllowsResolveWhenExplained()
+	}//end testAllowsResolveWhenExplained()
 
-    /**
-     * Resolution is denied when the result is not in the explained status.
-     *
-     * @return void
-     */
-    public function testDeniesResolveWhenNotExplained(): void
-    {
-        $result = ['id' => 'aanslres-1', 'status' => 'open', 'explanationReasonText' => 'Timing difference.'];
-        $this->logger->expects($this->once())->method('warning');
+	/**
+	 * Resolution is denied when the result is not in the explained status.
+	 *
+	 * @return void
+	 */
+	public function testDeniesResolveWhenNotExplained(): void {
+		$result = ['id' => 'aanslres-1', 'status' => 'open', 'explanationReasonText' => 'Timing difference.'];
+		$this->logger->expects($this->once())->method('warning');
 
-        self::assertFalse($this->guard->canResolve(result: $result));
+		self::assertFalse($this->guard->canResolve(result: $result));
 
-    }//end testDeniesResolveWhenNotExplained()
+	}//end testDeniesResolveWhenNotExplained()
 
-    /**
-     * Resolution is denied when explanationReasonText is blank (REQ-AANS-006).
-     *
-     * @return void
-     */
-    public function testDeniesResolveWhenReasonTextBlank(): void
-    {
-        $result = ['id' => 'aanslres-1', 'status' => 'explained', 'explanationReasonText' => '   '];
-        $this->logger->expects($this->once())->method('warning');
+	/**
+	 * Resolution is denied when explanationReasonText is blank (REQ-AANS-006).
+	 *
+	 * @return void
+	 */
+	public function testDeniesResolveWhenReasonTextBlank(): void {
+		$result = ['id' => 'aanslres-1', 'status' => 'explained', 'explanationReasonText' => '   '];
+		$this->logger->expects($this->once())->method('warning');
 
-        self::assertFalse($this->guard->canResolve(result: $result));
+		self::assertFalse($this->guard->canResolve(result: $result));
 
-    }//end testDeniesResolveWhenReasonTextBlank()
+	}//end testDeniesResolveWhenReasonTextBlank()
 
-    /**
-     * Resolution is denied when explanationReasonText is entirely absent.
-     *
-     * @return void
-     */
-    public function testDeniesResolveWhenReasonTextMissing(): void
-    {
-        $result = ['id' => 'aanslres-1', 'status' => 'explained'];
-        $this->logger->expects($this->once())->method('warning');
+	/**
+	 * Resolution is denied when explanationReasonText is entirely absent.
+	 *
+	 * @return void
+	 */
+	public function testDeniesResolveWhenReasonTextMissing(): void {
+		$result = ['id' => 'aanslres-1', 'status' => 'explained'];
+		$this->logger->expects($this->once())->method('warning');
 
-        self::assertFalse($this->guard->canResolve(result: $result));
+		self::assertFalse($this->guard->canResolve(result: $result));
 
-    }//end testDeniesResolveWhenReasonTextMissing()
+	}//end testDeniesResolveWhenReasonTextMissing()
 
-    /**
-     * Resolution is denied fail-closed on any internal exception (CWE-863).
-     *
-     * @return void
-     */
-    public function testDeniesResolveFailClosedOnException(): void
-    {
-        $unstringable = new class {
-        };
+	/**
+	 * Resolution is denied fail-closed on any internal exception (CWE-863).
+	 *
+	 * @return void
+	 */
+	public function testDeniesResolveFailClosedOnException(): void {
+		$unstringable = new class {
+		};
 
-        $result = ['id' => 'aanslres-1', 'status' => $unstringable];
-        $this->logger->expects($this->once())->method('error');
+		$result = ['id' => 'aanslres-1', 'status' => $unstringable];
+		$this->logger->expects($this->once())->method('error');
 
-        self::assertFalse($this->guard->canResolve(result: $result));
+		self::assertFalse($this->guard->canResolve(result: $result));
 
-    }//end testDeniesResolveFailClosedOnException()
+	}//end testDeniesResolveFailClosedOnException()
 }//end class

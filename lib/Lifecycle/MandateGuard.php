@@ -55,174 +55,168 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
-class MandateGuard
-{
+class MandateGuard {
 
-    /**
-     * SDD rulebook dormancy threshold in whole months (REQ-SDD-008).
-     */
-    private const DORMANCY_MONTHS = 36;
+	/**
+	 * SDD rulebook dormancy threshold in whole months (REQ-SDD-008).
+	 */
+	private const DORMANCY_MONTHS = 36;
 
-    /**
-     * Construct the guard.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * True iff the mandate may activate: scheme/account-type consistent and signed.
-     *
-     * REQ-SDD-001: CORE is reserved for consumer accounts and B2B for
-     * business accounts; a mandate may only become active once it has a
-     * signedAt date. Fail-closed on malformed input.
-     *
-     * @param string                   $mandateId The SepaMandate.id (call-signature parity; unused).
-     * @param array<string,mixed>|null $object    The mandate object being transitioned.
-     *
-     * @return bool True when the mandate may activate.
-     *
-     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
-     */
-    public function canActivate(string $mandateId, ?array $object=null): bool
-    {
-        try {
-            if ($object === null) {
-                return false;
-            }
+	/**
+	 * True iff the mandate may activate: scheme/account-type consistent and signed.
+	 *
+	 * REQ-SDD-001: CORE is reserved for consumer accounts and B2B for
+	 * business accounts; a mandate may only become active once it has a
+	 * signedAt date. Fail-closed on malformed input.
+	 *
+	 * @param string $mandateId The SepaMandate.id (call-signature parity; unused).
+	 * @param array<string,mixed>|null $object The mandate object being transitioned.
+	 *
+	 * @return bool True when the mandate may activate.
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 */
+	public function canActivate(string $mandateId, ?array $object = null): bool {
+		try {
+			if ($object === null) {
+				return false;
+			}
 
-            $signedAt = (string) ($object['signedAt'] ?? '');
-            if ($signedAt === '') {
-                return false;
-            }
+			$signedAt = (string)($object['signedAt'] ?? '');
+			if ($signedAt === '') {
+				return false;
+			}
 
-            return self::schemeMatchesAccountType(
-                scheme: (string) ($object['scheme'] ?? ''),
-                accountType: (string) ($object['debtorAccountType'] ?? '')
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'MandateGuard: activate check failed — denying transition (fail-closed)',
-                ['mandateId' => $mandateId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canActivate()
+			return self::schemeMatchesAccountType(
+				scheme: (string)($object['scheme'] ?? ''),
+				accountType: (string)($object['debtorAccountType'] ?? '')
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'MandateGuard: activate check failed — denying transition (fail-closed)',
+				['mandateId' => $mandateId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canActivate()
 
-    /**
-     * True iff the mandate may be cancelled: a cancellationReason is present.
-     *
-     * REQ-SDD-008: cancelling a mandate MUST record a reason, after which no
-     * further collections may reference it. Fail-closed on malformed input.
-     *
-     * @param string                   $mandateId The SepaMandate.id (call-signature parity; unused).
-     * @param array<string,mixed>|null $object    The mandate object being transitioned.
-     *
-     * @return bool True when the mandate may be cancelled.
-     *
-     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
-     */
-    public function canCancel(string $mandateId, ?array $object=null): bool
-    {
-        try {
-            if ($object === null) {
-                return false;
-            }
+	/**
+	 * True iff the mandate may be cancelled: a cancellationReason is present.
+	 *
+	 * REQ-SDD-008: cancelling a mandate MUST record a reason, after which no
+	 * further collections may reference it. Fail-closed on malformed input.
+	 *
+	 * @param string $mandateId The SepaMandate.id (call-signature parity; unused).
+	 * @param array<string,mixed>|null $object The mandate object being transitioned.
+	 *
+	 * @return bool True when the mandate may be cancelled.
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 */
+	public function canCancel(string $mandateId, ?array $object = null): bool {
+		try {
+			if ($object === null) {
+				return false;
+			}
 
-            $reason = trim((string) ($object['cancellationReason'] ?? ''));
-            return $reason !== '';
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'MandateGuard: cancel check failed — denying transition (fail-closed)',
-                ['mandateId' => $mandateId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canCancel()
+			$reason = trim((string)($object['cancellationReason'] ?? ''));
+			return $reason !== '';
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'MandateGuard: cancel check failed — denying transition (fail-closed)',
+				['mandateId' => $mandateId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canCancel()
 
-    /**
-     * True iff the mandate is dormant beyond the 36-month rulebook threshold.
-     *
-     * REQ-SDD-008: an active mandate whose last successful collection
-     * (lastUsedAt) — or, absent any collection, whose signedAt — is more
-     * than 36 months in the past MUST be expired by the daily job. Mandates
-     * never used and never signed cannot be evaluated and are left alone.
-     *
-     * @param string                   $mandateId The SepaMandate.id (call-signature parity; unused).
-     * @param array<string,mixed>|null $object    The mandate object being transitioned.
-     *
-     * @return bool True when the mandate is dormant and may expire.
-     *
-     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
-     */
-    public function canExpire(string $mandateId, ?array $object=null): bool
-    {
-        try {
-            if ($object === null) {
-                return false;
-            }
+	/**
+	 * True iff the mandate is dormant beyond the 36-month rulebook threshold.
+	 *
+	 * REQ-SDD-008: an active mandate whose last successful collection
+	 * (lastUsedAt) — or, absent any collection, whose signedAt — is more
+	 * than 36 months in the past MUST be expired by the daily job. Mandates
+	 * never used and never signed cannot be evaluated and are left alone.
+	 *
+	 * @param string $mandateId The SepaMandate.id (call-signature parity; unused).
+	 * @param array<string,mixed>|null $object The mandate object being transitioned.
+	 *
+	 * @return bool True when the mandate is dormant and may expire.
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 */
+	public function canExpire(string $mandateId, ?array $object = null): bool {
+		try {
+			if ($object === null) {
+				return false;
+			}
 
-            $anchor = (string) ($object['lastUsedAt'] ?? '');
-            if ($anchor === '') {
-                $anchor = (string) ($object['signedAt'] ?? '');
-            }
+			$anchor = (string)($object['lastUsedAt'] ?? '');
+			if ($anchor === '') {
+				$anchor = (string)($object['signedAt'] ?? '');
+			}
 
-            if ($anchor === '') {
-                return false;
-            }
+			if ($anchor === '') {
+				return false;
+			}
 
-            return $this->isDormant(anchorDate: $anchor);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'MandateGuard: expire check failed — denying transition (fail-closed)',
-                ['mandateId' => $mandateId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canExpire()
+			return $this->isDormant(anchorDate: $anchor);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'MandateGuard: expire check failed — denying transition (fail-closed)',
+				['mandateId' => $mandateId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canExpire()
 
-    /**
-     * True iff anchorDate is strictly more than DORMANCY_MONTHS in the past.
-     *
-     * @param string $anchorDate ISO-8601 date (Y-m-d) of last activity.
-     *
-     * @return bool True when the anchor is older than the dormancy threshold.
-     */
-    private function isDormant(string $anchorDate): bool
-    {
-        $anchor = new DateTimeImmutable($anchorDate);
-        $cutoff = (new DateTimeImmutable('today'))
-            ->sub(new DateInterval('P'.self::DORMANCY_MONTHS.'M'));
+	/**
+	 * True iff anchorDate is strictly more than DORMANCY_MONTHS in the past.
+	 *
+	 * @param string $anchorDate ISO-8601 date (Y-m-d) of last activity.
+	 *
+	 * @return bool True when the anchor is older than the dormancy threshold.
+	 */
+	private function isDormant(string $anchorDate): bool {
+		$anchor = new DateTimeImmutable($anchorDate);
+		$cutoff = (new DateTimeImmutable('today'))
+			->sub(new DateInterval('P' . self::DORMANCY_MONTHS . 'M'));
 
-        return $anchor <= $cutoff;
-    }//end isDormant()
+		return $anchor <= $cutoff;
+	}//end isDormant()
 
-    /**
-     * True iff the scheme matches the debtor account type per REQ-SDD-001.
-     *
-     * CORE ↔ consumer, B2B ↔ business. Any other pairing is rejected as
-     * sdd.mandate.scheme.mismatch.
-     *
-     * @param string $scheme      The mandate scheme (CORE | B2B).
-     * @param string $accountType The debtor account type (consumer | business).
-     *
-     * @return bool True when scheme and account type are consistent.
-     *
-     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
-     */
-    public static function schemeMatchesAccountType(string $scheme, string $accountType): bool
-    {
-        if ($scheme === 'CORE') {
-            return $accountType === 'consumer';
-        }
+	/**
+	 * True iff the scheme matches the debtor account type per REQ-SDD-001.
+	 *
+	 * CORE ↔ consumer, B2B ↔ business. Any other pairing is rejected as
+	 * sdd.mandate.scheme.mismatch.
+	 *
+	 * @param string $scheme The mandate scheme (CORE | B2B).
+	 * @param string $accountType The debtor account type (consumer | business).
+	 *
+	 * @return bool True when scheme and account type are consistent.
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 */
+	public static function schemeMatchesAccountType(string $scheme, string $accountType): bool {
+		if ($scheme === 'CORE') {
+			return $accountType === 'consumer';
+		}
 
-        if ($scheme === 'B2B') {
-            return $accountType === 'business';
-        }
+		if ($scheme === 'B2B') {
+			return $accountType === 'business';
+		}
 
-        return false;
-    }//end schemeMatchesAccountType()
+		return false;
+	}//end schemeMatchesAccountType()
 }//end class

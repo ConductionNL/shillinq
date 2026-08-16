@@ -21,26 +21,26 @@
 -->
 <template>
 	<NcSelect
-		:model-value="selectedOption"
+		:modelValue="selectedOption"
 		:options="filteredOptions"
 		:loading="loading"
-		:input-label="t('shillinq', 'BBV programme')"
+		:inputLabel="t('shillinq', 'BBV programme')"
 		:placeholder="t('shillinq', 'Search by programme code or name…')"
 		:filterable="true"
 		:clearable="false"
 		label="display"
-		track-by="value"
+		trackBy="value"
 		data-testid="bbv-programme-picker"
 		@search="onSearch"
 		@option:selected="onSelected"
-		@update:model-value="onUpdateModelValue" />
+		@update:modelValue="onUpdateModelValue" />
 </template>
 
 <script>
-import { NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcSelect } from '@nextcloud/vue'
 
 const REGISTER_SLUG = 'shillinq'
 const SCHEMA_SLUG = 'BBVProgramme'
@@ -56,6 +56,7 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * Optional administration scope. When set, the picker filters
 		 * BBVProgramme records to this administration.
@@ -64,6 +65,7 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/**
 		 * Fiscal year filter. Defaults to the calendar year and follows
 		 * the effectiveFrom date of the parent mapping form.
@@ -73,6 +75,7 @@ export default {
 			default: () => new Date().getFullYear(),
 		},
 	},
+
 	emits: ['update:modelValue', 'selected'],
 	data() {
 		return {
@@ -82,6 +85,7 @@ export default {
 			fetchError: '',
 		}
 	},
+
 	computed: {
 		options() {
 			return this.programmes.map((p) => ({
@@ -90,6 +94,7 @@ export default {
 				programme: p,
 			}))
 		},
+
 		filteredOptions() {
 			const q = (this.query || '').trim().toLowerCase()
 			if (!q) {
@@ -101,28 +106,39 @@ export default {
 				return code.includes(q) || name.includes(q)
 			})
 		},
+
 		selectedOption() {
 			if (!this.modelValue) {
 				return null
 			}
-			const match = this.options.find((o) => o.value === String(this.modelValue))
+			const match = this.options.find(
+				(o) => o.value === String(this.modelValue),
+			)
 			if (match) {
 				return match
 			}
-			return { value: String(this.modelValue), display: String(this.modelValue), programme: null }
+			return {
+				value: String(this.modelValue),
+				display: String(this.modelValue),
+				programme: null,
+			}
 		},
 	},
+
 	watch: {
 		fiscalYear() {
 			this.fetchProgrammes()
 		},
+
 		administrationId() {
 			this.fetchProgrammes()
 		},
 	},
+
 	async created() {
 		await this.fetchProgrammes()
 	},
+
 	methods: {
 		t,
 		formatDisplay(programme) {
@@ -133,15 +149,18 @@ export default {
 			const name = programme.programmeName || ''
 			return [code, name].filter(Boolean).join(' · ')
 		},
+
 		onSearch(query) {
 			this.query = query || ''
 		},
+
 		onSelected(option) {
 			if (!option) {
 				return
 			}
 			this.$emit('selected', option.programme || null)
 		},
+
 		onUpdateModelValue(option) {
 			const value = option?.value ?? ''
 			this.$emit('update:modelValue', value)
@@ -149,6 +168,7 @@ export default {
 				this.$emit('selected', option.programme)
 			}
 		},
+
 		async fetchProgrammes() {
 			this.loading = true
 			this.fetchError = ''
@@ -162,21 +182,31 @@ export default {
 					params.administrationId = this.administrationId
 				}
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+					),
 					{ params },
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				this.programmes = Array.isArray(rows) ? rows : []
 				if (this.modelValue) {
-					const match = this.programmes.find((p) =>
-						String(p.programmeCode || p.id) === String(this.modelValue))
+					const match = this.programmes.find(
+						(p) =>
+							String(p.programmeCode || p.id)
+							=== String(this.modelValue),
+					)
 					if (match) {
 						this.$emit('selected', match)
 					}
 				}
 			} catch (e) {
 				this.programmes = []
-				this.fetchError = e?.response?.data?.error
+				this.fetchError =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load BBV programmes.')
 			} finally {
 				this.loading = false

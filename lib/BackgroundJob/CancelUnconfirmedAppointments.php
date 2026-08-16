@@ -37,53 +37,51 @@ use Psr\Log\LoggerInterface;
 /**
  * Daily job cancelling pending appointments past their confirmation deadline.
  */
-class CancelUnconfirmedAppointments extends TimedJob
-{
-    /**
-     * Interval between runs, in seconds (24 hours).
-     *
-     * @var int
-     */
-    private const INTERVAL = (24 * 60 * 60);
+class CancelUnconfirmedAppointments extends TimedJob {
+	/**
+	 * Interval between runs, in seconds (24 hours).
+	 *
+	 * @var int
+	 */
+	private const INTERVAL = (24 * 60 * 60);
 
-    /**
-     * Constructor.
-     *
-     * @param ITimeFactory                   $time                The time factory.
-     * @param AppointmentConfirmationService $confirmationService The confirmation service.
-     * @param LoggerInterface                $logger              Logger.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private AppointmentConfirmationService $confirmationService,
-        private LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: self::INTERVAL);
+	/**
+	 * Constructor.
+	 *
+	 * @param ITimeFactory $time The time factory.
+	 * @param AppointmentConfirmationService $confirmationService The confirmation service.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private AppointmentConfirmationService $confirmationService,
+		private LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: self::INTERVAL);
 
-        // Auto-cancellation is not millisecond-critical; let the scheduler pick the window.
-        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+		// Auto-cancellation is not millisecond-critical; let the scheduler pick the window.
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
-        // Single instance only — avoid double-cancellation on overlapping cron passes.
-        $this->setAllowParallelRuns(allow: false);
-    }//end __construct()
+		// Single instance only — avoid double-cancellation on overlapping cron passes.
+		$this->setAllowParallelRuns(allow: false);
+	}//end __construct()
 
-    /**
-     * Run the cancellation sweep.
-     *
-     * @param mixed $argument Job argument (unused).
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    protected function run($argument): void
-    {
-        $cancelled = $this->confirmationService->cancelExpired();
-        if ($cancelled > 0) {
-            $this->logger->info(
-                'Shillinq: CancelUnconfirmedAppointments cancelled '.$cancelled.' appointment(s)'
-            );
-        }
-    }//end run()
+	/**
+	 * Run the cancellation sweep.
+	 *
+	 * @param mixed $argument Job argument (unused).
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 */
+	protected function run($argument): void {
+		$cancelled = $this->confirmationService->cancelExpired();
+		if ($cancelled > 0) {
+			$this->logger->info(
+				'Shillinq: CancelUnconfirmedAppointments cancelled ' . $cancelled . ' appointment(s)'
+			);
+		}
+	}//end run()
 }//end class

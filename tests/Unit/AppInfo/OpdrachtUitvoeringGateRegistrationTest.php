@@ -46,147 +46,138 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class OpdrachtUitvoeringGateRegistrationTest extends TestCase
-{
-    /**
-     * The tag the OpdrachtUitvoering `voltooien` transition declares.
-     *
-     * @var string
-     */
-    private const GUARD_TAG = 'OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard::canVoltooien';
+final class OpdrachtUitvoeringGateRegistrationTest extends TestCase {
+	/**
+	 * The tag the OpdrachtUitvoering `voltooien` transition declares.
+	 *
+	 * @var string
+	 */
+	private const GUARD_TAG = 'OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard::canVoltooien';
 
-    /**
-     * Captured registerEventListener() calls as [event, listener] pairs.
-     *
-     * @var array<int, array{0:string,1:string}>
-     */
-    private array $listeners = [];
+	/**
+	 * Captured registerEventListener() calls as [event, listener] pairs.
+	 *
+	 * @var array<int, array{0:string,1:string}>
+	 */
+	private array $listeners = [];
 
-    /**
-     * Captured registerService() factories, keyed by service name.
-     *
-     * @var array<string, callable>
-     */
-    private array $services = [];
+	/**
+	 * Captured registerService() factories, keyed by service name.
+	 *
+	 * @var array<string, callable>
+	 */
+	private array $services = [];
 
-    /**
-     * A registration context that records what was registered on it.
-     *
-     * @return IRegistrationContext The recording context.
-     */
-    private function recordingContext(): IRegistrationContext
-    {
-        $context = $this->createMock(IRegistrationContext::class);
+	/**
+	 * A registration context that records what was registered on it.
+	 *
+	 * @return IRegistrationContext The recording context.
+	 */
+	private function recordingContext(): IRegistrationContext {
+		$context = $this->createMock(IRegistrationContext::class);
 
-        $context->method('registerEventListener')->willReturnCallback(
-            function (string $event, string $listener, int $priority=0): void {
-                $this->listeners[] = [$event, $listener];
-            }
-        );
+		$context->method('registerEventListener')->willReturnCallback(
+			function (string $event, string $listener, int $priority = 0): void {
+				$this->listeners[] = [$event, $listener];
+			}
+		);
 
-        $context->method('registerService')->willReturnCallback(
-            function (string $name, callable $factory, bool $shared=true): void {
-                $this->services[$name] = $factory;
-            }
-        );
+		$context->method('registerService')->willReturnCallback(
+			function (string $name, callable $factory, bool $shared = true): void {
+				$this->services[$name] = $factory;
+			}
+		);
 
-        return $context;
+		return $context;
+	}//end recordingContext()
 
-    }//end recordingContext()
+	/**
+	 * Both PRE-SAVE events are covered, not just create.
+	 *
+	 * @return void
+	 */
+	public function testBothPreSaveEventsGetTheBewijsstukListener(): void {
+		(new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
 
+		$events = array_column($this->listeners, 0);
 
-    /**
-     * Both PRE-SAVE events are covered, not just create.
-     *
-     * @return void
-     */
-    public function testBothPreSaveEventsGetTheBewijsstukListener(): void
-    {
-        (new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
+		self::assertContains(
+			ObjectCreatingEvent::class,
+			$events,
+			'A direct create with status=completed and no bewijsstuk must be gated.'
+		);
+		self::assertContains(
+			ObjectUpdatingEvent::class,
+			$events,
+			'An update into status=completed must be gated too — covering create alone leaves the hole open.'
+		);
 
-        $events = array_column($this->listeners, 0);
+		foreach ($this->listeners as [$event, $listener]) {
+			self::assertSame(OpdrachtUitvoeringBewijsstukListener::class, $listener, 'for ' . $event);
+		}
 
-        self::assertContains(
-            ObjectCreatingEvent::class,
-            $events,
-            'A direct create with status=completed and no bewijsstuk must be gated.'
-        );
-        self::assertContains(
-            ObjectUpdatingEvent::class,
-            $events,
-            'An update into status=completed must be gated too — covering create alone leaves the hole open.'
-        );
+	}//end testBothPreSaveEventsGetTheBewijsstukListener()
 
-        foreach ($this->listeners as [$event, $listener]) {
-            self::assertSame(OpdrachtUitvoeringBewijsstukListener::class, $listener, 'for '.$event);
-        }
+	/**
+	 * The transition half is registered under the exact literal tag.
+	 *
+	 * A tag containing `::` cannot autowire, so the registration has to name
+	 * the literal string the register declares — a near-miss here means
+	 * OpenRegister's container can never resolve the guard and the transition
+	 * fails closed at runtime rather than at build time.
+	 *
+	 * @return void
+	 */
+	public function testTheTransitionGuardIsRegisteredUnderTheDeclaredLiteralTag(): void {
+		(new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
 
-    }//end testBothPreSaveEventsGetTheBewijsstukListener()
+		self::assertArrayHasKey(self::GUARD_TAG, $this->services);
 
+	}//end testTheTransitionGuardIsRegisteredUnderTheDeclaredLiteralTag()
 
-    /**
-     * The transition half is registered under the exact literal tag.
-     *
-     * A tag containing `::` cannot autowire, so the registration has to name
-     * the literal string the register declares — a near-miss here means
-     * OpenRegister's container can never resolve the guard and the transition
-     * fails closed at runtime rather than at build time.
-     *
-     * @return void
-     */
-    public function testTheTransitionGuardIsRegisteredUnderTheDeclaredLiteralTag(): void
-    {
-        (new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
+	/**
+	 * The registered factory builds an adapter over the real guard method,
+	 * and both enforcement points deny with identical wording.
+	 *
+	 * Divergent wording would let a caller distinguish the write path from
+	 * the transition path, which is exactly what the shared constant exists
+	 * to prevent.
+	 *
+	 * @return void
+	 */
+	public function testTheFactoryBuildsAnAdapterThatDeniesWithTheListenersWording(): void {
+		(new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
 
-        self::assertArrayHasKey(self::GUARD_TAG, $this->services);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			fn (string $id) => match ($id) {
+				OpdrachtUitvoeringGuard::class => $this->createMock(OpdrachtUitvoeringGuard::class),
+				LoggerInterface::class => $this->createMock(LoggerInterface::class),
+				default => null,
+			}
+		);
 
-    }//end testTheTransitionGuardIsRegisteredUnderTheDeclaredLiteralTag()
+		$adapter = ($this->services[self::GUARD_TAG])($container);
 
+		self::assertInstanceOf(RegisterRequiresGuardAdapter::class, $adapter);
 
-    /**
-     * The registered factory builds an adapter over the real guard method,
-     * and both enforcement points deny with identical wording.
-     *
-     * Divergent wording would let a caller distinguish the write path from
-     * the transition path, which is exactly what the shared constant exists
-     * to prevent.
-     *
-     * @return void
-     */
-    public function testTheFactoryBuildsAnAdapterThatDeniesWithTheListenersWording(): void
-    {
-        (new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
+		$reflection = new \ReflectionClass($adapter);
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturnCallback(
-            fn (string $id) => match ($id) {
-                OpdrachtUitvoeringGuard::class => $this->createMock(OpdrachtUitvoeringGuard::class),
-                LoggerInterface::class         => $this->createMock(LoggerInterface::class),
-                default                        => null,
-            }
-        );
+		$method = $reflection->getProperty('method');
+		$method->setAccessible(true);
+		self::assertSame(
+			'canVoltooien',
+			$method->getValue($adapter),
+			'The adapter must delegate to the method the register tag names.'
+		);
 
-        $adapter = ($this->services[self::GUARD_TAG])($container);
+		$denyMessage = $reflection->getProperty('denyMessage');
+		$denyMessage->setAccessible(true);
+		self::assertSame(
+			OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
+			$denyMessage->getValue($adapter),
+			'Both enforcement points must deny with the same wording.'
+		);
 
-        self::assertInstanceOf(RegisterRequiresGuardAdapter::class, $adapter);
-
-        $reflection = new \ReflectionClass($adapter);
-
-        $method = $reflection->getProperty('method');
-        $method->setAccessible(true);
-        self::assertSame(
-            'canVoltooien',
-            $method->getValue($adapter),
-            'The adapter must delegate to the method the register tag names.'
-        );
-
-        $denyMessage = $reflection->getProperty('denyMessage');
-        $denyMessage->setAccessible(true);
-        self::assertSame(
-            OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
-            $denyMessage->getValue($adapter),
-            'Both enforcement points must deny with the same wording.'
-        );
-
-    }//end testTheFactoryBuildsAnAdapterThatDeniesWithTheListenersWording()
+	}//end testTheFactoryBuildsAnAdapterThatDeniesWithTheListenersWording()
 }//end class

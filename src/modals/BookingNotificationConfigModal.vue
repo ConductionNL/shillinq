@@ -34,7 +34,11 @@
 					{{ label('Notifications') }}
 				</h2>
 				<p class="bk-notification-modal__subtitle">
-					{{ label('Configure how this booking notifies customers, organizers and administrators.') }}
+					{{
+						label(
+							'Configure how this booking notifies customers, organizers and administrators.',
+						)
+					}}
 				</p>
 			</header>
 
@@ -42,7 +46,10 @@
 				<p v-if="loading" data-testid="bk-notification-loading">
 					{{ label('Loading triggers…') }}
 				</p>
-				<p v-else-if="error" class="bk-notification-modal__error" data-testid="bk-notification-error">
+				<p
+					v-else-if="error"
+					class="bk-notification-modal__error"
+					data-testid="bk-notification-error">
 					{{ error }}
 				</p>
 				<ul
@@ -60,10 +67,12 @@
 									type="checkbox"
 									:checked="t.status === 'enabled'"
 									:data-testid="`bk-notification-${t.slug}-enabled`"
-									@change="setEnabled(t, $event.target.checked)">
+									@change="setEnabled(t, $event.target.checked)" />
 								<span>{{ t.name }}</span>
 							</label>
-							<span class="bk-notification-modal__type">{{ t.triggerType }}</span>
+							<span class="bk-notification-modal__type">{{
+								t.triggerType
+							}}</span>
 						</header>
 						<div class="bk-notification-modal__channels">
 							<label
@@ -74,7 +83,9 @@
 									type="checkbox"
 									:checked="t.channels.includes(c)"
 									:data-testid="`bk-notification-${t.slug}-channel-${c}`"
-									@change="toggleChannel(t, c, $event.target.checked)">
+									@change="
+										toggleChannel(t, c, $event.target.checked)
+									" />
 								<span>{{ label(channelLabel(c)) }}</span>
 							</label>
 						</div>
@@ -127,6 +138,7 @@ export default {
 		bookingId: { type: String, required: true },
 		triggers: { type: Array, default: () => [] },
 	},
+
 	emits: ['save', 'cancel'],
 	data() {
 		return {
@@ -137,12 +149,14 @@ export default {
 			allChannels: ['email', 'sms', 'chat', 'teams', 'slack'],
 		}
 	},
+
 	watch: {
 		open(val) {
 			if (val === true) {
 				this.reset()
 			}
 		},
+
 		triggers: {
 			immediate: true,
 			handler() {
@@ -150,6 +164,7 @@ export default {
 			},
 		},
 	},
+
 	methods: {
 		/**
 		 * Translate UI strings via Nextcloud's t() helper when available.
@@ -163,6 +178,7 @@ export default {
 			}
 			return key
 		},
+
 		/**
 		 * Human-readable channel label.
 		 *
@@ -170,9 +186,16 @@ export default {
 		 * @return {string} Capitalised label.
 		 */
 		channelLabel(channel) {
-			const map = { email: 'Email', sms: 'SMS', chat: 'Chat', teams: 'Teams', slack: 'Slack' }
-			return (map[channel] || channel)
+			const map = {
+				email: 'Email',
+				sms: 'SMS',
+				chat: 'Chat',
+				teams: 'Teams',
+				slack: 'Slack',
+			}
+			return map[channel] || channel
 		},
+
 		/**
 		 * Reset the editable copy from the incoming triggers prop.
 		 */
@@ -187,6 +210,7 @@ export default {
 			}))
 			this.error = ''
 		},
+
 		/**
 		 * Set the enabled/disabled status of one trigger.
 		 *
@@ -196,6 +220,7 @@ export default {
 		setEnabled(trigger, enabled) {
 			trigger.status = enabled ? 'enabled' : 'disabled'
 		},
+
 		/**
 		 * Toggle a channel on / off for one trigger.
 		 *
@@ -211,6 +236,7 @@ export default {
 				trigger.channels.splice(idx, 1)
 			}
 		},
+
 		/**
 		 * Emit the save payload — caller persists.
 		 */

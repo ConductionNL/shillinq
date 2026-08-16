@@ -46,9 +46,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Balanced two-line GLTransaction poster for inventory adjustments.
@@ -57,223 +57,216 @@ use RuntimeException;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class InventoryGlAdjustmentPoster
-{
-    /**
-     * Construct the poster.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for diagnostics; never logs full payloads.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
+class InventoryGlAdjustmentPoster {
+	/**
+	 * Construct the poster.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Post one balanced GLTransaction (debit leg + credit leg of the same
-     * integer-cent amount).
-     *
-     * @param string $administrationId Tenant scope.
-     * @param string $debitAccount     Account number debited.
-     * @param string $creditAccount    Account number credited.
-     * @param int    $amountCents      Amount in integer cents (both legs).
-     * @param string $journalCode      Journal code (e.g. 'LAND', 'NRV').
-     * @param string $description      Human-readable line description.
-     * @param string $sourceReference  Originating document reference.
-     * @param string $postingDate      ISO yyyy-mm-dd posting date.
-     * @param string $periodId         Period identifier (e.g. 2026-Q4).
-     *
-     * @return array<string,mixed> Result envelope with 'posted', 'balanced', 'transaction', 'debitCents', 'creditCents'.
-     *
-     * @spec openspec/specs/inventory-accounting-correctness/spec.md
-     */
-    public function post(
-        string $administrationId,
-        string $debitAccount,
-        string $creditAccount,
-        int $amountCents,
-        string $journalCode,
-        string $description,
-        string $sourceReference,
-        string $postingDate,
-        string $periodId
-    ): array {
-        if ($amountCents <= 0) {
-            return [
-                'posted'  => false,
-                'message' => 'amountCents non-positive — nothing to post',
-            ];
-        }
+	/**
+	 * Post one balanced GLTransaction (debit leg + credit leg of the same
+	 * integer-cent amount).
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $debitAccount Account number debited.
+	 * @param string $creditAccount Account number credited.
+	 * @param int $amountCents Amount in integer cents (both legs).
+	 * @param string $journalCode Journal code (e.g. 'LAND', 'NRV').
+	 * @param string $description Human-readable line description.
+	 * @param string $sourceReference Originating document reference.
+	 * @param string $postingDate ISO yyyy-mm-dd posting date.
+	 * @param string $periodId Period identifier (e.g. 2026-Q4).
+	 *
+	 * @return array<string,mixed> Result envelope with 'posted', 'balanced', 'transaction', 'debitCents', 'creditCents'.
+	 *
+	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 */
+	public function post(
+		string $administrationId,
+		string $debitAccount,
+		string $creditAccount,
+		int $amountCents,
+		string $journalCode,
+		string $description,
+		string $sourceReference,
+		string $postingDate,
+		string $periodId,
+	): array {
+		if ($amountCents <= 0) {
+			return [
+				'posted' => false,
+				'message' => 'amountCents non-positive — nothing to post',
+			];
+		}
 
-        if ($debitAccount === '' || $creditAccount === '') {
-            $this->logger->warning(
-                'InventoryGlAdjustmentPoster: GL accounts not configured — skipping post',
-                [
-                    'journalCode'   => $journalCode,
-                    'debitAccount'  => $debitAccount,
-                    'creditAccount' => $creditAccount,
-                ]
-            );
-            return [
-                'posted'  => false,
-                'message' => 'GL accounts not configured',
-            ];
-        }
+		if ($debitAccount === '' || $creditAccount === '') {
+			$this->logger->warning(
+				'InventoryGlAdjustmentPoster: GL accounts not configured — skipping post',
+				[
+					'journalCode' => $journalCode,
+					'debitAccount' => $debitAccount,
+					'creditAccount' => $creditAccount,
+				]
+			);
+			return [
+				'posted' => false,
+				'message' => 'GL accounts not configured',
+			];
+		}
 
-        // Balance invariant: both legs are the same amount by construction.
-        $debitCents  = $amountCents;
-        $creditCents = $amountCents;
-        if ($debitCents !== $creditCents) {
-            $this->logger->error(
-                'InventoryGlAdjustmentPoster: refusing to post an unbalanced transaction',
-                [
-                    'journalCode' => $journalCode,
-                    'debitCents'  => $debitCents,
-                    'creditCents' => $creditCents,
-                ]
-            );
-            return [
-                'posted'   => false,
-                'balanced' => false,
-                'message'  => 'debitCents !== creditCents',
-            ];
-        }
+		// Balance invariant: both legs are the same amount by construction.
+		$debitCents = $amountCents;
+		$creditCents = $amountCents;
+		if ($debitCents !== $creditCents) {
+			$this->logger->error(
+				'InventoryGlAdjustmentPoster: refusing to post an unbalanced transaction',
+				[
+					'journalCode' => $journalCode,
+					'debitCents' => $debitCents,
+					'creditCents' => $creditCents,
+				]
+			);
+			return [
+				'posted' => false,
+				'balanced' => false,
+				'message' => 'debitCents !== creditCents',
+			];
+		}
 
-        $amount = round(($amountCents / 100), 2);
-        $year   = (int) substr($postingDate, 0, 4);
-        if ($year === 0) {
-            $year = (int) date('Y');
-        }
+		$amount = round(($amountCents / 100), 2);
+		$year = (int)substr($postingDate, 0, 4);
+		if ($year === 0) {
+			$year = (int)date('Y');
+		}
 
-        try {
-            $transaction = $this->saveOnSchema(
-                schema: 'GLTransaction',
-                data: [
-                    'transactionNumber' => sprintf('%s-%04d-%s', $journalCode, $year, $sourceReference),
-                    'postingDate'       => $postingDate,
-                    'periodId'          => $periodId,
-                    'currency'          => 'EUR',
-                    'description'       => $description,
-                    'sourceReference'   => $sourceReference,
-                    'state'             => 'draft',
-                    'administrationId'  => $administrationId,
-                ]
-            );
+		try {
+			$transaction = $this->saveOnSchema(
+				schema: 'GLTransaction',
+				data: [
+					'transactionNumber' => sprintf('%s-%04d-%s', $journalCode, $year, $sourceReference),
+					'postingDate' => $postingDate,
+					'periodId' => $periodId,
+					'currency' => 'EUR',
+					'description' => $description,
+					'sourceReference' => $sourceReference,
+					'state' => 'draft',
+					'administrationId' => $administrationId,
+				]
+			);
 
-            $transactionId = (string) ($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+			$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
 
-            $this->saveOnSchema(
-                schema: 'GLLine',
-                data: [
-                    'transactionId' => $transactionId,
-                    'lineNumber'    => 1,
-                    'accountNumber' => $debitAccount,
-                    'side'          => 'debit',
-                    'amount'        => $amount,
-                    'currency'      => 'EUR',
-                    'description'   => $description,
-                ]
-            );
+			$this->saveOnSchema(
+				schema: 'GLLine',
+				data: [
+					'transactionId' => $transactionId,
+					'lineNumber' => 1,
+					'accountNumber' => $debitAccount,
+					'side' => 'debit',
+					'amount' => $amount,
+					'currency' => 'EUR',
+					'description' => $description,
+				]
+			);
 
-            $this->saveOnSchema(
-                schema: 'GLLine',
-                data: [
-                    'transactionId' => $transactionId,
-                    'lineNumber'    => 2,
-                    'accountNumber' => $creditAccount,
-                    'side'          => 'credit',
-                    'amount'        => $amount,
-                    'currency'      => 'EUR',
-                    'description'   => $description,
-                ]
-            );
+			$this->saveOnSchema(
+				schema: 'GLLine',
+				data: [
+					'transactionId' => $transactionId,
+					'lineNumber' => 2,
+					'accountNumber' => $creditAccount,
+					'side' => 'credit',
+					'amount' => $amount,
+					'currency' => 'EUR',
+					'description' => $description,
+				]
+			);
 
-            return [
-                'posted'      => true,
-                'balanced'    => true,
-                'transaction' => $transaction,
-                'debitCents'  => $debitCents,
-                'creditCents' => $creditCents,
-                'message'     => 'inventory adjustment posted',
-            ];
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'InventoryGlAdjustmentPoster: failed to post inventory adjustment',
-                [
-                    'journalCode' => $journalCode,
-                    'amountCents' => $amountCents,
-                    'exception'   => $e->getMessage(),
-                ]
-            );
+			return [
+				'posted' => true,
+				'balanced' => true,
+				'transaction' => $transaction,
+				'debitCents' => $debitCents,
+				'creditCents' => $creditCents,
+				'message' => 'inventory adjustment posted',
+			];
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'InventoryGlAdjustmentPoster: failed to post inventory adjustment',
+				[
+					'journalCode' => $journalCode,
+					'amountCents' => $amountCents,
+					'exception' => $e->getMessage(),
+				]
+			);
 
-            return [
-                'posted'  => false,
-                'message' => 'posting raised: '.$e->getMessage(),
-            ];
-        }//end try
+			return [
+				'posted' => false,
+				'message' => 'posting raised: ' . $e->getMessage(),
+			];
+		}//end try
 
-    }//end post()
+	}//end post()
 
-    /**
-     * Generic ObjectService::saveObject helper bound to the configured register.
-     *
-     * @param string              $schema Schema slug.
-     * @param array<string,mixed> $data   Row body.
-     *
-     * @return array<string,mixed>
-     */
-    private function saveOnSchema(string $schema, array $data): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $saved         = $objectService
-            ->setRegister($this->register())
-            ->setSchema($schema)
-            ->saveObject($data);
+	/**
+	 * Generic ObjectService::saveObject helper bound to the configured register.
+	 *
+	 * @param string $schema Schema slug.
+	 * @param array<string,mixed> $data Row body.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function saveOnSchema(string $schema, array $data): array {
+		$saved = $this->objectService
+			->setRegister($this->register())
+			->setSchema($schema)
+			->saveObject($data);
 
-        if (is_array($saved) === true) {
-            return $saved;
-        }
+		if (is_array($saved) === true) {
+			return $saved;
+		}
 
-        if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-            $out = $saved->jsonSerialize();
-            if (is_array($out) === true) {
-                return $out;
-            }
+		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
+			$out = $saved->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-            return [];
-        }
+			return [];
+		}
 
-        if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
-            $out = $saved->getObject();
-            if (is_array($out) === true) {
-                return $out;
-            }
+		if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
+			$out = $saved->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-            return [];
-        }
+			return [];
+		}
 
-        throw new RuntimeException('InventoryGlAdjustmentPoster: unsupported row type from ObjectService::saveObject');
+		throw new RuntimeException('InventoryGlAdjustmentPoster: unsupported row type from ObjectService::saveObject');
+	}//end saveOnSchema()
 
-    }//end saveOnSchema()
+	/**
+	 * Resolve the OR register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the OR register slug, defaulting to 'shillinq'.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

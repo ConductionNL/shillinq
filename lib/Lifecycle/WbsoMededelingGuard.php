@@ -44,8 +44,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guard for the WbsoMededeling submit / resubmit transitions.
@@ -56,141 +56,135 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
  */
-class WbsoMededelingGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class WbsoMededelingGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the mededeling may be submitted to RVO.
-     *
-     * REQ-WBSO-005: the realised S&O hours reported MUST NOT exceed the
-     * grantedSoHours ceiling of the WBSO-beschikking the mededeling reports on,
-     * and that beschikking MUST still be in the `granted` lifecycle state. The
-     * beschikking is resolved by its unique beschikkingNumber within the same
-     * register.
-     *
-     * Fail-closed: returns false on any exception, missing object, missing
-     * beschikkingNumber, an unresolvable / non-granted beschikking, or a
-     * realisatie that exceeds the granted ceiling (REQ-WBSO-005 / CWE-863).
-     *
-     * @param string                   $mededelingId The WbsoMededeling.id (unused;
-     *                                               present for the lifecycle-engine
-     *                                               call-signature parity).
-     * @param array<string,mixed>|null $object       The WbsoMededeling object being transitioned.
-     *
-     * @return bool True when the mededeling may be submitted.
-     *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
-     */
-    public function canSubmit(string $mededelingId, ?array $object=null): bool
-    {
-        try {
-            if ($object === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the mededeling may be submitted to RVO.
+	 *
+	 * REQ-WBSO-005: the realised S&O hours reported MUST NOT exceed the
+	 * grantedSoHours ceiling of the WBSO-beschikking the mededeling reports on,
+	 * and that beschikking MUST still be in the `granted` lifecycle state. The
+	 * beschikking is resolved by its unique beschikkingNumber within the same
+	 * register.
+	 *
+	 * Fail-closed: returns false on any exception, missing object, missing
+	 * beschikkingNumber, an unresolvable / non-granted beschikking, or a
+	 * realisatie that exceeds the granted ceiling (REQ-WBSO-005 / CWE-863).
+	 *
+	 * @param string $mededelingId The WbsoMededeling.id (unused;
+	 *                             present for the lifecycle-engine
+	 *                             call-signature parity).
+	 * @param array<string,mixed>|null $object The WbsoMededeling object being transitioned.
+	 *
+	 * @return bool True when the mededeling may be submitted.
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+	 */
+	public function canSubmit(string $mededelingId, ?array $object = null): bool {
+		try {
+			if ($object === null) {
+				return false;
+			}
 
-            $beschikkingNumber = (string) ($object['beschikkingNumber'] ?? '');
-            $administrationId  = (string) ($object['administrationId'] ?? '');
-            if ($beschikkingNumber === '' || $administrationId === '') {
-                return false;
-            }
+			$decisionNumber = (string)($object['decisionNumber'] ?? '');
+			$administrationId = (string)($object['administrationId'] ?? '');
+			if ($decisionNumber === '' || $administrationId === '') {
+				return false;
+			}
 
-            // Use integer-cent arithmetic on the hour figures to avoid IEEE-754
-            // equality issues at the ceiling boundary (realised == granted).
-            $realisedCenti = (int) round((float) ($object['realisedSoHours'] ?? -1) * 100);
-            if ($realisedCenti < 0) {
-                return false;
-            }
+			// Use integer-cent arithmetic on the hour figures to avoid IEEE-754
+			// equality issues at the ceiling boundary (realised == granted).
+			$realisedCenti = (int)round((float)($object['realisedSoHours'] ?? -1) * 100);
+			if ($realisedCenti < 0) {
+				return false;
+			}
 
-            $beschikking = $this->resolveBeschikking(
-                administrationId: $administrationId,
-                beschikkingNumber: $beschikkingNumber
-            );
-            if ($beschikking === null) {
-                return false;
-            }
+			$decision = $this->resolveDecision(
+				administrationId: $administrationId,
+				decisionNumber: $decisionNumber
+			);
+			if ($decision === null) {
+				return false;
+			}
 
-            // The beschikking must still be granted; an expired or withdrawn
-            // beschikking may not receive a new realisatie filing.
-            if (($beschikking['state'] ?? '') !== 'granted') {
-                return false;
-            }
+			// The beschikking must still be granted; an expired or withdrawn
+			// beschikking may not receive a new realisatie filing.
+			if (($decision['state'] ?? '') !== 'granted') {
+				return false;
+			}
 
-            $grantedCenti = (int) round((float) ($beschikking['grantedSoHours'] ?? 0) * 100);
+			$grantedCenti = (int)round((float)($decision['grantedSoHours'] ?? 0) * 100);
 
-            return $realisedCenti <= $grantedCenti;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'WbsoMededelingGuard: submit check failed — denying submit transition (fail-closed)',
-                ['mededelingId' => $mededelingId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canSubmit()
+			return $realisedCenti <= $grantedCenti;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'WbsoMededelingGuard: submit check failed — denying submit transition (fail-closed)',
+				['mededelingId' => $mededelingId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canSubmit()
 
-    /**
-     * Resolve the covering WbsoBeschikking by its unique beschikkingNumber,
-     * scoped to the administration so no cross-tenant beschikking can be
-     * referenced (REQ-WBSO-004).
-     *
-     * @param string $administrationId  Administration scope.
-     * @param string $beschikkingNumber The WbsoBeschikking.beschikkingNumber to look up.
-     *
-     * @return array<string,mixed>|null The beschikking object, or null when not found.
-     */
-    private function resolveBeschikking(string $administrationId, string $beschikkingNumber): ?array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
+	/**
+	 * Resolve the covering WbsoBeschikking by its unique beschikkingNumber,
+	 * scoped to the administration so no cross-tenant beschikking can be
+	 * referenced (REQ-WBSO-004).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $decisionNumber The WbsoBeschikking.beschikkingNumber to look up.
+	 *
+	 * @return array<string,mixed>|null The beschikking object, or null when not found.
+	 */
+	private function resolveDecision(string $administrationId, string $decisionNumber): ?array {
+		$register = $this->resolveRegister();
 
-        $beschikkingen = $objectService
-            ->setRegister($register)
-            ->setSchema('WbsoBeschikking')
-            ->findAll(
-                [
-                    'filters' => [
-                        'administrationId'  => $administrationId,
-                        'beschikkingNumber' => $beschikkingNumber,
-                    ],
-                ]
-            );
+		$beschikkingen = $this->objectService
+			->setRegister($register)
+			->setSchema('WbsoBeschikking')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'decisionNumber' => $decisionNumber,
+					],
+				]
+			);
 
-        foreach ($beschikkingen as $beschikking) {
-            if (is_array($beschikking) === true
-                && (string) ($beschikking['beschikkingNumber'] ?? '') === $beschikkingNumber
-                && (string) ($beschikking['administrationId'] ?? '') === $administrationId
-            ) {
-                return $beschikking;
-            }
-        }
+		foreach ($beschikkingen as $decision) {
+			if (is_array($decision) === true
+				&& (string)($decision['decisionNumber'] ?? '') === $decisionNumber
+				&& (string)($decision['administrationId'] ?? '') === $administrationId
+			) {
+				return $decision;
+			}
+		}
 
-        return null;
-    }//end resolveBeschikking()
+		return null;
+	}//end resolveBeschikking()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

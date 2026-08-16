@@ -43,100 +43,95 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/purchase-requisition/spec.md
  */
-class RequisitionConversionGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class RequisitionConversionGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for the `convertToPO` transition: is the requisition
-     * approved (REQ-REQ-005)?
-     *
-     * Fail-closed: returns false on any exception or when the requisition is
-     * missing or not in status 'approved'.
-     *
-     * @param string                   $requisitionId The requisition identifier (lifecycle-engine call parity).
-     * @param array<string,mixed>|null $object        The Requisition object being transitioned.
-     *
-     * @return bool True when the requisition may be converted.
-     *
-     * @spec openspec/specs/purchase-requisition/spec.md
-     */
-    public function canConvert(string $requisitionId, ?array $object=null): bool
-    {
-        try {
-            $requisition = ($object ?? $this->findOne(schema: 'Requisition', filters: ['id' => $requisitionId]));
-            if ($requisition === null) {
-                return false;
-            }
+	/**
+	 * Precondition for the `convertToPO` transition: is the requisition
+	 * approved (REQ-REQ-005)?
+	 *
+	 * Fail-closed: returns false on any exception or when the requisition is
+	 * missing or not in status 'approved'.
+	 *
+	 * @param string $requisitionId The requisition identifier (lifecycle-engine call parity).
+	 * @param array<string,mixed>|null $object The Requisition object being transitioned.
+	 *
+	 * @return bool True when the requisition may be converted.
+	 *
+	 * @spec openspec/specs/purchase-requisition/spec.md
+	 */
+	public function canConvert(string $requisitionId, ?array $object = null): bool {
+		try {
+			$requisition = ($object ?? $this->findOne(schema: 'Requisition', filters: ['id' => $requisitionId]));
+			if ($requisition === null) {
+				return false;
+			}
 
-            return (string) ($requisition['statusCode'] ?? '') === 'approved';
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RequisitionConversionGuard: canConvert failed — denying conversion (fail-closed)',
-                ['requisitionId' => $requisitionId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return (string)($requisition['statusCode'] ?? '') === 'approved';
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RequisitionConversionGuard: canConvert failed — denying conversion (fail-closed)',
+				['requisitionId' => $requisitionId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end canConvert()
+	}//end canConvert()
 
-    /**
-     * Return the configured register slug, falling back to 'shillinq'.
-     *
-     * @return string
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Return the configured register slug, falling back to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
 
-        return $slug;
+		return $slug;
+	}//end getRegisterSlug()
 
-    }//end getRegisterSlug()
+	/**
+	 * Find a single record by exact-match filters in the configured register.
+	 *
+	 * @param string $schema Schema name.
+	 * @param array<string, mixed> $filters Exact-match filters.
+	 *
+	 * @return array<string, mixed>|null First matching record, or null.
+	 */
+	private function findOne(string $schema, array $filters): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$result = $objectService
+				->setRegister(register: $this->getRegisterSlug())
+				->setSchema(schema: $schema)
+				->findAll(['filters' => $filters, 'limit' => 1]);
 
-    /**
-     * Find a single record by exact-match filters in the configured register.
-     *
-     * @param string               $schema  Schema name.
-     * @param array<string, mixed> $filters Exact-match filters.
-     *
-     * @return array<string, mixed>|null First matching record, or null.
-     */
-    private function findOne(string $schema, array $filters): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $result        = $objectService
-                ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: $schema)
-                ->findAll(['filters' => $filters, 'limit' => 1]);
+			if (is_array($result) === false || count($result) === 0) {
+				return null;
+			}
 
-            if (is_array($result) === false || count($result) === 0) {
-                return null;
-            }
+			return reset($result);
+		} catch (\Throwable $e) {
+			$this->logger->debug(
+				'RequisitionConversionGuard: schema lookup unavailable — treating as absent',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}//end try
 
-            return reset($result);
-        } catch (\Throwable $e) {
-            $this->logger->debug(
-                'RequisitionConversionGuard: schema lookup unavailable — treating as absent',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-            return null;
-        }//end try
-
-    }//end findOne()
+	}//end findOne()
 }//end class

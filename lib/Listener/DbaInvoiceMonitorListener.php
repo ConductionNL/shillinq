@@ -48,124 +48,121 @@ use Throwable;
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
  */
-class DbaInvoiceMonitorListener implements IEventListener
-{
-    /**
-     * Constructor.
-     *
-     * @param DBAVbarMonitorService $vbarMonitor VBAR monitoring service.
-     * @param LoggerInterface       $logger      Logger.
-     */
-    public function __construct(
-        private readonly DBAVbarMonitorService $vbarMonitor,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class DbaInvoiceMonitorListener implements IEventListener {
+	/**
+	 * Constructor.
+	 *
+	 * @param DBAVbarMonitorService $vbarMonitor VBAR monitoring service.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly DBAVbarMonitorService $vbarMonitor,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle an AP/AR factuur-created event (REQ-DBA-004 + REQ-DBA-016).
-     *
-     * @param Event $event The OR ObjectCreatedEvent (typed loosely so the
-     *                     listener compiles without an OR autoloader available).
-     *
-     * @return void
-     *
-     * @spec openspec/specs/dba-compliance-marker/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        $payload = $this->extractInvoice(event: $event);
-        if ($payload === null) {
-            return;
-        }
+	/**
+	 * Handle an AP/AR factuur-created event (REQ-DBA-004 + REQ-DBA-016).
+	 *
+	 * @param Event $event The OR ObjectCreatedEvent (typed loosely so the
+	 *                     listener compiles without an OR autoloader available).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	public function handle(Event $event): void {
+		$payload = $this->extractInvoice(event: $event);
+		if ($payload === null) {
+			return;
+		}
 
-        $opdrachtId = (string) ($payload['dbaOpdrachtId'] ?? '');
-        if ($opdrachtId === '') {
-            // Not tied to a DBA opdracht — no work to do.
-            return;
-        }
+		$assignmentId = (string)($payload['dbaOpdrachtId'] ?? '');
+		if ($assignmentId === '') {
+			// Not tied to a DBA opdracht — no work to do.
+			return;
+		}
 
-        $administrationId = (string) ($payload['administrationId'] ?? '');
-        $factuurId        = (string) ($payload['@self']['id'] ?? ($payload['id'] ?? ''));
-        $bedragCents      = (int) ($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
-        $uren = (float) ($payload['uren'] ?? ($payload['hoursBilled'] ?? 0.0));
+		$administrationId = (string)($payload['administrationId'] ?? '');
+		$invoiceId = (string)($payload['@self']['id'] ?? ($payload['id'] ?? ''));
+		$amountCents = (int)($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
+		$hours = (float)($payload['hours'] ?? ($payload['hoursBilled'] ?? 0.0));
 
-        try {
-            $result = $this->vbarMonitor->assess(
-                bedragCents: $bedragCents,
-                uren: $uren,
-                administrationId: $administrationId,
-            );
-            if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
-                && $factuurId !== ''
-            ) {
-                $this->vbarMonitor->emitFlag(
-                    opdrachtId: $opdrachtId,
-                    administrationId: $administrationId,
-                    factuurId: $factuurId,
-                    uurtariefCents: (int) ($result['uurtariefCents'] ?? 0),
-                    vbarGrensCents: (int) ($result['vbarGrensCents'] ?? 0),
-                );
-            }
-        } catch (Throwable $e) {
-            // Non-blocking: log and continue. The AP/AR factuur commit MUST NOT
-            // be undone by a DBA monitoring hiccup.
-            $this->logger->warning(
-                'DbaInvoiceMonitorListener: VBAR assess/emit failed (non-blocking).',
-                ['opdrachtId' => $opdrachtId, 'factuurId' => $factuurId, 'exception' => $e->getMessage()]
-            );
-        }//end try
-    }//end handle()
+		try {
+			$result = $this->vbarMonitor->assess(
+				amountCents: $amountCents,
+				hours: $hours,
+				administrationId: $administrationId,
+			);
+			if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
+				&& $invoiceId !== ''
+			) {
+				$this->vbarMonitor->emitFlag(
+					assignmentId: $assignmentId,
+					administrationId: $administrationId,
+					invoiceId: $invoiceId,
+					hourlyRateCents: (int)($result['uurtariefCents'] ?? 0),
+					vbarGrensCents: (int)($result['vbarGrensCents'] ?? 0),
+				);
+			}
+		} catch (Throwable $e) {
+			// Non-blocking: log and continue. The AP/AR factuur commit MUST NOT
+			// be undone by a DBA monitoring hiccup.
+			$this->logger->warning(
+				'DbaInvoiceMonitorListener: VBAR assess/emit failed (non-blocking).',
+				['assignmentId' => $assignmentId, 'invoiceId' => $invoiceId, 'exception' => $e->getMessage()]
+			);
+		}//end try
+	}//end handle()
 
-    /**
-     * Extract an invoice payload from a heterogeneous OR event.
-     *
-     * Tries `$event->getObject()`, `$event->getObject()->getObject()`, and
-     * `$event->getData()` so we are tolerant of multiple OR event versions.
-     *
-     * @param Event $event Any OR event.
-     *
-     * @return array<string,mixed>|null Invoice payload, or null when not extractable.
-     */
-    private function extractInvoice(Event $event): ?array
-    {
-        try {
-            if (method_exists($event, 'getObject') === true) {
-                $obj = $event->getObject();
-                if (is_array($obj) === true) {
-                    /*
-                     * @var array<string,mixed> $obj
-                     */
+	/**
+	 * Extract an invoice payload from a heterogeneous OR event.
+	 *
+	 * Tries `$event->getObject()`, `$event->getObject()->getObject()`, and
+	 * `$event->getData()` so we are tolerant of multiple OR event versions.
+	 *
+	 * @param Event $event Any OR event.
+	 *
+	 * @return array<string,mixed>|null Invoice payload, or null when not extractable.
+	 */
+	private function extractInvoice(Event $event): ?array {
+		try {
+			if (method_exists($event, 'getObject') === true) {
+				$obj = $event->getObject();
+				if (is_array($obj) === true) {
+					/*
+					 * @var array<string,mixed> $obj
+					 */
 
-                    return $obj;
-                }
+					return $obj;
+				}
 
-                if (is_object($obj) === true && method_exists($obj, 'getObject') === true) {
-                    $data = $obj->getObject();
-                    if (is_array($data) === true) {
-                        /*
-                         * @var array<string,mixed> $data
-                         */
+				if (is_object($obj) === true && method_exists($obj, 'getObject') === true) {
+					$data = $obj->getObject();
+					if (is_array($data) === true) {
+						/*
+						 * @var array<string,mixed> $data
+						 */
 
-                        return $data;
-                    }
-                }
-            }//end if
+						return $data;
+					}
+				}
+			}//end if
 
-            if (method_exists($event, 'getData') === true) {
-                $data = $event->getData();
-                if (is_array($data) === true) {
-                    /*
-                     * @var array<string,mixed> $data
-                     */
+			if (method_exists($event, 'getData') === true) {
+				$data = $event->getData();
+				if (is_array($data) === true) {
+					/*
+					 * @var array<string,mixed> $data
+					 */
 
-                    return $data;
-                }
-            }
-        } catch (Throwable $e) {
-            $this->logger->debug('DbaInvoiceMonitorListener: extract failed', ['exception' => $e->getMessage()]);
-        }//end try
+					return $data;
+				}
+			}
+		} catch (Throwable $e) {
+			$this->logger->debug('DbaInvoiceMonitorListener: extract failed', ['exception' => $e->getMessage()]);
+		}//end try
 
-        return null;
-    }//end extractInvoice()
+		return null;
+	}//end extractInvoice()
 }//end class

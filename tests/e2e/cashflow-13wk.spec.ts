@@ -18,7 +18,6 @@ import { test, expect } from '@playwright/test'
 const APP = '/apps/shillinq'
 
 test.describe('cashflow 13wk — manifest pages render', () => {
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
@@ -83,7 +82,9 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 		await page.waitForLoadState('domcontentloaded')
 		// Either a chart canvas, a manifest-rendered widget container, or the
 		// CashflowDashboard skeleton's chart slot must be present.
-		const chartCandidates = page.locator('[data-widget="cashflow-13week-chart"], canvas, [data-widget-id="cashflow-13week-chart"]')
+		const chartCandidates = page.locator(
+			'[data-widget="cashflow-13week-chart"], canvas, [data-widget-id="cashflow-13week-chart"]',
+		)
 		await expect(chartCandidates.first()).toBeVisible({ timeout: 10_000 })
 	})
 
@@ -120,13 +121,18 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	/**
 	 * @e2e bookkeeping-cashflow-13wk/REQ-CF-010/crisis-banner-conditional-render
 	 */
-	test('crisis banner is conditionally rendered (no fatal when absent)', async ({ page }) => {
+	test('crisis banner is conditionally rendered (no fatal when absent)', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/cashflow/dashboard')
 		await page.waitForLoadState('domcontentloaded')
 		// The crisis banner is conditional. Either it is absent (no negative
 		// forecast in fixtures) or it carries the role="alert" attribute.
 		const banner = page.locator('[role="alert"]')
-		const visible = await banner.first().isVisible().catch(() => false)
+		const visible = await banner
+			.first()
+			.isVisible()
+			.catch(() => false)
 		if (visible === true) {
 			await expect(banner.first()).toContainText(/CRISIS/i)
 		}

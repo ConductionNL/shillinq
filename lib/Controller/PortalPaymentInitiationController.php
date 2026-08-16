@@ -42,6 +42,7 @@ use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -55,87 +56,89 @@ use Throwable;
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
  */
-class PortalPaymentInitiationController extends Controller
-{
-    /**
-     * The audience this receiver serves — any other audience is refused
-     * before any OpenRegister read (REQ-SPPI-002).
-     */
-    private const AUDIENCE_CUSTOMER = 'customer';
+class PortalPaymentInitiationController extends Controller {
+	/**
+	 * The audience this receiver serves — any other audience is refused
+	 * before any OpenRegister read (REQ-SPPI-002).
+	 */
+	private const AUDIENCE_CUSTOMER = 'customer';
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                    $request        The request object.
-     * @param PortalAssertionVerifier     $verifier       Verifies the X-Portal-Subject assertion.
-     * @param PortalPaymentSessionService $sessionService Resolves ownership + mints the payment session.
-     * @param LoggerInterface             $logger         The logger.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly PortalAssertionVerifier $verifier,
-        private readonly PortalPaymentSessionService $sessionService,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
+	 * @param PortalPaymentSessionService $sessionService Resolves ownership + mints the payment session.
+	 * @param LoggerInterface $logger The logger.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly PortalAssertionVerifier $verifier,
+		private readonly PortalPaymentSessionService $sessionService,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Initiate (or reuse) an iDEAL payment session for the subject's own
-     * open AR invoice.
-     *
-     * Declared in `PortalContributionProvider` as endpoint-forward action
-     * `pay`; portaliq forwards `POST /apps/shillinq/api/portal/payments/initiate`
-     * with the portal client's JSON body `{"invoiceId": "<uuid-or-slug>"}` and
-     * the signed assertion header.
-     *
-     * Response contract: 200 `{checkoutUrl}` on success; 401 missing/invalid
-     * assertion; 403 wrong audience OR the target is foreign-owned,
-     * non-payable, non-existent or malformed (identical response — no
-     * existence oracle, REQ-SPPI-003); 503 `{status: "deferred"}` when the
-     * bound provider is dormant; 502 on a downstream/OpenRegister/PSP
-     * failure, never leaking raw exception text.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
-     */
-    #[PublicPage]
-    #[NoCSRFRequired]
-    public function initiate(): JSONResponse
-    {
-        // 1. Verify — the assertion is the ONLY credential (fail-closed 401).
-        $claims = $this->verifier->verify((string) $this->request->getHeader(PortalAssertionVerifier::HEADER));
-        if ($claims === null) {
-            return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Initiate (or reuse) an iDEAL payment session for the subject's own
+	 * open AR invoice.
+	 *
+	 * Declared in `PortalContributionProvider` as endpoint-forward action
+	 * `pay`; portaliq forwards `POST /apps/shillinq/api/portal/payments/initiate`
+	 * with the portal client's JSON body `{"invoiceId": "<uuid-or-slug>"}` and
+	 * the signed assertion header.
+	 *
+	 * Response contract: 200 `{checkoutUrl}` on success; 401 missing/invalid
+	 * assertion; 403 wrong audience OR the target is foreign-owned,
+	 * non-payable, non-existent or malformed (identical response — no
+	 * existence oracle, REQ-SPPI-003); 503 `{status: "deferred"}` when the
+	 * bound provider is dormant; 502 on a downstream/OpenRegister/PSP
+	 * failure, never leaking raw exception text.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	// Citizen-facing: starts a payment. Tighter than the receivers because a
+	// human clicks this, and each call creates a payment intent at the
+	// provider — real work, and real cost, per request.
+	#[AnonRateLimit(limit: 20, period: 60)]
+	public function initiate(): JSONResponse {
+		// 1. Verify — the assertion is the ONLY credential (fail-closed 401).
+		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifier::HEADER));
+		if ($claims === null) {
+			return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        // 2. Audience gate — before any OpenRegister read (REQ-SPPI-002).
-        if ((string) ($claims['audience'] ?? '') !== self::AUDIENCE_CUSTOMER) {
-            return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
-        }
+		// 2. Audience gate — before any OpenRegister read (REQ-SPPI-002).
+		if ((string)($claims['audience'] ?? '') !== self::AUDIENCE_CUSTOMER) {
+			return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
+		}
 
-        $invoiceId = $this->request->getParam('invoiceId');
-        if (is_string($invoiceId) === false) {
-            $invoiceId = '';
-        }
+		$invoiceId = $this->request->getParam('invoiceId');
+		if (is_string($invoiceId) === false) {
+			$invoiceId = '';
+		}
 
-        try {
-            $result = $this->sessionService->initiate(claims: $claims, target: $invoiceId);
-        } catch (Throwable $e) {
-            // Never leak internals from a #[PublicPage] endpoint (ADR-005).
-            $this->logger->error(
-                'Shillinq: portal payment initiation controller caught an unexpected failure',
-                ['exception' => $e->getMessage()]
-            );
-            return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
-        }
+		try {
+			$result = $this->sessionService->initiate(claims: $claims, target: $invoiceId);
+		} catch (Throwable $e) {
+			// Never leak internals from a #[PublicPage] endpoint (ADR-005).
+			$this->logger->error(
+				'Shillinq: portal payment initiation controller caught an unexpected failure',
+				['exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
+		}
 
-        return match ($result->status) {
-            'ok' => new JSONResponse(['checkoutUrl' => $result->checkoutUrl]),
-            'deferred' => new JSONResponse(['status' => 'deferred'], Http::STATUS_SERVICE_UNAVAILABLE),
-            'downstream_error' => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
-            default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
-        };
-    }//end initiate()
+		return match ($result->status) {
+			'ok' => new JSONResponse(['checkoutUrl' => $result->checkoutUrl]),
+			'deferred' => new JSONResponse(['status' => 'deferred'], Http::STATUS_SERVICE_UNAVAILABLE),
+			'downstream_error' => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
+			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
+		};
+	}//end initiate()
 }//end class

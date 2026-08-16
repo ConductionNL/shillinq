@@ -60,7 +60,12 @@
 					{{ t('shillinq', 'Reporting & Compliance') }}
 				</h2>
 				<p class="reporting-overview__hint">
-					{{ t('shillinq', 'Generate every statutory, tax and public-sector report shillinq supports from one place. Pick a report, choose a period and format, and generate the file.') }}
+					{{
+						t(
+							'shillinq',
+							'Generate every statutory, tax and public-sector report shillinq supports from one place. Pick a report, choose a period and format, and generate the file.',
+						)
+					}}
 				</p>
 			</div>
 
@@ -69,7 +74,7 @@
 					data-testid="reporting-overview-kpi"
 					:title="t('shillinq', 'Available reports')"
 					:count="reports.length"
-					:count-label="t('shillinq', 'report types')"
+					:countLabel="t('shillinq', 'report types')"
 					variant="default"
 					:loading="loading" />
 				<router-link
@@ -81,9 +86,13 @@
 			</div>
 		</header>
 
-		<div class="reporting-overview__filters" data-testid="reporting-overview-filters">
+		<div
+			class="reporting-overview__filters"
+			data-testid="reporting-overview-filters">
 			<div class="reporting-overview__filter">
-				<label class="reporting-overview__filter-label" for="reporting-category-filter">
+				<label
+					class="reporting-overview__filter-label"
+					for="reporting-category-filter">
 					{{ t('shillinq', 'Category') }}
 				</label>
 				<select
@@ -102,7 +111,9 @@
 				</select>
 			</div>
 			<div class="reporting-overview__filter">
-				<label class="reporting-overview__filter-label" for="reporting-search">
+				<label
+					class="reporting-overview__filter-label"
+					for="reporting-search">
 					{{ t('shillinq', 'Search') }}
 				</label>
 				<input
@@ -110,15 +121,21 @@
 					v-model="search"
 					type="search"
 					data-testid="reporting-search"
-					:placeholder="t('shillinq', 'Search reports…')">
+					:placeholder="t('shillinq', 'Search reports…')" />
 			</div>
 		</div>
 
-		<div v-if="loading" class="reporting-overview__loading" data-testid="reporting-overview-loading">
+		<div
+			v-if="loading"
+			class="reporting-overview__loading"
+			data-testid="reporting-overview-loading">
 			{{ t('shillinq', 'Loading report catalogue…') }}
 		</div>
 
-		<div v-else-if="error" class="reporting-overview__error" data-testid="reporting-overview-error">
+		<div
+			v-else-if="error"
+			class="reporting-overview__error"
+			data-testid="reporting-overview-error">
 			{{ error }}
 		</div>
 
@@ -157,7 +174,9 @@
 						<p class="reporting-overview__card-desc">
 							{{ report.description }}
 						</p>
-						<div v-if="report.kind !== 'view'" class="reporting-overview__card-format">
+						<div
+							v-if="report.kind !== 'view'"
+							class="reporting-overview__card-format">
 							<label
 								class="reporting-overview__filter-label"
 								:for="`reporting-format-${report.id}`">
@@ -168,7 +187,7 @@
 								v-model="selectedFormat[report.id]"
 								:data-testid="`reporting-format-${report.id}`">
 								<option
-									v-for="format in (report.formats || [])"
+									v-for="format in report.formats || []"
 									:key="format"
 									:value="format">
 									{{ format.toUpperCase() }}
@@ -201,8 +220,8 @@
 			v-if="dialogReport"
 			:report="dialogReport"
 			:format="selectedFormat[dialogReport.id]"
-			:administration-options="administrationOptions"
-			:default-administration-id="activeAdministrationId"
+			:administrationOptions="administrationOptions"
+			:defaultAdministrationId="activeAdministrationId"
 			@close="dialogReport = null"
 			@generated="onGenerated" />
 	</div>
@@ -210,13 +229,12 @@
 
 <script>
 import { CnStatsBlock } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
-import { showError, showSuccess } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
-
+import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import GenerateReportDialog from '../../modals/GenerateReportDialog.vue'
-import { reportViews, reportViewCategories } from './reportViews.js'
+import { reportViewCategories, reportViews } from './reportViews.js'
 
 export default {
 	name: 'ReportingComplianceOverview',
@@ -224,6 +242,7 @@ export default {
 		CnStatsBlock,
 		GenerateReportDialog,
 	},
+
 	data() {
 		return {
 			reports: [],
@@ -238,17 +257,19 @@ export default {
 			activeAdministrationId: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * Category select options, in catalogue order, restricted to the
 		 * categories that actually have a report in the loaded catalogue.
 		 */
 		categoryOptions() {
-			const present = new Set(this.reports.map(r => r.category))
+			const present = new Set(this.reports.map((r) => r.category))
 			return Object.keys(this.categories)
-				.filter(key => present.has(key))
-				.map(key => ({ value: key, label: this.categories[key] }))
+				.filter((key) => present.has(key))
+				.map((key) => ({ value: key, label: this.categories[key] }))
 		},
+
 		/**
 		 * The catalogue filtered by the category select + the free-text
 		 * search, then grouped by category in catalogue-declared order. The
@@ -264,7 +285,8 @@ export default {
 				if (!term) {
 					return true
 				}
-				const haystack = `${report.label} ${report.description} ${report.id}`.toLowerCase()
+				const haystack =
+					`${report.label} ${report.description} ${report.id}`.toLowerCase()
 				return haystack.includes(term)
 			})
 
@@ -279,20 +301,22 @@ export default {
 
 			// Keep catalogue order; append any unknown categories last.
 			const orderedKeys = [
-				...order.filter(key => byCategory[key]),
-				...Object.keys(byCategory).filter(key => !order.includes(key)),
+				...order.filter((key) => byCategory[key]),
+				...Object.keys(byCategory).filter((key) => !order.includes(key)),
 			]
-			return orderedKeys.map(key => ({
+			return orderedKeys.map((key) => ({
 				category: key,
 				label: this.categories[key] || key,
 				reports: byCategory[key],
 			}))
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadTypes()
 	},
+
 	methods: {
 		t,
 		/**
@@ -304,22 +328,29 @@ export default {
 			this.loading = true
 			this.error = ''
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/reporting/types'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/reporting/types'),
+				)
 				const data = response.data || {}
 				const rows = Array.isArray(data.types)
 					? data.types
-					: (Array.isArray(data) ? data : [])
+					: Array.isArray(data)
+						? data
+						: []
 				// Merge the existing report VIEW pages (navigate-cards) so the one
 				// overview holds every report — generate-to-file and on-screen
 				// views alike — instead of leaving them as scattered menu items.
-				const views = reportViews.map(v => ({
+				const views = reportViews.map((v) => ({
 					...v,
 					kind: 'view',
 					formats: [],
 					description: this.t('shillinq', 'Open this report.'),
 				}))
 				this.reports = [...rows, ...views]
-				this.categories = { ...(data.categories || {}), ...reportViewCategories }
+				this.categories = {
+					...(data.categories || {}),
+					...reportViewCategories,
+				}
 
 				// Seed each card's format picker with the first offered format.
 				const seed = {}
@@ -328,12 +359,14 @@ export default {
 				}
 				this.selectedFormat = seed
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load the report catalogue')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Best-effort administration context so the generate dialog can
 		 * pre-select the active administration and offer a switcher. A
@@ -342,22 +375,27 @@ export default {
 		 */
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/administrations/context'),
+				)
 				const admins = response.data?.administrations || []
-				this.administrationOptions = admins.map(a => ({
+				this.administrationOptions = admins.map((a) => ({
 					value: a.administrationId,
 					label: a.name || a.administrationCode || a.administrationId,
 				}))
 				if (response.data?.activeAdministrationId) {
-					this.activeAdministrationId = response.data.activeAdministrationId
+					this.activeAdministrationId =
+						response.data.activeAdministrationId
 				}
 			} catch (e) {
 				this.administrationOptions = []
 			}
 		},
+
 		openGenerate(report) {
 			this.dialogReport = report
 		},
+
 		/**
 		 * The dialog POSTed /api/reporting/generate successfully; surface a
 		 * toast linking to the file and point the user at the index.
@@ -366,8 +404,13 @@ export default {
 		 */
 		onGenerated(result) {
 			this.dialogReport = null
-			const downloadUrl = result?.downloadUrl
-				|| (result?.id ? generateUrl(`/apps/shillinq/api/reporting/download/${result.id}`) : null)
+			const downloadUrl =
+				result?.downloadUrl
+				|| (result?.id
+					? generateUrl(
+							`/apps/shillinq/api/reporting/download/${result.id}`,
+						)
+					: null)
 			if (downloadUrl) {
 				showSuccess(
 					this.t('shillinq', 'Report generated — {link}', {
@@ -379,9 +422,11 @@ export default {
 				showSuccess(this.t('shillinq', 'Report generated.'))
 			}
 		},
+
 		onGenerateError(message) {
 			showError(message || this.t('shillinq', 'Report generation failed'))
 		},
+
 		kindLabel(kind) {
 			if (kind === 'document') {
 				return this.t('shillinq', 'Document')

@@ -43,7 +43,12 @@
 					{{ t('shillinq', 'Generated reports') }}
 				</h2>
 				<p class="generated-reports__hint">
-					{{ t('shillinq', 'Every report generated from the Reporting & Compliance overview is archived here with a download link to the stored file.') }}
+					{{
+						t(
+							'shillinq',
+							'Every report generated from the Reporting & Compliance overview is archived here with a download link to the stored file.',
+						)
+					}}
 				</p>
 			</div>
 			<router-link
@@ -54,9 +59,13 @@
 			</router-link>
 		</header>
 
-		<div class="generated-reports__filters" data-testid="generated-reports-filters">
+		<div
+			class="generated-reports__filters"
+			data-testid="generated-reports-filters">
 			<div class="generated-reports__filter">
-				<label class="generated-reports__filter-label" for="generated-category-filter">
+				<label
+					class="generated-reports__filter-label"
+					for="generated-category-filter">
 					{{ t('shillinq', 'Category') }}
 				</label>
 				<select
@@ -75,7 +84,9 @@
 				</select>
 			</div>
 			<div class="generated-reports__filter">
-				<label class="generated-reports__filter-label" for="generated-period-filter">
+				<label
+					class="generated-reports__filter-label"
+					for="generated-period-filter">
 					{{ t('shillinq', 'Period') }}
 				</label>
 				<select
@@ -94,7 +105,9 @@
 				</select>
 			</div>
 			<div class="generated-reports__filter">
-				<label class="generated-reports__filter-label" for="generated-administration-filter">
+				<label
+					class="generated-reports__filter-label"
+					for="generated-administration-filter">
 					{{ t('shillinq', 'Administration') }}
 				</label>
 				<select
@@ -114,11 +127,17 @@
 			</div>
 		</div>
 
-		<div v-if="loading" class="generated-reports__loading" data-testid="generated-reports-loading">
+		<div
+			v-if="loading"
+			class="generated-reports__loading"
+			data-testid="generated-reports-loading">
 			{{ t('shillinq', 'Loading generated reports…') }}
 		</div>
 
-		<div v-else-if="error" class="generated-reports__error" data-testid="generated-reports-error">
+		<div
+			v-else-if="error"
+			class="generated-reports__error"
+			data-testid="generated-reports-error">
 			{{ error }}
 		</div>
 
@@ -127,7 +146,9 @@
 			data-testid="generated-reports-table"
 			:columns="columns"
 			:rows="filteredRows"
-			:empty-label="t('shillinq', 'No generated reports match the current filters.')">
+			:emptyLabel="
+				t('shillinq', 'No generated reports match the current filters.')
+			">
 			<template #cell-reportType="{ row }">
 				{{ reportLabel(row) }}
 			</template>
@@ -138,7 +159,9 @@
 				{{ formatDate(row.generatedAt) }}
 			</template>
 			<template #cell-format="{ row }">
-				<span class="generated-reports__format">{{ (row.format || '').toUpperCase() }}</span>
+				<span class="generated-reports__format">{{
+					(row.format || '').toUpperCase()
+				}}</span>
 			</template>
 			<template #cell-administrationId="{ row }">
 				{{ administrationLabel(row.administrationId) }}
@@ -159,15 +182,16 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'GeneratedReportsIndex',
 	components: {
 		CnDataTable,
 	},
+
 	data() {
 		return {
 			rows: [],
@@ -180,28 +204,70 @@ export default {
 			administrationFilter: '',
 		}
 	},
+
 	computed: {
 		columns() {
 			return [
-				{ key: 'reportType', label: this.t('shillinq', 'Report'), sortable: true },
-				{ key: 'category', label: this.t('shillinq', 'Category'), sortable: true },
-				{ key: 'period', label: this.t('shillinq', 'Period'), sortable: true },
-				{ key: 'administrationId', label: this.t('shillinq', 'Administration'), sortable: true },
-				{ key: 'format', label: this.t('shillinq', 'Format'), sortable: true },
-				{ key: 'generatedAt', label: this.t('shillinq', 'Generated at'), sortable: true },
-				{ key: 'download', label: this.t('shillinq', 'File'), sortable: false },
+				{
+					key: 'reportType',
+					label: this.t('shillinq', 'Report'),
+					sortable: true,
+				},
+				{
+					key: 'category',
+					label: this.t('shillinq', 'Category'),
+					sortable: true,
+				},
+				{
+					key: 'period',
+					label: this.t('shillinq', 'Period'),
+					sortable: true,
+				},
+				{
+					key: 'administrationId',
+					label: this.t('shillinq', 'Administration'),
+					sortable: true,
+				},
+				{
+					key: 'format',
+					label: this.t('shillinq', 'Format'),
+					sortable: true,
+				},
+				{
+					key: 'generatedAt',
+					label: this.t('shillinq', 'Generated at'),
+					sortable: true,
+				},
+				{
+					key: 'download',
+					label: this.t('shillinq', 'File'),
+					sortable: false,
+				},
 			]
 		},
+
 		categoryOptions() {
-			const present = [...new Set(this.rows.map(r => r.category).filter(Boolean))]
-			return present.map(key => ({ value: key, label: this.categories[key] || key }))
+			const present = [
+				...new Set(this.rows.map((r) => r.category).filter(Boolean)),
+			]
+			return present.map((key) => ({
+				value: key,
+				label: this.categories[key] || key,
+			}))
 		},
+
 		periodOptions() {
-			return [...new Set(this.rows.map(r => r.period).filter(Boolean))].sort().reverse()
+			return [...new Set(this.rows.map((r) => r.period).filter(Boolean))]
+				.sort()
+				.reverse()
 		},
+
 		administrationOptions() {
-			return [...new Set(this.rows.map(r => r.administrationId).filter(Boolean))]
+			return [
+				...new Set(this.rows.map((r) => r.administrationId).filter(Boolean)),
+			]
 		},
+
 		filteredRows() {
 			return this.rows.filter((row) => {
 				if (this.categoryFilter && row.category !== this.categoryFilter) {
@@ -210,37 +276,50 @@ export default {
 				if (this.periodFilter && row.period !== this.periodFilter) {
 					return false
 				}
-				if (this.administrationFilter && row.administrationId !== this.administrationFilter) {
+				if (
+					this.administrationFilter
+					&& row.administrationId !== this.administrationFilter
+				) {
 					return false
 				}
 				return true
 			})
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadGenerated()
 	},
+
 	methods: {
 		t,
 		async loadGenerated() {
 			this.loading = true
 			this.error = ''
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/reporting/generated'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/reporting/generated'),
+				)
 				const data = response.data || {}
 				const rows = Array.isArray(data.generated)
 					? data.generated
-					: (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []))
+					: Array.isArray(data.results)
+						? data.results
+						: Array.isArray(data)
+							? data
+							: []
 				this.rows = rows
 				this.categories = data.categories || {}
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load generated reports')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Best-effort administration names so the administration column +
 		 * filter read names instead of raw ids. A failure is non-fatal: the
@@ -248,32 +327,40 @@ export default {
 		 */
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/administrations/context'),
+				)
 				const admins = response.data?.administrations || []
 				const names = {}
 				for (const a of admins) {
-					names[a.administrationId] = a.name || a.administrationCode || a.administrationId
+					names[a.administrationId] =
+						a.name || a.administrationCode || a.administrationId
 				}
 				this.administrationNames = names
 			} catch (e) {
 				this.administrationNames = {}
 			}
 		},
+
 		downloadUrl(row) {
 			return generateUrl(`/apps/shillinq/api/reporting/download/${row.id}`)
 		},
+
 		reportLabel(row) {
 			return row.reportLabel || row.reportType || '—'
 		},
+
 		categoryLabel(category) {
 			return this.categories[category] || category || '—'
 		},
+
 		administrationLabel(administrationId) {
 			if (!administrationId) {
 				return '—'
 			}
 			return this.administrationNames[administrationId] || administrationId
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'

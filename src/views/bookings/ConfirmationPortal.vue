@@ -53,7 +53,11 @@
 			class="bookings-confirmation-portal__success"
 			data-testid="bk-confirm-success">
 			<h2>{{ label('Appointment confirmed!') }}</h2>
-			<p>{{ label('Your appointment is confirmed. A copy is in your inbox.') }}</p>
+			<p>
+				{{
+					label('Your appointment is confirmed. A copy is in your inbox.')
+				}}
+			</p>
 			<dl class="bookings-confirmation-portal__details">
 				<dt>{{ label('Service') }}</dt>
 				<dd>{{ appointment.serviceName }}</dd>
@@ -99,7 +103,9 @@
 				:disabled="confirming"
 				data-testid="bk-confirm-button"
 				@click="confirm">
-				{{ confirming ? label('Confirming…') : label('Confirm appointment') }}
+				{{
+					confirming ? label('Confirming…') : label('Confirm appointment')
+				}}
 			</button>
 		</section>
 	</div>
@@ -114,9 +120,11 @@ const REASON_MESSAGES = {
 	revoked: 'This confirmation link is no longer valid; a newer one was sent.',
 	invalid: 'This confirmation link is not valid.',
 	not_found: 'We could not find this appointment. Please check your email link.',
-	missing_appointment_id: 'This confirmation link is missing required information.',
+	missing_appointment_id:
+		'This confirmation link is missing required information.',
 	invalid_input: 'This confirmation link is incomplete.',
-	or_unavailable: 'The booking service is temporarily unavailable. Please try again later.',
+	or_unavailable:
+		'The booking service is temporarily unavailable. Please try again later.',
 }
 
 export default {
@@ -140,11 +148,13 @@ export default {
 			},
 		}
 	},
+
 	computed: {
 		token() {
 			const params = new URLSearchParams(window.location.search)
 			return params.get('token') || ''
 		},
+
 		appointmentIdFromUrl() {
 			// Manifest route is /confirm/:appointmentId so the segment lives in
 			// the URL path immediately after `/confirm/`. Fall back to query.
@@ -155,6 +165,7 @@ export default {
 			const params = new URLSearchParams(window.location.search)
 			return params.get('appointmentId') || ''
 		},
+
 		localTimeLabel() {
 			if (!this.appointment.startTime) {
 				return ''
@@ -174,6 +185,7 @@ export default {
 				return this.appointment.startTime
 			}
 		},
+
 		timezoneLabel() {
 			try {
 				return Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -181,6 +193,7 @@ export default {
 				return 'UTC'
 			}
 		},
+
 		errorMessage() {
 			if (!this.error) {
 				return ''
@@ -188,9 +201,11 @@ export default {
 			return this.label(REASON_MESSAGES[this.error] || REASON_MESSAGES.invalid)
 		},
 	},
+
 	mounted() {
 		this.validate()
 	},
+
 	methods: {
 		label(key) {
 			if (typeof t === 'function') {
@@ -198,6 +213,7 @@ export default {
 			}
 			return key
 		},
+
 		async validate() {
 			this.loading = true
 			this.error = null
@@ -223,6 +239,7 @@ export default {
 				this.loading = false
 			}
 		},
+
 		async confirm() {
 			if (this.confirming) {
 				return
@@ -250,13 +267,16 @@ export default {
 				this.confirming = false
 			}
 		},
+
 		async resend() {
 			if (this.resending) {
 				return
 			}
 			this.resending = true
 			try {
-				await confirmationApi.resendConfirmationEmail(this.appointmentIdFromUrl)
+				await confirmationApi.resendConfirmationEmail(
+					this.appointmentIdFromUrl,
+				)
 				this.error = null
 				this.confirmed = false
 				this.appointment.status = 'pending_confirmation'

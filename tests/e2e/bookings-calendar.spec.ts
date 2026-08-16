@@ -27,7 +27,9 @@ import { test, expect } from '@playwright/test'
 const APP = '/apps/shillinq'
 
 test.describe('shillinq — bookings calendar smoke', () => {
-	test('SPA mounts and bookings calendar components are registered @spec REQ-006', async ({ page }) => {
+	test('SPA mounts and bookings calendar components are registered @spec REQ-006', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 
@@ -57,11 +59,17 @@ test.describe('shillinq — bookings calendar smoke', () => {
 				}
 			}
 			const namespace = win.OCA?.Shillinq ?? {}
-			const candidate = namespace.components
+			const candidate =
+				namespace.components
 				?? namespace.registry
-				?? namespace as Record<string, unknown>
+				?? (namespace as Record<string, unknown>)
 			const keys = candidate ? Object.keys(candidate) : []
-			return keys.filter((k) => /^(bookings|calendar)/i.test(k) || k === 'BookingsCalendar' || k === 'BookingsForm')
+			return keys.filter(
+				(k) =>
+					/^(bookings|calendar)/i.test(k)
+					|| k === 'BookingsCalendar'
+					|| k === 'BookingsForm',
+			)
 		})
 		// Either the registry exposes the keys (component nav wired) or the
 		// SPA simply mounted; both prove the bundle includes the components.
@@ -70,7 +78,9 @@ test.describe('shillinq — bookings calendar smoke', () => {
 		expect(Array.isArray(registryEntries)).toBe(true)
 	})
 
-	test('GET /api/v2/calendars responds 200 with a JSON array @spec REQ-005', async ({ request }) => {
+	test('GET /api/v2/calendars responds 200 with a JSON array @spec REQ-005', async ({
+		request,
+	}) => {
 		const res = await request.get('/index.php/apps/shillinq/api/v2/calendars', {
 			headers: { 'OCS-APIRequest': 'true' },
 		})
@@ -85,8 +95,8 @@ test.describe('shillinq — bookings calendar smoke', () => {
 			// that canonical shape as well as a bare array / { data: [...] }.
 			expect(
 				Array.isArray(body)
-				|| Array.isArray(body?.data)
-				|| Array.isArray(body?.calendars),
+					|| Array.isArray(body?.data)
+					|| Array.isArray(body?.calendars),
 			).toBe(true)
 		}
 	})

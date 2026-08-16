@@ -47,34 +47,33 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
  */
-interface CreditNoteRequestAdapterInterface
-{
-    /**
-     * Submit one UBL CreditNote dispute request through openconnector.
-     *
-     * @param array<string,mixed> $payload The dispute payload — keys:
-     *                                     - matchId            string
-     *                                     - invoiceId          string
-     *                                     - invoiceNumber      string
-     *                                     - supplierId         string
-     *                                     - administrationId   string
-     *                                     - currency           string (ISO 4217)
-     *                                     - totalExclVat       int   (cents)
-     *                                     - totalVat           int   (cents)
-     *                                     - totalInclVat       int   (cents)
-     *                                     - reason             string
-     *                                     - divergenceDetails  array
-     *                                     - matchedPoIds       array<int,string>
-     *                                     - requestedAt        string (ISO-8601).
-     *
-     * @return array{accepted:bool,dispatchId:?string,error:?string}
-     *         An outcome envelope — accepted=true with the openconnector
-     *         dispatchId on success; accepted=false with a non-null error
-     *         when the adapter refused to dispatch. The caller logs the
-     *         outcome on the ThreeWayMatch but never blocks the
-     *         resolution flow on the dispatch outcome.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
-     */
-    public function submitDisputeCreditNote(array $payload): array;
+interface CreditNoteRequestAdapterInterface {
+	/**
+	 * Submit one UBL CreditNote dispute request through openconnector.
+	 *
+	 * @param array<string,mixed> $payload The dispute payload — keys:
+	 *                                     - matchId            string
+	 *                                     - invoiceId          string
+	 *                                     - invoiceNumber      string
+	 *                                     - supplierId         string
+	 *                                     - administrationId   string
+	 *                                     - currency           string (ISO 4217)
+	 *                                     - totalExclVat       int   (cents)
+	 *                                     - totalVat           int   (cents)
+	 *                                     - totalInclVat       int   (cents)
+	 *                                     - reason             string
+	 *                                     - divergenceDetails  array
+	 *                                     - matchedPoIds       array<int,string>
+	 *                                     - requestedAt        string (ISO-8601).
+	 *
+	 * @return array{accepted:bool,dispatchId:?string,error:?string}
+	 *                                                               An outcome envelope — accepted=true with the openconnector
+	 *                                                               dispatchId on success; accepted=false with a non-null error
+	 *                                                               when the adapter refused to dispatch. The caller logs the
+	 *                                                               outcome on the ThreeWayMatch but never blocks the
+	 *                                                               resolution flow on the dispatch outcome.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 */
+	public function submitDisputeCreditNote(array $payload): array;
 }//end interface

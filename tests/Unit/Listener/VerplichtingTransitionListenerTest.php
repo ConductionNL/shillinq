@@ -47,289 +47,268 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class VerplichtingTransitionListenerTest extends TestCase
-{
+final class VerplichtingTransitionListenerTest extends TestCase {
 
-    /**
-     * Build a recording IEventDispatcher.
-     *
-     * @return IEventDispatcher
-     */
-    private function recordingDispatcher(): IEventDispatcher
-    {
-        return new class implements IEventDispatcher {
+	/**
+	 * Build a recording IEventDispatcher.
+	 *
+	 * @return IEventDispatcher
+	 */
+	private function recordingDispatcher(): IEventDispatcher {
+		return new class implements IEventDispatcher {
+			/**
+			 * @var array<int, array{name: string, event: Event}>
+			 */
+			public array $events = [];
 
-            /**
-             * @var array<int, array{name: string, event: Event}>
-             */
-            public array $events = [];
+			public function dispatch(string $eventName, Event $event): void {
+				$this->events[] = ['name' => $eventName, 'event' => $event];
 
-            public function dispatch(string $eventName, Event $event): void
-            {
-                $this->events[] = ['name' => $eventName, 'event' => $event];
+			}//end dispatch()
 
-            }//end dispatch()
+			public function dispatchTyped(Event $event): void {
+				// No-op.
 
-            public function dispatchTyped(Event $event): void
-            {
-                // No-op.
+			}//end dispatchTyped()
 
-            }//end dispatchTyped()
+			public function addListener(string $eventName, callable $listener, int $priority = 0): void {
+				// No-op.
 
-            public function addListener(string $eventName, callable $listener, int $priority=0): void
-            {
-                // No-op.
+			}//end addListener()
 
-            }//end addListener()
+			public function addServiceListener(string $eventName, string $className, int $priority = 0): void {
+				// No-op.
 
-            public function addServiceListener(string $eventName, string $className, int $priority=0): void
-            {
-                // No-op.
+			}//end addServiceListener()
 
-            }//end addServiceListener()
+			public function hasListeners(string $eventName): bool {
+				return false;
+			}//end hasListeners()
 
-            public function hasListeners(string $eventName): bool
-            {
-                return false;
+			public function removeListener(string $eventName, callable $listener): void {
+				// No-op.
 
-            }//end hasListeners()
+			}//end removeListener()
+		};
 
-            public function removeListener(string $eventName, callable $listener): void
-            {
-                // No-op.
+	}//end recordingDispatcher()
 
-            }//end removeListener()
-        };
+	/**
+	 * Build an ObjectEntity carrying a numeric schema **id**, exactly as
+	 * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
+	 *
+	 * A hand-built entity carrying the slug is a shape production never
+	 * produces; the slug arrives through {@see ListenerSchemaResolver}.
+	 *
+	 * @param string $schemaId Numeric schema id as OR stamps it.
+	 * @param array<string,mixed> $payload Payload.
+	 *
+	 * @return ObjectEntity
+	 */
+	private function entity(string $schemaId, array $payload): ObjectEntity {
+		$entity = new ObjectEntity();
+		$entity->setSchema($schemaId);
+		$entity->setObject($payload);
+		return $entity;
+	}//end entity()
 
-    }//end recordingDispatcher()
+	/**
+	 * Build a ListenerSchemaResolver stub that reports a given schema slug.
+	 *
+	 * @param string $slug Slug the resolver resolves the entity's id to.
+	 *
+	 * @return ListenerSchemaResolver
+	 */
+	private function resolver(string $slug): ListenerSchemaResolver {
+		$resolver = $this->createMock(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willReturn($slug);
+		return $resolver;
+	}//end resolver()
 
-    /**
-     * Build an ObjectEntity carrying a numeric schema **id**, exactly as
-     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
-     *
-     * A hand-built entity carrying the slug is a shape production never
-     * produces; the slug arrives through {@see ListenerSchemaResolver}.
-     *
-     * @param string              $schemaId Numeric schema id as OR stamps it.
-     * @param array<string,mixed> $payload  Payload.
-     *
-     * @return ObjectEntity
-     */
-    private function entity(string $schemaId, array $payload): ObjectEntity
-    {
-        $entity = new ObjectEntity();
-        $entity->setSchema($schemaId);
-        $entity->setObject($payload);
-        return $entity;
+	/**
+	 * A created Verplichting with bron=tenderned + status=active emits.
+	 *
+	 * @return void
+	 */
+	public function testCreatedTenderNedActiveEmitsBudgetEvent(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$listener = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
-    }//end entity()
+		$event = new ObjectCreatedEvent(
+			$this->entity('1089', [
+				'source' => 'tenderned',
+				'sourceReference' => 'TN-2026-0001',
+				'status' => 'active',
+				'amount' => 50000.0,
+			])
+		);
 
-    /**
-     * Build a ListenerSchemaResolver stub that reports a given schema slug.
-     *
-     * @param string $slug Slug the resolver resolves the entity's id to.
-     *
-     * @return ListenerSchemaResolver
-     */
-    private function resolver(string $slug): ListenerSchemaResolver
-    {
-        $resolver = $this->createMock(ListenerSchemaResolver::class);
-        $resolver->method('schemaSlug')->willReturn($slug);
-        return $resolver;
+		$listener->handle($event);
 
-    }//end resolver()
+		$this->assertCount(1, $dispatcher->events);
+		$this->assertSame(BudgetImpactEmitter::EVENT_OBLIGATION_ACTIVATED, $dispatcher->events[0]['name']);
 
-    /**
-     * A created Verplichting with bron=tenderned + status=active emits.
-     *
-     * @return void
-     */
-    public function testCreatedTenderNedActiveEmitsBudgetEvent(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+	}//end testCreatedTenderNedActiveEmitsBudgetEvent()
 
-        $event = new ObjectCreatedEvent(
-            $this->entity('1089', [
-                'bron'           => 'tenderned',
-                'bronReferentie' => 'TN-2026-0001',
-                'status'         => 'active',
-                'bedrag'         => 50000.0,
-            ])
-        );
+	/**
+	 * A created manual Verplichting does NOT emit.
+	 *
+	 * @return void
+	 */
+	public function testCreatedManualVerplichtingDoesNotEmit(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$listener = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
-        $listener->handle($event);
+		$event = new ObjectCreatedEvent(
+			$this->entity('1089', [
+				'source' => 'manual',
+				'status' => 'active',
+				'amount' => 5000.0,
+			])
+		);
 
-        $this->assertCount(1, $dispatcher->events);
-        $this->assertSame(BudgetImpactEmitter::EVENT_OBLIGATION_ACTIVATED, $dispatcher->events[0]['name']);
+		$listener->handle($event);
 
-    }//end testCreatedTenderNedActiveEmitsBudgetEvent()
+		$this->assertCount(0, $dispatcher->events);
 
-    /**
-     * A created manual Verplichting does NOT emit.
-     *
-     * @return void
-     */
-    public function testCreatedManualVerplichtingDoesNotEmit(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+	}//end testCreatedManualVerplichtingDoesNotEmit()
 
-        $event = new ObjectCreatedEvent(
-            $this->entity('1089', [
-                'bron'   => 'manual',
-                'status' => 'active',
-                'bedrag' => 5000.0,
-            ])
-        );
+	/**
+	 * A created Verplichting with status=concept is ignored
+	 * (REQ-002 promotion writes status=active immediately).
+	 *
+	 * @return void
+	 */
+	public function testCreatedConceptVerplichtingDoesNotEmit(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$listener = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
-        $listener->handle($event);
+		$event = new ObjectCreatedEvent(
+			$this->entity('1089', [
+				'source' => 'tenderned',
+				'status' => 'draft',
+				'amount' => 5000.0,
+			])
+		);
 
-        $this->assertCount(0, $dispatcher->events);
+		$listener->handle($event);
 
-    }//end testCreatedManualVerplichtingDoesNotEmit()
+		$this->assertCount(0, $dispatcher->events);
 
-    /**
-     * A created Verplichting with status=concept is ignored
-     * (REQ-002 promotion writes status=active immediately).
-     *
-     * @return void
-     */
-    public function testCreatedConceptVerplichtingDoesNotEmit(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+	}//end testCreatedConceptVerplichtingDoesNotEmit()
 
-        $event = new ObjectCreatedEvent(
-            $this->entity('1089', [
-                'bron'   => 'tenderned',
-                'status' => 'concept',
-                'bedrag' => 5000.0,
-            ])
-        );
+	/**
+	 * A transition to=active on a tenderned-sourced Verplichting emits.
+	 *
+	 * @return void
+	 */
+	public function testTransitionedToActiveEmits(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$listener = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
-        $listener->handle($event);
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1089', [
+				'source' => 'tenderned',
+				'status' => 'active',
+				'amount' => 5000.0,
+			]),
+			'activeren',
+			'draft',
+			'active',
+			'admin',
+			'shillinq',
+			'Verplichting'
+		);
 
-        $this->assertCount(0, $dispatcher->events);
+		$listener->handle($event);
 
-    }//end testCreatedConceptVerplichtingDoesNotEmit()
+		$this->assertCount(1, $dispatcher->events);
 
-    /**
-     * A transition to=active on a tenderned-sourced Verplichting emits.
-     *
-     * @return void
-     */
-    public function testTransitionedToActiveEmits(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+	}//end testTransitionedToActiveEmits()
 
-        $event = new ObjectTransitionedEvent(
-            $this->entity('1089', [
-                'bron'   => 'tenderned',
-                'status' => 'active',
-                'bedrag' => 5000.0,
-            ]),
-            'activeren',
-            'concept',
-            'active',
-            'admin',
-            'shillinq',
-            'Verplichting'
-        );
+	/**
+	 * A transition to a non-active state does NOT emit.
+	 *
+	 * @return void
+	 */
+	public function testTransitionedToConceptDoesNotEmit(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$listener = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
-        $listener->handle($event);
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1089', [
+				'source' => 'tenderned',
+				'status' => 'draft',
+				'amount' => 5000.0,
+			]),
+			'reactiveren',
+			'active',
+			'draft',
+			'admin',
+			'shillinq',
+			'Verplichting'
+		);
 
-        $this->assertCount(1, $dispatcher->events);
+		$listener->handle($event);
 
-    }//end testTransitionedToActiveEmits()
+		$this->assertCount(0, $dispatcher->events);
 
-    /**
-     * A transition to a non-active state does NOT emit.
-     *
-     * @return void
-     */
-    public function testTransitionedToConceptDoesNotEmit(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+	}//end testTransitionedToConceptDoesNotEmit()
 
-        $event = new ObjectTransitionedEvent(
-            $this->entity('1089', [
-                'bron'   => 'tenderned',
-                'status' => 'concept',
-                'bedrag' => 5000.0,
-            ]),
-            'reactiveren',
-            'active',
-            'concept',
-            'admin',
-            'shillinq',
-            'Verplichting'
-        );
+	/**
+	 * A non-Verplichting schema event is ignored.
+	 *
+	 * @return void
+	 */
+	public function testNonVerplichtingSchemaIsIgnored(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$listener = new VerplichtingTransitionListener(
+			$emitter,
+			$this->resolver('TenderNedAanbesteding'),
+			new NullLogger()
+		);
 
-        $listener->handle($event);
+		$event = new ObjectCreatedEvent(
+			$this->entity('1090', [
+				'source' => 'tenderned',
+				'status' => 'active',
+			])
+		);
 
-        $this->assertCount(0, $dispatcher->events);
+		$listener->handle($event);
 
-    }//end testTransitionedToConceptDoesNotEmit()
+		$this->assertCount(0, $dispatcher->events);
 
-    /**
-     * A non-Verplichting schema event is ignored.
-     *
-     * @return void
-     */
-    public function testNonVerplichtingSchemaIsIgnored(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener(
-            $emitter,
-            $this->resolver('TenderNedAanbesteding'),
-            new NullLogger()
-        );
+	}//end testNonVerplichtingSchemaIsIgnored()
 
-        $event = new ObjectCreatedEvent(
-            $this->entity('1090', [
-                'bron'   => 'tenderned',
-                'status' => 'active',
-            ])
-        );
+	/**
+	 * An entity with a null payload is handled gracefully (the listener
+	 * resolves the schema, sees no object payload, and returns null).
+	 *
+	 * Originally this test passed a null event but the OR
+	 * ObjectCreatedEvent constructor now type-hints non-null ObjectEntity.
+	 * The fail-soft contract is identical: a non-Verplichting / payload-less
+	 * entity must NOT cause an emit.
+	 *
+	 * @return void
+	 */
+	public function testNullEntityIsIgnored(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$listener = new VerplichtingTransitionListener($emitter, $this->resolver('SalesOrder'), new NullLogger());
 
-        $listener->handle($event);
+		$entity = new ObjectEntity();
+		$entity->setSchema('4242');
+		$event = new ObjectCreatedEvent($entity);
+		$listener->handle($event);
 
-        $this->assertCount(0, $dispatcher->events);
+		$this->assertCount(0, $dispatcher->events);
 
-    }//end testNonVerplichtingSchemaIsIgnored()
-
-    /**
-     * An entity with a null payload is handled gracefully (the listener
-     * resolves the schema, sees no object payload, and returns null).
-     *
-     * Originally this test passed a null event but the OR
-     * ObjectCreatedEvent constructor now type-hints non-null ObjectEntity.
-     * The fail-soft contract is identical: a non-Verplichting / payload-less
-     * entity must NOT cause an emit.
-     *
-     * @return void
-     */
-    public function testNullEntityIsIgnored(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('SalesOrder'), new NullLogger());
-
-        $entity = new ObjectEntity();
-        $entity->setSchema('4242');
-        $event  = new ObjectCreatedEvent($entity);
-        $listener->handle($event);
-
-        $this->assertCount(0, $dispatcher->events);
-
-    }//end testNullEntityIsIgnored()
+	}//end testNullEntityIsIgnored()
 }//end class

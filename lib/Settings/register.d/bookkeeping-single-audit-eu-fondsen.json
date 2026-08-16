@@ -13,7 +13,7 @@
         "icon": "EarthBox",
         "version": "0.1.0",
         "title": "EU-project",
-        "description": "EU-fondsen project metadata (CCI-nummer, fonds, programma, eligibility, budget, managing authority) per Verordening 2021/1060 art 22 + 2021/1058 art 7 (REQ-EUF-001). Top-level record onto which segregated ledgers, expenditures, irregularities and audit-trail entries hang.",
+        "description": "EU-fondsen project metadata (CCI-number, fonds, programme, eligibility, budget, managing authority) per Verordening 2021/1060 art 22 + 2021/1058 art 7 (REQ-EUF-001). Top-level record onto which segregated ledgers, expenditures, irregularities and audit-trail entries hang.",
         "x-schema-org": "schema:Project",
         "type": "object",
         "required": [
@@ -34,12 +34,12 @@
           "administrationId": {
             "type": "string",
             "description": "Tenant administration identifier; scopes every EU-fondsen record to its owning administration (IDOR boundary).",
-            "example": "adm-gemeente-amsterdam",
+            "example": "adm-municipality-amsterdam",
             "title": "Administration ID"
           },
           "cciNumber": {
             "type": "string",
-            "description": "Common Code for Identification — unique EC programma-identifier (REQ-EUF-001).",
+            "description": "Common Code for Identification — unique EC programme-identifier (REQ-EUF-001).",
             "example": "2021NL16RFPR007",
             "title": "Cci Number"
           },
@@ -66,7 +66,7 @@
           },
           "priorityAxis": {
             "type": "string",
-            "description": "Prioriteit-as binnen het programma (art 22 CPR).",
+            "description": "Prioriteit-as binnen het programme (art 22 CPR).",
             "nullable": true,
             "example": "1",
             "title": "Priority Axis"
@@ -88,14 +88,14 @@
           "startDate": {
             "type": "string",
             "format": "date",
-            "description": "Begin van de subsidiabele periode. Boekingen buiten [startDate, endDate] worden geblokkeerd (REQ-EUF-001).",
+            "description": "Begin van de subsidiabele period. Boekingen buiten [startDate, endDate] worden geblokkeerd (REQ-EUF-001).",
             "example": "2026-01-01",
             "title": "Start Date"
           },
           "endDate": {
             "type": "string",
             "format": "date",
-            "description": "Einde van de subsidiabele periode.",
+            "description": "Einde van de subsidiabele period.",
             "example": "2029-12-31",
             "title": "End Date"
           },
@@ -119,7 +119,7 @@
             "description": "Nationale co-financiering uitsplitsing (REQ-EUF-001).",
             "nullable": true,
             "properties": {
-              "rijk": {
+              "centralGovernment": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Rijksbijdrage in EUR.",
@@ -131,13 +131,13 @@
                 "description": "Provinciale bijdrage in EUR.",
                 "title": "Provincie"
               },
-              "gemeente": {
+              "municipality": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Gemeentelijke bijdrage in EUR.",
                 "title": "Gemeente"
               },
-              "privaat": {
+              "private": {
                 "type": "number",
                 "minimum": 0,
                 "description": "Private bijdrage in EUR.",
@@ -148,7 +148,7 @@
           },
           "beneficiaryOrganization": {
             "type": "string",
-            "description": "Eindbegunstigde organisatie (REQ-EUF-001).",
+            "description": "Eindbegunstigde organisation (REQ-EUF-001).",
             "example": "Gemeente Amsterdam",
             "title": "Beneficiary Organization"
           },
@@ -160,7 +160,7 @@
               "onderwijsinstelling",
               "private_partij"
             ],
-            "description": "Beneficiary-type — bepaalt aanbestedings-drempel (€143k centraal / €221k decentraal, REQ-EUF-005).",
+            "description": "Beneficiary-type — bepaalt aanbestedings-threshold (€143k centraal / €221k decentraal, REQ-EUF-005).",
             "nullable": true,
             "title": "Beneficiary Type"
           },
@@ -226,12 +226,12 @@
           "retention": {
             "rule": "cpr:art82",
             "period": "P15Y",
-            "description": "EU-fondsen records bewaard tot 5 jaar na programma-sluiting — effectief 12–15 jaar voor langlopende projecten (art 82 CPR + art 46 Verordening 2021/1060)."
+            "description": "EU-fondsen records bewaard tot 5 year na programme-sluiting — effectief 12–15 year voor langlopende projecten (art 82 CPR + art 46 Verordening 2021/1060)."
           },
           "states": {
             "in_voorbereiding": {
               "label": "In voorbereiding",
-              "description": "Project wordt opgezet; eligibility-rules en sub-grootboek-structuur geconfigureerd."
+              "description": "Project wordt opgezet; eligibility-rules en sub-general_ledger-structuur geconfigureerd."
             },
             "uitvoering": {
               "label": "In uitvoering",
@@ -239,7 +239,7 @@
             },
             "afgerond_in_audit": {
               "label": "Afgerond — in audit",
-              "description": "Project afgerond; accounts-package ingediend, audit loopt."
+              "description": "Project afgerond; accounts-package submitted, audit loopt."
             },
             "gesloten": {
               "label": "Gesloten",
@@ -261,13 +261,13 @@
               "from": "uitvoering",
               "to": "afgerond_in_audit",
               "label": "Afronden",
-              "description": "Project afgerond, accounts-package ingediend bij MA."
+              "description": "Project afgerond, accounts-package submitted bij MA."
             },
             "close": {
               "from": "afgerond_in_audit",
               "to": "gesloten",
               "label": "Sluiten",
-              "description": "Audit afgerond; programma gesloten."
+              "description": "Audit afgerond; programme gesloten."
             },
             "withdraw": {
               "from": "in_voorbereiding",
@@ -308,8 +308,8 @@
         "slug": "EligibilityRule",
         "icon": "ScaleBalance",
         "version": "0.1.0",
-        "title": "Eligibility-regel",
-        "description": "Fonds- en regelgeving-specifieke cost-eligibility regel per regelgevingsartikel (ERDF 2021/1058 art 7, ESF+ 2021/1057 art 5, JTF 2021/1056 art 12, RRF 2021/241 art 4). Declaratieve cost-category mapping + SCO + drempelbedragen + bewijsvereisten (REQ-EUF-001, REQ-EUF-011, ADR-031 — geen PHP-rekenservice).",
+        "title": "Eligibility-rule",
+        "description": "Fonds- en regelgeving-specifieke cost-eligibility rule per regelgevingsartikel (ERDF 2021/1058 art 7, ESF+ 2021/1057 art 5, JTF 2021/1056 art 12, RRF 2021/241 art 4). Declaratieve cost-category mapping + SCO + drempelbedragen + bewijsvereisten (REQ-EUF-001, REQ-EUF-011, ADR-031 — geen PHP-rekenservice).",
         "x-schema-org": "schema:Legislation",
         "type": "object",
         "required": [
@@ -324,7 +324,7 @@
             "type": "string",
             "description": "Tenant administration identifier; null voor fleet-brede standaardregels.",
             "nullable": true,
-            "example": "adm-gemeente-amsterdam",
+            "example": "adm-municipality-amsterdam",
             "title": "Administration ID"
           },
           "fonds": {
@@ -339,24 +339,24 @@
               "BMVI",
               "EMFAF"
             ],
-            "description": "Fonds waarop de regel van toepassing is.",
+            "description": "Fonds waarop de rule van toepassing is.",
             "title": "Fonds"
           },
           "regulationArticle": {
             "type": "string",
-            "description": "Regelgevingsartikel waaruit de regel voortvloeit (REQ-EUF-011).",
+            "description": "Regelgevingsartikel waaruit de rule voortvloeit (REQ-EUF-011).",
             "example": "Verordening 2021/1058 art 7",
             "title": "Regulation Article"
           },
           "ruleDescription": {
             "type": "string",
-            "description": "Menselijk-leesbare omschrijving van de eligibility-regel.",
+            "description": "Menselijk-leesbare description van de eligibility-rule.",
             "example": "Subsidiabele kostencategorieën voor ERDF-investeringen in KMO-ondersteuning.",
             "title": "Rule Description"
           },
           "applicableCostCategories": {
             "type": "array",
-            "description": "Kostencategorieën die onder deze regel subsidiabel zijn (REQ-EUF-011).",
+            "description": "Kostencategorieën die onder deze rule subsidiabel zijn (REQ-EUF-011).",
             "items": {
               "type": "string",
               "enum": [
@@ -387,7 +387,7 @@
           },
           "temporalScope": {
             "type": "string",
-            "description": "Temporele geldigheid van de regel.",
+            "description": "Temporele geldigheid van de rule.",
             "nullable": true,
             "example": "2021-2027",
             "title": "Temporal Scope"
@@ -416,14 +416,14 @@
           },
           "vatRecoverableNotEligible": {
             "type": "boolean",
-            "description": "Indien true: terugvorderbare BTW is NIET subsidiabel voor deze cost-categories (dubbel-subsidie-preventie, REQ-EUF-002).",
+            "description": "Indien true: terugvorderbare BTW is NIET subsidiabel voor deze cost-categories (dubbel-subsidy-preventie, REQ-EUF-002).",
             "default": true,
             "title": "VAT Recoverable Not Eligible"
           },
           "procurementThresholdCentral": {
             "type": "number",
             "minimum": 0,
-            "description": "Aanbestedings-drempel centrale overheid leveringen/diensten in EUR (€143.000 voor 2026, REQ-EUF-005).",
+            "description": "Aanbestedings-threshold centrale overheid leveringen/diensten in EUR (€143.000 voor 2026, REQ-EUF-005).",
             "nullable": true,
             "example": 143000.0,
             "title": "Procurement Threshold Central"
@@ -431,7 +431,7 @@
           "procurementThresholdDecentral": {
             "type": "number",
             "minimum": 0,
-            "description": "Aanbestedings-drempel decentrale overheid leveringen in EUR (€221.000 voor 2026, REQ-EUF-005).",
+            "description": "Aanbestedings-threshold decentrale overheid leveringen in EUR (€221.000 voor 2026, REQ-EUF-005).",
             "nullable": true,
             "example": 221000.0,
             "title": "Procurement Threshold Decentral"
@@ -445,7 +445,7 @@
           },
           "evidenceRequired": {
             "type": "object",
-            "description": "Per cost-category de verplichte document-types (REQ-EUF-004). Sleutel = cost-category, waarde = lijst van vereiste documentType-enums.",
+            "description": "Per cost-category de verplichte document-types (REQ-EUF-004). Sleutel = cost-category, value = lijst van vereiste documentType-enums.",
             "nullable": true,
             "additionalProperties": {
               "type": "array",
@@ -461,7 +461,7 @@
               "active",
               "superseded"
             ],
-            "description": "Lifecycle state. Verouderde regels worden 'superseded' i.p.v. verwijderd.",
+            "description": "Lifecycle state. Verouderde rules worden 'superseded' i.p.v. verwijderd.",
             "default": "active",
             "title": "State"
           }
@@ -472,11 +472,11 @@
           "states": {
             "active": {
               "label": "Actief",
-              "description": "Regel is van kracht en wordt toegepast bij booking-validatie."
+              "description": "Regel is van kracht en wordt applied bij booking-validatie."
             },
             "superseded": {
               "label": "Vervangen",
-              "description": "Regel is vervangen door een nieuwere versie; behouden voor audit-reconstructie."
+              "description": "Regel is vervangen door een nieuwere version; behouden voor audit-reconstructie."
             }
           },
           "transitions": {
@@ -484,7 +484,7 @@
               "from": "active",
               "to": "superseded",
               "label": "Vervangen",
-              "description": "Regel vervangen door nieuwere versie (bv. nieuwe drempelbedragen)."
+              "description": "Regel vervangen door nieuwere version (bv. nieuwe drempelbedragen)."
             }
           }
         },
@@ -511,7 +511,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Eligibility-regel is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Eligibility-rule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "SegregatedLedger": {
@@ -526,7 +526,7 @@
           "administrationId",
           "euProjectId",
           "dedicatedAccountRange",
-          "tussenrekeningCode",
+          "suspenseAccountCode",
           "reconciliationStatus",
           "state"
         ],
@@ -534,7 +534,7 @@
           "administrationId": {
             "type": "string",
             "description": "Tenant administration identifier (IDOR boundary).",
-            "example": "adm-gemeente-amsterdam",
+            "example": "adm-municipality-amsterdam",
             "title": "Administration ID"
           },
           "euProjectId": {
@@ -551,7 +551,7 @@
           },
           "euFlagTransactionMarker": {
             "type": "boolean",
-            "description": "Of elke transactie in dit grootboek een EU-vlag draagt.",
+            "description": "Of elke transactie in dit general_ledger een EU-vlag draagt.",
             "default": true,
             "title": "Eu Flag Transaction Marker"
           },
@@ -562,7 +562,7 @@
             "example": "CC-EU-KVW3",
             "title": "Cost Center Code"
           },
-          "tussenrekeningCode": {
+          "suspenseAccountCode": {
             "type": "string",
             "description": "Project-specifieke tussenrekening die reguliere GL + EU-administratie reconcilieerbaar houdt; netteert naar nul (REQ-EUF-002).",
             "example": "2599-KVW3",
@@ -689,7 +689,7 @@
           "administrationId": {
             "type": "string",
             "description": "Tenant administration identifier (IDOR boundary).",
-            "example": "adm-gemeente-amsterdam",
+            "example": "adm-municipality-amsterdam",
             "title": "Administration ID"
           },
           "euProjectId": {
@@ -727,22 +727,22 @@
           "grossAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Bruto bedrag in EUR (REQ-EUF-002). Bij financiële correctie wordt een negatieve EuExpenditure geboekt (REQ-EUF-008).",
+            "description": "Bruto amount in EUR (REQ-EUF-002). Bij financiële correctie wordt een negatieve EuExpenditure geboekt (REQ-EUF-008).",
             "example": 12500.0,
             "title": "Gross Amount"
           },
           "vatTreatment": {
             "type": "string",
             "enum": [
-              "terugvorderbaar",
-              "niet_terugvorderbaar"
+              "recoverable",
+              "non_recoverable"
             ],
             "description": "BTW-behandeling. Terugvorderbaar → BTW niet subsidiabel; declared_amount excl. BTW (REQ-EUF-002).",
             "title": "VAT Treatment"
           },
           "declaredAmount": {
             "type": "number",
-            "description": "Te declareren bedrag aan MA, aangepast voor VAT-treatment (REQ-EUF-002, REQ-EUF-003).",
+            "description": "Te declareren amount aan MA, aangepast voor VAT-treatment (REQ-EUF-002, REQ-EUF-003).",
             "nullable": true,
             "example": 12500.0,
             "title": "Declared Amount"
@@ -757,13 +757,13 @@
           },
           "declarationPeriod": {
             "type": "string",
-            "description": "Declaratie-periode ISO-8601 kwartaal (art 73 CPR), bv. 2026-Q4.",
+            "description": "Declaratie-period ISO-8601 quarter (art 73 CPR), bv. 2026-Q4.",
             "example": "2026-Q4",
             "title": "Declaration Period"
           },
           "procurementRequired": {
             "type": "boolean",
-            "description": "Aanbestedingsplichtig (grossAmount boven drempel voor beneficiary-type, REQ-EUF-005).",
+            "description": "Aanbestedingsplichtig (grossAmount boven threshold voor beneficiary-type, REQ-EUF-005).",
             "default": false,
             "title": "Procurement Required"
           },
@@ -791,7 +791,7 @@
           "supportingDocumentsCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "Aantal gekoppelde bewijsstukken; declaratie geblokkeerd tot alle verplichte stukken aanwezig (REQ-EUF-004).",
+            "description": "Aantal gekoppelde supporting_documents; declaratie geblokkeerd tot alle verplichte stukken present (REQ-EUF-004).",
             "default": 0,
             "title": "Supporting Documents Count"
           },
@@ -811,45 +811,45 @@
           "state": {
             "type": "string",
             "enum": [
-              "geboekt",
+              "posted",
               "gedeclareerd",
-              "ingediend_bij_MA",
+              "submitted_at_ma",
               "gecertificeerd",
-              "betaald_door_EC",
+              "paid_by_ec",
               "in_audit",
               "gecorrigeerd"
             ],
             "description": "Lifecycle state (REQ-EUF-002 t/m REQ-EUF-008).",
-            "default": "geboekt",
+            "default": "posted",
             "title": "State"
           }
         },
         "x-openregister-lifecycle": {
           "field": "state",
-          "initialState": "geboekt",
+          "initialState": "posted",
           "retention": {
             "rule": "cpr:art82",
             "period": "P15Y",
-            "description": "Uitgave-records bewaard tot 5 jaar na programma-sluiting (art 82 CPR), effectief 12–15 jaar."
+            "description": "Uitgave-records bewaard tot 5 year na programme-sluiting (art 82 CPR), effectief 12–15 year."
           },
           "states": {
-            "geboekt": {
+            "posted": {
               "label": "Geboekt",
               "description": "Uitgave geboekt in reguliere GL + EU-administratie; cost-eligibility en VAT gevalideerd."
             },
             "gedeclareerd": {
               "label": "Gedeclareerd",
-              "description": "Opgenomen in een kwartaal-realisatie-declaratie."
+              "description": "Opgenomen in een quarter-actuals-declaratie."
             },
-            "ingediend_bij_MA": {
+            "submitted_at_ma": {
               "label": "Ingediend bij MA",
-              "description": "Declaratie ingediend bij managementautoriteit. Vereist complete bewijsstukken + aanbestedingsdossier (REQ-EUF-004, REQ-EUF-005)."
+              "description": "Declaratie submitted bij managementautoriteit. Vereist complete supporting_documents + aanbestedingsdossier (REQ-EUF-004, REQ-EUF-005)."
             },
             "gecertificeerd": {
               "label": "Gecertificeerd",
               "description": "Door certificeringsautoriteit gecertificeerd."
             },
-            "betaald_door_EC": {
+            "paid_by_ec": {
               "label": "Betaald door EC",
               "description": "Uitbetaald door de Europese Commissie; opgenomen in accounts-package (REQ-EUF-006)."
             },
@@ -859,38 +859,38 @@
             },
             "gecorrigeerd": {
               "label": "Gecorrigeerd",
-              "description": "Financiële correctie toegepast (negatieve uitgave geboekt, REQ-EUF-008)."
+              "description": "Financiële correctie applied (negatieve uitgave geboekt, REQ-EUF-008)."
             }
           },
           "transitions": {
             "declare": {
-              "from": "geboekt",
+              "from": "posted",
               "to": "gedeclareerd",
               "label": "Declareren",
-              "description": "Uitgave opgenomen in kwartaal-declaratie; vereist bevestigde eligibility.",
+              "description": "Uitgave opgenomen in quarter-declaratie; vereist bevestigde eligibility.",
               "requires": "OCA\\Shillinq\\Lifecycle\\EuExpenditureGuard::canDeclare"
             },
             "submit": {
               "from": "gedeclareerd",
-              "to": "ingediend_bij_MA",
+              "to": "submitted_at_ma",
               "label": "Indienen bij MA",
-              "description": "Indienen vereist complete verplichte bewijsstukken + aanbestedingsdossier indien aanbestedingsplichtig (REQ-EUF-004, REQ-EUF-005).",
+              "description": "Indienen vereist complete verplichte supporting_documents + aanbestedingsdossier indien aanbestedingsplichtig (REQ-EUF-004, REQ-EUF-005).",
               "requires": "OCA\\Shillinq\\Lifecycle\\EuExpenditureGuard::canSubmit"
             },
             "certify": {
-              "from": "ingediend_bij_MA",
+              "from": "submitted_at_ma",
               "to": "gecertificeerd",
               "label": "Certificeren",
               "description": "Gecertificeerd door certificeringsautoriteit."
             },
             "markPaid": {
               "from": "gecertificeerd",
-              "to": "betaald_door_EC",
+              "to": "paid_by_ec",
               "label": "Betaald door EC",
               "description": "Uitbetaald door de Europese Commissie."
             },
             "audit": {
-              "from": "betaald_door_EC",
+              "from": "paid_by_ec",
               "to": "in_audit",
               "label": "In audit nemen",
               "description": "Geselecteerd voor audit-sample."
@@ -899,7 +899,7 @@
               "from": "in_audit",
               "to": "gecorrigeerd",
               "label": "Corrigeren",
-              "description": "Financiële correctie toegepast na audit-bevinding (REQ-EUF-008)."
+              "description": "Financiële correctie applied na audit-bevinding (REQ-EUF-008)."
             }
           }
         },
@@ -914,7 +914,7 @@
               "declaredAmount",
               "euCoFundingAmount"
             ],
-            "description": "Kwartaal-realisatie-aggregatie per periode + cost-category voor de declaratie-rapportage (REQ-EUF-003)."
+            "description": "Kwartaal-actuals-aggregatie per period + cost-category voor de declaratie-rapportage (REQ-EUF-003)."
           }
         },
         "x-openregister-notifications": {
@@ -941,7 +941,7 @@
               }
             ],
             "subject": {
-              "nl": "EU-uitgave voor {{declarationPeriod}} is ingediend bij de managementautoriteit",
+              "nl": "EU-uitgave voor {{declarationPeriod}} is submitted bij de managementautoriteit",
               "en": "EU expenditure for {{declarationPeriod}} was submitted to the managing authority"
             }
           }
@@ -984,7 +984,7 @@
         "icon": "FileCertificateOutline",
         "version": "0.1.0",
         "title": "Bewijsstuk",
-        "description": "Bewijsstuk met SHA-256 hash-integriteit, digitale handtekening en 12–15 jaar bewaarplicht (REQ-EUF-004). Origineel wordt extern bewaard in docudesk (ADR-022) — alleen URI + hash hier. Subtypes dekken ook zichtbaarheidsbewijs (REQ-EUF-010).",
+        "description": "Bewijsstuk met SHA-256 hash-integriteit, digitale handtekening en 12–15 year bewaarplicht (REQ-EUF-004). Origineel wordt extern bewaard in docudesk (ADR-022) — alleen URI + hash hier. Subtypes dekken ook zichtbaarheidsbewijs (REQ-EUF-010).",
         "x-schema-org": "schema:DigitalDocument",
         "type": "object",
         "required": [
@@ -998,7 +998,7 @@
           "administrationId": {
             "type": "string",
             "description": "Tenant administration identifier (IDOR boundary).",
-            "example": "adm-gemeente-amsterdam",
+            "example": "adm-municipality-amsterdam",
             "title": "Administration ID"
           },
           "euExpenditureId": {
@@ -1031,7 +1031,7 @@
               "website_screenshot",
               "media_evidence"
             ],
-            "description": "Document-type; bepaalt welke verplichte stukken per cost-category aanwezig moeten zijn (REQ-EUF-004).",
+            "description": "Document-type; bepaalt welke verplichte stukken per cost-category present moeten zijn (REQ-EUF-004).",
             "title": "Document Type"
           },
           "sourceUri": {
@@ -1043,20 +1043,20 @@
           },
           "sha256Hash": {
             "type": "string",
-            "description": "SHA-256 hash van het origineel, berekend bij upload (docudesk). Integriteitscheck bij audit-reconstructie (REQ-EUF-004, REQ-EUF-009).",
+            "description": "SHA-256 hash van het origineel, calculated bij upload (docudesk). Integriteitscheck bij audit-reconstructie (REQ-EUF-004, REQ-EUF-009).",
             "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "title": "Sha256Hash"
           },
           "digitalSignature": {
             "type": "string",
-            "description": "Digitale handtekening van het document, indien aanwezig.",
+            "description": "Digitale handtekening van het document, indien present.",
             "nullable": true,
             "title": "Digital Signature"
           },
           "retentionUntilDate": {
             "type": "string",
             "format": "date",
-            "description": "Bewaartermijn: 31-12 van jaar+5 na programma-sluiting (REQ-EUF-004). Afgedwongen door docudesk-retentiebeleid.",
+            "description": "Bewaartermijn: 31-12 van year+5 na programme-sluiting (REQ-EUF-004). Afgedwongen door docudesk-retentiebeleid.",
             "nullable": true,
             "example": "2036-12-31",
             "title": "Retention Until Date"
@@ -1081,7 +1081,7 @@
           "capturedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Vastleggingsmoment (voor zichtbaarheidsbewijs: datum foto/screenshot, REQ-EUF-010).",
+            "description": "Vastleggingsmoment (voor zichtbaarheidsbewijs: date foto/screenshot, REQ-EUF-010).",
             "nullable": true,
             "title": "Captured At"
           },
@@ -1116,12 +1116,12 @@
           "retention": {
             "rule": "cpr:art82",
             "period": "P15Y",
-            "description": "Bewijsstukken bewaard tot 5 jaar na programma-sluiting (art 82 CPR + Annex XII), effectief 12–15 jaar."
+            "description": "Bewijsstukken bewaard tot 5 year na programme-sluiting (art 82 CPR + Annex XII), effectief 12–15 year."
           },
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Bewijsstuk geüpload; hash berekend; nog niet gewaarmerkt."
+              "description": "Bewijsstuk geüpload; hash calculated; nog niet gewaarmerkt."
             },
             "certified": {
               "label": "Gewaarmerkt",
@@ -1181,7 +1181,7 @@
         "icon": "AlertOctagonOutline",
         "version": "0.1.0",
         "title": "Onregelmatigheid-melding",
-        "description": "Onregelmatigheden-detectie met OLAF-drempel €10k, IMS-schema-compliance en terugvordering (REQ-EUF-007, art 86 Verordening 2021/1060). Bij bedrag ≥ €10k geldt IMS-meldplicht; verdere declaraties op het betrokken project worden geblokkeerd tot correctie verwerkt.",
+        "description": "Onregelmatigheden-detectie met OLAF-threshold €10k, IMS-schema-compliance en terugvordering (REQ-EUF-007, art 86 Verordening 2021/1060). Bij amount ≥ €10k geldt IMS-meldplicht; verdere declaraties op het betrokken project worden geblokkeerd tot correctie verwerkt.",
         "x-schema-org": "schema:Report",
         "type": "object",
         "required": [
@@ -1197,7 +1197,7 @@
           "administrationId": {
             "type": "string",
             "description": "Tenant administration identifier (IDOR boundary).",
-            "example": "adm-gemeente-amsterdam",
+            "example": "adm-municipality-amsterdam",
             "title": "Administration ID"
           },
           "euProjectId": {
@@ -1216,11 +1216,11 @@
           "detectionSource": {
             "type": "string",
             "enum": [
-              "interne_audit",
-              "externe_audit",
-              "klacht",
+              "internal_audit",
+              "external_audit",
+              "complaint",
               "OLAF",
-              "DG_REGIO",
+              "DG_REGION",
               "ARC"
             ],
             "description": "Bron van detectie (REQ-EUF-007).",
@@ -1241,33 +1241,33 @@
           "amountConcerned": {
             "type": "number",
             "minimum": 0,
-            "description": "Betrokken bedrag in EUR. ≥ €10.000 triggert IMS-meldplicht (REQ-EUF-007).",
+            "description": "Betrokken amount in EUR. ≥ €10.000 triggert IMS-meldplicht (REQ-EUF-007).",
             "example": 15400.0,
             "title": "Amount Concerned"
           },
           "imsReportable": {
             "type": "boolean",
-            "description": "Of het bedrag de OLAF-drempel van €10k overschrijdt en dus IMS-meldplichtig is (afgeleid bij creatie, REQ-EUF-007).",
+            "description": "Of het amount de OLAF-threshold van €10k overschrijdt en dus IMS-meldplichtig is (afgeleid bij creatie, REQ-EUF-007).",
             "default": false,
             "title": "Ims Reportable"
           },
           "recoveryAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Terug te vorderen bedrag (REQ-EUF-007, REQ-EUF-008).",
+            "description": "Terug te vorderen amount (REQ-EUF-007, REQ-EUF-008).",
             "nullable": true,
             "example": 15400.0,
             "title": "Recovery Amount"
           },
           "repaymentSchedule": {
             "type": "string",
-            "description": "Betalingsregeling / terugvorderings-plan met mijlpalen (REQ-EUF-007).",
+            "description": "Betalingsregeling / terugvorderings-plan met milestones (REQ-EUF-007).",
             "nullable": true,
             "title": "Repayment Schedule"
           },
           "imsReference": {
             "type": "string",
-            "description": "IMS-referentie (Irregularity Management System / OLAF).",
+            "description": "IMS-reference (Irregularity Management System / OLAF).",
             "nullable": true,
             "title": "Ims Reference"
           },
@@ -1290,7 +1290,7 @@
             "enum": [
               "initieel",
               "vervolgcontrole",
-              "definitief",
+              "final",
               "ingetrokken"
             ],
             "description": "Lifecycle state (REQ-EUF-007).",
@@ -1304,7 +1304,7 @@
           "retention": {
             "rule": "cpr:art82",
             "period": "P15Y",
-            "description": "Onregelmatigheden-meldingen bewaard tot 5 jaar na programma-sluiting (art 82 + art 86 CPR)."
+            "description": "Onregelmatigheden-meldingen bewaard tot 5 year na programme-sluiting (art 82 + art 86 CPR)."
           },
           "states": {
             "initieel": {
@@ -1315,7 +1315,7 @@
               "label": "Vervolgcontrole",
               "description": "Onder vervolgonderzoek; terugvordering in gang."
             },
-            "definitief": {
+            "final": {
               "label": "Definitief",
               "description": "Definitief vastgesteld; correctie verwerkt."
             },
@@ -1334,7 +1334,7 @@
             },
             "finalise": {
               "from": "vervolgcontrole",
-              "to": "definitief",
+              "to": "final",
               "label": "Definitief maken",
               "description": "Correctie verwerkt; onregelmatigheid definitief vastgesteld."
             },
@@ -1402,10 +1402,10 @@
       },
       "AuditTrail": {
         "slug": "AuditTrail",
-        "icon": "ClipboardTextClockOutline",
+        "icon": "History",
         "version": "0.1.0",
         "title": "Audit-trail",
-        "description": "Onveranderlijk append-only event-log voor alle EU-fondsen state-transities (boeking → declaratie → certificering → betaling → correctie → audit) met before/after-state en bewijs-URI (REQ-EUF-009, art 69 + 82 CPR). Maakt 5+ jaar reconstructie na project-sluiting mogelijk.",
+        "description": "Onveranderlijk append-only event-log voor alle EU-fondsen state-transities (boeking → declaratie → certificering → betaling → correctie → audit) met before/after-state en bewijs-URI (REQ-EUF-009, art 69 + 82 CPR). Maakt 5+ year reconstructie na project-sluiting mogelijk.",
         "x-schema-org": "schema:Action",
         "type": "object",
         "required": [
@@ -1419,7 +1419,7 @@
           "administrationId": {
             "type": "string",
             "description": "Tenant administration identifier (IDOR boundary).",
-            "example": "adm-gemeente-amsterdam",
+            "example": "adm-municipality-amsterdam",
             "title": "Administration ID"
           },
           "euProjectId": {
@@ -1450,7 +1450,7 @@
           },
           "actorNaturalPerson": {
             "type": "string",
-            "description": "Natuurlijk persoon die de actie uitvoerde. BSN of overige bijzondere persoonsgegevens worden NOOIT vastgelegd (ADR-005).",
+            "description": "Natuurlijk persoon die de action uitvoerde. BSN of overige bijzondere persoonsgegevens worden NOOIT vastgelegd (ADR-005).",
             "nullable": true,
             "example": "j.devries",
             "title": "Actor Natural Person"
@@ -1491,7 +1491,7 @@
           },
           "justification": {
             "type": "string",
-            "description": "Vrije tekst (bv. audit-bevinding-referentie, correctie-rationale).",
+            "description": "Vrije tekst (bv. audit-bevinding-reference, correctie-rationale).",
             "nullable": true,
             "title": "Justification"
           },
@@ -1714,7 +1714,7 @@
       },
       "fonds": "RRF",
       "regulationArticle": "Verordening 2021/241 art 4",
-      "ruleDescription": "Subsidiabele kosten voor Recovery and Resilience Facility: hervormingen en investeringen gekoppeld aan mijlpalen en streefdoelen (performance-based, vaak financing_not_linked).",
+      "ruleDescription": "Subsidiabele kosten voor Recovery and Resilience Facility: hervormingen en investeringen gekoppeld aan milestones en streefdoelen (performance-based, vaak financing_not_linked).",
       "applicableCostCategories": [
         "personeel",
         "kapitaal",
@@ -1762,10 +1762,10 @@
       "totalEligibleBudget": 4500000.0,
       "euCoFundingRate": 0.4,
       "nationalCoFunding": {
-        "rijk": 900000.0,
+        "centralGovernment": 900000.0,
         "provincie": 600000.0,
-        "gemeente": 300000.0,
-        "privaat": 900000.0
+        "municipality": 300000.0,
+        "private": 900000.0
       },
       "beneficiaryOrganization": "Gemeente Amsterdam",
       "beneficiaryType": "decentrale_overheid",

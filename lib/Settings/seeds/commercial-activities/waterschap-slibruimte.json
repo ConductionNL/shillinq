@@ -10,24 +10,24 @@
 	"activities": [
 		{
 			"code": "MO-WS-SLIBRUIM-01",
-			"naam": "Commerciële slibruimingsdienst",
-			"bestuursorgaan": "Waterschap Voorbeeld",
-			"organisatieonderdeel": "Afdeling Operations & Services",
-			"beschrijving": "Verwerking van slib voor derden (industriële en agrarische klanten) buiten waterschapsverordening om.",
-			"marktsegment": "industriële slibverwerking",
+			"name": "Commerciële slibruimingsdienst",
+			"governingBody": "Waterschap Voorbeeld",
+			"organisationalUnit": "Afdeling Operations & Services",
+			"description": "Verwerking van slib voor derden (industriële en agrarische klanten) buiten waterschapsverordening om.",
+			"marketSegment": "industriële slibverwerking",
 			"concurrenten": ["Indaver Nederland", "AVR Afvalverwerking", "Renewi Nederland"],
 			"afnemers": ["Cosun Beet Company", "Voorbeeld Industries BV"],
-			"startDatum": "2021-04-01",
-			"kostprijsMethode": "integrale-kostprijs-art-25i",
-			"kostenplaatsCode": "K-SBV-001",
-			"kostendragerCode": "D-MO-SBV-001",
+			"startDate": "2021-04-01",
+			"costPriceMethod": "integral-costprice-art-25i",
+			"costCentreCode": "K-SBV-001",
+			"costObjectCode": "D-MO-SBV-001",
 			"isExempted": false,
-			"acmMelding": {
-				"ingediend": true,
-				"datum": "2021-05-14",
-				"kenmerk": "ACM/UIT/422183"
+			"acmReport": {
+				"submitted": true,
+				"date": "2021-05-14",
+				"reference": "ACM/UIT/422183"
 			},
-			"jaaromzet": 1240000,
+			"annualRevenue": 1240000,
 			"state": "paused"
 		}
 	]

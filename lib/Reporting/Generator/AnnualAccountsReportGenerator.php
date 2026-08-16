@@ -19,7 +19,12 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
  *
  * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  * The change directory it names was never committed, and the `reporting`
@@ -44,357 +49,341 @@ use PhpOffice\PhpWord\PhpWord;
 /**
  * Renders the statutory annual accounts from a FinancialStatement object.
  */
-final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerator
-{
-    /**
-     * The catalogue report-type id this generator produces.
-     *
-     * @return string
-     */
-    public static function reportType(): string
-    {
-        return 'annual-accounts';
+final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerator {
+	/**
+	 * The catalogue report-type id this generator produces.
+	 *
+	 * @return string
+	 */
+	public static function reportType(): string {
+		return 'annual-accounts';
+	}//end reportType()
 
-    }//end reportType()
+	/**
+	 * Cover title for the document.
+	 *
+	 * @return string
+	 */
+	protected function documentTitle(): string {
+		return 'Jaarrekening';
+	}//end documentTitle()
 
-    /**
-     * Cover title for the document.
-     *
-     * @return string
-     */
-    protected function documentTitle(): string
-    {
-        return 'Jaarrekening';
+	/**
+	 * Build the jaarrekening body: cover, kerngegevens, balans, W&V, toelichting.
+	 *
+	 * @param PhpWord $phpWord The styled document.
+	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
+	 *
+	 * @return void
+	 */
+	protected function build(PhpWord $phpWord, array $context): void {
+		$statement = $this->resolveStatement($context);
+		$currency = $this->str($statement, 'currency');
+		if ($currency === '') {
+			$currency = 'EUR';
+		}
 
-    }//end documentTitle()
+		$section = $this->addSection($phpWord);
+		$this->addCover($section, 'Jaarrekening', 'Titel 9 BW2 — jaarrekening', $context);
 
-    /**
-     * Build the jaarrekening body: cover, kerngegevens, balans, W&V, toelichting.
-     *
-     * @param PhpWord              $phpWord The styled document.
-     * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
-     *
-     * @return void
-     */
-    protected function build(PhpWord $phpWord, array $context): void
-    {
-        $statement = $this->resolveStatement($context);
-        $currency  = $this->str($statement, 'currency');
-        if ($currency === '') {
-            $currency = 'EUR';
-        }
+		// --- Kerngegevens (key facts) ---
+		$this->addHeading($section, 'Kerngegevens');
+		$this->addDetailsTable(
+			$section,
+			[
+				'Soort jaarrekening' => $this->statementTypeLabel($this->str($statement, 'statementType')),
+				'Jurisdictie' => $this->str($statement, 'jurisdiction'),
+				'Stelsel' => $this->str($statement, 'framework'),
+				'Boekjaar' => $this->periodLabel($statement),
+				'Taal' => $this->str($statement, 'language'),
+				'Valuta' => $currency,
+				'Grootteklasse' => $this->str($statement, 'sizeClass'),
+				'Balanstotaal' => $this->money($this->num($statement, 'balanceTotal'), $currency),
+				'Netto-omzet' => $this->money($this->num($statement, 'turnover'), $currency),
+				'Gemiddeld personeel' => $this->employeesLabel($statement),
+			]
+		);
 
-        $section = $this->addSection($phpWord);
-        $this->addCover($section, 'Jaarrekening', 'Titel 9 BW2 — jaarrekening', $context);
+		// --- Balans ---
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Balans per ' . $this->str($statement, 'reportingPeriodEnd'));
+		$this->buildBalanceSheet($section, $statement, $currency);
 
-        // --- Kerngegevens (key facts) ---
-        $this->addHeading($section, 'Kerngegevens');
-        $this->addDetailsTable(
-            $section,
-            [
-                'Soort jaarrekening'  => $this->statementTypeLabel($this->str($statement, 'statementType')),
-                'Jurisdictie'         => $this->str($statement, 'jurisdiction'),
-                'Stelsel'             => $this->str($statement, 'framework'),
-                'Boekjaar'            => $this->periodLabel($statement),
-                'Taal'                => $this->str($statement, 'language'),
-                'Valuta'              => $currency,
-                'Grootteklasse'       => $this->str($statement, 'sizeClass'),
-                'Balanstotaal'        => $this->money($this->num($statement, 'balanceTotal'), $currency),
-                'Netto-omzet'         => $this->money($this->num($statement, 'turnover'), $currency),
-                'Gemiddeld personeel' => $this->employeesLabel($statement),
-            ]
-        );
+		// --- Winst- en verliesrekening ---
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Winst- en verliesrekening');
+		$this->buildProfitAndLoss($section, $statement, $currency);
 
-        // --- Balans ---
-        $section->addTextBreak(1);
-        $this->addHeading($section, 'Balans per '.$this->str($statement, 'reportingPeriodEnd'));
-        $this->buildBalanceSheet($section, $statement, $currency);
+		// --- Toelichting ---
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Toelichting');
+		$this->buildNotes($section, $statement, $currency);
 
-        // --- Winst- en verliesrekening ---
-        $section->addTextBreak(1);
-        $this->addHeading($section, 'Winst- en verliesrekening');
-        $this->buildProfitAndLoss($section, $statement, $currency);
+	}//end build()
 
-        // --- Toelichting ---
-        $section->addTextBreak(1);
-        $this->addHeading($section, 'Toelichting');
-        $this->buildNotes($section, $statement, $currency);
+	/**
+	 * Lay out the balance sheet: assets on one side, equity/provisions/
+	 * liabilities on the other, from FinancialStatement.balanceSheet.
+	 *
+	 * @param \PhpOffice\PhpWord\Element\Section $section The section.
+	 * @param array<string, mixed> $statement The statement object.
+	 * @param string $currency The presentation currency.
+	 *
+	 * @return void
+	 */
+	private function buildBalanceSheet(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void {
+		$balance = $statement['balanceSheet'] ?? [];
+		if (is_array($balance) === false) {
+			$balance = [];
+		}
 
-    }//end build()
+		$fixedAssets = $this->num($balance, 'fixedAssets');
+		$currentAssets = $this->num($balance, 'currentAssets');
+		$equity = $this->num($balance, 'equity');
+		$provisions = $this->num($balance, 'provisions');
+		$liabilities = $this->num($balance, 'liabilities');
 
-    /**
-     * Lay out the balance sheet: assets on one side, equity/provisions/
-     * liabilities on the other, from FinancialStatement.balanceSheet.
-     *
-     * @param \PhpOffice\PhpWord\Element\Section $section   The section.
-     * @param array<string, mixed>               $statement The statement object.
-     * @param string                             $currency  The presentation currency.
-     *
-     * @return void
-     */
-    private function buildBalanceSheet(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void
-    {
-        $balance = $statement['balanceSheet'] ?? [];
-        if (is_array($balance) === false) {
-            $balance = [];
-        }
+		$totalAssets = ($fixedAssets + $currentAssets);
+		$totalCredit = ($equity + $provisions + $liabilities);
 
-        $fixedAssets   = $this->num($balance, 'fixedAssets');
-        $currentAssets = $this->num($balance, 'currentAssets');
-        $equity        = $this->num($balance, 'equity');
-        $provisions    = $this->num($balance, 'provisions');
-        $liabilities   = $this->num($balance, 'liabilities');
+		$this->addAmountTable(
+			$section,
+			'Activa',
+			'Bedrag',
+			[
+				['label' => 'Vaste activa', 'amount' => $fixedAssets],
+				['label' => 'Vlottende activa', 'amount' => $currentAssets],
+			],
+			['label' => 'Totaal activa', 'amount' => $totalAssets],
+			$currency
+		);
 
-        $totalAssets = ($fixedAssets + $currentAssets);
-        $totalCredit = ($equity + $provisions + $liabilities);
+		$section->addTextBreak(1);
 
-        $this->addAmountTable(
-            $section,
-            'Activa',
-            'Bedrag',
-            [
-                ['label' => 'Vaste activa', 'amount' => $fixedAssets],
-                ['label' => 'Vlottende activa', 'amount' => $currentAssets],
-            ],
-            ['label' => 'Totaal activa', 'amount' => $totalAssets],
-            $currency
-        );
+		$this->addAmountTable(
+			$section,
+			'Passiva',
+			'Bedrag',
+			[
+				['label' => 'Eigen vermogen', 'amount' => $equity],
+				['label' => 'Voorzieningen', 'amount' => $provisions],
+				['label' => 'Schulden', 'amount' => $liabilities],
+			],
+			['label' => 'Totaal passiva', 'amount' => $totalCredit],
+			$currency
+		);
 
-        $section->addTextBreak(1);
+		if (abs($totalAssets - $totalCredit) > 0.005) {
+			$section->addTextBreak(1);
+			$this->addNote(
+				$section,
+				'Let op: activa (' . $this->money($totalAssets, $currency) . ') en passiva ('
+				. $this->money($totalCredit, $currency) . ') sluiten niet op elkaar aan.'
+			);
+		}
 
-        $this->addAmountTable(
-            $section,
-            'Passiva',
-            'Bedrag',
-            [
-                ['label' => 'Eigen vermogen', 'amount' => $equity],
-                ['label' => 'Voorzieningen', 'amount' => $provisions],
-                ['label' => 'Schulden', 'amount' => $liabilities],
-            ],
-            ['label' => 'Totaal passiva', 'amount' => $totalCredit],
-            $currency
-        );
+	}//end buildBalanceSheet()
 
-        if (abs($totalAssets - $totalCredit) > 0.005) {
-            $section->addTextBreak(1);
-            $this->addNote(
-                $section,
-                'Let op: activa ('.$this->money($totalAssets, $currency).') en passiva ('
-                .$this->money($totalCredit, $currency).') sluiten niet op elkaar aan.'
-            );
-        }
+	/**
+	 * Lay out the profit-and-loss account from FinancialStatement.profitAndLoss.
+	 *
+	 * @param \PhpOffice\PhpWord\Element\Section $section The section.
+	 * @param array<string, mixed> $statement The statement object.
+	 * @param string $currency The presentation currency.
+	 *
+	 * @return void
+	 */
+	private function buildProfitAndLoss(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void {
+		$pnl = $statement['profitAndLoss'] ?? [];
+		if (is_array($pnl) === false) {
+			$pnl = [];
+		}
 
-    }//end buildBalanceSheet()
+		$turnover = $this->num($pnl, 'netTurnover');
+		$expenses = $this->num($pnl, 'operatingExpenses');
+		$financial = $this->num($pnl, 'financialResult');
+		$result = $this->num($pnl, 'result');
+		if ($result === 0.0) {
+			$result = ($turnover - $expenses + $financial);
+		}
 
-    /**
-     * Lay out the profit-and-loss account from FinancialStatement.profitAndLoss.
-     *
-     * @param \PhpOffice\PhpWord\Element\Section $section   The section.
-     * @param array<string, mixed>               $statement The statement object.
-     * @param string                             $currency  The presentation currency.
-     *
-     * @return void
-     */
-    private function buildProfitAndLoss(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void
-    {
-        $pnl = $statement['profitAndLoss'] ?? [];
-        if (is_array($pnl) === false) {
-            $pnl = [];
-        }
+		$this->addAmountTable(
+			$section,
+			'Resultatenrekening',
+			'Bedrag',
+			[
+				['label' => 'Netto-omzet', 'amount' => $turnover],
+				['label' => 'Bedrijfslasten', 'amount' => (-1 * $expenses)],
+				['label' => 'Financiële baten en lasten', 'amount' => $financial],
+			],
+			['label' => 'Resultaat boekjaar', 'amount' => $result],
+			$currency
+		);
 
-        $turnover  = $this->num($pnl, 'netTurnover');
-        $expenses  = $this->num($pnl, 'operatingExpenses');
-        $financial = $this->num($pnl, 'financialResult');
-        $result    = $this->num($pnl, 'result');
-        if ($result === 0.0) {
-            $result = ($turnover - $expenses + $financial);
-        }
+		$model = $this->str($statement, 'plPresentationModel');
+		if ($model !== '') {
+			$section->addTextBreak(1);
+			$this->addNote(
+				$section,
+				'Presentatiemodel: ' . ($model === 'functional' ? 'functioneel (cost-of-sales)' : 'categoriaal (type-of-expense)') . '.'
+			);
+		}
 
-        $this->addAmountTable(
-            $section,
-            'Resultatenrekening',
-            'Bedrag',
-            [
-                ['label' => 'Netto-omzet', 'amount' => $turnover],
-                ['label' => 'Bedrijfslasten', 'amount' => (-1 * $expenses)],
-                ['label' => 'Financiële baten en lasten', 'amount' => $financial],
-            ],
-            ['label' => 'Resultaat boekjaar', 'amount' => $result],
-            $currency
-        );
+	}//end buildProfitAndLoss()
 
-        $model = $this->str($statement, 'plPresentationModel');
-        if ($model !== '') {
-            $section->addTextBreak(1);
-            $this->addNote(
-                $section,
-                'Presentatiemodel: '.($model === 'functional' ? 'functioneel (cost-of-sales)' : 'categoriaal (type-of-expense)').'.'
-            );
-        }
+	/**
+	 * Build the toelichting (notes): general principles, audit and filing.
+	 *
+	 * @param \PhpOffice\PhpWord\Element\Section $section The section.
+	 * @param array<string, mixed> $statement The statement object.
+	 * @param string $currency The presentation currency.
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $currency kept for
+	 *     signature parity with the sibling buildBalanceSheet()/
+	 *     buildProfitAndLoss() phases the orchestrator calls uniformly;
+	 *     this phase does not itself render a currency-denominated figure.
+	 */
+	private function buildNotes(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void {
+		$sizeClass = $this->str($statement, 'sizeClass');
+		$intro = 'Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW';
+		if ($this->str($statement, 'jurisdiction') !== '' && strtoupper($this->str($statement, 'jurisdiction')) !== 'NL') {
+			$intro = 'Deze jaarrekening is opgesteld op grond van het toepasselijke verslaggevingsstelsel ('
+				. $this->str($statement, 'framework') . ')';
+		}
 
-    }//end buildProfitAndLoss()
+		if ($sizeClass !== '') {
+			$intro .= ', met toepassing van het regime voor de grootteklasse "' . $sizeClass . '"';
+		}
 
-    /**
-     * Build the toelichting (notes): general principles, audit and filing.
-     *
-     * @param \PhpOffice\PhpWord\Element\Section $section   The section.
-     * @param array<string, mixed>               $statement The statement object.
-     * @param string                             $currency  The presentation currency.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $currency kept for
-     *     signature parity with the sibling buildBalanceSheet()/
-     *     buildProfitAndLoss() phases the orchestrator calls uniformly;
-     *     this phase does not itself render a currency-denominated figure.
-     */
-    private function buildNotes(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void
-    {
-        $sizeClass = $this->str($statement, 'sizeClass');
-        $intro     = 'Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW';
-        if ($this->str($statement, 'jurisdiction') !== '' && strtoupper($this->str($statement, 'jurisdiction')) !== 'NL') {
-            $intro = 'Deze jaarrekening is opgesteld op grond van het toepasselijke verslaggevingsstelsel ('
-                .$this->str($statement, 'framework').')';
-        }
+		$intro .= '.';
+		$this->addParagraph($section, $intro);
 
-        if ($sizeClass !== '') {
-            $intro .= ', met toepassing van het regime voor de grootteklasse "'.$sizeClass.'"';
-        }
+		$comparatives = ($statement['priorYearComparatives'] ?? null);
+		if ($comparatives !== null) {
+			$this->addParagraph(
+				$section,
+				((bool)$comparatives === true) ? 'De posten zijn voorzien van vergelijkende cijfers over het voorgaande boekjaar (art. 2:363 BW).' : 'Vergelijkende cijfers over het voorgaande boekjaar ontbreken; dit dient nog te worden aangevuld (art. 2:363 BW).'
+			);
+		}
 
-        $intro .= '.';
-        $this->addParagraph($section, $intro);
+		$netted = ($statement['itemsNetted'] ?? null);
+		if ($netted !== null && (bool)$netted === true) {
+			$this->addParagraph(
+				$section,
+				'Er is gebruikgemaakt van saldering van posten. Het bruto-principe (art. 2:363 BW) verbiedt saldering '
+				. 'tenzij dit uitdrukkelijk is toegestaan.'
+			);
+		}
 
-        $comparatives = ($statement['priorYearComparatives'] ?? null);
-        if ($comparatives !== null) {
-            $this->addParagraph(
-                $section,
-                ((bool) $comparatives === true) ? 'De posten zijn voorzien van vergelijkende cijfers over het voorgaande boekjaar (art. 2:363 BW).' : 'Vergelijkende cijfers over het voorgaande boekjaar ontbreken; dit dient nog te worden aangevuld (art. 2:363 BW).'
-            );
-        }
+		// Components present.
+		$components = ($statement['components'] ?? []);
+		if (is_array($components) === true && $components !== []) {
+			$this->addParagraph($section, 'Aanwezige onderdelen: ' . implode(', ', array_map('strval', $components)) . '.');
+		}
 
-        $netted = ($statement['itemsNetted'] ?? null);
-        if ($netted !== null && (bool) $netted === true) {
-            $this->addParagraph(
-                $section,
-                'Er is gebruikgemaakt van saldering van posten. Het bruto-principe (art. 2:363 BW) verbiedt saldering '
-                .'tenzij dit uitdrukkelijk is toegestaan.'
-            );
-        }
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Controle en deponering');
+		$this->addDetailsTable(
+			$section,
+			[
+				'Gecontroleerd' => (($statement['audited'] ?? false) === true ? 'Ja' : 'Nee'),
+				'Accountantskwalificatie' => $this->str($statement, 'auditorType'),
+				'Opgemaakt op' => $this->str($statement, 'preparedDate'),
+				'Vastgesteld op' => $this->str($statement, 'adoptionDate'),
+				'Gedeponeerd op' => $this->str($statement, 'filedDate'),
+			]
+		);
 
-        // Components present.
-        $components = ($statement['components'] ?? []);
-        if (is_array($components) === true && $components !== []) {
-            $this->addParagraph($section, 'Aanwezige onderdelen: '.implode(', ', array_map('strval', $components)).'.');
-        }
+	}//end buildNotes()
 
-        $section->addTextBreak(1);
-        $this->addHeading($section, 'Controle en deponering');
-        $this->addDetailsTable(
-            $section,
-            [
-                'Gecontroleerd'           => (($statement['audited'] ?? false) === true ? 'Ja' : 'Nee'),
-                'Accountantskwalificatie' => $this->str($statement, 'auditorType'),
-                'Opgemaakt op'            => $this->str($statement, 'preparedDate'),
-                'Vastgesteld op'          => $this->str($statement, 'adoptionDate'),
-                'Gedeponeerd op'          => $this->str($statement, 'filedDate'),
-            ]
-        );
+	/**
+	 * Resolve the FinancialStatement object for the report. When the context
+	 * carries a statementId (or financialStatementId) that object is loaded;
+	 * otherwise the best-matching statement for the period/administration is
+	 * picked from the register. Returns an empty array when nothing matches —
+	 * the document then renders with zeroed totals and a "no data" note.
+	 *
+	 * @param array<string, mixed> $context `{ period, administrationId, statementId? }`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function resolveStatement(array $context): array {
+		$id = $this->str($context, 'statementId', 'financialStatementId', 'objectId');
+		if ($id !== '') {
+			$object = $this->loadObject('FinancialStatement', $id);
+			if ($object !== null) {
+				return $object;
+			}
+		}
 
-    }//end buildNotes()
+		$candidates = $this->loadObjects('FinancialStatement');
+		if ($candidates === []) {
+			return [];
+		}
 
-    /**
-     * Resolve the FinancialStatement object for the report. When the context
-     * carries a statementId (or financialStatementId) that object is loaded;
-     * otherwise the best-matching statement for the period/administration is
-     * picked from the register. Returns an empty array when nothing matches —
-     * the document then renders with zeroed totals and a "no data" note.
-     *
-     * @param array<string, mixed> $context `{ period, administrationId, statementId? }`.
-     *
-     * @return array<string, mixed>
-     */
-    private function resolveStatement(array $context): array
-    {
-        $id = $this->str($context, 'statementId', 'financialStatementId', 'objectId');
-        if ($id !== '') {
-            $object = $this->loadObject('FinancialStatement', $id);
-            if ($object !== null) {
-                return $object;
-            }
-        }
+		$period = $this->str($context, 'period');
+		if ($period !== '') {
+			foreach ($candidates as $candidate) {
+				$start = $this->str($candidate, 'reportingPeriodStart');
+				$end = $this->str($candidate, 'reportingPeriodEnd');
+				if (str_contains($start, $period) === true || str_contains($end, $period) === true) {
+					return $candidate;
+				}
+			}
+		}
 
-        $candidates = $this->loadObjects('FinancialStatement');
-        if ($candidates === []) {
-            return [];
-        }
+		return $candidates[0];
+	}//end resolveStatement()
 
-        $period = $this->str($context, 'period');
-        if ($period !== '') {
-            foreach ($candidates as $candidate) {
-                $start = $this->str($candidate, 'reportingPeriodStart');
-                $end   = $this->str($candidate, 'reportingPeriodEnd');
-                if (str_contains($start, $period) === true || str_contains($end, $period) === true) {
-                    return $candidate;
-                }
-            }
-        }
+	/**
+	 * The reporting-period label (start – end) for the cover/details.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return string
+	 */
+	private function periodLabel(array $statement): string {
+		$start = $this->str($statement, 'reportingPeriodStart');
+		$end = $this->str($statement, 'reportingPeriodEnd');
+		if ($start !== '' && $end !== '') {
+			return $start . ' t/m ' . $end;
+		}
 
-        return $candidates[0];
+		return $end !== '' ? $end : $start;
+	}//end periodLabel()
 
-    }//end resolveStatement()
+	/**
+	 * Human label for the average-employees figure.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return string
+	 */
+	private function employeesLabel(array $statement): string {
+		if (array_key_exists('employees', $statement) === false || is_numeric($statement['employees']) === false) {
+			return '';
+		}
 
-    /**
-     * The reporting-period label (start – end) for the cover/details.
-     *
-     * @param array<string, mixed> $statement The statement object.
-     *
-     * @return string
-     */
-    private function periodLabel(array $statement): string
-    {
-        $start = $this->str($statement, 'reportingPeriodStart');
-        $end   = $this->str($statement, 'reportingPeriodEnd');
-        if ($start !== '' && $end !== '') {
-            return $start.' t/m '.$end;
-        }
+		return (string)((int)round((float)$statement['employees']));
+	}//end employeesLabel()
 
-        return $end !== '' ? $end : $start;
+	/**
+	 * Map a statementType enum to a Dutch label.
+	 *
+	 * @param string $type The statementType value.
+	 *
+	 * @return string
+	 */
+	private function statementTypeLabel(string $type): string {
+		return match ($type) {
+			'abridged' => 'Verkorte jaarrekening',
+			'consolidated' => 'Geconsolideerde jaarrekening',
+			'interim' => 'Tussentijdse cijfers',
+			'annual' => 'Volledige jaarrekening',
+			default => $type,
+		};
 
-    }//end periodLabel()
-
-    /**
-     * Human label for the average-employees figure.
-     *
-     * @param array<string, mixed> $statement The statement object.
-     *
-     * @return string
-     */
-    private function employeesLabel(array $statement): string
-    {
-        if (array_key_exists('employees', $statement) === false || is_numeric($statement['employees']) === false) {
-            return '';
-        }
-
-        return (string) ((int) round((float) $statement['employees']));
-
-    }//end employeesLabel()
-
-    /**
-     * Map a statementType enum to a Dutch label.
-     *
-     * @param string $type The statementType value.
-     *
-     * @return string
-     */
-    private function statementTypeLabel(string $type): string
-    {
-        return match ($type) {
-            'abridged'     => 'Verkorte jaarrekening',
-            'consolidated' => 'Geconsolideerde jaarrekening',
-            'interim'      => 'Tussentijdse cijfers',
-            'annual'       => 'Volledige jaarrekening',
-            default        => $type,
-        };
-
-    }//end statementTypeLabel()
+	}//end statementTypeLabel()
 }//end class

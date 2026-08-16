@@ -40,11 +40,15 @@ describe('arEInvoiceActions — canSendEInvoice', () => {
 
 describe('arEInvoiceActions — resolveDeliveryStatus', () => {
 	it('prefers the optimistic local override after a successful send', () => {
-		expect(resolveDeliveryStatus({ deliveryStatus: 'not-sent' }, 'queued')).toBe('queued')
+		expect(resolveDeliveryStatus({ deliveryStatus: 'not-sent' }, 'queued')).toBe(
+			'queued',
+		)
 	})
 
 	it('falls back to the object field, then to not-sent', () => {
-		expect(resolveDeliveryStatus({ deliveryStatus: 'delivered' }, null)).toBe('delivered')
+		expect(resolveDeliveryStatus({ deliveryStatus: 'delivered' }, null)).toBe(
+			'delivered',
+		)
 		expect(resolveDeliveryStatus({}, null)).toBe('not-sent')
 		expect(resolveDeliveryStatus(null, null)).toBe('not-sent')
 	})
@@ -52,23 +56,31 @@ describe('arEInvoiceActions — resolveDeliveryStatus', () => {
 
 describe('arEInvoiceActions — sendEInvoiceEndpoint', () => {
 	it('builds the send-einvoice REST path for an invoice number', () => {
-		expect(sendEInvoiceEndpoint('2026-0060'))
-			.toBe('/apps/shillinq/api/ar-invoices/2026-0060/send-einvoice')
+		expect(sendEInvoiceEndpoint('2026-0060')).toBe(
+			'/apps/shillinq/api/ar-invoices/2026-0060/send-einvoice',
+		)
 	})
 })
 
 describe('arEInvoiceActions — mapSendResult', () => {
 	it('maps a queued response without a fallback notice', () => {
-		const mapped = mapSendResult({ deliveryStatus: 'queued', fallback: false }, t)
+		const mapped = mapSendResult(
+			{ deliveryStatus: 'queued', fallback: false },
+			t,
+		)
 		expect(mapped.deliveryStatus).toBe('queued')
 		expect(mapped.fallbackNotice).toBe('')
 	})
 
 	it('surfaces the PDF+email fallback notice when no Peppol participant exists', () => {
-		const mapped = mapSendResult({ deliveryStatus: 'not-sent', fallback: true }, t)
+		const mapped = mapSendResult(
+			{ deliveryStatus: 'not-sent', fallback: true },
+			t,
+		)
 		expect(mapped.deliveryStatus).toBe('not-sent')
-		expect(mapped.fallbackNotice)
-			.toBe('No Peppol participant found for this debtor — use PDF + email instead.')
+		expect(mapped.fallbackNotice).toBe(
+			'No Peppol participant found for this debtor — use PDF + email instead.',
+		)
 	})
 
 	it('defaults the status to queued on a shapeless success body', () => {
@@ -79,13 +91,22 @@ describe('arEInvoiceActions — mapSendResult', () => {
 
 describe('arEInvoiceActions — extractSendErrorMessage', () => {
 	it('prefers the structured server error message', () => {
-		const error = { response: { data: { error: 'E-invoice validation failed: KvK number must be exactly 8 digits' } } }
-		expect(extractSendErrorMessage(error, t))
-			.toBe('E-invoice validation failed: KvK number must be exactly 8 digits')
+		const error = {
+			response: {
+				data: {
+					error: 'E-invoice validation failed: KvK number must be exactly 8 digits',
+				},
+			},
+		}
+		expect(extractSendErrorMessage(error, t)).toBe(
+			'E-invoice validation failed: KvK number must be exactly 8 digits',
+		)
 	})
 
 	it('falls back to a generic message without a structured body', () => {
-		expect(extractSendErrorMessage(new Error('network down'), t)).toBe('Failed to send e-invoice')
+		expect(extractSendErrorMessage(new Error('network down'), t)).toBe(
+			'Failed to send e-invoice',
+		)
 		expect(extractSendErrorMessage({}, t)).toBe('Failed to send e-invoice')
 	})
 })

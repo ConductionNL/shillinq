@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\EInvoice;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
@@ -45,388 +46,371 @@ use RuntimeException;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class EInvoiceServiceTest extends TestCase
-{
-    /**
-     * A realistic issued ARInvoice ready to send (B2G debtor).
-     *
-     * @return array<string,mixed>
-     */
-    private function issuedInvoice(): array
-    {
-        return [
-            'id'                       => 'invoice-obj-1',
-            'invoiceNumber'            => '2026-0042',
-            'customerId'               => 'DEB-0001',
-            'administrationId'         => 'adm-1',
-            'invoiceDate'              => '2026-06-10',
-            'dueDate'                  => '2026-07-10',
-            'netAmount'                => 1000.0,
-            'vatAmount'                => 210.0,
-            'grossAmount'              => 1210.0,
-            'currency'                 => 'EUR',
-            'lifecycleState'           => 'issued',
-            'deliveryStatus'           => 'not-sent',
-            'sellerName'               => 'Shillinq Consultancy B.V.',
-            'sellerVatId'              => 'NL809876543B01',
-            'buyerVatId'               => 'NL001234567B01',
-            'buyerLegalRegId'          => '12340001',
-        ];
+final class EInvoiceServiceTest extends TestCase {
+	/**
+	 * A realistic issued ARInvoice ready to send (B2G debtor).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function issuedInvoice(): array {
+		return [
+			'id' => 'invoice-obj-1',
+			'invoiceNumber' => '2026-0042',
+			'customerId' => 'DEB-0001',
+			'administrationId' => 'adm-1',
+			'invoiceDate' => '2026-06-10',
+			'dueDate' => '2026-07-10',
+			'netAmount' => 1000.0,
+			'vatAmount' => 210.0,
+			'grossAmount' => 1210.0,
+			'currency' => 'EUR',
+			'lifecycleState' => 'issued',
+			'deliveryStatus' => 'not-sent',
+			'sellerName' => 'Shillinq Consultancy B.V.',
+			'sellerVatId' => 'NL809876543B01',
+			'buyerVatId' => 'NL001234567B01',
+			'buyerLegalRegId' => '12340001',
+		];
 
-    }//end issuedInvoice()
+	}//end issuedInvoice()
 
-    /**
-     * Build an EInvoiceService over an in-memory ObjectService stub.
-     *
-     * @param array<string,array<int,array<string,mixed>>> $data                      Schema => rows.
-     * @param array<int,array<string,mixed>>               $saved                     Captured saves (by reference).
-     * @param IEventDispatcher                              $dispatcher                Event dispatcher (mock).
-     * @param PeppolTransmissionPortInterface|null          $peppolPort                Optional port override.
-     * @param string|null                                   $viesOutcomeValid          VIES valid outcome (default true).
-     * @param array<int,string>                             $accessibleAdministrations Tenants canAccess returns true for.
-     *
-     * @return EInvoiceService
-     */
-    private function buildService(
-        array $data,
-        array &$saved,
-        IEventDispatcher $dispatcher,
-        ?PeppolTransmissionPortInterface $peppolPort=null,
-        ?bool $viesOutcomeValid=true,
-        array $accessibleAdministrations=['adm-1']
-    ): EInvoiceService {
-        $stub = new class($data, $saved) {
-            /**
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $data;
+	/**
+	 * Build an EInvoiceService over an in-memory ObjectService stub.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
+	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
+	 * @param IEventDispatcher $dispatcher Event dispatcher (mock).
+	 * @param PeppolTransmissionPortInterface|null $peppolPort Optional port override.
+	 * @param string|null $viesOutcomeValid VIES valid outcome (default true).
+	 * @param array<int,string> $accessibleAdministrations Tenants canAccess returns true for.
+	 *
+	 * @return EInvoiceService
+	 */
+	private function buildService(
+		array $data,
+		array &$saved,
+		IEventDispatcher $dispatcher,
+		?PeppolTransmissionPortInterface $peppolPort = null,
+		?bool $viesOutcomeValid = true,
+		array $accessibleAdministrations = ['adm-1'],
+	): EInvoiceService {
+		$stub = new class($data, $saved) {
+			/**
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $data;
 
-            /**
-             * @var array<int,array<string,mixed>>
-             */
-            private array $saved;
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $saved;
 
-            /**
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * @param array<string,array<int,array<string,mixed>>> $data  Schema rows.
-             * @param array<int,array<string,mixed>>               $saved Capture ref.
-             */
-            public function __construct(array $data, array &$saved)
-            {
-                $this->data  = $data;
-                $this->saved = &$saved;
-            }
+			/**
+			 * @param array<string,array<int,array<string,mixed>>> $data Schema rows.
+			 * @param array<int,array<string,mixed>> $saved Capture ref.
+			 */
+			public function __construct(array $data, array &$saved) {
+				$this->data = $data;
+				$this->saved = &$saved;
+			}
 
-            /**
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                unset($register);
-                return $this;
-            }
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				unset($register);
+				return $this;
+			}
 
-            /**
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}
 
-            /**
-             * @param array<string,mixed> $params Query params.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->data[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
+			/**
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->data[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
+				if ($filters === []) {
+					return $rows;
+				}
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }
+							return true;
+						}
+					)
+				);
+			}
 
-            /**
-             * @param array<string,mixed> $object Object payload.
-             *
-             * @return array<string,mixed>
-             */
-            public function saveObject(array $object): array
-            {
-                $this->saved[] = ['schema' => $this->schema, 'object' => $object];
-                return $object;
-            }
-        };
+			/**
+			 * @param array<string,mixed> $object Object payload.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object): array {
+				$this->saved[] = ['schema' => $this->schema, 'object' => $object];
+				return $object;
+			}
+		};
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $administrationContext = $this->createMock(AdministrationContextService::class);
-        $administrationContext->method('canAccess')->willReturnCallback(
-            static function (string $administrationId) use ($accessibleAdministrations): bool {
-                return in_array($administrationId, $accessibleAdministrations, true);
-            }
-        );
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('canAccess')->willReturnCallback(
+			static function (string $administrationId) use ($accessibleAdministrations): bool {
+				return in_array($administrationId, $accessibleAdministrations, true);
+			}
+		);
 
-        $vies = $this->createMock(ViesService::class);
-        $vies->method('validate')->willReturn(['valid' => $viesOutcomeValid, 'outage' => false]);
+		$vies = $this->createMock(ViesService::class);
+		$vies->method('validate')->willReturn(['valid' => $viesOutcomeValid, 'outage' => false]);
 
-        $port = ($peppolPort ?? $this->stubPort('0106:00000000'));
+		$port = ($peppolPort ?? $this->stubPort('0106:00000000'));
 
-        $validationService = new EInvoiceValidationService(vies: $vies, peppolPort: $port);
+		$validationService = new EInvoiceValidationService(vies: $vies, peppolPort: $port);
 
-        return new EInvoiceService(
-            container: $container,
-            appConfig: $appConfig,
-            administrationContext: $administrationContext,
-            logger: new NullLogger(),
-            eventDispatcher: $dispatcher,
-            ublMapper: new ArInvoiceUblMapper(),
-            pdfGenerator: new InvoicePdfGenerator(),
-            validationService: $validationService,
-            peppolPort: $port
-        );
+		return new EInvoiceService(
+			appConfig: $appConfig,
+			administrationContext: $administrationContext,
+			logger: new NullLogger(),
+			eventDispatcher: $dispatcher,
+			ublMapper: new ArInvoiceUblMapper(),
+			pdfGenerator: new InvoicePdfGenerator(),
+			validationService: $validationService,
+			peppolPort: $port,
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * Build a stub Peppol port with a fixed lookupParticipant()/submit() outcome.
-     *
-     * @param string|null $participantId Lookup return value.
-     * @param bool        $failOnSubmit  Whether submit() should throw.
-     *
-     * @return PeppolTransmissionPortInterface
-     */
-    private function stubPort(?string $participantId, bool $failOnSubmit=false): PeppolTransmissionPortInterface
-    {
-        return new class($participantId, $failOnSubmit) implements PeppolTransmissionPortInterface
-        {
-            /**
-             * @param string|null $participantId Lookup return value.
-             * @param bool        $failOnSubmit  Whether submit() should throw.
-             */
-            public function __construct(
-                private readonly ?string $participantId,
-                private readonly bool $failOnSubmit
-            ) {
-            }
+	/**
+	 * Build a stub Peppol port with a fixed lookupParticipant()/submit() outcome.
+	 *
+	 * @param string|null $participantId Lookup return value.
+	 * @param bool $failOnSubmit Whether submit() should throw.
+	 *
+	 * @return PeppolTransmissionPortInterface
+	 */
+	private function stubPort(?string $participantId, bool $failOnSubmit = false): PeppolTransmissionPortInterface {
+		return new class($participantId, $failOnSubmit) implements PeppolTransmissionPortInterface {
+			/**
+			 * @param string|null $participantId Lookup return value.
+			 * @param bool $failOnSubmit Whether submit() should throw.
+			 */
+			public function __construct(
+				private readonly ?string $participantId,
+				private readonly bool $failOnSubmit,
+			) {
+			}
 
-            /**
-             * @inheritDoc
-             */
-            public function lookupParticipant(string $administrationId, string $partyId): ?string
-            {
-                unset($administrationId, $partyId);
-                return $this->participantId;
-            }
+			/**
+			 * @inheritDoc
+			 */
+			public function lookupParticipant(string $administrationId, string $partyId): ?string {
+				unset($administrationId, $partyId);
+				return $this->participantId;
+			}
 
-            /**
-             * @inheritDoc
-             */
-            public function submit(string $participantId, string $documentType, string $payloadFileUri): string
-            {
-                unset($documentType, $payloadFileUri);
-                if ($this->failOnSubmit === true) {
-                    throw new RuntimeException('Peppol AP unreachable');
-                }
+			/**
+			 * @inheritDoc
+			 */
+			public function submit(string $participantId, string $documentType, string $payloadFileUri): string {
+				unset($documentType, $payloadFileUri);
+				if ($this->failOnSubmit === true) {
+					throw new RuntimeException('Peppol AP unreachable');
+				}
 
-                return 'urn:uuid:'.substr(hash('sha256', $participantId), 0, 32);
-            }
-        };
+				return 'urn:uuid:' . substr(hash('sha256', $participantId), 0, 32);
+			}
+		};
 
-    }//end stubPort()
+	}//end stubPort()
 
-    /**
-     * REQ-EINV-005 scenario 1: send emits exactly one outbound-requested event
-     * and advances deliveryStatus to queued.
-     *
-     * @return void
-     */
-    public function testSendEmitsExactlyOneOutboundRequestedEventAndQueues(): void
-    {
-        $saved = [];
-        $data  = ['ARInvoice' => [$this->issuedInvoice()]];
+	/**
+	 * REQ-EINV-005 scenario 1: send emits exactly one outbound-requested event
+	 * and advances deliveryStatus to queued.
+	 *
+	 * @return void
+	 */
+	public function testSendEmitsExactlyOneOutboundRequestedEventAndQueues(): void {
+		$saved = [];
+		$data = ['ARInvoice' => [$this->issuedInvoice()]];
 
-        $dispatcher = $this->createMock(IEventDispatcher::class);
-        $dispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(
-                self::equalTo(EInvoiceService::EVENT_OUTBOUND_REQUESTED),
-                self::isInstanceOf(Event::class)
-            );
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects(self::once())
+			->method('dispatch')
+			->with(
+				self::equalTo(EInvoiceService::EVENT_OUTBOUND_REQUESTED),
+				self::isInstanceOf(Event::class)
+			);
 
-        $service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
+		$service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
 
-        $result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-        self::assertSame('queued', $result['deliveryStatus']);
-        self::assertNotNull($result['transmissionId']);
-        self::assertNotNull($result['payloadFileUri']);
-        self::assertFalse($result['fallback']);
+		self::assertSame('queued', $result['deliveryStatus']);
+		self::assertNotNull($result['transmissionId']);
+		self::assertNotNull($result['payloadFileUri']);
+		self::assertFalse($result['fallback']);
 
-        $arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
-        self::assertCount(1, $arSaves);
-        self::assertSame('queued', $arSaves[0]['object']['deliveryStatus']);
+		$arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
+		self::assertCount(1, $arSaves);
+		self::assertSame('queued', $arSaves[0]['object']['deliveryStatus']);
 
-    }//end testSendEmitsExactlyOneOutboundRequestedEventAndQueues()
+	}//end testSendEmitsExactlyOneOutboundRequestedEventAndQueues()
 
-    /**
-     * REQ-EINV-006: B2G send records transmissionId + payloadFileUri provenance.
-     *
-     * @return void
-     */
-    public function testB2GSendRecordsProvenance(): void
-    {
-        $saved = [];
-        $data  = ['ARInvoice' => [$this->issuedInvoice()]];
+	/**
+	 * REQ-EINV-006: B2G send records transmissionId + payloadFileUri provenance.
+	 *
+	 * @return void
+	 */
+	public function testB2GSendRecordsProvenance(): void {
+		$saved = [];
+		$data = ['ARInvoice' => [$this->issuedInvoice()]];
 
-        $dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher = $this->createMock(IEventDispatcher::class);
 
-        $service = $this->buildService(
-            data: $data,
-            saved: $saved,
-            dispatcher: $dispatcher,
-            peppolPort: $this->stubPort('0106:00000000')
-        );
+		$service = $this->buildService(
+			data: $data,
+			saved: $saved,
+			dispatcher: $dispatcher,
+			peppolPort: $this->stubPort('0106:00000000')
+		);
 
-        $result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-        self::assertStringStartsWith('urn:uuid:', (string) $result['transmissionId']);
-        self::assertStringStartsWith('docudesk://file/', (string) $result['payloadFileUri']);
+		self::assertStringStartsWith('urn:uuid:', (string)$result['transmissionId']);
+		self::assertStringStartsWith('docudesk://file/', (string)$result['payloadFileUri']);
 
-    }//end testB2GSendRecordsProvenance()
+	}//end testB2GSendRecordsProvenance()
 
-    /**
-     * REQ-EINV-005 scenario (IDOR): the send action rejects another
-     * administration's invoice.
-     *
-     * @return void
-     */
-    public function testSendRejectsCrossTenantAdministration(): void
-    {
-        $saved = [];
-        $data  = ['ARInvoice' => [$this->issuedInvoice()]];
+	/**
+	 * REQ-EINV-005 scenario (IDOR): the send action rejects another
+	 * administration's invoice.
+	 *
+	 * @return void
+	 */
+	public function testSendRejectsCrossTenantAdministration(): void {
+		$saved = [];
+		$data = ['ARInvoice' => [$this->issuedInvoice()]];
 
-        $dispatcher = $this->createMock(IEventDispatcher::class);
-        $dispatcher->expects(self::never())->method('dispatch');
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects(self::never())->method('dispatch');
 
-        $service = $this->buildService(
-            data: $data,
-            saved: $saved,
-            dispatcher: $dispatcher,
-            accessibleAdministrations: []
-        );
+		$service = $this->buildService(
+			data: $data,
+			saved: $saved,
+			dispatcher: $dispatcher,
+			accessibleAdministrations: []
+		);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('ARInvoice not found');
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('ARInvoice not found');
 
-        $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-    }//end testSendRejectsCrossTenantAdministration()
+	}//end testSendRejectsCrossTenantAdministration()
 
-    /**
-     * A draft (non-issued) ARInvoice cannot be sent.
-     *
-     * @return void
-     */
-    public function testDraftInvoiceCannotBeSent(): void
-    {
-        $saved   = [];
-        $invoice = $this->issuedInvoice();
-        $invoice['lifecycleState'] = 'draft';
-        $data    = ['ARInvoice' => [$invoice]];
+	/**
+	 * A draft (non-issued) ARInvoice cannot be sent.
+	 *
+	 * @return void
+	 */
+	public function testDraftInvoiceCannotBeSent(): void {
+		$saved = [];
+		$invoice = $this->issuedInvoice();
+		$invoice['lifecycleState'] = 'draft';
+		$data = ['ARInvoice' => [$invoice]];
 
-        $dispatcher = $this->createMock(IEventDispatcher::class);
-        $dispatcher->expects(self::never())->method('dispatch');
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects(self::never())->method('dispatch');
 
-        $service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
+		$service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
 
-        $this->expectException(RuntimeException::class);
+		$this->expectException(RuntimeException::class);
 
-        $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-    }//end testDraftInvoiceCannotBeSent()
+	}//end testDraftInvoiceCannotBeSent()
 
-    /**
-     * A malformed BTW-nummer blocks send — no event is emitted.
-     *
-     * @return void
-     */
-    public function testValidationFailureBlocksSendWithNoEvent(): void
-    {
-        $saved   = [];
-        $invoice = $this->issuedInvoice();
-        $invoice['buyerVatId'] = 'NL123';
-        $data    = ['ARInvoice' => [$invoice]];
+	/**
+	 * A malformed BTW-nummer blocks send — no event is emitted.
+	 *
+	 * @return void
+	 */
+	public function testValidationFailureBlocksSendWithNoEvent(): void {
+		$saved = [];
+		$invoice = $this->issuedInvoice();
+		$invoice['buyerVatId'] = 'NL123';
+		$data = ['ARInvoice' => [$invoice]];
 
-        $dispatcher = $this->createMock(IEventDispatcher::class);
-        $dispatcher->expects(self::never())->method('dispatch');
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects(self::never())->method('dispatch');
 
-        $service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
+		$service = $this->buildService(data: $data, saved: $saved, dispatcher: $dispatcher);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/BTW-nummer/');
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessageMatches('/BTW-nummer/');
 
-        $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-    }//end testValidationFailureBlocksSendWithNoEvent()
+	}//end testValidationFailureBlocksSendWithNoEvent()
 
-    /**
-     * REQ-EINV-003 scenario 2 (via orchestration): an unknown Peppol
-     * participant offers the PDF+email fallback — no event, deliveryStatus
-     * stays not-sent.
-     *
-     * @return void
-     */
-    public function testUnknownParticipantFallsBackWithoutEmitting(): void
-    {
-        $saved = [];
-        $data  = ['ARInvoice' => [$this->issuedInvoice()]];
+	/**
+	 * REQ-EINV-003 scenario 2 (via orchestration): an unknown Peppol
+	 * participant offers the PDF+email fallback — no event, deliveryStatus
+	 * stays not-sent.
+	 *
+	 * @return void
+	 */
+	public function testUnknownParticipantFallsBackWithoutEmitting(): void {
+		$saved = [];
+		$data = ['ARInvoice' => [$this->issuedInvoice()]];
 
-        $dispatcher = $this->createMock(IEventDispatcher::class);
-        $dispatcher->expects(self::never())->method('dispatch');
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects(self::never())->method('dispatch');
 
-        $service = $this->buildService(
-            data: $data,
-            saved: $saved,
-            dispatcher: $dispatcher,
-            peppolPort: $this->stubPort(null)
-        );
+		$service = $this->buildService(
+			data: $data,
+			saved: $saved,
+			dispatcher: $dispatcher,
+			peppolPort: $this->stubPort(null)
+		);
 
-        $result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$result = $service->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-        self::assertSame('not-sent', $result['deliveryStatus']);
-        self::assertTrue($result['fallback']);
-        self::assertSame([], array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
+		self::assertSame('not-sent', $result['deliveryStatus']);
+		self::assertTrue($result['fallback']);
+		self::assertSame([], array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
 
-    }//end testUnknownParticipantFallsBackWithoutEmitting()
+	}//end testUnknownParticipantFallsBackWithoutEmitting()
 }//end class

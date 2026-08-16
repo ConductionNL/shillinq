@@ -30,7 +30,15 @@ describe('mergeFullFragmentIntoManifest — reactivity (the load-bearing contrac
 		// writes THROUGH the proxy rather than to a raw reference. If it did
 		// not, this computed would keep returning `undefined` forever.
 		const manifest = reactive({
-			pages: [{ id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources', _fragment: '10-bookings-resource-calendar' }],
+			pages: [
+				{
+					id: 'Resources',
+					route: '/bookings/resources',
+					type: 'index',
+					title: 'Resources',
+					_fragment: '10-bookings-resource-calendar',
+				},
+			],
 		})
 
 		const configColumns = computed(() => {
@@ -41,7 +49,15 @@ describe('mergeFullFragmentIntoManifest — reactivity (the load-bearing contrac
 		expect(configColumns.value).toBeUndefined()
 
 		mergeFullFragmentIntoManifest(manifest, {
-			pages: [{ id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources', config: { columns: [{ key: 'name' }] } }],
+			pages: [
+				{
+					id: 'Resources',
+					route: '/bookings/resources',
+					type: 'index',
+					title: 'Resources',
+					config: { columns: [{ key: 'name' }] },
+				},
+			],
 		})
 
 		// A Vue 3 computed re-runs lazily on next access once its reactive
@@ -54,7 +70,9 @@ describe('mergeFullFragmentIntoManifest — reactivity (the load-bearing contrac
 		const slimPage = { id: 'Resources', _fragment: 'frag' }
 		const manifest = reactive({ pages: [slimPage] })
 
-		mergeFullFragmentIntoManifest(manifest, { pages: [{ id: 'Resources', config: { x: 1 } }] })
+		mergeFullFragmentIntoManifest(manifest, {
+			pages: [{ id: 'Resources', config: { x: 1 } }],
+		})
 
 		// `manifest.pages[0]` reads back as the reactive PROXY of slimPage, not
 		// slimPage itself — `toBe(slimPage)` would fail for a reason that has
@@ -67,12 +85,28 @@ describe('mergeFullFragmentIntoManifest — reactivity (the load-bearing contrac
 
 describe('mergeFullFragmentIntoManifest', () => {
 	it('updates a matching slim page IN PLACE (same object reference)', () => {
-		const slimPage = { id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources', _fragment: '10-bookings-resource-calendar' }
+		const slimPage = {
+			id: 'Resources',
+			route: '/bookings/resources',
+			type: 'index',
+			title: 'Resources',
+			_fragment: '10-bookings-resource-calendar',
+		}
 		const manifest = { pages: [slimPage] }
 
 		const fullFragment = {
 			pages: [
-				{ id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources', config: { register: 'shillinq', schema: 'Resource', columns: [{ key: 'name' }] } },
+				{
+					id: 'Resources',
+					route: '/bookings/resources',
+					type: 'index',
+					title: 'Resources',
+					config: {
+						register: 'shillinq',
+						schema: 'Resource',
+						columns: [{ key: 'name' }],
+					},
+				},
 			],
 		}
 
@@ -81,12 +115,26 @@ describe('mergeFullFragmentIntoManifest', () => {
 		expect(result).toEqual({ updated: 1, appended: 0 })
 		// Same reference — this is the load-bearing reactivity contract.
 		expect(manifest.pages[0]).toBe(slimPage)
-		expect(manifest.pages[0].config).toEqual({ register: 'shillinq', schema: 'Resource', columns: [{ key: 'name' }] })
+		expect(manifest.pages[0].config).toEqual({
+			register: 'shillinq',
+			schema: 'Resource',
+			columns: [{ key: 'name' }],
+		})
 	})
 
 	it('appends a page with no matching slim entry (defensive: shell/fragment drift)', () => {
 		const manifest = { pages: [] }
-		const fullFragment = { pages: [{ id: 'Orphan', route: '/orphan', type: 'index', title: 'Orphan', config: {} }] }
+		const fullFragment = {
+			pages: [
+				{
+					id: 'Orphan',
+					route: '/orphan',
+					type: 'index',
+					title: 'Orphan',
+					config: {},
+				},
+			],
+		}
 
 		const result = mergeFullFragmentIntoManifest(manifest, fullFragment)
 
@@ -116,17 +164,27 @@ describe('mergeFullFragmentIntoManifest', () => {
 	it('is a no-op on an empty/missing fragment pages array', () => {
 		const manifest = { pages: [{ id: 'A', _fragment: 'frag' }] }
 
-		expect(mergeFullFragmentIntoManifest(manifest, {})).toEqual({ updated: 0, appended: 0 })
-		expect(mergeFullFragmentIntoManifest(manifest, { pages: [] })).toEqual({ updated: 0, appended: 0 })
+		expect(mergeFullFragmentIntoManifest(manifest, {})).toEqual({
+			updated: 0,
+			appended: 0,
+		})
+		expect(mergeFullFragmentIntoManifest(manifest, { pages: [] })).toEqual({
+			updated: 0,
+			appended: 0,
+		})
 	})
 
 	it('tolerates a missing/non-array manifest.pages', () => {
-		expect(mergeFullFragmentIntoManifest({}, { pages: [{ id: 'A', config: {} }] })).toEqual({ updated: 0, appended: 1 })
+		expect(
+			mergeFullFragmentIntoManifest({}, { pages: [{ id: 'A', config: {} }] }),
+		).toEqual({ updated: 0, appended: 1 })
 	})
 
 	it('skips malformed full-page entries without an id', () => {
 		const manifest = { pages: [{ id: 'A', _fragment: 'frag' }] }
-		const result = mergeFullFragmentIntoManifest(manifest, { pages: [{ config: {} }, null] })
+		const result = mergeFullFragmentIntoManifest(manifest, {
+			pages: [{ config: {} }, null],
+		})
 
 		expect(result).toEqual({ updated: 0, appended: 0 })
 		expect(manifest.pages).toHaveLength(1)

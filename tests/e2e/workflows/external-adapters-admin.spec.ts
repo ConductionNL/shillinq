@@ -59,7 +59,9 @@ function collectAppErrors(page: Page): string[] {
 		}
 		const text = msg.text()
 		// Filter pure network/resource noise that is not an app-code defect.
-		if (/Failed to load resource|net::ERR_|favicon|404 \(Not Found\)/i.test(text)) {
+		if (
+			/Failed to load resource|net::ERR_|favicon|404 \(Not Found\)/i.test(text)
+		) {
 			return
 		}
 		errors.push(text)
@@ -74,7 +76,12 @@ function collectAppErrors(page: Page): string[] {
 async function gotoAdapterStatus(page: Page): Promise<void> {
 	await page.goto(STATUS_ROUTE, { waitUntil: 'domcontentloaded' })
 	const list = page.locator('.external-adapters__list')
-	if (await list.first().isVisible({ timeout: 8_000 }).catch(() => false)) {
+	if (
+		await list
+			.first()
+			.isVisible({ timeout: 8_000 })
+			.catch(() => false)
+	) {
 		return
 	}
 	// Fallback: open the app root and navigate via the nav tree.
@@ -88,12 +95,15 @@ async function gotoAdapterStatus(page: Page): Promise<void> {
 	if (await statusLink.isVisible().catch(() => false)) {
 		await statusLink.click().catch(() => {})
 	}
-	await expect(page.locator('.external-adapters__list').first()).toBeVisible({ timeout: 15_000 })
+	await expect(page.locator('.external-adapters__list').first()).toBeVisible({
+		timeout: 15_000,
+	})
 }
 
 test.describe('Shillinq W8 — External Adapters admin UI', () => {
-
-	test('the adapter status index lists every external-API family with badges + summary', async ({ page }) => {
+	test('the adapter status index lists every external-API family with badges + summary', async ({
+		page,
+	}) => {
 		const errors = collectAppErrors(page)
 		const adapterResponses: number[] = []
 		page.on('response', (res) => {
@@ -105,7 +115,9 @@ test.describe('Shillinq W8 — External Adapters admin UI', () => {
 		await gotoAdapterStatus(page)
 
 		// Title + description render.
-		await expect(page.getByRole('heading', { name: 'External Connections' })).toBeVisible()
+		await expect(
+			page.getByRole('heading', { name: 'External Connections' }),
+		).toBeVisible()
 
 		// The list is populated from the live controller registry — every
 		// family row is keyed by its data-adapter-id, so the count is the
@@ -127,11 +139,16 @@ test.describe('Shillinq W8 — External Adapters admin UI', () => {
 		await expect(page.locator('[data-adapter-id="mollie"]')).toBeVisible()
 
 		// The admin endpoint never 5xx'd.
-		expect(adapterResponses.every((s) => s < 500), `adapter endpoint 5xx: ${adapterResponses}`).toBeTruthy()
+		expect(
+			adapterResponses.every((s) => s < 500),
+			`adapter endpoint 5xx: ${adapterResponses}`,
+		).toBeTruthy()
 		expect(errors, `app console errors: ${errors.join(' | ')}`).toEqual([])
 	})
 
-	test('opening a family detail panel renders its activation recipe and returns to the index', async ({ page }) => {
+	test('opening a family detail panel renders its activation recipe and returns to the index', async ({
+		page,
+	}) => {
 		const errors = collectAppErrors(page)
 		let detail404 = false
 		let detail5xx = false
@@ -147,16 +164,26 @@ test.describe('Shillinq W8 — External Adapters admin UI', () => {
 		// index's "View activation" button instead.
 		await page.goto(DETAIL_ROUTE_MOLLIE, { waitUntil: 'domcontentloaded' })
 		let detail = page.locator('.adapter-detail[data-adapter-id]')
-		if (!(await detail.first().isVisible({ timeout: 8_000 }).catch(() => false))) {
+		if (
+			!(await detail
+				.first()
+				.isVisible({ timeout: 8_000 })
+				.catch(() => false))
+		) {
 			await gotoAdapterStatus(page)
-			await page.locator('[data-adapter-id="mollie"]').getByRole('button', { name: 'View activation' }).click()
+			await page
+				.locator('[data-adapter-id="mollie"]')
+				.getByRole('button', { name: 'View activation' })
+				.click()
 			detail = page.locator('.adapter-detail[data-adapter-id]')
 		}
 
 		await expect(detail.first()).toBeVisible({ timeout: 15_000 })
 
 		// Header: title + dormant/live badge resolved from the backend.
-		await expect(page.getByRole('heading', { name: 'Mollie Payments' })).toBeVisible()
+		await expect(
+			page.getByRole('heading', { name: 'Mollie Payments' }),
+		).toBeVisible()
 		const badge = page.locator('.adapter-detail__badge[data-state]')
 		await expect(badge).toBeVisible()
 		expect(['dormant', 'live']).toContain(await badge.getAttribute('data-state'))
@@ -165,16 +192,26 @@ test.describe('Shillinq W8 — External Adapters admin UI', () => {
 		// /api/admin/external-adapters/{id} payload. Target the fact-label
 		// cells specifically (the same phrases also appear inside step text).
 		const factLabels = page.locator('.adapter-detail__fact-label')
-		await expect(factLabels.filter({ hasText: 'openconnector source slug' })).toBeVisible()
+		await expect(
+			factLabels.filter({ hasText: 'openconnector source slug' }),
+		).toBeVisible()
 		await expect(factLabels.filter({ hasText: 'Feature flag' })).toBeVisible()
 		// The openconnector source slug value for Mollie is rendered.
-		await expect(page.locator('.adapter-detail__fact-value', { hasText: 'mollie-payments' })).toBeVisible()
+		await expect(
+			page.locator('.adapter-detail__fact-value', {
+				hasText: 'mollie-payments',
+			}),
+		).toBeVisible()
 		const steps = page.locator('.adapter-detail__step')
 		expect(await steps.count()).toBeGreaterThan(0)
 
 		// Primary action: back to the index.
-		await page.getByRole('button', { name: 'Back to External Connections' }).click()
-		await expect(page.locator('.external-adapters__list').first()).toBeVisible({ timeout: 15_000 })
+		await page
+			.getByRole('button', { name: 'Back to External Connections' })
+			.click()
+		await expect(page.locator('.external-adapters__list').first()).toBeVisible({
+			timeout: 15_000,
+		})
 
 		expect(detail404, 'a known adapter id must not 404').toBeFalsy()
 		expect(detail5xx, 'adapter detail endpoint must not 5xx').toBeFalsy()

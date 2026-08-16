@@ -45,382 +45,363 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class BarcodeLookupControllerTest extends TestCase
-{
+class BarcodeLookupControllerTest extends TestCase {
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock IUserSession.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $userSession;
+	/**
+	 * Mock IUserSession.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $userSession;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request     = $this->createMock(IRequest::class);
-        $this->container   = $this->createMock(ContainerInterface::class);
-        $this->appConfig   = $this->createMock(IAppConfig::class);
-        $this->userSession = $this->createMock(IUserSession::class);
-        $this->logger      = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->userSession = $this->createMock(IUserSession::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Configure app config: register slug 'shillinq' + the given API key.
-     *
-     * @param string $apiKey The configured POS API key ('' = none).
-     *
-     * @return void
-     */
-    private function configureAppConfig(string $apiKey): void
-    {
-        $this->appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default='') use ($apiKey): string {
-                if ($key === 'barcode_lookup_api_key') {
-                    return $apiKey;
-                }
+	/**
+	 * Configure app config: register slug 'shillinq' + the given API key.
+	 *
+	 * @param string $apiKey The configured POS API key ('' = none).
+	 *
+	 * @return void
+	 */
+	private function configureAppConfig(string $apiKey): void {
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use ($apiKey): string {
+				if ($key === 'barcode_lookup_api_key') {
+					return $apiKey;
+				}
 
-                if ($key === 'register') {
-                    return 'shillinq';
-                }
+				if ($key === 'register') {
+					return 'shillinq';
+				}
 
-                return $default;
-            }
-        );
+				return $default;
+			}
+		);
 
-    }//end configureAppConfig()
+	}//end configureAppConfig()
 
-    /**
-     * Wire the container to return a filter-aware ObjectService stub.
-     *
-     * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records by schema.
-     *
-     * @return void
-     */
-    private function withRecords(array $recordsBySchema): void
-    {
-        $stub = new class ($recordsBySchema) {
+	/**
+	 * Wire the container to return a filter-aware ObjectService stub.
+	 *
+	 * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records by schema.
+	 *
+	 * @return void
+	 */
+	private function withRecords(array $recordsBySchema): void {
+		$stub = new class($recordsBySchema) {
 
-            /**
-             * Records keyed by schema.
-             *
-             * @var array<string, array<int, array<string, mixed>>>
-             */
-            private array $recordsBySchema;
+			/**
+			 * Records keyed by schema.
+			 *
+			 * @var array<string, array<int, array<string, mixed>>>
+			 */
+			private array $recordsBySchema;
 
-            /**
-             * Active schema.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Active schema.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Constructor.
-             *
-             * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records.
-             */
-            public function __construct(array $recordsBySchema)
-            {
-                $this->recordsBySchema = $recordsBySchema;
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string, array<int, array<string, mixed>>> $recordsBySchema Records.
+			 */
+			public function __construct(array $recordsBySchema) {
+				$this->recordsBySchema = $recordsBySchema;
 
-            }//end __construct()
+			}//end __construct()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            }//end setRegister()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema name.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
+			/**
+			 * Filter the stubbed records by the provided exact-match filters.
+			 *
+			 * @param array<string, mixed> $params Query params with a 'filters' map.
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$records = ($this->recordsBySchema[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
 
-            }//end setSchema()
+				return array_values(
+					array_filter(
+						$records,
+						static function (array $record) use ($filters): bool {
+							foreach ($filters as $field => $value) {
+								if (($record[$field] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-            /**
-             * Filter the stubbed records by the provided exact-match filters.
-             *
-             * @param array<string, mixed> $params Query params with a 'filters' map.
-             *
-             * @return array<int, array<string, mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $records = ($this->recordsBySchema[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
+							return true;
+						}
+					)
+				);
 
-                return array_values(
-                    array_filter(
-                        $records,
-                        static function (array $record) use ($filters): bool {
-                            foreach ($filters as $field => $value) {
-                                if (($record[$field] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+			}//end findAll()
+		};
 
-                            return true;
-                        }
-                    )
-                );
+		$this->container->method('get')->willReturn($stub);
 
-            }//end findAll()
-        };
+	}//end withRecords()
 
-        $this->container->method('get')->willReturn($stub);
+	/**
+	 * Construct the controller under test.
+	 *
+	 * @return BarcodeLookupController
+	 */
+	private function controller(): BarcodeLookupController {
+		return new BarcodeLookupController(
+			request: $this->request,
+			container: $this->container,
+			appConfig: $this->appConfig,
+			userSession: $this->userSession,
+			logger: $this->logger,
+		);
 
-    }//end withRecords()
+	}//end controller()
 
-    /**
-     * Construct the controller under test.
-     *
-     * @return BarcodeLookupController
-     */
-    private function controller(): BarcodeLookupController
-    {
-        return new BarcodeLookupController(
-            request: $this->request,
-            container: $this->container,
-            appConfig: $this->appConfig,
-            userSession: $this->userSession,
-            logger: $this->logger,
-        );
+	/**
+	 * Return the seeded EAN (unit) + GTIN-14 (carton) barcodes for the cat food SKU.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function catFoodBarcodes(): array {
+		return [
+			[
+				'id' => 'barcode-001',
+				'barcode' => '5410317126589',
+				'barcodeType' => 'EAN',
+				'format' => 'EAN-13',
+				'productSku' => 'DV-KAT-SENIOR-2KG',
+				'uomCode' => 'EA',
+				'quantity' => 1,
+				'isDefault' => true,
+				'isActive' => true,
+			],
+			[
+				'id' => 'barcode-002',
+				'barcode' => '15410317126586',
+				'barcodeType' => 'GTIN',
+				'format' => 'GTIN-14',
+				'productSku' => 'DV-KAT-SENIOR-2KG',
+				'uomCode' => 'CA',
+				'quantity' => 4,
+				'isDefault' => false,
+				'isActive' => true,
+			],
+		];
+	}//end catFoodBarcodes()
 
-    }//end controller()
+	/**
+	 * REQ-SKU-007: a valid barcode returns 200 with the barcode + product data.
+	 *
+	 * @return void
+	 */
+	public function testValidBarcodeReturns200WithProduct(): void {
+		$this->configureAppConfig(apiKey: '');
+		$this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
+		$this->withRecords(
+			[
+				'Barcode' => $this->catFoodBarcodes(),
+				'Product' => [
+					[
+						'sku' => 'DV-KAT-SENIOR-2KG',
+						'name' => 'Dragonvale Cat Senior 2kg',
+						'category' => 'food_beverage',
+					],
+				],
+			]
+		);
 
-    /**
-     * Return the seeded EAN (unit) + GTIN-14 (carton) barcodes for the cat food SKU.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function catFoodBarcodes(): array
-    {
-        return [
-            [
-                'id'          => 'barcode-001',
-                'barcode'     => '5410317126589',
-                'barcodeType' => 'EAN',
-                'format'      => 'EAN-13',
-                'productSku'  => 'DV-KAT-SENIOR-2KG',
-                'uomCode'     => 'EA',
-                'quantity'    => 1,
-                'isDefault'   => true,
-                'isActive'    => true,
-            ],
-            [
-                'id'          => 'barcode-002',
-                'barcode'     => '15410317126586',
-                'barcodeType' => 'GTIN',
-                'format'      => 'GTIN-14',
-                'productSku'  => 'DV-KAT-SENIOR-2KG',
-                'uomCode'     => 'CA',
-                'quantity'    => 4,
-                'isDefault'   => false,
-                'isActive'    => true,
-            ],
-        ];
-    }//end catFoodBarcodes()
+		$response = $this->controller()->lookup(code: '5410317126589');
 
-    /**
-     * REQ-SKU-007: a valid barcode returns 200 with the barcode + product data.
-     *
-     * @return void
-     */
-    public function testValidBarcodeReturns200WithProduct(): void
-    {
-        $this->configureAppConfig(apiKey: '');
-        $this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
-        $this->withRecords(
-            [
-                'Barcode' => $this->catFoodBarcodes(),
-                'Product' => [
-                    [
-                        'sku'      => 'DV-KAT-SENIOR-2KG',
-                        'name'     => 'Dragonvale Cat Senior 2kg',
-                        'category' => 'food_beverage',
-                    ],
-                ],
-            ]
-        );
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame('5410317126589', $data['barcode']['barcode']);
+		self::assertSame(1, $data['barcode']['quantity']);
+		self::assertSame('DV-KAT-SENIOR-2KG', $data['product']['sku']);
 
-        $response = $this->controller()->lookup(code: '5410317126589');
+	}//end testValidBarcodeReturns200WithProduct()
 
-        self::assertInstanceOf(JSONResponse::class, $response);
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        self::assertSame('5410317126589', $data['barcode']['barcode']);
-        self::assertSame(1, $data['barcode']['quantity']);
-        self::assertSame('DV-KAT-SENIOR-2KG', $data['product']['sku']);
+	/**
+	 * REQ-SKU-007: an unknown barcode returns 404.
+	 *
+	 * @return void
+	 */
+	public function testUnknownBarcodeReturns404(): void {
+		$this->configureAppConfig(apiKey: '');
+		$this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
+		$this->withRecords(['Barcode' => $this->catFoodBarcodes()]);
 
-    }//end testValidBarcodeReturns200WithProduct()
+		$response = $this->controller()->lookup(code: '9999999999999');
 
-    /**
-     * REQ-SKU-007: an unknown barcode returns 404.
-     *
-     * @return void
-     */
-    public function testUnknownBarcodeReturns404(): void
-    {
-        $this->configureAppConfig(apiKey: '');
-        $this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
-        $this->withRecords(['Barcode' => $this->catFoodBarcodes()]);
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
-        $response = $this->controller()->lookup(code: '9999999999999');
+	}//end testUnknownBarcodeReturns404()
 
-        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	/**
+	 * REQ-SKU-008: an inactive barcode is never returned (404).
+	 *
+	 * @return void
+	 */
+	public function testInactiveBarcodeReturns404(): void {
+		$this->configureAppConfig(apiKey: '');
+		$this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
+		$this->withRecords(
+			[
+				'Barcode' => [
+					[
+						'id' => 'barcode-004',
+						'barcode' => 'OLD-VIT-001',
+						'barcodeType' => 'INTERNAL',
+						'format' => 'INTERNAL',
+						'productSku' => 'VIT-C-1000MG-100CT',
+						'uomCode' => 'EA',
+						'quantity' => 1,
+						'isDefault' => false,
+						'isActive' => false,
+					],
+				],
+			]
+		);
 
-    }//end testUnknownBarcodeReturns404()
+		$response = $this->controller()->lookup(code: 'OLD-VIT-001');
 
-    /**
-     * REQ-SKU-008: an inactive barcode is never returned (404).
-     *
-     * @return void
-     */
-    public function testInactiveBarcodeReturns404(): void
-    {
-        $this->configureAppConfig(apiKey: '');
-        $this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
-        $this->withRecords(
-            [
-                'Barcode' => [
-                    [
-                        'id'          => 'barcode-004',
-                        'barcode'     => 'OLD-VIT-001',
-                        'barcodeType' => 'INTERNAL',
-                        'format'      => 'INTERNAL',
-                        'productSku'  => 'VIT-C-1000MG-100CT',
-                        'uomCode'     => 'EA',
-                        'quantity'    => 1,
-                        'isDefault'   => false,
-                        'isActive'    => false,
-                    ],
-                ],
-            ]
-        );
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
-        $response = $this->controller()->lookup(code: 'OLD-VIT-001');
+	}//end testInactiveBarcodeReturns404()
 
-        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	/**
+	 * REQ-SKU-007: the UoM filter selects the carton GTIN-14 over the unit EAN.
+	 *
+	 * @return void
+	 */
+	public function testUomFilterSelectsCarton(): void {
+		$this->configureAppConfig(apiKey: '');
+		$this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
+		$this->withRecords(['Barcode' => $this->catFoodBarcodes()]);
 
-    }//end testInactiveBarcodeReturns404()
+		$response = $this->controller()->lookup(code: '15410317126586', uomCode: 'CA');
 
-    /**
-     * REQ-SKU-007: the UoM filter selects the carton GTIN-14 over the unit EAN.
-     *
-     * @return void
-     */
-    public function testUomFilterSelectsCarton(): void
-    {
-        $this->configureAppConfig(apiKey: '');
-        $this->userSession->method('getUser')->willReturn($this->createMock(IUser::class));
-        $this->withRecords(['Barcode' => $this->catFoodBarcodes()]);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame('GTIN', $data['barcode']['barcodeType']);
+		self::assertSame(4, $data['barcode']['quantity']);
+		self::assertSame('CA', $data['barcode']['uomCode']);
 
-        $response = $this->controller()->lookup(code: '15410317126586', uomCode: 'CA');
+	}//end testUomFilterSelectsCarton()
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        self::assertSame('GTIN', $data['barcode']['barcodeType']);
-        self::assertSame(4, $data['barcode']['quantity']);
-        self::assertSame('CA', $data['barcode']['uomCode']);
+	/**
+	 * ADR-005: with an API key configured, a missing Bearer token returns 401.
+	 *
+	 * @return void
+	 */
+	public function testMissingApiKeyReturns401(): void {
+		$this->configureAppConfig(apiKey: 'secret-pos-key');
+		$this->request->method('getHeader')->with('Authorization')->willReturn('');
 
-    }//end testUomFilterSelectsCarton()
+		$response = $this->controller()->lookup(code: '5410317126589');
 
-    /**
-     * ADR-005: with an API key configured, a missing Bearer token returns 401.
-     *
-     * @return void
-     */
-    public function testMissingApiKeyReturns401(): void
-    {
-        $this->configureAppConfig(apiKey: 'secret-pos-key');
-        $this->request->method('getHeader')->with('Authorization')->willReturn('');
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-        $response = $this->controller()->lookup(code: '5410317126589');
+	}//end testMissingApiKeyReturns401()
 
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+	/**
+	 * ADR-005: a valid Bearer API key authorizes the lookup.
+	 *
+	 * @return void
+	 */
+	public function testValidApiKeyAuthorizes(): void {
+		$this->configureAppConfig(apiKey: 'secret-pos-key');
+		$this->request->method('getHeader')->with('Authorization')->willReturn('Bearer secret-pos-key');
+		$this->withRecords(['Barcode' => $this->catFoodBarcodes()]);
 
-    }//end testMissingApiKeyReturns401()
+		$response = $this->controller()->lookup(code: '5410317126589');
 
-    /**
-     * ADR-005: a valid Bearer API key authorizes the lookup.
-     *
-     * @return void
-     */
-    public function testValidApiKeyAuthorizes(): void
-    {
-        $this->configureAppConfig(apiKey: 'secret-pos-key');
-        $this->request->method('getHeader')->with('Authorization')->willReturn('Bearer secret-pos-key');
-        $this->withRecords(['Barcode' => $this->catFoodBarcodes()]);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
-        $response = $this->controller()->lookup(code: '5410317126589');
+	}//end testValidApiKeyAuthorizes()
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
+	/**
+	 * ADR-005 fail-secure: no API key configured + anonymous caller returns 401.
+	 *
+	 * @return void
+	 */
+	public function testNoKeyAnonymousReturns401(): void {
+		$this->configureAppConfig(apiKey: '');
+		$this->userSession->method('getUser')->willReturn(null);
 
-    }//end testValidApiKeyAuthorizes()
+		$response = $this->controller()->lookup(code: '5410317126589');
 
-    /**
-     * ADR-005 fail-secure: no API key configured + anonymous caller returns 401.
-     *
-     * @return void
-     */
-    public function testNoKeyAnonymousReturns401(): void
-    {
-        $this->configureAppConfig(apiKey: '');
-        $this->userSession->method('getUser')->willReturn(null);
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-        $response = $this->controller()->lookup(code: '5410317126589');
-
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-
-    }//end testNoKeyAnonymousReturns401()
+	}//end testNoKeyAnonymousReturns401()
 }//end class

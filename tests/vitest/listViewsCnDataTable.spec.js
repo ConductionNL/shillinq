@@ -34,14 +34,16 @@ function tIdentity(app, text, vars) {
 	if (!vars) {
 		return text
 	}
-	return text.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`))
+	return text.replace(/\{(\w+)\}/g, (_, k) =>
+		k in vars ? String(vars[k]) : `{${k}}`,
+	)
 }
 
 /** Invoke a component's `columns` computed bound to a fake instance. */
 function columnKeys(Component) {
 	const fakeThis = { t: tIdentity }
 	const cols = Component.computed.columns.call(fakeThis)
-	return cols.map(c => c.key)
+	return cols.map((c) => c.key)
 }
 
 beforeEach(() => {
@@ -76,8 +78,14 @@ describe('migrate-list-views-to-cndatatable: CnDataTable is the list renderer', 
 describe('AdminInvoiceList columns', () => {
 	it('has the invoice #, dates, customer, billing model, gross, status and actions columns', () => {
 		expect(columnKeys(AdminInvoiceList)).toEqual([
-			'invoiceNumber', 'invoiceDate', 'dueDate', 'customerId',
-			'billingModel', 'grossAmount', 'status', 'actions',
+			'invoiceNumber',
+			'invoiceDate',
+			'dueDate',
+			'customerId',
+			'billingModel',
+			'grossAmount',
+			'status',
+			'actions',
 		])
 	})
 })
@@ -85,7 +93,11 @@ describe('AdminInvoiceList columns', () => {
 describe('DocumentsView columns', () => {
 	it('has the document number/type/date/status/file-reference columns', () => {
 		expect(columnKeys(DocumentsView)).toEqual([
-			'documentNumber', 'documentType', 'documentDate', 'status', 'fileReference',
+			'documentNumber',
+			'documentType',
+			'documentDate',
+			'status',
+			'fileReference',
 		])
 	})
 })
@@ -93,8 +105,12 @@ describe('DocumentsView columns', () => {
 describe('TransactionsView columns', () => {
 	it('has the date/number/type/description/amount/status columns', () => {
 		expect(columnKeys(TransactionsView)).toEqual([
-			'transactionDate', 'transactionNumber', 'transactionType',
-			'description', 'amount', 'status',
+			'transactionDate',
+			'transactionNumber',
+			'transactionType',
+			'description',
+			'amount',
+			'status',
 		])
 	})
 })
@@ -102,7 +118,13 @@ describe('TransactionsView columns', () => {
 describe('ThreeWayMatchIndex columns', () => {
 	it('has the invoice/supplier/amount/match-date/status/linked-PO-GRN/actions columns', () => {
 		expect(columnKeys(ThreeWayMatchIndex)).toEqual([
-			'invoice', 'supplier', 'amount', 'matchDate', 'matchStatus', 'refs', 'actions',
+			'invoice',
+			'supplier',
+			'amount',
+			'matchDate',
+			'matchStatus',
+			'refs',
+			'actions',
 		])
 	})
 })
@@ -110,8 +132,13 @@ describe('ThreeWayMatchIndex columns', () => {
 describe('VendorPerformanceIndex columns', () => {
 	it('has the supplier/period/score/trend/disputes/eligible/actions columns', () => {
 		expect(columnKeys(VendorPerformanceIndex)).toEqual([
-			'supplierId', 'period', 'overallScore', 'scoreTrend',
-			'disputeCount', 'automatedReviewEligible', 'actions',
+			'supplierId',
+			'period',
+			'overallScore',
+			'scoreTrend',
+			'disputeCount',
+			'automatedReviewEligible',
+			'actions',
 		])
 	})
 })

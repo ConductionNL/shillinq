@@ -29,260 +29,249 @@ use ReflectionMethod;
  * resolve to those schemas, and merges additively onto the monolith without
  * colliding with the pre-existing VatReturn (BTW-aangifte) schema (ADR-037).
  */
-final class VatBtwFilingFragmentTest extends TestCase
-{
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-vat-btw-filing.json';
+final class VatBtwFilingFragmentTest extends TestCase {
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-vat-btw-filing.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
-    }//end merge()
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    /**
-     * Load and decode the fragment JSON.
-     *
-     * @return array<mixed> The decoded fragment.
-     */
-    private function fragment(): array
-    {
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        return $data;
-    }//end fragment()
+	/**
+	 * Load and decode the fragment JSON.
+	 *
+	 * @return array<mixed> The decoded fragment.
+	 */
+	private function fragment(): array {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		return $data;
+	}//end fragment()
 
-    /**
-     * Return the fragment's seed objects (kept under components.objects, the
-     * shape OR's ConfigurationImportHandler consumes — $data['components']['objects']).
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function seedObjects(): array
-    {
-        $data = $this->fragment();
-        return ($data['components']['objects'] ?? []);
-    }//end seedObjects()
+	/**
+	 * Return the fragment's seed objects (kept under components.objects, the
+	 * shape OR's ConfigurationImportHandler consumes — $data['components']['objects']).
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function seedObjects(): array {
+		$data = $this->fragment();
+		return ($data['components']['objects'] ?? []);
+	}//end seedObjects()
 
-    /**
-     * The fragment file is present and valid JSON with a components.schemas block.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = $this->fragment();
-        self::assertArrayHasKey('schemas', $data['components']);
-        // Seed objects live under components.objects (OR ImportHandler reads $data['components']['objects']).
-        self::assertArrayHasKey('objects', $data['components']);
-    }//end testFragmentIsValidJson()
+	/**
+	 * The fragment file is present and valid JSON with a components.schemas block.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = $this->fragment();
+		self::assertArrayHasKey('schemas', $data['components']);
+		// Seed objects live under components.objects (OR ImportHandler reads $data['components']['objects']).
+		self::assertArrayHasKey('objects', $data['components']);
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment declares the three VAT registers from the spec.
-     *
-     * @return void
-     */
-    public function testFragmentDeclaresVatRegisters(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach (['BtwAangifte', 'VATDeclaration', 'VATLine'] as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-        }
-    }//end testFragmentDeclaresVatRegisters()
+	/**
+	 * The fragment declares the three VAT registers from the spec.
+	 *
+	 * @return void
+	 */
+	public function testFragmentDeclaresVatRegisters(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach (['BtwAangifte', 'VATDeclaration', 'VATLine'] as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+		}
+	}//end testFragmentDeclaresVatRegisters()
 
-    /**
-     * VATReturn declares the draft → submitted → verified → filed lifecycle on
-     * statusCode with all four transitions (REQ-VAT-005, REQ-VAT-008).
-     *
-     * @return void
-     */
-    public function testVatReturnDeclaresLifecycle(): void
-    {
-        $vatReturn = $this->fragment()['components']['schemas']['BtwAangifte'];
-        self::assertArrayHasKey('x-openregister-lifecycle', $vatReturn);
+	/**
+	 * VATReturn declares the draft → submitted → verified → filed lifecycle on
+	 * statusCode with all four transitions (REQ-VAT-005, REQ-VAT-008).
+	 *
+	 * @return void
+	 */
+	public function testVatReturnDeclaresLifecycle(): void {
+		$vatReturn = $this->fragment()['components']['schemas']['BtwAangifte'];
+		self::assertArrayHasKey('x-openregister-lifecycle', $vatReturn);
 
-        $lifecycle = $vatReturn['x-openregister-lifecycle'];
-        self::assertSame('statusCode', $lifecycle['field']);
-        self::assertSame('draft', $lifecycle['initialState']);
+		$lifecycle = $vatReturn['x-openregister-lifecycle'];
+		self::assertSame('statusCode', $lifecycle['field']);
+		self::assertSame('draft', $lifecycle['initialState']);
 
-        foreach (['draft', 'submitted', 'verified', 'filed'] as $state) {
-            self::assertArrayHasKey($state, $lifecycle['states'], "Missing state $state");
-        }
+		foreach (['draft', 'submitted', 'verified', 'filed'] as $state) {
+			self::assertArrayHasKey($state, $lifecycle['states'], "Missing state $state");
+		}
 
-        foreach (['submit', 'verify', 'file', 'rebase'] as $transition) {
-            self::assertArrayHasKey($transition, $lifecycle['transitions'], "Missing transition $transition");
-        }
+		foreach (['submit', 'verify', 'file', 'rebase'] as $transition) {
+			self::assertArrayHasKey($transition, $lifecycle['transitions'], "Missing transition $transition");
+		}
 
-        // The statusCode enum mirrors the lifecycle states exactly.
-        self::assertSame(
-            ['draft', 'submitted', 'verified', 'filed'],
-            $vatReturn['properties']['statusCode']['enum']
-        );
-    }//end testVatReturnDeclaresLifecycle()
+		// The statusCode enum mirrors the lifecycle states exactly.
+		self::assertSame(
+			['draft', 'submitted', 'verified', 'filed'],
+			$vatReturn['properties']['statusCode']['enum']
+		);
+	}//end testVatReturnDeclaresLifecycle()
 
-    /**
-     * VATReturn declares the VAT reconciliation aggregations sourced from
-     * VATLine (REQ-VAT-002, REQ-VAT-011) — no PHP service per ADR-031.
-     *
-     * The aggregation block exposes a single `totalsByReturn` rollup that
-     * sums VATLine.vatAmount / taxableAmount grouped per return, producing
-     * collected, paid and taxable totals via conditional sum operations,
-     * plus a derived `vatBalance` expression op (totalVATPaid − totalVATCollected).
-     *
-     * @return void
-     */
-    public function testVatReturnDeclaresReconciliationAggregations(): void
-    {
-        $vatReturn = $this->fragment()['components']['schemas']['BtwAangifte'];
-        self::assertArrayHasKey('x-openregister-aggregations', $vatReturn);
+	/**
+	 * VATReturn declares the VAT reconciliation aggregations sourced from
+	 * VATLine (REQ-VAT-002, REQ-VAT-011) — no PHP service per ADR-031.
+	 *
+	 * The aggregation block exposes a single `totalsByReturn` rollup that
+	 * sums VATLine.vatAmount / taxableAmount grouped per return, producing
+	 * collected, paid and taxable totals via conditional sum operations,
+	 * plus a derived `vatBalance` expression op (totalVATPaid − totalVATCollected).
+	 *
+	 * @return void
+	 */
+	public function testVatReturnDeclaresReconciliationAggregations(): void {
+		$vatReturn = $this->fragment()['components']['schemas']['BtwAangifte'];
+		self::assertArrayHasKey('x-openregister-aggregations', $vatReturn);
 
-        $aggregations = $vatReturn['x-openregister-aggregations'];
-        self::assertArrayHasKey('totalsByReturn', $aggregations);
+		$aggregations = $vatReturn['x-openregister-aggregations'];
+		self::assertArrayHasKey('totalsByReturn', $aggregations);
 
-        $totals = $aggregations['totalsByReturn'];
-        self::assertSame('VATLine', $totals['source']);
+		$totals = $aggregations['totalsByReturn'];
+		self::assertSame('VATLine', $totals['source']);
 
-        self::assertArrayHasKey('operations', $totals);
-        self::assertArrayHasKey('totalVATCollected', $totals['operations']);
-        self::assertArrayHasKey('totalVATPaid', $totals['operations']);
+		self::assertArrayHasKey('operations', $totals);
+		self::assertArrayHasKey('totalVATCollected', $totals['operations']);
+		self::assertArrayHasKey('totalVATPaid', $totals['operations']);
 
-        // Sum operations aggregate over a VATLine.* field; the `vatBalance`
-        // operation is an expression op derived from the sum results.
-        foreach ($totals['operations'] as $operation) {
-            self::assertContains(
-                $operation['operation'],
-                ['sum', 'expression'],
-                'aggregation operations are sum or expression'
-            );
-            if ($operation['operation'] === 'sum') {
-                self::assertStringStartsWith('VATLine.', $operation['field']);
-            }
-        }
-    }//end testVatReturnDeclaresReconciliationAggregations()
+		// Sum operations aggregate over a VATLine.* field; the `vatBalance`
+		// operation is an expression op derived from the sum results.
+		foreach ($totals['operations'] as $operation) {
+			self::assertContains(
+				$operation['operation'],
+				['sum', 'expression'],
+				'aggregation operations are sum or expression'
+			);
+			if ($operation['operation'] === 'sum') {
+				self::assertStringStartsWith('VATLine.', $operation['field']);
+			}
+		}
+	}//end testVatReturnDeclaresReconciliationAggregations()
 
-    /**
-     * Every seed object references one of the three VAT schemas under the
-     * shillinq register, with a stable slug.
-     *
-     * @return void
-     */
-    public function testSeedObjectsResolveToFragmentSchemas(): void
-    {
-        $data    = $this->fragment();
-        $defined = array_keys($data['components']['schemas']);
-        $seeds   = $this->seedObjects();
+	/**
+	 * Every seed object references one of the three VAT schemas under the
+	 * shillinq register, with a stable slug.
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsResolveToFragmentSchemas(): void {
+		$data = $this->fragment();
+		$defined = array_keys($data['components']['schemas']);
+		$seeds = $this->seedObjects();
 
-        self::assertNotEmpty($seeds);
-        $slugs = [];
-        foreach ($seeds as $object) {
-            self::assertArrayHasKey('@self', $object);
-            self::assertSame('shillinq', $object['@self']['register']);
-            self::assertContains($object['@self']['schema'], $defined, 'Seed references undefined schema');
-            self::assertArrayHasKey('slug', $object['@self']);
-            $slugs[] = $object['@self']['slug'];
-        }
+		self::assertNotEmpty($seeds);
+		$slugs = [];
+		foreach ($seeds as $object) {
+			self::assertArrayHasKey('@self', $object);
+			self::assertSame('shillinq', $object['@self']['register']);
+			self::assertContains($object['@self']['schema'], $defined, 'Seed references undefined schema');
+			self::assertArrayHasKey('slug', $object['@self']);
+			$slugs[] = $object['@self']['slug'];
+		}
 
-        // Slugs are unique so re-import is idempotent.
-        self::assertSame(count($slugs), count(array_unique($slugs)), 'Seed slugs must be unique');
-    }//end testSeedObjectsResolveToFragmentSchemas()
+		// Slugs are unique so re-import is idempotent.
+		self::assertSame(count($slugs), count(array_unique($slugs)), 'Seed slugs must be unique');
+	}//end testSeedObjectsResolveToFragmentSchemas()
 
-    /**
-     * Seed VATLine rows are structurally consistent: every row declares a
-     * non-negative taxable + VAT amount, a non-negative VAT rate, and a
-     * known line type. KOR (rate=0) and reverse-charge lines are seeded
-     * with the operator-stated amount the lifecycle uses for aggregation;
-     * the spec requires multiple seed lines to exercise the BTW return
-     * generator over the rate grid (REQ-VAT-010).
-     *
-     * @return void
-     */
-    public function testSeedVatLinesAreInternallyConsistent(): void
-    {
-        $objects   = $this->seedObjects();
-        $lineCount = 0;
-        foreach ($objects as $object) {
-            if ($object['@self']['schema'] !== 'VATLine') {
-                continue;
-            }
+	/**
+	 * Seed VATLine rows are structurally consistent: every row declares a
+	 * non-negative taxable + VAT amount, a non-negative VAT rate, and a
+	 * known line type. KOR (rate=0) and reverse-charge lines are seeded
+	 * with the operator-stated amount the lifecycle uses for aggregation;
+	 * the spec requires multiple seed lines to exercise the BTW return
+	 * generator over the rate grid (REQ-VAT-010).
+	 *
+	 * @return void
+	 */
+	public function testSeedVatLinesAreInternallyConsistent(): void {
+		$objects = $this->seedObjects();
+		$lineCount = 0;
+		foreach ($objects as $object) {
+			if ($object['@self']['schema'] !== 'VATLine') {
+				continue;
+			}
 
-            $lineCount++;
-            self::assertContains(
-                $object['type'],
-                ['collected', 'paid', 'reverse-charge'],
-                'VAT line type must be one of the declared categories'
-            );
-            self::assertGreaterThanOrEqual(0.0, (float) $object['taxableAmount']);
-            self::assertGreaterThanOrEqual(0.0, (float) $object['vatAmount']);
-            self::assertGreaterThanOrEqual(0.0, (float) $object['taxRate']);
+			$lineCount++;
+			self::assertContains(
+				$object['type'],
+				['collected', 'paid', 'reverse-charge'],
+				'VAT line type must be one of the declared categories'
+			);
+			self::assertGreaterThanOrEqual(0.0, (float)$object['taxableAmount']);
+			self::assertGreaterThanOrEqual(0.0, (float)$object['vatAmount']);
+			self::assertGreaterThanOrEqual(0.0, (float)$object['taxRate']);
 
-            if ($object['type'] === 'reverse-charge') {
-                self::assertTrue($object['reverseChargeApplicable']);
-            }
-        }
+			if ($object['type'] === 'reverse-charge') {
+				self::assertTrue($object['reverseChargeApplicable']);
+			}
+		}
 
-        self::assertGreaterThanOrEqual(5, $lineCount, 'Spec requires multiple seed VAT lines');
-    }//end testSeedVatLinesAreInternallyConsistent()
+		self::assertGreaterThanOrEqual(5, $lineCount, 'Spec requires multiple seed VAT lines');
+	}//end testSeedVatLinesAreInternallyConsistent()
 
-    /**
-     * Merging the fragment onto the monolith adds the three VAT registers
-     * without dropping any existing schema — including the distinct
-     * pre-existing VatReturn (BTW-aangifte) schema (ADR-037 disjoint union).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyWithoutCollision(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = $this->fragment();
+	/**
+	 * Merging the fragment onto the monolith adds the three VAT registers
+	 * without dropping any existing schema — including the distinct
+	 * pre-existing VatReturn (BTW-aangifte) schema (ADR-037 disjoint union).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyWithoutCollision(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = $this->fragment();
 
-        $schemaCountBefore = count($base['components']['schemas']);
-        // Base monolith keeps its seed objects at the top level; the fragment
-        // ships them under components.objects (the shape OR's import handler
-        // consumes). Both are valid input keys for the importer.
-        $baseObjectCount = count(($base['objects'] ?? []));
-        $fragObjectCount = count(($frag['components']['objects'] ?? []));
+		$schemaCountBefore = count($base['components']['schemas']);
+		// Base monolith keeps its seed objects at the top level; the fragment
+		// ships them under components.objects (the shape OR's import handler
+		// consumes). Both are valid input keys for the importer.
+		$baseObjectCount = count(($base['objects'] ?? []));
+		$fragObjectCount = count(($frag['components']['objects'] ?? []));
 
-        $merged  = $this->merge($base, $frag);
-        $schemas = $merged['components']['schemas'];
+		$merged = $this->merge($base, $frag);
+		$schemas = $merged['components']['schemas'];
 
-        self::assertArrayHasKey('BtwAangifte', $schemas);
-        self::assertArrayHasKey('VATDeclaration', $schemas);
-        self::assertArrayHasKey('VATLine', $schemas);
+		self::assertArrayHasKey('BtwAangifte', $schemas);
+		self::assertArrayHasKey('VATDeclaration', $schemas);
+		self::assertArrayHasKey('VATLine', $schemas);
 
-        // No existing schema dropped.
-        foreach (array_keys($base['components']['schemas']) as $existing) {
-            self::assertArrayHasKey($existing, $schemas, "Existing schema $existing must survive merge");
-        }
+		// No existing schema dropped.
+		foreach (array_keys($base['components']['schemas']) as $existing) {
+			self::assertArrayHasKey($existing, $schemas, "Existing schema $existing must survive merge");
+		}
 
-        // The three new schemas are net-additive.
-        self::assertSame($schemaCountBefore + 3, count($schemas));
+		// The three new schemas are net-additive.
+		self::assertSame($schemaCountBefore + 3, count($schemas));
 
-        // The base's top-level objects list survives unchanged (the fragment
-        // does not touch it) and the fragment's components.objects survive in
-        // the merged components block (disjoint-union property).
-        self::assertSame($baseObjectCount, count(($merged['objects'] ?? [])));
-        self::assertSame($fragObjectCount, count(($merged['components']['objects'] ?? [])));
-    }//end testFragmentMergesAdditivelyWithoutCollision()
+		// The base's top-level objects list survives unchanged (the fragment
+		// does not touch it) and the fragment's components.objects survive in
+		// the merged components block (disjoint-union property).
+		self::assertSame($baseObjectCount, count(($merged['objects'] ?? [])));
+		self::assertSame($fragObjectCount, count(($merged['components']['objects'] ?? [])));
+	}//end testFragmentMergesAdditivelyWithoutCollision()
 }//end class

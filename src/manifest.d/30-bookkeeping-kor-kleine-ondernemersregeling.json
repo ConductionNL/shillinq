@@ -72,13 +72,13 @@
 					}
 				],
 				"columns": [
-					{ "key": "ondernemingId", "label": "Business", "sortable": true },
+					{ "key": "enterpriseId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "aanmeldDatum", "label": "Registration date", "sortable": true },
-					{ "key": "ingangsDatum", "label": "Start date", "sortable": true },
-					{ "key": "lockInEindDatum", "label": "Lock-in end", "sortable": true },
-					{ "key": "belastingdienstReferentie", "label": "BD reference" }
+					{ "key": "registrationDate", "label": "Registration date", "sortable": true },
+					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
+					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
+					{ "key": "taxAuthorityReference", "label": "BD reference" }
 				],
 				"defaultSort": "-aanmeldDatum",
 				"lifecycleActions": true,
@@ -114,12 +114,12 @@
 					}
 				],
 				"columns": [
-					{ "key": "ondernemingId", "label": "Business", "sortable": true },
+					{ "key": "enterpriseId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime" },
 					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "ingangsDatum", "label": "Start date", "sortable": true },
-					{ "key": "lockInEindDatum", "label": "Lock-in end", "sortable": true },
-					{ "key": "drempelJaar", "label": "Threshold (EUR)" }
+					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
+					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
+					{ "key": "thresholdYear", "label": "Threshold (EUR)" }
 				],
 				"defaultSort": "-ingangsDatum",
 				"detailRoute": "KorDrempelMonitor",
@@ -136,19 +136,19 @@
 				"schema": "KORAnnualTurnover",
 				"_note": "REPORT/MONITOR archetype — a KOR annual-turnover record tracks a registration's running turnover against the small-business threshold in real time. Native shillinq detail contract: config.aggregations[] surface the three money/utilization KPIs (running turnover, year-end forecast, threshold utilization) so a bookkeeper instantly sees whether the threshold is at risk; config.fields[] render the full turnover data (year, threshold, per-month breakdown, excluded items, forecast status); and the bespoke KOR sidebarProps (alert-history list filtered by registrationId + audit trail) is preserved verbatim — the correct home for the threshold-alert log. NO comms/files — this is a computed monitor, not a document.",
 				"aggregations": [
-					{ "id": "runningTurnover", "title": "Running turnover", "field": "lopendeOmzet", "metric": "value", "format": "currency" },
-					{ "id": "yearEndForecast", "title": "Year-end forecast", "field": "prognoseEindeJaar", "metric": "value", "format": "currency" },
-					{ "id": "thresholdUtilization", "title": "Threshold utilization", "field": "drempelBenutting", "metric": "value", "format": "percentage" }
+					{ "id": "runningTurnover", "title": "Running turnover", "field": "currentRevenue", "metric": "value", "format": "currency" },
+					{ "id": "yearEndForecast", "title": "Year-end forecast", "field": "forecastYearEnd", "metric": "value", "format": "currency" },
+					{ "id": "thresholdUtilization", "title": "Threshold utilization", "field": "thresholdUtilisation", "metric": "value", "format": "percentage" }
 				],
 				"fields": [
 					{ "key": "registrationId", "label": "Registration", "type": "string" },
-					{ "key": "jaar", "label": "Calendar year", "type": "integer" },
-					{ "key": "lopendeOmzet", "label": "Running turnover (EUR)", "type": "money" },
-					{ "key": "drempel", "label": "Threshold (EUR)", "type": "money" },
-					{ "key": "drempelBenutting", "label": "Utilization", "type": "number" },
-					{ "key": "perMaand", "label": "Turnover per month", "type": "json" },
+					{ "key": "year", "label": "Calendar year", "type": "integer" },
+					{ "key": "currentRevenue", "label": "Running turnover (EUR)", "type": "money" },
+					{ "key": "threshold", "label": "Threshold (EUR)", "type": "money" },
+					{ "key": "thresholdUtilisation", "label": "Utilization", "type": "number" },
+					{ "key": "perMonth", "label": "Turnover per month", "type": "json" },
 					{ "key": "uitgeslotenPosten", "label": "Excluded items", "type": "array" },
-					{ "key": "prognoseEindeJaar", "label": "Year-end forecast (EUR)", "type": "money" },
+					{ "key": "forecastYearEnd", "label": "Year-end forecast (EUR)", "type": "money" },
 					{ "key": "prognoseStatus", "label": "Forecast status", "type": "string" }
 				],
 				"auditTrail": true,
@@ -171,10 +171,10 @@
 										"valueFromField": "registrationId"
 									},
 									"columns": [
-										{ "key": "uitgeloostOp", "label": "Timestamp" },
+										{ "key": "dischargedOn", "label": "Timestamp" },
 										{ "key": "trigger", "label": "Bracket" },
 										{ "key": "ernst", "label": "Severity" },
-										{ "key": "drempelBenutting", "label": "Utilization" }
+										{ "key": "thresholdUtilisation", "label": "Utilization" }
 									]
 								}
 							]
@@ -216,13 +216,13 @@
 					}
 				],
 				"columns": [
-					{ "key": "ondernemingId", "label": "Business", "sortable": true },
+					{ "key": "enterpriseId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime" },
-					{ "key": "ingangsDatum", "label": "Start date", "sortable": true },
-					{ "key": "lockInEindDatum", "label": "Lock-in end", "sortable": true },
-					{ "key": "vroegsteOpzegDatum", "label": "Earliest cancellation date", "sortable": true }
+					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
+					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
+					{ "key": "earliestTerminationDate", "label": "Earliest cancellation date", "sortable": true }
 				],
-				"defaultSort": "vroegsteOpzegDatum",
+				"defaultSort": "earliestTerminationDate",
 				"lifecycleActions": true,
 				"helpText": "Voluntary cancellation of an ACTIVE KOR registration. Cancellation is blocked until lockInEindDatum (REQ-KOR-007); the earliest cancellation date is three months before the end of the lock-in. The effective end date is 1 January of the next calendar year. On approval a KORRevocation with type=VRIJWILLIG_NA_LOCKOUT is created automatically."
 			}

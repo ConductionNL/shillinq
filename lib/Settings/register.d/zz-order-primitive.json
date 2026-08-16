@@ -35,14 +35,14 @@
             "enum": [
               "purchase",
               "sales",
-              "subsidie",
+              "subsidy",
               "engagement",
               "booking",
               "quote",
               "blanket"
             ],
             "description": "Discriminator. Only `purchase`, `subsidie` and `engagement` are populated by this change's migration; the others are reserved for future folds (REQ-ORD-001).",
-            "example": "subsidie",
+            "example": "subsidy",
             "title": "Order Type"
           },
           "direction": {
@@ -126,12 +126,12 @@
           "state": {
             "type": "string",
             "enum": [
-              "aanvraag",
-              "verleend",
-              "vastgesteld",
-              "uitbetaald",
-              "teruggevorderd",
-              "afgehandeld",
+              "request",
+              "granted",
+              "determined",
+              "disbursed",
+              "reclaimed",
+              "handled",
               "draft",
               "approved",
               "sent",
@@ -141,40 +141,40 @@
               "closed",
               "cancelled",
               "DRAFT",
-              "INTAKE_VEREIST",
-              "INTAKE_VOLTOOID",
-              "ACTIEF",
-              "BEEINDIGD"
+              "INTAKE_REQUIRED",
+              "INTAKE_COMPLETED",
+              "ACTIVE",
+              "ENDED"
             ],
-            "description": "Lifecycle state. The legal subset and transitions depend on `orderType` — see x-openregister-lifecycle.initialStateByType and .transitions.*.orderType (REQ-ORD-002). subsidie: aanvraag..afgehandeld (identical to the retired Subsidie schema). purchase: draft..cancelled (identical to PurchaseOrder.statusCode). engagement: DRAFT..BEEINDIGD (identical to DBAOpdracht.intakeStatus).",
-            "example": "aanvraag",
+            "description": "Lifecycle state. The legal subset and transitions depend on `orderType` — see x-openregister-lifecycle.initialStateByType and .transitions.*.orderType (REQ-ORD-002). subsidie: request..handled (identical to the retired Subsidie schema). purchase: draft..cancelled (identical to PurchaseOrder.statusCode). engagement: DRAFT..ENDED (identical to DBAOpdracht.intakeStatus).",
+            "example": "request",
             "title": "State"
           },
-          "subsidie": {
+          "subsidy": {
             "type": "object",
             "nullable": true,
             "title": "Subsidie Details",
             "description": "Populated only when orderType=subsidie. The full field set of the retired Subsidie schema (per Awb afdeling 4.2 + VNG ASV-model 2022) — no regulatory field dropped (REQ-ORD-002/003).",
             "properties": {
-              "subsidieNumber": {
+              "subsidyNumber": {
                 "type": "string",
                 "nullable": true,
                 "description": "Source Subsidie's own number (also mirrored to the base orderNumber).",
                 "title": "Subsidie Number"
               },
-              "regelingNaam": {
+              "schemeName": {
                 "type": "string",
                 "nullable": true,
                 "description": "Name of the underlying subsidieregeling.",
                 "title": "Regeling Naam"
               },
-              "regelingArtikel": {
+              "schemeArticle": {
                 "type": "string",
                 "nullable": true,
                 "description": "Specific article reference within the regeling.",
                 "title": "Regeling Artikel"
               },
-              "subsidieRegeling": {
+              "subsidyScheme": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
@@ -188,21 +188,21 @@
                 "description": "R&D subsidie regeling variant (REQ-RDS-001).",
                 "title": "Subsidie Regeling"
               },
-              "aanvraagDate": {
+              "requestDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Date of the subsidie aanvraag (Awb 4:5).",
                 "title": "Aanvraag Date"
               },
-              "beschikkingDate": {
+              "decisionDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Date of the verleningsbeschikking (Awb 4:43/4:48).",
                 "title": "Beschikking Date"
               },
-              "vaststellingDate": {
+              "determinationDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -223,48 +223,48 @@
                 "description": "When disbursed (English operations variant).",
                 "title": "Disbursement Date"
               },
-              "aangevraagdBedrag": {
+              "requestedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Applied-for amount in EUR.",
                 "title": "Aangevraagd Bedrag"
               },
-              "verleendBedrag": {
+              "grantedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Granted amount in EUR. Required on verleen transition. Mirrored to base totalAmount.",
                 "title": "Verleend Bedrag"
               },
-              "vastgesteldBedrag": {
+              "determinedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Settled amount in EUR. Required on vaststellen transition.",
                 "title": "Vastgesteld Bedrag"
               },
-              "uitbetaaldBedrag": {
+              "paidOutAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Paid amount in EUR. Required on uitbetalen transition.",
                 "title": "Uitbetaald Bedrag"
               },
-              "teruggevorderdBedrag": {
+              "reclaimedAmount": {
                 "type": "number",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Reclaimed amount in EUR. Required on terugvorderen transition.",
                 "title": "Teruggevorderd Bedrag"
               },
-              "beschikkingUri": {
+              "decisionUri": {
                 "type": "string",
                 "nullable": true,
                 "description": "docudesk URI of the verleningsbeschikking PDF.",
                 "title": "Beschikking URI"
               },
-              "vaststellingUri": {
+              "determinationUri": {
                 "type": "string",
                 "nullable": true,
                 "description": "docudesk URI of the vaststellingsbeschikking PDF.",
@@ -282,7 +282,7 @@
                 "description": "Free-text or structured prestatieverantwoording. Required on vaststellen transition.",
                 "title": "Prestatieverantwoording"
               },
-              "afwijzingsReden": {
+              "rejectionReason": {
                 "type": "string",
                 "nullable": true,
                 "description": "Reason for rejection. Required on afwijzen transition.",
@@ -466,65 +466,65 @@
             "title": "Engagement Details",
             "description": "Populated only when orderType=engagement. The full field set of DBAOpdracht — Wet DBA compliance engagement (modelovereenkomst + risicoklasse), per REQ-ORD-002/003.",
             "properties": {
-              "ondernemingId": {
+              "enterpriseId": {
                 "type": "string",
                 "nullable": true,
                 "description": "FK to the onderneming (ZZP/eenmanszaak/MKB) executing or hiring for this engagement.",
                 "title": "Onderneming ID"
               },
-              "klantId": {
+              "customerId": {
                 "type": "string",
                 "nullable": true,
                 "description": "FK to the client (also mirrored to the base counterpartyId).",
                 "title": "Klant ID"
               },
-              "opdrachtNaam": {
+              "assignmentName": {
                 "type": "string",
                 "nullable": true,
                 "description": "Free name of the engagement (also mirrored to the base description).",
                 "title": "Opdracht Naam"
               },
-              "verwachteEindDatum": {
+              "expectedEndDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Expected end date (also mirrored to the base endDate).",
                 "title": "Verwachte Eind Datum"
               },
-              "feitelijkeEindDatum": {
+              "actualEndDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "Actual end date; filled on the beeindiging procedure (REQ-DBA-018).",
                 "title": "Feitelijke Eind Datum"
               },
-              "verwachteOmzet": {
+              "expectedRevenue": {
                 "type": "integer",
                 "minimum": 0,
                 "nullable": true,
                 "description": "Expected total revenue in euro cents.",
                 "title": "Verwachte Omzet"
               },
-              "gerealiseerdeOmzet": {
+              "realisedRevenue": {
                 "type": "integer",
                 "minimum": 0,
                 "default": 0,
                 "description": "Revenue realised so far, in euro cents (REQ-DBA-004).",
                 "title": "Gerealiseerde Omzet"
               },
-              "eenmaligLageDrempel": {
+              "oneOffLowThreshold": {
                 "type": "boolean",
                 "default": false,
                 "description": "Marked 'one-off, total < EUR 5000' — shortened intake offered (REQ-DBA-001).",
                 "title": "Eenmalig Lage Drempel"
               },
-              "modelOvereenkomstId": {
+              "modelAgreementId": {
                 "type": "string",
                 "nullable": true,
                 "description": "FK to the applicable DBAModelovereenkomst (REQ-DBA-002).",
                 "title": "Model Overeenkomst ID"
               },
-              "intakeDatum": {
+              "intakeDate": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -539,15 +539,15 @@
                 "description": "Running DBA risk score 0-100 (REQ-DBA-003).",
                 "title": "Actuele Risicoscore"
               },
-              "risicoNiveau": {
+              "riskLevel": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
-                  "LAAG",
-                  "LAAG_MIDDEN",
-                  "MIDDEN_HOOG",
-                  "HOOG",
-                  "VERKORT_LAGE_DREMPEL"
+                  "LOW",
+                  "LOW_MIDDEN",
+                  "MIDDEN_HIGH",
+                  "HIGH",
+                  "ABBREVIATED_LOW_THRESHOLD"
                 ],
                 "description": "Risk band derived from actueleRisicoscore (REQ-DBA-003).",
                 "title": "Risico Niveau"
@@ -565,42 +565,42 @@
                 "description": "FK to the DBAEvidenceDossier for this engagement (REQ-DBA-007).",
                 "title": "Evidence Dossier ID"
               },
-              "wbaBeoordelingResultaat": {
+              "wbaAssessmentResult": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
-                  "BUITEN_DIENSTBETREKKING",
-                  "BINNEN_DIENSTBETREKKING",
-                  "GEEN_OORDEEL",
-                  "NIET_VAN_TOEPASSING"
+                  "OUTSIDE_EMPLOYMENT",
+                  "WITHIN_EMPLOYMENT",
+                  "NONE_OPINION",
+                  "NON_FROM_APPLICATION"
                 ],
                 "description": "Belastingdienst WBA assessment outcome (REQ-DBA-013).",
                 "title": "Wba Beoordeling Resultaat"
               },
-              "wbaGeldigTot": {
+              "wbaValidTo": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
                 "description": "WBA assessment validity date (1 year policy).",
                 "title": "Wba Geldig Tot"
               },
-              "intermediairMode": {
+              "intermediaryMode": {
                 "type": "boolean",
                 "default": false,
                 "description": "Whether the tussenkomst triangle applies (REQ-DBA-017).",
                 "title": "Intermediair Mode"
               },
-              "perspectief": {
+              "perspective": {
                 "type": "string",
                 "nullable": true,
                 "enum": [
-                  "OPDRACHTNEMER",
-                  "OPDRACHTGEVER"
+                  "CONTRACTOR",
+                  "CLIENT"
                 ],
                 "description": "ZZP perspective vs opdrachtgever/hire-in flow (REQ-DBA-010).",
                 "title": "Perspectief"
               },
-              "retentieDeadline": {
+              "retentionDeadline": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
@@ -632,40 +632,40 @@
         },
         "x-openregister-lifecycle": {
           "field": "state",
-          "initialState": "aanvraag",
+          "initialState": "request",
           "initialStateByType": {
-            "subsidie": "aanvraag",
+            "subsidy": "request",
             "purchase": "draft",
             "engagement": "DRAFT"
           },
           "states": {
-            "aanvraag": {
-              "orderType": "subsidie",
+            "request": {
+              "orderType": "subsidy",
               "label": "Aanvraag",
               "description": "Subsidie aanvraag ingediend (Awb 4:5)."
             },
-            "verleend": {
-              "orderType": "subsidie",
+            "granted": {
+              "orderType": "subsidy",
               "label": "Verleend",
               "description": "Subsidie verleend per beschikking (Awb 4:43/4:48)."
             },
-            "vastgesteld": {
-              "orderType": "subsidie",
+            "determined": {
+              "orderType": "subsidy",
               "label": "Vastgesteld",
               "description": "Subsidie vastgesteld op basis van verantwoording (Awb 4:46)."
             },
-            "uitbetaald": {
-              "orderType": "subsidie",
+            "disbursed": {
+              "orderType": "subsidy",
               "label": "Uitbetaald",
               "description": "Subsidie uitbetaald (Awb 4:52)."
             },
-            "teruggevorderd": {
-              "orderType": "subsidie",
+            "reclaimed": {
+              "orderType": "subsidy",
               "label": "Teruggevorderd",
               "description": "Subsidie (gedeeltelijk) teruggevorderd (Awb 4:57)."
             },
-            "afgehandeld": {
-              "orderType": "subsidie",
+            "handled": {
+              "orderType": "subsidy",
               "label": "Afgehandeld",
               "description": "Subsidie-dossier gesloten."
             },
@@ -714,22 +714,22 @@
               "label": "Concept",
               "description": "Engagement created, intake not yet required."
             },
-            "INTAKE_VEREIST": {
+            "INTAKE_REQUIRED": {
               "orderType": "engagement",
               "label": "Intake vereist",
               "description": "First invoice pending; DBA intake must complete first (REQ-DBA-001)."
             },
-            "INTAKE_VOLTOOID": {
+            "INTAKE_COMPLETED": {
               "orderType": "engagement",
               "label": "Intake voltooid",
               "description": "DBA intake completed; engagement ready to go active."
             },
-            "ACTIEF": {
+            "ACTIVE": {
               "orderType": "engagement",
               "label": "Actief",
               "description": "Engagement running; periodic monitoring active."
             },
-            "BEEINDIGD": {
+            "ENDED": {
               "orderType": "engagement",
               "label": "Beeindigd",
               "description": "Engagement closed; evidence trail closed, retention clock running."
@@ -737,9 +737,9 @@
           },
           "transitions": {
             "verleen": {
-              "orderType": "subsidie",
-              "from": "aanvraag",
-              "to": "verleend",
+              "orderType": "subsidy",
+              "from": "request",
+              "to": "granted",
               "label": "Verlenen",
               "requires": {
                 "fields": [
@@ -748,9 +748,9 @@
               }
             },
             "afwijzen": {
-              "orderType": "subsidie",
-              "from": "aanvraag",
-              "to": "afgehandeld",
+              "orderType": "subsidy",
+              "from": "request",
+              "to": "handled",
               "label": "Afwijzen",
               "requires": {
                 "fields": [
@@ -759,9 +759,9 @@
               }
             },
             "vaststellen": {
-              "orderType": "subsidie",
-              "from": "verleend",
-              "to": "vastgesteld",
+              "orderType": "subsidy",
+              "from": "granted",
+              "to": "determined",
               "label": "Vaststellen",
               "requires": {
                 "fields": [
@@ -771,9 +771,9 @@
               }
             },
             "uitbetalen": {
-              "orderType": "subsidie",
-              "from": "vastgesteld",
-              "to": "uitbetaald",
+              "orderType": "subsidy",
+              "from": "determined",
+              "to": "disbursed",
               "label": "Uitbetalen",
               "requires": {
                 "fields": [
@@ -782,9 +782,9 @@
               }
             },
             "terugvorderen": {
-              "orderType": "subsidie",
-              "from": "uitbetaald",
-              "to": "teruggevorderd",
+              "orderType": "subsidy",
+              "from": "disbursed",
+              "to": "reclaimed",
               "label": "Terugvorderen",
               "requires": {
                 "fields": [
@@ -794,15 +794,15 @@
               }
             },
             "afhandelenVanuitUitbetaald": {
-              "orderType": "subsidie",
-              "from": "uitbetaald",
-              "to": "afgehandeld",
+              "orderType": "subsidy",
+              "from": "disbursed",
+              "to": "handled",
               "label": "Dossier sluiten (na bewaartermijn)"
             },
             "afhandelenVanuitTeruggevorderd": {
-              "orderType": "subsidie",
-              "from": "teruggevorderd",
-              "to": "afgehandeld",
+              "orderType": "subsidy",
+              "from": "reclaimed",
+              "to": "handled",
               "label": "Dossier sluiten (terugbetaling voltooid)",
               "requires": "OCA\\Shillinq\\Guard\\SubsidieRepaymentGuard::requireZeroRepaymentBalance"
             },
@@ -869,30 +869,30 @@
             "requireIntake": {
               "orderType": "engagement",
               "from": "DRAFT",
-              "to": "INTAKE_VEREIST",
+              "to": "INTAKE_REQUIRED",
               "label": "Intake vereist"
             },
             "completeIntake": {
               "orderType": "engagement",
-              "from": "INTAKE_VEREIST",
-              "to": "INTAKE_VOLTOOID",
+              "from": "INTAKE_REQUIRED",
+              "to": "INTAKE_COMPLETED",
               "label": "Intake voltooid"
             },
             "activate": {
               "orderType": "engagement",
-              "from": "INTAKE_VOLTOOID",
-              "to": "ACTIEF",
+              "from": "INTAKE_COMPLETED",
+              "to": "ACTIVE",
               "label": "Activeren"
             },
             "endEngagement": {
               "orderType": "engagement",
               "from": [
                 "DRAFT",
-                "INTAKE_VEREIST",
-                "INTAKE_VOLTOOID",
-                "ACTIEF"
+                "INTAKE_REQUIRED",
+                "INTAKE_COMPLETED",
+                "ACTIVE"
               ],
-              "to": "BEEINDIGD",
+              "to": "ENDED",
               "label": "Beeindigen"
             }
           }

@@ -20,30 +20,48 @@
 		</header>
 
 		<dl class="admin-invoice-detail__meta">
-			<dt>{{ t('shillinq', 'Billing model') }}</dt><dd>{{ invoice.billingModel }}</dd>
-			<dt>{{ t('shillinq', 'Customer') }}</dt><dd>{{ invoice.customerId }}</dd>
-			<dt>{{ t('shillinq', 'Project') }}</dt><dd>{{ invoice.projectId || '—' }}</dd>
-			<dt>{{ t('shillinq', 'Invoice date') }}</dt><dd>{{ invoice.invoiceDate }}</dd>
-			<dt>{{ t('shillinq', 'Due date') }}</dt><dd>{{ invoice.dueDate }}</dd>
-			<dt>{{ t('shillinq', 'Rate card') }}</dt><dd>{{ invoice.rateCardId || '—' }}</dd>
-			<dt>{{ t('shillinq', 'Retainer schedule') }}</dt><dd>{{ invoice.retainerScheduleId || '—' }}</dd>
-			<dt>{{ t('shillinq', 'Status') }}</dt><dd>{{ invoice.status }} <span v-if="invoice.posted">({{ t('shillinq', 'Posted') }})</span></dd>
-			<dt>{{ t('shillinq', 'Obligation') }}</dt><dd>{{ invoice.obligationId || '—' }}</dd>
+			<dt>{{ t('shillinq', 'Billing model') }}</dt>
+			<dd>{{ invoice.billingModel }}</dd>
+			<dt>{{ t('shillinq', 'Customer') }}</dt>
+			<dd>{{ invoice.customerId }}</dd>
+			<dt>{{ t('shillinq', 'Project') }}</dt>
+			<dd>{{ invoice.projectId || '—' }}</dd>
+			<dt>{{ t('shillinq', 'Invoice date') }}</dt>
+			<dd>{{ invoice.invoiceDate }}</dd>
+			<dt>{{ t('shillinq', 'Due date') }}</dt>
+			<dd>{{ invoice.dueDate }}</dd>
+			<dt>{{ t('shillinq', 'Rate card') }}</dt>
+			<dd>{{ invoice.rateCardId || '—' }}</dd>
+			<dt>{{ t('shillinq', 'Retainer schedule') }}</dt>
+			<dd>{{ invoice.retainerScheduleId || '—' }}</dd>
+			<dt>{{ t('shillinq', 'Status') }}</dt>
+			<dd>
+				{{ invoice.status }}
+				<span v-if="invoice.posted">({{ t('shillinq', 'Posted') }})</span>
+			</dd>
+			<dt>{{ t('shillinq', 'Obligation') }}</dt>
+			<dd>{{ invoice.obligationId || '—' }}</dd>
 		</dl>
 
-		<InvoiceLineItemReview :lines="lines" :summary="invoice.summary || invoice" />
+		<InvoiceLineItemReview
+			:lines="lines"
+			:summary="invoice.summary || invoice" />
 
 		<section v-if="auditTrail.length" class="admin-invoice-detail__audit">
 			<h3>{{ t('shillinq', 'Audit trail') }}</h3>
 			<ul>
 				<li v-for="(event, idx) in auditTrail" :key="idx">
-					<strong>{{ event.timestamp }}</strong> — {{ event.actor }}: {{ event.action }}
+					<strong>{{ event.timestamp }}</strong> — {{ event.actor }}:
+					{{ event.action }}
 				</li>
 			</ul>
 		</section>
 
 		<div class="admin-invoice-detail__actions">
-			<button type="button" :disabled="invoice.status !== 'draft'" @click="post">
+			<button
+				type="button"
+				:disabled="invoice.status !== 'draft'"
+				@click="post">
 				{{ t('shillinq', 'Post to AR') }}
 			</button>
 			<button type="button" @click="pdf">
@@ -94,10 +112,12 @@ export default {
 				// Silent error — operator sees an empty page.
 			}
 		},
+
 		async post() {
 			await invoiceApi.post(this.invoiceId)
 			await this.reload()
 		},
+
 		async pdf() {
 			await invoiceApi.exportPdf(this.invoiceId)
 		},

@@ -66,364 +66,345 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/payment-control-guards/spec.md
  */
-final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
-{
-    /**
-     * User-facing denial when a line settles an already-paid AP invoice.
-     *
-     * @var string
-     */
-    public const MESSAGE_ALREADY_PAID = 'This payment run cannot be exported: at least one invoice in the batch has already been paid. '
-        .'Remove the settled invoice before exporting; paying it again would be a duplicate payment.';
+final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
+	/**
+	 * User-facing denial when a line settles an already-paid AP invoice.
+	 *
+	 * @var string
+	 */
+	public const MESSAGE_ALREADY_PAID = 'This payment run cannot be exported: at least one invoice in the batch has already been paid. '
+		. 'Remove the settled invoice before exporting; paying it again would be a duplicate payment.';
 
-    /**
-     * User-facing denial when a line settles an invoice already in another batch.
-     *
-     * @var string
-     */
-    public const MESSAGE_ALREADY_BATCHED = 'This payment run cannot be exported: at least one invoice in the batch is already queued in '
-        .'another open or executed payment batch. Remove the duplicate line before exporting to prevent a double payment.';
+	/**
+	 * User-facing denial when a line settles an invoice already in another batch.
+	 *
+	 * @var string
+	 */
+	public const MESSAGE_ALREADY_BATCHED = 'This payment run cannot be exported: at least one invoice in the batch is already queued in '
+		. 'another open or executed payment batch. Remove the duplicate line before exporting to prevent a double payment.';
 
-    /**
-     * User-facing denial when the batch itself cannot be identified (fail-closed).
-     *
-     * @var string
-     */
-    public const MESSAGE_NO_OBJECT = 'This payment run cannot be exported: the batch could not be identified for the duplicate-payment check '
-        .'(fail-closed).';
+	/**
+	 * User-facing denial when the batch itself cannot be identified (fail-closed).
+	 *
+	 * @var string
+	 */
+	public const MESSAGE_NO_OBJECT = 'This payment run cannot be exported: the batch could not be identified for the duplicate-payment check '
+		. '(fail-closed).';
 
-    /**
-     * User-facing denial when a line is malformed or a lookup fails (fail-closed).
-     *
-     * @var string
-     */
-    public const MESSAGE_INDETERMINATE = 'This payment run cannot be exported: the duplicate-payment check could not be completed, '
-        .'so the disbursement is blocked (fail-closed).';
+	/**
+	 * User-facing denial when a line is malformed or a lookup fails (fail-closed).
+	 *
+	 * @var string
+	 */
+	public const MESSAGE_INDETERMINATE = 'This payment run cannot be exported: the duplicate-payment check could not be completed, '
+		. 'so the disbursement is blocked (fail-closed).';
 
-    /**
-     * FQCN of OpenRegister's ObjectService, resolved lazily from the container.
-     *
-     * @var string
-     */
-    private const OBJECT_SERVICE = 'OCA\OpenRegister\Service\ObjectService';
+	/**
+	 * FQCN of OpenRegister's ObjectService, resolved lazily from the container.
+	 *
+	 * @var string
+	 */
+	private const OBJECT_SERVICE = 'OCA\OpenRegister\Service\ObjectService';
 
-    /**
-     * PaymentRun states that still "occupy" an invoice (open or executed batches).
-     *
-     * A `reconciled` run is terminal and its invoices are already `paid`, so the
-     * already-paid check covers it; it is deliberately excluded here.
-     *
-     * @var array<string>
-     */
-    private const OCCUPYING_STATES = [
-        'draft',
-        'approved',
-        'exported',
-    ];
+	/**
+	 * PaymentRun states that still "occupy" an invoice (open or executed batches).
+	 *
+	 * A `reconciled` run is terminal and its invoices are already `paid`, so the
+	 * already-paid check covers it; it is deliberately excluded here.
+	 *
+	 * @var array<string>
+	 */
+	private const OCCUPYING_STATES = [
+		'draft',
+		'approved',
+		'exported',
+	];
 
-    /**
-     * Construct the guard.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution (ADR-022).
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution (ADR-022).
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Authorise (or deny) the payment-run export transition.
-     *
-     * @param array<string, mixed> $object The loaded PaymentRun payload at its current (approved) state.
-     * @param string               $action The transition action being applied (expected: `export`).
-     * @param string               $userId The uid of the caller (unused; retained for the interface).
-     *
-     * @return GuardResult Allow when no line is a duplicate/paid invoice; deny (fail-closed) otherwise.
-     *
-     * @spec openspec/specs/payment-control-guards/spec.md
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $userId is required by
-     *     LifecycleGuardInterface::check()'s signature; this guard does not
-     *     discriminate by caller.
-     */
-    public function check(array $object, string $action, string $userId): GuardResult
-    {
-        $objectId = $this->resolveObjectId(object: $object);
-        if ($objectId === '') {
-            $this->logger->warning('PaymentRunDuplicateGuard: payment-run id is empty — denying (fail-closed).', ['action' => $action]);
-            return GuardResult::deny(self::MESSAGE_NO_OBJECT);
-        }
+	/**
+	 * Authorise (or deny) the payment-run export transition.
+	 *
+	 * @param array<string, mixed> $object The loaded PaymentRun payload at its current (approved) state.
+	 * @param string $action The transition action being applied (expected: `export`).
+	 * @param string $userId The uid of the caller (unused; retained for the interface).
+	 *
+	 * @return GuardResult Allow when no line is a duplicate/paid invoice; deny (fail-closed) otherwise.
+	 *
+	 * @spec openspec/specs/payment-control-guards/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $userId is required by
+	 *     LifecycleGuardInterface::check()'s signature; this guard does not
+	 *     discriminate by caller.
+	 */
+	public function check(array $object, string $action, string $userId): GuardResult {
+		$objectId = $this->resolveObjectId(object: $object);
+		if ($objectId === '') {
+			$this->logger->warning('PaymentRunDuplicateGuard: payment-run id is empty — denying (fail-closed).', ['action' => $action]);
+			return GuardResult::deny(self::MESSAGE_NO_OBJECT);
+		}
 
-        $refs = $this->resolveLineRefs(object: $object);
-        if ($refs === null) {
-            $this->logger->error(
-                'PaymentRunDuplicateGuard: a payment line has no apTransactionRef — denying (fail-closed).',
-                ['paymentRun' => $objectId, 'action' => $action]
-            );
-            return GuardResult::deny(self::MESSAGE_INDETERMINATE);
-        }
+		$refs = $this->resolveLineRefs(object: $object);
+		if ($refs === null) {
+			$this->logger->error(
+				'PaymentRunDuplicateGuard: a payment line has no apTransactionRef — denying (fail-closed).',
+				['paymentRun' => $objectId, 'action' => $action]
+			);
+			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
+		}
 
-        if ($refs === []) {
-            // A batch with no settleable lines cannot double-pay anything.
-            return GuardResult::allow();
-        }
+		if ($refs === []) {
+			// A batch with no settleable lines cannot double-pay anything.
+			return GuardResult::allow();
+		}
 
-        $administrationId = trim((string) ($object['administrationId'] ?? ''));
+		$administrationId = trim((string)($object['administrationId'] ?? ''));
 
-        try {
-            if ($this->anyAlreadyPaid(refs: $refs, administrationId: $administrationId) === true) {
-                $this->logger->warning(
-                    'PaymentRunDuplicateGuard: a line settles an already-paid invoice — denying export.',
-                    ['paymentRun' => $objectId, 'action' => $action]
-                );
-                return GuardResult::deny(self::MESSAGE_ALREADY_PAID);
-            }
+		try {
+			if ($this->anyAlreadyPaid(refs: $refs, administrationId: $administrationId) === true) {
+				$this->logger->warning(
+					'PaymentRunDuplicateGuard: a line settles an already-paid invoice — denying export.',
+					['paymentRun' => $objectId, 'action' => $action]
+				);
+				return GuardResult::deny(self::MESSAGE_ALREADY_PAID);
+			}
 
-            if ($this->anyAlreadyBatched(refs: $refs, administrationId: $administrationId, selfId: $objectId) === true) {
-                $this->logger->warning(
-                    'PaymentRunDuplicateGuard: a line is already queued in another batch — denying export.',
-                    ['paymentRun' => $objectId, 'action' => $action]
-                );
-                return GuardResult::deny(self::MESSAGE_ALREADY_BATCHED);
-            }
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'PaymentRunDuplicateGuard: duplicate-payment lookup threw — denying export (fail-closed).',
-                ['paymentRun' => $objectId, 'action' => $action, 'error' => $e->getMessage()]
-            );
-            return GuardResult::deny(self::MESSAGE_INDETERMINATE);
-        }//end try
+			if ($this->anyAlreadyBatched(refs: $refs, administrationId: $administrationId, selfId: $objectId) === true) {
+				$this->logger->warning(
+					'PaymentRunDuplicateGuard: a line is already queued in another batch — denying export.',
+					['paymentRun' => $objectId, 'action' => $action]
+				);
+				return GuardResult::deny(self::MESSAGE_ALREADY_BATCHED);
+			}
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PaymentRunDuplicateGuard: duplicate-payment lookup threw — denying export (fail-closed).',
+				['paymentRun' => $objectId, 'action' => $action, 'error' => $e->getMessage()]
+			);
+			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
+		}//end try
 
-        return GuardResult::allow();
+		return GuardResult::allow();
+	}//end check()
 
-    }//end check()
+	/**
+	 * Extract the object uuid from the transition payload.
+	 *
+	 * @param array<string, mixed> $object The loaded object payload.
+	 *
+	 * @return string The uuid, or '' when it cannot be resolved.
+	 */
+	private function resolveObjectId(array $object): string {
+		$id = ($object['id'] ?? ($object['@self']['id'] ?? ''));
+		if (is_string($id) === false) {
+			return '';
+		}
 
-    /**
-     * Extract the object uuid from the transition payload.
-     *
-     * @param array<string, mixed> $object The loaded object payload.
-     *
-     * @return string The uuid, or '' when it cannot be resolved.
-     */
-    private function resolveObjectId(array $object): string
-    {
-        $id = ($object['id'] ?? ($object['@self']['id'] ?? ''));
-        if (is_string($id) === false) {
-            return '';
-        }
+		return trim($id);
+	}//end resolveObjectId()
 
-        return trim($id);
+	/**
+	 * Collect the distinct, non-empty apTransactionRef values from the batch's lines.
+	 *
+	 * Returns null (indeterminate → fail-closed) when any line is present but
+	 * carries no apTransactionRef, because that line cannot be checked for
+	 * duplication and must not be silently paid.
+	 *
+	 * @param array<string, mixed> $object The PaymentRun payload.
+	 *
+	 * @return array<string, true>|null The ref set, [] when there are no lines, or null when indeterminate.
+	 */
+	private function resolveLineRefs(array $object): ?array {
+		$lines = ($object['paymentLines'] ?? []);
+		if (is_array($lines) === false) {
+			return null;
+		}
 
-    }//end resolveObjectId()
+		$refs = [];
+		foreach ($lines as $line) {
+			if (is_array($line) === false) {
+				return null;
+			}
 
-    /**
-     * Collect the distinct, non-empty apTransactionRef values from the batch's lines.
-     *
-     * Returns null (indeterminate → fail-closed) when any line is present but
-     * carries no apTransactionRef, because that line cannot be checked for
-     * duplication and must not be silently paid.
-     *
-     * @param array<string, mixed> $object The PaymentRun payload.
-     *
-     * @return array<string, true>|null The ref set, [] when there are no lines, or null when indeterminate.
-     */
-    private function resolveLineRefs(array $object): ?array
-    {
-        $lines = ($object['paymentLines'] ?? []);
-        if (is_array($lines) === false) {
-            return null;
-        }
+			$ref = trim((string)($line['apTransactionRef'] ?? ''));
+			if ($ref === '') {
+				return null;
+			}
 
-        $refs = [];
-        foreach ($lines as $line) {
-            if (is_array($line) === false) {
-                return null;
-            }
+			$refs[$ref] = true;
+		}
 
-            $ref = trim((string) ($line['apTransactionRef'] ?? ''));
-            if ($ref === '') {
-                return null;
-            }
+		return $refs;
+	}//end resolveLineRefs()
 
-            $refs[$ref] = true;
-        }
+	/**
+	 * Whether any referenced APTransaction is already in a paid/settled state.
+	 *
+	 * @param array<string, true> $refs The apTransactionRef set to check.
+	 * @param string $administrationId The administration scope ('' to skip scoping).
+	 *
+	 * @return bool True when at least one referenced invoice is already paid.
+	 */
+	private function anyAlreadyPaid(array $refs, string $administrationId): bool {
+		$transactions = $this->findBySchema(schema: 'APTransaction', administrationId: $administrationId);
+		foreach ($transactions as $transaction) {
+			if (is_array($transaction) === false) {
+				continue;
+			}
 
-        return $refs;
+			if ($this->recordMatchesRef(record: $transaction, refs: $refs) === false) {
+				continue;
+			}
 
-    }//end resolveLineRefs()
+			$state = (string)($transaction['state'] ?? ($transaction['status'] ?? ''));
+			if ($state === 'paid') {
+				return true;
+			}
+		}
 
-    /**
-     * Whether any referenced APTransaction is already in a paid/settled state.
-     *
-     * @param array<string, true> $refs             The apTransactionRef set to check.
-     * @param string              $administrationId The administration scope ('' to skip scoping).
-     *
-     * @return bool True when at least one referenced invoice is already paid.
-     */
-    private function anyAlreadyPaid(array $refs, string $administrationId): bool
-    {
-        $transactions = $this->findBySchema(schema: 'APTransaction', administrationId: $administrationId);
-        foreach ($transactions as $transaction) {
-            if (is_array($transaction) === false) {
-                continue;
-            }
+		return false;
+	}//end anyAlreadyPaid()
 
-            if ($this->recordMatchesRef(record: $transaction, refs: $refs) === false) {
-                continue;
-            }
+	/**
+	 * Whether any referenced invoice is already in another open/executed batch.
+	 *
+	 * @param array<string, true> $refs The apTransactionRef set to check.
+	 * @param string $administrationId The administration scope ('' to skip scoping).
+	 * @param string $selfId The id of the batch being exported (excluded).
+	 *
+	 * @return bool True when at least one referenced invoice sits in another occupying batch.
+	 */
+	private function anyAlreadyBatched(array $refs, string $administrationId, string $selfId): bool {
+		$runs = $this->findBySchema(schema: 'PaymentRun', administrationId: $administrationId);
+		foreach ($runs as $run) {
+			if (is_array($run) === false) {
+				continue;
+			}
 
-            $state = (string) ($transaction['state'] ?? ($transaction['status'] ?? ''));
-            if ($state === 'paid') {
-                return true;
-            }
-        }
+			if ($this->recordIdentity(record: $run) === $selfId) {
+				// The batch being exported never counts as a duplicate of itself.
+				continue;
+			}
 
-        return false;
+			$state = (string)($run['lifecycleState'] ?? ($run['status'] ?? ''));
+			if (in_array($state, self::OCCUPYING_STATES, true) === false) {
+				continue;
+			}
 
-    }//end anyAlreadyPaid()
+			$lines = ($run['paymentLines'] ?? []);
+			if (is_array($lines) === false) {
+				continue;
+			}
 
-    /**
-     * Whether any referenced invoice is already in another open/executed batch.
-     *
-     * @param array<string, true> $refs             The apTransactionRef set to check.
-     * @param string              $administrationId The administration scope ('' to skip scoping).
-     * @param string              $selfId           The id of the batch being exported (excluded).
-     *
-     * @return bool True when at least one referenced invoice sits in another occupying batch.
-     */
-    private function anyAlreadyBatched(array $refs, string $administrationId, string $selfId): bool
-    {
-        $runs = $this->findBySchema(schema: 'PaymentRun', administrationId: $administrationId);
-        foreach ($runs as $run) {
-            if (is_array($run) === false) {
-                continue;
-            }
+			foreach ($lines as $line) {
+				if (is_array($line) === false) {
+					continue;
+				}
 
-            if ($this->recordIdentity(record: $run) === $selfId) {
-                // The batch being exported never counts as a duplicate of itself.
-                continue;
-            }
+				$ref = trim((string)($line['apTransactionRef'] ?? ''));
+				if ($ref !== '' && isset($refs[$ref]) === true) {
+					return true;
+				}
+			}
+		}//end foreach
 
-            $state = (string) ($run['lifecycleState'] ?? ($run['status'] ?? ''));
-            if (in_array($state, self::OCCUPYING_STATES, true) === false) {
-                continue;
-            }
+		return false;
+	}//end anyAlreadyBatched()
 
-            $lines = ($run['paymentLines'] ?? []);
-            if (is_array($lines) === false) {
-                continue;
-            }
+	/**
+	 * Fetch every record of a schema, scoped by administration when known.
+	 *
+	 * The nested `paymentLines[].apTransactionRef` and the cross-schema state
+	 * check are not expressible as an OpenRegister filter, so the guard reads the
+	 * (administration-scoped) set and matches in PHP.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param string $administrationId The administration scope ('' to skip).
+	 *
+	 * @return array<int, mixed> The record set.
+	 */
+	private function findBySchema(string $schema, string $administrationId): array {
+		$filters = [];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
 
-            foreach ($lines as $line) {
-                if (is_array($line) === false) {
-                    continue;
-                }
+		$objectService = $this->container->get(self::OBJECT_SERVICE);
+		$found = $objectService
+			->setRegister($this->register())
+			->setSchema($schema)
+			->findAll(['filters' => $filters]);
 
-                $ref = trim((string) ($line['apTransactionRef'] ?? ''));
-                if ($ref !== '' && isset($refs[$ref]) === true) {
-                    return true;
-                }
-            }
-        }//end foreach
+		if (is_array($found) === false) {
+			return [];
+		}
 
-        return false;
+		return $found;
+	}//end findBySchema()
 
-    }//end anyAlreadyBatched()
+	/**
+	 * Read the stable identity of a record, tolerating id / uuid / slug shapes.
+	 *
+	 * @param array<string, mixed> $record The record.
+	 *
+	 * @return string The first non-empty identity, or ''.
+	 */
+	private function recordIdentity(array $record): string {
+		foreach (['id', 'uuid', 'slug'] as $key) {
+			$value = trim((string)($record[$key] ?? ''));
+			if ($value !== '') {
+				return $value;
+			}
+		}
 
-    /**
-     * Fetch every record of a schema, scoped by administration when known.
-     *
-     * The nested `paymentLines[].apTransactionRef` and the cross-schema state
-     * check are not expressible as an OpenRegister filter, so the guard reads the
-     * (administration-scoped) set and matches in PHP.
-     *
-     * @param string $schema           The schema slug.
-     * @param string $administrationId The administration scope ('' to skip).
-     *
-     * @return array<int, mixed> The record set.
-     */
-    private function findBySchema(string $schema, string $administrationId): array
-    {
-        $filters = [];
-        if ($administrationId !== '') {
-            $filters['administrationId'] = $administrationId;
-        }
+		return '';
+	}//end recordIdentity()
 
-        $objectService = $this->container->get(self::OBJECT_SERVICE);
-        $found         = $objectService
-            ->setRegister($this->register())
-            ->setSchema($schema)
-            ->findAll(['filters' => $filters]);
+	/**
+	 * Whether any of a record's identities (id / uuid / slug) is in the ref set.
+	 *
+	 * A `paymentLines[].apTransactionRef` may be persisted as a uuid or a slug,
+	 * so every identity shape is compared, not just the primary id.
+	 *
+	 * @param array<string, mixed> $record The record to test.
+	 * @param array<string, true> $refs The apTransactionRef set.
+	 *
+	 * @return bool True when the record is one of the referenced invoices.
+	 */
+	private function recordMatchesRef(array $record, array $refs): bool {
+		foreach (['id', 'uuid', 'slug'] as $key) {
+			$value = trim((string)($record[$key] ?? ''));
+			if ($value !== '' && isset($refs[$value]) === true) {
+				return true;
+			}
+		}
 
-        if (is_array($found) === false) {
-            return [];
-        }
+		return false;
+	}//end recordMatchesRef()
 
-        return $found;
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    }//end findBySchema()
-
-    /**
-     * Read the stable identity of a record, tolerating id / uuid / slug shapes.
-     *
-     * @param array<string, mixed> $record The record.
-     *
-     * @return string The first non-empty identity, or ''.
-     */
-    private function recordIdentity(array $record): string
-    {
-        foreach (['id', 'uuid', 'slug'] as $key) {
-            $value = trim((string) ($record[$key] ?? ''));
-            if ($value !== '') {
-                return $value;
-            }
-        }
-
-        return '';
-
-    }//end recordIdentity()
-
-    /**
-     * Whether any of a record's identities (id / uuid / slug) is in the ref set.
-     *
-     * A `paymentLines[].apTransactionRef` may be persisted as a uuid or a slug,
-     * so every identity shape is compared, not just the primary id.
-     *
-     * @param array<string, mixed> $record The record to test.
-     * @param array<string, true>  $refs   The apTransactionRef set.
-     *
-     * @return bool True when the record is one of the referenced invoices.
-     */
-    private function recordMatchesRef(array $record, array $refs): bool
-    {
-        foreach (['id', 'uuid', 'slug'] as $key) {
-            $value = trim((string) ($record[$key] ?? ''));
-            if ($value !== '' && isset($refs[$value]) === true) {
-                return true;
-            }
-        }
-
-        return false;
-
-    }//end recordMatchesRef()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

@@ -44,59 +44,57 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
-class DeadlineReminderJob extends TimedJob
-{
-    /**
-     * Construct the job with a daily interval.
-     *
-     * @param ITimeFactory                      $time            The Nextcloud time factory.
-     * @param ComplianceDeadlineCalendarService $calendarService The deadline publication + reminder service.
-     * @param LoggerInterface                   $logger          Logger for diagnostics.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly ComplianceDeadlineCalendarService $calendarService,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        // Run once every 24 hours.
-        $this->setInterval(seconds: (24 * 60 * 60));
+class DeadlineReminderJob extends TimedJob {
+	/**
+	 * Construct the job with a daily interval.
+	 *
+	 * @param ITimeFactory $time The Nextcloud time factory.
+	 * @param ComplianceDeadlineCalendarService $calendarService The deadline publication + reminder service.
+	 * @param LoggerInterface $logger Logger for diagnostics.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly ComplianceDeadlineCalendarService $calendarService,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		// Run once every 24 hours.
+		$this->setInterval(seconds: (24 * 60 * 60));
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Publish deadline VEVENTs + dispatch due reminders; never throw
-     * (a background job must not crash cron).
-     *
-     * @param mixed $argument Unused job argument.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/compliance-deadline-calendar/spec.md
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    protected function run($argument): void
-    {
-        try {
-            $users = $this->calendarService->publishAll();
-            $this->logger->debug('DeadlineReminderJob: published deadline VEVENTs for '.$users.' user(s)');
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'DeadlineReminderJob: deadline publication failed',
-                ['exception' => $e->getMessage()]
-            );
-        }
+	/**
+	 * Publish deadline VEVENTs + dispatch due reminders; never throw
+	 * (a background job must not crash cron).
+	 *
+	 * @param mixed $argument Unused job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 */
+	protected function run($argument): void {
+		try {
+			$users = $this->calendarService->publishAll();
+			$this->logger->debug('DeadlineReminderJob: published deadline VEVENTs for ' . $users . ' user(s)');
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'DeadlineReminderJob: deadline publication failed',
+				['exception' => $e->getMessage()]
+			);
+		}
 
-        try {
-            $count = $this->calendarService->dispatchDueReminders();
-            $this->logger->debug('DeadlineReminderJob: raised '.$count.' deadline reminder(s)');
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'DeadlineReminderJob: reminder dispatch failed',
-                ['exception' => $e->getMessage()]
-            );
-        }
+		try {
+			$count = $this->calendarService->dispatchDueReminders();
+			$this->logger->debug('DeadlineReminderJob: raised ' . $count . ' deadline reminder(s)');
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'DeadlineReminderJob: reminder dispatch failed',
+				['exception' => $e->getMessage()]
+			);
+		}
 
-    }//end run()
+	}//end run()
 }//end class

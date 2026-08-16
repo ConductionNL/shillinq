@@ -37,271 +37,261 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Optional credit-score integration. Uses the real OR ObjectService API.
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
  */
-class CreditScoreService
-{
-    /**
-     * App-config key for the cache window (days).
-     */
-    private const CFG_CACHE_DAYS = 'dunning.credit_score_cache_days';
+class CreditScoreService {
+	/**
+	 * App-config key for the cache window (days).
+	 */
+	private const CFG_CACHE_DAYS = 'dunning.credit_score_cache_days';
 
-    /**
-     * App-config key for the warning threshold (decimal on the active scoreSchaal).
-     */
-    private const CFG_WARNING_THRESHOLD = 'dunning.credit_score_warning_threshold';
+	/**
+	 * App-config key for the warning threshold (decimal on the active scoreSchaal).
+	 */
+	private const CFG_WARNING_THRESHOLD = 'dunning.credit_score_warning_threshold';
 
-    /**
-     * Construct the credit-score service with its dependencies.
-     *
-     * @param ContainerInterface               $container DI for OR ObjectService.
-     * @param IAppConfig                       $appConfig App config.
-     * @param LoggerInterface                  $logger    Logger.
-     * @param CreditScoreFetchAdapterInterface $fetch     Outbound credit-score fetch port (task-19).
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-        private readonly CreditScoreFetchAdapterInterface $fetch,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the credit-score service with its dependencies.
+	 *
+	 * @param ContainerInterface $container DI for OR ObjectService.
+	 * @param IAppConfig $appConfig App config.
+	 * @param LoggerInterface $logger Logger.
+	 * @param CreditScoreFetchAdapterInterface $fetch Outbound credit-score fetch port (task-19).
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly CreditScoreFetchAdapterInterface $fetch,
+	) {
+	}//end __construct()
 
-    /**
-     * Fetch the most recent CreditScore for a klant, refreshing when stale.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $klantId          Customer FK.
-     * @param string $provider         GRAYDON / CREDITSAFE / ATRADIUS_INSIGHTS.
-     *
-     * @return array<string,mixed>|null The score record, null when none is available.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
-     */
-    public function getOrRefresh(string $administrationId, string $klantId, string $provider): ?array
-    {
-        $cached = $this->latestForKlant(administrationId: $administrationId, klantId: $klantId, provider: $provider);
-        if ($cached !== null && $this->isFresh(score: $cached) === true) {
-            return $cached;
-        }
+	/**
+	 * Fetch the most recent CreditScore for a klant, refreshing when stale.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $customerId Customer FK.
+	 * @param string $provider GRAYDON / CREDITSAFE / ATRADIUS_INSIGHTS.
+	 *
+	 * @return array<string,mixed>|null The score record, null when none is available.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+	 */
+	public function getOrRefresh(string $administrationId, string $customerId, string $provider): ?array {
+		$cached = $this->latestForCustomer(administrationId: $administrationId, customerId: $customerId, provider: $provider);
+		if ($cached !== null && $this->isFresh(score: $cached) === true) {
+			return $cached;
+		}
 
-        // Cache miss / stale — dispatch via the bound fetch adapter
-        // (LogCreditScoreFetchAdapter by default — swap for an
-        // openconnector-backed implementation in production). When the
-        // adapter returns a fresh snapshot, persist it and return it;
-        // otherwise fall back to the stale cache so the caller can still
-        // surface what's known.
-        $fresh = null;
-        try {
-            $fresh = $this->fetch->fetch(
-                administrationId: $administrationId,
-                klantId: $klantId,
-                provider: $provider
-            );
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'Shillinq: CreditScoreFetchAdapter::fetch threw — falling back to cache: '.$e->getMessage()
-            );
-        }
+		// Cache miss / stale — dispatch via the bound fetch adapter
+		// (LogCreditScoreFetchAdapter by default — swap for an
+		// openconnector-backed implementation in production). When the
+		// adapter returns a fresh snapshot, persist it and return it;
+		// otherwise fall back to the stale cache so the caller can still
+		// surface what's known.
+		$fresh = null;
+		try {
+			$fresh = $this->fetch->fetch(
+				administrationId: $administrationId,
+				customerId: $customerId,
+				provider: $provider
+			);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: CreditScoreFetchAdapter::fetch threw — falling back to cache: ' . $e->getMessage()
+			);
+		}
 
-        if ($fresh === null) {
-            $this->logger->info('Shillinq: CreditScore live refresh unavailable for '.$klantId.' / '.$provider.'; using cached snapshot.');
-            return $cached;
-        }
+		if ($fresh === null) {
+			$this->logger->info('Shillinq: CreditScore live refresh unavailable for ' . $customerId . ' / ' . $provider . '; using cached snapshot.');
+			return $cached;
+		}
 
-        // Normalise + persist the fresh snapshot so the next call hits the cache.
-        $fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
-        $fresh['klantId']          = ($fresh['klantId'] ?? $klantId);
-        $fresh['provider']         = ($fresh['provider'] ?? $provider);
-        if (isset($fresh['scoreDatum']) === false || (string) $fresh['scoreDatum'] === '') {
-            $fresh['scoreDatum'] = (new DateTimeImmutable())->format('Y-m-d');
-        }
+		// Normalise + persist the fresh snapshot so the next call hits the cache.
+		$fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
+		$fresh['customerId'] = ($fresh['customerId'] ?? $customerId);
+		$fresh['provider'] = ($fresh['provider'] ?? $provider);
+		if (isset($fresh['scoreDate']) === false || (string)$fresh['scoreDate'] === '') {
+			$fresh['scoreDate'] = (new DateTimeImmutable())->format('Y-m-d');
+		}
 
-        try {
-            $persisted = $this->saveScore(score: $fresh);
-            if ($persisted !== null) {
-                return $persisted;
-            }
+		try {
+			$persisted = $this->saveScore(score: $fresh);
+			if ($persisted !== null) {
+				return $persisted;
+			}
 
-            return $fresh;
-        } catch (\Throwable $e) {
-            $this->logger->warning('Shillinq: failed to persist fresh CreditScore — returning in-memory snapshot: '.$e->getMessage());
-            return $fresh;
-        }
+			return $fresh;
+		} catch (\Throwable $e) {
+			$this->logger->warning('Shillinq: failed to persist fresh CreditScore — returning in-memory snapshot: ' . $e->getMessage());
+			return $fresh;
+		}
 
-    }//end getOrRefresh()
+	}//end getOrRefresh()
 
-    /**
-     * Persist a CreditScore snapshot via the canonical OR ObjectService API.
-     *
-     * @param array<string,mixed> $score The snapshot to persist.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function saveScore(array $score): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $saved         = $objectService
-                ->setRegister($this->register())
-                ->setSchema('CreditScore')
-                ->saveObject($score);
-            if (is_array($saved) === true) {
-                return $saved;
-            }
+	/**
+	 * Persist a CreditScore snapshot via the canonical OR ObjectService API.
+	 *
+	 * @param array<string,mixed> $score The snapshot to persist.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function saveScore(array $score): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$saved = $objectService
+				->setRegister($this->register())
+				->setSchema('CreditScore')
+				->saveObject($score);
+			if (is_array($saved) === true) {
+				return $saved;
+			}
 
-            return null;
-        } catch (\Throwable $e) {
-            $this->logger->warning('Shillinq: CreditScoreService::saveScore failed: '.$e->getMessage());
-            return null;
-        }
+			return null;
+		} catch (\Throwable $e) {
+			$this->logger->warning('Shillinq: CreditScoreService::saveScore failed: ' . $e->getMessage());
+			return null;
+		}
 
-    }//end saveScore()
+	}//end saveScore()
 
-    /**
-     * Render a UI warning payload for an invoice when the klant has a low score.
-     *
-     * @param array<string,mixed>|null $score         The CreditScore record.
-     * @param float                    $invoiceBedrag Invoice principal (EUR).
-     *
-     * @return array{warning:bool,message:string,creditLimietAdvies:?float,deelfacturatieAdvies:bool}
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
-     */
-    public function evaluateForInvoice(?array $score, float $invoiceBedrag): array
-    {
-        if ($score === null) {
-            return [
-                'warning'              => false,
-                'message'              => '',
-                'creditLimietAdvies'   => null,
-                'deelfacturatieAdvies' => false,
-            ];
-        }
+	/**
+	 * Render a UI warning payload for an invoice when the klant has a low score.
+	 *
+	 * @param array<string,mixed>|null $score The CreditScore record.
+	 * @param float $invoiceAmount Invoice principal (EUR).
+	 *
+	 * @return array{warning:bool,message:string,creditLimitAdvice:?float,deelfacturatieAdvies:bool}
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
+	 */
+	public function evaluateForInvoice(?array $score, float $invoiceAmount): array {
+		if ($score === null) {
+			return [
+				'warning' => false,
+				'message' => '',
+				'creditLimitAdvice' => null,
+				'deelfacturatieAdvies' => false,
+			];
+		}
 
-        $threshold = (float) $this->appConfig->getValueString(Application::APP_ID, self::CFG_WARNING_THRESHOLD, '3.0');
-        $value     = (float) ($score['score'] ?? 0.0);
-        $limit     = null;
-        if (isset($score['creditLimietAdvies']) === true) {
-            $limit = (float) $score['creditLimietAdvies'];
-        }
+		$threshold = (float)$this->appConfig->getValueString(Application::APP_ID, self::CFG_WARNING_THRESHOLD, '3.0');
+		$value = (float)($score['score'] ?? 0.0);
+		$limit = null;
+		if (isset($score['creditLimitAdvice']) === true) {
+			$limit = (float)$score['creditLimitAdvice'];
+		}
 
-        $belowThreshold = ($value < $threshold);
-        $overLimit      = ($limit !== null && $invoiceBedrag > $limit);
+		$belowThreshold = ($value < $threshold);
+		$overLimit = ($limit !== null && $invoiceAmount > $limit);
 
-        if ($belowThreshold === false && $overLimit === false) {
-            return [
-                'warning'              => false,
-                'message'              => '',
-                'creditLimietAdvies'   => $limit,
-                'deelfacturatieAdvies' => false,
-            ];
-        }
+		if ($belowThreshold === false && $overLimit === false) {
+			return [
+				'warning' => false,
+				'message' => '',
+				'creditLimitAdvice' => $limit,
+				'deelfacturatieAdvies' => false,
+			];
+		}
 
-        $klantId = (string) ($score['klantId'] ?? '');
-        $message = sprintf(
-            'Klant %s heeft lage creditscore (%s op %s). Overweeg vooruitbetaling of deelfacturatie.',
-            $klantId,
-            (string) $value,
-            (string) ($score['scoreSchaal'] ?? '')
-        );
+		$customerId = (string)($score['customerId'] ?? '');
+		$message = sprintf(
+			'Klant %s heeft lage creditscore (%s op %s). Overweeg vooruitbetaling of deelfacturatie.',
+			$customerId,
+			(string)$value,
+			(string)($score['scoreScale'] ?? '')
+		);
 
-        return [
-            'warning'              => true,
-            'message'              => $message,
-            'creditLimietAdvies'   => $limit,
-            'deelfacturatieAdvies' => ($overLimit === true),
-        ];
+		return [
+			'warning' => true,
+			'message' => $message,
+			'creditLimitAdvice' => $limit,
+			'deelfacturatieAdvies' => ($overLimit === true),
+		];
 
-    }//end evaluateForInvoice()
+	}//end evaluateForInvoice()
 
-    /**
-     * The most recent CreditScore for a klant / provider tuple.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $klantId          Customer FK.
-     * @param string $provider         Provider id.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function latestForKlant(string $administrationId, string $klantId, string $provider): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema('CreditScore')
-                ->findAll(
-                        [
-                            'filters' => [
-                                'administrationId' => $administrationId,
-                                'klantId'          => $klantId,
-                                'provider'         => $provider,
-                            ],
-                        ]
-                        );
-            if (is_array($rows) === false || $rows === []) {
-                return null;
-            }
+	/**
+	 * The most recent CreditScore for a klant / provider tuple.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $customerId Customer FK.
+	 * @param string $provider Provider id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function latestForCustomer(string $administrationId, string $customerId, string $provider): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($this->register())
+				->setSchema('CreditScore')
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							'customerId' => $customerId,
+							'provider' => $provider,
+						],
+					]
+				);
+			if (is_array($rows) === false || $rows === []) {
+				return null;
+			}
 
-            usort(
-                $rows,
-                static function (array $a, array $b): int {
-                    return strcmp((string) ($b['scoreDatum'] ?? ''), (string) ($a['scoreDatum'] ?? ''));
-                }
-            );
-            return $rows[0];
-        } catch (\Throwable $e) {
-            $this->logger->warning('Shillinq: CreditScoreService::latestForKlant failed: '.$e->getMessage());
-            return null;
-        }//end try
+			usort(
+				$rows,
+				static function (array $a, array $b): int {
+					return strcmp((string)($b['scoreDate'] ?? ''), (string)($a['scoreDate'] ?? ''));
+				}
+			);
+			return $rows[0];
+		} catch (\Throwable $e) {
+			$this->logger->warning('Shillinq: CreditScoreService::latestForKlant failed: ' . $e->getMessage());
+			return null;
+		}//end try
 
-    }//end latestForKlant()
+	}//end latestForKlant()
 
-    /**
-     * Whether a CreditScore snapshot is within the configured cache window.
-     *
-     * @param array<string,mixed> $score The snapshot.
-     *
-     * @return bool
-     */
-    private function isFresh(array $score): bool
-    {
-        $days  = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
-        $datum = (string) ($score['scoreDatum'] ?? '');
-        if ($datum === '') {
-            return false;
-        }
+	/**
+	 * Whether a CreditScore snapshot is within the configured cache window.
+	 *
+	 * @param array<string,mixed> $score The snapshot.
+	 *
+	 * @return bool
+	 */
+	private function isFresh(array $score): bool {
+		$days = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
+		$date = (string)($score['scoreDate'] ?? '');
+		if ($date === '') {
+			return false;
+		}
 
-        try {
-            $when = new DateTimeImmutable($datum);
-        } catch (\Throwable $e) {
-            return false;
-        }
+		try {
+			$when = new DateTimeImmutable($date);
+		} catch (\Throwable $e) {
+			return false;
+		}
 
-        $cutoff = (new DateTimeImmutable())->modify('-'.$days.' days');
-        return $when >= $cutoff;
+		$cutoff = (new DateTimeImmutable())->modify('-' . $days . ' days');
+		return $when >= $cutoff;
+	}//end isFresh()
 
-    }//end isFresh()
+	/**
+	 * Resolve the configured register slug.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the configured register slug.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

@@ -35,148 +35,131 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-4
  */
-final class TransactionalGuardTest extends TestCase
-{
+final class TransactionalGuardTest extends TestCase {
 
-    /**
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
+	/**
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    /**
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->logger = $this->createMock(LoggerInterface::class);
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * Local (DB=null) flow: begin → inTransaction true → commit clears.
+	 *
+	 * @return void
+	 */
+	public function testLocalLifecycleTracksFlag(): void {
+		$guard = new TransactionalGuard(null, $this->logger);
 
+		self::assertFalse($guard->inTransaction());
+		$guard->beginTransaction();
+		self::assertTrue($guard->inTransaction());
+		$guard->commit();
+		self::assertFalse($guard->inTransaction());
 
-    /**
-     * Local (DB=null) flow: begin → inTransaction true → commit clears.
-     *
-     * @return void
-     */
-    public function testLocalLifecycleTracksFlag(): void
-    {
-        $guard = new TransactionalGuard(null, $this->logger);
+	}//end testLocalLifecycleTracksFlag()
 
-        self::assertFalse($guard->inTransaction());
-        $guard->beginTransaction();
-        self::assertTrue($guard->inTransaction());
-        $guard->commit();
-        self::assertFalse($guard->inTransaction());
+	/**
+	 * Local rollBack clears the flag.
+	 *
+	 * @return void
+	 */
+	public function testLocalRollBackClearsFlag(): void {
+		$guard = new TransactionalGuard(null, $this->logger);
 
-    }//end testLocalLifecycleTracksFlag()
+		$guard->beginTransaction();
+		$guard->rollBack();
+		self::assertFalse($guard->inTransaction());
 
+	}//end testLocalRollBackClearsFlag()
 
-    /**
-     * Local rollBack clears the flag.
-     *
-     * @return void
-     */
-    public function testLocalRollBackClearsFlag(): void
-    {
-        $guard = new TransactionalGuard(null, $this->logger);
+	/**
+	 * With no DB wired, lockResourceRow is a no-op and returns false.
+	 *
+	 * @return void
+	 */
+	public function testLocalLockResourceRowReturnsFalse(): void {
+		$guard = new TransactionalGuard(null, $this->logger);
 
-        $guard->beginTransaction();
-        $guard->rollBack();
-        self::assertFalse($guard->inTransaction());
+		self::assertFalse($guard->lockResourceRow('res-1'));
 
-    }//end testLocalRollBackClearsFlag()
+	}//end testLocalLockResourceRowReturnsFalse()
 
+	/**
+	 * With a DB wired, begin/commit/rollBack forward to the connection.
+	 *
+	 * @return void
+	 */
+	public function testDbLifecycleForwardsCalls(): void {
+		$db = $this->createMock(IDBConnection::class);
 
-    /**
-     * With no DB wired, lockResourceRow is a no-op and returns false.
-     *
-     * @return void
-     */
-    public function testLocalLockResourceRowReturnsFalse(): void
-    {
-        $guard = new TransactionalGuard(null, $this->logger);
+		$db->expects(self::once())->method('beginTransaction');
+		$db->method('inTransaction')->willReturn(true);
+		$db->expects(self::once())->method('commit');
 
-        self::assertFalse($guard->lockResourceRow('res-1'));
+		$guard = new TransactionalGuard($db, $this->logger);
 
-    }//end testLocalLockResourceRowReturnsFalse()
+		$guard->beginTransaction();
+		self::assertTrue($guard->inTransaction());
+		$guard->commit();
 
+	}//end testDbLifecycleForwardsCalls()
 
-    /**
-     * With a DB wired, begin/commit/rollBack forward to the connection.
-     *
-     * @return void
-     */
-    public function testDbLifecycleForwardsCalls(): void
-    {
-        $db = $this->createMock(IDBConnection::class);
+	/**
+	 * commit() is a no-op when the connection isn't in a transaction.
+	 *
+	 * @return void
+	 */
+	public function testDbCommitIsNoOpWhenNoTransactionOpen(): void {
+		$db = $this->createMock(IDBConnection::class);
 
-        $db->expects(self::once())->method('beginTransaction');
-        $db->method('inTransaction')->willReturn(true);
-        $db->expects(self::once())->method('commit');
+		$db->method('inTransaction')->willReturn(false);
+		$db->expects(self::never())->method('commit');
 
-        $guard = new TransactionalGuard($db, $this->logger);
+		$guard = new TransactionalGuard($db, $this->logger);
+		$guard->commit(); // must not throw
 
-        $guard->beginTransaction();
-        self::assertTrue($guard->inTransaction());
-        $guard->commit();
+	}//end testDbCommitIsNoOpWhenNoTransactionOpen()
 
-    }//end testDbLifecycleForwardsCalls()
+	/**
+	 * rollBack() is a no-op when no transaction is open.
+	 *
+	 * @return void
+	 */
+	public function testDbRollBackIsNoOpWhenNoTransactionOpen(): void {
+		$db = $this->createMock(IDBConnection::class);
 
+		$db->method('inTransaction')->willReturn(false);
+		$db->expects(self::never())->method('rollBack');
 
-    /**
-     * commit() is a no-op when the connection isn't in a transaction.
-     *
-     * @return void
-     */
-    public function testDbCommitIsNoOpWhenNoTransactionOpen(): void
-    {
-        $db = $this->createMock(IDBConnection::class);
+		$guard = new TransactionalGuard($db, $this->logger);
+		$guard->rollBack();
 
-        $db->method('inTransaction')->willReturn(false);
-        $db->expects(self::never())->method('commit');
+	}//end testDbRollBackIsNoOpWhenNoTransactionOpen()
 
-        $guard = new TransactionalGuard($db, $this->logger);
-        $guard->commit(); // must not throw
+	/**
+	 * lockResourceRow throws a LogicException when called outside a tx.
+	 *
+	 * @return void
+	 */
+	public function testLockResourceRowRequiresTransaction(): void {
+		$db = $this->createMock(IDBConnection::class);
+		$db->method('inTransaction')->willReturn(false);
 
-    }//end testDbCommitIsNoOpWhenNoTransactionOpen()
+		$guard = new TransactionalGuard($db, $this->logger);
 
+		$this->expectException(\LogicException::class);
+		$this->expectExceptionMessage('lockResourceRow must be called inside a transaction');
 
-    /**
-     * rollBack() is a no-op when no transaction is open.
-     *
-     * @return void
-     */
-    public function testDbRollBackIsNoOpWhenNoTransactionOpen(): void
-    {
-        $db = $this->createMock(IDBConnection::class);
+		$guard->lockResourceRow('res-1');
 
-        $db->method('inTransaction')->willReturn(false);
-        $db->expects(self::never())->method('rollBack');
-
-        $guard = new TransactionalGuard($db, $this->logger);
-        $guard->rollBack();
-
-    }//end testDbRollBackIsNoOpWhenNoTransactionOpen()
-
-
-    /**
-     * lockResourceRow throws a LogicException when called outside a tx.
-     *
-     * @return void
-     */
-    public function testLockResourceRowRequiresTransaction(): void
-    {
-        $db = $this->createMock(IDBConnection::class);
-        $db->method('inTransaction')->willReturn(false);
-
-        $guard = new TransactionalGuard($db, $this->logger);
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('lockResourceRow must be called inside a transaction');
-
-        $guard->lockResourceRow('res-1');
-
-    }//end testLockResourceRowRequiresTransaction()
+	}//end testLockResourceRowRequiresTransaction()
 
 }//end class

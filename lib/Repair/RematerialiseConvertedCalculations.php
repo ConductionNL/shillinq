@@ -66,6 +66,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that re-saves every existing object on the 17 schemas whose
@@ -75,212 +76,206 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
  */
-class RematerialiseConvertedCalculations implements IRepairStep
-{
-    use ReadsSourceRowsInBatches;
+class RematerialiseConvertedCalculations implements IRepairStep {
+	use ReadsSourceRowsInBatches;
 
-    /**
-     * Schema slugs carrying a Bucket-1 or Bucket-2 per-object calc this
-     * change converted to JSON-AST + `materialise: true`. See design.md's
-     * per-calc audit table (#1-29, minus the 3 fields reclassified to the
-     * `-guards` follow-up).
-     *
-     * @var array<int,string>
-     */
-    private const SCHEMAS = [
-        'BankConnection',
-        'Account',
-        'RetentionRule',
-        'kernGegevensConfig',
-        'FixedAsset',
-        'RateSchedule',
-        'MileageEntry',
-        'PerDiem',
-        'RepaymentInstallment',
-        'WinstToerekening',
-        'ZzpDeduction',
-        'SisaReport',
-        'InventoryReorderRule',
-        'Project',
-        'ProjectAssignment',
-        'VatReturn',
-        'InnovatieboxElection',
-    ];
+	/**
+	 * Schema slugs carrying a Bucket-1 or Bucket-2 per-object calc this
+	 * change converted to JSON-AST + `materialise: true`. See design.md's
+	 * per-calc audit table (#1-29, minus the 3 fields reclassified to the
+	 * `-guards` follow-up).
+	 *
+	 * @var array<int,string>
+	 */
+	private const SCHEMAS = [
+		'BankConnection',
+		'Account',
+		'RetentionRule',
+		'kernGegevensConfig',
+		'FixedAsset',
+		'RateSchedule',
+		'MileageEntry',
+		'PerDiem',
+		'RepaymentInstallment',
+		'WinstToerekening',
+		'ZzpDeduction',
+		'SisaReport',
+		'InventoryReorderRule',
+		'Project',
+		'ProjectAssignment',
+		'VatReturn',
+		'InnovatieboxElection',
+	];
 
-    /**
-     * Constructor.
-     *
-     * @param SettingsService    $settingsService The settings service (register slug).
-     * @param LoggerInterface    $logger          The logger interface.
-     * @param ContainerInterface $container       The DI container (lazy OR ObjectService resolution).
-     */
-    public function __construct(
-        private SettingsService $settingsService,
-        private LoggerInterface $logger,
-        private ContainerInterface $container,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param LoggerInterface $logger The logger interface.
+	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
+	 */
+	public function __construct(
+		private SettingsService $settingsService,
+		private LoggerInterface $logger,
+		private ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * The repair-step display name.
-     *
-     * @return string The display name.
-     *
-     * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
-     */
-    public function getName(): string
-    {
-        return 'Shillinq: rematerialise converted calc fields on existing objects (revive-declarative-calc-layer)';
+	/**
+	 * The repair-step display name.
+	 *
+	 * @return string The display name.
+	 *
+	 * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
+	 */
+	public function getName(): string {
+		return 'Shillinq: rematerialise converted calc fields on existing objects (revive-declarative-calc-layer)';
+	}//end getName()
 
-    }//end getName()
+	/**
+	 * Re-save every existing object on each converted schema, triggering
+	 * CalculationOnSaveListener to recompute + persist the newly-materialised
+	 * derived fields. Best-effort per-schema: a failure on one schema does
+	 * not prevent the others from backfilling.
+	 *
+	 * @param IOutput $output The repair-step output (progress + warnings).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
+	 */
+	public function run(IOutput $output): void {
+		try {
+			$registerSlug = $this->settingsService->getRegisterSlug();
 
-    /**
-     * Re-save every existing object on each converted schema, triggering
-     * CalculationOnSaveListener to recompute + persist the newly-materialised
-     * derived fields. Best-effort per-schema: a failure on one schema does
-     * not prevent the others from backfilling.
-     *
-     * @param IOutput $output The repair-step output (progress + warnings).
-     *
-     * @return void
-     *
-     * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
-     */
-    public function run(IOutput $output): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->settingsService->getRegisterSlug();
+			// Re-saving an object that carries a folder association goes through
+			// the Files layer, which checks the ACTING USER's folder access — a
+			// session-less repair/CLI context has none, so the save is denied
+			// ("Access to folder '<n>' is denied for the acting user") and the
+			// object silently fails to rematerialise. Resolve an admin IUser and
+			// pass it as currentUser so the write has folder access (mirrors
+			// FoldIntoOrder). Live-verified: without this, 173 real objects
+			// (Account/RetentionRule/…) failed to re-save on occ maintenance:repair.
+			$admin = $this->resolveAdminUser();
+			$totalResaved = 0;
+			foreach (self::SCHEMAS as $schema) {
+				$totalResaved += $this->resaveSchema(
+					objectService: $this->objectService,
+					registerSlug: $registerSlug,
+					schema: $schema,
+					output: $output,
+					admin: $admin
+				);
+			}
 
-            // Re-saving an object that carries a folder association goes through
-            // the Files layer, which checks the ACTING USER's folder access — a
-            // session-less repair/CLI context has none, so the save is denied
-            // ("Access to folder '<n>' is denied for the acting user") and the
-            // object silently fails to rematerialise. Resolve an admin IUser and
-            // pass it as currentUser so the write has folder access (mirrors
-            // FoldIntoOrder). Live-verified: without this, 173 real objects
-            // (Account/RetentionRule/…) failed to re-save on occ maintenance:repair.
-            $admin        = $this->resolveAdminUser();
-            $totalResaved = 0;
-            foreach (self::SCHEMAS as $schema) {
-                $totalResaved += $this->resaveSchema(
-                    objectService: $objectService,
-                    registerSlug: $registerSlug,
-                    schema: $schema,
-                    output: $output,
-                    admin: $admin
-                );
-            }
+			$output->info(
+				'Shillinq: calc rematerialisation complete — ' . $totalResaved . ' object(s) re-saved across '
+				. count(self::SCHEMAS) . ' schema(s).'
+			);
+		} catch (\Throwable $e) {
+			// Backfill is best-effort: failing it must NOT block the app
+			// upgrade. Log + warn so an operator can re-run.
+			$output->warning('Shillinq: calc rematerialisation failed: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: RematerialiseConvertedCalculations failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-            $output->info(
-                'Shillinq: calc rematerialisation complete — '.$totalResaved.' object(s) re-saved across '
-                .count(self::SCHEMAS).' schema(s).'
-            );
-        } catch (\Throwable $e) {
-            // Backfill is best-effort: failing it must NOT block the app
-            // upgrade. Log + warn so an operator can re-run.
-            $output->warning('Shillinq: calc rematerialisation failed: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: RematerialiseConvertedCalculations failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+	}//end run()
 
-    }//end run()
+	/**
+	 * Resolve the first admin-group member as an IUser (never a string) so OR
+	 * writes that touch the Files/folder layer have folder access. Returns null
+	 * when no admin exists (best-effort; the save then runs session-less).
+	 *
+	 * @return IUser|null The first admin-group member, or null.
+	 */
+	private function resolveAdminUser(): ?IUser {
+		try {
+			$groupManager = $this->container->get(IGroupManager::class);
+			$adminGroup = $groupManager->get('admin');
+			if ($adminGroup === null) {
+				return null;
+			}
 
-    /**
-     * Resolve the first admin-group member as an IUser (never a string) so OR
-     * writes that touch the Files/folder layer have folder access. Returns null
-     * when no admin exists (best-effort; the save then runs session-less).
-     *
-     * @return IUser|null The first admin-group member, or null.
-     */
-    private function resolveAdminUser(): ?IUser
-    {
-        try {
-            $groupManager = $this->container->get(IGroupManager::class);
-            $adminGroup   = $groupManager->get('admin');
-            if ($adminGroup === null) {
-                return null;
-            }
+			$users = $adminGroup->getUsers();
+			if ($users === []) {
+				return null;
+			}
 
-            $users = $adminGroup->getUsers();
-            if ($users === []) {
-                return null;
-            }
+			return reset($users);
+		} catch (\Throwable $e) {
+			return null;
+		}
 
-            return reset($users);
-        } catch (\Throwable $e) {
-            return null;
-        }
+	}//end resolveAdminUser()
 
-    }//end resolveAdminUser()
+	/**
+	 * Re-save every existing object on one schema. Best-effort per object —
+	 * a single object failing to save is logged and skipped, not fatal to
+	 * the rest of the backfill.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param string $schema The schema slug being backfilled.
+	 * @param IOutput $output The repair-step output.
+	 * @param IUser|null $admin The acting admin user (folder access), or null.
+	 *
+	 * @return int The number of objects re-saved for this schema.
+	 */
+	private function resaveSchema(
+		object $objectService,
+		string $registerSlug,
+		string $schema,
+		IOutput $output,
+		?IUser $admin,
+	): int {
+		try {
+			$objects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: could not list ' . $schema . ' objects for rematerialisation: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: RematerialiseConvertedCalculations findAll failed',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+			return 0;
+		}
 
-    /**
-     * Re-save every existing object on one schema. Best-effort per object —
-     * a single object failing to save is logged and skipped, not fatal to
-     * the rest of the backfill.
-     *
-     * @param object     $objectService The OR ObjectService.
-     * @param string     $registerSlug  The register slug.
-     * @param string     $schema        The schema slug being backfilled.
-     * @param IOutput    $output        The repair-step output.
-     * @param IUser|null $admin         The acting admin user (folder access), or null.
-     *
-     * @return int The number of objects re-saved for this schema.
-     */
-    private function resaveSchema(
-        object $objectService,
-        string $registerSlug,
-        string $schema,
-        IOutput $output,
-        ?IUser $admin
-    ): int {
-        try {
-            $objects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
-        } catch (\Throwable $e) {
-            $output->warning('Shillinq: could not list '.$schema.' objects for rematerialisation: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: RematerialiseConvertedCalculations findAll failed',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-            return 0;
-        }
+		if (is_array($objects) === false || $objects === []) {
+			return 0;
+		}
 
-        if (is_array($objects) === false || $objects === []) {
-            return 0;
-        }
+		$resaved = 0;
+		foreach ($objects as $object) {
+			$arr = $this->rowPayload(row: $object);
+			if (isset($arr['id']) === false && isset($arr['uuid']) === false) {
+				// No identifiable persisted id — skip rather than risk
+				// creating a duplicate via an unintended CREATE.
+				continue;
+			}
 
-        $resaved = 0;
-        foreach ($objects as $object) {
-            $arr = $this->rowPayload(row: $object);
-            if (isset($arr['id']) === false && isset($arr['uuid']) === false) {
-                // No identifiable persisted id — skip rather than risk
-                // creating a duplicate via an unintended CREATE.
-                continue;
-            }
+			try {
+				$objectService->saveObject(
+					object: $arr,
+					register: $registerSlug,
+					schema: $schema,
+					_rbac: false,
+					_multitenancy: false,
+					currentUser: $admin,
+				);
+				$resaved++;
+			} catch (\Throwable $e) {
+				$id = (string)($arr['id'] ?? ($arr['uuid'] ?? 'unknown'));
+				$output->warning('Shillinq: failed to rematerialise ' . $schema . ' ' . $id . ': ' . $e->getMessage());
+				$this->logger->warning(
+					'Shillinq: RematerialiseConvertedCalculations saveObject failed',
+					['schema' => $schema, 'id' => $id, 'exception' => $e->getMessage()]
+				);
+			}
+		}//end foreach
 
-            try {
-                $objectService->saveObject(
-                    object: $arr,
-                    register: $registerSlug,
-                    schema: $schema,
-                    _rbac: false,
-                    _multitenancy: false,
-                    currentUser: $admin,
-                );
-                $resaved++;
-            } catch (\Throwable $e) {
-                $id = (string) ($arr['id'] ?? ($arr['uuid'] ?? 'unknown'));
-                $output->warning('Shillinq: failed to rematerialise '.$schema.' '.$id.': '.$e->getMessage());
-                $this->logger->warning(
-                    'Shillinq: RematerialiseConvertedCalculations saveObject failed',
-                    ['schema' => $schema, 'id' => $id, 'exception' => $e->getMessage()]
-                );
-            }
-        }//end foreach
-
-        return $resaved;
-
-    }//end resaveSchema()
+		return $resaved;
+	}//end resaveSchema()
 }//end class

@@ -50,9 +50,9 @@ use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatcher from posted StockMove -> valuation engine + COGS poster.
@@ -68,218 +68,209 @@ use Throwable;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
  */
-class StockMoveTransitionedListener implements IEventListener
-{
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param FifoValuationService          $fifo      FIFO engine.
-     * @param MovingAverageValuationService $average   Moving-average engine.
-     * @param CogsPosterService             $cogs      COGS poster.
-     * @param ContainerInterface            $container DI for ObjectService lazy resolution.
-     * @param IAppConfig                    $appConfig App config for register slug.
-     * @param LoggerInterface               $logger    Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly FifoValuationService $fifo,
-        private readonly MovingAverageValuationService $average,
-        private readonly CogsPosterService $cogs,
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
+class StockMoveTransitionedListener implements IEventListener {
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param FifoValuationService $fifo FIFO engine.
+	 * @param MovingAverageValuationService $average Moving-average engine.
+	 * @param CogsPosterService $cogs COGS poster.
+	 * @param IAppConfig $appConfig App config for register slug.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly FifoValuationService $fifo,
+		private readonly MovingAverageValuationService $average,
+		private readonly CogsPosterService $cogs,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an ObjectTransitionedEvent.
-     *
-     * @param Event $event Event from OpenRegister.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectTransitionedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectTransitionedEvent.
+	 *
+	 * @param Event $event Event from OpenRegister.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectTransitionedEvent === false) {
+			return;
+		}
 
-        try {
-            if ($this->isStockMoveSchema(schema: (string) $event->getSchema()) === false) {
-                return;
-            }
+		try {
+			if ($this->isStockMoveSchema(schema: (string)$event->getSchema()) === false) {
+				return;
+			}
 
-            if ($event->getTo() !== 'posted') {
-                return;
-            }
+			if ($event->getTo() !== 'posted') {
+				return;
+			}
 
-            $entity = $event->getObject();
-            $move   = $entity->getObject();
-            if (is_array($move) === false) {
-                return;
-            }
+			$entity = $event->getObject();
+			$move = $entity->getObject();
+			if (is_array($move) === false) {
+				return;
+			}
 
-            $movementType = (string) ($move['movementType'] ?? '');
-            if (in_array($movementType, ['receipt', 'issue'], true) === false) {
-                // Transfer, manufacture, repack — out of scope here.
-                return;
-            }
+			$movementType = (string)($move['movementType'] ?? '');
+			if (in_array($movementType, ['receipt', 'issue'], true) === false) {
+				// Transfer, manufacture, repack — out of scope here.
+				return;
+			}
 
-            $valuation = $this->lookupValuation(move: $move);
-            if ($valuation === null) {
-                // No driving valuation yet — only fire if the operator already
-                // has a snapshot. On a true first receipt the snapshot will be
-                // created by the engine on next dispatch via findOrCreateValuation().
-                $valuation = ['valuationMethod' => 'FIFO'];
-            }
+			$valuation = $this->lookupValuation(move: $move);
+			if ($valuation === null) {
+				// No driving valuation yet — only fire if the operator already
+				// has a snapshot. On a true first receipt the snapshot will be
+				// created by the engine on next dispatch via findOrCreateValuation().
+				$valuation = ['valuationMethod' => 'FIFO'];
+			}
 
-            $method = (string) ($valuation['valuationMethod'] ?? 'FIFO');
-            $result = match ($method) {
-                'average' => $this->average->processStockMove(move: $move),
-                default   => $this->fifo->processStockMove(move: $move),
-            };
+			$method = (string)($valuation['valuationMethod'] ?? 'FIFO');
+			$result = match ($method) {
+				'average' => $this->average->processStockMove(move: $move),
+				default => $this->fifo->processStockMove(move: $move),
+			};
 
-            if (((bool) ($result['processed'] ?? false)) !== true) {
-                return;
-            }
+			if (((bool)($result['processed'] ?? false)) !== true) {
+				return;
+			}
 
-            // Only outbound moves drive COGS posting per REQ-INV-007.
-            if ($movementType !== 'issue') {
-                return;
-            }
+			// Only outbound moves drive COGS posting per REQ-INV-007.
+			if ($movementType !== 'issue') {
+				return;
+			}
 
-            $cogsCents = (int) ($result['cogsCents'] ?? 0);
-            if ($cogsCents <= 0) {
-                return;
-            }
+			$cogsCents = (int)($result['cogsCents'] ?? 0);
+			if ($cogsCents <= 0) {
+				return;
+			}
 
-            $this->cogs->postCogs(
-                move: $move,
-                valuation: $result['valuation'],
-                cogsCents: $cogsCents
-            );
-        } catch (Throwable $e) {
-            // Fail-soft: valuation is a derived view. Never bubble up
-            // and block the StockMove transition itself.
-            $this->logger->error(
-                'StockMoveTransitionedListener: valuation dispatch failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->cogs->postCogs(
+				move: $move,
+				valuation: $result['valuation'],
+				cogsCents: $cogsCents
+			);
+		} catch (Throwable $e) {
+			// Fail-soft: valuation is a derived view. Never bubble up
+			// and block the StockMove transition itself.
+			$this->logger->error(
+				'StockMoveTransitionedListener: valuation dispatch failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Look up the active InventoryValuation snapshot for the move.
-     *
-     * @param array<string,mixed> $move The StockMove.
-     *
-     * @return array<string,mixed>|null Snapshot or null.
-     */
-    private function lookupValuation(array $move): ?array
-    {
-        $movementType = (string) ($move['movementType'] ?? '');
-        if ($movementType === 'receipt') {
-            $warehouse = (string) ($move['destinationLocationId'] ?? '');
-        } else {
-            $warehouse = (string) ($move['sourceLocationId'] ?? '');
-        }
+	/**
+	 * Look up the active InventoryValuation snapshot for the move.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return array<string,mixed>|null Snapshot or null.
+	 */
+	private function lookupValuation(array $move): ?array {
+		$movementType = (string)($move['movementType'] ?? '');
+		if ($movementType === 'receipt') {
+			$warehouse = (string)($move['destinationLocationId'] ?? '');
+		} else {
+			$warehouse = (string)($move['sourceLocationId'] ?? '');
+		}
 
-        $productId        = (string) ($move['itemId'] ?? '');
-        $administrationId = (string) ($move['administrationId'] ?? '');
+		$productId = (string)($move['itemId'] ?? '');
+		$administrationId = (string)($move['administrationId'] ?? '');
 
-        if ($productId === '' || $warehouse === '' || $administrationId === '') {
-            return null;
-        }
+		if ($productId === '' || $warehouse === '' || $administrationId === '') {
+			return null;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema('InventoryValuation')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'productId'        => $productId,
-                            'warehouse'        => $warehouse,
-                            'status'           => 'active',
-                            'administrationId' => $administrationId,
-                        ],
-                        'limit'   => 1,
-                    ]
-                );
+		try {
+			$rows = $this->objectService
+				->setRegister($this->register())
+				->setSchema('InventoryValuation')
+				->findAll(
+					[
+						'filters' => [
+							'productId' => $productId,
+							'warehouse' => $warehouse,
+							'status' => 'active',
+							'administrationId' => $administrationId,
+						],
+						'limit' => 1,
+					]
+				);
 
-            if (is_array($rows) === false) {
-                $rows = [];
-            }
+			if (is_array($rows) === false) {
+				$rows = [];
+			}
 
-            if (count($rows) === 0) {
-                return null;
-            }
+			if (count($rows) === 0) {
+				return null;
+			}
 
-            $row = $rows[0];
-            if (is_array($row) === true) {
-                return $row;
-            }
+			$row = $rows[0];
+			if (is_array($row) === true) {
+				return $row;
+			}
 
-            if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-                $out = $row->jsonSerialize();
-                if (is_array($out) === true) {
-                    return $out;
-                }
+			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+				$out = $row->jsonSerialize();
+				if (is_array($out) === true) {
+					return $out;
+				}
 
-                return null;
-            }
+				return null;
+			}
 
-            if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-                $out = $row->getObject();
-                if (is_array($out) === true) {
-                    return $out;
-                }
+			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+				$out = $row->getObject();
+				if (is_array($out) === true) {
+					return $out;
+				}
 
-                return null;
-            }
+				return null;
+			}
 
-            return null;
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'StockMoveTransitionedListener: lookupValuation failed',
-                ['exception' => $e->getMessage()]
-            );
-            return null;
-        }//end try
+			return null;
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'StockMoveTransitionedListener: lookupValuation failed',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}//end try
 
-    }//end lookupValuation()
+	}//end lookupValuation()
 
-    /**
-     * Schema-name match for StockMove (plain slug or namespaced).
-     *
-     * @param string $schema Schema identifier.
-     *
-     * @return bool
-     */
-    private function isStockMoveSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === 'stockmove' || str_ends_with($normalised, '/stockmove'));
+	/**
+	 * Schema-name match for StockMove (plain slug or namespaced).
+	 *
+	 * @param string $schema Schema identifier.
+	 *
+	 * @return bool
+	 */
+	private function isStockMoveSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === 'stockmove' || str_ends_with($normalised, '/stockmove'));
+	}//end isStockMoveSchema()
 
-    }//end isStockMoveSchema()
+	/**
+	 * Resolve the OR register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the OR register slug, defaulting to 'shillinq'.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

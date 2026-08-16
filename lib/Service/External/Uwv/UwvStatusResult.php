@@ -33,28 +33,27 @@ namespace OCA\Shillinq\Service\External\Uwv;
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md
  */
-final class UwvStatusResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $outcome ACCEPTED / REJECTED / FOUND /
-     *                                     NOT_FOUND / STATUS_DEFERRED /
-     *                                     SECTOR_DEFERRED / ERROR.
-     * @param string              $kenmerk UWV-side correlation kenmerk
-     *                                     (synthetic for dormant).
-     * @param bool                $dormant TRUE when the adapter was
-     *                                     dormant.
-     * @param array<string,mixed> $extras  Provider-specific extras —
-     *                                     rejectCodes[], rejectMessages[],
-     *                                     premieTarief, gediff,
-     *                                     sectorName.
-     */
-    public function __construct(
-        public readonly string $outcome,
-        public readonly string $kenmerk,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class UwvStatusResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $outcome ACCEPTED / REJECTED / FOUND /
+	 *                        NOT_FOUND / STATUS_DEFERRED /
+	 *                        SECTOR_DEFERRED / ERROR.
+	 * @param string $reference UWV-side correlation kenmerk
+	 *                        (synthetic for dormant).
+	 * @param bool $dormant TRUE when the adapter was
+	 *                      dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras —
+	 *                                    rejectCodes[], rejectMessages[],
+	 *                                    premieTarief, gediff,
+	 *                                    sectorName.
+	 */
+	public function __construct(
+		public readonly string $outcome,
+		public readonly string $reference,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

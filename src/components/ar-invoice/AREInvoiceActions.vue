@@ -26,29 +26,39 @@
 			:disabled="!canSend || sending"
 			data-testid="ar-einvoice-send"
 			@click="onSend">
-			{{ sending ? t('shillinq', 'Sending...') : t('shillinq', 'Send e-invoice') }}
+			{{
+				sending
+					? t('shillinq', 'Sending...')
+					: t('shillinq', 'Send e-invoice')
+			}}
 		</NcButton>
-		<p v-if="sendError" class="ar-einvoice-actions__error" data-testid="ar-einvoice-send-error">
+		<p
+			v-if="sendError"
+			class="ar-einvoice-actions__error"
+			data-testid="ar-einvoice-send-error">
 			{{ sendError }}
 		</p>
-		<p v-if="fallbackNotice" class="ar-einvoice-actions__notice" data-testid="ar-einvoice-fallback-notice">
+		<p
+			v-if="fallbackNotice"
+			class="ar-einvoice-actions__notice"
+			data-testid="ar-einvoice-fallback-notice">
 			{{ fallbackNotice }}
 		</p>
 	</div>
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 import { showSuccess } from '@nextcloud/dialogs'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 import DeliveryStatusChip from '../DeliveryStatusChip.vue'
 import {
 	canSendEInvoice,
+	extractSendErrorMessage,
+	mapSendResult,
 	resolveDeliveryStatus,
 	sendEInvoiceEndpoint,
-	mapSendResult,
-	extractSendErrorMessage,
 } from './arEInvoiceActions.js'
 
 export default {
@@ -57,6 +67,7 @@ export default {
 		NcButton,
 		DeliveryStatusChip,
 	},
+
 	props: {
 		/**
 		 * The resolved ARInvoice record (bound by CnDetailPage's actions slot).
@@ -66,6 +77,7 @@ export default {
 			default: () => ({}),
 		},
 	},
+
 	data() {
 		return {
 			sending: false,
@@ -76,24 +88,29 @@ export default {
 			localDeliveryStatus: null,
 		}
 	},
+
 	computed: {
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		deliveryStatus() {
 			return resolveDeliveryStatus(this.object, this.localDeliveryStatus)
 		},
+
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		canSend() {
 			return canSendEInvoice(this.object)
 		},
+
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		administrationId() {
 			return this.object?.administrationId || ''
 		},
+
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		invoiceNumber() {
 			return this.object?.invoiceNumber || ''
 		},
 	},
+
 	methods: {
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		async onSend() {
@@ -105,11 +122,16 @@ export default {
 					generateUrl(sendEInvoiceEndpoint(this.invoiceNumber)),
 					{ administrationId: this.administrationId },
 				)
-				const { deliveryStatus, fallbackNotice } = mapSendResult(response.data || {}, this.t)
+				const { deliveryStatus, fallbackNotice } = mapSendResult(
+					response.data || {},
+					this.t,
+				)
 				this.localDeliveryStatus = deliveryStatus
 				this.fallbackNotice = fallbackNotice
 				if (fallbackNotice === '') {
-					showSuccess(this.t('shillinq', 'Invoice queued for Peppol delivery.'))
+					showSuccess(
+						this.t('shillinq', 'Invoice queued for Peppol delivery.'),
+					)
 				}
 			} catch (e) {
 				this.sendError = extractSendErrorMessage(e, this.t)

@@ -38,94 +38,91 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
-class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
-{
-    /**
-     * Construct the log-backed Bunq adapter.
-     *
-     * @param LoggerInterface $logger Structured logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface {
+	/**
+	 * Construct the log-backed Bunq adapter.
+	 *
+	 * @param LoggerInterface $logger Structured logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Log the pull intent + synthesise a SYNC_DEFERRED result.
-     *
-     * No PII is logged — `connectionReference` is a non-credential
-     * BankConnection id (per `bookkeeping-bank-connectors` D1) and
-     * `context` is operator-supplied.
-     *
-     * @param string              $connectionReference Connection id.
-     * @param array<string,mixed> $context             Pull context.
-     *
-     * @return BunqSyncResult The dispatch outcome.
-     */
-    public function pullTransactions(string $connectionReference, array $context=[]): BunqSyncResult
-    {
-        $this->logger->info(
-            'Shillinq Bunq pullTransactions deferred (no outbound connector bound)',
-            [
-                'connectionReference' => $connectionReference,
-                'context'             => $context,
-            ]
-        );
+	/**
+	 * Log the pull intent + synthesise a SYNC_DEFERRED result.
+	 *
+	 * No PII is logged — `connectionReference` is a non-credential
+	 * BankConnection id (per `bookkeeping-bank-connectors` D1) and
+	 * `context` is operator-supplied.
+	 *
+	 * @param string $connectionReference Connection id.
+	 * @param array<string,mixed> $context Pull context.
+	 *
+	 * @return BunqSyncResult The dispatch outcome.
+	 */
+	public function pullTransactions(string $connectionReference, array $context = []): BunqSyncResult {
+		$this->logger->info(
+			'Shillinq Bunq pullTransactions deferred (no outbound connector bound)',
+			[
+				'connectionReference' => $connectionReference,
+				'context' => $context,
+			]
+		);
 
-        return new BunqSyncResult(
-            syncStatus: 'SYNC_DEFERRED',
-            connectionReference: $connectionReference,
-            transactionCount: 0,
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `bunq-bank-connector` (Bunq API v1, per-tenant '
-                    .'API key + installation token + device-server registration) and override '
-                    .'BunqBankConnectorAdapterInterface in Application::register() to enable real sync.',
-            ],
-        );
-    }//end pullTransactions()
+		return new BunqSyncResult(
+			syncStatus: 'SYNC_DEFERRED',
+			connectionReference: $connectionReference,
+			transactionCount: 0,
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector source slug `bunq-bank-connector` (Bunq API v1, per-tenant '
+					. 'API key + installation token + device-server registration) and override '
+					. 'BunqBankConnectorAdapterInterface in Application::register() to enable real sync.',
+			],
+		);
+	}//end pullTransactions()
 
-    /**
-     * Log the consent-renewal intent + synthesise a deferred result.
-     *
-     * @param string              $connectionReference Connection id.
-     * @param array<string,mixed> $context             Renewal context.
-     *
-     * @return BunqSyncResult The dispatch outcome.
-     */
-    public function renewConsent(string $connectionReference, array $context=[]): BunqSyncResult
-    {
-        $this->logger->info(
-            'Shillinq Bunq renewConsent deferred (no outbound connector bound)',
-            [
-                'connectionReference' => $connectionReference,
-                'context'             => $context,
-            ]
-        );
+	/**
+	 * Log the consent-renewal intent + synthesise a deferred result.
+	 *
+	 * @param string $connectionReference Connection id.
+	 * @param array<string,mixed> $context Renewal context.
+	 *
+	 * @return BunqSyncResult The dispatch outcome.
+	 */
+	public function renewConsent(string $connectionReference, array $context = []): BunqSyncResult {
+		$this->logger->info(
+			'Shillinq Bunq renewConsent deferred (no outbound connector bound)',
+			[
+				'connectionReference' => $connectionReference,
+				'context' => $context,
+			]
+		);
 
-        return new BunqSyncResult(
-            syncStatus: 'SYNC_DEFERRED',
-            connectionReference: $connectionReference,
-            transactionCount: 0,
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector SCA endpoint for Bunq + override '
-                    .'BunqBankConnectorAdapterInterface to enable real consent-renewal hand-off.',
-                'scaUrl' => '',
-            ],
-        );
-    }//end renewConsent()
+		return new BunqSyncResult(
+			syncStatus: 'SYNC_DEFERRED',
+			connectionReference: $connectionReference,
+			transactionCount: 0,
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector SCA endpoint for Bunq + override '
+					. 'BunqBankConnectorAdapterInterface to enable real consent-renewal hand-off.',
+				'scaUrl' => '',
+			],
+		);
+	}//end renewConsent()
 
-    /**
-     * Report whether this adapter is dormant.
-     *
-     * @return bool True when no outbound connector is bound.
-     *
-     * @inheritDoc
-     */
-    public function isDormant(): bool
-    {
-        return true;
-    }//end isDormant()
+	/**
+	 * Report whether this adapter is dormant.
+	 *
+	 * @return bool True when no outbound connector is bound.
+	 *
+	 * @inheritDoc
+	 */
+	public function isDormant(): bool {
+		return true;
+	}//end isDormant()
 }//end class

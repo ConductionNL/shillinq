@@ -42,207 +42,198 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class FinancialDashboardControllerTest extends TestCase
-{
+final class FinancialDashboardControllerTest extends TestCase {
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock FinancialDashboardService.
-     *
-     * @var FinancialDashboardService&MockObject
-     */
-    private FinancialDashboardService&MockObject $service;
+	/**
+	 * Mock FinancialDashboardService.
+	 *
+	 * @var FinancialDashboardService&MockObject
+	 */
+	private FinancialDashboardService&MockObject $service;
 
-    /**
-     * Mock AdministrationContextService.
-     *
-     * @var AdministrationContextService&MockObject
-     */
-    private AdministrationContextService&MockObject $context;
+	/**
+	 * Mock AdministrationContextService.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The controller under test.
-     *
-     * @var FinancialDashboardController
-     */
-    private FinancialDashboardController $controller;
+	/**
+	 * The controller under test.
+	 *
+	 * @var FinancialDashboardController
+	 */
+	private FinancialDashboardController $controller;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request = $this->createMock(IRequest::class);
-        $this->service = $this->createMock(FinancialDashboardService::class);
-        $this->context = $this->createMock(AdministrationContextService::class);
-        $this->logger  = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->service = $this->createMock(FinancialDashboardService::class);
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        // Default: an authenticated user.
-        $this->context->method('currentUserId')->willReturn('alice');
+		// Default: an authenticated user.
+		$this->context->method('currentUserId')->willReturn('alice');
 
-        $this->controller = new FinancialDashboardController(
-            request: $this->request,
-            dashboard: $this->service,
-            context: $this->context,
-            logger: $this->logger,
-        );
+		$this->controller = new FinancialDashboardController(
+			request: $this->request,
+			dashboard: $this->service,
+			context: $this->context,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Configure the from/to request params.
-     *
-     * @param string $from The from param.
-     * @param string $to   The to param.
-     *
-     * @return void
-     */
-    private function withParams(string $from, string $to): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $name, mixed $default=null) use ($from, $to): mixed {
-                if ($name === 'from') {
-                    return $from;
-                }
+	/**
+	 * Configure the from/to request params.
+	 *
+	 * @param string $from The from param.
+	 * @param string $to The to param.
+	 *
+	 * @return void
+	 */
+	private function withParams(string $from, string $to): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $name, mixed $default = null) use ($from, $to): mixed {
+				if ($name === 'from') {
+					return $from;
+				}
 
-                if ($name === 'to') {
-                    return $to;
-                }
+				if ($name === 'to') {
+					return $to;
+				}
 
-                return $default;
-            }
-        );
+				return $default;
+			}
+		);
 
-    }//end withParams()
+	}//end withParams()
 
-    /**
-     * An unauthenticated request is rejected with 401.
-     *
-     * @return void
-     */
-    public function testSeriesRejectsUnauthenticatedRequests(): void
-    {
-        $context = $this->createMock(AdministrationContextService::class);
-        $context->method('currentUserId')->willReturn(null);
+	/**
+	 * An unauthenticated request is rejected with 401.
+	 *
+	 * @return void
+	 */
+	public function testSeriesRejectsUnauthenticatedRequests(): void {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn(null);
 
-        $controller = new FinancialDashboardController(
-            request: $this->request,
-            dashboard: $this->service,
-            context: $context,
-            logger: $this->logger,
-        );
+		$controller = new FinancialDashboardController(
+			request: $this->request,
+			dashboard: $this->service,
+			context: $context,
+			logger: $this->logger,
+		);
 
-        $response = $controller->series();
+		$response = $controller->series();
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-    }//end testSeriesRejectsUnauthenticatedRequests()
+	}//end testSeriesRejectsUnauthenticatedRequests()
 
-    /**
-     * Providing only one of from/to is a 400.
-     *
-     * @return void
-     */
-    public function testSeriesRejectsOneSidedRange(): void
-    {
-        $this->withParams('2026-01-01', '');
+	/**
+	 * Providing only one of from/to is a 400.
+	 *
+	 * @return void
+	 */
+	public function testSeriesRejectsOneSidedRange(): void {
+		$this->withParams('2026-01-01', '');
 
-        $response = $this->controller->series();
+		$response = $this->controller->series();
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testSeriesRejectsOneSidedRange()
+	}//end testSeriesRejectsOneSidedRange()
 
-    /**
-     * A malformed bound is a 400.
-     *
-     * @return void
-     */
-    public function testSeriesRejectsMalformedDates(): void
-    {
-        $this->withParams('not-a-date', '2026-04-30');
+	/**
+	 * A malformed bound is a 400.
+	 *
+	 * @return void
+	 */
+	public function testSeriesRejectsMalformedDates(): void {
+		$this->withParams('not-a-date', '2026-04-30');
 
-        $response = $this->controller->series();
+		$response = $this->controller->series();
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testSeriesRejectsMalformedDates()
+	}//end testSeriesRejectsMalformedDates()
 
-    /**
-     * A valid range is passed to the service and the payload is returned.
-     *
-     * @return void
-     */
-    public function testSeriesDelegatesToServiceWithRange(): void
-    {
-        $this->withParams('2026-02-01', '2026-04-30');
-        $payload = ['months' => ['2026-02']];
-        $this->service->expects($this->once())
-            ->method('series')
-            ->with('2026-02-01', '2026-04-30')
-            ->willReturn($payload);
+	/**
+	 * A valid range is passed to the service and the payload is returned.
+	 *
+	 * @return void
+	 */
+	public function testSeriesDelegatesToServiceWithRange(): void {
+		$this->withParams('2026-02-01', '2026-04-30');
+		$payload = ['months' => ['2026-02']];
+		$this->service->expects($this->once())
+			->method('series')
+			->with('2026-02-01', '2026-04-30')
+			->willReturn($payload);
 
-        $response = $this->controller->series();
+		$response = $this->controller->series();
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame($payload, $response->getData());
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($payload, $response->getData());
 
-    }//end testSeriesDelegatesToServiceWithRange()
+	}//end testSeriesDelegatesToServiceWithRange()
 
-    /**
-     * A missing range is passed to the service as nulls (fallback window).
-     *
-     * @return void
-     */
-    public function testSummaryDelegatesToServiceWithoutRange(): void
-    {
-        $this->withParams('', '');
-        $payload = ['current' => []];
-        $this->service->expects($this->once())
-            ->method('summary')
-            ->with(null, null)
-            ->willReturn($payload);
+	/**
+	 * A missing range is passed to the service as nulls (fallback window).
+	 *
+	 * @return void
+	 */
+	public function testSummaryDelegatesToServiceWithoutRange(): void {
+		$this->withParams('', '');
+		$payload = ['current' => []];
+		$this->service->expects($this->once())
+			->method('summary')
+			->with(null, null)
+			->willReturn($payload);
 
-        $response = $this->controller->summary();
+		$response = $this->controller->summary();
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame($payload, $response->getData());
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($payload, $response->getData());
 
-    }//end testSummaryDelegatesToServiceWithoutRange()
+	}//end testSummaryDelegatesToServiceWithoutRange()
 
-    /**
-     * An unexpected service failure yields a 500 without a stack trace.
-     *
-     * @return void
-     */
-    public function testSummaryReturnsSanitised500OnServiceFailure(): void
-    {
-        $this->withParams('', '');
-        $this->service->method('summary')->willThrowException(new \RuntimeException('secret internals'));
-        $this->logger->expects($this->once())->method('error');
+	/**
+	 * An unexpected service failure yields a 500 without a stack trace.
+	 *
+	 * @return void
+	 */
+	public function testSummaryReturnsSanitised500OnServiceFailure(): void {
+		$this->withParams('', '');
+		$this->service->method('summary')->willThrowException(new \RuntimeException('secret internals'));
+		$this->logger->expects($this->once())->method('error');
 
-        $response = $this->controller->summary();
+		$response = $this->controller->summary();
 
-        $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-        $data = $response->getData();
-        $this->assertStringNotContainsString('secret internals', json_encode($data));
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$data = $response->getData();
+		$this->assertStringNotContainsString('secret internals', json_encode($data));
 
-    }//end testSummaryReturnsSanitised500OnServiceFailure()
+	}//end testSummaryReturnsSanitised500OnServiceFailure()
 }//end class

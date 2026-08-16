@@ -55,236 +55,226 @@ namespace OCA\Shillinq\Service;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class InnovatieboxSbrExportService
-{
-    /**
-     * SBR Nederland Vpb taxonomy version targeted by this converter.
-     *
-     * Tracks the Belastingdienst taxonomy for innovatiebox-sectie. The literal
-     * value follows the same VPB-XX-YYYY convention the SBR app uses for
-     * loonaangifte; the canonical value is supplied by the downstream
-     * bookkeeping-sbr-xbrl-reporting NT mapper when it lands.
-     *
-     * @var string
-     */
-    public const SBR_TAXONOMY_VERSION = 'VPB-XX-2026';
+class InnovatieboxSbrExportService {
+	/**
+	 * SBR Nederland Vpb taxonomy version targeted by this converter.
+	 *
+	 * Tracks the Belastingdienst taxonomy for innovatiebox-sectie. The literal
+	 * value follows the same VPB-XX-YYYY convention the SBR app uses for
+	 * loonaangifte; the canonical value is supplied by the downstream
+	 * bookkeeping-sbr-xbrl-reporting NT mapper when it lands.
+	 *
+	 * @var string
+	 */
+	public const SBR_TAXONOMY_VERSION = 'VPB-XX-2026';
 
-    /**
-     * Collection name on the SBR instance.
-     *
-     * @var string
-     */
-    public const SBR_COLLECTION = 'Vpb-Innovatiebox';
+	/**
+	 * Collection name on the SBR instance.
+	 *
+	 * @var string
+	 */
+	public const SBR_COLLECTION = 'Vpb-Innovatiebox';
 
-    /**
-     * Convert an InnovatieboxAggregationService result into an SBR/XBRL
-     * instance hand-off payload.
-     *
-     * @param array<string,mixed> $aggregation      The InnovatieboxAggregationService::aggregate result.
-     *                                              Expected shape: {data: list<row>, totals: assoc}.
-     * @param string              $administrationId Administration scope (server-resolved, REQ-IBA-008).
-     * @param int                 $boekjaar         Fiscal year.
-     * @param string              $methode          Election: 'per_asset_afpelmethode' (default)
-     *                                              or 'forfaitair_25pct'.
-     *
-     * @return array<string,mixed> The SBR/XBRL instance hand-off payload.
-     *
-     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
-     */
-    public function toSbrInstancePayload(
-        array $aggregation,
-        string $administrationId,
-        int $boekjaar,
-        string $methode='per_asset_afpelmethode'
-    ): array {
-        $rows   = $this->extractRows(aggregation: $aggregation);
-        $totals = $this->extractTotals(aggregation: $aggregation);
+	/**
+	 * Convert an InnovatieboxAggregationService result into an SBR/XBRL
+	 * instance hand-off payload.
+	 *
+	 * @param array<string,mixed> $aggregation The InnovatieboxAggregationService::aggregate result.
+	 *                                         Expected shape: {data: list<row>, totals: assoc}.
+	 * @param string $administrationId Administration scope (server-resolved, REQ-IBA-008).
+	 * @param int $financialYear Fiscal year.
+	 * @param string $method Election: 'per_asset_afpelmethode' (default)
+	 *                       or 'flat_rate_25pct'.
+	 *
+	 * @return array<string,mixed> The SBR/XBRL instance hand-off payload.
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
+	 */
+	public function toSbrInstancePayload(
+		array $aggregation,
+		string $administrationId,
+		int $financialYear,
+		string $method = 'per_asset_afpelmethode',
+	): array {
+		$rows = $this->extractRows(aggregation: $aggregation);
+		$totals = $this->extractTotals(aggregation: $aggregation);
 
-        $payload = [
-            'taxonomyVersion'        => self::SBR_TAXONOMY_VERSION,
-            'instanceRef'            => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
-            'collectie'              => self::SBR_COLLECTION,
-            'identificerendePeriode' => sprintf('%04d', $boekjaar),
-            'administratie'          => $administrationId,
-            'gekozenMethode'         => $methode,
-            'regel23_kwalifWinst'    => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-            'regel23_vpbInnovatie'   => round((float) ($totals['vpb_op_innovatiedeel'] ?? 0.0), 2),
-            'regel23_voordeel'       => round((float) ($totals['voordeel_innovatiebox'] ?? 0.0), 2),
-            'effectiefTarief'        => 0.09,
-            'status'                 => 'READY_FOR_SBR',
-        ];
+		$payload = [
+			'taxonomyVersion' => self::SBR_TAXONOMY_VERSION,
+			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, financialYear: $financialYear),
+			'collectie' => self::SBR_COLLECTION,
+			'identificerendePeriode' => sprintf('%04d', $financialYear),
+			'administration' => $administrationId,
+			'gekozenMethode' => $method,
+			'regel23_kwalifWinst' => round((float)($totals['qualifying_profit_after_nexus'] ?? 0.0), 2),
+			'regel23_vpbInnovatie' => round((float)($totals['vpb_on_innovation_share'] ?? 0.0), 2),
+			'regel23_voordeel' => round((float)($totals['benefit_innovation_box'] ?? 0.0), 2),
+			'effectiveRate' => 0.09,
+			'status' => 'READY_FOR_SBR',
+		];
 
-        if ($methode === 'forfaitair_25pct') {
-            // Forfaitair: collapse to a single line per art. 12bg.
-            $payload['forfaitairLine'] = [
-                'kwalifVoorCap' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-                'kwalifNaCap'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-                'capEur'        => 25000,
-                'capApplied'    => ((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
-            ];
-            $payload['perAssetRows']   = [];
-        } else {
-            // Afpelmethode: emit one row per qualifying asset.
-            $payload['perAssetRows']   = $this->renderAssetRows(rows: $rows);
-            $payload['forfaitairLine'] = null;
-        }
+		if ($method === 'flat_rate_25pct') {
+			// Forfaitair: collapse to a single line per art. 12bg.
+			$payload['forfaitairLine'] = [
+				'kwalifVoorCap' => round((float)($totals['qualifying_profit_for_nexus'] ?? 0.0), 2),
+				'kwalifNaCap' => round((float)($totals['qualifying_profit_after_nexus'] ?? 0.0), 2),
+				'capEur' => 25000,
+				'capApplied' => ((float)($totals['qualifying_profit_for_nexus'] ?? 0.0) > 25000.0),
+			];
+			$payload['perAssetRows'] = [];
+		} else {
+			// Afpelmethode: emit one row per qualifying asset.
+			$payload['perAssetRows'] = $this->renderAssetRows(rows: $rows);
+			$payload['forfaitairLine'] = null;
+		}
 
-        return $payload;
+		return $payload;
+	}//end toSbrInstancePayload()
 
-    }//end toSbrInstancePayload()
+	/**
+	 * Render the same data shaped for the docudesk PDF template
+	 * `vpb-aangifte-innovatiebox-sectie`.
+	 *
+	 * Provides the same totals + per-asset rows but with display-friendly
+	 * field names (naam, winst_voor_nexus, nexus_percent, ...). The
+	 * pre-formatting (locale, EUR signs) is left to the docudesk renderer
+	 * itself per ADR-024.
+	 *
+	 * @param array<string,mixed> $aggregation The InnovatieboxAggregationService::aggregate result.
+	 * @param string $administrationId Administration scope.
+	 * @param int $financialYear Fiscal year.
+	 * @param string $method Election method.
+	 *
+	 * @return array<string,mixed> The docudesk template context.
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
+	 */
+	public function toPdfRenderContext(
+		array $aggregation,
+		string $administrationId,
+		int $financialYear,
+		string $method = 'per_asset_afpelmethode',
+	): array {
+		$rows = $this->extractRows(aggregation: $aggregation);
+		$totals = $this->extractTotals(aggregation: $aggregation);
 
-    /**
-     * Render the same data shaped for the docudesk PDF template
-     * `vpb-aangifte-innovatiebox-sectie`.
-     *
-     * Provides the same totals + per-asset rows but with display-friendly
-     * field names (naam, winst_voor_nexus, nexus_percent, ...). The
-     * pre-formatting (locale, EUR signs) is left to the docudesk renderer
-     * itself per ADR-024.
-     *
-     * @param array<string,mixed> $aggregation      The InnovatieboxAggregationService::aggregate result.
-     * @param string              $administrationId Administration scope.
-     * @param int                 $boekjaar         Fiscal year.
-     * @param string              $methode          Election method.
-     *
-     * @return array<string,mixed> The docudesk template context.
-     *
-     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
-     */
-    public function toPdfRenderContext(
-        array $aggregation,
-        string $administrationId,
-        int $boekjaar,
-        string $methode='per_asset_afpelmethode'
-    ): array {
-        $rows   = $this->extractRows(aggregation: $aggregation);
-        $totals = $this->extractTotals(aggregation: $aggregation);
+		if ($method === 'flat_rate_25pct') {
+			$perAsset = [];
+		} else {
+			$perAsset = $this->renderAssetRows(rows: $rows);
+		}
 
-        if ($methode === 'forfaitair_25pct') {
-            $perAsset = [];
-        } else {
-            $perAsset = $this->renderAssetRows(rows: $rows);
-        }
+		if ($method === 'flat_rate_25pct') {
+			$forfaitair = [
+				'kwalifVoorCap' => round((float)($totals['qualifying_profit_for_nexus'] ?? 0.0), 2),
+				'kwalifNaCap' => round((float)($totals['qualifying_profit_after_nexus'] ?? 0.0), 2),
+				'capEur' => 25000,
+				'capApplied' => ((float)($totals['qualifying_profit_for_nexus'] ?? 0.0) > 25000.0),
+			];
+		} else {
+			$forfaitair = null;
+		}
 
-        if ($methode === 'forfaitair_25pct') {
-            $forfaitair = [
-                'kwalifVoorCap' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-                'kwalifNaCap'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-                'capEur'        => 25000,
-                'capApplied'    => ((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
-            ];
-        } else {
-            $forfaitair = null;
-        }
+		return [
+			'administrationId' => $administrationId,
+			'financialYear' => $financialYear,
+			'method' => $method,
+			'instanceRef' => $this->deriveInstanceRef(administrationId: $administrationId, financialYear: $financialYear),
+			'perAsset' => $perAsset,
+			'flatRate' => $forfaitair,
+			'totals' => [
+				'winst_voor_nexus' => round((float)($totals['qualifying_profit_for_nexus'] ?? 0.0), 2),
+				'winst_na_nexus' => round((float)($totals['qualifying_profit_after_nexus'] ?? 0.0), 2),
+				'vpb_innovatie' => round((float)($totals['vpb_on_innovation_share'] ?? 0.0), 2),
+				'voordeel' => round((float)($totals['benefit_innovation_box'] ?? 0.0), 2),
+			],
+		];
 
-        return [
-            'administrationId' => $administrationId,
-            'boekjaar'         => $boekjaar,
-            'methode'          => $methode,
-            'instanceRef'      => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
-            'perAsset'         => $perAsset,
-            'forfaitair'       => $forfaitair,
-            'totals'           => [
-                'winst_voor_nexus' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-                'winst_na_nexus'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-                'vpb_innovatie'    => round((float) ($totals['vpb_op_innovatiedeel'] ?? 0.0), 2),
-                'voordeel'         => round((float) ($totals['voordeel_innovatiebox'] ?? 0.0), 2),
-            ],
-        ];
+	}//end toPdfRenderContext()
 
-    }//end toPdfRenderContext()
+	/**
+	 * Derive the deterministic SBR instance reference (idempotent).
+	 *
+	 * The reference is stable across retries so the downstream
+	 * bookkeeping-sbr-xbrl-reporting app can deduplicate identical
+	 * resubmissions before they reach Digipoort.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param int $financialYear Fiscal year.
+	 *
+	 * @return string Instance reference (taxonomy-administration-boekjaar).
+	 */
+	public function deriveInstanceRef(string $administrationId, int $financialYear): string {
+		$safeAdm = preg_replace('/[^A-Za-z0-9_.\-]/', '', $administrationId);
+		if (is_string($safeAdm) === false) {
+			$safeAdm = '';
+		}
 
-    /**
-     * Derive the deterministic SBR instance reference (idempotent).
-     *
-     * The reference is stable across retries so the downstream
-     * bookkeeping-sbr-xbrl-reporting app can deduplicate identical
-     * resubmissions before they reach Digipoort.
-     *
-     * @param string $administrationId Administration scope.
-     * @param int    $boekjaar         Fiscal year.
-     *
-     * @return string Instance reference (taxonomy-administration-boekjaar).
-     */
-    public function deriveInstanceRef(string $administrationId, int $boekjaar): string
-    {
-        $safeAdm = preg_replace('/[^A-Za-z0-9_.\-]/', '', $administrationId);
-        if (is_string($safeAdm) === false) {
-            $safeAdm = '';
-        }
+		return sprintf('%s-%s-%04d', self::SBR_TAXONOMY_VERSION, $safeAdm, $financialYear);
+	}//end deriveInstanceRef()
 
-        return sprintf('%s-%s-%04d', self::SBR_TAXONOMY_VERSION, $safeAdm, $boekjaar);
+	/**
+	 * Pull the list of per-asset rows from the aggregation result.
+	 *
+	 * Accepts both the `data` and `rows` shapes for forward-compatibility
+	 * with the InnovatieboxAggregationService return contract.
+	 *
+	 * @param array<string,mixed> $aggregation Aggregation result.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function extractRows(array $aggregation): array {
+		if (isset($aggregation['data']) === true && is_array($aggregation['data']) === true) {
+			return $aggregation['data'];
+		}
 
-    }//end deriveInstanceRef()
+		if (isset($aggregation['rows']) === true && is_array($aggregation['rows']) === true) {
+			return $aggregation['rows'];
+		}
 
-    /**
-     * Pull the list of per-asset rows from the aggregation result.
-     *
-     * Accepts both the `data` and `rows` shapes for forward-compatibility
-     * with the InnovatieboxAggregationService return contract.
-     *
-     * @param array<string,mixed> $aggregation Aggregation result.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function extractRows(array $aggregation): array
-    {
-        if (isset($aggregation['data']) === true && is_array($aggregation['data']) === true) {
-            return $aggregation['data'];
-        }
+		return [];
+	}//end extractRows()
 
-        if (isset($aggregation['rows']) === true && is_array($aggregation['rows']) === true) {
-            return $aggregation['rows'];
-        }
+	/**
+	 * Pull the totals envelope from the aggregation result.
+	 *
+	 * @param array<string,mixed> $aggregation Aggregation result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function extractTotals(array $aggregation): array {
+		if (isset($aggregation['totals']) === true && is_array($aggregation['totals']) === true) {
+			return $aggregation['totals'];
+		}
 
-        return [];
+		return [];
+	}//end extractTotals()
 
-    }//end extractRows()
+	/**
+	 * Reshape per-asset rows for the SBR / PDF hand-off (whitelist + round).
+	 *
+	 * @param array<int,array<string,mixed>> $rows Aggregation rows.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function renderAssetRows(array $rows): array {
+		$out = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === false) {
+				continue;
+			}
 
-    /**
-     * Pull the totals envelope from the aggregation result.
-     *
-     * @param array<string,mixed> $aggregation Aggregation result.
-     *
-     * @return array<string,mixed>
-     */
-    private function extractTotals(array $aggregation): array
-    {
-        if (isset($aggregation['totals']) === true && is_array($aggregation['totals']) === true) {
-            return $aggregation['totals'];
-        }
+			$out[] = [
+				'qualifying_asset_id' => (string)($row['qualifying_asset_id'] ?? ''),
+				'name' => (string)($row['name'] ?? ''),
+				'winst_voor_nexus' => round((float)($row['winst_voor_nexus'] ?? ($row['qualifying_profit_for_nexus'] ?? 0.0)), 2),
+				'nexus_percent' => round((float)($row['nexus'] ?? ($row['nexus_fraction_applied'] ?? 0.0)), 4),
+				'winst_na_nexus' => round((float)($row['winst_na_nexus'] ?? ($row['qualifying_profit_after_nexus'] ?? 0.0)), 2),
+				'tariff' => round((float)($row['tariff'] ?? ($row['effective_rate'] ?? 0.09)), 4),
+				'vpb_impact' => round((float)($row['vpb_impact'] ?? ($row['vpb_on_innovation_share'] ?? 0.0)), 2),
+			];
+		}
 
-        return [];
-
-    }//end extractTotals()
-
-    /**
-     * Reshape per-asset rows for the SBR / PDF hand-off (whitelist + round).
-     *
-     * @param array<int,array<string,mixed>> $rows Aggregation rows.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function renderAssetRows(array $rows): array
-    {
-        $out = [];
-        foreach ($rows as $row) {
-            if (is_array($row) === false) {
-                continue;
-            }
-
-            $out[] = [
-                'qualifying_asset_id' => (string) ($row['qualifying_asset_id'] ?? ''),
-                'naam'                => (string) ($row['naam'] ?? ''),
-                'winst_voor_nexus'    => round((float) ($row['winst_voor_nexus'] ?? ($row['kwalificerende_winst_voor_nexus'] ?? 0.0)), 2),
-                'nexus_percent'       => round((float) ($row['nexus'] ?? ($row['nexusbreuk_toegepast'] ?? 0.0)), 4),
-                'winst_na_nexus'      => round((float) ($row['winst_na_nexus'] ?? ($row['kwalificerende_winst_na_nexus'] ?? 0.0)), 2),
-                'tariff'              => round((float) ($row['tariff'] ?? ($row['effectief_tarief'] ?? 0.09)), 4),
-                'vpb_impact'          => round((float) ($row['vpb_impact'] ?? ($row['vpb_op_innovatiedeel'] ?? 0.0)), 2),
-            ];
-        }
-
-        return $out;
-
-    }//end renderAssetRows()
+		return $out;
+	}//end renderAssetRows()
 }//end class

@@ -55,7 +55,7 @@
           "price": {
             "type": "number",
             "nullable": true,
-            "description": "Service price in the administration's currency. Informational in phase 1; payment is out of scope.",
+            "description": "DEPRECATED - superseded by `basePrice` from the canonical bookings-service-catalog fragment. Retained only so pre-existing rows keep resolving; read sites fall back `basePrice ?? price`. Do not use in new seeds. Service price in the administration's currency. Informational in phase 1; payment is out of scope.",
             "example": 75.0,
             "title": "Price"
           },
@@ -354,11 +354,17 @@
       },
       "administrationId": "adm-1",
       "serviceId": "svc-001",
+      "code": "intake-consult",
       "name": "Intake consultation",
       "description": "30-minute introductory consultation.",
       "duration": 30,
-      "price": 75.0,
+      "prepareTime": 0,
+      "bufferBefore": 0,
+      "bufferAfter": 0,
+      "basePrice": 75.0,
       "currency": "EUR",
+      "dynamicPricing": false,
+      "serviceCategory": "Consultation",
       "status": "active"
     },
     {

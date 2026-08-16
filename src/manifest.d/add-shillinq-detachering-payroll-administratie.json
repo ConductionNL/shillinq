@@ -41,7 +41,7 @@
 						"sortable": true
 					},
 					{
-						"key": "loontijdvak",
+						"key": "payrollPeriod",
 						"label": "Pay period",
 						"sortable": true
 					},
@@ -51,7 +51,7 @@
 						"sortable": true
 					},
 					{
-						"key": "loonkosten",
+						"key": "payrollCost",
 						"label": "Labour costs (EUR)",
 						"sortable": true
 					},
@@ -79,7 +79,7 @@
 						"type": "string"
 					},
 					{
-						"key": "loontijdvak",
+						"key": "payrollPeriod",
 						"label": "Pay period",
 						"type": "string"
 					},
@@ -94,12 +94,12 @@
 						"type": "string"
 					},
 					{
-						"key": "loonkosten",
+						"key": "payrollCost",
 						"label": "Labour costs (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "nettoloon",
+						"key": "netPay",
 						"label": "Net pay (EUR)",
 						"type": "number"
 					},
@@ -109,7 +109,7 @@
 						"type": "number"
 					},
 					{
-						"key": "loonheffing",
+						"key": "payrollTax",
 						"label": "Payroll tax (EUR)",
 						"type": "number"
 					},
@@ -166,27 +166,27 @@
 				"register": "shillinq",
 				"schema": "OpdrachtgeversVerklaring",				"columns": [
 					{
-						"key": "zzpNaam",
+						"key": "freelancerName",
 						"label": "Freelancer",
 						"sortable": true
 					},
 					{
-						"key": "looptijdStart",
+						"key": "termStart",
 						"label": "Start date",
 						"sortable": true
 					},
 					{
-						"key": "looptijdEind",
+						"key": "termEnd",
 						"label": "End date",
 						"sortable": true
 					},
 					{
-						"key": "verklaringStatus",
+						"key": "declarationStatus",
 						"label": "Status",
 						"sortable": true
 					},
 					{
-						"key": "risicoBeoordeling",
+						"key": "riskAssessment",
 						"label": "Risk assessment",
 						"sortable": true
 					}
@@ -209,27 +209,27 @@
 						"type": "string"
 					},
 					{
-						"key": "zzpNaam",
+						"key": "freelancerName",
 						"label": "Freelancer name",
 						"type": "string"
 					},
 					{
-						"key": "opdrachtBeschrijving",
+						"key": "assignmentDescription",
 						"label": "Assignment description",
 						"type": "string"
 					},
 					{
-						"key": "looptijdStart",
+						"key": "termStart",
 						"label": "Start date",
 						"type": "date"
 					},
 					{
-						"key": "looptijdEind",
+						"key": "termEnd",
 						"label": "End date",
 						"type": "date"
 					},
 					{
-						"key": "verklaringStatus",
+						"key": "declarationStatus",
 						"label": "Status",
 						"type": "string"
 					},
@@ -239,12 +239,12 @@
 						"type": "string"
 					},
 					{
-						"key": "verklaringDocumentUri",
+						"key": "declarationDocumentUri",
 						"label": "Statement document",
 						"type": "link"
 					},
 					{
-						"key": "risicoBeoordeling",
+						"key": "riskAssessment",
 						"label": "Risk assessment",
 						"type": "string"
 					},
@@ -261,7 +261,7 @@
 						"label": "Generate document",
 						"icon": "FileDocumentEditOutline",
 						"visibleWhen": {
-							"field": "verklaringStatus",
+							"field": "declarationStatus",
 							"in": ["concept"]
 						},
 						"type": "lifecycle-transition",
@@ -300,22 +300,22 @@
 				"register": "shillinq",
 				"schema": "IB47Record",				"columns": [
 					{
-						"key": "belastingjaar",
+						"key": "taxYear",
 						"label": "Tax year",
 						"sortable": true
 					},
 					{
-						"key": "ontvangerNaam",
+						"key": "recipientName",
 						"label": "Recipient",
 						"sortable": true
 					},
 					{
-						"key": "betalingenTotaal",
+						"key": "paymentsTotal",
 						"label": "Total payments (EUR)",
 						"sortable": true
 					},
 					{
-						"key": "betalingTypeCode",
+						"key": "paymentTypeCode",
 						"label": "Type",
 						"sortable": true
 					},
@@ -338,17 +338,17 @@
 				"schema": "IB47Record",				"_note": "IB47 TAX RECORD (a single third-party payment reported annually to the Belastingdienst — opgaaf van betalingen aan derden). The body is the reportable data: tax year, client, recipient (with encrypted BSN readable only to the payroll-officer role), address, total payments, type code and the dry-run flag/month used to validate before the real submission. A statutory record, not a correspondence, so no comms; the audit trail sidebar is the submission/dry-run history for a privacy-sensitive filing.",
 				"fields": [
 					{
-						"key": "belastingjaar",
+						"key": "taxYear",
 						"label": "Tax year",
 						"type": "integer"
 					},
 					{
-						"key": "opdrachtgeverId",
+						"key": "clientId",
 						"label": "Client",
 						"type": "string"
 					},
 					{
-						"key": "ontvangerNaam",
+						"key": "recipientName",
 						"label": "Recipient name",
 						"type": "string"
 					},
@@ -364,12 +364,12 @@
 						"type": "string"
 					},
 					{
-						"key": "betalingenTotaal",
+						"key": "paymentsTotal",
 						"label": "Total payments (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "betalingTypeCode",
+						"key": "paymentTypeCode",
 						"label": "Payment type code",
 						"type": "string"
 					},

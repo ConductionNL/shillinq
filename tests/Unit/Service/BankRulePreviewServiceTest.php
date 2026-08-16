@@ -31,213 +31,194 @@ use PHPUnit\Framework\TestCase;
  *
  * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
  */
-final class BankRulePreviewServiceTest extends TestCase
-{
+final class BankRulePreviewServiceTest extends TestCase {
 
-    /**
-     * Subject.
-     *
-     * @var BankRulePreviewService
-     */
-    private BankRulePreviewService $service;
+	/**
+	 * Subject.
+	 *
+	 * @var BankRulePreviewService
+	 */
+	private BankRulePreviewService $service;
 
+	/**
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->service = new BankRulePreviewService();
 
-    /**
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->service = new BankRulePreviewService();
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * Five candidate lines; a three-predicate rule must match exactly L1.
+	 *
+	 * @return void
+	 */
+	public function testDryRunMatchesRightLinesAndNoneWrong(): void {
+		$lines = [
+			['id' => 'L1', 'amount' => 500.0, 'reference' => 'INV-C-2026-0001', 'counterpartyName' => 'Acme B.V.'],
+			['id' => 'L2', 'amount' => 500.0, 'reference' => 'INV-C-2026-0002', 'counterpartyName' => 'Acme B.V.'],
+			['id' => 'L3', 'amount' => 500.0, 'reference' => 'INV-C-2026-0001', 'counterpartyName' => 'Globex'],
+			['id' => 'L4', 'amount' => 99.0, 'reference' => 'INV-C-2026-0001', 'counterpartyName' => 'Acme B.V.'],
+			['id' => 'L5', 'amount' => 500.0, 'reference' => '', 'counterpartyName' => 'Acme B.V.'],
+		];
 
+		$rule = [
+			'predicates' => [
+				['op' => 'exact-amount', 'amount' => 500],
+				['op' => 'reference-match', 'pattern' => 'INV-C-2026-0001'],
+				['op' => 'counterparty-fuzzy', 'name' => 'Acme BV', 'threshold' => 0.8],
+			],
+		];
 
-    /**
-     * Five candidate lines; a three-predicate rule must match exactly L1.
-     *
-     * @return void
-     */
-    public function testDryRunMatchesRightLinesAndNoneWrong(): void
-    {
-        $lines = [
-            ['id' => 'L1', 'amount' => 500.0, 'reference' => 'INV-C-2026-0001', 'counterpartyName' => 'Acme B.V.'],
-            ['id' => 'L2', 'amount' => 500.0, 'reference' => 'INV-C-2026-0002', 'counterpartyName' => 'Acme B.V.'],
-            ['id' => 'L3', 'amount' => 500.0, 'reference' => 'INV-C-2026-0001', 'counterpartyName' => 'Globex'],
-            ['id' => 'L4', 'amount' => 99.0, 'reference' => 'INV-C-2026-0001', 'counterpartyName' => 'Acme B.V.'],
-            ['id' => 'L5', 'amount' => 500.0, 'reference' => '', 'counterpartyName' => 'Acme B.V.'],
-        ];
+		$result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
 
-        $rule = [
-            'predicates' => [
-                ['op' => 'exact-amount', 'amount' => 500],
-                ['op' => 'reference-match', 'pattern' => 'INV-C-2026-0001'],
-                ['op' => 'counterparty-fuzzy', 'name' => 'Acme BV', 'threshold' => 0.8],
-            ],
-        ];
+		self::assertSame(['L1'], $result['matchedLineIds']);
+		self::assertSame(1, $result['matchedCount']);
+		self::assertSame(5, $result['totalEvaluated']);
 
-        $result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
+	}//end testDryRunMatchesRightLinesAndNoneWrong()
 
-        self::assertSame(['L1'], $result['matchedLineIds']);
-        self::assertSame(1, $result['matchedCount']);
-        self::assertSame(5, $result['totalEvaluated']);
+	/**
+	 * Debit lines match on their absolute amount (bank signs are irrelevant to
+	 * the operator's rule).
+	 *
+	 * @return void
+	 */
+	public function testExactAmountMatchesOnAbsoluteValue(): void {
+		$lines = [['id' => 'D1', 'amount' => -500.0, 'reference' => 'x']];
+		$rule = ['predicates' => [['op' => 'exact-amount', 'amount' => 500]]];
+		$result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
 
-    }//end testDryRunMatchesRightLinesAndNoneWrong()
+		self::assertSame(['D1'], $result['matchedLineIds']);
 
+	}//end testExactAmountMatchesOnAbsoluteValue()
 
-    /**
-     * Debit lines match on their absolute amount (bank signs are irrelevant to
-     * the operator's rule).
-     *
-     * @return void
-     */
-    public function testExactAmountMatchesOnAbsoluteValue(): void
-    {
-        $lines  = [['id' => 'D1', 'amount' => -500.0, 'reference' => 'x']];
-        $rule   = ['predicates' => [['op' => 'exact-amount', 'amount' => 500]]];
-        $result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
+	/**
+	 * counterparty-iban + amount-range: exact IBAN (case-insensitive) in range
+	 * matches; same IBAN out of range does not (spec scenario).
+	 *
+	 * @return void
+	 */
+	public function testCounterpartyIbanAndAmountRange(): void {
+		$lines = [
+			['id' => 'A', 'amount' => 450.0, 'counterpartyIban' => 'nl91abna0417164300'],
+			['id' => 'B', 'amount' => 5000.0, 'counterpartyIban' => 'NL91ABNA0417164300'],
+			['id' => 'C', 'amount' => 450.0, 'counterpartyIban' => 'NL00OTHER0000000000'],
+		];
+		$rule = [
+			'predicates' => [
+				['op' => 'counterparty-iban', 'iban' => 'NL91ABNA0417164300'],
+				['op' => 'amount-range', 'min' => 100, 'max' => 2000],
+			],
+		];
 
-        self::assertSame(['D1'], $result['matchedLineIds']);
+		$result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
 
-    }//end testExactAmountMatchesOnAbsoluteValue()
+		self::assertSame(['A'], $result['matchedLineIds']);
 
+	}//end testCounterpartyIbanAndAmountRange()
 
-    /**
-     * counterparty-iban + amount-range: exact IBAN (case-insensitive) in range
-     * matches; same IBAN out of range does not (spec scenario).
-     *
-     * @return void
-     */
-    public function testCounterpartyIbanAndAmountRange(): void
-    {
-        $lines = [
-            ['id' => 'A', 'amount' => 450.0, 'counterpartyIban' => 'nl91abna0417164300'],
-            ['id' => 'B', 'amount' => 5000.0, 'counterpartyIban' => 'NL91ABNA0417164300'],
-            ['id' => 'C', 'amount' => 450.0, 'counterpartyIban' => 'NL00OTHER0000000000'],
-        ];
-        $rule = [
-            'predicates' => [
-                ['op' => 'counterparty-iban', 'iban' => 'NL91ABNA0417164300'],
-                ['op' => 'amount-range', 'min' => 100, 'max' => 2000],
-            ],
-        ];
+	/**
+	 * date-window matches within N days of the supplied anchor, and excludes
+	 * out-of-window lines.
+	 *
+	 * @return void
+	 */
+	public function testDateWindowWithAnchor(): void {
+		$lines = [
+			['id' => 'near', 'amount' => 100.0, 'valueDate' => '2026-04-05'],
+			['id' => 'far', 'amount' => 100.0, 'valueDate' => '2026-05-20'],
+		];
+		$rule = ['predicates' => [['op' => 'date-window', 'days' => 7]]];
 
-        $result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
+		$result = $this->service->previewRule(rule: $rule, candidateLines: $lines, anchorDate: '2026-04-03');
 
-        self::assertSame(['A'], $result['matchedLineIds']);
+		self::assertSame(['near'], $result['matchedLineIds']);
 
-    }//end testCounterpartyIbanAndAmountRange()
+	}//end testDateWindowWithAnchor()
 
+	/**
+	 * A date-window predicate with NO anchor is indeterminate and must not by
+	 * itself produce a match (no false positives).
+	 *
+	 * @return void
+	 */
+	public function testDateWindowWithoutAnchorNeverMatchesAlone(): void {
+		$lines = [['id' => 'x', 'amount' => 100.0, 'valueDate' => '2026-04-05']];
+		$rule = ['predicates' => [['op' => 'date-window', 'days' => 7]]];
+		$result = $this->service->previewRule(rule: $rule, candidateLines: $lines, anchorDate: null);
 
-    /**
-     * date-window matches within N days of the supplied anchor, and excludes
-     * out-of-window lines.
-     *
-     * @return void
-     */
-    public function testDateWindowWithAnchor(): void
-    {
-        $lines = [
-            ['id' => 'near', 'amount' => 100.0, 'valueDate' => '2026-04-05'],
-            ['id' => 'far', 'amount' => 100.0, 'valueDate' => '2026-05-20'],
-        ];
-        $rule = ['predicates' => [['op' => 'date-window', 'days' => 7]]];
+		self::assertSame([], $result['matchedLineIds']);
+		self::assertSame(0, $result['matchedCount']);
 
-        $result = $this->service->previewRule(rule: $rule, candidateLines: $lines, anchorDate: '2026-04-03');
+	}//end testDateWindowWithoutAnchorNeverMatchesAlone()
 
-        self::assertSame(['near'], $result['matchedLineIds']);
+	/**
+	 * An invalid regex fails closed (no PHP warning, no match).
+	 *
+	 * @return void
+	 */
+	public function testInvalidRegexFailsClosed(): void {
+		$lines = [['id' => 'x', 'amount' => 1.0, 'reference' => 'anything']];
+		$rule = ['predicates' => [['op' => 'reference-match', 'pattern' => '([unclosed']]];
+		$result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
 
-    }//end testDateWindowWithAnchor()
+		self::assertSame([], $result['matchedLineIds']);
 
+	}//end testInvalidRegexFailsClosed()
 
-    /**
-     * A date-window predicate with NO anchor is indeterminate and must not by
-     * itself produce a match (no false positives).
-     *
-     * @return void
-     */
-    public function testDateWindowWithoutAnchorNeverMatchesAlone(): void
-    {
-        $lines  = [['id' => 'x', 'amount' => 100.0, 'valueDate' => '2026-04-05']];
-        $rule   = ['predicates' => [['op' => 'date-window', 'days' => 7]]];
-        $result = $this->service->previewRule(rule: $rule, candidateLines: $lines, anchorDate: null);
+	/**
+	 * An empty predicate list matches nothing (never everything).
+	 *
+	 * @return void
+	 */
+	public function testEmptyPredicatesMatchNothing(): void {
+		$lines = [['id' => 'x', 'amount' => 1.0]];
+		$result = $this->service->previewRule(rule: ['predicates' => []], candidateLines: $lines);
 
-        self::assertSame([], $result['matchedLineIds']);
-        self::assertSame(0, $result['matchedCount']);
+		self::assertSame(0, $result['matchedCount']);
 
-    }//end testDateWindowWithoutAnchorNeverMatchesAlone()
+	}//end testEmptyPredicatesMatchNothing()
 
+	/**
+	 * A saved rule suggests its GL account on a matching line; the lowest
+	 * `priority` value wins; an unknown IBAN yields null (spec scenario).
+	 *
+	 * @return void
+	 */
+	public function testSuggestForLinePicksHighestPriorityGlAccount(): void {
+		$rules = [
+			[
+				'id' => 'r-low',
+				'ruleName' => 'Acme low',
+				'priority' => 50,
+				'targetType' => 'gl-transaction',
+				'targetGlAccount' => '4500',
+				'predicates' => [['op' => 'counterparty-iban', 'iban' => 'NL91ABNA0417164300']],
+			],
+			[
+				'id' => 'r-high',
+				'ruleName' => 'Acme high',
+				'priority' => 10,
+				'targetType' => 'gl-transaction',
+				'targetGlAccount' => '4000',
+				'predicates' => [['op' => 'counterparty-iban', 'iban' => 'NL91ABNA0417164300']],
+			],
+		];
 
-    /**
-     * An invalid regex fails closed (no PHP warning, no match).
-     *
-     * @return void
-     */
-    public function testInvalidRegexFailsClosed(): void
-    {
-        $lines  = [['id' => 'x', 'amount' => 1.0, 'reference' => 'anything']];
-        $rule   = ['predicates' => [['op' => 'reference-match', 'pattern' => '([unclosed']]];
-        $result = $this->service->previewRule(rule: $rule, candidateLines: $lines);
+		$line = ['id' => 'bl', 'amount' => 200.0, 'counterpartyIban' => 'NL91ABNA0417164300'];
+		$suggestion = $this->service->suggestForLine(line: $line, activeRules: $rules);
 
-        self::assertSame([], $result['matchedLineIds']);
+		self::assertNotNull($suggestion);
+		self::assertSame('4000', $suggestion['targetGlAccount']);
+		self::assertSame('r-high', $suggestion['matchingRuleId']);
 
-    }//end testInvalidRegexFailsClosed()
+		// Unknown IBAN → no suggestion.
+		$none = $this->service->suggestForLine(
+			line: ['id' => 'bl2', 'amount' => 200.0, 'counterpartyIban' => 'NL00UNKNOWN000000000'],
+			activeRules: $rules,
+		);
+		self::assertNull($none);
 
-
-    /**
-     * An empty predicate list matches nothing (never everything).
-     *
-     * @return void
-     */
-    public function testEmptyPredicatesMatchNothing(): void
-    {
-        $lines  = [['id' => 'x', 'amount' => 1.0]];
-        $result = $this->service->previewRule(rule: ['predicates' => []], candidateLines: $lines);
-
-        self::assertSame(0, $result['matchedCount']);
-
-    }//end testEmptyPredicatesMatchNothing()
-
-
-    /**
-     * A saved rule suggests its GL account on a matching line; the lowest
-     * `priority` value wins; an unknown IBAN yields null (spec scenario).
-     *
-     * @return void
-     */
-    public function testSuggestForLinePicksHighestPriorityGlAccount(): void
-    {
-        $rules = [
-            [
-                'id'              => 'r-low',
-                'ruleName'        => 'Acme low',
-                'priority'        => 50,
-                'targetType'      => 'gl-transaction',
-                'targetGlAccount' => '4500',
-                'predicates'      => [['op' => 'counterparty-iban', 'iban' => 'NL91ABNA0417164300']],
-            ],
-            [
-                'id'              => 'r-high',
-                'ruleName'        => 'Acme high',
-                'priority'        => 10,
-                'targetType'      => 'gl-transaction',
-                'targetGlAccount' => '4000',
-                'predicates'      => [['op' => 'counterparty-iban', 'iban' => 'NL91ABNA0417164300']],
-            ],
-        ];
-
-        $line       = ['id' => 'bl', 'amount' => 200.0, 'counterpartyIban' => 'NL91ABNA0417164300'];
-        $suggestion = $this->service->suggestForLine(line: $line, activeRules: $rules);
-
-        self::assertNotNull($suggestion);
-        self::assertSame('4000', $suggestion['targetGlAccount']);
-        self::assertSame('r-high', $suggestion['matchingRuleId']);
-
-        // Unknown IBAN → no suggestion.
-        $none = $this->service->suggestForLine(
-            line: ['id' => 'bl2', 'amount' => 200.0, 'counterpartyIban' => 'NL00UNKNOWN000000000'],
-            activeRules: $rules,
-        );
-        self::assertNull($none);
-
-    }//end testSuggestForLinePicksHighestPriorityGlAccount()
+	}//end testSuggestForLinePicksHighestPriorityGlAccount()
 }//end class

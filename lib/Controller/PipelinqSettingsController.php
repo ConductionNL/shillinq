@@ -57,98 +57,94 @@ use OCP\IRequest;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
  */
-class PipelinqSettingsController extends Controller
-{
-    /**
-     * Constructor.
-     *
-     * @param IRequest       $request        The current HTTP request.
-     * @param PipelinqConfig $pipelinqConfig The connection config service.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly PipelinqConfig $pipelinqConfig,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+class PipelinqSettingsController extends Controller {
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request The current HTTP request.
+	 * @param PipelinqConfig $pipelinqConfig The connection config service.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly PipelinqConfig $pipelinqConfig,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * GET the current pipelinq connection settings.
-     *
-     * Returns the endpoint URL and a `hasToken` boolean. The token
-     * itself is intentionally NOT included so a page reload renders
-     * the token input as masked — only an admin who actively wants
-     * to rotate the token re-enters it.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
-     */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
-    public function index(): JSONResponse
-    {
-        return new JSONResponse(
-            [
-                'endpoint' => $this->pipelinqConfig->getPipelinqEndpoint(),
-                'hasToken' => $this->pipelinqConfig->hasPipelinqToken(),
-            ]
-        );
+	/**
+	 * GET the current pipelinq connection settings.
+	 *
+	 * Returns the endpoint URL and a `hasToken` boolean. The token
+	 * itself is intentionally NOT included so a page reload renders
+	 * the token input as masked — only an admin who actively wants
+	 * to rotate the token re-enters it.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
+	 */
+	#[AuthorizedAdminSetting(Application::APP_ID)]
+	public function index(): JSONResponse {
+		return new JSONResponse(
+			[
+				'endpoint' => $this->pipelinqConfig->getPipelinqEndpoint(),
+				'hasToken' => $this->pipelinqConfig->hasPipelinqToken(),
+			]
+		);
 
-    }//end index()
+	}//end index()
 
-    /**
-     * POST to update the pipelinq connection settings.
-     *
-     * Accepts `endpoint` (string) and an optional `token` (string).
-     * When `token` is absent or null, the currently-stored token is
-     * preserved — supporting the "edit endpoint only" case without
-     * forcing the admin to re-enter the secret. Explicitly passing
-     * an empty string clears the token (rotation/removal).
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
-     */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
-    public function create(): JSONResponse
-    {
-        $endpoint = (string) ($this->request->getParam('endpoint') ?? '');
-        $this->pipelinqConfig->setPipelinqEndpoint($endpoint);
+	/**
+	 * POST to update the pipelinq connection settings.
+	 *
+	 * Accepts `endpoint` (string) and an optional `token` (string).
+	 * When `token` is absent or null, the currently-stored token is
+	 * preserved — supporting the "edit endpoint only" case without
+	 * forcing the admin to re-enter the secret. Explicitly passing
+	 * an empty string clears the token (rotation/removal).
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
+	 */
+	#[AuthorizedAdminSetting(Application::APP_ID)]
+	public function create(): JSONResponse {
+		$endpoint = (string)($this->request->getParam('endpoint') ?? '');
+		$this->pipelinqConfig->setPipelinqEndpoint($endpoint);
 
-        // Token is optional; absent => preserve, '' => clear, set => rotate.
-        $tokenParam = $this->request->getParam('token');
-        if ($tokenParam !== null) {
-            $this->pipelinqConfig->setPipelinqToken((string) $tokenParam);
-        }
+		// Token is optional; absent => preserve, '' => clear, set => rotate.
+		$tokenParam = $this->request->getParam('token');
+		if ($tokenParam !== null) {
+			$this->pipelinqConfig->setPipelinqToken((string)$tokenParam);
+		}
 
-        return new JSONResponse(
-            [
-                'success'  => true,
-                'endpoint' => $this->pipelinqConfig->getPipelinqEndpoint(),
-                'hasToken' => $this->pipelinqConfig->hasPipelinqToken(),
-            ]
-        );
+		return new JSONResponse(
+			[
+				'success' => true,
+				'endpoint' => $this->pipelinqConfig->getPipelinqEndpoint(),
+				'hasToken' => $this->pipelinqConfig->hasPipelinqToken(),
+			]
+		);
 
-    }//end create()
+	}//end create()
 
-    /**
-     * POST to issue a pipelinq health-check ("Test Connection").
-     *
-     * Returns whatever PipelinqConfig::testConnection() resolves to
-     * (success/status/message). The token itself is never echoed
-     * back; only its presence is implicit in the outcome.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
-     */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
-    public function test(): JSONResponse
-    {
-        return new JSONResponse(
-            $this->pipelinqConfig->testConnection()
-        );
+	/**
+	 * POST to issue a pipelinq health-check ("Test Connection").
+	 *
+	 * Returns whatever PipelinqConfig::testConnection() resolves to
+	 * (success/status/message). The token itself is never echoed
+	 * back; only its presence is implicit in the outcome.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
+	 */
+	#[AuthorizedAdminSetting(Application::APP_ID)]
+	public function test(): JSONResponse {
+		return new JSONResponse(
+			$this->pipelinqConfig->testConnection()
+		);
 
-    }//end test()
+	}//end test()
 }//end class

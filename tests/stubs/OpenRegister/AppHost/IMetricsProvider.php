@@ -25,13 +25,12 @@ use OCA\OpenRegister\AppHost\Observability\MetricSample;
 /**
  * Stub for OCA\OpenRegister\AppHost\IMetricsProvider.
  */
-interface IMetricsProvider
-{
+interface IMetricsProvider {
 
-    /**
-     * Produce the provider's metric samples.
-     *
-     * @return MetricSample[] The provider's samples.
-     */
-    public function metrics(): array;
+	/**
+	 * Produce the provider's metric samples.
+	 *
+	 * @return MetricSample[] The provider's samples.
+	 */
+	public function metrics(): array;
 }//end interface

@@ -36,47 +36,44 @@ use Psr\Log\NullLogger;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  */
-final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface
-{
+final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 
-    /**
-     * Logger sink.
-     *
-     * @var LoggerInterface
-     */
-    private LoggerInterface $logger;
+	/**
+	 * Logger sink.
+	 *
+	 * @var LoggerInterface
+	 */
+	private LoggerInterface $logger;
 
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface|null $logger Optional logger (defaults to NullLogger).
-     */
-    public function __construct(?LoggerInterface $logger=null)
-    {
-        $this->logger = ($logger ?? new NullLogger());
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface|null $logger Optional logger (defaults to NullLogger).
+	 */
+	public function __construct(?LoggerInterface $logger = null) {
+		$this->logger = ($logger ?? new NullLogger());
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Log the dispatch of a purchase order email.
-     *
-     * @param string $administrationId The administration identifier.
-     * @param array  $purchaseOrder    The purchase order payload.
-     *
-     * @return void
-     *
-     * @inheritDoc
-     */
-    public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void
-    {
-        $this->logger->info(
-            'shillinq.purchase_order.mailer.dispatch',
-            [
-                'administrationId' => $administrationId,
-                'poNumber'         => (string) ($purchaseOrder['poNumber'] ?? ''),
-                'supplierId'       => (string) ($purchaseOrder['supplierId'] ?? ''),
-            ]
-        );
+	/**
+	 * Log the dispatch of a purchase order email.
+	 *
+	 * @param string $administrationId The administration identifier.
+	 * @param array $purchaseOrder The purchase order payload.
+	 *
+	 * @return void
+	 *
+	 * @inheritDoc
+	 */
+	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void {
+		$this->logger->info(
+			'shillinq.purchase_order.mailer.dispatch',
+			[
+				'administrationId' => $administrationId,
+				'poNumber' => (string)($purchaseOrder['poNumber'] ?? ''),
+				'supplierId' => (string)($purchaseOrder['supplierId'] ?? ''),
+			]
+		);
 
-    }//end sendPurchaseOrderEmail()
+	}//end sendPurchaseOrderEmail()
 }//end class

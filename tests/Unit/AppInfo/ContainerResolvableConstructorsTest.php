@@ -60,308 +60,293 @@ use PHPUnit\Framework\TestCase;
  * Nextcloud instance, and it cannot be fooled by the autoloader resolving
  * `OCA\Shillinq\*` to a deployed copy of the app rather than this tree.
  */
-final class ContainerResolvableConstructorsTest extends TestCase
-{
+final class ContainerResolvableConstructorsTest extends TestCase {
 
-    /**
-     * Repository root.
-     *
-     * @var string
-     */
-    private string $root = '';
+	/**
+	 * Repository root.
+	 *
+	 * @var string
+	 */
+	private string $root = '';
 
-    /**
-     * Set up the repository root path.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->root = dirname(__DIR__, 3);
+	/**
+	 * Set up the repository root path.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->root = dirname(__DIR__, 3);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Every required, non-instantiable in-app constructor dependency is bound.
-     *
-     * @return void
-     */
-    public function testEveryRequiredInAppInterfaceDependencyIsRegistered(): void
-    {
-        $files = $this->phpFiles($this->root.'/lib');
-        $this->assertGreaterThan(
-            500,
-            count($files),
-            'Sanity floor: the lib/ scan found implausibly few PHP files, so a '
-            .'green result here would mean the scan did not run, not that the '
-            .'bindings are correct.'
-        );
+	/**
+	 * Every required, non-instantiable in-app constructor dependency is bound.
+	 *
+	 * @return void
+	 */
+	public function testEveryRequiredInAppInterfaceDependencyIsRegistered(): void {
+		$files = $this->phpFiles($this->root . '/lib');
+		$this->assertGreaterThan(
+			500,
+			count($files),
+			'Sanity floor: the lib/ scan found implausibly few PHP files, so a '
+			. 'green result here would mean the scan did not run, not that the '
+			. 'bindings are correct.'
+		);
 
-        $nonInstantiable = $this->nonInstantiableInAppTypes($files);
-        $this->assertGreaterThan(
-            20,
-            count($nonInstantiable),
-            'Sanity floor: no in-app interfaces/abstract classes were detected, '
-            .'so this test could never fail and proves nothing.'
-        );
+		$nonInstantiable = $this->nonInstantiableInAppTypes($files);
+		$this->assertGreaterThan(
+			20,
+			count($nonInstantiable),
+			'Sanity floor: no in-app interfaces/abstract classes were detected, '
+			. 'so this test could never fail and proves nothing.'
+		);
 
-        $bound      = $this->registeredServices();
-        $violations = [];
+		$bound = $this->registeredServices();
+		$violations = [];
 
-        foreach ($files as $file) {
-            foreach ($this->requiredDependencies($file) as $dependency) {
-                [$fqcn, $className] = $dependency;
-                if (isset($nonInstantiable[$fqcn]) === false) {
-                    continue;
-                }
+		foreach ($files as $file) {
+			foreach ($this->requiredDependencies($file) as $dependency) {
+				[$fqcn, $className] = $dependency;
+				if (isset($nonInstantiable[$fqcn]) === false) {
+					continue;
+				}
 
-                if (isset($bound[$fqcn]) === true) {
-                    continue;
-                }
+				if (isset($bound[$fqcn]) === true) {
+					continue;
+				}
 
-                $violations[] = $className.' requires '.$fqcn
-                    .' (declared in '.str_replace($this->root.'/', '', $file).')';
-            }
-        }
+				$violations[] = $className . ' requires ' . $fqcn
+					. ' (declared in ' . str_replace($this->root . '/', '', $file) . ')';
+			}
+		}
 
-        $this->assertSame(
-            [],
-            $violations,
-            "The following constructors type-hint an in-app interface or abstract\n"
-            ."class NON-nullably with no default value, but Application::register()\n"
-            ."never binds that type. Nextcloud's container cannot build them, so\n"
-            ."every controller that transitively depends on one answers HTTP 500\n"
-            ."before its own code runs. Fix by adding a registerService() binding\n"
-            ."to lib/AppInfo/Application.php, or by making the parameter optional\n"
-            ."(`?Type \$p = null`) when the dependency really is optional:\n\n  "
-            .implode("\n  ", $violations)."\n"
-        );
+		$this->assertSame(
+			[],
+			$violations,
+			"The following constructors type-hint an in-app interface or abstract\n"
+			. "class NON-nullably with no default value, but Application::register()\n"
+			. "never binds that type. Nextcloud's container cannot build them, so\n"
+			. "every controller that transitively depends on one answers HTTP 500\n"
+			. "before its own code runs. Fix by adding a registerService() binding\n"
+			. "to lib/AppInfo/Application.php, or by making the parameter optional\n"
+			. "(`?Type \$p = null`) when the dependency really is optional:\n\n  "
+			. implode("\n  ", $violations) . "\n"
+		);
 
-    }//end testEveryRequiredInAppInterfaceDependencyIsRegistered()
+	}//end testEveryRequiredInAppInterfaceDependencyIsRegistered()
 
-    /**
-     * Recursively collect every .php file under a directory.
-     *
-     * @param string $dir Directory to walk.
-     *
-     * @return array<int,string> Absolute file paths.
-     */
-    private function phpFiles(string $dir): array
-    {
-        $found    = [];
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
-        );
+	/**
+	 * Recursively collect every .php file under a directory.
+	 *
+	 * @param string $dir Directory to walk.
+	 *
+	 * @return array<int,string> Absolute file paths.
+	 */
+	private function phpFiles(string $dir): array {
+		$found = [];
+		$iterator = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+		);
 
-        foreach ($iterator as $entry) {
-            if ($entry->isFile() === true && $entry->getExtension() === 'php') {
-                $found[] = $entry->getPathname();
-            }
-        }
+		foreach ($iterator as $entry) {
+			if ($entry->isFile() === true && $entry->getExtension() === 'php') {
+				$found[] = $entry->getPathname();
+			}
+		}
 
-        sort($found);
-        return $found;
+		sort($found);
+		return $found;
+	}//end phpFiles()
 
-    }//end phpFiles()
+	/**
+	 * Map every `OCA\Shillinq\*` interface / abstract class to its FQCN.
+	 *
+	 * @param array<int,string> $files Files to scan.
+	 *
+	 * @return array<string,true> FQCN => true for non-instantiable types.
+	 */
+	private function nonInstantiableInAppTypes(array $files): array {
+		$types = [];
 
-    /**
-     * Map every `OCA\Shillinq\*` interface / abstract class to its FQCN.
-     *
-     * @param array<int,string> $files Files to scan.
-     *
-     * @return array<string,true> FQCN => true for non-instantiable types.
-     */
-    private function nonInstantiableInAppTypes(array $files): array
-    {
-        $types = [];
+		foreach ($files as $file) {
+			$source = (string)file_get_contents($file);
+			if (preg_match('/^namespace\s+([^;]+);/m', $source, $ns) !== 1) {
+				continue;
+			}
 
-        foreach ($files as $file) {
-            $source = (string) file_get_contents($file);
-            if (preg_match('/^namespace\s+([^;]+);/m', $source, $ns) !== 1) {
-                continue;
-            }
+			$matched = preg_match(
+				'/^\s*(?:final\s+)?(interface|abstract\s+class)\s+(\w+)/m',
+				$source,
+				$decl
+			);
+			if ($matched !== 1) {
+				continue;
+			}
 
-            $matched = preg_match(
-                '/^\s*(?:final\s+)?(interface|abstract\s+class)\s+(\w+)/m',
-                $source,
-                $decl
-            );
-            if ($matched !== 1) {
-                continue;
-            }
+			$types[trim($ns[1]) . '\\' . $decl[2]] = true;
+		}
 
-            $types[trim($ns[1]).'\\'.$decl[2]] = true;
-        }
+		return $types;
+	}//end nonInstantiableInAppTypes()
 
-        return $types;
+	/**
+	 * Extract required (non-nullable, defaultless) in-app constructor deps.
+	 *
+	 * @param string $file The PHP file to inspect.
+	 *
+	 * @return array<int,array{0:string,1:string}> Tuples of [dependency FQCN, declaring class FQCN].
+	 */
+	private function requiredDependencies(string $file): array {
+		$source = (string)file_get_contents($file);
+		if (preg_match('/^namespace\s+([^;]+);/m', $source, $ns) !== 1) {
+			return [];
+		}
 
-    }//end nonInstantiableInAppTypes()
+		$namespace = trim($ns[1]);
+		if (preg_match('/^\s*(?:final\s+|abstract\s+)*class\s+(\w+)/m', $source, $decl) !== 1) {
+			return [];
+		}
 
-    /**
-     * Extract required (non-nullable, defaultless) in-app constructor deps.
-     *
-     * @param string $file The PHP file to inspect.
-     *
-     * @return array<int,array{0:string,1:string}> Tuples of [dependency FQCN, declaring class FQCN].
-     */
-    private function requiredDependencies(string $file): array
-    {
-        $source = (string) file_get_contents($file);
-        if (preg_match('/^namespace\s+([^;]+);/m', $source, $ns) !== 1) {
-            return [];
-        }
+		$className = $namespace . '\\' . $decl[1];
+		$aliases = $this->useAliases($source);
 
-        $namespace = trim($ns[1]);
-        if (preg_match('/^\s*(?:final\s+|abstract\s+)*class\s+(\w+)/m', $source, $decl) !== 1) {
-            return [];
-        }
+		$matched = preg_match(
+			'/function\s+__construct\s*\((.*?)\)\s*(?::\s*\w+\s*)?\{/s',
+			$source,
+			$ctor
+		);
+		if ($matched !== 1) {
+			return [];
+		}
 
-        $className = $namespace.'\\'.$decl[1];
-        $aliases   = $this->useAliases($source);
+		$dependencies = [];
+		foreach ($this->splitParameters($ctor[1]) as $parameter) {
+			// Optional (has a default) or explicitly nullable — the container
+			// falls back safely, so an unbound type is harmless here.
+			if (str_contains($parameter, '=') === true || str_contains($parameter, '?') === true) {
+				continue;
+			}
 
-        $matched = preg_match(
-            '/function\s+__construct\s*\((.*?)\)\s*(?::\s*\w+\s*)?\{/s',
-            $source,
-            $ctor
-        );
-        if ($matched !== 1) {
-            return [];
-        }
+			$matchedType = preg_match(
+				'/(?:public|protected|private)?\s*(?:readonly\s+)?([A-Za-z_\\\\][\w\\\\]*)\s+\$\w+\s*$/',
+				trim($parameter),
+				$type
+			);
+			if ($matchedType !== 1) {
+				continue;
+			}
 
-        $dependencies = [];
-        foreach ($this->splitParameters($ctor[1]) as $parameter) {
-            // Optional (has a default) or explicitly nullable — the container
-            // falls back safely, so an unbound type is harmless here.
-            if (str_contains($parameter, '=') === true || str_contains($parameter, '?') === true) {
-                continue;
-            }
+			$short = $type[1];
+			$fqcn = ($aliases[$short] ?? ($namespace . '\\' . $short));
+			if (str_starts_with($short, '\\') === true) {
+				$fqcn = ltrim($short, '\\');
+			}
 
-            $matchedType = preg_match(
-                '/(?:public|protected|private)?\s*(?:readonly\s+)?([A-Za-z_\\\\][\w\\\\]*)\s+\$\w+\s*$/',
-                trim($parameter),
-                $type
-            );
-            if ($matchedType !== 1) {
-                continue;
-            }
+			$dependencies[] = [$fqcn, $className];
+		}//end foreach
 
-            $short = $type[1];
-            $fqcn  = ($aliases[$short] ?? ($namespace.'\\'.$short));
-            if (str_starts_with($short, '\\') === true) {
-                $fqcn = ltrim($short, '\\');
-            }
+		return $dependencies;
+	}//end requiredDependencies()
 
-            $dependencies[] = [$fqcn, $className];
-        }//end foreach
+	/**
+	 * Build the short-name => FQCN map from a file's `use` statements.
+	 *
+	 * @param string $source PHP source.
+	 *
+	 * @return array<string,string> Alias map.
+	 */
+	private function useAliases(string $source): array {
+		$aliases = [];
+		preg_match_all('/^use\s+([\w\\\\]+)(?:\s+as\s+(\w+))?;/m', $source, $matches, PREG_SET_ORDER);
 
-        return $dependencies;
+		foreach ($matches as $match) {
+			$fqcn = $match[1];
+			$parts = explode('\\', $fqcn);
+			$short = ($match[2] ?? end($parts));
+			if ($short === '' || $short === null) {
+				$short = end($parts);
+			}
 
-    }//end requiredDependencies()
+			$aliases[$short] = $fqcn;
+		}
 
-    /**
-     * Build the short-name => FQCN map from a file's `use` statements.
-     *
-     * @param string $source PHP source.
-     *
-     * @return array<string,string> Alias map.
-     */
-    private function useAliases(string $source): array
-    {
-        $aliases = [];
-        preg_match_all('/^use\s+([\w\\\\]+)(?:\s+as\s+(\w+))?;/m', $source, $matches, PREG_SET_ORDER);
+		return $aliases;
+	}//end useAliases()
 
-        foreach ($matches as $match) {
-            $fqcn  = $match[1];
-            $parts = explode('\\', $fqcn);
-            $short = ($match[2] ?? end($parts));
-            if ($short === '' || $short === null) {
-                $short = end($parts);
-            }
+	/**
+	 * Split a constructor parameter list on top-level commas.
+	 *
+	 * Attribute arguments and default array literals can contain commas, so a
+	 * naive explode() would shred the list.
+	 *
+	 * @param string $parameters Raw parameter list.
+	 *
+	 * @return array<int,string> Individual parameter declarations.
+	 */
+	private function splitParameters(string $parameters): array {
+		$out = [];
+		$buffer = '';
+		$depth = 0;
+		$length = strlen($parameters);
 
-            $aliases[$short] = $fqcn;
-        }
+		for ($i = 0; $i < $length; $i++) {
+			$char = $parameters[$i];
+			if ($char === '(' || $char === '[') {
+				$depth++;
+			}
 
-        return $aliases;
+			if ($char === ')' || $char === ']') {
+				$depth--;
+			}
 
-    }//end useAliases()
+			if ($char === ',' && $depth === 0) {
+				$out[] = $buffer;
+				$buffer = '';
+				continue;
+			}
 
-    /**
-     * Split a constructor parameter list on top-level commas.
-     *
-     * Attribute arguments and default array literals can contain commas, so a
-     * naive explode() would shred the list.
-     *
-     * @param string $parameters Raw parameter list.
-     *
-     * @return array<int,string> Individual parameter declarations.
-     */
-    private function splitParameters(string $parameters): array
-    {
-        $out     = [];
-        $buffer  = '';
-        $depth   = 0;
-        $length  = strlen($parameters);
+			$buffer .= $char;
+		}
 
-        for ($i = 0; $i < $length; $i++) {
-            $char = $parameters[$i];
-            if ($char === '(' || $char === '[') {
-                $depth++;
-            }
+		if (trim($buffer) !== '') {
+			$out[] = $buffer;
+		}
 
-            if ($char === ')' || $char === ']') {
-                $depth--;
-            }
+		return $out;
+	}//end splitParameters()
 
-            if ($char === ',' && $depth === 0) {
-                $out[]  = $buffer;
-                $buffer = '';
-                continue;
-            }
+	/**
+	 * Collect every type bound via `registerService(` in Application.php.
+	 *
+	 * @return array<string,true> FQCN => true.
+	 */
+	private function registeredServices(): array {
+		$source = (string)file_get_contents($this->root . '/lib/AppInfo/Application.php');
+		$aliases = $this->useAliases($source);
+		$bound = [];
 
-            $buffer .= $char;
-        }
+		preg_match_all(
+			'/registerService\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
+			$source,
+			$matches
+		);
 
-        if (trim($buffer) !== '') {
-            $out[] = $buffer;
-        }
+		foreach ($matches[1] as $short) {
+			$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+		}
 
-        return $out;
+		// registerServiceAlias() is the other binding form the framework offers.
+		preg_match_all(
+			'/registerServiceAlias\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
+			$source,
+			$aliasMatches
+		);
 
-    }//end splitParameters()
+		foreach ($aliasMatches[1] as $short) {
+			$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+		}
 
-    /**
-     * Collect every type bound via `registerService(` in Application.php.
-     *
-     * @return array<string,true> FQCN => true.
-     */
-    private function registeredServices(): array
-    {
-        $source  = (string) file_get_contents($this->root.'/lib/AppInfo/Application.php');
-        $aliases = $this->useAliases($source);
-        $bound   = [];
-
-        preg_match_all(
-            '/registerService\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
-            $source,
-            $matches
-        );
-
-        foreach ($matches[1] as $short) {
-            $bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\'.$short)] = true;
-        }
-
-        // registerServiceAlias() is the other binding form the framework offers.
-        preg_match_all(
-            '/registerServiceAlias\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
-            $source,
-            $aliasMatches
-        );
-
-        foreach ($aliasMatches[1] as $short) {
-            $bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\'.$short)] = true;
-        }
-
-        return $bound;
-
-    }//end registeredServices()
+		return $bound;
+	}//end registeredServices()
 }//end class

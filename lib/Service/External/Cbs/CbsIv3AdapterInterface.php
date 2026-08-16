@@ -37,24 +37,23 @@ namespace OCA\Shillinq\Service\External\Cbs;
  *
  * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
-interface CbsIv3AdapterInterface
-{
-    /**
-     * Submit an Iv3 quarterly or annual report.
-     *
-     * @param array<string,mixed> $payload The Iv3 envelope — periodType
-     *                                     (KWARTAAL|JAAR), periodValue,
-     *                                     organizationCode, lines[] (functie + categorie + bedrag),
-     *                                     reportingXmlBytes, checksum.
-     *
-     * @return CbsSubmissionResult The dispatch outcome.
-     */
-    public function submit(array $payload): CbsSubmissionResult;
+interface CbsIv3AdapterInterface {
+	/**
+	 * Submit an Iv3 quarterly or annual report.
+	 *
+	 * @param array<string,mixed> $payload The Iv3 envelope — periodType
+	 *                                     (KWARTAAL|JAAR), periodValue,
+	 *                                     organizationCode, lines[] (functie + categorie + bedrag),
+	 *                                     reportingXmlBytes, checksum.
+	 *
+	 * @return CbsSubmissionResult The dispatch outcome.
+	 */
+	public function submit(array $payload): CbsSubmissionResult;
 
-    /**
-     * Whether the adapter is dormant.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

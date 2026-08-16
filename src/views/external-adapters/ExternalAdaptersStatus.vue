@@ -24,33 +24,47 @@
 					{{ t('shillinq', 'External Connections') }}
 				</h2>
 				<p class="external-adapters__description">
-					{{ t('shillinq', 'Operator view over every external-API adapter port the app ships. Each adapter is dormant by default (log-only) so regulatory-filing and bank-sync lifecycles advance without contacting a third party. Pick a family to see the activation recipe.') }}
+					{{
+						t(
+							'shillinq',
+							'Operator view over every external-API adapter port the app ships. Each adapter is dormant by default (log-only) so regulatory-filing and bank-sync lifecycles advance without contacting a third party. Pick a family to see the activation recipe.',
+						)
+					}}
 				</p>
 			</header>
 
 			<section v-if="loading" class="external-adapters__loading">
-				<NcLoadingIcon :size="20" :name="t('shillinq', 'Loading adapter status')" />
+				<NcLoadingIcon
+					:size="20"
+					:name="t('shillinq', 'Loading adapter status')" />
 			</section>
 
-			<section v-else-if="errorMessage" class="external-adapters__error" role="alert">
+			<section
+				v-else-if="errorMessage"
+				class="external-adapters__error"
+				role="alert">
 				{{ errorMessage }}
 			</section>
 
 			<section v-else class="external-adapters__body">
 				<div class="external-adapters__summary" aria-live="polite">
-					<span class="external-adapters__pill external-adapters__pill--total">
+					<span
+						class="external-adapters__pill external-adapters__pill--total">
 						{{ summary.total }} {{ t('shillinq', 'families') }}
 					</span>
-					<span class="external-adapters__pill external-adapters__pill--dormant">
+					<span
+						class="external-adapters__pill external-adapters__pill--dormant">
 						{{ summary.dormant }} {{ t('shillinq', 'dormant') }}
 					</span>
-					<span class="external-adapters__pill external-adapters__pill--live">
+					<span
+						class="external-adapters__pill external-adapters__pill--live">
 						{{ summary.live }} {{ t('shillinq', 'live') }}
 					</span>
 				</div>
 
 				<ul class="external-adapters__list">
-					<li v-for="entry in adapters"
+					<li
+						v-for="entry in adapters"
 						:key="entry.id"
 						class="external-adapters__item"
 						:data-adapter-id="entry.id">
@@ -60,8 +74,12 @@
 									{{ entry.title }}
 								</h3>
 								<p class="external-adapters__item-meta">
-									<span class="external-adapters__category">{{ entry.category }}</span>
-									<span v-if="entry.specSlug" class="external-adapters__spec">
+									<span class="external-adapters__category">{{
+										entry.category
+									}}</span>
+									<span
+										v-if="entry.specSlug"
+										class="external-adapters__spec">
 										{{ entry.specSlug }}
 									</span>
 								</p>
@@ -70,12 +88,19 @@
 								</p>
 							</div>
 							<div class="external-adapters__item-actions">
-								<span class="external-adapters__badge"
+								<span
+									class="external-adapters__badge"
 									:class="badgeClass(entry.dormant)"
 									:data-state="entry.dormant ? 'dormant' : 'live'">
-									{{ entry.dormant ? t('shillinq', 'Dormant') : t('shillinq', 'Live') }}
+									{{
+										entry.dormant
+											? t('shillinq', 'Dormant')
+											: t('shillinq', 'Live')
+									}}
 								</span>
-								<NcButton variant="secondary" @click="openDetail(entry.id)">
+								<NcButton
+									variant="secondary"
+									@click="openDetail(entry.id)">
 									{{ t('shillinq', 'View activation') }}
 								</NcButton>
 							</div>
@@ -88,9 +113,9 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 
 export default {
 	name: 'ExternalAdaptersStatus',
@@ -120,26 +145,33 @@ export default {
 				? 'external-adapters__badge--dormant'
 				: 'external-adapters__badge--live'
 		},
+
 		async loadStatus() {
 			this.loading = true
 			this.errorMessage = ''
 			try {
 				const url = generateUrl('/apps/shillinq/api/admin/external-adapters')
 				const { data } = await axios.get(url)
-				this.adapters = (data?.adapters ?? [])
-				this.summary = (data?.summary ?? { total: 0, dormant: 0, live: 0 })
+				this.adapters = data?.adapters ?? []
+				this.summary = data?.summary ?? { total: 0, dormant: 0, live: 0 }
 			} catch (err) {
-				this.errorMessage = t('shillinq', 'Could not load external adapter status: {message}', { message: err?.message ?? 'unknown error' })
+				this.errorMessage = t(
+					'shillinq',
+					'Could not load external adapter status: {message}',
+					{ message: err?.message ?? 'unknown error' },
+				)
 			} finally {
 				this.loading = false
 			}
 		},
+
 		openDetail(id) {
 			const routeId = this.routeIdForAdapter(id)
 			if (routeId !== null) {
 				this.$router.push({ name: routeId })
 			}
 		},
+
 		routeIdForAdapter(id) {
 			const map = {
 				'digipoort-sbr': 'ExternalAdapterDigipoort',
@@ -158,7 +190,7 @@ export default {
 				'csrd-esrs-xbrl': 'ExternalAdapterCsrd',
 				'deposit-payment': 'ExternalAdapterDepositPayment',
 			}
-			return (map[id] ?? null)
+			return map[id] ?? null
 		},
 	},
 }

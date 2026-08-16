@@ -45,130 +45,125 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-22
  */
-class SoftCloseJob extends TimedJob
-{
-    /**
-     * Daily interval in seconds.
-     *
-     * @var int
-     */
-    private const INTERVAL_SECONDS = 86400;
+class SoftCloseJob extends TimedJob {
+	/**
+	 * Daily interval in seconds.
+	 *
+	 * @var int
+	 */
+	private const INTERVAL_SECONDS = 86400;
 
-    /**
-     * Construct the cron job.
-     *
-     * @param ITimeFactory       $time      NC clock.
-     * @param SoftCloseExecutor  $executor  Soft-close orchestration service.
-     * @param ContainerInterface $container DI container for ObjectService lookup.
-     * @param IAppConfig         $appConfig App config for register slug.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly SoftCloseExecutor $executor,
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: self::INTERVAL_SECONDS);
-        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+	/**
+	 * Construct the cron job.
+	 *
+	 * @param ITimeFactory $time NC clock.
+	 * @param SoftCloseExecutor $executor Soft-close orchestration service.
+	 * @param ContainerInterface $container DI container for ObjectService lookup.
+	 * @param IAppConfig $appConfig App config for register slug.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly SoftCloseExecutor $executor,
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: self::INTERVAL_SECONDS);
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Execute the nightly soft-close for every active administratie (REQ-CLS-002).
-     *
-     * @param mixed $argument Unused.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
-     *     TimedJob::run()'s signature; this job takes no argument.
-     */
-    protected function run($argument): void
-    {
-        try {
-            $administrations = $this->findActiveAdministrations();
-            $periodId        = (new DateTimeImmutable())->format('Y-m');
+	/**
+	 * Execute the nightly soft-close for every active administratie (REQ-CLS-002).
+	 *
+	 * @param mixed $argument Unused.
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+	 *     TimedJob::run()'s signature; this job takes no argument.
+	 */
+	protected function run($argument): void {
+		try {
+			$administrations = $this->findActiveAdministrations();
+			$periodId = (new DateTimeImmutable())->format('Y-m');
 
-            foreach ($administrations as $admin) {
-                $administrationId = (string) ($admin['id'] ?? ($admin['administrationId'] ?? ''));
-                if ($administrationId === '') {
-                    continue;
-                }
+			foreach ($administrations as $admin) {
+				$administrationId = (string)($admin['id'] ?? ($admin['administrationId'] ?? ''));
+				if ($administrationId === '') {
+					continue;
+				}
 
-                try {
-                    $report = $this->executor->execute(
-                        administrationId: $administrationId,
-                        periodId: $periodId,
-                        asOf: new DateTimeImmutable()
-                    );
+				try {
+					$report = $this->executor->execute(
+						administrationId: $administrationId,
+						periodId: $periodId,
+						asOf: new DateTimeImmutable()
+					);
 
-                    $this->logger->info(
-                        'SoftCloseJob: soft-close run completed',
-                        [
-                            'administrationId' => $administrationId,
-                            'periodId'         => $periodId,
-                            'status'           => $report['status'],
-                            'postingCount'     => $report['postingCount'],
-                        ]
-                    );
-                } catch (Throwable $e) {
-                    $this->logger->error(
-                        'SoftCloseJob: soft-close run failed',
-                        ['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
-                    );
-                }//end try
-            }//end foreach
-        } catch (Throwable $e) {
-            $this->logger->error('SoftCloseJob: top-level failure', ['exception' => $e->getMessage()]);
-        }//end try
+					$this->logger->info(
+						'SoftCloseJob: soft-close run completed',
+						[
+							'administrationId' => $administrationId,
+							'periodId' => $periodId,
+							'status' => $report['status'],
+							'postingCount' => $report['postingCount'],
+						]
+					);
+				} catch (Throwable $e) {
+					$this->logger->error(
+						'SoftCloseJob: soft-close run failed',
+						['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
+					);
+				}//end try
+			}//end foreach
+		} catch (Throwable $e) {
+			$this->logger->error('SoftCloseJob: top-level failure', ['exception' => $e->getMessage()]);
+		}//end try
 
-    }//end run()
+	}//end run()
 
-    /**
-     * Find every active Administration via OpenRegister.
-     *
-     * @return array<int,array<string,mixed>> Administration records.
-     */
-    private function findActiveAdministrations(): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $found         = $objectService
-                ->setRegister($this->register())
-                ->setSchema('Administration')
-                ->findAll(['filters' => ['lifecycleState' => 'active']]);
+	/**
+	 * Find every active Administration via OpenRegister.
+	 *
+	 * @return array<int,array<string,mixed>> Administration records.
+	 */
+	private function findActiveAdministrations(): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$found = $objectService
+				->setRegister($this->register())
+				->setSchema('Administration')
+				->findAll(['filters' => ['lifecycleState' => 'active']]);
 
-            if (is_array($found) === false) {
-                return [];
-            }
+			if (is_array($found) === false) {
+				return [];
+			}
 
-            return array_values(array_map(static fn ($r): array => (array) $r, $found));
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'SoftCloseJob: failed to enumerate administrations',
-                ['exception' => $e->getMessage()]
-            );
-            return [];
-        }
+			return array_values(array_map(static fn ($r): array => (array)$r, $found));
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'SoftCloseJob: failed to enumerate administrations',
+				['exception' => $e->getMessage()]
+			);
+			return [];
+		}
 
-    }//end findActiveAdministrations()
+	}//end findActiveAdministrations()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

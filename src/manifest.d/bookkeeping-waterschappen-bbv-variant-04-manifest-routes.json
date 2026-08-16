@@ -77,12 +77,12 @@
 						"type": "string"
 					},
 					{
-						"key": "programmaCode",
+						"key": "programmeCode",
 						"label": "Programme",
 						"type": "string"
 					},
 					{
-						"key": "taakveld",
+						"key": "taskField",
 						"label": "Task field",
 						"type": "string"
 					},

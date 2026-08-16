@@ -36,168 +36,158 @@ use Psr\Log\LoggerInterface;
  * both empty -> returns [] (fail-closed, same as the legacy resolver+fallback
  * behaviour it replaces).
  */
-class RoleFallbackResolverTest extends TestCase
-{
-    /**
-     * Build a mock IUser with a fixed uid.
-     *
-     * @param string $uid The user id.
-     *
-     * @return IUser
-     */
-    private function makeUser(string $uid): IUser
-    {
-        $user = $this->createMock(originalClassName: IUser::class);
-        $user->method('getUID')->willReturn($uid);
-        return $user;
+class RoleFallbackResolverTest extends TestCase {
+	/**
+	 * Build a mock IUser with a fixed uid.
+	 *
+	 * @param string $uid The user id.
+	 *
+	 * @return IUser
+	 */
+	private function makeUser(string $uid): IUser {
+		$user = $this->createMock(originalClassName: IUser::class);
+		$user->method('getUID')->willReturn($uid);
+		return $user;
+	}//end makeUser()
 
-    }//end makeUser()
+	/**
+	 * Build a mock IGroup with the given member uids.
+	 *
+	 * @param array<int,string> $uids The member uids.
+	 *
+	 * @return IGroup
+	 */
+	private function makeGroup(array $uids): IGroup {
+		$group = $this->createMock(originalClassName: IGroup::class);
+		$group->method('getUsers')->willReturn(
+			array_map(fn (string $uid) => $this->makeUser(uid: $uid), $uids)
+		);
+		return $group;
+	}//end makeGroup()
 
-    /**
-     * Build a mock IGroup with the given member uids.
-     *
-     * @param array<int,string> $uids The member uids.
-     *
-     * @return IGroup
-     */
-    private function makeGroup(array $uids): IGroup
-    {
-        $group = $this->createMock(originalClassName: IGroup::class);
-        $group->method('getUsers')->willReturn(
-            array_map(fn (string $uid) => $this->makeUser(uid: $uid), $uids)
-        );
-        return $group;
+	/**
+	 * Primary group has members -> returns the primary group's uids, fallback untouched.
+	 *
+	 * @return void
+	 */
+	public function testPrimaryGroupWithMembersIsReturned(): void {
+		// phpcs:disable CustomSniffs.Functions.NamedParameters
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('get')->willReturnMap(
+			[
+				['shillinq_finance_officer', $this->makeGroup(['alice'])],
+				['shillinq_subsidie_coordinator', $this->makeGroup(['bob'])],
+			]
+		);
+		$logger = $this->createMock(LoggerInterface::class);
 
-    }//end makeGroup()
+		$resolver = new RoleFallbackResolver(
+			groupManager: $groupManager,
+			logger: $logger,
+			primaryGroup: 'shillinq_finance_officer',
+			fallbackGroup: 'shillinq_subsidie_coordinator',
+		);
 
-    /**
-     * Primary group has members -> returns the primary group's uids, fallback untouched.
-     *
-     * @return void
-     */
-    public function testPrimaryGroupWithMembersIsReturned(): void
-    {
-        // phpcs:disable CustomSniffs.Functions.NamedParameters
-        $groupManager = $this->createMock(IGroupManager::class);
-        $groupManager->method('get')->willReturnMap(
-            [
-                ['shillinq_finance_officer', $this->makeGroup(['alice'])],
-                ['shillinq_subsidie_coordinator', $this->makeGroup(['bob'])],
-            ]
-        );
-        $logger = $this->createMock(LoggerInterface::class);
+		$object = $this->createMock(ObjectEntity::class);
+		$this->assertSame(['alice'], $resolver->resolve($object, []));
 
-        $resolver = new RoleFallbackResolver(
-            groupManager: $groupManager,
-            logger: $logger,
-            primaryGroup: 'shillinq_finance_officer',
-            fallbackGroup: 'shillinq_subsidie_coordinator',
-        );
+	}//end testPrimaryGroupWithMembersIsReturned()
 
-        $object = $this->createMock(ObjectEntity::class);
-        $this->assertSame(['alice'], $resolver->resolve($object, []));
+	/**
+	 * Primary group is empty -> falls back to the fallback group's uids.
+	 *
+	 * @return void
+	 */
+	public function testEmptyPrimaryFallsBackToFallbackGroup(): void {
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('get')->willReturnMap(
+			[
+				['shillinq_finance_officer', $this->makeGroup([])],
+				['shillinq_subsidie_coordinator', $this->makeGroup(['bob'])],
+			]
+		);
+		$logger = $this->createMock(LoggerInterface::class);
 
-    }//end testPrimaryGroupWithMembersIsReturned()
+		$resolver = new RoleFallbackResolver(
+			groupManager: $groupManager,
+			logger: $logger,
+			primaryGroup: 'shillinq_finance_officer',
+			fallbackGroup: 'shillinq_subsidie_coordinator',
+		);
 
-    /**
-     * Primary group is empty -> falls back to the fallback group's uids.
-     *
-     * @return void
-     */
-    public function testEmptyPrimaryFallsBackToFallbackGroup(): void
-    {
-        $groupManager = $this->createMock(IGroupManager::class);
-        $groupManager->method('get')->willReturnMap(
-            [
-                ['shillinq_finance_officer', $this->makeGroup([])],
-                ['shillinq_subsidie_coordinator', $this->makeGroup(['bob'])],
-            ]
-        );
-        $logger = $this->createMock(LoggerInterface::class);
+		$object = $this->createMock(ObjectEntity::class);
+		$this->assertSame(['bob'], $resolver->resolve($object, []));
 
-        $resolver = new RoleFallbackResolver(
-            groupManager: $groupManager,
-            logger: $logger,
-            primaryGroup: 'shillinq_finance_officer',
-            fallbackGroup: 'shillinq_subsidie_coordinator',
-        );
+	}//end testEmptyPrimaryFallsBackToFallbackGroup()
 
-        $object = $this->createMock(ObjectEntity::class);
-        $this->assertSame(['bob'], $resolver->resolve($object, []));
+	/**
+	 * Both primary and fallback groups are empty -> returns [] (fail-closed).
+	 *
+	 * @return void
+	 */
+	public function testBothGroupsEmptyReturnsEmptyArray(): void {
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('get')->willReturnMap(
+			[
+				['shillinq_finance_officer', $this->makeGroup([])],
+				['shillinq_subsidie_coordinator', $this->makeGroup([])],
+			]
+		);
+		$logger = $this->createMock(LoggerInterface::class);
 
-    }//end testEmptyPrimaryFallsBackToFallbackGroup()
+		$resolver = new RoleFallbackResolver(
+			groupManager: $groupManager,
+			logger: $logger,
+			primaryGroup: 'shillinq_finance_officer',
+			fallbackGroup: 'shillinq_subsidie_coordinator',
+		);
 
-    /**
-     * Both primary and fallback groups are empty -> returns [] (fail-closed).
-     *
-     * @return void
-     */
-    public function testBothGroupsEmptyReturnsEmptyArray(): void
-    {
-        $groupManager = $this->createMock(IGroupManager::class);
-        $groupManager->method('get')->willReturnMap(
-            [
-                ['shillinq_finance_officer', $this->makeGroup([])],
-                ['shillinq_subsidie_coordinator', $this->makeGroup([])],
-            ]
-        );
-        $logger = $this->createMock(LoggerInterface::class);
+		$object = $this->createMock(ObjectEntity::class);
+		$this->assertSame([], $resolver->resolve($object, []));
 
-        $resolver = new RoleFallbackResolver(
-            groupManager: $groupManager,
-            logger: $logger,
-            primaryGroup: 'shillinq_finance_officer',
-            fallbackGroup: 'shillinq_subsidie_coordinator',
-        );
+	}//end testBothGroupsEmptyReturnsEmptyArray()
 
-        $object = $this->createMock(ObjectEntity::class);
-        $this->assertSame([], $resolver->resolve($object, []));
+	/**
+	 * An unknown primary group (get() returns null) and no fallback configured
+	 * -> returns [] without throwing.
+	 *
+	 * @return void
+	 */
+	public function testUnknownGroupAndNoFallbackReturnsEmptyArray(): void {
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('get')->willReturn(null);
+		$logger = $this->createMock(LoggerInterface::class);
 
-    }//end testBothGroupsEmptyReturnsEmptyArray()
+		$resolver = new RoleFallbackResolver(
+			groupManager: $groupManager,
+			logger: $logger,
+			primaryGroup: 'shillinq_unknown_role',
+		);
 
-    /**
-     * An unknown primary group (get() returns null) and no fallback configured
-     * -> returns [] without throwing.
-     *
-     * @return void
-     */
-    public function testUnknownGroupAndNoFallbackReturnsEmptyArray(): void
-    {
-        $groupManager = $this->createMock(IGroupManager::class);
-        $groupManager->method('get')->willReturn(null);
-        $logger = $this->createMock(LoggerInterface::class);
+		$object = $this->createMock(ObjectEntity::class);
+		$this->assertSame([], $resolver->resolve($object, []));
 
-        $resolver = new RoleFallbackResolver(
-            groupManager: $groupManager,
-            logger: $logger,
-            primaryGroup: 'shillinq_unknown_role',
-        );
+	}//end testUnknownGroupAndNoFallbackReturnsEmptyArray()
 
-        $object = $this->createMock(ObjectEntity::class);
-        $this->assertSame([], $resolver->resolve($object, []));
+	/**
+	 * A group-lookup failure (Throwable) is caught and yields [] fail-safe.
+	 *
+	 * @return void
+	 */
+	public function testGroupLookupFailureIsFailSafe(): void {
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('get')->willThrowException(new \RuntimeException('boom'));
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('warning');
 
-    }//end testUnknownGroupAndNoFallbackReturnsEmptyArray()
+		$resolver = new RoleFallbackResolver(
+			groupManager: $groupManager,
+			logger: $logger,
+			primaryGroup: 'shillinq_finance_officer',
+		);
 
-    /**
-     * A group-lookup failure (Throwable) is caught and yields [] fail-safe.
-     *
-     * @return void
-     */
-    public function testGroupLookupFailureIsFailSafe(): void
-    {
-        $groupManager = $this->createMock(IGroupManager::class);
-        $groupManager->method('get')->willThrowException(new \RuntimeException('boom'));
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())->method('warning');
+		$object = $this->createMock(ObjectEntity::class);
+		$this->assertSame([], $resolver->resolve($object, []));
 
-        $resolver = new RoleFallbackResolver(
-            groupManager: $groupManager,
-            logger: $logger,
-            primaryGroup: 'shillinq_finance_officer',
-        );
-
-        $object = $this->createMock(ObjectEntity::class);
-        $this->assertSame([], $resolver->resolve($object, []));
-
-    }//end testGroupLookupFailureIsFailSafe()
+	}//end testGroupLookupFailureIsFailSafe()
 }//end class

@@ -31,194 +31,184 @@ use ReflectionMethod;
  * registers with their lifecycle/aggregations, and merges additively onto the
  * monolith without dropping existing schemas (ADR-037 / REQ-PAY-002/004/005).
  */
-final class PayrollDetacheringFragmentTest extends TestCase
-{
+final class PayrollDetacheringFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-detachering-payroll-administratie.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-detachering-payroll-administratie.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
-    }//end merge()
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    /**
-     * Load and decode the fragment file.
-     *
-     * @return array<string,mixed>
-     */
-    private function fragment(): array
-    {
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        return $data;
-    }//end fragment()
+	/**
+	 * Load and decode the fragment file.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function fragment(): array {
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		return $data;
+	}//end fragment()
 
-    /**
-     * The fragment file is present and valid JSON with a schemas block.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = $this->fragment();
-        self::assertArrayHasKey('schemas', $data['components']);
-    }//end testFragmentIsValidJson()
+	/**
+	 * The fragment file is present and valid JSON with a schemas block.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = $this->fragment();
+		self::assertArrayHasKey('schemas', $data['components']);
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment declares the four payroll registers.
-     *
-     * @return void
-     */
-    public function testFragmentDeclaresFourSchemas(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach (['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-        }
-    }//end testFragmentDeclaresFourSchemas()
+	/**
+	 * The fragment declares the four payroll registers.
+	 *
+	 * @return void
+	 */
+	public function testFragmentDeclaresFourSchemas(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach (['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+		}
+	}//end testFragmentDeclaresFourSchemas()
 
-    /**
-     * The Payroll schema declares the draft->calculated->issued->paid lifecycle
-     * with guard-gated calculate and issue transitions (REQ-PAY-004).
-     *
-     * @return void
-     */
-    public function testPayrollLifecycleAndGuards(): void
-    {
-        $payroll   = $this->fragment()['components']['schemas']['Payroll'];
-        $lifecycle = $payroll['x-openregister-lifecycle'];
+	/**
+	 * The Payroll schema declares the draft->calculated->issued->paid lifecycle
+	 * with guard-gated calculate and issue transitions (REQ-PAY-004).
+	 *
+	 * @return void
+	 */
+	public function testPayrollLifecycleAndGuards(): void {
+		$payroll = $this->fragment()['components']['schemas']['Payroll'];
+		$lifecycle = $payroll['x-openregister-lifecycle'];
 
-        self::assertSame('status', $lifecycle['field']);
-        self::assertSame('draft', $lifecycle['initialState']);
-        foreach (['draft', 'calculated', 'issued', 'paid'] as $state) {
-            self::assertArrayHasKey($state, $lifecycle['states'], "Payroll must declare state $state");
-        }
+		self::assertSame('status', $lifecycle['field']);
+		self::assertSame('draft', $lifecycle['initialState']);
+		foreach (['draft', 'calculated', 'issued', 'paid'] as $state) {
+			self::assertArrayHasKey($state, $lifecycle['states'], "Payroll must declare state $state");
+		}
 
-        $transitions = $lifecycle['transitions'];
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\PayrollGuard::canCalculate',
-            $transitions['calculate']['requires']
-        );
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\PayrollGuard::canIssue',
-            $transitions['issue']['requires']
-        );
+		$transitions = $lifecycle['transitions'];
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\PayrollGuard::canCalculate',
+			$transitions['calculate']['requires']
+		);
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\PayrollGuard::canIssue',
+			$transitions['issue']['requires']
+		);
 
-        // The issue transition materialises a GLTransaction (REQ-PAY-008).
-        $issueActions = array_column($transitions['issue']['actions'], 'action');
-        self::assertContains('materialise-gl-transaction', $issueActions);
-        self::assertContains('generate-determination-letter', $issueActions);
-        self::assertContains('publish-cloudevent', $issueActions);
-    }//end testPayrollLifecycleAndGuards()
+		// The issue transition materialises a GLTransaction (REQ-PAY-008).
+		$issueActions = array_column($transitions['issue']['actions'], 'action');
+		self::assertContains('materialise-gl-transaction', $issueActions);
+		self::assertContains('generate-determination-letter', $issueActions);
+		self::assertContains('publish-cloudevent', $issueActions);
+	}//end testPayrollLifecycleAndGuards()
 
-    /**
-     * The Payroll schema declares the net-amount and annual-deduction
-     * aggregations (REQ-PAY-002 / REQ-PAY-005).
-     *
-     * @return void
-     */
-    public function testPayrollAggregations(): void
-    {
-        $payroll      = $this->fragment()['components']['schemas']['Payroll'];
-        $aggregations = $payroll['x-openregister-aggregations'];
+	/**
+	 * The Payroll schema declares the net-amount and annual-deduction
+	 * aggregations (REQ-PAY-002 / REQ-PAY-005).
+	 *
+	 * @return void
+	 */
+	public function testPayrollAggregations(): void {
+		$payroll = $this->fragment()['components']['schemas']['Payroll'];
+		$aggregations = $payroll['x-openregister-aggregations'];
 
-        self::assertArrayHasKey('netAmount', $aggregations);
-        self::assertSame('Deduction', $aggregations['netAmount']['source']);
-        self::assertArrayHasKey('annualEmployeeDeductions', $aggregations);
-        self::assertSame('Deduction', $aggregations['annualEmployeeDeductions']['source']);
-        self::assertContains('deductionType', $aggregations['annualEmployeeDeductions']['groupBy']);
-    }//end testPayrollAggregations()
+		self::assertArrayHasKey('netAmount', $aggregations);
+		self::assertSame('Deduction', $aggregations['netAmount']['source']);
+		self::assertArrayHasKey('annualEmployeeDeductions', $aggregations);
+		self::assertSame('Deduction', $aggregations['annualEmployeeDeductions']['source']);
+		self::assertContains('deductionType', $aggregations['annualEmployeeDeductions']['groupBy']);
+	}//end testPayrollAggregations()
 
-    /**
-     * BSN is flagged as PII and the Employee declares its lifecycle (REQ-PAY-012).
-     *
-     * @return void
-     */
-    public function testEmployeeBsnIsPiiFlagged(): void
-    {
-        $employee = $this->fragment()['components']['schemas']['Employee'];
-        $bsn      = $employee['properties']['bsn'];
+	/**
+	 * BSN is flagged as PII and the Employee declares its lifecycle (REQ-PAY-012).
+	 *
+	 * @return void
+	 */
+	public function testEmployeeBsnIsPiiFlagged(): void {
+		$employee = $this->fragment()['components']['schemas']['Employee'];
+		$bsn = $employee['properties']['bsn'];
 
-        self::assertTrue(($bsn['pii'] ?? false), 'BSN must be flagged pii');
-        self::assertTrue(($bsn['nullable'] ?? false), 'BSN must be nullable (B2B contractors have none)');
-        self::assertSame('active', $employee['x-openregister-lifecycle']['initialState']);
-    }//end testEmployeeBsnIsPiiFlagged()
+		self::assertTrue(($bsn['pii'] ?? false), 'BSN must be flagged pii');
+		self::assertTrue(($bsn['nullable'] ?? false), 'BSN must be nullable (B2B contractors have none)');
+		self::assertSame('active', $employee['x-openregister-lifecycle']['initialState']);
+	}//end testEmployeeBsnIsPiiFlagged()
 
-    /**
-     * Merging the fragment onto the monolith adds the four schemas and the seed
-     * objects without dropping any existing schema (ADR-037).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = $this->fragment();
+	/**
+	 * Merging the fragment onto the monolith adds the four schemas and the seed
+	 * objects without dropping any existing schema (ADR-037).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = $this->fragment();
 
-        $existingSchemas = array_keys($base['components']['schemas']);
-        $baseObjectCount = count($base['objects'] ?? []);
+		$existingSchemas = array_keys($base['components']['schemas']);
+		$baseObjectCount = count($base['objects'] ?? []);
 
-        $merged  = $this->merge($base, $frag);
-        $schemas = $merged['components']['schemas'];
+		$merged = $this->merge($base, $frag);
+		$schemas = $merged['components']['schemas'];
 
-        foreach (['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
-            self::assertArrayHasKey($name, $schemas, "$name must be present after merge");
-        }
+		foreach (['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
+			self::assertArrayHasKey($name, $schemas, "$name must be present after merge");
+		}
 
-        // No pre-existing schema is dropped.
-        foreach ($existingSchemas as $name) {
-            self::assertArrayHasKey($name, $schemas, "Pre-existing schema $name must survive merge");
-        }
+		// No pre-existing schema is dropped.
+		foreach ($existingSchemas as $name) {
+			self::assertArrayHasKey($name, $schemas, "Pre-existing schema $name must survive merge");
+		}
 
-        // Seed objects are unioned onto the monolith objects list.
-        self::assertGreaterThan(
-            $baseObjectCount,
-            count($merged['objects']),
-            'Fragment seed objects must be appended, not replace the monolith objects'
-        );
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+		// Seed objects are unioned onto the monolith objects list.
+		self::assertGreaterThan(
+			$baseObjectCount,
+			count($merged['objects']),
+			'Fragment seed objects must be appended, not replace the monolith objects'
+		);
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 
-    /**
-     * Every fragment seed object references one of the four payroll schemas with
-     * a slug (so OpenRegister import is idempotent by slug, REQ-PAY-022/029).
-     *
-     * @return void
-     */
-    public function testSeedObjectsAreWellFormed(): void
-    {
-        $objects = $this->fragment()['objects'];
-        self::assertNotEmpty($objects);
-        $allowed = ['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'];
+	/**
+	 * Every fragment seed object references one of the four payroll schemas with
+	 * a slug (so OpenRegister import is idempotent by slug, REQ-PAY-022/029).
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsAreWellFormed(): void {
+		$objects = $this->fragment()['objects'];
+		self::assertNotEmpty($objects);
+		$allowed = ['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'];
 
-        foreach ($objects as $object) {
-            self::assertArrayHasKey('@self', $object);
-            self::assertSame('shillinq', $object['@self']['register']);
-            self::assertContains($object['@self']['schema'], $allowed);
-            self::assertNotEmpty($object['@self']['slug'] ?? '');
-        }
-    }//end testSeedObjectsAreWellFormed()
+		foreach ($objects as $object) {
+			self::assertArrayHasKey('@self', $object);
+			self::assertSame('shillinq', $object['@self']['register']);
+			self::assertContains($object['@self']['schema'], $allowed);
+			self::assertNotEmpty($object['@self']['slug'] ?? '');
+		}
+	}//end testSeedObjectsAreWellFormed()
 }//end class

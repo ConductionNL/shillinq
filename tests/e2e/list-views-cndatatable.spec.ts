@@ -41,7 +41,9 @@ test.describe('migrate-list-views-to-cndatatable — invoice list via CnDataTabl
 		}
 	})
 
-	test('the invoice list renders through CnDataTable and the status filter narrows the rows', async ({ page }) => {
+	test('the invoice list renders through CnDataTable and the status filter narrows the rows', async ({
+		page,
+	}) => {
 		// The migrated list renders through CnDataTable (a real <table> emitted
 		// by the shared component), not the removed bespoke table.
 		const table = page.getByTestId('admin-invoice-table')

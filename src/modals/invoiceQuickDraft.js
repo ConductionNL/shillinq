@@ -22,7 +22,7 @@ export function defaultDraftLine() {
 		description: '',
 		quantity: 1,
 		unitPrice: 0,
-		btwRate: 21,
+		vatRate: 21,
 	}
 }
 
@@ -39,7 +39,7 @@ function round2(value) {
 
 /**
  * Compute net, VAT and gross totals from the line items. Each line's
- * net is quantity * unitPrice; VAT applies its btwRate percentage.
+ * net is quantity * unitPrice; VAT applies its vatRate percentage.
  *
  * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
  * @param {Array<object>} lines The draft lines.
@@ -52,7 +52,7 @@ export function computeTotals(lines) {
 		const qty = Number(line.quantity) || 0
 		const price = Number(line.unitPrice) || 0
 		const lineNet = qty * price
-		const rate = Number(line.btwRate) || 0
+		const rate = Number(line.vatRate) || 0
 		net += lineNet
 		vat += lineNet * (rate / 100)
 	}
@@ -119,7 +119,10 @@ export function periodIdFromDate(invoiceDate) {
  * @return {string} A unique provisional invoice number.
  */
 export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
-	const datePart = String(invoiceDate || '').slice(0, 10).replace(/-/g, '') || 'DRAFT'
+	const datePart =
+		String(invoiceDate || '')
+			.slice(0, 10)
+			.replace(/-/g, '') || 'DRAFT'
 	const hh = String(now.getHours()).padStart(2, '0')
 	const mm = String(now.getMinutes()).padStart(2, '0')
 	const ss = String(now.getSeconds()).padStart(2, '0')
@@ -146,17 +149,21 @@ export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
 export function buildInvoicePayload(input) {
 	const totals = computeTotals(input.lines)
 	const lines = (input.lines || [])
-		.filter((l) => (l.description || '').trim().length > 0 || Number(l.unitPrice) > 0)
+		.filter(
+			(l) =>
+				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
+		)
 		.map((l, idx) => ({
 			lineNumber: idx + 1,
 			description: (l.description || '').trim(),
 			quantity: Number(l.quantity) || 0,
 			unitPrice: Number(l.unitPrice) || 0,
-			btwRate: Number(l.btwRate) || 0,
+			vatRate: Number(l.vatRate) || 0,
 			glAccount: input.glAccount || '',
 		}))
 	return {
-		invoiceNumber: input.invoiceNumber || provisionalInvoiceNumber(input.invoiceDate),
+		invoiceNumber:
+			input.invoiceNumber || provisionalInvoiceNumber(input.invoiceDate),
 		administrationId: String(input.administrationId || ''),
 		periodId: input.periodId || periodIdFromDate(input.invoiceDate),
 		customerId: String(input.customerId),

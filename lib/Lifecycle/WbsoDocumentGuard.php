@@ -35,7 +35,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use DateTimeImmutable;
 use OCA\Shillinq\Service\WbsoDocumentService;
 use Psr\Log\LoggerInterface;
 
@@ -44,60 +43,55 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md
  */
-class WbsoDocumentGuard
-{
-    /**
-     * Construct the guard.
-     *
-     * @param WbsoDocumentService $documents Shared retention math.
-     * @param LoggerInterface     $logger    Logger.
-     */
-    public function __construct(
-        private readonly WbsoDocumentService $documents,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class WbsoDocumentGuard {
+	/**
+	 * Construct the guard.
+	 *
+	 * @param WbsoDocumentService $documents Shared retention math.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly WbsoDocumentService $documents,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for the `file` transition (REQ-WBSO-007).
-     *
-     * @param array<string,mixed> $record The Document record about to transition.
-     *
-     * @return bool
-     */
-    public function canFile(array $record): bool
-    {
-        if ((string) ($record['status'] ?? '') !== 'draft') {
-            $this->logger->debug('WbsoDocumentGuard: canFile rejected — not in draft');
-            return false;
-        }
+	/**
+	 * Precondition for the `file` transition (REQ-WBSO-007).
+	 *
+	 * @param array<string,mixed> $record The Document record about to transition.
+	 *
+	 * @return bool
+	 */
+	public function canFile(array $record): bool {
+		if ((string)($record['status'] ?? '') !== 'draft') {
+			$this->logger->debug('WbsoDocumentGuard: canFile rejected — not in draft');
+			return false;
+		}
 
-        if (trim((string) ($record['fileReference'] ?? '')) === '') {
-            $this->logger->debug('WbsoDocumentGuard: canFile rejected — missing fileReference');
-            return false;
-        }
+		if (trim((string)($record['fileReference'] ?? '')) === '') {
+			$this->logger->debug('WbsoDocumentGuard: canFile rejected — missing fileReference');
+			return false;
+		}
 
-        return true;
+		return true;
+	}//end canFile()
 
-    }//end canFile()
+	/**
+	 * Precondition for the `archive` transition (REQ-WBSO-009).
+	 *
+	 * @param array<string,mixed> $record The Document record about to transition.
+	 *
+	 * @return bool
+	 */
+	public function canArchive(array $record): bool {
+		if ((string)($record['status'] ?? '') !== 'filed') {
+			$this->logger->debug('WbsoDocumentGuard: canArchive rejected — not in filed');
+			return false;
+		}
 
-    /**
-     * Precondition for the `archive` transition (REQ-WBSO-009).
-     *
-     * @param array<string,mixed> $record The Document record about to transition.
-     *
-     * @return bool
-     */
-    public function canArchive(array $record): bool
-    {
-        if ((string) ($record['status'] ?? '') !== 'filed') {
-            $this->logger->debug('WbsoDocumentGuard: canArchive rejected — not in filed');
-            return false;
-        }
+		$filedAt = (string)($record['filedAt'] ?? ($record['documentDate'] ?? ''));
 
-        $filedAt = (string) ($record['filedAt'] ?? ($record['documentDate'] ?? ''));
-
-        return $this->documents->isRetentionElapsed(filedAt: $filedAt);
-
-    }//end canArchive()
+		return $this->documents->isRetentionElapsed(filedAt: $filedAt);
+	}//end canArchive()
 }//end class

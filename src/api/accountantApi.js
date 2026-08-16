@@ -36,7 +36,9 @@ export async function fetchAccountantDashboard() {
  * @return {void}
  */
 export function downloadHandoverPack(administrationId, period) {
-	let url = generateUrl(`/apps/shillinq/api/accountant/administrations/${encodeURIComponent(administrationId)}/handover-pack`)
+	let url = generateUrl(
+		`/apps/shillinq/api/accountant/administrations/${encodeURIComponent(administrationId)}/handover-pack`,
+	)
 	if (period) {
 		url += `?period=${encodeURIComponent(period)}`
 	}

@@ -32,57 +32,53 @@ namespace OCA\Shillinq\Service\Treasury;
  *
  * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
  */
-final class TreasuryRateSnapshot
-{
-    /**
-     * Construct the snapshot value object.
-     *
-     * @param string $value    Decimal string rate; `'0'` when dormant.
-     * @param string $source   Provenance label (`ECB`, `BLOOMBERG`, `LOG_DEFERRED`).
-     * @param string $asOf     ISO-8601 snapshot date.
-     * @param string $rateCode Original rate code / currency pair (audit).
-     * @param bool   $dormant  TRUE when no live source was contacted.
-     * @param string $rateId   Opaque adapter-side rate id.
-     */
-    public function __construct(
-        public readonly string $value,
-        public readonly string $source,
-        public readonly string $asOf,
-        public readonly string $rateCode,
-        public readonly bool $dormant,
-        public readonly string $rateId,
-    ) {
-    }//end __construct()
+final class TreasuryRateSnapshot {
+	/**
+	 * Construct the snapshot value object.
+	 *
+	 * @param string $value Decimal string rate; `'0'` when dormant.
+	 * @param string $source Provenance label (`ECB`, `BLOOMBERG`, `LOG_DEFERRED`).
+	 * @param string $asOf ISO-8601 snapshot date.
+	 * @param string $rateCode Original rate code / currency pair (audit).
+	 * @param bool $dormant TRUE when no live source was contacted.
+	 * @param string $rateId Opaque adapter-side rate id.
+	 */
+	public function __construct(
+		public readonly string $value,
+		public readonly string $source,
+		public readonly string $asOf,
+		public readonly string $rateCode,
+		public readonly bool $dormant,
+		public readonly string $rateId,
+	) {
+	}//end __construct()
 
-    /**
-     * Whether the snapshot was produced by a live source binding.
-     *
-     * @return bool
-     */
-    public function isLive(): bool
-    {
-        return ($this->dormant === false);
-    }//end isLive()
+	/**
+	 * Whether the snapshot was produced by a live source binding.
+	 *
+	 * @return bool
+	 */
+	public function isLive(): bool {
+		return ($this->dormant === false);
+	}//end isLive()
 
-    /**
-     * Whether the snapshot is a deferred sentinel.
-     *
-     * @return bool
-     */
-    public function isDormant(): bool
-    {
-        return $this->dormant;
-    }//end isDormant()
+	/**
+	 * Whether the snapshot is a deferred sentinel.
+	 *
+	 * @return bool
+	 */
+	public function isDormant(): bool {
+		return $this->dormant;
+	}//end isDormant()
 
-    /**
-     * Cast the decimal-string value to float for callers that need
-     * arithmetic. Dormant snapshots return 0.0 — callers MUST inspect
-     * `isLive()` before treating this value as meaningful.
-     *
-     * @return float
-     */
-    public function asFloat(): float
-    {
-        return (float) $this->value;
-    }//end asFloat()
+	/**
+	 * Cast the decimal-string value to float for callers that need
+	 * arithmetic. Dormant snapshots return 0.0 — callers MUST inspect
+	 * `isLive()` before treating this value as meaningful.
+	 *
+	 * @return float
+	 */
+	public function asFloat(): float {
+		return (float)$this->value;
+	}//end asFloat()
 }//end class

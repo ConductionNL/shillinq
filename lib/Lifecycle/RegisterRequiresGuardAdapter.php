@@ -71,62 +71,59 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
  */
-final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface
-{
-    /**
-     * Construct the adapter with the guard instance and method it wraps.
-     *
-     * @param object          $guard       The guard instance owning the precondition method.
-     * @param string          $method      Public method name on $guard, signature `(array $object): bool`.
-     * @param string          $denyMessage User-facing message returned when the precondition fails.
-     * @param LoggerInterface $logger      Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly object $guard,
-        private readonly string $method,
-        private readonly string $denyMessage,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface {
+	/**
+	 * Construct the adapter with the guard instance and method it wraps.
+	 *
+	 * @param object $guard The guard instance owning the precondition method.
+	 * @param string $method Public method name on $guard, signature `(array $object): bool`.
+	 * @param string $denyMessage User-facing message returned when the precondition fails.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly object $guard,
+		private readonly string $method,
+		private readonly string $denyMessage,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Authorise (or deny) a transition by delegating to the wrapped guard's
-     * boolean precondition method.
-     *
-     * @param array<string, mixed> $object The loaded object payload at its current state.
-     * @param string               $action The transition action being applied.
-     * @param string               $userId The uid of the caller.
-     *
-     * @return GuardResult Allow or deny + optional message.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $userId is required by
-     *     LifecycleGuardInterface::check()'s signature; this adapter does
-     *     not discriminate by caller.
-     */
-    public function check(array $object, string $action, string $userId): GuardResult
-    {
-        try {
-            $allowed = ($this->guard->{$this->method}($object) === true);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RegisterRequiresGuardAdapter: guard method threw — denying transition (fail-closed)',
-                [
-                    'guard'  => get_class($this->guard),
-                    'method' => $this->method,
-                    'action' => $action,
-                    'error'  => $e->getMessage(),
-                ]
-            );
-            return GuardResult::deny($this->denyMessage);
-        }
+	/**
+	 * Authorise (or deny) a transition by delegating to the wrapped guard's
+	 * boolean precondition method.
+	 *
+	 * @param array<string, mixed> $object The loaded object payload at its current state.
+	 * @param string $action The transition action being applied.
+	 * @param string $userId The uid of the caller.
+	 *
+	 * @return GuardResult Allow or deny + optional message.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $userId is required by
+	 *     LifecycleGuardInterface::check()'s signature; this adapter does
+	 *     not discriminate by caller.
+	 */
+	public function check(array $object, string $action, string $userId): GuardResult {
+		try {
+			$allowed = ($this->guard->{$this->method}($object) === true);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RegisterRequiresGuardAdapter: guard method threw — denying transition (fail-closed)',
+				[
+					'guard' => get_class($this->guard),
+					'method' => $this->method,
+					'action' => $action,
+					'error' => $e->getMessage(),
+				]
+			);
+			return GuardResult::deny($this->denyMessage);
+		}
 
-        if ($allowed === true) {
-            return GuardResult::allow();
-        }
+		if ($allowed === true) {
+			return GuardResult::allow();
+		}
 
-        return GuardResult::deny($this->denyMessage);
-
-    }//end check()
+		return GuardResult::deny($this->denyMessage);
+	}//end check()
 }//end class

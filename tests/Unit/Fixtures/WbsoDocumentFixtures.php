@@ -30,53 +30,51 @@ namespace OCA\Shillinq\Tests\Unit\Fixtures;
  *
  * @SuppressWarnings(PHPMD.StaticAccess)
  */
-final class WbsoDocumentFixtures
-{
+final class WbsoDocumentFixtures {
 
-    public const SAMPLE_ADMINISTRATION = 'adm-consultancy-nl';
+	public const SAMPLE_ADMINISTRATION = 'adm-consultancy-nl';
 
-    /**
-     * Three documents covering draft / filed / archived.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    public static function documents(): array
-    {
-        return [
-            [
-                'id'                => 'doc-fixture-inv-1',
-                'documentType'      => 'invoice',
-                'documentNumber'    => 'DOC-INV-2026-001',
-                'documentDate'      => '2026-01-15',
-                'status'            => 'filed',
-                'fileReference'     => 'docudesk://invoices/inv-2026-001.pdf',
-                'administrationId'  => self::SAMPLE_ADMINISTRATION,
-                'createdBy'         => 'system',
-                'filedAt'           => '2026-01-15T10:00:00+00:00',
-            ],
-            [
-                'id'                => 'doc-fixture-rec-1',
-                'documentType'      => 'receipt',
-                'documentNumber'    => 'DOC-REC-2026-001',
-                'documentDate'      => '2026-01-20',
-                'status'            => 'draft',
-                'administrationId'  => self::SAMPLE_ADMINISTRATION,
-                'createdBy'         => 'system',
-            ],
-            [
-                'id'                => 'doc-fixture-tax-1',
-                'documentType'      => 'tax-form',
-                'documentNumber'    => 'FORM-IB-2019',
-                'documentDate'      => '2019-04-30',
-                'status'            => 'archived',
-                'fileReference'     => 'docudesk://tax/form-ib-2019.pdf',
-                'administrationId'  => self::SAMPLE_ADMINISTRATION,
-                'createdBy'         => 'system',
-                'filedAt'           => '2019-05-01T09:00:00+00:00',
-                'archivedAt'        => '2026-05-01T09:00:00+00:00',
-                'archivalReason'    => 'Automatic 7-year archival (fixture).',
-            ],
-        ];
+	/**
+	 * Three documents covering draft / filed / archived.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function documents(): array {
+		return [
+			[
+				'id' => 'doc-fixture-inv-1',
+				'documentType' => 'invoice',
+				'documentNumber' => 'DOC-INV-2026-001',
+				'documentDate' => '2026-01-15',
+				'status' => 'filed',
+				'fileReference' => 'docudesk://invoices/inv-2026-001.pdf',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'createdBy' => 'system',
+				'filedAt' => '2026-01-15T10:00:00+00:00',
+			],
+			[
+				'id' => 'doc-fixture-rec-1',
+				'documentType' => 'receipt',
+				'documentNumber' => 'DOC-REC-2026-001',
+				'documentDate' => '2026-01-20',
+				'status' => 'draft',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'createdBy' => 'system',
+			],
+			[
+				'id' => 'doc-fixture-tax-1',
+				'documentType' => 'tax-form',
+				'documentNumber' => 'FORM-IB-2019',
+				'documentDate' => '2019-04-30',
+				'status' => 'archived',
+				'fileReference' => 'docudesk://tax/form-ib-2019.pdf',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'createdBy' => 'system',
+				'filedAt' => '2019-05-01T09:00:00+00:00',
+				'archivedAt' => '2026-05-01T09:00:00+00:00',
+				'archivalReason' => 'Automatic 7-year archival (fixture).',
+			],
+		];
 
-    }//end documents()
+	}//end documents()
 }//end class

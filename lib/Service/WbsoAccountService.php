@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service;
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Account-register helper service (REQ-WBSO-001 / REQ-WBSO-006).
@@ -43,323 +43,305 @@ use Psr\Container\ContainerInterface;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-23
  */
-class WbsoAccountService
-{
+class WbsoAccountService {
 
-    /**
-     * Maximum chart-of-accounts depth (REQ-WBSO-001).
-     *
-     * @var int
-     */
-    public const HIERARCHY_MAX_DEPTH = 5;
+	/**
+	 * Maximum chart-of-accounts depth (REQ-WBSO-001).
+	 *
+	 * @var int
+	 */
+	public const HIERARCHY_MAX_DEPTH = 5;
 
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface $container DI container; OR ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config (register slug).
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 * @param IAppConfig $appConfig App config (register slug).
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Return every Account record for an administration (REQ-WBSO-006).
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    public function getAccountsByAdministration(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        return $objectService
-            ->setRegister($this->register())
-            ->setSchema('Account')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+	/**
+	 * Return every Account record for an administration (REQ-WBSO-006).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function getAccountsByAdministration(string $administrationId): array {
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema('Account')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-    }//end getAccountsByAdministration()
+	}//end getAccountsByAdministration()
 
-    /**
-     * Return the chart-of-accounts as a hierarchical tree (REQ-WBSO-006).
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return array<int,array<string,mixed>> Root accounts, each carrying a recursive `children` array.
-     */
-    public function getAccountHierarchy(string $administrationId): array
-    {
-        $accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
+	/**
+	 * Return the chart-of-accounts as a hierarchical tree (REQ-WBSO-006).
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<int,array<string,mixed>> Root accounts, each carrying a recursive `children` array.
+	 */
+	public function getAccountHierarchy(string $administrationId): array {
+		$accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
 
-        return $this->buildHierarchy(accounts: $accounts);
+		return $this->buildHierarchy(accounts: $accounts);
+	}//end getAccountHierarchy()
 
-    }//end getAccountHierarchy()
+	/**
+	 * Build a tree from a flat account list. Pure function — no I/O.
+	 *
+	 * @param array<int,array<string,mixed>> $accounts Flat account list.
+	 *
+	 * @return array<int,array<string,mixed>> Root nodes with nested children.
+	 */
+	public function buildHierarchy(array $accounts): array {
+		$byNumber = [];
+		foreach ($accounts as $account) {
+			$number = (string)($account['accountNumber'] ?? '');
+			if ($number === '') {
+				continue;
+			}
 
-    /**
-     * Build a tree from a flat account list. Pure function — no I/O.
-     *
-     * @param array<int,array<string,mixed>> $accounts Flat account list.
-     *
-     * @return array<int,array<string,mixed>> Root nodes with nested children.
-     */
-    public function buildHierarchy(array $accounts): array
-    {
-        $byNumber = [];
-        foreach ($accounts as $account) {
-            $number = (string) ($account['accountNumber'] ?? '');
-            if ($number === '') {
-                continue;
-            }
+			$account['children'] = [];
+			$byNumber[$number] = $account;
+		}
 
-            $account['children'] = [];
-            $byNumber[$number]   = $account;
-        }
+		$roots = [];
+		foreach ($byNumber as $number => $account) {
+			$parent = (string)($account['parentAccountNumber'] ?? '');
+			if ($parent === '' || isset($byNumber[$parent]) === false) {
+				$roots[] = &$byNumber[$number];
+				continue;
+			}
 
-        $roots = [];
-        foreach ($byNumber as $number => $account) {
-            $parent = (string) ($account['parentAccountNumber'] ?? '');
-            if ($parent === '' || isset($byNumber[$parent]) === false) {
-                $roots[] = &$byNumber[$number];
-                continue;
-            }
+			$byNumber[$parent]['children'][] = &$byNumber[$number];
+		}
 
-            $byNumber[$parent]['children'][] = &$byNumber[$number];
-        }
+		return array_values($roots);
+	}//end buildHierarchy()
 
-        return array_values($roots);
+	/**
+	 * Return one account with its immediate parent + child links populated.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $accountNumber Account number to resolve.
+	 *
+	 * @return array<string,mixed>|null The account with `parent` + `children`, or null when missing.
+	 */
+	public function getAccountByNumber(string $administrationId, string $accountNumber): ?array {
+		$accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
+		$byNumber = [];
+		foreach ($accounts as $account) {
+			$number = (string)($account['accountNumber'] ?? '');
+			if ($number !== '') {
+				$byNumber[$number] = $account;
+			}
+		}
 
-    }//end buildHierarchy()
+		if (isset($byNumber[$accountNumber]) === false) {
+			return null;
+		}
 
-    /**
-     * Return one account with its immediate parent + child links populated.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $accountNumber    Account number to resolve.
-     *
-     * @return array<string,mixed>|null The account with `parent` + `children`, or null when missing.
-     */
-    public function getAccountByNumber(string $administrationId, string $accountNumber): ?array
-    {
-        $accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
-        $byNumber = [];
-        foreach ($accounts as $account) {
-            $number = (string) ($account['accountNumber'] ?? '');
-            if ($number !== '') {
-                $byNumber[$number] = $account;
-            }
-        }
+		$target = $byNumber[$accountNumber];
+		$target['parent'] = $byNumber[(string)($target['parentAccountNumber'] ?? '')] ?? null;
+		$target['children'] = [];
+		foreach ($byNumber as $candidate) {
+			if (($candidate['parentAccountNumber'] ?? null) === $accountNumber) {
+				$target['children'][] = $candidate;
+			}
+		}
 
-        if (isset($byNumber[$accountNumber]) === false) {
-            return null;
-        }
+		return $target;
+	}//end getAccountByNumber()
 
-        $target           = $byNumber[$accountNumber];
-        $target['parent'] = $byNumber[(string) ($target['parentAccountNumber'] ?? '')] ?? null;
-        $target['children'] = [];
-        foreach ($byNumber as $candidate) {
-            if (($candidate['parentAccountNumber'] ?? null) === $accountNumber) {
-                $target['children'][] = $candidate;
-            }
-        }
+	/**
+	 * Create an account, enforcing hierarchy + circular-ref rules (REQ-WBSO-001).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param array<string,mixed> $payload Account fields (accountNumber, name, accountType, etc.).
+	 *
+	 * @return array<string,mixed> The persisted record.
+	 *
+	 * @throws InvalidArgumentException When validation fails.
+	 */
+	public function createAccount(string $administrationId, array $payload): array {
+		$payload['administrationId'] = $administrationId;
+		$this->validatePayload(payload: $payload);
+		$this->assertHierarchy(
+			administrationId: $administrationId,
+			accountNumber: (string)$payload['accountNumber'],
+			parent: (string)($payload['parentAccountNumber'] ?? ''),
+		);
 
-        return $target;
 
-    }//end getAccountByNumber()
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema('Account')
+			->saveObject($payload);
 
-    /**
-     * Create an account, enforcing hierarchy + circular-ref rules (REQ-WBSO-001).
-     *
-     * @param string              $administrationId Administration scope.
-     * @param array<string,mixed> $payload          Account fields (accountNumber, name, accountType, etc.).
-     *
-     * @return array<string,mixed> The persisted record.
-     *
-     * @throws InvalidArgumentException When validation fails.
-     */
-    public function createAccount(string $administrationId, array $payload): array
-    {
-        $payload['administrationId'] = $administrationId;
-        $this->validatePayload(payload: $payload);
-        $this->assertHierarchy(
-            administrationId: $administrationId,
-            accountNumber: (string) $payload['accountNumber'],
-            parent: (string) ($payload['parentAccountNumber'] ?? ''),
-        );
+	}//end createAccount()
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+	/**
+	 * Update an account's mutable properties (REQ-WBSO-001).
+	 *
+	 * Allowed fields: name, description, status (active/blocked), vatApplicable,
+	 * and parentAccountNumber subject to hierarchy/circular-ref checks. The
+	 * accountNumber is immutable once created.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $accountNumber Account to update.
+	 * @param array<string,mixed> $payload Update payload.
+	 *
+	 * @return array<string,mixed> The merged + persisted record.
+	 *
+	 * @throws InvalidArgumentException When validation fails.
+	 */
+	public function updateAccount(string $administrationId, string $accountNumber, array $payload): array {
+		$existing = $this->getAccountByNumber(
+			administrationId: $administrationId,
+			accountNumber: $accountNumber,
+		);
+		if ($existing === null) {
+			throw new InvalidArgumentException('Account not found');
+		}
 
-        return $objectService
-            ->setRegister($this->register())
-            ->setSchema('Account')
-            ->saveObject($payload);
+		$merged = array_merge($existing, $payload);
+		unset($merged['parent'], $merged['children']);
+		$merged['accountNumber'] = $accountNumber;
+		$merged['administrationId'] = $administrationId;
 
-    }//end createAccount()
+		$this->validatePayload(payload: $merged);
+		$this->assertHierarchy(
+			administrationId: $administrationId,
+			accountNumber: $accountNumber,
+			parent: (string)($merged['parentAccountNumber'] ?? ''),
+		);
 
-    /**
-     * Update an account's mutable properties (REQ-WBSO-001).
-     *
-     * Allowed fields: name, description, status (active/blocked), vatApplicable,
-     * and parentAccountNumber subject to hierarchy/circular-ref checks. The
-     * accountNumber is immutable once created.
-     *
-     * @param string              $administrationId Administration scope.
-     * @param string              $accountNumber    Account to update.
-     * @param array<string,mixed> $payload          Update payload.
-     *
-     * @return array<string,mixed> The merged + persisted record.
-     *
-     * @throws InvalidArgumentException When validation fails.
-     */
-    public function updateAccount(string $administrationId, string $accountNumber, array $payload): array
-    {
-        $existing = $this->getAccountByNumber(
-            administrationId: $administrationId,
-            accountNumber: $accountNumber,
-        );
-        if ($existing === null) {
-            throw new InvalidArgumentException('Account not found');
-        }
 
-        $merged = array_merge($existing, $payload);
-        unset($merged['parent'], $merged['children']);
-        $merged['accountNumber']    = $accountNumber;
-        $merged['administrationId'] = $administrationId;
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema('Account')
+			->saveObject($merged);
 
-        $this->validatePayload(payload: $merged);
-        $this->assertHierarchy(
-            administrationId: $administrationId,
-            accountNumber: $accountNumber,
-            parent: (string) ($merged['parentAccountNumber'] ?? ''),
-        );
+	}//end updateAccount()
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+	/**
+	 * Validate the minimum required payload fields. Pure function.
+	 *
+	 * @param array<string,mixed> $payload Account fields to validate.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When validation fails.
+	 */
+	public function validatePayload(array $payload): void {
+		$required = ['accountNumber', 'name', 'accountType', 'administrationId'];
+		foreach ($required as $field) {
+			if (isset($payload[$field]) === false || $payload[$field] === '') {
+				throw new InvalidArgumentException(sprintf('%s is required', $field));
+			}
+		}
 
-        return $objectService
-            ->setRegister($this->register())
-            ->setSchema('Account')
-            ->saveObject($merged);
+		$allowedTypes = ['assets', 'liabilities', 'equity', 'revenue', 'expenses'];
+		if (in_array((string)$payload['accountType'], $allowedTypes, true) === false) {
+			throw new InvalidArgumentException('accountType must be one of: ' . implode(', ', $allowedTypes));
+		}
 
-    }//end updateAccount()
+		$allowedStatus = ['active', 'blocked', 'archived'];
+		$status = (string)($payload['status'] ?? 'active');
+		if (in_array($status, $allowedStatus, true) === false) {
+			throw new InvalidArgumentException('status must be one of: ' . implode(', ', $allowedStatus));
+		}
 
-    /**
-     * Validate the minimum required payload fields. Pure function.
-     *
-     * @param array<string,mixed> $payload Account fields to validate.
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When validation fails.
-     */
-    public function validatePayload(array $payload): void
-    {
-        $required = ['accountNumber', 'name', 'accountType', 'administrationId'];
-        foreach ($required as $field) {
-            if (isset($payload[$field]) === false || $payload[$field] === '') {
-                throw new InvalidArgumentException(sprintf('%s is required', $field));
-            }
-        }
+		$currency = (string)($payload['currency'] ?? 'EUR');
+		if ($currency !== 'EUR') {
+			throw new InvalidArgumentException('currency must be EUR in phase 1');
+		}
 
-        $allowedTypes = ['assets', 'liabilities', 'equity', 'revenue', 'expenses'];
-        if (in_array((string) $payload['accountType'], $allowedTypes, true) === false) {
-            throw new InvalidArgumentException('accountType must be one of: '.implode(', ', $allowedTypes));
-        }
+	}//end validatePayload()
 
-        $allowedStatus = ['active', 'blocked', 'archived'];
-        $status        = (string) ($payload['status'] ?? 'active');
-        if (in_array($status, $allowedStatus, true) === false) {
-            throw new InvalidArgumentException('status must be one of: '.implode(', ', $allowedStatus));
-        }
+	/**
+	 * Hierarchy + circular-ref validation, mirroring x-openregister-constraint.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $accountNumber Account about to be saved.
+	 * @param string $parent Parent accountNumber ('' means root).
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When validation fails.
+	 */
+	public function assertHierarchy(string $administrationId, string $accountNumber, string $parent): void {
+		if ($parent === '') {
+			return;
+		}
 
-        $currency = (string) ($payload['currency'] ?? 'EUR');
-        if ($currency !== 'EUR') {
-            throw new InvalidArgumentException('currency must be EUR in phase 1');
-        }
+		if ($parent === $accountNumber) {
+			throw new InvalidArgumentException('parentAccountNumber must not equal the account itself');
+		}
 
-    }//end validatePayload()
+		$accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
+		$byNumber = [];
+		foreach ($accounts as $account) {
+			$number = (string)($account['accountNumber'] ?? '');
+			if ($number !== '') {
+				$byNumber[$number] = $account;
+			}
+		}
 
-    /**
-     * Hierarchy + circular-ref validation, mirroring x-openregister-constraint.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $accountNumber    Account about to be saved.
-     * @param string $parent           Parent accountNumber ('' means root).
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When validation fails.
-     */
-    public function assertHierarchy(string $administrationId, string $accountNumber, string $parent): void
-    {
-        if ($parent === '') {
-            return;
-        }
+		if (isset($byNumber[$parent]) === false) {
+			throw new InvalidArgumentException('parentAccountNumber does not exist in this administration');
+		}
 
-        if ($parent === $accountNumber) {
-            throw new InvalidArgumentException('parentAccountNumber must not equal the account itself');
-        }
+		if ((string)($byNumber[$parent]['status'] ?? '') !== 'active') {
+			throw new InvalidArgumentException('parentAccountNumber refers to an account that is not active');
+		}
 
-        $accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
-        $byNumber = [];
-        foreach ($accounts as $account) {
-            $number = (string) ($account['accountNumber'] ?? '');
-            if ($number !== '') {
-                $byNumber[$number] = $account;
-            }
-        }
+		// Walk ancestors. If we encounter $accountNumber, we have a cycle.
+		$cursor = $parent;
+		$depth = 1;
+		$seen = [$accountNumber => true];
+		while ($cursor !== '') {
+			if (isset($seen[$cursor]) === true) {
+				throw new InvalidArgumentException('Circular parent reference detected');
+			}
 
-        if (isset($byNumber[$parent]) === false) {
-            throw new InvalidArgumentException('parentAccountNumber does not exist in this administration');
-        }
+			$seen[$cursor] = true;
+			$depth++;
+			if ($depth > self::HIERARCHY_MAX_DEPTH) {
+				throw new InvalidArgumentException(
+					sprintf(
+						'Hierarchy depth must not exceed %d levels',
+						self::HIERARCHY_MAX_DEPTH
+					)
+				);
+			}
 
-        if ((string) ($byNumber[$parent]['status'] ?? '') !== 'active') {
-            throw new InvalidArgumentException('parentAccountNumber refers to an account that is not active');
-        }
+			$next = (string)($byNumber[$cursor]['parentAccountNumber'] ?? '');
+			if ($next === '' || isset($byNumber[$next]) === false) {
+				break;
+			}
 
-        // Walk ancestors. If we encounter $accountNumber, we have a cycle.
-        $cursor = $parent;
-        $depth  = 1;
-        $seen   = [$accountNumber => true];
-        while ($cursor !== '') {
-            if (isset($seen[$cursor]) === true) {
-                throw new InvalidArgumentException('Circular parent reference detected');
-            }
+			$cursor = $next;
+		}//end while
 
-            $seen[$cursor] = true;
-            $depth++;
-            if ($depth > self::HIERARCHY_MAX_DEPTH) {
-                throw new InvalidArgumentException(
-                        sprintf(
-                    'Hierarchy depth must not exceed %d levels',
-                    self::HIERARCHY_MAX_DEPTH
-                )
-                        );
-            }
+	}//end assertHierarchy()
 
-            $next = (string) ($byNumber[$cursor]['parentAccountNumber'] ?? '');
-            if ($next === '' || isset($byNumber[$next]) === false) {
-                break;
-            }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string Register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-            $cursor = $next;
-        }//end while
-
-    }//end assertHierarchy()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string Register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

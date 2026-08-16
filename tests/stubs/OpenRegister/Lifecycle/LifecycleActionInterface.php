@@ -31,17 +31,16 @@ namespace OCA\OpenRegister\Lifecycle;
  * merges the return value back into the object being saved. A pure
  * side-effect action MUST return the payload it received, unchanged.
  */
-interface LifecycleActionInterface
-{
-    /**
-     * Run the action on a transitioning object.
-     *
-     * @param array<string, mixed> $objectData   The object payload after the lifecycle field was moved to its target value.
-     * @param array<string, mixed> $previousData The object payload before the transition (for conditions / diffing).
-     * @param array<string, mixed> $parameters   The declared `actionParameters` block (empty array when absent).
-     * @param string               $actionName   The declared `action` name that resolved to this handler.
-     *
-     * @return array<string, mixed> The object payload, with any self-mutations applied.
-     */
-    public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array;
+interface LifecycleActionInterface {
+	/**
+	 * Run the action on a transitioning object.
+	 *
+	 * @param array<string, mixed> $objectData The object payload after the lifecycle field was moved to its target value.
+	 * @param array<string, mixed> $previousData The object payload before the transition (for conditions / diffing).
+	 * @param array<string, mixed> $parameters The declared `actionParameters` block (empty array when absent).
+	 * @param string $actionName The declared `action` name that resolved to this handler.
+	 *
+	 * @return array<string, mixed> The object payload, with any self-mutations applied.
+	 */
+	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array;
 }//end interface

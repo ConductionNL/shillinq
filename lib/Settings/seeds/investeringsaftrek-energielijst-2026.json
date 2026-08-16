@@ -8,15 +8,15 @@
 		"imported": "2026-06-05T00:00:00Z"
 	},
 	"energielijstCodes": [
-		{"code": "210000", "jaartal": 2026, "categorie": "Bedrijfsgebouwen", "omschrijving": "HR-luchtverwarmer voor bedrijfshallen", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "stuk", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "211110", "jaartal": 2026, "categorie": "Bedrijfsgebouwen", "omschrijving": "Energiezuinige LED-verlichting met daglichtregeling", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "stuk", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "251701", "jaartal": 2026, "categorie": "Duurzame energie", "omschrijving": "Zonnepaneelsysteem > 15 kWp", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "kWp", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "251702", "jaartal": 2026, "categorie": "Duurzame energie", "omschrijving": "Zonnecollectorsysteem voor warmtapwater", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "m2", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "261601", "jaartal": 2026, "categorie": "Energie-efficiency", "omschrijving": "Warmtepomp lucht-water", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "kW", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "261602", "jaartal": 2026, "categorie": "Energie-efficiency", "omschrijving": "Warmtepomp water-water (bodemwarmte)", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "kW", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "271100", "jaartal": 2026, "categorie": "Energie-efficiency", "omschrijving": "Energiezuinig koel-/vriesinstallatie met warmteterugwinning", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "stuk", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "320000", "jaartal": 2026, "categorie": "Procesketens", "omschrijving": "Warmteterugwinning uit procesafgassen", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "stuk", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "411000", "jaartal": 2026, "categorie": "Mobiliteit", "omschrijving": "Laadpaal voor elektrische bedrijfsvoertuigen", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "stuk", "ingangsdatum": "2026-01-01", "vervaldatum": null},
-		{"code": "441705", "jaartal": 2026, "categorie": "Mobiliteit", "omschrijving": "Elektrische bedrijfsbus", "deelpercentage": 100, "maxBedragPerEenheid": null, "eenheid": "stuk", "ingangsdatum": "2026-01-01", "vervaldatum": null}
+		{"code": "210000", "yearNumber": 2026, "category": "Bedrijfsgebouwen", "description": "HR-luchtverwarmer voor bedrijfshallen", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "stuk", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "211110", "yearNumber": 2026, "category": "Bedrijfsgebouwen", "description": "Energiezuinige LED-verlichting met daglichtregeling", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "stuk", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "251701", "yearNumber": 2026, "category": "Duurzame energie", "description": "Zonnepaneelsysteem > 15 kWp", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "kWp", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "251702", "yearNumber": 2026, "category": "Duurzame energie", "description": "Zonnecollectorsysteem voor warmtapwater", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "m2", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "261601", "yearNumber": 2026, "category": "Energie-efficiency", "description": "Warmtepomp lucht-water", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "kW", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "261602", "yearNumber": 2026, "category": "Energie-efficiency", "description": "Warmtepomp water-water (bodemwarmte)", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "kW", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "271100", "yearNumber": 2026, "category": "Energie-efficiency", "description": "Energiezuinig koel-/vriesinstallatie met warmteterugwinning", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "stuk", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "320000", "yearNumber": 2026, "category": "Procesketens", "description": "Warmteterugwinning uit procesafgassen", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "stuk", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "411000", "yearNumber": 2026, "category": "Mobiliteit", "description": "Laadpaal voor elektrische bedrijfsvoertuigen", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "stuk", "effectiveDate": "2026-01-01", "expiryDate": null},
+		{"code": "441705", "yearNumber": 2026, "category": "Mobiliteit", "description": "Elektrische bedrijfsbus", "deelpercentage": 100, "maxAmountPerUnit": null, "unit": "stuk", "effectiveDate": "2026-01-01", "expiryDate": null}
 	]
 }

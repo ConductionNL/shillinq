@@ -79,7 +79,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "beschikkingNumber",
+          "decisionNumber",
           "projectNumber",
           "grantedSoHours"
         ],
@@ -89,7 +89,7 @@
             "description": "FK to the Administration entity that owns this beschikking (REQ-WBSO-001).",
             "title": "Administration ID"
           },
-          "beschikkingNumber": {
+          "decisionNumber": {
             "type": "string",
             "description": "RVO beschikking number identifying the grant decision (REQ-WBSO-001). Unique per administration.",
             "example": "WBSO-2026-000123",
@@ -194,10 +194,10 @@
           }
         },
         "x-openregister-relations": {
-          "beschikking": {
-            "localField": "beschikkingNumber",
+          "decision": {
+            "localField": "decisionNumber",
             "relatedSchema": "WbsoBeschikking",
-            "relatedField": "beschikkingNumber",
+            "relatedField": "decisionNumber",
             "cardinality": "many-to-one",
             "scopeField": "administrationId",
             "description": "FK to the beschikking the hours are booked against (REQ-WBSO-002)."
@@ -247,7 +247,7 @@
             "example": "alice",
             "title": "Employee ID"
           },
-          "beschikkingNumber": {
+          "decisionNumber": {
             "type": "string",
             "description": "RVO beschikking number the hours are booked against (REQ-WBSO-002).",
             "example": "WBSO-2026-000123",
@@ -350,10 +350,10 @@
           }
         },
         "x-openregister-relations": {
-          "beschikking": {
-            "localField": "beschikkingNumber",
+          "decision": {
+            "localField": "decisionNumber",
             "relatedSchema": "WbsoBeschikking",
-            "relatedField": "beschikkingNumber",
+            "relatedField": "decisionNumber",
             "cardinality": "many-to-one",
             "scopeField": "administrationId",
             "description": "FK to the beschikking whose realisatie this mededeling reports (REQ-WBSO-003)."
@@ -389,7 +389,7 @@
         "type": "object",
         "required": [
           "administrationId",
-          "beschikkingNumber",
+          "decisionNumber",
           "realisedSoHours"
         ],
         "properties": {
@@ -398,7 +398,7 @@
             "description": "FK to the Administration entity that owns this mededeling (REQ-WBSO-003).",
             "title": "Administration ID"
           },
-          "beschikkingNumber": {
+          "decisionNumber": {
             "type": "string",
             "description": "RVO beschikking number whose realisatie this mededeling reports (REQ-WBSO-003).",
             "example": "WBSO-2026-000123",
@@ -443,7 +443,7 @@
         "_synthetic": true
       },
       "administrationId": "adm-consultancy-nl",
-      "beschikkingNumber": "WBSO-2026-000123",
+      "decisionNumber": "WBSO-2026-000123",
       "rvoReference": "RVO/2026/SO/000123",
       "projectNumber": "PRJ-2026-007",
       "periodStart": "2026-01-01",
@@ -460,7 +460,7 @@
         "_synthetic": true
       },
       "administrationId": "adm-consultancy-nl",
-      "beschikkingNumber": "WBSO-2026-000456",
+      "decisionNumber": "WBSO-2026-000456",
       "rvoReference": "RVO/2026/SO/000456",
       "projectNumber": "PRJ-2026-011",
       "periodStart": "2026-01-01",
@@ -478,7 +478,7 @@
       },
       "administrationId": "adm-consultancy-nl",
       "employeeId": "alice",
-      "beschikkingNumber": "WBSO-2026-000123",
+      "decisionNumber": "WBSO-2026-000123",
       "workDate": "2026-02-03",
       "hours": 6,
       "description": "Prototype work on the experimental indexing engine.",
@@ -493,7 +493,7 @@
       },
       "administrationId": "adm-consultancy-nl",
       "employeeId": "bob",
-      "beschikkingNumber": "WBSO-2026-000456",
+      "decisionNumber": "WBSO-2026-000456",
       "workDate": "2026-02-04",
       "hours": 8,
       "description": "Research into the novel compression algorithm.",
@@ -507,7 +507,7 @@
         "_synthetic": true
       },
       "administrationId": "adm-consultancy-nl",
-      "beschikkingNumber": "WBSO-2026-000123",
+      "decisionNumber": "WBSO-2026-000123",
       "realisedSoHours": 1100,
       "reportingPeriodEnd": "2026-12-31",
       "state": "draft"
@@ -520,7 +520,7 @@
         "_synthetic": true
       },
       "administrationId": "adm-consultancy-nl",
-      "beschikkingNumber": "WBSO-2026-000456",
+      "decisionNumber": "WBSO-2026-000456",
       "realisedSoHours": 600,
       "reportingPeriodEnd": "2026-06-30",
       "state": "submitted"

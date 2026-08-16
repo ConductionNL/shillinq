@@ -44,199 +44,191 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class WbsoAccountApiControllerTest extends TestCase
-{
+final class WbsoAccountApiControllerTest extends TestCase {
 
-    /**
-     * Request mock.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Request mock.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Service mock.
-     *
-     * @var WbsoAccountService&MockObject
-     */
-    private WbsoAccountService&MockObject $accounts;
+	/**
+	 * Service mock.
+	 *
+	 * @var WbsoAccountService&MockObject
+	 */
+	private WbsoAccountService&MockObject $accounts;
 
-    /**
-     * Rbac mock.
-     *
-     * @var WbsoRbacResolver&MockObject
-     */
-    private WbsoRbacResolver&MockObject $rbac;
+	/**
+	 * Rbac mock.
+	 *
+	 * @var WbsoRbacResolver&MockObject
+	 */
+	private WbsoRbacResolver&MockObject $rbac;
 
-    /**
-     * Session mock.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $session;
+	/**
+	 * Session mock.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $session;
 
-    /**
-     * Logger.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Controller under test.
-     *
-     * @var WbsoAccountApiController
-     */
-    private WbsoAccountApiController $controller;
+	/**
+	 * Controller under test.
+	 *
+	 * @var WbsoAccountApiController
+	 */
+	private WbsoAccountApiController $controller;
 
-    /**
-     * Set up.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request  = $this->createMock(IRequest::class);
-        $this->accounts = $this->createMock(WbsoAccountService::class);
-        $this->rbac     = $this->createMock(WbsoRbacResolver::class);
-        $this->session  = $this->createMock(IUserSession::class);
-        $this->logger   = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->accounts = $this->createMock(WbsoAccountService::class);
+		$this->rbac = $this->createMock(WbsoRbacResolver::class);
+		$this->session = $this->createMock(IUserSession::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->session->method('getUser')->willReturn($user);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->session->method('getUser')->willReturn($user);
 
-        $this->controller = new WbsoAccountApiController(
-            request: $this->request,
-            accounts: $this->accounts,
-            rbac: $this->rbac,
-            userSession: $this->session,
-            logger: $this->logger,
-        );
-    }//end setUp()
+		$this->controller = new WbsoAccountApiController(
+			request: $this->request,
+			accounts: $this->accounts,
+			rbac: $this->rbac,
+			userSession: $this->session,
+			logger: $this->logger,
+		);
+	}//end setUp()
 
-    /**
-     * Index returns 200 with the accounts list.
-     *
-     * @return void
-     */
-    public function testIndexReturnsAccounts(): void
-    {
-        $this->request->method('getParam')->willReturnMap([
-            ['administration_id', 'adm-consultancy-nl', 'adm-1'],
-        ]);
-        $this->rbac->method('hasAny')->willReturn(false);
-        $this->accounts->method('getAccountsByAdministration')->willReturn([
-            ['accountNumber' => '1000', 'name' => 'Kas', 'administrationId' => 'adm-1'],
-        ]);
+	/**
+	 * Index returns 200 with the accounts list.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsAccounts(): void {
+		$this->request->method('getParam')->willReturnMap([
+			['administration_id', 'adm-consultancy-nl', 'adm-1'],
+		]);
+		$this->rbac->method('hasAny')->willReturn(false);
+		$this->accounts->method('getAccountsByAdministration')->willReturn([
+			['accountNumber' => '1000', 'name' => 'Kas', 'administrationId' => 'adm-1'],
+		]);
 
-        $response = $this->controller->index();
+		$response = $this->controller->index();
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        self::assertCount(1, $data['accounts']);
-        self::assertFalse($data['canCreate']);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertCount(1, $data['accounts']);
+		self::assertFalse($data['canCreate']);
 
-    }//end testIndexReturnsAccounts()
+	}//end testIndexReturnsAccounts()
 
-    /**
-     * Unauthenticated user receives 401.
-     *
-     * @return void
-     */
-    public function testUnauthenticatedReturns401(): void
-    {
-        $session = $this->createMock(IUserSession::class);
-        $session->method('getUser')->willReturn(null);
+	/**
+	 * Unauthenticated user receives 401.
+	 *
+	 * @return void
+	 */
+	public function testUnauthenticatedReturns401(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
 
-        $controller = new WbsoAccountApiController(
-            request: $this->request,
-            accounts: $this->accounts,
-            rbac: $this->rbac,
-            userSession: $session,
-            logger: $this->logger,
-        );
+		$controller = new WbsoAccountApiController(
+			request: $this->request,
+			accounts: $this->accounts,
+			rbac: $this->rbac,
+			userSession: $session,
+			logger: $this->logger,
+		);
 
-        $response = $controller->index();
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$response = $controller->index();
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-    }//end testUnauthenticatedReturns401()
+	}//end testUnauthenticatedReturns401()
 
-    /**
-     * Hierarchy returns 200 with tree.
-     *
-     * @return void
-     */
-    public function testHierarchyReturnsTree(): void
-    {
-        $this->request->method('getParam')->willReturnMap([
-            ['administration_id', 'adm-consultancy-nl', 'adm-1'],
-        ]);
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->accounts->method('getAccountHierarchy')->willReturn([
-            ['accountNumber' => '1', 'children' => []],
-        ]);
+	/**
+	 * Hierarchy returns 200 with tree.
+	 *
+	 * @return void
+	 */
+	public function testHierarchyReturnsTree(): void {
+		$this->request->method('getParam')->willReturnMap([
+			['administration_id', 'adm-consultancy-nl', 'adm-1'],
+		]);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->accounts->method('getAccountHierarchy')->willReturn([
+			['accountNumber' => '1', 'children' => []],
+		]);
 
-        $response = $this->controller->hierarchy();
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        self::assertSame('1', $data['tree'][0]['accountNumber']);
-        self::assertTrue($data['canCreate']);
+		$response = $this->controller->hierarchy();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame('1', $data['tree'][0]['accountNumber']);
+		self::assertTrue($data['canCreate']);
 
-    }//end testHierarchyReturnsTree()
+	}//end testHierarchyReturnsTree()
 
-    /**
-     * Non-administrator create is rejected with 403.
-     *
-     * @return void
-     */
-    public function testCreateRequiresAdministrator(): void
-    {
-        $this->request->method('getParam')->willReturn('adm-1');
-        $this->rbac->method('hasAny')->willReturn(false);
+	/**
+	 * Non-administrator create is rejected with 403.
+	 *
+	 * @return void
+	 */
+	public function testCreateRequiresAdministrator(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturn(false);
 
-        $response = $this->controller->create();
-        self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$response = $this->controller->create();
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 
-    }//end testCreateRequiresAdministrator()
+	}//end testCreateRequiresAdministrator()
 
-    /**
-     * Validation error surfaces as 400.
-     *
-     * @return void
-     */
-    public function testCreateValidationErrorReturns400(): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null): mixed {
-                if ($key === 'administration_id') {
-                    return 'adm-1';
-                }
+	/**
+	 * Validation error surfaces as 400.
+	 *
+	 * @return void
+	 */
+	public function testCreateValidationErrorReturns400(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				if ($key === 'administration_id') {
+					return 'adm-1';
+				}
 
-                return $default;
-            }
-        );
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->accounts->method('createAccount')->willThrowException(new InvalidArgumentException('accountNumber is required'));
+				return $default;
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->accounts->method('createAccount')->willThrowException(new InvalidArgumentException('accountNumber is required'));
 
-        $response = $this->controller->create();
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$response = $this->controller->create();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testCreateValidationErrorReturns400()
+	}//end testCreateValidationErrorReturns400()
 
-    /**
-     * Show returns 404 when the account is missing.
-     *
-     * @return void
-     */
-    public function testShowMissingReturns404(): void
-    {
-        $this->request->method('getParam')->willReturn('adm-1');
-        $this->accounts->method('getAccountByNumber')->willReturn(null);
+	/**
+	 * Show returns 404 when the account is missing.
+	 *
+	 * @return void
+	 */
+	public function testShowMissingReturns404(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->accounts->method('getAccountByNumber')->willReturn(null);
 
-        $response = $this->controller->show(accountNumber: '9999');
-        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$response = $this->controller->show(accountNumber: '9999');
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
-    }//end testShowMissingReturns404()
+	}//end testShowMissingReturns404()
 }//end class

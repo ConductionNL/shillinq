@@ -50,8 +50,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for the retainer-billing-engine registers.
@@ -63,342 +63,321 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/retainer-billing-management/spec.md
  */
-class RetainerGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class RetainerGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the RetainerPool may be activated.
-     *
-     * REQ-RETN-001: no other active/draft pool may overlap this pool's effective
-     * period for the same (clientId, projectId) pair. Overlapping periods are
-     * rejected so historical retainer tracking stays unambiguous.
-     *
-     * @param string                   $poolId The RetainerPool id (call-signature parity).
-     * @param array<string,mixed>|null $object The pool being transitioned.
-     *
-     * @return bool True when the pool may be activated.
-     *
-     * @spec openspec/specs/retainer-billing-management/spec.md
-     */
-    public function canActivatePool(string $poolId, ?array $object=null): bool
-    {
-        try {
-            $pool = $this->resolveObject(schema: 'RetainerPool', id: $poolId, object: $object);
-            if ($pool === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the RetainerPool may be activated.
+	 *
+	 * REQ-RETN-001: no other active/draft pool may overlap this pool's effective
+	 * period for the same (clientId, projectId) pair. Overlapping periods are
+	 * rejected so historical retainer tracking stays unambiguous.
+	 *
+	 * @param string $poolId The RetainerPool id (call-signature parity).
+	 * @param array<string,mixed>|null $object The pool being transitioned.
+	 *
+	 * @return bool True when the pool may be activated.
+	 *
+	 * @spec openspec/specs/retainer-billing-management/spec.md
+	 */
+	public function canActivatePool(string $poolId, ?array $object = null): bool {
+		try {
+			$pool = $this->resolveObject(schema: 'RetainerPool', id: $poolId, object: $object);
+			if ($pool === null) {
+				return false;
+			}
 
-            $start = trim((string) ($pool['periodStart'] ?? ''));
-            $end   = trim((string) ($pool['periodEnd'] ?? ''));
-            if ($start === '' || $end === '' || $start > $end) {
-                return false;
-            }
+			$start = trim((string)($pool['periodStart'] ?? ''));
+			$end = trim((string)($pool['periodEnd'] ?? ''));
+			if ($start === '' || $end === '' || $start > $end) {
+				return false;
+			}
 
-            $clientId = (string) ($pool['clientId'] ?? '');
-            if ($clientId === '') {
-                return false;
-            }
+			$clientId = (string)($pool['clientId'] ?? '');
+			if ($clientId === '') {
+				return false;
+			}
 
-            $projectId = (string) ($pool['projectId'] ?? '');
-            $selfId    = (string) ($pool['poolId'] ?? $poolId);
+			$projectId = (string)($pool['projectId'] ?? '');
+			$selfId = (string)($pool['poolId'] ?? $poolId);
 
-            $candidates = $this->findPoolsForClient(clientId: $clientId);
-            foreach ($candidates as $candidate) {
-                if ($this->poolConflicts(
-                    candidate: $candidate,
-                    selfId: $selfId,
-                    projectId: $projectId,
-                    start: $start,
-                    end: $end
-                ) === true
-                ) {
-                    return false;
-                }
-            }
+			$candidates = $this->findPoolsForClient(clientId: $clientId);
+			foreach ($candidates as $candidate) {
+				if ($this->poolConflicts(
+					candidate: $candidate,
+					selfId: $selfId,
+					projectId: $projectId,
+					start: $start,
+					end: $end
+				) === true
+				) {
+					return false;
+				}
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RetainerGuard: pool activation check failed — denying transition (fail-closed)',
-                ['poolId' => $poolId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canActivatePool()
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RetainerGuard: pool activation check failed — denying transition (fail-closed)',
+				['poolId' => $poolId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canActivatePool()
 
-    /**
-     * Returns true iff the RetainerDrawdown may be materialized.
-     *
-     * REQ-RETN-002 / design D2: drawdownAmount MUST equal hoursOrAmount × the
-     * pool's configured retainerRate (not the timesheet rate). The drawdownRate
-     * recorded on the drawdown must also match the pool rate so historical
-     * drawdowns are immutable against later RateCard changes.
-     *
-     * @param string                   $drawdownId The RetainerDrawdown id (call-signature parity).
-     * @param array<string,mixed>|null $object     The drawdown being transitioned.
-     *
-     * @return bool True when the drawdown may be materialized.
-     *
-     * @spec openspec/specs/retainer-billing-management/spec.md
-     */
-    public function canMaterializeDrawdown(string $drawdownId, ?array $object=null): bool
-    {
-        try {
-            $drawdown = $this->resolveObject(schema: 'RetainerDrawdown', id: $drawdownId, object: $object);
-            if ($drawdown === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the RetainerDrawdown may be materialized.
+	 *
+	 * REQ-RETN-002 / design D2: drawdownAmount MUST equal hoursOrAmount × the
+	 * pool's configured retainerRate (not the timesheet rate). The drawdownRate
+	 * recorded on the drawdown must also match the pool rate so historical
+	 * drawdowns are immutable against later RateCard changes.
+	 *
+	 * @param string $drawdownId The RetainerDrawdown id (call-signature parity).
+	 * @param array<string,mixed>|null $object The drawdown being transitioned.
+	 *
+	 * @return bool True when the drawdown may be materialized.
+	 *
+	 * @spec openspec/specs/retainer-billing-management/spec.md
+	 */
+	public function canMaterializeDrawdown(string $drawdownId, ?array $object = null): bool {
+		try {
+			$drawdown = $this->resolveObject(schema: 'RetainerDrawdown', id: $drawdownId, object: $object);
+			if ($drawdown === null) {
+				return false;
+			}
 
-            $poolId = (string) ($drawdown['poolId'] ?? '');
-            if ($poolId === '' || $this->drawdownAmountIsConsistent(drawdown: $drawdown) === false) {
-                return false;
-            }
+			$poolId = (string)($drawdown['poolId'] ?? '');
+			if ($poolId === '' || $this->drawdownAmountIsConsistent(drawdown: $drawdown) === false) {
+				return false;
+			}
 
-            // The recorded drawdownRate must match the pool's configured retainerRate
-            // (rate immutability — design D2). When the pool cannot be resolved
-            // (cross-app), accept the recorded rate as authoritative.
-            $pool = $this->resolveObject(schema: 'RetainerPool', id: $poolId, object: null);
-            if ($pool !== null && array_key_exists('retainerRate', $pool) === true) {
-                return $this->amountsEqual(left: (float) $drawdown['drawdownRate'], right: (float) $pool['retainerRate']);
-            }
+			// The recorded drawdownRate must match the pool's configured retainerRate
+			// (rate immutability — design D2). When the pool cannot be resolved
+			// (cross-app), accept the recorded rate as authoritative.
+			$pool = $this->resolveObject(schema: 'RetainerPool', id: $poolId, object: null);
+			if ($pool !== null && array_key_exists('retainerRate', $pool) === true) {
+				return $this->amountsEqual(left: (float)$drawdown['drawdownRate'], right: (float)$pool['retainerRate']);
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RetainerGuard: drawdown materialize check failed — denying transition (fail-closed)',
-                ['drawdownId' => $drawdownId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canMaterializeDrawdown()
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RetainerGuard: drawdown materialize check failed — denying transition (fail-closed)',
+				['drawdownId' => $drawdownId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canMaterializeDrawdown()
 
-    /**
-     * Returns true iff a drawdown carries non-negative hours/rate and its
-     * drawdownAmount equals hoursOrAmount × drawdownRate (REQ-RETN-002).
-     *
-     * @param array<string,mixed> $drawdown The drawdown to validate.
-     *
-     * @return bool True when the drawdown amount is internally consistent.
-     */
-    private function drawdownAmountIsConsistent(array $drawdown): bool
-    {
-        if (array_key_exists('hoursOrAmount', $drawdown) === false
-            || array_key_exists('drawdownRate', $drawdown) === false
-            || array_key_exists('drawdownAmount', $drawdown) === false
-        ) {
-            return false;
-        }
+	/**
+	 * Returns true iff a drawdown carries non-negative hours/rate and its
+	 * drawdownAmount equals hoursOrAmount × drawdownRate (REQ-RETN-002).
+	 *
+	 * @param array<string,mixed> $drawdown The drawdown to validate.
+	 *
+	 * @return bool True when the drawdown amount is internally consistent.
+	 */
+	private function drawdownAmountIsConsistent(array $drawdown): bool {
+		if (array_key_exists('hoursOrAmount', $drawdown) === false
+			|| array_key_exists('drawdownRate', $drawdown) === false
+			|| array_key_exists('drawdownAmount', $drawdown) === false
+		) {
+			return false;
+		}
 
-        $hours  = (float) $drawdown['hoursOrAmount'];
-        $rate   = (float) $drawdown['drawdownRate'];
-        $amount = (float) $drawdown['drawdownAmount'];
-        if ($hours < 0.0 || $rate < 0.0) {
-            return false;
-        }
+		$hours = (float)$drawdown['hoursOrAmount'];
+		$rate = (float)$drawdown['drawdownRate'];
+		$amount = (float)$drawdown['drawdownAmount'];
+		if ($hours < 0.0 || $rate < 0.0) {
+			return false;
+		}
 
-        return $this->amountsEqual(left: $amount, right: ($hours * $rate));
+		return $this->amountsEqual(left: $amount, right: ($hours * $rate));
+	}//end drawdownAmountIsConsistent()
 
-    }//end drawdownAmountIsConsistent()
+	/**
+	 * Returns true iff the RetainerTrueUp may be approved.
+	 *
+	 * REQ-RETN-011: an approver identity must be recorded before a true-up moves
+	 * to approved. The retainer:approve-true-up permission is enforced at the
+	 * controller layer; this guard fails closed when no approver is present.
+	 *
+	 * @param string $trueUpId The RetainerTrueUp id (call-signature parity).
+	 * @param array<string,mixed>|null $object The true-up being transitioned.
+	 *
+	 * @return bool True when the true-up may be approved.
+	 *
+	 * @spec openspec/specs/retainer-billing-management/spec.md
+	 */
+	public function canApproveTrueUp(string $trueUpId, ?array $object = null): bool {
+		try {
+			$trueUp = $this->resolveObject(schema: 'RetainerTrueUp', id: $trueUpId, object: $object);
+			if ($trueUp === null) {
+				return false;
+			}
 
-    /**
-     * Returns true iff the RetainerTrueUp may be approved.
-     *
-     * REQ-RETN-011: an approver identity must be recorded before a true-up moves
-     * to approved. The retainer:approve-true-up permission is enforced at the
-     * controller layer; this guard fails closed when no approver is present.
-     *
-     * @param string                   $trueUpId The RetainerTrueUp id (call-signature parity).
-     * @param array<string,mixed>|null $object   The true-up being transitioned.
-     *
-     * @return bool True when the true-up may be approved.
-     *
-     * @spec openspec/specs/retainer-billing-management/spec.md
-     */
-    public function canApproveTrueUp(string $trueUpId, ?array $object=null): bool
-    {
-        try {
-            $trueUp = $this->resolveObject(schema: 'RetainerTrueUp', id: $trueUpId, object: $object);
-            if ($trueUp === null) {
-                return false;
-            }
+			return trim((string)($trueUp['approvedBy'] ?? '')) !== '';
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RetainerGuard: true-up approve check failed — denying transition (fail-closed)',
+				['trueUpId' => $trueUpId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canApproveTrueUp()
 
-            return trim((string) ($trueUp['approvedBy'] ?? '')) !== '';
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RetainerGuard: true-up approve check failed — denying transition (fail-closed)',
-                ['trueUpId' => $trueUpId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canApproveTrueUp()
+	/**
+	 * Returns true iff a candidate pool conflicts with the activating pool: same
+	 * (clientId already filtered) and projectId, a non-archived/non-inactive
+	 * status, a different identity, and an overlapping period.
+	 *
+	 * @param mixed $candidate The candidate pool row.
+	 * @param string $selfId The activating pool's poolId.
+	 * @param string $projectId The activating pool's projectId.
+	 * @param string $start The activating pool's periodStart.
+	 * @param string $end The activating pool's periodEnd.
+	 *
+	 * @return bool True when the candidate conflicts.
+	 */
+	private function poolConflicts(mixed $candidate, string $selfId, string $projectId, string $start, string $end): bool {
+		if ($this->isEligibleSibling(candidate: $candidate, selfId: $selfId, projectId: $projectId) === false) {
+			return false;
+		}
 
-    /**
-     * Returns true iff a candidate pool conflicts with the activating pool: same
-     * (clientId already filtered) and projectId, a non-archived/non-inactive
-     * status, a different identity, and an overlapping period.
-     *
-     * @param mixed  $candidate The candidate pool row.
-     * @param string $selfId    The activating pool's poolId.
-     * @param string $projectId The activating pool's projectId.
-     * @param string $start     The activating pool's periodStart.
-     * @param string $end       The activating pool's periodEnd.
-     *
-     * @return bool True when the candidate conflicts.
-     */
-    private function poolConflicts(mixed $candidate, string $selfId, string $projectId, string $start, string $end): bool
-    {
-        if ($this->isEligibleSibling(candidate: $candidate, selfId: $selfId, projectId: $projectId) === false) {
-            return false;
-        }
+		$candidateStart = trim((string)($candidate['periodStart'] ?? ''));
+		$candidateEnd = trim((string)($candidate['periodEnd'] ?? ''));
+		if ($candidateStart === '' || $candidateEnd === '') {
+			return false;
+		}
 
-        $candidateStart = trim((string) ($candidate['periodStart'] ?? ''));
-        $candidateEnd   = trim((string) ($candidate['periodEnd'] ?? ''));
-        if ($candidateStart === '' || $candidateEnd === '') {
-            return false;
-        }
+		// Inclusive-period overlap: start <= candidateEnd AND candidateStart <= end.
+		return $start <= $candidateEnd && $candidateStart <= $end;
+	}//end poolConflicts()
 
-        // Inclusive-period overlap: start <= candidateEnd AND candidateStart <= end.
-        return $start <= $candidateEnd && $candidateStart <= $end;
+	/**
+	 * Returns true iff the candidate is an eligible sibling that could conflict:
+	 * a real array, a different non-empty poolId, an active/draft status, and the
+	 * same projectId scope (REQ-RETN-001).
+	 *
+	 * @param mixed $candidate The candidate pool row.
+	 * @param string $selfId The activating pool's poolId.
+	 * @param string $projectId The activating pool's projectId.
+	 *
+	 * @return bool True when the candidate is an eligible sibling.
+	 */
+	private function isEligibleSibling(mixed $candidate, string $selfId, string $projectId): bool {
+		if (is_array($candidate) === false) {
+			return false;
+		}
 
-    }//end poolConflicts()
+		$candidateId = (string)($candidate['poolId'] ?? '');
+		if ($candidateId === '' || $candidateId === $selfId) {
+			return false;
+		}
 
-    /**
-     * Returns true iff the candidate is an eligible sibling that could conflict:
-     * a real array, a different non-empty poolId, an active/draft status, and the
-     * same projectId scope (REQ-RETN-001).
-     *
-     * @param mixed  $candidate The candidate pool row.
-     * @param string $selfId    The activating pool's poolId.
-     * @param string $projectId The activating pool's projectId.
-     *
-     * @return bool True when the candidate is an eligible sibling.
-     */
-    private function isEligibleSibling(mixed $candidate, string $selfId, string $projectId): bool
-    {
-        if (is_array($candidate) === false) {
-            return false;
-        }
+		$status = (string)($candidate['status'] ?? '');
+		if ($status === 'inactive' || $status === 'archived') {
+			return false;
+		}
 
-        $candidateId = (string) ($candidate['poolId'] ?? '');
-        if ($candidateId === '' || $candidateId === $selfId) {
-            return false;
-        }
+		return (string)($candidate['projectId'] ?? '') === $projectId;
+	}//end isEligibleSibling()
 
-        $status = (string) ($candidate['status'] ?? '');
-        if ($status === 'inactive' || $status === 'archived') {
-            return false;
-        }
+	/**
+	 * Returns true iff two monetary/rate values are equal within a cent epsilon.
+	 *
+	 * @param float $left Left operand.
+	 * @param float $right Right operand.
+	 *
+	 * @return bool True when the values are equal within 0.005.
+	 */
+	private function amountsEqual(float $left, float $right): bool {
+		return abs($left - $right) < 0.005;
+	}//end amountsEqual()
 
-        return (string) ($candidate['projectId'] ?? '') === $projectId;
+	/**
+	 * Find all RetainerPool rows for a given client (ADR-022 real API).
+	 *
+	 * @param string $clientId The client entity reference to filter by.
+	 *
+	 * @return array<int,array<string,mixed>> The matching pool rows.
+	 */
+	private function findPoolsForClient(string $clientId): array {
+		$register = $this->resolveRegister();
 
-    }//end isEligibleSibling()
+		$results = $this->objectService
+			->setRegister($register)
+			->setSchema('RetainerPool')
+			->findAll(['filters' => ['clientId' => $clientId]]);
 
-    /**
-     * Returns true iff two monetary/rate values are equal within a cent epsilon.
-     *
-     * @param float $left  Left operand.
-     * @param float $right Right operand.
-     *
-     * @return bool True when the values are equal within 0.005.
-     */
-    private function amountsEqual(float $left, float $right): bool
-    {
-        return abs($left - $right) < 0.005;
+		$pools = [];
+		foreach ($results as $result) {
+			if (is_array($result) === true) {
+				$pools[] = $result;
+			}
+		}
 
-    }//end amountsEqual()
+		return $pools;
+	}//end findPoolsForClient()
 
-    /**
-     * Find all RetainerPool rows for a given client (ADR-022 real API).
-     *
-     * @param string $clientId The client entity reference to filter by.
-     *
-     * @return array<int,array<string,mixed>> The matching pool rows.
-     */
-    private function findPoolsForClient(string $clientId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
+	/**
+	 * Resolve the object under transition, preferring the supplied in-flight
+	 * object and falling back to an ObjectService lookup by id (ADR-022 real API).
+	 *
+	 * @param string $schema The OpenRegister schema slug to query.
+	 * @param string $id The object id to look up if no object given.
+	 * @param array<string,mixed>|null $object The in-flight object, if provided by the engine.
+	 *
+	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
+	 */
+	private function resolveObject(string $schema, string $id, ?array $object): ?array {
+		if ($object !== null) {
+			return $object;
+		}
 
-        $results = $objectService
-            ->setRegister($register)
-            ->setSchema('RetainerPool')
-            ->findAll(['filters' => ['clientId' => $clientId]]);
+		if ($id === '') {
+			return null;
+		}
 
-        $pools = [];
-        foreach ($results as $result) {
-            if (is_array($result) === true) {
-                $pools[] = $result;
-            }
-        }
+		$register = $this->resolveRegister();
 
-        return $pools;
+		$results = $this->objectService
+			->setRegister($register)
+			->setSchema($schema)
+			->findAll(['filters' => ['id' => $id]]);
 
-    }//end findPoolsForClient()
+		foreach ($results as $result) {
+			if (is_array($result) === true) {
+				return $result;
+			}
+		}
 
-    /**
-     * Resolve the object under transition, preferring the supplied in-flight
-     * object and falling back to an ObjectService lookup by id (ADR-022 real API).
-     *
-     * @param string                   $schema The OpenRegister schema slug to query.
-     * @param string                   $id     The object id to look up if no object given.
-     * @param array<string,mixed>|null $object The in-flight object, if provided by the engine.
-     *
-     * @return array<string,mixed>|null The resolved object, or null when unavailable.
-     */
-    private function resolveObject(string $schema, string $id, ?array $object): ?array
-    {
-        if ($object !== null) {
-            return $object;
-        }
+		return null;
+	}//end resolveObject()
 
-        if ($id === '') {
-            return null;
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
-
-        $results = $objectService
-            ->setRegister($register)
-            ->setSchema($schema)
-            ->findAll(['filters' => ['id' => $id]]);
-
-        foreach ($results as $result) {
-            if (is_array($result) === true) {
-                return $result;
-            }
-        }
-
-        return null;
-
-    }//end resolveObject()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

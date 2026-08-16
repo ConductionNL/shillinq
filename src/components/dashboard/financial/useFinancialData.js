@@ -6,9 +6,9 @@
 // dashboard page load issues exactly one request per schema no
 // matter how many widgets mount.
 
-import { ref } from 'vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { ref } from 'vue'
 
 const REGISTER_SLUG = 'shillinq'
 const PAGE_LIMIT = 2000
@@ -52,14 +52,16 @@ async function fetchSchema(schema) {
 /** @return {Promise<object>} */
 async function fetchAll() {
 	const entries = Object.entries(SCHEMAS)
-	const settled = await Promise.all(entries.map(async ([key, schema]) => {
-		try {
-			return [key, await fetchSchema(schema)]
-		} catch (e) {
-			error.value = e
-			return [key, []]
-		}
-	}))
+	const settled = await Promise.all(
+		entries.map(async ([key, schema]) => {
+			try {
+				return [key, await fetchSchema(schema)]
+			} catch (e) {
+				error.value = e
+				return [key, []]
+			}
+		}),
+	)
 	return Object.fromEntries(settled)
 }
 
@@ -74,17 +76,27 @@ async function fetchAll() {
  *   data: import('vue').Ref<object|null>, load: Function, reload: Function }}
  */
 export function useFinancialData() {
+	/**
+	 *
+	 */
 	function load() {
 		if (!inflight) {
 			loading.value = true
 			error.value = null
 			inflight = fetchAll()
-				.then((result) => { data.value = result })
-				.finally(() => { loading.value = false })
+				.then((result) => {
+					data.value = result
+				})
+				.finally(() => {
+					loading.value = false
+				})
 		}
 		return inflight
 	}
 
+	/**
+	 *
+	 */
 	function reload() {
 		inflight = null
 		return load()

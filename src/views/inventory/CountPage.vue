@@ -28,9 +28,20 @@ export default {
 </script>
 
 <style scoped>
-.count-page { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+.count-page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
 
-.count-page__header { display: flex; justify-content: space-between; align-items: center; }
+.count-page__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
 
-.count-page__back { text-decoration: none; }
+.count-page__back {
+	text-decoration: none;
+}
 </style>

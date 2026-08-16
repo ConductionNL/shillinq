@@ -9,32 +9,45 @@
 				id="wsw-business-id"
 				v-model.trim="businessId"
 				type="text"
-				class="shillinq-widget-keys__input">
+				class="shillinq-widget-keys__input" />
 		</div>
 
 		<div class="shillinq-widget-keys__field">
-			<label for="wsw-administration-id">{{ t('shillinq', 'Administration ID') }}</label>
+			<label for="wsw-administration-id">{{
+				t('shillinq', 'Administration ID')
+			}}</label>
 			<input
 				id="wsw-administration-id"
 				v-model.trim="administrationId"
 				type="text"
-				class="shillinq-widget-keys__input">
+				class="shillinq-widget-keys__input" />
 		</div>
 
 		<div class="shillinq-widget-keys__actions">
-			<NcButton variant="primary" :disabled="!businessId || !administrationId || busy" @click="generate">
+			<NcButton
+				variant="primary"
+				:disabled="!businessId || !administrationId || busy"
+				@click="generate">
 				{{ t('shillinq', 'Generate key') }}
 			</NcButton>
-			<NcButton variant="secondary" :disabled="!businessId || busy" @click="rotate">
+			<NcButton
+				variant="secondary"
+				:disabled="!businessId || busy"
+				@click="rotate">
 				{{ t('shillinq', 'Rotate key') }}
 			</NcButton>
-			<NcButton variant="error" :disabled="!businessId || busy" @click="revoke">
+			<NcButton
+				variant="error"
+				:disabled="!businessId || busy"
+				@click="revoke">
 				{{ t('shillinq', 'Revoke key') }}
 			</NcButton>
 		</div>
 
 		<div v-if="plaintextKey" class="shillinq-widget-keys__key" role="status">
-			<strong>{{ t('shillinq', 'Copy this key now — it will not be shown again') }}</strong>
+			<strong>{{
+				t('shillinq', 'Copy this key now — it will not be shown again')
+			}}</strong>
 			<code>{{ plaintextKey }}</code>
 		</div>
 
@@ -64,19 +77,23 @@ export default {
 			busy: false,
 		}
 	},
+
 	methods: {
 		async post(path, body) {
 			this.busy = true
 			this.message = ''
 			try {
-				const response = await fetch(generateUrl(`/apps/shillinq/api/${path}`), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						requesttoken: OC.requestToken,
+				const response = await fetch(
+					generateUrl(`/apps/shillinq/api/${path}`),
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							requesttoken: OC.requestToken,
+						},
+						body: JSON.stringify(body),
 					},
-					body: JSON.stringify(body),
-				})
+				)
 				return await response.json()
 			} catch (error) {
 				console.error('Widget key request failed:', error)
@@ -85,6 +102,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		/**
 		 * Mint the FIRST key for a businessId (REQ-WSW-009 §1).
 		 *
@@ -108,6 +126,7 @@ export default {
 			}
 			this.message = result.message || ''
 		},
+
 		/**
 		 * Replace an existing key; the predecessor keeps working for 7 days.
 		 *
@@ -124,9 +143,12 @@ export default {
 			}
 			this.message = result.message || ''
 		},
+
 		async revoke() {
 			this.plaintextKey = ''
-			const result = await this.post('widget/admin/keys/revoke', { businessId: this.businessId })
+			const result = await this.post('widget/admin/keys/revoke', {
+				businessId: this.businessId,
+			})
 			this.message = result.message || ''
 		},
 	},

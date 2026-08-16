@@ -886,7 +886,7 @@
             "example": "KC-100",
             "title": "Cost Center Code"
           },
-          "kostenDragerCode": {
+          "costCarrierCode": {
             "type": "string",
             "description": "FK to AnalyticalDimension.code (dimensionType=cost-object) for cost-unit analytical reporting per REQ-CC-003 + REQ-ADIM-101. A business key, not an object identifier. Field name and stored values are unchanged; only the target was re-pointed from the retired KostenDrager schema to the unified AnalyticalDimension.",
             "nullable": true,
@@ -913,7 +913,7 @@
             },
             "title": "Dimensions"
           },
-          "ozbCategorie": {
+          "ozbCategory": {
             "type": "array",
             "description": "OZB category flags enabling the Iv3-OZB aggregation to split OZB-postings by eigenaars/gebruikers-deel and woning/niet-woning per REQ-CBSE-004. Null on non-OZB lines.",
             "items": {
@@ -989,12 +989,12 @@
             "description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the cost-object dimension per REQ-CC-005 + REQ-ADIM-004. Re-targeted from the retired KostenDrager register to AnalyticalDimension(dimensionType=cost-object). Field name and stored values unchanged.",
             "filter": {
               "eliminationFlag": false,
-              "kostenDragerCode": {
+              "costCarrierCode": {
                 "operator": "isNotNull"
               }
             },
             "groupBy": [
-              "kostenDragerCode",
+              "costCarrierCode",
               "fiscalYearId",
               "accountNumber"
             ],
@@ -1094,12 +1094,12 @@
             "sourceSchema": "GLLine",
             "groupBy": [
               "periodId",
-              "ozbCategorie"
+              "ozbCategory"
             ],
             "filter": {
               "eliminationFlag": false,
               "GLTransaction.state": "posted",
-              "ozbCategorie": {
+              "ozbCategory": {
                 "operator": "isNotNull"
               }
             },
@@ -1127,24 +1127,24 @@
         "x-schema-org": "schema:Organization",
         "type": "object",
         "required": [
-          "deelnemerType",
-          "deelnemerNaam",
-          "aandeel",
+          "participantType",
+          "participantName",
+          "share",
           "lifecycleState"
         ],
         "properties": {
-          "deelnemerType": {
+          "participantType": {
             "type": "string",
             "enum": [
-              "gemeente",
-              "provincie",
-              "waterschap"
+              "municipality",
+              "province",
+              "waterAuthority"
             ],
             "description": "Juridical type of the deelnemer.",
-            "example": "gemeente",
+            "example": "municipality",
             "title": "Participant Type"
           },
-          "deelnemerNaam": {
+          "participantName": {
             "type": "string",
             "description": "Official name of the deelnemer.",
             "example": "Gemeente Voorbeeld",
@@ -1157,7 +1157,7 @@
             "example": "adm-voorbeeld",
             "title": "Administration ID"
           },
-          "aandeel": {
+          "share": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -1228,7 +1228,7 @@
             "filter": "actief = true",
             "operations": {
               "aandeelSum": {
-                "field": "aandeel",
+                "field": "share",
                 "operation": "sum"
               }
             }
@@ -1244,13 +1244,13 @@
         "x-schema-org": "schema:Thing",
         "type": "object",
         "required": [
-          "sleutelNaam",
+          "keyName",
           "costClusterAccountNumbers",
           "verdelingsType",
           "lineNumber"
         ],
         "properties": {
-          "sleutelNaam": {
+          "keyName": {
             "type": "string",
             "description": "Human-readable name of this apportionment rule.",
             "example": "Sleutel 41xxx vast-percentage",
@@ -1273,11 +1273,11 @@
             "type": "string",
             "enum": [
               "vast-percentage",
-              "inwoner-aantal",
-              "gewogen-oppervlak",
+              "resident-count",
+              "weighted-area",
               "custom-formula"
             ],
-            "description": "Apportionment method. vast-percentage uses fixed per-deelnemer percentages in parameters; inwoner-aantal weights by population count; gewogen-oppervlak by weighted surface area; custom-formula accepts free-form parameters JSON.",
+            "description": "Apportionment method. vast-percentage uses fixed per-deelnemer percentages in parameters; resident-count weights by population count; weighted-area by weighted surface area; custom-formula accepts free-form parameters JSON.",
             "title": "Distribution Type"
           },
           "parameters": {
@@ -1434,14 +1434,14 @@
           "bbvVariant": {
             "type": "string",
             "enum": [
-              "gemeente",
-              "waterschap",
-              "provincie"
+              "municipality",
+              "waterAuthority",
+              "province"
             ],
-            "default": "gemeente",
-            "description": "BBV regulatory variant under which this account is interpreted. 'waterschap' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
+            "default": "municipality",
+            "description": "BBV regulatory variant under which this account is interpreted. 'waterAuthority' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
             "nullable": true,
-            "example": "waterschap",
+            "example": "waterAuthority",
             "title": "BBV Variant"
           },
           "vpbPligtig": {
@@ -1669,7 +1669,7 @@
         "x-schema-org": "schema:DefinedTerm",
         "type": "object",
         "required": [
-          "selectielijstCode",
+          "selectionListCode",
           "description",
           "recordCategory",
           "disposition",
@@ -1752,7 +1752,7 @@
           }
         },
         "properties": {
-          "selectielijstCode": {
+          "selectionListCode": {
             "type": "string",
             "description": "Selectielijst Gemeenten 2020 classifier code (e.g. 5.1.2, 3.5.1, 1.1.1).",
             "example": "5.1.2",
@@ -1770,7 +1770,7 @@
             "description": "High-level category of records covered by this rule.",
             "enum": [
               "financial",
-              "subsidie",
+              "subsidy",
               "personeel",
               "algemeen-bestuur",
               "verantwoording",
@@ -2921,7 +2921,7 @@
             "enabled": true,
             "filter": {
               "administrationType": [
-                "gemeente",
+                "municipality",
                 "provincie",
                 "waterschap"
               ]
@@ -2940,7 +2940,7 @@
         "required": [
           "administrationId",
           "fiscalYearId",
-          "inwonerAantal"
+          "residentCount"
         ],
         "properties": {
           "administrationId": {
@@ -2955,14 +2955,14 @@
             "example": "fy-2026",
             "title": "Fiscal Year ID"
           },
-          "inwonerAantal": {
+          "residentCount": {
             "type": "integer",
             "minimum": 0,
             "description": "Number of inhabitants per CBS Kerngegevens denominator. Used to compute lasten per inwoner, baten per inwoner, etc.",
             "example": 50000,
             "title": "Resident Count"
           },
-          "oppervlak": {
+          "area": {
             "type": "number",
             "minimum": 0,
             "description": "Total surface area of the administration in km². Used for oppervlak-based denominators.",
@@ -2970,7 +2970,7 @@
             "example": 123.5,
             "title": "Area"
           },
-          "gewogenOppervlak": {
+          "weightedArea": {
             "type": "number",
             "minimum": 0,
             "description": "Weighted surface area in km² (land + water weighted factor). Used for gewogen-oppervlak denominators.",
@@ -2978,7 +2978,7 @@
             "example": 98.2,
             "title": "Weighted Area"
           },
-          "bestuursOmvang": {
+          "boardSize": {
             "type": "integer",
             "minimum": 0,
             "description": "Number of elected council seats (raadsleden / statenleden). Used for bestuursomvang-based ratios.",
@@ -2986,7 +2986,7 @@
             "example": 39,
             "title": "Governing Board Size"
           },
-          "ambtenarenAantal": {
+          "civilServantsCount": {
             "type": "integer",
             "minimum": 0,
             "description": "FTE count of civil servants. Used for personeelslasten per fte denominator.",
@@ -3124,7 +3124,7 @@
             "enabled": true,
             "filter": {
               "administrationType": [
-                "gemeente",
+                "municipality",
                 "provincie",
                 "waterschap"
               ]
@@ -3140,7 +3140,7 @@
             "enabled": true,
             "filter": {
               "administrationType": [
-                "gemeente",
+                "municipality",
                 "provincie",
                 "waterschap"
               ]
@@ -3161,7 +3161,7 @@
             "enabled": true,
             "filter": {
               "administrationType": [
-                "gemeente",
+                "municipality",
                 "provincie",
                 "waterschap"
               ]
@@ -3182,7 +3182,7 @@
             "enabled": true,
             "filter": {
               "administrationType": [
-                "gemeente",
+                "municipality",
                 "provincie",
                 "waterschap"
               ]
@@ -3220,9 +3220,9 @@
         "type": "object",
         "required": [
           "code",
-          "naam",
+          "name",
           "administrationId",
-          "programmaStructure"
+          "programmeStructure"
         ],
         "properties": {
           "code": {
@@ -3231,13 +3231,13 @@
             "example": "watersysteembeheer",
             "title": "Code"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Human-readable Dutch programma name.",
             "example": "Watersysteembeheer",
             "title": "Name"
           },
-          "beschrijving": {
+          "description": {
             "type": "string",
             "description": "Optional operator-authored description of this programma.",
             "nullable": true,
@@ -3250,13 +3250,13 @@
             "example": "adm-waterschap-1",
             "title": "Administration ID"
           },
-          "programmaStructure": {
+          "programmeStructure": {
             "type": "string",
             "enum": [
-              "taakveld",
+              "taskField",
               "kostentoedeling"
             ],
-            "default": "taakveld",
+            "default": "taskField",
             "description": "Discriminator that controls the classification hierarchy used at aggregation / rollup time. 'kostentoedeling' is the BBVW-canonical structure for waterschappen per REQ-WSB-002.",
             "example": "kostentoedeling",
             "title": "Programme Structure"
@@ -3264,14 +3264,14 @@
           "bbvVariant": {
             "type": "string",
             "enum": [
-              "gemeente",
-              "waterschap",
-              "provincie"
+              "municipality",
+              "waterAuthority",
+              "province"
             ],
-            "default": "gemeente",
+            "default": "municipality",
             "description": "BBV regulatory variant under which this programma is interpreted per REQ-WSB-001.",
             "nullable": true,
-            "example": "waterschap",
+            "example": "waterAuthority",
             "title": "BBV Variant"
           },
           "parentCode": {
@@ -3284,7 +3284,7 @@
         },
         "x-openregister-aggregations": {
           "postingsByProgramma": {
-            "description": "Aggregates GL debit/credit totals per programma code, honouring the programmaStructure discriminator. When programmaStructure is 'kostentoedeling', groups by kostentoedeling cluster; when 'taakveld', groups by taakveld code.",
+            "description": "Aggregates GL debit/credit totals per programma code, honouring the programmaStructure discriminator. When programmaStructure is 'kostentoedeling', groups by kostentoedeling cluster; when 'taskField', groups by taakveld code.",
             "sourceSchema": "GLLine",
             "groupBy": "BBVProgramma.code",
             "join": {
@@ -3317,16 +3317,16 @@
         "x-schema-org": "schema:Invoice",
         "type": "object",
         "required": [
-          "heffingType",
-          "aanslagJaar",
-          "tariefGrondslag",
-          "tarief",
-          "aanslagBedrag",
+          "levyType",
+          "assessmentYear",
+          "rateBasis",
+          "rate",
+          "assessmentAmount",
           "administrationId",
           "state"
         ],
         "properties": {
-          "heffingType": {
+          "levyType": {
             "type": "string",
             "enum": [
               "watersysteemheffing",
@@ -3337,26 +3337,26 @@
             "example": "zuiveringsheffing",
             "title": "Levy Type"
           },
-          "aanslagJaar": {
+          "assessmentYear": {
             "type": "integer",
             "description": "Belastingjaar of this aanslag.",
             "example": 2026,
             "title": "Assessment Year"
           },
-          "tariefGrondslag": {
+          "rateBasis": {
             "type": "string",
             "description": "Canonical grondslag for the tarief computation (e.g. 'vervuilingseenheden', 'oppervlakte-m2', 'inwonerequivalenten').",
             "example": "vervuilingseenheden",
             "title": "Rate Basis"
           },
-          "tarief": {
+          "rate": {
             "type": "number",
             "minimum": 0,
             "description": "Applied tarief per grondslag-eenheid in EUR.",
             "example": 85.5,
             "title": "Rate"
           },
-          "aanslagBedrag": {
+          "assessmentAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Total aanslag amount in EUR (tarief × grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
@@ -3461,7 +3461,7 @@
               "actionParameters": {
                 "debitField": "debitAccountNumber",
                 "creditField": "creditAccountNumber",
-                "amountField": "aanslagBedrag",
+                "amountField": "assessmentAmount",
                 "currency": "EUR",
                 "sourceReference": "@self.id",
                 "journalEntryIdField": "journalEntryId",
@@ -3474,10 +3474,10 @@
           "totalByHeffingType": {
             "description": "Total aanslag bedrag per heffingType for the administration, excluding reversed postings. Used by the waterschapsbelastingen index page.",
             "filter": "state != 'reversed'",
-            "groupBy": "heffingType",
+            "groupBy": "levyType",
             "operations": {
               "totalAanslag": {
-                "field": "aanslagBedrag",
+                "field": "assessmentAmount",
                 "operation": "sum"
               },
               "count": {
@@ -3491,7 +3491,7 @@
             "filter": "state = 'posted' AND emuExclusionRule != 'excluded'",
             "operations": {
               "emuTotal": {
-                "field": "aanslagBedrag",
+                "field": "assessmentAmount",
                 "operation": "sum"
               }
             }
@@ -5285,14 +5285,14 @@
             "type": "string",
             "description": "Current lifecycle state of the project.",
             "enum": [
-              "offerte",
+              "quote",
               "active",
               "on-hold",
               "closed",
               "archived"
             ],
             "example": "active",
-            "default": "offerte",
+            "default": "quote",
             "title": "State"
           },
           "startDate": {
@@ -5420,7 +5420,7 @@
         },
         "x-openregister-lifecycle": {
           "field": "state",
-          "initialState": "offerte",
+          "initialState": "quote",
           "states": {
             "active": {
               "label": "Actief",
@@ -5434,7 +5434,7 @@
               "label": "Gearchiveerd",
               "description": "Historical only; remains queryable per 7-year retention rule."
             },
-            "offerte": {
+            "quote": {
               "label": "Offerte",
               "description": "Project is at quotation stage; no GL postings yet."
             },
@@ -5467,7 +5467,7 @@
               "description": "Move closed project to archive (typically 12 months post-close)."
             },
             "activate": {
-              "from": "offerte",
+              "from": "quote",
               "to": "active",
               "label": "Activeer project",
               "description": "Move project from quotation to active execution. startDate must be set.",
@@ -5978,7 +5978,7 @@
             "description": "Which dimension the targets[].code values refer to per REQ-CC-004.",
             "enum": [
               "cost-center",
-              "kosten-drager",
+              "cost-carrier",
               "project"
             ],
             "example": "cost-center",
@@ -10282,9 +10282,9 @@
         "type": "object",
         "required": [
           "taxYear",
-          "zelfstandigenaftrek",
-          "startersaftrek",
-          "mkbWinstvrijstellingPercentage"
+          "selfEmployedDeduction",
+          "starterDeduction",
+          "mkbProfitExemptionPercentage"
         ],
         "properties": {
           "taxYear": {
@@ -10293,21 +10293,21 @@
             "example": 2026,
             "title": "Tax Year"
           },
-          "zelfstandigenaftrek": {
+          "selfEmployedDeduction": {
             "type": "number",
             "minimum": 0,
             "description": "Zelfstandigenaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.76).",
             "example": 3750,
             "title": "Self-Employed Deduction"
           },
-          "startersaftrek": {
+          "starterDeduction": {
             "type": "number",
             "minimum": 0,
             "description": "Startersaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.77).",
             "example": 2123,
             "title": "Starter Deduction"
           },
-          "mkbWinstvrijstellingPercentage": {
+          "mkbProfitExemptionPercentage": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -10846,11 +10846,11 @@
         "type": "object",
         "required": [
           "horizonId",
-          "ondernemingId",
+          "enterpriseId",
           "horizonStart",
-          "horizonEind",
-          "rolledOp",
-          "openingSaldo",
+          "horizonEnd",
+          "rolledOn",
+          "openingBalance",
           "administrationId",
           "lifecycleState"
         ],
@@ -10861,7 +10861,7 @@
             "example": "horizon-ond-zzp-c001-2026-w22",
             "title": "Horizon ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK to the Corporation/Onderneming owning this horizon. REQ-CF-001.",
             "example": "ond-zzp-c001",
@@ -10874,60 +10874,60 @@
             "example": "2026-05-25",
             "title": "Horizon Start"
           },
-          "horizonEind": {
+          "horizonEnd": {
             "type": "string",
             "format": "date",
             "description": "Last day (Sunday) of the 13-week window (horizonStart + 90 days).",
             "example": "2026-08-23",
             "title": "Horizon End"
           },
-          "rolledOp": {
+          "rolledOn": {
             "type": "string",
             "format": "date-time",
             "description": "Timestamp of the most recent weekly roll (Monday 02:00 UTC). REQ-CF-000.",
             "example": "2026-05-25T02:00:00Z",
             "title": "Rolled Op"
           },
-          "openingSaldo": {
+          "openingBalance": {
             "type": "object",
             "description": "Opening balance breakdown across the four spaardoel buckets. REQ-CF-001, REQ-CF-014.",
             "required": [
-              "zakelijkeRekening",
-              "spaardoel_btw",
-              "spaardoel_ib",
-              "spaardoel_buffer",
-              "totaal"
+              "businessAccount",
+              "savings_goal_vat",
+              "savings_goal_ib",
+              "savings_goal_buffer",
+              "total"
             ],
             "properties": {
-              "zakelijkeRekening": {
+              "businessAccount": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "Saldo on the operational business account.",
                 "example": 14820.0,
                 "title": "Business Account"
               },
-              "spaardoel_btw": {
+              "savings_goal_vat": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "Reserve for quarterly BTW afdracht.",
                 "example": 3200.0,
                 "title": "VAT Savings Goal"
               },
-              "spaardoel_ib": {
+              "savings_goal_ib": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "Reserve for annual IB/VPB aanslag.",
                 "example": 5800.0,
                 "title": "Income Tax Savings Goal"
               },
-              "spaardoel_buffer": {
+              "savings_goal_buffer": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "Emergency buffer (1-3 months vaste kosten).",
                 "example": 8200.0,
                 "title": "Buffer Savings Goal"
               },
-              "totaal": {
+              "total": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "SUM of all four buckets.",
@@ -10937,14 +10937,14 @@
             },
             "title": "Opening Balance"
           },
-          "modelVersie": {
+          "modelVersion": {
             "type": "string",
             "description": "Version of the forecast model in effect. REQ-CF-017.",
             "example": "v4.1-klantspecifiek-betaalgedrag",
             "default": "v4.1-klantspecifiek-betaalgedrag",
             "title": "Model Version"
           },
-          "kalibratieScore": {
+          "calibrationScore": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -11031,8 +11031,8 @@
             "filter": "CashflowWeek.horizonId = {horizonId}",
             "groupBy": "CashflowWeek.weeknummer",
             "select": {
-              "weeknummer": "CashflowWeek.weeknummer",
-              "eindSaldo": "CashflowWeek.eindSaldo",
+              "weekNumber": "CashflowWeek.weeknummer",
+              "closingBalance": "CashflowWeek.eindSaldo",
               "bufferStatus": "CASE WHEN CashflowWeek.eindSaldo < CashflowBufferPolicy.alertOndergrens THEN 'CRISIS' WHEN CashflowWeek.eindSaldo < CashflowBufferPolicy.alertVooralarm THEN 'VOORALARM' ELSE 'BOVEN_BUFFER' END"
             }
           },
@@ -11087,16 +11087,16 @@
         "required": [
           "weekId",
           "horizonId",
-          "weeknummer",
+          "weekNumber",
           "weekStart",
-          "weekEind",
-          "openingSaldo",
+          "weekEnd",
+          "openingBalance",
           "inflows_ar_geprognosticeerd",
-          "inflows_totaal",
+          "inflows_total",
           "outflows_ap_geprognosticeerd",
-          "outflows_totaal",
-          "nettoMutatie",
-          "eindSaldo",
+          "outflows_total",
+          "netMovement",
+          "closingBalance",
           "administrationId"
         ],
         "properties": {
@@ -11112,7 +11112,7 @@
             "example": "horizon-ond-zzp-c001-2026-w22",
             "title": "Horizon ID"
           },
-          "weeknummer": {
+          "weekNumber": {
             "type": "integer",
             "minimum": 1,
             "maximum": 53,
@@ -11127,14 +11127,14 @@
             "example": "2026-05-25",
             "title": "Week Start"
           },
-          "weekEind": {
+          "weekEnd": {
             "type": "string",
             "format": "date",
             "description": "Sunday of the week.",
             "example": "2026-05-31",
             "title": "Week End"
           },
-          "openingSaldo": {
+          "openingBalance": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Opening balance for the week (= prior week's eindSaldo, or horizon openingSaldo.totaal for week-1).",
@@ -11162,14 +11162,14 @@
             "example": 4200.0,
             "title": "Inflows Pipeline"
           },
-          "inflows_overig": {
+          "inflows_other": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Interest income, refunds, other miscellaneous inflows.",
             "example": 0.0,
             "title": "Other Inflows"
           },
-          "inflows_totaal": {
+          "inflows_total": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "SUM of all inflow categories.",
@@ -11183,14 +11183,14 @@
             "example": 2100.0,
             "title": "Outflows AP Forecasted"
           },
-          "outflows_recurring_huur": {
+          "outflows_recurring_rent": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Recurring monthly rent (huur).",
             "example": 1200.0,
             "title": "Outflows Recurring Rent"
           },
-          "outflows_recurring_verzekering": {
+          "outflows_recurring_insurance": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Recurring insurance premiums.",
@@ -11204,28 +11204,28 @@
             "example": 240.0,
             "title": "Outflows Recurring Subscriptions"
           },
-          "outflows_recurring_dga_loon": {
+          "outflows_recurring_dga_pay": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "DGA salary (loon-uitkering).",
             "example": 3500.0,
             "title": "Outflows Recurring DGA Salary"
           },
-          "outflows_recurring_lijfrentepremie": {
+          "outflows_recurring_annuity_premium": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Pension (lijfrente) contributions.",
             "example": 250.0,
             "title": "Outflows Recurring Annuity Premium"
           },
-          "outflows_btw_afdracht": {
+          "outflows_vat_remittance": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Quarterly BTW settlement (if due this week, per Belastingdienst calendar). REQ-CF-007.",
             "example": 0.0,
             "title": "Outflows VAT Remittance"
           },
-          "outflows_ib_aanslag": {
+          "outflows_ib_assessment": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "Annual IB/VPB settlement (if due this week, per peilmaanden). REQ-CF-008.",
@@ -11239,21 +11239,21 @@
             "example": 0.0,
             "title": "Outflows Investments"
           },
-          "outflows_totaal": {
+          "outflows_total": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "SUM of all outflow categories.",
             "example": 7475.0,
             "title": "Total Outflows"
           },
-          "nettoMutatie": {
+          "netMovement": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "inflows_totaal - outflows_totaal (computed).",
             "example": 9225.0,
             "title": "Net Change"
           },
-          "eindSaldo": {
+          "closingBalance": {
             "type": "number",
             "multipleOf": 0.01,
             "description": "openingSaldo + nettoMutatie (computed).",
@@ -11264,11 +11264,11 @@
             "type": "string",
             "description": "Buffer-policy status derived from eindSaldo vs CashflowBufferPolicy thresholds. REQ-CF-009.",
             "enum": [
-              "BOVEN_BUFFER",
-              "VOORALARM",
+              "ABOVE_BUFFER",
+              "PRE_ALERT",
               "CRISIS"
             ],
-            "default": "BOVEN_BUFFER",
+            "default": "ABOVE_BUFFER",
             "title": "Buffer Status"
           },
           "alerts": {
@@ -11280,9 +11280,9 @@
                 "type": {
                   "type": "string",
                   "enum": [
-                    "BUFFER_ONDERSCHRIJDING",
-                    "NEGATIEF_SALDO",
-                    "VOORALARM"
+                    "BUFFER_SHORTFALL",
+                    "NEGATIVE_BALANCE",
+                    "PRE_ALERT"
                   ],
                   "title": "Type",
                   "description": "The type or category classification."
@@ -11323,7 +11323,7 @@
             "filter": "CashflowARProjection.horizonId = {horizonId} AND CashflowARProjection.verwachtOntvangstWeek = {weeknummer}",
             "groupBy": "CashflowARProjection.verwachtOntvangstWeek",
             "select": {
-              "weeknummer": "CashflowARProjection.verwachtOntvangstWeek",
+              "weekNumber": "CashflowARProjection.verwachtOntvangstWeek",
               "inflows_ar_geprognosticeerd": "SUM(CashflowARProjection.openstaandBedrag)"
             }
           },
@@ -11334,7 +11334,7 @@
             "filter": "CashflowAPSchedule.horizonId = {horizonId}",
             "groupBy": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
             "select": {
-              "weeknummer": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
+              "weekNumber": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
               "outflows_ap_geprognosticeerd": "SUM(CashflowAPSchedule.bedrag)"
             }
           },
@@ -11359,8 +11359,8 @@
               "CPI_AFGELOPEN_JAAR": "CashflowRecurring.standaardBedrag * (1 + CBS.cpi_prior_year(YEAR(CashflowWeek.weekStart)))"
             },
             "select": {
-              "weeknummer": "CashflowWeek.weeknummer",
-              "categorie": "CashflowRecurring.categorie",
+              "weekNumber": "CashflowWeek.weeknummer",
+              "category": "CashflowRecurring.categorie",
               "amount": "applyIndexation(CashflowRecurring.indexatieRegel)"
             }
           },
@@ -11370,37 +11370,37 @@
             "calendar": {
               "BTW_Q1": {
                 "dueDate": "{year}-04-30",
-                "category": "outflows_btw_afdracht",
+                "category": "outflows_vat_remittance",
                 "basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (1,2,3) AND YEAR(invoiceDate) = {year}) * 0.21"
               },
               "BTW_Q2": {
                 "dueDate": "{year}-07-31",
-                "category": "outflows_btw_afdracht",
+                "category": "outflows_vat_remittance",
                 "basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (4,5,6) AND YEAR(invoiceDate) = {year}) * 0.21"
               },
               "BTW_Q3": {
                 "dueDate": "{year}-10-31",
-                "category": "outflows_btw_afdracht",
+                "category": "outflows_vat_remittance",
                 "basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (7,8,9) AND YEAR(invoiceDate) = {year}) * 0.21"
               },
               "BTW_Q4": {
                 "dueDate": "{nextYear}-01-31",
-                "category": "outflows_btw_afdracht",
+                "category": "outflows_vat_remittance",
                 "basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (10,11,12) AND YEAR(invoiceDate) = {year}) * 0.21"
               },
               "IB_VA_MAY": {
                 "dueDate": "{year}-05-31",
-                "category": "outflows_ib_aanslag",
+                "category": "outflows_ib_assessment",
                 "basis": "prior_year_aanslag * (1 + projected_growth)"
               },
               "IB_VA_SEP": {
                 "dueDate": "{year}-09-30",
-                "category": "outflows_ib_aanslag",
+                "category": "outflows_ib_assessment",
                 "basis": "prior_year_aanslag * (1 + projected_growth)"
               },
               "IB_VA_NOV": {
                 "dueDate": "{year}-11-30",
-                "category": "outflows_ib_aanslag",
+                "category": "outflows_ib_assessment",
                 "basis": "prior_year_aanslag * (1 + projected_growth)"
               }
             }
@@ -11416,7 +11416,7 @@
                 "when": "{eindSaldo} < CashflowBufferPolicy.alertOndergrens",
                 "set": "CRISIS",
                 "alert": {
-                  "type": "BUFFER_ONDERSCHRIJDING",
+                  "type": "BUFFER_SHORTFALL",
                   "severity": "RED"
                 }
               },
@@ -11424,7 +11424,7 @@
                 "when": "{eindSaldo} < CashflowBufferPolicy.alertVooralarm",
                 "set": "VOORALARM",
                 "alert": {
-                  "type": "VOORALARM",
+                  "type": "PRE_ALERT",
                   "severity": "YELLOW"
                 }
               },
@@ -11471,10 +11471,10 @@
           "projId",
           "horizonId",
           "arInvoiceId",
-          "factuurDatum",
-          "vervalDatum",
-          "openstaandBedrag",
-          "verwachtOntvangstDatum",
+          "invoiceDate",
+          "expiryDate",
+          "outstandingAmount",
+          "expectedReceiptDate",
           "administrationId"
         ],
         "properties": {
@@ -11496,27 +11496,27 @@
             "example": "fact-2026-0247",
             "title": "AR Invoice ID"
           },
-          "klantId": {
+          "customerId": {
             "type": "string",
             "description": "De-normalized customer identifier for reporting + grouping.",
             "example": "klant-acme-bv",
             "title": "Customer ID"
           },
-          "factuurDatum": {
+          "invoiceDate": {
             "type": "string",
             "format": "date",
             "description": "Invoice issuance date.",
             "example": "2026-04-15",
             "title": "Invoice Date"
           },
-          "vervalDatum": {
+          "expiryDate": {
             "type": "string",
             "format": "date",
             "description": "Contract due date (per paymentTermDays).",
             "example": "2026-05-15",
             "title": "Due Date"
           },
-          "openstaandBedrag": {
+          "outstandingAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -11524,40 +11524,40 @@
             "example": 8400.0,
             "title": "Outstanding Amount"
           },
-          "verwachtOntvangstDatum": {
+          "expectedReceiptDate": {
             "type": "string",
             "format": "date",
             "description": "Projected receipt date: vervalDatum + betalingsgedrag mean offset. REQ-CF-003.",
             "example": "2026-05-28",
             "title": "Expected Receipt Date"
           },
-          "verwachtOntvangstWeek": {
+          "expectedReceiptWeek": {
             "type": "string",
             "description": "ISO week-number string for grouping.",
             "example": "2026-w22",
             "title": "Expected Receipt Week"
           },
-          "betalingsHistorie_gemiddeldeAfwijking": {
+          "payment_history_average_deviation": {
             "type": "string",
             "description": "Mean payment offset from due date (e.g., '+13 days').",
             "example": "+13 days",
             "title": "Payment History Average Deviation"
           },
-          "betalingsHistorie_facturen12mnd": {
+          "payment_history_invoices12m": {
             "type": "integer",
             "minimum": 0,
             "description": "Number of settled invoices in 12-month sample for this customer.",
             "example": 9,
             "title": "Payment History Invoices (12 Months)"
           },
-          "betalingsHistorie_betaaldVoorVerval": {
+          "payment_history_paid_for_expiry": {
             "type": "integer",
             "minimum": 0,
             "description": "Number of those that were paid on-or-before due date.",
             "example": 2,
             "title": "Payment History Paid Before Due"
           },
-          "betrouwbaarheidScore": {
+          "reliabilityScore": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -11610,9 +11610,9 @@
           "schedId",
           "horizonId",
           "apTransactionId",
-          "vervalDatum",
-          "geplandeBetaalDatum",
-          "bedrag",
+          "expiryDate",
+          "plannedPaymentDate",
+          "amount",
           "administrationId"
         ],
         "properties": {
@@ -11634,27 +11634,27 @@
             "example": "aptxn-2026-kpn-184",
             "title": "AP Transaction ID"
           },
-          "leverancierNaam": {
+          "supplierName": {
             "type": "string",
             "description": "Supplier display name.",
             "example": "KPN Zakelijk",
             "title": "Supplier Name"
           },
-          "vervalDatum": {
+          "expiryDate": {
             "type": "string",
             "format": "date",
             "description": "Invoice due date.",
             "example": "2026-05-30",
             "title": "Due Date"
           },
-          "geplandeBetaalDatum": {
+          "plannedPaymentDate": {
             "type": "string",
             "format": "date",
             "description": "Scheduled payment date (typically equals vervalDatum unless deferred).",
             "example": "2026-05-30",
             "title": "Planned Payment Date"
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -11662,7 +11662,7 @@
             "example": 184.0,
             "title": "Amount"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "description": "AP category for grouping.",
             "enum": [
@@ -11676,16 +11676,16 @@
             "default": "AP_GENERIC",
             "title": "Category"
           },
-          "betalingsmethode": {
+          "paymentMethod": {
             "type": "string",
             "description": "Payment method.",
             "enum": [
-              "AUTOMATISCHE_INCASSO_SEPA",
+              "AUTOMATIC_COLLECTION_SEPA",
               "BANKTRANSFER",
               "IDEAL",
               "CREDIT_CARD",
               "CASH",
-              "OVERIG"
+              "OTHER"
             ],
             "default": "BANKTRANSFER",
             "title": "Payment Method"
@@ -11733,13 +11733,13 @@
         "type": "object",
         "required": [
           "recurId",
-          "ondernemingId",
+          "enterpriseId",
           "label",
-          "categorie",
-          "richting",
-          "frequentie",
-          "standaardBedrag",
-          "geldigVan",
+          "category",
+          "direction",
+          "frequency",
+          "standardAmount",
+          "validFrom",
           "administrationId"
         ],
         "properties": {
@@ -11749,7 +11749,7 @@
             "example": "rec-huur-kantoor",
             "title": "Recur ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK to Corporation.",
             "example": "ond-zzp-c001",
@@ -11761,22 +11761,22 @@
             "example": "Huur kantoorruimte De Werkfabriek",
             "title": "Label"
           },
-          "categorie": {
+          "category": {
             "type": "string",
             "description": "Recurring category. Determines which outflows_recurring_* column in CashflowWeek receives the amount.",
             "enum": [
-              "RECURRING_HUUR",
-              "RECURRING_VERZEKERING",
-              "RECURRING_ABONNEMENTEN",
+              "RECURRING_RENT",
+              "RECURRING_INSURANCE",
+              "RECURRING_SUBSCRIPTIONS",
               "RECURRING_SOFTWARE",
-              "RECURRING_DGA_LOON",
-              "RECURRING_LIJFRENTEPREMIE",
+              "RECURRING_DGA_PAY",
+              "RECURRING_ANNUITY_PREMIUM",
               "RECURRING_LEASING",
-              "RECURRING_OVERIG"
+              "RECURRING_OTHER"
             ],
             "title": "Category"
           },
-          "richting": {
+          "direction": {
             "type": "string",
             "description": "Direction: IN (inflow, e.g. recurring contract revenue) or OUT (outflow).",
             "enum": [
@@ -11786,19 +11786,19 @@
             "default": "OUT",
             "title": "Direction"
           },
-          "frequentie": {
+          "frequency": {
             "type": "string",
             "description": "Recurrence frequency.",
             "enum": [
-              "MAANDELIJKS",
-              "KWARTAALS",
-              "JAARLIJKS",
-              "WEKELIJKS",
-              "TWEEWEKELIJKS"
+              "MONTHLY",
+              "QUARTERLY",
+              "ANNUALLY",
+              "WEEKLY",
+              "FORTNIGHTLY"
             ],
             "title": "Frequency"
           },
-          "dagVanMaand": {
+          "dagFromMonth": {
             "type": "integer",
             "minimum": 1,
             "maximum": 31,
@@ -11807,7 +11807,7 @@
             "example": 1,
             "title": "Day of Month"
           },
-          "maandVanJaar": {
+          "monthOfYear": {
             "type": "integer",
             "minimum": 1,
             "maximum": 12,
@@ -11816,7 +11816,7 @@
             "example": 7,
             "title": "Month of Year"
           },
-          "standaardBedrag": {
+          "standardAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -11824,24 +11824,24 @@
             "example": 850.0,
             "title": "Default Amount"
           },
-          "indexatieRegel": {
+          "indexationRule": {
             "type": "string",
             "description": "Annual indexation rule.",
             "enum": [
               "FIXED",
-              "CPI_AFGELOPEN_JAAR"
+              "CPI_PAST_YEAR"
             ],
             "default": "FIXED",
             "title": "Indexation Rule"
           },
-          "geldigVan": {
+          "validFrom": {
             "type": "string",
             "format": "date",
             "description": "Effective start date. Weeks before this are ignored.",
             "example": "2024-09-01",
             "title": "Valid From"
           },
-          "geldigTot": {
+          "validTo": {
             "type": "string",
             "format": "date",
             "nullable": true,
@@ -11939,11 +11939,11 @@
         "type": "object",
         "required": [
           "policyId",
-          "ondernemingId",
+          "enterpriseId",
           "policy",
           "berekendeBuffer",
-          "alertOndergrens",
-          "alertVooralarm",
+          "alertLowerLimit",
+          "alertPreAlert",
           "administrationId"
         ],
         "properties": {
@@ -11953,7 +11953,7 @@
             "example": "policy-ond-zzp-c001",
             "title": "Policy ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK to Corporation.",
             "example": "ond-zzp-c001",
@@ -11964,7 +11964,7 @@
             "description": "Buffer-policy formula.",
             "enum": [
               "MIN_FIXED_AMOUNT",
-              "MIN_MONTHS_VASTE_KOSTEN",
+              "MIN_MONTHS_FIXED_COST",
               "CUSTOM_FORMULA"
             ],
             "title": "Policy"
@@ -11978,7 +11978,7 @@
             "example": 5200.0,
             "title": "Fixed Amount"
           },
-          "monthsVasteKosten": {
+          "monthsFixedCost": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -12000,7 +12000,7 @@
             "example": 5200.0,
             "title": "Calculated Buffer"
           },
-          "alertOndergrens": {
+          "alertLowerLimit": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -12008,7 +12008,7 @@
             "example": 2600.0,
             "title": "Alert Lower Threshold"
           },
-          "alertVooralarm": {
+          "alertPreAlert": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -12061,7 +12061,7 @@
         "required": [
           "scenarioId",
           "horizonId",
-          "naam",
+          "name",
           "aanpassingen",
           "createdAt",
           "administrationId"
@@ -12079,7 +12079,7 @@
             "example": "horizon-ond-zzp-c001-2026-w22",
             "title": "Horizon ID"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Scenario name.",
             "example": "Acme pays late by 4 weeks",
@@ -12129,7 +12129,7 @@
                   "title": "Week Shift",
                   "description": "The numeric value for week shift."
                 },
-                "kansVanBetaling": {
+                "kansFromPayment": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1,
@@ -12202,7 +12202,7 @@
             },
             "title": "Adjustments"
           },
-          "resultaat": {
+          "result": {
             "type": "object",
             "description": "Computed results after recomputing the horizon against the adjustments.",
             "properties": {
@@ -12211,7 +12211,7 @@
                 "description": "ISO week-number string of the lowest saldo week.",
                 "title": "Min Buffer Week"
               },
-              "minBufferBedrag": {
+              "minBufferAmount": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "Saldo value in that week.",
@@ -12349,23 +12349,23 @@
             "example": 3.2,
             "title": "Tax Mape"
           },
-          "betalingsgedragUpdates": {
+          "paymentBehaviourUpdates": {
             "type": "array",
             "description": "Customers whose betalingsgedrag offset was updated.",
             "items": {
               "type": "object",
               "properties": {
-                "klantId": {
+                "customerId": {
                   "type": "string",
                   "title": "Customer ID",
                   "description": "The identifier of the associated klant."
                 },
-                "oudGemiddeldeAfwijking": {
+                "oldAverageDeviation": {
                   "type": "string",
                   "title": "Previous Average Deviation",
                   "description": "The oud gemiddelde afwijking."
                 },
-                "nieuwGemiddeldeAfwijking": {
+                "newAverageDeviation": {
                   "type": "string",
                   "title": "New Average Deviation",
                   "description": "The nieuw gemiddelde afwijking."
@@ -12390,12 +12390,12 @@
                   "title": "Deal ID",
                   "description": "The identifier of the associated deal."
                 },
-                "oudProbability": {
+                "oldProbability": {
                   "type": "number",
                   "title": "Previous Probability",
                   "description": "The numeric value for oud probability."
                 },
-                "nieuwProbability": {
+                "newProbability": {
                   "type": "number",
                   "title": "New Probability",
                   "description": "The numeric value for nieuw probability."
@@ -14885,11 +14885,11 @@
         "required": [
           "administrationId",
           "direction",
-          "subsidieNumber",
+          "subsidyNumber",
           "counterpartyName",
-          "regelingNaam",
-          "aanvraagDate",
-          "aangevraagdBedrag",
+          "schemeName",
+          "requestDate",
+          "requestedAmount",
           "state"
         ],
         "properties": {
@@ -14909,7 +14909,7 @@
             "example": "outgoing",
             "title": "Direction"
           },
-          "subsidieNumber": {
+          "subsidyNumber": {
             "type": "string",
             "description": "Unique subsidie number per administration + fiscal year (e.g. SUB-2026-001).",
             "example": "SUB-2026-001",
@@ -14928,27 +14928,27 @@
             "example": null,
             "title": "Counterparty ID"
           },
-          "regelingNaam": {
+          "schemeName": {
             "type": "string",
             "description": "Name of the underlying subsidieregeling (e.g. Subsidieregeling cultuur 2026).",
             "example": "Subsidieregeling cultuur 2026",
             "title": "Scheme Name"
           },
-          "regelingArtikel": {
+          "schemeArticle": {
             "type": "string",
             "description": "Specific article reference within the regeling.",
             "nullable": true,
             "example": "Art. 3.1",
             "title": "Scheme Article"
           },
-          "aanvraagDate": {
+          "requestDate": {
             "type": "string",
             "format": "date",
             "description": "Date of the subsidie aanvraag (Awb 4:5).",
             "example": "2026-02-01",
             "title": "Application Date"
           },
-          "beschikkingDate": {
+          "decisionDate": {
             "type": "string",
             "format": "date",
             "description": "Date of the verleningsbeschikking (Awb 4:43/4:48).",
@@ -14956,7 +14956,7 @@
             "example": "2026-03-15",
             "title": "Decision Date"
           },
-          "vaststellingDate": {
+          "determinationDate": {
             "type": "string",
             "format": "date",
             "description": "Date of the vaststellingsbeschikking (Awb 4:46). Used as retention trigger start per REQ-SUB-009.",
@@ -14964,14 +14964,14 @@
             "example": "2026-10-01",
             "title": "Determination Date"
           },
-          "aangevraagdBedrag": {
+          "requestedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Applied-for amount in EUR.",
             "example": 25000.0,
             "title": "Requested Amount"
           },
-          "verleendBedrag": {
+          "grantedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Granted amount in EUR. Required on verleen transition.",
@@ -14979,7 +14979,7 @@
             "example": 20000.0,
             "title": "Granted Amount"
           },
-          "vastgesteldBedrag": {
+          "determinedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Settled amount in EUR. Required on vaststel transition.",
@@ -14987,7 +14987,7 @@
             "example": 18500.0,
             "title": "Final Amount"
           },
-          "uitbetaaldBedrag": {
+          "paidOutAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Paid amount in EUR. Required on uitbetaal transition.",
@@ -14995,7 +14995,7 @@
             "example": 18500.0,
             "title": "Disbursed Amount"
           },
-          "teruggevorderdBedrag": {
+          "reclaimedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Reclaimed amount in EUR. Required on terugvorder transition.",
@@ -15006,26 +15006,26 @@
           "state": {
             "type": "string",
             "enum": [
-              "aanvraag",
-              "verleend",
-              "vastgesteld",
-              "uitbetaald",
-              "teruggevorderd",
-              "afgehandeld"
+              "request",
+              "granted",
+              "determined",
+              "disbursed",
+              "reclaimed",
+              "handled"
             ],
             "description": "Current lifecycle state per Awb afdeling 4.2 + VNG ASV-model.",
-            "default": "aanvraag",
-            "example": "aanvraag",
+            "default": "request",
+            "example": "request",
             "title": "State"
           },
-          "beschikkingUri": {
+          "decisionUri": {
             "type": "string",
             "description": "docudesk URI of the verleningsbeschikking PDF (Awb 4:43/4:48).",
             "nullable": true,
             "example": "docudesk://shillinq/beschikkingen/SUB-2026-001-verlening.pdf",
             "title": "Decision URI"
           },
-          "vaststellingUri": {
+          "determinationUri": {
             "type": "string",
             "description": "docudesk URI of the vaststellingsbeschikking PDF (Awb 4:46).",
             "nullable": true,
@@ -15039,7 +15039,7 @@
             "example": "De subsidie is aangewend voor de geplande cultuuractiviteiten zoals beschreven in het activiteitenplan.",
             "title": "Performance Accountability Report"
           },
-          "afwijzingsReden": {
+          "rejectionReason": {
             "type": "string",
             "description": "Reason for rejection (afwijzing). Required on afhandel transition from aanvraag.",
             "nullable": true,
@@ -15053,7 +15053,7 @@
             "example": null,
             "title": "Repayment Plan ID"
           },
-          "subsidieRegeling": {
+          "subsidyScheme": {
             "type": "string",
             "enum": [
               "mit",
@@ -15151,7 +15151,7 @@
             "description": "When settled/vastgesteld.",
             "title": "Settlement Date"
           },
-          "subsidieName": {
+          "subsidyName": {
             "type": "string",
             "description": "Grant program name.",
             "example": "Cultuursubsidie 2026",
@@ -15160,43 +15160,43 @@
         },
         "x-openregister-lifecycle": {
           "field": "state",
-          "initialState": "aanvraag",
+          "initialState": "request",
           "retention": {
             "rule": "selectielijst:3.5.1",
-            "triggerField": "vaststellingDate",
+            "triggerField": "determinationDate",
             "period": "P10Y",
             "description": "Subsidie-records retained 10 years after vaststellingDate per Selectielijst Gemeenten 2020 + Awb 4:52 (REQ-SUB-009). Trigger: vaststellingDate or paidDate of last RepaymentInstallment."
           },
           "states": {
-            "aanvraag": {
+            "request": {
               "label": "Aanvraag",
               "description": "Subsidie aanvraag ingediend. Awb 4:5 — aanvraag indiening."
             },
-            "verleend": {
+            "granted": {
               "label": "Verleend",
               "description": "Subsidie verleend per beschikking. Awb 4:43/4:48 — verlening of weigering."
             },
-            "vastgesteld": {
+            "determined": {
               "label": "Vastgesteld",
               "description": "Subsidie vastgesteld op basis van verantwoording. Awb 4:46 — vaststelling."
             },
-            "uitbetaald": {
+            "disbursed": {
               "label": "Uitbetaald",
               "description": "Subsidie uitbetaald; journal entry created in state pending. Awb 4:52 — bevoorschotting / betaling."
             },
-            "teruggevorderd": {
+            "reclaimed": {
               "label": "Teruggevorderd",
               "description": "Subsidie (gedeeltelijk) teruggevorderd. Awb 4:57 — terugvordering."
             },
-            "afgehandeld": {
+            "handled": {
               "label": "Afgehandeld",
               "description": "Dossier gesloten (afwijzing, einde verplichtingen, of volledige terugbetaling)."
             }
           },
           "transitions": {
             "verleen": {
-              "from": "aanvraag",
-              "to": "verleend",
+              "from": "request",
+              "to": "granted",
               "label": "Verlenen",
               "description": "Verleen de subsidie na goedkeuring. Vereist verleendBedrag en (SHOULD) beschikkingUri. Approval-workflow gated per REQ-SUB-004.",
               "requires": {
@@ -15205,41 +15205,41 @@
                   "description": "Subsidie-coordinator initieert, manager keurt goed (dual control per REQ-SUB-004)."
                 },
                 "fields": [
-                  "verleendBedrag"
+                  "grantedAmount"
                 ]
               }
             },
             "afwijzen": {
-              "from": "aanvraag",
-              "to": "afgehandeld",
+              "from": "request",
+              "to": "handled",
               "label": "Afwijzen",
               "description": "Wijs de subsidie-aanvraag af. Vereist afwijzingsReden.",
               "requires": {
                 "fields": [
-                  "afwijzingsReden"
+                  "rejectionReason"
                 ]
               }
             },
             "vaststellen": {
-              "from": "verleend",
-              "to": "vastgesteld",
+              "from": "granted",
+              "to": "determined",
               "label": "Vaststellen",
               "description": "Stel de subsidie vast na ontvangen verantwoording. Vereist prestatieverantwoording en vastgesteldBedrag.",
               "requires": {
                 "fields": [
                   "prestatieverantwoording",
-                  "vastgesteldBedrag"
+                  "determinedAmount"
                 ]
               }
             },
             "uitbetalen": {
-              "from": "vastgesteld",
-              "to": "uitbetaald",
+              "from": "determined",
+              "to": "disbursed",
               "label": "Uitbetalen",
               "description": "Betaal de vastgestelde subsidie uit. Vereist uitbetaaldBedrag. Aanmaken van JournalEntry in state pending per REQ-SUB-005 (NOOIT auto-posted).",
               "requires": {
                 "fields": [
-                  "uitbetaaldBedrag"
+                  "paidOutAmount"
                 ]
               },
               "postTransition": {
@@ -15282,8 +15282,8 @@
               }
             },
             "terugvorderen": {
-              "from": "uitbetaald",
-              "to": "teruggevorderd",
+              "from": "disbursed",
+              "to": "reclaimed",
               "label": "Terugvorderen",
               "description": "Vorder (een deel van) de subsidie terug. Vereist teruggevorderdBedrag en afwijzingsReden. Approval-workflow gated per REQ-SUB-004.",
               "requires": {
@@ -15292,24 +15292,24 @@
                   "description": "Subsidie-coordinator initieert, manager keurt goed (dual control per REQ-SUB-004)."
                 },
                 "fields": [
-                  "teruggevorderdBedrag",
-                  "afwijzingsReden"
+                  "reclaimedAmount",
+                  "rejectionReason"
                 ]
               }
             },
             "afhandelenVanuitUitbetaald": {
-              "from": "uitbetaald",
-              "to": "afgehandeld",
+              "from": "disbursed",
+              "to": "handled",
               "label": "Dossier sluiten (na bewaartermijn)",
               "description": "Sluit het subsidiedossier na verstrijken van de bewaarplicht. Kalender-trigger na selectielijst:3.5.1 retentieperiode.",
               "timeBased": {
-                "field": "vaststellingDate",
+                "field": "determinationDate",
                 "offsetYears": 10
               }
             },
             "afhandelenVanuitTeruggevorderd": {
-              "from": "teruggevorderd",
-              "to": "afgehandeld",
+              "from": "reclaimed",
+              "to": "handled",
               "label": "Dossier sluiten (terugbetaling voltooid)",
               "description": "Sluit het subsidiedossier na volledige terugbetaling (repaymentBalance = 0).",
               "requires": "OCA\\Shillinq\\Guard\\SubsidieRepaymentGuard::requireZeroRepaymentBalance"
@@ -15407,14 +15407,14 @@
         "x-schema-org": "schema:LoanOrCredit",
         "type": "object",
         "required": [
-          "subsidieId",
+          "subsidyId",
           "installmentNumber",
           "dueDate",
           "amount",
           "state"
         ],
         "properties": {
-          "subsidieId": {
+          "subsidyId": {
             "type": "string",
             "format": "uuid",
             "$ref": "Subsidie",
@@ -15635,8 +15635,8 @@
         "required": [
           "administrationId",
           "accountNumber",
-          "taakveld",
-          "programmaCode",
+          "taskField",
+          "programmeCode",
           "autorisatieniveau",
           "bcfCompensable",
           "iv3Bucket"
@@ -15654,19 +15654,19 @@
             "example": "4250",
             "title": "Account Number"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "description": "BBV taakveld code from the BbvTaakveld catalogue (REQ-BBV-005). e.g. '0.1', '5.3'.",
             "example": "5.3",
             "title": "Task Field"
           },
-          "programmaCode": {
+          "programmeCode": {
             "type": "string",
             "description": "Operator-defined programma identifier (e.g. '01-Bestuur').",
             "example": "05-Cultuur",
             "title": "Programme Code"
           },
-          "paragraafCode": {
+          "paragraphCode": {
             "type": "string",
             "description": "Operator-defined paragraaf code if applicable.",
             "nullable": true,
@@ -15676,12 +15676,12 @@
           "autorisatieniveau": {
             "type": "string",
             "enum": [
-              "programma",
-              "taakveld",
-              "kostenplaats"
+              "programme",
+              "taskField",
+              "costCentre"
             ],
             "description": "Level at which raadsautorisatie applies.",
-            "example": "programma",
+            "example": "programme",
             "title": "Authorization Level"
           },
           "bcfCompensable": {
@@ -15693,15 +15693,15 @@
           "iv3Bucket": {
             "type": "string",
             "enum": [
-              "lasten",
-              "baten",
+              "expenses",
+              "revenue",
               "investeringen",
-              "reserves-toevoeging",
-              "reserves-onttrekking",
-              "resultaat"
+              "reserves-addition",
+              "reserves-withdrawal",
+              "result"
             ],
             "description": "IV3 reporting bucket for this account mapping. See bookkeeping-iv3-reporting.",
-            "example": "lasten",
+            "example": "expenses",
             "title": "Iv3Bucket"
           }
         },
@@ -15768,21 +15768,21 @@
         },
         "x-openregister-aggregations": {
           "byTaakveld": {
-            "field": "taakveld",
+            "field": "taskField",
             "operation": "count",
             "description": "Number of accounts mapped per taakveld.",
-            "groupBy": "taakveld"
+            "groupBy": "taskField"
           },
           "byProgramma": {
-            "field": "programmaCode",
+            "field": "programmeCode",
             "operation": "count",
             "description": "Number of accounts mapped per programma code.",
-            "groupBy": "programmaCode"
+            "groupBy": "programmeCode"
           },
           "bbvProgrammaSummary": {
             "description": "Sum of GL debits and credits per programmaCode for BBV reporting (REQ-BBV-004). Joins BbvAccountMapping with GLLine via accountNumber.",
             "operation": "sum",
-            "groupBy": "programmaCode",
+            "groupBy": "programmeCode",
             "joinSchema": "GLLine",
             "joinField": "accountNumber"
           }
@@ -15797,14 +15797,14 @@
         "type": "object",
         "x-schema-org": "schema:DefinedTerm",
         "required": [
-          "taakveldCode",
+          "taskFieldCode",
           "name",
           "category",
           "legalBasis",
           "effectiveFrom"
         ],
         "properties": {
-          "taakveldCode": {
+          "taskFieldCode": {
             "type": "string",
             "description": "BBV taakveld code from bijlage IV. e.g. '0.1', '1.2', '7.1'.",
             "example": "5.3",
@@ -16484,8 +16484,8 @@
         "type": "object",
         "required": [
           "fondsType",
-          "uitkeringJaar",
-          "uitkeringBedrag",
+          "distributionYear",
+          "benefitAmount",
           "administrationId",
           "state"
         ],
@@ -16502,20 +16502,20 @@
             "example": "provinciefonds",
             "title": "Fund Type"
           },
-          "uitkeringJaar": {
+          "distributionYear": {
             "type": "integer",
             "description": "Fiscal year for this uitkering.",
             "example": 2026,
             "title": "Distribution Year"
           },
-          "uitkeringBedrag": {
+          "benefitAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Total uitkering amount in EUR. This amount is materialised into a balanced GLTransaction on post per REQ-PRB-004.",
             "example": 50000.0,
             "title": "Distribution Amount"
           },
-          "uitkeringBeschikking": {
+          "benefitDecision": {
             "type": "string",
             "description": "Beschikkingnummer of the uitkering (official reference number from the relevant ministry).",
             "nullable": true,
@@ -16608,7 +16608,7 @@
               "actionParameters": {
                 "debitField": "debitAccountNumber",
                 "creditField": "creditAccountNumber",
-                "amountField": "uitkeringBedrag",
+                "amountField": "benefitAmount",
                 "currency": "EUR",
                 "sourceReference": "@self.id",
                 "journalEntryIdField": "journalEntryId",
@@ -16624,7 +16624,7 @@
             "groupBy": "fondsType",
             "operations": {
               "totalUitkering": {
-                "field": "uitkeringBedrag",
+                "field": "benefitAmount",
                 "operation": "sum"
               },
               "count": {
@@ -16648,16 +16648,16 @@
         "type": "object",
         "x-schema-org": "schema:Intangible",
         "required": [
-          "assetNaam",
+          "assetName",
           "assetType",
-          "valuationBedrag",
+          "valuationAmount",
           "valuationDate",
           "applicableTariff",
-          "vpbBalansLinkId",
+          "vpbBalanceLinkId",
           "administrationId"
         ],
         "properties": {
-          "assetNaam": {
+          "assetName": {
             "type": "string",
             "description": "Human-readable name of the IP asset.",
             "example": "Shillinq ML-belastingmodule v2",
@@ -16676,21 +16676,21 @@
             "example": "s-en-o-certificaat",
             "title": "Asset Type"
           },
-          "wbsoVerklaringNummer": {
+          "rndTaxCreditDeclarationNumber": {
             "type": "string",
             "description": "FK to WBSO S&O-verklaring number (required when assetType is s-en-o-certificaat). References the sibling add-shillinq-wbso-sno-administratie spec.",
             "nullable": true,
             "example": "WBSO-2026-NL-001",
             "title": "WBSO Certificate Number"
           },
-          "octrooiNummer": {
+          "patentNumber": {
             "type": "string",
             "description": "Patent registration number (required when assetType is octrooi).",
             "nullable": true,
             "example": "EP1234567B1",
             "title": "Patent Number"
           },
-          "valuationBedrag": {
+          "valuationAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Capitalised valuation of the IP asset in euros.",
@@ -16711,7 +16711,7 @@
             "example": 0.09,
             "title": "Applicable Tariff"
           },
-          "vpbBalansLinkId": {
+          "vpbBalanceLinkId": {
             "type": "string",
             "description": "FK to VpbBalansLink (REQ-VPB-002 from bookkeeping-vpb-corporate-tax). Links the IP asset to the Vpb-balans.",
             "example": "vpb-balans-link-2026-001",
@@ -16733,7 +16733,7 @@
               "description": "Records tariff-application events when the applicable tariff changes on an IP asset; immutable per ADR-022.",
               "immutable": true,
               "fields": [
-                "assetNaam",
+                "assetName",
                 "assetType",
                 "applicableTariff",
                 "valuationDate"
@@ -16798,10 +16798,10 @@
             "type": "string",
             "description": "Elected innovatiebox route for this fiscal year. Mutually exclusive per (administrationId, fiscalYear).",
             "enum": [
-              "forfaitair",
+              "flatRate",
               "afpelmethode"
             ],
-            "example": "forfaitair",
+            "example": "flatRate",
             "title": "Route"
           },
           "applicableTariff": {
@@ -16811,7 +16811,7 @@
             "example": 0.09,
             "title": "Applicable Tariff"
           },
-          "forfaitairCapBedrag": {
+          "flatRateCapAmount": {
             "type": "number",
             "description": "Statutory cap on innovation-attributed profit under the forfaitair route (Wet Vpb art. 12bg). Required when route is forfaitair. Default 25000.",
             "default": 25000.0,
@@ -16819,7 +16819,7 @@
             "example": 25000.0,
             "title": "Flat-Rate Cap Amount"
           },
-          "forfaitairPercentage": {
+          "flatRatePercentage": {
             "type": "number",
             "description": "Percentage of operating profit attributed to innovation under the forfaitair route (Wet Vpb art. 12bg). Required when route is forfaitair. Default 0.25.",
             "default": 0.25,
@@ -16834,7 +16834,7 @@
             "example": 200000.0,
             "title": "Operating Profit"
           },
-          "vpbAangifteId": {
+          "vpbTaxReturnId": {
             "type": "string",
             "description": "Optional FK to the Vpb-aangifte record this election is attached to.",
             "nullable": true,
@@ -16862,11 +16862,11 @@
                       {
                         "operation": "multiply",
                         "fields": [
-                          "forfaitairPercentage",
+                          "flatRatePercentage",
                           "operatingProfit"
                         ]
                       },
-                      "forfaitairCapBedrag"
+                      "flatRateCapAmount"
                     ],
                     "target": "innovationAttributedProfit"
                   },
@@ -16951,7 +16951,7 @@
                     {
                       "*": [
                         {
-                          "prop": "forfaitairPercentage"
+                          "prop": "flatRatePercentage"
                         },
                         {
                           "prop": "operatingProfit"
@@ -16959,7 +16959,7 @@
                       ]
                     },
                     {
-                      "prop": "forfaitairCapBedrag"
+                      "prop": "flatRateCapAmount"
                     }
                   ]
                 },
@@ -16969,7 +16969,7 @@
               ]
             },
             "type": "number",
-            "description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value). JSON-AST: if(route=='forfaitair', min(forfaitairPercentage*operatingProfit, forfaitairCapBedrag), null).",
+            "description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value). JSON-AST: if(route=='flatRate', min(forfaitairPercentage*operatingProfit, forfaitairCapBedrag), null).",
             "example": 25000.0
           }
         },
@@ -17059,14 +17059,14 @@
             "example": 0.09,
             "title": "Applicable Tariff"
           },
-          "forfaitairPercentage": {
+          "flatRatePercentage": {
             "type": "number",
             "description": "Forfaitair percentage of operating profit attributed to innovation (Wet Vpb art. 12bg). Default 0.25.",
             "nullable": true,
             "example": 0.25,
             "title": "Flat-Rate Percentage"
           },
-          "forfaitairCapBedrag": {
+          "flatRateCapAmount": {
             "type": "number",
             "description": "Statutory cap on innovation-attributed profit under the forfaitair route in EUR (Wet Vpb art. 12bg). Default 25000.",
             "nullable": true,
@@ -17127,8 +17127,8 @@
         "required": [
           "ipAssetId",
           "periodId",
-          "toegerekendeWinst",
-          "verdeelsleutel",
+          "allocatedProfit",
+          "allocationKey",
           "administrationId"
         ],
         "properties": {
@@ -17146,22 +17146,22 @@
             "example": "2026-Q1",
             "title": "Period ID"
           },
-          "toegerekendeWinst": {
+          "allocatedProfit": {
             "type": "number",
             "minimum": 0,
             "description": "Profit attributed to the IP asset for this period in euros.",
             "example": 60000.0,
             "title": "Allocated Profit"
           },
-          "verdeelsleutel": {
+          "allocationKey": {
             "type": "string",
             "description": "Method used to attribute profit to the IP asset.",
             "enum": [
-              "omzet-aandeel",
-              "r-en-d-uren",
+              "revenue-share",
+              "r-and-d-hours",
               "custom-formula"
             ],
-            "example": "omzet-aandeel",
+            "example": "revenue-share",
             "title": "Allocation Key"
           },
           "parameters": {
@@ -17180,7 +17180,7 @@
             "example": "adm-1",
             "title": "Administration ID"
           },
-          "verdeelsleutelRatio": {
+          "allocationKeyRatio": {
             "type": "number",
             "description": "Derived (do not set directly): computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods; null for custom-formula. Materialised via x-openregister-calculations.",
             "nullable": true,
@@ -17189,9 +17189,9 @@
           }
         },
         "x-openregister-calculations": {
-          "verdeelsleutelRatio": {
+          "allocationKeyRatio": {
             "materialise": true,
-            "targetField": "verdeelsleutelRatio",
+            "targetField": "allocationKeyRatio",
             "expression": {
               "if": [
                 {
@@ -17199,7 +17199,7 @@
                     {
                       "eq": [
                         {
-                          "prop": "verdeelsleutel"
+                          "prop": "allocationKey"
                         },
                         {
                           "lit": "omzet-aandeel"
@@ -17235,7 +17235,7 @@
                         {
                           "eq": [
                             {
-                              "prop": "verdeelsleutel"
+                              "prop": "allocationKey"
                             },
                             {
                               "lit": "r-en-d-uren"
@@ -17349,7 +17349,7 @@
               "required": [
                 "vatNumber",
                 "countryCode",
-                "omzet",
+                "revenue",
                 "type"
               ],
               "properties": {
@@ -17367,7 +17367,7 @@
                   "example": "BE",
                   "title": "Country Code"
                 },
-                "omzet": {
+                "revenue": {
                   "type": "number",
                   "description": "Net supply amount for this customer in the period.",
                   "example": 12500.0,
@@ -17699,9 +17699,9 @@
           "periodStart",
           "periodEnd",
           "rubrieken",
-          "verschuldigdeOmzetbelasting",
-          "voorbelasting",
-          "teBetalenOfTeruggave",
+          "dueSalesTax",
+          "inputVat",
+          "payableOrRefund",
           "state"
         ],
         "properties": {
@@ -17741,39 +17741,39 @@
             "additionalProperties": {
               "type": "object",
               "properties": {
-                "omzet": {
+                "revenue": {
                   "type": "number"
                 },
-                "btw": {
+                "vat": {
                   "type": "number"
                 }
               }
             },
             "example": {
               "1a": {
-                "omzet": 50000.0,
-                "btw": 10500.0
+                "revenue": 50000.0,
+                "vat": 10500.0
               },
               "5b": {
-                "omzet": 0,
-                "btw": -2500.0
+                "revenue": 0,
+                "vat": -2500.0
               }
             },
             "title": "Sections"
           },
-          "verschuldigdeOmzetbelasting": {
+          "dueSalesTax": {
             "type": "number",
             "description": "Calculated total payable; derived via x-openregister-calculations from rubrieken BTW fields.",
             "example": 10500.0,
             "title": "VAT Payable"
           },
-          "voorbelasting": {
+          "inputVat": {
             "type": "number",
             "description": "Input VAT deductible; derived from GL postings tagged as voorbelasting.",
             "example": 2500.0,
             "title": "Input VAT"
           },
-          "teBetalenOfTeruggave": {
+          "payableOrRefund": {
             "type": "number",
             "description": "Net payable (positive = afdragen) or refund (negative = teruggave). Equals verschuldigdeOmzetbelasting minus voorbelasting.",
             "example": 8000.0,
@@ -17928,7 +17928,7 @@
               "select": "VatTariff.rubriek"
             }
           },
-          "verschuldigdeOmzetbelasting": {
+          "dueSalesTax": {
             "description": "Sum of all BTW owed from rubrieken (1a through 4b btw fields).",
             "operation": "sum",
             "sourceField": "rubrieken.*.btw",
@@ -17936,7 +17936,7 @@
               "rubriekCategory": "verschuldigd"
             }
           },
-          "voorbelasting": {
+          "inputVat": {
             "description": "Sum of input VAT from rubrieken (5a through 5g btw fields).",
             "operation": "sum",
             "sourceField": "rubrieken.*.btw",
@@ -17946,18 +17946,18 @@
           }
         },
         "x-openregister-calculations": {
-          "teBetalenOfTeruggave": {
+          "payableOrRefund": {
             "materialise": true,
-            "targetField": "teBetalenOfTeruggave",
+            "targetField": "payableOrRefund",
             "type": "number",
             "description": "Net payable = verschuldigdeOmzetbelasting minus voorbelasting. JSON-AST: verschuldigdeOmzetbelasting - voorbelasting.",
             "expression": {
               "-": [
                 {
-                  "prop": "verschuldigdeOmzetbelasting"
+                  "prop": "dueSalesTax"
                 },
                 {
-                  "prop": "voorbelasting"
+                  "prop": "inputVat"
                 }
               ]
             }
@@ -18050,17 +18050,17 @@
           "category": {
             "type": "string",
             "enum": [
-              "standaard",
+              "standard",
               "verlaagd",
               "nul",
-              "vrijgesteld",
+              "exempt",
               "verleggingsregeling"
             ],
             "description": "Tariff category per Wet OB 1968.",
-            "example": "standaard",
+            "example": "standard",
             "title": "Category"
           },
-          "rubriek": {
+          "section": {
             "type": "string",
             "description": "The BTW rubriek code on the aangifteformulier this tariff maps to (e.g. 1a, 2a, 4b).",
             "example": "1a",
@@ -18430,19 +18430,19 @@
             "nullable": true,
             "description": "Snapshot of ZzpDeduction values at generation time: zelfstandigenaftrek, startersaftrek, mkbWinstvrijstelling, totalDeduction (REQ-ZZP-006).",
             "properties": {
-              "zelfstandigenaftrekAmount": {
+              "selfEmployedDeductionAmount": {
                 "type": "number",
                 "example": 3750.0,
                 "title": "Self-Employed Deduction Amount",
                 "description": "The zelfstandigenaftrek amount as a numeric value."
               },
-              "startersaftrekAmount": {
+              "starterDeductionAmount": {
                 "type": "number",
                 "example": 0.0,
                 "title": "Starter Deduction Amount",
                 "description": "The startersaftrek amount as a numeric value."
               },
-              "mkbWinstvrijstellingAmount": {
+              "mkbProfitExemptionAmount": {
                 "type": "number",
                 "example": 7160.25,
                 "title": "SME Profit Exemption Amount",
@@ -18621,7 +18621,7 @@
             "example": 1100.0,
             "title": "Ytd Qualifying Hours"
           },
-          "qualifiesForUrencriterium": {
+          "qualifiesForHoursCriterion": {
             "type": "boolean",
             "nullable": true,
             "readOnly": true,
@@ -18629,7 +18629,7 @@
             "example": false,
             "title": "Qualifies for Hours Criterion"
           },
-          "isStartersOpvolger": {
+          "isStarterSuccessor": {
             "type": "boolean",
             "description": "True when the ZZP-er qualifies as a starters-opvolger (lower 800-hour threshold). Operator-set flag; default false.",
             "default": false,
@@ -18660,7 +18660,7 @@
             "example": 60000.0,
             "title": "Taxable Profit"
           },
-          "zelfstandigenaftrekAmount": {
+          "selfEmployedDeductionAmount": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -18669,7 +18669,7 @@
             "example": 3750.0,
             "title": "Self-Employed Deduction Amount"
           },
-          "startersaftrekAmount": {
+          "starterDeductionAmount": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -18678,7 +18678,7 @@
             "example": 2123.0,
             "title": "Starter Deduction Amount"
           },
-          "mkbWinstvrijstellingPercentage": {
+          "mkbProfitExemptionPercentage": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
@@ -18688,7 +18688,7 @@
             "example": 0.127,
             "title": "SME Profit Exemption Percentage"
           },
-          "mkbWinstvrijstellingAmount": {
+          "mkbProfitExemptionAmount": {
             "type": "number",
             "minimum": 0,
             "nullable": true,
@@ -18719,15 +18719,15 @@
           }
         },
         "x-openregister-calculations": {
-          "qualifiesForUrencriterium": {
+          "qualifiesForHoursCriterion": {
             "materialise": true,
-            "targetField": "qualifiesForUrencriterium",
+            "targetField": "qualifiesForHoursCriterion",
             "description": "True when ytdQualifyingHours >= threshold (1225 regular, 800 starters-opvolgers). REQ-ZZP-007. JSON-AST: if(isStartersOpvolger, ytdQualifyingHours>=800, ytdQualifyingHours>=1225).",
             "type": "boolean",
             "expression": {
               "if": [
                 {
-                  "prop": "isStartersOpvolger"
+                  "prop": "isStarterSuccessor"
                 },
                 {
                   "gte": [
@@ -18752,15 +18752,15 @@
               ]
             }
           },
-          "zelfstandigenaftrekAmount": {
+          "selfEmployedDeductionAmount": {
             "materialise": true,
             "type": "number",
-            "targetField": "zelfstandigenaftrekAmount",
+            "targetField": "selfEmployedDeductionAmount",
             "description": "Declarative (ADR-031): zelfstandigenaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.76. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard. JSON-AST: if(qualifiesForUrencriterium, @ref.deduction.zelfstandigenaftrek, 0).",
             "expression": {
               "if": [
                 {
-                  "prop": "qualifiesForUrencriterium"
+                  "prop": "qualifiesForHoursCriterion"
                 },
                 {
                   "prop": "@ref.deduction.zelfstandigenaftrek"
@@ -18771,10 +18771,10 @@
               ]
             }
           },
-          "startersaftrekAmount": {
+          "starterDeductionAmount": {
             "materialise": true,
             "type": "number",
-            "targetField": "startersaftrekAmount",
+            "targetField": "starterDeductionAmount",
             "description": "Declarative (ADR-031): startersaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when isStarter AND startersClaimsThisRegime < 3 AND qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.77. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard.",
             "expression": {
               "if": [
@@ -18794,7 +18794,7 @@
                       ]
                     },
                     {
-                      "prop": "qualifiesForUrencriterium"
+                      "prop": "qualifiesForHoursCriterion"
                     }
                   ]
                 },
@@ -18807,18 +18807,18 @@
               ]
             }
           },
-          "mkbWinstvrijstellingPercentage": {
+          "mkbProfitExemptionPercentage": {
             "materialise": true,
             "type": "number",
-            "targetField": "mkbWinstvrijstellingPercentage",
+            "targetField": "mkbProfitExemptionPercentage",
             "description": "Declarative (ADR-031): MKB-winstvrijstelling percentage from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference). Wet IB 2001 art. 3.79a. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard. JSON-AST: @ref.deduction.mkbWinstvrijstellingPercentage.",
             "expression": {
               "prop": "@ref.deduction.mkbWinstvrijstellingPercentage"
             }
           },
-          "mkbWinstvrijstellingAmount": {
+          "mkbProfitExemptionAmount": {
             "materialise": true,
-            "targetField": "mkbWinstvrijstellingAmount",
+            "targetField": "mkbProfitExemptionAmount",
             "description": "Derived: (taxableProfit - zelfstandigenaftrekAmount - startersaftrekAmount) x mkbWinstvrijstellingPercentage. JSON-AST arithmetic.",
             "type": "number",
             "expression": {
@@ -18829,15 +18829,15 @@
                       "prop": "taxableProfit"
                     },
                     {
-                      "prop": "zelfstandigenaftrekAmount"
+                      "prop": "selfEmployedDeductionAmount"
                     },
                     {
-                      "prop": "startersaftrekAmount"
+                      "prop": "starterDeductionAmount"
                     }
                   ]
                 },
                 {
-                  "prop": "mkbWinstvrijstellingPercentage"
+                  "prop": "mkbProfitExemptionPercentage"
                 }
               ]
             }
@@ -18850,13 +18850,13 @@
             "expression": {
               "+": [
                 {
-                  "prop": "zelfstandigenaftrekAmount"
+                  "prop": "selfEmployedDeductionAmount"
                 },
                 {
-                  "prop": "startersaftrekAmount"
+                  "prop": "starterDeductionAmount"
                 },
                 {
-                  "prop": "mkbWinstvrijstellingAmount"
+                  "prop": "mkbProfitExemptionAmount"
                 }
               ]
             }
@@ -18953,7 +18953,7 @@
                 "label": "Uren YTD (kwalificerend)",
                 "type": "number"
               },
-              "qualifiesForUrencriterium": {
+              "qualifiesForHoursCriterion": {
                 "label": "Urencriterium gehaald",
                 "type": "boolean-badge"
               },
@@ -19133,12 +19133,12 @@
         "type": "object",
         "x-schema-org": "schema:Thing",
         "required": [
-          "nummer",
+          "number",
           "administrationId",
           "status"
         ],
         "properties": {
-          "nummer": {
+          "number": {
             "type": "string",
             "description": "Begrotingswijziging number, unique per administration.",
             "example": "BW-2026-007",
@@ -19150,55 +19150,55 @@
             "example": "gem-lemelerveld",
             "title": "Administration ID"
           },
-          "programma": {
+          "programme": {
             "type": "string",
             "description": "FK to Programma (nummer).",
             "nullable": true,
             "title": "Programme"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "description": "FK to Taakveld.code.",
             "nullable": true,
             "title": "Task Field"
           },
-          "economischeCategorie": {
+          "economicCategory": {
             "type": "string",
             "description": "FK to EconomischeCategorie.code.",
             "nullable": true,
             "title": "Economic Category"
           },
-          "bedragOorspronkelijkCents": {
+          "originalAmountCents": {
             "type": "integer",
             "default": 0,
             "description": "Original amount in integer eurocents.",
             "title": "Original Amount (Cents)"
           },
-          "bedragWijzigingCents": {
+          "amountChangeCents": {
             "type": "integer",
             "default": 0,
             "description": "Change amount (may be negative) in integer eurocents.",
             "title": "Amendment Amount (Cents)"
           },
-          "bedragNieuwCents": {
+          "newAmountCents": {
             "type": "integer",
             "default": 0,
             "description": "Resulting amount in integer eurocents.",
             "title": "New Amount (Cents)"
           },
-          "reden": {
+          "reason": {
             "type": "string",
             "description": "Reason for the wijziging.",
             "nullable": true,
             "title": "Reason"
           },
-          "raadsbesluitNummer": {
+          "councilResolutionNumber": {
             "type": "string",
             "description": "Raadsbesluit reference.",
             "nullable": true,
             "title": "Council Resolution Number"
           },
-          "raadsbesluitDatum": {
+          "councilResolutionDate": {
             "type": "string",
             "format": "date",
             "description": "Raadsbesluit date.",
@@ -19208,11 +19208,11 @@
           "status": {
             "type": "string",
             "enum": [
-              "concept",
-              "vastgesteld",
+              "draft",
+              "determined",
               "verwerkt"
             ],
-            "default": "concept",
+            "default": "draft",
             "description": "Processing status of the wijziging.",
             "title": "Status"
           },
@@ -19255,7 +19255,7 @@
         "x-schema-org": "schema:DefinedTerm",
         "required": [
           "code",
-          "naam",
+          "name",
           "administrationId"
         ],
         "properties": {
@@ -19265,31 +19265,31 @@
             "example": "BBV-7.1",
             "title": "Code"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Indicator name.",
             "example": "Fijn huishoudelijk restafval",
             "title": "Name"
           },
-          "eenheid": {
+          "unit": {
             "type": "string",
             "description": "Unit of measure (e.g. 'kg per inwoner').",
             "nullable": true,
             "title": "Unit"
           },
-          "bron": {
+          "source": {
             "type": "string",
             "description": "Source of the indicator value (e.g. 'CBS').",
             "nullable": true,
             "title": "Source"
           },
-          "waarde": {
+          "value": {
             "type": "number",
             "description": "Measured indicator value.",
             "nullable": true,
             "title": "Value"
           },
-          "programma": {
+          "programme": {
             "type": "string",
             "description": "FK to Programma (composite key reference) this indicator belongs to.",
             "nullable": true,
@@ -19333,9 +19333,9 @@
         "x-schema-org": "schema:DefinedTerm",
         "required": [
           "code",
-          "naam",
-          "niveau",
-          "batenOfLasten"
+          "name",
+          "level",
+          "revenueOfExpenses"
         ],
         "properties": {
           "code": {
@@ -19344,13 +19344,13 @@
             "example": "3.4.3",
             "title": "Code"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Human-readable name of the economische categorie.",
             "example": "Betaalde belastingen",
             "title": "Name"
           },
-          "niveau": {
+          "level": {
             "type": "integer",
             "minimum": 1,
             "maximum": 3,
@@ -19365,18 +19365,18 @@
             "example": "3.4",
             "title": "Parent Code"
           },
-          "batenOfLasten": {
+          "revenueOfExpenses": {
             "type": "string",
             "enum": [
-              "baten",
-              "lasten",
-              "balans"
+              "revenue",
+              "expenses",
+              "balance"
             ],
             "description": "Whether postings on this categorie are baten, lasten, or balans-mutaties.",
-            "example": "lasten",
+            "example": "expenses",
             "title": "Revenue or Expense"
           },
-          "iv3Verplicht": {
+          "iv3Mandatory": {
             "type": "boolean",
             "default": false,
             "description": "Whether this categorie is mandatory in the Iv3-aanlevering per informatievoorschrift.",
@@ -19413,20 +19413,20 @@
         "type": "object",
         "x-schema-org": "schema:MonetaryAmount",
         "required": [
-          "omschrijving",
-          "mvaCategorie",
-          "aanschafwaardeCents",
-          "ingebruiknameDatum",
+          "description",
+          "mvaCategory",
+          "acquisitionValueCents",
+          "commissioningDate",
           "administrationId"
         ],
         "properties": {
-          "omschrijving": {
+          "description": {
             "type": "string",
             "description": "MVA description, unique per (administrationId, ingebruiknameDatum).",
             "example": "Sporthal De Brug",
             "title": "Description"
           },
-          "mvaCategorie": {
+          "mvaCategory": {
             "type": "string",
             "enum": [
               "economisch-nut",
@@ -19443,14 +19443,14 @@
             "example": "gem-lemelerveld",
             "title": "Administration ID"
           },
-          "aanschafwaardeCents": {
+          "acquisitionValueCents": {
             "type": "integer",
             "minimum": 0,
             "description": "Gross acquisition value in integer eurocents (before subsidie van derden deduction).",
             "example": 240000000,
             "title": "Acquisition Value (Cents)"
           },
-          "subsidieVanDerdenCents": {
+          "subsidyFromThirdPartiesCents": {
             "type": "integer",
             "minimum": 0,
             "description": "Object-earmarked third-party contribution deducted directly from aanschafwaarde (not as bate) per REQ-BBV-005. Te activeren waarde = aanschafwaarde - subsidie.",
@@ -19458,14 +19458,14 @@
             "example": 35000000,
             "title": "Third-Party Subsidy (Cents)"
           },
-          "ingebruiknameDatum": {
+          "commissioningDate": {
             "type": "string",
             "format": "date",
             "description": "In-use date. Depreciation starts the month following this date per REQ-BBV-005.",
             "example": "2026-09-15",
             "title": "Commissioning Date"
           },
-          "afschrijvingsmethode": {
+          "depreciationMethod": {
             "type": "string",
             "enum": [
               "lineair",
@@ -19475,7 +19475,7 @@
             "default": "lineair",
             "title": "Depreciation Method"
           },
-          "afschrijvingstermijnJaar": {
+          "depreciationPeriodYears": {
             "type": "integer",
             "minimum": 1,
             "description": "Depreciation term in years.",
@@ -19483,20 +19483,20 @@
             "example": 40,
             "title": "Depreciation Period (Years)"
           },
-          "restwaardeCents": {
+          "residualValueCents": {
             "type": "integer",
             "minimum": 0,
             "description": "Residual value in integer eurocents.",
             "default": 0,
             "title": "Residual Value (Cents)"
           },
-          "renteOmslagPercentage": {
+          "interestApportionmentPercentage": {
             "type": "number",
             "description": "Rente-omslag percentage applied to this actief.",
             "nullable": true,
             "title": "Interest Allocation Percentage"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "description": "FK to Taakveld.code the afschrijving is booked on.",
             "nullable": true,
@@ -19509,19 +19509,19 @@
             "nullable": true,
             "title": "Credit Resolution"
           },
-          "componentenMethode": {
+          "componentsMethod": {
             "type": "boolean",
             "default": false,
             "description": "Whether the componentenmethode applies (samengesteld actief split into components with separate schedules).",
             "title": "Components Method"
           },
-          "boekwaardeBeginJaarCents": {
+          "bookValueYearStartCents": {
             "type": "integer",
             "default": 0,
             "description": "Boekwaarde at the start of the boekjaar in integer eurocents.",
             "title": "Book Value Start of Year (Cents)"
           },
-          "afschrijvingJaarCents": {
+          "depreciationYearCents": {
             "type": "integer",
             "description": "Computed depreciation for the boekjaar in integer eurocents.",
             "nullable": true,
@@ -19564,9 +19564,9 @@
         "x-schema-org": "schema:MonetaryAmount",
         "required": [
           "administrationId",
-          "boekjaar",
+          "financialYear",
           "meerjarenHorizon",
-          "versie"
+          "version"
         ],
         "properties": {
           "administrationId": {
@@ -19575,26 +19575,26 @@
             "example": "gem-lemelerveld",
             "title": "Administration ID"
           },
-          "programma": {
+          "programme": {
             "type": "string",
             "description": "FK to Programma (nummer) this budget row belongs to.",
             "nullable": true,
             "title": "Programme"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "description": "FK to Taakveld.code.",
             "nullable": true,
             "example": "6.1",
             "title": "Task Field"
           },
-          "economischeCategorie": {
+          "economicCategory": {
             "type": "string",
             "description": "FK to EconomischeCategorie.code.",
             "nullable": true,
             "title": "Economic Category"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Base fiscal year T of the meerjarenraming.",
             "example": 2026,
@@ -19608,7 +19608,7 @@
             "example": 0,
             "title": "Multi-Year Horizon"
           },
-          "batenCents": {
+          "revenueCents": {
             "type": "integer",
             "minimum": 0,
             "description": "Budgeted baten in integer eurocents (server-authoritative; never client-trusted floats).",
@@ -19616,7 +19616,7 @@
             "example": 92400000000,
             "title": "Revenue (Cents)"
           },
-          "lastenCents": {
+          "expensesCents": {
             "type": "integer",
             "minimum": 0,
             "description": "Budgeted lasten in integer eurocents.",
@@ -19624,51 +19624,51 @@
             "example": 91800000000,
             "title": "Expenses (Cents)"
           },
-          "mutatieReservesCents": {
+          "movementReservesCents": {
             "type": "integer",
             "description": "Saldo of reserve-mutaties (may be negative) in integer eurocents, contributing to the sluitend-saldo per REQ-BBV-003.",
             "default": 0,
             "example": 20000000,
             "title": "Reserves Movement (Cents)"
           },
-          "incidenteelBatenCents": {
+          "incidentalRevenueCents": {
             "type": "integer",
             "minimum": 0,
             "description": "Portion of baten that is incidenteel, shown apart per BBV-art. 19 (REQ-BBV-003).",
             "default": 0,
             "title": "Incidental Revenue (Cents)"
           },
-          "incidenteelLastenCents": {
+          "incidentalExpensesCents": {
             "type": "integer",
             "minimum": 0,
             "description": "Portion of lasten that is incidenteel.",
             "default": 0,
             "title": "Incidental Expenses (Cents)"
           },
-          "versie": {
+          "version": {
             "type": "string",
             "enum": [
               "primitief",
               "na-wijziging",
-              "realisatie"
+              "actuals"
             ],
             "description": "Budget version.",
             "default": "primitief",
             "title": "Version"
           },
-          "begrotingswijziging": {
+          "budgetAmendment": {
             "type": "string",
             "description": "FK to Begrotingswijziging.nummer when this row results from a wijziging.",
             "nullable": true,
             "title": "Budget Amendment"
           },
-          "toelichting": {
+          "notes": {
             "type": "string",
             "description": "Explanatory note.",
             "nullable": true,
             "title": "Notes"
           },
-          "stelselwijziging": {
+          "accountingPolicyChange": {
             "type": "boolean",
             "default": false,
             "description": "Marks a recomputed comparative figure after a taakveld catalogue change per REQ-BBV-008.",
@@ -19682,7 +19682,7 @@
             "groupBy": "meerjarenHorizon",
             "operations": {
               "saldoCents": {
-                "field": "batenCents",
+                "field": "revenueCents",
                 "operation": "sum"
               }
             }
@@ -19720,22 +19720,22 @@
         "required": [
           "type",
           "administrationId",
-          "boekjaar"
+          "financialYear"
         ],
         "properties": {
           "type": {
             "type": "string",
             "enum": [
-              "Lokale_heffingen",
-              "Weerstandsvermogen",
-              "Onderhoud_kapitaalgoederen",
-              "Financiering",
-              "Bedrijfsvoering",
-              "Verbonden_partijen",
-              "Grondbeleid"
+              "local_levies",
+              "Resilience",
+              "maintenance_capital_goods",
+              "Financing",
+              "Operations",
+              "affiliated_parties",
+              "LandPolicy"
             ],
             "description": "Paragraaf type per BBV art. 9.",
-            "example": "Weerstandsvermogen",
+            "example": "Resilience",
             "title": "Type"
           },
           "administrationId": {
@@ -19744,13 +19744,13 @@
             "example": "gem-lemelerveld",
             "title": "Administration ID"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year of this paragraaf.",
             "example": 2026,
             "title": "Fiscal Year"
           },
-          "inhoud": {
+          "content": {
             "type": "string",
             "description": "Free-text content of the paragraaf (template-driven editor output).",
             "nullable": true,
@@ -19762,7 +19762,7 @@
             "nullable": true,
             "title": "Resilience Ratio"
           },
-          "compleet": {
+          "complete": {
             "type": "boolean",
             "default": false,
             "description": "Whether the paragraaf is filled and signed-off.",
@@ -19799,14 +19799,14 @@
         "type": "object",
         "x-schema-org": "schema:Thing",
         "required": [
-          "nummer",
-          "naam",
+          "number",
+          "name",
           "administrationId",
-          "boekjaar",
+          "financialYear",
           "lifecycleState"
         ],
         "properties": {
-          "nummer": {
+          "number": {
             "type": "integer",
             "minimum": 0,
             "maximum": 99,
@@ -19814,19 +19814,19 @@
             "example": 3,
             "title": "Number"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Programme name.",
             "example": "Sociaal Domein",
             "title": "Name"
           },
-          "omschrijving": {
+          "description": {
             "type": "string",
             "description": "Programme description.",
             "nullable": true,
             "title": "Description"
           },
-          "portefeuillehouder": {
+          "portfolioHolder": {
             "type": "string",
             "description": "Responsible bestuurder (portefeuillehouder).",
             "nullable": true,
@@ -19838,7 +19838,7 @@
             "example": "gem-lemelerveld",
             "title": "Administration ID"
           },
-          "taakvelden": {
+          "taskFields": {
             "type": "array",
             "items": {
               "type": "string"
@@ -19861,7 +19861,7 @@
                   "title": "What",
                   "description": "The date and time for wat."
                 },
-                "wanneer": {
+                "when": {
                   "type": "string",
                   "title": "When",
                   "description": "The wanneer."
@@ -19886,39 +19886,39 @@
             "nullable": true,
             "title": "Policy Indicators"
           },
-          "boekjaar": {
+          "financialYear": {
             "type": "integer",
             "description": "Fiscal year of this programma version.",
             "example": 2026,
             "title": "Fiscal Year"
           },
-          "versie": {
+          "version": {
             "type": "string",
             "enum": [
-              "begroting",
-              "jaarrekening",
+              "budget",
+              "annualAccounts",
               "burap-1",
               "burap-2",
               "marap",
-              "tussenrapportage"
+              "interimReport"
             ],
             "description": "Document version this programma belongs to.",
-            "default": "begroting",
+            "default": "budget",
             "title": "Version"
           },
-          "stelselwijziging": {
+          "accountingPolicyChange": {
             "type": "boolean",
             "default": false,
             "description": "Marks recomputed comparative figures after a taakveld catalogue change per REQ-BBV-008.",
             "title": "Accounting Policy Change"
           },
-          "raadsbesluitNummer": {
+          "councilResolutionNumber": {
             "type": "string",
             "description": "Raadsbesluit reference motivating a non-sluitende publicatie override per REQ-BBV-003.",
             "nullable": true,
             "title": "Council Resolution Number"
           },
-          "raadsbesluitDatum": {
+          "councilResolutionDate": {
             "type": "string",
             "format": "date",
             "description": "Date of the override raadsbesluit.",
@@ -19995,18 +19995,18 @@
         "type": "object",
         "x-schema-org": "schema:MonetaryAmount",
         "required": [
-          "naam",
-          "soort",
+          "name",
+          "kind",
           "administrationId"
         ],
         "properties": {
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Reserve name, unique per administration.",
             "example": "Onderwijshuisvesting",
             "title": "Name"
           },
-          "soort": {
+          "kind": {
             "type": "string",
             "enum": [
               "algemeen",
@@ -20016,7 +20016,7 @@
             "example": "bestemming",
             "title": "Type"
           },
-          "doel": {
+          "purpose": {
             "type": "string",
             "description": "Purpose of the reserve; required for bestemmingsreserves.",
             "nullable": true,
@@ -20028,7 +20028,7 @@
             "example": "gem-lemelerveld",
             "title": "Administration ID"
           },
-          "raadsbesluitInstelling": {
+          "councilResolutionInstitution": {
             "type": "string",
             "description": "Raadsbesluit reference establishing the reserve.",
             "nullable": true,
@@ -20040,20 +20040,20 @@
             "nullable": true,
             "title": "Cap (Cents)"
           },
-          "bodemCents": {
+          "floorCents": {
             "type": "integer",
             "description": "Lower bound (bodem) in integer eurocents.",
             "nullable": true,
             "title": "Floor Value (Cents)"
           },
-          "looptijdEinde": {
+          "termEnd": {
             "type": "string",
             "format": "date",
             "description": "End date of the bestemmingsreserve.",
             "nullable": true,
             "title": "Term End"
           },
-          "programma": {
+          "programme": {
             "type": "string",
             "description": "FK to Programma (nummer) this reserve is linked to.",
             "nullable": true,
@@ -20065,13 +20065,13 @@
             "description": "Whether rente is toegerekend to this reserve.",
             "title": "Interest Allocation"
           },
-          "saldoBeginJaarCents": {
+          "balanceYearStartCents": {
             "type": "integer",
             "default": 0,
             "description": "Saldo at the start of the boekjaar in integer eurocents.",
             "title": "Balance Start of Year (Cents)"
           },
-          "saldoEindJaarCents": {
+          "balanceYearEndCents": {
             "type": "integer",
             "description": "Saldo at the end of the boekjaar in integer eurocents.",
             "nullable": true,
@@ -20109,8 +20109,8 @@
         "x-schema-org": "schema:DefinedTerm",
         "required": [
           "code",
-          "naam",
-          "hoofdfunctie",
+          "name",
+          "mainFunction",
           "overheidslaag"
         ],
         "properties": {
@@ -20120,13 +20120,13 @@
             "example": "7.5",
             "title": "Code"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Human-readable taakveld name.",
             "example": "Begraafplaatsen en crematoria",
             "title": "Name"
           },
-          "hoofdfunctie": {
+          "mainFunction": {
             "type": "integer",
             "minimum": 0,
             "maximum": 8,
@@ -20134,14 +20134,14 @@
             "example": 7,
             "title": "Main Function"
           },
-          "hoofdfunctieNaam": {
+          "mainFunctionName": {
             "type": "string",
             "description": "Name of the hoofdfunctie.",
             "nullable": true,
             "example": "Volksgezondheid en milieu",
             "title": "Main Function Name"
           },
-          "omschrijvingIv3": {
+          "descriptionIv3": {
             "type": "string",
             "description": "Official Iv3-informatievoorschrift description of the taakveld scope.",
             "nullable": true,
@@ -20150,15 +20150,15 @@
           "overheidslaag": {
             "type": "string",
             "enum": [
-              "gemeente",
-              "provincie",
-              "waterschap"
+              "municipality",
+              "province",
+              "waterAuthority"
             ],
             "description": "Which overheidslaag this taakveld catalogue applies to.",
-            "example": "gemeente",
+            "example": "municipality",
             "title": "Government Tier"
           },
-          "verplichteEconomischeCategorieen": {
+          "mandatoryEconomicCategories": {
             "type": "array",
             "items": {
               "type": "string"
@@ -20170,7 +20170,7 @@
             ],
             "title": "Mandatory Economic Categories"
           },
-          "geldigVanaf": {
+          "validFrom": {
             "type": "string",
             "format": "date",
             "description": "First date this taakveld version is effective (Iv3 catalogue versioning per design Risk 1).",
@@ -20178,7 +20178,7 @@
             "example": "2025-01-01",
             "title": "Valid From"
           },
-          "geldigTot": {
+          "validTo": {
             "type": "string",
             "format": "date",
             "description": "Last date this taakveld version is effective; null = open-ended.",
@@ -20216,18 +20216,18 @@
         "type": "object",
         "x-schema-org": "schema:MonetaryAmount",
         "required": [
-          "naam",
-          "bbvArtikel44Categorie",
+          "name",
+          "bbvArticle44Category",
           "administrationId"
         ],
         "properties": {
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Voorziening name, unique per administration.",
             "example": "Groot Onderhoud Wegen",
             "title": "Name"
           },
-          "bbvArtikel44Categorie": {
+          "bbvArticle44Category": {
             "type": "string",
             "enum": [
               "a",
@@ -20245,52 +20245,52 @@
             "example": "gem-lemelerveld",
             "title": "Administration ID"
           },
-          "onderbouwingDocument": {
+          "substantiationDocument": {
             "type": "string",
             "description": "Docudesk URI of the onderbouwing (e.g. beheerplan).",
             "nullable": true,
             "title": "Justification Document"
           },
-          "actualisatieFrequentieJaar": {
+          "updateFrequencyYears": {
             "type": "integer",
             "description": "Actualisation frequency in years.",
             "nullable": true,
             "example": 4,
             "title": "Update Frequency (Years)"
           },
-          "volgendeActualisatie": {
+          "nextUpdate": {
             "type": "string",
             "format": "date",
             "description": "Date of the next required actualisation.",
             "nullable": true,
             "title": "Next Update"
           },
-          "taakveld": {
+          "taskField": {
             "type": "string",
             "description": "FK to Taakveld.code — the gekoppelde exploitatie-taakveld for dotatie/vrijval per REQ-BBV-004.",
             "nullable": true,
             "example": "2.1",
             "title": "Task Field"
           },
-          "saldoBeginJaarCents": {
+          "balanceYearStartCents": {
             "type": "integer",
             "default": 0,
             "description": "Saldo at the start of the boekjaar in integer eurocents.",
             "title": "Balance Start of Year (Cents)"
           },
-          "dotatiesJaarCents": {
+          "additionsYearCents": {
             "type": "integer",
             "default": 0,
             "description": "Total dotaties in the boekjaar in integer eurocents.",
             "title": "Additions for Year (Cents)"
           },
-          "vrijvallenJaarCents": {
+          "releasesYearCents": {
             "type": "integer",
             "default": 0,
             "description": "Total vrijvallen in the boekjaar in integer eurocents.",
             "title": "Releases for Year (Cents)"
           },
-          "saldoEindJaarCents": {
+          "balanceYearEndCents": {
             "type": "integer",
             "description": "Saldo at the end of the boekjaar in integer eurocents.",
             "nullable": true,
@@ -20328,9 +20328,9 @@
         "type": "object",
         "required": [
           "orderId",
-          "ondernemingId",
+          "enterpriseId",
           "administrationId",
-          "klantId",
+          "customerId",
           "orderDate",
           "termStart",
           "status",
@@ -20343,7 +20343,7 @@
             "example": "ORDER-2026-0001",
             "title": "Order ID"
           },
-          "ondernemingId": {
+          "enterpriseId": {
             "type": "string",
             "description": "FK to the selling Corporation.",
             "example": "00000000-0000-0000-0000-000000000000",
@@ -20355,7 +20355,7 @@
             "example": "00000000-0000-0000-0000-000000000000",
             "title": "Administration ID"
           },
-          "klantId": {
+          "customerId": {
             "type": "string",
             "description": "FK to the customer.",
             "example": "KLANT-ACME-CONSULTING",
@@ -20526,24 +20526,24 @@
             "example": 12000.0,
             "title": "Amount"
           },
-          "maandWaarde": {
+          "monthValue": {
             "type": "number",
             "description": "Monthly-normalized recurring amount; derived — do not set directly. 0 for one-off lines.",
             "example": 1000.0,
             "title": "Monthly Value"
           },
-          "frequentie": {
+          "frequency": {
             "type": "string",
             "nullable": true,
-            "description": "Recurrence frequency. Required for RECURRING lines; null for ONE_OFF. Normalized to a monthly rate by the engine (MAANDELIJKS=1, KWARTAALS=1/3, JAARLIJKS=1/12, WEKELIJKS=52/12, TWEEWEKELIJKS=26/12).",
+            "description": "Recurrence frequency. Required for RECURRING lines; null for ONE_OFF. Normalized to a monthly rate by the engine (MONTHLY=1, QUARTERLY=1/3, ANNUALLY=1/12, WEEKLY=52/12, FORTNIGHTLY=26/12).",
             "enum": [
-              "MAANDELIJKS",
-              "KWARTAALS",
-              "JAARLIJKS",
-              "WEKELIJKS",
-              "TWEEWEKELIJKS"
+              "MONTHLY",
+              "QUARTERLY",
+              "ANNUALLY",
+              "WEEKLY",
+              "FORTNIGHTLY"
             ],
-            "example": "JAARLIJKS",
+            "example": "ANNUALLY",
             "title": "Frequency"
           },
           "recognitionMethod": {
@@ -20588,10 +20588,10 @@
           }
         },
         "x-openregister-calculations": {
-          "maandWaarde": {
+          "monthValue": {
             "description": "Monthly-normalized recurring amount: amount × frequencyFactor(frequentie), 0 for ONE_OFF lines (one-offs contribute nothing to recurring run-rate). Factors: MAANDELIJKS=1, KWARTAALS=1/3, JAARLIJKS=1/12, WEKELIJKS=52/12, TWEEWEKELIJKS=26/12. Derived — do not set directly. Pipelinq SUMs this (filtered nature=RECURRING) for its CRM run-rate tile. Expressed in OpenRegister's JSON-AST calc grammar (CalculationEvaluator) with materialise:true — the on-save listener skips calcs without it.",
             "materialise": true,
-            "targetField": "maandWaarde",
+            "targetField": "monthValue",
             "expression": {
               "if": [
                 {
@@ -20612,7 +20612,7 @@
                     {
                       "eq": [
                         {
-                          "prop": "frequentie"
+                          "prop": "frequency"
                         },
                         {
                           "lit": "MAANDELIJKS"
@@ -20627,7 +20627,7 @@
                         {
                           "eq": [
                             {
-                              "prop": "frequentie"
+                              "prop": "frequency"
                             },
                             {
                               "lit": "KWARTAALS"
@@ -20649,7 +20649,7 @@
                             {
                               "eq": [
                                 {
-                                  "prop": "frequentie"
+                                  "prop": "frequency"
                                 },
                                 {
                                   "lit": "JAARLIJKS"
@@ -20671,7 +20671,7 @@
                                 {
                                   "eq": [
                                     {
-                                      "prop": "frequentie"
+                                      "prop": "frequency"
                                     },
                                     {
                                       "lit": "WEKELIJKS"
@@ -20700,7 +20700,7 @@
                                     {
                                       "eq": [
                                         {
-                                          "prop": "frequentie"
+                                          "prop": "frequency"
                                         },
                                         {
                                           "lit": "TWEEWEKELIJKS"
@@ -21032,7 +21032,7 @@
             }
           ],
           "subject": {
-            "nl": "AP-factuur goedgekeurd: {{invoiceNumber}}",
+            "nl": "AP-factuur approved: {{invoiceNumber}}",
             "en": "AP invoice approved: {{invoiceNumber}}"
           }
         }
@@ -21609,20 +21609,20 @@
       "x-schema-org": "schema:MonetaryAmount",
       "type": "object",
       "required": [
-        "subsidieId",
-        "subsidieRegeling",
-        "kostencategorie",
+        "subsidyId",
+        "subsidyScheme",
+        "expenseCategory",
         "amount",
         "periodId",
         "administrationId"
       ],
       "properties": {
-        "subsidieId": {
+        "subsidyId": {
           "type": "string",
           "description": "FK to parent Subsidie.id.",
           "example": "subsidie-rdsubsidie-2026-001"
         },
-        "subsidieRegeling": {
+        "subsidyScheme": {
           "type": "string",
           "enum": [
             "mit",
@@ -21635,7 +21635,7 @@
           "description": "Denormalized regeling from parent Subsidie. Drives if/then kostencategorie constraint enforcement at save time (REQ-RDS-002).",
           "example": "eu-horizon"
         },
-        "kostencategorie": {
+        "expenseCategory": {
           "type": "string",
           "enum": [
             "personnel",
@@ -21676,7 +21676,7 @@
           "description": "docudesk URI of supporting documentation. Per ADR-022.",
           "example": "docudesk://shillinq/kostenpost-2026-001.pdf"
         },
-        "soUrenStaatUri": {
+        "soHoursStatementUri": {
           "type": "string",
           "nullable": true,
           "description": "docudesk URI of the S&O-uren-staat for personnel kostenposten in EU-Horizon subsidies. Referenced in Horizon audit-pack per REQ-RDS-004.",
@@ -22793,25 +22793,25 @@
       "x-schema-org": "schema:Report",
       "type": "object",
       "required": [
-        "subsidieId",
-        "regelingCode",
+        "subsidyId",
+        "schemeCode",
         "indicatorCode",
-        "indicatorOmschrijving",
-        "indicatorWaarde",
-        "peilDatum",
-        "controleprotocol",
+        "indicatorDescription",
+        "indicatorValue",
+        "levelDate",
+        "auditProtocol",
         "fiscalYear",
         "administrationId"
       ],
       "properties": {
-        "subsidieId": {
+        "subsidyId": {
           "type": "string",
           "format": "uuid",
           "$ref": "Subsidie",
           "description": "Reference to the parent Subsidie record of subtype specifieke-uitkering. Per ADR-022, no parallel SiSa subsidie register — the indicator attaches to the existing T3 subsidie register.",
           "example": "subsidie-uuid-d8-2026"
         },
-        "regelingCode": {
+        "schemeCode": {
           "type": "string",
           "description": "BZK regeling identifier from the controleprotocol (e.g. D8, E3, C17). Used as grouping key in the SiSa-bijlage aggregation.",
           "example": "D8"
@@ -22821,12 +22821,12 @@
           "description": "Indicator code per controleprotocol (e.g. D8.01, D8.02). Unique within a regeling.",
           "example": "D8.01"
         },
-        "indicatorOmschrijving": {
+        "indicatorDescription": {
           "type": "string",
           "description": "Human-readable description of the indicator as stated in the controleprotocol.",
           "example": "Aantal personen met een bijstandsuitkering per 31 december van het verantwoordingsjaar"
         },
-        "indicatorWaarde": {
+        "indicatorValue": {
           "description": "Measured or reported value of the indicator for the fiscal year. May be a number (count, amount, percentage) or string depending on indicatorType.",
           "oneOf": [
             {
@@ -22838,19 +22838,19 @@
           ],
           "example": 1247
         },
-        "indicatorEenheid": {
+        "indicatorUnit": {
           "type": "string",
           "description": "Unit of the indicator value (e.g. personen, euro, %, ja/nee). Nullable when not applicable.",
           "nullable": true,
           "example": "personen"
         },
-        "peilDatum": {
+        "levelDate": {
           "type": "string",
           "format": "date",
           "description": "Reference date (peildatum) for the indicator measurement, typically fiscal-year-end.",
           "example": "2026-12-31"
         },
-        "controleprotocol": {
+        "auditProtocol": {
           "type": "string",
           "description": "Version of the BZK SiSa controleprotocol this indicator was filed under (e.g. 2026). Version-pins the reporting year.",
           "example": "2026"
@@ -22877,7 +22877,7 @@
           "description": "BZK submission status for this indicator's regeling in the annual bijlage.",
           "example": "submitted"
         },
-        "bijlageDocumentUri": {
+        "attachmentDocumentUri": {
           "type": "string",
           "description": "docudesk URI of the generated SiSa-bijlage document that contains this indicator. Set after bijlage generation.",
           "nullable": true,
@@ -22894,7 +22894,7 @@
         "sisaBijlagePerRegelingPerYear": {
           "description": "Annual SiSa-bijlage aggregation grouping SisaRegelingIndicator records by (regelingCode, controleprotocol) for the closed fiscal year. Missing verplicht: true indicatoren declared in the controleprotocol seed surface as warnings in the audit preview per REQ-SISA-003.",
           "groupBy": [
-            "regelingCode",
+            "schemeCode",
             "controleprotocol",
             "fiscalYear"
           ],
@@ -22941,7 +22941,7 @@
             "description": "Immutable audit event written on every BZK SiSa submission attempt per REQ-SISA-005. Linked to the parent jaarrekening via the audit-trail hash chain.",
             "fields": [
               "administrationId",
-              "regelingCode",
+              "schemeCode",
               "controleprotocol",
               "fiscalYear",
               "bijlageDocumentUri",
@@ -22955,7 +22955,7 @@
               "bzkResponseStatus",
               "documentUri"
             ],
-            "hashChainLink": "jaarrekening"
+            "hashChainLink": "annualAccounts"
           }
         }
       }
@@ -22973,37 +22973,37 @@
       "x-schema-org": "schema:Project",
       "type": "object",
       "required": [
-        "projectNaam",
-        "rvoProjectNummer",
-        "looptijdStart",
-        "looptijdEind",
+        "projectName",
+        "rvoProjectNumber",
+        "termStart",
+        "termEnd",
         "status",
         "administrationId"
       ],
       "properties": {
-        "projectNaam": {
+        "projectName": {
           "type": "string",
           "description": "Naam van het S&O-project zoals opgegeven bij de RvO-aanvraag.",
           "example": "Ontwikkeling van een AI-gestuurde planningsmodule"
         },
-        "rvoProjectNummer": {
+        "rvoProjectNumber": {
           "type": "string",
           "description": "Projectnummer toegekend door RvO bij de WBSO-beschikking.",
           "example": "2026/0001"
         },
-        "sEnOCertificaatNummer": {
+        "rndCertificateNumber": {
           "type": "string",
           "nullable": true,
           "description": "S&O-certificaatnummer afgegeven door RvO.",
           "example": "CERT-2026-0042"
         },
-        "looptijdStart": {
+        "termStart": {
           "type": "string",
           "format": "date",
           "description": "Startdatum van de S&O-projectlooptijd.",
           "example": "2026-01-01"
         },
-        "looptijdEind": {
+        "termEnd": {
           "type": "string",
           "format": "date",
           "description": "Einddatum van de S&O-projectlooptijd.",
@@ -23062,15 +23062,15 @@
       "icon": "ClockCheckOutline",
       "version": "0.1.0",
       "title": "S&O-uren-staat",
-      "description": "Per-medewerker per-week per-project S&O-urenstaat voor WBSO-administratie. Lifecycle draft → goedgekeurd → afgesloten met approval-workflow op de goedgekeurd-transitie per ADR-022. RBAC beperkt lezen tot bookkeeper / payroll-officer / auditor. Per REQ-WBSO-002.",
+      "description": "Per-medewerker per-week per-project S&O-urenstaat voor WBSO-administratie. Lifecycle draft → approved → afgesloten met approval-workflow op de approved-transitie per ADR-022. RBAC beperkt lezen tot bookkeeper / payroll-officer / auditor. Per REQ-WBSO-002.",
       "x-schema-org": "schema:Action",
       "type": "object",
       "required": [
         "soProjectId",
-        "medewerkerId",
+        "employeeId",
         "weekISO",
-        "aantalUren",
-        "taakOmschrijving",
+        "countHours",
+        "taskDescription",
         "state",
         "administrationId"
       ],
@@ -23080,7 +23080,7 @@
           "description": "FK to SoProject.id — het S&O-project waarvoor de uren zijn gemaakt.",
           "example": "sop-2026-001"
         },
-        "medewerkerId": {
+        "employeeId": {
           "type": "string",
           "description": "Referentie naar een Nextcloud-gebruiker (uid) of een Detachering-record-id (FK naar het sibling add-shillinq-detachering-payroll-administratie capability).",
           "example": "user-jan.de.vries"
@@ -23091,14 +23091,14 @@
           "description": "ISO-8601 weekaanduiding waarop de S&O-uren zijn gemaakt.",
           "example": "2026-W14"
         },
-        "aantalUren": {
+        "countHours": {
           "type": "number",
           "minimum": 0,
           "multipleOf": 0.25,
           "description": "Aantal S&O-uren in de gegeven week (minimaal 0, kwartieren — veelvoud van 0.25).",
           "example": 32.5
         },
-        "taakOmschrijving": {
+        "taskDescription": {
           "type": "string",
           "description": "Omschrijving van de uitgevoerde S&O-werkzaamheden.",
           "example": "Ontwerp en implementatie van het AI-planningsalgoritme"
@@ -23107,13 +23107,13 @@
           "type": "string",
           "enum": [
             "draft",
-            "goedgekeurd",
-            "afgesloten"
+            "approved",
+            "closed"
           ],
           "description": "Status van de urenstaat in de goedkeurings-workflow.",
           "example": "draft"
         },
-        "sEnOUurloon": {
+        "soHourlyWage": {
           "type": "number",
           "minimum": 0,
           "nullable": true,
@@ -23130,14 +23130,14 @@
         "field": "state",
         "initial": "draft",
         "states": {
-          "draft": "Urenstaat in concept — nog niet goedgekeurd.",
-          "goedgekeurd": "Urenstaat goedgekeurd door projectleider — telt mee in mededeling-aggregaties.",
-          "afgesloten": "Urenstaat definitief afgesloten na kwartaalrapportage."
+          "draft": "Urenstaat in concept — nog niet approved.",
+          "approved": "Urenstaat approved door projectleider — telt mee in mededeling-aggregaties.",
+          "closed": "Urenstaat definitief afgesloten na kwartaalrapportage."
         },
         "transitions": {
           "goedkeuren": {
             "from": "draft",
-            "to": "goedgekeurd",
+            "to": "approved",
             "label": "Goedkeuren",
             "description": "Urenstaat goedkeuren — vereist approval-workflow per ADR-022.",
             "requires": {
@@ -23146,8 +23146,8 @@
             }
           },
           "afsluiten": {
-            "from": "goedgekeurd",
-            "to": "afgesloten",
+            "from": "approved",
+            "to": "closed",
             "label": "Afsluiten",
             "description": "Urenstaat definitief afsluiten na kwartaalrapportage."
           }
@@ -23159,7 +23159,7 @@
           "description": "Sommeert goedgekeurde S&O-uren per kwartaal per project voor de RvO-mededeling (REQ-WBSO-003). Alleen urenstaten met state ≠ draft worden meegeteld.",
           "groupBy": [
             "soProjectId",
-            "kwartaal"
+            "quarter"
           ],
           "filter": {
             "state": {
@@ -23167,13 +23167,13 @@
             }
           },
           "fields": {
-            "kwartaal": {
+            "quarter": {
               "expression": "YEAR(weekISO) + '-Q' + QUARTER(weekISO)",
               "description": "Kwartaal afgeleid van weekISO (bijv. 2026-Q1)."
             },
-            "totaalUren": {
+            "totalHours": {
               "operation": "sum",
-              "field": "aantalUren",
+              "field": "countHours",
               "label": "Totaal S&O-uren"
             },
             "aantalUrenstaatRegels": {
@@ -23186,7 +23186,7 @@
           "description": "Sommeert alle vier kwartaalmededelingen per jaar per project voor het RvO-jaarrapport (REQ-WBSO-004). De som van jaarrapport.totaalUren MOET gelijk zijn aan de som van de vier kwartaalmededelingen.",
           "groupBy": [
             "soProjectId",
-            "jaar"
+            "year"
           ],
           "filter": {
             "state": {
@@ -23194,13 +23194,13 @@
             }
           },
           "fields": {
-            "jaar": {
+            "year": {
               "expression": "YEAR(weekISO)",
               "description": "Jaar afgeleid van weekISO."
             },
-            "totaalUren": {
+            "totalHours": {
               "operation": "sum",
-              "field": "aantalUren",
+              "field": "countHours",
               "label": "Totaal S&O-uren per jaar"
             }
           }
@@ -23393,9 +23393,9 @@
         "slug": "sales-order-2026-0001"
       },
       "orderId": "ORDER-2026-0001",
-      "ondernemingId": "00000000-0000-0000-0000-000000000000",
+      "enterpriseId": "00000000-0000-0000-0000-000000000000",
       "administrationId": "00000000-0000-0000-0000-000000000000",
-      "klantId": "KLANT-ACME-CONSULTING",
+      "customerId": "KLANT-ACME-CONSULTING",
       "orderDate": "2026-01-01",
       "termStart": "2026-01-01",
       "termEnd": "2026-12-31",
@@ -23415,7 +23415,7 @@
       "nature": "RECURRING",
       "label": "SaaS subscription",
       "amount": 12000.0,
-      "frequentie": "JAARLIJKS",
+      "frequency": "ANNUALLY",
       "recognitionMethod": "OVER_TIME",
       "recognitionDate": null,
       "termStart": null,
@@ -23434,7 +23434,7 @@
       "nature": "ONE_OFF",
       "label": "Implementation fee",
       "amount": 5000.0,
-      "frequentie": null,
+      "frequency": null,
       "recognitionMethod": "POINT_IN_TIME",
       "recognitionDate": "2026-01-15",
       "termStart": null,
@@ -23453,7 +23453,7 @@
       "nature": "RECURRING",
       "label": "Monthly retainer",
       "amount": 1500.0,
-      "frequentie": "MAANDELIJKS",
+      "frequency": "MONTHLY",
       "recognitionMethod": "OVER_TIME",
       "recognitionDate": null,
       "termStart": null,
@@ -24735,7 +24735,7 @@
       "customerNumber": "C-2026-001",
       "name": "Demo Klant BV",
       "kvkNumber": "87654321",
-      "btwNumber": "NL876543210B01",
+      "vatNumber": "NL876543210B01",
       "paymentTermDays": 30,
       "defaultRevenueAccountNumber": "8000",
       "email": "facturen@democonsult.nl",

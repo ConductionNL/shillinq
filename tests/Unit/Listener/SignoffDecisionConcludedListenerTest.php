@@ -36,63 +36,55 @@ namespace OCA\Decidesk\Event;
 // can class_exists()-guard, instanceof-check, and read its getters without the
 // decidesk app installed. The real class lives in decidesk.
 if (class_exists(\OCA\Decidesk\Event\DecisionConcludedEvent::class, false) === false) {
-    class DecisionConcludedEvent extends \OCP\EventDispatcher\Event
-    {
-        public function __construct(
-            private readonly string $sourceApp='',
-            private readonly string $status='pending',
-            private readonly string $decisionId='',
-            private readonly ?string $subjectSchema=null,
-            private readonly ?string $subjectId=null,
-            private readonly string $externalReference='',
-            private readonly string $correlationId='',
-        ) {
-            parent::__construct();
-        }//end __construct()
+	class DecisionConcludedEvent extends \OCP\EventDispatcher\Event {
+		public function __construct(
+			private readonly string $sourceApp = '',
+			private readonly string $status = 'pending',
+			private readonly string $decisionId = '',
+			private readonly ?string $subjectSchema = null,
+			private readonly ?string $subjectId = null,
+			private readonly string $externalReference = '',
+			private readonly string $correlationId = '',
+		) {
+			parent::__construct();
+		}//end __construct()
 
-        public function getSourceApp(): string
-        {
-            return $this->sourceApp;
-        }//end getSourceApp()
+		public function getSourceApp(): string {
+			return $this->sourceApp;
+		}//end getSourceApp()
 
-        public function getStatus(): string
-        {
-            return $this->status;
-        }//end getStatus()
+		public function getStatus(): string {
+			return $this->status;
+		}//end getStatus()
 
-        public function getDecisionId(): string
-        {
-            return $this->decisionId;
-        }//end getDecisionId()
+		public function getDecisionId(): string {
+			return $this->decisionId;
+		}//end getDecisionId()
 
-        public function getSubjectSchema(): ?string
-        {
-            return $this->subjectSchema;
-        }//end getSubjectSchema()
+		public function getSubjectSchema(): ?string {
+			return $this->subjectSchema;
+		}//end getSubjectSchema()
 
-        public function getSubjectId(): ?string
-        {
-            return $this->subjectId;
-        }//end getSubjectId()
+		public function getSubjectId(): ?string {
+			return $this->subjectId;
+		}//end getSubjectId()
 
-        public function getExternalReference(): string
-        {
-            return $this->externalReference;
-        }//end getExternalReference()
+		public function getExternalReference(): string {
+			return $this->externalReference;
+		}//end getExternalReference()
 
-        public function getCorrelationId(): string
-        {
-            return $this->correlationId;
-        }//end getCorrelationId()
-    }//end class
+		public function getCorrelationId(): string {
+			return $this->correlationId;
+		}//end getCorrelationId()
+	}//end class
 }//end if
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\Decidesk\Event\DecisionConcludedEvent;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
-use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -103,229 +95,214 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class SignoffDecisionConcludedListenerTest extends TestCase
-{
+final class SignoffDecisionConcludedListenerTest extends TestCase {
 
-    /**
-     * Recording fake ObjectService: captures find() lookups and updateObject()
-     * writes, and returns a configured object for the matching id.
-     *
-     * @var object
-     */
-    private object $objectService;
+	/**
+	 * Recording fake ObjectService: captures find() lookups and updateObject()
+	 * writes, and returns a configured object for the matching id.
+	 *
+	 * @var object
+	 */
+	private object $objectService;
 
-    /**
-     * Build the SUT wired to the recording ObjectService.
-     *
-     * @param array<string,mixed>|null $found The object find() returns, or null.
-     *
-     * @return SignoffDecisionConcludedListener
-     */
-    private function makeListener(?array $found): SignoffDecisionConcludedListener
-    {
-        $this->objectService = new class($found) {
+	/**
+	 * Build the SUT wired to the recording ObjectService.
+	 *
+	 * @param array<string,mixed>|null $found The object find() returns, or null.
+	 *
+	 * @return SignoffDecisionConcludedListener
+	 */
+	private function makeListener(?array $found): SignoffDecisionConcludedListener {
+		$this->objectService = new class($found) {
 
-            /**
-             * @var array<string,mixed>|null
-             */
-            private ?array $found;
+			/**
+			 * @var array<string,mixed>|null
+			 */
+			private ?array $found;
 
-            /**
-             * @var array<int,array<string,mixed>>
-             */
-            public array $updates = [];
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			public array $updates = [];
 
-            /**
-             * @param array<string,mixed>|null $found
-             */
-            public function __construct(?array $found)
-            {
-                $this->found = $found;
-            }//end __construct()
+			/**
+			 * @param array<string,mixed>|null $found
+			 */
+			public function __construct(?array $found) {
+				$this->found = $found;
+			}//end __construct()
 
-            public function setRegister(string $r): self
-            {
-                return $this;
-            }//end setRegister()
+			public function setRegister(string $r): self {
+				return $this;
+			}//end setRegister()
 
-            public function setSchema(string $s): self
-            {
-                return $this;
-            }//end setSchema()
+			public function setSchema(string $s): self {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * @return array<string,mixed>|null
-             */
-            public function find(string $id): ?array
-            {
-                return $this->found;
-            }//end find()
+			/**
+			 * @return array<string,mixed>|null
+			 */
+			public function find(string $id): ?array {
+				return $this->found;
+			}//end find()
 
-            /**
-             * @param array<string,mixed> $updates
-             */
-            public function updateObject(string $id, array $updates): void
-            {
-                $this->updates[] = ['id' => $id] + $updates;
-            }//end updateObject()
-        };
+			/**
+			 * @param array<string,mixed> $updates
+			 */
+			public function updateObject(string $id, array $updates): void {
+				$this->updates[] = ['id' => $id] + $updates;
+			}//end updateObject()
+		};
 
-        $svc = $this->objectService;
+		$svc = $this->objectService;
 
-        $container = new class($svc) implements ContainerInterface {
+		$container = new class($svc) implements ContainerInterface {
 
-            private object $svc;
+			private object $svc;
 
-            public function __construct(object $svc)
-            {
-                $this->svc = $svc;
-            }//end __construct()
+			public function __construct(object $svc) {
+				$this->svc = $svc;
+			}//end __construct()
 
-            public function get(string $id): mixed
-            {
-                return $this->svc;
-            }//end get()
+			public function get(string $id): mixed {
+				return $this->svc;
+			}//end get()
 
-            public function has(string $id): bool
-            {
-                return true;
-            }//end has()
-        };
+			public function has(string $id): bool {
+				return true;
+			}//end has()
+		};
 
-        $settings = $this->createMock(SettingsService::class);
-        $settings->method('getRegisterSlug')->willReturn('shillinq');
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-        return new SignoffDecisionConcludedListener(
-            $container,
-            $settings,
-            new SignoffDecisionService($settings, $this->createMock(IEventDispatcher::class), new NullLogger()),
-            new NullLogger(),
-        );
+		return new SignoffDecisionConcludedListener(
+			$container,
+			$settings,
+			new SignoffDecisionService($settings, $this->createMock(IEventDispatcher::class), new NullLogger()),
+			new NullLogger(),
+		);
 
-    }//end makeListener()
+	}//end makeListener()
 
-    /**
-     * A non-shillinq source app is ignored (no persist).
-     *
-     * @return void
-     */
-    public function testForeignSourceAppIsIgnored(): void
-    {
-        $listener = $this->makeListener(['id' => 'acm-1', 'decisionOutcome' => 'pending']);
+	/**
+	 * A non-shillinq source app is ignored (no persist).
+	 *
+	 * @return void
+	 */
+	public function testForeignSourceAppIsIgnored(): void {
+		$listener = $this->makeListener(['id' => 'acm-1', 'decisionOutcome' => 'pending']);
 
-        $listener->handle(
-                new DecisionConcludedEvent(
-            sourceApp: 'decidesk',
-            status: 'approved',
-            decisionId: 'dec-1',
-            subjectSchema: 'ACMReport',
-            subjectId: 'acm-1',
-            externalReference: 'acm-1',
-        )
-                );
+		$listener->handle(
+			new DecisionConcludedEvent(
+				sourceApp: 'decidesk',
+				status: 'approved',
+				decisionId: 'dec-1',
+				subjectSchema: 'ACMReport',
+				subjectId: 'acm-1',
+				externalReference: 'acm-1',
+			)
+		);
 
-        $this->assertCount(0, $this->objectService->updates);
+		$this->assertCount(0, $this->objectService->updates);
 
-    }//end testForeignSourceAppIsIgnored()
+	}//end testForeignSourceAppIsIgnored()
 
-    /**
-     * An approved decision projects approved + fires the GL consequence gate.
-     *
-     * @return void
-     */
-    public function testApprovedProjectsOutcomeAndOpensGate(): void
-    {
-        $listener = $this->makeListener(['id' => 'acm-1', 'decisionOutcome' => 'pending']);
+	/**
+	 * An approved decision projects approved + fires the GL consequence gate.
+	 *
+	 * @return void
+	 */
+	public function testApprovedProjectsOutcomeAndOpensGate(): void {
+		$listener = $this->makeListener(['id' => 'acm-1', 'decisionOutcome' => 'pending']);
 
-        $listener->handle(
-                new DecisionConcludedEvent(
-            sourceApp: 'shillinq',
-            status: 'approved',
-            decisionId: 'dec-1',
-            subjectSchema: 'ACMReport',
-            subjectId: 'acm-1',
-            externalReference: 'acm-1',
-        )
-                );
+		$listener->handle(
+			new DecisionConcludedEvent(
+				sourceApp: 'shillinq',
+				status: 'approved',
+				decisionId: 'dec-1',
+				subjectSchema: 'ACMReport',
+				subjectId: 'acm-1',
+				externalReference: 'acm-1',
+			)
+		);
 
-        $this->assertCount(1, $this->objectService->updates);
-        $this->assertSame('approved', $this->objectService->updates[0]['decisionOutcome']);
-        $this->assertSame('dec-1', $this->objectService->updates[0]['decisionRef']);
-        $this->assertTrue($this->objectService->updates[0]['signoffGateOpen']);
+		$this->assertCount(1, $this->objectService->updates);
+		$this->assertSame('approved', $this->objectService->updates[0]['decisionOutcome']);
+		$this->assertSame('dec-1', $this->objectService->updates[0]['decisionRef']);
+		$this->assertTrue($this->objectService->updates[0]['signoffGateOpen']);
 
-    }//end testApprovedProjectsOutcomeAndOpensGate()
+	}//end testApprovedProjectsOutcomeAndOpensGate()
 
-    /**
-     * A rejected decision projects rejected without opening the gate.
-     *
-     * @return void
-     */
-    public function testRejectedProjectsOutcomeWithoutGate(): void
-    {
-        $listener = $this->makeListener(['id' => 'av-1', 'decisionOutcome' => 'pending']);
+	/**
+	 * A rejected decision projects rejected without opening the gate.
+	 *
+	 * @return void
+	 */
+	public function testRejectedProjectsOutcomeWithoutGate(): void {
+		$listener = $this->makeListener(['id' => 'av-1', 'decisionOutcome' => 'pending']);
 
-        $listener->handle(
-                new DecisionConcludedEvent(
-            sourceApp: 'shillinq',
-            status: 'rejected',
-            decisionId: 'dec-2',
-            subjectSchema: 'ActuarialValuation',
-            subjectId: 'av-1',
-            externalReference: 'av-1',
-        )
-                );
+		$listener->handle(
+			new DecisionConcludedEvent(
+				sourceApp: 'shillinq',
+				status: 'rejected',
+				decisionId: 'dec-2',
+				subjectSchema: 'ActuarialValuation',
+				subjectId: 'av-1',
+				externalReference: 'av-1',
+			)
+		);
 
-        $this->assertCount(1, $this->objectService->updates);
-        $this->assertSame('rejected', $this->objectService->updates[0]['decisionOutcome']);
-        $this->assertArrayNotHasKey('signoffGateOpen', $this->objectService->updates[0]);
+		$this->assertCount(1, $this->objectService->updates);
+		$this->assertSame('rejected', $this->objectService->updates[0]['decisionOutcome']);
+		$this->assertArrayNotHasKey('signoffGateOpen', $this->objectService->updates[0]);
 
-    }//end testRejectedProjectsOutcomeWithoutGate()
+	}//end testRejectedProjectsOutcomeWithoutGate()
 
-    /**
-     * A non-terminal status (withdrawn) is ignored.
-     *
-     * @return void
-     */
-    public function testWithdrawnStatusIsIgnored(): void
-    {
-        $listener = $this->makeListener(['id' => 'ar-1', 'decisionOutcome' => 'pending']);
+	/**
+	 * A non-terminal status (withdrawn) is ignored.
+	 *
+	 * @return void
+	 */
+	public function testWithdrawnStatusIsIgnored(): void {
+		$listener = $this->makeListener(['id' => 'ar-1', 'decisionOutcome' => 'pending']);
 
-        $listener->handle(
-                new DecisionConcludedEvent(
-            sourceApp: 'shillinq',
-            status: 'withdrawn',
-            decisionId: 'dec-3',
-            subjectSchema: 'AnnualReport',
-            subjectId: 'ar-1',
-            externalReference: 'ar-1',
-        )
-                );
+		$listener->handle(
+			new DecisionConcludedEvent(
+				sourceApp: 'shillinq',
+				status: 'withdrawn',
+				decisionId: 'dec-3',
+				subjectSchema: 'AnnualReport',
+				subjectId: 'ar-1',
+				externalReference: 'ar-1',
+			)
+		);
 
-        $this->assertCount(0, $this->objectService->updates);
+		$this->assertCount(0, $this->objectService->updates);
 
-    }//end testWithdrawnStatusIsIgnored()
+	}//end testWithdrawnStatusIsIgnored()
 
-    /**
-     * A missing finance object is skipped without error (fail-soft).
-     *
-     * @return void
-     */
-    public function testMissingObjectIsSkippedFailSoft(): void
-    {
-        $listener = $this->makeListener(null);
+	/**
+	 * A missing finance object is skipped without error (fail-soft).
+	 *
+	 * @return void
+	 */
+	public function testMissingObjectIsSkippedFailSoft(): void {
+		$listener = $this->makeListener(null);
 
-        $listener->handle(
-                new DecisionConcludedEvent(
-            sourceApp: 'shillinq',
-            status: 'approved',
-            decisionId: 'dec-4',
-            subjectSchema: 'ACMReport',
-            subjectId: 'missing',
-            externalReference: 'missing',
-        )
-                );
+		$listener->handle(
+			new DecisionConcludedEvent(
+				sourceApp: 'shillinq',
+				status: 'approved',
+				decisionId: 'dec-4',
+				subjectSchema: 'ACMReport',
+				subjectId: 'missing',
+				externalReference: 'missing',
+			)
+		);
 
-        $this->assertCount(0, $this->objectService->updates);
+		$this->assertCount(0, $this->objectService->updates);
 
-    }//end testMissingObjectIsSkippedFailSoft()
+	}//end testMissingObjectIsSkippedFailSoft()
 }//end class

@@ -54,127 +54,125 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
  */
-class DocumentArchiveCron extends TimedJob
-{
+class DocumentArchiveCron extends TimedJob {
 
-    /**
-     * Daily interval in seconds (24h).
-     *
-     * @var int
-     */
-    private const INTERVAL_SECONDS = 86400;
+	/**
+	 * Daily interval in seconds (24h).
+	 *
+	 * @var int
+	 */
+	private const INTERVAL_SECONDS = 86400;
 
-    /**
-     * Default archival reason captured against the job-driven transitions.
-     *
-     * @var string
-     */
-    private const SYSTEM_REASON = 'Automatic archival after 7-year Archiefwet retention boundary.';
+	/**
+	 * Default archival reason captured against the job-driven transitions.
+	 *
+	 * @var string
+	 */
+	private const SYSTEM_REASON = 'Automatic archival after 7-year Archiefwet retention boundary.';
 
-    /**
-     * Constructor.
-     *
-     * @param ITimeFactory        $time      Time factory.
-     * @param SettingsService     $settings  Settings (register slug + OR availability).
-     * @param WbsoDocumentService $documents Document archival service.
-     * @param ContainerInterface  $container DI container (OR ObjectService).
-     * @param LoggerInterface     $logger    Logger.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly SettingsService $settings,
-        private readonly WbsoDocumentService $documents,
-        private readonly ContainerInterface $container,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: self::INTERVAL_SECONDS);
-        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
-        $this->setAllowParallelRuns(allow: false);
+	/**
+	 * Constructor.
+	 *
+	 * @param ITimeFactory $time Time factory.
+	 * @param SettingsService $settings Settings (register slug + OR availability).
+	 * @param WbsoDocumentService $documents Document archival service.
+	 * @param ContainerInterface $container DI container (OR ObjectService).
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly SettingsService $settings,
+		private readonly WbsoDocumentService $documents,
+		private readonly ContainerInterface $container,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: self::INTERVAL_SECONDS);
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+		$this->setAllowParallelRuns(allow: false);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Sweep filed documents and archive ones past the retention boundary.
-     *
-     * @param mixed $argument Unused job argument.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
-     *     TimedJob::run()'s signature; this job takes no argument.
-     */
-    protected function run($argument): void
-    {
-        if ($this->settings->isOpenRegisterAvailable() === false) {
-            $this->logger->info('DocumentArchiveCron: OpenRegister not available, skipping.');
-            return;
-        }
+	/**
+	 * Sweep filed documents and archive ones past the retention boundary.
+	 *
+	 * @param mixed $argument Unused job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+	 *     TimedJob::run()'s signature; this job takes no argument.
+	 */
+	protected function run($argument): void {
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			$this->logger->info('DocumentArchiveCron: OpenRegister not available, skipping.');
+			return;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $registerSlug  = $this->settings->getRegisterSlug();
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$registerSlug = $this->settings->getRegisterSlug();
 
-            $filed = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('Document')
-                ->findAll(
-                        [
-                            'filters' => ['status' => 'filed'],
-                            'limit'   => 5000,
-                        ]
-                        );
+			$filed = $objectService
+				->setRegister($registerSlug)
+				->setSchema('Document')
+				->findAll(
+					[
+						'filters' => ['status' => 'filed'],
+						'limit' => 5000,
+					]
+				);
 
-            $archived = 0;
-            $skipped  = 0;
-            $failed   = 0;
-            foreach ($filed as $row) {
-                $documentId       = (string) ($row['id'] ?? ($row['documentNumber'] ?? ''));
-                $administrationId = (string) ($row['administrationId'] ?? '');
-                $filedAt          = (string) ($row['filedAt'] ?? ($row['documentDate'] ?? ''));
+			$archived = 0;
+			$skipped = 0;
+			$failed = 0;
+			foreach ($filed as $row) {
+				$documentId = (string)($row['id'] ?? ($row['documentNumber'] ?? ''));
+				$administrationId = (string)($row['administrationId'] ?? '');
+				$filedAt = (string)($row['filedAt'] ?? ($row['documentDate'] ?? ''));
 
-                if ($documentId === '' || $administrationId === '') {
-                    $skipped++;
-                    continue;
-                }
+				if ($documentId === '' || $administrationId === '') {
+					$skipped++;
+					continue;
+				}
 
-                if ($this->documents->isRetentionElapsed(filedAt: $filedAt) === false) {
-                    $skipped++;
-                    continue;
-                }
+				if ($this->documents->isRetentionElapsed(filedAt: $filedAt) === false) {
+					$skipped++;
+					continue;
+				}
 
-                try {
-                    $this->documents->archiveDocument(
-                        administrationId: $administrationId,
-                        documentId: $documentId,
-                        reason: self::SYSTEM_REASON,
-                        allowEarly: false,
-                    );
-                    $archived++;
-                } catch (Throwable $e) {
-                    $failed++;
-                    $this->logger->warning(
-                        'DocumentArchiveCron: failed to archive document '.$documentId,
-                        [
-                            'administrationId' => $administrationId,
-                            'exception'        => $e->getMessage(),
-                        ]
-                    );
-                }
-            }//end foreach
+				try {
+					$this->documents->archiveDocument(
+						administrationId: $administrationId,
+						documentId: $documentId,
+						reason: self::SYSTEM_REASON,
+						allowEarly: false,
+					);
+					$archived++;
+				} catch (Throwable $e) {
+					$failed++;
+					$this->logger->warning(
+						'DocumentArchiveCron: failed to archive document ' . $documentId,
+						[
+							'administrationId' => $administrationId,
+							'exception' => $e->getMessage(),
+						]
+					);
+				}
+			}//end foreach
 
-            $this->logger->info(
-                'DocumentArchiveCron: archived='.$archived.' skipped='.$skipped.' failed='.$failed
-                .' (sampled '.count($filed).' filed documents).'
-            );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'DocumentArchiveCron failed: '.$e->getMessage(),
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->logger->info(
+				'DocumentArchiveCron: archived=' . $archived . ' skipped=' . $skipped . ' failed=' . $failed
+				. ' (sampled ' . count($filed) . ' filed documents).'
+			);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'DocumentArchiveCron failed: ' . $e->getMessage(),
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end run()
+	}//end run()
 }//end class

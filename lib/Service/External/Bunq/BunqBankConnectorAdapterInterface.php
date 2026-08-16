@@ -78,49 +78,48 @@ namespace OCA\Shillinq\Service\External\Bunq;
  *
  * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
-interface BunqBankConnectorAdapterInterface
-{
-    /**
-     * Pull Bunq monetary-account transactions for a connection.
-     *
-     * @param string              $connectionReference Non-credential
-     *                                                 BankConnection id
-     *                                                 — maps to an
-     *                                                 openconnector
-     *                                                 Source row.
-     * @param array<string,mixed> $context             Optional context —
-     *                                                 sinceTransactionId,
-     *                                                 maxTransactions,
-     *                                                 administrationId,
-     *                                                 correlationId.
-     *
-     * @return BunqSyncResult The dispatch outcome (status +
-     *                        transaction count + native CAMT.053 URI).
-     */
-    public function pullTransactions(string $connectionReference, array $context=[]): BunqSyncResult;
+interface BunqBankConnectorAdapterInterface {
+	/**
+	 * Pull Bunq monetary-account transactions for a connection.
+	 *
+	 * @param string $connectionReference Non-credential
+	 *                                    BankConnection id
+	 *                                    — maps to an
+	 *                                    openconnector
+	 *                                    Source row.
+	 * @param array<string,mixed> $context Optional context —
+	 *                                     sinceTransactionId,
+	 *                                     maxTransactions,
+	 *                                     administrationId,
+	 *                                     correlationId.
+	 *
+	 * @return BunqSyncResult The dispatch outcome (status +
+	 *                        transaction count + native CAMT.053 URI).
+	 */
+	public function pullTransactions(string $connectionReference, array $context = []): BunqSyncResult;
 
-    /**
-     * Renew the SCA consent for a Bunq connection by handing off
-     * to the openconnector SCA endpoint.
-     *
-     * @param string              $connectionReference Non-credential
-     *                                                 BankConnection id.
-     * @param array<string,mixed> $context             Optional context —
-     *                                                 administrationId,
-     *                                                 redirectAfterScaUrl.
-     *
-     * @return BunqSyncResult The dispatch outcome — `scaUrl` extra
-     *                        carries the URL the operator should
-     *                        follow to complete SCA in the Bunq
-     *                        app / Bunq web UI.
-     */
-    public function renewConsent(string $connectionReference, array $context=[]): BunqSyncResult;
+	/**
+	 * Renew the SCA consent for a Bunq connection by handing off
+	 * to the openconnector SCA endpoint.
+	 *
+	 * @param string $connectionReference Non-credential
+	 *                                    BankConnection id.
+	 * @param array<string,mixed> $context Optional context —
+	 *                                     administrationId,
+	 *                                     redirectAfterScaUrl.
+	 *
+	 * @return BunqSyncResult The dispatch outcome — `scaUrl` extra
+	 *                        carries the URL the operator should
+	 *                        follow to complete SCA in the Bunq
+	 *                        app / Bunq web UI.
+	 */
+	public function renewConsent(string $connectionReference, array $context = []): BunqSyncResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * Bunq.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * Bunq.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

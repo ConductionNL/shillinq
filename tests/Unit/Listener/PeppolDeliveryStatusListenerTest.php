@@ -39,307 +39,296 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class PeppolDeliveryStatusListenerTest extends TestCase
-{
-    /**
-     * Per-notification mock state-bag (spl_object_id => stdClass).
-     *
-     * @var array<int,object>
-     */
-    private array $notificationState = [];
+final class PeppolDeliveryStatusListenerTest extends TestCase {
+	/**
+	 * Per-notification mock state-bag (spl_object_id => stdClass).
+	 *
+	 * @var array<int,object>
+	 */
+	private array $notificationState = [];
 
-    /**
-     * REQ-AR-011 scenario: sent -> delivered advances the sub-lifecycle and
-     * persists the event detail.
-     *
-     * @return void
-     */
-    public function testSentToDeliveredAdvancesAndPersistsDetail(): void
-    {
-        $saved = [];
-        $data  = [
-            'ARInvoice' => [
-                [
-                    'id'               => 'invoice-1',
-                    'invoiceNumber'    => '2026-0051',
-                    'administrationId' => 'adm-1',
-                    'deliveryStatus'   => 'sent',
-                    'transmissionId'   => 'urn:uuid:old',
-                ],
-            ],
-        ];
+	/**
+	 * REQ-AR-011 scenario: sent -> delivered advances the sub-lifecycle and
+	 * persists the event detail.
+	 *
+	 * @return void
+	 */
+	public function testSentToDeliveredAdvancesAndPersistsDetail(): void {
+		$saved = [];
+		$data = [
+			'ARInvoice' => [
+				[
+					'id' => 'invoice-1',
+					'invoiceNumber' => '2026-0051',
+					'administrationId' => 'adm-1',
+					'deliveryStatus' => 'sent',
+					'transmissionId' => 'urn:uuid:old',
+				],
+			],
+		];
 
-        $listener = $this->buildListener(data: $data, saved: $saved, notifications: $notifications);
+		$listener = $this->buildListener(data: $data, saved: $saved, notifications: $notifications);
 
-        $listener->handle(
-            new GenericEvent(
-                null,
-                [
-                    'objectUri'      => 'openregister://shillinq/ARInvoice/invoice-1',
-                    'transmissionId' => 'urn:uuid:old',
-                    'status'         => 'delivered',
-                    'timestamp'      => '2026-06-20T10:00:00+00:00',
-                    'detail'         => 'Delivered to recipient AP',
-                ]
-            )
-        );
+		$listener->handle(
+			new GenericEvent(
+				null,
+				[
+					'objectUri' => 'openregister://shillinq/ARInvoice/invoice-1',
+					'transmissionId' => 'urn:uuid:old',
+					'status' => 'delivered',
+					'timestamp' => '2026-06-20T10:00:00+00:00',
+					'detail' => 'Delivered to recipient AP',
+				]
+			)
+		);
 
-        $arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
-        self::assertCount(1, $arSaves);
-        self::assertSame('delivered', $arSaves[0]['object']['deliveryStatus']);
-        self::assertSame('Delivered to recipient AP', $arSaves[0]['object']['deliveryDetail']);
+		$arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
+		self::assertCount(1, $arSaves);
+		self::assertSame('delivered', $arSaves[0]['object']['deliveryStatus']);
+		self::assertSame('Delivered to recipient AP', $arSaves[0]['object']['deliveryDetail']);
 
-    }//end testSentToDeliveredAdvancesAndPersistsDetail()
+	}//end testSentToDeliveredAdvancesAndPersistsDetail()
 
-    /**
-     * REQ-AR-011 / REQ-EINV-005 scenario: an in-flight invoice rejected —
-     * deliveryStatus -> rejected, detail persisted, ar-controller notified.
-     *
-     * @return void
-     */
-    public function testInFlightRejectedNotifiesFinanceOperators(): void
-    {
-        $saved = [];
-        $data  = [
-            'ARInvoice'                => [
-                [
-                    'id'               => 'invoice-1',
-                    'invoiceNumber'    => '2026-0060',
-                    'administrationId' => 'adm-1',
-                    'deliveryStatus'   => 'queued',
-                ],
-            ],
-            'AdministrationMembership' => [
-                ['administrationId' => 'adm-1', 'role' => 'ar-controller', 'userId' => 'controller-1'],
-                ['administrationId' => 'adm-1', 'role' => 'inkoper', 'userId' => 'buyer-1'],
-            ],
-        ];
+	/**
+	 * REQ-AR-011 / REQ-EINV-005 scenario: an in-flight invoice rejected —
+	 * deliveryStatus -> rejected, detail persisted, ar-controller notified.
+	 *
+	 * @return void
+	 */
+	public function testInFlightRejectedNotifiesFinanceOperators(): void {
+		$saved = [];
+		$data = [
+			'ARInvoice' => [
+				[
+					'id' => 'invoice-1',
+					'invoiceNumber' => '2026-0060',
+					'administrationId' => 'adm-1',
+					'deliveryStatus' => 'queued',
+				],
+			],
+			'AdministrationMembership' => [
+				['administrationId' => 'adm-1', 'role' => 'ar-controller', 'userId' => 'controller-1'],
+				['administrationId' => 'adm-1', 'role' => 'inkoper', 'userId' => 'buyer-1'],
+			],
+		];
 
-        $listener = $this->buildListener(data: $data, saved: $saved, notifications: $notifications);
+		$listener = $this->buildListener(data: $data, saved: $saved, notifications: $notifications);
 
-        $listener->handle(
-            new GenericEvent(
-                null,
-                [
-                    'objectUri' => 'openregister://shillinq/ARInvoice/invoice-1',
-                    'status'    => 'rejected',
-                    'detail'    => 'Unknown recipient participant',
-                ]
-            )
-        );
+		$listener->handle(
+			new GenericEvent(
+				null,
+				[
+					'objectUri' => 'openregister://shillinq/ARInvoice/invoice-1',
+					'status' => 'rejected',
+					'detail' => 'Unknown recipient participant',
+				]
+			)
+		);
 
-        $arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
-        self::assertSame('rejected', $arSaves[0]['object']['deliveryStatus']);
-        self::assertSame('Unknown recipient participant', $arSaves[0]['object']['deliveryDetail']);
+		$arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
+		self::assertSame('rejected', $arSaves[0]['object']['deliveryStatus']);
+		self::assertSame('Unknown recipient participant', $arSaves[0]['object']['deliveryDetail']);
 
-        self::assertCount(1, $notifications);
-        self::assertSame('controller-1', $notifications[0]['user']);
+		self::assertCount(1, $notifications);
+		self::assertSame('controller-1', $notifications[0]['user']);
 
-    }//end testInFlightRejectedNotifiesFinanceOperators()
+	}//end testInFlightRejectedNotifiesFinanceOperators()
 
-    /**
-     * An illegal transition (e.g. not-sent -> delivered, skipping queued/sent)
-     * is skipped — fail-soft, no state corruption.
-     *
-     * @return void
-     */
-    public function testIllegalTransitionIsSkipped(): void
-    {
-        $saved = [];
-        $data  = [
-            'ARInvoice' => [
-                [
-                    'id'               => 'invoice-1',
-                    'invoiceNumber'    => '2026-0070',
-                    'administrationId' => 'adm-1',
-                    'deliveryStatus'   => 'not-sent',
-                ],
-            ],
-        ];
+	/**
+	 * An illegal transition (e.g. not-sent -> delivered, skipping queued/sent)
+	 * is skipped — fail-soft, no state corruption.
+	 *
+	 * @return void
+	 */
+	public function testIllegalTransitionIsSkipped(): void {
+		$saved = [];
+		$data = [
+			'ARInvoice' => [
+				[
+					'id' => 'invoice-1',
+					'invoiceNumber' => '2026-0070',
+					'administrationId' => 'adm-1',
+					'deliveryStatus' => 'not-sent',
+				],
+			],
+		];
 
-        $listener = $this->buildListener(data: $data, saved: $saved, notifications: $notifications);
+		$listener = $this->buildListener(data: $data, saved: $saved, notifications: $notifications);
 
-        $listener->handle(
-            new GenericEvent(
-                null,
-                [
-                    'objectUri' => 'openregister://shillinq/ARInvoice/invoice-1',
-                    'status'    => 'delivered',
-                    'detail'    => 'should not apply',
-                ]
-            )
-        );
+		$listener->handle(
+			new GenericEvent(
+				null,
+				[
+					'objectUri' => 'openregister://shillinq/ARInvoice/invoice-1',
+					'status' => 'delivered',
+					'detail' => 'should not apply',
+				]
+			)
+		);
 
-        $arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
-        self::assertCount(0, $arSaves, 'an illegal transition must never be persisted');
+		$arSaves = array_values(array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
+		self::assertCount(0, $arSaves, 'an illegal transition must never be persisted');
 
-    }//end testIllegalTransitionIsSkipped()
+	}//end testIllegalTransitionIsSkipped()
 
-    /**
-     * A non-GenericEvent is ignored without error.
-     *
-     * @return void
-     */
-    public function testNonGenericEventIsIgnored(): void
-    {
-        $saved    = [];
-        $listener = $this->buildListener(data: [], saved: $saved, notifications: $notifications);
+	/**
+	 * A non-GenericEvent is ignored without error.
+	 *
+	 * @return void
+	 */
+	public function testNonGenericEventIsIgnored(): void {
+		$saved = [];
+		$listener = $this->buildListener(data: [], saved: $saved, notifications: $notifications);
 
-        $listener->handle(new \OCP\EventDispatcher\Event());
+		$listener->handle(new \OCP\EventDispatcher\Event());
 
-        self::assertSame([], $saved);
+		self::assertSame([], $saved);
 
-    }//end testNonGenericEventIsIgnored()
+	}//end testNonGenericEventIsIgnored()
 
-    /**
-     * Build a listener over an in-memory ObjectService stub + notification manager mock.
-     *
-     * @param array<string,array<int,array<string,mixed>>> $data          Schema => rows.
-     * @param array<int,array<string,mixed>>                $saved         Captured saves (by reference).
-     * @param array<int,array<string,mixed>>|null           $notifications Captured notifications (by reference, out param).
-     *
-     * @return PeppolDeliveryStatusListener
-     */
-    private function buildListener(array $data, array &$saved, ?array &$notifications): PeppolDeliveryStatusListener
-    {
-        $notifications = [];
+	/**
+	 * Build a listener over an in-memory ObjectService stub + notification manager mock.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
+	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
+	 * @param array<int,array<string,mixed>>|null $notifications Captured notifications (by reference, out param).
+	 *
+	 * @return PeppolDeliveryStatusListener
+	 */
+	private function buildListener(array $data, array &$saved, ?array &$notifications): PeppolDeliveryStatusListener {
+		$notifications = [];
 
-        $stub = new class($data, $saved) {
-            /**
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $data;
+		$stub = new class($data, $saved) {
+			/**
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $data;
 
-            /**
-             * @var array<int,array<string,mixed>>
-             */
-            private array $saved;
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $saved;
 
-            /**
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * @param array<string,array<int,array<string,mixed>>> $data  Schema rows.
-             * @param array<int,array<string,mixed>>               $saved Capture ref.
-             */
-            public function __construct(array $data, array &$saved)
-            {
-                $this->data  = $data;
-                $this->saved = &$saved;
-            }
+			/**
+			 * @param array<string,array<int,array<string,mixed>>> $data Schema rows.
+			 * @param array<int,array<string,mixed>> $saved Capture ref.
+			 */
+			public function __construct(array $data, array &$saved) {
+				$this->data = $data;
+				$this->saved = &$saved;
+			}
 
-            /**
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                unset($register);
-                return $this;
-            }
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				unset($register);
+				return $this;
+			}
 
-            /**
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}
 
-            /**
-             * @param array<string,mixed> $params Query params.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->data[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
+			/**
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->data[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
+				if ($filters === []) {
+					return $rows;
+				}
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }
+							return true;
+						}
+					)
+				);
+			}
 
-            /**
-             * @param array<string,mixed> $object Object payload.
-             *
-             * @return array<string,mixed>
-             */
-            public function saveObject(array $object): array
-            {
-                $this->saved[] = ['schema' => $this->schema, 'object' => $object];
-                return $object;
-            }
-        };
+			/**
+			 * @param array<string,mixed> $object Object payload.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object): array {
+				$this->saved[] = ['schema' => $this->schema, 'object' => $object];
+				return $object;
+			}
+		};
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $manager = $this->createMock(INotificationManager::class);
-        $manager->method('createNotification')->willReturnCallback(
-            function () : INotification {
-                $state = (object) ['user' => '', 'subject' => ''];
+		$manager = $this->createMock(INotificationManager::class);
+		$manager->method('createNotification')->willReturnCallback(
+			function () : INotification {
+				$state = (object)['user' => '', 'subject' => ''];
 
-                $notification = $this->createMock(INotification::class);
-                $notification->method('setApp')->willReturnSelf();
-                $notification->method('setDateTime')->willReturnSelf();
-                $notification->method('setUser')->willReturnCallback(
-                    function (string $user) use ($notification, $state): INotification {
-                        $state->user = $user;
-                        return $notification;
-                    }
-                );
-                $notification->method('setObject')->willReturnSelf();
-                $notification->method('setSubject')->willReturnCallback(
-                    function (string $subject) use ($notification, $state): INotification {
-                        $state->subject = $subject;
-                        return $notification;
-                    }
-                );
+				$notification = $this->createMock(INotification::class);
+				$notification->method('setApp')->willReturnSelf();
+				$notification->method('setDateTime')->willReturnSelf();
+				$notification->method('setUser')->willReturnCallback(
+					function (string $user) use ($notification, $state): INotification {
+						$state->user = $user;
+						return $notification;
+					}
+				);
+				$notification->method('setObject')->willReturnSelf();
+				$notification->method('setSubject')->willReturnCallback(
+					function (string $subject) use ($notification, $state): INotification {
+						$state->subject = $subject;
+						return $notification;
+					}
+				);
 
-                $this->notificationState[spl_object_id($notification)] = $state;
-                return $notification;
-            }
-        );
-        $manager->method('notify')->willReturnCallback(
-            function (INotification $notification) use (&$notifications): void {
-                $state = ($this->notificationState[spl_object_id($notification)] ?? null);
-                if ($state !== null) {
-                    $notifications[] = ['user' => $state->user, 'subject' => $state->subject];
-                }
-            }
-        );
+				$this->notificationState[spl_object_id($notification)] = $state;
+				return $notification;
+			}
+		);
+		$manager->method('notify')->willReturnCallback(
+			function (INotification $notification) use (&$notifications): void {
+				$state = ($this->notificationState[spl_object_id($notification)] ?? null);
+				if ($state !== null) {
+					$notifications[] = ['user' => $state->user, 'subject' => $state->subject];
+				}
+			}
+		);
 
-        return new PeppolDeliveryStatusListener(
-            container: $container,
-            appConfig: $appConfig,
-            notificationManager: $manager,
-            logger: new NullLogger()
-        );
+		return new PeppolDeliveryStatusListener(
+			container: $container,
+			appConfig: $appConfig,
+			notificationManager: $manager,
+			logger: new NullLogger()
+		);
 
-    }//end buildListener()
+	}//end buildListener()
 }//end class

@@ -39,115 +39,109 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class DocudeskExtractionClientTest extends TestCase
-{
+final class DocudeskExtractionClientTest extends TestCase {
 
-    /**
-     * Mock IClientService.
-     *
-     * @var IClientService&MockObject
-     */
-    private IClientService&MockObject $clientService;
+	/**
+	 * Mock IClientService.
+	 *
+	 * @var IClientService&MockObject
+	 */
+	private IClientService&MockObject $clientService;
 
-    /**
-     * Mock IURLGenerator.
-     *
-     * @var IURLGenerator&MockObject
-     */
-    private IURLGenerator&MockObject $urlGenerator;
+	/**
+	 * Mock IURLGenerator.
+	 *
+	 * @var IURLGenerator&MockObject
+	 */
+	private IURLGenerator&MockObject $urlGenerator;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->clientService = $this->createMock(IClientService::class);
-        $this->urlGenerator  = $this->createMock(IURLGenerator::class);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->clientService = $this->createMock(IClientService::class);
+		$this->urlGenerator = $this->createMock(IURLGenerator::class);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the client under test.
-     *
-     * @return DocudeskExtractionClient
-     */
-    private function buildClient(): DocudeskExtractionClient
-    {
-        return new DocudeskExtractionClient(
-            clientService: $this->clientService,
-            urlGenerator: $this->urlGenerator,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+	/**
+	 * Build the client under test.
+	 *
+	 * @return DocudeskExtractionClient
+	 */
+	private function buildClient(): DocudeskExtractionClient {
+		return new DocudeskExtractionClient(
+			clientService: $this->clientService,
+			urlGenerator: $this->urlGenerator,
+			logger: $this->createMock(LoggerInterface::class),
+		);
 
-    }//end buildClient()
+	}//end buildClient()
 
-    /**
-     * REQ-GAC-001: a successful 201 response's `id` is captured as
-     * `extractionId`.
-     *
-     * @return void
-     */
-    public function testRequestExtractionCapturesExtractionIdFromResponseBody(): void
-    {
-        $this->urlGenerator->method('linkToRouteAbsolute')->willReturn('https://nc.example/apps/docudesk/api/extraction/financial');
+	/**
+	 * REQ-GAC-001: a successful 201 response's `id` is captured as
+	 * `extractionId`.
+	 *
+	 * @return void
+	 */
+	public function testRequestExtractionCapturesExtractionIdFromResponseBody(): void {
+		$this->urlGenerator->method('linkToRouteAbsolute')->willReturn('https://nc.example/apps/docudesk/api/extraction/financial');
 
-        $response = $this->createMock(originalClassName: IResponse::class);
-        $response->method('getStatusCode')->willReturn(201);
-        $response->method('getBody')->willReturn(json_encode(['id' => 'ext-123', 'documentUri' => 'docudesk://x']));
+		$response = $this->createMock(originalClassName: IResponse::class);
+		$response->method('getStatusCode')->willReturn(201);
+		$response->method('getBody')->willReturn(json_encode(['id' => 'ext-123', 'documentUri' => 'docudesk://x']));
 
-        $client = $this->createMock(originalClassName: IClient::class);
-        $client->method('post')->willReturn($response);
-        $this->clientService->method('newClient')->willReturn($client);
+		$client = $this->createMock(originalClassName: IClient::class);
+		$client->method('post')->willReturn($response);
+		$this->clientService->method('newClient')->willReturn($client);
 
-        $result = $this->buildClient()->requestExtraction(documentUri: 'docudesk://x', docType: 'supplier-invoice');
+		$result = $this->buildClient()->requestExtraction(documentUri: 'docudesk://x', docType: 'supplier-invoice');
 
-        self::assertTrue($result['success']);
-        self::assertSame('ext-123', $result['extractionId']);
+		self::assertTrue($result['success']);
+		self::assertSame('ext-123', $result['extractionId']);
 
-    }//end testRequestExtractionCapturesExtractionIdFromResponseBody()
+	}//end testRequestExtractionCapturesExtractionIdFromResponseBody()
 
-    /**
-     * A response body with no usable `id` degrades to a null extractionId,
-     * not an error.
-     *
-     * @return void
-     */
-    public function testRequestExtractionToleratesMissingId(): void
-    {
-        $this->urlGenerator->method('linkToRouteAbsolute')->willReturn('https://nc.example/x');
+	/**
+	 * A response body with no usable `id` degrades to a null extractionId,
+	 * not an error.
+	 *
+	 * @return void
+	 */
+	public function testRequestExtractionToleratesMissingId(): void {
+		$this->urlGenerator->method('linkToRouteAbsolute')->willReturn('https://nc.example/x');
 
-        $response = $this->createMock(originalClassName: IResponse::class);
-        $response->method('getStatusCode')->willReturn(202);
-        $response->method('getBody')->willReturn('{}');
+		$response = $this->createMock(originalClassName: IResponse::class);
+		$response->method('getStatusCode')->willReturn(202);
+		$response->method('getBody')->willReturn('{}');
 
-        $client = $this->createMock(originalClassName: IClient::class);
-        $client->method('post')->willReturn($response);
-        $this->clientService->method('newClient')->willReturn($client);
+		$client = $this->createMock(originalClassName: IClient::class);
+		$client->method('post')->willReturn($response);
+		$this->clientService->method('newClient')->willReturn($client);
 
-        $result = $this->buildClient()->requestExtraction(documentUri: 'docudesk://x', docType: 'receipt');
+		$result = $this->buildClient()->requestExtraction(documentUri: 'docudesk://x', docType: 'receipt');
 
-        self::assertTrue($result['success']);
-        self::assertNull($result['extractionId']);
+		self::assertTrue($result['success']);
+		self::assertNull($result['extractionId']);
 
-    }//end testRequestExtractionToleratesMissingId()
+	}//end testRequestExtractionToleratesMissingId()
 
-    /**
-     * A route-resolution failure (docudesk not installed) yields a null
-     * extractionId alongside the existing failure contract.
-     *
-     * @return void
-     */
-    public function testRequestExtractionExtractionIdNullWhenRouteUnavailable(): void
-    {
-        $this->urlGenerator->method('linkToRouteAbsolute')->willThrowException(new \RuntimeException('no route'));
+	/**
+	 * A route-resolution failure (docudesk not installed) yields a null
+	 * extractionId alongside the existing failure contract.
+	 *
+	 * @return void
+	 */
+	public function testRequestExtractionExtractionIdNullWhenRouteUnavailable(): void {
+		$this->urlGenerator->method('linkToRouteAbsolute')->willThrowException(new \RuntimeException('no route'));
 
-        $result = $this->buildClient()->requestExtraction(documentUri: 'docudesk://x', docType: 'receipt');
+		$result = $this->buildClient()->requestExtraction(documentUri: 'docudesk://x', docType: 'receipt');
 
-        self::assertFalse($result['success']);
-        self::assertNull($result['extractionId']);
+		self::assertFalse($result['success']);
+		self::assertNull($result['extractionId']);
 
-    }//end testRequestExtractionExtractionIdNullWhenRouteUnavailable()
+	}//end testRequestExtractionExtractionIdNullWhenRouteUnavailable()
 }//end class

@@ -58,49 +58,46 @@ use OCA\Shillinq\Service\OssRecordResolver;
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class OssPaymentGuard
-{
-    /**
-     * Construct the guard.
-     *
-     * @param OssRecordResolver        $resolver       Reads the counterpart OssReturn / OssPayment.
-     * @param OssPaymentReconciliation $reconciliation The pure-logic REQ-OSS-008 kernel.
-     */
-    public function __construct(
-        private readonly OssRecordResolver $resolver,
-        private readonly OssPaymentReconciliation $reconciliation,
-    ) {
+class OssPaymentGuard {
+	/**
+	 * Construct the guard.
+	 *
+	 * @param OssRecordResolver $resolver Reads the counterpart OssReturn / OssPayment.
+	 * @param OssPaymentReconciliation $reconciliation The pure-logic REQ-OSS-008 kernel.
+	 */
+	public function __construct(
+		private readonly OssRecordResolver $resolver,
+		private readonly OssPaymentReconciliation $reconciliation,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Precondition: a matching bank transaction must settle the return in full.
-     *
-     * @param array<string,mixed> $object Either an OssPayment or the OssReturn being paid.
-     *
-     * @return bool True when the transition is permitted.
-     *
-     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
-     */
-    public function canMarkPaid(array $object): bool
-    {
-        $payment = $object;
-        if (trim((string) ($object['ossReturnId'] ?? '')) === '') {
-            // The object is the OssReturn side: find the payment settling it.
-            $payment = $this->resolver->findPaymentForReturn(ossReturn: $object);
-            if ($payment === null) {
-                return false;
-            }
+	/**
+	 * Precondition: a matching bank transaction must settle the return in full.
+	 *
+	 * @param array<string,mixed> $object Either an OssPayment or the OssReturn being paid.
+	 *
+	 * @return bool True when the transition is permitted.
+	 *
+	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	public function canMarkPaid(array $object): bool {
+		$payment = $object;
+		if (trim((string)($object['ossReturnId'] ?? '')) === '') {
+			// The object is the OssReturn side: find the payment settling it.
+			$payment = $this->resolver->findPaymentForReturn(ossReturn: $object);
+			if ($payment === null) {
+				return false;
+			}
 
-            return $this->reconciliation->canMarkPaid(ossPayment: $payment, ossReturn: $object);
-        }
+			return $this->reconciliation->canMarkPaid(ossPayment: $payment, ossReturn: $object);
+		}
 
-        $ossReturn = $this->resolver->findReturnForPayment(ossPayment: $payment);
-        if ($ossReturn === null) {
-            return false;
-        }
+		$ossReturn = $this->resolver->findReturnForPayment(ossPayment: $payment);
+		if ($ossReturn === null) {
+			return false;
+		}
 
-        return $this->reconciliation->canMarkPaid(ossPayment: $payment, ossReturn: $ossReturn);
-
-    }//end canMarkPaid()
+		return $this->reconciliation->canMarkPaid(ossPayment: $payment, ossReturn: $ossReturn);
+	}//end canMarkPaid()
 }//end class

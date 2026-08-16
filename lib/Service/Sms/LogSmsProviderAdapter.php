@@ -37,63 +37,62 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-22
  */
-final class LogSmsProviderAdapter implements SmsProviderAdapterInterface
-{
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface          $logger     Application logger.
-     * @param SmsPhoneNumberNormalizer $normalizer Phone masking helper.
-     * @param SmsTemplateRenderer      $renderer   Segment-count helper.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-        private readonly SmsPhoneNumberNormalizer $normalizer,
-        private readonly SmsTemplateRenderer $renderer
-    ) {
+final class LogSmsProviderAdapter implements SmsProviderAdapterInterface {
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Application logger.
+	 * @param SmsPhoneNumberNormalizer $normalizer Phone masking helper.
+	 * @param SmsTemplateRenderer $renderer Segment-count helper.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+		private readonly SmsPhoneNumberNormalizer $normalizer,
+		private readonly SmsTemplateRenderer $renderer,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Record one SMS "send" as a masked, body-free log line.
-     *
-     * @param string      $connectorId   openconnector connector id holding the credentials.
-     * @param string      $e164Recipient Validated E.164 recipient number.
-     * @param string      $body          Rendered message body (length only is logged, never the text).
-     * @param string|null $senderId      Optional sender id.
-     *
-     * @return SmsSendResult Pending result with a synthetic reference and segment count.
-     *
-     * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-22
-     */
-    public function send(
-        string $connectorId,
-        string $e164Recipient,
-        string $body,
-        ?string $senderId=null
-    ): SmsSendResult {
-        $segments = $this->renderer->segmentCount($body);
+	/**
+	 * Record one SMS "send" as a masked, body-free log line.
+	 *
+	 * @param string $connectorId openconnector connector id holding the credentials.
+	 * @param string $e164Recipient Validated E.164 recipient number.
+	 * @param string $body Rendered message body (length only is logged, never the text).
+	 * @param string|null $senderId Optional sender id.
+	 *
+	 * @return SmsSendResult Pending result with a synthetic reference and segment count.
+	 *
+	 * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-22
+	 */
+	public function send(
+		string $connectorId,
+		string $e164Recipient,
+		string $body,
+		?string $senderId = null,
+	): SmsSendResult {
+		$segments = $this->renderer->segmentCount($body);
 
-        $this->logger->info(
-            'SMS reminder queued via log adapter',
-            [
-                'app'       => 'shillinq',
-                'connector' => $connectorId,
-                'recipient' => $this->normalizer->mask($e164Recipient),
-                'sender'    => $senderId,
-                'length'    => mb_strlen($body),
-                'segments'  => $segments,
-            ]
-        );
+		$this->logger->info(
+			'SMS reminder queued via log adapter',
+			[
+				'app' => 'shillinq',
+				'connector' => $connectorId,
+				'recipient' => $this->normalizer->mask($e164Recipient),
+				'sender' => $senderId,
+				'length' => mb_strlen($body),
+				'segments' => $segments,
+			]
+		);
 
-        $reference = 'log-'.bin2hex(random_bytes(8));
+		$reference = 'log-' . bin2hex(random_bytes(8));
 
-        return new SmsSendResult(
-            SmsSendResult::STATUS_PENDING,
-            $reference,
-            'queued via log adapter (no live gateway wired)',
-            $segments
-        );
+		return new SmsSendResult(
+			SmsSendResult::STATUS_PENDING,
+			$reference,
+			'queued via log adapter (no live gateway wired)',
+			$segments
+		);
 
-    }//end send()
+	}//end send()
 }//end class

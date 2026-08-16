@@ -39,168 +39,157 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class VerplichtingGuardTest extends TestCase
-{
+class VerplichtingGuardTest extends TestCase {
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var VerplichtingGuard
-     */
-    private VerplichtingGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var VerplichtingGuard
+	 */
+	private VerplichtingGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new VerplichtingGuard(logger: $this->logger);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new VerplichtingGuard(logger: $this->logger);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build an enriched obligation with a 1-year term.
-     *
-     * @param array<string, mixed> $overrides Field overrides.
-     *
-     * @return array<string, mixed>
-     */
-    private function verplichting(array $overrides=[]): array
-    {
-        return array_merge(
-            [
-                'verplichtingNummer' => 'VPL-2026-0001',
-                'kostenplaats'       => 'FAC-001',
-                'grootboekrekening'  => '4500',
-                'looptijdStart'      => '2026-02-01',
-                'looptijdEind'       => '2027-01-31',
-                'mijlpalen'          => [],
-            ],
-            $overrides
-        );
+	/**
+	 * Build an enriched obligation with a 1-year term.
+	 *
+	 * @param array<string, mixed> $overrides Field overrides.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function commitment(array $overrides = []): array {
+		return array_merge(
+			[
+				'commitmentNumber' => 'VPL-2026-0001',
+				'costCentre' => 'FAC-001',
+				'generalLedgerAccount' => '4500',
+				'termStart' => '2026-02-01',
+				'termEnd' => '2027-01-31',
+				'milestones' => [],
+			],
+			$overrides
+		);
 
-    }//end verplichting()
+	}//end verplichting()
 
-    /**
-     * Missing kostenplaats denies activation (design D2).
-     *
-     * @return void
-     */
-    public function testMissingKostenplaatsDeniesActivation(): void
-    {
-        $this->assertFalse($this->guard->canActiveren($this->verplichting(['kostenplaats' => ''])));
+	/**
+	 * Missing kostenplaats denies activation (design D2).
+	 *
+	 * @return void
+	 */
+	public function testMissingKostenplaatsDeniesActivation(): void {
+		$this->assertFalse($this->guard->canActiveren($this->commitment(['costCentre' => ''])));
 
-    }//end testMissingKostenplaatsDeniesActivation()
+	}//end testMissingKostenplaatsDeniesActivation()
 
-    /**
-     * Missing grootboekrekening denies activation (design D2).
-     *
-     * @return void
-     */
-    public function testMissingGrootboekrekeningDeniesActivation(): void
-    {
-        $this->assertFalse($this->guard->canActiveren($this->verplichting(['grootboekrekening' => ''])));
+	/**
+	 * Missing grootboekrekening denies activation (design D2).
+	 *
+	 * @return void
+	 */
+	public function testMissingGrootboekrekeningDeniesActivation(): void {
+		$this->assertFalse($this->guard->canActiveren($this->commitment(['generalLedgerAccount' => ''])));
 
-    }//end testMissingGrootboekrekeningDeniesActivation()
+	}//end testMissingGrootboekrekeningDeniesActivation()
 
-    /**
-     * Enriched obligation with no milestones is permitted.
-     *
-     * @return void
-     */
-    public function testEnrichedWithoutMilestonesPermitted(): void
-    {
-        $this->assertTrue($this->guard->canActiveren($this->verplichting()));
+	/**
+	 * Enriched obligation with no milestones is permitted.
+	 *
+	 * @return void
+	 */
+	public function testEnrichedWithoutMilestonesPermitted(): void {
+		$this->assertTrue($this->guard->canActiveren($this->commitment()));
 
-    }//end testEnrichedWithoutMilestonesPermitted()
+	}//end testEnrichedWithoutMilestonesPermitted()
 
-    /**
-     * Milestone within the term is permitted.
-     *
-     * @return void
-     */
-    public function testMilestoneWithinTermPermitted(): void
-    {
-        $v = $this->verplichting(
-            ['mijlpalen' => [['mijlpaalId' => 'MS-001', 'datum' => '2026-08-01']]]
-        );
-        $this->assertTrue($this->guard->canActiveren($v));
+	/**
+	 * Milestone within the term is permitted.
+	 *
+	 * @return void
+	 */
+	public function testMilestoneWithinTermPermitted(): void {
+		$v = $this->commitment(
+			['milestones' => [['milestoneId' => 'MS-001', 'date' => '2026-08-01']]]
+		);
+		$this->assertTrue($this->guard->canActiveren($v));
 
-    }//end testMilestoneWithinTermPermitted()
+	}//end testMilestoneWithinTermPermitted()
 
-    /**
-     * Milestone before the start date denies activation.
-     *
-     * @return void
-     */
-    public function testMilestoneBeforeStartDenied(): void
-    {
-        $v = $this->verplichting(
-            ['mijlpalen' => [['mijlpaalId' => 'MS-001', 'datum' => '2026-01-01']]]
-        );
-        $this->assertFalse($this->guard->canActiveren($v));
+	/**
+	 * Milestone before the start date denies activation.
+	 *
+	 * @return void
+	 */
+	public function testMilestoneBeforeStartDenied(): void {
+		$v = $this->commitment(
+			['milestones' => [['milestoneId' => 'MS-001', 'date' => '2026-01-01']]]
+		);
+		$this->assertFalse($this->guard->canActiveren($v));
 
-    }//end testMilestoneBeforeStartDenied()
+	}//end testMilestoneBeforeStartDenied()
 
-    /**
-     * Milestone after the end date denies activation.
-     *
-     * @return void
-     */
-    public function testMilestoneAfterEndDenied(): void
-    {
-        $v = $this->verplichting(
-            ['mijlpalen' => [['mijlpaalId' => 'MS-001', 'datum' => '2027-03-01']]]
-        );
-        $this->assertFalse($this->guard->canActiveren($v));
+	/**
+	 * Milestone after the end date denies activation.
+	 *
+	 * @return void
+	 */
+	public function testMilestoneAfterEndDenied(): void {
+		$v = $this->commitment(
+			['milestones' => [['milestoneId' => 'MS-001', 'date' => '2027-03-01']]]
+		);
+		$this->assertFalse($this->guard->canActiveren($v));
 
-    }//end testMilestoneAfterEndDenied()
+	}//end testMilestoneAfterEndDenied()
 
-    /**
-     * Milestones on the exact boundary dates are permitted.
-     *
-     * @return void
-     */
-    public function testMilestoneOnBoundaryDatesPermitted(): void
-    {
-        $v = $this->verplichting(
-            [
-                'mijlpalen' => [
-                    ['mijlpaalId' => 'MS-001', 'datum' => '2026-02-01'],
-                    ['mijlpaalId' => 'MS-002', 'datum' => '2027-01-31'],
-                ],
-            ]
-        );
-        $this->assertTrue($this->guard->canActiveren($v));
+	/**
+	 * Milestones on the exact boundary dates are permitted.
+	 *
+	 * @return void
+	 */
+	public function testMilestoneOnBoundaryDatesPermitted(): void {
+		$v = $this->commitment(
+			[
+				'milestones' => [
+					['milestoneId' => 'MS-001', 'date' => '2026-02-01'],
+					['milestoneId' => 'MS-002', 'date' => '2027-01-31'],
+				],
+			]
+		);
+		$this->assertTrue($this->guard->canActiveren($v));
 
-    }//end testMilestoneOnBoundaryDatesPermitted()
+	}//end testMilestoneOnBoundaryDatesPermitted()
 
-    /**
-     * With no declared term, milestone dates are not bounded (permitted).
-     *
-     * @return void
-     */
-    public function testNoTermSkipsMilestoneBound(): void
-    {
-        $v = $this->verplichting(
-            [
-                'looptijdStart' => '',
-                'looptijdEind'  => '',
-                'mijlpalen'     => [['mijlpaalId' => 'MS-001', 'datum' => '2099-01-01']],
-            ]
-        );
-        $this->assertTrue($this->guard->canActiveren($v));
+	/**
+	 * With no declared term, milestone dates are not bounded (permitted).
+	 *
+	 * @return void
+	 */
+	public function testNoTermSkipsMilestoneBound(): void {
+		$v = $this->commitment(
+			[
+				'termStart' => '',
+				'termEnd' => '',
+				'milestones' => [['milestoneId' => 'MS-001', 'date' => '2099-01-01']],
+			]
+		);
+		$this->assertTrue($this->guard->canActiveren($v));
 
-    }//end testNoTermSkipsMilestoneBound()
+	}//end testNoTermSkipsMilestoneBound()
 }//end class

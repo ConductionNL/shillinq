@@ -23,73 +23,65 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for OCA\OpenRegister\Event\ObjectUpdatingEvent.
  */
-class ObjectUpdatingEvent extends Event
-{
+class ObjectUpdatingEvent extends Event {
 
-    /**
-     * Errors set by a rejecting hook.
-     *
-     * @var array<string,mixed>
-     */
-    private array $errors = [];
+	/**
+	 * Errors set by a rejecting hook.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private array $errors = [];
 
-    /**
-     * Construct the event.
-     *
-     * @param ObjectEntity|null $newObject The object as it will be persisted.
-     * @param ObjectEntity|null $oldObject The object as it is stored today.
-     */
-    public function __construct(
-        private ?ObjectEntity $newObject=null,
-        private ?ObjectEntity $oldObject=null
-    ) {
-        parent::__construct();
+	/**
+	 * Construct the event.
+	 *
+	 * @param ObjectEntity|null $newObject The object as it will be persisted.
+	 * @param ObjectEntity|null $oldObject The object as it is stored today.
+	 */
+	public function __construct(
+		private ?ObjectEntity $newObject = null,
+		private ?ObjectEntity $oldObject = null,
+	) {
+		parent::__construct();
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the object as it will be persisted.
-     *
-     * @return ObjectEntity|null
-     */
-    public function getNewObject(): ?ObjectEntity
-    {
-        return $this->newObject;
+	/**
+	 * Return the object as it will be persisted.
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getNewObject(): ?ObjectEntity {
+		return $this->newObject;
+	}//end getNewObject()
 
-    }//end getNewObject()
+	/**
+	 * Return the object as it is stored today.
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getOldObject(): ?ObjectEntity {
+		return $this->oldObject;
+	}//end getOldObject()
 
-    /**
-     * Return the object as it is stored today.
-     *
-     * @return ObjectEntity|null
-     */
-    public function getOldObject(): ?ObjectEntity
-    {
-        return $this->oldObject;
+	/**
+	 * Record the rejection reason.
+	 *
+	 * @param array<string,mixed> $errors The rejection payload.
+	 *
+	 * @return void
+	 */
+	public function setErrors(array $errors): void {
+		$this->errors = $errors;
 
-    }//end getOldObject()
+	}//end setErrors()
 
-    /**
-     * Record the rejection reason.
-     *
-     * @param array<string,mixed> $errors The rejection payload.
-     *
-     * @return void
-     */
-    public function setErrors(array $errors): void
-    {
-        $this->errors = $errors;
-
-    }//end setErrors()
-
-    /**
-     * Return the rejection reason.
-     *
-     * @return array<string,mixed>
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-
-    }//end getErrors()
+	/**
+	 * Return the rejection reason.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function getErrors(): array {
+		return $this->errors;
+	}//end getErrors()
 }//end class

@@ -44,7 +44,9 @@
  */
 export function mergeFullFragmentIntoManifest(manifest, fullFragment) {
 	const pages = Array.isArray(manifest && manifest.pages) ? manifest.pages : []
-	const fullPages = Array.isArray(fullFragment && fullFragment.pages) ? fullFragment.pages : []
+	const fullPages = Array.isArray(fullFragment && fullFragment.pages)
+		? fullFragment.pages
+		: []
 
 	let updated = 0
 	let appended = 0
@@ -87,7 +89,11 @@ export function buildPageFragmentIndex(pages) {
 	}
 
 	for (const page of pages) {
-		if (page && typeof page.id === 'string' && typeof page._fragment === 'string') {
+		if (
+			page
+			&& typeof page.id === 'string'
+			&& typeof page._fragment === 'string'
+		) {
 			index.set(page.id, page._fragment)
 		}
 	}

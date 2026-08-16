@@ -50,315 +50,297 @@ use Psr\Log\AbstractLogger;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
  */
-final class BookingCreatedTimelinePublishListenerTest extends TestCase
-{
+final class BookingCreatedTimelinePublishListenerTest extends TestCase {
 
-    /**
-     * Build a recording logger.
-     *
-     * @return AbstractLogger
-     */
-    private function recordingLogger(): AbstractLogger
-    {
-        return new class extends AbstractLogger {
+	/**
+	 * Build a recording logger.
+	 *
+	 * @return AbstractLogger
+	 */
+	private function recordingLogger(): AbstractLogger {
+		return new class extends AbstractLogger {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $records = [];
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            public array $records = [];
+			/**
+			 * @param mixed $level Level.
+			 * @param string|\Stringable $message Message.
+			 * @param array<string, mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, string|\Stringable $message, array $context = []): void {
+				$this->records[] = ['level' => $level, 'message' => (string)$message, 'context' => $context];
+			}//end log()
+		};
 
-            /**
-             * @param mixed                $level   Level.
-             * @param string|\Stringable   $message Message.
-             * @param array<string, mixed> $context Context.
-             *
-             * @return void
-             */
-            public function log($level, string|\Stringable $message, array $context=[]): void
-            {
-                $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
-            }//end log()
-        };
+	}//end recordingLogger()
 
-    }//end recordingLogger()
+	/**
+	 * Build a recording TimelineRetryQueue + a stubbable publish adapter.
+	 *
+	 * @param bool $publishOk Result the stub returns.
+	 * @param array<int, TimelineEventDto> &$publishCalls Capture of every publish call.
+	 * @param array<int, TimelineEventDto> &$enqueueCalls Capture of every enqueue call.
+	 *
+	 * @return array{0:PipelinqContactAdapter, 1:TimelineRetryQueue}
+	 */
+	private function deps(bool $publishOk, array &$publishCalls, array &$enqueueCalls): array {
+		$adapter = new class($publishOk, $publishCalls) extends PipelinqContactAdapter {
 
-    /**
-     * Build a recording TimelineRetryQueue + a stubbable publish adapter.
-     *
-     * @param bool                              $publishOk    Result the stub returns.
-     * @param array<int, TimelineEventDto>      &$publishCalls Capture of every publish call.
-     * @param array<int, TimelineEventDto>      &$enqueueCalls Capture of every enqueue call.
-     *
-     * @return array{0:PipelinqContactAdapter, 1:TimelineRetryQueue}
-     */
-    private function deps(bool $publishOk, array &$publishCalls, array &$enqueueCalls): array
-    {
-        $adapter = new class($publishOk, $publishCalls) extends PipelinqContactAdapter {
+			/**
+			 * @var bool
+			 */
+			private bool $publishOk;
 
-            /**
-             * @var bool
-             */
-            private bool $publishOk;
+			/**
+			 * @var array<int, TimelineEventDto>
+			 */
+			private array $publishCalls;
 
-            /**
-             * @var array<int, TimelineEventDto>
-             */
-            private array $publishCalls;
+			/**
+			 * @param bool $publishOk Result.
+			 * @param array<int, TimelineEventDto> &$publishCalls Capture.
+			 */
+			public function __construct(bool $publishOk, array &$publishCalls) {
+				$this->publishOk = $publishOk;
+				$this->publishCalls = & $publishCalls;
+			}//end __construct()
 
-            /**
-             * @param bool                          $publishOk    Result.
-             * @param array<int, TimelineEventDto> &$publishCalls Capture.
-             */
-            public function __construct(bool $publishOk, array &$publishCalls)
-            {
-                $this->publishOk     = $publishOk;
-                $this->publishCalls  =& $publishCalls;
-            }//end __construct()
+			/**
+			 * @param TimelineEventDto $event Event.
+			 *
+			 * @return bool
+			 */
+			public function publishTimelineEvent(TimelineEventDto $event): bool {
+				$this->publishCalls[] = $event;
+				return $this->publishOk;
+			}//end publishTimelineEvent()
+		};
 
-            /**
-             * @param TimelineEventDto $event Event.
-             *
-             * @return bool
-             */
-            public function publishTimelineEvent(TimelineEventDto $event): bool
-            {
-                $this->publishCalls[] = $event;
-                return $this->publishOk;
-            }//end publishTimelineEvent()
-        };
+		$queue = new class($enqueueCalls) implements TimelineRetryQueue {
 
-        $queue = new class($enqueueCalls) implements TimelineRetryQueue {
+			/**
+			 * @var array<int, TimelineEventDto>
+			 */
+			private array $enqueueCalls;
 
-            /**
-             * @var array<int, TimelineEventDto>
-             */
-            private array $enqueueCalls;
+			/**
+			 * @param array<int, TimelineEventDto> &$enqueueCalls Capture sink.
+			 */
+			public function __construct(array &$enqueueCalls) {
+				$this->enqueueCalls = & $enqueueCalls;
+			}//end __construct()
 
-            /**
-             * @param array<int, TimelineEventDto> &$enqueueCalls Capture sink.
-             */
-            public function __construct(array &$enqueueCalls)
-            {
-                $this->enqueueCalls =& $enqueueCalls;
-            }//end __construct()
+			/**
+			 * @param TimelineEventDto $event Event.
+			 *
+			 * @return void
+			 */
+			public function enqueue(TimelineEventDto $event): void {
+				$this->enqueueCalls[] = $event;
+			}//end enqueue()
+		};
 
-            /**
-             * @param TimelineEventDto $event Event.
-             *
-             * @return void
-             */
-            public function enqueue(TimelineEventDto $event): void
-            {
-                $this->enqueueCalls[] = $event;
-            }//end enqueue()
-        };
+		return [$adapter, $queue];
+	}//end deps()
 
-        return [$adapter, $queue];
+	/**
+	 * Build an Appointment ObjectEntity carrying the numeric schema **id**,
+	 * exactly as OpenRegister stamps it
+	 * (`setSchema((string) $schema->getId())`).
+	 *
+	 * A hand-built entity carrying the slug is a shape production never
+	 * produces; the slug arrives through {@see ListenerSchemaResolver}.
+	 *
+	 * @param array<string, mixed> $appointment Object payload.
+	 * @param string $schemaId Numeric schema id as OR stamps it.
+	 *
+	 * @return ObjectEntity
+	 */
+	private function appointmentEntity(array $appointment, string $schemaId = '7001'): ObjectEntity {
+		$entity = new ObjectEntity();
+		$entity->setSchema($schemaId);
+		$entity->setObject($appointment);
+		return $entity;
+	}//end appointmentEntity()
 
-    }//end deps()
+	/**
+	 * Build a ListenerSchemaResolver stub that reports a given schema slug.
+	 *
+	 * @param string $slug Slug the resolver resolves the entity's id to.
+	 *
+	 * @return ListenerSchemaResolver
+	 */
+	private function resolver(string $slug): ListenerSchemaResolver {
+		$resolver = $this->createMock(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willReturn($slug);
+		return $resolver;
+	}//end resolver()
 
-    /**
-     * Build an Appointment ObjectEntity carrying the numeric schema **id**,
-     * exactly as OpenRegister stamps it
-     * (`setSchema((string) $schema->getId())`).
-     *
-     * A hand-built entity carrying the slug is a shape production never
-     * produces; the slug arrives through {@see ListenerSchemaResolver}.
-     *
-     * @param array<string, mixed> $appointment Object payload.
-     * @param string               $schemaId    Numeric schema id as OR stamps it.
-     *
-     * @return ObjectEntity
-     */
-    private function appointmentEntity(array $appointment, string $schemaId='7001'): ObjectEntity
-    {
-        $entity = new ObjectEntity();
-        $entity->setSchema($schemaId);
-        $entity->setObject($appointment);
-        return $entity;
+	/**
+	 * Happy path — pipelinqContactId set, publish succeeds, no retry
+	 * queueing.
+	 *
+	 * @return void
+	 */
+	public function testHappyPathPublishesFixedPayload(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
 
-    }//end appointmentEntity()
+		$listener = new BookingCreatedTimelinePublishListener(
+			pipelinq: $adapter,
+			retryQueue: $queue,
+			schemaResolver: $this->resolver('appointment'),
+			logger: $this->recordingLogger()
+		);
 
-    /**
-     * Build a ListenerSchemaResolver stub that reports a given schema slug.
-     *
-     * @param string $slug Slug the resolver resolves the entity's id to.
-     *
-     * @return ListenerSchemaResolver
-     */
-    private function resolver(string $slug): ListenerSchemaResolver
-    {
-        $resolver = $this->createMock(ListenerSchemaResolver::class);
-        $resolver->method('schemaSlug')->willReturn($slug);
-        return $resolver;
+		$listener->handle(
+			new ObjectCreatedEvent(
+				$this->appointmentEntity(
+					[
+						'appointmentId' => 'booking-abc-123',
+						'pipelinqContactId' => 'pl-contact-42',
+						'serviceId' => 'haircut',
+						'startTime' => '2026-06-07T10:00:00Z',
+						'endTime' => '2026-06-07T11:00:00Z',
+						'resourceId' => 'chair-1',
+						'status' => 'pending_confirmation',
+						'createdAt' => '2026-06-06T12:34:56Z',
+					]
+				)
+			)
+		);
 
-    }//end resolver()
+		self::assertCount(1, $publishCalls);
+		self::assertCount(0, $enqueueCalls);
 
-    /**
-     * Happy path — pipelinqContactId set, publish succeeds, no retry
-     * queueing.
-     *
-     * @return void
-     */
-    public function testHappyPathPublishesFixedPayload(): void
-    {
-        $publishCalls = [];
-        $enqueueCalls = [];
-        [$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
+		$dto = $publishCalls[0];
+		self::assertSame('booking.created', $dto->type());
+		self::assertSame('booking-abc-123', $dto->externalId());
+		self::assertSame('pl-contact-42', $dto->contactId());
 
-        $listener = new BookingCreatedTimelinePublishListener(
-            pipelinq: $adapter,
-            retryQueue: $queue,
-            schemaResolver: $this->resolver('appointment'),
-            logger: $this->recordingLogger()
-        );
+		$payload = $dto->toPayload();
+		self::assertSame('2026-06-06T12:34:56Z', $payload['timestamp']);
+		self::assertSame(
+			[
+				'bookingNumber' => 'booking-abc-123',
+				'service' => 'haircut',
+				'startTime' => '2026-06-07T10:00:00Z',
+				'endTime' => '2026-06-07T11:00:00Z',
+				'resourceId' => 'chair-1',
+				'status' => 'pending_confirmation',
+			],
+			$payload['metadata']
+		);
 
-        $listener->handle(
-            new ObjectCreatedEvent(
-                $this->appointmentEntity(
-                    [
-                        'appointmentId'     => 'booking-abc-123',
-                        'pipelinqContactId' => 'pl-contact-42',
-                        'serviceId'         => 'haircut',
-                        'startTime'         => '2026-06-07T10:00:00Z',
-                        'endTime'           => '2026-06-07T11:00:00Z',
-                        'resourceId'        => 'chair-1',
-                        'status'            => 'pending_confirmation',
-                        'createdAt'         => '2026-06-06T12:34:56Z',
-                    ]
-                )
-            )
-        );
+	}//end testHappyPathPublishesFixedPayload()
 
-        self::assertCount(1, $publishCalls);
-        self::assertCount(0, $enqueueCalls);
+	/**
+	 * A publish that returns FALSE is handed off to the retry queue.
+	 *
+	 * @return void
+	 */
+	public function testFailureHandsOffToRetryQueue(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: false, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
 
-        $dto = $publishCalls[0];
-        self::assertSame('booking.created', $dto->type());
-        self::assertSame('booking-abc-123', $dto->externalId());
-        self::assertSame('pl-contact-42', $dto->contactId());
+		$listener = new BookingCreatedTimelinePublishListener(
+			pipelinq: $adapter,
+			retryQueue: $queue,
+			schemaResolver: $this->resolver('appointment'),
+			logger: $this->recordingLogger()
+		);
 
-        $payload = $dto->toPayload();
-        self::assertSame('2026-06-06T12:34:56Z', $payload['timestamp']);
-        self::assertSame(
-            [
-                'bookingNumber' => 'booking-abc-123',
-                'service'       => 'haircut',
-                'startTime'     => '2026-06-07T10:00:00Z',
-                'endTime'       => '2026-06-07T11:00:00Z',
-                'resourceId'    => 'chair-1',
-                'status'        => 'pending_confirmation',
-            ],
-            $payload['metadata']
-        );
+		$listener->handle(
+			new ObjectCreatedEvent(
+				$this->appointmentEntity(
+					[
+						'appointmentId' => 'booking-abc-123',
+						'pipelinqContactId' => 'pl-contact-42',
+					]
+				)
+			)
+		);
 
-    }//end testHappyPathPublishesFixedPayload()
+		self::assertCount(1, $publishCalls);
+		self::assertCount(1, $enqueueCalls);
+		self::assertSame('booking-abc-123', $enqueueCalls[0]->externalId());
 
-    /**
-     * A publish that returns FALSE is handed off to the retry queue.
-     *
-     * @return void
-     */
-    public function testFailureHandsOffToRetryQueue(): void
-    {
-        $publishCalls = [];
-        $enqueueCalls = [];
-        [$adapter, $queue] = $this->deps(publishOk: false, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
+	}//end testFailureHandsOffToRetryQueue()
 
-        $listener = new BookingCreatedTimelinePublishListener(
-            pipelinq: $adapter,
-            retryQueue: $queue,
-            schemaResolver: $this->resolver('appointment'),
-            logger: $this->recordingLogger()
-        );
+	/**
+	 * Bookings without a pipelinqContactId are silently skipped — slice 06
+	 * already labels them "not linked" in the UI.
+	 *
+	 * @return void
+	 */
+	public function testMissingPipelinqContactIdSkipsPublish(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
 
-        $listener->handle(
-            new ObjectCreatedEvent(
-                $this->appointmentEntity(
-                    [
-                        'appointmentId'     => 'booking-abc-123',
-                        'pipelinqContactId' => 'pl-contact-42',
-                    ]
-                )
-            )
-        );
+		$listener = new BookingCreatedTimelinePublishListener(
+			pipelinq: $adapter,
+			retryQueue: $queue,
+			schemaResolver: $this->resolver('appointment'),
+			logger: $this->recordingLogger()
+		);
 
-        self::assertCount(1, $publishCalls);
-        self::assertCount(1, $enqueueCalls);
-        self::assertSame('booking-abc-123', $enqueueCalls[0]->externalId());
+		$listener->handle(
+			new ObjectCreatedEvent(
+				$this->appointmentEntity(
+					[
+						'appointmentId' => 'booking-abc-123',
+						// pipelinqContactId omitted.
+					]
+				)
+			)
+		);
 
-    }//end testFailureHandsOffToRetryQueue()
+		self::assertCount(0, $publishCalls);
+		self::assertCount(0, $enqueueCalls);
 
-    /**
-     * Bookings without a pipelinqContactId are silently skipped — slice 06
-     * already labels them "not linked" in the UI.
-     *
-     * @return void
-     */
-    public function testMissingPipelinqContactIdSkipsPublish(): void
-    {
-        $publishCalls = [];
-        $enqueueCalls = [];
-        [$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
+	}//end testMissingPipelinqContactIdSkipsPublish()
 
-        $listener = new BookingCreatedTimelinePublishListener(
-            pipelinq: $adapter,
-            retryQueue: $queue,
-            schemaResolver: $this->resolver('appointment'),
-            logger: $this->recordingLogger()
-        );
+	/**
+	 * Non-Appointment schemas are ignored — the ObjectCreatedEvent fires
+	 * for every schema in OR, and this listener is interested only in
+	 * appointments.
+	 *
+	 * @return void
+	 */
+	public function testNonAppointmentSchemaIsIgnored(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
 
-        $listener->handle(
-            new ObjectCreatedEvent(
-                $this->appointmentEntity(
-                    [
-                        'appointmentId' => 'booking-abc-123',
-                        // pipelinqContactId omitted.
-                    ]
-                )
-            )
-        );
+		$listener = new BookingCreatedTimelinePublishListener(
+			pipelinq: $adapter,
+			retryQueue: $queue,
+			schemaResolver: $this->resolver('invoice'),
+			logger: $this->recordingLogger()
+		);
 
-        self::assertCount(0, $publishCalls);
-        self::assertCount(0, $enqueueCalls);
+		$listener->handle(
+			new ObjectCreatedEvent(
+				$this->appointmentEntity(
+					[
+						'appointmentId' => 'whatever',
+						'pipelinqContactId' => 'pl-contact-42',
+					],
+					schemaId: '7050'
+				)
+			)
+		);
 
-    }//end testMissingPipelinqContactIdSkipsPublish()
+		self::assertCount(0, $publishCalls);
+		self::assertCount(0, $enqueueCalls);
 
-    /**
-     * Non-Appointment schemas are ignored — the ObjectCreatedEvent fires
-     * for every schema in OR, and this listener is interested only in
-     * appointments.
-     *
-     * @return void
-     */
-    public function testNonAppointmentSchemaIsIgnored(): void
-    {
-        $publishCalls = [];
-        $enqueueCalls = [];
-        [$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
-
-        $listener = new BookingCreatedTimelinePublishListener(
-            pipelinq: $adapter,
-            retryQueue: $queue,
-            schemaResolver: $this->resolver('invoice'),
-            logger: $this->recordingLogger()
-        );
-
-        $listener->handle(
-            new ObjectCreatedEvent(
-                $this->appointmentEntity(
-                    [
-                        'appointmentId'     => 'whatever',
-                        'pipelinqContactId' => 'pl-contact-42',
-                    ],
-                    schemaId: '7050'
-                )
-            )
-        );
-
-        self::assertCount(0, $publishCalls);
-        self::assertCount(0, $enqueueCalls);
-
-    }//end testNonAppointmentSchemaIsIgnored()
+	}//end testNonAppointmentSchemaIsIgnored()
 
 }//end class

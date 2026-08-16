@@ -37,231 +37,223 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-14
  */
-class SlotServiceTest extends TestCase
-{
+class SlotServiceTest extends TestCase {
 
-    /**
-     * DI container.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * DI container.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Settings stub.
-     *
-     * @var SettingsService&MockObject
-     */
-    private SettingsService&MockObject $settings;
+	/**
+	 * Settings stub.
+	 *
+	 * @var SettingsService&MockObject
+	 */
+	private SettingsService&MockObject $settings;
 
-    /**
-     * Cache factory stub (always returns "no cache" so tests stay deterministic).
-     *
-     * @var ICacheFactory&MockObject
-     */
-    private ICacheFactory&MockObject $cacheFactory;
+	/**
+	 * Cache factory stub (always returns "no cache" so tests stay deterministic).
+	 *
+	 * @var ICacheFactory&MockObject
+	 */
+	private ICacheFactory&MockObject $cacheFactory;
 
-    /**
-     * Time factory stub. Frozen to 2026-05-22T00:00:00Z (one day before the slot date).
-     *
-     * @var ITimeFactory&MockObject
-     */
-    private ITimeFactory&MockObject $time;
+	/**
+	 * Time factory stub. Frozen to 2026-05-22T00:00:00Z (one day before the slot date).
+	 *
+	 * @var ITimeFactory&MockObject
+	 */
+	private ITimeFactory&MockObject $time;
 
-    /**
-     * Logger stub.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Logger stub.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Service under test.
-     *
-     * @var SlotService
-     */
-    private SlotService $service;
+	/**
+	 * Service under test.
+	 *
+	 * @var SlotService
+	 */
+	private SlotService $service;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container    = $this->createMock(ContainerInterface::class);
-        $this->settings     = $this->createMock(SettingsService::class);
-        $this->cacheFactory = $this->createMock(ICacheFactory::class);
-        $this->time         = $this->createMock(ITimeFactory::class);
-        $this->logger       = $this->createMock(LoggerInterface::class);
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->settings = $this->createMock(SettingsService::class);
+		$this->cacheFactory = $this->createMock(ICacheFactory::class);
+		$this->time = $this->createMock(ITimeFactory::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->cacheFactory->method('isLocalCacheAvailable')->willReturn(false);
-        $this->time->method('getTime')->willReturn(strtotime('2026-05-21T00:00:00Z'));
+		$this->cacheFactory->method('isLocalCacheAvailable')->willReturn(false);
+		$this->time->method('getTime')->willReturn(strtotime('2026-05-21T00:00:00Z'));
 
-        $this->service = new SlotService(
-            container: $this->container,
-            settings: $this->settings,
-            cacheFactory: $this->cacheFactory,
-            time: $this->time,
-            logger: $this->logger,
-        );
+		$this->service = new SlotService(
+			container: $this->container,
+			settings: $this->settings,
+			cacheFactory: $this->cacheFactory,
+			time: $this->time,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Slots are enumerated across the full operational-hours window when no
-     * conflicting appointments exist.
-     *
-     * @return void
-     */
-    public function testEnumerateAllSlotsWhenWindowEmpty(): void
-    {
-        $slots = $this->service->enumerateSlotsPublic(
-            date: '2026-05-22',
-            openingTime: '09:00',
-            closingTime: '10:00',
-            durationMinutes: 30,
-            existingAppointments: [],
-            allowOverlap: false,
-        );
+	/**
+	 * Slots are enumerated across the full operational-hours window when no
+	 * conflicting appointments exist.
+	 *
+	 * @return void
+	 */
+	public function testEnumerateAllSlotsWhenWindowEmpty(): void {
+		$slots = $this->service->enumerateSlotsPublic(
+			date: '2026-05-22',
+			openingTime: '09:00',
+			closingTime: '10:00',
+			durationMinutes: 30,
+			existingAppointments: [],
+			allowOverlap: false,
+		);
 
-        // 09:00-09:30 and 09:15-09:45 and 09:30-10:00 — three 15-min-stepped slots fit.
-        self::assertCount(3, $slots);
-        self::assertSame('2026-05-22T09:00:00Z', $slots[0]['startTime']);
-        self::assertSame('2026-05-22T09:30:00Z', $slots[0]['endTime']);
-        self::assertSame('2026-05-22T09:30:00Z', $slots[2]['startTime']);
-        self::assertSame('2026-05-22T10:00:00Z', $slots[2]['endTime']);
+		// 09:00-09:30 and 09:15-09:45 and 09:30-10:00 — three 15-min-stepped slots fit.
+		self::assertCount(3, $slots);
+		self::assertSame('2026-05-22T09:00:00Z', $slots[0]['startTime']);
+		self::assertSame('2026-05-22T09:30:00Z', $slots[0]['endTime']);
+		self::assertSame('2026-05-22T09:30:00Z', $slots[2]['startTime']);
+		self::assertSame('2026-05-22T10:00:00Z', $slots[2]['endTime']);
 
-    }//end testEnumerateAllSlotsWhenWindowEmpty()
+	}//end testEnumerateAllSlotsWhenWindowEmpty()
 
-    /**
-     * Slots overlapping an existing appointment are excluded.
-     *
-     * @return void
-     */
-    public function testConflictingSlotsExcluded(): void
-    {
-        $existing = [
-            [
-                'startTime' => '2026-05-22T09:15:00Z',
-                'endTime'   => '2026-05-22T09:45:00Z',
-            ],
-        ];
+	/**
+	 * Slots overlapping an existing appointment are excluded.
+	 *
+	 * @return void
+	 */
+	public function testConflictingSlotsExcluded(): void {
+		$existing = [
+			[
+				'startTime' => '2026-05-22T09:15:00Z',
+				'endTime' => '2026-05-22T09:45:00Z',
+			],
+		];
 
-        $slots = $this->service->enumerateSlotsPublic(
-            date: '2026-05-22',
-            openingTime: '09:00',
-            closingTime: '10:00',
-            durationMinutes: 30,
-            existingAppointments: $existing,
-            allowOverlap: false,
-        );
+		$slots = $this->service->enumerateSlotsPublic(
+			date: '2026-05-22',
+			openingTime: '09:00',
+			closingTime: '10:00',
+			durationMinutes: 30,
+			existingAppointments: $existing,
+			allowOverlap: false,
+		);
 
-        // 09:00-09:30 overlaps (09:15), 09:15-09:45 overlaps, 09:30-10:00 overlaps (09:45).
-        // Only nothing fits — all three candidates conflict.
-        self::assertSame([], $slots);
+		// 09:00-09:30 overlaps (09:15), 09:15-09:45 overlaps, 09:30-10:00 overlaps (09:45).
+		// Only nothing fits — all three candidates conflict.
+		self::assertSame([], $slots);
 
-    }//end testConflictingSlotsExcluded()
+	}//end testConflictingSlotsExcluded()
 
-    /**
-     * allowOverlap=true bypasses the conflict check.
-     *
-     * @return void
-     */
-    public function testAllowOverlapBypassesConflictCheck(): void
-    {
-        $existing = [
-            [
-                'startTime' => '2026-05-22T09:15:00Z',
-                'endTime'   => '2026-05-22T09:45:00Z',
-            ],
-        ];
+	/**
+	 * allowOverlap=true bypasses the conflict check.
+	 *
+	 * @return void
+	 */
+	public function testAllowOverlapBypassesConflictCheck(): void {
+		$existing = [
+			[
+				'startTime' => '2026-05-22T09:15:00Z',
+				'endTime' => '2026-05-22T09:45:00Z',
+			],
+		];
 
-        $slots = $this->service->enumerateSlotsPublic(
-            date: '2026-05-22',
-            openingTime: '09:00',
-            closingTime: '10:00',
-            durationMinutes: 30,
-            existingAppointments: $existing,
-            allowOverlap: true,
-        );
+		$slots = $this->service->enumerateSlotsPublic(
+			date: '2026-05-22',
+			openingTime: '09:00',
+			closingTime: '10:00',
+			durationMinutes: 30,
+			existingAppointments: $existing,
+			allowOverlap: true,
+		);
 
-        self::assertCount(3, $slots);
+		self::assertCount(3, $slots);
 
-    }//end testAllowOverlapBypassesConflictCheck()
+	}//end testAllowOverlapBypassesConflictCheck()
 
-    /**
-     * Slots starting before `now` are excluded.
-     *
-     * @return void
-     */
-    public function testPastSlotsExcluded(): void
-    {
-        // Reset the SUT with a frozen clock on the same day as the slot.
-        $time = $this->createMock(ITimeFactory::class);
-        $time->method('getTime')->willReturn(strtotime('2026-05-22T09:30:00Z'));
-        $service = new SlotService(
-            container: $this->container,
-            settings: $this->settings,
-            cacheFactory: $this->cacheFactory,
-            time: $time,
-            logger: $this->logger,
-        );
+	/**
+	 * Slots starting before `now` are excluded.
+	 *
+	 * @return void
+	 */
+	public function testPastSlotsExcluded(): void {
+		// Reset the SUT with a frozen clock on the same day as the slot.
+		$time = $this->createMock(ITimeFactory::class);
+		$time->method('getTime')->willReturn(strtotime('2026-05-22T09:30:00Z'));
+		$service = new SlotService(
+			container: $this->container,
+			settings: $this->settings,
+			cacheFactory: $this->cacheFactory,
+			time: $time,
+			logger: $this->logger,
+		);
 
-        $slots = $service->enumerateSlotsPublic(
-            date: '2026-05-22',
-            openingTime: '09:00',
-            closingTime: '10:00',
-            durationMinutes: 30,
-            existingAppointments: [],
-            allowOverlap: false,
-        );
+		$slots = $service->enumerateSlotsPublic(
+			date: '2026-05-22',
+			openingTime: '09:00',
+			closingTime: '10:00',
+			durationMinutes: 30,
+			existingAppointments: [],
+			allowOverlap: false,
+		);
 
-        // Only the 09:30-10:00 candidate is still in the future.
-        self::assertCount(1, $slots);
-        self::assertSame('2026-05-22T09:30:00Z', $slots[0]['startTime']);
+		// Only the 09:30-10:00 candidate is still in the future.
+		self::assertCount(1, $slots);
+		self::assertSame('2026-05-22T09:30:00Z', $slots[0]['startTime']);
 
-    }//end testPastSlotsExcluded()
+	}//end testPastSlotsExcluded()
 
-    /**
-     * The opening > closing window is rejected as empty.
-     *
-     * @return void
-     */
-    public function testEmptyWindowReturnsNoSlots(): void
-    {
-        $slots = $this->service->enumerateSlotsPublic(
-            date: '2026-05-22',
-            openingTime: '17:00',
-            closingTime: '09:00',
-            durationMinutes: 30,
-            existingAppointments: [],
-            allowOverlap: false,
-        );
+	/**
+	 * The opening > closing window is rejected as empty.
+	 *
+	 * @return void
+	 */
+	public function testEmptyWindowReturnsNoSlots(): void {
+		$slots = $this->service->enumerateSlotsPublic(
+			date: '2026-05-22',
+			openingTime: '17:00',
+			closingTime: '09:00',
+			durationMinutes: 30,
+			existingAppointments: [],
+			allowOverlap: false,
+		);
 
-        self::assertSame([], $slots);
+		self::assertSame([], $slots);
 
-    }//end testEmptyWindowReturnsNoSlots()
+	}//end testEmptyWindowReturnsNoSlots()
 
-    /**
-     * Duration longer than the window yields no slots.
-     *
-     * @return void
-     */
-    public function testDurationExceedingWindowYieldsNoSlots(): void
-    {
-        $slots = $this->service->enumerateSlotsPublic(
-            date: '2026-05-22',
-            openingTime: '09:00',
-            closingTime: '09:30',
-            durationMinutes: 45,
-            existingAppointments: [],
-            allowOverlap: false,
-        );
+	/**
+	 * Duration longer than the window yields no slots.
+	 *
+	 * @return void
+	 */
+	public function testDurationExceedingWindowYieldsNoSlots(): void {
+		$slots = $this->service->enumerateSlotsPublic(
+			date: '2026-05-22',
+			openingTime: '09:00',
+			closingTime: '09:30',
+			durationMinutes: 45,
+			existingAppointments: [],
+			allowOverlap: false,
+		);
 
-        self::assertSame([], $slots);
+		self::assertSame([], $slots);
 
-    }//end testDurationExceedingWindowYieldsNoSlots()
+	}//end testDurationExceedingWindowYieldsNoSlots()
 
 }//end class

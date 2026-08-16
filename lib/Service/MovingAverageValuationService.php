@@ -50,9 +50,9 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative moving-average engine driving {@see CogsPosterService}.
@@ -64,283 +64,272 @@ use RuntimeException;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
  */
-class MovingAverageValuationService
-{
-    /**
-     * Construct the service.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the OR register slug.
-     * @param LoggerInterface    $logger    Logger for diagnostics; never logs full payloads.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
+class MovingAverageValuationService {
+	/**
+	 * Construct the service.
+	 *
+	 * @param IAppConfig $appConfig App config for the OR register slug.
+	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Process a posted StockMove for an average-valued item.
-     *
-     * Returns a result envelope:
-     * <code>
-     *  [
-     *    'processed'  => bool,            // false on idempotent retry / non-trigger
-     *    'valuation'  => array,           // updated InventoryValuation snapshot
-     *    'cogsCents'  => int,             // COGS amount in integer cents (issue only)
-     *    'message'    => string,
-     *  ]
-     * </code>
-     *
-     * @param array<string,mixed> $move The posted StockMove record.
-     *
-     * @return array<string,mixed> Result envelope.
-     *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
-     */
-    public function processStockMove(array $move): array
-    {
-        $movementType = (string) ($move['movementType'] ?? '');
-        if (in_array($movementType, ['receipt', 'issue'], true) === false) {
-            return [
-                'processed' => false,
-                'message'   => 'movementType '.$movementType.' is not an average trigger',
-            ];
-        }
+	/**
+	 * Process a posted StockMove for an average-valued item.
+	 *
+	 * Returns a result envelope:
+	 * <code>
+	 *  [
+	 *    'processed'  => bool,            // false on idempotent retry / non-trigger
+	 *    'valuation'  => array,           // updated InventoryValuation snapshot
+	 *    'cogsCents'  => int,             // COGS amount in integer cents (issue only)
+	 *    'message'    => string,
+	 *  ]
+	 * </code>
+	 *
+	 * @param array<string,mixed> $move The posted StockMove record.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 *
+	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
+	 */
+	public function processStockMove(array $move): array {
+		$movementType = (string)($move['movementType'] ?? '');
+		if (in_array($movementType, ['receipt', 'issue'], true) === false) {
+			return [
+				'processed' => false,
+				'message' => 'movementType ' . $movementType . ' is not an average trigger',
+			];
+		}
 
-        $productId = (string) ($move['itemId'] ?? '');
-        if ($movementType === 'receipt') {
-            $warehouse = (string) ($move['destinationLocationId'] ?? '');
-        } else {
-            $warehouse = (string) ($move['sourceLocationId'] ?? '');
-        }
+		$productId = (string)($move['itemId'] ?? '');
+		if ($movementType === 'receipt') {
+			$warehouse = (string)($move['destinationLocationId'] ?? '');
+		} else {
+			$warehouse = (string)($move['sourceLocationId'] ?? '');
+		}
 
-        $administrationId = (string) ($move['administrationId'] ?? '');
-        $moveUuid         = (string) ($move['uuid'] ?? ($move['@self']['uuid'] ?? ($move['id'] ?? '')));
+		$administrationId = (string)($move['administrationId'] ?? '');
+		$moveUuid = (string)($move['uuid'] ?? ($move['@self']['uuid'] ?? ($move['id'] ?? '')));
 
-        if ($productId === '' || $warehouse === '' || $administrationId === '' || $moveUuid === '') {
-            return [
-                'processed' => false,
-                'message'   => 'StockMove missing itemId / location / administrationId / uuid',
-            ];
-        }
+		if ($productId === '' || $warehouse === '' || $administrationId === '' || $moveUuid === '') {
+			return [
+				'processed' => false,
+				'message' => 'StockMove missing itemId / location / administrationId / uuid',
+			];
+		}
 
-        $valuation = $this->findOrCreateValuation(
-            productId: $productId,
-            warehouse: $warehouse,
-            administrationId: $administrationId
-        );
+		$valuation = $this->findOrCreateValuation(
+			productId: $productId,
+			warehouse: $warehouse,
+			administrationId: $administrationId
+		);
 
-        if ((string) ($valuation['lastStockMoveUuid'] ?? '') === $moveUuid) {
-            $this->logger->info(
-                'MovingAverageValuationService: idempotent retry — skipping',
-                [
-                    'productId' => $productId,
-                    'warehouse' => $warehouse,
-                    'moveUuid'  => $moveUuid,
-                ]
-            );
-            return [
-                'processed' => false,
-                'valuation' => $valuation,
-                'cogsCents' => 0,
-                'message'   => 'idempotent retry',
-            ];
-        }
+		if ((string)($valuation['lastStockMoveUuid'] ?? '') === $moveUuid) {
+			$this->logger->info(
+				'MovingAverageValuationService: idempotent retry — skipping',
+				[
+					'productId' => $productId,
+					'warehouse' => $warehouse,
+					'moveUuid' => $moveUuid,
+				]
+			);
+			return [
+				'processed' => false,
+				'valuation' => $valuation,
+				'cogsCents' => 0,
+				'message' => 'idempotent retry',
+			];
+		}
 
-        $rcvQty  = (float) ($move['quantity'] ?? 0);
-        $rcvCost = (float) ($move['unitCost'] ?? 0);
-        $curQty  = (float) ($valuation['quantity'] ?? 0);
-        $curCost = (float) ($valuation['unitCost'] ?? 0);
+		$rcvQty = (float)($move['quantity'] ?? 0);
+		$rcvCost = (float)($move['unitCost'] ?? 0);
+		$curQty = (float)($valuation['quantity'] ?? 0);
+		$curCost = (float)($valuation['unitCost'] ?? 0);
 
-        if ($movementType === 'receipt') {
-            $newQty = ($curQty + $rcvQty);
-            // New unitCost = (cur_qty * cur_cost + rcv_qty * rcv_cost) / new_qty,
-            // rounded to 4 dp per design.md D3.
-            $newCost = 0.0;
-            if ($newQty > 0) {
-                $newCost = round(((($curQty * $curCost) + ($rcvQty * $rcvCost)) / $newQty), 4);
-            }
+		if ($movementType === 'receipt') {
+			$newQty = ($curQty + $rcvQty);
+			// New unitCost = (cur_qty * cur_cost + rcv_qty * rcv_cost) / new_qty,
+			// rounded to 4 dp per design.md D3.
+			$newCost = 0.0;
+			if ($newQty > 0) {
+				$newCost = round(((($curQty * $curCost) + ($rcvQty * $rcvCost)) / $newQty), 4);
+			}
 
-            // TotalValue = newQty * newCost rounded to 2 dp via integer cents.
-            $totalCents            = (int) round(($newQty * $newCost) * 100);
-            $valuation['quantity'] = round($newQty, 2);
-            $valuation['unitCost'] = $newCost;
-            $valuation['totalValue'] = round(($totalCents / 100), 2);
-            $valuation['date']       = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-            $valuation['lastStockMoveUuid'] = $moveUuid;
+			// TotalValue = newQty * newCost rounded to 2 dp via integer cents.
+			$totalCents = (int)round(($newQty * $newCost) * 100);
+			$valuation['quantity'] = round($newQty, 2);
+			$valuation['unitCost'] = $newCost;
+			$valuation['totalValue'] = round(($totalCents / 100), 2);
+			$valuation['date'] = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
+			$valuation['lastStockMoveUuid'] = $moveUuid;
 
-            $saved = $this->saveValuation(data: $valuation);
+			$saved = $this->saveValuation(data: $valuation);
 
-            return [
-                'processed' => true,
-                'valuation' => $saved,
-                'cogsCents' => 0,
-                'message'   => 'receipt processed (moving-average recalculated)',
-            ];
-        }//end if
+			return [
+				'processed' => true,
+				'valuation' => $saved,
+				'cogsCents' => 0,
+				'message' => 'receipt processed (moving-average recalculated)',
+			];
+		}//end if
 
-        // Issue: COGS at current unitCost; quantity decremented; cost retained.
-        $cogsCents = (int) round(($rcvQty * $curCost) * 100);
-        $newQty    = ($curQty - $rcvQty);
-        if ($newQty < 0) {
-            $this->logger->warning(
-                'MovingAverageValuationService: outbound exceeds current quantity — clamped to zero',
-                [
-                    'productId'   => $productId,
-                    'warehouse'   => $warehouse,
-                    'curQty'      => $curQty,
-                    'outboundQty' => $rcvQty,
-                ]
-            );
-            $newQty = 0.0;
-        }
+		// Issue: COGS at current unitCost; quantity decremented; cost retained.
+		$cogsCents = (int)round(($rcvQty * $curCost) * 100);
+		$newQty = ($curQty - $rcvQty);
+		if ($newQty < 0) {
+			$this->logger->warning(
+				'MovingAverageValuationService: outbound exceeds current quantity — clamped to zero',
+				[
+					'productId' => $productId,
+					'warehouse' => $warehouse,
+					'curQty' => $curQty,
+					'outboundQty' => $rcvQty,
+				]
+			);
+			$newQty = 0.0;
+		}
 
-        $totalCents            = (int) round(($newQty * $curCost) * 100);
-        $valuation['quantity'] = round($newQty, 2);
-        $valuation['unitCost'] = $curCost;
-        $valuation['totalValue'] = round(($totalCents / 100), 2);
-        $valuation['date']       = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-        $valuation['lastStockMoveUuid'] = $moveUuid;
+		$totalCents = (int)round(($newQty * $curCost) * 100);
+		$valuation['quantity'] = round($newQty, 2);
+		$valuation['unitCost'] = $curCost;
+		$valuation['totalValue'] = round(($totalCents / 100), 2);
+		$valuation['date'] = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
+		$valuation['lastStockMoveUuid'] = $moveUuid;
 
-        $saved = $this->saveValuation(data: $valuation);
+		$saved = $this->saveValuation(data: $valuation);
 
-        return [
-            'processed' => true,
-            'valuation' => $saved,
-            'cogsCents' => $cogsCents,
-            'message'   => 'issue processed (COGS at current average)',
-        ];
+		return [
+			'processed' => true,
+			'valuation' => $saved,
+			'cogsCents' => $cogsCents,
+			'message' => 'issue processed (COGS at current average)',
+		];
 
-    }//end processStockMove()
+	}//end processStockMove()
 
-    /**
-     * Locate the active InventoryValuation snapshot for the tuple, or
-     * create one on the fly (average method, status=active).
-     *
-     * @param string $productId        Product id.
-     * @param string $warehouse        Warehouse location id.
-     * @param string $administrationId Tenant scope.
-     *
-     * @return array<string,mixed> The snapshot record.
-     */
-    private function findOrCreateValuation(
-        string $productId,
-        string $warehouse,
-        string $administrationId
-    ): array {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $existing      = $objectService
-            ->setRegister($this->register())
-            ->setSchema('InventoryValuation')
-            ->findAll(
-                [
-                    'filters' => [
-                        'productId'        => $productId,
-                        'warehouse'        => $warehouse,
-                        'status'           => 'active',
-                        'administrationId' => $administrationId,
-                    ],
-                    'limit'   => 1,
-                ]
-            );
+	/**
+	 * Locate the active InventoryValuation snapshot for the tuple, or
+	 * create one on the fly (average method, status=active).
+	 *
+	 * @param string $productId Product id.
+	 * @param string $warehouse Warehouse location id.
+	 * @param string $administrationId Tenant scope.
+	 *
+	 * @return array<string,mixed> The snapshot record.
+	 */
+	private function findOrCreateValuation(
+		string $productId,
+		string $warehouse,
+		string $administrationId,
+	): array {
+		$existing = $this->objectService
+			->setRegister($this->register())
+			->setSchema('InventoryValuation')
+			->findAll(
+				[
+					'filters' => [
+						'productId' => $productId,
+						'warehouse' => $warehouse,
+						'status' => 'active',
+						'administrationId' => $administrationId,
+					],
+					'limit' => 1,
+				]
+			);
 
-        if (is_array($existing) === false) {
-            $existing = [];
-        }
+		if (is_array($existing) === false) {
+			$existing = [];
+		}
 
-        if (count($existing) > 0) {
-            return $this->asArray(row: $existing[0]);
-        }
+		if (count($existing) > 0) {
+			return $this->asArray(row: $existing[0]);
+		}
 
-        return [
-            'productId'        => $productId,
-            'warehouse'        => $warehouse,
-            'quantity'         => 0.0,
-            'unitCost'         => 0.0,
-            'totalValue'       => 0.0,
-            'valuationMethod'  => 'average',
-            'date'             => '',
-            'status'           => 'active',
-            'administrationId' => $administrationId,
-            'pendingCogs'      => false,
-        ];
+		return [
+			'productId' => $productId,
+			'warehouse' => $warehouse,
+			'quantity' => 0.0,
+			'unitCost' => 0.0,
+			'totalValue' => 0.0,
+			'valuationMethod' => 'average',
+			'date' => '',
+			'status' => 'active',
+			'administrationId' => $administrationId,
+			'pendingCogs' => false,
+		];
 
-    }//end findOrCreateValuation()
+	}//end findOrCreateValuation()
 
-    /**
-     * Persist the snapshot via OR's ObjectService.
-     *
-     * @param array<string,mixed> $data The snapshot data.
-     *
-     * @return array<string,mixed> Persisted snapshot (with id).
-     */
-    private function saveValuation(array $data): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $saved         = $objectService
-            ->setRegister($this->register())
-            ->setSchema('InventoryValuation')
-            ->saveObject($data);
+	/**
+	 * Persist the snapshot via OR's ObjectService.
+	 *
+	 * @param array<string,mixed> $data The snapshot data.
+	 *
+	 * @return array<string,mixed> Persisted snapshot (with id).
+	 */
+	private function saveValuation(array $data): array {
+		$saved = $this->objectService
+			->setRegister($this->register())
+			->setSchema('InventoryValuation')
+			->saveObject($data);
 
-        if (is_array($saved) === false) {
-            return $this->asArray(row: $saved);
-        }
+		if (is_array($saved) === false) {
+			return $this->asArray(row: $saved);
+		}
 
-        return $saved;
+		return $saved;
+	}//end saveValuation()
 
-    }//end saveValuation()
+	/**
+	 * Normalise an OR Object / array to a plain array<string,mixed>.
+	 *
+	 * @param mixed $row Raw row from ObjectService.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
 
-    /**
-     * Normalise an OR Object / array to a plain array<string,mixed>.
-     *
-     * @param mixed $row Raw row from ObjectService.
-     *
-     * @return array<string,mixed>
-     */
-    private function asArray(mixed $row): array
-    {
-        if (is_array($row) === true) {
-            return $row;
-        }
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-            $out = $row->jsonSerialize();
-            if (is_array($out) === true) {
-                return $out;
-            }
+			return [];
+		}
 
-            return [];
-        }
+		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+			$out = $row->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-            $out = $row->getObject();
-            if (is_array($out) === true) {
-                return $out;
-            }
+			return [];
+		}
 
-            return [];
-        }
+		throw new RuntimeException('MovingAverageValuationService: unsupported row type from ObjectService');
+	}//end asArray()
 
-        throw new RuntimeException('MovingAverageValuationService: unsupported row type from ObjectService');
+	/**
+	 * Resolve the OR register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    }//end asArray()
-
-    /**
-     * Resolve the OR register slug, defaulting to 'shillinq'.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

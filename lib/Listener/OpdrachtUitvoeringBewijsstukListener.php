@@ -20,7 +20,7 @@
  *   - On CREATE, OpenRegister's LifecycleInitialStateListener only seeds the
  *     declared `initialState` when the caller left the lifecycle field empty
  *     ("Caller already set a value — leave it alone"). A client that POSTs
- *     `{"status": "completed", "bewijsstukken": []}` is therefore persisted
+ *     `{"status": "completed", "supportingDocuments": []}` is therefore persisted
  *     exactly as sent — born in the terminal state, with the transition and
  *     its guard never involved.
  *   - On UPDATE, a PUT that rewrites `status` to `completed` bypasses the
@@ -77,121 +77,119 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
-class OpdrachtUitvoeringBewijsstukListener implements IEventListener
-{
+class OpdrachtUitvoeringBewijsstukListener implements IEventListener {
 
-    /**
-     * Schema slug this guard is scoped to.
-     *
-     * @var string
-     */
-    private const SCHEMA_SLUG = 'OpdrachtUitvoering';
+	/**
+	 * Schema slug this guard is scoped to.
+	 *
+	 * @var string
+	 */
+	private const SCHEMA_SLUG = 'OpdrachtUitvoering';
 
-    /**
-     * The lifecycle field on the OpdrachtUitvoering schema.
-     *
-     * @var string
-     */
-    private const STATUS_FIELD = 'status';
+	/**
+	 * The lifecycle field on the OpdrachtUitvoering schema.
+	 *
+	 * @var string
+	 */
+	private const STATUS_FIELD = 'status';
 
-    /**
-     * The terminal state the bewijsstuk gate protects.
-     *
-     * @var string
-     */
-    private const COMPLETED_STATE = 'completed';
+	/**
+	 * The terminal state the bewijsstuk gate protects.
+	 *
+	 * @var string
+	 */
+	private const COMPLETED_STATE = 'completed';
 
-    /**
-     * User-facing denial message (REQ-004).
-     *
-     * Public because the declarative `voltooien` transition guard registered in
-     * Application::register() must deny with the SAME wording — the two paths
-     * enforce one rule and a caller should not be able to tell them apart.
-     *
-     * @var string
-     */
-    public const DENY_MESSAGE = 'An OpdrachtUitvoering can only be completed when at least one bewijsstuk '
-        .'(proof of delivery) with a documentId is attached (REQ-004).';
+	/**
+	 * User-facing denial message (REQ-004).
+	 *
+	 * Public because the declarative `voltooien` transition guard registered in
+	 * Application::register() must deny with the SAME wording — the two paths
+	 * enforce one rule and a caller should not be able to tell them apart.
+	 *
+	 * @var string
+	 */
+	public const DENY_MESSAGE = 'An OpdrachtUitvoering can only be completed when at least one bewijsstuk '
+		. '(proof of delivery) with a documentId is attached (REQ-004).';
 
-    /**
-     * Constructor.
-     *
-     * @param OpdrachtUitvoeringGuard $guard          The REQ-004 precondition guard (single source of truth).
-     * @param ListenerSchemaResolver  $schemaResolver Resolves the entity's schema to its slug.
-     * @param LoggerInterface         $logger         Logger for guard diagnostics.
-     */
-    public function __construct(
-        private readonly OpdrachtUitvoeringGuard $guard,
-        private readonly ListenerSchemaResolver $schemaResolver,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param OpdrachtUitvoeringGuard $guard The REQ-004 precondition guard (single source of truth).
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema to its slug.
+	 * @param LoggerInterface $logger Logger for guard diagnostics.
+	 */
+	public function __construct(
+		private readonly OpdrachtUitvoeringGuard $guard,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Veto a create/update that would persist `status: completed` without a bewijsstuk.
-     *
-     * @param Event $event The OpenRegister pre-save event.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        $entity = null;
-        if ($event instanceof ObjectCreatingEvent === true) {
-            $entity = $event->getObject();
-        }
+	/**
+	 * Veto a create/update that would persist `status: completed` without a bewijsstuk.
+	 *
+	 * @param Event $event The OpenRegister pre-save event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function handle(Event $event): void {
+		$entity = null;
+		if ($event instanceof ObjectCreatingEvent === true) {
+			$entity = $event->getObject();
+		}
 
-        if ($event instanceof ObjectUpdatingEvent === true) {
-            $entity = $event->getNewObject();
-        }
+		if ($event instanceof ObjectUpdatingEvent === true) {
+			$entity = $event->getNewObject();
+		}
 
-        if ($entity === null) {
-            return;
-        }
+		if ($entity === null) {
+			return;
+		}
 
-        if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
-            return;
-        }
+		if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
+			return;
+		}
 
-        $data = [];
-        if (method_exists($entity, 'getObject') === true) {
-            $data = ($entity->getObject() ?? []);
-        }
+		$data = [];
+		if (method_exists($entity, 'getObject') === true) {
+			$data = ($entity->getObject() ?? []);
+		}
 
-        if (is_array($data) === false) {
-            $data = [];
-        }
+		if (is_array($data) === false) {
+			$data = [];
+		}
 
-        // Only the completed state is gated — an in-progress or cancelled
-        // delivery may be written freely, with or without bewijsstukken.
-        $status = strtolower(trim((string) ($data[self::STATUS_FIELD] ?? '')));
-        if ($status !== self::COMPLETED_STATE) {
-            return;
-        }
+		// Only the completed state is gated — an in-progress or cancelled
+		// delivery may be written freely, with or without bewijsstukken.
+		$status = strtolower(trim((string)($data[self::STATUS_FIELD] ?? '')));
+		if ($status !== self::COMPLETED_STATE) {
+			return;
+		}
 
-        if ($this->guard->canVoltooien(opdracht: $data) === true) {
-            return;
-        }
+		if ($this->guard->canVoltooien(assignment: $data) === true) {
+			return;
+		}
 
-        $this->logger->warning(
-            'Shillinq: refused an OpdrachtUitvoering write into `completed` without a bewijsstuk (REQ-004)',
-            [
-                'verplichtingId' => ($data['verplichtingId'] ?? 'unknown'),
-                'mijlpaalId'     => ($data['mijlpaalId'] ?? 'unknown'),
-            ]
-        );
+		$this->logger->warning(
+			'Shillinq: refused an OpdrachtUitvoering write into `completed` without a bewijsstuk (REQ-004)',
+			[
+				'commitmentId' => ($data['commitmentId'] ?? 'unknown'),
+				'milestoneId' => ($data['milestoneId'] ?? 'unknown'),
+			]
+		);
 
-        $event->setErrors(
-            [
-                'message'        => self::DENY_MESSAGE,
-                'field'          => 'bewijsstukken',
-                'requirement'    => 'REQ-004',
-                'attemptedState' => self::COMPLETED_STATE,
-            ]
-        );
-        $event->stopPropagation();
+		$event->setErrors(
+			[
+				'message' => self::DENY_MESSAGE,
+				'field' => 'supportingDocuments',
+				'requirement' => 'REQ-004',
+				'attemptedState' => self::COMPLETED_STATE,
+			]
+		);
+		$event->stopPropagation();
 
-    }//end handle()
+	}//end handle()
 }//end class

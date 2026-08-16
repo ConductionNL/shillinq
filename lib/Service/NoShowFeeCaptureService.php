@@ -53,209 +53,205 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class NoShowFeeCaptureService
-{
+class NoShowFeeCaptureService {
 
-    /**
-     * No fee defined / nothing to capture.
-     *
-     * @var string
-     */
-    public const STATUS_NONE = 'none';
+	/**
+	 * No fee defined / nothing to capture.
+	 *
+	 * @var string
+	 */
+	public const STATUS_NONE = 'none';
 
-    /**
-     * Fee captured through the provider.
-     *
-     * @var string
-     */
-    public const STATUS_CAPTURED = 'captured';
+	/**
+	 * Fee captured through the provider.
+	 *
+	 * @var string
+	 */
+	public const STATUS_CAPTURED = 'captured';
 
-    /**
-     * Capture attempt failed and needs operator attention.
-     *
-     * @var string
-     */
-    public const STATUS_FAILED = 'failed';
+	/**
+	 * Capture attempt failed and needs operator attention.
+	 *
+	 * @var string
+	 */
+	public const STATUS_FAILED = 'failed';
 
-    /**
-     * Construct the service.
-     *
-     * @param DepositPaymentAdapterInterface $adapter Payment-provider lifecycle
-     *                                                adapter (dormant log-only
-     *                                                default; production binding
-     *                                                delegates to Mollie/Stripe).
-     * @param LoggerInterface                $logger  Structured logger for the
-     *                                                audit trail.
-     */
-    public function __construct(
-        private readonly DepositPaymentAdapterInterface $adapter,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the service.
+	 *
+	 * @param DepositPaymentAdapterInterface $adapter Payment-provider lifecycle
+	 *                                                adapter (dormant log-only
+	 *                                                default; production binding
+	 *                                                delegates to Mollie/Stripe).
+	 * @param LoggerInterface $logger Structured logger for the
+	 *                                audit trail.
+	 */
+	public function __construct(
+		private readonly DepositPaymentAdapterInterface $adapter,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the no-show fee (in integer cents) for an appointment.
-     *
-     * The fee is `round(appointmentCost * noShowFee / 100)` where `noShowFee`
-     * is the 0-100 percentage snapshotted onto `appliedPolicy` at appointment
-     * creation (bookings-cancellation-rules design D2). The percentage is
-     * clamped to 0-100 and the fee is clamped to the appointment cost. Returns
-     * 0 when no cost, no policy, or a zero no-show fee is defined — the signal
-     * the caller uses to skip the charge entirely (design D1).
-     *
-     * @param array<string, mixed> $appointment Appointment array carrying
-     *                                          `appointmentCost` (int cents) and
-     *                                          `appliedPolicy.noShowFee`.
-     *
-     * @return int Fee in integer cents (0 <= fee <= appointmentCost).
-     *
-     * @spec openspec/specs/bookings-cancellation-rules/spec.md
-     */
-    public function computeNoShowFeeCents(array $appointment): int
-    {
-        $cost = (int) ($appointment['appointmentCost'] ?? 0);
-        if ($cost <= 0) {
-            return 0;
-        }
+	/**
+	 * Compute the no-show fee (in integer cents) for an appointment.
+	 *
+	 * The fee is `round(appointmentCost * noShowFee / 100)` where `noShowFee`
+	 * is the 0-100 percentage snapshotted onto `appliedPolicy` at appointment
+	 * creation (bookings-cancellation-rules design D2). The percentage is
+	 * clamped to 0-100 and the fee is clamped to the appointment cost. Returns
+	 * 0 when no cost, no policy, or a zero no-show fee is defined — the signal
+	 * the caller uses to skip the charge entirely (design D1).
+	 *
+	 * @param array<string, mixed> $appointment Appointment array carrying
+	 *                                          `appointmentCost` (int cents) and
+	 *                                          `appliedPolicy.noShowFee`.
+	 *
+	 * @return int Fee in integer cents (0 <= fee <= appointmentCost).
+	 *
+	 * @spec openspec/specs/bookings-cancellation-rules/spec.md
+	 */
+	public function computeNoShowFeeCents(array $appointment): int {
+		$cost = (int)($appointment['appointmentCost'] ?? 0);
+		if ($cost <= 0) {
+			return 0;
+		}
 
-        $policy  = ($appointment['appliedPolicy'] ?? []);
-        $percent = 0;
-        if (is_array($policy) === true) {
-            $percent = (int) ($policy['noShowFee'] ?? 0);
-        }
+		$policy = ($appointment['appliedPolicy'] ?? []);
+		$percent = 0;
+		if (is_array($policy) === true) {
+			$percent = (int)($policy['noShowFee'] ?? 0);
+		}
 
-        if ($percent <= 0) {
-            return 0;
-        }
+		if ($percent <= 0) {
+			return 0;
+		}
 
-        if ($percent > 100) {
-            $percent = 100;
-        }
+		if ($percent > 100) {
+			$percent = 100;
+		}
 
-        $fee = (int) round(($cost * $percent) / 100);
-        if ($fee > $cost) {
-            $fee = $cost;
-        }
+		$fee = (int)round(($cost * $percent) / 100);
+		if ($fee > $cost) {
+			$fee = $cost;
+		}
 
-        return $fee;
+		return $fee;
+	}//end computeNoShowFeeCents()
 
-    }//end computeNoShowFeeCents()
+	/**
+	 * Capture the no-show fee for an appointment through the provider rails and
+	 * return the mutated appointment array.
+	 *
+	 * Behaviour:
+	 *  - If no fee is defined ({@see computeNoShowFeeCents()} returns 0) the
+	 *    method is a no-op: it stamps `noShowFeeStatus = none`, dispatches NO
+	 *    provider call, and returns the appointment unchanged otherwise
+	 *    (design D1 — a booking without a defined fee is not charged).
+	 *  - If a fee is defined and the appointment carries an authorized
+	 *    DepositPayment intent (`depositPaymentIntentId`), the fee is CAPTURED
+	 *    against that existing authorization (capture-later rail).
+	 *  - Otherwise a fresh charge is opened for the fee amount via
+	 *    `requestPayment` (authorise-now rail, e.g. a card-on-file charge).
+	 *
+	 * The input is NOT mutated in place (returns a new array) so callers can
+	 * diff before/after for the audit trail. A dormant adapter still advances
+	 * the bookkeeping to `captured` with the synthetic intent id so the flow
+	 * stays observable until a production PSP binding is wired.
+	 *
+	 * @param array<string, mixed> $appointment Appointment array (must carry
+	 *                                          `appointmentId`,
+	 *                                          `appointmentCost`,
+	 *                                          `appliedPolicy`; MAY carry
+	 *                                          `administrationId`,
+	 *                                          `currency`,
+	 *                                          `depositPaymentIntentId`).
+	 * @param DateTimeImmutable|null $capturedAt Capture instant; defaults to
+	 *                                           now (UTC).
+	 *
+	 * @return array{appointment: array<string, mixed>, feeCents: int, charged: bool, result: DepositPaymentResult|null}
+	 *
+	 * @spec openspec/specs/bookings-cancellation-rules/spec.md
+	 */
+	public function captureNoShowFee(array $appointment, ?DateTimeImmutable $capturedAt = null): array {
+		$feeCents = $this->computeNoShowFeeCents(appointment: $appointment);
 
-    /**
-     * Capture the no-show fee for an appointment through the provider rails and
-     * return the mutated appointment array.
-     *
-     * Behaviour:
-     *  - If no fee is defined ({@see computeNoShowFeeCents()} returns 0) the
-     *    method is a no-op: it stamps `noShowFeeStatus = none`, dispatches NO
-     *    provider call, and returns the appointment unchanged otherwise
-     *    (design D1 — a booking without a defined fee is not charged).
-     *  - If a fee is defined and the appointment carries an authorized
-     *    DepositPayment intent (`depositPaymentIntentId`), the fee is CAPTURED
-     *    against that existing authorization (capture-later rail).
-     *  - Otherwise a fresh charge is opened for the fee amount via
-     *    `requestPayment` (authorise-now rail, e.g. a card-on-file charge).
-     *
-     * The input is NOT mutated in place (returns a new array) so callers can
-     * diff before/after for the audit trail. A dormant adapter still advances
-     * the bookkeeping to `captured` with the synthetic intent id so the flow
-     * stays observable until a production PSP binding is wired.
-     *
-     * @param array<string, mixed>   $appointment Appointment array (must carry
-     *                                            `appointmentId`,
-     *                                            `appointmentCost`,
-     *                                            `appliedPolicy`; MAY carry
-     *                                            `administrationId`,
-     *                                            `currency`,
-     *                                            `depositPaymentIntentId`).
-     * @param DateTimeImmutable|null $capturedAt  Capture instant; defaults to
-     *                                            now (UTC).
-     *
-     * @return array{appointment: array<string, mixed>, feeCents: int, charged: bool, result: DepositPaymentResult|null}
-     *
-     * @spec openspec/specs/bookings-cancellation-rules/spec.md
-     */
-    public function captureNoShowFee(array $appointment, ?DateTimeImmutable $capturedAt=null): array
-    {
-        $feeCents = $this->computeNoShowFeeCents(appointment: $appointment);
+		if ($feeCents <= 0) {
+			$appointment['noShowFeeAmount'] = 0;
+			$appointment['noShowFeeStatus'] = self::STATUS_NONE;
+			$this->logger->info(
+				'Shillinq: no-show recorded but no fee defined — no charge dispatched',
+				['appointmentId' => (string)($appointment['appointmentId'] ?? '')]
+			);
 
-        if ($feeCents <= 0) {
-            $appointment['noShowFeeAmount'] = 0;
-            $appointment['noShowFeeStatus'] = self::STATUS_NONE;
-            $this->logger->info(
-                'Shillinq: no-show recorded but no fee defined — no charge dispatched',
-                ['appointmentId' => (string) ($appointment['appointmentId'] ?? '')]
-            );
+			return [
+				'appointment' => $appointment,
+				'feeCents' => 0,
+				'charged' => false,
+				'result' => null,
+			];
+		}
 
-            return [
-                'appointment' => $appointment,
-                'feeCents'    => 0,
-                'charged'     => false,
-                'result'      => null,
-            ];
-        }
+		$capturedAt = ($capturedAt ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
+		$currency = (string)($appointment['currency'] ?? 'EUR');
+		$intentId = (string)($appointment['depositPaymentIntentId'] ?? '');
+		$meta = [
+			'appointmentId' => (string)($appointment['appointmentId'] ?? ''),
+			'administrationId' => (string)($appointment['administrationId'] ?? ''),
+			'correlationId' => 'noshow-' . ((string)($appointment['appointmentId'] ?? 'unknown')),
+		];
 
-        $capturedAt = ($capturedAt ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-        $currency   = (string) ($appointment['currency'] ?? 'EUR');
-        $intentId   = (string) ($appointment['depositPaymentIntentId'] ?? '');
-        $meta       = [
-            'appointmentId'    => (string) ($appointment['appointmentId'] ?? ''),
-            'administrationId' => (string) ($appointment['administrationId'] ?? ''),
-            'correlationId'    => 'noshow-'.((string) ($appointment['appointmentId'] ?? 'unknown')),
-        ];
+		if ($intentId !== '') {
+			// Capture-later rail: capture the no-show fee against the existing
+			// authorization / card hold.
+			$result = $this->adapter->capturePayment(
+				$intentId,
+				[
+					'amount' => ['value' => $feeCents, 'currency' => $currency],
+					'reason' => 'noShowFee',
+					'metadata' => $meta,
+				]
+			);
+		} else {
+			// Authorise-now rail: open a fresh charge for the fee amount.
+			$result = $this->adapter->requestPayment(
+				[
+					'amount' => ['value' => $feeCents, 'currency' => $currency],
+					'description' => 'No-show fee',
+					'methodHint' => 'creditcard',
+					'metadata' => $meta,
+				]
+			);
+		}//end if
 
-        if ($intentId !== '') {
-            // Capture-later rail: capture the no-show fee against the existing
-            // authorization / card hold.
-            $result = $this->adapter->capturePayment(
-                $intentId,
-                [
-                    'amount'   => ['value' => $feeCents, 'currency' => $currency],
-                    'reason'   => 'noShowFee',
-                    'metadata' => $meta,
-                ]
-            );
-        } else {
-            // Authorise-now rail: open a fresh charge for the fee amount.
-            $result = $this->adapter->requestPayment(
-                [
-                    'amount'      => ['value' => $feeCents, 'currency' => $currency],
-                    'description' => 'No-show fee',
-                    'methodHint'  => 'creditcard',
-                    'metadata'    => $meta,
-                ]
-            );
-        }//end if
+		$ok = in_array($result->lifecycleState, ['captured', 'authorized', 'pending'], true);
+		$status = self::STATUS_FAILED;
+		if ($ok === true) {
+			$status = self::STATUS_CAPTURED;
+		}
 
-        $ok     = in_array($result->lifecycleState, ['captured', 'authorized', 'pending'], true);
-        $status = self::STATUS_FAILED;
-        if ($ok === true) {
-            $status = self::STATUS_CAPTURED;
-        }
+		$appointment['noShowFeeAmount'] = $feeCents;
+		$appointment['noShowFeeStatus'] = $status;
+		$appointment['noShowFeePaymentIntentId'] = $result->paymentIntentId;
+		$appointment['noShowFeeCapturedAt'] = $capturedAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
-        $appointment['noShowFeeAmount']          = $feeCents;
-        $appointment['noShowFeeStatus']          = $status;
-        $appointment['noShowFeePaymentIntentId'] = $result->paymentIntentId;
-        $appointment['noShowFeeCapturedAt']      = $capturedAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
+		$this->logger->info(
+			'Shillinq: no-show fee captured via payment provider',
+			[
+				'appointmentId' => $meta['appointmentId'],
+				'feeCents' => $feeCents,
+				'gateway' => $result->gateway,
+				'lifecycleState' => $result->lifecycleState,
+				'dormant' => $result->dormant,
+				'paymentIntentId' => $result->paymentIntentId,
+			]
+		);
 
-        $this->logger->info(
-            'Shillinq: no-show fee captured via payment provider',
-            [
-                'appointmentId'   => $meta['appointmentId'],
-                'feeCents'        => $feeCents,
-                'gateway'         => $result->gateway,
-                'lifecycleState'  => $result->lifecycleState,
-                'dormant'         => $result->dormant,
-                'paymentIntentId' => $result->paymentIntentId,
-            ]
-        );
+		return [
+			'appointment' => $appointment,
+			'feeCents' => $feeCents,
+			'charged' => true,
+			'result' => $result,
+		];
 
-        return [
-            'appointment' => $appointment,
-            'feeCents'    => $feeCents,
-            'charged'     => true,
-            'result'      => $result,
-        ];
-
-    }//end captureNoShowFee()
+	}//end captureNoShowFee()
 }//end class

@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use JsonSerializable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BadoControleprotocolCalculator;
 use OCA\Shillinq\Service\BadoControleprotocolService;
 use OCP\IAppConfig;
@@ -50,252 +51,237 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class BadoControleprotocolTenantTest extends TestCase
-{
+final class BadoControleprotocolTenantTest extends TestCase {
 
-    /**
-     * Mock container.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock container.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock app config.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock app config.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Service under test.
-     *
-     * @var BadoControleprotocolService
-     */
-    private BadoControleprotocolService $service;
+	/**
+	 * Service under test.
+	 *
+	 * @var BadoControleprotocolService
+	 */
+	private BadoControleprotocolService $service;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->service = new BadoControleprotocolService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            calculator: $this->createMock(BadoControleprotocolCalculator::class),
-            logger: new NullLogger(),
-        );
+		$this->service = new BadoControleprotocolService(
+			appConfig: $this->appConfig,
+			calculator: $this->createMock(BadoControleprotocolCalculator::class),
+			logger: new NullLogger(),
+			objectService: $this->createMock(ObjectServiceInterface::class),
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build an ObjectService double that mirrors ObjectService::find().
-     *
-     * The real signature is
-     * `find(int|string $id, ?array $_extend = [], bool $files = false,
-     *       Register|string|int|null $register = null,
-     *       Schema|string|int|null $schema = null, ...): ?ObjectEntity`.
-     * The parameter NAMES are reproduced because the caller passes them by
-     * name; a double that renamed them would accept a call the real service
-     * rejects with "Unknown named parameter".
-     *
-     * @param mixed $result What find() returns.
-     *
-     * @return object
-     */
-    private function fakeObjectService(mixed $result): object
-    {
-        return new class($result)
-        {
+	/**
+	 * Build an ObjectService double that mirrors ObjectService::find().
+	 *
+	 * The real signature is
+	 * `find(int|string $id, ?array $_extend = [], bool $files = false,
+	 *       Register|string|int|null $register = null,
+	 *       Schema|string|int|null $schema = null, ...): ?ObjectEntity`.
+	 * The parameter NAMES are reproduced because the caller passes them by
+	 * name; a double that renamed them would accept a call the real service
+	 * rejects with "Unknown named parameter".
+	 *
+	 * @param mixed $result What find() returns.
+	 *
+	 * @return object
+	 */
+	private function fakeObjectService(mixed $result): object {
+		return new class($result) {
+			/**
+			 * What find() returns.
+			 *
+			 * @var mixed
+			 */
+			private mixed $result;
 
-            /**
-             * What find() returns.
-             *
-             * @var mixed
-             */
-            private mixed $result;
+			/**
+			 * The arguments find() was called with.
+			 *
+			 * @var array<string,mixed>
+			 */
+			public array $seenFind = [];
 
-            /**
-             * The arguments find() was called with.
-             *
-             * @var array<string,mixed>
-             */
-            public array $seenFind = [];
+			/**
+			 * Constructor.
+			 *
+			 * @param mixed $result What find() returns.
+			 */
+			public function __construct(mixed $result) {
+				$this->result = $result;
+			}//end __construct()
 
-            /**
-             * Constructor.
-             *
-             * @param mixed $result What find() returns.
-             */
-            public function __construct(mixed $result)
-            {
-                $this->result = $result;
-            }//end __construct()
+			/**
+			 * Identity lookup (mirrors ObjectService::find).
+			 *
+			 * @param int|string $id Object identity.
+			 * @param array|null $_extend Properties to extend.
+			 * @param bool $files Whether to include files.
+			 * @param string|null $register Register slug.
+			 * @param string|null $schema Schema slug.
+			 *
+			 * @return mixed
+			 */
+			public function find(
+				int|string $id,
+				?array $_extend = [],
+				bool $files = false,
+				?string $register = null,
+				?string $schema = null,
+			): mixed {
+				$this->seenFind = [
+					'id' => $id,
+					'register' => $register,
+					'schema' => $schema,
+				];
 
-            /**
-             * Identity lookup (mirrors ObjectService::find).
-             *
-             * @param int|string  $id       Object identity.
-             * @param array|null  $_extend  Properties to extend.
-             * @param bool        $files    Whether to include files.
-             * @param string|null $register Register slug.
-             * @param string|null $schema   Schema slug.
-             *
-             * @return mixed
-             */
-            public function find(
-                int | string $id,
-                ?array $_extend=[],
-                bool $files=false,
-                string | null $register=null,
-                string | null $schema=null
-            ): mixed {
-                $this->seenFind = [
-                    'id'       => $id,
-                    'register' => $register,
-                    'schema'   => $schema,
-                ];
+				return $this->result;
+			}//end find()
 
-                return $this->result;
-            }//end find()
+			/**
+			 * Present so a regression onto the broken lookup fails loudly
+			 * instead of silently returning null, the way it does live.
+			 *
+			 * @param array<string,mixed> $config Query configuration.
+			 *
+			 * @return array<int,mixed>
+			 */
+			public function findAll(array $config = []): array {
+				throw new \LogicException(
+					'organisationIdFor() must address the protocol by identity: '
+					. "findAll(['filters' => ['id' => ...]]) cannot match a bigint @self.id."
+				);
+			}//end findAll()
 
-            /**
-             * Present so a regression onto the broken lookup fails loudly
-             * instead of silently returning null, the way it does live.
-             *
-             * @param array<string,mixed> $config Query configuration.
-             *
-             * @return array<int,mixed>
-             */
-            public function findAll(array $config=[]): array
-            {
-                throw new \LogicException(
-                    'organisationIdFor() must address the protocol by identity: '
-                    ."findAll(['filters' => ['id' => ...]]) cannot match a bigint @self.id."
-                );
-            }//end findAll()
+			/**
+			 * Fluent register setter (mirrors ObjectService::setRegister).
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter (mirrors ObjectService::setRegister).
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent schema setter (mirrors ObjectService::setSchema).
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+		};
 
-            /**
-             * Fluent schema setter (mirrors ObjectService::setSchema).
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
-        };
+	}//end fakeObjectService()
 
-    }//end fakeObjectService()
+	/**
+	 * An empty protocol id resolves to null without touching the data layer.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+	 */
+	public function testAnEmptyProtocolIdResolvesToNull(): void {
+		$this->container->expects($this->never())->method('get');
 
-    /**
-     * An empty protocol id resolves to null without touching the data layer.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
-     */
-    public function testAnEmptyProtocolIdResolvesToNull(): void
-    {
-        $this->container->expects($this->never())->method('get');
+		self::assertNull($this->service->organisationIdFor(protocolId: ''));
 
-        self::assertNull($this->service->organisationIdFor(protocolId: ''));
+	}//end testAnEmptyProtocolIdResolvesToNull()
 
-    }//end testAnEmptyProtocolIdResolvesToNull()
+	/**
+	 * A protocol that does not exist resolves to null, and the lookup addresses
+	 * the object by identity with the configured register and schema.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+	 */
+	public function testAnAbsentProtocolResolvesToNull(): void {
+		$stub = $this->fakeObjectService(null);
+		$this->container->method('get')->willReturn($stub);
 
-    /**
-     * A protocol that does not exist resolves to null, and the lookup addresses
-     * the object by identity with the configured register and schema.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
-     */
-    public function testAnAbsentProtocolResolvesToNull(): void
-    {
-        $stub = $this->fakeObjectService(null);
-        $this->container->method('get')->willReturn($stub);
+		self::assertNull($this->service->organisationIdFor(protocolId: 'proto-1'));
+		self::assertSame(
+			['id' => 'proto-1', 'register' => 'shillinq', 'schema' => 'Controleprotocol'],
+			$stub->seenFind
+		);
 
-        self::assertNull($this->service->organisationIdFor(protocolId: 'proto-1'));
-        self::assertSame(
-            ['id' => 'proto-1', 'register' => 'shillinq', 'schema' => 'Controleprotocol'],
-            $stub->seenFind
-        );
+	}//end testAnAbsentProtocolResolvesToNull()
 
-    }//end testAnAbsentProtocolResolvesToNull()
+	/**
+	 * An ObjectEntity is normalised through jsonSerialize().
+	 *
+	 * ObjectService::find() is declared `: ?ObjectEntity` and ObjectEntity
+	 * implements JsonSerializable, so the entity arm — not the array arm — is
+	 * the one production actually takes.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+	 */
+	public function testAnEntityIsNormalisedThroughJsonSerialize(): void {
+		$entity = new class implements JsonSerializable {
 
-    /**
-     * An ObjectEntity is normalised through jsonSerialize().
-     *
-     * ObjectService::find() is declared `: ?ObjectEntity` and ObjectEntity
-     * implements JsonSerializable, so the entity arm — not the array arm — is
-     * the one production actually takes.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
-     */
-    public function testAnEntityIsNormalisedThroughJsonSerialize(): void
-    {
-        $entity = new class implements JsonSerializable
-        {
+			/**
+			 * Serialise the object body.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function jsonSerialize(): array {
+				return ['id' => 'proto-1', 'organisationId' => 'adm-1'];
+			}//end jsonSerialize()
+		};
 
-            /**
-             * Serialise the object body.
-             *
-             * @return array<string,mixed>
-             */
-            public function jsonSerialize(): array
-            {
-                return ['id' => 'proto-1', 'organisationId' => 'adm-1'];
-            }//end jsonSerialize()
-        };
+		$this->container->method('get')->willReturn($this->fakeObjectService($entity));
 
-        $this->container->method('get')->willReturn($this->fakeObjectService($entity));
+		self::assertSame('adm-1', $this->service->organisationIdFor(protocolId: 'proto-1'));
 
-        self::assertSame('adm-1', $this->service->organisationIdFor(protocolId: 'proto-1'));
+	}//end testAnEntityIsNormalisedThroughJsonSerialize()
 
-    }//end testAnEntityIsNormalisedThroughJsonSerialize()
+	/**
+	 * A protocol carrying no organisationId resolves to the empty string.
+	 *
+	 * The caller treats '' as a refusal — AdministrationContextService::canAccess()
+	 * fails closed on it — so a tenant-less protocol is inaccessible rather than
+	 * accessible to everyone.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+	 */
+	public function testAProtocolWithoutATenantResolvesToTheEmptyString(): void {
+		$this->container->method('get')->willReturn(
+			$this->fakeObjectService(['id' => 'proto-1'])
+		);
 
-    /**
-     * A protocol carrying no organisationId resolves to the empty string.
-     *
-     * The caller treats '' as a refusal — AdministrationContextService::canAccess()
-     * fails closed on it — so a tenant-less protocol is inaccessible rather than
-     * accessible to everyone.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
-     */
-    public function testAProtocolWithoutATenantResolvesToTheEmptyString(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->fakeObjectService(['id' => 'proto-1'])
-        );
+		self::assertSame('', $this->service->organisationIdFor(protocolId: 'proto-1'));
 
-        self::assertSame('', $this->service->organisationIdFor(protocolId: 'proto-1'));
-
-    }//end testAProtocolWithoutATenantResolvesToTheEmptyString()
+	}//end testAProtocolWithoutATenantResolvesToTheEmptyString()
 }//end class

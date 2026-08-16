@@ -38,7 +38,7 @@ use Psr\Log\NullLogger;
  *
  * Measured on a live Nextcloud 32 + OpenRegister instance before the fix:
  * `POST /apps/openregister/api/objects/shillinq/OpdrachtUitvoering` with
- * `{"status":"completed","bewijsstukken":[]}` returned **201 Created** and
+ * `{"status":"completed","supportingDocuments":[]}` returned **201 Created** and
  * persisted the terminal state. After the fix the same request returns 422,
  * and the same request WITH a valid bewijsstuk still returns 201.
  *
@@ -48,203 +48,191 @@ use Psr\Log\NullLogger;
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
-final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase
-{
+final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 
-    /**
-     * A completion without a bewijsstuk is vetoed.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function testCompletionWithoutBewijsstukIsVetoed(): void
-    {
-        $event = $this->creatingEvent(
-            [
-                'verplichtingId' => 'V-1',
-                'mijlpaalId'     => 'MS-1',
-                'status'         => 'completed',
-                'bewijsstukken'  => [],
-            ]
-        );
+	/**
+	 * A completion without a bewijsstuk is vetoed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function testCompletionWithoutBewijsstukIsVetoed(): void {
+		$event = $this->creatingEvent(
+			[
+				'commitmentId' => 'V-1',
+				'milestoneId' => 'MS-1',
+				'status' => 'completed',
+				'supportingDocuments' => [],
+			]
+		);
 
-        $this->listener(matches: true)->handle($event);
+		$this->listener(matches: true)->handle($event);
 
-        self::assertTrue($event->isPropagationStopped(), 'The write must be refused (REQ-004).');
-        self::assertSame('bewijsstukken', $event->getErrors()['field'] ?? null);
-        self::assertSame(
-            OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
-            $event->getErrors()['message'] ?? null
-        );
+		self::assertTrue($event->isPropagationStopped(), 'The write must be refused (REQ-004).');
+		self::assertSame('supportingDocuments', $event->getErrors()['field'] ?? null);
+		self::assertSame(
+			OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
+			$event->getErrors()['message'] ?? null
+		);
 
-    }//end testCompletionWithoutBewijsstukIsVetoed()
+	}//end testCompletionWithoutBewijsstukIsVetoed()
 
-    /**
-     * A completion WITH a valid bewijsstuk still goes through.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function testCompletionWithAValidBewijsstukIsAllowed(): void
-    {
-        $event = $this->creatingEvent(
-            [
-                'verplichtingId' => 'V-1',
-                'mijlpaalId'     => 'MS-1',
-                'status'         => 'completed',
-                'bewijsstukken'  => [['app' => 'docudesk', 'documentId' => 'doc-1']],
-            ]
-        );
+	/**
+	 * A completion WITH a valid bewijsstuk still goes through.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function testCompletionWithAValidBewijsstukIsAllowed(): void {
+		$event = $this->creatingEvent(
+			[
+				'commitmentId' => 'V-1',
+				'milestoneId' => 'MS-1',
+				'status' => 'completed',
+				'supportingDocuments' => [['app' => 'docudesk', 'documentId' => 'doc-1']],
+			]
+		);
 
-        $this->listener(matches: true)->handle($event);
+		$this->listener(matches: true)->handle($event);
 
-        self::assertFalse($event->isPropagationStopped(), 'A proven completion must not be blocked.');
+		self::assertFalse($event->isPropagationStopped(), 'A proven completion must not be blocked.');
 
-    }//end testCompletionWithAValidBewijsstukIsAllowed()
+	}//end testCompletionWithAValidBewijsstukIsAllowed()
 
-    /**
-     * The UPDATE path is gated too — a PUT into `completed` is not a loophole.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function testUpdateIntoCompletedWithoutBewijsstukIsVetoed(): void
-    {
-        $event = $this->updatingEvent(
-            [
-                'verplichtingId' => 'V-1',
-                'status'         => 'completed',
-                'bewijsstukken'  => [],
-            ]
-        );
+	/**
+	 * The UPDATE path is gated too — a PUT into `completed` is not a loophole.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function testUpdateIntoCompletedWithoutBewijsstukIsVetoed(): void {
+		$event = $this->updatingEvent(
+			[
+				'commitmentId' => 'V-1',
+				'status' => 'completed',
+				'supportingDocuments' => [],
+			]
+		);
 
-        $this->listener(matches: true)->handle($event);
+		$this->listener(matches: true)->handle($event);
 
-        self::assertTrue($event->isPropagationStopped(), 'A PUT into completed must be refused too.');
+		self::assertTrue($event->isPropagationStopped(), 'A PUT into completed must be refused too.');
 
-    }//end testUpdateIntoCompletedWithoutBewijsstukIsVetoed()
+	}//end testUpdateIntoCompletedWithoutBewijsstukIsVetoed()
 
-    /**
-     * A bewijsstuk without a documentId does not satisfy the gate.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function testEmptyPlaceholderBewijsstukDoesNotSatisfyTheGate(): void
-    {
-        $event = $this->creatingEvent(
-            [
-                'status'        => 'completed',
-                'bewijsstukken' => [['app' => 'docudesk', 'documentId' => '   ']],
-            ]
-        );
+	/**
+	 * A bewijsstuk without a documentId does not satisfy the gate.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function testEmptyPlaceholderBewijsstukDoesNotSatisfyTheGate(): void {
+		$event = $this->creatingEvent(
+			[
+				'status' => 'completed',
+				'supportingDocuments' => [['app' => 'docudesk', 'documentId' => '   ']],
+			]
+		);
 
-        $this->listener(matches: true)->handle($event);
+		$this->listener(matches: true)->handle($event);
 
-        self::assertTrue($event->isPropagationStopped(), 'A blank documentId is not proof of delivery.');
+		self::assertTrue($event->isPropagationStopped(), 'A blank documentId is not proof of delivery.');
 
-    }//end testEmptyPlaceholderBewijsstukDoesNotSatisfyTheGate()
+	}//end testEmptyPlaceholderBewijsstukDoesNotSatisfyTheGate()
 
-    /**
-     * A non-completed write is never gated, with or without bewijsstukken.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function testInProgressWriteIsNotGated(): void
-    {
-        $event = $this->creatingEvent(
-            [
-                'verplichtingId' => 'V-1',
-                'status'         => 'in-progress',
-                'bewijsstukken'  => [],
-            ]
-        );
+	/**
+	 * A non-completed write is never gated, with or without bewijsstukken.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function testInProgressWriteIsNotGated(): void {
+		$event = $this->creatingEvent(
+			[
+				'commitmentId' => 'V-1',
+				'status' => 'in-progress',
+				'supportingDocuments' => [],
+			]
+		);
 
-        $this->listener(matches: true)->handle($event);
+		$this->listener(matches: true)->handle($event);
 
-        self::assertFalse($event->isPropagationStopped());
+		self::assertFalse($event->isPropagationStopped());
 
-    }//end testInProgressWriteIsNotGated()
+	}//end testInProgressWriteIsNotGated()
 
-    /**
-     * Another schema's write is untouched even when it looks completed.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
-     */
-    public function testOtherSchemasAreUntouched(): void
-    {
-        $event = $this->creatingEvent(['status' => 'completed', 'bewijsstukken' => []]);
+	/**
+	 * Another schema's write is untouched even when it looks completed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function testOtherSchemasAreUntouched(): void {
+		$event = $this->creatingEvent(['status' => 'completed', 'supportingDocuments' => []]);
 
-        $this->listener(matches: false)->handle($event);
+		$this->listener(matches: false)->handle($event);
 
-        self::assertFalse($event->isPropagationStopped(), 'The guard must be scoped to OpdrachtUitvoering.');
+		self::assertFalse($event->isPropagationStopped(), 'The guard must be scoped to OpdrachtUitvoering.');
 
-    }//end testOtherSchemasAreUntouched()
+	}//end testOtherSchemasAreUntouched()
 
-    /**
-     * Build the listener with a schema resolver that does or does not match.
-     *
-     * @param bool $matches Whether the entity is an OpdrachtUitvoering.
-     *
-     * @return OpdrachtUitvoeringBewijsstukListener
-     */
-    private function listener(bool $matches): OpdrachtUitvoeringBewijsstukListener
-    {
-        $resolver = $this->createMock(ListenerSchemaResolver::class);
-        $resolver->method('matchesSchema')->willReturn($matches);
+	/**
+	 * Build the listener with a schema resolver that does or does not match.
+	 *
+	 * @param bool $matches Whether the entity is an OpdrachtUitvoering.
+	 *
+	 * @return OpdrachtUitvoeringBewijsstukListener
+	 */
+	private function listener(bool $matches): OpdrachtUitvoeringBewijsstukListener {
+		$resolver = $this->createMock(ListenerSchemaResolver::class);
+		$resolver->method('matchesSchema')->willReturn($matches);
 
-        return new OpdrachtUitvoeringBewijsstukListener(
-            guard: new OpdrachtUitvoeringGuard(logger: new NullLogger()),
-            schemaResolver: $resolver,
-            logger: new NullLogger(),
-        );
+		return new OpdrachtUitvoeringBewijsstukListener(
+			guard: new OpdrachtUitvoeringGuard(logger: new NullLogger()),
+			schemaResolver: $resolver,
+			logger: new NullLogger(),
+		);
 
-    }//end listener()
+	}//end listener()
 
-    /**
-     * Build an ObjectCreatingEvent carrying the given payload.
-     *
-     * Uses the suite's OpenRegister stubs (tests/stubs/OpenRegister), which the
-     * unit bootstrap registers under the OCA\OpenRegister\ PSR-4 prefix.
-     *
-     * @param array<string,mixed> $data The object payload being written.
-     *
-     * @return ObjectCreatingEvent The event.
-     */
-    private function creatingEvent(array $data): ObjectCreatingEvent
-    {
-        $entity = new ObjectEntity();
-        $entity->setObject($data);
-        $entity->setSchema('OpdrachtUitvoering');
-        $entity->setRegister('shillinq');
+	/**
+	 * Build an ObjectCreatingEvent carrying the given payload.
+	 *
+	 * Uses the suite's OpenRegister stubs (tests/stubs/OpenRegister), which the
+	 * unit bootstrap registers under the OCA\OpenRegister\ PSR-4 prefix.
+	 *
+	 * @param array<string,mixed> $data The object payload being written.
+	 *
+	 * @return ObjectCreatingEvent The event.
+	 */
+	private function creatingEvent(array $data): ObjectCreatingEvent {
+		$entity = new ObjectEntity();
+		$entity->setObject($data);
+		$entity->setSchema('OpdrachtUitvoering');
+		$entity->setRegister('shillinq');
 
-        return new ObjectCreatingEvent($entity);
+		return new ObjectCreatingEvent($entity);
+	}//end creatingEvent()
 
-    }//end creatingEvent()
+	/**
+	 * Build an ObjectUpdatingEvent carrying the given payload.
+	 *
+	 * @param array<string,mixed> $data The object payload being written.
+	 *
+	 * @return ObjectUpdatingEvent The event.
+	 */
+	private function updatingEvent(array $data): ObjectUpdatingEvent {
+		$entity = new ObjectEntity();
+		$entity->setObject($data);
+		$entity->setSchema('OpdrachtUitvoering');
+		$entity->setRegister('shillinq');
 
-    /**
-     * Build an ObjectUpdatingEvent carrying the given payload.
-     *
-     * @param array<string,mixed> $data The object payload being written.
-     *
-     * @return ObjectUpdatingEvent The event.
-     */
-    private function updatingEvent(array $data): ObjectUpdatingEvent
-    {
-        $entity = new ObjectEntity();
-        $entity->setObject($data);
-        $entity->setSchema('OpdrachtUitvoering');
-        $entity->setRegister('shillinq');
-
-        return new ObjectUpdatingEvent($entity);
-
-    }//end updatingEvent()
+		return new ObjectUpdatingEvent($entity);
+	}//end updatingEvent()
 }//end class

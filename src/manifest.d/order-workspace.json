@@ -21,7 +21,7 @@
 				"quickFilters": [
 					{ "label": "All", "filter": {}, "default": true },
 					{ "label": "Purchase", "filter": { "orderType": "purchase" } },
-					{ "label": "Subsidie", "filter": { "orderType": "subsidie" } },
+					{ "label": "Subsidie", "filter": { "orderType": "subsidy" } },
 					{ "label": "Engagement", "filter": { "orderType": "engagement" } }
 				],
 				"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"]

@@ -40,50 +40,47 @@ use Psr\Log\NullLogger;
 /**
  * Verifies the narrowed dormant Mollie port and the removal of verifyWebhook().
  */
-final class LogMolliePaymentAdapterTest extends TestCase
-{
-    /**
-     * The dormant default's createPayment returns a deferred, dormant result
-     * without contacting Mollie.
-     *
-     * @return void
-     */
-    public function testCreatePaymentIsDormantAndDeferred(): void
-    {
-        $adapter = new LogMolliePaymentAdapter(logger: new NullLogger());
+final class LogMolliePaymentAdapterTest extends TestCase {
+	/**
+	 * The dormant default's createPayment returns a deferred, dormant result
+	 * without contacting Mollie.
+	 *
+	 * @return void
+	 */
+	public function testCreatePaymentIsDormantAndDeferred(): void {
+		$adapter = new LogMolliePaymentAdapter(logger: new NullLogger());
 
-        $result = $adapter->createPayment(
-            payload: [
-                'amount'      => ['value' => '10.00', 'currency' => 'EUR'],
-                'description' => 'Invoice 2026-0001',
-                'redirectUrl' => 'https://example.test/return',
-                'webhookUrl'  => 'https://example.test/webhook',
-            ]
-        );
+		$result = $adapter->createPayment(
+			payload: [
+				'amount' => ['value' => '10.00', 'currency' => 'EUR'],
+				'description' => 'Invoice 2026-0001',
+				'redirectUrl' => 'https://example.test/return',
+				'webhookUrl' => 'https://example.test/webhook',
+			]
+		);
 
-        $this->assertInstanceOf(expected: MolliePaymentResult::class, actual: $result);
-        $this->assertSame(expected: 'PAYMENT_DEFERRED', actual: $result->paymentStatus);
-        $this->assertTrue(condition: $result->dormant);
-        $this->assertTrue(condition: $adapter->isDormant());
-    }//end testCreatePaymentIsDormantAndDeferred()
+		$this->assertInstanceOf(expected: MolliePaymentResult::class, actual: $result);
+		$this->assertSame(expected: 'PAYMENT_DEFERRED', actual: $result->paymentStatus);
+		$this->assertTrue(condition: $result->dormant);
+		$this->assertTrue(condition: $adapter->isDormant());
+	}//end testCreatePaymentIsDormantAndDeferred()
 
-    /**
-     * The port is inbound-verification-free: neither the interface nor the
-     * dormant default may re-declare verifyWebhook(). Inbound HMAC verification
-     * lives solely on the webhook controllers (REQ-APL-004).
-     *
-     * @return void
-     */
-    public function testWebhookVerificationIsNotOnThePort(): void
-    {
-        $this->assertFalse(
-            condition: method_exists(MolliePaymentAdapterInterface::class, 'verifyWebhook'),
-            message: 'verifyWebhook() must not be re-introduced on the Mollie port; '
-                .'the controller HMAC gate is the sole inbound verifier.'
-        );
-        $this->assertFalse(
-            condition: method_exists(LogMolliePaymentAdapter::class, 'verifyWebhook'),
-            message: 'LogMolliePaymentAdapter must not re-declare verifyWebhook().'
-        );
-    }//end testWebhookVerificationIsNotOnThePort()
+	/**
+	 * The port is inbound-verification-free: neither the interface nor the
+	 * dormant default may re-declare verifyWebhook(). Inbound HMAC verification
+	 * lives solely on the webhook controllers (REQ-APL-004).
+	 *
+	 * @return void
+	 */
+	public function testWebhookVerificationIsNotOnThePort(): void {
+		$this->assertFalse(
+			condition: method_exists(MolliePaymentAdapterInterface::class, 'verifyWebhook'),
+			message: 'verifyWebhook() must not be re-introduced on the Mollie port; '
+				. 'the controller HMAC gate is the sole inbound verifier.'
+		);
+		$this->assertFalse(
+			condition: method_exists(LogMolliePaymentAdapter::class, 'verifyWebhook'),
+			message: 'LogMolliePaymentAdapter must not re-declare verifyWebhook().'
+		);
+	}//end testWebhookVerificationIsNotOnThePort()
 }//end class
