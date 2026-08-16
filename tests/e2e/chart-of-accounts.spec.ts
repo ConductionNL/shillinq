@@ -32,14 +32,22 @@ test.describe('shillinq — SPA smoke (v0.1.0 shell)', () => {
 		// 2. The Shillinq page title must be set (renders after Vue mounts + l10n).
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 
-		// 3. The sidebar must contain a link pointing at the shillinq Settings
-		// page. The lib renders it inside the collapsed `cn-app-nav__settings-list`
+		// 3. The sidebar must contain a link to the shillinq settings surface.
+		// The lib renders it inside the collapsed `cn-app-nav__settings-list`
 		// footer (revealed by a toggle), so it is attached but not visible until
 		// the user opens that list — assert presence via the stable nav testid
 		// rather than viewport visibility (the .first() href match used to grab
 		// the off-screen settings cog and flake on toBeVisible).
+		//
+		// `GeneralSettings`, not `Settings`. The in-app `type: settings` page was
+		// REMOVED on purpose under ADR-079 D1 — see the docblock on
+		// src/manifest.d/zz-configuratie-group.json: it "hands off to the platform
+		// admin section at /settings/admin/shillinq … instead of routing to an
+		// in-app type:settings page, which was a second home for the same register
+		// configuration". This assertion kept naming the removed id, so it failed
+		// on a deliberate design change rather than on a regression.
 		await expect(
-			page.locator('[data-testid="cn-nav-entry-Settings"]'),
+			page.locator('[data-testid="cn-nav-entry-GeneralSettings"]'),
 		).toBeAttached({ timeout: 10_000 })
 	})
 })

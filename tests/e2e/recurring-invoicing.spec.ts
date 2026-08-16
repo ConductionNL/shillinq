@@ -32,6 +32,26 @@ import { test, expect } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 
+/*
+ * ⚠️ These three tests FAIL, on purpose, and the selector below is CORRECT.
+ * Do not "fix" them by pointing them at a different button.
+ *
+ * `/bookkeeping/recurring-invoices` is a declarative `type: index` page. Its
+ * manifest (src/manifest.d/recurring-invoicing.json) declares exactly this
+ * label in `headerActions[]` — "New recurring profile" — but CnIndexPage
+ * renders headerActions only inside the ⋯ overflow, and clicking one merely
+ * EMITS `header-action`, which CnPageRenderer does not listen for. See that
+ * file's `_note_open_modal_gap`: there is currently no declarative way to
+ * launch a registry modal from an index page, so RecurringInvoiceProfileModal
+ * (and every `rip-*` testid below) is unreachable through the UI.
+ *
+ * The page DOES render a library-generated "Add Recurring Invoice Profile"
+ * button, but that opens the generic schema-driven create modal, not this
+ * app's profile modal — retargeting at it would turn test 1 green while
+ * tests 2 and 3 still failed, which reads as a stale selector fixed rather
+ * than as the product gap it actually is. Tracked in #864.
+ */
+
 test.describe('recurring-invoicing — profile create modal', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
