@@ -49,6 +49,8 @@
 				],
 				"defaultSort": "invoiceDate",
 				"detailRoute": "SupplierInvoiceDetail",
+				"rowRoute": "SupplierInvoiceDetail",
+				"_note_rowRoute": "`rowRoute`, not `detailRoute`, is the key CnPageRenderer reads. SupplierInvoiceDetail is `type:\"custom\"`, so these rows were dead on click — on a worklist whose entire purpose is drilling into the gap.",
 				"description": "Supplier invoices with no attached source document (UBL/OCR/Peppol origin never resolved) — a declarative OpenRegister `sourceDocumentUri IS NULL` filter (routing-audit-2026-07-14.md item 2), oldest invoice date first so the longest-outstanding gaps surface at the top. Not a bespoke worklist service.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
 			}
@@ -74,6 +76,8 @@
 				],
 				"defaultSort": "receiptDate",
 				"detailRoute": "ReceiptDetail",
+				"rowRoute": "ReceiptDetail",
+				"_note_rowRoute": "`rowRoute`, not `detailRoute`, is the key CnPageRenderer reads. receipt-extraction-consume.json overlays ReceiptDetail as `type:\"custom\"`, so these rows were dead on click.",
 				"description": "Expense receipts with no attached source photo/scan — the same declarative `sourceDocumentUri IS NULL` filter as the supplier-invoice worklist, oldest receipt date first.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}

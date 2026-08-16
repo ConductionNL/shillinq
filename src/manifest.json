@@ -9940,6 +9940,8 @@
 					}
 				],
 				"detailRoute": "ReceiptDetail",
+				"rowRoute": "ReceiptDetail",
+				"_note_rowRoute": "`rowRoute`, NOT `detailRoute`, is what CnPageRenderer reads. It sets `rowClickToView` when EITHER rowRoute is declared OR a `type:\"detail\"` page exists for the same register+schema. receipt-extraction-consume.json overlays ReceiptDetail as `type:\"custom\"` (ReceiptCapture), so the second condition stopped holding and every row on this index went dead on click — the library's own comment calls out this exact case. detailRoute is kept because 247 pages declare it, but nothing reads it.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
@@ -13831,6 +13833,8 @@
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "SupplierInvoiceDetail",
+				"rowRoute": "SupplierInvoiceDetail",
+				"_note_rowRoute": "See the Receipts index — `rowRoute` is the key CnPageRenderer reads; SupplierInvoiceDetail is `type:\"custom\"`, so without it these rows are dead on click.",
 				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
 			}
@@ -14042,6 +14046,8 @@
 				],
 				"defaultSort": "createdAt",
 				"detailRoute": "ThreeWayMatchDetail",
+				"rowRoute": "ThreeWayMatchDetail",
+				"_note_rowRoute": "See the Receipts index — ThreeWayMatchDetail is `type:\"custom\"`, so without `rowRoute` these rows are dead on click.",
 				"description": "3-way match outcomes. Member 06 owns the matching engine.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
@@ -14196,6 +14202,8 @@
 				],
 				"defaultSort": "createdAt",
 				"detailRoute": "ThreeWayMatchDetail",
+				"rowRoute": "ThreeWayMatchDetail",
+				"_note_rowRoute": "See the Receipts index — ThreeWayMatchDetail is `type:\"custom\"`, so without `rowRoute` these rows are dead on click.",
 				"description": "Filtered view of 3-way matches that need operator action (price/quantity/missing-GRN/missing-PO/fraud-alert exceptions). Member 08 owns the exception workflow.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
