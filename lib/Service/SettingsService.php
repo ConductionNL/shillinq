@@ -412,10 +412,19 @@ class SettingsService {
 	 * administration is its owner. Only the CALLING user is granted — this is not
 	 * a broadcast to every account.
 	 *
-	 * The membership is written against the administration's OpenRegister **uuid**,
-	 * not its administrationCode, because that is the identifier the record is
-	 * addressed by. `findAdministration()` resolves either, so both id spaces work,
-	 * but the uuid is the stable one.
+	 * ⚠️ The membership is written against the **administrationCode**, NOT the
+	 * OpenRegister uuid, even though the uuid is the more "correct" identifier.
+	 * `buildContext()` echoes this value back as `activeAdministrationId`, and
+	 * consumers downstream already run on the code: the `administration_id`
+	 * app-config holds `ADM-001` and ~20 call sites scope on it, and
+	 * `tests/e2e/ci-seed.sh` stamps its booking fixtures with
+	 * `activeAdministrationId`, falling back to the literal `ADM-001` when the
+	 * context is empty. Writing the uuid here would silently switch that value
+	 * from a code to a uuid and strand every fixture the seed created.
+	 *
+	 * `findAdministration()` resolves either id space, so this is a choice about
+	 * which one the rest of the system sees — and the answer is the one it
+	 * already uses.
 	 *
 	 * Idempotent: a membership for the same (userId, administrationId) is left
 	 * alone, so re-running setup never duplicates or downgrades an existing grant.
@@ -444,8 +453,9 @@ class SettingsService {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->getRegisterSlug();
 
-			// Resolve the uuid via administrationCode — a real JSON property, and
-			// therefore filterable. Filtering on `id` here would match nothing.
+			// Confirm the administration exists before granting anything, by the
+			// administrationCode — a real JSON property, and therefore filterable.
+			// Filtering on `id` here would match nothing (see findAdministration()).
 			$administrations = $objectService
 				->setRegister($registerSlug)
 				->setSchema('Administration')
@@ -456,19 +466,13 @@ class SettingsService {
 					]
 				);
 
-			$administrationId = '';
-			foreach ($administrations as $administration) {
-				$row = ($administration instanceof \JsonSerializable) ? $administration->jsonSerialize() : $administration;
-				if (is_array($row) === true) {
-					$administrationId = (string)($row['id'] ?? '');
-				}
-
-				break;
-			}
-
-			if ($administrationId === '') {
+			if (empty($administrations) === true) {
 				return ['granted' => false, 'reason' => 'administration not found: ' . $administrationCode];
 			}
+
+			// The code is the id space the rest of the system runs on — see the
+			// docblock. Deliberately not the uuid.
+			$administrationId = $administrationCode;
 
 			$existing = $objectService
 				->setRegister($registerSlug)

@@ -31,7 +31,7 @@ const APP = '/apps/shillinq'
 test.describe('migrate-list-views-to-cndatatable — invoice list via CnDataTable', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
-		await page.goto(APP + '/#/invoice')
+		await page.goto(APP + '/invoice')
 		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')

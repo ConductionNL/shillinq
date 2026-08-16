@@ -40,15 +40,40 @@ const SCHEMA = 'OrderPrimitive'
 const ADMIN_ID = 'ADM-001'
 
 test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)', () => {
-	// The OpenRegister object API is slow under a loaded shared instance
-	// (single creates observed at 18-24s); tests that chain create + poll +
-	// transition + read need well above the 30s default. Run serially (they
-	// share one authenticated context) with a generous per-test budget.
-	// retries here are for the shared dev instance's transient load (slow/laggy
-	// object API under a concurrent session), NOT product flakiness: every test
-	// passes deterministically in isolation. On a fresh CI instance the whole
-	// spec runs in well under a minute.
-	test.describe.configure({ mode: 'serial', timeout: 180_000, retries: 3 })
+	// ── This block used to be `{ mode: 'serial', timeout: 180_000, retries: 3 }`
+	// and all three parts were wrong ON CI. Its own comment supplied the
+	// disproof: "on a fresh CI instance the whole spec runs in well under a
+	// minute". Measured on run 31073204125 (E2E job 92525589609), where all five
+	// tests here PASSED on their first attempt:
+	//
+	//     a subsidie is an Order of type subsidie              1.6s
+	//     a purchase order is an Order of type purchase        1.0s
+	//     a DBA engagement is an Order of type engagement      1.1s
+	//     subsidie keeps its statutory lifecycle               1.9s
+	//     a transition never crosses orderType boundaries      1.3s
+	//
+	// `retries: 3` — a PER-FILE override silently defeats the repo-level
+	//   `retries: 0` that playwright.config.ts argues for at length. Nothing
+	//   here needed a retry (slowest first-attempt pass: 1.9s), and a retry
+	//   budget that is never exercised is indistinguishable from one that is
+	//   quietly converting a real intermittent failure into a green. The 18-24s
+	//   creates it was written for are a SHARED dev instance's contention; CI
+	//   gets its own instance.
+	// `timeout: 180_000` — 95x the slowest passing test. Dropped entirely so the
+	//   file inherits the config's 60_000, which is still ~31x. This is a CUT,
+	//   justified by the measurement above; it is never raised.
+	// `mode: 'serial'` — bought nothing and cost four tests their verdict on any
+	//   single failure. These five share no state: each creates its OWN object
+	//   with its own `${UNIQUE_PREFIX}-*` orderNumber and asserts only about
+	//   that object; `beforeAll` shares an API *context*, not ordering.
+	//   Removing it adds no concurrency either — playwright.config.ts sets
+	//   `fullyParallel: false`, so a file's tests still run one at a time in
+	//   declaration order on a single worker. Same reasoning as the header of
+	//   tests/e2e/spec-coverage/_helpers.ts.
+	//
+	// If the shared dev instance is genuinely too slow for these locally, that
+	// is an argument for seeding differently there — not for a retry budget that
+	// can manufacture green in CI.
 
 	let fx: OrFixtures
 	let api: import('@playwright/test').APIRequestContext

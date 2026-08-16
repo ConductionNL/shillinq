@@ -9,7 +9,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Verplichting",
-        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (PO signed, raamovereenkomst agreed, arbeidscontract executed, subsidiebeschikking awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable Verplichtingsmutatie (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR).",
+        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (PO signed, raamovereenkomst agreed, arbeidscontract executed, subsidiebeschikking awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable Verplichtingsmutatie (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -28,7 +28,7 @@
           },
           "commitmentNumber": {
             "type": "string",
-            "description": "Operator-assigned unique commitment number within the administration.",
+            "description": "Operator-assigned unique commitment number within the administration. NOTE — a second spelling of this same field, camelCase `verplichtingNummer`, is also live in production: it is written by TenderNedAwardDetectedListener and read by VerplichtingGuard, while this one is written by CommitmentMaterialisationService and read by BudgetBlocker::canCommit, MandaatEnforcer::hasSufficientMandate and RequisitionService. The split is resolved by the English domain rename (Verplichting -> Commitment), which owns collapsing the two and the repair step that migrates stored values; it is deliberately NOT done in this fragment.",
             "example": "PO-2026-00874",
             "title": "Verplichtingsnummer"
           },

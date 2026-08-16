@@ -373,10 +373,21 @@ class AdministrationContextService {
 
 			// Primary: the OpenRegister uuid, via the single-object lookup that
 			// actually addresses it.
-			$direct = $scoped->find($administrationId);
-			$arr = $this->asArray(row: $direct);
-			if ($arr !== []) {
-				return $arr;
+			//
+			// ⚠️ Its own try/catch, deliberately. find() THROWS
+			// DoesNotExistException ("Object with identifier 'ADM-001' not found
+			// in any magic table") for anything that is not a uuid — it does not
+			// return null. Letting that reach the outer catch would return null
+			// before the administrationCode fallback below ever runs, which is
+			// exactly the bug this method is being fixed for, reintroduced one
+			// layer down. A miss here is a normal id-space mismatch, not an error.
+			try {
+				$arr = $this->asArray(row: $scoped->find($administrationId));
+				if ($arr !== []) {
+					return $arr;
+				}
+			} catch (\Throwable $notAUuid) {
+				// Fall through to the administrationCode lookup.
 			}
 
 			// Fallback: the human administrationCode, which IS a JSON property

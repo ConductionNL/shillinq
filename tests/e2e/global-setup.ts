@@ -20,18 +20,24 @@
  * adopter).
  */
 
-import type { FullConfig, Page } from '@playwright/test'
-
-import { chromium, request } from '@playwright/test'
+import { chromium, request, type FullConfig, type Page } from '@playwright/test'
+import { resolveBaseURL } from './base-url'
 import { execSync } from 'child_process'
-import * as fs from 'fs'
 import * as path from 'path'
-import { resolveBaseURL } from './base-url.ts'
+import * as fs from 'fs'
 
 const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
 const APP_ROOT = path.resolve(__dirname, '..', '..')
 const BUNDLE_PATH = path.join(APP_ROOT, 'js', 'shillinq-main.js')
+const INFO_XML = path.join(APP_ROOT, 'appinfo', 'info.xml')
+
+/**
+ * localStorage key `CnAppRoot` reads the walkthrough's last-seen version from.
+ * Namespaced by app id — see `walkthroughSeenVersion()` in
+ * `@conduction/nextcloud-vue/…/CnAppRoot`.
+ */
+const WALKTHROUGH_SEEN_KEY = 'cn-walkthrough-seen:shillinq'
 
 /**
  * Ensure the webpack bundle exists before specs hit `/apps/shillinq/`.
@@ -51,13 +57,115 @@ const BUNDLE_PATH = path.join(APP_ROOT, 'js', 'shillinq-main.js')
  * checkout that serves its own `js/`.
  */
 function ensureBundleBuilt(): void {
-	if (fs.existsSync(BUNDLE_PATH)) {
+	// SIZE FLOOR, not `existsSync`. A truncated or half-written bundle is still
+	// a file, so a bare existence check returns early and the suite runs against
+	// a page whose script tag serves 0 bytes — the exact control condition run
+	// 30858387599 used to manufacture false PASSES (with no router there is no
+	// redirect, so URL assertions "succeed"). A healthy build measures ~12.2 MB
+	// (run 30881358951 logged 12242717 bytes); 1 MB is a floor no real build can
+	// fall under and no broken one can reach.
+	const MIN_BUNDLE_BYTES = 1_000_000
+	if (fs.existsSync(BUNDLE_PATH) && fs.statSync(BUNDLE_PATH).size >= MIN_BUNDLE_BYTES) {
 		return
 	}
+	if (fs.existsSync(BUNDLE_PATH)) {
+		// eslint-disable-next-line no-console
+		console.log(
+			`[playwright globalSetup] bundle at ${BUNDLE_PATH} is only `
+			+ `${fs.statSync(BUNDLE_PATH).size} bytes (floor ${MIN_BUNDLE_BYTES}); rebuilding.`,
+		)
+	}
+	// eslint-disable-next-line no-console
 	console.log(
 		`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`,
 	)
 	execSync('npm run build', { cwd: APP_ROOT, stdio: 'inherit' })
+}
+
+/** Read `<version>` out of `appinfo/info.xml` — the app version the SPA reports. */
+function readAppVersion(): string {
+	const xml = fs.readFileSync(INFO_XML, 'utf8')
+	const m = xml.match(/<version>\s*([^<\s]+)\s*<\/version>/)
+	if (!m) {
+		throw new Error(`Could not read <version> from ${INFO_XML}`)
+	}
+	return m[1]
+}
+
+/**
+ * Mark the ADR-043 product walkthrough as already seen for this browser profile.
+ *
+ * WHY THIS IS SEEDING, NOT SUPPRESSION
+ * ------------------------------------
+ * `src/manifest.json` declares `walkthrough.enabled: true` with a single tour,
+ * `shillinq:getting-started`, whose `trigger` is `first-visit`. `CnAppRoot`
+ * mounts `CnWalkthrough` for it, and the tour renders
+ *
+ *     <div role="dialog" aria-modal="true" class="cn-walkthrough"
+ *          aria-label="Welcome to Shillinq">
+ *       <div class="cn-walkthrough__dim cn-walkthrough__dim--full"></div>
+ *
+ * — a FULL-VIEWPORT dim that legitimately swallows pointer events until the
+ * user finishes or skips the tour. That is the intended product behaviour for
+ * a genuinely first-time visitor, and it is exactly what every CI run gets,
+ * because a fresh runner profile has never seen it.
+ *
+ * The symptom is deliberately confusing and worth recording: the target button
+ * RESOLVES and reports "visible, enabled and stable", then the click retries
+ * until the test times out. Run 30879466171 logged it verbatim:
+ *
+ *     - locator resolved to <button data-testid="cn-action-import-bill" …>
+ *     - attempting click action
+ *       - element is visible, enabled and stable
+ *       - <div class="cn-walkthrough__dim cn-walkthrough__dim--full"></div>
+ *         from <div role="dialog" … aria-label="Welcome to Shillinq">…</div>
+ *         subtree intercepts pointer events
+ *
+ * So it presents as a TIMEOUT ON A PRESENT ELEMENT, never as "overlay open" —
+ * which is why it reads like a dozen unrelated flaky-click defects.
+ *
+ * This is the THIRD onboarding surface in the stack, and the other two are
+ * already handled elsewhere: Nextcloud's own `#firstrunwizard` (dismissed by
+ * the specs) and the ADR-042 setup wizard (completed by `ci-seed.sh` over its
+ * admin API). The walkthrough had no equivalent, so it is handled here.
+ *
+ * `CnAppRoot.walkthroughSeenVersion()` reads `localStorage` — NOT a server-side
+ * per-user config, despite what `manifest.walkthrough.completionConfigKey`
+ * suggests; the shipped getter's own docblock says apps wanting cross-device
+ * persistence must override the `#walkthrough` slot. `useWalkthrough`'s
+ * `autoStartTour` then gates on it:
+ *
+ *     if (tour.trigger === 'first-visit' && !seenVersion) return tour
+ *
+ * so ANY non-empty value stops a `first-visit` tour from auto-starting. We
+ * write the real app version rather than a sentinel, so that if a future
+ * `version-bump` tour is added it will still fire for a version ABOVE this one
+ * — seeding the profile as a returning user, not disabling the feature.
+ *
+ * ⚠️ Nothing here touches an assertion, a timeout or a skip. The walkthrough
+ * itself stays enabled in the product and is still reachable in-app via
+ * "replay walkthrough"; it simply is not re-offered to an already-onboarded
+ * profile. Specs that want to test the tour can clear the key themselves.
+ *
+ * Gated on a read-back so a silently-failing write cannot look like success.
+ *
+ * @param page A page already authenticated on the Nextcloud origin.
+ */
+async function markWalkthroughSeen(page: Page): Promise<void> {
+	const version = readAppVersion()
+	await page.evaluate(
+		([key, value]) => window.localStorage.setItem(key, value),
+		[WALKTHROUGH_SEEN_KEY, version],
+	)
+	const readBack = await page.evaluate((key) => window.localStorage.getItem(key), WALKTHROUGH_SEEN_KEY)
+	if (readBack !== version) {
+		throw new Error(
+			`Failed to seed ${WALKTHROUGH_SEEN_KEY}: wrote "${version}", read back ${JSON.stringify(readBack)}. `
+			+ 'The walkthrough overlay would intercept pointer events for the whole run.',
+		)
+	}
+	// eslint-disable-next-line no-console
+	console.log(`[playwright globalSetup] ${WALKTHROUGH_SEEN_KEY} = ${version} (walkthrough will not auto-start)`)
 }
 
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {
@@ -80,95 +188,6 @@ async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 		}
 	} finally {
 		await ctx.dispose()
-	}
-}
-
-/**
- * Complete Shillinq's first-time setup, and mark the getting-started
- * walkthrough as seen, on the instance under test.
- *
- * WHY THIS IS NOT OPTIONAL
- * ------------------------
- * Until `legal_country` / `legal_region` / `rgs_template` / `administration_id`
- * are all set, the app renders NOTHING but its "Set up this app" dialog — no
- * `#shillinq` root, no `<main>` content, on EVERY route. Measured 2026-08-16
- * against a freshly-installed instance: 77 of 262 executed specs failed, and
- * the dominant error was `element(s) not found` / `toBeVisible() failed`,
- * because the setup dialog was the only thing on the page. The suite was
- * describing an un-onboarded instance, not the app.
- *
- * The same is true of the walkthrough: once setup completes, a 4-step tour
- * opens over the dashboard on first visit and swallows clicks. It is
- * suppressed by writing the version the manifest declares
- * (`walkthrough.completionConfigKey`) to the user's preferences — the same
- * key `useWalkthrough()` reads.
- *
- * Driven through the setup API rather than by clicking the seven wizard tabs:
- * the wizard is itself under test elsewhere, and a fixture that depends on the
- * UI it is preparing fails for two unrelated reasons at once.
- *
- * `nl` / `municipality` is the widest choice — it is the organisation type the
- * BBV compliance specs assume, and it leaves every non-BBV surface reachable.
- * The provincie / waterschap variants scope themselves per spec.
- *
- * Idempotent: `init-administration` reports `skipped` when ADM-001 already
- * exists, and re-running `seed` is a no-op. Failures here are FATAL by design —
- * a suite that silently proceeds against an un-onboarded instance produces a
- * red run that looks like broken code.
- */
-async function completeAppSetup(page: Page): Promise<void> {
-	const result = await page.evaluate(async () => {
-		// The requesttoken must come from THIS page — a bare fetch without it is
-		// rejected, and a rejected setup call would leave the whole suite
-		// describing an un-onboarded instance.
-		const w = window as unknown as { OC?: { requestToken?: string } }
-		const token =
-			document.head.querySelector<HTMLMetaElement>('meta[name=csrf-token]')
-				?.content
-			|| w.OC?.requestToken
-			|| ''
-		const base = '/index.php/apps/shillinq/api'
-		const send = async (method: string, url: string, body: unknown) => {
-			const res = await fetch(url, {
-				method,
-				headers: { 'Content-Type': 'application/json', requesttoken: token },
-				body: JSON.stringify(body ?? {}),
-			})
-			return { url, status: res.status }
-		}
-
-		const calls = [
-			await send('POST', `${base}/setup/config`, {
-				legal_country: 'nl',
-				legal_region: 'municipality',
-				rgs_template: 'municipality',
-			}),
-			await send('POST', `${base}/setup/action/init-administration`, {}),
-			await send('POST', `${base}/setup/action/seed`, {}),
-			await send('PUT', `${base}/preferences/walkthrough_completed_version`, {
-				value: '999.0.0',
-			}),
-		]
-
-		const status = await fetch(`${base}/setup/status`, {
-			headers: { requesttoken: token },
-		})
-		const completed = status.ok
-			? ((await status.json().catch(() => ({}))) as { completed?: boolean })
-					.completed === true
-			: false
-
-		return { calls, completed }
-	})
-
-	const failed = result.calls.filter((c) => c.status >= 400)
-	if (failed.length > 0 || result.completed !== true) {
-		throw new Error(
-			'[playwright globalSetup] Shillinq first-time setup did not complete: '
-				+ JSON.stringify(result)
-				+ '. Every spec would then be asserting against the setup dialog '
-				+ 'rather than the app, so the run is stopped here instead.',
-		)
 	}
 }
 
@@ -220,9 +239,9 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 		)
 	}
 
-	// Onboard the app before any spec runs. Must happen while this page is
-	// authenticated — the setup endpoints are admin-gated and CSRF-protected.
-	await completeAppSetup(page)
+	// Seed the walkthrough as already-seen BEFORE the state is captured, so the
+	// key travels with the storage state into every spec's context.
+	await markWalkthroughSeen(page)
 
 	// Persist the storage state so individual specs reuse the session.
 	await context.storageState({ path: STORAGE_STATE })
