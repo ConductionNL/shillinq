@@ -194,7 +194,6 @@ final class PayrollJaaropgaveServiceTest extends TestCase {
 		return new PayrollJaaropgaveService(
 			appConfig: $this->appConfig,
 			calculator: new PayrollCalculator(),
-			logger: $this->logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 

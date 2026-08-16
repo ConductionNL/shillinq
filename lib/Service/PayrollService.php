@@ -36,7 +36,6 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
@@ -57,13 +56,11 @@ class PayrollService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Pure-logic payroll arithmetic helper.
-	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
-		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
