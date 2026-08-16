@@ -64,8 +64,8 @@
 				],
 				"defaultSort": "startTime",
 				"detailRoute": "AfspraakDetail",
-				"rowRoute": "AfspraakDetail",
-				"_note_rowRoute": "`rowRoute`, not `detailRoute`, is the key CnPageRenderer reads to make a row click navigate. AfspraakDetail is `type:\"custom\"`, so the renderer's other trigger (a matching `type:\"detail\"` page for the same register+schema) does not fire and these rows were dead on click."
+				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. AfspraakDetail is a `type:\"custom\"` page, so CnPageRenderer's register+schema detail lookup finds nothing and rows do not open without `rowRoute`.",
+				"rowRoute": "AfspraakDetail"
 			}
 		},
 		{

@@ -164,8 +164,8 @@
 				"defaultSort": "countId",
 				"defaultSortDirection": "desc",
 				"detailRoute": "CycleCountDetail",
+				"_note_rowRoute": "`detailRoute` is inert; the implicit fallback matches by register+schema and this index is bound to InventoryCycleCountLine. The description below promises a row-click drilldown that did nothing without `rowRoute`.",
 				"rowRoute": "CycleCountDetail",
-				"_note_rowRoute": "`rowRoute`, not `detailRoute`, is the key CnPageRenderer reads. CycleCountDetail IS a `type:\"detail\"` page, but on schema InventoryCycleCount while this index lists InventoryCycleCountLine, so the renderer's register+schema match never fired and the row-click drill-down promised in the description below did not happen. (The CycleCounts index above needs no rowRoute — it lists InventoryCycleCount, so the match does fire there.)",
 				"description": "Aggregated view of every flagged variance line per REQ-ICC-010. Group-by reasonCode produces the count-by-reason rollup; row click drills back to the originating count and its adjustment StockMove."
 			}
 		}

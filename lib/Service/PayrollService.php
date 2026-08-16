@@ -388,45 +388,22 @@ class PayrollService {
 
 	}//end bouwLoonjournaalpost()
 
-	/**
-	 * Persist a computed payslip (REQ-PAY-010), scoped to the administration.
+	/*
+	 * NO PAYROLL PERSISTENCE HERE.
 	 *
-	 * @param array<string,mixed> $paySlip The computed LoonStrook payload.
+	 * `persistLoonStrook()` and `persistLoonjournaalpost()` stood here and had
+	 * no caller. `PayrollController` drives `berekenLoonStrook()` /
+	 * `bouwLoonjournaalpost()` and returns the computed payload to the client;
+	 * nothing ever handed it back for a server-side save, so LoonStrook and
+	 * Loonjournaalpost objects were never written through this service.
 	 *
-	 * @return array<string,mixed> The saved object as returned by OpenRegister.
-	 *
-	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
+	 * ⚠️ `persistLoonjournaalpost()` carried the only balance guard in the code
+	 * base ("refuse an unbalanced journal"). It never ran, because the method
+	 * never ran — removing it takes away nothing that was protecting anything.
+	 * A balance invariant that must hold belongs on the Loonjournaalpost
+	 * schema in OpenRegister, where it applies to every writer; that is
+	 * recorded as a follow-up rather than left as a guard on a dead path.
 	 */
-	public function persistLoonStrook(array $paySlip): array {
-		return (array)$this->objectService()
-			->saveObject(object: $paySlip, register: $this->register(), schema: 'LoonStrook');
-
-	}//end persistLoonStrook()
-
-	/**
-	 * Persist a balanced journal; refuse an unbalanced one (REQ-PAY-012).
-	 *
-	 * @param array<string,mixed> $journalEntry The Loonjournaalpost payload.
-	 *
-	 * @return array<string,mixed> The saved object.
-	 *
-	 * @throws \RuntimeException When the journal is not balanced.
-	 *
-	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
-	 */
-	public function persistLoonjournaalpost(array $journalEntry): array {
-		if (($journalEntry['balanced'] ?? false) !== true) {
-			$this->logger->error(
-				'Shillinq payroll: refusing to post unbalanced loonjournaalpost',
-				['periodId' => ($journalEntry['periodId'] ?? null)]
-			);
-			throw new RuntimeException('Loonjournaalpost is niet in balans (debet != credit).');
-		}
-
-		return (array)$this->objectService()
-			->saveObject(object: $journalEntry, register: $this->register(), schema: 'Loonjournaalpost');
-
-	}//end persistLoonjournaalpost()
 
 	/**
 	 * Mask a BSN for safe display/logging (REQ-PAY-000, AVG).

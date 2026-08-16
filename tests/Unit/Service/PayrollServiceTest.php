@@ -371,41 +371,12 @@ final class PayrollServiceTest extends TestCase {
 
 	}//end testBouwLoonjournaalpostBalances()
 
-	/**
-	 * The persistLoonjournaalpost method refuses an unbalanced journal (REQ-PAY-012).
-	 *
-	 * @return void
-	 */
-	public function testPersistRefusesUnbalancedJournal(): void {
-		$saved = [];
-		$service = $this->buildService($this->dataset(), $saved);
-
-		$this->expectException(\RuntimeException::class);
-		$service->persistLoonjournaalpost(
-			[
-				'periodId' => 'lp-1',
-				'balanced' => false,
-				'rules' => [],
-			]
-		);
-
-	}//end testPersistRefusesUnbalancedJournal()
-
-	/**
-	 * The persistLoonStrook method writes through the ObjectService (REQ-PAY-010).
-	 *
-	 * @return void
-	 */
-	public function testPersistLoonStrookSaves(): void {
-		$saved = [];
-		$service = $this->buildService($this->dataset(), $saved);
-
-		$service->persistLoonStrook(['employeeId' => 'wn-1', 'administrationId' => 'adm-1']);
-
-		self::assertCount(1, $saved);
-		self::assertSame('LoonStrook', $saved[0]['@self']['schema']);
-
-	}//end testPersistLoonStrookSaves()
+	// testPersistRefusesUnbalancedJournal and testPersistLoonStrookSaves were
+	// removed with PayrollService::persistLoonjournaalpost() and
+	// ::persistLoonStrook(). Both methods had zero production callers, so
+	// neither the save nor the balance guard these cases asserted ever ran
+	// outside this file. testBouwLoonjournaalpostBalances above still asserts
+	// the balance invariant on the payload the live controller path returns.
 
 	/**
 	 * BSN masking exposes only the last two digits (AVG, REQ-PAY-000).

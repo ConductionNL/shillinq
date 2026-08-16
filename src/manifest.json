@@ -9876,6 +9876,8 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Receipt",
+				"_note_rowRoute": "Load-bearing. CnPageRenderer.onRowOpen() resolves `config.rowRoute ?? detailPageByRegisterSchema.get('<register> <schema>')`, and that map indexes ONLY `type:\"detail\"` pages; `detailRoute` is never read by the library. A manifest.d overlay retypes ReceiptDetail to `custom`, so without this key the lookup returned null, `rowClickToView` stayed false, and every row here was unclickable. Naming the target makes the index independent of the detail page's TYPE.",
+				"rowRoute": "ReceiptDetail",
 				"columns": [
 					{
 						"key": "receiptDate",
@@ -13799,6 +13801,8 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "SupplierInvoice",
+				"_note_rowRoute": "Same cause as the Receipts index: SupplierInvoiceDetail is overlaid as `type:\"custom\"`, so the implicit lookup finds nothing and rows do not open without this key.",
+				"rowRoute": "SupplierInvoiceDetail",
 				"columns": [
 					{
 						"key": "invoiceNumber",
@@ -14012,6 +14016,8 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ThreeWayMatch",
+				"_note_rowRoute": "Same cause as the Receipts index: ThreeWayMatchDetail is overlaid as `type:\"custom\"`, so rows do not open without this key.",
+				"rowRoute": "ThreeWayMatchDetail",
 				"columns": [
 					{
 						"key": "invoiceId",
@@ -14162,6 +14168,8 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ThreeWayMatch",
+				"_note_rowRoute": "Same cause as the ThreeWayMatches index above: rows do not open without this key.",
+				"rowRoute": "ThreeWayMatchDetail",
 				"filter": {
 					"matchStatus": {
 						"in": [

@@ -39,7 +39,6 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
@@ -145,30 +144,16 @@ class PayrollJaaropgaveService {
 
 	}//end bouwJaaropgave()
 
-	/**
-	 * Persist a Jaaropgave; refuse inconsistent cumulatieven (REQ-PAY-013).
+	/*
+	 * NO JAAROPGAVE PERSISTENCE HERE.
 	 *
-	 * @param array<string,mixed> $jaaropgave The Jaaropgave payload.
-	 *
-	 * @return array<string,mixed> The saved object.
-	 *
-	 * @throws \RuntimeException When cumulatieven do not match the period sum.
-	 *
-	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
+	 * `persistJaaropgave()` stood here with no caller — the service builds a
+	 * Jaaropgave and returns it; nothing handed it back for a save, so no
+	 * Jaaropgave object was ever written through it. Its cumulatieven guard
+	 * was, for the same reason, never executed. Like the payroll balance
+	 * guard, that invariant belongs on the Jaaropgave schema in OpenRegister
+	 * where it binds every writer, not on a method with no callers.
 	 */
-	public function persistJaaropgave(array $jaaropgave): array {
-		if (($jaaropgave['cumulatievenConsistent'] ?? false) !== true) {
-			$this->logger->error(
-				'Shillinq payroll: refusing to persist Jaaropgave with inconsistent cumulatieven',
-				['employeeId' => ($jaaropgave['employeeId'] ?? null), 'year' => ($jaaropgave['year'] ?? null)]
-			);
-			throw new RuntimeException('Jaaropgave-cumulatieven matchen de som van de perioden niet.');
-		}
-
-		return (array)$this->objectService()
-			->saveObject(object: $jaaropgave, register: $this->register(), schema: 'Jaaropgave');
-
-	}//end persistJaaropgave()
 
 	/**
 	 * Read every LoonStrook for the calendar year, administration-scoped.
