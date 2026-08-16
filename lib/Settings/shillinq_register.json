@@ -21259,30 +21259,35 @@
         "invoiceNumber": {
           "type": "string",
           "description": "ARInvoice.invoiceNumber at the time of the captured event. Immutable copy.",
-          "example": "INV-C-2026-0001"
+          "example": "INV-C-2026-0001",
+          "title": "Invoice Number"
         },
         "invoiceDate": {
           "type": "string",
           "format": "date",
           "description": "ARInvoice.invoiceDate at issuance. Immutable copy.",
-          "example": "2026-05-15"
+          "example": "2026-05-15",
+          "title": "Invoice Date"
         },
         "lineSequence": {
           "type": "integer",
           "minimum": 1,
           "description": "1-based index of the line within ARInvoice.lines[].",
-          "example": 1
+          "example": 1,
+          "title": "Line Number"
         },
         "lineDescription": {
           "type": "string",
           "description": "Immutable copy of ARInvoice.lines[lineSequence-1].description at event time.",
-          "example": "Website hosting - May 2026"
+          "example": "Website hosting - May 2026",
+          "title": "Line Description"
         },
         "lineAmount": {
           "type": "number",
           "minimum": 0,
           "description": "Immutable copy of ARInvoice.lines[lineSequence-1].amount in decimal euros (mirrors AR T2 convention).",
-          "example": 200.0
+          "example": 200.0,
+          "title": "Net Line Amount"
         },
         "vatRate": {
           "type": "integer",
@@ -21293,13 +21298,15 @@
             0
           ],
           "description": "VAT rate applied to this line at event time per REQ-VAT-001.",
-          "example": 9
+          "example": 9,
+          "title": "VAT Rate (%)"
         },
         "vatAmount": {
           "type": "number",
           "minimum": 0,
           "description": "Immutable copy of the line's vatAmount in decimal euros at event time; banker's-rounded to 2 decimals per REQ-VAT-007.",
-          "example": 18.0
+          "example": 18.0,
+          "title": "VAT Amount"
         },
         "serviceCategory": {
           "type": "string",
@@ -21309,7 +21316,8 @@
             "exempt"
           ],
           "description": "Immutable copy of the line's serviceCategory at event time per REQ-VAT-002.",
-          "example": "service"
+          "example": "service",
+          "title": "Service Category"
         },
         "lifecycleEvent": {
           "type": "string",
@@ -21320,25 +21328,29 @@
             "reversed"
           ],
           "description": "Which ARInvoice lifecycle transition this record captures. issued: VAT accrual on first issue (REQ-VAT-003). paid: payment match cleared via bank-reconciliation. written_off: bad-debt write-off (REQ-AR-007). reversed: compensating reversal / credit note.",
-          "example": "issued"
+          "example": "issued",
+          "title": "Invoice Event"
         },
         "eventDate": {
           "type": "string",
           "format": "date-time",
           "description": "Timestamp the lifecycle event was recorded. UTC. Immutable.",
-          "example": "2026-05-15T14:32:00Z"
+          "example": "2026-05-15T14:32:00Z",
+          "title": "Recorded At"
         },
         "paymentDate": {
           "type": "string",
           "format": "date",
           "description": "Populated only when lifecycleEvent=paid; date of the matched payment.",
           "nullable": true,
-          "example": "2026-05-20"
+          "example": "2026-05-20",
+          "title": "Payment Date"
         },
         "settlementPeriod": {
           "type": "string",
           "description": "FK to the FiscalPeriod (periodId) bound at issue time per REQ-VAT-005. Immutable once set; survives subsequent administration.vatFilingFrequency reconfigurations.",
-          "example": "2026-05"
+          "example": "2026-05",
+          "title": "VAT Settlement Period"
         },
         "overrideId": {
           "type": "string",
@@ -21346,12 +21358,14 @@
           "$ref": "ServiceCategoryOverride",
           "description": "Optional reference to the ServiceCategoryOverride consulted at issue time, when this line's vatRate / serviceCategory combination was authorised under an exception per REQ-VAT-002bis.",
           "nullable": true,
-          "example": "sco-2026-0001"
+          "example": "sco-2026-0001",
+          "title": "Rate Exception Applied"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the administration owning this audit record.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         }
       },
       "x-openregister-aggregations": {
@@ -21427,7 +21441,8 @@
         "administrationId": {
           "type": "string",
           "description": "FK to the administration owning the override.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         },
         "serviceCategory": {
           "type": "string",
@@ -21437,7 +21452,8 @@
             "exempt"
           ],
           "description": "The serviceCategory the override applies to.",
-          "example": "service"
+          "example": "service",
+          "title": "Service Category"
         },
         "vatRate": {
           "type": "integer",
@@ -21448,24 +21464,28 @@
             0
           ],
           "description": "The vatRate the override permits for the serviceCategory.",
-          "example": 21
+          "example": 21,
+          "title": "Permitted VAT Rate (%)"
         },
         "reason": {
           "type": "string",
           "minLength": 1,
           "description": "Operator-authored audit reason. Retained for Belastingdienst inspection; free text.",
-          "example": "Special consulting agreement per contract X-2026"
+          "example": "Special consulting agreement per contract X-2026",
+          "title": "Reason for the Exception"
         },
         "createdAt": {
           "type": "string",
           "format": "date-time",
           "description": "Set on creation; immutable copy.",
-          "example": "2026-05-10T09:00:00Z"
+          "example": "2026-05-10T09:00:00Z",
+          "title": "Created At"
         },
         "createdBy": {
           "type": "string",
           "description": "Nextcloud user id of the creator; immutable.",
-          "example": "accountant1"
+          "example": "accountant1",
+          "title": "Created By"
         }
       },
       "x-openregister-rbac": {
@@ -21524,43 +21544,50 @@
         "administrationId": {
           "type": "string",
           "description": "FK to the administration; one VATGLAccounts record per administration.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         },
         "vat21Account": {
           "type": "string",
           "description": "GL account number credited for 21% VAT lines. Default 2020 per RGS baseline. MUST exist in Account for the administration.",
           "example": "2020",
-          "default": "2020"
+          "default": "2020",
+          "title": "GL Account for 21% VAT"
         },
         "vat9Account": {
           "type": "string",
           "description": "GL account number credited for 9% VAT lines. Default 2021. MUST exist in Account for the administration.",
           "example": "2021",
-          "default": "2021"
+          "default": "2021",
+          "title": "GL Account for 9% VAT"
         },
         "vat6Account": {
           "type": "string",
           "description": "GL account number credited for 6% VAT lines. Default 2022. MUST exist in Account for the administration.",
           "example": "2022",
-          "default": "2022"
+          "default": "2022",
+          "title": "GL Account for 6% VAT"
         },
         "vat0Account": {
           "type": "string",
           "description": "GL account number credited for 0% / exempt VAT lines. Default 2023. MUST exist in Account for the administration.",
           "example": "2023",
-          "default": "2023"
+          "default": "2023",
+          "title": "GL Account for 0% and Exempt VAT"
         },
         "createdAt": {
           "type": "string",
           "format": "date-time",
           "description": "Set on first save.",
-          "example": "2026-01-01T00:00:00Z"
+          "example": "2026-01-01T00:00:00Z",
+          "title": "Created At"
         },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
           "description": "Updated on each save.",
-          "example": "2026-01-15T10:00:00Z"
+          "example": "2026-01-15T10:00:00Z",
+          "title": "Last Updated At"
         }
       },
       "x-openregister-rbac": {
@@ -21620,7 +21647,8 @@
         "subsidyId": {
           "type": "string",
           "description": "FK to parent Subsidie.id.",
-          "example": "subsidie-rdsubsidie-2026-001"
+          "example": "subsidie-rdsubsidie-2026-001",
+          "title": "Subsidy"
         },
         "subsidyScheme": {
           "type": "string",
@@ -21633,7 +21661,8 @@
             "other"
           ],
           "description": "Denormalized regeling from parent Subsidie. Drives if/then kostencategorie constraint enforcement at save time (REQ-RDS-002).",
-          "example": "eu-horizon"
+          "example": "eu-horizon",
+          "title": "Subsidy Scheme"
         },
         "expenseCategory": {
           "type": "string",
@@ -21651,36 +21680,42 @@
             "green-recovery"
           ],
           "description": "Expense category for this kostenpost. Allowed values are constrained per subsidieRegeling (REQ-RDS-002).",
-          "example": "personnel"
+          "example": "personnel",
+          "title": "Expense Category"
         },
         "amount": {
           "type": "number",
           "minimum": 0,
           "description": "Expense amount in euros.",
-          "example": 5000.0
+          "example": 5000.0,
+          "title": "Amount (EUR)"
         },
         "description": {
           "type": "string",
           "nullable": true,
           "description": "Description of the expense.",
-          "example": "Personeelskosten Q1 2026"
+          "example": "Personeelskosten Q1 2026",
+          "title": "Expense Description"
         },
         "periodId": {
           "type": "string",
           "description": "FK to FiscalPeriod this kostenpost covers.",
-          "example": "2026-Q1"
+          "example": "2026-Q1",
+          "title": "Fiscal Period"
         },
         "attachmentUri": {
           "type": "string",
           "nullable": true,
           "description": "docudesk URI of supporting documentation. Per ADR-022.",
-          "example": "docudesk://shillinq/kostenpost-2026-001.pdf"
+          "example": "docudesk://shillinq/kostenpost-2026-001.pdf",
+          "title": "Supporting Document"
         },
         "soHoursStatementUri": {
           "type": "string",
           "nullable": true,
           "description": "docudesk URI of the S&O-uren-staat for personnel kostenposten in EU-Horizon subsidies. Referenced in Horizon audit-pack per REQ-RDS-004.",
-          "example": "docudesk://shillinq/so-uren-staat-2026-q1.pdf"
+          "example": "docudesk://shillinq/so-uren-staat-2026-q1.pdf",
+          "title": "R&D Hours Statement"
         },
         "state": {
           "type": "string",
@@ -21691,12 +21726,14 @@
           ],
           "description": "Approval state.",
           "default": "entered",
-          "example": "entered"
+          "example": "entered",
+          "title": "Approval State"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the administration owning this record.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         }
       },
       "x-openregister-lifecycle": {
@@ -21762,13 +21799,15 @@
         "name": {
           "type": "string",
           "description": "Human-readable location name per REQ-LOC-001.",
-          "example": "Amsterdam Central Warehouse"
+          "example": "Amsterdam Central Warehouse",
+          "title": "Location Name"
         },
         "locationCode": {
           "type": "string",
           "description": "Operator-assigned location code unique per administration per REQ-LOC-002 and D5. Immutable after creation — operator must create new location + migrate stock if rename required. Examples: 'W-01', 'Z-01', 'B-100', 'IN-TRANSIT-W01-W02'.",
           "example": "W-01",
-          "pattern": "^[A-Z0-9][A-Z0-9\\-_]{0,19}$"
+          "pattern": "^[A-Z0-9][A-Z0-9\\-_]{0,19}$",
+          "title": "Location Code"
         },
         "locationType": {
           "type": "string",
@@ -21779,25 +21818,29 @@
             "bin",
             "in-transit"
           ],
-          "example": "warehouse"
+          "example": "warehouse",
+          "title": "Location Type"
         },
         "parentLocationId": {
           "type": "string",
           "nullable": true,
           "description": "FK to parent Location id per REQ-LOC-001 D1. Null for warehouse and in-transit types (top-level or virtual). Required for zone and bin types. Max hierarchy depth 4 per REQ-LOC-003.",
-          "example": "loc-w01"
+          "example": "loc-w01",
+          "title": "Parent Location"
         },
         "address": {
           "type": "string",
           "nullable": true,
           "description": "Physical address of warehouse (street + city). Applicable to warehouse type only.",
-          "example": "Westerdoksdijk 40, 1013 AE Amsterdam"
+          "example": "Westerdoksdijk 40, 1013 AE Amsterdam",
+          "title": "Address"
         },
         "region": {
           "type": "string",
           "nullable": true,
           "description": "Geographic region for rollup reporting filters per REQ-LOC-007.",
-          "example": "Noord-Holland"
+          "example": "Noord-Holland",
+          "title": "Region"
         },
         "binNamingConvention": {
           "type": "string",
@@ -21810,19 +21853,22 @@
             "location"
           ],
           "default": "bin",
-          "example": "bin"
+          "example": "bin",
+          "title": "Bin Terminology"
         },
         "capacity": {
           "type": "number",
           "nullable": true,
           "description": "Maximum storage capacity in operator-defined units. Used for capacity warning per REQ-LOC-009.",
-          "example": 500.0
+          "example": 500.0,
+          "title": "Storage Capacity"
         },
         "capacityUnit": {
           "type": "string",
           "nullable": true,
           "description": "Unit of capacity measurement (e.g., 'pallets', 'items', 'kg').",
-          "example": "pallets"
+          "example": "pallets",
+          "title": "Capacity Unit"
         },
         "status": {
           "type": "string",
@@ -21833,18 +21879,21 @@
             "archived"
           ],
           "default": "active",
-          "example": "active"
+          "example": "active",
+          "title": "Status"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the Administration owning this location per REQ-LOC-008. All location queries are scoped to this administration — cross-org access is rejected with 403.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         },
         "notes": {
           "type": "string",
           "nullable": true,
           "description": "Optional operator notes about this location.",
-          "example": "High-bay racking, forklift required"
+          "example": "High-bay racking, forklift required",
+          "title": "Notes"
         }
       },
       "x-openregister-unique": [
@@ -22070,42 +22119,49 @@
           "type": "string",
           "nullable": true,
           "description": "Human-readable transfer reference (auto-generated if empty).",
-          "example": "TRF-2026-001"
+          "example": "TRF-2026-001",
+          "title": "Transfer Number"
         },
         "sourceLocationId": {
           "type": "string",
           "description": "FK to source Location per REQ-LOC-006. Any location type (warehouse/zone/bin).",
-          "example": "loc-w01"
+          "example": "loc-w01",
+          "title": "From Location"
         },
         "destinationLocationId": {
           "type": "string",
           "description": "FK to destination Location per REQ-LOC-006. Must differ from source.",
-          "example": "loc-w02"
+          "example": "loc-w02",
+          "title": "To Location"
         },
         "sku": {
           "type": "string",
           "description": "Product SKU being transferred. References Product.sku.",
-          "example": "LAPTOP-001"
+          "example": "LAPTOP-001",
+          "title": "Product SKU"
         },
         "quantity": {
           "type": "number",
           "minimum": 0.001,
           "description": "Quantity to transfer. Must be positive and ≤ available stock at source.",
-          "example": 50.0
+          "example": 50.0,
+          "title": "Quantity"
         },
         "scheduledDate": {
           "type": "string",
           "format": "date",
           "nullable": true,
           "description": "Planned transfer execution date.",
-          "example": "2026-06-10"
+          "example": "2026-06-10",
+          "title": "Planned Date"
         },
         "completedDate": {
           "type": "string",
           "format": "date",
           "nullable": true,
           "description": "Actual transfer completion date (when stock arrives at destination).",
-          "example": "2026-06-12"
+          "example": "2026-06-12",
+          "title": "Date Received"
         },
         "status": {
           "type": "string",
@@ -22118,25 +22174,29 @@
             "cancelled"
           ],
           "default": "draft",
-          "example": "draft"
+          "example": "draft",
+          "title": "Status"
         },
         "notes": {
           "type": "string",
           "nullable": true,
           "description": "Operator notes about this transfer.",
-          "example": "Seasonal stock rebalancing W-MAIN → W-EAST"
+          "example": "Seasonal stock rebalancing W-MAIN → W-EAST",
+          "title": "Notes"
         },
         "glPosted": {
           "type": "boolean",
           "nullable": true,
           "default": false,
           "description": "Whether GL reclassification entry has been posted (optional, requires add-shillinq-general-ledger).",
-          "example": false
+          "example": false,
+          "title": "Posted to the General Ledger"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to Administration owning this transfer. Scoped per org.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         }
       },
       "x-openregister-lifecycle": {
@@ -22247,29 +22307,34 @@
         "wbsoCode": {
           "type": "string",
           "description": "Official WBSO project code (SO, TWO, SMART) or custom code per WBSO legislation. Not an enum — operators may add custom codes per subsidy agreement (REQ-WBSO-002).",
-          "example": "SO"
+          "example": "SO",
+          "title": "WBSO Code"
         },
         "displayName": {
           "type": "string",
           "description": "Dutch display name of the WBSO code shown in UI and exports (REQ-WBSO-002).",
-          "example": "Stand-alone Project"
+          "example": "Stand-alone Project",
+          "title": "Display Name"
         },
         "description": {
           "type": "string",
           "nullable": true,
           "description": "RVO alignment notes and subsidy conditions for this code.",
-          "example": "Solo R&D project funded by WBSO subsidy — no collaborative partner required."
+          "example": "Solo R&D project funded by WBSO subsidy — no collaborative partner required.",
+          "title": "Conditions and Notes"
         },
         "rvoCertificationUrl": {
           "type": "string",
           "nullable": true,
           "description": "Link to the official RVO directive or legislation reference for this code.",
-          "example": "https://www.rvo.nl/subsidies-financiering/wbso"
+          "example": "https://www.rvo.nl/subsidies-financiering/wbso",
+          "title": "Link to RVO Guidance"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the Administration owning this WBSO code entry.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         },
         "lifecycleState": {
           "type": "string",
@@ -22280,7 +22345,8 @@
             "deprecated"
           ],
           "default": "active",
-          "example": "active"
+          "example": "active",
+          "title": "Status"
         }
       },
       "x-openregister-lifecycle": {
@@ -22371,12 +22437,14 @@
         "activityCode": {
           "type": "string",
           "description": "Activity code identifier: A001–A999 for allowed R&D activities, B001+ for restricted/overhead, or custom per subsidy agreement (REQ-WBSO-003).",
-          "example": "A001"
+          "example": "A001",
+          "title": "Activity Code"
         },
         "description": {
           "type": "string",
           "description": "Activity description per RVO guidelines (REQ-WBSO-003).",
-          "example": "Software development for R&D"
+          "example": "Software development for R&D",
+          "title": "Activity Description"
         },
         "category": {
           "type": "string",
@@ -22387,23 +22455,27 @@
             "non-eligible",
             "infrastructure"
           ],
-          "example": "research-development"
+          "example": "research-development",
+          "title": "RVO Category"
         },
         "isAllowed": {
           "type": "boolean",
           "description": "true = eligible for WBSO subsidy hours; false = tracked but excluded from RVO submission totals (REQ-WBSO-003).",
-          "example": true
+          "example": true,
+          "title": "Eligible for WBSO"
         },
         "parentActivityCode": {
           "type": "string",
           "nullable": true,
           "description": "FK to the baseline WBSOActivityCode.activityCode this entry is a custom variant of. Custom variants inherit isAllowed from parent unless explicitly overridden (REQ-WBSO-009).",
-          "example": "A001"
+          "example": "A001",
+          "title": "Based on Baseline Code"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the Administration owning this code entry.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         },
         "lifecycleState": {
           "type": "string",
@@ -22414,7 +22486,8 @@
             "deprecated"
           ],
           "default": "active",
-          "example": "active"
+          "example": "active",
+          "title": "Status"
         }
       },
       "x-openregister-lifecycle": {
@@ -22507,19 +22580,22 @@
         "exportId": {
           "type": "string",
           "description": "Unique export identifier in the format EXP-{YEAR}-{PERIOD}-{SEQ} (REQ-WBSO-005).",
-          "example": "EXP-2026-Q1-001"
+          "example": "EXP-2026-Q1-001",
+          "title": "Export Reference"
         },
         "periodStart": {
           "type": "string",
           "format": "date",
           "description": "Start of the export date range (inclusive), typically fiscal quarter start (REQ-WBSO-005).",
-          "example": "2026-01-01"
+          "example": "2026-01-01",
+          "title": "Period Start"
         },
         "periodEnd": {
           "type": "string",
           "format": "date",
           "description": "End of the export date range (inclusive), typically fiscal quarter end (REQ-WBSO-005).",
-          "example": "2026-03-31"
+          "example": "2026-03-31",
+          "title": "Period End"
         },
         "exportFormat": {
           "type": "string",
@@ -22529,7 +22605,8 @@
             "pdf",
             "xml"
           ],
-          "example": "csv"
+          "example": "csv",
+          "title": "File Format"
         },
         "status": {
           "type": "string",
@@ -22543,26 +22620,30 @@
             "rejected"
           ],
           "default": "draft",
-          "example": "draft"
+          "example": "draft",
+          "title": "Status"
         },
         "recordCount": {
           "type": "integer",
           "minimum": 0,
           "description": "Number of Urenregistratie entries included in this export (REQ-WBSO-005).",
-          "example": 247
+          "example": 247,
+          "title": "Time Entries Included"
         },
         "totalHours": {
           "type": "number",
           "minimum": 0,
           "description": "Total eligible hours (A-codes) included in the export. Excludes B-code entries (REQ-WBSO-005).",
-          "example": 320.5
+          "example": 320.5,
+          "title": "Eligible Hours"
         },
         "totalHoursIneligible": {
           "type": "number",
           "minimum": 0,
           "nullable": true,
           "description": "Total non-eligible hours (B-codes) tracked but excluded from RVO submission totals (REQ-WBSO-005).",
-          "example": 10.0
+          "example": 10.0,
+          "title": "Non-Eligible Hours"
         },
         "exportFilters": {
           "type": "object",
@@ -22571,21 +22652,24 @@
           "example": {
             "wbsoTagId": "wbso-tag-so-1",
             "isAllowed": true
-          }
+          },
+          "title": "Filters Applied"
         },
         "generatedAt": {
           "type": "string",
           "format": "date-time",
           "nullable": true,
           "description": "Timestamp when the export file was materialized (REQ-WBSO-005).",
-          "example": "2026-04-10T09:15:00Z"
+          "example": "2026-04-10T09:15:00Z",
+          "title": "Generated At"
         },
         "validatedAt": {
           "type": "string",
           "format": "date-time",
           "nullable": true,
           "description": "Timestamp when RVO validation passed (REQ-WBSO-005).",
-          "example": "2026-04-10T09:20:00Z"
+          "example": "2026-04-10T09:20:00Z",
+          "title": "Validated At"
         },
         "validationErrors": {
           "type": "array",
@@ -22596,25 +22680,29 @@
           },
           "example": [
             "Entry abc-123: missing wbsoTagId"
-          ]
+          ],
+          "title": "Validation Errors"
         },
         "submittedAt": {
           "type": "string",
           "format": "date-time",
           "nullable": true,
           "description": "Timestamp when submitted to RVO portal or operator marked submission complete (REQ-WBSO-005).",
-          "example": "2026-04-10T10:30:00Z"
+          "example": "2026-04-10T10:30:00Z",
+          "title": "Submitted At"
         },
         "fileUri": {
           "type": "string",
           "nullable": true,
           "description": "Storage path or cloud URL of the generated export file (REQ-WBSO-005).",
-          "example": "s3://shillinq-exports/wbso-2026-q1.csv"
+          "example": "s3://shillinq-exports/wbso-2026-q1.csv",
+          "title": "Export File"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the Administration owning this export log.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         }
       },
       "x-openregister-lifecycle": {
@@ -22809,22 +22897,26 @@
           "format": "uuid",
           "$ref": "Subsidie",
           "description": "Reference to the parent Subsidie record of subtype specifieke-uitkering. Per ADR-022, no parallel SiSa subsidie register — the indicator attaches to the existing T3 subsidie register.",
-          "example": "subsidie-uuid-d8-2026"
+          "example": "subsidie-uuid-d8-2026",
+          "title": "Subsidy"
         },
         "schemeCode": {
           "type": "string",
           "description": "BZK regeling identifier from the controleprotocol (e.g. D8, E3, C17). Used as grouping key in the SiSa-bijlage aggregation.",
-          "example": "D8"
+          "example": "D8",
+          "title": "Scheme Code"
         },
         "indicatorCode": {
           "type": "string",
           "description": "Indicator code per controleprotocol (e.g. D8.01, D8.02). Unique within a regeling.",
-          "example": "D8.01"
+          "example": "D8.01",
+          "title": "Indicator Code"
         },
         "indicatorDescription": {
           "type": "string",
           "description": "Human-readable description of the indicator as stated in the controleprotocol.",
-          "example": "Aantal personen met een bijstandsuitkering per 31 december van het verantwoordingsjaar"
+          "example": "Aantal personen met een bijstandsuitkering per 31 december van het verantwoordingsjaar",
+          "title": "Indicator Description"
         },
         "indicatorValue": {
           "description": "Measured or reported value of the indicator for the fiscal year. May be a number (count, amount, percentage) or string depending on indicatorType.",
@@ -22836,34 +22928,40 @@
               "type": "string"
             }
           ],
-          "example": 1247
+          "example": 1247,
+          "title": "Reported Value"
         },
         "indicatorUnit": {
           "type": "string",
           "description": "Unit of the indicator value (e.g. personen, euro, %, ja/nee). Nullable when not applicable.",
           "nullable": true,
-          "example": "personen"
+          "example": "personen",
+          "title": "Unit"
         },
         "levelDate": {
           "type": "string",
           "format": "date",
           "description": "Reference date (peildatum) for the indicator measurement, typically fiscal-year-end.",
-          "example": "2026-12-31"
+          "example": "2026-12-31",
+          "title": "Reference Date"
         },
         "auditProtocol": {
           "type": "string",
           "description": "Version of the BZK SiSa controleprotocol this indicator was filed under (e.g. 2026). Version-pins the reporting year.",
-          "example": "2026"
+          "example": "2026",
+          "title": "Audit Protocol Year"
         },
         "fiscalYear": {
           "type": "integer",
           "description": "Fiscal year for which this indicator is reported.",
-          "example": 2026
+          "example": 2026,
+          "title": "Fiscal Year"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the Administration owning this indicator record.",
-          "example": "adm-gemeente-voorbeeld"
+          "example": "adm-gemeente-voorbeeld",
+          "title": "Administration ID"
         },
         "sisaSubmissionStatus": {
           "type": "string",
@@ -22875,19 +22973,22 @@
           ],
           "default": "not-submitted",
           "description": "BZK submission status for this indicator's regeling in the annual bijlage.",
-          "example": "submitted"
+          "example": "submitted",
+          "title": "Submission Status"
         },
         "attachmentDocumentUri": {
           "type": "string",
           "description": "docudesk URI of the generated SiSa-bijlage document that contains this indicator. Set after bijlage generation.",
           "nullable": true,
-          "example": "docudesk://shillinq/sisa-bijlage-2026-adm-gemeente-voorbeeld"
+          "example": "docudesk://shillinq/sisa-bijlage-2026-adm-gemeente-voorbeeld",
+          "title": "SiSa Annex Document"
         },
         "submissionAuditEventId": {
           "type": "string",
           "description": "FK to the immutable audit event written on BZK submission per REQ-SISA-005.",
           "nullable": true,
-          "example": "audit-event-uuid-sisa-2026"
+          "example": "audit-event-uuid-sisa-2026",
+          "title": "Submission Audit Event"
         }
       },
       "x-openregister-aggregations": {
@@ -22983,37 +23084,43 @@
       "properties": {
         "projectName": {
           "type": "string",
-          "description": "Naam van het S&O-project zoals opgegeven bij de RvO-aanvraag.",
-          "example": "Ontwikkeling van een AI-gestuurde planningsmodule"
+          "description": "Name of the R&D project as filed in the RVO application. Keep it identical to the application so RVO correspondence can be matched to this record.",
+          "example": "Ontwikkeling van een AI-gestuurde planningsmodule",
+          "title": "Project Name"
         },
         "rvoProjectNumber": {
           "type": "string",
-          "description": "Projectnummer toegekend door RvO bij de WBSO-beschikking.",
-          "example": "2026/0001"
+          "description": "Project number assigned by RVO in the WBSO decision letter (beschikking). Quoted on every RVO submission for this project.",
+          "example": "2026/0001",
+          "title": "RVO Project Number"
         },
         "rndCertificateNumber": {
           "type": "string",
           "nullable": true,
-          "description": "S&O-certificaatnummer afgegeven door RvO.",
-          "example": "CERT-2026-0042"
+          "description": "R&D certificate number (S&O-certificaatnummer) issued by RVO. Left empty until the certificate arrives.",
+          "example": "CERT-2026-0042",
+          "title": "R&D Certificate Number"
         },
         "termStart": {
           "type": "string",
           "format": "date",
-          "description": "Startdatum van de S&O-projectlooptijd.",
-          "example": "2026-01-01"
+          "description": "First day of the R&D project term as granted by RVO. Hours booked before this date are not eligible.",
+          "example": "2026-01-01",
+          "title": "Term Start"
         },
         "termEnd": {
           "type": "string",
           "format": "date",
-          "description": "Einddatum van de S&O-projectlooptijd.",
-          "example": "2026-12-31"
+          "description": "Last day of the R&D project term as granted by RVO. Hours booked after this date are not eligible.",
+          "example": "2026-12-31",
+          "title": "Term End"
         },
         "costCenterId": {
           "type": "string",
           "nullable": true,
           "description": "FK to AnalyticalDimension.code (dimensionType=cost-center) from the bookkeeping-cost-centers-dimensions base capability. Re-targeted from the retired CostCenter per REQ-ADIM-102.",
-          "example": "cc-innovatie-2026"
+          "example": "cc-innovatie-2026",
+          "title": "Cost Center"
         },
         "status": {
           "type": "string",
@@ -23022,13 +23129,15 @@
             "toegekend",
             "afgerond"
           ],
-          "description": "Status van de WBSO-aanvraag / het project.",
-          "example": "toegekend"
+          "description": "Where the WBSO application and the project it funds currently stand. The values are the statutory Dutch terms used by RVO: aangevraagd (applied for), toegekend (granted), afgerond (completed).",
+          "example": "toegekend",
+          "title": "Application Status"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the Administration owning this S&O-project.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         }
       },
       "x-openregister-rbac": {
@@ -23077,31 +23186,36 @@
       "properties": {
         "soProjectId": {
           "type": "string",
-          "description": "FK to SoProject.id — het S&O-project waarvoor de uren zijn gemaakt.",
-          "example": "sop-2026-001"
+          "description": "FK to SoProject.id — the R&D project the hours were worked on. Only projects whose granted term covers the week may be selected.",
+          "example": "sop-2026-001",
+          "title": "R&D Project"
         },
         "employeeId": {
           "type": "string",
-          "description": "Referentie naar een Nextcloud-gebruiker (uid) of een Detachering-record-id (FK naar het sibling add-shillinq-detachering-payroll-administratie capability).",
-          "example": "user-jan.de.vries"
+          "description": "The person who worked the hours: either a Nextcloud user id (uid) or a Detachering record id (FK into the sibling add-shillinq-detachering-payroll-administratie capability).",
+          "example": "user-jan.de.vries",
+          "title": "Employee"
         },
         "weekISO": {
           "type": "string",
           "pattern": "^\\d{4}-W(0[1-9]|[1-4][0-9]|5[0-3])$",
-          "description": "ISO-8601 weekaanduiding waarop de S&O-uren zijn gemaakt.",
-          "example": "2026-W14"
+          "description": "The ISO-8601 week the R&D hours were worked in, written as YYYY-Www. One timesheet per employee, per project, per week.",
+          "example": "2026-W14",
+          "title": "Week"
         },
         "countHours": {
           "type": "number",
           "minimum": 0,
           "multipleOf": 0.25,
-          "description": "Aantal S&O-uren in de gegeven week (minimaal 0, kwartieren — veelvoud van 0.25).",
-          "example": 32.5
+          "description": "Number of R&D hours worked in that week. Recorded in quarter hours (multiples of 0.25); only hours spent on the project's granted R&D work may be entered.",
+          "example": 32.5,
+          "title": "Hours Worked"
         },
         "taskDescription": {
           "type": "string",
-          "description": "Omschrijving van de uitgevoerde S&O-werkzaamheden.",
-          "example": "Ontwerp en implementatie van het AI-planningsalgoritme"
+          "description": "What the employee actually did that week. RVO inspects this text, so describe the R&D work concretely rather than restating the project name.",
+          "example": "Ontwerp en implementatie van het AI-planningsalgoritme",
+          "title": "Work Performed"
         },
         "state": {
           "type": "string",
@@ -23110,20 +23224,23 @@
             "approved",
             "closed"
           ],
-          "description": "Status van de urenstaat in de goedkeurings-workflow.",
-          "example": "draft"
+          "description": "Where this timesheet stands in the approval workflow. Only draft timesheets can still be edited; approved ones count toward the quarterly RVO statement.",
+          "example": "draft",
+          "title": "Approval State"
         },
         "soHourlyWage": {
           "type": "number",
           "minimum": 0,
           "nullable": true,
-          "description": "S&O-uurloon van de medewerker ten behoeve van de afdrachtvermindering-berekening (REQ-WBSO-006). Vastgelegd per urenstaat als snapshot op het moment van invullen.",
-          "example": 48.5
+          "description": "The employee's R&D hourly wage, used to calculate the payroll-tax remittance reduction (REQ-WBSO-006). Captured as a snapshot when the timesheet is filled in, so a later wage change does not alter historical claims.",
+          "example": 48.5,
+          "title": "R&D Hourly Wage"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the Administration owning this urenstaat.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration ID"
         }
       },
       "x-openregister-lifecycle": {
