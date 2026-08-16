@@ -20,14 +20,25 @@
  fileName) so the parent can toast a download link; on failure it surfaces
  the error inline and stays open.
 
- @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ @spec exclude The reporting capability has no canonical spec. This tag pointed at
+       openspec/changes/reporting-compliance-consolidation (a change directory that
+       exists neither under changes nor under changes/archive), and no canonical
+       reporting capability exists under openspec/specs either. Tracked in #525.
+       Deliberately NOT resolved by writing that spec — authoring the requirement
+       a tag is checked against turns the gate green over an unspecified capability.
 
- KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
- The change directory it names was never committed, and the `reporting`
+ KNOWINGLY DANGLING — do not repoint this tag at a spec (gate-46, shillinq#499).
+ The change directory it named was never committed, and the `reporting`
  capability has NO canonical spec. One was drafted during gate remediation and
  withdrawn: a spec written to fit the code, by the process whose job is to
  check the code against a spec, is not a specification anyone agreed to.
  Authoring it is the capability owner's decision, not a gate fix.
+
+ The dangling path is replaced by the reason-bearing `@spec exclude` above —
+ the same declaration lib/Controller/ReportingController.php already carries for
+ the same capability. The prose note alone did not say this to gate-46, which
+ reads the tag and not the paragraph under it, so the two halves of the same
+ decision disagreed and only the PHP half was legible.
 -->
 
 <template>
