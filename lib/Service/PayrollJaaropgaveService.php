@@ -91,6 +91,21 @@ class PayrollJaaropgaveService {
 			year: $year
 		);
 
+		if ($stroken === []) {
+			// An employee with no payslips for the year still yields a jaaropgave —
+			// an all-zero one, which is indistinguishable from a correctly-zero year.
+			// Record it so the difference is auditable. Identifiers only: never the
+			// BSN or any special-category field.
+			$this->logger->warning(
+				'Jaaropgave built from zero payslips — the annual statement will be all-zero.',
+				[
+					'administrationId' => $administrationId,
+					'employeeId' => $employeeId,
+					'year' => $year,
+				]
+			);
+		}
+
 		$fiscalC = 0;
 		$payrollTaxC = 0;
 		$svWgC = 0;
