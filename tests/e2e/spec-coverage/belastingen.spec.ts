@@ -27,7 +27,12 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/tax-estimates', title: 'Tax Estimates' },
 	{ route: '/tax-configuration', title: 'Tax Configuration' },
 	{
-		route: '/belastingen/vat-aangiften',
+		// `btw-`, not `vat-`. The manifest declares `/belastingen/btw-aangiften`
+		// and always has; this spec asked for a route that has never existed, so
+		// vue-router fell through to the catch-all and the assertion measured the
+		// dashboard. The `title` below was already the Dutch one, which is what
+		// gives away that this was a stale route string and not a second page.
+		route: '/belastingen/btw-aangiften',
 		title: 'BTW-aangiften',
 		titleRe: /BTW-?aangift/i,
 	},
@@ -42,7 +47,8 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		titleRe: /ICP-?opgaaf|ICP/i,
 	},
 	{
-		route: '/belastingen/vat-correcties',
+		// `btw-`, not `vat-` — same stale-route-string as btw-aangiften above.
+		route: '/belastingen/btw-correcties',
 		title: 'BTW-correcties',
 		titleRe: /BTW-?correct/i,
 	},
@@ -53,9 +59,15 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		titleRe: /ZZP-?aftrek/i,
 	},
 	{
-		route: '/belastingen/ib-tax_return',
-		title: 'IB-tax_return',
-		titleRe: /IB-?aangift/i,
+		// `ib-aangifte`, not `ib-tax_return`. A Dutch→English substitution
+		// (aangifte → tax_return) was applied to the ROUTE and TITLE here but
+		// never to the manifest — the underscore in `tax_return` is the tell,
+		// no route in this app uses one. The manifest declares
+		// `/belastingen/ib-aangifte` titled "IB return", so accept either
+		// wording rather than pinning this spec to whichever side renames next.
+		route: '/belastingen/ib-aangifte',
+		title: 'IB return',
+		titleRe: /IB[-\s]?(aangift|return)/i,
 	},
 	// Uitgestelde belastingen (deferred tax)
 	{
@@ -68,7 +80,9 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		title: 'Tijdelijke verschillen',
 	},
 	{
-		route: '/belastingen/uitgestelde-belastingen/movements',
+		// `mutaties`, not `movements`. Same class again — and the title
+		// (`Mutatieoverzicht`, matched by /Mutatie/i) is the tell.
+		route: '/belastingen/uitgestelde-belastingen/mutaties',
 		title: 'Mutatieoverzicht',
 		titleRe: /Mutatie/i,
 	},
