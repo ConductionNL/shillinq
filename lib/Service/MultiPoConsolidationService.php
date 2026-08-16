@@ -182,6 +182,7 @@ class MultiPoConsolidationService {
 	 *                                                       SupplierInvoice document records its
 	 *                                                       per-line PO links inline (REQ-PO3W-007).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */
