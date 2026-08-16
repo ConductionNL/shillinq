@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -215,18 +216,16 @@ class PayrollWebhookController extends Controller {
 	private function applyEvent(string $eventId, string $payrollId, array $data): ?array {
 		$register = $this->resolveRegister();
 
-		$payrolls = $this->objectService
-			->setRegister($register)
-			->setSchema('Payroll')
-			->findAll(['filters' => ['id' => $payrollId]]);
-
-		$payroll = null;
-		foreach ($payrolls as $candidate) {
-			if (is_array($candidate) === true) {
-				$payroll = $candidate;
-				break;
-			}
-		}
+		// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
+		// properties and the entity's `id` is not one, so that shape matched
+		// nothing for every value and every inbound payroll webhook was
+		// treated as referencing an unknown Payroll.
+		$payroll = ObjectIdentifier::findOne(
+			scoped: $this->objectService
+				->setRegister($register)
+				->setSchema('Payroll'),
+			id: $payrollId
+		);
 
 		if ($payroll === null) {
 			return null;

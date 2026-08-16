@@ -53,6 +53,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -358,15 +359,20 @@ class PaymentReconciliationService {
 		}
 
 		try {
-			$invoices = $objectService
-				->setRegister($registerSlug)
-				->setSchema('ARInvoice')
-				->findAll(
-					[
-						'filters' => ['id' => $invoiceRef],
-						'limit' => 1,
-					]
-				);
+			// The by-id arm was findAll(['filters' => ['id' => …]]), which
+			// matches NOTHING — `filters` addresses JSON properties and the
+			// entity's `id` is not one — so every reference fell through to
+			// the slug arm and an invoice referenced by uuid never reconciled.
+			$byId = ObjectIdentifier::findOne(
+				scoped: $objectService
+					->setRegister($registerSlug)
+					->setSchema('ARInvoice'),
+				id: $invoiceRef
+			);
+			$invoices = [];
+			if ($byId !== null) {
+				$invoices = [$byId];
+			}
 
 			if (empty($invoices) === true) {
 				$invoices = $objectService

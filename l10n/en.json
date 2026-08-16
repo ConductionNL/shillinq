@@ -162,7 +162,6 @@
         "Allocation %": "Allocation %",
         "Allocation Key": "Allocation Key",
         "Allocation Key Ratio": "Allocation Key Ratio",
-        "Allocation must be between 0 % and 100 %.": "Allocation must be between 0 % and 100 %.",
         "Allocation range": "Allocation range",
         "Allocation Rule": "Allocation Rule",
         "Allocation Rules": "Allocation Rules",
@@ -2754,7 +2753,22 @@
         "Zelfstandigenaftrek": "Self-employed deduction",
         "ZZP Deduction": "ZZP Deduction",
         "ZZP-aftrek": "Self-employed deductions",
-        "Δ": "Δ"
+        "Δ": "Δ",
+        "Creating…": "Creating…",
+        "Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.": "Declare which accounting and reporting frameworks this administration follows, and drag them into order of precedence. When frameworks disagree on a treatment (revenue, leases, inventory, …), business logic follows the highest-ranked enabled framework.",
+        "Evaluating…": "Evaluating…",
+        "Loading goods receipt note…": "Loading goods receipt note…",
+        "Loading match…": "Loading match…",
+        "Loading purchase order…": "Loading purchase order…",
+        "Loading receipt…": "Loading receipt…",
+        "Loading scorecard…": "Loading scorecard…",
+        "Loading scorecards…": "Loading scorecards…",
+        "Loading supplier invoice…": "Loading supplier invoice…",
+        "Loading three-way matches…": "Loading three-way matches…",
+        "Search account or programme…": "Search account or programme…",
+        "Sending PDF…": "Sending PDF…",
+        "Sending Peppol…": "Sending Peppol…",
+        "Sending…": "Sending…"
     },
     "plurals": ""
 }

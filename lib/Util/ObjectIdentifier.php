@@ -171,6 +171,103 @@ final class ObjectIdentifier {
 	}//end accessor()
 
 	/**
+	 * Look one object up by identifier, the way that actually works.
+	 *
+	 * ⚠️ DO NOT reach for `findAll(['filters' => ['id' => $id]])` instead.
+	 *
+	 * `filters` addresses the object's JSON PROPERTIES. The ObjectEntity's `id`
+	 * is the entity's own column, merged into the serialised output afterwards
+	 * — so it is not a property the filter can see, and that shape matches
+	 * ZERO rows for every value, uuids included. It returns an empty array
+	 * rather than raising, so the caller reads a record that plainly exists as
+	 * "not found", with no exception and nothing in the log. The HTTP list API
+	 * DOES answer `?id=…` (it maps that onto the entity column), so the same
+	 * lookup looks healthy when probed with curl and returns nothing in PHP.
+	 *
+	 * `find()` is the single-object lookup and it THROWS DoesNotExistException
+	 * on a miss rather than returning null — including for any identifier that
+	 * is not a uuid — so it needs its own catch. Cross-references in this app
+	 * join on the uuid, so `find()` answers most lookups on its own.
+	 *
+	 * `$fallbackProperty` covers the identifiers that are NOT uuids: an
+	 * administration is addressed by its `administrationCode` ('ADM-001')
+	 * throughout the app, because buildContext() echoes the code back as
+	 * `activeAdministrationId` and ci-seed.sh stamps fixtures with it.
+	 *
+	 * @param object      $scoped           ObjectService with register + schema already set.
+	 * @param string      $id               The uuid, or the fallback property's value.
+	 * @param string|null $fallbackProperty JSON property to match when $id is not a uuid.
+	 *
+	 * @return array<string,mixed>|null The record, or null when genuinely absent.
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	public static function findOne(object $scoped, string $id, ?string $fallbackProperty = null): ?array {
+		if ($id === '') {
+			return null;
+		}
+
+		// Its own try/catch, deliberately — find() throws rather than
+		// returning null, so a shared catch would swallow the fallback.
+		try {
+			$record = self::record(candidate: $scoped->find($id));
+			if ($record !== null) {
+				return $record;
+			}
+		} catch (Throwable $notAUuid) {
+			// Fall through to the property lookup below.
+		}
+
+		if ($fallbackProperty === null) {
+			return null;
+		}
+
+		try {
+			$matches = $scoped->findAll(['filters' => [$fallbackProperty => $id], 'limit' => 1]);
+		} catch (Throwable $e) {
+			return null;
+		}
+
+		foreach ($matches as $match) {
+			$record = self::record(candidate: $match);
+			if ($record !== null) {
+				return $record;
+			}
+		}
+
+		return null;
+	}//end findOne()
+
+	/**
+	 * Normalise an ObjectService result entry to a plain record array.
+	 *
+	 * Results arrive as either plain arrays or ObjectEntity instances
+	 * depending on the call shape.
+	 *
+	 * @param mixed $candidate Result entry or single object.
+	 *
+	 * @return array<string,mixed>|null The record, or null when not usable.
+	 */
+	private static function record(mixed $candidate): ?array {
+		if (is_array($candidate) === true) {
+			if ($candidate === []) {
+				return null;
+			}
+
+			return $candidate;
+		}
+
+		if (is_object($candidate) === true && method_exists($candidate, 'getObject') === true) {
+			$payload = $candidate->getObject();
+			if (is_array($payload) === true && $payload !== []) {
+				return $payload;
+			}
+		}
+
+		return null;
+	}//end record()
+
+	/**
 	 * Render a scalar identifier as a non-empty string.
 	 *
 	 * @param mixed $value The candidate identifier.
