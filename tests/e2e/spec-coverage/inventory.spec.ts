@@ -46,7 +46,10 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 ]
 
 test.describe('shillinq spec-coverage — Inventory', () => {
-	test.describe.configure({ mode: 'serial' })
+	// No `mode: 'serial'` — see the header of ./_helpers.ts. This block is
+	// where the cost was measured: ONE failing route entry
+	// (`/inventory/products`) left the other 13 pages here unmeasured.
+
 	for (const p of PAGES) {
 		test(`Inventory › ${p.title} (${p.route})`, async ({ page }) => {
 			const rec = recordShillinqErrors(page)

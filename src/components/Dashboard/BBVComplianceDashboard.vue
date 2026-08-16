@@ -42,9 +42,9 @@
 			:widgets="widgets"
 			:layout="layout"
 			:loading="loading"
-			:cellHeight="80"
-			:gridMargin="16"
-			:emptyLabel="t('shillinq', 'No widgets configured.')">
+			:cell-height="80"
+			:grid-margin="16"
+			:empty-label="t('shillinq', 'No widgets configured.')">
 			<template #header-actions>
 				<span
 					v-if="scope.fiscalYear"
@@ -91,14 +91,11 @@
 				<BBVProgrammeTable
 					:programmes="programmes"
 					:loading="loading"
-					@rowClick="onProgrammeClick" />
+					@row-click="onProgrammeClick" />
 			</template>
 		</CnDashboardPage>
 
-		<p
-			v-if="error"
-			class="bbv-dashboard__error"
-			data-testid="bbv-dashboard-error">
+		<p v-if="error" class="bbv-dashboard__error" data-testid="bbv-dashboard-error">
 			{{ error }}
 		</p>
 	</div>
@@ -106,13 +103,14 @@
 
 <script>
 import { CnDashboardPage } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import BBVComplianceChart from './BBVComplianceChart.vue'
+import { translate as t } from '@nextcloud/l10n'
+import axios from '@nextcloud/axios'
+
 import BBVKPICards from './BBVKPICards.vue'
-import BBVProgrammeTable from './BBVProgrammeTable.vue'
+import BBVComplianceChart from './BBVComplianceChart.vue'
 import BBVTrendChart from './BBVTrendChart.vue'
+import BBVProgrammeTable from './BBVProgrammeTable.vue'
 
 export default {
 	name: 'BBVComplianceDashboard',
@@ -123,7 +121,6 @@ export default {
 		BBVTrendChart,
 		BBVProgrammeTable,
 	},
-
 	data() {
 		return {
 			programmes: [],
@@ -141,84 +138,32 @@ export default {
 			},
 		}
 	},
-
 	computed: {
 		widgets() {
 			return [
-				{
-					id: 'bbv-kpis',
-					title: this.t('shillinq', 'Key compliance metrics'),
-					type: 'custom',
-				},
-				{
-					id: 'bbv-pie',
-					title: this.t('shillinq', 'Compliance status distribution'),
-					type: 'custom',
-				},
-				{
-					id: 'bbv-trend',
-					title: this.t('shillinq', 'YTD cumulative spend per programme'),
-					type: 'custom',
-				},
-				{
-					id: 'bbv-table',
-					title: this.t('shillinq', 'Programme utilization'),
-					type: 'custom',
-				},
+				{ id: 'bbv-kpis', title: this.t('shillinq', 'Key compliance metrics'), type: 'custom' },
+				{ id: 'bbv-pie', title: this.t('shillinq', 'Compliance status distribution'), type: 'custom' },
+				{ id: 'bbv-trend', title: this.t('shillinq', 'YTD cumulative spend per programme'), type: 'custom' },
+				{ id: 'bbv-table', title: this.t('shillinq', 'Programme utilization'), type: 'custom' },
 			]
 		},
-
 		layout() {
 			return [
-				{
-					id: 'layout-kpis',
-					widgetId: 'bbv-kpis',
-					gridX: 0,
-					gridY: 0,
-					gridWidth: 12,
-					gridHeight: 2,
-					showTitle: false,
-				},
-				{
-					id: 'layout-pie',
-					widgetId: 'bbv-pie',
-					gridX: 0,
-					gridY: 2,
-					gridWidth: 6,
-					gridHeight: 4,
-				},
-				{
-					id: 'layout-trend',
-					widgetId: 'bbv-trend',
-					gridX: 6,
-					gridY: 2,
-					gridWidth: 6,
-					gridHeight: 4,
-				},
-				{
-					id: 'layout-table',
-					widgetId: 'bbv-table',
-					gridX: 0,
-					gridY: 6,
-					gridWidth: 12,
-					gridHeight: 5,
-				},
+				{ id: 'layout-kpis', widgetId: 'bbv-kpis', gridX: 0, gridY: 0, gridWidth: 12, gridHeight: 2, showTitle: false },
+				{ id: 'layout-pie', widgetId: 'bbv-pie', gridX: 0, gridY: 2, gridWidth: 6, gridHeight: 4 },
+				{ id: 'layout-trend', widgetId: 'bbv-trend', gridX: 6, gridY: 2, gridWidth: 6, gridHeight: 4 },
+				{ id: 'layout-table', widgetId: 'bbv-table', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
 			]
 		},
-
 		fyLabel() {
 			if (!this.scope.fiscalYear) {
 				return ''
 			}
 			return this.t('shillinq', 'FY {year}', { year: this.scope.fiscalYear })
 		},
-
 		scopeDescription() {
 			if (!this.scope.fiscalYear) {
-				return this.t(
-					'shillinq',
-					'Fiscal-year overview of programme utilization and compliance status.',
-				)
+				return this.t('shillinq', 'Fiscal-year overview of programme utilization and compliance status.')
 			}
 			return this.t(
 				'shillinq',
@@ -227,19 +172,15 @@ export default {
 			)
 		},
 	},
-
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadProgrammes()
 	},
-
 	methods: {
 		t,
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
+				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
 				const admins = response.data?.administrations || []
 				this.administrationOptions = admins.map((a) => ({
 					value: a.administrationId,
@@ -250,20 +191,27 @@ export default {
 				}
 			} catch (e) {
 				// Inline error; the dashboard still renders an empty envelope.
-				this.error = this.t(
-					'shillinq',
-					'Failed to load administration context',
-				)
+				this.error = this.t('shillinq', 'Failed to load administration context')
 			}
 		},
-
 		async onAdministrationChange() {
 			// Server-side scope is derived from the session, but explicitly
 			// passing administrationId lets a multi-admin user pivot the
 			// view without a session-switch round-trip (REQ-BBVW-006).
 			await this.loadProgrammes()
 		},
-
+		/**
+		 * Load the BBV compliance envelope (widgets, programmes, mappings,
+		 * counts, summary) for the active administration and render the
+		 * dashboard from it.
+		 *
+		 * Errors surface inline via `this.error`; the dashboard still renders
+		 * an empty envelope rather than a blank page.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
 		async loadProgrammes() {
 			this.loading = true
 			this.error = ''
@@ -273,13 +221,15 @@ export default {
 					params.administrationId = this.administrationId
 				}
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/bbv-dashboard'),
+					// `/api/` prefix is load-bearing — see appinfo/routes.php:
+					// the un-prefixed path is the SPA PAGE route for this very
+					// dashboard, and registering the JSON endpoint there made
+					// the page itself unreachable in a browser.
+					generateUrl('/apps/shillinq/api/bbv-dashboard'),
 					{ params },
 				)
 				const data = response.data || {}
-				this.programmes = Array.isArray(data.programmes)
-					? data.programmes
-					: []
+				this.programmes = Array.isArray(data.programmes) ? data.programmes : []
 				this.mappings = Array.isArray(data.mappings) ? data.mappings : []
 				this.timeline = Array.isArray(data.timeline) ? data.timeline : []
 				this.scope = data.scope || {
@@ -292,20 +242,13 @@ export default {
 				this.programmes = []
 				this.timeline = []
 				this.mappings = []
-				this.scope = {
-					administrationId: null,
-					fiscalYear: null,
-					startDate: null,
-					endDate: null,
-				}
-				this.error =
-					e?.response?.data?.error
+				this.scope = { administrationId: null, fiscalYear: null, startDate: null, endDate: null }
+				this.error = e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load BBV programmes')
 			} finally {
 				this.loading = false
 			}
 		},
-
 		onProgrammeClick(row) {
 			// The table component handles router.push itself; this hook is
 			// kept so embedders (e.g. tests, parent shells) can intercept
