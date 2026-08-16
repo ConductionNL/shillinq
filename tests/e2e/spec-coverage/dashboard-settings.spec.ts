@@ -22,7 +22,6 @@ test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
 	// test's uncaught "Element not found" page error was silently costing
 	// the Settings tests below it their verdict.
 
-
 	test('Dashboard — root SPA mounts with the Dashboard surface', async ({
 		page,
 	}) => {

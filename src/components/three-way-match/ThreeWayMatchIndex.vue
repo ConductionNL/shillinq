@@ -64,7 +64,7 @@
 			v-if="loading"
 			class="twm-index__loading"
 			data-testid="twm-index-loading">
-			{{ t('shillinq', 'Loading three-way matches...') }}
+			{{ t('shillinq', 'Loading three-way matches…') }}
 		</div>
 
 		<div
@@ -128,7 +128,7 @@
 					@click="reevaluate(row)">
 					{{
 						reevaluating === row.id
-							? t('shillinq', 'Evaluating...')
+							? t('shillinq', 'Evaluating…')
 							: t('shillinq', 'Re-evaluate')
 					}}
 				</button>

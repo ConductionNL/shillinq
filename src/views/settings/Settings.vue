@@ -17,7 +17,7 @@
 			</div>
 
 			<NcButton variant="primary" type="submit" :disabled="saving">
-				{{ saving ? t('shillinq', 'Saving...') : t('shillinq', 'Save') }}
+				{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}
 			</NcButton>
 		</form>
 	</CnSettingsSection>

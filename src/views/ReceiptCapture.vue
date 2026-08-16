@@ -53,7 +53,7 @@
 			v-if="loading"
 			class="receipt-capture__loading"
 			data-testid="receipt-capture-loading">
-			{{ t('shillinq', 'Loading receipt...') }}
+			{{ t('shillinq', 'Loading receipt…') }}
 		</div>
 
 		<div

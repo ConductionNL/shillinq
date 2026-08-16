@@ -63,16 +63,16 @@ export function resolveBaseURL(): string {
 		// eslint-disable-next-line no-console
 		console.warn(
 			`[shillinq e2e] none of ${BASE_URL_ENV_NAMES.join(' / ')} is set; `
-			+ `falling back to the CI-local ${CI_DEFAULT_BASE_URL}.`,
+				+ `falling back to the CI-local ${CI_DEFAULT_BASE_URL}.`,
 		)
 		return CI_DEFAULT_BASE_URL
 	}
 
 	throw new Error(
 		`No Nextcloud base URL configured. Set one of ${BASE_URL_ENV_NAMES.join(' / ')} `
-		+ '— e.g. PLAYWRIGHT_BASE_URL=http://localhost:8087. '
-		+ 'There is deliberately no default outside CI: the old fallback was the '
-		+ 'SHARED dev container on :8080, so an unset environment silently drove '
-		+ "somebody else's instance.",
+			+ '— e.g. PLAYWRIGHT_BASE_URL=http://localhost:8087. '
+			+ 'There is deliberately no default outside CI: the old fallback was the '
+			+ 'SHARED dev container on :8080, so an unset environment silently drove '
+			+ "somebody else's instance.",
 	)
 }

@@ -69,7 +69,9 @@ describe('CalendarView.fetchBookings — response envelope', () => {
 		expect(a.bookings).toHaveLength(1)
 
 		const b = instance()
-		mockFetchJson({ results: [{ bookingId: 'bk-002' }, { bookingId: 'bk-003' }] })
+		mockFetchJson({
+			results: [{ bookingId: 'bk-002' }, { bookingId: 'bk-003' }],
+		})
 		await fetchBookings.call(b)
 		expect(b.bookings).toHaveLength(2)
 	})

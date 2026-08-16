@@ -187,7 +187,7 @@
 					data-testid="po-form-submit">
 					{{
 						submitting
-							? t('shillinq', 'Creating...')
+							? t('shillinq', 'Creating…')
 							: t('shillinq', 'Create purchase order')
 					}}
 				</NcButton>
