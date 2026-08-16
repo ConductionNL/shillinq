@@ -559,11 +559,11 @@ class CommitmentMaterialisationService {
 			$ruleNumber++;
 		}
 
-		if (is_array($saved) === true) {
-			return $saved;
-		}
-
-		return $draft;
+		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
+		// is_array() arm here was unreachable by type and persist() returned the
+		// unsaved DRAFT on every call — the Verplichting's stored id never
+		// reached the caller.
+		return (array)$saved->jsonSerialize();
 	}//end persist()
 
 	/**

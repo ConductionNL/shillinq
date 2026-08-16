@@ -160,10 +160,13 @@ class WbsoDocumentService {
 		$this->validateDocumentPayload(payload: $payload);
 
 
-		return $this->objectService
+		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
+		// this method declares — returning it raised a TypeError on every call.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Document')
-			->saveObject($payload);
+			->saveObject($payload)
+			->jsonSerialize();
 
 	}//end createDocument()
 
@@ -203,10 +206,12 @@ class WbsoDocumentService {
 		$document['filedBy'] = $approver;
 
 
-		return $this->objectService
+		// ADR-084: see createDocument() — the contract returns an entity.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Document')
-			->saveObject($document);
+			->saveObject($document)
+			->jsonSerialize();
 
 	}//end fileDocument()
 
@@ -252,10 +257,12 @@ class WbsoDocumentService {
 		$document['archivalReason'] = $reason;
 
 
-		return $this->objectService
+		// ADR-084: see createDocument() — the contract returns an entity.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Document')
-			->saveObject($document);
+			->saveObject($document)
+			->jsonSerialize();
 
 	}//end archiveDocument()
 

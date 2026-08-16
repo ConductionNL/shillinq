@@ -188,7 +188,8 @@ class RuleComplianceGuard {
 				->setSchema('GLLine')
 				->findAll(['filters' => ['transactionId' => $key]]);
 
-			foreach (($rows ?? []) as $row) {
+			// ADR-084: findAll() is declared `: array` — never null.
+			foreach ($rows as $row) {
 				$line = $row;
 				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
 					$line = (array)$row->jsonSerialize();

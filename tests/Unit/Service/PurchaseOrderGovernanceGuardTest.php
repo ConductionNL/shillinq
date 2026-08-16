@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -31,7 +30,6 @@ use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -52,11 +50,12 @@ final class PurchaseOrderGovernanceGuardTest extends TestCase {
 	 * @return PurchaseOrderService
 	 */
 	private function buildService(array $data, string $qualificationPolicy, ?InMemoryObjectServiceStub &$stubOut = null): PurchaseOrderService {
+		// ADR-084: the stub used to reach the service (and its self-constructed
+		// governance guards) through a ContainerInterface mock, while
+		// `objectService:` got a bare createMock() — so the guards consulted an
+		// EMPTY double and neither REQ-PG-002 nor REQ-PG-004 could ever fire.
 		$stub = new InMemoryObjectServiceStub($data);
 		$stubOut = $stub;
-
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($stub);
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -94,7 +93,7 @@ final class PurchaseOrderGovernanceGuardTest extends TestCase {
 			administrationContext: $administrationContext,
 			notificationManager: $notificationManager,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $stub,
 		);
 	}//end buildService()
 

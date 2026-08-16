@@ -179,10 +179,13 @@ class WbsoAccountService {
 		);
 
 
-		return $this->objectService
+		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
+		// this method declares — returning it raised a TypeError on every call.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
-			->saveObject($payload);
+			->saveObject($payload)
+			->jsonSerialize();
 
 	}//end createAccount()
 
@@ -223,10 +226,12 @@ class WbsoAccountService {
 		);
 
 
-		return $this->objectService
+		// ADR-084: see createAccount() — the contract returns an entity.
+		return (array)$this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
-			->saveObject($merged);
+			->saveObject($merged)
+			->jsonSerialize();
 
 	}//end updateAccount()
 

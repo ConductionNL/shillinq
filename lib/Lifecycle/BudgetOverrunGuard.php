@@ -112,11 +112,11 @@ class BudgetOverrunGuard {
 			$register = $this->resolveRegister();
 
 			$basis = $this->toRows(
-				rows: $objectService->setRegister($register)->setSchema('Taakveld')
+				rows: $this->objectService->setRegister($register)->setSchema('Taakveld')
 					->findAll(['filters' => ['budgetId' => $budgetId]])
 			);
 			$wijzigingen = $this->toRows(
-				rows: $objectService->setRegister($register)->setSchema('Begrotingswijziging')
+				rows: $this->objectService->setRegister($register)->setSchema('Begrotingswijziging')
 					->findAll(['filters' => ['budgetId' => $budgetId]])
 			);
 
@@ -127,7 +127,7 @@ class BudgetOverrunGuard {
 			);
 
 			$glLines = $this->toRows(
-				rows: $objectService->setRegister($register)->setSchema('GLLine')
+				rows: $this->objectService->setRegister($register)->setSchema('GLLine')
 					->findAll(['filters' => ['taskFieldCode' => $taskFieldCode, 'side' => 'debit']])
 			);
 			$alreadyPostedCents = 0;

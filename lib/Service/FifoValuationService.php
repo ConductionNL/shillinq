@@ -591,11 +591,9 @@ class FifoValuationService {
 			->setSchema('InventoryValuation')
 			->saveObject($data);
 
-		if (is_array($saved) === false) {
-			return $this->asArray(row: $saved);
-		}
-
-		return $saved;
+		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
+		// is_array() test was constant — asArray() is the only path that runs.
+		return $this->asArray(row: $saved);
 	}//end saveValuation()
 
 	/**

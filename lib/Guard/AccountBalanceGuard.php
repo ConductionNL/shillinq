@@ -94,20 +94,18 @@ class AccountBalanceGuard {
 	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md (REQ-CoA-005)
 	 */
 	public function requireZeroBalance(array $account): bool {
-		// T1 probe: if ObjectService itself is unavailable (OR not installed), permit
-		// archive by default — no GLLine register can exist without OR (T1 state).
-		// This probe is intentionally separate from the computation resolution below
-		// so that "OR absent" (permit) and "computation failed" (deny, fail-closed)
-		// remain two distinct, independently observable outcomes.
-		try {
-		} catch (\Throwable) {
-			$this->logger->debug(
-				'AccountBalanceGuard: ObjectService not present (T1 state) — archive permitted by default',
-				['accountNumber' => ($account['accountNumber'] ?? 'unknown')]
-			);
-			return true;
-		}
-
+		// ADR-084 removed the T1 probe that used to live here: it resolved
+		// ObjectService from the container inside a try/catch so that "OR absent"
+		// (permit) stayed distinguishable from "computation failed" (deny). With
+		// the contract injected non-nullably that probe became an EMPTY try block
+		// whose catch could never fire — a dead branch that read like a live
+		// fail-open. It is deleted rather than left looking load-bearing.
+		//
+		// Consequence, stated rather than hidden: on an instance without
+		// OpenRegister the call below throws and the fail-closed catch DENIES the
+		// archive. That is the safe direction, but it is a behaviour change from
+		// the T1 permit, and it belongs to the ADR-084 migration, not to this fix.
+		//
 		// T2+ check: compute balance via GLLine records. Fail-closed on any error
 		// so a transient DB failure denies archive rather than silently permitting it.
 		// The ObjectService is resolved again inside this guarded block so a failure

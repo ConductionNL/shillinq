@@ -22,12 +22,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Peppol;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
 /**
@@ -176,56 +176,28 @@ final class LogPeppolTransmissionAdapterTest extends TestCase {
 	 * @return LogPeppolTransmissionAdapter
 	 */
 	private function buildAdapter(array $rows): LogPeppolTransmissionAdapter {
-		$stub = new class($rows) {
-			/**
-			 * @var array<string,array<int,array<string,mixed>>>
-			 */
-			private array $rows;
-
-			/**
-			 * @var string
-			 */
-			private string $schema = '';
-
-			/**
-			 * @param array<string,array<int,array<string,mixed>>> $rows Schema rows.
-			 */
-			public function __construct(array $rows) {
-				$this->rows = $rows;
+		// ADR-084: the adapter takes ObjectServiceInterface, not the container, so
+		// the double has to BE that interface rather than merely quack like it.
+		// createMock() gives the whole 25-method surface for free and, crucially,
+		// is regenerated from the real interface — a signature that moves upstream
+		// breaks this double instead of leaving it quietly answering the old shape.
+		$schema = '';
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnCallback(
+			static function (string|int $requested) use (&$schema, $objectService): ObjectServiceInterface {
+				$schema = (string)$requested;
+				return $objectService;
 			}
-
-			/**
-			 * @param string $register Register slug (ignored).
-			 *
-			 * @return static
-			 */
-			public function setRegister(string $register): static {
-				unset($register);
-				return $this;
-			}
-
-			/**
-			 * @param string $schema Schema slug.
-			 *
-			 * @return static
-			 */
-			public function setSchema(string $schema): static {
-				$this->schema = $schema;
-				return $this;
-			}
-
-			/**
-			 * @param array<string,mixed> $params Query params.
-			 *
-			 * @return array<int,array<string,mixed>>
-			 */
-			public function findAll(array $params = []): array {
-				$rows = ($this->rows[$this->schema] ?? []);
-				$filters = ($params['filters'] ?? []);
+		);
+		$objectService->method('findAll')->willReturnCallback(
+			static function (array $config = []) use (&$schema, $rows): array {
+				$candidates = ($rows[$schema] ?? []);
+				$filters = ($config['filters'] ?? []);
 
 				return array_values(
 					array_filter(
-						$rows,
+						$candidates,
 						static function (array $row) use ($filters): bool {
 							foreach ($filters as $key => $value) {
 								if (($row[$key] ?? null) !== $value) {
@@ -238,19 +210,17 @@ final class LogPeppolTransmissionAdapterTest extends TestCase {
 					)
 				);
 			}
-		};
-
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($stub);
+		);
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		return new LogPeppolTransmissionAdapter(
-			container: $container,
+			objectService: $objectService,
 			appConfig: $appConfig,
 			logger: new NullLogger()
 		);
 
 	}//end buildAdapter()
+
 }//end class

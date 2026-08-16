@@ -196,22 +196,32 @@ class PurchaseOrderService {
 		?FrameworkAgreementDrawdownGuard $frameworkAgreementDrawdownGuard = null,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
 	) {
+		// ADR-084: these three collaborators used to be handed the DI container so
+		// they could resolve OpenRegister's ObjectService lazily. They now take the
+		// contract directly, so the container argument was removed from all three —
+		// but this composition site kept passing `container: $container`, a
+		// parameter this constructor no longer declares. An undefined variable is
+		// null, so every PurchaseOrderService built without an explicit
+		// $peppolAdapter/$supplierQualificationGuard/$frameworkAgreementDrawdownGuard
+		// died here at REQUEST time (Error: Unknown named parameter $container /
+		// TypeError: $container must be of type ContainerInterface, null given),
+		// taking every /api/purchase-orders* route with it.
 		$this->peppolAdapter = ($peppolAdapter ?? new LogPeppolTransmissionAdapter(
-			container: $container,
+			objectService: $objectService,
 			appConfig: $appConfig,
 			logger: $logger
 		));
 		$this->purchaseOrderMailer = ($purchaseOrderMailer ?? new LogPurchaseOrderMailer(logger: $logger));
 		$this->peppolMapper = ($peppolMapper ?? new PeppolBisOrderMapper());
 		$this->supplierQualificationGuard = ($supplierQualificationGuard ?? new SupplierQualificationGuard(
-			container: $container,
 			appConfig: $appConfig,
-			logger: $logger
+			logger: $logger,
+			objectService: $objectService
 		));
 		$this->frameworkAgreementDrawdownGuard = ($frameworkAgreementDrawdownGuard ?? new FrameworkAgreementDrawdownGuard(
-			container: $container,
 			appConfig: $appConfig,
-			logger: $logger
+			logger: $logger,
+			objectService: $objectService
 		));
 	}//end __construct()
 
@@ -1101,11 +1111,11 @@ class PurchaseOrderService {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
-
-			return $object;
+			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
+			// is_array() arm here was unreachable by type and this helper returned
+			// the INPUT on every save — silently discarding the id/uuid the store
+			// had just generated, which callers then read back as empty.
+			return (array)$result->jsonSerialize();
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PurchaseOrderService: failed to persist object',
