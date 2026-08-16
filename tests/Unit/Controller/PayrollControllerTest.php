@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PayrollController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PayrollService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -72,6 +73,20 @@ final class PayrollControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock AdministrationContextService — the ADR-005 membership guard.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
+
+	/**
+	 * What canAccess() answers. Flipped by the REQ-MA-001 refusal tests.
+	 *
+	 * @var bool
+	 */
+	private bool $canAccess = true;
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var PayrollController
@@ -91,10 +106,21 @@ final class PayrollControllerTest extends TestCase {
 		$this->userSession = $this->createMock(IUserSession::class);
 		$user = $this->createMock(IUser::class);
 		$this->userSession->method('getUser')->willReturn($user);
+
+		// The ADR-005 membership guard. Default ALLOW so the pre-existing tests
+		// keep asserting what they were written to assert; the refusal tests
+		// flip $this->canAccess. A callback rather than a second
+		// ->method('canAccess') call, because PHPUnit APPENDS matchers instead
+		// of replacing the first one.
+		$this->canAccess = true;
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
+
 		$this->controller = new PayrollController(
 			request: $this->request,
 			payrollService: $this->service,
 			userSession: $this->userSession,
+			context: $this->context,
 			logger: $this->logger,
 		);
 
@@ -182,6 +208,59 @@ final class PayrollControllerTest extends TestCase {
 		self::assertSame($payload, $response->getData());
 
 	}//end testLoonstrookSuccess()
+
+	/**
+	 * Every payroll endpoint refuses an administration the caller holds no
+	 * membership for (ADR-005 / REQ-MA-001), and refuses it BEFORE computing.
+	 *
+	 * ⚠️ The 404 alone would prove nothing — testLoonstrookReturns404OnMissingRecord()
+	 * also answers 404, from the service. What distinguishes a REFUSAL from a
+	 * LOOKUP-THAT-MISSED is that the payroll service is never consulted at all,
+	 * so that is the assertion. Remove the guard from the controller and every
+	 * arm of this test errors on its never() matcher rather than merely failing
+	 * a status comparison.
+	 *
+	 * @param string $method The controller method to drive.
+	 * @param string $serviceMethod The PayrollService method that must not run.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider payrollEndpointProvider
+	 */
+	public function testRefusesInaccessibleAdministrationWithoutComputing(
+		string $method,
+		string $serviceMethod
+	): void {
+		$this->canAccess = false;
+		$this->withParams(
+			[
+				'administration_id' => 'someone-elses-adm',
+				'werknemer_id' => 'wn-1',
+				'periode_id' => 'lp-1',
+			]
+		);
+		$this->service->expects(self::never())->method($serviceMethod);
+
+		$response = $this->controller->$method();
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame('Administration not found', $response->getData()['error']);
+
+	}//end testRefusesInaccessibleAdministrationWithoutComputing()
+
+	/**
+	 * The three administration-scoped payroll endpoints and the service call
+	 * each one must not reach when the membership check refuses.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function payrollEndpointProvider(): array {
+		return [
+			'loonstrook (payslip)' => ['loonstrook', 'berekenLoonStrook'],
+			'lhAfdracht (wage-tax remittance)' => ['lhAfdracht', 'berekenLHAfdracht'],
+			'journaalpost (payroll journal)' => ['journaalpost', 'bouwLoonjournaalpost'],
+		];
+
+	}//end payrollEndpointProvider()
 
 	/**
 	 * LH-afdracht requires a period and returns the aggregate with HTTP 200.

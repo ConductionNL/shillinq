@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PeriodCloseAssistantService;
 use OCA\Shillinq\Service\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodCloseService;
@@ -47,6 +48,21 @@ use Psr\Log\LoggerInterface;
 /**
  * REST surface for the PeriodClose lifecycle and close-assistant flags.
  *
+ * The endpoints are authenticated (#[NoAdminRequired]) AND authorised per
+ * administration in this controller, via
+ * AdministrationContextService::canAccess() (ADR-005, REQ-MA-001).
+ *
+ * ⚠️ Authorisation is NOT delegated downstream, and it must not be assumed to
+ * be. `administration_id` arrives on the request; PeriodCloseService and
+ * PeriodCloseAssistantService use it purely as a QUERY TERM — they filter the
+ * data to the administration that was asked for, which is not the same thing as
+ * checking the caller may ask for it. Nor does OpenRegister supply a backstop:
+ * this app declares no `authorization` block on its schemas, and OpenRegister
+ * treats an absent block as open to every authenticated user (see the same note
+ * on VATReturnController). The membership check below is therefore the only
+ * thing standing between an authenticated user and another administration's
+ * close data.
+ *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-19
  */
 class PeriodCloseController extends Controller {
@@ -56,6 +72,7 @@ class PeriodCloseController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param PeriodCloseService $periodCloseService Lifecycle orchestration service.
 	 * @param PeriodCloseAssistantService $assistantService Close-assistant detection service.
+	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
@@ -63,6 +80,7 @@ class PeriodCloseController extends Controller {
 		IRequest $request,
 		private readonly PeriodCloseService $periodCloseService,
 		private readonly PeriodCloseAssistantService $assistantService,
+		private readonly AdministrationContextService $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -93,6 +111,11 @@ class PeriodCloseController extends Controller {
 		$administrationId = $this->administrationId();
 		if ($administrationId === null) {
 			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
@@ -141,6 +164,11 @@ class PeriodCloseController extends Controller {
 		$administrationId = $this->administrationId();
 		if ($administrationId === null) {
 			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
@@ -273,14 +301,22 @@ class PeriodCloseController extends Controller {
 			return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
 		}
 
+		// Identity first, then the membership check: canAccess() fails closed for
+		// an anonymous caller, so without this order an unauthenticated request
+		// would be answered 404 instead of 401.
+		$userId = $this->userId();
+		if ($userId === '') {
+			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+		}
+
 		$administrationId = $this->administrationId();
 		if ($administrationId === null) {
 			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		$userId = $this->userId();
-		if ($userId === '') {
-			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
@@ -315,6 +351,10 @@ class PeriodCloseController extends Controller {
 	/**
 	 * Resolve the administration scope from the request (REQ-PC-008).
 	 *
+	 * ⚠️ This is a FORMAT check and nothing more. A well-formed id is not an
+	 * authorised one — call requireAccessibleAdministration() on the result
+	 * before it reaches any service.
+	 *
 	 * @return string|null The validated administration id, or null when missing/invalid.
 	 */
 	private function administrationId(): ?string {
@@ -325,6 +365,30 @@ class PeriodCloseController extends Controller {
 
 		return $administrationId;
 	}//end administrationId()
+
+	/**
+	 * Refuse the request unless the caller holds a membership for the
+	 * administration it named (ADR-005 / REQ-MA-001).
+	 *
+	 * Returns 400 when no usable administration id was supplied and 404 — never
+	 * 403 — when the caller may not access it. The 404 is deliberate and is
+	 * AdministrationContextService::canAccess()'s own documented contract: a 403
+	 * would confirm that the administration exists, turning this endpoint into
+	 * an enumeration oracle for the instance's tenant list.
+	 *
+	 * @param string $administrationId The format-checked id.
+	 *
+	 * @return JSONResponse|null A refusal to return to the client, or null when authorised.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	private function requireAccessibleAdministration(string $administrationId): ?JSONResponse {
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return $this->error(message: 'Period not found', status: Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end requireAccessibleAdministration()
 
 	/**
 	 * Resolve the acting user id from the session.
