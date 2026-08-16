@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PayrollService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -43,6 +44,19 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Payroll compute endpoints (read-only, period-scoped).
+ *
+ * The endpoints are authenticated (#[NoAdminRequired]) AND authorised per
+ * administration in this controller, via
+ * AdministrationContextService::canAccess() (ADR-005, REQ-MA-001).
+ *
+ * ⚠️ Read-only is not the same as harmless: these three endpoints return
+ * payslips, wage-tax remittance totals and the payroll journal. `scopeParam()`
+ * below is a FORMAT check — it proves the administration id is a safe slug, not
+ * that the caller may have it — and PayrollService uses the id purely as a
+ * query term. This app declares no `authorization` block on its schemas, and
+ * OpenRegister treats an absent block as open to every authenticated user (see
+ * the same note on VATReturnController), so nothing downstream refuses either.
+ * The membership check is the whole guard.
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
@@ -61,6 +75,7 @@ class PayrollController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param PayrollService $payrollService The payroll computation service.
 	 * @param IUserSession $userSession User session for authentication guard.
+	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
 	 * @param LoggerInterface $logger Logger (no stack traces to client, no raw BSN).
 	 *
 	 * @return void
@@ -69,6 +84,7 @@ class PayrollController extends Controller {
 		IRequest $request,
 		private readonly PayrollService $payrollService,
 		private readonly IUserSession $userSession,
+		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -103,6 +119,11 @@ class PayrollController extends Controller {
 		);
 		if ($error !== null) {
 			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
+		}
+
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
@@ -145,6 +166,11 @@ class PayrollController extends Controller {
 		$error = $this->firstBlank(values: ['administration_id' => $administrationId, 'periode_id' => $periodId]);
 		if ($error !== null) {
 			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
+		}
+
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$wkr = (float)$this->request->getParam('eindheffingen_wkr', 0);
@@ -192,6 +218,11 @@ class PayrollController extends Controller {
 			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
 		}
 
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			$journaal = $this->payrollService->bouwLoonjournaalpost(
 				administrationId: $administrationId,
@@ -223,6 +254,28 @@ class PayrollController extends Controller {
 
 		return $value;
 	}//end scopeParam()
+
+	/**
+	 * Refuse the request unless the caller holds a membership for the
+	 * administration it named (ADR-005 / REQ-MA-001).
+	 *
+	 * 404, never 403 — AdministrationContextService::canAccess()'s own
+	 * documented contract. A 403 would confirm the administration exists and
+	 * turn these endpoints into an enumeration oracle for the tenant list.
+	 *
+	 * @param string $administrationId The format-checked administration id.
+	 *
+	 * @return JSONResponse|null A refusal to return to the client, or null when authorised.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	private function requireAccessibleAdministration(string $administrationId): ?JSONResponse {
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end requireAccessibleAdministration()
 
 	/**
 	 * Return a validation error message for the first blank/invalid scope value.

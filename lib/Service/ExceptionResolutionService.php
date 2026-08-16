@@ -225,6 +225,7 @@ class ExceptionResolutionService {
 	 *                                  authoritative, not body).
 	 * @param INotificationManager $notificationManager NC notification dispatcher.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param CreditNoteRequestAdapterInterface|null $creditNoteAdapter Optional UBL CreditNote
 	 *                                                                  dispatch port — defaults to
 	 *                                                                  {@see LogCreditNoteRequestAdapter}

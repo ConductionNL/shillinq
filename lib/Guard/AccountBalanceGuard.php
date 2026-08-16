@@ -45,10 +45,9 @@ class AccountBalanceGuard {
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
-	 *                                      lazily so this class stays usable in T1
-	 *                                      before T2's GLLine register exists.
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution (C3).
 	 * @param LoggerInterface $logger Nextcloud logger for fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

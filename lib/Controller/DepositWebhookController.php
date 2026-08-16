@@ -82,12 +82,12 @@ class DepositWebhookController extends Controller {
 	 *                      or malformed payload, 404 when no deposit matches.
 	 *
 	 * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
+	 * Rate limit: payment-gateway callback. The caller retries on its own
+	 * schedule and authenticates by its own signature. Generous ceiling —
+	 * dropping a deposit notification is worse than absorbing a burst.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// Payment gateway callback: the caller retries on its own schedule and
-	// authenticates by its own signature. Generous ceiling — dropping a
-	// deposit notification is worse than absorbing a burst.
 	#[AnonRateLimit(limit: 300, period: 60)]
 	public function handle(string $gateway): JSONResponse {
 		$gateway = strtolower($gateway);

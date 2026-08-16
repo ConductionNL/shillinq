@@ -68,6 +68,7 @@ class OssRecordResolver {
 	 *
 	 * @param IAppConfig $appConfig App config (register slug).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

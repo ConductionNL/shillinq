@@ -45,10 +45,10 @@ class ProgrammabegrotingService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param SluitendCalculator $sluitend Computes the sluitend-flags and toezichtregime.
 	 * @param ProgrammabegrotingExporter $exporter Produces iv3 / EMU / JSON export shapes.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

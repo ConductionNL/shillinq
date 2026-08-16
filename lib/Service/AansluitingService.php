@@ -107,12 +107,12 @@ class AansluitingService {
 	 * direct dependencies on the two services whose computation this class
 	 * reuses rather than duplicating (REQ-AANS-002).
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param AansluitingCalculator $calculator Pure-logic tolerance/diff helper.
 	 * @param VATReturnService $vatReturnService The BTW ledger-derivation engine this service diffs against.
 	 * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

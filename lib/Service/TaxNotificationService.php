@@ -65,6 +65,7 @@ class TaxNotificationService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IManager $notificationMgr Nextcloud notification manager.
 	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

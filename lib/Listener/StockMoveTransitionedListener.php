@@ -77,6 +77,7 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @param CogsPosterService $cogs COGS poster.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly FifoValuationService $fifo,
