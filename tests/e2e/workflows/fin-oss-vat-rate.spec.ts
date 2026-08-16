@@ -25,7 +25,11 @@
  * enters the OSS pipeline), so the destination-country case (DE 19%) is used
  * here and the gross/VAT identity is asserted explicitly.
  *
- * @spec openspec/changes/bookkeeping-vat-oss-eu/specs/bookkeeping-vat-oss-eu/spec.md
+ * The capability is spelled with the Dutch statutory term for the tax — `btw`,
+ * not `vat` — so the canonical spec is `bookkeeping-btw-oss-eu`. The path this
+ * tag used to name has never existed in any form.
+ *
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md#REQ-OSS-001
  */
 
 import { test, expect, request as pwRequest } from '@playwright/test'
