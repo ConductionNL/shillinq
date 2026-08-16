@@ -109,10 +109,30 @@ class AdministrationArchivalServiceLookupTest extends TestCase {
 				return $this;
 			}
 
+			// ⚠️ THROWS on a miss, like the real one — it never returns null,
+			// so a caller wanting a fallback needs its own try/catch. No row
+			// here is addressed by uuid, so this always throws and the
+			// administrationCode fallback is what answers. The double had no
+			// find() at all, which is why it could not see that the service's
+			// by-id lookup never worked.
+			public function find(string $id): array {
+				throw new \OCP\AppFramework\Db\DoesNotExistException(
+					sprintf("Object with identifier '%s' not found in any magic table", $id)
+				);
+			}
+
+			// ⚠️ `filters` addresses JSON PROPERTIES only. Real OpenRegister
+			// matches ZERO rows for ['filters' => ['id' => …]] at every value,
+			// because the entity's `id` is its own column — mirrored here so
+			// this double cannot bless that shape again.
 			public function findAll(array $config): array {
 				$this->seenConfig = $config;
 				if ($this->throws === true) {
 					throw new \RuntimeException('findAll exploded');
+				}
+
+				if (array_key_exists('id', ($config['filters'] ?? [])) === true) {
+					return [];
 				}
 
 				return $this->matches;
@@ -166,7 +186,9 @@ class AdministrationArchivalServiceLookupTest extends TestCase {
 	 * @return void
 	 */
 	public function testArrayRowForActiveAdministrationIsWritable(): void {
-		$fake = $this->fakeObjectService([['id' => 'adm-1', 'status' => 'actief']]);
+		$fake = $this->fakeObjectService(
+			[['id' => 'adm-1', 'administrationCode' => 'adm-1', 'status' => 'actief']]
+		);
 		$service = $this->buildService($fake);
 
 		$service->assertWritableById('adm-1');
@@ -174,7 +196,13 @@ class AdministrationArchivalServiceLookupTest extends TestCase {
 		// The lookup must be tenant-targeted and bounded.
 		self::assertSame('shillinq', $fake->seenRegister);
 		self::assertSame('Administration', $fake->seenSchema);
-		self::assertSame(['id' => 'adm-1'], $fake->seenConfig['filters']);
+
+		// ⚠️ `administrationCode`, NOT `id`. This assertion used to pin
+		// ['id' => 'adm-1'] — the shape real OpenRegister answers with zero
+		// rows for every value, because `filters` addresses JSON properties
+		// and the entity's `id` is its own column. The test was holding the
+		// broken lookup in place as though it were the contract.
+		self::assertSame(['administrationCode' => 'adm-1'], $fake->seenConfig['filters']);
 		self::assertSame(1, $fake->seenConfig['limit']);
 
 	}//end testArrayRowForActiveAdministrationIsWritable()
