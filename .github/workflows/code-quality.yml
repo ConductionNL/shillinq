@@ -189,6 +189,22 @@ jobs:
       #                          looks like an application bug. Measured at 89
       #                          before this commit, 81 after; the baseline is
       #                          a hard ceiling that may only be lowered.
+      #   check:fragment-required  NEW. Ratchet on the CAUSE that check:seeds
+      #                          measures the damage of. ADR-037 merges register
+      #                          fragments by schema key and CONCATENATES list
+      #                          values, so two fragments declaring `required`
+      #                          for one schema make the effective list the
+      #                          UNION of both — and no payload of either model
+      #                          can then satisfy it. Measured at 47 conflicting
+      #                          schema keys on `development` (plus 16 that
+      #                          declare the SAME set twice, which is malformed
+      #                          per JSON Schema but still satisfiable and is
+      #                          reported without failing). Compares as SETS,
+      #                          not sequences: an order-sensitive compare
+      #                          reports 49 here, and the 2 extra are schemas
+      #                          declaring the same names in a different order,
+      #                          which merge fine. The baseline is a hard
+      #                          ceiling that may only be lowered.
       #
       # `format` (prettier --check) is listed because the shared workflow has NO
       # prettier job of its own — `quality.yml` runs eslint and stylelint and
@@ -201,7 +217,7 @@ jobs:
       # Measured on this tree before enabling: PASSES, 216 of 222 tracked
       # frontend files in scope (docs/ excluded via .prettierignore; build
       # output via .gitignore, which prettier 3 also reads).
-      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "test:l10n", "format"]'
+      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "test:l10n", "format"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both
