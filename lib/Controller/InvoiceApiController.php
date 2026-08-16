@@ -64,6 +64,7 @@ class InvoiceApiController extends Controller {
 	 * @param IUserSession $session User session.
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
 	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -182,8 +183,8 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// find() hands back an entity; everything below this line reads the
-			// invoice as an array, so normalise once here rather than at each use.
+			// Normalise once: find() hands back an entity, and everything below
+			// this line reads the invoice as an array.
 			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
@@ -236,8 +237,8 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// find() hands back an entity; everything below this line reads the
-			// invoice as an array, so normalise once here rather than at each use.
+			// Normalise once: find() hands back an entity, and everything below
+			// this line reads the invoice as an array.
 			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
@@ -283,8 +284,8 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// find() hands back an entity; everything below this line reads the
-			// invoice as an array, so normalise once here rather than at each use.
+			// Normalise once: find() hands back an entity, and everything below
+			// this line reads the invoice as an array.
 			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {

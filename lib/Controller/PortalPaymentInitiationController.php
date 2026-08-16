@@ -99,12 +99,12 @@ class PortalPaymentInitiationController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 * Rate limit: citizen-facing, and it starts a payment. Tighter than the
+	 * receivers because a human clicks this, and each call creates a payment
+	 * intent at the provider — real work, and real cost, per request.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// Citizen-facing: starts a payment. Tighter than the receivers because a
-	// human clicks this, and each call creates a payment intent at the
-	// provider — real work, and real cost, per request.
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function initiate(): JSONResponse {
 		// 1. Verify — the assertion is the ONLY credential (fail-closed 401).

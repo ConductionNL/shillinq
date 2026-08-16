@@ -86,6 +86,7 @@ class PeriodCloseService {
 	 * @param IGroupManager $groupManager Group manager for role resolution.
 	 * @param SuspenseAgeingService $suspenseAgeing Suspense worklist ageing (close blocker, REQ-PCG-003).
 	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

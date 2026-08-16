@@ -54,9 +54,7 @@ class DoorsnijdingsVerbodValidator {
 	 * (ADR-083 rule 1).
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param ObjectServiceInterface $objectService OpenRegister's published object
-	 *                                              surface (ADR-084), aliased in
-	 *                                              Application.php.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param InnovatieboxAuditEventLogger|null $auditLogger Optional audit-event logger. When
 	 *                                                       provided, every validateNoDuplication
 	 *                                                       run emits a DoorsnijdingsVerbod.check_run

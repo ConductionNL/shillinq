@@ -54,9 +54,7 @@ class IcpFilingService {
 	 * @param IcpCalculator $calculator Pure-logic ICP helper.
 	 * @param IcpService $icp Read-side ICP service (period-window supplies).
 	 * @param ViesService $vies VIES validation / evidence-reuse helper.
-	 * @param ObjectServiceInterface $objectService OpenRegister's published object
-	 *                                              surface (ADR-084), aliased in
-	 *                                              Application.php.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,

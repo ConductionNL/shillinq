@@ -233,6 +233,7 @@ class ComplianceDeadlineCalendarService {
 	 * @param ObligationTaskBridge $obligationTaskBridge The single home of the
 	 *                                                   contract-obligation path (REQ-CDC-005).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,

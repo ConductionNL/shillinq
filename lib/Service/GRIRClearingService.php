@@ -280,6 +280,7 @@ class GRIRClearingService {
 	 *                              register slug).
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @SuppressWarnings(PHPMD.LongVariable) administrationContext is the
 	 * canonical name fleet-wide.

@@ -61,6 +61,7 @@ class ObligationTaskBridge {
 	 *
 	 * @param ContainerInterface $container DI container for lazy backend resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
