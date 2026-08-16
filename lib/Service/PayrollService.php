@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
@@ -56,11 +57,13 @@ class PayrollService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Pure-logic payroll arithmetic helper.
+	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
+		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
@@ -86,12 +89,33 @@ class PayrollService {
 		$period = $this->findOne(schema: 'LoonPeriode', administrationId: $administrationId, filters: ['id' => $periodId]);
 		$employee = $this->findOne(schema: 'Werknemer', administrationId: $administrationId, filters: ['id' => $employeeId]);
 		if ($period === null || $employee === null) {
+			// Identifiers only — never the BSN or any special-category field.
+			$this->logger->warning(
+				'Payslip refused: period or employee not resolvable in this administration.',
+				[
+					'administrationId' => $administrationId,
+					'periodId' => $periodId,
+					'employeeId' => $employeeId,
+					'periodResolved' => ($period !== null),
+					'employeeResolved' => ($employee !== null),
+				]
+			);
 			throw new RuntimeException('Loonperiode of werknemer niet gevonden in deze administratie.');
 		}
 
 		$employerId = (string)($employee['employerId'] ?? '');
 		$werkgever = $this->findOne(schema: 'Werkgever', administrationId: $administrationId, filters: ['id' => $employerId]);
 		if ($werkgever === null) {
+			// Identifiers only — never the BSN or any special-category field.
+			$this->logger->warning(
+				'Payslip refused: employer not resolvable in this administration.',
+				[
+					'administrationId' => $administrationId,
+					'periodId' => $periodId,
+					'employeeId' => $employeeId,
+					'employerId' => $employerId,
+				]
+			);
 			throw new RuntimeException('Werkgever niet gevonden in deze administratie.');
 		}
 

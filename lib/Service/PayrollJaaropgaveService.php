@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
+use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
@@ -55,11 +56,13 @@ class PayrollJaaropgaveService {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param PayrollCalculator $calculator Cents arithmetic helper (no IO).
+	 * @param LoggerInterface $logger Logger (no BSN / special-category data).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly PayrollCalculator $calculator,
+		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
@@ -87,6 +90,21 @@ class PayrollJaaropgaveService {
 			employeeId: $employeeId,
 			year: $year
 		);
+
+		if ($stroken === []) {
+			// An employee with no payslips for the year still yields a jaaropgave —
+			// an all-zero one, which is indistinguishable from a correctly-zero year.
+			// Record it so the difference is auditable. Identifiers only: never the
+			// BSN or any special-category field.
+			$this->logger->warning(
+				'Jaaropgave built from zero payslips — the annual statement will be all-zero.',
+				[
+					'administrationId' => $administrationId,
+					'employeeId' => $employeeId,
+					'year' => $year,
+				]
+			);
+		}
 
 		$fiscalC = 0;
 		$payrollTaxC = 0;
