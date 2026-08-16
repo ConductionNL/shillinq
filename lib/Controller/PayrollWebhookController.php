@@ -84,10 +84,11 @@ class PayrollWebhookController extends Controller {
 	 * @return JSONResponse 501 — the webhook accepts POST only.
 	 *
 	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 * Rate limit: payroll-provider integration surface — machine caller with
+	 * its own credential.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// Payroll provider integration surface — machine caller, own credential.
 	#[AnonRateLimit(limit: 300, period: 60)]
 	public function info(): JSONResponse {
 		return new JSONResponse(

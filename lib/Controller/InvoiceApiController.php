@@ -183,8 +183,8 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// find() hands back an entity; everything below this line reads the
-			// invoice as an array, so normalise once here rather than at each use.
+			// Normalise once: find() hands back an entity, and everything below
+			// this line reads the invoice as an array.
 			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
@@ -237,8 +237,8 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// find() hands back an entity; everything below this line reads the
-			// invoice as an array, so normalise once here rather than at each use.
+			// Normalise once: find() hands back an entity, and everything below
+			// this line reads the invoice as an array.
 			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {
@@ -284,8 +284,8 @@ class InvoiceApiController extends Controller {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// find() hands back an entity; everything below this line reads the
-			// invoice as an array, so normalise once here rather than at each use.
+			// Normalise once: find() hands back an entity, and everything below
+			// this line reads the invoice as an array.
 			$invoice = $found->jsonSerialize();
 
 			if (((string)($invoice['administrationId'] ?? '')) !== $admin) {

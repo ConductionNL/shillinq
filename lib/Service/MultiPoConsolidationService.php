@@ -172,8 +172,6 @@ class MultiPoConsolidationService {
 	/**
 	 * Constructor.
 	 *
-	 *                                      is fetched lazily so unit tests
-	 *                                      can swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param IUserSession $userSession Session for chosenBy attribution.

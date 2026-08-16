@@ -52,7 +52,6 @@ class DoorsnijdingsVerbodValidator {
 	/**
 	 * Construct the validator with lazy DI of OpenRegister's ObjectService.
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param InnovatieboxAuditEventLogger|null $auditLogger Optional audit-event logger. When

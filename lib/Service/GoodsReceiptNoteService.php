@@ -156,7 +156,6 @@ class GoodsReceiptNoteService {
 	/**
 	 * Constructor.
 	 *
-	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).

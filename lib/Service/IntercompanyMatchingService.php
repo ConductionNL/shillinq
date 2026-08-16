@@ -53,7 +53,6 @@ class IntercompanyMatchingService {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IntercompanyMatchingCalculator $calculator Pure-logic arithmetic + classification helper.
 	 * @param LoggerInterface $logger Logger for diagnostics.

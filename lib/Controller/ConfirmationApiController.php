@@ -117,6 +117,8 @@ class ConfirmationApiController extends Controller {
 	 * @param ConfirmationTokenService $tokens Token lifecycle +
 	 *                                         email dispatcher.
 	 * @param ITimeFactory $time Server clock.
+	 * @param IThrottler $throttler Brute-force throttler for
+	 *                              failed token attempts.
 	 * @param LoggerInterface $logger Logger for fail-closed
 	 *                                diagnostics.
 	 */

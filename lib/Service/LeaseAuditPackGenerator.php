@@ -56,7 +56,6 @@ class LeaseAuditPackGenerator {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
-	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LeasePaymentScheduleService $scheduleService Schedule rows for the pack.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).

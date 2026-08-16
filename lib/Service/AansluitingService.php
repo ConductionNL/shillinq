@@ -107,7 +107,6 @@ class AansluitingService {
 	 * direct dependencies on the two services whose computation this class
 	 * reuses rather than duplicating (REQ-AANS-002).
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param AansluitingCalculator $calculator Pure-logic tolerance/diff helper.

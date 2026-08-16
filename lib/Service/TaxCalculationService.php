@@ -56,7 +56,6 @@ class TaxCalculationService {
 	/**
 	 * Construct the service.
 	 *
-	 *                                      fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param TaxCalculationHelper $helper Pure-logic helper (loss compensation, rate calc).
 	 * @param LoggerInterface $logger PSR-3 logger.

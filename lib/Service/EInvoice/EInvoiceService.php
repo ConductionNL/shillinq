@@ -82,7 +82,6 @@ final class EInvoiceService {
 	/**
 	 * Constructor.
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param LoggerInterface $logger Logger (no PII/document bodies logged).
