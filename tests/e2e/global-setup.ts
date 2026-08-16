@@ -65,14 +65,17 @@ function ensureBundleBuilt(): void {
 	// (run 30881358951 logged 12242717 bytes); 1 MB is a floor no real build can
 	// fall under and no broken one can reach.
 	const MIN_BUNDLE_BYTES = 1_000_000
-	if (fs.existsSync(BUNDLE_PATH) && fs.statSync(BUNDLE_PATH).size >= MIN_BUNDLE_BYTES) {
+	if (
+		fs.existsSync(BUNDLE_PATH)
+		&& fs.statSync(BUNDLE_PATH).size >= MIN_BUNDLE_BYTES
+	) {
 		return
 	}
 	if (fs.existsSync(BUNDLE_PATH)) {
 		// eslint-disable-next-line no-console
 		console.log(
 			`[playwright globalSetup] bundle at ${BUNDLE_PATH} is only `
-			+ `${fs.statSync(BUNDLE_PATH).size} bytes (floor ${MIN_BUNDLE_BYTES}); rebuilding.`,
+				+ `${fs.statSync(BUNDLE_PATH).size} bytes (floor ${MIN_BUNDLE_BYTES}); rebuilding.`,
 		)
 	}
 	// eslint-disable-next-line no-console
@@ -157,15 +160,20 @@ async function markWalkthroughSeen(page: Page): Promise<void> {
 		([key, value]) => window.localStorage.setItem(key, value),
 		[WALKTHROUGH_SEEN_KEY, version],
 	)
-	const readBack = await page.evaluate((key) => window.localStorage.getItem(key), WALKTHROUGH_SEEN_KEY)
+	const readBack = await page.evaluate(
+		(key) => window.localStorage.getItem(key),
+		WALKTHROUGH_SEEN_KEY,
+	)
 	if (readBack !== version) {
 		throw new Error(
 			`Failed to seed ${WALKTHROUGH_SEEN_KEY}: wrote "${version}", read back ${JSON.stringify(readBack)}. `
-			+ 'The walkthrough overlay would intercept pointer events for the whole run.',
+				+ 'The walkthrough overlay would intercept pointer events for the whole run.',
 		)
 	}
 	// eslint-disable-next-line no-console
-	console.log(`[playwright globalSetup] ${WALKTHROUGH_SEEN_KEY} = ${version} (walkthrough will not auto-start)`)
+	console.log(
+		`[playwright globalSetup] ${WALKTHROUGH_SEEN_KEY} = ${version} (walkthrough will not auto-start)`,
+	)
 }
 
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {

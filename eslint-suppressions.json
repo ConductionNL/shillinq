@@ -5,9 +5,6 @@
     }
   },
   "src/components/BudgetBBVMapping/BudgetBBVMappingIndex.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 2
     }
@@ -28,11 +25,6 @@
       "count": 1
     }
   },
-  "src/components/ar-invoice/AREInvoiceActions.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    }
-  },
   "src/components/cashflow/CashflowDashboard.vue": {
     "vue/custom-event-name-casing": {
       "count": 1
@@ -44,17 +36,11 @@
     }
   },
   "src/components/goods-receipt-note/GoodsReceiptNoteDetail.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 3
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 4
     }
   },
   "src/components/goods-receipt-note/GoodsReceiptNoteForm.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 4
     }
@@ -95,17 +81,11 @@
     }
   },
   "src/components/purchase-order/PurchaseOrderDetail.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 3
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 3
     }
   },
   "src/components/purchase-order/PurchaseOrderForm.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 2
     }
@@ -121,9 +101,6 @@
     }
   },
   "src/components/supplier-invoice/SupplierInvoiceDetail.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 3
     }
@@ -134,35 +111,16 @@
     }
   },
   "src/components/three-way-match/ThreeWayMatchExceptionPanel.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 5
     }
   },
   "src/components/three-way-match/ThreeWayMatchIndex.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 2
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 2
     }
   },
-  "src/components/vendor-performance/VendorPerformanceDetail.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    }
-  },
-  "src/components/vendor-performance/VendorPerformanceIndex.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    }
-  },
   "src/components/widget/SelfServiceWidget.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 4
     }
@@ -242,9 +200,6 @@
     }
   },
   "src/views/ReceiptCapture.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 1
     },
@@ -335,17 +290,11 @@
     }
   },
   "src/views/settings/Settings.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
     "vue/multi-word-component-names": {
       "count": 1
     }
   },
   "src/views/settings/StandardsPolicyEditor.vue": {
-    "@nextcloud/l10n-non-breaking-space": {
-      "count": 1
-    },
     "@typescript-eslint/no-unused-vars": {
       "count": 1
     },

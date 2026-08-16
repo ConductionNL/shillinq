@@ -56,7 +56,7 @@
 		</div>
 
 		<div v-if="loading" class="vp-index__loading" data-testid="vp-index-loading">
-			{{ t('shillinq', 'Loading scorecards...') }}
+			{{ t('shillinq', 'Loading scorecards…') }}
 		</div>
 
 		<div v-else-if="error" class="vp-index__error" data-testid="vp-index-error">

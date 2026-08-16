@@ -200,12 +200,16 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		await expect(save).toBeVisible()
 
 		const savePost = page.waitForResponse(
-			(response) => response.url().includes('/api/pipelinq/settings')
+			(response) =>
+				response.url().includes('/api/pipelinq/settings')
 				&& response.request().method() === 'POST',
 		)
 		await save.click()
 		const saveResponse = await savePost
-		expect(saveResponse.ok(), `pipelinq settings POST returned ${saveResponse.status()}`).toBeTruthy()
+		expect(
+			saveResponse.ok(),
+			`pipelinq settings POST returned ${saveResponse.status()}`,
+		).toBeTruthy()
 
 		await page.reload()
 		await page.waitForLoadState('domcontentloaded')

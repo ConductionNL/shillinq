@@ -176,12 +176,14 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 		await expect(
 			body.getByText('Budget vs. actuals', { exact: false }).first(),
 		).toBeVisible({ timeout: 15_000 })
-		await expect(
-			body.getByText('Trend', { exact: false }).first(),
-		).toBeVisible({ timeout: 15_000 })
+		await expect(body.getByText('Trend', { exact: false }).first()).toBeVisible({
+			timeout: 15_000,
+		})
 		await expect(
 			body
-				.locator('.cn-chart-widget svg, [data-testid="cn-chart-widget-empty"]')
+				.locator(
+					'.cn-chart-widget svg, [data-testid="cn-chart-widget-empty"]',
+				)
 				.first(),
 		).toBeVisible({ timeout: 15_000 })
 	})
@@ -207,9 +209,7 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 	/**
 	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBC-002/dashboard-filters-render
 	 */
-	test('dashboard renders the three declared filter facets', async ({
-		page,
-	}) => {
+	test('dashboard renders the three declared filter facets', async ({ page }) => {
 		await expect(page.getByTestId('cn-dashboard-page')).toBeVisible({
 			timeout: 15_000,
 		})
@@ -245,7 +245,10 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 		page,
 	}) => {
 		const query = page.waitForResponse(
-			(r) => /\/apps\/openregister\/api\/objects\/shillinq\/GLLine/i.test(r.url()),
+			(r) =>
+				/\/apps\/openregister\/api\/objects\/shillinq\/GLLine/i.test(
+					r.url(),
+				),
 			{ timeout: 25_000 },
 		)
 		await gotoRoute(page, LINKER_INDEX_ROUTE)
@@ -258,84 +261,85 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 			await gotoRoute(page, LINKER_INDEX_ROUTE)
 		})
 
-	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-index-renders
-	 *
-	 * The linker index is a `type:"index"` page with no `component`, so it is
-	 * rendered by CnIndexPage. Assert the library's real index surface: the
-	 * page title, and one of the recognised index bodies (a data table, an
-	 * empty-content block, a list, or the primary-action toolbar). This holds
-	 * on a bare CI instance with no seeded GL lines — an empty CnIndexPage
-	 * still renders its empty-content block and its toolbar.
-	 */
-	test('linker index mounts a real index surface', async ({ page }) => {
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({
-			timeout: 15_000,
-		})
+		/**
+		 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-index-renders
+		 *
+		 * The linker index is a `type:"index"` page with no `component`, so it is
+		 * rendered by CnIndexPage. Assert the library's real index surface: the
+		 * page title, and one of the recognised index bodies (a data table, an
+		 * empty-content block, a list, or the primary-action toolbar). This holds
+		 * on a bare CI instance with no seeded GL lines — an empty CnIndexPage
+		 * still renders its empty-content block and its toolbar.
+		 */
+		test('linker index mounts a real index surface', async ({ page }) => {
+			await expect(page.getByTestId('cn-index-page')).toBeVisible({
+				timeout: 15_000,
+			})
 
-		const host = page.locator('#app-content-vue, main').first()
-		await expect(host.getByText('Budget Links', { exact: false }).first())
-			.toBeVisible({ timeout: 15_000 })
-
-		const tables = await host.locator('table:visible').count()
-		const empty = await host
-			.locator('.empty-content, .emptycontent, [class*="empty-content" i]')
-			.count()
-		const rows = await host.locator('[role="row"]').count()
-		const actionsBar = await page.getByTestId('cn-actions-bar').count()
-		expect(
-			tables + empty + rows + actionsBar,
-			'the linker index rendered no table, no empty state, no rows and no actions bar',
-		).toBeGreaterThan(0)
-	})
-
-	/**
-	 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-filter-facets
-	 *
-	 * `config.filters[]` declares three facets — Account type, Programme,
-	 * Assignment status. `filters` IS a supported CnIndexPage concept (unlike
-	 * `bulkActions` / `mappingStatus` below), so their declared labels must
-	 * appear on the page. The previous version of this test asserted
-	 * `bbv-linker-filters` and three `bbv-linker-filter-*` testids, none of
-	 * which exists anywhere outside that spec file.
-	 *
-	 * ⚠️ IT IS RED, and the rewrite is what proved why — #866. The page itself
-	 * is fine: the two tests above pass, including the one asserting that this
-	 * index really does query `/apps/openregister/api/objects/shillinq/GLLine`.
-	 * Only the DECLARED BODY fails to appear, so `config.filters[]` joins
-	 * `config.dashboard.*`, `config.bulkActions[]` and `config.mappingStatus`
-	 * on this fragment's list of keys nothing reads.
-	 */
-	test('linker index renders the three declared filter facets', async ({
-		page,
-	}) => {
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({
-			timeout: 15_000,
-		})
-		const host = page.locator('#app-content-vue, main').first()
-		for (const label of ['Account type', 'Programme', 'Assignment status']) {
+			const host = page.locator('#app-content-vue, main').first()
 			await expect(
-				host.getByText(label, { exact: false }).first(),
-				`filter facet "${label}" is declared in config.filters[] but does not render`,
+				host.getByText('Budget Links', { exact: false }).first(),
 			).toBeVisible({ timeout: 15_000 })
-		}
-	})
 
-	/**
-	 * ⚠️ NOT COVERED HERE, AND SAID SO RATHER THAN FAKED.
-	 *
-	 * `config.bulkActions[]` (the "Link to Programme" CTA + its CnFormDialog
-	 * with Target Programme / Effective Date) and `config.mappingStatus` are
-	 * declared by the fragment and are NOT props of CnIndexPage — the library
-	 * has zero references to either key, exactly like `config.dashboard` on the
-	 * dashboard page above (#866). The previous file "covered" both with
-	 * `if (await cta.isVisible()) { expect(cta).toBeVisible() }`, an assertion
-	 * that cannot fail and reported green while nothing rendered.
-	 *
-	 * Rather than keep a test that measures nothing, the claim is withdrawn:
-	 * there is no `@e2e` tag for REQ-BBL-001's bulk-link scenario in this file
-	 * any more. It belongs to #866 with the dashboard vocabulary.
-	 */
+			const tables = await host.locator('table:visible').count()
+			const empty = await host
+				.locator('.empty-content, .emptycontent, [class*="empty-content" i]')
+				.count()
+			const rows = await host.locator('[role="row"]').count()
+			const actionsBar = await page.getByTestId('cn-actions-bar').count()
+			expect(
+				tables + empty + rows + actionsBar,
+				'the linker index rendered no table, no empty state, no rows and no actions bar',
+			).toBeGreaterThan(0)
+		})
+
+		/**
+		 * @e2e bookkeeping-provincies-bbv-variant/REQ-BBL-001/linker-filter-facets
+		 *
+		 * `config.filters[]` declares three facets — Account type, Programme,
+		 * Assignment status. `filters` IS a supported CnIndexPage concept (unlike
+		 * `bulkActions` / `mappingStatus` below), so their declared labels must
+		 * appear on the page. The previous version of this test asserted
+		 * `bbv-linker-filters` and three `bbv-linker-filter-*` testids, none of
+		 * which exists anywhere outside that spec file.
+		 *
+		 * ⚠️ IT IS RED, and the rewrite is what proved why — #866. The page itself
+		 * is fine: the two tests above pass, including the one asserting that this
+		 * index really does query `/apps/openregister/api/objects/shillinq/GLLine`.
+		 * Only the DECLARED BODY fails to appear, so `config.filters[]` joins
+		 * `config.dashboard.*`, `config.bulkActions[]` and `config.mappingStatus`
+		 * on this fragment's list of keys nothing reads.
+		 */
+		test('linker index renders the three declared filter facets', async ({
+			page,
+		}) => {
+			await expect(page.getByTestId('cn-index-page')).toBeVisible({
+				timeout: 15_000,
+			})
+			const host = page.locator('#app-content-vue, main').first()
+			for (const label of ['Account type', 'Programme', 'Assignment status']) {
+				await expect(
+					host.getByText(label, { exact: false }).first(),
+					`filter facet "${label}" is declared in config.filters[] but does not render`,
+				).toBeVisible({ timeout: 15_000 })
+			}
+		})
+
+		/**
+		 * ⚠️ NOT COVERED HERE, AND SAID SO RATHER THAN FAKED.
+		 *
+		 * `config.bulkActions[]` (the "Link to Programme" CTA + its CnFormDialog
+		 * with Target Programme / Effective Date) and `config.mappingStatus` are
+		 * declared by the fragment and are NOT props of CnIndexPage — the library
+		 * has zero references to either key, exactly like `config.dashboard` on the
+		 * dashboard page above (#866). The previous file "covered" both with
+		 * `if (await cta.isVisible()) { expect(cta).toBeVisible() }`, an assertion
+		 * that cannot fail and reported green while nothing rendered.
+		 *
+		 * Rather than keep a test that measures nothing, the claim is withdrawn:
+		 * there is no `@e2e` tag for REQ-BBL-001's bulk-link scenario in this file
+		 * any more. It belongs to #866 with the dashboard vocabulary.
+		 */
 	})
 })
 
@@ -376,4 +380,3 @@ test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
  * nothing is the purest form of an invisible pass. Withdrawing the claim is
  * the honest outcome; building the setting belongs to #866.
  */
-

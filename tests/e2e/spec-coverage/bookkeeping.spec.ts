@@ -13,9 +13,14 @@
  */
 
 import { test } from '@playwright/test'
-import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+import {
+	gotoPage,
+	assertIndexSurface,
+	assertNoShillinqFailures,
+	recordShillinqErrors,
+} from './_helpers'
 
-const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
+const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/chart-of-accounts', title: 'Chart of Accounts' },
 	{ route: '/general-ledger', title: 'General Ledger' },
 	{ route: '/journals', title: 'Journals' },
@@ -40,19 +45,34 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/bookkeeping/ar-aging', title: 'AR Aging' },
 	{ route: '/bookkeeping/dunning-timeline', title: 'Dunning Timeline' },
 	{ route: '/bookkeeping/dunning/ladders', title: 'Dunning Ladders' },
-	{ route: '/bookkeeping/dunning/overrides', title: 'Klant Ladder Overrides', titleRe: /Override|Klant/i },
+	{
+		route: '/bookkeeping/dunning/overrides',
+		title: 'Klant Ladder Overrides',
+		titleRe: /Override|Klant/i,
+	},
 	{ route: '/bookkeeping/dunning/runs', title: 'Dunning Runs' },
 	{ route: '/bookkeeping/dunning/incasso-kosten', title: 'Incasso Kosten' },
 	{ route: '/bookkeeping/dunning/oninbaar', title: 'Oninbare Afschrijvingen' },
 	{ route: '/waterschapsbelastingen', title: 'Waterschapsbelastingen' },
 	{ route: '/gr/deelnemers', title: 'Deelnemers' },
 	{ route: '/gr/verdeelsleutels', title: 'Verdeelsleutels' },
-	{ route: '/gr/geconsolideerd', title: 'Geconsolideerde view', titleRe: /Geconsolideerde|consolidat/i },
+	{
+		route: '/gr/geconsolideerd',
+		title: 'Geconsolideerde view',
+		titleRe: /Geconsolideerde|consolidat/i,
+	},
 	{ route: '/financial-statements/balance-sheet', title: 'Balance Sheet' },
 	{ route: '/financial-statements/trial-balance', title: 'Trial Balance' },
-	{ route: '/financial-statements/trial-balance-lines', title: 'Trial Balance', titleRe: /Trial Balance/i },
+	{
+		route: '/financial-statements/trial-balance-lines',
+		title: 'Trial Balance',
+		titleRe: /Trial Balance/i,
+	},
 	{ route: '/financial-statements/consolidations', title: 'Consolidations' },
-	{ route: '/financial-statements/consolidated-report', title: 'Consolidated Report' },
+	{
+		route: '/financial-statements/consolidated-report',
+		title: 'Consolidated Report',
+	},
 	// The manifest route is Dutch (`/iv3-rapportages`, page id `Iv3Rapportages`)
 	// while its title is already English ("IV3 reports"). `/iv3-reports` is the
 	// path named in the ARCHIVED change's tasks.md, not the path that was built.
@@ -60,11 +80,19 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	// is a bookmarkable URL, so changing it is a product decision, not a test fix.
 	{ route: '/iv3-rapportages', title: 'IV3 reports', titleRe: /IV3/i },
 	{ route: '/emu-rapportage', title: 'EMU-rapportage' },
-	{ route: '/bookkeeping/r-d-subsidies', title: 'R&D Subsidies', titleRe: /R&D|R\s*&\s*D|Subsid/i },
+	{
+		route: '/bookkeeping/r-d-subsidies',
+		title: 'R&D Subsidies',
+		titleRe: /R&D|R\s*&\s*D|Subsid/i,
+	},
 	{ route: '/wbso/tags', title: 'WBSO Tags' },
 	{ route: '/wbso/export', title: 'WBSO Export' },
 	{ route: '/bookkeeping/fiscal-years', title: 'Fiscal Years' },
-	{ route: '/bookkeeping/year-end-close-checklist', title: 'Year-End Close Checklist', titleRe: /Year-End|Close/i },
+	{
+		route: '/bookkeeping/year-end-close-checklist',
+		title: 'Year-End Close Checklist',
+		titleRe: /Year-End|Close/i,
+	},
 	{ route: '/bookkeeping/closing-entries', title: 'Closing Entries' },
 	{ route: '/bookkeeping/audit-trail', title: 'Audit Trail' },
 ]

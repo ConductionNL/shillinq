@@ -23,7 +23,7 @@
 <template>
 	<div class="grn-detail">
 		<div v-if="loading" class="grn-detail__loading">
-			{{ t('shillinq', 'Loading goods receipt note...') }}
+			{{ t('shillinq', 'Loading goods receipt note…') }}
 		</div>
 
 		<div
@@ -152,7 +152,7 @@
 					@click="onQualityCheck">
 					{{
 						transitioning
-							? t('shillinq', 'Working...')
+							? t('shillinq', 'Working…')
 							: t('shillinq', 'Quality check passed')
 					}}
 				</NcButton>
@@ -164,7 +164,7 @@
 					@click="onAccept">
 					{{
 						transitioning
-							? t('shillinq', 'Working...')
+							? t('shillinq', 'Working…')
 							: t('shillinq', 'Accept goods')
 					}}
 				</NcButton>

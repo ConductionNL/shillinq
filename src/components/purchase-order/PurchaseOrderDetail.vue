@@ -23,7 +23,7 @@
 <template>
 	<div class="po-detail">
 		<div v-if="loading" class="po-detail__loading">
-			{{ t('shillinq', 'Loading purchase order...') }}
+			{{ t('shillinq', 'Loading purchase order…') }}
 		</div>
 
 		<div
@@ -199,7 +199,7 @@
 					@click="onSendPeppol">
 					{{
 						sending && sendingChannel === 'peppol'
-							? t('shillinq', 'Sending Peppol...')
+							? t('shillinq', 'Sending Peppol…')
 							: t('shillinq', 'Send via Peppol')
 					}}
 				</NcButton>
@@ -210,7 +210,7 @@
 					@click="onSendEmail">
 					{{
 						sending && sendingChannel === 'email'
-							? t('shillinq', 'Sending PDF...')
+							? t('shillinq', 'Sending PDF…')
 							: t('shillinq', 'Send via PDF+email')
 					}}
 				</NcButton>

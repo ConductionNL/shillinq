@@ -27,9 +27,7 @@
 			data-testid="ar-einvoice-send"
 			@click="onSend">
 			{{
-				sending
-					? t('shillinq', 'Sending...')
-					: t('shillinq', 'Send e-invoice')
+				sending ? t('shillinq', 'Sending…') : t('shillinq', 'Send e-invoice')
 			}}
 		</NcButton>
 		<p

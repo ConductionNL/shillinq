@@ -234,7 +234,7 @@
 					class="wsw-widget__button"
 					:disabled="submitting"
 					@click="submit">
-					{{ submitting ? t('Submitting...') : t('Confirm booking') }}
+					{{ submitting ? t('Submitting…') : t('Confirm booking') }}
 				</button>
 			</div>
 		</section>
