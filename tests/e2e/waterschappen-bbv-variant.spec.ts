@@ -114,8 +114,15 @@ test.describe('BBV dashboard — widget shell renders', () => {
 			await openButton.click()
 			// Drill-in lands on the BudgetBBVMappings list filtered by
 			// programmeCode (slice 06 wiring).
-			await page.waitForLoadState('domcontentloaded')
-			expect(page.url()).toMatch(/budget-mappings|bbv-dashboard/)
+			//
+			// POLLED, NOT waitForLoadState — see the note on the Add-CTA test
+			// below. This is a vue-router push inside an already-loaded
+			// document, so `waitForLoadState('domcontentloaded')` resolves in
+			// the same tick and the URL gets read before the router has
+			// pushed. The assertion itself is unchanged.
+			await expect
+				.poll(() => page.url(), { timeout: 15_000 })
+				.toMatch(/budget-mappings|bbv-dashboard/)
 		}
 	})
 })
@@ -182,8 +189,35 @@ test.describe('BBV mapping index — search + add + row click', () => {
 		const addCta = page.getByTestId('cn-cta-primary').first()
 		await expect(addCta).toBeVisible({ timeout: 15_000 })
 		await addCta.click()
-		await page.waitForLoadState('domcontentloaded')
-		expect(page.url()).toMatch(/budget-mappings\/new|budget-mappings\/[^/]+$/)
+
+		// ⚠️ THIS WAS A RACE, AND IT FIRED.
+		//
+		// The click triggers a vue-router `push` inside the document that is
+		// ALREADY loaded — no navigation, no new document. So
+		// `page.waitForLoadState('domcontentloaded')` had nothing to wait for:
+		// the current document reached that state long ago, the promise
+		// resolves immediately, and `page.url()` was read in effectively the
+		// same tick as the click handler. Whether the router had pushed by
+		// then was down to scheduling.
+		//
+		// Measured, not guessed. On PR #882 this test read
+		//   ✓ passed (12.5s)  at head 614acbea
+		//   ✗ failed          at head f2c6883e, "Received: …/budget-mappings"
+		// and the diff between those two heads is `lib/Lifecycle/
+		// ExpenseClaimGuard.php` plus thirteen PHPUnit files — zero `src/`,
+		// zero manifest, zero register fragments. Nothing in it can reach this
+		// button. A verdict that moves over a diff that cannot touch the
+		// subject is non-determinism, not a regression.
+		//
+		// `expect.poll` retries the SAME assertion instead of asserting once
+		// against an unsettled URL. Nothing is relaxed: the pattern is
+		// byte-identical, so a CTA that genuinely fails to navigate still
+		// fails here, just after 15s instead of instantly. `waitForURL` would
+		// also work but reports only a timeout; poll reports the URL it last
+		// saw, which is the half of the old failure message worth keeping.
+		await expect
+			.poll(() => page.url(), { timeout: 15_000 })
+			.toMatch(/budget-mappings\/new|budget-mappings\/[^/]+$/)
 	})
 })
 
