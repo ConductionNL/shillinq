@@ -285,6 +285,57 @@ class ExpenseClaimGuardTest extends TestCase {
 	}//end testRequireCostCentresAndItemsIsFailClosedOnException()
 
 	/**
+	 * The guard DISCRIMINATES: same guard, two claims, opposite verdicts.
+	 *
+	 * This exists because the individual permit/deny tests cannot, on their
+	 * own, prove the guard is deciding anything. Before this repair the guard
+	 * denied EVERYTHING -- `$item['costCentreCode']` on the ObjectEntityInterface
+	 * that ADR-084 made find() return raised an Error, and
+	 * requireOpenPeriodAndCostCentres()'s catch (\Throwable) converted it to
+	 * `return false`. Every deny test therefore PASSED, for a reason that had
+	 * nothing to do with cost centres, while every permit test failed.
+	 *
+	 * A guard that always denies and a guard that always permits are both
+	 * broken, and each is invisible to half the suite. Asserting both verdicts
+	 * from ONE guard instance in ONE test is the assertion neither half can
+	 * satisfy vacuously: it fails if the guard reverts to always-deny, and it
+	 * fails if the guard is ever loosened into always-permit.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+	 */
+	public function testRequireCostCentresAndItemsDiscriminatesBetweenClaims(): void {
+		$objectService = $this->buildObjectServiceStub(
+			itemsBySchema: [
+				'Receipt' => [
+					['id' => 'rec-ok', 'costCentreCode' => 'CC100'],
+					['id' => 'rec-bad', 'costCentreCode' => ''],
+				],
+			]
+		);
+		$this->guard = $this->buildGuard(store: $objectService);
+
+		$permitted = $this->guard->requireCostCentresAndItems(
+			claim: ['id' => 'claim-ok', 'receiptIds' => ['rec-ok'], 'mileageIds' => [], 'perDiemIds' => []]
+		);
+		$denied = $this->guard->requireCostCentresAndItems(
+			claim: ['id' => 'claim-bad', 'receiptIds' => ['rec-bad'], 'mileageIds' => [], 'perDiemIds' => []]
+		);
+
+		self::assertTrue(condition: $permitted, message: 'A claim whose items all carry a costCentreCode must be permitted');
+		self::assertFalse(condition: $denied, message: 'A claim with an item lacking a costCentreCode must be denied');
+		self::assertNotSame(
+			expected: $permitted,
+			actual: $denied,
+			message: 'The guard must DISCRIMINATE: identical wiring, opposite verdicts. '
+				. 'Equal verdicts here mean the guard is answering the same way regardless '
+				. 'of the claim, which is what the ADR-084 array-access defect did.'
+		);
+
+	}//end testRequireCostCentresAndItemsDiscriminatesBetweenClaims()
+
+	/**
 	 * Posting is permitted when the FiscalYear register is absent (T1 state).
 	 *
 	 * @return void
