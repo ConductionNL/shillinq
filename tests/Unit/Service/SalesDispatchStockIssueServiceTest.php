@@ -29,10 +29,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
 use OCA\Shillinq\Sort\FefoSort;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -311,7 +311,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),
 		);
 
 	}//end setUpService()

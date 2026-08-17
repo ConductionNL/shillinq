@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\FidoTreasuryGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -83,17 +83,17 @@ class FidoTreasuryGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new FidoTreasuryGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$this->stubAdoptedStatuut(statuut: null);
 
 	}//end setUp()
 
 	/**
-	 * Wire the container to return a stub ObjectService that yields the given
+	 * Rebuild the guard over a stub ObjectService that yields the given
 	 * Treasurystatuut row for the adopted-statuut lookup (ADR-022 real API shape).
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so the store
+	 * has to be present when the guard is built — parking it on the container
+	 * after the fact leaves the guard reading an empty world.
 	 *
 	 * @param array<string,mixed>|null $statuut The adopted statuut to return, or null.
 	 *
@@ -157,7 +157,11 @@ class FidoTreasuryGuardTest extends TestCase {
 			}//end findAll()
 		};
 
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = new FidoTreasuryGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($objectService),
+		);
 
 	}//end stubAdoptedStatuut()
 

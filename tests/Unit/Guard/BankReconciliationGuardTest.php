@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\BankReconciliationGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -84,13 +84,29 @@ class BankReconciliationGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new BankReconciliationGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub());
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return BankReconciliationGuard
+	 */
+	private function buildGuard(object $store): BankReconciliationGuard {
+		return new BankReconciliationGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * A brand-new reconciliation (no id) with a valid period is permitted to save.
@@ -137,7 +153,7 @@ class BankReconciliationGuardTest extends TestCase {
 		$stub = $this->buildObjectServiceStub(
 			stored: ['id' => 'rec-1', 'status' => 'reconciled'],
 		);
-		$this->container->method('get')->willReturn($stub);
+		$this->guard = $this->buildGuard(store: $stub);
 
 		$result = $this->guard->requireUnlockedAndValidDates(
 			[
@@ -162,7 +178,7 @@ class BankReconciliationGuardTest extends TestCase {
 		$stub = $this->buildObjectServiceStub(
 			stored: ['id' => 'rec-1', 'status' => 'reconciled'],
 		);
-		$this->container->method('get')->willReturn($stub);
+		$this->guard = $this->buildGuard(store: $stub);
 
 		$result = $this->guard->requireUnlockedAndValidDates(
 			[
@@ -184,7 +200,7 @@ class BankReconciliationGuardTest extends TestCase {
 		$stub = $this->buildObjectServiceStub(
 			stored: ['id' => 'rec-1', 'status' => 'reconciled'],
 		);
-		$this->container->method('get')->willReturn($stub);
+		$this->guard = $this->buildGuard(store: $stub);
 
 		$result = $this->guard->requireParentUnlocked(
 			[
@@ -206,7 +222,7 @@ class BankReconciliationGuardTest extends TestCase {
 		$stub = $this->buildObjectServiceStub(
 			stored: ['id' => 'rec-1', 'status' => 'in-progress'],
 		);
-		$this->container->method('get')->willReturn($stub);
+		$this->guard = $this->buildGuard(store: $stub);
 
 		$result = $this->guard->requireParentUnlocked(
 			[
@@ -232,7 +248,7 @@ class BankReconciliationGuardTest extends TestCase {
 				['matchType' => 'pending-review', 'bankTransactionAmount' => 50.00],
 			],
 		);
-		$this->container->method('get')->willReturn($stub);
+		$this->guard = $this->buildGuard(store: $stub);
 
 		$result = $this->guard->requireResolvedMatches(
 			[
@@ -262,7 +278,7 @@ class BankReconciliationGuardTest extends TestCase {
 				['matchType' => 'rejected', 'bankTransactionAmount' => 99.00, 'journalEntryId' => null],
 			],
 		);
-		$this->container->method('get')->willReturn($stub);
+		$this->guard = $this->buildGuard(store: $stub);
 
 		$result = $this->guard->requireResolvedMatches(
 			[
@@ -306,7 +322,7 @@ class BankReconciliationGuardTest extends TestCase {
 	 */
 	public function testApproveFailClosedOnLookupError(): void {
 		$stub = $this->buildObjectServiceStubThatThrows();
-		$this->container->method('get')->willReturn($stub);
+		$this->guard = $this->buildGuard(store: $stub);
 
 		$result = $this->guard->requireResolvedMatches(
 			[

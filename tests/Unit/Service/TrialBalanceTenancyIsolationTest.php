@@ -29,11 +29,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\TrialBalanceController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TrialBalanceCalculator;
 use OCA\Shillinq\Service\TrialBalanceService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -123,7 +123,7 @@ final class TrialBalanceTenancyIsolationTest extends TestCase {
 		$service = new TrialBalanceService(
 			appConfig: $this->appConfig,
 			calculator: new TrialBalanceCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objectService),
 		);
 
 		// Compute for adm-A; adm-B GLLines must never appear in the totals.
@@ -197,7 +197,7 @@ final class TrialBalanceTenancyIsolationTest extends TestCase {
 		$service = new TrialBalanceService(
 			appConfig: $this->appConfig,
 			calculator: new TrialBalanceCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objectService),
 		);
 
 		// user-A asks for adm-A → 200 + adm-A totals.

@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\InvoiceGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -87,13 +87,16 @@ class InvoiceGuardTest extends TestCase {
 		$this->guard = new InvoiceGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub(bySchema: [])),
 		);
 
 	}//end setUp()
 
 	/**
-	 * Wire the container to return a schema-aware ObjectService stub.
+	 * Rebuild the guard on a schema-aware ObjectService stub.
+	 *
+	 * The store is injected through the constructor since ADR-084, so the guard
+	 * has to be rebuilt whenever a test seeds different records.
 	 *
 	 * @param array<int,mixed> $invoices Invoice records returned for the Invoice schema.
 	 * @param array<int,mixed> $lines InvoiceLine records returned for the InvoiceLine schema.
@@ -101,8 +104,13 @@ class InvoiceGuardTest extends TestCase {
 	 * @return void
 	 */
 	private function wireObjectService(array $invoices, array $lines): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(bySchema: ['Invoice' => $invoices, 'InvoiceLine' => $lines])
+		$store = $this->buildObjectServiceStub(bySchema: ['Invoice' => $invoices, 'InvoiceLine' => $lines]);
+		$this->container->method('get')->willReturn($store);
+
+		$this->guard = new InvoiceGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
 		);
 
 	}//end wireObjectService()
@@ -382,11 +390,59 @@ class InvoiceGuardTest extends TestCase {
 			'state' => 'draft',
 			'timeEntryIds' => ['time-1'],
 			'expenseIds' => [],
-			// Inline lines so resolveLines short-circuits before container->get.
+			// Inline lines so resolveLines short-circuits before the store is read.
 			'lines' => [['sourceType' => 'time_entry', 'costAmount' => 100000]],
 		];
+
+		// The store itself is the failure now that it is injected rather than
+		// pulled from the container: the source-id uniqueness check reads it.
+		$exploding = new class {
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every read, as an unavailable ObjectService would.
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+		};
+
 		$this->container->method('get')
 			->willThrowException(new \RuntimeException('ObjectService unavailable'));
+
+		$this->guard = new InvoiceGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($exploding),
+		);
+
 		$this->logger->expects($this->once())->method('error');
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters

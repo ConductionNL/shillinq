@@ -21,6 +21,7 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\AccountBalanceGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -82,13 +83,31 @@ class AccountBalanceGuardTest extends TestCase {
 		// Default: return the canonical register slug.
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new AccountBalanceGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(lines: [], closingAccounts: [])
 		);
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return AccountBalanceGuard
+	 */
+	private function buildGuard(object $store): AccountBalanceGuard {
+		return new AccountBalanceGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * requireZeroBalance returns true when the GLLine register is unavailable (T1).
@@ -96,9 +115,14 @@ class AccountBalanceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testRequireZeroBalancePermitsArchiveInT1State(): void {
-		// Simulate T1: container throws when trying to get ObjectService.
-		$this->container->method('get')
-			->willThrowException(new \RuntimeException('ObjectService not found'));
+		// ADR-084 deleted the container probe this test used to simulate: with the
+		// contract injected non-nullably the guard can no longer distinguish "the
+		// GLLine schema is absent" from "the account has no GLLine rows". An empty
+		// store is what the guard actually observes in a T1 state, and it is still
+		// the case that an account carrying no postings has a zero balance.
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(lines: [], closingAccounts: [])
+		);
 
 		$result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
@@ -122,7 +146,7 @@ class AccountBalanceGuardTest extends TestCase {
 
 		// The ObjectService stub: setRegister/setSchema returns itself, findAll returns $lines.
 		$objectService = $this->buildObjectServiceStub(lines: $lines, closingAccounts: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
@@ -141,7 +165,7 @@ class AccountBalanceGuardTest extends TestCase {
 		];
 
 		$objectService = $this->buildObjectServiceStub(lines: $lines, closingAccounts: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
@@ -152,21 +176,24 @@ class AccountBalanceGuardTest extends TestCase {
 	/**
 	 * requireZeroBalance is fail-closed: returns false (denies archive) on exception.
 	 *
-	 * The first container->get() call is the T1 probe in isGLLineRegisterAvailable(),
-	 * which must succeed so the guard proceeds to compute the balance. The second call
-	 * is the actual computation path, where findAll() throws to trigger fail-closed.
+	 * The store throws, so the outer try/catch must return false.
+	 *
+	 * The previous version also asserted `container->get()` was called exactly
+	 * twice — a T1 probe plus the computation. ADR-084 deleted both the probe
+	 * and the container, and the guard now receives its ObjectService through
+	 * the constructor, so nothing resolves a container at all. That expectation
+	 * could never fire again: it was not coverage, it was a guaranteed failure
+	 * describing an architecture that no longer exists. Removed rather than
+	 * relaxed; the assertion that matters — fail-closed on exception — is
+	 * untouched and is what the store's throwing findAll() now exercises.
 	 *
 	 * @return void
 	 */
 	public function testRequireZeroBalanceIsFailClosedOnException(): void {
-		// Probe call: succeeds (empty lines) so isGLLineRegisterAvailable() returns true.
-		$probeStub = $this->buildObjectServiceStub(lines: [], closingAccounts: []);
 		// Computation call: throws so the outer try-catch returns false (fail-closed).
 		$throwStub = $this->buildObjectServiceStubThatThrows();
 
-		$this->container->expects($this->exactly(2))
-			->method('get')
-			->willReturnOnConsecutiveCalls($probeStub, $throwStub);
+		$this->guard = $this->buildGuard(store: $throwStub);
 
 		$result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
@@ -180,8 +207,20 @@ class AccountBalanceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testRequireSingleClosingAccountPermitsNonClosingAccount(): void {
-		// Container should not be touched for non-closing accounts.
-		$this->container->expects($this->never())->method('get');
+		// The data layer must not be touched for non-closing accounts. Asserted
+		// against the ObjectService the guard actually holds — the old
+		// `container->expects($this->never())->method('get')` was vacuously true
+		// after ADR-084, because nothing consults a container any more, so it
+		// would have stayed green even if the guard queried on every call.
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->expects($this->never())->method('findAll');
+		$objectService->expects($this->never())->method('find');
+
+		$this->guard = new AccountBalanceGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: $objectService,
+		);
 
 		$result = $this->guard->requireSingleClosingAccount(['isClosingAccount' => false]);
 
@@ -196,7 +235,7 @@ class AccountBalanceGuardTest extends TestCase {
 	 */
 	public function testRequireSingleClosingAccountPermitsFirstClosingAccount(): void {
 		$objectService = $this->buildObjectServiceStub(lines: [], closingAccounts: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireSingleClosingAccount([
 			'isClosingAccount' => true,
@@ -218,7 +257,7 @@ class AccountBalanceGuardTest extends TestCase {
 			['id' => 'other-uuid', 'accountNumber' => 'CLOSE-OLD', 'administrationId' => 'adm-1', 'isClosingAccount' => true],
 		];
 		$objectService = $this->buildObjectServiceStub(lines: [], closingAccounts: $existingClosing);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireSingleClosingAccount([
 			'isClosingAccount' => true,

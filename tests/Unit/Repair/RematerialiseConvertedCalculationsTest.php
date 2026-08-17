@@ -28,9 +28,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\RematerialiseConvertedCalculations;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -360,7 +360,6 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 			 */
 			public function setSchema(string $schema): self {
 				$this->schema = $schema;
-				$this->schemasQueried[] = $schema;
 
 				return $this;
 			}//end setSchema()
@@ -377,6 +376,11 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 			 * @return list<array<string,mixed>> Matching fixture rows.
 			 */
 			public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				// Recorded here rather than in setSchema(): the assertion is
+				// that findAll() was called on every targeted schema, and the
+				// write path re-selects the schema on the same chain.
+				$this->schemasQueried[] = $this->schema;
+
 				if (in_array($this->schema, $this->failFindAllSchemas, true) === true) {
 					throw new \RuntimeException('findAll failed for ' . $this->schema);
 				}
@@ -410,8 +414,8 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register,
-				string $schema,
+				string $register = '',
+				string $schema = '',
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 				mixed $currentUser = null,
@@ -434,7 +438,7 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 			settingsService: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),
 		);
 
 	}//end makeStep()

@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\VpbBerekeningGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -85,10 +85,31 @@ class VpbBerekeningGuardTest extends TestCase {
 		$this->guard = new VpbBerekeningGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildSchemaStub(recordsBySchema: [])),
 		);
 
 	}//end setUp()
+
+	/**
+	 * Point the guard at the given duck-typed ObjectService store.
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different records.
+	 *
+	 * @param object $store The in-memory ObjectService double.
+	 *
+	 * @return void
+	 */
+	private function wireObjectService(object $store): void {
+		$this->container->method('get')->willReturn($store);
+
+		$this->guard = new VpbBerekeningGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end wireObjectService()
 
 	/**
 	 * The schijftarief calculation applies the 2026 brackets (19% / 25.8% / 245k) (REQ-VPB-003).
@@ -99,8 +120,8 @@ class VpbBerekeningGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testBerekenVerschuldigdeVpbAppliesBrackets(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(
+		$this->wireObjectService(
+			store: $this->buildSchemaStub(
 				recordsBySchema: [
 					'VpbTariefcatalogus' => [
 						['taxYear' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
@@ -120,8 +141,8 @@ class VpbBerekeningGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testBerekenVerschuldigdeVpbBelowGrens(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(
+		$this->wireObjectService(
+			store: $this->buildSchemaStub(
 				recordsBySchema: [
 					'VpbTariefcatalogus' => [
 						['taxYear' => 2026, 'tarief1' => 0.19, 'tarief2' => 0.258, 'taxableAmountThreshold' => 245000],
@@ -152,8 +173,8 @@ class VpbBerekeningGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testBerekenVerschuldigdeVpbZeroWhenNoTarief(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(recordsBySchema: ['VpbTariefcatalogus' => []])
+		$this->wireObjectService(
+			store: $this->buildSchemaStub(recordsBySchema: ['VpbTariefcatalogus' => []])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -167,7 +188,7 @@ class VpbBerekeningGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testBerekenVerschuldigdeVpbFailsClosed(): void {
-		$this->container->method('get')->willThrowException(new \RuntimeException('down'));
+		$this->wireObjectService(store: $this->buildFailingObjectServiceStub());
 		$this->logger->expects($this->once())->method('error');
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -281,4 +302,52 @@ class VpbBerekeningGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildSchemaStub()
+
+	/**
+	 * Build an ObjectService store that refuses every read.
+	 *
+	 * Since the store is injected rather than pulled from the container, an
+	 * unavailable OpenRegister is modelled by a store that throws.
+	 *
+	 * @return object
+	 */
+	private function buildFailingObjectServiceStub(): object {
+		return new class {
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse the read, as an unavailable ObjectService would.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('down');
+			}//end findAll()
+		};
+	}//end buildFailingObjectServiceStub()
 }//end class

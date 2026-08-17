@@ -48,11 +48,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\ThreeWayMatchingEngine;
 use OCA\Shillinq\Service\ToleranceProfileService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -223,7 +223,7 @@ final class ThreeWayMatchingEngineTest extends TestCase {
 			appConfig:             $appConfig,
 			administrationContext: $administrationContext,
 			logger:                $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		return new ThreeWayMatchingEngine(
@@ -231,7 +231,7 @@ final class ThreeWayMatchingEngineTest extends TestCase {
 			toleranceService: $tolerance,
 			invoiceService:   $invoiceService,
 			logger:           $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildEngine()

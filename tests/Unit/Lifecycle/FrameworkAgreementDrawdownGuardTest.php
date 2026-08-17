@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -126,8 +126,9 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 	 * @return FrameworkAgreementDrawdownGuard
 	 */
 	private function buildGuard(array $agreements): FrameworkAgreementDrawdownGuard {
+		$stub      = $this->buildStub($agreements);
 		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($this->buildStub($agreements));
+		$container->method('get')->willReturn($stub);
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
@@ -135,7 +136,7 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 		return new FrameworkAgreementDrawdownGuard(
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 	}//end buildGuard()
 

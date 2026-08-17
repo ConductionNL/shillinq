@@ -30,11 +30,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
 use OCA\Shillinq\Service\AansluitingCalculator;
 use OCA\Shillinq\Service\AansluitingService;
 use OCA\Shillinq\Service\VATReturnService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -97,7 +97,7 @@ final class AansluitingServiceTest extends TestCase {
 		$vatReturnService = new VATReturnService(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		$guard = new AansluitingResolutionGuard(logger: $this->logger);
@@ -108,7 +108,7 @@ final class AansluitingServiceTest extends TestCase {
 			calculator: new AansluitingCalculator(),
 			vatReturnService: $vatReturnService,
 			resolutionGuard: $guard,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

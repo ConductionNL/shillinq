@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Consolidation;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Consolidation\ConsolidationGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -91,13 +91,31 @@ class ConsolidationGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new ConsolidationGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(findReturn: null, findAllReturn: [])
 		);
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return ConsolidationGuard
+	 */
+	private function buildGuard(object $store): ConsolidationGuard {
+		return new ConsolidationGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * RequireFiscalPeriodClosed denies when fiscalYearId is missing.
@@ -123,7 +141,7 @@ class ConsolidationGuardTest extends TestCase {
 	 */
 	public function testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent(): void {
 		$objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireFiscalPeriodClosed(
 			[
@@ -144,7 +162,7 @@ class ConsolidationGuardTest extends TestCase {
 	public function testRequireFiscalPeriodClosedPermitsWhenClosed(): void {
 		$fiscalYear = ['id' => 'fy-2026', 'isClosed' => true];
 		$objectService = $this->buildObjectServiceStub(findReturn: $fiscalYear, findAllReturn: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireFiscalPeriodClosed(
 			[
@@ -165,7 +183,7 @@ class ConsolidationGuardTest extends TestCase {
 	public function testRequireFiscalPeriodClosedDenieswhenOpen(): void {
 		$fiscalYear = ['id' => 'fy-2026', 'isClosed' => false];
 		$objectService = $this->buildObjectServiceStub(findReturn: $fiscalYear, findAllReturn: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireFiscalPeriodClosed(
 			[
@@ -184,7 +202,7 @@ class ConsolidationGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testRequireFiscalPeriodClosedIsFailClosedOnException(): void {
-		$this->container->method('get')->willThrowException(new \RuntimeException('DB error'));
+		$this->guard = $this->buildGuard(store: $this->buildUnavailableObjectServiceStub());
 
 		$result = $this->guard->requireFiscalPeriodClosed(
 			[
@@ -216,7 +234,7 @@ class ConsolidationGuardTest extends TestCase {
 	 */
 	public function testRequireAllMembersFinalisedPermitsWhenGroupAbsent(): void {
 		$objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireAllMembersFinalised(
 			[
@@ -242,7 +260,7 @@ class ConsolidationGuardTest extends TestCase {
 		// Both administrations have a final BalanceSheet.
 		$balanceSheet = [['id' => 'bs-001', 'status' => 'final']];
 		$objectService = $this->buildObjectServiceStub(findReturn: $group, findAllReturn: $balanceSheet);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireAllMembersFinalised(
 			[
@@ -267,7 +285,7 @@ class ConsolidationGuardTest extends TestCase {
 		];
 		// No final BalanceSheet for adm-1.
 		$objectService = $this->buildObjectServiceStub(findReturn: $group, findAllReturn: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireAllMembersFinalised(
 			[
@@ -422,4 +440,67 @@ class ConsolidationGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('DB error');
+			}//end find()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Filter params.
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('DB error');
+			}//end findAll()
+		};
+	}//end buildUnavailableObjectServiceStub()
 }//end class

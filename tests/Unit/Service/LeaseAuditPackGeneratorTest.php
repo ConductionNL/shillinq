@@ -22,10 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeaseAuditPackGenerator;
 use OCA\Shillinq\Service\LeasePaymentScheduleService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -175,7 +175,7 @@ final class LeaseAuditPackGeneratorTest extends TestCase {
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
 				return $object;
 			}//end saveObject()
 		};
@@ -191,9 +191,10 @@ final class LeaseAuditPackGeneratorTest extends TestCase {
 				appConfig: $this->appConfig,
 				calculator: $calculator,
 				logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		),
+				objectService: new DuckObjectServiceAdapter($stub),
+			),
 			logger: $logger,
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\EInvoice;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
@@ -31,6 +30,7 @@ use OCA\Shillinq\Service\EInvoice\EInvoiceValidationService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\ViesService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -207,7 +207,7 @@ final class EInvoiceServiceTest extends TestCase {
 			pdfGenerator: new InvoicePdfGenerator(),
 			validationService: $validationService,
 			peppolPort: $port,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

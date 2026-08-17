@@ -26,8 +26,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\WbsoDocumentService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -176,7 +176,7 @@ final class WbsoDocumentServiceTest extends TestCase {
 		return new WbsoDocumentService(
 			appConfig: $this->appConfig,
 			userSession: $this->session,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

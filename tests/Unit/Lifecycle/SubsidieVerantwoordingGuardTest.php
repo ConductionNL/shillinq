@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\SubsidieVerantwoordingGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -87,10 +87,31 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 		$this->guard = new SubsidieVerantwoordingGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub(records: [])),
 		);
 
 	}//end setUp()
+
+	/**
+	 * Point the guard at the given duck-typed ObjectService store.
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different records.
+	 *
+	 * @param object $store The in-memory ObjectService double.
+	 *
+	 * @return void
+	 */
+	private function wireObjectService(object $store): void {
+		$this->container->method('get')->willReturn($store);
+
+		$this->guard = new SubsidieVerantwoordingGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end wireObjectService()
 
 	/**
 	 * A grant below the auditor threshold may approve without any AuditorStatement (REQ-SUBV-003).
@@ -111,8 +132,8 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testLargeGrantBlockedByPendingAuditorStatement(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'pending']])
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'pending']])
 		);
 
 		$object = ['grantId' => 'SUB-2', 'awardedAmount' => 50000.0];
@@ -128,8 +149,8 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testLargeGrantWithApprovedAuditorStatementApproves(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'approved']])
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'approved']])
 		);
 
 		$object = ['grantId' => 'SUB-3', 'awardedAmount' => 50000.0];
@@ -145,8 +166,8 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testLargeGrantWithConditionalAuditorStatementApproves(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'conditional']])
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'conditional']])
 		);
 
 		$object = ['grantId' => 'SUB-4', 'awardedAmount' => 30000.0];
@@ -162,8 +183,8 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testLargeGrantWithRejectedAuditorStatementBlocked(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'rejected']])
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(records: [['statementId' => 'AS-1', 'status' => 'rejected']])
 		);
 
 		$object = ['grantId' => 'SUB-5', 'awardedAmount' => 99000.0];
@@ -192,8 +213,7 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testExceptionFailsClosed(): void {
-		$this->container->method('get')
-			->willThrowException(new \RuntimeException('ObjectService unavailable'));
+		$this->wireObjectService(store: $this->buildFailingObjectServiceStub());
 
 		$this->logger->expects($this->once())->method('error');
 
@@ -263,4 +283,52 @@ class SubsidieVerantwoordingGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build an ObjectService store that refuses every read.
+	 *
+	 * Since the store is injected rather than pulled from the container, an
+	 * unavailable OpenRegister is modelled by a store that throws.
+	 *
+	 * @return object
+	 */
+	private function buildFailingObjectServiceStub(): object {
+		return new class {
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse the read, as an unavailable ObjectService would.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+		};
+	}//end buildFailingObjectServiceStub()
 }//end class

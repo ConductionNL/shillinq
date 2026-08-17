@@ -32,7 +32,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
@@ -41,6 +40,7 @@ use OCA\Shillinq\Service\DepreciationCalculator;
 use OCA\Shillinq\Service\DisposalJournalEmitter;
 use OCA\Shillinq\Service\FixedAssetDisposalService;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -103,7 +103,7 @@ class FixedAssetDisposalListenerTest extends TestCase {
 			emitter: new DisposalJournalEmitter(new DepreciationCalculator()),
 			administrationContext: $administrationContext,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objects),
 		);
 
 		$this->listener = new FixedAssetDisposalListener(

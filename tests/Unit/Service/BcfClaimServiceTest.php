@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BcfClaimService;
 use OCA\Shillinq\Service\BcfCompensationCalculator;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -55,13 +55,6 @@ final class BcfClaimServiceTest extends TestCase {
 	private IAppConfig&MockObject $appConfig;
 
 	/**
-	 * The service under test.
-	 *
-	 * @var BcfClaimService
-	 */
-	private BcfClaimService $service;
-
-	/**
 	 * Set up test fixtures.
 	 *
 	 * @return void
@@ -73,13 +66,27 @@ final class BcfClaimServiceTest extends TestCase {
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->service = new BcfClaimService(
+	}//end setUp()
+
+	/**
+	 * Build the service over a seeded ObjectService double.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so the
+	 * subject has to be built AFTER the per-test store exists — it can no
+	 * longer be assembled once in setUp() and re-pointed through a container.
+	 *
+	 * @param object $stub The seeded in-memory double.
+	 *
+	 * @return BcfClaimService
+	 */
+	private function serviceWith(object $stub): BcfClaimService {
+		return new BcfClaimService(
 			appConfig: $this->appConfig,
 			calculator: new BcfCompensationCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
-	}//end setUp()
+	}//end serviceWith()
 
 	/**
 	 * The service joins GLLines to mappings, filters and weights to the quarter total (REQ-BCF-002).
@@ -117,7 +124,7 @@ final class BcfClaimServiceTest extends TestCase {
 			['administrationId' => 'adm-1', 'accountNumber' => '3650', 'bcfCompensable' => false, 'compensablePercentage' => 0],
 		];
 
-		$this->container->method('get')->willReturn(
+		$service = $this->serviceWith(
 			$this->buildObjectServiceStub(
 				[
 					'GLTransaction' => $transactions,
@@ -127,7 +134,7 @@ final class BcfClaimServiceTest extends TestCase {
 			)
 		);
 
-		$result = $this->service->computeClaim(administrationId: 'adm-1', claimQuarter: '2026-Q1');
+		$result = $service->computeClaim(administrationId: 'adm-1', claimQuarter: '2026-Q1');
 
 		self::assertSame('adm-1', $result['administrationId']);
 		self::assertSame('2026-Q1', $result['claimQuarter']);
@@ -146,7 +153,7 @@ final class BcfClaimServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testComputeClaimZeroWhenNoCompensablePostings(): void {
-		$this->container->method('get')->willReturn(
+		$service = $this->serviceWith(
 			$this->buildObjectServiceStub(
 				[
 					'GLTransaction' => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q2']],
@@ -160,7 +167,7 @@ final class BcfClaimServiceTest extends TestCase {
 			)
 		);
 
-		$result = $this->service->computeClaim(administrationId: 'adm-1', claimQuarter: '2026-Q2');
+		$result = $service->computeClaim(administrationId: 'adm-1', claimQuarter: '2026-Q2');
 
 		self::assertSame(0.0, $result['totalCompensableAmount']);
 		self::assertSame([], $result['breakdown']);

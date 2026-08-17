@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeasePaymentScheduleService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -123,6 +123,13 @@ final class LeasePaymentScheduleServiceTest extends TestCase {
 			}//end setRegister()
 
 			/**
+			 * Active schema, remembered so a later saveObject() can report it.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
+
+			/**
 			 * Fluent schema setter.
 			 *
 			 * @param string $schema Schema slug.
@@ -130,6 +137,7 @@ final class LeasePaymentScheduleServiceTest extends TestCase {
 			 * @return static
 			 */
 			public function setSchema(string $schema): static {
+				$this->schema = $schema;
 				return $this;
 			}//end setSchema()
 
@@ -155,7 +163,11 @@ final class LeasePaymentScheduleServiceTest extends TestCase {
 			}//end findAll()
 
 			/**
-			 * Capture a saved object.
+			 * Capture a saved object together with the schema it went to.
+			 *
+			 * The schema may arrive as an explicit argument or through a
+			 * preceding setSchema() call — the real ObjectService honours both,
+			 * so the capture falls back to the active schema.
 			 *
 			 * @param array<string,mixed> $object The object payload.
 			 * @param string $register Register slug.
@@ -163,8 +175,11 @@ final class LeasePaymentScheduleServiceTest extends TestCase {
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
-				$this->saved[] = ['object' => $object, 'schema' => $schema];
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+				$this->saved[] = [
+					'object' => $object,
+					'schema' => ($schema !== '') ? $schema : $this->schema,
+				];
 				return $object;
 			}//end saveObject()
 		};
@@ -175,7 +190,7 @@ final class LeasePaymentScheduleServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			calculator: new LeaseAmortizationCalculator(),
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()
