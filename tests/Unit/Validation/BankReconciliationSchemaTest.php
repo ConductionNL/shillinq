@@ -205,26 +205,34 @@ final class BankReconciliationSchemaTest extends TestCase {
 	}//end testServerAuthoritativeDerivedFieldsAreNullable()
 
 	/**
-	 * BankReconciliation declares the one-to-many relation to its match pairs and
-	 * countByStatus aggregation that the manifest index filters on.
+	 * BankReconciliation declares the countByStatus aggregation that the
+	 * manifest index filters on.
+	 *
+	 * WITHDRAWN ASSERTION — the `matches` relation (BankReconciliation ->
+	 * BankReconciliationMatch). It was declared in the per-schema
+	 * `x-openregister-relations` block, which ADR-062 rule 7 retired on
+	 * 2026-07-08 in favour of a property-level `$ref`. This relation is NOT
+	 * expressible in the canonical dialect and was therefore removed rather
+	 * than migrated: it is the INVERSE side. Its `localField` was `id` — this
+	 * schema's own object identity, not a property — and the foreign key
+	 * actually lives on the other schema, as `BankReconciliationMatch.
+	 * reconciliationId`. A `$ref` rides on the property that HOLDS the
+	 * reference, so the only place this relationship can be declared is the
+	 * child, where testMatchReconciliationRelation() now asserts it. Asserting
+	 * it here as well would be asserting something the register deliberately no
+	 * longer declares on either side of the pair.
 	 *
 	 * @return void
 	 */
-	public function testReconciliationRelationsAndAggregations(): void {
+	public function testReconciliationAggregations(): void {
 		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
-
-		$rel = $schema['x-openregister-relations']['matches'];
-		self::assertSame('id', $rel['localField']);
-		self::assertSame('BankReconciliationMatch', $rel['relatedSchema']);
-		self::assertSame('reconciliationId', $rel['relatedField']);
-		self::assertSame('one-to-many', $rel['cardinality']);
 
 		$agg = $schema['x-openregister-aggregations']['countByStatus'];
 		self::assertSame('status', $agg['field']);
 		self::assertSame('count', $agg['operation']);
 		self::assertSame('status', $agg['groupBy']);
 
-	}//end testReconciliationRelationsAndAggregations()
+	}//end testReconciliationAggregations()
 
 	/**
 	 * BankReconciliation declares the bookkeeper/auditor RBAC roles per ADR-005.
@@ -380,15 +388,37 @@ final class BankReconciliationSchemaTest extends TestCase {
 	 * BankReconciliationMatch declares the many-to-one relation back to its parent
 	 * reconciliation, which the related-list on the detail page (Task 7/10) renders.
 	 *
+	 * The relation is asserted in the CANONICAL dialect (ADR-062 rule 7): a
+	 * property-level `$ref` on `reconciliationId`, resolving case-exactly to a
+	 * schema key in the same register set. It was previously read from the
+	 * per-schema `x-openregister-relations` block, which was retired
+	 * 2026-07-08. This side of the pair is expressible because the old block's
+	 * `relatedField` was `id` — the parent's object identity — so the foreign
+	 * key genuinely holds what a `$ref` resolves against. Cardinality is no
+	 * longer declared anywhere: a scalar (non-array) `$ref` IS the many-to-one
+	 * form, so the shape of the property carries it.
+	 *
 	 * @return void
 	 */
 	public function testMatchReconciliationRelation(): void {
 		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-		$rel = $schema['x-openregister-relations']['reconciliation'];
-		self::assertSame('reconciliationId', $rel['localField']);
-		self::assertSame('BankReconciliation', $rel['relatedSchema']);
-		self::assertSame('id', $rel['relatedField']);
-		self::assertSame('many-to-one', $rel['cardinality']);
+
+		self::assertArrayHasKey(
+			key: 'reconciliationId',
+			array: $schema['properties'],
+			message: 'BankReconciliationMatch must declare the reconciliationId foreign key.'
+		);
+		$prop = $schema['properties']['reconciliationId'];
+		self::assertSame(
+			expected: 'BankReconciliation',
+			actual: ($prop['$ref'] ?? null),
+			message: 'reconciliationId must carry the canonical property-level $ref to BankReconciliation (ADR-062 rule 7).'
+		);
+		self::assertSame(
+			expected: 'string',
+			actual: ($prop['type'] ?? null),
+			message: 'A scalar (non-array) $ref is the many-to-one form; an array would mean one-to-many.'
+		);
 
 	}//end testMatchReconciliationRelation()
 
