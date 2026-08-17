@@ -97,11 +97,15 @@ class BbvProgrammeBudgetReader {
 	 * @param IAppConfig $appConfig App config (OpenRegister register slug).
 	 * @param LoggerInterface $logger Logger — never receives a record body.
 	 * @param ObjectServiceInterface $objectService OpenRegister object service (ADR-083/084).
+	 * @param BbvBudgetVocabulary $vocabulary Reads a Budget under EITHER of the two
+	 *                                        colliding `Budget` schemas — see that
+	 *                                        class for why there are two.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly BbvBudgetVocabulary $vocabulary = new BbvBudgetVocabulary(),
 	) {
 
 	}//end __construct()
@@ -125,7 +129,7 @@ class BbvProgrammeBudgetReader {
 				filters: ['administrationId' => $administrationId]
 			);
 			foreach ($budgets as $budget) {
-				if ((int)($budget['fiscalYear'] ?? 0) !== $fiscalYear) {
+				if ($this->budgetYear(budget: $budget) !== $fiscalYear) {
 					continue;
 				}
 
@@ -142,6 +146,38 @@ class BbvProgrammeBudgetReader {
 	}//end budgetsFor()
 
 	/**
+	 * Read a Budget's fiscal year across BOTH vocabularies the schema carries.
+	 *
+	 * ⚠️ `Budget` is declared TWICE in `lib/Settings/register.d/`, by two
+	 * different changes, and the two declarations share no field names:
+	 *
+	 *   bookkeeping-provincies-bbv-variant     fiscalYear, totalAmount,
+	 *                                          programmeStructure, status
+	 *   bookkeeping-verplichtingenadministratie financialYear, authorised_amount,
+	 *                                          programmeCode
+	 *
+	 * The fragments DEEP-MERGE and the later file's `required` wins, so the
+	 * deployed schema demands `financialYear` + `authorised_amount` — measured
+	 * on a live instance, where creating a BBV-shaped Budget is refused with
+	 * "The required properties (financialYear, authorised_amount) are missing".
+	 * A reader that knew only the BBV half would therefore report ZERO for a
+	 * province whose budgets exist, which is indistinguishable from a province
+	 * with no budget.
+	 *
+	 * Adapting on READ is the narrow fix. Renaming either fragment's properties
+	 * is a DATA MIGRATION and neither vocabulary belongs to this change; the
+	 * collision itself is reported rather than papered over.
+	 *
+	 * @param array<string,mixed> $budget The Budget record.
+	 *
+	 * @return integer The fiscal year, or 0 when neither field carries one.
+	 */
+	private function budgetYear(array $budget): int {
+		return $this->vocabulary->year(budget: $budget);
+
+	}//end budgetYear()
+
+	/**
 	 * Sum budget amounts per programme.
 	 *
 	 * @param list<array<string,mixed>> $budgets The budgets in scope.
@@ -153,12 +189,17 @@ class BbvProgrammeBudgetReader {
 	public function budgetByProgramme(array $budgets): array {
 		$totals = [];
 		foreach ($budgets as $budget) {
-			$programme = (string)($budget['programmeStructure'] ?? '');
+			// Both vocabularies again — see budgetYear(). `programmeCode` and
+			// `authorised_amount` are the verplichtingenadministratie half of
+			// the same colliding schema, and a budget written through that
+			// half is still this province's budget.
+			$programme = $this->vocabulary->programme(budget: $budget);
 			if ($programme === '') {
 				continue;
 			}
 
-			$totals[$programme] = (($totals[$programme] ?? 0.0) + (float)($budget['totalAmount'] ?? 0));
+			$amount = $this->vocabulary->amount(budget: $budget);
+			$totals[$programme] = (($totals[$programme] ?? 0.0) + $amount);
 		}
 
 		return $totals;
@@ -256,7 +297,7 @@ class BbvProgrammeBudgetReader {
 				filters: ['administrationId' => $administrationId]
 			);
 			foreach ($budgets as $budget) {
-				$year = (int)($budget['fiscalYear'] ?? 0);
+				$year = $this->budgetYear(budget: $budget);
 				if ($year > 0) {
 					$years[$year] = true;
 				}
@@ -282,9 +323,10 @@ class BbvProgrammeBudgetReader {
 	public function accountsFor(array $administrationIds): array {
 		$rows = [];
 		foreach ($administrationIds as $administrationId) {
-			foreach ($this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]) as $account) {
-				$rows[] = $account;
-			}
+			$rows = array_merge(
+				$rows,
+				$this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId])
+			);
 		}
 
 		return $rows;

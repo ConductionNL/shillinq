@@ -431,6 +431,49 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	}//end testCommitmentsFromAnotherFiscalYearAreNotCounted()
 
 	/**
+	 * ⚠️ `Budget` is declared TWICE in `lib/Settings/register.d/` — by
+	 * bookkeeping-provincies-bbv-variant (`fiscalYear` / `totalAmount` /
+	 * `programmeStructure`) and by bookkeeping-verplichtingenadministratie
+	 * (`financialYear` / `authorised_amount` / `programmeCode`) — and the two
+	 * share no field names. The fragments deep-merge and the LATER file's
+	 * `required` wins, so a live instance refuses a BBV-shaped Budget with
+	 * "The required properties (financialYear, authorised_amount) are
+	 * missing". Measured on the rig, not inferred.
+	 *
+	 * A reader that knew only the BBV half would therefore report ZERO for a
+	 * province whose budgets exist — indistinguishable from one with no
+	 * budget at all. This asserts BOTH vocabularies land in the same total,
+	 * which is the only assertion that fails if either half is dropped.
+	 *
+	 * @return void
+	 */
+	public function testABudgetWrittenInEitherVocabularyIsCounted(): void {
+		$rows = $this->seed();
+		// The verplichtingenadministratie half of the same colliding schema.
+		$rows['Budget'][] = [
+			'administrationId' => 'adm-prov-zh',
+			'financialYear' => 2026,
+			'programmeCode' => 'milieu',
+			'authorised_amount' => 300000.0,
+			'status' => 'approved',
+		];
+
+		$envelope = $this->subject($rows)->programmeBudgetVsActuals();
+
+		$this->assertSame(
+			300000.0,
+			$this->rowFor($envelope, 'milieu')['totalBudget'],
+			'a Budget written in the verplichtingenadministratie vocabulary is still this province budget'
+		);
+		$this->assertSame(
+			1000000.0,
+			$this->rowFor($envelope, 'mobiliteit')['totalBudget'],
+			'and the BBV vocabulary still counts'
+		);
+		$this->assertSame(1700000.0, $envelope['totals']['totalBudget']);
+	}//end testABudgetWrittenInEitherVocabularyIsCounted()
+
+	/**
 	 * A caller with no accessible administration gets the empty envelope —
 	 * the same SHAPE as a populated one, so the dashboard renders zeroes and a
 	 * cross-tenant probe cannot tell an empty province from an inaccessible
