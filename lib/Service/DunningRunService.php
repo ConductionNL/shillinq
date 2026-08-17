@@ -1069,9 +1069,12 @@ class DunningRunService {
 	/**
 	 * Release the pre-dispatch seal after a non-DELIVERED outcome.
 	 *
-	 * The run goes back to `executed` so the operator can retry. When the
-	 * release itself fails the run STAYS `locked` — deliberately: a blocked
-	 * retry is recoverable, a duplicate dossier at a collection agency is not.
+	 * The run goes back to `executed` so the operator can retry, and its
+	 * `deliveryStatus` records the provider's verdict — a run whose transfer
+	 * BOUNCED or FAILED must not be left reading `DELIVERED` from an earlier
+	 * channel attempt. When the release itself fails the run STAYS `locked` —
+	 * deliberately: a blocked retry is recoverable, a duplicate dossier at a
+	 * collection agency is not.
 	 *
 	 * @param array<string,mixed> $run          The run as it was before sealing.
 	 * @param string              $dunningRunId The run's identifier, for logging.
