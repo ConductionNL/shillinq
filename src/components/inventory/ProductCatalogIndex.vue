@@ -154,6 +154,7 @@ export default {
 		 * Table column definitions.
 		 *
 		 * @return {Array<object>} The columns.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 		 */
 		columns() {
 			return [
@@ -196,6 +197,7 @@ export default {
 		 * Headline of the provenance banner.
 		 *
 		 * @return {string} The heading.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 		 */
 		provenanceTitle() {
 			return this.authoritative
@@ -207,6 +209,7 @@ export default {
 		 * Body of the provenance banner. States exactly what the rows are.
 		 *
 		 * @return {string} The explanation.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 		 */
 		provenanceDetail() {
 			if (this.authoritative) {
@@ -226,6 +229,7 @@ export default {
 		 * Placeholder for a field shillinq does not own and cannot resolve.
 		 *
 		 * @return {string} The placeholder.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 		 */
 		unknownLabel() {
 			// Not translated: an em dash is the same glyph in every locale, and
@@ -239,6 +243,7 @@ export default {
 		 * master and no local references" are different facts.
 		 *
 		 * @return {string} The empty label.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 		 */
 		emptyLabel() {
 			return this.authoritative
@@ -264,6 +269,7 @@ export default {
 		 * Fetch the catalog envelope and unpack it.
 		 *
 		 * @return {Promise<void>} Resolves once state is set.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 		 */
 		async loadCatalog() {
 			this.loading = true
@@ -307,6 +313,7 @@ export default {
 		 * @param {number|null} value    The amount.
 		 * @param {string|null} currency The ISO 4217 code.
 		 * @return {string} The formatted amount.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-002
 		 */
 		money(value, currency) {
 			if (
@@ -325,6 +332,7 @@ export default {
 		 *
 		 * @param {number|null} value The quantity.
 		 * @return {string} The formatted quantity.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-002
 		 */
 		quantity(value) {
 			if (

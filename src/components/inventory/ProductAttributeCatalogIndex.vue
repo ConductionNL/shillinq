@@ -114,6 +114,7 @@ export default {
 		 * Table column definitions (REQ-IPC-004 field set, plus the owner).
 		 *
 		 * @return {Array<object>} The columns.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
 		 */
 		columns() {
 			return [
@@ -155,6 +156,7 @@ export default {
 		 * Headline of the provenance banner.
 		 *
 		 * @return {string} The heading.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
 		 */
 		provenanceTitle() {
 			return this.authoritative
@@ -172,6 +174,7 @@ export default {
 		 * Body of the provenance banner.
 		 *
 		 * @return {string} The explanation.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
 		 */
 		provenanceDetail() {
 			if (this.authoritative) {
@@ -202,6 +205,7 @@ export default {
 		 * Fetch the attribute envelope and unpack it.
 		 *
 		 * @return {Promise<void>} Resolves once state is set.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
 		 */
 		async loadAttributes() {
 			this.loading = true
