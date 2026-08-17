@@ -98,6 +98,21 @@ import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceipt
 // fits a built-in `index` / `detail` page type, so both are kind:"page"
 // custom components.
 import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNoteForm.vue'
+// inventory-product-catalog (#860, REQ-IPC-004 / REQ-IPC-008 +
+// shillinq-product-vendor-to-pipelinq REQ-SPVP-004): the two read-only
+// catalog surfaces. A declarative `type: "index"` page binds to ONE
+// OpenRegister register + schema, and the product master these two pages
+// show is not in shillinq's register at all — REQ-SPVP-004 deleted the local
+// `Product` register and moved ownership to pipelinq. Binding an index page
+// to `register: "pipelinq"` instead would render an empty table on every
+// install without pipelinq while satisfying every "the page mounted"
+// assertion; these components call shillinq's own catalog endpoint, which
+// resolves the master first and falls back to the local denormalised cache
+// the ADR-019 contract declares, and renders WHICH OF THE TWO answered.
+// Neither page can write: no create affordance and no write route exists,
+// per REQ-SPVP-004.
+import ProductAttributeCatalogIndex from './components/inventory/ProductAttributeCatalogIndex.vue'
+import ProductCatalogIndex from './components/inventory/ProductCatalogIndex.vue'
 // invoice-from-time-and-expense (issue #111): drafting form + admin list
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
@@ -458,5 +473,13 @@ export default {
 	AccountantPortalDashboard: {
 		kind: 'page',
 		component: AccountantPortalDashboard,
+	},
+
+	// inventory-product-catalog (#860). See the import docblock above for why
+	// these are custom pages rather than declarative `type: "index"` ones.
+	ProductCatalogIndex: { kind: 'page', component: ProductCatalogIndex },
+	ProductAttributeCatalogIndex: {
+		kind: 'page',
+		component: ProductAttributeCatalogIndex,
 	},
 }

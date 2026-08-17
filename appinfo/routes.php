@@ -435,6 +435,18 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'bbvProgrammeBudget#programmeBudgetVsActuals', 'url' => '/api/bbv-provincie/programme-budget-vs-actuals', 'verb' => 'GET'],
             ['name' => 'bbvProgrammeBudget#glLineFacets', 'url' => '/api/bbv-provincie/gl-line-facets', 'verb' => 'GET'],
 
+        // Read-only inventory product catalog (inventory-product-catalog
+        // REQ-IPC-008 / shillinq-product-vendor-to-pipelinq REQ-SPVP-004, #860).
+        // The product master itself lives in pipelinq; these two GETs serve the
+        // catalog projection shillinq renders over it, with the integration
+        // contract's declared local-cache fallback. Deliberately GET-only:
+        // REQ-SPVP-004 forbids any shillinq surface that accepts a product
+        // definition, so there is no create/update/delete counterpart. Both take
+        // no parameters — scope comes from the caller's AdministrationMembership
+        // set, so nothing caller-supplied crosses the boundary.
+            ['name' => 'productCatalog#products', 'url' => '/api/inventory/products', 'verb' => 'GET'],
+            ['name' => 'productCatalog#productAttributes', 'url' => '/api/inventory/product-attributes', 'verb' => 'GET'],
+
         // BCF compensation calculator (bookkeeping-bcf-claim). Pure compute
         // surface returning a what-if compensation result.
             ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf/compensation', 'verb' => 'GET'],
