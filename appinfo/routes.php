@@ -419,6 +419,22 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // caller-supplied object identifier crosses the boundary.
             ['name' => 'cashflowExport#exportPdf', 'url' => '/api/cashflow/export-pdf', 'verb' => 'POST'],
 
+        // Provincies-BBV dashboards (bookkeeping-provincies-bbv-variant,
+        // REQ-BBC-001..003 / REQ-BBL-001 — #866/#862). Two read-only GETs the
+        // manifest's declarative `endpointSource` widgets bind to. Like the
+        // waterschappen endpoints above they MUST stay under `/api/`: the SPA
+        // page routes `/bbv-provincie/compliance-dashboard` and
+        // `/bbv-provincie/budget-to-programme` are declared by the same
+        // manifest fragment, and an app route always beats the SPA catch-all.
+        //
+        // Neither takes an object identifier — the administration scope is
+        // resolved server-side from the caller's AdministrationMembership set
+        // (REQ-MA-001), so there is no per-object IDOR surface. The only
+        // inputs are the three REQ-BBC-002 value filters, validated against a
+        // closed vocabulary in the controller.
+            ['name' => 'bbvProgrammeBudget#programmeBudgetVsActuals', 'url' => '/api/bbv-provincie/programme-budget-vs-actuals', 'verb' => 'GET'],
+            ['name' => 'bbvProgrammeBudget#glLineFacets', 'url' => '/api/bbv-provincie/gl-line-facets', 'verb' => 'GET'],
+
         // BCF compensation calculator (bookkeeping-bcf-claim). Pure compute
         // surface returning a what-if compensation result.
             ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf/compensation', 'verb' => 'GET'],
