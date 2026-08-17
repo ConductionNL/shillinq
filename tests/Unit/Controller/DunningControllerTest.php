@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\DunningController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BIKStaffelCalculator;
+use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\IncassoDossierComposer;
 use OCA\Shillinq\Service\DunningRunService;
 use OCP\AppFramework\Http;
@@ -468,6 +469,170 @@ final class DunningControllerTest extends TestCase {
 		self::assertStringContainsString('active dunning pause', (string)$response->getData()['error']);
 
 	}//end testExecuteRunPausedInvoiceReturns409()
+
+	/**
+	 * An anonymous caller cannot dispatch a dossier to a collection agency.
+	 *
+	 * @return void
+	 */
+	public function testTransferAnonymousReturns401(): void {
+		$this->userId = null;
+		$this->withParams(
+			[
+				'administration_id' => 'adm-1',
+				'invoiceId' => 'inv-1',
+				'customerId' => 'cust-1',
+				'dunningRunId' => 'run-1',
+			]
+		);
+		$this->runs->expects($this->never())->method('transferToIncasso');
+
+		$response = $this->controller->transfer();
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testTransferAnonymousReturns401()
+
+	/**
+	 * An administration the caller cannot access is refused as 404, not 403.
+	 *
+	 * A 403 would confirm the administration exists and turn the endpoint into
+	 * an existence oracle for another tenant's ids; the masked 404 is the house
+	 * pattern the sibling dossier endpoint already uses.
+	 *
+	 * @return void
+	 */
+	public function testTransferForeignAdministrationReturns404(): void {
+		$this->canAccess = false;
+		$this->withParams(
+			[
+				'administration_id' => 'adm-other',
+				'invoiceId' => 'inv-1',
+				'customerId' => 'cust-1',
+				'dunningRunId' => 'run-1',
+			]
+		);
+		$this->runs->expects($this->never())->method('transferToIncasso');
+		$this->dossier->expects($this->never())->method('compose');
+
+		$response = $this->controller->transfer();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testTransferForeignAdministrationReturns404()
+
+	/**
+	 * A missing dunningRunId is rejected before anything is dispatched.
+	 *
+	 * Without the run id the service cannot seal the run on a DELIVERED
+	 * outcome, so a dossier would reach the bureau with no record sealed
+	 * behind it — the transfer must not start at all.
+	 *
+	 * @return void
+	 */
+	public function testTransferMissingRunIdReturns400(): void {
+		$this->withParams(
+			[
+				'administration_id' => 'adm-1',
+				'invoiceId' => 'inv-1',
+				'customerId' => 'cust-1',
+			]
+		);
+		$this->runs->expects($this->never())->method('transferToIncasso');
+
+		$response = $this->controller->transfer();
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+
+	}//end testTransferMissingRunIdReturns400()
+
+	/**
+	 * The happy path composes the dossier SERVER-SIDE and dispatches it.
+	 *
+	 * The assertion that matters is that the bundle handed to the bureau is the
+	 * one the composer produced, not anything the request carried: this is the
+	 * evidence bundle a debt-collection agency acts on.
+	 *
+	 * @return void
+	 */
+	public function testTransferComposesServerSideAndReturnsOutcome(): void {
+		$this->withParams(
+			[
+				'administration_id' => 'adm-1',
+				'invoiceId' => 'inv-1',
+				'customerId' => 'cust-1',
+				'dunningRunId' => 'run-1',
+				// A client-supplied dossier must be ignored entirely.
+				'dossier' => ['forged' => true],
+			]
+		);
+
+		$composed = ['invoice' => 'inv-1', 'lines' => []];
+		$this->dossier->method('compose')->willReturn($composed);
+
+		$seen = null;
+		$this->runs->method('transferToIncasso')->willReturnCallback(
+			static function (
+				string $administrationId,
+				string $invoiceId,
+				array $dossier,
+				string $dunningRunId
+			) use (&$seen): DunningChannelSendResult {
+				$seen = $dossier;
+				return new DunningChannelSendResult(
+					channel: 'incasso',
+					deliveryStatus: 'DELIVERED',
+					providerMessageId: 'msg-1',
+					extras: ['dossierId' => 'dos-1'],
+				);
+			}
+		);
+
+		$response = $this->controller->transfer();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($composed, $seen, 'The dispatched dossier must be the composed one, never the request body');
+		self::assertSame('DELIVERED', $response->getData()['deliveryStatus']);
+		self::assertSame('dos-1', $response->getData()['extras']['dossierId']);
+
+	}//end testTransferComposesServerSideAndReturnsOutcome()
+
+	/**
+	 * A non-DELIVERED outcome is reported as 200 carrying the provider verdict.
+	 *
+	 * The dispatch attempt itself succeeded; the operator needs the status and
+	 * errorMessage to choose between a retry and a manual escalation, and an
+	 * HTTP error would hide both.
+	 *
+	 * @return void
+	 */
+	public function testTransferSurfacesANonDeliveredOutcome(): void {
+		$this->withParams(
+			[
+				'administration_id' => 'adm-1',
+				'invoiceId' => 'inv-1',
+				'customerId' => 'cust-1',
+				'dunningRunId' => 'run-1',
+			]
+		);
+		$this->dossier->method('compose')->willReturn([]);
+		$this->runs->method('transferToIncasso')->willReturn(
+			new DunningChannelSendResult(
+				channel: 'incasso',
+				deliveryStatus: 'FAILED',
+				providerMessageId: null,
+				extras: [],
+				errorMessage: 'bureau rejected the dossier',
+			)
+		);
+
+		$response = $this->controller->transfer();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('FAILED', $response->getData()['deliveryStatus']);
+		self::assertSame('bureau rejected the dossier', $response->getData()['errorMessage']);
+
+	}//end testTransferSurfacesANonDeliveredOutcome()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
