@@ -278,8 +278,20 @@ export default {
 					: []
 				this.source = payload.source || 'local-cache'
 				this.authoritative = payload.authoritative === true
-			} catch {
+			} catch (e) {
 				this.products = []
+				// 403 is not a failure, it is an answer: the caller holds no
+				// AdministrationMembership. Reporting it as "could not load"
+				// would send an operator hunting a broken endpoint instead of
+				// asking for access.
+				if (e?.response?.status === 403) {
+					this.error = this.t(
+						'shillinq',
+						'You have no administration yet, so there is no inventory to show. Ask an administrator for access.',
+					)
+					return
+				}
+
 				this.error = this.t(
 					'shillinq',
 					'Could not load the product catalog.',

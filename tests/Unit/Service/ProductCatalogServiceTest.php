@@ -325,6 +325,31 @@ final class ProductCatalogServiceTest extends TestCase {
 	}//end testLocalProjectionIsScopedToTheCallersAdministrations()
 
 	/**
+	 * A caller with no AdministrationMembership is REFUSED — on both endpoints,
+	 * and before the master is consulted.
+	 *
+	 * The master seed is deliberately present: without the refusal this call
+	 * would answer two authoritative product definitions, which is the hole.
+	 * The positive control is the widening at the end — the same store, the
+	 * same seed, one membership granted, and the rows appear.
+	 *
+	 * @return void
+	 */
+	public function testACallerWithNoAdministrationIsRefusedOnBothEndpoints(): void {
+		$this->accessible = [];
+		$subject = $this->subject($this->masterSeed());
+
+		$this->assertNull($subject->listProducts());
+		$this->assertNull($subject->listAttributes());
+
+		$this->accessible = ['adm-001'];
+		$granted = $this->subject($this->masterSeed());
+		$this->assertNotNull($granted->listProducts());
+		$this->assertSame(2, $granted->listProducts()['total']);
+
+	}//end testACallerWithNoAdministrationIsRefusedOnBothEndpoints()
+
+	/**
 	 * A master that throws (register absent, the normal case) falls through to
 	 * the local cache instead of propagating.
 	 *

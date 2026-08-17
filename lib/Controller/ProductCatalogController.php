@@ -83,11 +83,17 @@ class ProductCatalogController extends Controller {
 	/**
 	 * List the product catalog (REQ-IPC-008).
 	 *
-	 * Answers 200 with an explicit `source` / `authoritative` envelope in every
-	 * case — including when the pipelinq master is unreachable, where the body
-	 * carries the locally-projected rows and `authoritative: false`. The UI is
-	 * required to render that distinction; a bare 200 with rows would let a
-	 * stale cache read as the master.
+	 * Answers 200 with an explicit `source` / `authoritative` envelope whenever
+	 * the caller holds an administration — including when the pipelinq master
+	 * is unreachable, where the body carries the locally-projected rows and
+	 * `authoritative: false`. The UI is required to render that distinction; a
+	 * bare 200 with rows would let a stale cache read as the master.
+	 *
+	 * Answers **403** when the caller holds no valid AdministrationMembership.
+	 * That is the authorisation decision this endpoint makes: it takes no
+	 * parameters, so there is no caller-supplied object to compare against —
+	 * the caller's own membership set IS the scope, and an empty set is a
+	 * refusal rather than an empty catalog.
 	 *
 	 * @return JSONResponse The catalog envelope, or a JSON error envelope.
 	 *
@@ -100,7 +106,12 @@ class ProductCatalogController extends Controller {
 		}
 
 		try {
-			return new JSONResponse($this->catalogService->listProducts());
+			$catalog = $this->catalogService->listProducts();
+			if ($catalog === null) {
+				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
+			}
+
+			return new JSONResponse($catalog);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'ProductCatalogController: product catalog lookup failed',
@@ -114,6 +125,8 @@ class ProductCatalogController extends Controller {
 	/**
 	 * List the catalog's attribute definitions (REQ-IPC-004).
 	 *
+	 * Carries the same 403-on-no-membership refusal as {@see products()}.
+	 *
 	 * @return JSONResponse The attribute-definition envelope, or a JSON error envelope.
 	 *
 	 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
@@ -125,7 +138,12 @@ class ProductCatalogController extends Controller {
 		}
 
 		try {
-			return new JSONResponse($this->catalogService->listAttributes());
+			$attributes = $this->catalogService->listAttributes();
+			if ($attributes === null) {
+				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
+			}
+
+			return new JSONResponse($attributes);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'ProductCatalogController: product attribute lookup failed',

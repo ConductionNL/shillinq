@@ -2794,7 +2794,8 @@
         "The product master holds no products yet.": "The product master holds no products yet.",
         "The product master is unavailable, so the rows below are shillinq’s local cache: the products its own stock and barcode records reference. Names, categories and prices are owned elsewhere and are shown blank rather than guessed.": "The product master is unavailable, so the rows below are shillinq’s local cache: the products its own stock and barcode records reference. Names, categories and prices are owned elsewhere and are shown blank rather than guessed.",
         "The product master is unavailable, so the rows below are the attribute surface the integration contract publishes. The “Owned By” column says which application authors each value.": "The product master is unavailable, so the rows below are the attribute surface the integration contract publishes. The “Owned By” column says which application authors each value.",
-        "Unit Price": "Unit Price"
+        "Unit Price": "Unit Price",
+        "You have no administration yet, so there is no inventory to show. Ask an administrator for access.": "You have no administration yet, so there is no inventory to show. Ask an administrator for access."
     },
     "plurals": ""
 }

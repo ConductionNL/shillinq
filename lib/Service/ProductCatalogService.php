@@ -163,14 +163,26 @@ class ProductCatalogService {
 	 * Resolution order is the one the integration contract declares: the
 	 * pipelinq master first, its local denormalised cache second.
 	 *
-	 * @return array{source:string,authoritative:bool,masterAvailable:bool,masterApp:string,total:int,products:list<array<string,mixed>>}
-	 *         The catalog envelope. `authoritative` is false whenever the rows
-	 *         did not come from the owning app — the UI is required to say so.
+	 * REFUSES a caller holding no valid AdministrationMembership (REQ-MA-001)
+	 * by answering null — BEFORE the master is consulted. Without that check
+	 * the local-cache branch would be scoped and the MASTER branch would not,
+	 * so a user with no administration at all would be handed the whole
+	 * product master. The refusal is the guard; there is no caller-supplied
+	 * identifier anywhere in this class, so scoping to the caller is the only
+	 * authorisation decision it has to make.
+	 *
+	 * @return array{source:string,authoritative:bool,masterAvailable:bool,masterApp:string,total:int,products:list<array<string,mixed>>}|null
+	 *         The catalog envelope, or null when the caller holds no
+	 *         administration membership. `authoritative` is false whenever the
+	 *         rows did not come from the owning app — the UI must say so.
 	 *
 	 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 	 */
-	public function listProducts(): array {
+	public function listProducts(): ?array {
 		$administrationIds = $this->administrationContext->accessibleAdministrationIds();
+		if ($administrationIds === []) {
+			return null;
+		}
 
 		$master = $this->query(register: self::MASTER_REGISTER, schema: self::MASTER_SCHEMA_PRODUCT, filters: []);
 		if ($master !== []) {
@@ -214,12 +226,21 @@ class ProductCatalogService {
 	 * question ("which product attributes does this installation have, and who
 	 * owns each one?") instead of rendering an empty table.
 	 *
-	 * @return array{source:string,authoritative:bool,masterAvailable:bool,masterApp:string,total:int,attributes:list<array<string,mixed>>}
-	 *         The attribute-definition envelope.
+	 * Carries the same membership refusal as {@see listProducts()}, and for the
+	 * same reason: when the master IS reachable these rows are derived from its
+	 * products' own attribute names, which is data, not documentation.
+	 *
+	 * @return array{source:string,authoritative:bool,masterAvailable:bool,masterApp:string,total:int,attributes:list<array<string,mixed>>}|null
+	 *         The attribute-definition envelope, or null when the caller holds
+	 *         no administration membership.
 	 *
 	 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
 	 */
-	public function listAttributes(): array {
+	public function listAttributes(): ?array {
+		if ($this->administrationContext->accessibleAdministrationIds() === []) {
+			return null;
+		}
+
 		$master = $this->query(register: self::MASTER_REGISTER, schema: self::MASTER_SCHEMA_PRODUCT, filters: []);
 		if ($master !== []) {
 			$attributes = $this->attributesFromMaster(rows: $master);

@@ -216,8 +216,17 @@ export default {
 					: []
 				this.source = payload.source || 'contract'
 				this.authoritative = payload.authoritative === true
-			} catch {
+			} catch (e) {
 				this.attributes = []
+				// See ProductCatalogIndex.vue: 403 is an answer, not a failure.
+				if (e?.response?.status === 403) {
+					this.error = this.t(
+						'shillinq',
+						'You have no administration yet, so there is no inventory to show. Ask an administrator for access.',
+					)
+					return
+				}
+
 				this.error = this.t(
 					'shillinq',
 					'Could not load the product attribute definitions.',

@@ -179,6 +179,27 @@ final class ProductCatalogControllerTest extends TestCase {
 	}//end testBothEndpointsRequireAuthentication()
 
 	/**
+	 * A caller with no administration membership is refused with 403 on both
+	 * endpoints — never with an empty 200, which would read to the operator as
+	 * "this administration has no products" rather than "you have none".
+	 *
+	 * @return void
+	 */
+	public function testBothEndpointsAnswer403WhenTheCallerHoldsNoAdministration(): void {
+		$this->catalogService->products = null;
+		$this->catalogService->attributes = null;
+
+		$products = $this->controller()->products();
+		$attributes = $this->controller()->productAttributes();
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $products->getStatus());
+		self::assertSame(['error' => 'no_accessible_administration'], $products->getData());
+		self::assertSame(Http::STATUS_FORBIDDEN, $attributes->getStatus());
+		self::assertSame(['error' => 'no_accessible_administration'], $attributes->getData());
+
+	}//end testBothEndpointsAnswer403WhenTheCallerHoldsNoAdministration()
+
+	/**
 	 * A failure inside the service answers 500 with a stable code and leaks no
 	 * exception text to the caller.
 	 *
@@ -224,18 +245,18 @@ final class ProductCatalogControllerTest extends TestCase {
 final class RecordingProductCatalogService extends ProductCatalogService {
 
 	/**
-	 * What listProducts() answers.
+	 * What listProducts() answers. Null models the membership refusal.
 	 *
-	 * @var array<string,mixed>
+	 * @var array<string,mixed>|null
 	 */
-	public array $products = [];
+	public ?array $products = [];
 
 	/**
-	 * What listAttributes() answers.
+	 * What listAttributes() answers. Null models the membership refusal.
 	 *
-	 * @var array<string,mixed>
+	 * @var array<string,mixed>|null
 	 */
-	public array $attributes = [];
+	public ?array $attributes = [];
 
 	/**
 	 * When set, both methods throw it.
@@ -265,9 +286,9 @@ final class RecordingProductCatalogService extends ProductCatalogService {
 	}
 
 	/**
-	 * @return array<string,mixed>
+	 * @return array<string,mixed>|null
 	 */
-	public function listProducts(): array {
+	public function listProducts(): ?array {
 		$this->productCalls++;
 		if ($this->throw !== null) {
 			throw $this->throw;
@@ -277,9 +298,9 @@ final class RecordingProductCatalogService extends ProductCatalogService {
 	}
 
 	/**
-	 * @return array<string,mixed>
+	 * @return array<string,mixed>|null
 	 */
-	public function listAttributes(): array {
+	public function listAttributes(): ?array {
 		$this->attributeCalls++;
 		if ($this->throw !== null) {
 			throw $this->throw;
