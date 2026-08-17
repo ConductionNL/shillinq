@@ -361,6 +361,15 @@ class ProductCatalogService {
 			}
 		}
 
+		// The `Barcode` query carries NO `administrationId` filter, and that is
+		// not an omission: `20-inventory-barcode-sku.json` does not declare the
+		// property, so there is nothing to filter on — a filter naming it would
+		// address a non-property and match nothing for every value, silently.
+		// Barcodes are already an unscoped register in this app (the
+		// `/inventory/barcodes` index lists them the same way), so this adds no
+		// exposure; it does mean a product may appear here with a barcode and
+		// no stock. If `Barcode` ever gains an `administrationId`, this call
+		// must gain the filter with it.
 		foreach ($this->query(register: $this->register(), schema: self::LOCAL_SCHEMA_BARCODE, filters: []) as $barcode) {
 			$productId = $this->stringOrNull(value: ($barcode['productId'] ?? null));
 			if ($productId === null) {
