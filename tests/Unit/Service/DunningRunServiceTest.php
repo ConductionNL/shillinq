@@ -37,6 +37,7 @@ use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -117,7 +118,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testResolveLadderFallsBackToBaseWhenNoOverride(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningLadder', rows: [
 			[
 				'id' => 'ladder-1',
@@ -140,7 +141,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testResolveLadderUsesActiveOverride(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningLadder', rows: [
 			['id' => 'ladder-1', 'stages' => [['nr' => 1, 'channel' => 'EMAIL']]],
 		]);
@@ -173,7 +174,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testExecuteStageRefusesWhilePaused(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningPauseDispute', rows: [
 			[
 				'id' => 'pause-1',
@@ -201,7 +202,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testExecuteStagePersistsExecutedRun(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$persisted = $service->executeStage(administrationId: 'adm-1', params: [
@@ -230,7 +231,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testPauseSetsSixtyDayHardDeadline(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$pause = $service->pause(
@@ -254,7 +255,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testResumePauseFlipsLifecycleState(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningPauseDispute', rows: [
 			['id' => 'pause-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
 		]);
@@ -264,7 +265,7 @@ final class DunningRunServiceTest extends TestCase {
 		self::assertSame('resolved', $resolved['lifecycleState']);
 		self::assertNotNull($resolved['pauseEnd']);
 
-		$os2 = new InMemoryObjectService();
+		$os2 = new OpenRegisterFaithfulObjectService();
 		$os2->seed(schema: 'DunningPauseDispute', rows: [
 			['id' => 'pause-2', 'administrationId' => 'adm-1', 'lifecycleState' => 'active'],
 		]);
@@ -280,7 +281,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testWriteOffPersistsRecord(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$persisted = $service->writeOff(administrationId: 'adm-1', params: [
@@ -303,7 +304,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testStageForOverdueDaysPicksHighestApplicable(): void {
-		$service = $this->makeService(os: new InMemoryObjectService());
+		$service = $this->makeService(os: new OpenRegisterFaithfulObjectService());
 		$stages = [
 			['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL'],
 			['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL'],
@@ -327,7 +328,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTickInvoiceEmitsRunForApplicableStage(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningLadder', rows: [
 			[
 				'id' => 'ladder-1',
@@ -369,7 +370,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTickInvoiceSkipsWhilePaused(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningLadder', rows: [
 			['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
 		]);
@@ -400,7 +401,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTickInvoiceIsIdempotentPerStage(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningLadder', rows: [
 			['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
 		]);
@@ -432,7 +433,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTickInvoiceSkipsWhenWithinTerms(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningLadder', rows: [
 			['id' => 'ladder-1', 'stages' => [['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'EMAIL']]],
 		]);
@@ -457,7 +458,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testWriteOffMaterialisesBalancedGlPosting(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$persisted = $service->writeOff(administrationId: 'adm-1', params: [
@@ -500,7 +501,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testWriteOffQueuesArt29ObCorrectionVatLine(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$persisted = $service->writeOff(administrationId: 'adm-1', params: [
@@ -530,7 +531,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testWriteOffHonorsCallerProvidedBoekingId(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$persisted = $service->writeOff(administrationId: 'adm-1', params: [
@@ -552,7 +553,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAdminErrorDetectorFlagsGoodCustomers(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningRun', rows: [
 			[
 				'id' => 'dr-1',
@@ -586,7 +587,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAdminErrorDetectorPrefersInvoicePaidHistory(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'Invoice', rows: [
 			[
 				'id' => 'inv-1',
@@ -605,7 +606,7 @@ final class DunningRunServiceTest extends TestCase {
 		));
 
 		// No matching paid invoice + no DunningRun history → no flag.
-		$os2 = new InMemoryObjectService();
+		$os2 = new OpenRegisterFaithfulObjectService();
 		$service2 = $this->makeService(os: $os2);
 		self::assertFalse($service2->detectAdminError(
 			administrationId: 'adm-1',
@@ -621,7 +622,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTransferToIncassoLocksRunOnDelivery(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningRun', rows: [
 			[
 				'id' => 'dr-1',
@@ -657,7 +658,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTransferToIncassoKeepsRunExecutedOnFailure(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningRun', rows: [
 			[
 				'id' => 'dr-1',
@@ -692,12 +693,150 @@ final class DunningRunServiceTest extends TestCase {
 	}//end testTransferToIncassoKeepsRunExecutedOnFailure()
 
 	/**
+	 * REQ-CCD-008: the seal is PERSISTED BEFORE the dossier leaves.
+	 *
+	 * 🔑 This is the assertion the shipped code could not pass. It called the
+	 * adapter first and sealed afterwards, with a lookup real OpenRegister
+	 * answers with zero rows — so the dossier went to the collection agency
+	 * and the run was never sealed at all. The spy reads the store from INSIDE
+	 * `transfer()`, which is the only moment at which "sealed before dispatch"
+	 * is distinguishable from "sealed after dispatch".
+	 *
+	 * @return void
+	 */
+	public function testTransferToIncassoSealsTheRunBeforeDispatching(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningRun', rows: [
+			[
+				'id' => 'dr-1',
+				'administrationId' => 'adm-1',
+				'invoiceId' => 'inv-1',
+				'stageNr' => 5,
+				'lifecycleState' => 'executed',
+			],
+		]);
+
+		$incasso = new class ($os) implements IncassoBureauAdapterInterface {
+			public array $stateAtDispatch = [];
+
+			public function __construct(private OpenRegisterFaithfulObjectService $store) {
+			}
+
+			public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
+				foreach ($this->store->dump('DunningRun') as $row) {
+					$this->stateAtDispatch[] = (string)($row['lifecycleState'] ?? '');
+				}
+
+				return new DunningChannelSendResult(
+					channel: 'COLLECTION_AGENCY_API',
+					deliveryStatus: 'DELIVERED',
+					extras: ['dossierId' => 'dossier-9'],
+				);
+			}
+		};
+
+		$service = $this->makeService(os: $os, incasso: $incasso);
+		$service->transferToIncasso(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-1',
+			dossier: ['invoiceId' => 'inv-1', 'content' => []],
+			dunningRunId: 'dr-1'
+		);
+
+		self::assertSame(['locked'], $incasso->stateAtDispatch);
+
+	}//end testTransferToIncassoSealsTheRunBeforeDispatching()
+
+	/**
+	 * REQ-CCD-008: an unresolvable run is NOT dispatched.
+	 *
+	 * A dossier sent against a run this app cannot find has no evidence trail
+	 * and no re-dispatch guard, so the refusal has to happen before the
+	 * adapter is reached — not be logged after it.
+	 *
+	 * @return void
+	 */
+	public function testTransferToIncassoRefusesToDispatchWhenTheRunIsAbsent(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$incasso = new class implements IncassoBureauAdapterInterface {
+			public int $calls = 0;
+
+			public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
+				$this->calls++;
+				return new DunningChannelSendResult(
+					channel: 'COLLECTION_AGENCY_API',
+					deliveryStatus: 'DELIVERED',
+					extras: ['dossierId' => 'must-not-happen'],
+				);
+			}
+		};
+
+		$service = $this->makeService(os: $os, incasso: $incasso);
+		$result = $service->transferToIncasso(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-1',
+			dossier: ['invoiceId' => 'inv-1', 'content' => []],
+			dunningRunId: 'dr-does-not-exist'
+		);
+
+		self::assertSame(0, $incasso->calls);
+		self::assertSame('FAILED', $result->deliveryStatus);
+		self::assertStringContainsString('not dispatched', (string)$result->errorMessage);
+
+	}//end testTransferToIncassoRefusesToDispatchWhenTheRunIsAbsent()
+
+	/**
+	 * REQ-CCD-008: a sealed run is never handed to the agency a second time.
+	 *
+	 * @return void
+	 */
+	public function testTransferToIncassoRefusesToRedispatchASealedRun(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningRun', rows: [
+			[
+				'id' => 'dr-1',
+				'administrationId' => 'adm-1',
+				'invoiceId' => 'inv-1',
+				'stageNr' => 5,
+				'lifecycleState' => 'locked',
+				'deliveryStatus' => 'DELIVERED',
+				'postageStatus' => ['dossierId' => 'dossier-first'],
+			],
+		]);
+		$incasso = new class implements IncassoBureauAdapterInterface {
+			public int $calls = 0;
+
+			public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
+				$this->calls++;
+				return new DunningChannelSendResult(
+					channel: 'COLLECTION_AGENCY_API',
+					deliveryStatus: 'DELIVERED',
+					extras: ['dossierId' => 'dossier-second'],
+				);
+			}
+		};
+
+		$service = $this->makeService(os: $os, incasso: $incasso);
+		$result = $service->transferToIncasso(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-1',
+			dossier: ['invoiceId' => 'inv-1', 'content' => []],
+			dunningRunId: 'dr-1'
+		);
+
+		self::assertSame(0, $incasso->calls);
+		self::assertSame('dossier-first', $result->extras['dossierId']);
+		self::assertCount(1, $os->dump(schema: 'DunningRun'));
+
+	}//end testTransferToIncassoRefusesToRedispatchASealedRun()
+
+	/**
 	 * REQ-CCD-009 / task-21: sendRegisteredLetter captures barcode + tracking on the DunningRun.
 	 *
 	 * @return void
 	 */
 	public function testSendRegisteredLetterCapturesPostNLTrackingOnRun(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$os->seed(schema: 'DunningRun', rows: [
 			[
 				'id' => 'dr-1',
@@ -733,7 +872,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testPauseRejectsMalformedEvidenceUri(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$this->expectException(\InvalidArgumentException::class);
@@ -754,7 +893,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testPauseAcceptsWellFormedEvidenceUri(): void {
-		$os = new InMemoryObjectService();
+		$os = new OpenRegisterFaithfulObjectService();
 		$service = $this->makeService(os: $os);
 
 		$pause = $service->pause(

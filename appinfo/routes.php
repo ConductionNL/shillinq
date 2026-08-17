@@ -111,6 +111,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'dunning#executeRun', 'url' => '/api/dunning/runs/execute', 'verb' => 'POST'],
             ['name' => 'dunning#pause', 'url' => '/api/dunning/pauses', 'verb' => 'POST'],
             ['name' => 'dunning#dossier', 'url' => '/api/dunning/incasso/dossier', 'verb' => 'POST'],
+            ['name' => 'dunning#transfer', 'url' => '/api/dunning/incasso/transfer', 'verb' => 'POST'],
             ['name' => 'dunning#writeOff', 'url' => '/api/dunning/writeoffs', 'verb' => 'POST'],
             ['name' => 'dunning#resumePause', 'url' => '/api/dunning/pauses/{pauseId}/resume', 'verb' => 'POST'],
 

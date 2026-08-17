@@ -72,36 +72,6 @@
             "title": "Description"
           }
         },
-        "x-openregister-relations": {
-          "cogsAccount": {
-            "localField": "cogsAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for the COGS posting target. Validation MUST verify the Account exists within administrationId. REQ-CG-001."
-          },
-          "inventoryAssetAccount": {
-            "localField": "inventoryAssetAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for the Inventory Asset balance-sheet line. Validation MUST verify the Account exists within administrationId. REQ-CG-001."
-          },
-          "grIrClearingAccount": {
-            "localField": "grIrClearingAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for the GR/IR clearing account. Validation MUST verify the Account exists within administrationId. REQ-CG-001 + REQ-CG-003 two-step pattern."
-          },
-          "inventoryAdjustmentAccount": {
-            "localField": "inventoryAdjustmentAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to chart-of-accounts Account record for inventory adjustment / count-variance postings. Validation MUST verify the Account exists within administrationId. REQ-CG-001 + REQ-CG-004."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
