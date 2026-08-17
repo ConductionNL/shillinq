@@ -171,17 +171,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "costCenter": {
-            "type": "many-to-one",
-            "target": "AnalyticalDimension",
-            "foreignKey": "costCenterId",
-            "constraint": {
-              "dimensionType": "cost-center",
-              "enterpriseActivity": true
-            }
-          }
-        },
         "x-openregister-unique": [
           [
             "costCenterId",

@@ -29,7 +29,8 @@
             "type": "string",
             "description": "FK to the ConsolidationGroup this rule applies to (REQ-ICP-002).",
             "example": "gr-afval-001",
-            "title": "Consolidation Group ID"
+            "title": "Consolidation Group ID",
+            "$ref": "ConsolidationGroup"
           },
           "ruleType": {
             "type": "string",
@@ -74,15 +75,6 @@
             "default": true,
             "description": "Whether this rule is enforced at consolidation time. Disable instead of deleting to preserve audit history (REQ-ICP-002).",
             "title": "Is Active"
-          }
-        },
-        "x-openregister-relations": {
-          "consolidationGroup": {
-            "localField": "consolidationGroupId",
-            "relatedSchema": "ConsolidationGroup",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The ConsolidationGroup this elimination rule belongs to (REQ-ICP-002)."
           }
         },
         "x-openregister-rbac": {
@@ -138,7 +130,8 @@
             "type": "string",
             "description": "FK to the ConsolidationGroup this transaction belongs to (REQ-ICP-001).",
             "example": "gr-afval-001",
-            "title": "Consolidation Group ID"
+            "title": "Consolidation Group ID",
+            "$ref": "ConsolidationGroup"
           },
           "fromMemberId": {
             "type": "string",
@@ -202,7 +195,8 @@
             "nullable": true,
             "description": "FK to the underlying GLTransaction once posted; may be null if the record is created post-facto (REQ-ICP-005).",
             "example": "gl-txn-2026-0001",
-            "title": "GL Transaction ID"
+            "title": "GL Transaction ID",
+            "$ref": "GLTransaction"
           },
           "isManualOverride": {
             "type": "boolean",
@@ -226,7 +220,8 @@
             "type": "string",
             "nullable": true,
             "description": "FK to the ConsolidatedReport this transaction was included in once consolidated. Once that report is finalized or published, eliminationStatus is immutable (REQ-ICP-006).",
-            "title": "Consolidated Report ID"
+            "title": "Consolidated Report ID",
+            "$ref": "ConsolidatedReport"
           },
           "eliminationStatus": {
             "type": "string",
@@ -286,29 +281,6 @@
               "description": "Reverse an elimination before the report is finalized (REQ-ICP-006).",
               "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "consolidationGroup": {
-            "localField": "consolidationGroupId",
-            "relatedSchema": "ConsolidationGroup",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The ConsolidationGroup this transaction belongs to (REQ-ICP-001)."
-          },
-          "glTransaction": {
-            "localField": "glTransactionId",
-            "relatedSchema": "GLTransaction",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The underlying GL posting, for drill-down traceability (REQ-ICP-005)."
-          },
-          "consolidatedReport": {
-            "localField": "consolidatedReportId",
-            "relatedSchema": "ConsolidatedReport",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The ConsolidatedReport this transaction was consolidated into; governs immutability (REQ-ICP-006)."
           }
         },
         "x-openregister-rbac": {

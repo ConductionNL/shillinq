@@ -108,7 +108,8 @@
             "description": "Back-reference to the JournalEntry materialised from this feed record after mapping.",
             "nullable": true,
             "example": "je-2026-001",
-            "title": "Journal Entry ID"
+            "title": "Journal Entry ID",
+            "$ref": "JournalEntry"
           },
           "administrationId": {
             "type": "string",
@@ -236,15 +237,6 @@
                 "read"
               ]
             }
-          }
-        },
-        "x-openregister-relations": {
-          "journalEntry": {
-            "localField": "journalEntryId",
-            "relatedSchema": "JournalEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The JournalEntry materialised from this salaris-feed record after successful mapping."
           }
         },
         "x-openregister-audit-trail": {

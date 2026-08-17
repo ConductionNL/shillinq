@@ -309,7 +309,8 @@
             "type": "string",
             "description": "FK to FixedAsset UUID — the asset this schedule covers.",
             "example": "uuid-of-fixed-asset",
-            "title": "Asset Ref"
+            "title": "Asset Ref",
+            "$ref": "FixedAsset"
           },
           "depreciationMethod": {
             "type": "string",
@@ -396,14 +397,16 @@
             "type": "string",
             "description": "FK to Administration — scoping field for multi-administratie installs.",
             "example": "adm-sample",
-            "title": "Administration ID"
+            "title": "Administration ID",
+            "$ref": "Administration"
           },
           "glTransactionRef": {
             "type": "string",
             "description": "When the yearly depreciation-expense posting has been materialised, FK to the resulting GLTransaction UUID. Null until the workflow ticks for the period.",
             "nullable": true,
             "example": "uuid-of-gl-transaction",
-            "title": "GL Transaction Ref"
+            "title": "GL Transaction Ref",
+            "$ref": "GLTransaction"
           },
           "calculationFloatPrecision": {
             "type": "integer",
@@ -413,29 +416,6 @@
             "maximum": 8,
             "example": 2,
             "title": "Calculation Float Precision"
-          }
-        },
-        "x-openregister-relations": {
-          "asset": {
-            "localField": "assetRef",
-            "relatedSchema": "FixedAsset",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "REQ-FA-003 — DepreciationSchedule belongs to exactly one FixedAsset."
-          },
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Administration that owns this depreciation schedule."
-          },
-          "glTransaction": {
-            "localField": "glTransactionRef",
-            "relatedSchema": "GLTransaction",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "REQ-FA-007 — the materialised yearly depreciation-expense GLTransaction for this period."
           }
         },
         "x-openregister-calculations": {
