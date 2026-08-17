@@ -145,7 +145,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
-        // bookings-depth — no-show-fee capture + recurring appointment series.
+        // Bookings-depth: no-show-fee capture + recurring appointment series.
         // Both are operator actions (#[NoAdminRequired] + per-administration
         // guard). no-show captures the defined noShowFee via the DepositPayment
         // provider rails; appointment-series expands an RRULE into individual
@@ -418,6 +418,22 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // server-side from the caller's AdministrationMembership set, so no
         // caller-supplied object identifier crosses the boundary.
             ['name' => 'cashflowExport#exportPdf', 'url' => '/api/cashflow/export-pdf', 'verb' => 'POST'],
+
+        // Provincies-BBV dashboards (bookkeeping-provincies-bbv-variant,
+        // REQ-BBC-001..003 / REQ-BBL-001 — #866/#862). Two read-only GETs the
+        // manifest's declarative `endpointSource` widgets bind to. Like the
+        // waterschappen endpoints above they MUST stay under `/api/`: the SPA
+        // page routes `/bbv-provincie/compliance-dashboard` and
+        // `/bbv-provincie/budget-to-programme` are declared by the same
+        // manifest fragment, and an app route always beats the SPA catch-all.
+        //
+        // Neither takes an object identifier — the administration scope is
+        // resolved server-side from the caller's AdministrationMembership set
+        // (REQ-MA-001), so there is no per-object IDOR surface. The only
+        // inputs are the three REQ-BBC-002 value filters, validated against a
+        // closed vocabulary in the controller.
+            ['name' => 'bbvProgrammeBudget#programmeBudgetVsActuals', 'url' => '/api/bbv-provincie/programme-budget-vs-actuals', 'verb' => 'GET'],
+            ['name' => 'bbvProgrammeBudget#glLineFacets', 'url' => '/api/bbv-provincie/gl-line-facets', 'verb' => 'GET'],
 
         // Read-only inventory product catalog (inventory-product-catalog
         // REQ-IPC-008 / shillinq-product-vendor-to-pipelinq REQ-SPVP-004, #860).
