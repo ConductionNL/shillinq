@@ -410,6 +410,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // to the caller's accessible administrations (IDOR-safe).
             ['name' => 'sepaAudit#exportMandate', 'url' => '/api/sepa/mandates/{mandateId}/audit-export', 'verb' => 'GET'],
 
+        // 13-week cashflow PDF export (zzp-cashflow-13wk, REQ-CF-016 / #865).
+        // POST because the Cashflow Dashboard's declarative `headerActions[]`
+        // api-call action issues a POST through @nextcloud/axios, which carries
+        // the request token — so the endpoint keeps CSRF protection rather than
+        // opting out of it. It takes NO parameters: the horizon is resolved
+        // server-side from the caller's AdministrationMembership set, so no
+        // caller-supplied object identifier crosses the boundary.
+            ['name' => 'cashflowExport#exportPdf', 'url' => '/api/cashflow/export-pdf', 'verb' => 'POST'],
+
         // BCF compensation calculator (bookkeeping-bcf-claim). Pure compute
         // surface returning a what-if compensation result.
             ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf/compensation', 'verb' => 'GET'],
