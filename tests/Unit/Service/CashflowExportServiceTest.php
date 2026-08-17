@@ -40,13 +40,16 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\CashflowExportService;
 use OCA\Shillinq\Service\CashflowPdfRenderer;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use RuntimeException;
 
 /**
  * Export-wiring tests.
@@ -311,5 +314,120 @@ final class CashflowExportServiceTest extends TestCase {
 		self::assertNull($this->subject($rows)->buildHorizonExport());
 
 	}//end testReturnsNullWhenTheAdministrationHasNoHorizon()
+
+	/**
+	 * A store that throws is logged and answered as "no horizon" — the export
+	 * must not surface an OpenRegister exception to the browser.
+	 *
+	 * ⚠️ The double here is a `createMock` on purpose and it observes NOTHING:
+	 * it is configured only to throw. That is the one use of a mock this file's
+	 * header does not warn against — no argument is inspected, so the
+	 * named-argument blindness cannot produce a false pass.
+	 *
+	 * @return void
+	 */
+	public function testAStoreFailureIsSwallowedIntoNoHorizon(): void {
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('findAll')->willThrowException(new RuntimeException('connection refused'));
+
+		self::assertNull($this->subjectWith(objectService: $objectService)->buildHorizonExport());
+
+	}//end testAStoreFailureIsSwallowedIntoNoHorizon()
+
+	/**
+	 * OpenRegister answers some call shapes with ObjectEntity instances rather
+	 * than plain arrays, and the export must read those too.
+	 *
+	 * Without this the service would silently produce a horizon-less export the
+	 * moment the store's return shape changed — an empty PDF, not an error.
+	 *
+	 * @return void
+	 */
+	public function testReadsEntityShapedRowsAsWellAsArrays(): void {
+		$horizon = new ObjectEntityStub(
+			[
+				'horizonId' => 'hz-entity-shaped',
+				'administrationId' => 'adm-001',
+				'rolledOn' => '2026-05-25T02:00:00Z',
+			],
+			'shillinq',
+			'CashflowForecastHorizon'
+		);
+
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('findAll')->willReturn([$horizon]);
+
+		$export = $this->subjectWith(objectService: $objectService)->buildHorizonExport();
+
+		self::assertNotNull($export);
+		self::assertStringContainsString('hz-entity-shaped', $export['filename']);
+
+	}//end testReadsEntityShapedRowsAsWellAsArrays()
+
+	/**
+	 * An app config that answers an empty register slug falls back to
+	 * `shillinq` rather than querying register `''`, which OpenRegister would
+	 * answer with nothing at all.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyConfiguredRegisterFallsBackToShillinq(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('');
+
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('accessibleAdministrationIds')->willReturn(['adm-001']);
+
+		$registers = [];
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnCallback(
+			function (string|int $register) use (&$registers, $objectService): ObjectServiceInterface {
+				$registers[] = (string)$register;
+				return $objectService;
+			}
+		);
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('findAll')->willReturn([]);
+
+		$service = new CashflowExportService(
+			appConfig: $appConfig,
+			logger: new NullLogger(),
+			objectService: $objectService,
+			administrationContext: $context,
+			renderer: new CashflowPdfRenderer(),
+		);
+
+		self::assertNull($service->buildHorizonExport());
+		self::assertSame(['shillinq'], array_unique($registers));
+
+	}//end testAnEmptyConfiguredRegisterFallsBackToShillinq()
+
+	/**
+	 * Build the subject over a caller-supplied object service.
+	 *
+	 * @param ObjectServiceInterface $objectService The store double.
+	 *
+	 * @return CashflowExportService
+	 */
+	private function subjectWith(ObjectServiceInterface $objectService): CashflowExportService {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('accessibleAdministrationIds')
+			->willReturnCallback(fn (): array => $this->accessible);
+
+		return new CashflowExportService(
+			appConfig: $appConfig,
+			logger: new NullLogger(),
+			objectService: $objectService,
+			administrationContext: $context,
+			renderer: new CashflowPdfRenderer(),
+		);
+	}//end subjectWith()
 
 }//end class
