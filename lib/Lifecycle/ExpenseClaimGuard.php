@@ -199,7 +199,20 @@ class ExpenseClaimGuard {
 					->setSchema(schema: $check['schema'])
 					->find(id: $itemId);
 
-				if ($item === null || trim(string: (string)($item['costCentreCode'] ?? '')) === '') {
+				// ADR-084: find() returns an ObjectEntityInterface, which extends
+				// JsonSerializable ONLY and does not implement ArrayAccess. The
+				// previous `$item['costCentreCode']` raised
+				// `Error: Cannot use object of type … as array` -- which `??`
+				// cannot suppress -- and requireOpenPeriodAndCostCentres()'s
+				// catch (\Throwable) turned that into `return false`, so the
+				// guard DENIED EVERY claim carrying a linked item. getObject()
+				// is declared on the contract and returns the body as an array.
+				$costCentreCode = '';
+				if ($item !== null) {
+					$costCentreCode = (string)($item->getObject()['costCentreCode'] ?? '');
+				}
+
+				if ($item === null || trim(string: $costCentreCode) === '') {
 					$this->logger->info(
 						'ExpenseClaimGuard: item missing costCentreCode — denying transition',
 						['claimId' => $claimId, 'schema' => $check['schema'], 'itemId' => $itemId]

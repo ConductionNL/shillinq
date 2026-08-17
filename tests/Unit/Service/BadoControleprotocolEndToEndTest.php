@@ -79,6 +79,15 @@ require_once __DIR__ . '/InMemoryObjectService.php';
  * bare mention as "is invalid".)
  *
  * @uses \OCA\Shillinq\Service\BadoControleprotocolCalculator
+ *
+ * ObjectIdentifier is the same shape of collaborator, and it only became
+ * REACHABLE with the ADR-084 rewiring in this branch. Both subjects resolve a
+ * record through the static helper (BadoControleprotocolService:633 and
+ * AccountantsdossierExportService:892); until the seeded store was reconnected
+ * the lookup short-circuited before it, so the class never executed and the
+ * strict-coverage check had nothing to report. It is used, not covered.
+ *
+ * @uses \OCA\Shillinq\Util\ObjectIdentifier
  */
 final class BadoControleprotocolEndToEndTest extends TestCase {
 
