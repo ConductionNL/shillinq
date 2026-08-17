@@ -151,6 +151,7 @@ export default {
 		 * fresh instance.
 		 *
 		 * @return {Array<{key: string, label: string, options: Array}>} The facets.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		facets() {
 			const page = (this.cnManifest?.pages || []).find(
@@ -186,6 +187,7 @@ export default {
 		 * administration has no accounts".
 		 *
 		 * @return {Promise<void>} Resolves once the facets are loaded or the failure is shown.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		async loadFacets() {
 			this.loading = true
@@ -229,6 +231,7 @@ export default {
 		 *
 		 * @param {object} facet The declared facet.
 		 * @return {{value: string, label: string}} The option.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		allOption(facet) {
 			return {
@@ -245,6 +248,7 @@ export default {
 		 *
 		 * @param {object} facet The declared facet.
 		 * @return {Array<{value: string, label: string}>} The options.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		liveOptions(facet) {
 			const live = this.sources[FACET_SOURCE[facet.key]] || []
@@ -269,6 +273,7 @@ export default {
 		 *
 		 * @param {object} facet The facet.
 		 * @return {object|null} The option, or null.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		selectedOption(facet) {
 			const query = this.$route?.query || {}
@@ -306,6 +311,7 @@ export default {
 		 *
 		 * @param {object} query The route query.
 		 * @return {string} The account type, or '' when none is active.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		accountTypeFromQuery(query) {
 			const raw = query.accountNumber
@@ -334,6 +340,7 @@ export default {
 		 * @param {object} facet The facet that changed.
 		 * @param {object|null} option The chosen option.
 		 * @return {void}
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		onSelect(facet, option) {
 			const value =
@@ -402,6 +409,7 @@ export default {
 		 * no-op filter.
 		 *
 		 * @return {Array<string>} The codes.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		allProgrammeCodes() {
 			const live = (this.sources.programmes || []).map((o) => String(o.value))
@@ -421,6 +429,7 @@ export default {
 		 *
 		 * @param {object} query The route query.
 		 * @return {string} The programme code.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		programmeFromQuery(query) {
 			if (Array.isArray(query.programmeStructure)) {
@@ -436,6 +445,7 @@ export default {
 		 *
 		 * @param {object} query The route query.
 		 * @return {string} `mapped`, or ''.
+		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		assignmentStatusFromQuery(query) {
 			return Array.isArray(query.programmeStructure) ? 'mapped' : ''
