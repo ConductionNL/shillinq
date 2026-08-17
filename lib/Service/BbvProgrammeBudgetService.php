@@ -16,6 +16,10 @@
  * validated. This service is that aggregation, computed here where the join
  * across four schemas can actually be expressed.
  *
+ * It orchestrates and scopes only: {@see BbvProgrammeBudgetReader} does every
+ * OpenRegister read and {@see BbvProgrammeBudgetCalculator} every sum,
+ * threshold and series.
+ *
  * ## Where each number comes from, and the one place the spec cannot be met literally
  *
  * REQ-BBC-001 asks for four KPIs. Three map onto declared properties directly:
@@ -51,9 +55,6 @@
  * this class — there is nothing addressable to guard. A `fiscalYear` the caller
  * supplies is used only as a value filter over already-scoped rows.
  *
- * Every OpenRegister lookup filters on a DECLARED schema property. None filters
- * on `id`.
- *
  * @category Service
  * @package  OCA\Shillinq\Service
  *
@@ -73,56 +74,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
-use OCP\IAppConfig;
-use Psr\Log\LoggerInterface;
-use Throwable;
-
 /**
- * Computes programme budget-vs-actuals for the provincies-BBV dashboard.
+ * Assembles the provincies-BBV dashboard envelopes (REQ-BBC-001..003, REQ-BBL-001).
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) ADR-084 injects the
- *     OpenRegister contract alongside the two shillinq context services.
  */
 class BbvProgrammeBudgetService {
-	/**
-	 * Budget schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_BUDGET = 'Budget';
-
-	/**
-	 * GL transaction (header) schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_GL_TRANSACTION = 'GLTransaction';
-
-	/**
-	 * GL line schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_GL_LINE = 'GLLine';
-
-	/**
-	 * Commitment-line schema slug (verplichtingenadministratie).
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_COMMITMENT_LINE = 'Verplichtingsregel';
-
-	/**
-	 * Chart-of-accounts schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_ACCOUNT = 'Account';
-
 	/**
 	 * The seven BBV programme codes REQ-BBC-002 enumerates.
 	 *
@@ -139,27 +96,18 @@ class BbvProgrammeBudgetService {
 	];
 
 	/**
-	 * Remaining-share above which a programme is green (REQ-BBC-001).
-	 *
-	 * @var float
-	 */
-	private const GREEN_THRESHOLD = 0.15;
-
-	/**
 	 * Construct the service.
 	 *
-	 * @param IAppConfig $appConfig App config (OpenRegister register slug).
-	 * @param LoggerInterface $logger Logger — never receives a record body.
-	 * @param ObjectServiceInterface $objectService OpenRegister object service (ADR-083/084).
-	 * @param AdministrationContextService $administrationContext Membership guard (REQ-MA-001).
+	 * @param AdministrationContextService $adminContext Membership guard (REQ-MA-001).
 	 * @param FiscalYearContextService $fiscalYearContext Active fiscal-year window resolver.
+	 * @param BbvProgrammeBudgetReader $reader Every OpenRegister read the dashboards need.
+	 * @param BbvProgrammeBudgetCalculator $calculator The REQ-BBC-001..003 arithmetic.
 	 */
 	public function __construct(
-		private readonly IAppConfig $appConfig,
-		private readonly LoggerInterface $logger,
-		private readonly ObjectServiceInterface $objectService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextService $adminContext,
 		private readonly FiscalYearContextService $fiscalYearContext,
+		private readonly BbvProgrammeBudgetReader $reader,
+		private readonly BbvProgrammeBudgetCalculator $calculator = new BbvProgrammeBudgetCalculator(),
 	) {
 
 	}//end __construct()
@@ -184,7 +132,7 @@ class BbvProgrammeBudgetService {
 		?array $programmes = null,
 		?array $statuses = null,
 	): array {
-		$administrationIds = $this->administrationContext->accessibleAdministrationIds();
+		$administrationIds = $this->adminContext->accessibleAdministrationIds();
 		if ($administrationIds === []) {
 			return $this->emptyEnvelope();
 		}
@@ -194,32 +142,39 @@ class BbvProgrammeBudgetService {
 			return $this->emptyEnvelope();
 		}
 
-		$budgets = $this->budgetsFor(
-			administrationIds: $administrationIds,
-			fiscalYear: $window['fiscalYear'],
-			statuses: $statuses
+		$budgetByProgramme = $this->reader->budgetByProgramme(
+			budgets: $this->reader->budgetsFor(
+				administrationIds: $administrationIds,
+				fiscalYear: $window['fiscalYear'],
+				statuses: $statuses
+			)
 		);
-		$spend = $this->spendByProgramme(administrationIds: $administrationIds, window: $window);
-		$committed = $this->committedByProgramme(
+		$spend = $this->reader->spendByProgramme(
+			administrationIds: $administrationIds,
+			window: $window
+		);
+		$committed = $this->reader->committedByProgramme(
 			administrationIds: $administrationIds,
 			fiscalYear: $window['fiscalYear']
 		);
 
-		$selected = $this->selectedProgrammes(
+		$selected = $this->calculator->selectedProgrammes(
+			universe: self::PROGRAMMES,
 			requested: $programmes,
 			seen: array_merge(
-				array_keys($this->budgetByProgramme(budgets: $budgets)),
+				array_keys($budgetByProgramme),
 				array_keys($spend['byProgramme']),
 				array_keys($committed)
 			)
 		);
 
-		$rows = $this->buildRows(
+		$rows = $this->calculator->buildRows(
 			selected: $selected,
-			budgetByProgramme: $this->budgetByProgramme(budgets: $budgets),
+			budgetByProgramme: $budgetByProgramme,
 			spendByProgramme: $spend['byProgramme'],
 			committedByProgramme: $committed
 		);
+		$totals = $this->calculator->totalsFor(rows: $rows);
 
 		return [
 			'scope' => [
@@ -229,16 +184,17 @@ class BbvProgrammeBudgetService {
 				'endDate' => $window['endDate'],
 				'currency' => 'EUR',
 			],
-			'totals' => $this->totalsFor(rows: $rows),
-			'programmes' => $this->seriesFor(rows: $rows),
-			'trend' => $this->trendFor(
-				window: $window,
+			'totals' => $totals,
+			'programmes' => $this->calculator->seriesFor(rows: $rows),
+			'trend' => $this->calculator->trendFor(
+				startDate: $window['startDate'],
+				endDate: $window['endDate'],
 				monthlySpend: $spend['byMonth'],
-				selected: $selected,
-				totalBudget: $this->sumOf(rows: $rows, key: 'totalBudget')
+				anyProgrammeSelected: ($selected !== []),
+				totalBudget: (float)$totals['totalBudget']
 			),
-			'exceptions' => $this->exceptionsFor(rows: $rows),
-			'fiscalYears' => $this->fiscalYearsFor(administrationIds: $administrationIds),
+			'exceptions' => $this->calculator->exceptionsFor(rows: $rows),
+			'fiscalYears' => $this->reader->fiscalYearsFor(administrationIds: $administrationIds),
 			'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
 		];
 
@@ -264,47 +220,48 @@ class BbvProgrammeBudgetService {
 	 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 	 */
 	public function glLineFacets(): array {
-		$administrationIds = $this->administrationContext->accessibleAdministrationIds();
+		$administrationIds = $this->adminContext->accessibleAdministrationIds();
 		if ($administrationIds === []) {
 			return ['accountTypes' => [], 'programmes' => [], 'assignmentStatuses' => []];
 		}
 
 		$byType = [];
-		foreach ($administrationIds as $administrationId) {
-			$accounts = $this->query(
-				schema: self::SCHEMA_ACCOUNT,
-				filters: ['administrationId' => $administrationId]
-			);
-			foreach ($accounts as $account) {
-				$type = (string)($account['accountType'] ?? '');
-				$number = (string)($account['accountNumber'] ?? '');
-				if ($type === '' || $number === '') {
-					continue;
-				}
-
-				$byType[$type][$number] = true;
+		foreach ($this->reader->accountsFor(administrationIds: $administrationIds) as $account) {
+			$type = (string)($account['accountType'] ?? '');
+			$number = (string)($account['accountNumber'] ?? '');
+			if ($type === '' || $number === '') {
+				continue;
 			}
+
+			$byType[$type][$number] = true;
 		}
 
+		ksort($byType);
 		$accountTypes = [];
 		foreach ($byType as $type => $numbers) {
 			$accountTypes[] = [
-				'value' => $type,
-				'label' => $this->humanise(code: $type),
-				'accountNumbers' => array_keys($numbers),
+				'value' => (string)$type,
+				'label' => $this->calculator->humanise(code: (string)$type),
+				// `array_keys()` hands back INTEGERS here: PHP coerces a
+				// numeric-string array key to int, so a chart of accounts
+				// numbered `4100` would serialise as JSON numbers while
+				// `accountNumber` is a declared STRING property. The filter
+				// still worked by luck (the client stringifies on the way into
+				// the query), but the endpoint's own contract would have been
+				// wrong, and a leading-zero account like `0100` survives only
+				// because the key was never numeric in the first place.
+				'accountNumbers' => array_map(
+					static function (int|string $number): string {
+						return (string)$number;
+					},
+					array_keys($numbers)
+				),
 			];
 		}
 
-		usort(
-			$accountTypes,
-			static function (array $left, array $right): int {
-				return strcmp((string)$left['value'], (string)$right['value']);
-			}
-		);
-
 		$programmes = [];
 		foreach (self::PROGRAMMES as $code) {
-			$programmes[] = ['value' => $code, 'label' => $this->humanise(code: $code)];
+			$programmes[] = ['value' => $code, 'label' => $this->calculator->humanise(code: $code)];
 		}
 
 		return [
@@ -342,7 +299,9 @@ class BbvProgrammeBudgetService {
 			}
 
 			// A prior year was asked for: keep the administration's window
-			// shape but shift it, so a 1 April start stays a 1 April start.
+			// SHAPE but shift it, so a 1 April fiscal-year start stays a
+			// 1 April start. Recomputing it as a calendar year would quietly
+			// report the wrong twelve months for every non-calendar province.
 			$shift = ($fiscalYear - (int)$window['fiscalYear']);
 			return [
 				'fiscalYear' => $fiscalYear,
@@ -371,502 +330,6 @@ class BbvProgrammeBudgetService {
 		return sprintf('%04d%s', ((int)$matches[1] + $years), $matches[2]);
 
 	}//end shiftYear()
-
-	/**
-	 * Load the budgets in scope for the fiscal year.
-	 *
-	 * @param array<int,string> $administrationIds Administrations the caller may read.
-	 * @param integer $fiscalYear Fiscal year.
-	 * @param array<int,string>|null $statuses Budget-status filter; null = every status.
-	 *
-	 * @return list<array<string,mixed>> The matching budgets.
-	 */
-	private function budgetsFor(array $administrationIds, int $fiscalYear, ?array $statuses): array {
-		$rows = [];
-		foreach ($administrationIds as $administrationId) {
-			foreach ($this->query(schema: self::SCHEMA_BUDGET, filters: ['administrationId' => $administrationId]) as $budget) {
-				if ((int)($budget['fiscalYear'] ?? 0) !== $fiscalYear) {
-					continue;
-				}
-
-				if ($statuses !== null && in_array((string)($budget['status'] ?? ''), $statuses, true) === false) {
-					continue;
-				}
-
-				$rows[] = $budget;
-			}
-		}
-
-		return $rows;
-
-	}//end budgetsFor()
-
-	/**
-	 * Sum budget amounts per programme.
-	 *
-	 * @param list<array<string,mixed>> $budgets The budgets in scope.
-	 *
-	 * @return array<string,float> Programme code => budgeted amount.
-	 */
-	private function budgetByProgramme(array $budgets): array {
-		$totals = [];
-		foreach ($budgets as $budget) {
-			$programme = (string)($budget['programmeStructure'] ?? '');
-			if ($programme === '') {
-				continue;
-			}
-
-			$totals[$programme] = (($totals[$programme] ?? 0.0) + (float)($budget['totalAmount'] ?? 0));
-		}
-
-		return $totals;
-
-	}//end budgetByProgramme()
-
-	/**
-	 * Sum POSTED GL spend per programme, and per month for the trend chart.
-	 *
-	 * Only `GLTransaction.state === 'posted'` transactions inside the window
-	 * count: a draft journal is not spend, and a reversed one has a
-	 * counter-posting of its own.
-	 *
-	 * @param array<int,string> $administrationIds Administrations the caller may read.
-	 * @param array{fiscalYear:int,startDate:string,endDate:string} $window Fiscal-year window.
-	 *
-	 * @return array{byProgramme:array<string,float>,byMonth:array<string,float>} The sums.
-	 */
-	private function spendByProgramme(array $administrationIds, array $window): array {
-		$monthOfTransaction = [];
-		foreach ($administrationIds as $administrationId) {
-			$transactions = $this->query(
-				schema: self::SCHEMA_GL_TRANSACTION,
-				filters: ['administrationId' => $administrationId, 'state' => 'posted']
-			);
-			foreach ($transactions as $transaction) {
-				$postingDate = (string)($transaction['postingDate'] ?? '');
-				if ($postingDate === '' || $postingDate < $window['startDate'] || $postingDate > $window['endDate']) {
-					continue;
-				}
-
-				// A GL line's `transactionId` references its parent by EITHER
-				// the OpenRegister object id or the human transactionNumber,
-				// depending on which writer created it. Keying both is the
-				// idiom {@see FinancialSeriesCalculator::postedLinesByMonth()}
-				// already established here; keying only one silently drops
-				// every line written by the other path, which reads as
-				// "this programme spent nothing".
-				$month = substr($postingDate, 0, 7);
-				$objectId = (string)($transaction['@self']['id'] ?? $transaction['id'] ?? '');
-				if ($objectId !== '') {
-					$monthOfTransaction[$objectId] = $month;
-				}
-
-				$number = (string)($transaction['transactionNumber'] ?? '');
-				if ($number !== '') {
-					$monthOfTransaction[$number] = $month;
-				}
-			}
-		}
-
-		$byProgramme = [];
-		$byMonth = [];
-		if ($monthOfTransaction === []) {
-			return ['byProgramme' => $byProgramme, 'byMonth' => $byMonth];
-		}
-
-		foreach ($this->query(schema: self::SCHEMA_GL_LINE, filters: []) as $line) {
-			$transactionId = (string)($line['transactionId'] ?? '');
-			if (isset($monthOfTransaction[$transactionId]) === false) {
-				continue;
-			}
-
-			$programme = (string)($line['programmeStructure'] ?? '');
-			if ($programme === '') {
-				continue;
-			}
-
-			$amount = $this->signedAmount(line: $line);
-			$byProgramme[$programme] = (($byProgramme[$programme] ?? 0.0) + $amount);
-			$month = $monthOfTransaction[$transactionId];
-			$byMonth[$month] = (($byMonth[$month] ?? 0.0) + $amount);
-		}
-
-		return ['byProgramme' => $byProgramme, 'byMonth' => $byMonth];
-
-	}//end spendByProgramme()
-
-	/**
-	 * Resolve a GL line's contribution to programme spend.
-	 *
-	 * A debit on an expense programme increases spend; a credit reduces it
-	 * (a correction or a refund). Returning the raw amount for both would make
-	 * a reversal look like more spend, not less.
-	 *
-	 * @param array<string,mixed> $line The GL line.
-	 *
-	 * @return float The signed amount.
-	 */
-	private function signedAmount(array $line): float {
-		$amount = (float)($line['amount'] ?? 0);
-		if ((string)($line['side'] ?? 'debit') === 'credit') {
-			return -$amount;
-		}
-
-		return $amount;
-
-	}//end signedAmount()
-
-	/**
-	 * Sum outstanding commitments per programme.
-	 *
-	 * @param array<int,string> $administrationIds Administrations the caller may read.
-	 * @param integer $fiscalYear Fiscal year.
-	 *
-	 * @return array<string,float> Programme code => committed amount.
-	 */
-	private function committedByProgramme(array $administrationIds, int $fiscalYear): array {
-		$totals = [];
-		foreach ($administrationIds as $administrationId) {
-			$lines = $this->query(
-				schema: self::SCHEMA_COMMITMENT_LINE,
-				filters: ['administrationId' => $administrationId]
-			);
-			foreach ($lines as $line) {
-				if ((int)($line['financialYear'] ?? 0) !== $fiscalYear) {
-					continue;
-				}
-
-				$programme = (string)($line['programme'] ?? '');
-				if ($programme === '') {
-					continue;
-				}
-
-				$totals[$programme] = (($totals[$programme] ?? 0.0) + (float)($line['remaining_committed'] ?? 0));
-			}
-		}
-
-		return $totals;
-
-	}//end committedByProgramme()
-
-	/**
-	 * Decide which programmes the envelope reports on.
-	 *
-	 * @param array<int,string>|null $requested The REQ-BBC-002 programme filter.
-	 * @param array<int,string> $seen Programme codes present in the data.
-	 *
-	 * @return list<string> The programme codes, in the REQ-BBC-002 order.
-	 */
-	private function selectedProgrammes(?array $requested, array $seen): array {
-		// REQ-BBC-002: "Selecting no programme MUST show no data (not all
-		// programmes)." An EMPTY array is a selection of none; null is no
-		// filter at all.
-		if ($requested !== null && $requested === []) {
-			return [];
-		}
-
-		$universe = self::PROGRAMMES;
-		foreach ($seen as $code) {
-			if ($code !== '' && in_array($code, $universe, true) === false) {
-				$universe[] = $code;
-			}
-		}
-
-		if ($requested === null) {
-			return array_values($universe);
-		}
-
-		return array_values(array_filter($universe, static fn (string $code): bool => in_array($code, $requested, true)));
-
-	}//end selectedProgrammes()
-
-	/**
-	 * Build one row per selected programme.
-	 *
-	 * @param list<string> $selected Programme codes to report on.
-	 * @param array<string,float> $budgetByProgramme Budget sums.
-	 * @param array<string,float> $spendByProgramme Spend sums.
-	 * @param array<string,float> $committedByProgramme Commitment sums.
-	 *
-	 * @return list<array<string,mixed>> The per-programme rows.
-	 */
-	private function buildRows(
-		array $selected,
-		array $budgetByProgramme,
-		array $spendByProgramme,
-		array $committedByProgramme,
-	): array {
-		$rows = [];
-		foreach ($selected as $code) {
-			$totalBudget = (float)($budgetByProgramme[$code] ?? 0.0);
-			$spent = (float)($spendByProgramme[$code] ?? 0.0);
-			$committed = (float)($committedByProgramme[$code] ?? 0.0);
-			$remaining = ($totalBudget - ($committed + $spent));
-
-			$rows[] = [
-				'programmeStructure' => $code,
-				'programme' => $this->humanise(code: $code),
-				'totalBudget' => $totalBudget,
-				'committed' => $committed,
-				'spent' => $spent,
-				'remaining' => $remaining,
-				'overspent' => max(0.0, -$remaining),
-				'remainingRatio' => $this->ratio(part: $remaining, whole: $totalBudget),
-				'utilisation' => $this->ratio(part: ($committed + $spent), whole: $totalBudget),
-				'status' => $this->trafficLight(remaining: $remaining, totalBudget: $totalBudget),
-			];
-		}
-
-		return $rows;
-
-	}//end buildRows()
-
-	/**
-	 * Apply the REQ-BBC-001 traffic-light rule.
-	 *
-	 * @param float $remaining Remaining budget in EUR.
-	 * @param float $totalBudget Total budget in EUR.
-	 *
-	 * @return string One of `green`, `yellow`, `red`.
-	 */
-	private function trafficLight(float $remaining, float $totalBudget): string {
-		if ($remaining < 0.0) {
-			return 'red';
-		}
-
-		if ($totalBudget <= 0.0) {
-			// No budget and no overspend: nothing to be amber about.
-			return 'green';
-		}
-
-		if (($remaining / $totalBudget) >= self::GREEN_THRESHOLD) {
-			return 'green';
-		}
-
-		return 'yellow';
-
-	}//end trafficLight()
-
-	/**
-	 * Divide safely.
-	 *
-	 * @param float $part The numerator.
-	 * @param float $whole The denominator.
-	 *
-	 * @return float The ratio, or 0.0 when the denominator is zero.
-	 */
-	private function ratio(float $part, float $whole): float {
-		if ($whole == 0.0) {
-			return 0.0;
-		}
-
-		return ($part / $whole);
-
-	}//end ratio()
-
-	/**
-	 * Sum one numeric key across the rows.
-	 *
-	 * @param list<array<string,mixed>> $rows The per-programme rows.
-	 * @param string $key The key to sum.
-	 *
-	 * @return float The total.
-	 */
-	private function sumOf(array $rows, string $key): float {
-		$total = 0.0;
-		foreach ($rows as $row) {
-			$total += (float)($row[$key] ?? 0);
-		}
-
-		return $total;
-
-	}//end sumOf()
-
-	/**
-	 * Aggregate the four REQ-BBC-001 KPI values across the reported programmes.
-	 *
-	 * @param list<array<string,mixed>> $rows The per-programme rows.
-	 *
-	 * @return array<string,mixed> The KPI bag.
-	 */
-	private function totalsFor(array $rows): array {
-		$totalBudget = $this->sumOf(rows: $rows, key: 'totalBudget');
-		$committed = $this->sumOf(rows: $rows, key: 'committed');
-		$spent = $this->sumOf(rows: $rows, key: 'spent');
-		$remaining = ($totalBudget - ($committed + $spent));
-
-		return [
-			'totalBudget' => $totalBudget,
-			'committed' => $committed,
-			'spent' => $spent,
-			'remaining' => $remaining,
-			'remainingRatio' => $this->ratio(part: $remaining, whole: $totalBudget),
-			'utilisation' => $this->ratio(part: ($committed + $spent), whole: $totalBudget),
-			'status' => $this->trafficLight(remaining: $remaining, totalBudget: $totalBudget),
-			'programmeCount' => count($rows),
-		];
-
-	}//end totalsFor()
-
-	/**
-	 * Shape the per-programme rows as the parallel arrays a chart widget's
-	 * `endpointSource` maps onto (`labelsPath` + one `path` per series).
-	 *
-	 * @param list<array<string,mixed>> $rows The per-programme rows.
-	 *
-	 * @return array<string,mixed> Labels, three series and the rows themselves.
-	 */
-	private function seriesFor(array $rows): array {
-		$labels = [];
-		$budget = [];
-		$spent = [];
-		$committed = [];
-		foreach ($rows as $row) {
-			$labels[] = (string)$row['programme'];
-			$budget[] = round((float)$row['totalBudget'], 2);
-			$spent[] = round((float)$row['spent'], 2);
-			$committed[] = round((float)$row['committed'], 2);
-		}
-
-		return [
-			'labels' => $labels,
-			'budget' => $budget,
-			'spent' => $spent,
-			'committed' => $committed,
-			'rows' => $rows,
-		];
-
-	}//end seriesFor()
-
-	/**
-	 * Build the cumulative monthly spend trend (REQ-BBC-001 "Trend Chart").
-	 *
-	 * Months with no GL postings appear as the previous cumulative value, never
-	 * omitted — the requirement is explicit that a quiet month must not close
-	 * the gap in the line.
-	 *
-	 * @param array{fiscalYear:int,startDate:string,endDate:string} $window Fiscal-year window.
-	 * @param array<string,float> $monthlySpend Spend keyed `YYYY-MM`.
-	 * @param list<string> $selected Programme codes reported on.
-	 * @param float $totalBudget Total budget, drawn as the flat reference line.
-	 *
-	 * @return array<string,mixed> Months, cumulative spend and the budget reference.
-	 */
-	private function trendFor(array $window, array $monthlySpend, array $selected, float $totalBudget): array {
-		$months = [];
-		$cursor = substr($window['startDate'], 0, 7);
-		$last = substr($window['endDate'], 0, 7);
-		$guard = 0;
-		while ($cursor <= $last && $guard < 120) {
-			$months[] = $cursor;
-			$cursor = $this->nextMonth(month: $cursor);
-			$guard++;
-		}
-
-		$cumulative = [];
-		$reference = [];
-		$running = 0.0;
-		foreach ($months as $month) {
-			if ($selected !== []) {
-				$running += (float)($monthlySpend[$month] ?? 0.0);
-			}
-
-			$cumulative[] = round($running, 2);
-			$reference[] = round($totalBudget, 2);
-		}
-
-		return [
-			'months' => $months,
-			'cumulativeSpend' => $cumulative,
-			'budgetReference' => $reference,
-		];
-
-	}//end trendFor()
-
-	/**
-	 * Advance a `YYYY-MM` bucket by one month.
-	 *
-	 * @param string $month The bucket.
-	 *
-	 * @return string The next bucket.
-	 */
-	private function nextMonth(string $month): string {
-		$year = (int)substr($month, 0, 4);
-		$index = (int)substr($month, 5, 2);
-		$index++;
-		if ($index > 12) {
-			$index = 1;
-			$year++;
-		}
-
-		return sprintf('%04d-%02d', $year, $index);
-
-	}//end nextMonth()
-
-	/**
-	 * Build the REQ-BBC-003 exception list: overspent programmes, worst first.
-	 *
-	 * @param list<array<string,mixed>> $rows The per-programme rows.
-	 *
-	 * @return list<array<string,mixed>> The overspent rows.
-	 */
-	private function exceptionsFor(array $rows): array {
-		$exceptions = array_values(
-			array_filter(
-				$rows,
-				static function (array $row): bool {
-					return ((float)$row['remaining'] < 0.0);
-				}
-			)
-		);
-
-		usort(
-			$exceptions,
-			static function (array $left, array $right): int {
-				return ((float)$right['overspent'] <=> (float)$left['overspent']);
-			}
-		);
-
-		return $exceptions;
-
-	}//end exceptionsFor()
-
-	/**
-	 * Discover the fiscal years that have Budget data (REQ-BBC-002 filter options).
-	 *
-	 * @param array<int,string> $administrationIds Administrations the caller may read.
-	 *
-	 * @return list<int> The years, newest first.
-	 */
-	private function fiscalYearsFor(array $administrationIds): array {
-		$years = [];
-		foreach ($administrationIds as $administrationId) {
-			foreach ($this->query(schema: self::SCHEMA_BUDGET, filters: ['administrationId' => $administrationId]) as $budget) {
-				$year = (int)($budget['fiscalYear'] ?? 0);
-				if ($year > 0) {
-					$years[$year] = true;
-				}
-			}
-		}
-
-		$list = array_keys($years);
-		rsort($list);
-
-		return array_values($list);
-
-	}//end fiscalYearsFor()
-
-	/**
-	 * Turn a lowercase code into a display label.
-	 *
-	 * @param string $code The code.
-	 *
-	 * @return string The label.
-	 */
-	private function humanise(string $code): string {
-		return ucfirst($code);
-
-	}//end humanise()
 
 	/**
 	 * The envelope returned when there is nothing the caller may read.
@@ -914,64 +377,4 @@ class BbvProgrammeBudgetService {
 		];
 
 	}//end emptyEnvelope()
-
-	/**
-	 * Run one property-filtered query against the shillinq register.
-	 *
-	 * A failure is logged and answered as an empty result set: a missing
-	 * commitment register must not stop the budget half of the dashboard from
-	 * rendering.
-	 *
-	 * @param string $schema The schema slug.
-	 * @param array<string,mixed> $filters Property filters (never `id`).
-	 *
-	 * @return list<array<string,mixed>> The matching records as plain arrays.
-	 */
-	private function query(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BbvProgrammeBudgetService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
-			}
-		}
-
-		return $result;
-
-	}//end query()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config.
-	 *
-	 * @return string The register slug, defaulting to `shillinq`.
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-
-	}//end register()
 }//end class

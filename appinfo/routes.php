@@ -145,7 +145,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
-        // bookings-depth — no-show-fee capture + recurring appointment series.
+        // Bookings-depth: no-show-fee capture + recurring appointment series.
         // Both are operator actions (#[NoAdminRequired] + per-administration
         // guard). no-show captures the defined noShowFee via the DepositPayment
         // provider rails; appointment-series expands an RRULE into individual

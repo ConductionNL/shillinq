@@ -78,14 +78,14 @@ class BbvProgrammeBudgetController extends Controller {
 	 * @param IL10N $l10n Translation service for response messages (ADR-007).
 	 * @param LoggerInterface $logger Logger — never receives a record body.
 	 * @param BbvProgrammeBudgetService $budgets Computes the envelopes.
-	 * @param AdministrationContextService $administrationContext Authentication gate (ADR-005).
+	 * @param AdministrationContextService $adminContext Authentication gate (ADR-005).
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly BbvProgrammeBudgetService $budgets,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextService $adminContext,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -107,7 +107,7 @@ class BbvProgrammeBudgetController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function programmeBudgetVsActuals(): JSONResponse {
-		if ($this->administrationContext->currentUserId() === null) {
+		if ($this->adminContext->currentUserId() === null) {
 			return new JSONResponse(
 				['error' => $this->l10n->t('Not logged in')],
 				Http::STATUS_UNAUTHORIZED
@@ -176,7 +176,7 @@ class BbvProgrammeBudgetController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function glLineFacets(): JSONResponse {
-		if ($this->administrationContext->currentUserId() === null) {
+		if ($this->adminContext->currentUserId() === null) {
 			return new JSONResponse(
 				['error' => $this->l10n->t('Not logged in')],
 				Http::STATUS_UNAUTHORIZED
@@ -221,15 +221,14 @@ class BbvProgrammeBudgetController extends Controller {
 			return null;
 		}
 
+		$entries = $raw;
+		if (is_array($entries) === false) {
+			$entries = explode(',', (string)$entries);
+		}
+
 		$candidates = [];
-		if (is_array($raw) === true) {
-			foreach ($raw as $entry) {
-				$candidates[] = trim((string)$entry);
-			}
-		} else {
-			foreach (explode(',', (string)$raw) as $entry) {
-				$candidates[] = trim($entry);
-			}
+		foreach ($entries as $entry) {
+			$candidates[] = trim((string)$entry);
 		}
 
 		$values = [];
