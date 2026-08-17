@@ -31,6 +31,16 @@
  Registered in src/registry.js as a kind:"page" custom component so the
  manifest router can dispatch `component: "ProductCatalogIndex"`.
 
+ @visual exclude the page is a stock CnDataTable whose every pixel below the
+ header is data — and which of two provenance states it renders depends on
+ whether a pipelinq register exists on the instance, which differs between a
+ developer rig, CI and production. A committed baseline would therefore encode
+ the environment rather than the design, and would go red on a fixture change
+ that broke nothing. The behaviour that matters (route resolves, index surface
+ renders, no shillinq 5xx, no uncaught page error) is asserted by
+ tests/e2e/spec-coverage/inventory.spec.ts, and both provenance branches are
+ asserted in tests/Unit/Service/ProductCatalogServiceTest.php.
+
  @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
 -->
 <template>

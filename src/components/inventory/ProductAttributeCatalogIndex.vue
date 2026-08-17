@@ -24,6 +24,13 @@
 
  Registered in src/registry.js as a kind:"page" custom component.
 
+ @visual exclude same reason as ProductCatalogIndex.vue — a stock CnDataTable
+ whose rows and whose provenance banner both depend on whether a pipelinq
+ register exists on the instance, so a committed pixel baseline would encode
+ the environment rather than the design. Behaviour is asserted by
+ tests/e2e/spec-coverage/inventory.spec.ts and both branches by
+ tests/Unit/Service/ProductCatalogServiceTest.php.
+
  @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
 -->
 <template>
