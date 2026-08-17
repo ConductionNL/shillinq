@@ -51,6 +51,17 @@ const DECLARED_FILTERS = [
 	},
 ]
 
+/** The seven BBV programme codes, as the facet endpoint returns them. */
+const PROGRAMME_CODES = [
+	'ruimte',
+	'mobiliteit',
+	'water',
+	'milieu',
+	'cultuur',
+	'economie',
+	'bestuur',
+]
+
 /** A manifest carrying the Linker page with those filters. */
 const MANIFEST = {
 	pages: [
@@ -76,14 +87,14 @@ const FACETS = {
 		{ value: 'assets', label: 'Assets', accountNumbers: ['0100', '0200'] },
 		{ value: 'expenses', label: 'Expenses', accountNumbers: ['4100', '4110'] },
 	],
-	programmes: [
-		{ value: 'ruimte', label: 'Ruimte' },
-		{ value: 'mobiliteit', label: 'Mobiliteit' },
-	],
-	assignmentStatuses: [
-		{ value: 'mapped', label: 'Mapped' },
-		{ value: 'unmapped', label: 'Unmapped' },
-	],
+	programmes: PROGRAMME_CODES.map((c) => ({
+		value: c,
+		label: c[0].toUpperCase() + c.slice(1),
+	})),
+	// Only `mapped`: an unassigned GL line has NO programmeStructure key, and
+	// OpenRegister's filter grammar cannot address an absent key — measured,
+	// with a positive control, in BbvProgrammeBudgetService::glLineFacets().
+	assignmentStatuses: [{ value: 'mapped', label: 'Mapped' }],
 }
 
 /**
@@ -208,15 +219,24 @@ describe('BbvLinkerFilterBar — the query each facet really writes', () => {
 		expect(ctx.pushed[0].query.programmeStructure).toBe('water')
 	})
 
-	it('expresses "unmapped" as the empty OPERATOR, and "mapped" as its negation', () => {
-		ctx.onSelect(facet(ctx, 'assignmentStatus'), { value: 'unmapped' })
-		expect(ctx.pushed[0].query['programmeStructure[empty]']).toBe('true')
-		// The negative half: the literal word must not be sent as a value —
-		// no GL line has `programmeStructure: "unmapped"`.
-		expect(ctx.pushed[0].query.programmeStructure).toBeUndefined()
-
+	it('expresses "mapped" as an IN over every declared programme code', () => {
 		ctx.onSelect(facet(ctx, 'assignmentStatus'), { value: 'mapped' })
-		expect(ctx.pushed[1].query['programmeStructure[empty]']).toBe('false')
+
+		const query = ctx.pushed[0].query
+		expect(query.programmeStructure).toEqual(PROGRAMME_CODES)
+		// The negative half: the literal word must NOT be sent as a value — no
+		// GL line has `programmeStructure: "mapped"`, so it would match nothing
+		// while the control looked active.
+		expect(query.programmeStructure).not.toContain('mapped')
+	})
+
+	it('never emits an `empty`/`null`/`exists` operator, which this deployment cannot satisfy', () => {
+		ctx.onSelect(facet(ctx, 'assignmentStatus'), { value: 'mapped' })
+
+		const query = ctx.pushed[0].query
+		for (const key of Object.keys(query)) {
+			expect(key).not.toMatch(/\[(empty|null|exists)\]$/)
+		}
 	})
 
 	it('clears a facet back to no filter when "All" is chosen', () => {
@@ -240,22 +260,19 @@ describe('BbvLinkerFilterBar — the query each facet really writes', () => {
 		expect(query.programmeStructure).toBe('ruimte')
 	})
 
-	it('never emits a programme value and an empty-operator on the same key', () => {
-		ctx.onSelect(facet(ctx, 'assignmentStatus'), { value: 'unmapped' })
+	it('never emits a single programme and the mapped IN list at once', () => {
+		ctx.onSelect(facet(ctx, 'assignmentStatus'), { value: 'mapped' })
 		ctx.$route.query = ctx.pushed[0].query
 
 		ctx.onSelect(facet(ctx, 'programmeStructure'), { value: 'water' })
 		const query = ctx.pushed[1].query
-
 		expect(query.programmeStructure).toBe('water')
-		expect(query['programmeStructure[empty]']).toBeUndefined()
 
-		// ...and the other way round.
+		// ...and the other way round: choosing "mapped" replaces the single
+		// programme rather than appending to it.
 		ctx.$route.query = query
-		ctx.onSelect(facet(ctx, 'assignmentStatus'), { value: 'unmapped' })
-		const back = ctx.pushed[2].query
-		expect(back['programmeStructure[empty]']).toBe('true')
-		expect(back.programmeStructure).toBeUndefined()
+		ctx.onSelect(facet(ctx, 'assignmentStatus'), { value: 'mapped' })
+		expect(ctx.pushed[2].query.programmeStructure).toEqual(PROGRAMME_CODES)
 	})
 
 	it('leaves query keys it does not own untouched', () => {
@@ -280,16 +297,15 @@ describe('BbvLinkerFilterBar — reading the selection back out of the URL', () 
 		)
 	})
 
-	it('recovers the assignment status from the empty operator', () => {
-		const unmapped = context({ 'programmeStructure[empty]': 'true' })
-		expect(
-			unmapped.selectedOption(facet(unmapped, 'assignmentStatus')).value,
-		).toBe('unmapped')
+	it('recovers "mapped" from the IN list, and does not mistake it for a programme', () => {
+		const ctx = context({ programmeStructure: PROGRAMME_CODES })
 
-		const mapped = context({ 'programmeStructure[empty]': 'false' })
-		expect(mapped.selectedOption(facet(mapped, 'assignmentStatus')).value).toBe(
+		expect(ctx.selectedOption(facet(ctx, 'assignmentStatus')).value).toBe(
 			'mapped',
 		)
+		// The negative half: the Programme facet must NOT claim one of the
+		// seven is selected just because the array contains it.
+		expect(ctx.selectedOption(facet(ctx, 'programmeStructure')).value).toBe('')
 	})
 
 	it('falls back to "All" when the URL carries no filter for a facet', () => {

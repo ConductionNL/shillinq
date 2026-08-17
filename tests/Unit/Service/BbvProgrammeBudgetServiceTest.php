@@ -525,23 +525,44 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	}//end testAccountTypeFacetCarriesGlLineFilterableAccountNumbers()
 
 	/**
-	 * The facets offer the seven declared BBV programmes and the two
-	 * assignment states, so the Linker's bar renders on a fresh instance.
+	 * The facets offer the seven declared BBV programmes, so the Linker's bar
+	 * renders on a fresh instance.
 	 *
 	 * @return void
 	 */
-	public function testFacetsOfferTheDeclaredProgrammesAndAssignmentStates(): void {
+	public function testFacetsOfferTheSevenDeclaredProgrammes(): void {
 		$facets = $this->subject($this->seed())->glLineFacets();
 
 		$this->assertSame(
 			BbvProgrammeBudgetService::PROGRAMMES,
 			array_column($facets['programmes'], 'value')
 		);
-		$this->assertSame(
-			['mapped', 'unmapped'],
-			array_column($facets['assignmentStatuses'], 'value')
-		);
-	}//end testFacetsOfferTheDeclaredProgrammesAndAssignmentStates()
+	}//end testFacetsOfferTheSevenDeclaredProgrammes()
+
+	/**
+	 * The assignment-status facet offers `mapped` and NOT `unmapped`.
+	 *
+	 * That absence is the measurement, not an oversight. An unassigned GL line
+	 * has no `programmeStructure` key at all, and OpenRegister's filter grammar
+	 * cannot address an ABSENT key — `[empty]`, `[null]` and `[exists]` all
+	 * answer ZERO for BOTH truth values on a live instance, while
+	 * `vatApplicable[null]=false` (a key every row HAS) answers with all 115
+	 * rows, which is the positive control proving the operator family is
+	 * otherwise alive. Offering `unmapped` would ship a control that renders,
+	 * is clickable, and quietly returns nothing.
+	 *
+	 * The assertion is written as an explicit NOT-contains so that restoring
+	 * the option later has to come with the capability, not just the label.
+	 *
+	 * @return void
+	 */
+	public function testAssignmentStatusOffersOnlyTheHalfTheFilterGrammarCanExpress(): void {
+		$facets = $this->subject($this->seed())->glLineFacets();
+		$values = array_column($facets['assignmentStatuses'], 'value');
+
+		$this->assertSame(['mapped'], $values);
+		$this->assertNotContains('unmapped', $values);
+	}//end testAssignmentStatusOffersOnlyTheHalfTheFilterGrammarCanExpress()
 
 	/**
 	 * Another province's chart of accounts never reaches the facets either.

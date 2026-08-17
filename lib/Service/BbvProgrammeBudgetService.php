@@ -211,8 +211,30 @@ class BbvProgrammeBudgetService {
 	 *    therefore carries the administration's account NUMBERS per type, and
 	 *    the client filters `accountNumber[]` — a declared GL-line property.
 	 *  - **Programme** filters `programmeStructure` directly.
-	 *  - **Assignment status** maps onto OpenRegister's `empty` operator over
-	 *    `programmeStructure`, which is what "unmapped" means.
+	 *  - **Assignment status** offers `mapped` only, and that is a MEASURED
+	 *    limitation rather than an oversight — see below.
+	 *
+	 * ## Why `unmapped` is not offered
+	 *
+	 * "Unmapped" means the GL line has NO `programmeStructure`. OpenRegister
+	 * stores only the properties an object actually carries, so an unassigned
+	 * line has no such key at all — and the filter grammar cannot address an
+	 * ABSENT key. Measured on a live instance, with a positive control that
+	 * proves the operator family is alive:
+	 *
+	 *     Account?vatApplicable[null]=false   -> 115   (a key every row HAS)
+	 *     Account?description[null]=false     ->   0
+	 *     Account?description[null]=true      ->   0   (a key no row has)
+	 *     GLLine?programmeStructure[empty]=true  -> 0
+	 *     GLLine?programmeStructure[empty]=false -> 0
+	 *
+	 * BOTH truth values answering zero is the tell: the clause is unsatisfiable,
+	 * not selective. `[ne]` and the `field[]=` IN form both work, so the facet
+	 * offers the half that can be expressed — `mapped`, as an IN over the seven
+	 * declared programme codes — rather than an `unmapped` option that would
+	 * render, be clickable, and quietly return nothing. Restoring it needs an
+	 * OpenRegister filter for an absent property; that is a different repo and
+	 * a separate decision.
 	 *
 	 * @return array<string,mixed> The facet envelope; empty facets when the
 	 *         caller has no accessible administration.
@@ -269,7 +291,6 @@ class BbvProgrammeBudgetService {
 			'programmes' => $programmes,
 			'assignmentStatuses' => [
 				['value' => 'mapped', 'label' => 'Mapped'],
-				['value' => 'unmapped', 'label' => 'Unmapped'],
 			],
 		];
 

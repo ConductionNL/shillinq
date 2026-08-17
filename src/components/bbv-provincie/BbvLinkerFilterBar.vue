@@ -27,17 +27,32 @@
  address the object's JSON properties, and an unknown key yields zero rows for
  every value with nothing logged. So the mapping matters more than the label:
 
- | facet                | GLLine query                          | why |
- |----------------------|---------------------------------------|-----|
+ | facet                | GLLine query                           | why |
+ |----------------------|----------------------------------------|-----|
  | `accountType`        | `accountNumber[]=<the type's numbers>` | `accountType` is a property of **Account**, not of GLLine. `/api/bbv-provincie/gl-line-facets` resolves the administration's chart of accounts to the account numbers per type, and those ARE a GL-line property. |
- | `programmeStructure` | `programmeStructure=<code>`           | declared by this change's own register fragment. |
- | `assignmentStatus`   | `programmeStructure[empty]=true|false` | "unmapped" is not a value, it is the ABSENCE of one. OpenRegister's search handler implements `empty` / `exists` / `null` operators; PHP parses the bracketed key back into `filters[programmeStructure][empty]`. |
+ | `programmeStructure` | `programmeStructure=<code>`            | declared by this change's own register fragment. |
+ | `assignmentStatus`   | `programmeStructure[]=<the seven codes>` | "mapped" as an IN over every declared programme. |
 
- Programme and Assignment status address the SAME property, so selecting a
- programme clears the assignment-status facet (and vice versa) rather than
- emitting both: a scalar and an operator map on one key would collide in the
- query string, and "programme = water AND programme is empty" is unsatisfiable
- anyway.
+ Every one of those three was measured against a live instance, WITH a
+ negative control, before being wired — `accountNumber[]=9999` returns 0 and
+ `accountNumber[]=4100&accountNumber[]=4200` returns exactly the two matching
+ lines, so the filter is selective rather than merely non-empty.
+
+ ## Why there is no "Unmapped" option
+
+ It cannot be expressed. An unassigned GL line has NO `programmeStructure` key
+ at all (OpenRegister stores only the properties an object carries), and the
+ filter grammar cannot address an ABSENT key: `programmeStructure[empty]`,
+ `[null]` and `[exists]` all answer ZERO for BOTH truth values, which is the
+ tell that the clause is unsatisfiable rather than selective. The positive
+ control that proves the operator family is otherwise alive:
+ `Account?vatApplicable[null]=false` returns all 115 rows, while
+ `Account?description[null]=true|false` — a key no row carries — returns 0 both
+ ways. So the facet offers the half that works instead of an option that would
+ render, be clickable, and quietly return nothing.
+
+ Programme and Assignment status address the SAME property, so selecting one
+ clears the other rather than emitting both.
 
  ## What this component does not do
 
@@ -96,11 +111,7 @@ const FACET_SOURCE = {
  * keeps Programme and Assignment status from both addressing
  * `programmeStructure` at once.
  */
-const OWNED_QUERY_KEYS = [
-	'accountNumber',
-	'programmeStructure',
-	'programmeStructure[empty]',
-]
+const OWNED_QUERY_KEYS = ['accountNumber', 'programmeStructure']
 
 export default {
 	name: 'BbvLinkerFilterBar',
@@ -265,11 +276,11 @@ export default {
 			if (facet.key === 'accountType') {
 				value = this.accountTypeFromQuery(query)
 			} else if (facet.key === 'programmeStructure') {
-				value = String(query.programmeStructure ?? '')
+				value = Array.isArray(query.programmeStructure)
+					? ''
+					: String(query.programmeStructure ?? '')
 			} else if (facet.key === 'assignmentStatus') {
-				const empty = query['programmeStructure[empty]']
-				if (empty === 'true') value = 'unmapped'
-				else if (empty === 'false') value = 'mapped'
+				value = this.assignmentStatusFromQuery(query)
 			}
 
 			const known = facet.options.find((o) => o.value === value)
@@ -342,7 +353,7 @@ export default {
 				programmeStructure:
 					facet.key === 'programmeStructure'
 						? value
-						: String(query.programmeStructure ?? ''),
+						: this.programmeFromQuery(query),
 
 				assignmentStatus:
 					facet.key === 'assignmentStatus'
@@ -373,26 +384,61 @@ export default {
 				query.programmeStructure = keep.programmeStructure
 			}
 
-			if (keep.assignmentStatus === 'unmapped') {
-				query['programmeStructure[empty]'] = 'true'
-			} else if (keep.assignmentStatus === 'mapped') {
-				query['programmeStructure[empty]'] = 'false'
+			// "Mapped" is an IN over every declared programme code — the one
+			// half of the assignment-status question the filter grammar can
+			// express (see the block comment at the top of this file for the
+			// measurement that rules the other half out).
+			if (keep.assignmentStatus === 'mapped') {
+				query.programmeStructure = this.allProgrammeCodes()
 			}
 
 			this.$router.replace({ query }).catch(() => {})
 		},
 
 		/**
-		 * Recover the assignment-status selection from the route query.
+		 * Every programme code the facet endpoint offers, for the "mapped" IN
+		 * filter. Falls back to the codes the manifest declares when the
+		 * endpoint is unreachable, so the option never silently becomes a
+		 * no-op filter.
+		 *
+		 * @return {Array<string>} The codes.
+		 */
+		allProgrammeCodes() {
+			const live = (this.sources.programmes || []).map((o) => String(o.value))
+			if (live.length > 0) {
+				return live
+			}
+
+			const declared = this.facets.find((f) => f.key === 'programmeStructure')
+			return (declared?.options || [])
+				.map((o) => String(o.value))
+				.filter((v) => v !== '')
+		},
+
+		/**
+		 * The single active programme in the route query, or '' when the query
+		 * carries the "mapped" IN list (an array) or nothing.
 		 *
 		 * @param {object} query The route query.
-		 * @return {string} `mapped`, `unmapped`, or ''.
+		 * @return {string} The programme code.
+		 */
+		programmeFromQuery(query) {
+			if (Array.isArray(query.programmeStructure)) {
+				return ''
+			}
+
+			return String(query.programmeStructure ?? '')
+		},
+
+		/**
+		 * Recover the assignment-status selection from the route query: the
+		 * "mapped" filter is the ARRAY form of `programmeStructure`.
+		 *
+		 * @param {object} query The route query.
+		 * @return {string} `mapped`, or ''.
 		 */
 		assignmentStatusFromQuery(query) {
-			const empty = query['programmeStructure[empty]']
-			if (empty === 'true') return 'unmapped'
-			if (empty === 'false') return 'mapped'
-			return ''
+			return Array.isArray(query.programmeStructure) ? 'mapped' : ''
 		},
 	},
 }
