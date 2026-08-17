@@ -39,8 +39,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\VendorPerformanceAggregation;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -77,7 +77,7 @@ final class VendorPerformanceAggregationTest extends TestCase {
 		return new VendorPerformanceAggregation(
 			appConfig: $appConfig,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($os),
 		);
 
 	}//end makeService()

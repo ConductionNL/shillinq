@@ -49,10 +49,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AccountantsdossierExportService;
 use OCA\Shillinq\Service\BadoControleprotocolCalculator;
 use OCA\Shillinq\Service\BadoControleprotocolService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
@@ -79,6 +79,15 @@ require_once __DIR__ . '/InMemoryObjectService.php';
  * bare mention as "is invalid".)
  *
  * @uses \OCA\Shillinq\Service\BadoControleprotocolCalculator
+ *
+ * ObjectIdentifier is the same shape of collaborator, and it only became
+ * REACHABLE with the ADR-084 rewiring in this branch. Both subjects resolve a
+ * record through the static helper (BadoControleprotocolService:633 and
+ * AccountantsdossierExportService:892); until the seeded store was reconnected
+ * the lookup short-circuited before it, so the class never executed and the
+ * strict-coverage check had nothing to report. It is used, not covered.
+ *
+ * @uses \OCA\Shillinq\Util\ObjectIdentifier
  */
 final class BadoControleprotocolEndToEndTest extends TestCase {
 
@@ -128,14 +137,14 @@ final class BadoControleprotocolEndToEndTest extends TestCase {
 			appConfig: $appConfig,
 			calculator: new BadoControleprotocolCalculator(),
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->os),
 		);
 
 		$this->exporter = new AccountantsdossierExportService(
 			appConfig: $appConfig,
 			userSession: $userSession,
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->os),
 		);
 
 	}//end setUp()

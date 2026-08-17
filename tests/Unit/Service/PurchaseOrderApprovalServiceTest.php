@@ -36,9 +36,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -411,7 +411,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			userSession: $userSession,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

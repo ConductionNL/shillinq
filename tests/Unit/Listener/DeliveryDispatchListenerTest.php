@@ -33,7 +33,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
@@ -44,6 +43,7 @@ use OCA\Shillinq\Service\FifoValuationService;
 use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
 use OCA\Shillinq\Sort\FefoSort;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -477,14 +477,14 @@ class DeliveryDispatchListenerTest extends TestCase {
 
 		// Real business-logic classes — nothing about the existing valuation
 		// + COGS pipeline is mocked or reimplemented.
-		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$fifo = new FifoValuationService(appConfig: $appConfig, logger: $logger,
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
-		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$average = new MovingAverageValuationService(appConfig: $appConfig, logger: $logger,
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
-		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$cogs = new CogsPosterService(appConfig: $appConfig, logger: $logger,
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
 		$stockMoveListener = new StockMoveTransitionedListener(
 			fifo: $fifo,
@@ -492,7 +492,7 @@ class DeliveryDispatchListenerTest extends TestCase {
 			cogs: $cogs,
 			appConfig: $appConfig,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(
@@ -500,7 +500,7 @@ class DeliveryDispatchListenerTest extends TestCase {
 			appConfig: $appConfig,
 			logger: $logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
 		$deliveryListener = new DeliveryDispatchListener(dispatchService: $dispatchService, logger: $logger);
 

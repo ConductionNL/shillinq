@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\IcpCalculator;
 use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
 use OCA\Shillinq\Service\ViesService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -179,7 +179,12 @@ final class IcpFilingServiceTest extends TestCase {
 			}//end findAll()
 
 			/**
-			 * Capture a saved object.
+			 * Capture a saved object, keyed by the schema it was written to.
+			 *
+			 * The schema may arrive either as an explicit argument or through a
+			 * preceding setSchema() call — the real ObjectService honours both,
+			 * so the capture falls back to the active schema rather than filing
+			 * the row under an empty key.
 			 *
 			 * @param array<string,mixed> $object The object.
 			 * @param string $register Register slug.
@@ -188,7 +193,8 @@ final class IcpFilingServiceTest extends TestCase {
 			 * @return array<string,mixed>
 			 */
 			public function saveObject(array $object, string $register = '', string $schema = ''): array {
-				$this->saved[$schema][] = $object;
+				$target = ($schema !== '') ? $schema : $this->schema;
+				$this->saved[$target][] = $object;
 				return $object;
 			}//end saveObject()
 		};
@@ -201,12 +207,12 @@ final class IcpFilingServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			clientService: $this->createMock(IClientService::class),
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 		$icp = new IcpService(
 			appConfig: $this->appConfig,
 			calculator: $calculator,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		return new IcpFilingService(
@@ -214,7 +220,7 @@ final class IcpFilingServiceTest extends TestCase {
 			calculator: $calculator,
 			icp: $icp,
 			vies: $vies,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\MandaatEnforcer;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\RequisitionService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -238,7 +238,7 @@ final class RequisitionServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			budgetBlocker: $budget,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

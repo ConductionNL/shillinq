@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PeriodCloseAssistantService;
 use OCA\Shillinq\Service\SuspenseAgeingService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -141,7 +141,7 @@ final class PeriodCloseAssistantServiceTest extends TestCase {
 		return new PeriodCloseAssistantService(
 			appConfig: $appConfig,
 			suspenseAgeing: $suspenseAgeing,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

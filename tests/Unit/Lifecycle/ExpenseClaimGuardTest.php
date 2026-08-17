@@ -19,8 +19,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\ExpenseClaimGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -85,13 +85,29 @@ class ExpenseClaimGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new ExpenseClaimGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub());
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return ExpenseClaimGuard
+	 */
+	private function buildGuard(object $store): ExpenseClaimGuard {
+		return new ExpenseClaimGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * Build a fluent ObjectService stub returning items by schema.
@@ -220,7 +236,7 @@ class ExpenseClaimGuardTest extends TestCase {
 				'Receipt' => [['id' => 'rec-1', 'costCentreCode' => null]],
 			]
 		);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$claim = ['id' => 'claim-1', 'receiptIds' => ['rec-1'], 'mileageIds' => [], 'perDiemIds' => []];
 
@@ -242,7 +258,7 @@ class ExpenseClaimGuardTest extends TestCase {
 				'MileageEntry' => [['id' => 'mlg-1', 'costCentreCode' => 'CC200']],
 			]
 		);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$claim = ['id' => 'claim-1', 'receiptIds' => ['rec-1'], 'mileageIds' => ['mlg-1'], 'perDiemIds' => []];
 
@@ -258,8 +274,7 @@ class ExpenseClaimGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testRequireCostCentresAndItemsIsFailClosedOnException(): void {
-		$this->container->method('get')
-			->willThrowException(new \RuntimeException('ObjectService unavailable'));
+		$this->guard = $this->buildGuard(store: $this->buildUnavailableObjectServiceStub());
 
 		$claim = ['id' => 'claim-1', 'receiptIds' => ['rec-1'], 'mileageIds' => [], 'perDiemIds' => []];
 
@@ -268,6 +283,57 @@ class ExpenseClaimGuardTest extends TestCase {
 		self::assertFalse(condition: $result, message: 'Exception must deny submit (fail-closed)');
 
 	}//end testRequireCostCentresAndItemsIsFailClosedOnException()
+
+	/**
+	 * The guard DISCRIMINATES: same guard, two claims, opposite verdicts.
+	 *
+	 * This exists because the individual permit/deny tests cannot, on their
+	 * own, prove the guard is deciding anything. Before this repair the guard
+	 * denied EVERYTHING -- `$item['costCentreCode']` on the ObjectEntityInterface
+	 * that ADR-084 made find() return raised an Error, and
+	 * requireOpenPeriodAndCostCentres()'s catch (\Throwable) converted it to
+	 * `return false`. Every deny test therefore PASSED, for a reason that had
+	 * nothing to do with cost centres, while every permit test failed.
+	 *
+	 * A guard that always denies and a guard that always permits are both
+	 * broken, and each is invisible to half the suite. Asserting both verdicts
+	 * from ONE guard instance in ONE test is the assertion neither half can
+	 * satisfy vacuously: it fails if the guard reverts to always-deny, and it
+	 * fails if the guard is ever loosened into always-permit.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+	 */
+	public function testRequireCostCentresAndItemsDiscriminatesBetweenClaims(): void {
+		$objectService = $this->buildObjectServiceStub(
+			itemsBySchema: [
+				'Receipt' => [
+					['id' => 'rec-ok', 'costCentreCode' => 'CC100'],
+					['id' => 'rec-bad', 'costCentreCode' => ''],
+				],
+			]
+		);
+		$this->guard = $this->buildGuard(store: $objectService);
+
+		$permitted = $this->guard->requireCostCentresAndItems(
+			claim: ['id' => 'claim-ok', 'receiptIds' => ['rec-ok'], 'mileageIds' => [], 'perDiemIds' => []]
+		);
+		$denied = $this->guard->requireCostCentresAndItems(
+			claim: ['id' => 'claim-bad', 'receiptIds' => ['rec-bad'], 'mileageIds' => [], 'perDiemIds' => []]
+		);
+
+		self::assertTrue(condition: $permitted, message: 'A claim whose items all carry a costCentreCode must be permitted');
+		self::assertFalse(condition: $denied, message: 'A claim with an item lacking a costCentreCode must be denied');
+		self::assertNotSame(
+			expected: $permitted,
+			actual: $denied,
+			message: 'The guard must DISCRIMINATE: identical wiring, opposite verdicts. '
+				. 'Equal verdicts here mean the guard is answering the same way regardless '
+				. 'of the claim, which is what the ADR-084 array-access defect did.'
+		);
+
+	}//end testRequireCostCentresAndItemsDiscriminatesBetweenClaims()
 
 	/**
 	 * Posting is permitted when the FiscalYear register is absent (T1 state).
@@ -362,7 +428,7 @@ class ExpenseClaimGuardTest extends TestCase {
 			}//end find()
 		};
 
-		$this->container->method('get')->willReturn($throwingStub);
+		$this->guard = $this->buildGuard(store: $throwingStub);
 
 		$claim = [
 			'id' => 'claim-1',
@@ -393,7 +459,7 @@ class ExpenseClaimGuardTest extends TestCase {
 				['id' => 'fy-2026', 'startDate' => '2026-01-01', 'endDate' => '2026-12-31', 'state' => 'open'],
 			]
 		);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$claim = [
 			'id' => 'claim-1',
@@ -424,7 +490,7 @@ class ExpenseClaimGuardTest extends TestCase {
 				['id' => 'fy-2026', 'startDate' => '2026-01-01', 'endDate' => '2026-12-31', 'state' => 'closed'],
 			]
 		);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$claim = [
 			'id' => 'claim-1',
@@ -440,4 +506,67 @@ class ExpenseClaimGuardTest extends TestCase {
 		self::assertFalse(condition: $result, message: 'Closed FiscalYear must deny posting');
 
 	}//end testRequireOpenPeriodDeniesPostingWhenFiscalYearIsClosed()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end find()
+		};
+	}//end buildUnavailableObjectServiceStub()
 }//end class

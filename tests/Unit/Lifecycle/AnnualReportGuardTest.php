@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\AnnualReportGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -83,13 +83,29 @@ class AnnualReportGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new AnnualReportGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(records: []));
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return AnnualReportGuard
+	 */
+	private function buildGuard(object $store): AnnualReportGuard {
+		return new AnnualReportGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * A jaarrekening whose linked balans balances (activa = passiva) may opmaken (REQ-T9-002).
@@ -97,8 +113,8 @@ class AnnualReportGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanOpmakenWhenBalansBalances(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-1', 'totalAssets' => 845000, 'totalLiabilities' => 845000]])
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(records: [['reportId' => 'r-1', 'totalAssets' => 845000, 'totalLiabilities' => 845000]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -112,8 +128,8 @@ class AnnualReportGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCannotOpmakenWhenBalansUnbalanced(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-2', 'totalAssets' => 845000, 'totalLiabilities' => 800000]])
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(records: [['reportId' => 'r-2', 'totalAssets' => 845000, 'totalLiabilities' => 800000]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -137,7 +153,7 @@ class AnnualReportGuardTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub(records: [$balanceSheet]));
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(records: [$balanceSheet]));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertTrue($this->guard->canOpmaken(annualReportId: 'r-3', object: ['id' => 'r-3']));
@@ -150,7 +166,7 @@ class AnnualReportGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCannotOpmakenWithoutBalanceSheet(): void {
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub(records: []));
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(records: []));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse($this->guard->canOpmaken(annualReportId: 'r-4', object: ['id' => 'r-4']));
@@ -163,8 +179,8 @@ class AnnualReportGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testZeroTotalBalansCannotOpmaken(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['reportId' => 'r-5', 'totalAssets' => 0, 'totalLiabilities' => 0]])
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(records: [['reportId' => 'r-5', 'totalAssets' => 0, 'totalLiabilities' => 0]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -178,8 +194,7 @@ class AnnualReportGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testOpmaakExceptionFailsClosed(): void {
-		$this->container->method('get')
-			->willThrowException(new \RuntimeException('ObjectService unavailable'));
+		$this->guard = $this->buildGuard(store: $this->buildUnavailableObjectServiceStub());
 
 		$this->logger->expects($this->once())->method('error');
 
@@ -320,4 +335,67 @@ class AnnualReportGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end find()
+		};
+	}//end buildUnavailableObjectServiceStub()
 }//end class

@@ -44,9 +44,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BadoControleprotocolCalculator;
 use OCA\Shillinq\Service\BadoControleprotocolService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -61,6 +61,17 @@ require_once __DIR__ . '/InMemoryObjectService.php';
  *
  * @covers \OCA\Shillinq\Service\BadoControleprotocolService
  * @covers \OCA\Shillinq\Service\BadoControleprotocolCalculator
+ *
+ * The subject resolves a record through the static ObjectIdentifier helper
+ * (BadoControleprotocolService:633). That call only became REACHABLE with the
+ * ADR-084 rewiring in this branch — until the seeded store was reconnected the
+ * lookup short-circuited before it, so the class never executed and the
+ * strict-coverage check had nothing to report. It is a collaborator this test
+ * uses but does not claim coverage of; without the declaration below the run is
+ * reported RISKY under beStrictAboutCoverageMetadata, and phpunit.xml sets
+ * failOnRisky="true", so the whole cell exits 1 on an otherwise green suite.
+ *
+ * @uses \OCA\Shillinq\Util\ObjectIdentifier
  */
 final class BadoFindingEscalationTest extends TestCase {
 
@@ -99,7 +110,7 @@ final class BadoFindingEscalationTest extends TestCase {
 			appConfig: $appConfig,
 			calculator: new BadoControleprotocolCalculator(),
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->os),
 		);
 
 	}//end setUp()

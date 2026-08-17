@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\VarianceGate;
 use OCA\Shillinq\Service\CycleCountService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -184,7 +184,7 @@ class CycleCountServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			varianceGate: $this->varianceGate,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objectService),
 		);
 
 	}//end setUp()

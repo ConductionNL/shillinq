@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\IntercompanyToleranceGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -86,13 +86,31 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new IntercompanyToleranceGuard(
-			$this->appConfig,
-			$this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(relations: [], rules: [])
 		);
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return IntercompanyToleranceGuard
+	 */
+	private function buildGuard(object $store): IntercompanyToleranceGuard {
+		return new IntercompanyToleranceGuard(
+			$this->appConfig,
+			$this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * A near-zero mismatch is always within tolerance without any rule lookup.
@@ -130,8 +148,8 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testWithinConfiguredRule(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(
 				relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-services']],
 				rules: [
 					[
@@ -164,8 +182,8 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testOutsideConfiguredRule(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(
 				relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-services']],
 				rules: [
 					[
@@ -199,8 +217,8 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testMinOfMethodStricter(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(
 				relations: [['relationId' => 'rel1', 'relationType' => 'dividend']],
 				rules: [
 					[
@@ -234,8 +252,8 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDefaultsWhenNoRule(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(
 				relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-goods']],
 				rules: []
 			)
@@ -261,7 +279,7 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testFailClosedOnException(): void {
-		$this->container->method('get')->willThrowException(new \RuntimeException('OR unavailable'));
+		$this->guard = $this->buildGuard(store: $this->buildUnavailableObjectServiceStub());
 
 		$match = [
 			'matchId' => 'm8',
@@ -357,4 +375,67 @@ final class IntercompanyToleranceGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('OR unavailable');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('OR unavailable');
+			}//end find()
+		};
+	}//end buildUnavailableObjectServiceStub()
 }//end class

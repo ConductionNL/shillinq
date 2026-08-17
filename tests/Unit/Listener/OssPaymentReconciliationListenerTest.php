@@ -29,7 +29,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
@@ -37,6 +36,7 @@ use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\OssPaymentReconciliation;
 use OCA\Shillinq\Service\OssRecordResolver;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -92,7 +92,7 @@ class OssPaymentReconciliationListenerTest extends TestCase {
 		$resolver = new OssRecordResolver(
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objects),
 		);
 
 		$this->schemaResolver = $this->createMock(ListenerSchemaResolver::class);

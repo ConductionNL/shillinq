@@ -26,8 +26,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\WbsoTransactionService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -191,7 +191,7 @@ final class WbsoTransactionServiceTest extends TestCase {
 		return new WbsoTransactionService(
 			appConfig: $this->appConfig,
 			userSession: $this->userSession,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

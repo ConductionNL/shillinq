@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\ViesService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -186,7 +186,14 @@ final class ViesServiceTest extends TestCase {
 			 * @return array<string,mixed>
 			 */
 			public function saveObject(array $object, string $register = '', string $schema = ''): array {
-				$this->saved[$schema][] = $object;
+				$target = $schema;
+				if ($target === '') {
+					// The contract adapter passes the payload alone and applies
+					// the caller's `schema:` through setSchema() first.
+					$target = $this->schema;
+				}
+
+				$this->saved[$target][] = $object;
 				return $object;
 			}//end saveObject()
 		};
@@ -198,7 +205,7 @@ final class ViesServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			clientService: $this->clientService,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

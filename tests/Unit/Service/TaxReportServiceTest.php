@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\TaxReportCalculator;
 use OCA\Shillinq\Service\TaxReportService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -71,13 +71,29 @@ final class TaxReportServiceTest extends TestCase {
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
-		$this->service = new TaxReportService(
-			appConfig: $this->appConfig,
-			calculator: new TaxReportCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$this->service = $this->buildService($this->buildObjectServiceStub([]));
 
 	}//end setUp()
+
+	/**
+	 * Build the subject around a seeded in-memory ObjectService store.
+	 *
+	 * The store used to reach the subject through the container; ADR-084 injects
+	 * it as a contract-typed constructor argument instead, so each test rebuilds
+	 * the subject with its own store.
+	 *
+	 * @param object $store The seeded in-memory ObjectService double.
+	 *
+	 * @return TaxReportService
+	 */
+	private function buildService(object $store): TaxReportService {
+		return new TaxReportService(
+			appConfig: $this->appConfig,
+			calculator: new TaxReportCalculator(),
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildService()
 
 	/**
 	 * Quarter computation joins GLLine to Account and aggregates by tax treatment (REQ-VPB-003, REQ-VPB-009).
@@ -99,7 +115,7 @@ final class TaxReportServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($records));
+		$this->service = $this->buildService($this->buildObjectServiceStub($records));
 
 		$result = $this->service->computeQuarter(administrationId: 'adm-1', fiscalYear: 2025, quarter: 1);
 
@@ -132,7 +148,7 @@ final class TaxReportServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($records));
+		$this->service = $this->buildService($this->buildObjectServiceStub($records));
 
 		$result = $this->service->computeQuarter(administrationId: 'adm-1', fiscalYear: 2025, quarter: 1);
 
@@ -154,7 +170,7 @@ final class TaxReportServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($records));
+		$this->service = $this->buildService($this->buildObjectServiceStub($records));
 
 		$result = $this->service->computeQuarter(administrationId: 'adm-1', fiscalYear: 2025, quarter: 2);
 
@@ -177,7 +193,7 @@ final class TaxReportServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($records, ignorePeriod: true));
+		$this->service = $this->buildService($this->buildObjectServiceStub($records, ignorePeriod: true));
 
 		$result = $this->service->computeAnnual(administrationId: 'adm-1', fiscalYear: 2025);
 

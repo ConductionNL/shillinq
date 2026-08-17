@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\EuExpenditureGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -84,22 +84,37 @@ class EuExpenditureGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new EuExpenditureGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$this->guard = $this->buildGuard(store: GuardObjectServiceStub::make([]));
 	}//end setUp()
 
 	/**
-	 * Wire the container to return a schema-aware ObjectService stub.
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return EuExpenditureGuard
+	 */
+	private function buildGuard(object $store): EuExpenditureGuard {
+		return new EuExpenditureGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+	}//end buildGuard()
+
+	/**
+	 * Rebuild the guard over a schema-aware ObjectService stub.
 	 *
 	 * @param array<string,array<mixed>> $recordsBySchema Records keyed by schema slug.
 	 *
 	 * @return void
 	 */
 	private function wireObjectService(array $recordsBySchema): void {
-		$this->container->method('get')->willReturn(GuardObjectServiceStub::make($recordsBySchema));
+		$this->guard = $this->buildGuard(store: GuardObjectServiceStub::make($recordsBySchema));
 	}//end wireObjectService()
 
 	/**
@@ -286,7 +301,7 @@ class EuExpenditureGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testDeclareExceptionFailsClosed(): void {
-		$this->container->method('get')->willThrowException(new \RuntimeException('ObjectService down'));
+		$this->guard = $this->buildGuard(store: $this->buildUnavailableObjectServiceStub());
 		$this->logger->expects($this->once())->method('error');
 
 		$object = [
@@ -299,4 +314,67 @@ class EuExpenditureGuardTest extends TestCase {
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse($this->guard->canDeclare(euExpenditureId: 'exp-8', object: $object));
 	}//end testDeclareExceptionFailsClosed()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService down');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('ObjectService down');
+			}//end find()
+		};
+	}//end buildUnavailableObjectServiceStub()
 }//end class

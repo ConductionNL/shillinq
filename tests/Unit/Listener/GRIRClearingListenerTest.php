@@ -34,7 +34,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\GRIRClearingListener;
@@ -45,6 +44,7 @@ use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\ThreeWayMatchingEngine;
 use OCA\Shillinq\Service\ToleranceProfileService;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -403,14 +403,14 @@ class GRIRClearingListenerTest extends TestCase {
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($os),
 		);
 
 		$grirService = new GRIRClearingService(
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($os),
 		);
 
 		$grirListener = new GRIRClearingListener(grirClearingService: $grirService, logger: $logger);
@@ -459,14 +459,14 @@ class GRIRClearingListenerTest extends TestCase {
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($os),
 		);
 		$matchingEngine = new ThreeWayMatchingEngine(
 			appConfig: $appConfig,
 			toleranceService: $tolerance,
 			invoiceService: $invoiceService,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($os),
 		);
 
 		$matchResult = $matchingEngine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-1');

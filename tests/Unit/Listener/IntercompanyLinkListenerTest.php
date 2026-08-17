@@ -31,13 +31,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Service\IntercompanyJournalService;
 use OCA\Shillinq\Service\IntercompanyLinkService;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -86,7 +86,7 @@ class IntercompanyLinkListenerTest extends TestCase {
 			appConfig: $appConfig,
 			journalService: new IntercompanyJournalService(),
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objects),
 		);
 
 		$this->listener = new IntercompanyLinkListener(

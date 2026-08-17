@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeaseReassessmentService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -161,15 +161,21 @@ final class LeaseReassessmentServiceTest extends TestCase {
 			/**
 			 * Capture saveObject calls; echo the row back.
 			 *
+			 * The schema may arrive as an explicit argument or through a
+			 * preceding setSchema() call — the real ObjectService honours both,
+			 * so the capture falls back to the last schema that was set rather
+			 * than filing the row under an empty key.
+			 *
 			 * @param array<string,mixed> $object The row.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
-				$this->saved[$schema] = ($this->saved[$schema] ?? []);
-				$this->saved[$schema][] = $object;
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+				$target = ($schema !== '') ? $schema : $this->lastSchema;
+				$this->saved[$target] = ($this->saved[$target] ?? []);
+				$this->saved[$target][] = $object;
 				return $object;
 			}//end saveObject()
 		};
@@ -180,7 +186,7 @@ final class LeaseReassessmentServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			calculator: new LeaseAmortizationCalculator(),
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		return [$service, $stub];

@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -126,8 +126,10 @@ final class SupplierQualificationGuardTest extends TestCase {
 	 * @return SupplierQualificationGuard
 	 */
 	private function buildGuard(array $data): SupplierQualificationGuard {
+		$stub = $this->buildStub($data);
+
 		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($this->buildStub($data));
+		$container->method('get')->willReturn($stub);
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
@@ -135,7 +137,7 @@ final class SupplierQualificationGuardTest extends TestCase {
 		return new SupplierQualificationGuard(
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 	}//end buildGuard()
 

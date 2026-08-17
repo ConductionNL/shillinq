@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\RequisitionConversionGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Service\RequisitionConversionService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
@@ -282,7 +282,7 @@ final class RequisitionConversionServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			notificationManager: $this->lenientNotificationManager(),
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		return new RequisitionConversionService(
@@ -291,7 +291,7 @@ final class RequisitionConversionServiceTest extends TestCase {
 			guard: $guard,
 			purchaseOrderService: $purchaseOrderService,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()
