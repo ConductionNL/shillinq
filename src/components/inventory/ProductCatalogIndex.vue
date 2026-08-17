@@ -69,27 +69,44 @@
 			data-testid="product-catalog-table"
 			:columns="columns"
 			:rows="products"
-			:isLoading="loading"
-			:emptyLabel="emptyLabel">
-			<template #cell-productId="{ row }">
+			:loading="loading"
+			:emptyText="emptyLabel">
+			<!--
+				⚠️ THREE NAMES ON THIS COMPONENT ARE EASY TO GET WRONG AND FAIL
+				SILENTLY. CnDataTable 2.3.0 declares the props `loading` and
+				`emptyText`, and the per-column slot `#column-{key}` (scoped with
+				`{ row, value }`). `isLoading`, `emptyLabel` and `#cell-{key}` are
+				NOT part of its API: Vue falls the two attributes through onto the
+				root DOM element and drops the unmatched slot content, so all three
+				render nowhere while the table looks healthy. Measured on the rig:
+				with `#cell-unitPrice` the price column printed the raw `1899`
+				instead of `1899.00 EUR`, and with `:emptyLabel` the empty state
+				printed CnDataTable's untranslated default `No items found`.
+				⚠️ Six other files in this repo use the `#cell-*` spelling on
+				CnDataTable (three-way-match, vendor-performance, reporting,
+				bookkeeping DocumentsView/TransactionsView, invoice AdminInvoiceList)
+				— ~30 overrides that are inert today. Reported, not fixed here:
+				each one changes what those pages render and needs its own check.
+			-->
+			<template #column-productId="{ row }">
 				<code class="product-catalog__id">{{ row.productId }}</code>
 			</template>
-			<template #cell-name="{ row }">
+			<template #column-name="{ row }">
 				{{ row.name || unknownLabel }}
 			</template>
-			<template #cell-category="{ row }">
+			<template #column-category="{ row }">
 				{{ row.category || unknownLabel }}
 			</template>
-			<template #cell-unitPrice="{ row }">
+			<template #column-unitPrice="{ row }">
 				{{ money(row.unitPrice, row.currency) }}
 			</template>
-			<template #cell-unitCost="{ row }">
+			<template #column-unitCost="{ row }">
 				{{ money(row.unitCost, 'EUR') }}
 			</template>
-			<template #cell-quantityOnHand="{ row }">
+			<template #column-quantityOnHand="{ row }">
 				{{ quantity(row.quantityOnHand) }}
 			</template>
-			<template #cell-status="{ row }">
+			<template #column-status="{ row }">
 				{{ row.status || unknownLabel }}
 			</template>
 		</CnDataTable>

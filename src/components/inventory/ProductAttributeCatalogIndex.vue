@@ -62,12 +62,14 @@
 			data-testid="product-attributes-table"
 			:columns="columns"
 			:rows="attributes"
-			:isLoading="loading"
-			:emptyLabel="t('shillinq', 'No attribute definitions are available.')">
-			<template #cell-isRequired="{ row }">
+			:loading="loading"
+			:emptyText="t('shillinq', 'No attribute definitions are available.')">
+			<!-- `#column-<key>` — see the note in ProductCatalogIndex.vue: the
+			     `cell-*` spelling is not a CnDataTable slot and renders nowhere. -->
+			<template #column-isRequired="{ row }">
 				{{ row.isRequired ? t('shillinq', 'Yes') : t('shillinq', 'No') }}
 			</template>
-			<template #cell-validationRule="{ row }">
+			<template #column-validationRule="{ row }">
 				{{ row.validationRule || '—' }}
 			</template>
 		</CnDataTable>
