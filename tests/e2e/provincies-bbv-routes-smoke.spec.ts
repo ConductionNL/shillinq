@@ -46,7 +46,7 @@
  * Mount/render coverage lives in `provincies-bbv-variant.spec.ts`, which
  * drives a real browser.
  *
- * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#smoke-tests
+ * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#task-26
  */
 
 import { test, expect, type APIRequestContext } from '@playwright/test'
