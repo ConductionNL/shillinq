@@ -52,6 +52,7 @@ use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -85,6 +86,16 @@ class DunningRunService {
 	 * App-config key for the admin-error lookback window (days).
 	 */
 	private const CFG_ADMIN_ERROR_LOOKBACK_DAYS = 'dunning.admin_error_lookback_days';
+
+	/**
+	 * The `kanaal` enum value for a collection-agency API dispatch.
+	 *
+	 * Matches `LogIncassoBureauAdapter` and the `channel` enum declared in
+	 * `lib/Settings/register.d/bookkeeping-credit-control-dunning.json`, so a
+	 * result this service builds itself (a refusal, before any adapter is
+	 * reached) carries the same channel as one the adapter builds.
+	 */
+	private const INCASSO_CHANNEL = 'COLLECTION_AGENCY_API';
 
 	/**
 	 * Construct the service with lazy DI of OR's ObjectService.
@@ -284,10 +295,11 @@ class DunningRunService {
 	 *     changed in this style/quality-only pass.
 	 */
 	public function resolveLadderForKlant(string $administrationId, string $customerId, string $baseLadderId): array {
-		$baseLadder = $this->fetchOne(schema: 'DunningLadder', filters: ['id' => $baseLadderId]);
-		if ($baseLadder === null) {
-			$baseLadder = $this->fetchOne(schema: 'DunningLadder', filters: ['slug' => $baseLadderId]);
-		}
+		$baseLadder = $this->fetchById(
+			schema: 'DunningLadder',
+			id: $baseLadderId,
+			fallbackProperty: 'slug'
+		);
 
 		if ($baseLadder === null) {
 			throw new RuntimeException(sprintf('DunningLadder %s not found.', $baseLadderId));
@@ -503,7 +515,7 @@ class DunningRunService {
 		string $resolution = 'resolve',
 		?float $partialSettlement = null,
 	): array {
-		$pause = $this->fetchOne(schema: 'DunningPauseDispute', filters: ['id' => $pauseId]);
+		$pause = $this->fetchById(schema: 'DunningPauseDispute', id: $pauseId);
 		if ($pause === null) {
 			throw new RuntimeException(sprintf('DunningPauseDispute %s not found.', $pauseId));
 		}
@@ -907,13 +919,39 @@ class DunningRunService {
 	 * REQ-CCD-008 / task-20: dispatch the stage-5 dossier to the configured
 	 * incasso bureau via the bound `IncassoBureauAdapterInterface`.
 	 *
-	 * The dossier MUST already be composed (by `IncassoDossierComposer`). On
-	 * a DELIVERED outcome this method seals the linked `DunningRun` to
-	 * `lifecycleState=locked` (REQ-CCD-002 immutability + IncassoDossierComposer
-	 * REQ-CCD-008 lock) and stamps the provider's `dossierId` on the run's
-	 * `postageStatus` field for evidence-trail. On any other outcome the run
-	 * remains `executed` and the caller is expected to queue a retry / surface
-	 * the error to the operator.
+	 * The dossier MUST already be composed (by `IncassoDossierComposer`). The
+	 * linked `DunningRun` is sealed to `lifecycleState=locked` (REQ-CCD-002
+	 * immutability + IncassoDossierComposer REQ-CCD-008 lock) and the
+	 * provider's `dossierId` is stamped on the run's `postageStatus` field for
+	 * evidence-trail. On any outcome other than DELIVERED the seal is released
+	 * and the run returns to `executed`, so the caller can queue a retry /
+	 * surface the error to the operator.
+	 *
+	 * ## Ordering — the seal is CLAIMED BEFORE the dossier leaves
+	 *
+	 * 🔴 This method used to call the adapter FIRST and only then look the run
+	 * up, with `filters: ['id' => …]` — a shape real OpenRegister answers with
+	 * zero rows (see `fetchById()`). The dossier was therefore handed to the
+	 * collection agency while the run was NEVER sealed, the `dossierId` was
+	 * never stamped, and nothing stopped the same stage-5 dossier being
+	 * dispatched to the agency again. Two green unit tests could not see it
+	 * because their double matched `id` as a plain array key.
+	 *
+	 * A dispatch to a debt-collection agency is not revocable, so the write
+	 * that records it must not be able to fail after it. The order is:
+	 *
+	 *  1. resolve the run BY IDENTITY — absent means FAIL CLOSED, no dispatch;
+	 *  2. refuse a run already sealed `locked` — that dossier is already with
+	 *     the agency, and re-dispatching it is the harm this seal prevents;
+	 *  3. WRITE the seal (`locked`, delivery PENDING) — if that write fails,
+	 *     nothing is dispatched;
+	 *  4. dispatch;
+	 *  5. stamp the provider's `dossierId` on the sealed run.
+	 *
+	 * On a non-DELIVERED outcome the seal is released back to `executed`. If
+	 * THAT write fails the run stays `locked`, i.e. it fails closed: a
+	 * blocked retry is recoverable by an operator, a duplicate dossier at a
+	 * collection agency is not.
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param string $invoiceId Invoice FK.
@@ -930,6 +968,58 @@ class DunningRunService {
 		array $dossier,
 		string $dunningRunId,
 	): DunningChannelSendResult {
+		// 1. Resolve the run BEFORE anything leaves the building. A dossier
+		// dispatched against a run this app cannot find is a dossier with no
+		// evidence trail and no re-dispatch guard, so absent = refuse.
+		$run = $this->fetchById(schema: 'DunningRun', id: $dunningRunId);
+		if ($run === null) {
+			$this->logger->error(
+				'Shillinq: transferToIncasso could not find DunningRun ' . $dunningRunId
+				. ' — dossier NOT dispatched'
+			);
+			return new DunningChannelSendResult(
+				channel: self::INCASSO_CHANNEL,
+				deliveryStatus: 'FAILED',
+				errorMessage: sprintf('DunningRun %s not found — dossier not dispatched.', $dunningRunId)
+			);
+		}
+
+		// 2. A sealed run has already been handed to the agency. Report the
+		// dossier that IS with them rather than sending a second one.
+		if ((string)($run['lifecycleState'] ?? '') === 'locked') {
+			$this->logger->warning(
+				'Shillinq: DunningRun ' . $dunningRunId . ' is already sealed — refusing to re-dispatch'
+			);
+			return new DunningChannelSendResult(
+				channel: self::INCASSO_CHANNEL,
+				deliveryStatus: 'DELIVERED',
+				extras: [
+					'dossierId' => (string)(((array)($run['postageStatus'] ?? []))['dossierId'] ?? ''),
+					'alreadyTransferred' => true,
+				]
+			);
+		}
+
+		// 3. Claim the seal FIRST. A failure here costs a retry; a failure
+		// after the dispatch would cost a duplicate dossier.
+		$sealed = $run;
+		$sealed['lifecycleState'] = 'locked';
+		$sealed['deliveryStatus'] = 'PENDING';
+		try {
+			$this->saveObject(schema: 'DunningRun', data: $sealed);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'Shillinq: failed to seal DunningRun ' . $dunningRunId
+				. ' — dossier NOT dispatched: ' . $e->getMessage()
+			);
+			return new DunningChannelSendResult(
+				channel: self::INCASSO_CHANNEL,
+				deliveryStatus: 'FAILED',
+				errorMessage: sprintf('Could not seal DunningRun %s — dossier not dispatched.', $dunningRunId)
+			);
+		}
+
+		// 4. Dispatch.
 		$adapter = $this->resolveIncassoAdapter();
 		$result = $adapter->transfer(
 			administrationId: $administrationId,
@@ -945,35 +1035,61 @@ class DunningRunService {
 					$result->deliveryStatus
 				)
 			);
+			$this->releaseIncassoSeal(run: $run, dunningRunId: $dunningRunId, outcome: $result->deliveryStatus);
 			return $result;
 		}
 
-		$run = $this->fetchOne(schema: 'DunningRun', filters: ['id' => $dunningRunId]);
-		if ($run === null) {
-			$this->logger->warning('Shillinq: transferToIncasso could not find DunningRun ' . $dunningRunId);
-			return $result;
-		}
-
-		$run['lifecycleState'] = 'locked';
-		$run['deliveryStatus'] = 'DELIVERED';
-		$existing = (array)($run['postageStatus'] ?? []);
+		// 5. Stamp the provider's evidence on the already-sealed run.
+		$sealed['deliveryStatus'] = 'DELIVERED';
+		$existing = (array)($sealed['postageStatus'] ?? []);
 		$dossierId = (string)($result->extras['dossierId'] ?? '');
 		if ($dossierId !== '') {
 			$existing['dossierId'] = $dossierId;
 		}
 
 		if ($existing !== []) {
-			$run['postageStatus'] = $existing;
+			$sealed['postageStatus'] = $existing;
 		}
 
 		try {
-			$this->saveObject(schema: 'DunningRun', data: $run);
+			$this->saveObject(schema: 'DunningRun', data: $sealed);
 		} catch (\Throwable $e) {
-			$this->logger->warning('Shillinq: failed to seal DunningRun ' . $dunningRunId . ': ' . $e->getMessage());
+			// The seal itself is already persisted, so the run cannot be
+			// re-dispatched; only the provider's dossierId is missing. Loud,
+			// because the evidence trail now needs manual repair.
+			$this->logger->error(
+				'Shillinq: DunningRun ' . $dunningRunId . ' was dispatched and sealed but its dossierId '
+				. 'could not be stamped: ' . $e->getMessage()
+			);
 		}
 
 		return $result;
 	}//end transferToIncasso()
+
+	/**
+	 * Release the pre-dispatch seal after a non-DELIVERED outcome.
+	 *
+	 * The run goes back to `executed` so the operator can retry. When the
+	 * release itself fails the run STAYS `locked` — deliberately: a blocked
+	 * retry is recoverable, a duplicate dossier at a collection agency is not.
+	 *
+	 * @param array<string,mixed> $run          The run as it was before sealing.
+	 * @param string              $dunningRunId The run's identifier, for logging.
+	 * @param string              $outcome      The adapter's delivery status.
+	 *
+	 * @return void
+	 */
+	private function releaseIncassoSeal(array $run, string $dunningRunId, string $outcome): void {
+		$run['deliveryStatus'] = $outcome;
+		try {
+			$this->saveObject(schema: 'DunningRun', data: $run);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'Shillinq: DunningRun ' . $dunningRunId . ' stays sealed after a ' . $outcome
+				. ' transfer — the seal could not be released: ' . $e->getMessage()
+			);
+		}
+	}//end releaseIncassoSeal()
 
 	/**
 	 * REQ-CCD-009 / task-21: dispatch a stage-4 ingebrekestelling registered
@@ -1004,7 +1120,7 @@ class DunningRunService {
 		$adapter = $this->resolvePostNlAdapter();
 		$result = $adapter->sendRegisteredLetter(payload: $payload);
 
-		$run = $this->fetchOne(schema: 'DunningRun', filters: ['id' => $dunningRunId]);
+		$run = $this->fetchById(schema: 'DunningRun', id: $dunningRunId);
 		if ($run !== null) {
 			$postage = ((array)($run['postageStatus'] ?? []));
 			$extras = $result->postageStatus();
@@ -1083,6 +1199,47 @@ class DunningRunService {
 
 		return $rows[0];
 	}//end fetchOne()
+
+	/**
+	 * Look one record up by its IDENTIFIER.
+	 *
+	 * ⚠️ NOT `fetchOne(schema: …, filters: ['id' => …])`. `filters` addresses
+	 * the object's JSON properties; the ObjectEntity's `id` is its own column,
+	 * merged into the serialised output only afterwards. That shape matches
+	 * ZERO rows against real OpenRegister for every value, uuids included, and
+	 * it does so silently — no exception, nothing logged, an empty result
+	 * indistinguishable from a genuinely absent record. Every identifier
+	 * lookup in this service used to be written that way, so each one took its
+	 * not-found branch on every call in production while passing green under a
+	 * double that matched `id` as a plain array key.
+	 *
+	 * `ObjectIdentifier::findOne()` uses `find()`, which resolves the entity by
+	 * id/uuid/slug, and gives it its own try/catch because `find()` THROWS on a
+	 * miss rather than returning null.
+	 *
+	 * @param string      $schema           Schema slug.
+	 * @param string      $id               The record's uuid, id or slug.
+	 * @param string|null $fallbackProperty JSON property to match when $id is
+	 *                                      not an identifier the engine resolves.
+	 *
+	 * @return array<string,mixed>|null The record, or null when genuinely absent.
+	 */
+	private function fetchById(string $schema, string $id, ?string $fallbackProperty = null): ?array {
+		try {
+			$scoped = $this->objectService
+				->setRegister($this->register())
+				->setSchema($schema);
+		} catch (\Throwable $e) {
+			$this->logger->warning('Shillinq: dunning scope for ' . $schema . ' failed: ' . $e->getMessage());
+			return null;
+		}
+
+		return ObjectIdentifier::findOne(
+			scoped: $scoped,
+			id: $id,
+			fallbackProperty: $fallbackProperty
+		);
+	}//end fetchById()
 
 	/**
 	 * Find all matching records via the canonical OR ObjectService API.
