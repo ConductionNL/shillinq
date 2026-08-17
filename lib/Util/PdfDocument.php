@@ -57,6 +57,11 @@ final class PdfDocument {
 	 * Object numbers MUST be contiguous from 1: the xref table is positional,
 	 * so a gap would point a reader at the wrong byte offset.
 	 *
+	 * ℹ️ An instance method rather than a static one so callers can hold it as
+	 * an injected collaborator — `phpmd`'s CleanCode ruleset is enabled here
+	 * and reports static access as a finding, and `development` currently
+	 * carries ZERO phpmd findings across `lib/`.
+	 *
 	 * @param array<int,string> $objects Object bodies keyed by object number
 	 *                                   (without the `N 0 obj` / `endobj` wrapper).
 	 *
@@ -64,7 +69,7 @@ final class PdfDocument {
 	 *
 	 * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
 	 */
-	public static function assemble(array $objects): string {
+	public function assemble(array $objects): string {
 		ksort($objects);
 		$count = count($objects);
 
@@ -99,7 +104,7 @@ final class PdfDocument {
 	 *
 	 * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
 	 */
-	public static function escapeString(string $value): string {
+	public function escapeString(string $value): string {
 		$escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $value);
 
 		return (string)preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $escaped);

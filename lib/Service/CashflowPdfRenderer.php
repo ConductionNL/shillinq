@@ -131,6 +131,23 @@ class CashflowPdfRenderer {
 	private const CHART_HALF_HEIGHT = 300;
 
 	/**
+	 * Construct the renderer.
+	 *
+	 * `$pdf` defaults to a fresh {@see PdfDocument} so the existing
+	 * `new CashflowPdfRenderer()` call shape — used by the container and by
+	 * this class's own tests — keeps working unchanged. It is a collaborator
+	 * rather than a static utility because phpmd's CleanCode ruleset reports
+	 * static access, and `lib/` currently carries zero phpmd findings.
+	 *
+	 * @param PdfDocument $pdf The PDF object serialiser.
+	 */
+	public function __construct(
+		private readonly PdfDocument $pdf = new PdfDocument(),
+	) {
+
+	}//end __construct()
+
+	/**
 	 * Render a cashflow horizon to a textual PDF-compatible summary.
 	 *
 	 * Returns a string payload suitable for downstream PDF wrapping (e.g.
@@ -352,7 +369,7 @@ class CashflowPdfRenderer {
 		$ops[] = sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y));
 
 		foreach ($lines as $line) {
-			$ops[] = '(' . PdfDocument::escapeString(rtrim($line)) . ') Tj';
+			$ops[] = '(' . $this->pdf->escapeString(rtrim($line)) . ') Tj';
 			$ops[] = 'T*';
 		}
 
@@ -404,7 +421,7 @@ class CashflowPdfRenderer {
 			'BT',
 			'/F1 9 Tf',
 			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y - 18)),
-			'(' . PdfDocument::escapeString(
+			'(' . $this->pdf->escapeString(
 				'Horizon ' . (string)($horizon['horizonStart'] ?? '?') . ' .. ' . (string)($horizon['horizonEnd'] ?? '?')
 				. '   blue = above buffer, amber = pre-alert, red = below buffer'
 			) . ') Tj',
@@ -420,21 +437,24 @@ class CashflowPdfRenderer {
 		foreach ($weeks as $index => $week) {
 			$balance = (float)($week['closingBalance'] ?? 0);
 			$height = (($balance / $scale) * self::CHART_HALF_HEIGHT);
-			$x = (self::MARGIN_X + ($index * $slot) + (($slot - $barWidth) / 2));
+			$barX = (self::MARGIN_X + ($index * $slot) + (($slot - $barWidth) / 2));
 
-			$y = $zeroY;
+			// A negative balance hangs DOWN from the zero line: the rectangle's
+			// origin is its bottom-left corner, so the bar's foot moves down by
+			// its own (negative) height and the height itself is drawn positive.
+			$barY = $zeroY;
 			if ($height < 0) {
-				$y = ($zeroY + $height);
+				$barY = ($zeroY + $height);
 			}
 
 			$ops[] = $this->bufferColour(status: (string)($week['bufferStatus'] ?? ''));
-			$ops[] = sprintf('%.2f %.2f %.2f %.2f re', $x, $y, $barWidth, abs($height));
+			$ops[] = sprintf('%.2f %.2f %.2f %.2f re', $barX, $barY, $barWidth, abs($height));
 			$ops[] = 'f';
 
 			$ops[] = 'BT';
 			$ops[] = '/F1 7 Tf';
-			$ops[] = sprintf('%.2f %.2f Td', $x, ($zeroY - self::CHART_HALF_HEIGHT - 14));
-			$ops[] = '(' . PdfDocument::escapeString('w' . (string)($week['weekNumber'] ?? '?')) . ') Tj';
+			$ops[] = sprintf('%.2f %.2f Td', $barX, ($zeroY - self::CHART_HALF_HEIGHT - 14));
+			$ops[] = '(' . $this->pdf->escapeString('w' . (string)($week['weekNumber'] ?? '?')) . ') Tj';
 			$ops[] = 'ET';
 		}
 
@@ -495,6 +515,6 @@ class CashflowPdfRenderer {
 		$objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
 		$objects[2] = '<< /Type /Pages /Kids [' . implode(' ', $kids) . '] /Count ' . count($kids) . ' >>';
 
-		return PdfDocument::assemble(objects: $objects);
+		return $this->pdf->assemble(objects: $objects);
 	}//end document()
 }//end class
