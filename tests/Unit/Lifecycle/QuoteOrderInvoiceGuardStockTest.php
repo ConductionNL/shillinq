@@ -24,8 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\QuoteOrderInvoiceGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -84,21 +84,44 @@ class QuoteOrderInvoiceGuardStockTest extends TestCase {
 		$this->guard = new QuoteOrderInvoiceGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub([])),
 		);
 
 	}//end setUp()
 
 	/**
-	 * Wire the container to return a fluent ObjectService stub serving the given
-	 * records by schema (matching the ADR-022 setRegister/setSchema/findAll API).
+	 * Rebuild the guard on a fluent ObjectService stub serving the given records
+	 * by schema (matching the ADR-022 setRegister/setSchema/findAll API).
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different records.
 	 *
 	 * @param array<string,array<int,array<string,mixed>>> $itemsBySchema Map schema -> records.
 	 *
 	 * @return void
 	 */
 	private function stubObjectService(array $itemsBySchema): void {
-		$service = new class($itemsBySchema) {
+		$service = $this->buildObjectServiceStub($itemsBySchema);
+
+		$this->container->method('get')->willReturn($service);
+
+		$this->guard = new QuoteOrderInvoiceGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($service),
+		);
+
+	}//end stubObjectService()
+
+	/**
+	 * Build a duck-typed ObjectService store over the given records.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $itemsBySchema Map schema -> records.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $itemsBySchema): object {
+		return new class($itemsBySchema) {
 
 			/**
 			 * Records keyed by schema.
@@ -180,9 +203,7 @@ class QuoteOrderInvoiceGuardStockTest extends TestCase {
 			}//end findAll()
 		};
 
-		$this->container->method('get')->willReturn($service);
-
-	}//end stubObjectService()
+	}//end buildObjectServiceStub()
 
 	/**
 	 * A complete delivery line referencing an order line with a positive quantity.

@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PayrollUpaHandoffService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -169,7 +169,7 @@ final class PayrollUpaHandoffServiceTest extends TestCase {
 		return new PayrollUpaHandoffService(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

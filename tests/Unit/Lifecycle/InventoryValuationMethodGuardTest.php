@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\InventoryValuationMethodGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -84,7 +84,7 @@ class InventoryValuationMethodGuardTest extends TestCase {
 		$this->guard = new InventoryValuationMethodGuard(
 			appConfig: $appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->os),
 		);
 
 	}//end setUp()

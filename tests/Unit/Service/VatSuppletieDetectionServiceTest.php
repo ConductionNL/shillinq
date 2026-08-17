@@ -29,9 +29,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
 use OCA\Shillinq\Service\VatSuppletieDetectionService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -95,14 +95,14 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		$vatReturnService = new VATReturnService(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		$detectionService = new VatSuppletieDetectionService(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			vatReturnService: $vatReturnService,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		return [$vatReturnService, $detectionService];

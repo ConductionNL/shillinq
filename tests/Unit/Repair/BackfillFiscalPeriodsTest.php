@@ -26,9 +26,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\BackfillFiscalPeriods;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -372,11 +372,18 @@ class BackfillFiscalPeriodsTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register,
-				string $schema,
+				string $register = '',
+				string $schema = '',
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 			): void {
+				// The schema may arrive positionally or, when the caller reaches
+				// this double through the ADR-084 contract adapter, via the
+				// preceding setSchema() on the fluent chain.
+				if ($schema === '') {
+					$schema = $this->schema;
+				}
+
 				$this->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 			}
 		};
@@ -389,7 +396,7 @@ class BackfillFiscalPeriodsTest extends TestCase {
 		return new BackfillFiscalPeriods(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),
 		);
 
 	}//end makeStep()

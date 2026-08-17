@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\ObligationTaskBridge;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -337,6 +338,16 @@ class ObligationTaskBridgeTest extends TestCase {
 
 				throw new \RuntimeException('not available: ' . $id);
 			}
+		);
+
+		// Since ADR-084 the bridge reads OpenRegister through the injected
+		// ObjectServiceInterface rather than through the container, so the
+		// seeded store above has to be handed to the constructor. Rebuild the
+		// bridge with it; the container mock stays for the register lookup.
+		$this->bridge = new ObligationTaskBridge(
+			container: $this->container,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter(inner: $objectService),
 		);
 
 		$deadlines = $this->bridge->listOpenObligationDeadlines();

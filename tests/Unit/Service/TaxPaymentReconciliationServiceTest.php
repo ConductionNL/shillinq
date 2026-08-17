@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\TaxPaymentReconciliationService;
 use OCA\Shillinq\Service\TaxReportCalculator;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -68,13 +68,29 @@ final class TaxPaymentReconciliationServiceTest extends TestCase {
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
-		$this->service = new TaxPaymentReconciliationService(
-			appConfig: $this->appConfig,
-			calculator: new TaxReportCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$this->service = $this->buildService($this->buildObjectServiceStub([]));
 
 	}//end setUp()
+
+	/**
+	 * Build the subject around a seeded in-memory ObjectService store.
+	 *
+	 * The store used to reach the subject through the container; ADR-084 injects
+	 * it as a contract-typed constructor argument instead, so each test rebuilds
+	 * the subject with its own store.
+	 *
+	 * @param object $store The seeded in-memory ObjectService double.
+	 *
+	 * @return TaxPaymentReconciliationService
+	 */
+	private function buildService(object $store): TaxPaymentReconciliationService {
+		return new TaxPaymentReconciliationService(
+			appConfig: $this->appConfig,
+			calculator: new TaxReportCalculator(),
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildService()
 
 	/**
 	 * A payment that matches a GL posting reports matched with zero variance (REQ-VPB-008).
@@ -97,7 +113,7 @@ final class TaxPaymentReconciliationServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($records));
+		$this->service = $this->buildService($this->buildObjectServiceStub($records));
 
 		$result = $this->service->reconcile(administrationId: 'adm-1', paymentId: 'pay-1');
 
@@ -128,7 +144,7 @@ final class TaxPaymentReconciliationServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($records));
+		$this->service = $this->buildService($this->buildObjectServiceStub($records));
 
 		$result = $this->service->reconcile(administrationId: 'adm-1', paymentId: 'pay-1');
 
@@ -145,7 +161,7 @@ final class TaxPaymentReconciliationServiceTest extends TestCase {
 	 */
 	public function testUnknownPaymentReturnsUnmatched(): void {
 		$records = ['TaxPaymentTracking' => [], 'GLLine' => []];
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($records));
+		$this->service = $this->buildService($this->buildObjectServiceStub($records));
 
 		$result = $this->service->reconcile(administrationId: 'adm-1', paymentId: 'missing');
 

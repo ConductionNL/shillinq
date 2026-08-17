@@ -19,11 +19,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\BookingNotificationController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BookingNotificationService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -125,16 +125,73 @@ class BookingNotificationControllerTest extends TestCase {
 
 		$this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
 
-		$this->controller = new BookingNotificationController(
+		$this->controller = $this->buildController(store: $this->buildEmptyObjectServiceStub());
+	}//end setUp()
+
+	/**
+	 * Build the controller over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the controller is built — parking it on the
+	 * container after the fact leaves the controller reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return BookingNotificationController
+	 */
+	private function buildController(object $store): BookingNotificationController {
+		return new BookingNotificationController(
 			request: $this->request,
 			settingsService: $this->settingsService,
 			groupManager: $this->groupManager,
 			userSession: $this->userSession,
 			logger: $this->logger,
 			administrationContext: $this->administrationContext,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($store),
 		);
-	}//end setUp()
+	}//end buildController()
+
+	/**
+	 * Build an empty in-memory ObjectService double.
+	 *
+	 * @return object
+	 */
+	private function buildEmptyObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Answer an empty result set.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 */
+			public function findAll(array $params = []): array {
+				return [];
+			}//end findAll()
+		};
+	}//end buildEmptyObjectServiceStub()
 
 	/**
 	 * GetBookingTriggers throws OCSForbiddenException when user is unauthenticated.
@@ -178,7 +235,7 @@ class BookingNotificationControllerTest extends TestCase {
 		};
 		// phpcs:enable
 		// phpcs:disable CustomSn.Functions.NamedParameters
-		$this->container->method('get')->willReturn($objectService);
+		$this->controller = $this->buildController(store: $objectService);
 		// phpcs:enable CustomSn.Functions.NamedParameters
 
 		$response = $this->controller->getBookingTriggers(id: 'booking-123');
@@ -230,7 +287,7 @@ class BookingNotificationControllerTest extends TestCase {
 		};
 		// phpcs:enable
 		// phpcs:disable CustomSn.Functions.NamedParameters
-		$this->container->method('get')->willReturn($objectService);
+		$this->controller = $this->buildController(store: $objectService);
 		$this->administrationContext->method('canAccess')->willReturn(true);
 		// phpcs:enable CustomSn.Functions.NamedParameters
 
@@ -267,7 +324,7 @@ class BookingNotificationControllerTest extends TestCase {
 		};
 		// phpcs:enable
 		// phpcs:disable CustomSn.Functions.NamedParameters
-		$this->container->method('get')->willReturn($objectService);
+		$this->controller = $this->buildController(store: $objectService);
 		$this->administrationContext->method('canAccess')->willReturn(false);
 		// phpcs:enable CustomSn.Functions.NamedParameters
 
@@ -303,7 +360,7 @@ class BookingNotificationControllerTest extends TestCase {
 		};
 		// phpcs:enable
 		// phpcs:disable CustomSn.Functions.NamedParameters
-		$this->container->method('get')->willReturn($objectService);
+		$this->controller = $this->buildController(store: $objectService);
 		// An empty administrationId must still reach canAccess(), which
 		// returns false for it — assert the guard consults the seam rather
 		// than short-circuiting past it (the #474 defect).
@@ -360,7 +417,7 @@ class BookingNotificationControllerTest extends TestCase {
 		};
 		// phpcs:enable
 		// phpcs:disable CustomSn.Functions.NamedParameters
-		$this->container->method('get')->willReturn($objectService);
+		$this->controller = $this->buildController(store: $objectService);
 		// phpcs:enable CustomSn.Functions.NamedParameters
 
 		$response = $this->controller->getNotificationMonitor();
@@ -391,13 +448,13 @@ class BookingNotificationControllerTest extends TestCase {
 				return [['id' => 'trig-1', 'active' => true], ['id' => 'trig-2', 'active' => true]];
 			}
 
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
 				return $object;
 			}
 		};
 		// phpcs:enable
 		// phpcs:disable CustomSn.Functions.NamedParameters
-		$this->container->method('get')->willReturn($objectService);
+		$this->controller = $this->buildController(store: $objectService);
 		// phpcs:enable CustomSn.Functions.NamedParameters
 
 		$this->logger->expects(static::once())->method('warning');

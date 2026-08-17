@@ -44,9 +44,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BadoControleprotocolCalculator;
 use OCA\Shillinq\Service\BadoControleprotocolService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -99,7 +99,7 @@ final class BadoFindingEscalationTest extends TestCase {
 			appConfig: $appConfig,
 			calculator: new BadoControleprotocolCalculator(),
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->os),
 		);
 
 	}//end setUp()

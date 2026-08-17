@@ -88,6 +88,28 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	private object $inner;
 
 	/**
+	 * Active register, as set through the fluent setter.
+	 *
+	 * Production reaches OpenRegister as
+	 * `->setRegister($r)->setSchema($s)->saveObject($data)`, so the scope
+	 * arrives through the SETTERS, not as call arguments. Doubles, however,
+	 * frequently declare `saveObject(array $o, string $register, string $schema)`
+	 * and record what they were handed. The adapter therefore has to remember
+	 * the scope and hand it on, or such a double records `''` where production
+	 * sent `'shillinq'` — the adapter lying about the thing it stands in for.
+	 *
+	 * @var string
+	 */
+	private string $register = '';
+
+	/**
+	 * Active schema, as set through the fluent setter.
+	 *
+	 * @var string
+	 */
+	private string $schema = '';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param object $inner The duck-typed in-memory double to delegate to.
@@ -119,6 +141,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return static
 	 */
 	public function setRegister(string|int $register): static {
+		$this->register = (string) $register;
 		if (method_exists($this->inner, 'setRegister') === true) {
 			$this->inner->setRegister($register);
 		}
@@ -135,6 +158,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return static
 	 */
 	public function setSchema(string|int $schema): static {
+		$this->schema = (string) $schema;
 		if (method_exists($this->inner, 'setSchema') === true) {
 			$this->inner->setSchema($schema);
 		}
@@ -165,11 +189,16 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
-		if (method_exists($this->inner, 'findAll') === false) {
-			$this->unsupported(method: 'findAll');
-		}
-
-		return $this->inner->findAll($config);
+		return $this->invokeInner(
+			method: 'findAll',
+			primary: $config,
+			named: [
+				'register'      => $this->register,
+				'schema'        => $this->schema,
+				'_rbac'         => $_rbac,
+				'_multitenancy' => $_multitenancy,
+			]
+		);
 
 	}//end findAll()
 
@@ -202,19 +231,44 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		bool $_render = true,
 		bool $_audit = true
 	): ?ObjectEntityInterface {
+		// The scope can arrive EITHER through the fluent setters or as named
+		// arguments on the call itself -- BadoControleprotocolService does the
+		// latter, `find(id: …, register: …, schema: …)`. Honouring only one of
+		// the two routes makes the double record '' for a register production
+		// really did send.
+		if ($register !== null) {
+			$this->setRegister(register: $register);
+		}
+
 		if ($schema !== null) {
 			$this->setSchema(schema: $schema);
 		}
 
 		if (method_exists($this->inner, 'find') === true) {
-			return $this->entity(value: $this->inner->find($id));
+			return $this->entity(
+				value: $this->invokeInner(
+					method: 'find',
+					primary: $id,
+					named: [
+						'_extend'       => $_extend,
+						'extend'        => $_extend,
+						'files'         => $files,
+						'register'      => $this->register,
+						'schema'        => $this->schema,
+						'_rbac'         => $_rbac,
+						'_multitenancy' => $_multitenancy,
+						'_render'       => $_render,
+						'_audit'        => $_audit,
+					]
+				)
+			);
 		}
 
 		if (method_exists($this->inner, 'findAll') === false) {
 			$this->unsupported(method: 'find');
 		}
 
-		foreach ($this->inner->findAll([]) as $row) {
+		foreach ($this->findAll() as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
@@ -264,15 +318,32 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		?IUser $currentUser = null,
 		bool $failIfExists = false
 	): ObjectEntityInterface {
-		if (method_exists($this->inner, 'saveObject') === false) {
-			$this->unsupported(method: 'saveObject');
-		}
-
 		if ($schema !== null) {
 			$this->setSchema(schema: $schema);
 		}
 
-		$saved = $this->inner->saveObject($object);
+		if ($register !== null) {
+			$this->setRegister(register: $register);
+		}
+
+		$saved = $this->invokeInner(
+			method: 'saveObject',
+			primary: $object,
+			named: [
+				'register'       => $this->register,
+				'schema'         => $this->schema,
+				'uuid'           => $uuid,
+				'extend'         => $extend,
+				'_extend'        => $extend,
+				'_rbac'          => $_rbac,
+				'_multitenancy'  => $_multitenancy,
+				'silent'         => $silent,
+				'_validation'    => $_validation,
+				'uploadedFiles'  => $uploadedFiles,
+				'currentUser'    => $currentUser,
+				'failIfExists'   => $failIfExists,
+			]
+		);
 
 		// A double declared `: void`, or one that returns nothing on some
 		// branch, still persisted the payload — echo it back rather than
@@ -284,6 +355,94 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		return $this->entity(value: $saved) ?? new ObjectEntityStub(payload: $object);
 
 	}//end saveObject()
+
+	/**
+	 * Call a method on the wrapped double, supplying the arguments IT declares.
+	 *
+	 * The suite's doubles are not uniform. `saveObject()` alone appears as
+	 * `(array $object)`, `(array $o, string $register = '', string $schema = '')`,
+	 * `(array $o, string $register, string $schema)` — required, no defaults —
+	 * and `(array $o, string $r, string $s, bool $_rbac, bool $_multitenancy,
+	 * mixed $currentUser)`. A fixed positional call cannot serve all of those.
+	 *
+	 * So: the FIRST parameter is always the primary value (payload, id or
+	 * config) whatever it is named — doubles spell it `$object`, `$data`,
+	 * `$row`, `$id`, `$params` — and every later parameter is matched BY NAME
+	 * against what the adapter knows, falling back to the parameter's own
+	 * default.
+	 *
+	 * 🔴 Why this matters beyond tidiness: a required positional `$register`
+	 * that the adapter fails to supply raises `ArgumentCountError`, and
+	 * production listeners and repair steps `catch (\Throwable)`. The error is
+	 * swallowed and surfaces as "0 rows written" — indistinguishable from a
+	 * genuinely empty result. A defaulted `$register = ''` is worse still: no
+	 * error at all, the row is filed under the empty-string key, and later
+	 * reads of the real schema come back empty.
+	 *
+	 * @param string $method  The method to call on the double.
+	 * @param mixed  $primary The first argument, whatever the double calls it.
+	 * @param array  $named   Values the adapter can supply, keyed by parameter name.
+	 *
+	 * @return mixed Whatever the double returned.
+	 */
+	private function invokeInner(string $method, mixed $primary, array $named = []): mixed {
+		if (method_exists($this->inner, $method) === false) {
+			$this->unsupported(method: $method);
+		}
+
+		try {
+			$reflected = new \ReflectionMethod($this->inner, $method);
+		} catch (\ReflectionException) {
+			// A double reaching the method through __call cannot be reflected;
+			// fall back to the single-argument form, which is what every such
+			// double modelled before this adapter existed.
+			return $this->inner->$method($primary);
+		}
+
+		$args = [];
+		foreach ($reflected->getParameters() as $index => $parameter) {
+			if ($index === 0) {
+				$args[] = $primary;
+				continue;
+			}
+
+			if ($parameter->isVariadic() === true) {
+				break;
+			}
+
+			$name = $parameter->getName();
+			if (array_key_exists($name, $named) === true) {
+				$args[] = $named[$name];
+				continue;
+			}
+
+			if ($parameter->isDefaultValueAvailable() === true) {
+				$args[] = $parameter->getDefaultValue();
+				continue;
+			}
+
+			if ($parameter->allowsNull() === true) {
+				$args[] = null;
+				continue;
+			}
+
+			throw new LogicException(
+				sprintf(
+					'DuckObjectServiceAdapter cannot supply required parameter $%s of %s::%s(). '
+					. 'Give it a default on the double, or rename it to one the adapter knows '
+					. '(%s). Guessing a value here would file the row under the wrong key and '
+					. 'read as an empty result later.',
+					$name,
+					get_debug_type($this->inner),
+					$method,
+					implode(', ', array_keys($named))
+				)
+			);
+		}
+
+		return $reflected->invokeArgs($this->inner, $args);
+
+	}//end invokeInner()
 
 	/**
 	 * Normalise a double's return value to a contract entity.
@@ -372,6 +531,28 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		// Delegate to a double that models updateObject() directly, the way
+		// deleteObject()/saveObjects() already do. Without this arm the
+		// synthesised find()+saveObject() path below asks such a double for a
+		// saveObject() it never declared, and the adapter refuses -- which
+		// reads as "the update was never persisted".
+		if (method_exists($this->inner, 'updateObject') === true) {
+			return $this->entity(
+				value: $this->invokeInner(
+					method: 'updateObject',
+					primary: $objectId,
+					named: [
+						'data'          => $data,
+						'object'        => $data,
+						'register'      => $this->register,
+						'schema'        => $this->schema,
+						'_rbac'         => $_rbac,
+						'_multitenancy' => $_multitenancy,
+					]
+				)
+			) ?? new ObjectEntityStub(payload: $data);
+		}
+
 		$existing = $this->find(id: $objectId);
 		$merged   = $data;
 		if ($existing !== null) {
@@ -504,11 +685,23 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 		?IUser $currentUser = null,
 		bool $permanent = false
 	): bool {
-		if (method_exists($this->inner, 'deleteObject') === false) {
-			$this->unsupported(method: 'deleteObject');
+		if ($schema !== null) {
+			$this->setSchema(schema: $schema);
 		}
 
-		return (bool) $this->inner->deleteObject($uuid);
+		return (bool) $this->invokeInner(
+			method: 'deleteObject',
+			primary: $uuid,
+			named: [
+				'register'        => $this->register,
+				'schema'          => $this->schema,
+				'_rbac'           => $_rbac,
+				'_multitenancy'   => $_multitenancy,
+				'_retentionSweep' => $_retentionSweep,
+				'currentUser'     => $currentUser,
+				'permanent'       => $permanent,
+			]
+		);
 
 	}//end deleteObject()
 

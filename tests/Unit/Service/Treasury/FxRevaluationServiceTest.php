@@ -22,10 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Treasury;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Treasury\FxRevaluationService;
 use OCA\Shillinq\Service\Treasury\TreasuryRateService;
 use OCA\Shillinq\Service\Treasury\TreasuryRateSnapshot;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -159,14 +159,24 @@ final class FxRevaluationServiceTest extends TestCase {
 			/**
 			 * Record the saved object under its schema.
 			 *
+			 * The register/schema arguments are optional so the fake also answers
+			 * the single-argument call the contract adapter makes; the schema
+			 * then falls back to the one `setSchema()` last selected, which the
+			 * adapter applies from the caller's named `schema:` argument.
+			 *
 			 * @param array<string,mixed> $object Object payload.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
-				$this->saved[$schema][] = $object;
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+				$target = $schema;
+				if ($target === '') {
+					$target = $this->schema;
+				}
+
+				$this->saved[$target][] = $object;
 				return $object;
 			}//end saveObject()
 		};
@@ -187,11 +197,10 @@ final class FxRevaluationServiceTest extends TestCase {
 		$this->treasuryRateService = $this->createMock(TreasuryRateService::class);
 
 		$this->service = new FxRevaluationService(
-			$container,
 			$appConfig,
 			$this->treasuryRateService,
 			new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objectService),
 		);
 	}//end setUp()
 

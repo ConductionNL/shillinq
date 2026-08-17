@@ -19,10 +19,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\DepositReconciliationService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -106,7 +106,7 @@ final class DepositReconciliationServiceTest extends TestCase {
 		return new DepositReconciliationService(
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 	}//end makeService()
 
@@ -131,7 +131,7 @@ final class DepositReconciliationServiceTest extends TestCase {
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
 			adapter: $adapter,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 	}//end makeServiceWithAdapter()
 

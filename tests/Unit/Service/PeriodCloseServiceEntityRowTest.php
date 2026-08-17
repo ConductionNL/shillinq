@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PeriodCloseService;
 use OCA\Shillinq\Service\SuspenseAgeingService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use PHPUnit\Framework\TestCase;
@@ -279,7 +279,7 @@ final class PeriodCloseServiceEntityRowTest extends TestCase {
 			groupManager: $groupManager,
 			suspenseAgeing: $ageing,
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter(inner: $objectService),
 		);
 
 	}//end buildService()

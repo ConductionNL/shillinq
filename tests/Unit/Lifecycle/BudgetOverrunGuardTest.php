@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\BudgetOverrunGuard;
 use OCA\Shillinq\Service\BegrotingswijzigingStacker;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -79,14 +79,32 @@ final class BudgetOverrunGuardTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new BudgetOverrunGuard(
-			appConfig: $this->appConfig,
-			stacker: new BegrotingswijzigingStacker(),
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$this->guard = $this->buildGuard(
+			store: $this->objectServiceStub(taskFields: [], wijzigingen: [], glLines: [])
 		);
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return BudgetOverrunGuard
+	 */
+	private function buildGuard(object $store): BudgetOverrunGuard {
+		return new BudgetOverrunGuard(
+			appConfig: $this->appConfig,
+			stacker: new BegrotingswijzigingStacker(),
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * REQ-010: a posting within the authorized lasten stays within budget.
@@ -124,8 +142,8 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanPostWithinStackedBudgetSucceeds(): void {
-		$this->container->method('get')->willReturn(
-			$this->objectServiceStub(
+		$this->guard = $this->buildGuard(
+			store: $this->objectServiceStub(
 				taskFields: [['taskFieldCode' => '1.2', 'revenue' => 0.0, 'expenses' => 500.0]],
 				wijzigingen: [['status' => 'determined', 'movements' => [['taskFieldCode' => '1.2', 'lasten_delta' => 100.0]]]],
 				glLines: [['taskFieldCode' => '1.2', 'side' => 'debit', 'amount' => 400.0]]
@@ -143,8 +161,8 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanPostOverBudgetFails(): void {
-		$this->container->method('get')->willReturn(
-			$this->objectServiceStub(
+		$this->guard = $this->buildGuard(
+			store: $this->objectServiceStub(
 				taskFields: [['taskFieldCode' => '1.2', 'revenue' => 0.0, 'expenses' => 500.0]],
 				wijzigingen: [],
 				glLines: [['taskFieldCode' => '1.2', 'side' => 'debit', 'amount' => 450.0]]
@@ -172,7 +190,7 @@ final class BudgetOverrunGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanPostFailsClosedOnException(): void {
-		$this->container->method('get')->willThrowException(new \RuntimeException('OR down'));
+		$this->guard = $this->buildGuard(store: $this->buildUnavailableObjectServiceStub());
 		self::assertFalse($this->guard->canPost(budgetId: 'pb-1', taskFieldCode: '1.2', attempted: 1.0));
 
 	}//end testCanPostFailsClosedOnException()
@@ -276,6 +294,69 @@ final class BudgetOverrunGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end objectServiceStub()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('OR down');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('OR down');
+			}//end find()
+		};
+	}//end buildUnavailableObjectServiceStub()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

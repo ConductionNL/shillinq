@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PayrollCalculator;
 use OCA\Shillinq\Service\PayrollService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -198,7 +198,7 @@ final class PayrollServiceTest extends TestCase {
 			appConfig: $this->appConfig,
 			calculator: new PayrollCalculator(),
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

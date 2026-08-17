@@ -94,7 +94,6 @@ if (class_exists(\OCA\Pipelinq\Event\PosStockMovedEvent::class, false) === false
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Pipelinq\Event\PosStockMovedEvent;
 use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
@@ -104,6 +103,7 @@ use OCA\Shillinq\Service\FifoValuationService;
 use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
 use OCA\Shillinq\Sort\FefoSort;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\EventDispatcher\Event;
 use OCP\IAppConfig;
 use OCP\IGroup;
@@ -275,7 +275,7 @@ class PosStockDecrementListenerTest extends TestCase {
 			groupManager: $this->groupManager,
 			notificationMgr: $this->notificationMgr,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),
 		);
 	}//end setUpListener()
 
@@ -826,14 +826,14 @@ class PosStockDecrementListenerTest extends TestCase {
 		// Real business-logic classes throughout — nothing about the
 		// existing decrement + valuation + COGS pipeline is mocked or
 		// reimplemented.
-		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$fifo = new FifoValuationService(appConfig: $appConfig, logger: $logger,
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
-		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$average = new MovingAverageValuationService(appConfig: $appConfig, logger: $logger,
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
-		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$cogs = new CogsPosterService(appConfig: $appConfig, logger: $logger,
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
 		$stockMoveListener = new StockMoveTransitionedListener(
 			fifo: $fifo,
@@ -841,7 +841,7 @@ class PosStockDecrementListenerTest extends TestCase {
 			cogs: $cogs,
 			appConfig: $appConfig,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(
@@ -849,7 +849,7 @@ class PosStockDecrementListenerTest extends TestCase {
 			appConfig: $appConfig,
 			logger: $logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
 
 		$groupManager = $this->createMock(IGroupManager::class);
@@ -862,7 +862,7 @@ class PosStockDecrementListenerTest extends TestCase {
 			groupManager: $groupManager,
 			notificationMgr: $notificationMgr,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($fakeObjectService),
 		);
 
 		// Step 1: a POS sale of 4 units of SKU-1001 -> expect exactly one new

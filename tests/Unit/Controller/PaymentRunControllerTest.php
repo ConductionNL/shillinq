@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\PaymentRunController;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
 use OCA\Shillinq\PaymentRun\PaymentRunReconciliationService;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
@@ -91,8 +91,9 @@ class PaymentRunControllerTest extends TestCase {
 		PaymentRunExportService $export,
 		PaymentRunReconciliationService $reconcile,
 	): PaymentRunController {
+		$objects   = $this->objectServiceReturning($run);
 		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($this->objectServiceReturning($run));
+		$container->method('get')->willReturn($objects);
 
 		$adminContext = $this->createMock(AdministrationContextService::class);
 		$adminContext->method('canAccess')->willReturn($canAccess);
@@ -109,7 +110,7 @@ class PaymentRunControllerTest extends TestCase {
 			$adminContext,
 			$session,
 			$this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objects),
 		);
 	}//end controller()
 

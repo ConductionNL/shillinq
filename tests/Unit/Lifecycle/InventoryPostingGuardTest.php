@@ -45,9 +45,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\InventoryPostingGuard;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -81,7 +81,7 @@ final class InventoryPostingGuardTest extends TestCase {
 		return new InventoryPostingGuard(
 			appConfig: $appConfig,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($os),
 		);
 
 	}//end makeGuard()
