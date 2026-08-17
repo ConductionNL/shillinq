@@ -943,10 +943,12 @@ class DunningRunService {
 	 *  1. resolve the run BY IDENTITY — absent means FAIL CLOSED, no dispatch;
 	 *  2. refuse a run already sealed `locked` — that dossier is already with
 	 *     the agency, and re-dispatching it is the harm this seal prevents;
-	 *  3. WRITE the seal (`locked`, delivery PENDING) — if that write fails,
+	 *  3. resolve the adapter, which throws when unbound — before the seal, so
+	 *     a configuration error cannot lock a run it never dispatched;
+	 *  4. WRITE the seal (`locked`, delivery PENDING) — if that write fails,
 	 *     nothing is dispatched;
-	 *  4. dispatch;
-	 *  5. stamp the provider's `dossierId` on the sealed run.
+	 *  5. dispatch;
+	 *  6. stamp the provider's `dossierId` on the sealed run.
 	 *
 	 * On a non-DELIVERED outcome the seal is released back to `executed`. If
 	 * THAT write fails the run stays `locked`, i.e. it fails closed: a
@@ -1000,8 +1002,14 @@ class DunningRunService {
 			);
 		}
 
-		// 3. Claim the seal FIRST. A failure here costs a retry; a failure
-		// after the dispatch would cost a duplicate dossier.
+		// 3. Resolve the adapter BEFORE the seal is written. It is a pure
+		// container lookup with no side effect, and it throws when the binding
+		// is missing — after the seal that would leave the run permanently
+		// `locked` over a configuration error, with nothing dispatched.
+		$adapter = $this->resolveIncassoAdapter();
+
+		// 4. Claim the seal. A failure here costs a retry; a failure after the
+		// dispatch would cost a duplicate dossier.
 		$sealed = $run;
 		$sealed['lifecycleState'] = 'locked';
 		$sealed['deliveryStatus'] = 'PENDING';
@@ -1019,8 +1027,7 @@ class DunningRunService {
 			);
 		}
 
-		// 4. Dispatch.
-		$adapter = $this->resolveIncassoAdapter();
+		// 5. Dispatch.
 		$result = $adapter->transfer(
 			administrationId: $administrationId,
 			invoiceId: $invoiceId,
@@ -1039,7 +1046,7 @@ class DunningRunService {
 			return $result;
 		}
 
-		// 5. Stamp the provider's evidence on the already-sealed run.
+		// 6. Stamp the provider's evidence on the already-sealed run.
 		$sealed['deliveryStatus'] = 'DELIVERED';
 		$existing = (array)($sealed['postageStatus'] ?? []);
 		$dossierId = (string)($result->extras['dossierId'] ?? '');
