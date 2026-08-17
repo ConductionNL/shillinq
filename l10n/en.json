@@ -557,6 +557,7 @@
         "Could not load adapter: {message}": "Could not load adapter: {message}",
         "Could not load bookings: {message}": "Could not load bookings: {message}",
         "Could not load external adapter status: {message}": "Could not load external adapter status: {message}",
+        "Could not load the filter values; showing the declared options only.": "Could not load the filter values; showing the declared options only.",
         "Could not reconcile the payment run.": "Could not reconcile the payment run.",
         "Could not record count.": "Could not record count.",
         "Could not record pick.": "Could not record pick.",

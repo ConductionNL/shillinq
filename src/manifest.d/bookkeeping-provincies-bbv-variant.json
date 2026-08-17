@@ -29,7 +29,7 @@
 			"route": "/bbv-provincie/compliance-dashboard",
 			"type": "dashboard",
 			"title": "BBV Compliance Dashboard",
-			"_note": "#866/#862. This page's body USED TO be declared under `config.dashboard.{kpis,charts,exceptions,filters}` and sourced four values from a named OpenRegister aggregation called `programmeBudgetVsActuals`. NEITHER EXISTED: CnDashboardPage has no `dashboard` prop, and OpenRegister has no named-aggregation registry (its ad-hoc endpoint takes a metric + field, not a name). The page therefore mounted an EMPTY dashboard for every visitor while the manifest validated, because `pages[].config` is `additionalProperties: true`. The body is now expressed in the vocabulary CnDashboardPage actually reads — `widgets` + `layout` + `pageFilters` — and the aggregation is computed by `\\OCA\\Shillinq\\Service\\BbvProgrammeBudgetService`, exposed at `/api/bbv-provincie/programme-budget-vs-actuals`. NOT CLOSED: REQ-BBC-002 asks for MULTI-select Programme and Budget status facets, and `pageFilters` renders single-selects only (nc-vue 2.3.0 has no multi-select page filter anywhere — CnFilterBar and CnWorkspaceFilterWidget are single-valued too); the fiscal-year options are static rather than auto-discovered, though the endpoint returns `fiscalYears[]` ready for a dynamic control. REQ-BBC-004 (admin refresh interval) is untouched.",
+			"_note": "#866/#862. This body was declared under `config.dashboard.{kpis,charts,exceptions,filters}` against a named OpenRegister aggregation, `programmeBudgetVsActuals`. NEITHER EXISTED — CnDashboardPage has no `dashboard` prop and OpenRegister has no named-aggregation registry — so the page mounted an EMPTY dashboard for every visitor while the manifest validated, `pages[].config` being additionalProperties:true. It is now `widgets` + `layout` + `pageFilters`, the vocabulary CnDashboardPage reads, over `\\OCA\\Shillinq\\Service\\BbvProgrammeBudgetService`. NOT CLOSED: REQ-BBC-002 wants MULTI-select Programme and Budget status; `pageFilters` is single-select and nc-vue 2.3.0 has no multi-select page filter anywhere. Fiscal years are static here though the endpoint returns `fiscalYears[]`. REQ-BBC-004 is untouched.",
 			"config": {
 				"register": "shillinq",
 				"schema": "Budget",
@@ -139,7 +139,7 @@
 						"id": "bbv-remaining",
 						"title": "Remaining",
 						"type": "stat",
-						"_note": "REQ-BBC-001's traffic light. `variantWhen` is first-match, so the RED rule must be declared before the YELLOW one; `remainingRatio` is the server-computed remaining/budget share the rule's 0.15 threshold is expressed in.",
+						"_note": "REQ-BBC-001's traffic light. `variantWhen` is FIRST-MATCH, so the red rule must precede the green one.",
 						"content": {
 							"label": "Remaining",
 							"icon": "WalletOutline",
@@ -191,7 +191,6 @@
 						"id": "bbv-spend-trend",
 						"title": "Trend",
 						"type": "chart",
-						"_note": "REQ-BBC-001 'Trend Chart': cumulative monthly spend with a budget reference line. Months with no GL postings are emitted by the endpoint carrying the previous cumulative value, never omitted — the requirement is explicit that a quiet month must not close the gap in the line.",
 						"content": {
 							"chartKind": "line",
 							"height": "100%",
@@ -276,7 +275,7 @@
 			"route": "/bbv-provincie/budget-to-programme",
 			"type": "index",
 			"title": "Budget Links",
-			"_note": "#866/#862. `config.filters[]` below is UNCHANGED — it is the declaration, and it is now READ. CnIndexPage has no `filters` prop (its filter concepts are `quickFilters`, a single tab strip, and a schema-derived facet sidebar), so this array rendered nowhere. `slots.below-header` mounts `BbvLinkerFilterBar`, which reads THIS array out of the injected manifest, resolves each facet's live values from `/api/bbv-provincie/gl-line-facets`, and writes the selection into `$route.query` — the deep-link filter path CnIndexPage's own self-fetch merges into `fixedFilters` and re-fetches on. Every facet resolves to a property GLLine really declares: `accountType` to `accountNumber[]` (accountType is a property of Account, not of GLLine), `programmeStructure` directly, and assignment status to OpenRegister's `empty` operator over `programmeStructure`. STILL UNBUILT and deliberately left declared: `config.bulkActions[]` (REQ-BBL-001 §2/§3, the Link-to-Programme dialog) and `config.mappingStatus` (REQ-BBL-004, the unmapped badge). Both are outside the five e2e specs this change closes, and `tests/e2e/provincies-bbv-variant.spec.ts` withdraws its claims on them rather than asserting them.",
+			"_note": "#866/#862. `config.filters[]` below is UNCHANGED — it is the declaration, and it is now READ. CnIndexPage has no `filters` prop (its concepts are `quickFilters` and a schema-derived facet sidebar), so the array rendered nowhere. `slots.below-header` mounts `BbvLinkerFilterBar`, which reads it from the injected manifest, takes live values from `/api/bbv-provincie/gl-line-facets`, and writes `$route.query` — the deep-link path CnIndexPage's self-fetch merges into `fixedFilters`. Every facet lands on a property GLLine declares: accountType→`accountNumber[]` (accountType belongs to Account), programme→`programmeStructure`, assignment status→the `empty` operator. STILL UNBUILT, deliberately left declared: `config.bulkActions[]` (REQ-BBL-001 §2/§3) and `config.mappingStatus` (REQ-BBL-004); both are outside the five e2e specs this change closes.",
 			"slots": {
 				"below-header": "BbvLinkerFilterBar"
 			},
