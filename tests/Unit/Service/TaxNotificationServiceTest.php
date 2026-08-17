@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\TaxNotificationService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\Notification\IManager;
 use OCP\Notification\INotification;
@@ -87,14 +87,30 @@ final class TaxNotificationServiceTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->service = new TaxNotificationService(
+		$this->service = $this->buildService($this->buildObjectServiceStub([]));
+
+	}//end setUp()
+
+	/**
+	 * Build the subject around a seeded in-memory ObjectService store.
+	 *
+	 * The store used to reach the subject through the container; ADR-084 injects
+	 * it as a contract-typed constructor argument instead, so each test rebuilds
+	 * the subject with its own store.
+	 *
+	 * @param object $store The seeded in-memory ObjectService double.
+	 *
+	 * @return TaxNotificationService
+	 */
+	private function buildService(object $store): TaxNotificationService {
+		return new TaxNotificationService(
 			appConfig: $this->appConfig,
 			notificationMgr: $this->notificationMgr,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($store),
 		);
 
-	}//end setUp()
+	}//end buildService()
 
 	/**
 	 * The reminder window matches exactly 7 and 1 day(s) before the deadline (REQ-VPB-013).
@@ -138,7 +154,7 @@ final class TaxNotificationServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($deadlines));
+		$this->service = $this->buildService($this->buildObjectServiceStub($deadlines));
 
 		$notification = $this->createMock(INotification::class);
 		$notification->method('setApp')->willReturnSelf();
@@ -170,7 +186,7 @@ final class TaxNotificationServiceTest extends TestCase {
 			],
 		];
 
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($deadlines));
+		$this->service = $this->buildService($this->buildObjectServiceStub($deadlines));
 		$this->notificationMgr->expects($this->never())->method('notify');
 
 		$count = $this->service->dispatchDueReminders(new \DateTimeImmutable('2025-04-13'));

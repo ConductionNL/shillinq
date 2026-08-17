@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\PeriodCloseBackfill;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -120,12 +121,6 @@ class PeriodCloseBackfillTest extends TestCase {
 			existingPeriods: []
 		);
 
-		$this->container
-			->expects($this->once())
-			->method('get')
-			->with('OCA\OpenRegister\Service\ObjectService')
-			->willReturn($objectService);
-
 		$this->output
 			->expects($this->atLeastOnce())
 			->method('info');
@@ -133,7 +128,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 		$step->run($this->output);
 
@@ -156,16 +151,10 @@ class PeriodCloseBackfillTest extends TestCase {
 			existingPeriods: []
 		);
 
-		$this->container
-			->expects($this->once())
-			->method('get')
-			->with('OCA\OpenRegister\Service\ObjectService')
-			->willReturn($objectService);
-
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 		$step->run($this->output);
 
@@ -215,16 +204,10 @@ class PeriodCloseBackfillTest extends TestCase {
 			existingPeriods: $existing
 		);
 
-		$this->container
-			->expects($this->once())
-			->method('get')
-			->with('OCA\OpenRegister\Service\ObjectService')
-			->willReturn($objectService);
-
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 		$step->run($this->output);
 
@@ -239,10 +222,12 @@ class PeriodCloseBackfillTest extends TestCase {
 	 * @return void
 	 */
 	public function testRunFailureIsBestEffort(): void {
-		$this->container
-			->expects($this->once())
-			->method('get')
-			->with('OCA\OpenRegister\Service\ObjectService')
+		// The injected ObjectService is the failure surface now that ADR-084
+		// removed the container: refuse on the very first call of the read
+		// chain, exactly as an unavailable OpenRegister would.
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService
+			->method('setRegister')
 			->willThrowException(new \RuntimeException('ObjectService unavailable'));
 
 		$this->output
@@ -256,7 +241,7 @@ class PeriodCloseBackfillTest extends TestCase {
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $objectService,
 		);
 
 		// Must NOT throw — the repair step swallows the failure.
@@ -284,16 +269,10 @@ class PeriodCloseBackfillTest extends TestCase {
 			existingPeriods: []
 		);
 
-		$this->container
-			->expects($this->once())
-			->method('get')
-			->with('OCA\OpenRegister\Service\ObjectService')
-			->willReturn($objectService);
-
 		$step = new PeriodCloseBackfill(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 		$step->run($this->output);
 
@@ -451,8 +430,8 @@ class PeriodCloseBackfillTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				string $register,
-				string $schema,
+				string $register = '',
+				string $schema = '',
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 			): array {

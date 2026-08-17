@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -85,10 +85,31 @@ class JournalEntryGuardTest extends TestCase {
 		$this->guard = new JournalEntryGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub(records: [])),
 		);
 
 	}//end setUp()
+
+	/**
+	 * Point the guard at the given duck-typed ObjectService store.
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different records.
+	 *
+	 * @param object $store The in-memory ObjectService double.
+	 *
+	 * @return void
+	 */
+	private function wireObjectService(object $store): void {
+		$this->container->method('get')->willReturn($store);
+
+		$this->guard = new JournalEntryGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end wireObjectService()
 
 	/**
 	 * A balanced 2-line journal supplied inline returns true per REQ-JE-007.
@@ -223,8 +244,8 @@ class JournalEntryGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCanVoidWhenGlTransactionReversed(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['id' => 'gl-1', 'state' => 'reversed']])
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(records: [['id' => 'gl-1', 'state' => 'reversed']])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -238,8 +259,8 @@ class JournalEntryGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCannotVoidWhenGlTransactionNotReversed(): void {
-		$this->container->method('get')->willReturn(
-			$this->buildObjectServiceStub(records: [['id' => 'gl-1', 'state' => 'posted']])
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(records: [['id' => 'gl-1', 'state' => 'posted']])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -264,8 +285,7 @@ class JournalEntryGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testVoidExceptionFailsClosed(): void {
-		$this->container->method('get')
-			->willThrowException(new \RuntimeException('ObjectService unavailable'));
+		$this->wireObjectService(store: $this->buildFailingObjectServiceStub());
 
 		$this->logger->expects($this->once())->method('error');
 
@@ -333,4 +353,52 @@ class JournalEntryGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build an ObjectService store that refuses every read.
+	 *
+	 * Since the store is injected rather than pulled from the container, an
+	 * unavailable OpenRegister is modelled by a store that throws.
+	 *
+	 * @return object
+	 */
+	private function buildFailingObjectServiceStub(): object {
+		return new class {
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse the read, as an unavailable ObjectService would.
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+		};
+	}//end buildFailingObjectServiceStub()
 }//end class

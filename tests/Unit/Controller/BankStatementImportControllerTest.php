@@ -22,10 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\BankStatementImportController;
 use OCA\Shillinq\Lifecycle\StatementParser;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -195,7 +195,7 @@ class BankStatementImportControllerTest extends TestCase {
 			administrationContext: $this->adminContext,
 			session: $this->session,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objectService),
 		);
 	}//end controller()
 

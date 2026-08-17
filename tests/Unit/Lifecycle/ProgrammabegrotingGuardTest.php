@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\ProgrammabegrotingGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -96,7 +96,7 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 		$this->guard = new ProgrammabegrotingGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildParagraafStub([])),
 		);
 
 	}//end setUp()
@@ -119,14 +119,36 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	}//end paragrafen()
 
 	/**
-	 * Stub the container's ObjectService to return the given paragrafen.
+	 * Rebuild the guard on a store returning the given paragrafen.
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different rows.
 	 *
 	 * @param array<int,array<string,mixed>> $paragrafen The paragraaf rows to return.
 	 *
 	 * @return void
 	 */
 	private function stubParagrafen(array $paragrafen): void {
-		$stub = new class($paragrafen) {
+		$stub = $this->buildParagraafStub($paragrafen);
+
+		$this->container->method('get')->willReturn($stub);
+
+		$this->guard = new ProgrammabegrotingGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($stub),
+		);
+	}//end stubParagrafen()
+
+	/**
+	 * Build a duck-typed ObjectService store over the given paragraaf rows.
+	 *
+	 * @param array<int,array<string,mixed>> $paragrafen The paragraaf rows to return.
+	 *
+	 * @return object
+	 */
+	private function buildParagraafStub(array $paragrafen): object {
+		return new class($paragrafen) {
 
 			/**
 			 * Paragraaf rows.
@@ -177,9 +199,7 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 				return $this->rows;
 			}//end findAll()
 		};
-
-		$this->container->method('get')->willReturn($stub);
-	}//end stubParagrafen()
+	}//end buildParagraafStub()
 
 	/**
 	 * REQ-007/D7: behandelen allowed when all seven paragrafen exist and nominale set.
@@ -262,7 +282,52 @@ final class ProgrammabegrotingGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testFailsClosedOnException(): void {
+		$failing = new class {
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse the read, as an unavailable ObjectService would.
+			 *
+			 * @param array<string,mixed> $params Query params (unused).
+			 *
+			 * @return array<int,array<string,mixed>>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('OR down');
+			}//end findAll()
+		};
+
 		$this->container->method('get')->willThrowException(new \RuntimeException('OR down'));
+
+		$this->guard = new ProgrammabegrotingGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($failing),
+		);
+
 		$budget = ['id' => 'pb-1', 'determinationDecision' => 'raadsbesluit-1'];
 		self::assertFalse($this->guard->canVaststellen(budgetId: 'pb-1', object: $budget));
 

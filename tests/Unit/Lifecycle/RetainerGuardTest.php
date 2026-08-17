@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\RetainerGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -87,21 +87,44 @@ class RetainerGuardTest extends TestCase {
 		$this->guard = new RetainerGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub([])),
 		);
 
 	}//end setUp()
 
 	/**
-	 * Stub the ObjectService chain so findAll() returns the given rows for any
-	 * schema query (used by canActivatePool's client lookup).
+	 * Rebuild the guard on an ObjectService store whose findAll() returns the
+	 * given rows for any schema query (used by canActivatePool's client lookup).
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different rows.
 	 *
 	 * @param array<int,array<string,mixed>> $rows Rows to return from findAll().
 	 *
 	 * @return void
 	 */
 	private function stubObjectService(array $rows): void {
-		$objectService = new class($rows) {
+		$objectService = $this->buildObjectServiceStub($rows);
+
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->guard = new RetainerGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($objectService),
+		);
+
+	}//end stubObjectService()
+
+	/**
+	 * Build a duck-typed ObjectService store over the given rows.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Rows to return from findAll().
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $rows): object {
+		return new class($rows) {
 			/**
 			 * Construct the fake ObjectService.
 			 *
@@ -150,9 +173,7 @@ class RetainerGuardTest extends TestCase {
 			// phpcs:enable CustomSniffs.Functions.NamedParameters
 		};
 
-		$this->container->method('get')->willReturn($objectService);
-
-	}//end stubObjectService()
+	}//end buildObjectServiceStub()
 
 	/**
 	 * A pool with no overlapping sibling for the same client/project may activate

@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\ObjectionPeriodGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -85,10 +85,31 @@ class ObjectionPeriodGuardTest extends TestCase {
 		$this->guard = new ObjectionPeriodGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildSchemaStub(recordsBySchema: [])),
 		);
 
 	}//end setUp()
+
+	/**
+	 * Point the guard at the given duck-typed ObjectService store.
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different records.
+	 *
+	 * @param object $store The in-memory ObjectService double.
+	 *
+	 * @return void
+	 */
+	private function wireObjectService(object $store): void {
+		$this->container->method('get')->willReturn($store);
+
+		$this->guard = new ObjectionPeriodGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end wireObjectService()
 
 	/**
 	 * Bezwaar is admissible within the 6-week termijn from the aanslag dagtekening (REQ-VPB-010).
@@ -97,8 +118,8 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 */
 	public function testCanBezwaarMakenWithinTermijn(): void {
 		$issueDate = (new \DateTimeImmutable('today'))->modify('-1 week')->format('Y-m-d');
-		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-1', 'issueDate' => $issueDate]]])
+		$this->wireObjectService(
+			store: $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-1', 'issueDate' => $issueDate]]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -113,8 +134,8 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 */
 	public function testCannotBezwaarMakenAfterTermijn(): void {
 		$issueDate = (new \DateTimeImmutable('today'))->modify('-8 weeks')->format('Y-m-d');
-		$this->container->method('get')->willReturn(
-			$this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-2', 'issueDate' => $issueDate]]])
+		$this->wireObjectService(
+			store: $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => [['taxReturn' => 'aangifte-2', 'issueDate' => $issueDate]]])
 		);
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -128,7 +149,7 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testCannotBezwaarMakenWithoutAanslag(): void {
-		$this->container->method('get')->willReturn($this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => []]));
+		$this->wireObjectService(store: $this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => []]));
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-3', object: ['id' => 'aangifte-3']));
@@ -184,7 +205,7 @@ class ObjectionPeriodGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testBezwaarExceptionFailsClosed(): void {
-		$this->container->method('get')->willThrowException(new \RuntimeException('down'));
+		$this->wireObjectService(store: $this->buildFailingObjectServiceStub());
 		$this->logger->expects($this->once())->method('error');
 
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
@@ -259,4 +280,52 @@ class ObjectionPeriodGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildSchemaStub()
+
+	/**
+	 * Build an ObjectService store that refuses every read.
+	 *
+	 * Since the store is injected rather than pulled from the container, an
+	 * unavailable OpenRegister is modelled by a store that throws.
+	 *
+	 * @return object
+	 */
+	private function buildFailingObjectServiceStub(): object {
+		return new class {
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse the read, as an unavailable ObjectService would.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('down');
+			}//end findAll()
+		};
+	}//end buildFailingObjectServiceStub()
 }//end class

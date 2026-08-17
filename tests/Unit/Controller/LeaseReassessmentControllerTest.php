@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\LeaseReassessmentController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeaseReassessmentService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -169,15 +169,26 @@ final class LeaseReassessmentControllerTest extends TestCase {
 			/**
 			 * Capture saveObject calls; echo the row back.
 			 *
+			 * Register and schema are optional because the real contract declares
+			 * them optional: a caller that has already narrowed the scope through
+			 * setRegister()/setSchema() passes the payload alone. When the schema
+			 * is omitted the row is filed under the last one selected, so
+			 * findAll() still finds it.
+			 *
 			 * @param array<string,mixed> $object The row.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
-				$this->saved[$schema] = ($this->saved[$schema] ?? []);
-				$this->saved[$schema][] = $object;
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+				$key = $schema;
+				if ($key === '') {
+					$key = $this->lastSchema;
+				}
+
+				$this->saved[$key] = ($this->saved[$key] ?? []);
+				$this->saved[$key][] = $object;
 				return $object;
 			}//end saveObject()
 		};
@@ -192,7 +203,7 @@ final class LeaseReassessmentControllerTest extends TestCase {
 			appConfig: $appConfig,
 			calculator: new LeaseAmortizationCalculator(),
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

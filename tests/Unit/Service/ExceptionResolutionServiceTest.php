@@ -48,10 +48,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -227,7 +227,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 			notificationManager: $notificationManager,
 			logger: $logger,
 			creditNoteAdapter: $adapter,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()

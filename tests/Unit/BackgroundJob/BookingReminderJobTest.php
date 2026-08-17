@@ -19,9 +19,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\BackgroundJob\BookingReminderJob;
 use OCA\Shillinq\Service\BookingNotificationService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -95,14 +95,133 @@ class BookingReminderJobTest extends TestCase {
 		$this->time->method('getTime')->willReturn(time());
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->job = new BookingReminderJob(
+		$this->job = $this->buildJob(store: $this->buildObjectServiceStub());
+	}//end setUp()
+
+	/**
+	 * Build the job over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the job is built — parking it on the
+	 * container after the fact leaves the job reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return BookingReminderJob
+	 */
+	private function buildJob(object $store): BookingReminderJob {
+		return new BookingReminderJob(
 			time: $this->time,
 			notificationService: $this->notificationService,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($store),
 		);
-	}//end setUp()
+	}//end buildJob()
+
+	/**
+	 * Build an empty in-memory ObjectService double.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Answer an empty result set.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 */
+			public function findAll(array $params = []): array {
+				return [];
+			}//end findAll()
+		};
+	}//end buildObjectServiceStub()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('DB unavailable');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('DB unavailable');
+			}//end find()
+		};
+	}//end buildUnavailableObjectServiceStub()
 
 	/**
 	 * BookingReminderJob can be instantiated with correct interval.
@@ -123,9 +242,7 @@ class BookingReminderJobTest extends TestCase {
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
 	 */
 	public function testJobHandlesObjectServiceErrorGracefully(): void {
-		$this->container
-			->method('get')
-			->willThrowException(new \RuntimeException('DB unavailable'));
+		$this->job = $this->buildJob(store: $this->buildUnavailableObjectServiceStub());
 
 		// Logger::error should be called for each window that fails.
 		$this->logger

@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\PayrollGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -90,21 +90,41 @@ class PayrollGuardTest extends TestCase {
 		$this->guard = new PayrollGuard(
 			appConfig: $this->appConfig,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub([])),
 		);
 
 	}//end setUp()
 
 	/**
-	 * Wire the container to return a schema-aware ObjectService stub.
+	 * Rebuild the guard on a schema-aware ObjectService stub.
+	 *
+	 * The store is a constructor dependency since ADR-084, so the guard has to
+	 * be rebuilt whenever a test seeds different records.
 	 *
 	 * @param array<string,array<mixed>> $recordsBySchema Records keyed by schema slug.
 	 *
 	 * @return void
 	 */
 	private function wireObjectService(array $recordsBySchema): void {
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($recordsBySchema));
+		$this->wireStore($this->buildObjectServiceStub($recordsBySchema));
 	}//end wireObjectService()
+
+	/**
+	 * Point the guard at the given duck-typed ObjectService store.
+	 *
+	 * @param object $store The in-memory ObjectService double.
+	 *
+	 * @return void
+	 */
+	private function wireStore(object $store): void {
+		$this->container->method('get')->willReturn($store);
+
+		$this->guard = new PayrollGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+	}//end wireStore()
 
 	/**
 	 * canCalculate returns true when the employee is active and at least one
@@ -224,7 +244,7 @@ class PayrollGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testFailsClosedOnServiceError(): void {
-		$this->container->method('get')->willThrowException(new \RuntimeException('ObjectService unavailable'));
+		$this->wireStore($this->buildFailingObjectServiceStub());
 
 		$payroll = ['id' => 'pay-1', 'employeeId' => 'emp-1', 'period' => '2026-05', 'periodStartDate' => '2026-05-01', 'grossAmount' => 3500.0];
 		// phpcs:disable CustomSniffs.Functions.NamedParameters
@@ -304,4 +324,52 @@ class PayrollGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build an ObjectService store that refuses every read.
+	 *
+	 * Since the store is injected rather than pulled from the container, an
+	 * unavailable OpenRegister is modelled by a store that throws.
+	 *
+	 * @return object
+	 */
+	private function buildFailingObjectServiceStub(): object {
+		return new class {
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug (unused).
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse the read, as an unavailable ObjectService would.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+		};
+	}//end buildFailingObjectServiceStub()
 }//end class

@@ -40,6 +40,7 @@ use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BadoControleprotocolCalculator;
 use OCA\Shillinq\Service\BadoControleprotocolService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -68,13 +69,6 @@ final class BadoControleprotocolTenantTest extends TestCase {
 	private IAppConfig&MockObject $appConfig;
 
 	/**
-	 * Service under test.
-	 *
-	 * @var BadoControleprotocolService
-	 */
-	private BadoControleprotocolService $service;
-
-	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -85,14 +79,28 @@ final class BadoControleprotocolTenantTest extends TestCase {
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->service = new BadoControleprotocolService(
+	}//end setUp()
+
+	/**
+	 * Build the service over a given ObjectService.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so the
+	 * subject has to be built AFTER the per-test double exists — it can no
+	 * longer be assembled once in setUp() and re-pointed through a container.
+	 *
+	 * @param ObjectServiceInterface $objectService The object service to inject.
+	 *
+	 * @return BadoControleprotocolService
+	 */
+	private function serviceWith(ObjectServiceInterface $objectService): BadoControleprotocolService {
+		return new BadoControleprotocolService(
 			appConfig: $this->appConfig,
 			calculator: $this->createMock(BadoControleprotocolCalculator::class),
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $objectService,
 		);
 
-	}//end setUp()
+	}//end serviceWith()
 
 	/**
 	 * Build an ObjectService double that mirrors ObjectService::find().
@@ -209,9 +217,12 @@ final class BadoControleprotocolTenantTest extends TestCase {
 	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
 	 */
 	public function testAnEmptyProtocolIdResolvesToNull(): void {
-		$this->container->expects($this->never())->method('get');
+		// The data layer is the injected ObjectService now that ADR-084
+		// removed the container: an empty id must not reach it at all.
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->expects($this->never())->method('find');
 
-		self::assertNull($this->service->organisationIdFor(protocolId: ''));
+		self::assertNull($this->serviceWith($objectService)->organisationIdFor(protocolId: ''));
 
 	}//end testAnEmptyProtocolIdResolvesToNull()
 
@@ -225,9 +236,10 @@ final class BadoControleprotocolTenantTest extends TestCase {
 	 */
 	public function testAnAbsentProtocolResolvesToNull(): void {
 		$stub = $this->fakeObjectService(null);
-		$this->container->method('get')->willReturn($stub);
 
-		self::assertNull($this->service->organisationIdFor(protocolId: 'proto-1'));
+		self::assertNull(
+			$this->serviceWith(new DuckObjectServiceAdapter($stub))->organisationIdFor(protocolId: 'proto-1')
+		);
 		self::assertSame(
 			['id' => 'proto-1', 'register' => 'shillinq', 'schema' => 'Controleprotocol'],
 			$stub->seenFind
@@ -259,9 +271,12 @@ final class BadoControleprotocolTenantTest extends TestCase {
 			}//end jsonSerialize()
 		};
 
-		$this->container->method('get')->willReturn($this->fakeObjectService($entity));
+		$stub = $this->fakeObjectService($entity);
 
-		self::assertSame('adm-1', $this->service->organisationIdFor(protocolId: 'proto-1'));
+		self::assertSame(
+			'adm-1',
+			$this->serviceWith(new DuckObjectServiceAdapter($stub))->organisationIdFor(protocolId: 'proto-1')
+		);
 
 	}//end testAnEntityIsNormalisedThroughJsonSerialize()
 
@@ -277,11 +292,12 @@ final class BadoControleprotocolTenantTest extends TestCase {
 	 * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
 	 */
 	public function testAProtocolWithoutATenantResolvesToTheEmptyString(): void {
-		$this->container->method('get')->willReturn(
-			$this->fakeObjectService(['id' => 'proto-1'])
-		);
+		$stub = $this->fakeObjectService(['id' => 'proto-1']);
 
-		self::assertSame('', $this->service->organisationIdFor(protocolId: 'proto-1'));
+		self::assertSame(
+			'',
+			$this->serviceWith(new DuckObjectServiceAdapter($stub))->organisationIdFor(protocolId: 'proto-1')
+		);
 
 	}//end testAProtocolWithoutATenantResolvesToTheEmptyString()
 }//end class

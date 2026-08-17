@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\IntercompanyMatchingCalculator;
 use OCA\Shillinq\Service\IntercompanyMatchingService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -88,11 +88,10 @@ final class IntercompanyMatchingServiceTest extends TestCase {
 	private function service(object $objectService): IntercompanyMatchingService {
 		$this->container->method('get')->willReturn($objectService);
 		return new IntercompanyMatchingService(
-			$this->container,
 			$this->appConfig,
 			new IntercompanyMatchingCalculator(),
 			$this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 
 	}//end service()

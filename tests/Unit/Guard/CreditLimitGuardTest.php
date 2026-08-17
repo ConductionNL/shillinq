@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\CreditLimitGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -89,13 +89,31 @@ class CreditLimitGuardTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new CreditLimitGuard(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(customers: [], invoices: [])
 		);
 
 	}//end setUp()
+
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return CreditLimitGuard
+	 */
+	private function buildGuard(object $store): CreditLimitGuard {
+		return new CreditLimitGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * No credit limit configured → unlimited credit; issue permitted.
@@ -105,7 +123,7 @@ class CreditLimitGuardTest extends TestCase {
 	public function testPermitsWhenNoCreditLimitSet(): void {
 		$customer = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => null]];
 		$objectService = $this->buildObjectServiceStub(customers: $customer, invoices: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireWithinCreditLimit(
 			[
@@ -132,7 +150,7 @@ class CreditLimitGuardTest extends TestCase {
 			['invoiceNumber' => 'INV-9', 'status' => 'draft', 'totalCents' => 40000],
 		];
 		$objectService = $this->buildObjectServiceStub(customers: $customer, invoices: $invoices);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		// Outstanding excluding INV-9 = 30000; + this invoice 40000 = 70000 <= 100000.
 		$result = $this->guard->requireWithinCreditLimit(
@@ -159,7 +177,7 @@ class CreditLimitGuardTest extends TestCase {
 			['invoiceNumber' => 'INV-1', 'status' => 'issued', 'totalCents' => 80000],
 		];
 		$objectService = $this->buildObjectServiceStub(customers: $customer, invoices: $invoices);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		// 80000 outstanding + 30000 this invoice = 110000 > 100000.
 		$result = $this->guard->requireWithinCreditLimit(
@@ -186,7 +204,7 @@ class CreditLimitGuardTest extends TestCase {
 			['invoiceNumber' => 'INV-1', 'status' => 'overdue', 'totalCents' => 60000],
 		];
 		$objectService = $this->buildObjectServiceStub(customers: $customer, invoices: $invoices);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		// 60000 + 40000 = 100000 == limit → permitted.
 		$result = $this->guard->requireWithinCreditLimit(
@@ -215,7 +233,7 @@ class CreditLimitGuardTest extends TestCase {
 			['invoiceNumber' => 'INV-3', 'status' => 'issued', 'totalCents' => 10000],
 		];
 		$objectService = $this->buildObjectServiceStub(customers: $customer, invoices: $invoices);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		// Outstanding = 10000 (only INV-3); + 30000 this invoice = 40000 <= 50000.
 		$result = $this->guard->requireWithinCreditLimit(
@@ -238,7 +256,7 @@ class CreditLimitGuardTest extends TestCase {
 	 */
 	public function testDeniesWhenCustomerNotFound(): void {
 		$objectService = $this->buildObjectServiceStub(customers: [], invoices: []);
-		$this->container->method('get')->willReturn($objectService);
+		$this->guard = $this->buildGuard(store: $objectService);
 
 		$result = $this->guard->requireWithinCreditLimit(
 			[
@@ -279,8 +297,7 @@ class CreditLimitGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testIsFailClosedOnException(): void {
-		$this->container->method('get')
-			->willThrowException(new \RuntimeException('DB error'));
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStubThatThrows());
 
 		$result = $this->guard->requireWithinCreditLimit(
 			[
@@ -378,4 +395,66 @@ class CreditLimitGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build a store whose every read throws.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself, which
+	 * is what the guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStubThatThrows(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('DB error');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('DB error');
+			}//end find()
+		};
+	}//end buildObjectServiceStubThatThrows()
 }//end class

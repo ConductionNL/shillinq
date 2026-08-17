@@ -21,6 +21,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BookingNotificationService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -85,6 +86,47 @@ class BookingNotificationServiceTest extends TestCase {
 			objectService: $this->createMock(ObjectServiceInterface::class),
 		);
 	}//end setUp()
+
+	/**
+	 * Rebuild the service over a given ObjectService.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test
+	 * that needs a seeded — or a refusing — store has to rebuild the subject
+	 * rather than re-point the container. The container stays: it still
+	 * resolves `IClientService` for the Openconnector send path.
+	 *
+	 * @param ObjectServiceInterface $objectService The object service to inject.
+	 *
+	 * @return void
+	 */
+	private function rebuildServiceWith(ObjectServiceInterface $objectService): void {
+		$this->service = new BookingNotificationService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: $objectService,
+		);
+	}//end rebuildServiceWith()
+
+	/**
+	 * An ObjectService that refuses every call the app makes on it.
+	 *
+	 * Models "OpenRegister is unavailable" — the condition the fail-open
+	 * paths are asserted against, which used to be injected by making the
+	 * container throw on get().
+	 *
+	 * @param string $message The refusal message.
+	 *
+	 * @return ObjectServiceInterface
+	 */
+	private function refusingObjectService(string $message): ObjectServiceInterface {
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		foreach (['setRegister', 'setSchema', 'findAll', 'find', 'saveObject'] as $method) {
+			$objectService->method($method)->willThrowException(new \RuntimeException($message));
+		}
+
+		return $objectService;
+	}//end refusingObjectService()
 
 	/**
 	 * Template renders booking variables correctly.
@@ -303,9 +345,7 @@ class BookingNotificationServiceTest extends TestCase {
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-9
 	 */
 	public function testIsRateLimitedReturnsFalseOnServiceError(): void {
-		$this->container
-			->method('get')
-			->willThrowException(new \RuntimeException('Service unavailable'));
+		$this->rebuildServiceWith($this->refusingObjectService('Service unavailable'));
 
 		$this->logger
 			->expects(static::once())
@@ -339,9 +379,7 @@ class BookingNotificationServiceTest extends TestCase {
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-9
 	 */
 	public function testIsDuplicateReturnsFalseOnServiceError(): void {
-		$this->container
-			->method('get')
-			->willThrowException(new \RuntimeException('Service unavailable'));
+		$this->rebuildServiceWith($this->refusingObjectService('Service unavailable'));
 
 		$this->logger
 			->expects(static::once())
@@ -364,9 +402,7 @@ class BookingNotificationServiceTest extends TestCase {
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-13
 	 */
 	public function testIsOptedOutReturnsFalseOnServiceError(): void {
-		$this->container
-			->method('get')
-			->willThrowException(new \RuntimeException('Service unavailable'));
+		$this->rebuildServiceWith($this->refusingObjectService('Service unavailable'));
 
 		$this->logger
 			->expects(static::once())
@@ -401,9 +437,7 @@ class BookingNotificationServiceTest extends TestCase {
 			}
 		};
 		// phpcs:enable
-		// phpcs:disable CustomSn.Functions.NamedParameters
-		$this->container->method('get')->willReturn($objectService);
-		// phpcs:enable CustomSn.Functions.NamedParameters
+		$this->rebuildServiceWith(new DuckObjectServiceAdapter($objectService));
 
 		$result = $this->service->isOptedOut(
 			recipient: 'alice@example.com',
@@ -448,9 +482,7 @@ class BookingNotificationServiceTest extends TestCase {
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-8
 	 */
 	public function testRecordAuditTrailLogsErrorOnServiceThrow(): void {
-		$this->container
-			->method('get')
-			->willThrowException(new \RuntimeException('DB unavailable'));
+		$this->rebuildServiceWith($this->refusingObjectService('DB unavailable'));
 
 		$this->logger
 			->expects(static::once())

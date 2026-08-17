@@ -160,7 +160,15 @@ class BankStatementImportController extends Controller {
 					]
 				);
 
-			$statementId = (string)($statement['id'] ?? $statement['uuid'] ?? '');
+			// ADR-084: saveObject() returns an ObjectEntityInterface, and that
+			// interface extends JsonSerializable ONLY -- it does not implement
+			// ArrayAccess. The previous `$statement['id'] ?? $statement['uuid']`
+			// therefore raised `Error: Cannot use object of type … as array`,
+			// which `??` cannot suppress, and the surrounding catch (\Throwable)
+			// turned it into a bare HTTP 500 on EVERY import. getObject() is
+			// declared on the contract and returns the body as an array.
+			$statementBody = $statement->getObject();
+			$statementId   = (string)($statementBody['id'] ?? $statement->getUuid() ?? '');
 
 			$lineNumber = 0;
 			foreach ($parsed as $line) {

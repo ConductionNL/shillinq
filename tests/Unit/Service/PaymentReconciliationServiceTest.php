@@ -19,8 +19,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PaymentReconciliationService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -93,6 +93,15 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			 * @return array<string, mixed>
 			 */
 			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+				// The subject reaches this double through the ADR-084 contract,
+				// which carries the target schema as a named argument and applies
+				// it via setSchema() rather than passing it on positionally here.
+				// Fall back to the schema the fluent chain selected so the sink
+				// still records where the write landed.
+				if ($schema === '') {
+					$schema = $this->schema;
+				}
+
 				$this->saved[] = ['schema' => $schema, 'object' => $object];
 				return $object;
 			}
@@ -117,7 +126,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			container: $container,
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter(inner: $objectService),
 		);
 	}//end makeService()
 

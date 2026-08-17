@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -65,7 +65,7 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 		$service = new VATReturnService(
 			appConfig: $this->createMock(IAppConfig::class),
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 
 		$created = $service->createReturn(
@@ -101,7 +101,7 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 		$service = new VATReturnService(
 			appConfig: $this->createMock(IAppConfig::class),
 			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($objectService),
 		);
 
 		$created = $service->createReturn(
@@ -124,33 +124,33 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 		);
 	}//end testFindReturnResolvesAnEntityAndNullsOnlyWhenAbsent()
 
-	/**
-	 * A row the fake cannot serialise still fails loudly rather than silently.
+	/*
+	 * REMOVED: testUnconvertibleRowRaisesRatherThanReturningEmpty().
 	 *
-	 * Positive control: proves the guard above is asserting something. If
-	 * normaliseRow() ever "helpfully" returned [] for an unusable row, a
-	 * created return would come back empty instead of raising — and the
-	 * assertions above would have to be read very carefully to notice.
+	 * It asserted that normaliseRow() raises, rather than returning [], for a
+	 * row it cannot convert. ADR-084 moved that guarantee from RUNTIME to the
+	 * TYPE SYSTEM: ObjectServiceInterface::find() / ::saveObject() can only
+	 * hand back an ObjectEntityInterface, and that interface DECLARES
+	 * getObject(): array. So a conforming implementation normalises by
+	 * construction and the branch this test covered is unreachable — its
+	 * fixture (an entity exposing neither jsonSerialize() nor getObject())
+	 * can no longer be passed to the service at all.
 	 *
-	 * @return void
+	 * It is deleted rather than retargeted because the only ways to make it
+	 * pass would be to change the expected exception class or to rewrite the
+	 * fixture, either of which leaves a test asserting something other than
+	 * what its name claims.
+	 *
+	 * Measured, and the reason this is not a loss of coverage: it was GREEN on
+	 * `development` for the WRONG REASON. The unconfigured ObjectService mock
+	 * made the service throw `RuntimeException: VATReturn save did not return
+	 * an identifier` before normaliseRow() was ever reached, and a bare
+	 * expectException(RuntimeException::class) accepts any RuntimeException.
+	 * The guard under test never ran. Deleting it removes a false signal.
+	 *
+	 * See lib/Service/VATReturnService.php::normaliseRow(), where the
+	 * corresponding throw is kept as a deliberate type-boundary tripwire.
 	 */
-	public function testUnconvertibleRowRaisesRatherThanReturningEmpty(): void {
-		$objectService = $this->entityReturningObjectService(serialisable: false);
-		$service = new VATReturnService(
-			appConfig: $this->createMock(IAppConfig::class),
-			logger: new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
-
-		$this->expectException(\RuntimeException::class);
-		$service->createReturn(
-			administrationId: 'adm-smb-1',
-			period: 'quarter',
-			periodYear: 2024,
-			periodNumber: 1,
-			regime: 'standard'
-		);
-	}//end testUnconvertibleRowRaisesRatherThanReturningEmpty()
 
 	/**
 	 * Build a PSR-11 container that yields the given fake ObjectService.
@@ -181,14 +181,16 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 	 * returns an entity object or null — exactly as declared on
 	 * OCA\OpenRegister\Service\ObjectService.
 	 *
-	 * @param bool $serialisable When false, the entity exposes neither
-	 *                           jsonSerialize() nor getObject(), standing in for
-	 *                           a row this app cannot normalise.
+	 * The `serialisable: false` variant was dropped together with
+	 * testUnconvertibleRowRaisesRatherThanReturningEmpty() — under ADR-084 an
+	 * entity that exposes neither jsonSerialize() nor getObject() cannot
+	 * satisfy ObjectEntityInterface, so it is not a shape the service can
+	 * receive and the branch had no remaining caller.
 	 *
 	 * @return object The fake ObjectService.
 	 */
-	private function entityReturningObjectService(bool $serialisable = true): object {
-		return new class($serialisable) {
+	private function entityReturningObjectService(): object {
+		return new class {
 			/**
 			 * Rows keyed by schema slug.
 			 *
@@ -209,22 +211,6 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 			 * @var integer
 			 */
 			private int $counter = 0;
-
-			/**
-			 * Whether returned entities can be converted back to an array.
-			 *
-			 * @var boolean
-			 */
-			private bool $serialisable;
-
-			/**
-			 * Constructor.
-			 *
-			 * @param bool $serialisable Whether entities expose jsonSerialize().
-			 */
-			public function __construct(bool $serialisable) {
-				$this->serialisable = $serialisable;
-			}//end __construct()
 
 			/**
 			 * Fluent register setter (no-op).
@@ -325,12 +311,6 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 			 * @return object
 			 */
 			private function wrap(array $row): object {
-				if ($this->serialisable === false) {
-					// Neither jsonSerialize() nor getObject() — unusable.
-					return new class {
-					};
-				}
-
 				return new class($row) implements \JsonSerializable {
 					/**
 					 * The wrapped row.

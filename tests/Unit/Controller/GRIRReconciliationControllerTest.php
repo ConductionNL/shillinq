@@ -30,11 +30,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\GRIRReconciliationController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\GRIRClearingService;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -120,7 +120,7 @@ class GRIRReconciliationControllerTest extends TestCase {
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objects),
 		);
 
 		$request = $this->createMock(IRequest::class);

@@ -23,9 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\TimeIntakeService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -198,7 +198,7 @@ final class TimeIntakeServiceTest extends TestCase {
 			$this->appConfig,
 			$this->logger,
 			$this->invoiceGenerationService,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->fake),
 		);
 
 	}//end svc()

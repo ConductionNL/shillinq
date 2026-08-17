@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SepaAuditService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -153,7 +153,7 @@ final class SepaAuditServiceTest extends TestCase {
 		$this->container->method('get')->willReturn($fake);
 
 		return new SepaAuditService( $this->appConfig, $context, $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($fake),
 		);
 	}//end svc()
 
@@ -170,7 +170,7 @@ final class SepaAuditServiceTest extends TestCase {
 			$this->appConfig,
 			$this->createMock(AdministrationContextService::class),
 			$this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter(new FakeSepaObjectService([])),
 		);
 
 		self::assertNull($svc->buildMandateDossier(''));

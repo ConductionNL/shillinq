@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\ComplianceValidator;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -92,13 +92,31 @@ class ComplianceValidatorTest extends TestCase {
 			->with(Application::APP_ID, 'register', 'shillinq')
 			->willReturn('shillinq');
 
-		$this->validator = new ComplianceValidator(
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: [])
 		);
 
 	}//end setUp()
+
+	/**
+	 * Build the validator over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the validator is built — parking it on the
+	 * container after the fact leaves the validator reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return ComplianceValidator
+	 */
+	private function buildValidator(object $store): ComplianceValidator {
+		return new ComplianceValidator(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end buildValidator()
 
 	/**
 	 * Build a minimal valid TreasuryAccount fixture.
@@ -268,6 +286,69 @@ class ComplianceValidatorTest extends TestCase {
 	}//end buildObjectServiceMockWithFailingTreasuryLookup()
 
 	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * validator's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceMock(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end find()
+		};
+	}//end buildUnavailableObjectServiceMock()
+
+	/**
 	 * All active rules pass → isCompliant returns true (happy path).
 	 *
 	 * @return void
@@ -290,9 +371,8 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules));
 
 		$account = $this->buildAccount();
 		$result = $this->validator->isCompliant(account: $account);
@@ -317,9 +397,8 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules));
 
 		// Invalid IBAN — too short.
 		$account = $this->buildAccount(overrides: ['iban' => 'NL91ABNA04171643']);
@@ -345,9 +424,8 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules));
 
 		$account = $this->buildAccount(overrides: ['approvalStatus' => 'pending']);
 		$result = $this->validator->isCompliant(account: $account);
@@ -362,9 +440,8 @@ class ComplianceValidatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testNoActiveRulesPermitsTransition(): void {
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMock(bankingRuleRules: []));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: []));
 
 		$account = $this->buildAccount();
 		$result = $this->validator->isCompliant(account: $account);
@@ -394,9 +471,7 @@ class ComplianceValidatorTest extends TestCase {
 	 * @return void
 	 */
 	public function testObjectServiceExceptionFailsClosed(): void {
-		$this->container
-			->method('get')
-			->willThrowException(new \RuntimeException('ObjectService unavailable'));
+		$this->validator = $this->buildValidator(store: $this->buildUnavailableObjectServiceMock());
 
 		$account = $this->buildAccount();
 		$result = $this->validator->isCompliant(account: $account);
@@ -421,9 +496,8 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules));
 
 		// Invalid IBAN but the rule is only a warning, not blocking.
 		$account = $this->buildAccount(overrides: ['iban' => 'NL91ABNA04171643']);
@@ -458,9 +532,8 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules));
 
 		// IBAN passes, but approval is still pending.
 		$account = $this->buildAccount(overrides: ['approvalStatus' => 'pending']);
@@ -507,11 +580,9 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn(
-				$this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: $treasuryAccounts)
-			);
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: $treasuryAccounts)
+		);
 
 		$account = $this->buildAccount(overrides: ['id' => 'acct-001']);
 		$result = $this->validator->isCompliant(account: $account);
@@ -551,11 +622,9 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn(
-				$this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: $treasuryAccounts)
-			);
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: $treasuryAccounts)
+		);
 
 		$account = $this->buildAccount(overrides: ['id' => 'acct-001']);
 		$result = $this->validator->isCompliant(account: $account);
@@ -585,9 +654,8 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMockWithFailingTreasuryLookup(bankingRuleRules: $rules));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMockWithFailingTreasuryLookup(bankingRuleRules: $rules));
 
 		$account = $this->buildAccount(overrides: ['id' => 'acct-001']);
 		$result = $this->validator->isCompliant(account: $account);
@@ -617,9 +685,8 @@ class ComplianceValidatorTest extends TestCase {
 			],
 		];
 
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: []));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: []));
 
 		$account = $this->buildAccount(overrides: ['iban' => '']);
 		$result = $this->validator->isCompliant(account: $account);
@@ -650,9 +717,8 @@ class ComplianceValidatorTest extends TestCase {
 
 		// A failing TreasuryAccount lookup proves the rule genuinely short-circuits
 		// rather than happening to pass because the stub returns no rows.
-		$this->container
-			->method('get')
-			->willReturn($this->buildObjectServiceMockWithFailingTreasuryLookup(bankingRuleRules: $rules));
+		$this->validator = $this->buildValidator(
+			store: $this->buildObjectServiceMockWithFailingTreasuryLookup(bankingRuleRules: $rules));
 
 		$account = $this->buildAccount();
 		$result = $this->validator->isCompliant(account: $account);

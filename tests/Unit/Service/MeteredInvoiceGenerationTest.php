@@ -24,7 +24,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -33,6 +32,7 @@ use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Service\VATCalculationService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -239,7 +239,7 @@ final class MeteredInvoiceGenerationTest extends TestCase {
 			new InvoiceDeduplicationService($container, $appConfig, $logger),
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objectService),
 		);
 	}//end setUp()
 

@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -30,6 +29,7 @@ use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeasePaymentScheduleService;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -90,6 +90,13 @@ final class LeaseActivationListenerTest extends TestCase {
 			private array $saved;
 
 			/**
+			 * The schema most recently selected on the fluent chain.
+			 *
+			 * @var string
+			 */
+			private string $currentSchema = '';
+
+			/**
 			 * Constructor.
 			 *
 			 * @param array<int,array<string,mixed>> $leases Lease records.
@@ -119,6 +126,7 @@ final class LeaseActivationListenerTest extends TestCase {
 			 * @return static
 			 */
 			public function setSchema(string $schema): static {
+				$this->currentSchema = $schema;
 				return $this;
 			}//end setSchema()
 
@@ -147,13 +155,11 @@ final class LeaseActivationListenerTest extends TestCase {
 			 * Capture a saved object.
 			 *
 			 * @param array<string,mixed> $object The object payload.
-			 * @param string $register Register slug.
-			 * @param string $schema Schema slug.
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
-				$this->saved[] = ['object' => $object, 'schema' => $schema];
+			public function saveObject(array $object): array {
+				$this->saved[] = ['object' => $object, 'schema' => $this->currentSchema];
 				return $object;
 			}//end saveObject()
 		};
@@ -168,7 +174,7 @@ final class LeaseActivationListenerTest extends TestCase {
 			appConfig: $appConfig,
 			calculator: new LeaseAmortizationCalculator(),
 			logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		$schemaResolver = $this->createMock(ListenerSchemaResolver::class);

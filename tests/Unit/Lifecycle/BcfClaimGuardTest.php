@@ -22,10 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\BcfClaimGuard;
 use OCA\Shillinq\Service\BcfClaimService;
 use OCA\Shillinq\Service\BcfCompensationCalculator;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -86,13 +86,14 @@ class BcfClaimGuardTest extends TestCase {
 	 * @return BcfClaimGuard
 	 */
 	private function guardWith(array $recordsBySchema): BcfClaimGuard {
-		$this->container->method('get')->willReturn($this->buildObjectServiceStub($recordsBySchema));
+		$store = $this->buildObjectServiceStub($recordsBySchema);
+		$this->container->method('get')->willReturn($store);
 
 		$calculator = new BcfCompensationCalculator();
 		$service = new BcfClaimService(
 			appConfig: $this->appConfig,
 			calculator: $calculator,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($store),
 		);
 
 		return new BcfClaimGuard(
@@ -100,7 +101,7 @@ class BcfClaimGuardTest extends TestCase {
 			claimService: $service,
 			calculator: $calculator,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($store),
 		);
 
 	}//end guardWith()
@@ -236,6 +237,7 @@ class BcfClaimGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testSubmitExceptionFailsClosed(): void {
+		$store = $this->buildUnavailableObjectServiceStub();
 		$this->container->method('get')->willThrowException(new \RuntimeException('ObjectService unavailable'));
 		$this->logger->expects($this->once())->method('error');
 
@@ -243,14 +245,14 @@ class BcfClaimGuardTest extends TestCase {
 		$service = new BcfClaimService(
 			appConfig: $this->appConfig,
 			calculator: $calculator,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($store),
 		);
 		$guard = new BcfClaimGuard(
 			appConfig: $this->appConfig,
 			claimService: $service,
 			calculator: $calculator,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($store),
 		);
 
 		self::assertFalse(
@@ -330,6 +332,82 @@ class BcfClaimGuardTest extends TestCase {
 		};
 
 	}//end buildObjectServiceStub()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused).
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end findAll()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object id.
+			 *
+			 * @return ?object
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end find()
+
+			/**
+			 * Refuse every write.
+			 *
+			 * @param array<string,mixed> $object Object payload.
+			 *
+			 * @return array<string,mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function saveObject(array $object): array {
+				throw new \RuntimeException('ObjectService unavailable');
+			}//end saveObject()
+		};
+
+	}//end buildUnavailableObjectServiceStub()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

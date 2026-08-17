@@ -902,6 +902,14 @@ class VATReturnService {
 			}
 		}
 
+		// UNREACHABLE under the ADR-084 contract, and deliberately kept: both
+		// callers hold an ObjectServiceInterface, whose find()/saveObject() can
+		// only return an ObjectEntityInterface, and that interface DECLARES
+		// getObject(): array — so the branch above always returns. It becomes
+		// reachable again if $objectService is ever widened to an untyped or
+		// duck-typed source, or if ObjectEntityInterface stops declaring
+		// getObject(): array. Cheap tripwire at a type boundary; not dead code
+		// left behind by accident.
 		throw new RuntimeException(
 			sprintf('VATReturnService: unsupported row type from ObjectService::%s', $context)
 		);

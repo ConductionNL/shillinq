@@ -31,10 +31,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use DateTimeImmutable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Service\ComplianceDeadlineCalendarService;
 use OCA\Shillinq\Service\ObligationTaskBridge;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;
@@ -273,7 +273,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 			notificationMgr: $this->notificationMgr,
 			obligationTaskBridge: $this->bridge,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objectServiceStub),
 		);
 
 	}//end buildService()

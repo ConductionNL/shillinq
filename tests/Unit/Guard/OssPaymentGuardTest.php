@@ -29,11 +29,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\OssPaymentGuard;
 use OCA\Shillinq\Service\OssPaymentReconciliation;
 use OCA\Shillinq\Service\OssRecordResolver;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -82,7 +82,7 @@ class OssPaymentGuardTest extends TestCase {
 			resolver: new OssRecordResolver(
 				appConfig: $appConfig,
 				logger: $this->createMock(LoggerInterface::class),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($this->objects),
 		),
 			reconciliation: new OssPaymentReconciliation(),
 		);

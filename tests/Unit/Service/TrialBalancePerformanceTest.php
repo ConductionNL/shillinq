@@ -28,9 +28,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\TrialBalanceCalculator;
 use OCA\Shillinq\Service\TrialBalanceService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -83,7 +83,7 @@ final class TrialBalancePerformanceTest extends TestCase {
 		$service = new TrialBalanceService(
 			appConfig: $appConfig,
 			calculator: new TrialBalanceCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 		$startedAt = microtime(true);
