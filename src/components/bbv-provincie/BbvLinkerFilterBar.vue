@@ -272,11 +272,22 @@ export default {
 				else if (empty === 'false') value = 'mapped'
 			}
 
-			return (
-				facet.options.find((o) => o.value === value)
-				|| facet.options[0]
-				|| null
-			)
+			const known = facet.options.find((o) => o.value === value)
+			if (known) {
+				return known
+			}
+
+			// The URL carries a value this facet does not offer — a programme
+			// the facet endpoint did not list, or one saved before the chart of
+			// accounts changed. Falling back to "All" here would show a control
+			// that DISAGREES with the list on screen: the rows really are
+			// filtered, and the bar would claim they are not. Surface the
+			// active value instead, so the two always tell the same story.
+			if (value !== '') {
+				return { value, label: value }
+			}
+
+			return facet.options[0] || null
 		},
 
 		/**
