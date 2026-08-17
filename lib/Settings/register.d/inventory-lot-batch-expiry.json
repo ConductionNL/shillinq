@@ -11,17 +11,8 @@
             "nullable": true,
             "description": "REQ-LOT-008: optional FK to the InventoryLot created/replenished by this receipt. Required when the receipt's product (Product.requiresLotTracking == true) is lot-tracked — the LotTrackingReceiptGuard enforces this on save.",
             "example": "lot-2026-001",
-            "title": "Lot ID"
-          }
-        },
-        "x-openregister-relations": {
-          "lot": {
-            "localField": "lotId",
-            "relatedSchema": "InventoryLot",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "required": false,
-            "description": "REQ-LOT-008: receipt → lot back-reference. The LotTrackingReceiptGuard rejects saves for requiresLotTracking products when this field is empty AND no lot references this receipt via goodsReceiptId."
+            "title": "Lot ID",
+            "$ref": "InventoryLot"
           }
         },
         "x-openregister-lifecycle": {
@@ -78,7 +69,8 @@
             "type": "string",
             "description": "FK to pipelinq Product (productId). Required. Resolved via ?expand=productId via ADR-019 integration registry.",
             "example": "pipelinq-product-id-001",
-            "title": "Product ID"
+            "title": "Product ID",
+            "x-external-register": "pipelinq"
           },
           "productSku": {
             "type": "string",
@@ -169,7 +161,8 @@
             "nullable": true,
             "description": "FK to the GoodsReceipt event that introduced this lot to the warehouse. Optional — lots may also be created manually (e.g. initial stock-take).",
             "example": "gr-2026-0001",
-            "title": "Goods Receipt ID"
+            "title": "Goods Receipt ID",
+            "$ref": "GoodsReceipt"
           },
           "administrationId": {
             "type": "string",
@@ -291,38 +284,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "product": {
-            "localField": "productId",
-            "relatedSchema": "pipelinq:Product",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "required": true,
-            "description": "REQ-LOT-003: FK to the pipelinq Product (catalogue entity). ?expand=productId resolves via ADR-019 integration registry."
-          },
-          "goodsReceipt": {
-            "localField": "goodsReceiptId",
-            "relatedSchema": "GoodsReceipt",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "required": false,
-            "description": "REQ-LOT-003: FK to the GoodsReceipt event that created the lot. Optional — manual stock-take lots have no receipt."
-          },
-          "stockMovements": {
-            "reverse": true,
-            "relatedSchema": "StockMove",
-            "relatedField": "lotId",
-            "cardinality": "one-to-many",
-            "description": "REQ-LOT-003: reverse relation — every StockMove that affected this lot. Declared from StockMove.lotId in inventory-stock-movement-ledger (additive patch when that chain spec lands; harmless until then)."
-          },
-          "expiryAlerts": {
-            "reverse": true,
-            "relatedSchema": "ExpiryAlert",
-            "relatedField": "lotId",
-            "cardinality": "one-to-many",
-            "description": "Reverse relation — every ExpiryAlert raised for this lot. Drives the expiry-dashboard view."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "warehouse_manager": {
@@ -387,7 +348,8 @@
             "type": "string",
             "description": "REQ-LOT-007: FK to InventoryLot.id — the lot triggering the alert. Resolves via ?expand=lotId.",
             "example": "lot-2025-099",
-            "title": "Lot ID"
+            "title": "Lot ID",
+            "$ref": "InventoryLot"
           },
           "alertType": {
             "type": "string",
@@ -494,24 +456,6 @@
               "labelNl": "Afhandelen",
               "description": "Operator marks the alert resolved after corrective action. Stamps resolvedDate."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "lot": {
-            "localField": "lotId",
-            "relatedSchema": "InventoryLot",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "required": true,
-            "description": "REQ-LOT-007: FK to the lot triggering the alert. ?expand=lotId resolves the lot."
-          },
-          "recipient": {
-            "localField": "recipientId",
-            "relatedSchema": "Person",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "required": false,
-            "description": "FK to the Person notified (Nextcloud user). Optional — dashboard-only alerts have no individual recipient."
           }
         },
         "x-openregister-rbac": {

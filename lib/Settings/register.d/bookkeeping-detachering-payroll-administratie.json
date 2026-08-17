@@ -183,15 +183,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "payrolls": {
-            "localField": "id",
-            "relatedSchema": "Payroll",
-            "relatedField": "employeeId",
-            "cardinality": "one-to-many",
-            "description": "All payroll periods for this employee (REQ-PAY-009)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "payroll-administrator": {
@@ -249,7 +240,8 @@
             "type": "string",
             "description": "FK to Employee.",
             "example": "employee-001-john-smith",
-            "title": "Employee ID"
+            "title": "Employee ID",
+            "$ref": "Employee"
           },
           "period": {
             "type": "string",
@@ -322,7 +314,8 @@
             "description": "Back-reference to the materialised salary-expense GLTransaction once issued (REQ-PAY-008).",
             "nullable": true,
             "example": "gl-2026-05-payroll-001",
-            "title": "GL Transaction ID"
+            "title": "GL Transaction ID",
+            "$ref": "GLTransaction"
           },
           "placementGlTransactionId": {
             "type": "string",
@@ -486,36 +479,6 @@
             ]
           }
         },
-        "x-openregister-relations": {
-          "employee": {
-            "localField": "employeeId",
-            "relatedSchema": "Employee",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The employee this payroll belongs to."
-          },
-          "deductions": {
-            "localField": "id",
-            "relatedSchema": "Deduction",
-            "relatedField": "payrollId",
-            "cardinality": "one-to-many",
-            "description": "Deduction line items for this payroll (REQ-PAY-003)."
-          },
-          "glTransaction": {
-            "localField": "glTransactionId",
-            "relatedSchema": "GLTransaction",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The salary-expense GLTransaction materialised on issue (REQ-PAY-008)."
-          },
-          "determinationLetters": {
-            "localField": "id",
-            "relatedSchema": "DeterminationLetter",
-            "relatedField": "payrollId",
-            "cardinality": "one-to-many",
-            "description": "Determination letters generated from this payroll (REQ-PAY-006)."
-          }
-        },
         "x-openregister-ubl": {
           "profile": "peppol-bis-30",
           "computed": false,
@@ -577,7 +540,8 @@
             "type": "string",
             "description": "FK to the parent Payroll.",
             "example": "payroll-2026-05-emp-001",
-            "title": "Payroll ID"
+            "title": "Payroll ID",
+            "$ref": "Payroll"
           },
           "deductionType": {
             "type": "string",
@@ -634,15 +598,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-relations": {
-          "payroll": {
-            "localField": "payrollId",
-            "relatedSchema": "Payroll",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The payroll this deduction belongs to."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "payroll-administrator": {
@@ -690,7 +645,8 @@
             "type": "string",
             "description": "FK to the source Payroll.",
             "example": "payroll-2026-05-emp-001",
-            "title": "Payroll ID"
+            "title": "Payroll ID",
+            "$ref": "Payroll"
           },
           "letterType": {
             "type": "string",
@@ -782,15 +738,6 @@
               "label": "Archive",
               "description": "Transition to read-only archival after the active period."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "payroll": {
-            "localField": "payrollId",
-            "relatedSchema": "Payroll",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The payroll this letter documents."
           }
         },
         "x-openregister-rbac": {
