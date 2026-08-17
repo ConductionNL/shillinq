@@ -12205,7 +12205,7 @@
 						"url": "/apps/shillinq/api/cashflow/export-pdf",
 						"download": true,
 						"filename": "cashflow-forecast.pdf",
-						"icon": "FilePdfBox",
+						"icon": "DatabaseExportOutline",
 						"successMessage": "Cashflow forecast exported.",
 						"errorMessage": "No cashflow forecast is available to export yet."
 					}
