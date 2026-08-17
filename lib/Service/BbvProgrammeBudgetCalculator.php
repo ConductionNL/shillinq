@@ -70,14 +70,6 @@ class BbvProgrammeBudgetCalculator {
 	 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 	 */
 	public function selectedProgrammes(array $universe, ?array $requested, array $seen): array {
-		// REQ-BBC-002: "Selecting no programme MUST show no data (not all
-		// programmes)." An EMPTY array is a selection of none; null is the
-		// absence of a filter. Collapsing the two would make the "all
-		// deselected" case render everything, which is the opposite of the rule.
-		if ($requested !== null && $requested === []) {
-			return [];
-		}
-
 		$codes = $universe;
 		foreach ($seen as $code) {
 			if ($code !== '' && in_array($code, $codes, true) === false) {
@@ -85,6 +77,15 @@ class BbvProgrammeBudgetCalculator {
 			}
 		}
 
+		// REQ-BBC-002: "Selecting no programme MUST show no data (not all
+		// programmes)." ONLY `null` opens the gate. The empty-array case needs
+		// no branch of its own — the filter below keeps nothing when nothing
+		// is requested — and it deliberately does not have one: an explicit
+		// `if ($requested === []) return []` here was written first, and a
+		// mutation control proved it was DEAD (breaking it changed no test and
+		// no behaviour). A guard that cannot be shown to fail is not a guard;
+		// the rule lives in this `=== null` test, which the same control does
+		// redden.
 		if ($requested === null) {
 			return array_values($codes);
 		}
