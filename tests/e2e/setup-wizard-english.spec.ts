@@ -107,10 +107,13 @@ function resetSetupStateServerSide(): void {
 		)
 	}
 	for (const key of SETUP_CONFIG_KEYS) {
-		execSync(`php ${JSON.stringify(occPath)} config:app:delete shillinq ${JSON.stringify(key)}`, {
-			cwd: serverRoot,
-			stdio: 'pipe',
-		})
+		execSync(
+			`php ${JSON.stringify(occPath)} config:app:delete shillinq ${JSON.stringify(key)}`,
+			{
+				cwd: serverRoot,
+				stdio: 'pipe',
+			},
+		)
 	}
 }
 
@@ -133,10 +136,19 @@ async function restoreCiSeedBaseline(baseURL: string): Promise<void> {
 	})
 	try {
 		await ctx.post('/index.php/apps/shillinq/api/setup/config', {
-			data: { legal_country: 'nl', legal_region: 'gemeente', rgs_template: 'bbv' },
+			data: {
+				legal_country: 'nl',
+				legal_region: 'gemeente',
+				rgs_template: 'bbv',
+			},
 		})
-		await ctx.post('/index.php/apps/shillinq/api/setup/action/init-administration', { data: {} })
-		await ctx.post('/index.php/apps/shillinq/api/setup/action/seed', { data: {} })
+		await ctx.post(
+			'/index.php/apps/shillinq/api/setup/action/init-administration',
+			{ data: {} },
+		)
+		await ctx.post('/index.php/apps/shillinq/api/setup/action/seed', {
+			data: {},
+		})
 		const status = await ctx.get('/index.php/apps/shillinq/api/setup/status')
 		const body = await status.json().catch(() => ({}))
 		if (body?.completed !== true) {
@@ -197,16 +209,22 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await restoreCiSeedBaseline(resolveBaseURL())
 	})
 
-	test('the wizard gates the shell and walks all 7 steps in English @e2e REQ-SWE-001 REQ-SWE-005', async ({ page }) => {
+	test('the wizard gates the shell and walks all 7 steps in English @e2e REQ-SWE-001 REQ-SWE-005', async ({
+		page,
+	}) => {
 		await page.goto(APP, { waitUntil: 'domcontentloaded', timeout: 25_000 })
 		await dismissFirstRunWizard(page)
 
 		const dialog = page.getByRole('dialog').first()
-		await expect(dialog, 'shillinq\'s own ADR-042 setup dialog must gate the shell on a reset instance')
-			.toBeVisible({ timeout: 15_000 })
+		await expect(
+			dialog,
+			"shillinq's own ADR-042 setup dialog must gate the shell on a reset instance",
+		).toBeVisible({ timeout: 15_000 })
 
 		// ── Step 0: welcome ──────────────────────────────────────────────
-		await expect(dialog.getByText('Welcome to Shillinq', { exact: false })).toBeVisible()
+		await expect(
+			dialog.getByText('Welcome to Shillinq', { exact: false }),
+		).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'First choose the country (legal region) and organisation type, then the chart-of-accounts template',
@@ -217,9 +235,15 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 1: country ──────────────────────────────────────────────
-		await expect(dialog.getByText('Legal region (country)', { exact: false })).toBeVisible()
-		await expect(dialog.getByText('In which country is this organisation legally established?', { exact: false }))
-			.toBeVisible()
+		await expect(
+			dialog.getByText('Legal region (country)', { exact: false }),
+		).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'In which country is this organisation legally established?',
+				{ exact: false },
+			),
+		).toBeVisible()
 		await expect(dialog.getByText('Netherlands', { exact: true })).toBeVisible()
 		await expect(dialog.getByText('Belgium', { exact: true })).toBeVisible()
 		await expect(dialog.getByText('Germany', { exact: true })).toBeVisible()
@@ -228,10 +252,14 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 2: organisation ─────────────────────────────────────────
-		await expect(dialog.getByText('Organisation type', { exact: false })).toBeVisible()
+		await expect(
+			dialog.getByText('Organisation type', { exact: false }),
+		).toBeVisible()
 		await expect(dialog.getByText('Municipality', { exact: true })).toBeVisible()
 		await expect(dialog.getByText('Province', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('Water authority', { exact: true })).toBeVisible()
+		await expect(
+			dialog.getByText('Water authority', { exact: true }),
+		).toBeVisible()
 		// Jurisdiction-specific legal-entity acronyms must remain unglossed
 		// (ADR-007 proper-noun/acronym exception) — see REQ-SWE-001.
 		await expect(dialog.getByText('ZZP', { exact: true })).toBeVisible()
@@ -241,19 +269,31 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 3: rgs-template ─────────────────────────────────────────
-		await expect(dialog.getByText('Chart of accounts (RGS)', { exact: false })).toBeVisible()
 		await expect(
-			dialog.getByText('the standardised layout of ledger accounts your balance sheet', { exact: false }),
+			dialog.getByText('Chart of accounts (RGS)', { exact: false }),
 		).toBeVisible()
-		await expect(dialog.getByText('BBV (government)', { exact: true })).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'the standardised layout of ledger accounts your balance sheet',
+				{ exact: false },
+			),
+		).toBeVisible()
+		await expect(
+			dialog.getByText('BBV (government)', { exact: true }),
+		).toBeVisible()
 		await assertNoDutchToken(dialog)
 		await selectOption(dialog, 'BBV (government)')
 		await clickContinue(dialog)
 
 		// ── Step 4: administration (run-action) ──────────────────────────
-		await expect(dialog.getByText('Create administration', { exact: false })).toBeVisible()
 		await expect(
-			dialog.getByText('This registers your organisation as an administration in OpenRegister', { exact: false }),
+			dialog.getByText('Create administration', { exact: false }),
+		).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'This registers your organisation as an administration in OpenRegister',
+				{ exact: false },
+			),
 		).toBeVisible()
 		await assertNoDutchToken(dialog)
 		await clickRun(dialog)
@@ -261,9 +301,16 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 5: seed (run-action) ─────────────────────────────────────
-		await expect(dialog.getByText('Load chart of accounts and reference data', { exact: false })).toBeVisible()
 		await expect(
-			dialog.getByText('Load the chosen chart of accounts (ledger accounts), the VAT rates', { exact: false }),
+			dialog.getByText('Load chart of accounts and reference data', {
+				exact: false,
+			}),
+		).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'Load the chosen chart of accounts (ledger accounts), the VAT rates',
+				{ exact: false },
+			),
 		).toBeVisible()
 		await assertNoDutchToken(dialog)
 		await clickRun(dialog)
@@ -272,31 +319,48 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 
 		// ── Step 6: done (summary) ────────────────────────────────────────
 		await expect(dialog.getByText('Done', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('Review your choices below and complete the installation.', { exact: false }))
-			.toBeVisible()
+		await expect(
+			dialog.getByText(
+				'Review your choices below and complete the installation.',
+				{ exact: false },
+			),
+		).toBeVisible()
 		await assertNoDutchToken(dialog)
 
 		// Finish — the wizard's own "complete" action. Wording is a chrome
 		// string from `@conduction/nextcloud-vue` (not migrated by this
 		// change), so match broadly.
-		const finishButton = dialog.getByRole('button', { name: /finish|complete|done|close/i }).last()
+		const finishButton = dialog
+			.getByRole('button', { name: /finish|complete|done|close/i })
+			.last()
 		await finishButton.click({ timeout: 10_000 }).catch(() => {
 			// eslint-disable-next-line no-console
-			console.warn('[setup-wizard-english] no explicit finish button matched; the wizard may auto-close on `completed: true`.')
+			console.warn(
+				'[setup-wizard-english] no explicit finish button matched; the wizard may auto-close on `completed: true`.',
+			)
 		})
 
 		// ── The shell is unblocked ────────────────────────────────────────
-		await expect(dialog, 'the setup dialog must not still gate the shell once all required steps are done')
-			.not.toBeVisible({ timeout: 15_000 })
-		await expect(page.locator('main, [role="main"]')).toBeVisible({ timeout: 15_000 })
+		await expect(
+			dialog,
+			'the setup dialog must not still gate the shell once all required steps are done',
+		).not.toBeVisible({ timeout: 15_000 })
+		await expect(page.locator('main, [role="main"]')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 })
 
 /** Assert none of the pre-change Dutch strings appear inside `scope`'s text. */
-async function assertNoDutchToken(scope: ReturnType<Page['getByRole']>): Promise<void> {
+async function assertNoDutchToken(
+	scope: ReturnType<Page['getByRole']>,
+): Promise<void> {
 	const text = await scope.innerText()
 	for (const dutch of PRE_CHANGE_DUTCH_STRINGS) {
-		expect(text, `residual pre-change Dutch string "${dutch}" found in the setup dialog`).not.toContain(dutch)
+		expect(
+			text,
+			`residual pre-change Dutch string "${dutch}" found in the setup dialog`,
+		).not.toContain(dutch)
 	}
 }
 
@@ -307,16 +371,25 @@ async function assertNoDutchToken(scope: ReturnType<Page['getByRole']>): Promise
  * an exact label that could be "Next" or "Continue" depending on version.
  */
 async function clickContinue(scope: ReturnType<Page['getByRole']>): Promise<void> {
-	await scope.getByRole('button', { name: /next|continue/i }).first().click({ timeout: 10_000 })
+	await scope
+		.getByRole('button', { name: /next|continue/i })
+		.first()
+		.click({ timeout: 10_000 })
 }
 
 /** Click a `run-action` step's Run button (per design.md: "Klik op 'Run' om te starten" -> "Run"). */
 async function clickRun(scope: ReturnType<Page['getByRole']>): Promise<void> {
-	await scope.getByRole('button', { name: /run/i }).first().click({ timeout: 10_000 })
+	await scope
+		.getByRole('button', { name: /run/i })
+		.first()
+		.click({ timeout: 10_000 })
 }
 
 /** Select a choice-step option by its (English) label text. */
-async function selectOption(scope: ReturnType<Page['getByRole']>, label: string): Promise<void> {
+async function selectOption(
+	scope: ReturnType<Page['getByRole']>,
+	label: string,
+): Promise<void> {
 	await scope.getByText(label, { exact: true }).first().click({ timeout: 10_000 })
 }
 
@@ -325,7 +398,10 @@ async function selectOption(scope: ReturnType<Page['getByRole']>, label: string)
  * and report their own completion; wait for the Continue action to become
  * available rather than a fixed sleep.
  */
-async function waitForActionComplete(scope: ReturnType<Page['getByRole']>): Promise<void> {
-	await expect(scope.getByRole('button', { name: /next|continue/i }).first())
-		.toBeEnabled({ timeout: 60_000 })
+async function waitForActionComplete(
+	scope: ReturnType<Page['getByRole']>,
+): Promise<void> {
+	await expect(
+		scope.getByRole('button', { name: /next|continue/i }).first(),
+	).toBeEnabled({ timeout: 60_000 })
 }
