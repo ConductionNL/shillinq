@@ -29,6 +29,7 @@
     "check:seeds": "node tests/validate-seeds.js",
     "check:fragment-required": "node tests/validate-fragment-required.js",
     "check:markers": "node tests/validate-semantic-markers.js",
+    "check:nav-reachability": "node tests/validate-nav-reachability.js",
     "test:e2e": "playwright test",
     "test:e2e:docs": "playwright test --project docs-capture",
     "test:e2e:install": "playwright install chromium",

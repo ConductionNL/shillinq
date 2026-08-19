@@ -28,6 +28,7 @@ any other approximation of the merge semantics.
   `src/menu-layout.json`
 - **THEN** the check proceeds to compute reachability against the returned
   `{ pages, menu }`
+- @e2e exclude verified by running `npm run check:nav-reachability` against the real `node_modules` install (Node/CLI-level module resolution), not a browser flow
 
 #### Scenario: The library cannot be resolved — fail closed
 
@@ -37,6 +38,7 @@ any other approximation of the merge semantics.
   with a non-zero code
 - **THEN** the check does NOT attempt any structural-lint or re-implemented
   fallback
+- @e2e exclude verified by code inspection of `resolveBuildManifestModule()`'s candidate-list + `process.exit(1)` fail-closed path in `tests/validate-nav-reachability.js`, a Node-level branch, not a browser flow
 
 ### Requirement: REQ-NAVR-002 — Reachability MUST be computed by the defined menu-plus-link-field relation
 
@@ -56,6 +58,7 @@ NOT be treated as page links.
   "Dashboard"` and a page with `id: "Dashboard"`
 - **WHEN** reachability is computed
 - **THEN** `Dashboard` is in the reachable set
+- @e2e exclude verified by the `computeReachable()` unit tests in `tests/vitest/validateNavReachability.spec.js` and by the CLI's own run against the real 595-page manifest; a pure-function check, not a browser flow
 
 #### Scenario: A detail page reachable via its index's `detailRoute`
 
@@ -64,6 +67,7 @@ NOT be treated as page links.
 - **WHEN** reachability is computed
 - **THEN** `InvoiceDetail` is in the reachable set even though no menu node
   names it directly
+- @e2e exclude verified by the LINK_FIELDS transitive-closure logic in `computeReachable()`, exercised against the real manifest's `detailRoute` chains; a pure-function check, not a browser flow
 
 #### Scenario: An index page reachable via its detail's `indexRoute`
 
@@ -71,6 +75,7 @@ NOT be treated as page links.
   `config.indexRoute` is `Foo`
 - **WHEN** reachability is computed
 - **THEN** `Foo` is in the reachable set
+- @e2e exclude verified by the LINK_FIELDS transitive-closure logic in `computeReachable()`, exercised against the real manifest's `indexRoute` chains; a pure-function check, not a browser flow
 
 #### Scenario: A page with no menu entry and no inbound link is orphaned
 
@@ -78,6 +83,7 @@ NOT be treated as page links.
   any depth, and no other page's `config` names `Ghost` in any link field
 - **WHEN** reachability is computed
 - **THEN** `Ghost` appears in the orphan list
+- @e2e exclude verified directly by the `Ghost` fixture assertion in `tests/vitest/validateNavReachability.spec.js`; a node-level fixture test, not a browser flow
 
 ### Requirement: REQ-NAVR-003 — A checked-in, reason-bearing ratchet baseline MUST gate only NEW orphans
 
@@ -97,6 +103,7 @@ justified exception — not a bulk suppression of a fresh regression.
   `tests/nav-reachability-baseline.json` with a non-empty reason
 - **WHEN** the check runs
 - **THEN** the check exits 0 for this id's contribution to the result
+- @e2e exclude verified by the `diffBaseline` unit test in `tests/vitest/validateNavReachability.spec.js` and by the real `npm run check:nav-reachability` PASS run against the 40-entry baseline; a node-level check, not a browser flow
 
 #### Scenario: A new orphan not in the baseline fails the build
 
@@ -104,6 +111,7 @@ justified exception — not a bulk suppression of a fresh regression.
   manifest and does NOT appear in `tests/nav-reachability-baseline.json`
 - **WHEN** the check runs
 - **THEN** the check exits non-zero and names `NewlyOrphaned` in its output
+- @e2e exclude verified by the `diffBaseline` unit test and by a live control run (removed `MobileScannerReceive` from the baseline, confirmed exit 1 naming exactly that id, then restored); a node-level check, not a browser flow
 
 #### Scenario: A stale baseline entry warns but does not fail
 
@@ -114,6 +122,7 @@ justified exception — not a bulk suppression of a fresh regression.
 - **THEN** the check prints a warning naming `NowReachable` as a stale
   baseline entry
 - **THEN** this warning alone does not cause a non-zero exit
+- @e2e exclude verified by the `diffBaseline` unit test and by a live control run (added a fake exception for reachable page `Dashboard`, confirmed WARN + exit 0, then restored); a node-level check, not a browser flow
 
 ### Requirement: REQ-NAVR-004 — Failure output MUST name the orphaned page id and attribute the cause to a menu-layout stage
 
@@ -132,6 +141,7 @@ The reported cause MUST be one of: no menu entry in any base/fragment
 - **WHEN** the check runs and finds `OnlyPath` newly orphaned
 - **THEN** the failure output for `OnlyPath` names the cause as `removals` and
   names the removed id `OnlyPathLeaf`
+- @e2e exclude verified by the `attributeCause` unit test asserting `'removals'` and by a live real-pipeline control (added `MobileScannerHome` to `menu-layout.json#removals`, confirmed cause = removals, then reverted); a node-level check, not a browser flow
 
 #### Scenario: An orphan with no menu entry anywhere is attributed to a pre-existing gap
 
@@ -140,6 +150,7 @@ The reported cause MUST be one of: no menu entry in any base/fragment
 - **WHEN** the check runs and finds `NeverLinked` newly orphaned
 - **THEN** the failure output attributes the cause as "no menu entry in any
   base/fragment `menu[]`", not to `relocations`/`removals`/`settingsSection`
+- @e2e exclude verified by the `attributeCause` unit test asserting the `Ghost` fixture page is attributed `'no menu entry in any base/fragment menu[]'`, not `'removals'`; a node-level check, not a browser flow
 
 ### Requirement: REQ-NAVR-005 — A negative-fixture test MUST prove the check can fail
 
@@ -159,6 +170,7 @@ case is caused by the removal and not by an unrelated defect in the fixture.
 - **WHEN** the check's core logic runs against this fixture with an empty
   baseline
 - **THEN** the result's new-orphan list contains `Solo`
+- @e2e exclude this IS the REQ-NAVR-005 negative-fixture proof itself, in `tests/vitest/validateNavReachability.spec.js`; a node-level fixture test by design, not a browser flow
 
 #### Scenario: The positive control on the same fixture reports no orphan
 
@@ -167,6 +179,7 @@ case is caused by the removal and not by an unrelated defect in the fixture.
 - **WHEN** the check's core logic runs against this fixture with an empty
   baseline
 - **THEN** the result's new-orphan list is empty
+- @e2e exclude this IS the REQ-NAVR-005 positive-control sibling assertion on the same fixture, in `tests/vitest/validateNavReachability.spec.js`; a node-level fixture test by design, not a browser flow
 
 ### Requirement: REQ-NAVR-006 — The check MUST run via `npm run` and in this repo's CI
 
@@ -183,6 +196,7 @@ it in CI the same way those siblings run.
 - **WHEN** a developer runs `npm run check:nav-reachability`
 - **THEN** `node tests/validate-nav-reachability.js` executes and exits 0 or
   non-zero per REQ-NAVR-003
+- @e2e exclude verified by running `npm run check:nav-reachability` locally and observing exit 0; a CLI invocation, not a browser flow
 
 #### Scenario: CI runs the check as a frontend-check leg
 
@@ -190,6 +204,7 @@ it in CI the same way those siblings run.
   inspected
 - **THEN** it includes `"check:nav-reachability"` alongside the existing
   manifest-related legs
+- @e2e exclude verified by inspecting `.github/workflows/code-quality.yml`'s `frontend-checks` array and parsing the YAML; a workflow-config check, not a browser flow
 
 ### Requirement: REQ-NAVR-007 — Non-goals
 
@@ -207,3 +222,4 @@ crossref` (gate 30). This gate is additive and app-local; it complements gate
   `src/menu-layout.json` are unchanged
 - **THEN** only `tests/`, `package.json`, and `.github/workflows/code-
   quality.yml` are touched
+- @e2e exclude verified by `git status`/`git diff` on `src/manifest.json`, `src/manifest.d/*.json`, and `src/menu-layout.json` showing no changes; a diff-inspection check, not a browser flow
