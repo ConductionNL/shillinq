@@ -288,22 +288,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "invoice": {
-            "localField": "invoiceId",
-            "relatedSchema": "Invoice",
-            "relatedField": "invoiceId",
-            "cardinality": "one-to-one",
-            "description": "The final Invoice materialised for this order on completion."
-          },
-          "depositPayment": {
-            "localField": "depositPaymentId",
-            "relatedSchema": "DepositPayment",
-            "relatedField": "depositPaymentId",
-            "cardinality": "many-to-one",
-            "description": "The authorised deposit credited on the final invoice."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "scheduler": {
@@ -544,22 +528,6 @@
             "title": "State"
           }
         },
-        "x-openregister-relations": {
-          "order": {
-            "localField": "orderId",
-            "relatedSchema": "BookingOrder",
-            "relatedField": "orderId",
-            "cardinality": "many-to-one",
-            "description": "The source booking order."
-          },
-          "depositPayment": {
-            "localField": "depositPaymentId",
-            "relatedSchema": "DepositPayment",
-            "relatedField": "depositPaymentId",
-            "cardinality": "many-to-one",
-            "description": "The deposit credited on this invoice."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "scheduler": {
@@ -687,15 +655,6 @@
             "example": 18150,
             "title": "Gross Amount"
           }
-        },
-        "x-openregister-relations": {
-          "invoice": {
-            "localField": "invoiceId",
-            "relatedSchema": "Invoice",
-            "relatedField": "invoiceId",
-            "cardinality": "many-to-one",
-            "description": "The parent invoice."
-          }
         }
       },
       "CreditNote": {
@@ -784,15 +743,6 @@
             "default": "issued",
             "example": "issued",
             "title": "State"
-          }
-        },
-        "x-openregister-relations": {
-          "invoice": {
-            "localField": "linkedInvoiceId",
-            "relatedSchema": "Invoice",
-            "relatedField": "invoiceId",
-            "cardinality": "many-to-one",
-            "description": "The invoice being reversed."
           }
         }
       }

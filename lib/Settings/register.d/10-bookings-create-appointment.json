@@ -296,22 +296,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "service": {
-            "localField": "serviceId",
-            "relatedSchema": "Service",
-            "relatedField": "serviceId",
-            "cardinality": "many-to-one",
-            "description": "The Service this appointment books."
-          },
-          "resource": {
-            "localField": "resourceId",
-            "relatedSchema": "Resource",
-            "relatedField": "resourceId",
-            "cardinality": "many-to-one",
-            "description": "The Resource this appointment reserves."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "scheduler": {

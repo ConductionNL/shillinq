@@ -171,15 +171,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "appointment": {
-            "localField": "appointmentId",
-            "relatedSchema": "Appointment",
-            "relatedField": "appointmentId",
-            "cardinality": "many-to-one",
-            "description": "The Appointment this token confirms (REQ-BCF-002)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "scheduler": {
