@@ -475,24 +475,30 @@ class DeliveryDispatchListenerTest extends TestCase {
 
 		$logger = $this->createMock(LoggerInterface::class);
 
+		// ADR-084: these classes take OpenRegister's PUBLISHED interface, so the
+		// double has to BE that interface and has to reach the SAME in-memory
+		// store the rest of this test asserts against. Passing a bare
+		// createMock(ObjectServiceInterface::class) — as this file did — answers
+		// every call with null, and the end-to-end assertions below would be
+		// measuring an empty store.
+		$objectService = $this->objectServiceFor(recorder: $fakeObjectService);
+
 		// Real business-logic classes — nothing about the existing valuation
 		// + COGS pipeline is mocked or reimplemented.
-		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$fifo = new FifoValuationService(appConfig: $appConfig, logger: $logger, objectService: $objectService);
+		$average = new MovingAverageValuationService(
+			appConfig: $appConfig,
+			logger: $logger,
+			objectService: $objectService
 		);
-		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
-		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$cogs = new CogsPosterService(appConfig: $appConfig, logger: $logger, objectService: $objectService);
 		$stockMoveListener = new StockMoveTransitionedListener(
 			fifo: $fifo,
 			average: $average,
 			cogs: $cogs,
 			appConfig: $appConfig,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $objectService,
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(
@@ -500,7 +506,7 @@ class DeliveryDispatchListenerTest extends TestCase {
 			appConfig: $appConfig,
 			logger: $logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $objectService,
 		);
 		$deliveryListener = new DeliveryDispatchListener(dispatchService: $dispatchService, logger: $logger);
 
@@ -573,6 +579,58 @@ class DeliveryDispatchListenerTest extends TestCase {
 		self::assertEqualsWithDelta(18.00, (float)$credit['amount'], 0.001);
 
 	}//end testConfirmedDeliveryProducesIssueMoveThatDrivesCogsPosting()
+
+	/**
+	 * Wrap the in-memory fake in a real ObjectServiceInterface double.
+	 *
+	 * ADR-084: the pipeline classes type-hint OpenRegister's PUBLISHED
+	 * interface, and `find()` / `saveObject()` / `updateObject()` on it return
+	 * an ObjectEntityInterface rather than an array — so the double both
+	 * delegates to the fake store and wraps its rows in the entity shape
+	 * production actually receives.
+	 *
+	 * @param object $recorder The in-memory fake ObjectService.
+	 *
+	 * @return ObjectServiceInterface The interface double.
+	 */
+	private function objectServiceFor(object $recorder): ObjectServiceInterface {
+		$mock = $this->createMock(ObjectServiceInterface::class);
+		$mock->method('setRegister')->willReturnCallback(
+			static function (string|int $register) use ($recorder, $mock): object {
+				$recorder->setRegister((string)$register);
+				return $mock;
+			}
+		);
+		$mock->method('setSchema')->willReturnCallback(
+			static function (string|int $schema) use ($recorder, $mock): object {
+				$recorder->setSchema((string)$schema);
+				return $mock;
+			}
+		);
+		$mock->method('findAll')->willReturnCallback(
+			static fn (array $config = []): array => $recorder->findAll($config)
+		);
+		$mock->method('saveObject')->willReturnCallback(
+			static fn (array $object): ObjectEntity => (new ObjectEntity())
+				->setObject($recorder->saveObject($object))
+		);
+		$mock->method('updateObject')->willReturnCallback(
+			static fn (string $objectId, array $data): ObjectEntity => (new ObjectEntity())
+				->setObject($recorder->updateObject($objectId, $data))
+		);
+		$mock->method('find')->willReturnCallback(
+			static function (int|string $id) use ($recorder): ?ObjectEntity {
+				$row = $recorder->find((string)$id);
+				if ($row === null) {
+					return null;
+				}
+
+				return (new ObjectEntity())->setObject($row);
+			}
+		);
+
+		return $mock;
+	}//end objectServiceFor()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

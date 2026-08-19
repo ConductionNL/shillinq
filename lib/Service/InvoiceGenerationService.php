@@ -758,8 +758,17 @@ class InvoiceGenerationService {
 	private function find(string $schema, string $id): ?array {
 		try {
 			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->find($id);
-			if (is_array($rs) === true) {
-				return $rs;
+			if ($rs === null) {
+				return null;
+			}
+
+			// ADR-084: find() returns an ObjectEntityInterface (a
+			// JsonSerializable) or null, never an array. The former is_array()
+			// arm was unreachable, so this method returned null for EVERY
+			// record that existed.
+			$out = $rs->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
 			}
 
 			return null;

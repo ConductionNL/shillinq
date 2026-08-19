@@ -452,13 +452,12 @@ class CycleCountService {
 				$filters['locationId'] = $locationFilter;
 			}
 
-			$rows = ($this->objectService
+			// ADR-084: findAll() is declared `: array` — it never returns null,
+			// so the former `?? []` and is_array() guard were both dead.
+			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryStock')
-				->findAll(['filters' => $filters]) ?? []);
-			if (is_array($rows) === false) {
-				return [];
-			}
+				->findAll(['filters' => $filters]);
 
 			// Category filter requires a Product lookup. Fall back to client-side
 			// filter (the volume of stock rows per administration is bounded by SKU
@@ -516,13 +515,25 @@ class CycleCountService {
 				)
 			);
 			foreach ($skus as $sku) {
-				$product = $this->objectService
+				// ADR-084 made this visible: find() takes an id (int|string),
+				// NOT a filter array. Passed a filter array it could never
+				// resolve a Product, so every category resolved to '' and this
+				// filter silently matched nothing. findAll() is the method that
+				// takes filters.
+				$products = $this->objectService
 					->setRegister($this->register())
 					->setSchema('Product')
-					->find(['filters' => ['administrationId' => $administrationId, 'sku' => $sku]]);
+					->findAll(
+						['filters' => ['administrationId' => $administrationId, 'sku' => $sku]]
+					);
 				$cat = '';
-				if (is_array($product) === true && isset($product['category']) === true) {
-					$cat = (string)$product['category'];
+				foreach ($products as $product) {
+					$productRow = $this->asArray(row: $product);
+					if (isset($productRow['category']) === true) {
+						$cat = (string)$productRow['category'];
+					}
+
+					break;
 				}
 
 				$skuToCategory[$sku] = $cat;
@@ -559,7 +570,9 @@ class CycleCountService {
 	 */
 	private function findLinesForCount(string $administrationId, string $countId): array {
 		try {
-			$rows = ($this->objectService
+			// ADR-084: findAll() is declared `: array` — it never returns null,
+			// so the former `?? []` and is_array() guard were both dead.
+			return $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryCycleCountLine')
 				->findAll(
@@ -569,12 +582,7 @@ class CycleCountService {
 							'countId' => $countId,
 						],
 					]
-				) ?? []);
-			if (is_array($rows) === true) {
-				return $rows;
-			}
-
-			return [];
+				);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: findLinesForCount failed',
@@ -632,6 +640,32 @@ class CycleCountService {
 	private function extractId(mixed $saved): string {
 		return ObjectIdentifier::resolve(saved: $saved);
 	}//end extractId()
+
+	/**
+	 * Normalise an OpenRegister row to a plain array.
+	 *
+	 * ADR-084: findAll() yields ObjectEntityInterface rows, which extend
+	 * JsonSerializable. A bare (array) cast yields the entity's own
+	 * name-mangled private properties, not the stored object.
+	 *
+	 * @param mixed $row Raw row from ObjectService.
+	 *
+	 * @return array<string,mixed> The row body.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if ($row instanceof \JsonSerializable) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return [];
+	}//end asArray()
 
 	/**
 	 * Resolve the OpenRegister register slug, defaulting to 'shillinq'.

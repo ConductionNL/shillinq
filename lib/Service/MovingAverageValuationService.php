@@ -279,11 +279,9 @@ class MovingAverageValuationService {
 			->setSchema('InventoryValuation')
 			->saveObject($data);
 
-		if (is_array($saved) === false) {
-			return $this->asArray(row: $saved);
-		}
-
-		return $saved;
+		// ADR-084: saveObject() returns an ObjectEntityInterface, never an
+		// array — the former is_array() guard was always true.
+		return $this->asArray(row: $saved);
 	}//end saveValuation()
 
 	/**

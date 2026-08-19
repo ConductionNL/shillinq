@@ -130,7 +130,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 				// Load the linked ARInvoice. factuurId is the ARInvoice UUID.
 				$invoice = null;
 				try {
-					$invoice = $objectService->find(
+					$invoice = $this->objectService->find(
 						id: $invoiceId,
 						register: $registerSlug,
 						schema: 'ARInvoice',

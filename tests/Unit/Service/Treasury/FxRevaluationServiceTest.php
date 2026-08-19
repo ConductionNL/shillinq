@@ -23,13 +23,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Treasury;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Service\Treasury\FxRevaluationService;
 use OCA\Shillinq\Service\Treasury\TreasuryRateService;
 use OCA\Shillinq\Service\Treasury\TreasuryRateSnapshot;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
 /**
@@ -176,9 +176,6 @@ final class FxRevaluationServiceTest extends TestCase {
 			'FXPosition' => [],
 		];
 
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($this->objectService);
-
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default): string => $default
@@ -187,13 +184,56 @@ final class FxRevaluationServiceTest extends TestCase {
 		$this->treasuryRateService = $this->createMock(TreasuryRateService::class);
 
 		$this->service = new FxRevaluationService(
-			$container,
 			$appConfig,
 			$this->treasuryRateService,
 			new NullLogger(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			$this->objectServiceDouble(),
 		);
 	}//end setUp()
+
+	/**
+	 * Wrap the recording stub in a real ObjectServiceInterface double.
+	 *
+	 * ADR-084: the service takes OpenRegister's PUBLISHED interface, so the
+	 * double has to BE that interface. It delegates to `$this->objectService`
+	 * so the `saved[...]` assertions below keep measuring real calls — a bare
+	 * `createMock(ObjectServiceInterface::class)` would record nothing and
+	 * every one of those assertions would be asserting against an empty array.
+	 *
+	 * @return ObjectServiceInterface The interface double.
+	 */
+	private function objectServiceDouble(): ObjectServiceInterface {
+		$recorder = $this->objectService;
+		$mock = $this->createMock(ObjectServiceInterface::class);
+		$mock->method('setRegister')->willReturnCallback(
+			static function (string|int $register) use ($recorder, $mock): object {
+				$recorder->setRegister((string)$register);
+				return $mock;
+			}
+		);
+		$mock->method('setSchema')->willReturnCallback(
+			static function (string|int $schema) use ($recorder, $mock): object {
+				$recorder->setSchema((string)$schema);
+				return $mock;
+			}
+		);
+		$mock->method('findAll')->willReturnCallback(
+			static fn (array $config = []): array => $recorder->findAll($config)
+		);
+		$mock->method('saveObject')->willReturnCallback(
+			static function (
+				array $object,
+				?array $extend = [],
+				string|int|null $register = null,
+				string|int|null $schema = null
+			) use ($recorder): ObjectEntity {
+				$recorder->saveObject($object, (string)$register, (string)$schema);
+				return (new ObjectEntity())->setObject($object);
+			}
+		);
+
+		return $mock;
+	}//end objectServiceDouble()
 
 	/**
 	 * Build a live snapshot.

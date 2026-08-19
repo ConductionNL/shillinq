@@ -396,11 +396,11 @@ class PurchaseOrderApprovalService {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
-
-			return $object;
+			// ADR-084: saveObject() returns an ObjectEntityInterface, never an
+			// array. The former is_array() arm was unreachable, so this
+			// returned the UNSAVED $object and the caller never saw the
+			// server-assigned id.
+			return (array)$result->jsonSerialize();
 		} catch (\Throwable $exception) {
 			$this->logger->error(
 				'PurchaseOrderApprovalService: failed to persist object',

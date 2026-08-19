@@ -385,8 +385,8 @@ class Application extends App implements IBootstrap {
 			DoorsnijdingsVerbodValidator::class,
 			static function (ContainerInterface $c): DoorsnijdingsVerbodValidator {
 				return new DoorsnijdingsVerbodValidator(
-					container: $c,
 					appConfig: $c->get(IAppConfig::class),
+					objectService: $c->get(ObjectServiceInterface::class),
 					auditLogger: $c->get(InnovatieboxAuditEventLogger::class),
 				);
 			}

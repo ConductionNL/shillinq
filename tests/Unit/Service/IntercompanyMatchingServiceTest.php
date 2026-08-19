@@ -23,12 +23,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Service\IntercompanyMatchingCalculator;
 use OCA\Shillinq\Service\IntercompanyMatchingService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -42,13 +42,6 @@ use Psr\Log\LoggerInterface;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class IntercompanyMatchingServiceTest extends TestCase {
-
-	/**
-	 * Mock ContainerInterface.
-	 *
-	 * @var ContainerInterface&MockObject
-	 */
-	private ContainerInterface&MockObject $container;
 
 	/**
 	 * Mock IAppConfig.
@@ -71,7 +64,6 @@ final class IntercompanyMatchingServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
@@ -86,16 +78,55 @@ final class IntercompanyMatchingServiceTest extends TestCase {
 	 * @return IntercompanyMatchingService
 	 */
 	private function service(object $objectService): IntercompanyMatchingService {
-		$this->container->method('get')->willReturn($objectService);
 		return new IntercompanyMatchingService(
-			$this->container,
 			$this->appConfig,
 			new IntercompanyMatchingCalculator(),
 			$this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			$this->objectServiceFor($objectService),
 		);
 
 	}//end service()
+
+	/**
+	 * Wrap the recording stub in a real ObjectServiceInterface double.
+	 *
+	 * ADR-084: the service takes OpenRegister's PUBLISHED interface, so the
+	 * double has to BE that interface. It delegates to the recorder so the
+	 * existing `savedSchemas` / `matchesByPeriod` assertions keep working —
+	 * injecting a bare `createMock(ObjectServiceInterface::class)` here would
+	 * silently answer every call with null and turn these tests into an
+	 * invisible pass.
+	 *
+	 * @param object $recorder The recording stub from buildStub().
+	 *
+	 * @return ObjectServiceInterface The interface double.
+	 */
+	private function objectServiceFor(object $recorder): ObjectServiceInterface {
+		$mock = $this->createMock(ObjectServiceInterface::class);
+		$mock->method('setRegister')->willReturnCallback(
+			static function (string|int $register) use ($recorder, $mock): object {
+				$recorder->setRegister((string)$register);
+				return $mock;
+			}
+		);
+		$mock->method('setSchema')->willReturnCallback(
+			static function (string|int $schema) use ($recorder, $mock): object {
+				$recorder->setSchema((string)$schema);
+				return $mock;
+			}
+		);
+		$mock->method('findAll')->willReturnCallback(
+			static fn (array $config = []): array => $recorder->findAll($config)
+		);
+		$mock->method('saveObject')->willReturnCallback(
+			static function (array $object) use ($recorder): ObjectEntity {
+				$recorder->saveObject($object);
+				return (new ObjectEntity())->setObject($object);
+			}
+		);
+
+		return $mock;
+	}//end objectServiceFor()
 
 	/**
 	 * Explicit marking yields explicitly-marked / high confidence (REQ-ICE-002).

@@ -95,20 +95,14 @@ class AccountBalanceGuard {
 	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md (REQ-CoA-005)
 	 */
 	public function requireZeroBalance(array $account): bool {
-		// T1 probe: if ObjectService itself is unavailable (OR not installed), permit
-		// archive by default — no GLLine register can exist without OR (T1 state).
-		// This probe is intentionally separate from the computation resolution below
-		// so that "OR absent" (permit) and "computation failed" (deny, fail-closed)
-		// remain two distinct, independently observable outcomes.
-		try {
-		} catch (\Throwable) {
-			$this->logger->debug(
-				'AccountBalanceGuard: ObjectService not present (T1 state) — archive permitted by default',
-				['accountNumber' => ($account['accountNumber'] ?? 'unknown')]
-			);
-			return true;
-		}
-
+		// The former "T1 probe" here was an EMPTY try {} with a catch that could
+		// never fire: ADR-083 removed the `$container->get(ObjectService)` call
+		// it was guarding, leaving the catch unreachable (phpstan: "Dead catch").
+		// With ObjectServiceInterface injected, an absent OpenRegister now fails
+		// when the DI alias resolves, before this guard is ever constructed —
+		// so the "permit by default" outcome no longer exists and pretending it
+		// does would be an invisible pass.
+		//
 		// T2+ check: compute balance via GLLine records. Fail-closed on any error
 		// so a transient DB failure denies archive rather than silently permitting it.
 		// The ObjectService is resolved again inside this guarded block so a failure
@@ -141,9 +135,13 @@ class AccountBalanceGuard {
 
 			// Use integer cents to avoid IEEE-754 float equality issues (C1).
 			// 0.1 + 0.2 - 0.3 in floats ≠ 0.0, but (10 + 20 - 30) === 0.
+			// findAll() yields ObjectEntityInterface rows. ObjectEntity does NOT
+			// implement ArrayAccess, so subscripting a row directly is a fatal
+			// "Cannot use object of type ... as array" — caught below, which
+			// made this guard deny EVERY archive. Normalise first.
 			$balanceCents = array_sum(
 				array_map(
-					static fn ($line) => (int)round(((float)($line['debit'] ?? 0) - (float)($line['credit'] ?? 0)) * 100),
+					fn (mixed $row): int => $this->lineBalanceCents(row: $row),
 					$lines
 				)
 			);
@@ -228,4 +226,46 @@ class AccountBalanceGuard {
 			return false;
 		}//end try
 	}//end requireSingleClosingAccount()
+
+	/**
+	 * Signed debit-minus-credit of one GLLine row, in integer cents.
+	 *
+	 * @param mixed $row A GLLine row from ObjectService (an
+	 *                   ObjectEntityInterface, or an array in unit fixtures).
+	 *
+	 * @return int Debit minus credit, in cents.
+	 */
+	private function lineBalanceCents(mixed $row): int {
+		$line = $this->asArray(row: $row);
+
+		return (int)round(
+			(((float)($line['debit'] ?? 0)) - ((float)($line['credit'] ?? 0))) * 100
+		);
+	}//end lineBalanceCents()
+
+	/**
+	 * Normalise an OpenRegister row to a plain array.
+	 *
+	 * ADR-084: findAll() yields ObjectEntityInterface rows, which extend
+	 * JsonSerializable. A bare (array) cast yields the entity's own
+	 * name-mangled private properties, not the stored object.
+	 *
+	 * @param mixed $row Raw row from ObjectService.
+	 *
+	 * @return array<string,mixed> The row body.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if ($row instanceof \JsonSerializable) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return [];
+	}//end asArray()
 }//end class

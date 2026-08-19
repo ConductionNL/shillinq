@@ -300,8 +300,7 @@ class IcpFilingService {
 	 */
 	private function saveReturn(array $return): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $return,
 				register: $this->register(),
 				schema: 'IcpOpgaaf',

@@ -82,7 +82,6 @@ final class EInvoiceService {
 	/**
 	 * Constructor.
 	 *
-	 *                                      lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param LoggerInterface $logger Logger (no PII/document bodies logged).
@@ -90,6 +89,7 @@ final class EInvoiceService {
 	 * @param ArInvoiceUblMapper $ublMapper NLCIUS UBL 2.1 mapper (REQ-EINV-001).
 	 * @param InvoicePdfGenerator $pdfGenerator Hybrid PDF embed (REQ-EINV-002).
 	 * @param EInvoiceValidationService $validationService Pre-send validation (REQ-EINV-003).
+	 * @param ObjectServiceInterface $objectService OpenRegister object store.
 	 * @param PeppolTransmissionPortInterface|null $peppolPort Optional transmission port; defaults to
 	 *                                                         {@see LogPeppolTransmissionAdapter}.
 	 */
@@ -105,7 +105,7 @@ final class EInvoiceService {
 		?PeppolTransmissionPortInterface $peppolPort = null,
 	) {
 		$this->peppolPort = ($peppolPort ?? new LogPeppolTransmissionAdapter(
-			container: $container,
+			objectService: $objectService,
 			appConfig: $appConfig,
 			logger: $logger
 		));
@@ -363,11 +363,11 @@ final class EInvoiceService {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
-
-			return $object;
+			// ADR-084: saveObject() returns an ObjectEntityInterface, never an
+			// array. The former is_array() arm was unreachable, so this
+			// returned the UNSAVED $object and the caller never saw the
+			// server-assigned id.
+			return (array)$result->jsonSerialize();
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'EInvoiceService: failed to persist object',

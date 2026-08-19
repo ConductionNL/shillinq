@@ -370,11 +370,11 @@ class StockReservationGuard {
 				return false;
 			}
 
-			if (is_array($current) === true) {
-				$currentArray = $current;
-			} else {
-				$currentArray = (array)$current;
-			}
+			// ADR-084: find() returns an ObjectEntityInterface (a
+			// JsonSerializable). A bare (array) cast on that object yields the
+			// entity's own name-mangled private properties, so the version
+			// below read as 0 and this CAS check compared nothing.
+			$currentArray = $current->jsonSerialize();
 
 			if ((int)($currentArray['version'] ?? 0) !== (int)($row['version'] ?? 0)) {
 				$this->logger->info('StockReservationGuard: CAS collision', ['id' => $id]);
@@ -385,7 +385,13 @@ class StockReservationGuard {
 			$this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryStock')
-				->updateObject(id: $id, object: $merged, register: $this->register(), schema: 'InventoryStock');
+				// ADR-084: updateObject() takes ($objectId, $data). The register
+				// and schema are the ones set on the chain above; they were
+				// never parameters of this method, so the previous
+				// id:/object:/register:/schema: call raised "Unknown named
+				// parameter" and was swallowed by the catch below — every CAS
+				// write silently failed and reported "CAS update failed".
+				->updateObject(objectId: $id, data: $merged);
 
 			return true;
 		} catch (\Throwable $e) {

@@ -178,10 +178,12 @@ class WbsoAccountService {
 		);
 
 
-		return $this->objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->saveObject($payload);
+
+		return $this->asArray(row: $saved);
 
 	}//end createAccount()
 
@@ -222,10 +224,12 @@ class WbsoAccountService {
 		);
 
 
-		return $this->objectService
+		$saved = $this->objectService
 			->setRegister($this->register())
 			->setSchema('Account')
 			->saveObject($merged);
+
+		return $this->asArray(row: $saved);
 
 	}//end updateAccount()
 
@@ -344,4 +348,30 @@ class WbsoAccountService {
 
 		return $register;
 	}//end register()
+
+	/**
+	 * Normalise an OpenRegister row to a plain array.
+	 *
+	 * ADR-084: saveObject() returns an ObjectEntityInterface, which extends
+	 * JsonSerializable. Returning it straight out of a method declared
+	 * `: array` is a TypeError on every call.
+	 *
+	 * @param mixed $row Raw row from ObjectService.
+	 *
+	 * @return array<string,mixed> The row body.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if ($row instanceof \JsonSerializable) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return [];
+	}//end asArray()
 }//end class

@@ -37,12 +37,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Service\IntercompanyMatchingCalculator;
 use OCA\Shillinq\Service\IntercompanyMatchingService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -146,7 +146,6 @@ final class IntercompanyMatchingPerformanceTest extends TestCase {
 	 * @return IntercompanyMatchingService
 	 */
 	private function buildService(int $transactionCount): IntercompanyMatchingService {
-		$container = $this->createMock(ContainerInterface::class);
 		$appConfig = $this->createMock(IAppConfig::class);
 		$logger = $this->createMock(LoggerInterface::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
@@ -158,17 +157,54 @@ final class IntercompanyMatchingPerformanceTest extends TestCase {
 			relations: $relations,
 			transactions: $transactions,
 		);
-		$container->method('get')->willReturn($stub);
 
 		return new IntercompanyMatchingService(
-			$container,
 			$appConfig,
 			new IntercompanyMatchingCalculator(),
 			$logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			$this->objectServiceFor(recorder: $stub),
 		);
 
 	}//end buildService()
+
+	/**
+	 * Wrap the seeded stub in a real ObjectServiceInterface double.
+	 *
+	 * ADR-084: the service takes OpenRegister's PUBLISHED interface. A bare
+	 * `createMock(ObjectServiceInterface::class)` would answer every findAll()
+	 * with null, so the benchmark would time an empty data set — a measurement
+	 * that always passes and means nothing.
+	 *
+	 * @param object $recorder The seeded stub from newObjectServiceStub().
+	 *
+	 * @return ObjectServiceInterface The interface double.
+	 */
+	private function objectServiceFor(object $recorder): ObjectServiceInterface {
+		$mock = $this->createMock(ObjectServiceInterface::class);
+		$mock->method('setRegister')->willReturnCallback(
+			static function (string|int $register) use ($recorder, $mock): object {
+				$recorder->setRegister((string)$register);
+				return $mock;
+			}
+		);
+		$mock->method('setSchema')->willReturnCallback(
+			static function (string|int $schema) use ($recorder, $mock): object {
+				$recorder->setSchema((string)$schema);
+				return $mock;
+			}
+		);
+		$mock->method('findAll')->willReturnCallback(
+			static fn (array $config = []): array => $recorder->findAll($config)
+		);
+		$mock->method('saveObject')->willReturnCallback(
+			static function (array $object) use ($recorder): ObjectEntity {
+				$recorder->saveObject($object);
+				return (new ObjectEntity())->setObject($object);
+			}
+		);
+
+		return $mock;
+	}//end objectServiceFor()
 
 	/**
 	 * Build the single IntercompanyRelation fixture used by all transactions.

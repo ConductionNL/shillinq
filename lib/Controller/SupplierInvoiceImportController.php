@@ -353,11 +353,11 @@ class SupplierInvoiceImportController extends Controller {
 			->setSchema(self::SUPPLIER_INVOICE_SCHEMA)
 			->saveObject($record);
 
-		if (is_array($result) === true) {
-			return $result;
-		}
-
-		return $record;
+		// ADR-084: saveObject() returns an ObjectEntityInterface (a
+		// JsonSerializable), never an array — the persisted row, including the
+		// server-assigned id, only reaches the caller through jsonSerialize().
+		// The former is_array() arm silently returned the UNSAVED $record.
+		return (array)$result->jsonSerialize();
 	}//end saveSupplierInvoice()
 
 	/**

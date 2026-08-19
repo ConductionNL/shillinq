@@ -43,10 +43,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Peppol;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -71,14 +71,16 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	];
 
 	/**
-	 * DI container — used to lazily fetch OR's ObjectService for the party lookup.
-	 * The container indirection keeps this class testable without forcing a
-	 * hard dependency on OpenRegister when a schema is absent (e.g. greenfield
-	 * deployments).
+	 * OpenRegister's published object store, used for the party lookup.
 	 *
-	 * @var ContainerInterface
+	 * ADR-084: the interface is the seam, so this class stays testable without
+	 * a container hop. A schema that is absent (e.g. a greenfield deployment)
+	 * still surfaces as the caught lookup failure below, not as a hard
+	 * dependency at construction.
+	 *
+	 * @var ObjectServiceInterface
 	 */
-	private ContainerInterface $container;
+	private ObjectServiceInterface $objectService;
 
 	/**
 	 * App config (resolves the register slug).
@@ -97,19 +99,18 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService
-	 *                                      is fetched lazily.
+	 * @param ObjectServiceInterface $objectService OpenRegister object store.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface|null $logger Optional logger (defaults to NullLogger).
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		ContainerInterface $container,
+		ObjectServiceInterface $objectService,
 		IAppConfig $appConfig,
 		?LoggerInterface $logger = null,
 	) {
-		$this->container = $container;
+		$this->objectService = $objectService;
 		$this->appConfig = $appConfig;
 		$this->logger = ($logger ?? new NullLogger());
 
@@ -245,8 +246,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	private function lookupInSchema(string $administrationId, string $partyId, string $schema, string $idField): ?string {
 		try {
 			$register = $this->register();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister($register)
 				->setSchema($schema)
 				->findAll(

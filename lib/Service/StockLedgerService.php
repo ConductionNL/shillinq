@@ -257,28 +257,23 @@ class StockLedgerService {
 			'lifecycleState' => 'posted',
 		];
 
-		$sourceSide = ($this->objectService
+		// ADR-084: findAll() is declared `: array` — it never returns null, so
+		// the former `?? []` and is_array() guards were dead.
+		$sourceSide = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
-			->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])]) ?? []);
-		$destinationSide = ($this->objectService
+			->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])]);
+		$destinationSide = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
-			->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])]) ?? []);
-
-		if (is_array($sourceSide) === false) {
-			$sourceSide = [];
-		}
-
-		if (is_array($destinationSide) === false) {
-			$destinationSide = [];
-		}
+			->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])]);
 
 		$byId = [];
-		foreach (array_merge($sourceSide, $destinationSide) as $move) {
-			if (is_array($move) === false) {
-				continue;
-			}
+		foreach (array_merge($sourceSide, $destinationSide) as $row) {
+			// The rows are ObjectEntityInterface instances, not arrays. The
+			// former `is_array($move) === false → continue` skipped every one
+			// of them, so this method returned an empty ledger.
+			$move = $this->asArray(row: $row);
 
 			$id = (string)($move['id'] ?? ($move['@self']['id'] ?? ''));
 			if ($id === '') {
@@ -305,7 +300,9 @@ class StockLedgerService {
 			return [];
 		}
 
-		$rows = ($this->objectService
+		// ADR-084: findAll() is declared `: array` — it never returns null, so
+		// the former `?? []` and is_array() guards were dead.
+		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(
@@ -317,14 +314,39 @@ class StockLedgerService {
 						'lifecycleState' => 'draft',
 					],
 				]
-			) ?? []);
+			);
 
-		if (is_array($rows) === true) {
-			return $rows;
+		return array_map(
+			fn (mixed $row): array => $this->asArray(row: $row),
+			array_values($rows)
+		);
+	}//end draftMovesForSource()
+
+	/**
+	 * Normalise an OpenRegister row to a plain array.
+	 *
+	 * ADR-084: findAll() yields ObjectEntityInterface rows, which extend
+	 * JsonSerializable. A bare (array) cast yields the entity's own
+	 * name-mangled private properties, not the stored object.
+	 *
+	 * @param mixed $row Raw row from ObjectService.
+	 *
+	 * @return array<string,mixed> The row body.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if ($row instanceof \JsonSerializable) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
 		}
 
 		return [];
-	}//end draftMovesForSource()
+	}//end asArray()
 
 	/**
 	 * Convert a money/quantity value to integer cents (multipleOf 0.01).

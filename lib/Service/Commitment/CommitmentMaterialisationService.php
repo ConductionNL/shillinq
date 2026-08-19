@@ -558,11 +558,11 @@ class CommitmentMaterialisationService {
 			$ruleNumber++;
 		}
 
-		if (is_array($saved) === true) {
-			return $saved;
-		}
-
-		return $draft;
+		// ADR-084: saveObject() returns an ObjectEntityInterface, never an
+		// array. The former is_array() arm was unreachable, so this returned
+		// the UNSAVED $draft and the caller never saw the persisted
+		// Verplichting (id included).
+		return (array)$saved->jsonSerialize();
 	}//end persist()
 
 	/**

@@ -157,11 +157,11 @@ class PurchaseOrderService {
 	/**
 	 * Constructor.
 	 *
-	 *                                      ObjectService is fetched lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param INotificationManager $notificationManager NC notification dispatcher.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param ObjectServiceInterface $objectService OpenRegister object store.
 	 * @param PeppolTransmissionAdapterInterface|null $peppolAdapter Optional Peppol port (slice 03);
 	 *                                                               defaults to
 	 *                                                               LogPeppolTransmissionAdapter.
@@ -196,21 +196,21 @@ class PurchaseOrderService {
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
 	) {
 		$this->peppolAdapter = ($peppolAdapter ?? new LogPeppolTransmissionAdapter(
-			container: $container,
+			objectService: $objectService,
 			appConfig: $appConfig,
 			logger: $logger
 		));
 		$this->purchaseOrderMailer = ($purchaseOrderMailer ?? new LogPurchaseOrderMailer(logger: $logger));
 		$this->peppolMapper = ($peppolMapper ?? new PeppolBisOrderMapper());
 		$this->supplierQualificationGuard = ($supplierQualificationGuard ?? new SupplierQualificationGuard(
-			container: $container,
 			appConfig: $appConfig,
-			logger: $logger
+			logger: $logger,
+			objectService: $objectService
 		));
 		$this->frameworkAgreementDrawdownGuard = ($frameworkAgreementDrawdownGuard ?? new FrameworkAgreementDrawdownGuard(
-			container: $container,
 			appConfig: $appConfig,
-			logger: $logger
+			logger: $logger,
+			objectService: $objectService
 		));
 	}//end __construct()
 
@@ -1100,11 +1100,11 @@ class PurchaseOrderService {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
-
-			return $object;
+			// ADR-084: saveObject() returns an ObjectEntityInterface, never an
+			// array. The former is_array() arm was unreachable, so this
+			// returned the UNSAVED $object and the caller never saw the
+			// server-assigned id.
+			return (array)$result->jsonSerialize();
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PurchaseOrderService: failed to persist object',

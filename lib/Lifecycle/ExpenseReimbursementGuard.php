@@ -355,10 +355,7 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$itemArray = (array)$item;
-				if (is_array($item) === true) {
-					$itemArray = $item;
-				}
+				$itemArray = $this->asArray(row: $item);
 
 				$itemMode = ($itemArray['settlementMode'] ?? null);
 
@@ -508,10 +505,7 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$itemArray = (array)$item;
-				if (is_array($item) === true) {
-					$itemArray = $item;
-				}
+				$itemArray = $this->asArray(row: $item);
 
 				if (($itemArray['settlementMode'] ?? null) !== 'pass-through') {
 					continue;
@@ -556,10 +550,7 @@ class ExpenseReimbursementGuard {
 			return false;
 		}
 
-		$txnArray = (array)$txn;
-		if (is_array($txn) === true) {
-			$txnArray = $txn;
-		}
+		$txnArray = $this->asArray(row: $txn);
 
 		$status = ($txnArray['status'] ?? null);
 		$reversed = ($txnArray['isReversed'] ?? null);
@@ -574,4 +565,32 @@ class ExpenseReimbursementGuard {
 
 		return false;
 	}//end isGlTransactionReversed()
+
+	/**
+	 * Normalise an OpenRegister row to a plain array.
+	 *
+	 * ADR-084: `find()` returns an `ObjectEntityInterface`, which extends
+	 * `JsonSerializable`. A bare `(array)` cast on that object yields the
+	 * entity's own (name-mangled) private properties, NOT the stored object —
+	 * so every field read off it was silently null and this guard stopped
+	 * rejecting. Serialise instead.
+	 *
+	 * @param mixed $row Raw row from ObjectService.
+	 *
+	 * @return array<string,mixed> The row body.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if ($row instanceof \JsonSerializable) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return [];
+	}//end asArray()
 }//end class

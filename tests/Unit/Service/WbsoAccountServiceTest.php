@@ -28,11 +28,11 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Service\WbsoAccountService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 
 /**
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-31
@@ -40,13 +40,6 @@ use Psr\Container\ContainerInterface;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class WbsoAccountServiceTest extends TestCase {
-
-	/**
-	 * Mock container.
-	 *
-	 * @var ContainerInterface&MockObject
-	 */
-	private ContainerInterface&MockObject $container;
 
 	/**
 	 * Mock app-config.
@@ -62,7 +55,6 @@ final class WbsoAccountServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 	}//end setUp()
@@ -161,12 +153,40 @@ final class WbsoAccountServiceTest extends TestCase {
 			}
 		};
 
-		$this->container->method('get')->willReturn($stub);
-
-		return new WbsoAccountService(container: $this->container, appConfig: $this->appConfig,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		return new WbsoAccountService(
+			appConfig: $this->appConfig,
+			objectService: $this->objectServiceFor(recorder: $stub),
 		);
 	}//end buildService()
+
+	/**
+	 * Wrap the recording stub in a real ObjectServiceInterface double.
+	 *
+	 * ADR-084: the service takes OpenRegister's PUBLISHED interface, so the
+	 * double has to BE that interface. It delegates to the recorder — a bare
+	 * `createMock(ObjectServiceInterface::class)` would answer every findAll()
+	 * with null and make these tests assert nothing.
+	 *
+	 * @param object $recorder The recording stub built above.
+	 *
+	 * @return ObjectServiceInterface The interface double.
+	 */
+	private function objectServiceFor(object $recorder): ObjectServiceInterface {
+		$mock = $this->createMock(ObjectServiceInterface::class);
+		$mock->method('setRegister')->willReturnSelf();
+		$mock->method('setSchema')->willReturnSelf();
+		$mock->method('findAll')->willReturnCallback(
+			static fn (array $config = []): array => $recorder->findAll($config)
+		);
+		$mock->method('saveObject')->willReturnCallback(
+			static function (array $object) use ($recorder): ObjectEntity {
+				$recorder->saveObject($object);
+				return (new ObjectEntity())->setObject($object);
+			}
+		);
+
+		return $mock;
+	}//end objectServiceFor()
 
 	/**
 	 * Happy path: list accounts filtered by administration.

@@ -269,13 +269,17 @@ class PosStockDecrementListenerTest extends TestCase {
 			}
 		);
 
+		// ADR-084: wire the listener to the SAME in-memory fake the container
+		// used to hand it. A bare createMock(ObjectServiceInterface::class)
+		// answers every call with null, which would quietly stop these tests
+		// exercising the listener's own object reads.
 		$this->listener = new PosStockDecrementListener(
 			dispatchService: $this->dispatchService,
 			appConfig: $this->appConfig,
 			groupManager: $this->groupManager,
 			notificationMgr: $this->notificationMgr,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $this->objectServiceFor(recorder: $this->fakeObjectService),
 		);
 	}//end setUpListener()
 
@@ -823,25 +827,31 @@ class PosStockDecrementListenerTest extends TestCase {
 
 		$logger = $this->createMock(LoggerInterface::class);
 
+		// ADR-084: these classes take OpenRegister's PUBLISHED interface, so the
+		// double has to BE that interface and has to reach the SAME in-memory
+		// store this test asserts against. Bare
+		// createMock(ObjectServiceInterface::class) instances — as this file
+		// passed — answer every call with null, so the end-to-end assertions
+		// below would be measuring an empty store.
+		$objectService = $this->objectServiceFor(recorder: $fakeObjectService);
+
 		// Real business-logic classes throughout — nothing about the
 		// existing decrement + valuation + COGS pipeline is mocked or
 		// reimplemented.
-		$fifo = new FifoValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+		$fifo = new FifoValuationService(appConfig: $appConfig, logger: $logger, objectService: $objectService);
+		$average = new MovingAverageValuationService(
+			appConfig: $appConfig,
+			logger: $logger,
+			objectService: $objectService
 		);
-		$average = new MovingAverageValuationService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
-		$cogs = new CogsPosterService(container: $container, appConfig: $appConfig, logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
-		);
+		$cogs = new CogsPosterService(appConfig: $appConfig, logger: $logger, objectService: $objectService);
 		$stockMoveListener = new StockMoveTransitionedListener(
 			fifo: $fifo,
 			average: $average,
 			cogs: $cogs,
 			appConfig: $appConfig,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $objectService,
 		);
 
 		$dispatchService = new SalesDispatchStockIssueService(
@@ -849,7 +859,7 @@ class PosStockDecrementListenerTest extends TestCase {
 			appConfig: $appConfig,
 			logger: $logger,
 			lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $objectService,
 		);
 
 		$groupManager = $this->createMock(IGroupManager::class);
@@ -862,7 +872,7 @@ class PosStockDecrementListenerTest extends TestCase {
 			groupManager: $groupManager,
 			notificationMgr: $notificationMgr,
 			logger: $logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $objectService,
 		);
 
 		// Step 1: a POS sale of 4 units of SKU-1001 -> expect exactly one new
@@ -926,4 +936,67 @@ class PosStockDecrementListenerTest extends TestCase {
 		self::assertCount(2, $store->objects['StockMove'], 'redelivery created NO second StockMove');
 		self::assertCount(1, $store->objects['GLTransaction'], 'redelivery posted NO second COGS entry');
 	}//end testPosSaleProducesIssueMoveThatDrivesCogsPostingAndIsIdempotent()
+
+	/**
+	 * Wrap an in-memory fake in a real ObjectServiceInterface double.
+	 *
+	 * ADR-084: the pipeline classes type-hint OpenRegister's PUBLISHED
+	 * interface, and `find()` / `saveObject()` / `updateObject()` on it return
+	 * an ObjectEntityInterface rather than an array — so the double both
+	 * delegates to the fake store and wraps its rows in the entity shape
+	 * production actually receives. Methods the fake does not implement are
+	 * simply not stubbed; a test that needed one would fail loudly rather than
+	 * pass quietly.
+	 *
+	 * @param object $recorder The in-memory fake ObjectService.
+	 *
+	 * @return ObjectServiceInterface The interface double.
+	 */
+	private function objectServiceFor(object $recorder): ObjectServiceInterface {
+		$mock = $this->createMock(ObjectServiceInterface::class);
+		$mock->method('setRegister')->willReturnCallback(
+			static function (string|int $register) use ($recorder, $mock): object {
+				$recorder->setRegister((string)$register);
+				return $mock;
+			}
+		);
+		$mock->method('setSchema')->willReturnCallback(
+			static function (string|int $schema) use ($recorder, $mock): object {
+				$recorder->setSchema((string)$schema);
+				return $mock;
+			}
+		);
+		$mock->method('findAll')->willReturnCallback(
+			static fn (array $config = []): array => $recorder->findAll($config)
+		);
+
+		if (method_exists($recorder, 'saveObject') === true) {
+			$mock->method('saveObject')->willReturnCallback(
+				static fn (array $object): \OCA\OpenRegister\Db\ObjectEntity => (new \OCA\OpenRegister\Db\ObjectEntity())
+					->setObject($recorder->saveObject($object))
+			);
+		}
+
+		if (method_exists($recorder, 'updateObject') === true) {
+			$mock->method('updateObject')->willReturnCallback(
+				static fn (string $objectId, array $data): \OCA\OpenRegister\Db\ObjectEntity
+					=> (new \OCA\OpenRegister\Db\ObjectEntity())->setObject($recorder->updateObject($objectId, $data))
+			);
+		}
+
+		if (method_exists($recorder, 'find') === true) {
+			$mock->method('find')->willReturnCallback(
+				static function (int|string $id) use ($recorder): ?\OCA\OpenRegister\Db\ObjectEntity {
+					$row = $recorder->find((string)$id);
+					if ($row === null) {
+						return null;
+					}
+
+					return (new \OCA\OpenRegister\Db\ObjectEntity())->setObject($row);
+				}
+			);
+		}
+
+		return $mock;
+	}//end objectServiceFor()
 }//end class
