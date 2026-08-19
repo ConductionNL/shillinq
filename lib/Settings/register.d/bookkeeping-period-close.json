@@ -348,15 +348,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "transactions": {
-            "localField": "periodId",
-            "relatedSchema": "GLTransaction",
-            "relatedField": "periodId",
-            "cardinality": "one-to-many",
-            "description": "All GLTransaction rows posted into this period."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "period-closer": {
@@ -386,17 +377,6 @@
                 "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen"
               ]
             }
-          }
-        }
-      },
-      "GLLine": {
-        "x-openregister-relations": {
-          "periodRelation": {
-            "localField": "periodId",
-            "relatedSchema": "FiscalPeriod",
-            "relatedField": "periodId",
-            "cardinality": "many-to-one",
-            "description": "FK to FiscalPeriod.periodId. Additive promotion of the T1 stub-string field per REQ-PC-001: existing string values resolve against the new FiscalPeriod records by exact match — no destructive migration. Backfill is performed by lib/Migration/BackfillFiscalPeriodsFromGLLines.php (REQ-PC-001 idempotent repair step)."
           }
         }
       }

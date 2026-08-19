@@ -113,25 +113,42 @@ final class BookingsCreateAppointmentFragmentTest extends TestCase {
 	}//end testAppointmentDeclaresLifecycleWithGuard()
 
 	/**
-	 * The Appointment schema declares relations to Service and Resource and a
-	 * required field set covering the booking time window.
+	 * The Appointment schema declares a required field set covering the booking
+	 * time window and both foreign keys.
+	 *
+	 * WITHDRAWN ASSERTIONS — the `service` and `resource` relations. Both were
+	 * declared in the per-schema `x-openregister-relations` block, which
+	 * ADR-062 rule 7 retired on 2026-07-08 in favour of a property-level
+	 * `$ref`. Neither is expressible in the canonical dialect, so both were
+	 * removed rather than migrated: their `relatedField` was the TARGET'S
+	 * OPERATOR-ASSIGNED BUSINESS KEY, not its object identity —
+	 * `Service.serviceId` is documented as "Operator-assigned unique service
+	 * identifier within the administration" (example `svc-001`), and
+	 * `Resource.resourceId` likewise. A `$ref` is resolved by OpenRegister
+	 * against the target's object id, so declaring one on a property that holds
+	 * `svc-001` would name a target the relation engine can never reach. What
+	 * the register still guarantees — and what this test now pins — is that
+	 * both foreign-key properties are declared and required.
 	 *
 	 * @return void
 	 */
-	public function testAppointmentDeclaresRelationsAndRequiredFields(): void {
+	public function testAppointmentDeclaresRequiredFields(): void {
 		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
 		$appointment = $data['components']['schemas']['Appointment'];
 
-		self::assertArrayHasKey('service', $appointment['x-openregister-relations']);
-		self::assertArrayHasKey('resource', $appointment['x-openregister-relations']);
-		self::assertSame('Service', $appointment['x-openregister-relations']['service']['relatedSchema']);
-		self::assertSame('Resource', $appointment['x-openregister-relations']['resource']['relatedSchema']);
+		foreach (['serviceId', 'resourceId'] as $foreignKey) {
+			self::assertArrayHasKey(
+				key: $foreignKey,
+				array: $appointment['properties'],
+				message: "Appointment must declare the $foreignKey foreign key"
+			);
+		}
 
 		foreach (['startTime', 'endTime', 'serviceId', 'resourceId', 'customerId', 'status'] as $field) {
 			self::assertContains($field, $appointment['required'], "$field must be required");
 		}
 
-	}//end testAppointmentDeclaresRelationsAndRequiredFields()
+	}//end testAppointmentDeclaresRequiredFields()
 
 	/**
 	 * Merging the fragment onto the monolith adds the booking schemas and seed
