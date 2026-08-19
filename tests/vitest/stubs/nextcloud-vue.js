@@ -12,3 +12,5 @@
 export const NcAppContent = { name: 'NcAppContent', render: () => null }
 export const NcButton = { name: 'NcButton', render: () => null }
 export const NcLoadingIcon = { name: 'NcLoadingIcon', render: () => null }
+// BbvLinkerFilterBar (#866/#862) renders one NcSelect per declared facet.
+export const NcSelect = { name: 'NcSelect', render: () => null }

@@ -15,8 +15,15 @@
  *
  *  - both pilot clusters declare the `$ref` (+ `inversedBy`) idiom exactly as
  *    pinned in design.md (Tasks 1, 2, 3, 5, 6);
- *  - the pre-existing descriptive `x-openregister-relations` block on
- *    ARInvoice is left intact — it is NOT the resolving idiom (Task 5);
+ *  - (Task 5 originally also pinned that the descriptive
+ *    `x-openregister-relations` block on ARInvoice was left intact, on the
+ *    grounds that it was NOT the resolving idiom. That block is gone: ADR-062
+ *    rule 7 retired the per-schema dialect fleet-wide on 2026-07-08, and its
+ *    ARInvoice entries — which pointed at SepaMandate and ARInvoice by object
+ *    id — were migrated to the property-level `$ref` this test already
+ *    asserts. The clause is dropped rather than restated because the block it
+ *    described no longer exists anywhere in the register set; nothing in this
+ *    file ever asserted it, so no assertion is lost.)
  *  - the seed clusters (Tasks 4, 7) carry real, distinct, non-nil UUIDs in
  *    `@self.id` and that every reference field's stored value equals the
  *    referenced object's `@self.id` — i.e. the exact matching OpenRegister's

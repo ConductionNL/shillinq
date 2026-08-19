@@ -169,7 +169,8 @@
             "description": "Back-reference to the materialised GLTransaction once posted (REQ-JE-007).",
             "nullable": true,
             "example": "gl-txn-2026-0001",
-            "title": "GL Transaction ID"
+            "title": "GL Transaction ID",
+            "$ref": "GLTransaction"
           },
           "approvalState": {
             "type": "string",
@@ -289,15 +290,6 @@
               "description": "Void a posted journal. Requires the materialised GLTransaction to already be reversed per REQ-GL-004 / REQ-JE-010.",
               "requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canVoid"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "glTransaction": {
-            "localField": "glTransactionId",
-            "relatedSchema": "GLTransaction",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The GLTransaction materialised when this journal entry was posted (REQ-JE-007)."
           }
         },
         "x-openregister-rbac": {
