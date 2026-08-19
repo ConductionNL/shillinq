@@ -182,6 +182,12 @@ final class AnnualReportSchemaTest extends TestCase {
 	 * REQ-T9-002: every BalanceSheet rubriek carries a wettelijke rubriek code
 	 * and the relation back to AnnualReport is declared.
 	 *
+	 * The relation is asserted in the CANONICAL dialect (ADR-062 rule 7): a
+	 * property-level `$ref` on the foreign-key property, resolving case-exactly
+	 * to a schema key in the same register set. It was previously read from the
+	 * per-schema `x-openregister-relations` block, which was retired
+	 * 2026-07-08; the relationship itself is unchanged, only its expression.
+	 *
 	 * @return void
 	 */
 	public function testBalanceSheetRubriekAndRelation(): void {
@@ -189,7 +195,17 @@ final class AnnualReportSchemaTest extends TestCase {
 		$item = $schema['properties']['rubrieken']['items'];
 		self::assertContains('rubrieckCode', $item['required']);
 		self::assertContains('currentYear', $item['required']);
-		self::assertSame('AnnualReport', $schema['x-openregister-relations']['annualReport']['relatedSchema']);
+
+		self::assertArrayHasKey(
+			key: 'reportId',
+			array: $schema['properties'],
+			message: 'BalanceSheet must declare the reportId foreign key back to AnnualReport.'
+		);
+		self::assertSame(
+			expected: 'AnnualReport',
+			actual: ($schema['properties']['reportId']['$ref'] ?? null),
+			message: 'BalanceSheet.reportId must carry the canonical property-level $ref to AnnualReport (ADR-062 rule 7).'
+		);
 
 	}//end testBalanceSheetRubriekAndRelation()
 

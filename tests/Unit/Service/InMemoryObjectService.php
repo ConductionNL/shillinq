@@ -99,6 +99,30 @@ class InMemoryObjectService {
 	/**
 	 * Find all records on the active schema matching the filter map.
 	 *
+	 * 🔴 **THIS METHOD IS MORE PERMISSIVE THAN REAL OPENREGISTER, DELIBERATELY.**
+	 *
+	 * It matches every filter key against a plain PHP array key — `id` and
+	 * `uuid` included. Real OpenRegister cannot do that: `filters` addresses
+	 * the object's JSON PROPERTIES, while `id`/`uuid` are the ObjectEntity's
+	 * own COLUMNS, merged into the serialised output only after the query has
+	 * run. `findAll(['filters' => ['id' => $x]])` therefore matches ZERO rows
+	 * against the real engine, for every value, uuids included, with no
+	 * exception and nothing logged.
+	 *
+	 * So a production lookup written that way is dead on arrival and STILL
+	 * PASSES against this double. That is precisely how
+	 * `DunningRunService::transferToIncasso()` came to ship a sealing lookup
+	 * that never found its run, under two green unit tests.
+	 *
+	 * 🔑 **Before trusting any test in this suite over an identifier lookup,
+	 * check which double it uses.** {@see Support\OpenRegisterFaithfulObjectService}
+	 * is this class with the real engine's identifier semantics restored; a
+	 * test that must be able to SEE the defect has to use that one. The
+	 * leniency is kept here only because the app still carries ~60 live
+	 * `filters['id']` sites (shillinq#871) whose repair is a product decision,
+	 * not a test-side one — flipping this default red-lines 27 tests across
+	 * six services in one step.
+	 *
 	 * @param array<string,mixed> $args ['filters' => ...].
 	 *
 	 * @return array<int,array<string,mixed>>

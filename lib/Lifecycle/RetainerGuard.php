@@ -49,6 +49,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -337,6 +338,19 @@ class RetainerGuard {
 	 * Resolve the object under transition, preferring the supplied in-flight
 	 * object and falling back to an ObjectService lookup by id (ADR-022 real API).
 	 *
+	 * 🔴 The fallback used to be `findAll(['filters' => ['id' => $id]])`, which
+	 * matches ZERO rows against real OpenRegister for every value: `filters`
+	 * addresses the object's JSON properties, and the entity's `id` is its own
+	 * column. It returns an empty array rather than raising, so the caller
+	 * reads a record that plainly exists as "not found".
+	 *
+	 * That made `canMaterializeDrawdown()` **FAIL OPEN**: its rate-immutability
+	 * check is guarded by `if ($pool !== null …)`, the pool was never resolved,
+	 * and the method returned true without ever comparing `drawdownRate` to the
+	 * pool's `retainerRate` (REQ-RETN-002 / design D2). The narrow cross-app
+	 * concession — "when the pool cannot be resolved, accept the recorded rate"
+	 * — silently widened to 100% of calls.
+	 *
 	 * @param string $schema The OpenRegister schema slug to query.
 	 * @param string $id The object id to look up if no object given.
 	 * @param array<string,mixed>|null $object The in-flight object, if provided by the engine.
@@ -352,20 +366,12 @@ class RetainerGuard {
 			return null;
 		}
 
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return ObjectIdentifier::findOne(
+			scoped: $this->objectService
+				->setRegister($this->resolveRegister())
+				->setSchema($schema),
+			id: $id
+		);
 	}//end resolveObject()
 
 	/**

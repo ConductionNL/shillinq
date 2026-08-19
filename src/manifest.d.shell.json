@@ -4614,6 +4614,45 @@
 			"menu": [
 				{
 					"id": "Inventory",
+					"children": [
+						{
+							"id": "ProductCatalog",
+							"label": "Products",
+							"icon": "PackageVariantClosed",
+							"route": "ProductCatalog",
+							"order": 5
+						},
+						{
+							"id": "ProductAttributeCatalog",
+							"label": "Product Attributes",
+							"icon": "FormatListBulletedType",
+							"route": "ProductAttributeCatalog",
+							"order": 6
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inventory-product-catalog",
+					"id": "ProductCatalog",
+					"route": "/inventory/products",
+					"type": "custom",
+					"title": "Products"
+				},
+				{
+					"_fragment": "inventory-product-catalog",
+					"id": "ProductAttributeCatalog",
+					"route": "/inventory/product-attributes",
+					"type": "custom",
+					"title": "Product Attributes"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Inventory",
 					"label": "Inventory",
 					"icon": "Warehouse",
 					"order": 22,

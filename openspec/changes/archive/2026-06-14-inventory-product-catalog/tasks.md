@@ -2,6 +2,43 @@
 
 > **Implementation cycle.** This spec has been implemented via the Hydra Builder pipeline. Tasks marked `[x]` are complete.
 
+> 🔴 **CORRECTION (2026-08-17, #860).** Issue #860 reported Task 14 as a
+> *phantom tick* — "none of it exists, the capability was never built". That is
+> **wrong, and measurably so**. Every `[x]` below was TRUE when it was written:
+> commit `726249f4` ("feat: implement inventory product catalog — Product +
+> ProductAttribute schemas, seeds, manifest nav (#106)") really did add the
+> `Product` / `ProductAttribute` schemas, the five `product-attributes-*.json`
+> seeds, `SettingsService::seedProductAttributes()` and the
+> `/inventory/products` + `/inventory/product-attributes` manifest pages.
+>
+> Commit `4a1d3275` ("feat(shillinq): consume pipelinq product master + demote
+> vendor to financial profile") then **deliberately deleted all of it** under
+> `shillinq-product-vendor-to-pipelinq` **REQ-SPVP-004**, which requires that
+> "no `Product` or `ProductAttribute` schema MUST be present" in shillinq and
+> moves product-definition ownership to pipelinq. That rewire is live today:
+> `InventoryStock`'s uniqueness key is `[productId, locationCode,
+> administrationId]` and every inventory fragment carries a `productId` FK.
+>
+> Reproduce with `git log -S'"Product": {' -- lib/Settings/shillinq_register.json`
+> and `git log -S'/inventory/products' -- src/manifest.json src/manifest.d/`
+> — both return exactly those two commits, in that order.
+>
+> **What the archive was actually missing is a withdrawal note, not the work.**
+> An archived `[x]` describing an output a later change removed reads as a lie
+> to the next person, and cost one issue and one investigation here. The ticks
+> are LEFT AS THEY ARE — unticking them would replace one false record with
+> another — and this note is the correction.
+>
+> The half of REQ-SPVP-004 that was genuinely NOT built is its second clause:
+> the two routes were required to stay deep-linkable ("a saved deep link to its
+> former route MUST still resolve (read-only / redirect) so e2e and bookmarks
+> do not 404"). Nothing did that, which is why
+> `tests/e2e/spec-coverage/inventory.spec.ts` fails on the vue-router catch-all
+> redirect. #860 closes that clause: both routes are declared again, as
+> READ-ONLY surfaces over the pipelinq master with the integration contract's
+> declared local-cache fallback, and **no `Product` register is re-introduced**.
+> See `lib/Service/ProductCatalogService.php`.
+
 ## Tasks
 
 - [x] Task 1: Confirm app placement (dedicated `product-catalog` app vs. existing `inventory-management` or `shillinq`). **Decision: shillinq** — product catalog lands in the existing `shillinq` app using the established `shillinq_register.json` pattern.
