@@ -143,15 +143,6 @@
             "save": "OCA\\Shillinq\\Guard\\UrencriteriumYearGuard::validateOnSave"
           }
         },
-        "x-openregister-relations": {
-          "category": {
-            "localField": "enterpriseId",
-            "relatedSchema": "UrenDagregistratie",
-            "relatedField": "enterpriseId",
-            "cardinality": "one-to-many",
-            "description": "De dagregistraties die deze jaar-tally voeden."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "ondernemer": {

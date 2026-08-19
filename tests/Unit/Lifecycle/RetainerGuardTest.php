@@ -160,13 +160,32 @@ class RetainerGuardTest extends TestCase {
 			}//end setSchema()
 
 			/**
-			 * Return the stubbed rows regardless of the query.
+			 * Return the stubbed rows, EXCEPT for an identifier-column query.
+			 *
+			 * 🔴 The store used to answer every query with its rows, the
+			 * identifier lookups included. Real OpenRegister cannot do that:
+			 * `filters` addresses the object's JSON properties, while `id` and
+			 * `uuid` are the entity's own columns, so
+			 * `findAll(['filters' => ['id' => …]])` matches ZERO rows for every
+			 * value, silently. A store that answers it anyway certifies a
+			 * production lookup that is dead by construction — which is how
+			 * `canMaterializeDrawdown()` came to skip its rate-immutability
+			 * check on every real call while this suite stayed green.
+			 *
+			 * Property filters are still ignored (each test seeds exactly the
+			 * rows its subject should see); only the identifier columns are
+			 * answered the way the engine answers them.
 			 *
 			 * @param array<string,mixed> $q Query.
 			 *
 			 * @return array<int,array<string,mixed>>
 			 */
 			public function findAll(array $q): array {
+				$filters = (array)($q['filters'] ?? []);
+				if (array_key_exists('id', $filters) === true || array_key_exists('uuid', $filters) === true) {
+					return [];
+				}
+
 				return $this->rows;
 			}//end findAll()
 
@@ -379,10 +398,17 @@ class RetainerGuardTest extends TestCase {
 	 */
 	public function testDrawdownRateMustMatchPoolRate(): void {
 		// Pool lookup returns a pool with a different retainerRate.
+		//
+		// ⚠️ The row carries `id` deliberately. `drawdown.poolId` is a foreign
+		// key onto the pool's IDENTIFIER, and the guard resolves it by
+		// identity. The fixture used to declare only `poolId`, which no
+		// identity lookup can answer — it passed solely because this store's
+		// `findAll()` returns its rows whatever it is asked, i.e. the test was
+		// green over a lookup that could never work in production.
 		// phpcs:ignore CustomSniffs.Functions.NamedParameters
 		$this->stubObjectService(
 			rows: [
-				['poolId' => 'RETN-2026-01-001', 'retainerRate' => 100],
+				['id' => 'RETN-2026-01-001', 'poolId' => 'RETN-2026-01-001', 'retainerRate' => 100],
 			]
 		);
 
@@ -397,6 +423,41 @@ class RetainerGuardTest extends TestCase {
 		self::assertFalse($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
 
 	}//end testDrawdownRateMustMatchPoolRate()
+
+	/**
+	 * The rate-immutability check must be REACHED, not merely present.
+	 *
+	 * 🔑 This is the assertion `testDrawdownRateMustMatchPoolRate` above cannot
+	 * make on its own. `canMaterializeDrawdown()` guards the comparison with
+	 * `if ($pool !== null …)` and falls through to `return true` otherwise —
+	 * a deliberate, narrow concession for a pool that lives in another app.
+	 * With the pool lookup written as `filters['id']` that concession applied
+	 * to 100% of calls against real OpenRegister, so the guard FAILED OPEN and
+	 * every divergent rate was accepted. A store that answers by identity is
+	 * the only way to tell the two apart: the matching-rate case must pass and
+	 * the divergent one must fail, over the SAME store.
+	 *
+	 * @return void
+	 */
+	public function testDrawdownMatchingThePoolRateMayMaterialize(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->stubObjectService(
+			rows: [
+				['id' => 'RETN-2026-01-001', 'poolId' => 'RETN-2026-01-001', 'retainerRate' => 75],
+			]
+		);
+
+		$drawdown = [
+			'poolId' => 'RETN-2026-01-001',
+			'hoursOrAmount' => 20,
+			'drawdownRate' => 75,
+			'drawdownAmount' => 1500,
+		];
+
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canMaterializeDrawdown(drawdownId: 'DD-1', object: $drawdown));
+
+	}//end testDrawdownMatchingThePoolRateMayMaterialize()
 
 	/**
 	 * A true-up with a recorded approver may be approved (REQ-RETN-011).

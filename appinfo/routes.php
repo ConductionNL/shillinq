@@ -111,6 +111,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'dunning#executeRun', 'url' => '/api/dunning/runs/execute', 'verb' => 'POST'],
             ['name' => 'dunning#pause', 'url' => '/api/dunning/pauses', 'verb' => 'POST'],
             ['name' => 'dunning#dossier', 'url' => '/api/dunning/incasso/dossier', 'verb' => 'POST'],
+            ['name' => 'dunning#transfer', 'url' => '/api/dunning/incasso/transfer', 'verb' => 'POST'],
             ['name' => 'dunning#writeOff', 'url' => '/api/dunning/writeoffs', 'verb' => 'POST'],
             ['name' => 'dunning#resumePause', 'url' => '/api/dunning/pauses/{pauseId}/resume', 'verb' => 'POST'],
 
@@ -144,7 +145,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
-        // bookings-depth — no-show-fee capture + recurring appointment series.
+        // Bookings-depth: no-show-fee capture + recurring appointment series.
         // Both are operator actions (#[NoAdminRequired] + per-administration
         // guard). no-show captures the defined noShowFee via the DepositPayment
         // provider rails; appointment-series expands an RRULE into individual
@@ -408,6 +409,43 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // REQ-SDD-010). Returns a per-mandate ZIP dossier scoped server-side
         // to the caller's accessible administrations (IDOR-safe).
             ['name' => 'sepaAudit#exportMandate', 'url' => '/api/sepa/mandates/{mandateId}/audit-export', 'verb' => 'GET'],
+
+        // 13-week cashflow PDF export (zzp-cashflow-13wk, REQ-CF-016 / #865).
+        // POST because the Cashflow Dashboard's declarative `headerActions[]`
+        // api-call action issues a POST through @nextcloud/axios, which carries
+        // the request token — so the endpoint keeps CSRF protection rather than
+        // opting out of it. It takes NO parameters: the horizon is resolved
+        // server-side from the caller's AdministrationMembership set, so no
+        // caller-supplied object identifier crosses the boundary.
+            ['name' => 'cashflowExport#exportPdf', 'url' => '/api/cashflow/export-pdf', 'verb' => 'POST'],
+
+        // Provincies-BBV dashboards (bookkeeping-provincies-bbv-variant,
+        // REQ-BBC-001..003 / REQ-BBL-001 — #866/#862). Two read-only GETs the
+        // manifest's declarative `endpointSource` widgets bind to. Like the
+        // waterschappen endpoints above they MUST stay under `/api/`: the SPA
+        // page routes `/bbv-provincie/compliance-dashboard` and
+        // `/bbv-provincie/budget-to-programme` are declared by the same
+        // manifest fragment, and an app route always beats the SPA catch-all.
+        //
+        // Neither takes an object identifier — the administration scope is
+        // resolved server-side from the caller's AdministrationMembership set
+        // (REQ-MA-001), so there is no per-object IDOR surface. The only
+        // inputs are the three REQ-BBC-002 value filters, validated against a
+        // closed vocabulary in the controller.
+            ['name' => 'bbvProgrammeBudget#programmeBudgetVsActuals', 'url' => '/api/bbv-provincie/programme-budget-vs-actuals', 'verb' => 'GET'],
+            ['name' => 'bbvProgrammeBudget#glLineFacets', 'url' => '/api/bbv-provincie/gl-line-facets', 'verb' => 'GET'],
+
+        // Read-only inventory product catalog (inventory-product-catalog
+        // REQ-IPC-008 / shillinq-product-vendor-to-pipelinq REQ-SPVP-004, #860).
+        // The product master itself lives in pipelinq; these two GETs serve the
+        // catalog projection shillinq renders over it, with the integration
+        // contract's declared local-cache fallback. Deliberately GET-only:
+        // REQ-SPVP-004 forbids any shillinq surface that accepts a product
+        // definition, so there is no create/update/delete counterpart. Both take
+        // no parameters — scope comes from the caller's AdministrationMembership
+        // set, so nothing caller-supplied crosses the boundary.
+            ['name' => 'productCatalog#products', 'url' => '/api/inventory/products', 'verb' => 'GET'],
+            ['name' => 'productCatalog#productAttributes', 'url' => '/api/inventory/product-attributes', 'verb' => 'GET'],
 
         // BCF compensation calculator (bookkeeping-bcf-claim). Pure compute
         // surface returning a what-if compensation result.
