@@ -179,36 +179,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "weeks": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowWeek",
-            "relatedField": "horizonId",
-            "cardinality": "one-to-many",
-            "description": "The 13 weekly slots of this horizon (REQ-CF-001/002)."
-          },
-          "arProjections": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowARProjection",
-            "relatedField": "horizonId",
-            "cardinality": "one-to-many",
-            "description": "AR receipt projections feeding the horizon's inflows (REQ-CF-001/004)."
-          },
-          "apSchedule": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowAPSchedule",
-            "relatedField": "horizonId",
-            "cardinality": "one-to-many",
-            "description": "AP payment schedule feeding the horizon's outflows (REQ-CF-001/006)."
-          },
-          "scenarios": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowScenario",
-            "relatedField": "horizonId",
-            "cardinality": "one-to-many",
-            "description": "What-if scenarios branched from this horizon (REQ-CF-011)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "cashflow-manager": {
@@ -461,15 +431,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-relations": {
-          "horizon": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowForecastHorizon",
-            "relatedField": "horizonId",
-            "cardinality": "many-to-one",
-            "description": "The horizon this week belongs to (REQ-CF-002)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "cashflow-manager": {
@@ -625,15 +586,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-relations": {
-          "horizon": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowForecastHorizon",
-            "relatedField": "horizonId",
-            "cardinality": "many-to-one",
-            "description": "The horizon this projection feeds (REQ-CF-004)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "cashflow-manager": {
@@ -757,15 +709,6 @@
             "description": "FK to the administration (tenant scope) (REQ-CF-006).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "horizon": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowForecastHorizon",
-            "relatedField": "horizonId",
-            "cardinality": "many-to-one",
-            "description": "The horizon this AP schedule feeds (REQ-CF-006)."
           }
         },
         "x-openregister-rbac": {
@@ -1262,15 +1205,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-relations": {
-          "horizon": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowForecastHorizon",
-            "relatedField": "horizonId",
-            "cardinality": "many-to-one",
-            "description": "The horizon this scenario branches from (REQ-CF-011)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "cashflow-manager": {
@@ -1427,15 +1361,6 @@
             "description": "FK to the administration (tenant scope) (REQ-CF-013).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "horizon": {
-            "localField": "horizonId",
-            "relatedSchema": "CashflowForecastHorizon",
-            "relatedField": "horizonId",
-            "cardinality": "many-to-one",
-            "description": "The horizon this report calibrates (REQ-CF-013)."
           }
         },
         "x-openregister-rbac": {

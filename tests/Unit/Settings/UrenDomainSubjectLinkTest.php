@@ -45,10 +45,14 @@ use PHPUnit\Framework\TestCase;
  *  2. Both must be NULLABLE. Every hour entry that exists today has no
  *     subject; making either required would invalidate the entire historical
  *     ledger on the next validation pass.
- *  3. Neither may be a `relatedSchema`. The target lives in ANOTHER app's
- *     register, so Shillinq cannot resolve or cascade it — and an hour entry
- *     must survive the domain object being archived. A relatedSchema here
- *     would invite exactly the cascade that must not happen.
+ *  3. Neither may be declared as a resolvable relation. The target lives in
+ *     ANOTHER app's register, so Shillinq cannot resolve or cascade it — and
+ *     an hour entry must survive the domain object being archived. A relation
+ *     here would invite exactly the cascade that must not happen. This is
+ *     checked against BOTH spellings: the retired per-schema
+ *     `relatedSchema` (ADR-062 rule 7 retired that dialect on 2026-07-08) and
+ *     the canonical property-level `$ref` that replaced it. Checking only the
+ *     retired key would leave this invariant declared but enforced nowhere.
  *
  * @coversNothing
  */
@@ -144,7 +148,12 @@ class UrenDomainSubjectLinkTest extends TestCase {
 	}
 
 	/**
-	 * The link is weak: not a relatedSchema, because the target is another app's.
+	 * The link is weak: not a resolvable relation, because the target is
+	 * another app's.
+	 *
+	 * Checked against both the retired `relatedSchema` key and the canonical
+	 * property-level `$ref` that replaced it (ADR-062 rule 7), so the invariant
+	 * stays enforced under the current dialect rather than only the dead one.
 	 *
 	 * @return void
 	 */
@@ -152,13 +161,15 @@ class UrenDomainSubjectLinkTest extends TestCase {
 		$props = $this->mergedProperties();
 
 		foreach (['subjectApp', 'subjectId'] as $field) {
-			self::assertArrayNotHasKey(
-				'relatedSchema',
-				$props[$field],
-				$field . ' must not declare relatedSchema: the target lives in another app\'s register, '
-				. 'so Shillinq cannot resolve or cascade it, and an hour entry must survive the domain '
-				. 'object being archived.'
-			);
+			foreach (['relatedSchema', '$ref'] as $relationKey) {
+				self::assertArrayNotHasKey(
+					$relationKey,
+					$props[$field],
+					$field . ' must not declare ' . $relationKey . ': the target lives in another app\'s register, '
+					. 'so Shillinq cannot resolve or cascade it, and an hour entry must survive the domain '
+					. 'object being archived.'
+				);
+			}
 		}
 	}
 }

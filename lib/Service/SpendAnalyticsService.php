@@ -33,6 +33,45 @@
  * credit leg are excluded from the GL debit slice) — they answer different
  * questions and are labelled distinctly.
  *
+ * ⚠️ ADMINISTRATION SCOPE IS NOT UNIFORM ACROSS THE FOUR VIEWS, because the
+ * two source schemas do not carry the same scope column.
+ *
+ *  - `APTransaction` DECLARES `administrationId` (bookkeeping-accounts-payable-
+ *    core.json), so `spendBySupplier()` takes the caller's administration and
+ *    pushes it into the aggregation filter. That view is really scoped.
+ *  - `GLLine` declares NO administration/organisation property at all (its
+ *    property set is transactionId, lineNumber, accountNumber, side, amount,
+ *    currency, description, costCenter(Code), costCarrierCode, projectCode,
+ *    periodId, ozbCategory, dimensions, subLedgerType, subLedgerRef,
+ *    accountRef, eliminationFlag) — the administration lives one hop away on
+ *    the parent `GLTransaction`. OpenRegister's `filters` address the object's
+ *    own JSON properties and cannot join, so there is NO filter this service
+ *    can pass that scopes a GLLine aggregation to one administration. A
+ *    filter on `administrationId` here would address a property that does not
+ *    exist and match NOTHING for every value — a silent zero in a bookkeeping
+ *    total, which is worse than the exposure it would pretend to fix. So it is
+ *    deliberately NOT applied, and the category / cost-centre / period views
+ *    aggregate every administration in the register.
+ *
+ * The controller's membership check (AdministrationContextService::canAccess())
+ * is therefore the ONLY containment on the three GL views: it reduces the
+ * audience from "any authenticated Nextcloud user" to "a member of some
+ * administration", but it does not stop a member of administration A reading
+ * administration B's category / cost-centre / period totals. Closing that
+ * needs `administrationId` denormalised onto GLLine plus a backfill of the
+ * existing rows — a schema + data migration, tracked separately. Do not
+ * "fix" it by adding the unmatched filter.
+ *
+ * What DOES NOT scope these reads, verified rather than assumed:
+ *  - OR's `AggregationRunner` applies a `_organisation = ?` predicate and a
+ *    schema-level `list` RBAC gate. `_organisation` is OpenRegister's tenancy
+ *    axis, NOT shillinq's administration — many administrations live inside
+ *    one organisation, which is the entire point of AdministrationMembership.
+ *  - `x-openregister-rbac` on APTransaction is read by ZERO PHP in
+ *    OpenRegister (grep over its lib/ returns nothing); it is documentation.
+ *    OR's RBAC reads `Schema::getAuthorization()`, and no schema in this app
+ *    declares an `authorization` block, which OR treats as open.
+ *
  * @category Service
  * @package  OCA\Shillinq\Service
  *
@@ -118,18 +157,31 @@ class SpendAnalyticsService {
 	}//end __construct()
 
 	/**
-	 * Spend grouped by supplier (vendorId) over the committed AP states.
+	 * Spend grouped by supplier (vendorId) over the committed AP states, scoped
+	 * to one administration.
+	 *
+	 * `APTransaction.administrationId` is a declared, filterable property, so
+	 * the caller's administration is pushed into the aggregation filter and the
+	 * returned totals contain no other administration's invoices. The caller
+	 * MUST have proven membership of `$administrationId` first — this service
+	 * treats the value purely as a scope term, exactly like every other
+	 * administration-scoped service in the app.
+	 *
+	 * @param string $administrationId The administration the caller is a member of.
 	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
 	 * @spec openspec/specs/spend-analytics/spec.md
 	 */
-	public function spendBySupplier(): array {
+	public function spendBySupplier(string $administrationId): array {
 		return $this->aggregate(
 			dimension: 'supplier',
 			schema: self::SCHEMA_AP_TRANSACTION,
 			metricField: 'totalAmount',
-			filter: ['state' => ['in' => self::AP_SPEND_STATES]],
+			filter: [
+				'administrationId' => $administrationId,
+				'state' => ['in' => self::AP_SPEND_STATES],
+			],
 			groupField: 'vendorId'
 		);
 
@@ -138,6 +190,12 @@ class SpendAnalyticsService {
 	/**
 	 * Spend grouped by expense category (GL accountNumber) over the debit AP
 	 * expense postings.
+	 *
+	 * ⚠️ NOT administration-scoped, and deliberately takes no administration
+	 * parameter so the signature does not imply a scope it cannot apply:
+	 * `GLLine` declares no administration property, so no filter this service
+	 * can pass would narrow the aggregation to one tenant. See the class
+	 * docblock.
 	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
@@ -158,6 +216,9 @@ class SpendAnalyticsService {
 	 * Spend grouped by analytical cost centre (GL costCenterCode) over the
 	 * debit AP expense postings.
 	 *
+	 * ⚠️ NOT administration-scoped — see spendByCategory() and the class
+	 * docblock for why `GLLine` cannot be filtered to one administration.
+	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
 	 * @spec openspec/specs/spend-analytics/spec.md
@@ -176,6 +237,9 @@ class SpendAnalyticsService {
 	/**
 	 * Spend grouped by fiscal period (GL periodId) over the debit AP expense
 	 * postings.
+	 *
+	 * ⚠️ NOT administration-scoped — see spendByCategory() and the class
+	 * docblock for why `GLLine` cannot be filtered to one administration.
 	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
