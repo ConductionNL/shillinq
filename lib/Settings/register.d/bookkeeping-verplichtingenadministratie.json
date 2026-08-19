@@ -353,29 +353,6 @@
             "onApprove": "advanceTransition"
           }
         },
-        "x-openregister-relations": {
-          "rules": {
-            "localField": "commitmentNumber",
-            "relatedSchema": "Verplichtingsregel",
-            "relatedField": "commitment",
-            "cardinality": "one-to-many",
-            "description": "Budget-tracking line items, one per coderingscombinatie / boekjaar (D2)."
-          },
-          "movements": {
-            "localField": "commitmentNumber",
-            "relatedSchema": "Verplichtingsmutatie",
-            "relatedField": "commitment",
-            "cardinality": "one-to-many",
-            "description": "Immutable audit log of every state change (D1)."
-          },
-          "mandaat": {
-            "localField": "mandate_applied",
-            "relatedSchema": "Mandaat",
-            "relatedField": "mandateCode",
-            "cardinality": "many-to-one",
-            "description": "The mandaat under whose authority the commitment was signed."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "commitment-administrator": {
@@ -541,15 +518,6 @@
             "title": "Afgesloten"
           }
         },
-        "x-openregister-relations": {
-          "verplichtingFk": {
-            "localField": "commitment",
-            "relatedSchema": "Verplichting",
-            "relatedField": "commitmentNumber",
-            "cardinality": "many-to-one",
-            "description": "Parent commitment."
-          }
-        },
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
             "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching Budget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
@@ -691,15 +659,6 @@
             "description": "FK to the Nextcloud user who triggered the mutation.",
             "example": "user-5",
             "title": "Gebruiker"
-          }
-        },
-        "x-openregister-relations": {
-          "verplichtingFk": {
-            "localField": "commitment",
-            "relatedSchema": "Verplichting",
-            "relatedField": "commitmentNumber",
-            "cardinality": "many-to-one",
-            "description": "Parent commitment."
           }
         },
         "x-openregister-audit-trail": {
@@ -953,15 +912,6 @@
             "description": "File URI of the captured signature.",
             "example": "docudesk:sig-12",
             "title": "Handtekening Bestand"
-          }
-        },
-        "x-openregister-relations": {
-          "verplichtingFk": {
-            "localField": "commitment",
-            "relatedSchema": "Verplichting",
-            "relatedField": "commitmentNumber",
-            "cardinality": "many-to-one",
-            "description": "The commitment awaiting approval."
           }
         },
         "x-openregister-audit-trail": {

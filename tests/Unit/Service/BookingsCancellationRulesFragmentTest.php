@@ -124,7 +124,22 @@ final class BookingsCancellationRulesFragmentTest extends TestCase {
 
 	/**
 	 * BookingCancellation is immutable: operator role has no delete permission,
-	 * and it links to Appointment one-to-one (REQ-BCR-008).
+	 * and it links to Appointment (REQ-BCR-008).
+	 *
+	 * WITHDRAWN ASSERTIONS — the `relatedSchema` / `cardinality` of the
+	 * `appointment` relation. It was declared in the per-schema
+	 * `x-openregister-relations` block, which ADR-062 rule 7 retired on
+	 * 2026-07-08 in favour of a property-level `$ref`. This relation is NOT
+	 * expressible in the canonical dialect and was removed rather than
+	 * migrated: its `relatedField` was `Appointment.appointmentId`, the
+	 * target's operator-assigned business key (example `apt-12345`), not its
+	 * object identity. OpenRegister resolves a `$ref` against the target's
+	 * object id, so a `$ref` here would name a target it could never reach.
+	 *
+	 * The LINK half of this test's name stays true and is still asserted, at
+	 * the level the register still declares it: `appointmentId` is a declared,
+	 * required property, which is what makes exactly one cancellation record
+	 * per appointment enforceable.
 	 *
 	 * @return void
 	 */
@@ -133,9 +148,16 @@ final class BookingsCancellationRulesFragmentTest extends TestCase {
 		$operator = $schema['x-openregister-rbac']['roles']['operator']['permissions'];
 		self::assertNotContains(needle: 'delete', haystack: $operator, message: 'BookingCancellation must be immutable (no delete)');
 
-		$relation = $schema['x-openregister-relations']['appointment'];
-		self::assertSame(expected: 'Appointment', actual: $relation['relatedSchema']);
-		self::assertSame(expected: 'one-to-one', actual: $relation['cardinality']);
+		self::assertArrayHasKey(
+			key: 'appointmentId',
+			array: $schema['properties'],
+			message: 'BookingCancellation must declare the appointmentId foreign key to Appointment'
+		);
+		self::assertContains(
+			needle: 'appointmentId',
+			haystack: $schema['required'],
+			message: 'appointmentId must be required — a cancellation without its appointment is unattributable (REQ-BCR-008)'
+		);
 
 	}//end testBookingCancellationIsImmutableAndLinked()
 

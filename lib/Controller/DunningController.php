@@ -473,4 +473,97 @@ class DunningController extends Controller {
 
 		return new JSONResponse($bundle, Http::STATUS_OK);
 	}//end dossier()
+
+	/**
+	 * Dispatch the stage-5 incasso dossier to the bound bureau (REQ-CCD-008).
+	 *
+	 * `dossier()` above composes the bundle and hands it back to the caller;
+	 * nothing then SENT it. `DunningRunService::transferToIncasso()` — the
+	 * method that performs the dispatch and seals the run on a DELIVERED
+	 * outcome — had zero production callers, so the whole of task-20's
+	 * transfer half was implemented, unit-tested and spec'd done while being
+	 * unreachable at runtime. This route is the missing half.
+	 *
+	 * The dossier is composed HERE rather than accepted from the request: it
+	 * is the evidence bundle a debt-collection agency acts on, so it must be
+	 * derived from stored records, never from a client-supplied body.
+	 *
+	 * Body JSON: { administration_id, invoiceId, customerId, dunningRunId }.
+	 *
+	 * @return JSONResponse 200 with the dispatch outcome; 400 on validation;
+	 *                      401 when anonymous; 404 when the administration is
+	 *                      out of scope; 500 without a stack trace on failure.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+	 */
+	#[NoAdminRequired]
+	public function transfer(): JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$allowed = $this->context->canAccess(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			$this->logger->error('DunningController: admin access check failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		// A 404 rather than a 403, so the response cannot become an existence
+		// oracle for another tenant's administration ids.
+		if ($allowed === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		$invoiceId = (string)$this->request->getParam('invoiceId', '');
+		$customerId = (string)$this->request->getParam('customerId', '');
+		$dunningRunId = (string)$this->request->getParam('dunningRunId', '');
+		if ($invoiceId === '' || $customerId === '' || $dunningRunId === '') {
+			return new JSONResponse(
+				['error' => 'factuurId + klantId + dunningRunId required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		try {
+			$bundle = $this->dossier->compose(
+				administrationId: $administrationId,
+				invoiceId: $invoiceId,
+				customerId: $customerId,
+			);
+
+			$outcome = $this->runs->transferToIncasso(
+				administrationId: $administrationId,
+				invoiceId: $invoiceId,
+				dossier: $bundle,
+				dunningRunId: $dunningRunId,
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq: incasso transfer failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Failed to transfer dossier'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		// A non-DELIVERED outcome is reported as a 200 carrying the status, not
+		// as an HTTP error: the dispatch attempt itself succeeded and the
+		// operator needs the provider's own verdict (and errorMessage) to
+		// decide between a retry and a manual escalation.
+		return new JSONResponse(
+			[
+				'channel' => $outcome->channel,
+				'deliveryStatus' => $outcome->deliveryStatus,
+				'extras' => $outcome->extras,
+				'errorMessage' => $outcome->errorMessage,
+			],
+			Http::STATUS_OK
+		);
+	}//end transfer()
 }//end class

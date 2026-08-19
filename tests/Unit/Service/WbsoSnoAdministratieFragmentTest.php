@@ -109,6 +109,17 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase {
 	/**
 	 * WbsoBeschikking carries the RVO grant fields with a granted/expired/withdrawn lifecycle.
 	 *
+	 * WITHDRAWN ASSERTION — the `project` relation. It was declared in the
+	 * per-schema `x-openregister-relations` block, which ADR-062 rule 7 retired
+	 * on 2026-07-08 in favour of a property-level `$ref`. It is NOT expressible
+	 * in the canonical dialect and was removed rather than migrated, on two
+	 * counts: it was a SELF-relation (WbsoBeschikking -> WbsoBeschikking) whose
+	 * `relatedField` was `projectNumber` — an RVO-issued business key, not the
+	 * object identity a `$ref` resolves against. It also carried a bespoke
+	 * `scopeField: administrationId` that the canonical dialect has no slot
+	 * for. `projectNumber` itself is still asserted as a declared field above,
+	 * which is what the register still guarantees.
+	 *
 	 * @return void
 	 */
 	public function testBeschikkingFieldsAndLifecycle(): void {
@@ -119,7 +130,6 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase {
 
 		self::assertSame('granted', $schema['x-openregister-lifecycle']['initialState']);
 		self::assertSame(['granted', 'expired', 'withdrawn'], $schema['properties']['state']['enum']);
-		self::assertArrayHasKey('project', $schema['x-openregister-relations']);
 
 	}//end testBeschikkingFieldsAndLifecycle()
 

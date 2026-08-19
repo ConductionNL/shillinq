@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-multi-administratie",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Foundational multi-administratie (multi-tenant) layer. Declares Administration as a first-class register record (the juridisch-onafhankelijke boekhouding boundary), the AdministrationMembership user-administratie-role join, the IntercompanyJournalEntry mirrored-pair tracker, the ConsolidationMapping chart-of-accounts mapping, and the AdministrationMigration asset/contract/employee transfer audit record. Field names follow the app's existing English camelCase convention (administrationId already on GLTransaction/Account/FixedAsset/BalanceSheet); the Dutch context-brief names map 1:1. Schema membership of the shillinq register is by components.schemas key (objects carry @self.register=shillinq); the existing ConsolidationGroup/ConsolidatedReport schemas are NOT touched. Lifecycle/relations are declared via x-openregister-lifecycle / x-openregister-relations (ADR-031 declarative, no service classes for storage). Seed objects provide a worked holding-werkmij (Beheer B.V. / Werk B.V.) example plus an accounting-firm multi-client example."
+    "description": "Foundational multi-administratie (multi-tenant) layer. Declares Administration as a first-class register record (the juridisch-onafhankelijke boekhouding boundary), the AdministrationMembership user-administratie-role join, the IntercompanyJournalEntry mirrored-pair tracker, the ConsolidationMapping chart-of-accounts mapping, and the AdministrationMigration asset/contract/employee transfer audit record. Field names follow the app's existing English camelCase convention (administrationId already on GLTransaction/Account/FixedAsset/BalanceSheet); the Dutch context-brief names map 1:1. Schema membership of the shillinq register is by components.schemas key (objects carry @self.register=shillinq); the existing ConsolidationGroup/ConsolidatedReport schemas are NOT touched. Lifecycle is declared via x-openregister-lifecycle and relations via property-level $ref (ADR-031 declarative, no service classes for storage). Seed objects provide a worked holding-werkmij (Beheer B.V. / Werk B.V.) example plus an accounting-firm multi-client example."
   },
   "components": {
     "schemas": {
@@ -112,7 +112,8 @@
             "description": "FK to the moederadministratie when this entity is a dochter in a holding structure.",
             "nullable": true,
             "example": null,
-            "title": "Parent Administration ID"
+            "title": "Parent Administration ID",
+            "$ref": "Administration"
           },
           "childAdministrationIds": {
             "type": "array",
@@ -201,7 +202,8 @@
             "description": "FK to a ConsolidationMapping used when consolidating this administration into its parent (REQ-MA-005).",
             "nullable": true,
             "example": null,
-            "title": "Consolidation Mapping ID"
+            "title": "Consolidation Mapping ID",
+            "$ref": "ConsolidationMapping"
           },
           "consolidateIntoId": {
             "type": "string",
@@ -332,22 +334,6 @@
               "description": "Archive a liquidated administration for retention."
             }
           }
-        },
-        "x-openregister-relations": {
-          "parentAdministration": {
-            "localField": "parentAdministrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Moederadministratie in a holding/werkmij structure."
-          },
-          "consolidationMapping": {
-            "localField": "consolidationMappingId",
-            "relatedSchema": "ConsolidationMapping",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Chart-of-accounts mapping used when consolidating into the parent."
-          }
         }
       },
       "AdministrationMembership": {
@@ -374,7 +360,8 @@
             "type": "string",
             "description": "FK to the Administration this membership grants access to.",
             "example": "adm-werk-001",
-            "title": "Administration ID"
+            "title": "Administration ID",
+            "$ref": "Administration"
           },
           "role": {
             "type": "string",
@@ -438,15 +425,6 @@
             "example": "partner",
             "title": "Granted By"
           }
-        },
-        "x-openregister-relations": {
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The administration this membership grants access to."
-          }
         }
       },
       "IntercompanyJournalEntry": {
@@ -500,13 +478,15 @@
             "type": "string",
             "description": "FK to the source (bron) administration where the originating journaalpost is booked.",
             "example": "adm-werk-001",
-            "title": "Source Administration ID"
+            "title": "Source Administration ID",
+            "$ref": "Administration"
           },
           "destinationAdministrationId": {
             "type": "string",
             "description": "FK to the destination (doel) administration where the mirrored journaalpost is booked.",
             "example": "adm-beheer-001",
-            "title": "Destination Administration ID"
+            "title": "Destination Administration ID",
+            "$ref": "Administration"
           },
           "sourceJournalEntryId": {
             "type": "string",
@@ -644,22 +624,6 @@
               "requires": "OCA\\Shillinq\\Guard\\IntercompanyEliminationGuard::requireReconciledPair"
             }
           }
-        },
-        "x-openregister-relations": {
-          "sourceAdministration": {
-            "localField": "sourceAdministrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Source administration of the intercompany flow."
-          },
-          "destinationAdministration": {
-            "localField": "destinationAdministrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Destination administration of the intercompany flow."
-          }
         }
       },
       "ConsolidationMapping": {
@@ -686,13 +650,15 @@
             "type": "string",
             "description": "FK to the dochter (source) administration.",
             "example": "adm-werk-001",
-            "title": "Source Administration ID"
+            "title": "Source Administration ID",
+            "$ref": "Administration"
           },
           "destinationAdministrationId": {
             "type": "string",
             "description": "FK to the moeder (destination) administration.",
             "example": "adm-beheer-001",
-            "title": "Destination Administration ID"
+            "title": "Destination Administration ID",
+            "$ref": "Administration"
           },
           "rules": {
             "type": "array",
@@ -751,22 +717,6 @@
             "example": "2026-01-01",
             "title": "Valid From"
           }
-        },
-        "x-openregister-relations": {
-          "sourceAdministration": {
-            "localField": "sourceAdministrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Dochter administration whose accounts are mapped."
-          },
-          "destinationAdministration": {
-            "localField": "destinationAdministrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Moeder administration the accounts consolidate into."
-          }
         }
       },
       "AdministrationMigration": {
@@ -803,13 +753,15 @@
             "type": "string",
             "description": "FK to the administration the object leaves.",
             "example": "adm-werk-001",
-            "title": "Source Administration ID"
+            "title": "Source Administration ID",
+            "$ref": "Administration"
           },
           "destinationAdministrationId": {
             "type": "string",
             "description": "FK to the administration the object enters.",
             "example": "adm-werk-002",
-            "title": "Destination Administration ID"
+            "title": "Destination Administration ID",
+            "$ref": "Administration"
           },
           "kind": {
             "type": "string",
@@ -958,22 +910,6 @@
               "description": "Cancel a prepared migration before any side is posted."
             }
           }
-        },
-        "x-openregister-relations": {
-          "sourceAdministration": {
-            "localField": "sourceAdministrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Administration the object is transferred from."
-          },
-          "destinationAdministration": {
-            "localField": "destinationAdministrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Administration the object is transferred to."
-          }
         }
       },
       "AdministrationBackupRun": {
@@ -995,7 +931,8 @@
             "type": "string",
             "description": "FK to the administration this backup covers.",
             "example": "adm-werk-001",
-            "title": "Administration ID"
+            "title": "Administration ID",
+            "$ref": "Administration"
           },
           "administrationCode": {
             "type": "string",
@@ -1058,15 +995,6 @@
             "description": "Computed next scheduled backup instant; null for on-request schedules.",
             "nullable": true,
             "title": "Next Backup At"
-          }
-        },
-        "x-openregister-relations": {
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Administration covered by this backup run."
           }
         },
         "x-openregister-audit-trail": {

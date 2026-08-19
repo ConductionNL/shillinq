@@ -29,6 +29,7 @@ use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
 use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUser;
@@ -106,6 +107,13 @@ final class IcpControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock ObjectServiceInterface — OpenRegister reads for the ICP invoice PDF.
+	 *
+	 * @var ObjectServiceInterface&MockObject
+	 */
+	private ObjectServiceInterface&MockObject $objectService;
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var IcpController
@@ -127,6 +135,7 @@ final class IcpControllerTest extends TestCase {
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->objectService = $this->createMock(ObjectServiceInterface::class);
 
 		// Default to an authenticated session — each test can override.
 		$user = $this->createMock(IUser::class);
@@ -141,7 +150,7 @@ final class IcpControllerTest extends TestCase {
 			pdfRenderer: $this->pdfRenderer,
 			userSession: $this->userSession,
 			logger: $this->logger,
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: $this->objectService,
 		);
 
 	}//end setUp()
@@ -421,6 +430,291 @@ final class IcpControllerTest extends TestCase {
 		self::assertSame(3, $data['supplyCount']);
 
 	}//end testAuditExportReturns200WithoutPath()
+
+	/**
+	 * Wire the ObjectService mock to serve rows per schema slug, mirroring the
+	 * fluent setRegister()->setSchema()->findAll() chain the controller uses.
+	 *
+	 * @param array<string, list<array<string,mixed>>> $rowsBySchema Rows per schema.
+	 *
+	 * @return void
+	 */
+	private function seedObjects(array $rowsBySchema): void {
+		$schema = '';
+		$this->objectService->method('setRegister')->willReturnSelf();
+		$this->objectService->method('setSchema')->willReturnCallback(
+			function (string|int $slug) use (&$schema): ObjectServiceInterface {
+				$schema = (string)$slug;
+				return $this->objectService;
+			}
+		);
+		$this->objectService->method('findAll')->willReturnCallback(
+			static function () use (&$schema, $rowsBySchema): array {
+				return ($rowsBySchema[$schema] ?? []);
+			}
+		);
+
+	}//end seedObjects()
+
+	/**
+	 * Build a second controller bound to an anonymous session.
+	 *
+	 * @return IcpController The controller with no signed-in user.
+	 */
+	private function anonymousController(): IcpController {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+
+		return new IcpController(
+			request: $this->request,
+			icpService: $this->service,
+			filingService: $this->filing,
+			viesService: $this->vies,
+			pdfRenderer: $this->pdfRenderer,
+			userSession: $session,
+			logger: $this->logger,
+			objectService: $this->objectService,
+		);
+
+	}//end anonymousController()
+
+	/**
+	 * renderInvoicePdf is fail-closed: an anonymous session gets HTTP 401 and
+	 * no invoice is ever read (REQ-ICP-001 / ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfRequiresAuthentication(): void {
+		$this->pdfRenderer->expects($this->never())->method('render');
+
+		$response = $this->anonymousController()->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testRenderInvoicePdfRequiresAuthentication()
+
+	/**
+	 * A missing invoice_id yields HTTP 400 before any read (REQ-ICP-007).
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfMissingInvoiceReturns400(): void {
+		$this->withParams(['administration_id' => 'adm-1']);
+		$this->pdfRenderer->expects($this->never())->method('render');
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertStringContainsString('invoice_id', (string)$response->getData()['error']);
+
+	}//end testRenderInvoicePdfMissingInvoiceReturns400()
+
+	/**
+	 * A path-traversal administration_id is rejected with HTTP 400.
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfMalformedAdministrationReturns400(): void {
+		$this->withParams(['invoice_id' => 'AR-2026-0001', 'administration_id' => '../../etc']);
+		$this->pdfRenderer->expects($this->never())->method('render');
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertStringContainsString('administration_id', (string)$response->getData()['error']);
+
+	}//end testRenderInvoicePdfMalformedAdministrationReturns400()
+
+	/**
+	 * An invoice that is not in the administration's own set yields HTTP 404 —
+	 * the lookup never escapes the administration filter (IDOR-safe).
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfUnknownInvoiceReturns404(): void {
+		$this->withParams(['invoice_id' => 'AR-2026-9999', 'administration_id' => 'adm-1']);
+		$this->seedObjects(
+			[
+				'ARInvoice' => [['id' => 'AR-2026-0001', 'administrationId' => 'adm-1']],
+			]
+		);
+		$this->pdfRenderer->expects($this->never())->method('render');
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testRenderInvoicePdfUnknownInvoiceReturns404()
+
+	/**
+	 * A valid request resolves invoice + customer + seller, hands all three to
+	 * the renderer and serves the result inline with the ICP marker header
+	 * (REQ-ICP-007).
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfReturnsInlineDocument(): void {
+		$this->withParams(['invoice_id' => 'AR-2026-0001', 'administration_id' => 'adm-1']);
+		$this->seedObjects(
+			[
+				'ARInvoice' => [
+					['id' => 'AR-2026-0002', 'customerId' => 'C-2', 'administrationId' => 'adm-1'],
+					['id' => 'AR-2026-0001', 'customerId' => 'C-1', 'invoiceNumber' => 'AR-2026-0001', 'administrationId' => 'adm-1'],
+				],
+				'CustomerMaster' => [
+					['id' => 'C-9', 'name' => 'Other B.V.'],
+					['id' => 'C-1', 'name' => 'Acme SPRL', 'vatId' => 'BE0123456789'],
+				],
+				'Administration' => [
+					['id' => 'adm-2', 'legalName' => 'Wrong Operator'],
+					['id' => 'adm-1', 'legalName' => 'Shillinq Operator B.V.', 'vatId' => 'NL001234567B01'],
+				],
+			]
+		);
+
+		$seen = [];
+		$this->pdfRenderer->expects($this->once())->method('render')->willReturnCallback(
+			static function (array $invoice, array $customer, array $seller) use (&$seen): array {
+				$seen = ['invoice' => $invoice, 'customer' => $customer, 'seller' => $seller];
+				return [
+					'filename' => 'arinvoice-AR-2026-0001.pdf',
+					'html' => '<html><body>ICP</body></html>',
+					'mimeType' => 'application/pdf',
+				];
+			}
+		);
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(DataDisplayResponse::class, $response);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('<html><body>ICP</body></html>', $response->render());
+
+		$headers = $response->getHeaders();
+		self::assertSame('true', $headers['X-Shillinq-Icp']);
+		self::assertSame('text/html; charset=utf-8', $headers['Content-Type']);
+
+		/*
+		 * Observed, not desired: DataDisplayResponse::__construct() calls
+		 * addHeader('Content-Disposition', 'inline; filename=""') AFTER applying
+		 * the headers passed to it, so the filename the controller computes is
+		 * always discarded by the framework. Asserted as-is so the day someone
+		 * fixes it (e.g. by switching to DownloadResponse) this test says so
+		 * rather than silently passing on a header nobody reads.
+		 */
+		self::assertSame('inline; filename=""', $headers['Content-Disposition']);
+
+		self::assertSame('AR-2026-0001', $seen['invoice']['id']);
+		self::assertSame('Acme SPRL', $seen['customer']['name']);
+		self::assertSame('Shillinq Operator B.V.', $seen['seller']['legalName']);
+
+	}//end testRenderInvoicePdfReturnsInlineDocument()
+
+	/**
+	 * A missing buyer VAT-ID on an ICP supply is a correctable data defect, not
+	 * a server error: HTTP 422 carrying the machine-readable error code
+	 * (REQ-ICP-007).
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfMissingBuyerVatIdReturns422(): void {
+		$this->withParams(['invoice_id' => 'AR-2026-0001', 'administration_id' => 'adm-1']);
+		$this->seedObjects(
+			[
+				'ARInvoice' => [['id' => 'AR-2026-0001', 'administrationId' => 'adm-1']],
+			]
+		);
+		$this->pdfRenderer->method('render')->willThrowException(
+			new \InvalidArgumentException(
+				ArInvoiceIcpPdfRenderer::ERROR_VATID_MISSING . ': Cannot render ICP invoice without buyer VAT-ID'
+			)
+		);
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		self::assertSame(ArInvoiceIcpPdfRenderer::ERROR_VATID_MISSING, $response->getData()['error']);
+
+	}//end testRenderInvoicePdfMissingBuyerVatIdReturns422()
+
+	/**
+	 * Any other InvalidArgumentException is still a 422, but without claiming
+	 * the VAT-ID error code.
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfOtherValidationFailureReturns422(): void {
+		$this->withParams(['invoice_id' => 'AR-2026-0001', 'administration_id' => 'adm-1']);
+		$this->seedObjects(
+			[
+				'ARInvoice' => [['id' => 'AR-2026-0001', 'administrationId' => 'adm-1']],
+			]
+		);
+		$this->pdfRenderer->method('render')->willThrowException(
+			new \InvalidArgumentException('supplyType is not a recognised ICP supply type')
+		);
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		self::assertSame('Render failed', $response->getData()['error']);
+
+	}//end testRenderInvoicePdfOtherValidationFailureReturns422()
+
+	/**
+	 * A renderer crash yields HTTP 500, is logged, and leaks no stack trace
+	 * (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfRendererCrashReturns500WithoutLeak(): void {
+		$this->withParams(['invoice_id' => 'AR-2026-0001', 'administration_id' => 'adm-1']);
+		$this->seedObjects(
+			[
+				'ARInvoice' => [['id' => 'AR-2026-0001', 'administrationId' => 'adm-1']],
+			]
+		);
+		$this->pdfRenderer->method('render')->willThrowException(new \RuntimeException('wkhtmltopdf segfault'));
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertStringNotContainsString('segfault', (string)json_encode($response->getData()));
+
+	}//end testRenderInvoicePdfRendererCrashReturns500WithoutLeak()
+
+	/**
+	 * A failure while loading the invoice context yields HTTP 500 with a
+	 * generic message and never reaches the renderer.
+	 *
+	 * @return void
+	 */
+	public function testRenderInvoicePdfContextLoadFailureReturns500(): void {
+		$this->withParams(['invoice_id' => 'AR-2026-0001', 'administration_id' => 'adm-1']);
+		$this->objectService->method('setRegister')->willReturnSelf();
+		$this->objectService->method('setSchema')->willReturnSelf();
+		$this->objectService->method('findAll')->willThrowException(
+			new \RuntimeException('SQLSTATE[42S02] oc_openregister_objects missing')
+		);
+		$this->pdfRenderer->expects($this->never())->method('render');
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->renderInvoicePdf();
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame('Failed to load invoice context', $response->getData()['error']);
+		self::assertStringNotContainsString('SQLSTATE', (string)json_encode($response->getData()));
+
+	}//end testRenderInvoicePdfContextLoadFailureReturns500()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
