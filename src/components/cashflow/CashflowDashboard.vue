@@ -1,6 +1,20 @@
 <!--
   Cashflow Dashboard Skeleton
 
+  ⚠️ THIS COMPONENT IS AN ORPHAN AND ITS "Export PDF" BUTTON IS NOT THE ONE
+  THAT WORKS. Nothing imports this file, it has no registry entry and no
+  manifest binding, so it never mounts; its @click only $emit's 'export-pdf'
+  and nothing listens. It is left in place because its crisis-banner and
+  scenario-switcher skeletons are still unspent design, but it must not be
+  mistaken for the implementation.
+
+  The live REQ-CF-016 affordance (#865) is the declarative
+  `config.headerActions[]` entry on the CashflowDashboard page in
+  src/manifest.json: an api-call action with `download: true` that POSTs
+  /apps/shillinq/api/cashflow/export-pdf and saves the returned PDF. Its
+  chain is CashflowExportController -> CashflowExportService ->
+  CashflowPdfRenderer::renderPdf().
+
   Per ADR-031: the dashboard is rendered by the manifest-v2 page (type: dashboard)
   using widgets backed by x-openregister-aggregations. This component is a thin
   skeleton mounted by the manifest renderer for any host that wants a
