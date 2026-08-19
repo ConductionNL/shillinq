@@ -152,13 +152,22 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase {
 			self::assertArrayHasKey($state, $states, "Lifecycle state $state was dropped");
 		}
 
-		// Existing relations preserved (member 03 may add a contact relation;
-		// member 01 must not perturb the create-appointment relations).
-		$relations = ($appt['x-openregister-relations'] ?? []);
-		foreach (['service', 'resource'] as $rel) {
-			self::assertArrayHasKey($rel, $relations, "Relation $rel was dropped");
-		}
-
+		// WITHDRAWN ASSERTION — the `service` and `resource` relations on the
+		// merged Appointment. They were declared in the base fragment's
+		// per-schema `x-openregister-relations` block, which ADR-062 rule 7
+		// retired on 2026-07-08 in favour of a property-level `$ref`. Neither
+		// was migrated, because neither is expressible: their `relatedField`
+		// was the target's operator-assigned business key
+		// (`Service.serviceId` / `Resource.resourceId`), not its object
+		// identity, and OpenRegister resolves a `$ref` against the object id.
+		// So there is no longer a relation for this overlay to perturb, on
+		// either side of the merge.
+		//
+		// The test's own subject — that member 01 extends Appointment
+		// ADDITIVELY — is unaffected and still fully asserted: the
+		// `serviceId` / `resourceId` properties are checked above as
+		// pre-existing survivors, alongside every other base field and every
+		// base lifecycle state.
 	}//end testAppointmentIsExtendedAdditively()
 
 	/**
