@@ -45,16 +45,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "project": {
-            "localField": "projectNumber",
-            "relatedSchema": "WbsoBeschikking",
-            "relatedField": "projectNumber",
-            "cardinality": "many-to-one",
-            "scopeField": "administrationId",
-            "description": "Links the beschikking to its WBSO project (REQ-WBSO-001). The S&O realisatie and mededeling are scoped to the same project."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -191,16 +181,6 @@
               "label": "Lock hours",
               "description": "Lock confirmed hours when the period mededeling is submitted (REQ-WBSO-002)."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "decision": {
-            "localField": "decisionNumber",
-            "relatedSchema": "WbsoBeschikking",
-            "relatedField": "decisionNumber",
-            "cardinality": "many-to-one",
-            "scopeField": "administrationId",
-            "description": "FK to the beschikking the hours are booked against (REQ-WBSO-002)."
           }
         },
         "x-openregister-rbac": {
@@ -347,16 +327,6 @@
               "label": "Reject mededeling",
               "description": "Record RVO rejection of the mededeling (REQ-WBSO-003)."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "decision": {
-            "localField": "decisionNumber",
-            "relatedSchema": "WbsoBeschikking",
-            "relatedField": "decisionNumber",
-            "cardinality": "many-to-one",
-            "scopeField": "administrationId",
-            "description": "FK to the beschikking whose realisatie this mededeling reports (REQ-WBSO-003)."
           }
         },
         "x-openregister-rbac": {

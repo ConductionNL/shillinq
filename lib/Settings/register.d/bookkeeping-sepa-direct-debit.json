@@ -295,7 +295,8 @@
           "mandateId": {
             "type": "string",
             "description": "FK to SepaMandate UUID (REQ-SDD-002).",
-            "title": "Mandate ID"
+            "title": "Mandate ID",
+            "$ref": "SepaMandate"
           },
           "invoiceId": {
             "type": "string",
@@ -363,7 +364,8 @@
             "type": "string",
             "nullable": true,
             "description": "FK to DirectDebitBatch once submitted (REQ-SDD-002).",
-            "title": "Submitted In Batch ID"
+            "title": "Submitted In Batch ID",
+            "$ref": "DirectDebitBatch"
           },
           "pain002ReasonCode": {
             "type": "string",
@@ -463,22 +465,6 @@
               "description": "One-click repost; allowed only for bank-problem reason codes (REQ-SDD-009).",
               "requires": "OCA\\Shillinq\\Lifecycle\\RepostingEligibilityGuard::canRepost"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "mandate": {
-            "localField": "mandateId",
-            "relatedSchema": "SepaMandate",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The mandate authorising this collection (REQ-SDD-002)."
-          },
-          "batch": {
-            "localField": "submittedInBatchId",
-            "relatedSchema": "DirectDebitBatch",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The batch this collection was submitted in (REQ-SDD-005)."
           }
         },
         "x-openregister-rbac": {
@@ -725,7 +711,8 @@
           "collectionId": {
             "type": "string",
             "description": "FK to DirectDebitCollection UUID (REQ-SDD-007).",
-            "title": "Collection ID"
+            "title": "Collection ID",
+            "$ref": "DirectDebitCollection"
           },
           "type": {
             "type": "string",
@@ -782,15 +769,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-relations": {
-          "collection": {
-            "localField": "collectionId",
-            "relatedSchema": "DirectDebitCollection",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The collection this R-transaction reverses (REQ-SDD-007)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -829,7 +807,8 @@
           "collectionId": {
             "type": "string",
             "description": "FK to DirectDebitCollection UUID (REQ-SDD-003).",
-            "title": "Collection ID"
+            "title": "Collection ID",
+            "$ref": "DirectDebitCollection"
           },
           "sentAt": {
             "type": "string",
@@ -869,15 +848,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-relations": {
-          "collection": {
-            "localField": "collectionId",
-            "relatedSchema": "DirectDebitCollection",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The collection this pre-notification covers (REQ-SDD-003)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -907,16 +877,8 @@
             "type": "string",
             "nullable": true,
             "description": "FK to the customer's default SEPA mandate UUID; when set the AR billing flow proposes direct-debit collection by default (REQ-SDD-002). Optional — collections may still be scheduled against any active mandate held by the customer. Cleared automatically when the referenced mandate transitions to `cancelled` or `expired`.",
-            "title": "Default Mandate ID"
-          }
-        },
-        "x-openregister-relations": {
-          "defaultMandate": {
-            "localField": "defaultMandateId",
-            "relatedSchema": "SepaMandate",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The customer's default mandate for direct-debit collection (REQ-SDD-002)."
+            "title": "Default Mandate ID",
+            "$ref": "SepaMandate"
           }
         }
       },
@@ -942,29 +904,15 @@
             "type": "string",
             "nullable": true,
             "description": "FK to the SepaMandate UUID under which this invoice is to be collected (REQ-SDD-002). Required when `paymentMethod = direct_debit`; ignored otherwise. The mandate MUST be `active` at collection-scheduling time; cancellation or expiry triggers `sdd.mandate.cancelled` / `sdd.mandate.expired`.",
-            "title": "Direct Debit Mandate ID"
+            "title": "Direct Debit Mandate ID",
+            "$ref": "SepaMandate"
           },
           "directDebitPreNotificationInvoiceId": {
             "type": "string",
             "nullable": true,
             "description": "Optional FK to the ARInvoice whose line item carried the SEPA pre-notification text for this collection (REQ-SDD-003, design D3 invoice-line channel). When set, this invoice's pre-notification proof is sourced from the linked invoice's issue date + line text; the `PreNotification` register entry references the same invoice via `recipientAddress`.",
-            "title": "Direct Debit Pre Notification Invoice ID"
-          }
-        },
-        "x-openregister-relations": {
-          "directDebitMandate": {
-            "localField": "directDebitMandateId",
-            "relatedSchema": "SepaMandate",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The SEPA mandate authorising direct-debit collection of this invoice (REQ-SDD-002)."
-          },
-          "directDebitPreNotificationInvoice": {
-            "localField": "directDebitPreNotificationInvoiceId",
-            "relatedSchema": "ARInvoice",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The invoice whose line item carried the SEPA pre-notification text for this collection (REQ-SDD-003, design D3)."
+            "title": "Direct Debit Pre Notification Invoice ID",
+            "$ref": "ARInvoice"
           }
         }
       }

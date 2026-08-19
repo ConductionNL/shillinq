@@ -58,7 +58,8 @@
             "type": "string",
             "description": "FK to pipelinq Product (productId). Required. Resolved via ADR-019 integration registry.",
             "example": "pipelinq-product-id-001",
-            "title": "Product ID"
+            "title": "Product ID",
+            "x-external-register": "pipelinq"
           },
           "productSku": {
             "type": "string",
@@ -101,15 +102,6 @@
             "description": "Operator-authored free text (e.g. 'Carton of 4 bags').",
             "example": "Unit barcode for individual 2kg bag",
             "title": "Notes"
-          }
-        },
-        "x-openregister-relations": {
-          "product": {
-            "localField": "productId",
-            "relatedSchema": "pipelinq:Product",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The pipelinq Product this barcode identifies. Resolvable via ?expand=productId per REQ-SKU-004 via ADR-019 integration registry."
           }
         },
         "x-openregister-rbac": {
