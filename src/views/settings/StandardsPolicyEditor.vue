@@ -11,7 +11,14 @@
   @spec openspec/specs/accounting-standards-policy/spec.md
 -->
 <template>
-	<div class="standards-policy">
+	<!--
+	  The root carries the component's own name as a test id so a browser test
+	  can assert THIS page mounted, rather than inferring it from a class name
+	  or a heading string that a restyle or a copy change could move. The route
+	  alone is not enough: an unresolved route lands on the SPA shell, which
+	  renders a page with no error of any kind.
+	-->
+	<div class="standards-policy" data-testid="StandardsPolicyEditor">
 		<div class="standards-policy__header">
 			<h2>{{ t('shillinq', 'Accounting standards') }}</h2>
 			<p class="standards-policy__intro">

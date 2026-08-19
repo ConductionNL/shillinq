@@ -28,6 +28,16 @@
 // dispatch itself requires kind:"page"), mounted into CnDetailPage's actions
 // header slot with `{ object, objectId, schema, objectType, store }`.
 import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
+// bookkeeping-provincies-bbv-variant (#866/#862, REQ-BBL-001): the
+// Budget-to-Programme Linker's three declared filter facets. The page stays a
+// built-in `type:"index"` — this is a SLOT component, mounted into
+// CnIndexPage's `below-header` slot via the page's `slots` map, not a
+// replacement page. It exists because CnIndexPage has no `filters` prop at
+// all: the manifest's `config.filters[]` rendered nowhere, so the index
+// fetched the right rows and offered no way to narrow them. It writes the
+// selection into `$route.query`, which CnIndexPage's own self-fetch merges
+// into `fixedFilters` and re-fetches on — so the list stays the library's.
+import BbvLinkerFilterBar from './components/bbv-provincie/BbvLinkerFilterBar.vue'
 // bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
 // Budget Mapping detail page composes two bespoke autocomplete pickers
 // (Chart of Accounts + BBVProgramme), a live per-account allocation
@@ -88,6 +98,21 @@ import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceipt
 // fits a built-in `index` / `detail` page type, so both are kind:"page"
 // custom components.
 import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNoteForm.vue'
+// inventory-product-catalog (#860, REQ-IPC-004 / REQ-IPC-008 +
+// shillinq-product-vendor-to-pipelinq REQ-SPVP-004): the two read-only
+// catalog surfaces. A declarative `type: "index"` page binds to ONE
+// OpenRegister register + schema, and the product master these two pages
+// show is not in shillinq's register at all — REQ-SPVP-004 deleted the local
+// `Product` register and moved ownership to pipelinq. Binding an index page
+// to `register: "pipelinq"` instead would render an empty table on every
+// install without pipelinq while satisfying every "the page mounted"
+// assertion; these components call shillinq's own catalog endpoint, which
+// resolves the master first and falls back to the local denormalised cache
+// the ADR-019 contract declares, and renders WHICH OF THE TWO answered.
+// Neither page can write: no create affordance and no write route exists,
+// per REQ-SPVP-004.
+import ProductAttributeCatalogIndex from './components/inventory/ProductAttributeCatalogIndex.vue'
+import ProductCatalogIndex from './components/inventory/ProductCatalogIndex.vue'
 // invoice-from-time-and-expense (issue #111): drafting form + admin list
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
@@ -377,6 +402,13 @@ export default {
 
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
+
+	// bookkeeping-provincies-bbv-variant (#866/#862, REQ-BBL-001).
+	BbvLinkerFilterBar: {
+		kind: 'widget',
+		component: BbvLinkerFilterBar,
+		_note: "Slot component for CnIndexPage's `below-header` slot, not a page: the Linker index stays a built-in type:\"index\" so its self-fetch, paging and empty state remain the library's. CnIndexPage has no `filters` prop, so the page's declared config.filters[] had no renderer; this one writes the selection into $route.query, which the self-fetch merges into fixedFilters.",
+	},
 	AdministrationSwitcherPage: {
 		kind: 'page',
 		component: AdministrationSwitcherPage,
@@ -441,5 +473,13 @@ export default {
 	AccountantPortalDashboard: {
 		kind: 'page',
 		component: AccountantPortalDashboard,
+	},
+
+	// inventory-product-catalog (#860). See the import docblock above for why
+	// these are custom pages rather than declarative `type: "index"` ones.
+	ProductCatalogIndex: { kind: 'page', component: ProductCatalogIndex },
+	ProductAttributeCatalogIndex: {
+		kind: 'page',
+		component: ProductAttributeCatalogIndex,
 	},
 }

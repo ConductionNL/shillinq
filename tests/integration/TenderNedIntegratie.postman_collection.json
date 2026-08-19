@@ -115,16 +115,17 @@
 			"name": "REQ-008 — Mijn Contracten filter returns the tenderned-sourced row",
 			"request": {
 				"method": "GET",
+				"description": "Property filters on the OpenRegister objects endpoint are BARE property names (`?source=…&sourceReference=…`). ObjectsController::getConfig() assigns the WHOLE request parameter bag to `filters`, so `filters[source]=…` arrives as a filter on a property literally named `filters` — which no schema declares, so it matches nothing and the endpoint answers `200` with `total: 0`. A filter on a non-property fails silently; it does not error. Reserved parameters are underscore-prefixed (`_limit`, `_page`, `_search`, `_order`, `_extend`, `_fields`). Measured live against openregister on 2026-08-17 with one seeded row: `filters[source]=tenderned&filters[sourceReference]=TN-PROBE-0001` → total 0; `source=tenderned&sourceReference=TN-PROBE-0001` → total 1.",
 				"header": [
 					{ "key": "Accept", "value": "application/json" }
 				],
 				"url": {
-					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Verplichting?filters[source]=tenderned&filters[sourceReference]={{tender_aanbesteding_id}}",
+					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Verplichting?source=tenderned&sourceReference={{tender_aanbesteding_id}}",
 					"host": ["{{base_url}}"],
 					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "Verplichting"],
 					"query": [
-						{ "key": "filters[source]", "value": "tenderned" },
-						{ "key": "filters[sourceReference]", "value": "{{tender_aanbesteding_id}}" }
+						{ "key": "source", "value": "tenderned" },
+						{ "key": "sourceReference", "value": "{{tender_aanbesteding_id}}" }
 					]
 				}
 			},

@@ -165,14 +165,21 @@ final class SpendAnalyticsServiceTest extends TestCase {
 	private function apTransactions(): array {
 		return [
 			// Vendor V1: 100.00 + 50.00 committed (issued/paid) = 150.00.
-			['vendorId' => 'V1', 'totalAmount' => 100.00, 'state' => 'issued'],
-			['vendorId' => 'V1', 'totalAmount' => 50.00,  'state' => 'paid'],
+			['administrationId' => 'ADM-001', 'vendorId' => 'V1', 'totalAmount' => 100.00, 'state' => 'issued'],
+			['administrationId' => 'ADM-001', 'vendorId' => 'V1', 'totalAmount' => 50.00,  'state' => 'paid'],
 			// Vendor V2: 200.00 committed (overdue) = 200.00.
-			['vendorId' => 'V2', 'totalAmount' => 200.00, 'state' => 'overdue'],
+			['administrationId' => 'ADM-001', 'vendorId' => 'V2', 'totalAmount' => 200.00, 'state' => 'overdue'],
 			// Vendor V2: 999.00 DRAFT — excluded from committed spend.
-			['vendorId' => 'V2', 'totalAmount' => 999.00, 'state' => 'draft'],
+			['administrationId' => 'ADM-001', 'vendorId' => 'V2', 'totalAmount' => 999.00, 'state' => 'draft'],
 			// Vendor V3: 40.00 VOIDED — excluded.
-			['vendorId' => 'V3', 'totalAmount' => 40.00,  'state' => 'voided'],
+			['administrationId' => 'ADM-001', 'vendorId' => 'V3', 'totalAmount' => 40.00,  'state' => 'voided'],
+			// ANOTHER TENANT'S committed invoices. Same schema, same register,
+			// same committed states — the ONLY thing separating them is the
+			// administrationId filter the service is now required to send.
+			// Deliberately larger than every ADM-001 figure so a missing
+			// filter cannot pass any of the assertions by coincidence.
+			['administrationId' => 'ADM-999', 'vendorId' => 'V1', 'totalAmount' => 7000.00, 'state' => 'issued'],
+			['administrationId' => 'ADM-999', 'vendorId' => 'V9', 'totalAmount' => 8000.00, 'state' => 'paid'],
 		];
 
 	}//end apTransactions()
@@ -204,7 +211,7 @@ final class SpendAnalyticsServiceTest extends TestCase {
 		$runner->seed('APTransaction', $this->apTransactions());
 		$service = $this->makeService($runner);
 
-		$result = $service->spendBySupplier();
+		$result = $service->spendBySupplier(administrationId: 'ADM-001');
 
 		$this->assertSame('supplier', $result['dimension']);
 		$this->assertSame('php-fallback', $result['backend']);
@@ -227,6 +234,65 @@ final class SpendAnalyticsServiceTest extends TestCase {
 		$this->assertSame('vendorId', $query->getGroupByField());
 		$this->assertSame(['field' => 'vendorId'], $query->groupBy);
 	}//end testSpendBySupplierCorrectTotals()
+
+	/**
+	 * THE TENANT-ISOLATION CONTROL (gate-7). The supplier aggregation must
+	 * carry the caller's administration into the filter it sends to OR, and
+	 * the totals it returns must contain no other administration's invoices.
+	 *
+	 * Written so it FAILS on the pre-fix service, twice over: that version's
+	 * filter was `['state' => ['in' => …]]` with no administration term, so
+	 * the filter assertion fails outright, and the totals it produced summed
+	 * ADM-999's 7000 into V1 (7150, not 150) and surfaced a V9 group that the
+	 * caller has no membership to see.
+	 */
+	public function testSpendBySupplierExcludesOtherAdministrations(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('APTransaction', $this->apTransactions());
+		$service = $this->makeService($runner);
+
+		$result = $service->spendBySupplier(administrationId: 'ADM-001');
+
+		$byKey = [];
+		foreach ($result['groups'] as $group) {
+			$byKey[$group['key']] = $group['amount'];
+		}
+
+		// ADM-999's 7000 must not be folded into V1, and its V9 must be absent.
+		$this->assertSame(150.0, $byKey['V1']);
+		$this->assertArrayNotHasKey('V9', $byKey);
+		$this->assertSame(350.0, $result['total']);
+
+		// The scope must reach OR as a filter term, not merely be checked and
+		// dropped upstream: an aggregation is executed by the database, so a
+		// scope that never enters the query never narrows anything.
+		$filter = $runner->lastQuery['APTransaction']->filter;
+		$this->assertArrayHasKey('administrationId', $filter);
+		$this->assertSame('ADM-001', $filter['administrationId']);
+	}//end testSpendBySupplierExcludesOtherAdministrations()
+
+	/**
+	 * The same seeded set read as a different tenant returns that tenant's
+	 * figures — proving the filter is the caller's administration and not a
+	 * constant that happens to match the fixture.
+	 */
+	public function testSpendBySupplierIsScopedToTheAdministrationAsked(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('APTransaction', $this->apTransactions());
+		$service = $this->makeService($runner);
+
+		$result = $service->spendBySupplier(administrationId: 'ADM-999');
+
+		$byKey = [];
+		foreach ($result['groups'] as $group) {
+			$byKey[$group['key']] = $group['amount'];
+		}
+
+		$this->assertSame(7000.0, $byKey['V1']);
+		$this->assertSame(8000.0, $byKey['V9']);
+		$this->assertArrayNotHasKey('V2', $byKey);
+		$this->assertSame(15000.0, $result['total']);
+	}//end testSpendBySupplierIsScopedToTheAdministrationAsked()
 
 	/**
 	 * spend-by-category sums debit AP expense postings by GL account.
@@ -314,6 +380,35 @@ final class SpendAnalyticsServiceTest extends TestCase {
 		$service = new SpendAnalyticsService(container: $container, appConfig: $appConfig, logger: $logger);
 
 		$this->expectException(RuntimeException::class);
-		$service->spendBySupplier();
+		$service->spendBySupplier(administrationId: 'ADM-001');
 	}//end testRaisesWhenRunnerUnavailable()
+
+	/**
+	 * Pins the KNOWN GAP so it cannot be mistaken for a solved problem: the
+	 * three GL-backed views are NOT administration-scoped, because `GLLine`
+	 * declares no administration property and OpenRegister's filters cannot
+	 * join to the parent GLTransaction that holds one.
+	 *
+	 * This test asserts the current, deliberate state — the GL filter carries
+	 * the posting slice and nothing else. It is written to FAIL the moment
+	 * someone adds an `administrationId` term to a GLLine query, because on
+	 * that schema such a term addresses a property that does not exist and
+	 * matches NOTHING for every value: a silent zero in a bookkeeping total.
+	 * The real fix is `administrationId` denormalised onto GLLine plus a
+	 * backfill of existing rows; when that lands, this test is the one to
+	 * change, alongside the fixture that proves the new filter matches.
+	 */
+	public function testGlBackedViewsCarryNoAdministrationFilterYet(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('GLLine', $this->glLines());
+		$service = $this->makeService($runner);
+
+		$service->spendByCategory();
+
+		$this->assertSame(
+			['side' => 'debit', 'subLedgerType' => 'ap'],
+			$runner->lastQuery['GLLine']->filter,
+			'GLLine cannot be filtered by administration — see SpendAnalyticsService class docblock.'
+		);
+	}//end testGlBackedViewsCarryNoAdministrationFilterYet()
 }//end class
