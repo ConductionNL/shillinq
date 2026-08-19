@@ -24,6 +24,8 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Lifecycle\ProvisionGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -353,6 +355,150 @@ class ProvisionGuardTest extends TestCase {
 		self::assertFalse($this->guard->canActivateProvision(provisionId: 'p-claim', object: $object));
 
 	}//end testClaimsProvisionWithoutDetailFkBlocksActivation()
+
+	// ---------------------------------------------------------------------- //
+	// The linked detail must be RESOLVABLE, not merely referenced            //
+	// ---------------------------------------------------------------------- //
+
+	/**
+	 * Rebuild the guard on a store that answers identifier lookups the way the
+	 * real engine does.
+	 *
+	 * 🔑 The suite's default store is a bare `createMock(ObjectServiceInterface)`
+	 * — it answers `findAll()` with `[]` and `find()` with null, so the linked
+	 * detail is unresolvable whatever the guard does, and the two tests above
+	 * pass identically over a working lookup and a dead one. They can only ever
+	 * assert the missing-FK case. This store carries the detail, so the
+	 * difference becomes visible.
+	 *
+	 * @param string $schema The detail schema slug.
+	 * @param array<string,mixed> $detail The detail record, carrying its `id`.
+	 *
+	 * @return void
+	 */
+	private function guardWithDetail(string $schema, array $detail): void {
+		$store = new OpenRegisterFaithfulObjectService();
+		$store->seed(schema: $schema, rows: [$detail]);
+
+		$this->guard = new ProvisionGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
+
+	}//end guardWithDetail()
+
+	/**
+	 * REQ-PROV-005 / IAS 37 §72+§75: a restructuring provision whose linked
+	 * detail carries a timely, communicated plan MAY activate.
+	 *
+	 * 🔴 This failed before the lookup was repaired — not because the plan was
+	 * late or uncommunicated, but because `resolveObject()` asked for the
+	 * detail with `filters['id']`, which real OpenRegister answers with zero
+	 * rows. `canActivateHerstructurering()` fails closed on an unresolvable
+	 * detail, so EVERY restructuring provision was permanently blocked from
+	 * activation, and the guard was reached declaratively (`requires:` in
+	 * `bookkeeping-voorzieningen-claims.json`), i.e. in production.
+	 *
+	 * @return void
+	 */
+	public function testRestructuringProvisionWithATimelyCommunicatedPlanMayActivate(): void {
+		$this->guardWithDetail(
+			schema: 'HerstructureringsvoorzieningDetail',
+			detail: [
+				'id' => 'her-1',
+				'detailedPlanDate' => '2026-11-30',
+				'balanceDate' => '2026-12-31',
+				'planCommunicatedTo' => ['works-council', 'affected-staff'],
+			]
+		);
+
+		$object = $this->completeImmaterialProvision();
+		$object['provisionType'] = 'restructuring';
+		$object['linkedRestructuringProvisionDetail'] = 'her-1';
+
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canActivateProvision(provisionId: 'p-her', object: $object));
+
+	}//end testRestructuringProvisionWithATimelyCommunicatedPlanMayActivate()
+
+	/**
+	 * REQ-PROV-005 / IAS 37 §72: a plan dated AFTER the balance date still
+	 * blocks activation once the detail is resolvable.
+	 *
+	 * The negative control for the test above: without it, a repair that
+	 * simply stopped denying would look identical to a repair that made the
+	 * rule evaluable.
+	 *
+	 * @return void
+	 */
+	public function testRestructuringProvisionWithALatePlanStillBlocksActivation(): void {
+		$this->guardWithDetail(
+			schema: 'HerstructureringsvoorzieningDetail',
+			detail: [
+				'id' => 'her-2',
+				'detailedPlanDate' => '2027-01-15',
+				'balanceDate' => '2026-12-31',
+				'planCommunicatedTo' => ['works-council'],
+			]
+		);
+
+		$object = $this->completeImmaterialProvision();
+		$object['provisionType'] = 'restructuring';
+		$object['linkedRestructuringProvisionDetail'] = 'her-2';
+
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canActivateProvision(provisionId: 'p-her-late', object: $object));
+
+	}//end testRestructuringProvisionWithALatePlanStillBlocksActivation()
+
+	/**
+	 * REQ-PROV-006: a claims provision whose linked detail carries the legal
+	 * advice memo MAY activate.
+	 *
+	 * @return void
+	 */
+	public function testClaimsProvisionWithALegalAdviceMemoMayActivate(): void {
+		$this->guardWithDetail(
+			schema: 'ClaimsVoorzieningDetail',
+			detail: [
+				'id' => 'clm-1',
+				'legalAdviceMemo' => 'memo-2026-07',
+			]
+		);
+
+		$object = $this->completeImmaterialProvision();
+		$object['provisionType'] = 'claims';
+		$object['linkedClaimsProvisionDetail'] = 'clm-1';
+
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canActivateProvision(provisionId: 'p-claim', object: $object));
+
+	}//end testClaimsProvisionWithALegalAdviceMemoMayActivate()
+
+	/**
+	 * REQ-PROV-006: a resolvable claims detail with an EMPTY legal advice memo
+	 * still blocks activation — the negative control.
+	 *
+	 * @return void
+	 */
+	public function testClaimsProvisionWithoutALegalAdviceMemoStillBlocksActivation(): void {
+		$this->guardWithDetail(
+			schema: 'ClaimsVoorzieningDetail',
+			detail: [
+				'id' => 'clm-2',
+				'legalAdviceMemo' => '   ',
+			]
+		);
+
+		$object = $this->completeImmaterialProvision();
+		$object['provisionType'] = 'claims';
+		$object['linkedClaimsProvisionDetail'] = 'clm-2';
+
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canActivateProvision(provisionId: 'p-claim-empty', object: $object));
+
+	}//end testClaimsProvisionWithoutALegalAdviceMemoStillBlocksActivation()
 
 	// ---------------------------------------------------------------------- //
 	// T32 + T16: ProvisionMovement close / immutability                      //

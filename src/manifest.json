@@ -12195,6 +12195,21 @@
 			"type": "dashboard",
 			"title": "Cashflow Dashboard",
 			"config": {
+				"_note_export_pdf": "REQ-CF-016 / #865. CnDashboardPage passes headerActions[] to CnActionButtons, which renders each entry as a plain visible NcButton — not the collapsed overflow CnActionsBar uses on an index page. download:true makes nc-vue 2.3.0 request responseType blob and save the file. No custom component, so no customComponents.js entry can be forgotten.",
+				"headerActions": [
+					{
+						"id": "export-cashflow-pdf",
+						"label": "Export PDF",
+						"type": "api-call",
+						"method": "POST",
+						"url": "/apps/shillinq/api/cashflow/export-pdf",
+						"download": true,
+						"filename": "cashflow-forecast.pdf",
+						"icon": "DatabaseExportOutline",
+						"successMessage": "Cashflow forecast exported.",
+						"errorMessage": "No cashflow forecast is available to export yet."
+					}
+				],
 				"widgets": [
 					{
 						"id": "cashflow-13week-chart",

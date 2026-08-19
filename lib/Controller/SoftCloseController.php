@@ -221,6 +221,23 @@ class SoftCloseController extends Controller {
 	 * @return DataResponse|JSONResponse Format-specific response.
 	 *
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-25
+	 *
+	 * @no-admin-idor-exempt Stateless renderer — the endpoint reads no storage, so the
+	 *     $fluxRunId it is handed reaches no lookup that could be steered. The response is
+	 *     built entirely from the caller's own request: buildNarrative($items, $periodId)
+	 *     filters/sorts/sums the items[] array the caller posted and returns it, with no
+	 *     ObjectService, mapper or app-config read in its body or in the three
+	 *     renderNarrative* formatters. $fluxRunId is validated as a slug and then never
+	 *     used, so substituting another tenant's run id changes nothing in the output.
+	 *     ⚠️ THIS EXEMPTION IS CONDITIONAL ON THAT AND EXPIRES THE MOMENT THE RUN IS
+	 *     ACTUALLY LOADED. Whoever wires the persisted FluxRun in must add the guard the
+	 *     sibling methods already use — requireAccessibleAdministration() against the
+	 *     run's administrationId (FluxRun declares one), 404 not 403 — before reading it.
+	 *     Note also that no such lookup is possible today: FluxService::persistRun() saves
+	 *     the FluxRun WITHOUT its generated run id and FluxRun declares no id property, so
+	 *     the {fluxRunId} in the route addresses nothing that exists. That defect is
+	 *     reported separately; it is why this endpoint is stateless rather than a design
+	 *     choice to be relied on.
 	 */
 	#[NoAdminRequired]
 	public function narrative(string $fluxRunId): DataResponse|JSONResponse {

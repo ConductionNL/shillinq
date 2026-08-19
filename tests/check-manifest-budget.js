@@ -70,7 +70,31 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // the thing it was written to measure. When a future change legitimately needs
 // more, re-measure and re-state the ratio here rather than leaving slack
 // behind for it.
-const DEFAULT_BUDGET_BYTES = 1_120_000
+//
+// Re-measured 2026-08-17 (bookkeeping-provincies-bbv-variant, #866/#862):
+// 1,121,104 bytes, +6,230 on the 1,114,874 this branch started from. The
+// growth is one fragment,
+// `src/manifest.d/bookkeeping-provincies-bbv-variant.json`, going 9,088 →
+// 15,318: the BBV Compliance Dashboard's body was declared under a
+// `config.dashboard.*` vocabulary NOTHING reads, and re-expressing it in the
+// vocabulary CnDashboardPage does read costs bytes — seven widgets, each with
+// its own `endpointSource` block carrying the three REQ-BBC-002 filter params,
+// plus a `layout[]` entry apiece. That repetition is the declarative
+// vocabulary's own shape, not prose: there is no way to hoist a shared
+// endpoint binding across widgets.
+//
+// TRIMMED FIRST, then raised. The first draft of this change measured
+// 1,122,261 (+7,387); cutting two widget `_note`s and tightening the two page
+// notes recovered 1,157 B. What is left of the prose is the RECORD of the
+// defect — that the page mounted empty for every visitor while the manifest
+// validated — and this file's own note above says deleting the schema's
+// documentation to fit is the opposite of what the gate asks for.
+//
+// HEADROOM RE-STATED, per the paragraph above: 1,126,300 leaves 5,196 B
+// (0.46%), matching the 5,126 B (0.46%) this check ran with immediately
+// before, so the tripwire keeps exactly the sensitivity it had. It is NOT
+// rounded up to a comfortable number.
+const DEFAULT_BUDGET_BYTES = 1_126_300
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

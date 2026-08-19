@@ -261,34 +261,59 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase 
 	}//end testBudgetBbvMappingRequiredFields()
 
 	/**
-	 * BBVProgramme + BudgetBBVMapping carry the declared OpenRegister
-	 * relations to Administration / BBVProgramme / Account so the
-	 * downstream UI + aggregation service can join.
+	 * BBVProgramme + BudgetBBVMapping carry the foreign-key fields to
+	 * Administration / BBVProgramme / Account so the downstream UI +
+	 * aggregation service can join.
+	 *
+	 * WITHDRAWN ASSERTIONS — all four `x-openregister-relations` entries
+	 * (BBVProgramme.administration, and BudgetBBVMapping.programme / .account /
+	 * .administration). The per-schema block was retired by ADR-062 rule 7 on
+	 * 2026-07-08 in favour of a property-level `$ref`. NONE of the four is
+	 * expressible in the canonical dialect, so all four were removed rather
+	 * than migrated: every one of them pointed at a BUSINESS KEY rather than
+	 * the target's object identity — `Administration.administrationCode`,
+	 * `BBVProgramme.programmeCode` and `Account.accountNumber` respectively.
+	 * OpenRegister resolves a `$ref` against the target's object id, so a
+	 * `$ref` on any of these would name a target it could never reach.
+	 * Cardinality has no slot in the canonical dialect either — a scalar
+	 * `$ref` IS the many-to-one form.
+	 *
+	 * The join this test exists to protect is still pinned, at the level the
+	 * register still declares it: the three foreign-key fields are declared and
+	 * required, so a mapping cannot be stored without the keys the aggregation
+	 * service joins on. The FK-existence rule itself is enforced separately, by
+	 * the `x-openregister-validation.glAccountForeignKey` rule that
+	 * WaterschappenBbv03ValidationRulesIntegrationTest asserts — a different
+	 * dialect, untouched by the ADR-062 retirement.
 	 *
 	 * @return void
 	 */
-	public function testRelationsDeclared(): void {
+	public function testForeignKeyFieldsDeclared(): void {
 		$components = $this->loadMergedComponents();
 
 		$programme = $components['schemas']['BBVProgramme'];
-		self::assertArrayHasKey('x-openregister-relations', $programme);
-		self::assertArrayHasKey('administration', $programme['x-openregister-relations']);
+		self::assertArrayHasKey(
+			key: 'administrationId',
+			array: $programme['properties'],
+			message: 'BBVProgramme MUST declare the administrationId foreign key.'
+		);
+		self::assertContains(needle: 'administrationId', haystack: $programme['required']);
 
 		$mapping = $components['schemas']['BudgetBBVMapping'];
-		self::assertArrayHasKey('x-openregister-relations', $mapping);
-		foreach (['programme', 'account', 'administration'] as $relation) {
+		foreach (['programmeCode', 'glAccountNumber', 'administrationId'] as $foreignKey) {
 			self::assertArrayHasKey(
-				$relation,
-				$mapping['x-openregister-relations'],
-				'BudgetBBVMapping MUST declare the ' . $relation . ' many-to-one relation.'
+				key: $foreignKey,
+				array: $mapping['properties'],
+				message: 'BudgetBBVMapping MUST declare the ' . $foreignKey . ' foreign key.'
 			);
-			self::assertSame(
-				'many-to-one',
-				$mapping['x-openregister-relations'][$relation]['cardinality']
+			self::assertContains(
+				needle: $foreignKey,
+				haystack: $mapping['required'],
+				message: 'BudgetBBVMapping.' . $foreignKey . ' MUST be required — the aggregation service joins on it.'
 			);
 		}
 
-	}//end testRelationsDeclared()
+	}//end testForeignKeyFieldsDeclared()
 
 	/**
 	 * The 5 demo programmes the design specifies are present in the fixture.
