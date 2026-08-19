@@ -118,22 +118,6 @@
             "title": "Pending COGS"
           }
         },
-        "x-openregister-relations": {
-          "product": {
-            "localField": "productId",
-            "relatedSchema": "pipelinq:Product",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "pipelinq Product master record. One InventoryValuation snapshot per (productId, warehouse, status=active). REQ-INV-002 + ADR-000 + ADR-019."
-          },
-          "costCenter": {
-            "localField": "costCenterId",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Optional cost-center dimension on the snapshot (AnalyticalDimension.dimensionType=cost-center). Used for per-cost-centre inventory value reporting. REQ-INV-002 + ADR-000 + REQ-ADIM-101. Re-targeted from the retired CostCenter; stored costCenterId values unchanged."
-          }
-        },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "active",

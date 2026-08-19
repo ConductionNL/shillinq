@@ -303,4 +303,230 @@ final class BankRuleControllerTest extends TestCase {
 		$controller->preview();
 
 	}//end testUnauthenticatedIsRejected()
+
+	/**
+	 * Seed a fake carrying $count confirmed GL-transaction matches for one
+	 * counterparty, each pointing at its own bank line.
+	 *
+	 * @param int    $count            Number of confirmed categorisations.
+	 * @param string $counterpartyName The counterparty on every line.
+	 * @param string $glAccount        The GL account every match targets.
+	 *
+	 * @return FakeBankRuleObjectService The seeded fake.
+	 */
+	private function seedHistory(int $count, string $counterpartyName, string $glAccount): FakeBankRuleObjectService {
+		$matches = [];
+		$lines = [];
+		for ($i = 1; $i <= $count; $i++) {
+			$lineId = 'bl-' . $i;
+			$matches[] = [
+				'id' => 'm-' . $i,
+				'administrationId' => 'adm-1',
+				'state' => 'confirmed',
+				'targetType' => 'gl-transaction',
+				'targetRefs' => [$glAccount],
+				'bankLineRefs' => [$lineId],
+			];
+			$lines[] = [
+				'id' => $lineId,
+				'administrationId' => 'adm-1',
+				'counterpartyName' => $counterpartyName,
+				'counterpartyIban' => 'NL91ABNA0417164300',
+			];
+		}
+
+		return new FakeBankRuleObjectService(
+			[
+				'ReconciliationMatch' => $matches,
+				'BankStatementLine' => $lines,
+			]
+		);
+
+	}//end seedHistory()
+
+	/**
+	 * suggestions mines confirmed categorisation history and proposes a rule
+	 * once the counterparty/GL pair reaches the threshold — a proposal only,
+	 * never an applied rule (REQ-BR-012).
+	 *
+	 * @return void
+	 */
+	public function testSuggestionsProposeRuleAtThreshold(): void {
+		$fake = $this->seedHistory(3, 'Acme B.V.', '4000');
+		$controller = $this->make([], $fake);
+
+		$response = $controller->suggestions();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame(BankRuleSuggestionService::DEFAULT_THRESHOLD, $data['threshold']);
+		self::assertCount(1, $data['suggestions']);
+		self::assertSame('Acme B.V. → 4000', $data['suggestions'][0]['ruleName']);
+		self::assertSame('4000', $data['suggestions'][0]['targetGlAccount']);
+		self::assertSame(3, $data['suggestions'][0]['occurrences']);
+		self::assertSame('history', $data['suggestions'][0]['source']);
+
+		// A suggestion never writes: the operator confirms via acceptSuggestion.
+		self::assertSame([], $fake->saves);
+
+	}//end testSuggestionsProposeRuleAtThreshold()
+
+	/**
+	 * A counterparty seen fewer times than the threshold yields no proposal —
+	 * the endpoint still answers 200 with an empty list, not a 404 or a 500.
+	 *
+	 * @return void
+	 */
+	public function testSuggestionsWithdrawBelowThreshold(): void {
+		$fake = $this->seedHistory(2, 'Acme B.V.', '4000');
+		$controller = $this->make([], $fake);
+
+		$response = $controller->suggestions();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame([], $response->getData()['suggestions']);
+
+	}//end testSuggestionsWithdrawBelowThreshold()
+
+	/**
+	 * An explicit lower k lets the same two-occurrence history produce a
+	 * proposal, and the applied threshold is echoed back to the caller.
+	 *
+	 * @return void
+	 */
+	public function testSuggestionsHonourExplicitThreshold(): void {
+		$fake = $this->seedHistory(2, 'Acme B.V.', '4000');
+		$controller = $this->make(['k' => '2'], $fake);
+
+		$response = $controller->suggestions();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(2, $response->getData()['threshold']);
+		self::assertCount(1, $response->getData()['suggestions']);
+
+	}//end testSuggestionsHonourExplicitThreshold()
+
+	/**
+	 * A non-positive k cannot disable the evidence bar: it falls back to the
+	 * service default rather than proposing on a single sighting.
+	 *
+	 * @return void
+	 */
+	public function testSuggestionsRejectNonPositiveThreshold(): void {
+		$fake = $this->seedHistory(1, 'Acme B.V.', '4000');
+		$controller = $this->make(['k' => '0'], $fake);
+
+		$response = $controller->suggestions();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(BankRuleSuggestionService::DEFAULT_THRESHOLD, $response->getData()['threshold']);
+		self::assertSame([], $response->getData()['suggestions']);
+
+	}//end testSuggestionsRejectNonPositiveThreshold()
+
+	/**
+	 * suggestions is scoped to the server-resolved administration: another
+	 * administration's confirmed history never leaks into the proposals.
+	 *
+	 * @return void
+	 */
+	public function testSuggestionsAreScopedToActiveAdministration(): void {
+		$matches = [];
+		$lines = [];
+		foreach ([['adm-1', 'Acme B.V.', '4000', 'a'], ['adm-2', 'Foreign N.V.', '9999', 'f']] as $spec) {
+			[$administration, $name, $gl, $prefix] = $spec;
+			for ($i = 1; $i <= 3; $i++) {
+				$lineId = $prefix . 'l-' . $i;
+				$matches[] = [
+					'id' => $prefix . 'm-' . $i,
+					'administrationId' => $administration,
+					'state' => 'confirmed',
+					'targetType' => 'gl-transaction',
+					'targetRefs' => [$gl],
+					'bankLineRefs' => [$lineId],
+				];
+				$lines[] = [
+					'id' => $lineId,
+					'administrationId' => $administration,
+					'counterpartyName' => $name,
+					'counterpartyIban' => 'NL91ABNA0417164300',
+				];
+			}
+		}
+
+		$fake = new FakeBankRuleObjectService(
+			[
+				'ReconciliationMatch' => $matches,
+				'BankStatementLine' => $lines,
+			]
+		);
+
+		$controller = $this->make([], $fake);
+
+		$response = $controller->suggestions();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$names = array_column($response->getData()['suggestions'], 'ruleName');
+		self::assertSame(['Acme B.V. → 4000'], $names);
+
+	}//end testSuggestionsAreScopedToActiveAdministration()
+
+	/**
+	 * A read failure surfaces as HTTP 500 with a generic message — the server
+	 * log holds the detail, the client gets no stack trace (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testSuggestionsReadFailureReturns500WithoutLeak(): void {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static function (string $key, $default = null) {
+				return $default;
+			}
+		);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willThrowException(
+			new \RuntimeException('SQLSTATE[42S02] oc_openregister_objects missing')
+		);
+
+		$admin = $this->createMock(AdministrationContextService::class);
+		$admin->method('buildContext')->willReturn(['activeAdministrationId' => 'adm-1']);
+
+		$session = $this->createMock(IUserSession::class);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$session->method('getUser')->willReturn($user);
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('error');
+
+		$controller = new BankRuleController(
+			$request,
+			new BankRulePreviewService(),
+			new BankRuleSuggestionService($this->createMock(LoggerInterface::class)),
+			$admin,
+			$container,
+			$session,
+			$logger,
+		);
+
+		$response = $controller->suggestions();
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertStringNotContainsString('SQLSTATE', (string)json_encode($response->getData()));
+
+	}//end testSuggestionsReadFailureReturns500WithoutLeak()
+
+	/**
+	 * suggestions is fail-closed for an unauthenticated session.
+	 *
+	 * @return void
+	 */
+	public function testSuggestionsRejectUnauthenticatedSession(): void {
+		$this->expectException(\OCP\AppFramework\OCS\OCSForbiddenException::class);
+		$controller = $this->make([], null, false);
+		$controller->suggestions();
+
+	}//end testSuggestionsRejectUnauthenticatedSession()
 }//end class

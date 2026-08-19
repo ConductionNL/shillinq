@@ -206,15 +206,6 @@
             "save": "OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireUnlockedAndValidDates"
           }
         },
-        "x-openregister-relations": {
-          "matches": {
-            "localField": "id",
-            "relatedSchema": "BankReconciliationMatch",
-            "relatedField": "reconciliationId",
-            "cardinality": "one-to-many",
-            "description": "The match pairs belonging to this reconciliation session."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -260,7 +251,8 @@
             "type": "string",
             "description": "FK to the parent BankReconciliation.id.",
             "example": "reconciliation-2026-05-abc-checking",
-            "title": "Reconciliation ID"
+            "title": "Reconciliation ID",
+            "$ref": "BankReconciliation"
           },
           "bankTransactionRef": {
             "type": "string",
@@ -393,15 +385,6 @@
           },
           "preconditions": {
             "save": "OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireParentUnlocked"
-          }
-        },
-        "x-openregister-relations": {
-          "reconciliation": {
-            "localField": "reconciliationId",
-            "relatedSchema": "BankReconciliation",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent reconciliation session."
           }
         },
         "x-openregister-rbac": {

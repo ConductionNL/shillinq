@@ -6,7 +6,7 @@
     "spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
     "tier": "T4",
     "adr": "ADR-037 fragment — declarative WMO (Wet Markt en Overheid, Mededingingswet ch. 4b) compliance: CommercialActivity, IntegralCostPrice, ActivityCostAllocation, AlgemeenBelangBesluit, ACMReport, AlertLog (cross-subsidy detector), WMOAuditLog (immutable), MarketBenchmark. Merged additively into shillinq_register.json at load (SettingsService::deepMergeConfig).",
-    "description": "Phase 1+2 WMO compliance engine. Declares 8 schemas plus their x-openregister-lifecycle, x-openregister-relations, x-openregister-aggregations and x-openregister-rbac blocks. Per-period IKP records are immutable (status=voorlopig|definitief); ActivityCostAllocation splits are reversible audit records; ACMReport is write-once after digital signature; WMOAuditLog has 7-year retention per Mededingingswet bewaartermijn."
+    "description": "Phase 1+2 WMO compliance engine. Declares 8 schemas plus their x-openregister-lifecycle, x-openregister-aggregations and x-openregister-rbac blocks; relations are property-level $ref. Per-period IKP records are immutable (status=voorlopig|definitief); ActivityCostAllocation splits are reversible audit records; ACMReport is write-once after digital signature; WMOAuditLog has 7-year retention per Mededingingswet bewaartermijn."
   },
   "components": {
     "schemas": {
@@ -139,7 +139,8 @@
             "type": "string",
             "description": "FK to AlgemeenBelangBesluit.id when isExempted=true.",
             "nullable": true,
-            "title": "Exemption Besluit ID"
+            "title": "Exemption Besluit ID",
+            "$ref": "AlgemeenBelangBesluit"
           },
           "annualRevenue": {
             "type": "number",
@@ -294,43 +295,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "exemptionBesluit": {
-            "localField": "exemptionDecisionId",
-            "relatedSchema": "AlgemeenBelangBesluit",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The ABB granting exemption when isExempted=true (REQ-WMO-005)."
-          },
-          "integralCostPrices": {
-            "localField": "id",
-            "relatedSchema": "IntegralCostPrice",
-            "relatedField": "commercialActivityId",
-            "cardinality": "one-to-many",
-            "description": "All IKP records for this activity (REQ-WMO-002)."
-          },
-          "activityCostAllocations": {
-            "localField": "id",
-            "relatedSchema": "ActivityCostAllocation",
-            "relatedField": "commercialActivityId",
-            "cardinality": "one-to-many",
-            "description": "Allocation splits for this activity (REQ-WMO-003)."
-          },
-          "alerts": {
-            "localField": "id",
-            "relatedSchema": "AlertLog",
-            "relatedField": "commercialActivityId",
-            "cardinality": "one-to-many",
-            "description": "Cross-subsidy alerts raised against this activity (REQ-WMO-007)."
-          },
-          "benchmarks": {
-            "localField": "id",
-            "relatedSchema": "MarketBenchmark",
-            "relatedField": "commercialActivityId",
-            "cardinality": "one-to-many",
-            "description": "Market benchmark observations (REQ-WMO-012)."
-          }
-        },
         "x-openregister-aggregations": {
           "lastIntegralCostPricePeriod": {
             "description": "Most-recent IKP period (REQ-WMO-002). Drives the cross-subsidy 'omzet spike without IKP update' alert.",
@@ -443,7 +407,8 @@
             "type": "string",
             "description": "FK to CommercialActivity.id.",
             "example": "ca-mo-sp-014",
-            "title": "Commercial Activity ID"
+            "title": "Commercial Activity ID",
+            "$ref": "CommercialActivity"
           },
           "period": {
             "type": "string",
@@ -598,15 +563,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-relations": {
-          "commercialActivity": {
-            "localField": "commercialActivityId",
-            "relatedSchema": "CommercialActivity",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The activity this IKP belongs to."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "concerncontroller": {
@@ -678,12 +634,14 @@
           "journalEntryId": {
             "type": "string",
             "description": "FK to the JournalEntry / GLTransaction being split (REQ-WMO-003).",
-            "title": "Journal Entry ID"
+            "title": "Journal Entry ID",
+            "$ref": "JournalEntry"
           },
           "commercialActivityId": {
             "type": "string",
             "description": "FK to the CommercialActivity matched on kostenplaats/kostendrager.",
-            "title": "Commercial Activity ID"
+            "title": "Commercial Activity ID",
+            "$ref": "CommercialActivity"
           },
           "glLineId": {
             "type": "string",
@@ -855,28 +813,6 @@
               "to": "reversed",
               "label": "Reverse"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "journalEntry": {
-            "localField": "journalEntryId",
-            "relatedSchema": "JournalEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The journal entry being split."
-          },
-          "commercialActivity": {
-            "localField": "commercialActivityId",
-            "relatedSchema": "CommercialActivity",
-            "relatedField": "id",
-            "cardinality": "many-to-one"
-          },
-          "overheadRule": {
-            "localField": "allocationKey",
-            "relatedSchema": "OverheadDistributionRule",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The OverheadDistributionRule applied for this split."
           }
         },
         "x-openregister-rbac": {
@@ -1232,15 +1168,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "activities": {
-            "localField": "concernsActivities",
-            "relatedSchema": "CommercialActivity",
-            "relatedField": "id",
-            "cardinality": "many-to-many",
-            "description": "CommercialActivity records exempted by this ABB."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "juridisch-beleidsadviseur": {
@@ -1538,7 +1465,8 @@
           "administrationId": {
             "type": "string",
             "title": "Administration ID",
-            "description": "The date and time for administration id."
+            "description": "The date and time for administration id.",
+            "$ref": "Administration"
           },
           "status": {
             "type": "string",
@@ -1592,14 +1520,6 @@
               "to": "archived",
               "label": "Archive"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one"
           }
         },
         "x-openregister-rbac": {
@@ -1800,7 +1720,8 @@
           "commercialActivityId": {
             "type": "string",
             "description": "FK to the affected CommercialActivity.",
-            "title": "Commercial Activity ID"
+            "title": "Commercial Activity ID",
+            "$ref": "CommercialActivity"
           },
           "severity": {
             "type": "string",
@@ -1904,14 +1825,6 @@
               "to": "escalated",
               "label": "Escalate"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "commercialActivity": {
-            "localField": "commercialActivityId",
-            "relatedSchema": "CommercialActivity",
-            "relatedField": "id",
-            "cardinality": "many-to-one"
           }
         },
         "x-openregister-rbac": {
@@ -2158,7 +2071,8 @@
           "commercialActivityId": {
             "type": "string",
             "title": "Commercial Activity ID",
-            "description": "The identifier of the associated commercial activity."
+            "description": "The identifier of the associated commercial activity.",
+            "$ref": "CommercialActivity"
           },
           "referenceDate": {
             "type": "string",
@@ -2206,14 +2120,6 @@
             "type": "string",
             "title": "Administration ID",
             "description": "The date and time for administration id."
-          }
-        },
-        "x-openregister-relations": {
-          "commercialActivity": {
-            "localField": "commercialActivityId",
-            "relatedSchema": "CommercialActivity",
-            "relatedField": "id",
-            "cardinality": "many-to-one"
           }
         },
         "x-openregister-rbac": {
