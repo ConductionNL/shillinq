@@ -34,7 +34,8 @@
             "type": "string",
             "description": "FK to pipelinq Product (productId). Required. Resolved via ADR-019 integration registry (shillinq → pipelinq). Local denormalised caches (status, unitCost) are refreshed from the registry but stock-keeping + GL posting work offline on cached values.",
             "example": "pipelinq-product-id-001",
-            "title": "Product ID"
+            "title": "Product ID",
+            "x-external-register": "pipelinq"
           },
           "productSku": {
             "type": "string",
@@ -121,15 +122,6 @@
             "description": "FK to Administration owning this stock record (REQ-IST-007 multi-tenant scope). Cross-administration reads / writes are masked 404 by AdministrationContextService — organisation A's 'Amsterdam Warehouse' is invisible to organisation B.",
             "example": "adm-default",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "product": {
-            "localField": "productId",
-            "relatedSchema": "pipelinq:Product",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "pipelinq Product master record. ?expand=productId resolves via ADR-019 integration registry."
           }
         },
         "x-openregister-calculations": {

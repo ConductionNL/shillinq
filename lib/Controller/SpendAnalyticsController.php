@@ -4,15 +4,53 @@
  * Spend Analytics Controller
  *
  * Read-only API for single-dimension spend analysis over the Accounts-Payable
- * sub-ledger. `GET /api/analytics/spend?dimension=<supplier|category|
- * costCentre|period>` returns `{ dimension, label, groups:[{key,amount}],
- * total, backend }`. Every read is delegated to OpenRegister's aggregation-api
- * (`AggregationRunner::runAdhocByRef`, ADR-022), which enforces list-RBAC and
- * the active-organisation multi-tenant predicate server-side — the endpoint
- * exposes exactly the aggregate the caller could already compute over the
- * objects they may read. There is no create/update/delete route and no
- * client-supplied object identifier (no IDOR surface); the only input is the
- * closed `dimension` enum, validated before dispatch.
+ * sub-ledger. `GET /api/analytics/spend?administration_id=<id>&dimension=
+ * <supplier|category|costCentre|period>` returns `{ dimension, label,
+ * groups:[{key,amount}], total, backend }`. Reads are delegated to
+ * OpenRegister's aggregation-api (`AggregationRunner::runAdhocByRef`,
+ * ADR-022). There is no create/update/delete route.
+ *
+ * ⚠️ CORRECTION (gate-7). An earlier version of this docblock claimed the
+ * endpoint had "no IDOR surface" because it took no object identifier and
+ * because OR's aggregation-api "enforces list-RBAC and the active-organisation
+ * multi-tenant predicate". Both halves were checked against the source and
+ * neither holds for THIS app's tenancy:
+ *
+ *  - OR's predicate is `_organisation = ?` (AggregationRunner). That is
+ *    OpenRegister's organisation, not shillinq's *administration*. Many
+ *    administrations live inside one organisation — that is what
+ *    AdministrationMembership exists for — so the predicate does not separate
+ *    two administrations from each other.
+ *  - OR's list-RBAC reads `Schema::getAuthorization()`. No schema in this app
+ *    declares an `authorization` block (`grep -c authorization
+ *    lib/Settings/register.d/*.json` finds only prose), and OpenRegister
+ *    treats an absent block as OPEN. The `x-openregister-rbac` key on
+ *    APTransaction is read by zero PHP in OpenRegister — it is documentation,
+ *    not enforcement.
+ *  - "no client-supplied object identifier" was true and irrelevant: an
+ *    unscoped aggregate discloses other tenants' money without anyone naming
+ *    an id.
+ *
+ * The endpoint therefore now requires `administration_id` and refuses, with a
+ * 404 rather than a 403, any administration the caller holds no membership
+ * for (AdministrationContextService::canAccess(), ADR-005 / REQ-MA-001) — a
+ * 403 would confirm the administration exists and turn this into an
+ * enumeration oracle for the tenant list.
+ *
+ * ⚠️ That guard is COMPLETE for `dimension=supplier` only. The supplier view
+ * reads APTransaction, which declares `administrationId`, so the caller's
+ * administration is pushed into the aggregation filter. The category /
+ * cost-centre / period views read GLLine, which declares no administration
+ * property at all (the administration lives on the parent GLTransaction and
+ * OpenRegister's filters cannot join), so those three still aggregate every
+ * administration in the register. The membership check reduces their audience
+ * from "any authenticated Nextcloud user" to "a member of some
+ * administration" but does not isolate one administration from another.
+ * Closing it requires `administrationId` denormalised onto GLLine plus a
+ * backfill — a schema + data migration, out of scope here and tracked
+ * separately. See SpendAnalyticsService's class docblock; do NOT close it by
+ * passing an `administrationId` filter GLLine cannot match, which would
+ * silently return a zero total.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -45,7 +83,7 @@ use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
 /**
- * GET /api/analytics/spend?dimension=...
+ * GET /api/analytics/spend?administration_id=...&dimension=...
  *
  * @spec openspec/specs/spend-analytics/spec.md
  */
@@ -84,14 +122,18 @@ class SpendAnalyticsController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Single-dimension spend analysis.
+	 * Single-dimension spend analysis, scoped to one administration.
 	 *
 	 * Query parameters:
+	 *  - administration_id (required) the administration to report on. The
+	 *    caller must hold a valid AdministrationMembership for it.
 	 *  - dimension (required) one of supplier|category|costCentre|period.
 	 *
 	 * Returns HTTP 200 with { dimension, label, groups:[{key,amount}], total,
-	 * backend }; HTTP 400 on an unknown dimension; HTTP 401 when anonymous;
-	 * HTTP 500 without a stack trace on an unexpected failure.
+	 * backend }; HTTP 400 on a missing/malformed administration_id or an
+	 * unknown dimension; HTTP 401 when anonymous; HTTP 404 when the caller has
+	 * no membership for the named administration (masked, never 403 — see the
+	 * class docblock); HTTP 500 without a stack trace on an unexpected failure.
 	 *
 	 * @return JSONResponse The spend payload or an error envelope.
 	 *
@@ -99,12 +141,52 @@ class SpendAnalyticsController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function spend(): JSONResponse {
-		// Authentication gate (ADR-005) — the data layer relies on a resolved
-		// user for OR's RBAC scoping.
+		// Authentication gate (ADR-005). NOT the authorisation guard — that is
+		// the membership check below. #[NoAdminRequired] has already settled
+		// whether anyone is logged in; this only turns a null uid into a clean
+		// 401 instead of letting canAccess() answer "no memberships" as a 404.
 		if ($this->context->currentUserId() === null) {
 			return new JSONResponse(
 				['error' => 'Not authenticated'],
 				Http::STATUS_UNAUTHORIZED
+			);
+		}
+
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		if ($administrationId === '') {
+			return new JSONResponse(
+				['error' => 'administration_id is required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		if (preg_match('/^[A-Za-z0-9_.\-]{1,64}$/', $administrationId) !== 1) {
+			return new JSONResponse(
+				['error' => 'administration_id must be a valid identifier'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		// IDOR guard (ADR-005 / REQ-MA-001): the caller must hold a valid
+		// membership for the administration they named. 404, never 403.
+		try {
+			$allowed = $this->context->canAccess(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'SpendAnalyticsController: administration access check failed',
+				['exception' => $e->getMessage()]
+			);
+
+			return new JSONResponse(
+				['error' => 'Authorization failure'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}
+
+		if ($allowed === false) {
+			return new JSONResponse(
+				['error' => 'Administration not found'],
+				Http::STATUS_NOT_FOUND
 			);
 		}
 
@@ -117,7 +199,7 @@ class SpendAnalyticsController extends Controller {
 		}
 
 		try {
-			$result = $this->dispatch(dimension: $dimension);
+			$result = $this->dispatch(dimension: $dimension, administrationId: $administrationId);
 			$result['label'] = $this->label(dimension: $dimension);
 		} catch (\Throwable $e) {
 			$this->logger->error(
@@ -137,14 +219,20 @@ class SpendAnalyticsController extends Controller {
 	/**
 	 * Dispatch to the matching service method for the validated dimension.
 	 *
+	 * Only the supplier view can be narrowed to an administration, so only it
+	 * receives `$administrationId`. The three GL-backed views take no
+	 * administration argument at all — a parameter they could not honour would
+	 * read as a scope that is applied. See the class docblock.
+	 *
 	 * @param string $dimension The validated dimension.
+	 * @param string $administrationId The administration the caller proved membership of.
 	 *
 	 * @return array<string,mixed> The service payload.
 	 */
-	private function dispatch(string $dimension): array {
+	private function dispatch(string $dimension, string $administrationId): array {
 		switch ($dimension) {
 			case 'supplier':
-				return $this->service->spendBySupplier();
+				return $this->service->spendBySupplier(administrationId: $administrationId);
 			case 'category':
 				return $this->service->spendByCategory();
 			case 'costCentre':
