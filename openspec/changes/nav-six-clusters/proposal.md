@@ -131,11 +131,13 @@ manifest):
 - **Explicitly out of scope** (full non-goals list in
   `specs/nav-clusters/spec.md` REQ-NAVC-010): no OpenRegister schema changes,
   no route/id renames (only menu placement and page-set membership change —
-  every surviving page keeps its route), no Payroll/ExternalConnections
-  *deep* re-homing (they land in a defensible cluster now; a dedicated
-  HR/integrations home is Wave 2, tracked separately — see design.md §7), and
-  the ADR-097 amendment itself is **not** authored by this change (hydra repo
-  scope — see Impact).
+  every surviving page keeps its route), no Payroll *deep* re-homing (it
+  lands in a defensible cluster now; a dedicated HR home is Wave 2, tracked
+  separately — see design.md §7), **no `ExternalConnections` change of any
+  kind — not even a relocation** (frozen as-is; a confirmed Wave 2 change,
+  `integration-config-to-openconnector`, owns its full collapse — see
+  design.md §7 and Impact), and the ADR-097 amendment itself is **not**
+  authored by this change (hydra repo scope — see Impact).
 
 ## Impact
 
@@ -169,6 +171,19 @@ manifest):
   duplicate-schema measurements against whatever `development` actually
   contains at that point — the counts in this proposal and design.md are
   dated 2026-08-19 and will drift.
+- **Sequencing with `integration-config-to-openconnector` (branch
+  `feat/integration-config-to-openconnector`, spec committed 2026-08-19).**
+  This confirmed Wave 2 change owns the full collapse of the
+  `ExternalConnections` surface (15 adapter-family pages + 1 index → 1
+  roster page reusing the `ExternalAdaptersStatus` id/route, ~9,920 bytes
+  freed) and lands AFTER this change. **This change deliberately makes zero
+  edits to `src/manifest.d/external-adapters-w8.json` or to any of the 15
+  `ExternalConnections` settings-foldout entries** — not even a relocation —
+  specifically to avoid a manifest-fragment conflict between the two
+  branches (design.md §7). The ~9,920-byte saving is Wave 2's own headroom
+  contribution, not counted anywhere in this change's byte-budget estimate
+  (design.md §9); this change's budget must close using only its own
+  deletions against the current 2,927-byte headroom.
 - **Cross-repo, explicitly flagged**: the ADR-097 amendment naming every
   demotion this change makes (Decision 1's "a seventh requires an
   amendment... naming what it demotes and why nothing could be" — inverted

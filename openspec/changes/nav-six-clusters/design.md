@@ -268,9 +268,34 @@ Wave 2 will shrink them."
   is a likely future hand-off to the fleet's dedicated HR app; Wave 2 is the
   right place to decide whether shillinq keeps this content or re-homes it
   entirely.
-- **ExternalConnections**: already a phantom top-level (§5.5) — every child
-  is already correctly in the settings foldout. No action needed from this
-  change.
+- **ExternalConnections: explicitly frozen, do not touch.** Already a
+  phantom top-level (§5.5) — every one of its 15 adapter-family children is
+  already correctly in the settings foldout via
+  `menu-layout.json#settingsSection`. **This change MUST NOT relocate,
+  restructure, or delete any of these 15 entries, even though several sit
+  inside clusters this change otherwise touches heavily (e.g. the
+  `ExternalAdapterCcm`/`ExternalAdapterCsrd` entries are content-adjacent to
+  Cluster 6, `ExternalAdapterBunq`/`ExternalAdapterMollie` to Cluster 4).**
+  A confirmed Wave 2 change, `integration-config-to-openconnector`
+  (branch `feat/integration-config-to-openconnector`, spec committed
+  2026-08-19, `lib/Controller/ExternalAdaptersAdminController.php`'s
+  `ADAPTERS` registry — re-verified: **15** adapter families, not 14; the
+  `Cbs` directory alone holds two, `CbsBestandenAdapterInterface` and
+  `CbsIv3AdapterInterface`, each with its own registry entry, `sourceSlug`,
+  and nav page), already owns the full collapse of this surface: all 15
+  `ExternalAdapterDetail` pages + the `ExternalAdaptersStatus` index fold
+  into ONE roster page reusing the `ExternalAdaptersStatus` id/route
+  (REQ-ICO-002/004), freeing a measured **~9,920 bytes**
+  (`src/manifest.d/external-adapters-w8.json`: 10,922B → ~1,002B, per that
+  change's own `design.md` §3/§7). That change lands AFTER this one.
+  Touching any of these 15 entries here — even a pure relocation with no
+  page deleted — would create a manifest-fragment conflict between the two
+  branches for no navigational benefit, since Wave 2 deletes the whole
+  group's page-level structure outright days or weeks later. Leaving them
+  exactly where they are today is the lowest-churn, lowest-risk choice.
+  **The ~9,920-byte saving is Wave 2's, not this change's — §9 does not
+  count it, and this change's own byte budget must close on its own
+  merits.**
 
 ## 8. `nav-reachability-gate` baseline — resolving the 25 IA-gap entries
 
@@ -317,6 +342,15 @@ this pruning.
 Measured: 595 pages total 758,936 bytes, average 1,276 bytes/page, median
 946 bytes/page (page bodies only — menu nodes, `_meta`, and fragment
 wrapper overhead are additional but small per-entry).
+
+**Explicitly excluded from this estimate: the ~9,920 bytes `integration-
+config-to-openconnector` (Wave 2, §7) will free by collapsing the 15
+`ExternalConnections` adapter pages into one roster page.** That saving
+belongs to Wave 2's own PR, lands after this change, and is not this
+change's to spend or report — this change touches zero bytes of
+`src/manifest.d/external-adapters-w8.json` (§7) and its budget below must
+close using only its own deletions, against the current, pre-Wave-2
+headroom of 2,927 bytes.
 
 - Deleting the 4 dangling dialog pages (§6): **-4,427 bytes**, high
   confidence.

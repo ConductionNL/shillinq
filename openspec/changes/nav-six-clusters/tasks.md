@@ -37,6 +37,13 @@
 - [ ] Relabel `Payroll`'s rendered label from "People & Projects" to
   "Payroll"; split `ExpenseSettlementClassifier` into the Purchasing
   cluster per §7, keep the other 6 leaves in Bookkeeping.
+- [ ] **Do not touch `src/manifest.d/external-adapters-w8.json` or any of
+  the 15 `ExternalAdapter*` ids in `menu-layout.json#settingsSection`** —
+  design.md §7: frozen as-is to avoid a manifest-fragment conflict with the
+  confirmed Wave 2 change `integration-config-to-openconnector`
+  (`feat/integration-config-to-openconnector`), which owns the full
+  collapse of that surface. Diff this file at the end of task 1 and confirm
+  it is byte-identical to its pre-change state.
 - [ ] Confirm after this task: `section: "main"` top-level count is exactly
   7 (Dashboard + 6), via the same `buildManifest()` measurement as task 0.
 
@@ -157,10 +164,17 @@
 
 ## 7. Byte budget
 - [ ] Run `node tests/check-manifest-budget.js` before this change's first
-  commit (baseline) and after the final commit (result). Record both totals
-  and the delta in the PR description — do not rely on design.md §9's
-  estimate as the reported number.
-- [ ] Confirm the after-total is at or under budget.
+  commit (baseline: 2,927 bytes headroom, per the `fix/setup-wizard-english`
+  baseline this change assumes — task 0) and after the final commit
+  (result). Record both totals and the delta in the PR description — do
+  not rely on design.md §9's estimate as the reported number.
+- [ ] Confirm the after-total is at or under budget **using only this
+  change's own deletions** — the ~9,920 bytes `integration-config-to-
+  openconnector` will separately free by collapsing `ExternalConnections`
+  (design.md §7) is NOT this change's to count, since task 1 makes zero
+  edits to that surface. If this change's budget does not close on its own,
+  that is a real problem to fix here, not something to paper over by
+  assuming Wave 2's saving.
 
 ## 8. e2e coverage
 - [ ] Write `tests/e2e/NavSixClusters.spec.js` per design.md §11: top-level

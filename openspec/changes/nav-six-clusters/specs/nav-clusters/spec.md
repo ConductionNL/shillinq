@@ -248,10 +248,13 @@ deleted dangling dialog pages' routes no longer resolve.
 This change MUST NOT change any OpenRegister schema, MUST NOT rename any
 page `id` or `route` (every surviving page keeps its existing route — only
 menu placement and page-SET membership change), MUST NOT perform a deep
-re-home of the Payroll or ExternalConnections content beyond the placement
-recorded in design.md §7 (a dedicated home is Wave 2 scope), and MUST NOT
-author the ADR-097 amendment itself (design.md §13 — that is a hydra-repo
-artifact, handed back to the orchestrator as a cross-repo follow-up task).
+re-home of the Payroll content beyond the placement recorded in design.md §7
+(a dedicated HR home is Wave 2 scope), MUST NOT make ANY change — including a
+mere relocation — to the `ExternalConnections` surface (the 15
+adapter-family settings-foldout entries and `src/manifest.d/external-
+adapters-w8.json`), and MUST NOT author the ADR-097 amendment itself
+(design.md §13 — that is a hydra-repo artifact, handed back to the
+orchestrator as a cross-repo follow-up task).
 
 #### Scenario: No page route changes
 - **GIVEN** this change's full diff
@@ -261,3 +264,15 @@ artifact, handed back to the orchestrator as a cross-repo follow-up task).
   exception, and each is accounted for in design.md §4/§6)
 
 @e2e exclude structural manifest diff assertion, not independently UI-observable beyond what `preset-deep-links-resolve` and `deleted-dialog-routes-gone` already cover — verified by manifest diff review, not a separate Playwright scenario
+
+#### Scenario: ExternalConnections is untouched, to avoid a cross-branch manifest conflict
+- **GIVEN** this change's full diff and the confirmed Wave 2 change
+  `integration-config-to-openconnector` (branch `feat/integration-config-to-
+  openconnector`), which owns the full collapse of this surface
+- **WHEN** `src/manifest.d/external-adapters-w8.json` and the 15
+  `ExternalAdapter*` ids in `menu-layout.json#settingsSection` are inspected
+  before and after this change
+- **THEN** neither the fragment file's content nor any of the 15 ids' menu
+  placement changed — this change made zero edits there
+
+@e2e exclude structural manifest diff assertion — verified by manifest diff review (confirming zero touched lines in `external-adapters-w8.json`), not a Playwright scenario
