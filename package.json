@@ -18,6 +18,8 @@
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
     "test:l10n": "node tests/l10n/check-l10n.js",
+    "test:l10n-parity": "L10N_REQUIRED_LOCALES=nl node tests/l10n/check-l10n-parity.js",
+    "test:l10n-dutch-tokens": "node tests/l10n/check-dutch-tokens.js",
     "pretest:unit": "node scripts/generate-manifest-shell.js",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
