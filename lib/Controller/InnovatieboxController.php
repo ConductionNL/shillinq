@@ -141,6 +141,19 @@ class InnovatieboxController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-009
+	 *
+	 * @no-admin-idor-exempt Stateless calculator — reads no storage and takes no object
+	 *     reference, so there is nothing to scope to a caller. The three inputs
+	 *     (own_rd_cost, uitbesteed_derden, uitbesteed_verbonden) are numbers supplied by
+	 *     the caller; they are handed to NexusCalculationService::calculateNexusBreak(),
+	 *     whose body is pure arithmetic over its own arguments (max/min/round + the OECD
+	 *     1.3 uplift and the 1.0 cap) with no ObjectService, no mapper, no app-config and
+	 *     no session read anywhere in the call. Every byte of the response is a function
+	 *     of the caller's own request, so no other administration's data can be reached
+	 *     by substituting any value. Deliberately NOT "fixed" with an administration_id
+	 *     parameter: that would demand a scope term the computation has no use for, and a
+	 *     guard that gates nothing is the dead auth code gate-6 exists to catch.
+	 *     Verify by reading lib/Service/NexusCalculationService.php::calculateNexusBreak().
 	 */
 	#[NoAdminRequired]
 	public function scenario(): JSONResponse {

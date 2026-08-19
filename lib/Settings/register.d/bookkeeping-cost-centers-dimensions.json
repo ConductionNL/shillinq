@@ -274,21 +274,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "parentDimension": {
-            "localField": "parentCode",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation enabling hierarchical navigation within a dimensionType per REQ-CC-002. A cost-center parents a cost-center; a cost-object parents a cost-object."
-          },
-          "referenceTarget": {
-            "description": "When dataType=reference (custom dimensions only), the dimension value MUST resolve to an object of (referenceRegister, referenceSchema). Validated by the OR relations engine.",
-            "sourceField": "referenceSchema",
-            "relatedSchema": "@self.referenceSchema",
-            "cardinality": "0..1"
-          }
-        },
         "x-openregister-aggregations": {
           "segmentPnl": {
             "description": "Segment P&L for this dimension (cost-center rows only): sum of GLLine amounts whose costCenterCode equals this record's code, including child cost-centers rolled up via parentCode per REQ-CC-005. Consumes GLLine.costCenterCode = @self.code with eliminationFlag = false. Scoped dimensionType = cost-center.",
