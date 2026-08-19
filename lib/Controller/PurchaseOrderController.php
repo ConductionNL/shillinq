@@ -146,6 +146,18 @@ class PurchaseOrderController extends Controller {
 	 * @return JSONResponse 200 with {chain: [...]} ; 401 anonymous.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 *
+	 * @no-admin-idor-exempt Stateless policy calculator — reads no storage and takes no
+	 *     object reference. The only input is a numeric amount; it goes to
+	 *     PurchaseOrderService::determineApprovalChain(), whose body compares the amount
+	 *     in cents against two class constants and returns role NAMES
+	 *     (teamleider / facility_manager / procurement_manager) with an order index. No
+	 *     ObjectService call, no mapper, no PurchaseOrder is loaded, and no administration
+	 *     appears in the call at all — the neighbouring create() and send() methods, which
+	 *     DO reach storage, carry the canAccess() 404-masking guard. The response reveals
+	 *     only the app-global approval thresholds, which are the same for every tenant and
+	 *     are documented in the spec; substituting any amount reaches no one else's data.
+	 *     Verify by reading lib/Service/PurchaseOrderService.php::determineApprovalChain().
 	 */
 	#[NoAdminRequired]
 	public function previewApprovalChain(): JSONResponse {

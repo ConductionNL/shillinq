@@ -1,0 +1,41 @@
+{
+	"menu": [
+		{
+			"id": "Inventory",
+			"children": [
+				{
+					"id": "ProductCatalog",
+					"label": "Products",
+					"icon": "PackageVariantClosed",
+					"route": "ProductCatalog",
+					"order": 5
+				},
+				{
+					"id": "ProductAttributeCatalog",
+					"label": "Product Attributes",
+					"icon": "FormatListBulletedType",
+					"route": "ProductAttributeCatalog",
+					"order": 6
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ProductCatalog",
+			"route": "/inventory/products",
+			"type": "custom",
+			"title": "Products",
+			"component": "ProductCatalogIndex",
+			"_note": "inventory-product-catalog REQ-IPC-008 (#860). NOT type:'index' — a declarative index page binds to ONE OpenRegister register+schema, and the product master is not in shillinq's register: shillinq-product-vendor-to-pipelinq REQ-SPVP-004 deleted the local Product register and moved ownership to pipelinq, which is why 'schema: Product' 404s. Binding this page to register:'pipelinq' instead would render an empty table on every install without pipelinq while satisfying every 'the page mounted' assertion. The component calls GET /apps/shillinq/api/inventory/products, which resolves the master first and falls back to the local denormalised cache the ADR-019 integration contract already declares, and renders which of the two answered. Read-only: no create affordance, no write route — REQ-SPVP-004 forbids a shillinq surface that accepts a product definition. No detail page for the same reason: the object being detailed lives in pipelinq, so a shillinq detail route would be a second empty shell."
+		},
+		{
+			"id": "ProductAttributeCatalog",
+			"route": "/inventory/product-attributes",
+			"type": "custom",
+			"title": "Product Attributes",
+			"component": "ProductAttributeCatalogIndex",
+			"_note": "inventory-product-catalog REQ-IPC-003 / REQ-IPC-004 (#860). Same ownership story as ProductCatalog: the ProductAttribute register was deleted from shillinq by shillinq-product-vendor-to-pipelinq REQ-SPVP-004. Serves GET /apps/shillinq/api/inventory/product-attributes — the attribute names the product master's products declare when it is reachable, otherwise the attribute surface the ADR-019 contract publishes, every row naming its owning application. Read-only, no write route."
+		}
+	]
+}
