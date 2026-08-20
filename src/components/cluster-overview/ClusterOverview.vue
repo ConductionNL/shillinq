@@ -117,6 +117,7 @@ export default {
 		 *
 		 * @param {{route: string, query?: object}} card The card descriptor.
 		 * @return {{name: string, query?: object}} The router-link target.
+		 * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-002
 		 */
 		cardTo(card) {
 			return card.query

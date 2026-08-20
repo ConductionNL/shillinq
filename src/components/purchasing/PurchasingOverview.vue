@@ -34,6 +34,13 @@ export default {
 	name: 'PurchasingOverview',
 	components: { ClusterOverview },
 	computed: {
+		/**
+		 * Card-section data for this cluster's landing page — a plain, static
+		 * grouping of the Purchasing cluster's absorbed children.
+		 *
+		 * @return {Array} The section descriptors passed to ClusterOverview.
+		 * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-002
+		 */
 		sections() {
 			return [
 				{

@@ -230,9 +230,20 @@ test.describe('nav-six-clusters — Dashboard + 6 domain clusters (REQ-NAVC-001.
 	})
 
 	// The 4 dangling config.createDialog pages (design.md §6) are deleted —
-	// their old routes no longer resolve to the old form UI. This app's
-	// router redirects any unregistered path to '/' (src/main.js:218), so a
-	// "gone" route lands back on the Dashboard rather than 404ing.
+	// their old routes no longer resolve to the old form UI.
+	//
+	// ⚠️ NOT a plain 404-to-Dashboard case. Each deleted `/<x>/new` route has
+	// a sibling `/<x>/:id` DETAIL route already declared (e.g. VATReturnDetail
+	// at `/vat-returns/:id` — see src/manifest.d/bookkeeping-vat-btw-filing.json).
+	// vue-router matches `:id` segments literally, so `/vat-returns/new`
+	// resolves to that detail route with id="new" rather than falling through
+	// to the unregistered-route catch-all (src/main.js:218) that redirects to
+	// '/'. Verified live: the URL stays on `${APP}${dialog.route}`, not
+	// `${APP}/`. An earlier draft of this test asserted the catch-all
+	// redirect and failed on all 4 cases for exactly this reason — the
+	// substantive REQ-NAVC-004 guarantee ("the old create-dialog form is
+	// gone") is the heading assertion below, which holds regardless of which
+	// of the two router outcomes a given deleted route lands on.
 	const DELETED_DIALOG_ROUTES = [
 		{ route: '/vat-returns/new', title: 'New BTW return' },
 		{ route: '/reimbursement-policies/new', title: 'New Reimbursement Policy' },
@@ -251,8 +262,13 @@ test.describe('nav-six-clusters — Dashboard + 6 domain clusters (REQ-NAVC-001.
 			await page.waitForLoadState('domcontentloaded')
 			await dismissWizard(page)
 
-			// The unregistered-route catch-all sends the router back to '/'.
-			await expect(page).toHaveURL(`${APP}/`, { timeout: 10_000 })
+			// Stays on the shillinq app surface either way (catch-all '/' or a
+			// sibling ':id' detail route) — never bounces off the app entirely.
+			await expect(page).toHaveURL(new RegExp(`${APP}/`), {
+				timeout: 10_000,
+			})
+			// The substantive check: the old create-dialog form heading is gone,
+			// whichever route the deleted path happened to fall through to.
 			await expect(
 				page.getByRole('heading', { name: dialog.title }),
 			).toHaveCount(0)

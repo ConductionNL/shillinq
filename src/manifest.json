@@ -235,7 +235,7 @@
 				{
 					"id": "AansluitingResultaten",
 					"label": "Tie-out results",
-					"icon": "FileCompareOutline",
+					"icon": "FileCheckOutline",
 					"route": "AansluitingResultaten",
 					"order": 29
 				},
